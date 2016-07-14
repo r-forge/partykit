@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the partykit package}
 
-\section{Changes in Version 1.1-0 (2016-06-05)}{
+\section{Changes in Version 1.1-0 (2016-07-14)}{
   \itemize{
     \item{Added a new function \code{palmtree} that fits partially
       additive (generalized) linear model trees. These employ
