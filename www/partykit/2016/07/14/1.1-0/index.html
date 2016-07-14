@@ -4,10 +4,10 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Version 0.8-2</title>
+    <title>Version 1.1-0</title>
     <meta name="viewport" content="width=device-width">
     <meta name="description" content="">
-    <link rel="canonical" href="http://partykit.r-forge.r-project.org/partykit/2014/09/12/0.8-2/">
+    <link rel="canonical" href="http://partykit.r-forge.r-project.org/partykit/2016/07/14/1.1-0/">
 
     <!-- Custom CSS -->
     <link rel="stylesheet" href="http://partykit.r-forge.r-project.org/partykit/css/main.css">
@@ -64,13 +64,30 @@ hljs.initHighlightingOnLoad();
       <div class="post">
 
   <header class="post-header">
-    <h1>Version 0.8-2</h1>
-    <p class="meta">Sep 12, 2014</p>
+    <h1>Version 1.1-0</h1>
+    <p class="meta">Jul 14, 2016</p>
   </header>
 
   <article class="post-content">
   <ul>
-<li> Fixed an uninitialized memory issue reported by valgrind. </li>
+<li> Added a new function palmtree that fits partially additive
+ (generalized) linear model trees. These employ model-based
+ recursive partitioning (mob) based on (generalized) linear models
+ with some local (i.e., leaf-specific) and some global (i.e.,
+ constant throughout the tree) regression coefficients. </li>
+<li> Splits in ordinal variables are now represented correctly in the
+ (still internal) list.rule method. </li>
+<li> Kaplan-Meier curves in "constparty" trees were plotted incorrectly
+ due to use a wrong scaling of the x-axis. Spotted by Peter Calhoun
+ <calhoun.peter@gmail.com>. </li>
+<li> Use quote(stats::model.frame) instead of as.name("model.frame"). </li>
+<li> The as.party methods for rpart and Weka_tree now have a data = TRUE
+ argument so that by default the data is preserved in the party
+ object (instead of an empty model frame). </li>
+<li> The predict method for cforest objects did not work for one-row data
+ frames, fixed now. </li>
+<li> Added rot and just arguments to node_barplot for more fine control
+ of x-axis labeling (e.g., with 45 degree rotation). </li>
 </ul>
 
   </article>
