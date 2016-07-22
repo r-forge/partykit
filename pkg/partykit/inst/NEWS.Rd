@@ -2,6 +2,13 @@
 \name{NEWS}
 \title{NEWS file for the partykit package}
 
+\section{Changes in Version 1.1-1 (2016-mm-dd)}{
+  \itemize{
+    \item{Proper support of quasi-families in \code{glmtree}
+      and hence \code{palmtree}.}
+  }
+}
+
 \section{Changes in Version 1.1-0 (2016-07-14)}{
   \itemize{
     \item{Added a new function \code{palmtree} that fits partially
