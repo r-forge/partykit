@@ -190,6 +190,7 @@
          ret <- NULL
          for (j in whichvar) {
              x <- data[[j]]
+             ORDERED <- is.ordered(x) || is.numeric(x)
              if ((ctrl$multiway && ctrl$maxsurrogate == 0) && is.factor(x)) {
                  index <- 1L:nlevels(x)
                  if (length(weights) > 0) {
@@ -207,7 +208,8 @@
                                  Y = Y, iy = iy, subset = subset,
                                  weights = weights, block = block, B = 0L)
                  sp <- doTest(lev, type = ifelse(ctrl$teststat == "quad", "quadform", "maxstat"), 
-                              minbucket = minbucket)$index
+                              minbucket = minbucket, 
+                              ordered = ORDERED)$index
                  if (!all(is.na(sp))) {
                      if (length(sp) == 1) sp <- attr(bdr[[j]], "levels")[sp]
                      ret <- partysplit(as.integer(j), breaks = sp)
