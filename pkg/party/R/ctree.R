@@ -1,12 +1,12 @@
 
 ### surrogate splits
-.csurr <- function(split, subset, whichvar, ctrl) {
+.csurr <- function(split, data, subset, whichvar, ctrl) {
 
     ### <FIXME> surrogate splits for multiway splits </FIXME>?
-    stopifnot(length(unique(split)) == 3) ### 0, 1, 2
-    attr(split, "levels") <- 0:2
+    stopifnot(length(unique(split)) %in% c(2, 3)) ### 0, 1, 2
+    attr(split, "levels") <- 1:2
 
-    Y <- cbind(0, diag(2))
+    Y <- rbind(0, diag(2))
     p <- ctrl$var_select(Y, iy = split, subset = subset, whichvar = whichvar)
     crit <- p[ctrl$criterion,,drop = TRUE]
     ### crit is maximised, but there might be ties
@@ -16,24 +16,20 @@
         crit[ties] <- crit[ties] + order(p["statistic", ties]) / (sum(ties) * 1000)
     }
 
-    ret <- vector(mode = "list", length = min(length(whichvar), ctrl$maxsurrogate))
+    ret <- vector(mode = "list", length = min(c(length(whichvar), ctrl$maxsurrogate)))
 
     for (i in 1L:length(ret)) {
         jsel <- which.max(crit)
         sp <- ctrl$var_split(Y, iy = split, subset = subset, whichvar = jsel, 0L)
-        if (any(is.na(sp))) next
-        if (length(sp) == 1) {
-            ret[[i]] <- partysplit(as.integer(isel), breaks = sp, index = 1L:2L)
-        } else {
-            ret[[i]] <- partysplit(as.integer(isel), index = sp)
-        }
+        if (is.null(sp)) next
+        ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], data, obs = subset)
         tmps <- split[subset]
         tab <- table(tmp, tmps)
         if (tab[1, 1] < tab[1, 2]) {
             indx <- ret[[i]]$index
-            ret[[i]]$index[indx == 1] <- 2
-            ret[[i]]$index[indx == 2] <- 1
+            ret[[i]]$index[indx == 1] <- 2L
+            ret[[i]]$index[indx == 2] <- 1L
         }
         crit[which.max(crit)] <- -Inf
     }
@@ -120,7 +116,7 @@
     prob <- prop.table(table(kidids))
     names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
-        prob <- numeric(0) + 1L:length(prob) %in% which.max(prob)
+        prob <- (1L:length(prob)) %in% which.max(prob)
     ret$split$prob <- prob
 
     if (ctrl$maxsurrogate > 0) {
@@ -128,7 +124,7 @@
         inp[thissplit$varid] <- FALSE
         tmp <- integer(nrow(data))
         tmp[subset] <- kidids
-        ret$surrogates <- .csurr(tmp, subset = subset, whichvar = which(inp), ctrl)
+        ret$surrogates <- .csurr(tmp, data = data, subset = subset, whichvar = which(inp), ctrl)
         kidids <- kidids_node(ret, data, obs = subset)
     }
 
@@ -199,9 +195,9 @@
                      xt <- xtabs(weights ~ x, subset = subset)
                  }
                  index[xt == 0] <- NA
-                 index[xt < mb] <- nlevels(x) + 1
+                 index[xt < mb] <- nlevels(x) + 1L
                  index <- unclass(factor(index))
-                 ret <- partysplit(as.integer(isel), index = index)
+                 ret <- partysplit(as.integer(j), index = as.integer(index))
                  break()
             } else {
                  lev <- LinStatExpCov(ix = bdr[[j]],
@@ -211,8 +207,13 @@
                               minbucket = minbucket, 
                               ordered = ORDERED)$index
                  if (!all(is.na(sp))) {
-                     if (length(sp) == 1) sp <- attr(bdr[[j]], "levels")[sp]
-                     ret <- partysplit(as.integer(j), breaks = sp)
+                     if (length(sp) == 1) {
+                         if (!is.ordered(x))
+                             sp <- attr(bdr[[j]], "levels")[sp]
+                         ret <- partysplit(as.integer(j), breaks = sp, index = 1L:2L)
+                     } else {
+                         ret <- partysplit(as.integer(j), index = as.integer(sp) + 1L)
+                     }
                      break
                  }
             }
