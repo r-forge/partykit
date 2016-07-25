@@ -276,7 +276,7 @@
 ctree_control <- function(teststat = c("quad", "max"),
     testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
     nmax = 20L,
-    mincriterion = 0.95, minsplit = 50L, minbucket = 7L, minprob = 0.01,
+    mincriterion = 0.95, minsplit = 20L, minbucket = 7L, minprob = 0.01,
     stump = FALSE, nresample = 9999L, maxsurrogate = 0L, mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, majority = FALSE,
     applyfun = NULL, cores = NULL) {
