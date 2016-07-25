@@ -6,6 +6,8 @@
   \itemize{
     \item{Proper support of quasi-families in \code{glmtree}
       and hence \code{palmtree}.}
+    \item{NA handling by following the majority was 
+          potentially incorrect in \code{ctree}.}
   }
 }
 
