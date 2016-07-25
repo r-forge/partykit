@@ -239,7 +239,8 @@
                          X <- unclass(x)
                      } else {
                          X <- match(x, ux <- sort(unique(x)))
-                         X[is.na(X)] <- 0
+                         X[is.na(X)] <- 0L
+                         storage.mode(X) <- "integer"
                      }
                  }
                  lev <- LinStatExpCov(X = X, ix = bdr[[j]],

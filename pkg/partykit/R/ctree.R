@@ -222,10 +222,11 @@
     ret$info <- list(criterion = p, p.value = fmP(p)[iselp])
     thissurr <- NULL
     kidids <- kidids_node(ret, data)
-    prob <- prop.table(table(kidids))
+    prob <- prop.table(table(rep(kidids, weights)))
+    names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
-        prob <- numeric(0) + 1L:length(prob) %in% which.max(prob)
-    ret$prob <- prob
+        prob <- 1L:length(prob) %in% which.max(prob)
+    ret$split$prob <- prob
 
     if (ctrl$maxsurrogate > 0) {
         inp <- inputs
