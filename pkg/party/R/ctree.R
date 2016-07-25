@@ -31,12 +31,15 @@
         ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], data, obs = subset)
         tmps <- split[subset]
+
+        ### <FIXME> this needs fixing for multiway "split"
         tab <- table(tmp, tmps)
         if (tab[1, 1] < tab[1, 2]) {
             indx <- ret[[i]]$index
             ret[[i]]$index[indx == 1] <- 2L
             ret[[i]]$index[indx == 2] <- 1L
         }
+        ### </FIXME>
         crit[which.max(crit)] <- -Inf
     }
     ret <- ret[!sapply(ret, is.null)]
