@@ -151,9 +151,14 @@
 
     if (missing(subset)) subset <- 1:NROW(data)
 
-    bdr <- libcoin:::BDR(data, ctrl$nmax)
+    if (ctrl$nmax < Inf) {
+        bdr <- libcoin:::BDR(data, ctrl$nmax)
+        X <- lapply(bdr, function(x) attr(x, "X"))
+    } else {
+        stop("not yet implemented")
+    }
     if (is.null(trafo)) {
-        Y <- attr(bdr[[response]], "X")
+        Y <- X[[response]]
         trafo <- function(...) Y
     }
 
@@ -164,7 +169,7 @@
         rownames(ret) <- c("statistic", "p.value")
         
         for (j in whichvar) {
-            lev <- LinStatExpCov(X = attr(bdr[[j]], "X"), ix = bdr[[j]], 
+            lev <- LinStatExpCov(X = X[[j]], ix = bdr[[j]], 
                                  Y = Y, iy = iy, subset = subset,
                                  weights = weights, block = block, 
                                  B = ifelse(ctrl$testtype == "MonteCarlo", 
@@ -292,6 +297,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
         }
     }
 
+    ### <FIXME> implement y ~ x | block or y ~ 1 | x | block ? </FIXME>
     block <- integer(0)
     tree <- .ctree_fit(dat, response = response, trafo = ytrafo, 
                        weights = weights, block = block, ctrl = control)
