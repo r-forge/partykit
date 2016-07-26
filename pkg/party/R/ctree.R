@@ -249,7 +249,7 @@
                  lev <- LinStatExpCov(X = X, ix = bdr[[j]],
                                  Y = Y, iy = iy, subset = subset,
                                  weights = weights, block = block, B = 0L)
-                 sp <- doTest(lev, type = ifelse(ctrl$teststat == "quad", "quadform", "maxstat"), 
+                 sp <- doTest(lev, type = ifelse(ctrl$splitstat == "quad", "quadform", "maxstat"), 
                               minbucket = minbucket, 
                               ordered = ORDERED)$index
                  if (!all(is.na(sp))) {
@@ -273,7 +273,7 @@
 }
 
 
-ctree_control <- function(teststat = c("quad", "max"),
+ctree_control <- function(teststat = c("quad", "max"), splitstat = c("max", "quad"),
     testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
     nmax = 20L,
     mincriterion = 0.95, minsplit = 20L, minbucket = 7L, minprob = 0.01,
@@ -282,6 +282,7 @@ ctree_control <- function(teststat = c("quad", "max"),
     applyfun = NULL, cores = NULL) {
 
     teststat <- match.arg(teststat)
+    splitstat <- match.arg(splitstat)
     testtype <- match.arg(testtype)
 
     ## apply infrastructure for determining split points
@@ -294,7 +295,8 @@ ctree_control <- function(teststat = c("quad", "max"),
         }
     }
 
-    list(teststat = teststat, criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
+    list(teststat = teststat, splitstat = splitstat, 
+         criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
          testtype = testtype, nmax = nmax, mincriterion = log(mincriterion),
          minsplit = minsplit, minbucket = minbucket, 
          minprob = minprob, stump = stump, nresample = nresample, mtry = mtry, 
