@@ -26,7 +26,7 @@
 
     for (i in 1L:length(ret)) {
         jsel <- which.max(crit)
-        sp <- ctrl$var_split(Y, iy = iy, subset = subset, whichvar = jsel, 0L)
+        sp <- ctrl$var_split(Y, iy = iy, subset = subset, whichvar = jsel, 0L, splitstat = ctrl$splitstat)
         if (is.null(sp)) next
         ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], data, obs = subset)
@@ -122,21 +122,23 @@
     ret$split <- thissplit
     ret$info <- list(criterion = p[,inp], p.value = fmP(p))
     thissurr <- NULL
-    kidids <- kidids_node(ret, data, obs = subset)
+    s <- subset[!is.na(data[subset, varid_split(thissplit)])]
+    kidids <- kidids_node(ret, data, obs = s)
     prob <- prop.table(table(kidids))
     names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
-        prob <- (1L:length(prob)) %in% which.max(prob)
+        prob <- as.double((1L:length(prob)) %in% which.max(prob))
     ret$split$prob <- prob
 
     if (ctrl$maxsurrogate > 0) {
         inp <- inputs
         inp[thissplit$varid] <- FALSE
         tmp <- integer(nrow(data))
-        tmp[subset] <- kidids
-        ret$surrogates <- .csurr(tmp, data = data, subset = subset, whichvar = which(inp), ctrl)
-        kidids <- kidids_node(ret, data, obs = subset)
+        tmp[s] <- kidids
+        ret$surrogates <- .csurr(tmp, data = data, subset = s, whichvar = which(inp), ctrl)
     }
+    ### <FIXME> we do this twice, not really needed </FIXME>
+    kidids <- kidids_node(ret, data, obs = subset)
 
     kids <- vector(mode = "list", length = max(kidids)) ## Z: was 1:max(kidids)
     nextid <- id + 1
@@ -214,7 +216,7 @@
      }
 
      ctrl$var_split <- function(Y, iy = bdr[[response]], subset, whichvar, 
-                                minbucket)
+                                minbucket, splitstat = ctrl$teststat)
      {
          ret <- NULL
          for (j in whichvar) {
@@ -241,6 +243,7 @@
                      if (is.factor(x)) {
                          X <- unclass(x)
                      } else {
+                         x[-subset] <- NA
                          X <- match(x, ux <- sort(unique(x)))
                          X[is.na(X)] <- 0L
                          storage.mode(X) <- "integer"
@@ -248,8 +251,8 @@
                  }
                  lev <- LinStatExpCov(X = X, ix = bdr[[j]],
                                  Y = Y, iy = iy, subset = subset,
-                                 weights = weights, block = block, B = 0L)
-                 sp <- doTest(lev, type = ifelse(ctrl$splitstat == "quad", "quadform", "maxstat"), 
+                                 weights = weights, block = block, B = 0L, varonly = TRUE)
+                 sp <- doTest(lev, type = ifelse(splitstat == "quad", "quadform", "maxstat"), 
                               minbucket = minbucket, 
                               ordered = ORDERED)$index
                  if (!all(is.na(sp))) {
