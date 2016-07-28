@@ -205,6 +205,7 @@
                                  B = ifelse(ctrl$testtype == "MonteCarlo", 
                                             ctrl$nresample, 0L))
             tst <- doTest(lev, type = ifelse(ctrl$teststat == "quad", "quadform", "maxstat"), 
+                          pvalue = ctrl$testtype != "Teststatistic",
                           lower = TRUE, 
                           log = TRUE)
             ret["statistic", j] <- log(tst$TestStatistic)
@@ -253,7 +254,7 @@
                                  Y = Y, iy = iy, subset = subset,
                                  weights = weights, block = block, B = 0L, varonly = TRUE)
                  sp <- doTest(lev, type = ifelse(splitstat == "quad", "quadform", "maxstat"), 
-                              minbucket = minbucket, 
+                              minbucket = minbucket, pvalue = FALSE,
                               ordered = ORDERED)$index
                  if (!all(is.na(sp))) {
                      if (length(sp) == 1) {
