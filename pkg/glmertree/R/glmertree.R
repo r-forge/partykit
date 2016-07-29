@@ -233,7 +233,10 @@ logLik.lmertree <- logLik.glmertree <- function(object, dfsplit = NULL, ...)
 
 model.frame.lmertree <- model.frame.glmertree <- function(formula, ...) {
   mf <- model.frame(formula$tree, ...)
-  mf[["(offset)"]] <- NULL
+  mf[["(offset)"]] <- mf[["(weights)"]] <- NULL
+  dc <- attr(attr(mf, "terms"), "dataClasses")
+  dc <- dc[!(names(dc) %in% c("(offset)", "(weights)"))]
+  attr(attr(mf, "terms"), "dataClasses") <- dc
   return(mf)
 }
 
