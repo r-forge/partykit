@@ -1,18 +1,26 @@
 \name{glmertree}
 \alias{lmertree}
 \alias{glmertree}
+
 \alias{print.lmertree}
 \alias{plot.lmertree}
 \alias{coef.lmertree}
 \alias{ranef.lmertree}
 \alias{logLik.lmertree}
+\alias{model.frame.lmertree}
+\alias{predict.lmertree}
+\alias{terms.lmertree}
+\alias{as.party.lmertree}
+
 \alias{print.glmertree}
 \alias{plot.glmertree}
 \alias{coef.glmertree}
 \alias{ranef.glmertree}
 \alias{logLik.glmertree}
+\alias{model.frame.glmertree}
 \alias{predict.glmertree}
-\alias{predict.lmertree}
+\alias{terms.glmertree}
+\alias{as.party.glmertree}
 
 \encoding{latin1}
 

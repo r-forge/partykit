@@ -1,4 +1,4 @@
-utils::globalVariables(c(".tree", ".ranef"))
+utils::globalVariables(c(".tree", ".ranef", ".weights"))
 
 lmertree <- function(formula, data, weights = NULL,
   ranefstart = NULL, abstol = 0.001, maxit = 100, 
@@ -231,6 +231,20 @@ logLik.lmertree <- logLik.glmertree <- function(object, dfsplit = NULL, ...)
   structure(object$loglik, df = object$df + dfsplit, nobs = object$nobs, class = "logLik")
 }
 
+model.frame.lmertree <- model.frame.glmertree <- function(formula, ...) {
+  mf <- model.frame(formula$tree, ...)
+  mf[["(offset)"]] <- NULL
+  return(mf)
+}
+
+terms.lmertree <- terms.glmertree <- function(x, ...) {
+  terms(x$tree, ...)
+}
+
+as.party.lmertree <- as.party.glmertree <- function(obj, ...) {
+  obj$tree
+}
+
 print.lmertree <- function(x, title = "Linear mixed model tree", ...) {
   print(x$tree, title = title, ...)
   cat("\nRandom effects:\n")
@@ -298,3 +312,4 @@ predict.glmertree <- function(object, newdata = NULL, type = "response", ...) {
     }
   }
 }
+
