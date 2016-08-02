@@ -3,6 +3,7 @@
 .urp_surrogates <- function(split, data, subset, whichvar, selectfun, splitfun, ctrl) {
 
     p <- selectfun(y = split, subset = subset, whichvar = whichvar)
+    ### partykit always used p-values, so expect some differences
     crit <- p[ctrl$criterion,,drop = TRUE]
     ### crit is maximised, but there might be ties
     ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
@@ -155,7 +156,17 @@
         bdr <- libcoin:::BDR(data, ctrl$nmax)
         X <- lapply(bdr, function(x) attr(x, "X"))
     } else {
-        Y <- partykit:::.y2infl(data, response, ytrafo = trafo)
+        if (is.null(trafo)) {
+            Y <- partykit:::.y2infl(data, response)
+            trafo <- NULL
+        } else {
+            if (!is.function(trafo)) {
+                Y <- partykit:::.y2infl(data, response, ytrafo = trafo)
+                trafo <- NULL
+            } else {
+                Y <- trafo(data, subset, weights)
+            }
+        }
         X <- lapply(data, function(x) {
             if (is.numeric(x)) {
                 ret <- matrix(x, ncol = 1)
@@ -307,7 +318,7 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
                           splitstat = c("maximum", "quadratic"),
                           testtype = c("Bonferroni", "MonteCarlo", 
                                        "Univariate", "Teststatistic"),
-                          nmax = 20L, mincriterion = 0.95, minsplit = 20L, 
+                          nmax = Inf, mincriterion = 0.95, minsplit = 20L, 
                           minbucket = 7L, minprob = 0.01, stump = FALSE, 
                           nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
                           maxdepth = Inf, multiway = FALSE, splittry = 2L, 
