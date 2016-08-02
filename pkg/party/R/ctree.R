@@ -1,19 +1,8 @@
 
 ### surrogate splits
-.csurr <- function(split, data, subset, whichvar, ctrl) {
+.csurr <- function(split, data, subset, whichvar, selectfun, splitfun, ctrl) {
 
-    if (ctrl$nmax < Inf) {
-        Y <- rbind(0, max(split))
-        iy <- split
-    } else {
-        Y <- matrix(NA, nrow = length(split), ncol = max(split))
-        split[split == 0] <- NA
-        Y[!is.na(split),] <- model.matrix(~ factor(split) - 1)
-        storage.mode(Y) <- "double"
-        iy <- NULL
-    }
-
-    p <- ctrl$var_select(Y, iy = iy, subset = subset, whichvar = whichvar)
+    p <- selectfun(y = split, subset = subset, whichvar = whichvar)
     crit <- p[ctrl$criterion,,drop = TRUE]
     ### crit is maximised, but there might be ties
     ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
@@ -26,14 +15,13 @@
 
     for (i in 1L:length(ret)) {
         jsel <- which.max(crit)
-        sp <- ctrl$var_split(Y, iy = iy, subset = subset, whichvar = jsel, 0L, splitstat = ctrl$splitstat)
+        sp <- splitfun(y = split, subset = subset, whichvar = jsel, 0L)
         if (is.null(sp)) next
         ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], data, obs = subset)
-        tmps <- split[subset]
 
         ### <FIXME> this needs fixing for multiway "split"
-        tab <- table(tmp, tmps)
+        tab <- table(tmp, split)
         if (tab[1, 1] < tab[1, 2]) {
             indx <- ret[[i]]$index
             ret[[i]]$index[indx == 1] <- 2L
@@ -49,8 +37,8 @@
 
 
 ### set up new node for conditional inference tree
-.cnode <- function(id = 1, data, trafo, inputs, weights = integer(0), 
-                   subset, ctrl, cenv = NULL) {
+.cnode <- function(id = 1, data, selectfun, splitfun, inputs, 
+                   weights = integer(0), subset, ctrl, cenv = NULL) {
 
     if (id > 1 && ctrl$stump) return(partynode(as.integer(id)))
 
@@ -80,8 +68,7 @@
         inp[s] <- TRUE
     } 
 
-    Y <- trafo(subset)
-    p <- ctrl$var_select(Y, subset = subset, whichvar = which(inp))
+    p <- selectfun(subset = subset, whichvar = which(inp))
     crit <- p[ctrl$criterion,,drop = TRUE]
     crit[is.na(crit)] <- -Inf
     ### crit is maximised, but there might be ties
@@ -111,7 +98,7 @@
     if (mb < swp) mb <- as.integer(swp)
     jsel <- rev(order(crit))[1:ctrl$splittry]
     jsel <- jsel[crit[jsel] > ctrl$mincriterion]
-    thissplit <- ctrl$var_split(Y, subset = subset, whichvar = jsel , minbucket = mb)
+    thissplit <- splitfun(subset = subset, whichvar = jsel, minbucket = mb)
 
     if (is.null(thissplit))
         return(partynode(as.integer(id), 
@@ -133,9 +120,8 @@
     if (ctrl$maxsurrogate > 0) {
         inp <- inputs
         inp[thissplit$varid] <- FALSE
-        tmp <- integer(nrow(data))
-        tmp[s] <- kidids
-        ret$surrogates <- .csurr(tmp, data = data, subset = s, whichvar = which(inp), ctrl)
+        ret$surrogates <- .csurr(kidids, data = data, subset = s, whichvar = which(inp), 
+                                 selectfun = selectfun, splitfun = splitfun, ctrl)
     }
     ### <FIXME> we do this twice, not really needed </FIXME>
     kidids <- kidids_node(ret, data, obs = subset)
@@ -145,8 +131,9 @@
     for (k in 1L:max(kidids)) {
         nextsubset <- subset[kidids == k]
         assign("depth", depth + 1, envir = cenv)
-        kids[[k]] <- .cnode(nextid, data, trafo, inputs, weights = weights, 
-                            subset = nextsubset, ctrl, cenv)
+        kids[[k]] <- .cnode(id = nextid, data = data, selectfun = selectfun, 
+                            splitfun = splitfun, inputs = inputs, weights = weights, 
+                            subset = nextsubset, ctrl = ctrl, cenv = cenv)
         nextid <- max(nodeids(kids[[k]])) + 1
     }
     ret$kids <- kids
@@ -189,22 +176,41 @@
     }
     if (is.null(trafo)) {
         Y <- X[[response]]
-        trafo <- function(...) Y
     }
 
-    ctrl$var_select <- function(Y, iy =  bdr[[response]], subset, whichvar) {
+    selectfun <- function(y = NULL, subset, whichvar) 
+    {
     
         ret <- matrix(NA, nrow = 2L, ncol = ncol(data))
         colnames(ret) <- names(data)
         rownames(ret) <- c("statistic", "p.value")
-        
+
+        if (is.null(y)) {
+            if (!is.null(trafo))
+                Y[subset,] <- trafo(data = data, subset = subset, weights = weights)
+            iy <- bdr[[response]]
+        } else {
+            ### y is kidids in .csurr and nothing else
+            stopifnot(length(y) == length(subset))
+            if (ctrl$nmax < Inf) {
+                Y <- rbind(0, max(y))
+                iy <- numeric(NROW(data))
+                iy[subset] <- as.integer(y)
+            } else {
+                Y <- matrix(0, nrow = NROW(data), ncol = max(y))
+                Y[cbind(subset, y)] <- 1 ### model.matrix(~ as.factor(y) - 1)
+                storage.mode(Y) <- "double"
+                iy <- NULL
+            }
+        }
+
         for (j in whichvar) {
             lev <- LinStatExpCov(X = X[[j]], ix = bdr[[j]], 
                                  Y = Y, iy = iy, subset = subset,
                                  weights = weights, block = block, 
                                  B = ifelse(ctrl$testtype == "MonteCarlo", 
                                             ctrl$nresample, 0L))
-            tst <- doTest(lev, type = ifelse(ctrl$teststat == "quad", "quadform", "maxstat"), 
+            tst <- doTest(lev, teststat = ctrl$teststat, 
                           pvalue = ctrl$testtype != "Teststatistic",
                           lower = TRUE, 
                           log = TRUE)
@@ -214,70 +220,89 @@
         if (ctrl$testtype == "Bonferroni")
             ret["p.value",] <- ret["p.value",] * length(whichvar)
         ret
-     }
-
-     ctrl$var_split <- function(Y, iy = bdr[[response]], subset, whichvar, 
-                                minbucket, splitstat = ctrl$teststat)
-     {
-         ret <- NULL
-         for (j in whichvar) {
-             x <- data[[j]]
-             ORDERED <- is.ordered(x) || is.numeric(x)
-             if ((ctrl$multiway && ctrl$maxsurrogate == 0) && is.factor(x)) {
-                 index <- 1L:nlevels(x)
-                 if (length(weights) > 0) {
-                     xt <- xtabs(~ x, subset = subset)
-                 } else {
-                     xt <- xtabs(weights ~ x, subset = subset)
-                 }
-                 index[xt == 0] <- NA
-                 index[xt < mb] <- nlevels(x) + 1L
-                 index <- unclass(factor(index))
-                 ret <- partysplit(as.integer(j), index = as.integer(index))
-                 break()
-            } else {
-                 ix <- bdr[[j]]
-                 if (!is.null(ix)) {
-                     X <- numeric(0) 
-                     ux <- attr(bdr[[j]], "levels")
-                 } else {
-                     if (is.factor(x)) {
-                         X <- unclass(x)
-                     } else {
-                         x[-subset] <- NA
-                         X <- match(x, ux <- sort(unique(x)))
-                         X[is.na(X)] <- 0L
-                         storage.mode(X) <- "integer"
-                     }
-                 }
-                 lev <- LinStatExpCov(X = X, ix = bdr[[j]],
-                                 Y = Y, iy = iy, subset = subset,
-                                 weights = weights, block = block, B = 0L, varonly = TRUE)
-                 sp <- doTest(lev, type = ifelse(splitstat == "quad", "quadform", "maxstat"), 
-                              minbucket = minbucket, pvalue = FALSE,
-                              ordered = ORDERED)$index
-                 if (!all(is.na(sp))) {
-                     if (length(sp) == 1) {
-                         if (!is.ordered(x))
-                             sp <- ux[sp]
-                         ret <- partysplit(as.integer(j), breaks = sp, index = 1L:2L)
-                     } else {
-                         ret <- partysplit(as.integer(j), index = as.integer(sp) + 1L)
-                     }
-                     break
-                 }
-            }
-        }
-        ret
     }
 
-    tree <- .cnode(1L, data, trafo, inputs, weights, subset, ctrl)
+    splitfun <- function(y = NULL, subset, whichvar,  minbucket)
+    {
+        ret <- NULL
+        if (is.null(y)) {
+            if (!is.null(trafo))
+                Y[subset,] <- trafo(data = data, subset = subset, weights = weights)
+            iy <- bdr[[response]]
+        } else {
+            ### y is kidids in .csurr and nothing else
+            stopifnot(length(y) == length(subset))
+            if (ctrl$nmax < Inf) {
+                Y <- rbind(0, max(y))
+                iy <- numeric(NROW(data))
+                iy[subset] <- as.integer(y)
+            } else {
+                Y <- matrix(0, nrow = NROW(data), ncol = max(y))
+                Y[cbind(subset, y)] <- 1 ### model.matrix(~ as.factor(y) - 1)
+                storage.mode(Y) <- "double"
+                iy <- NULL
+            }
+        }
+
+        for (j in whichvar) {
+            x <- data[[j]]
+            ORDERED <- is.ordered(x) || is.numeric(x)
+            if ((ctrl$multiway && ctrl$maxsurrogate == 0) && is.factor(x)) {
+                index <- 1L:nlevels(x)
+                if (length(weights) > 0) {
+                    xt <- xtabs(~ x, subset = subset)
+                } else {
+                    xt <- xtabs(weights ~ x, subset = subset)
+                }
+                index[xt == 0] <- NA
+                index[xt < mb] <- nlevels(x) + 1L
+                index <- unclass(factor(index))
+                ret <- partysplit(as.integer(j), index = as.integer(index))
+                break()
+           } else {
+                ix <- bdr[[j]]
+                if (!is.null(ix)) {
+                    X <- numeric(0) 
+                    ux <- attr(bdr[[j]], "levels")
+                } else {
+                    if (is.factor(x)) {
+                        X <- unclass(x)
+                    } else {
+                        x[-subset] <- NA
+                        X <- match(x, ux <- sort(unique(x)))
+                        X[is.na(X)] <- 0L
+                        storage.mode(X) <- "integer"
+                    }
+                }
+                lev <- LinStatExpCov(X = X, ix = bdr[[j]],
+                                Y = Y, iy = iy, subset = subset,
+                                weights = weights, block = block, B = 0L, varonly = TRUE)
+                sp <- doTest(lev, teststat = ctrl$splitstat,
+                             minbucket = minbucket, pvalue = FALSE,
+                             ordered = ORDERED)$index
+                if (!all(is.na(sp))) {
+                    if (length(sp) == 1) {
+                        if (!is.ordered(x))
+                            sp <- ux[sp]
+                        ret <- partysplit(as.integer(j), breaks = sp, index = 1L:2L)
+                    } else {
+                        ret <- partysplit(as.integer(j), index = as.integer(sp) + 1L)
+                    }
+                    break
+                }
+           }
+       }
+       ret
+    }
+
+    tree <- .cnode(id = 1L, data = data, selectfun = selectfun, splitfun = splitfun, 
+                   inputs = inputs, weights = weights, subset = subset, ctrl = ctrl)
 
     return(tree)
 }
 
 
-ctree_control <- function(teststat = c("quad", "max"), splitstat = c("max", "quad"),
+ctree_control <- function(teststat = c("quadratic", "maximum"), splitstat = c("maximum", "quadratic"),
     testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
     nmax = 20L,
     mincriterion = 0.95, minsplit = 20L, minbucket = 7L, minprob = 0.01,
