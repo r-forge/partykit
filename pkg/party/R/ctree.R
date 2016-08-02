@@ -1,6 +1,6 @@
 
 ### surrogate splits
-.csurr <- function(split, data, subset, whichvar, selectfun, splitfun, ctrl) {
+.urp_surrogates <- function(split, data, subset, whichvar, selectfun, splitfun, ctrl) {
 
     p <- selectfun(y = split, subset = subset, whichvar = whichvar)
     crit <- p[ctrl$criterion,,drop = TRUE]
@@ -37,7 +37,7 @@
 
 
 ### set up new node for conditional inference tree
-.cnode <- function(id = 1, data, selectfun, splitfun, inputs, 
+.urp_node <- function(id = 1, data, selectfun, splitfun, inputs, 
                    weights = integer(0), subset, ctrl, cenv = NULL) {
 
     if (id > 1 && ctrl$stump) return(partynode(as.integer(id)))
@@ -120,8 +120,10 @@
     if (ctrl$maxsurrogate > 0) {
         inp <- inputs
         inp[thissplit$varid] <- FALSE
-        ret$surrogates <- .csurr(kidids, data = data, subset = s, whichvar = which(inp), 
-                                 selectfun = selectfun, splitfun = splitfun, ctrl)
+        ret$surrogates <- .urp_surrogates(kidids, data = data, subset = s, 
+                                          whichvar = which(inp), 
+                                          selectfun = selectfun, splitfun = splitfun, 
+                                          ctrl = ctrl)
     }
     ### <FIXME> we do this twice, not really needed </FIXME>
     kidids <- kidids_node(ret, data, obs = subset)
@@ -131,9 +133,9 @@
     for (k in 1L:max(kidids)) {
         nextsubset <- subset[kidids == k]
         assign("depth", depth + 1, envir = cenv)
-        kids[[k]] <- .cnode(id = nextid, data = data, selectfun = selectfun, 
-                            splitfun = splitfun, inputs = inputs, weights = weights, 
-                            subset = nextsubset, ctrl = ctrl, cenv = cenv)
+        kids[[k]] <- .urp_node(id = nextid, data = data, selectfun = selectfun, 
+                               splitfun = splitfun, inputs = inputs, weights = weights, 
+                               subset = nextsubset, ctrl = ctrl, cenv = cenv)
         nextid <- max(nodeids(kids[[k]])) + 1
     }
     ret$kids <- kids
@@ -146,7 +148,6 @@
 {
 
     inputs <- !(colnames(data) %in% response)
-
 
     if (missing(subset)) subset <- 1:NROW(data)
 
@@ -295,20 +296,22 @@
        ret
     }
 
-    tree <- .cnode(id = 1L, data = data, selectfun = selectfun, splitfun = splitfun, 
-                   inputs = inputs, weights = weights, subset = subset, ctrl = ctrl)
+    tree <- .urp_node(id = 1L, data = data, selectfun = selectfun, splitfun = splitfun, 
+                      inputs = inputs, weights = weights, subset = subset, ctrl = ctrl)
 
     return(tree)
 }
 
 
-ctree_control <- function(teststat = c("quadratic", "maximum"), splitstat = c("maximum", "quadratic"),
-    testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
-    nmax = 20L,
-    mincriterion = 0.95, minsplit = 20L, minbucket = 7L, minprob = 0.01,
-    stump = FALSE, nresample = 9999L, maxsurrogate = 0L, mtry = Inf, maxdepth = Inf, 
-    multiway = FALSE, splittry = 2L, majority = FALSE,
-    applyfun = NULL, cores = NULL) {
+ctree_control <- function(teststat = c("quadratic", "maximum"), 
+                          splitstat = c("maximum", "quadratic"),
+                          testtype = c("Bonferroni", "MonteCarlo", 
+                                       "Univariate", "Teststatistic"),
+                          nmax = 20L, mincriterion = 0.95, minsplit = 20L, 
+                          minbucket = 7L, minprob = 0.01, stump = FALSE, 
+                          nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
+                          maxdepth = Inf, multiway = FALSE, splittry = 2L, 
+                          majority = FALSE, applyfun = NULL, cores = NULL) {
 
     teststat <- match.arg(teststat)
     splitstat <- match.arg(splitstat)
@@ -323,6 +326,9 @@ ctree_control <- function(teststat = c("quadratic", "maximum"), splitstat = c("m
                 parallel::mclapply(X, FUN, ..., mc.cores = cores)
         }
     }
+
+    if (multiway & maxsurrogate > 0)
+        stop("surrogate splits currently not implemented for multiway splits")
 
     list(teststat = teststat, splitstat = splitstat, 
          criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
