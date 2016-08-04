@@ -1,8 +1,9 @@
 
 ### unbiased recursive partitioning: surrogate splits
-.urp_surrogates <- function(split, data, subset, whichvar, selectfun, splitfun, ctrl) {
+.urp_surrogates <- function(split, data, subset, whichvar, selectfun, ctrl) {
 
-    p <- selectfun(y = split, subset = subset, whichvar = whichvar)
+    sf <- selectfun(y = split, subset = subset, whichvar = whichvar)
+    p <- sf$p
     ### partykit always used p-values, so expect some differences
     crit <- p[ctrl$criterion,,drop = TRUE]
     ### crit is maximised, but there might be ties
@@ -16,7 +17,7 @@
 
     for (i in 1L:length(ret)) {
         jsel <- which.max(crit)
-        sp <- splitfun(y = split, subset = subset, whichvar = jsel, 0L)
+        sp <- sf$splitfun(whichvar = jsel, 0L)
         if (is.null(sp)) next
         ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], data, obs = subset)
@@ -38,8 +39,8 @@
 
 
 ### unbiased recursive partitioning: set up new node
-.urp_node <- function(id = 1, data, selectfun, splitfun, inputs, 
-                   weights = integer(0), subset, ctrl, cenv = NULL) {
+.urp_node <- function(id = 1, data, selectfun, inputs, 
+                      weights = integer(0), subset, ctrl, cenv = NULL) {
 
     if (id > 1 && ctrl$stump) return(partynode(as.integer(id)))
 
@@ -69,7 +70,8 @@
         inp[s] <- TRUE
     } 
 
-    p <- selectfun(subset = subset, whichvar = which(inp))
+    sf <- selectfun(subset = subset, whichvar = which(inp))
+    p <- sf$p
     crit <- p[ctrl$criterion,,drop = TRUE]
     crit[is.na(crit)] <- -Inf
     ### crit is maximised, but there might be ties
@@ -99,7 +101,7 @@
     if (mb < swp) mb <- as.integer(swp)
     jsel <- rev(order(crit))[1:ctrl$splittry]
     jsel <- jsel[crit[jsel] > ctrl$mincriterion]
-    thissplit <- splitfun(subset = subset, whichvar = jsel, minbucket = mb)
+    thissplit <- sf$splitfun(whichvar = jsel, minbucket = mb)
 
     if (is.null(thissplit))
         return(partynode(as.integer(id), 
@@ -123,7 +125,7 @@
         inp[thissplit$varid] <- FALSE
         ret$surrogates <- .urp_surrogates(kidids, data = data, subset = s, 
                                           whichvar = which(inp), 
-                                          selectfun = selectfun, splitfun = splitfun, 
+                                          selectfun = selectfun, 
                                           ctrl = ctrl)
     }
     ### <FIXME> we do this twice, not really needed </FIXME>
@@ -135,7 +137,7 @@
         nextsubset <- subset[kidids == k]
         assign("depth", depth + 1, envir = cenv)
         kids[[k]] <- .urp_node(id = nextid, data = data, selectfun = selectfun, 
-                               splitfun = splitfun, inputs = inputs, weights = weights, 
+                               inputs = inputs, weights = weights, 
                                subset = nextsubset, ctrl = ctrl, cenv = cenv)
         nextid <- max(nodeids(kids[[k]])) + 1
     }
