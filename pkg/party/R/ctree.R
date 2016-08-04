@@ -5,14 +5,9 @@
     data, 				### full data, readonly
     partyvars, 				### partytioning variables,
 					### a subset of 1:ncol(data)
-    trafo,				### trafo(data, subset, weights)
-    weights = integer(0), 		### an optional vector of case weights
-    subset = integer(0),		### subset of 1:nrow(data)
     block = integer(0), 		### a blocking factor w/o NA
     ctrl				### ctree_control()
 ) {
-
-    if (length(subset) == 0) subset <- 1:NROW(data)
 
     ### transform partytioning variables
     X <- vector(mode = "list", length = NCOL(data))
@@ -35,12 +30,15 @@
         ret
     })
 
+    function(trafo, subset, weights) {
+
     ### compute statistics and (optionally) p-values
     ### for a subset of observations and variables
     ### y is used for node ids when computing surrogate splits
-    selectfun <- function(y = NULL, subset, whichvar) 
+    selectfun <- function(y = NULL, trafo, subset = integer(0), 
+                          weights = integer(0), whichvar) 
     {
-    
+
         ret <- list(p = matrix(NA, nrow = 2L, ncol = ncol(data)))
         colnames(ret$p) <- names(data)
         rownames(ret$p) <- c("statistic", "p.value")
@@ -131,12 +129,13 @@
        ret
     }
 
-    tree <- .urp_node(id = 1L, data = data, selectfun = selectfun, 
+    tree <- .urp_node(id = 1L, data = data, selectfun = function(...) selectfun(..., trafo = trafo),
                       partyvars = partyvars, weights = weights, 
                       subset = subset, 
                       ctrl = ctrl)
 
     return(tree)
+    }
 }
 
 ctree_control <- function(teststat = c("quadratic", "maximum"), 
@@ -223,9 +222,11 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
         ytrafo <- function(...) Y
     }
 
-    tree <- .ctree_fit_1d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
-                          trafo = ytrafo, weights = weights, block = block, 
-                          ctrl = control)
+    if (control$nmax < Inf)
+        stop("not yet implemented")
+    treefun <- .ctree_fit_1d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
+                          block = block, ctrl = control)
+    tree <- treefun(ytrafo, subset = 1:nrow(fitdat), weights)
 
     if (length(weights) == 0)
         weights <- rep.int(1, nrow(fitdat))
@@ -236,6 +237,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     names(fitted)[3] <- "(response)"
     ret <- party(tree, data = fitdat, fitted = fitted, 
                  info = list(call = match.call(), control = control))
+    ret$update <- treefun
     class(ret) <- c("constparty", class(ret))
 
     ### doesn't work for Surv objects

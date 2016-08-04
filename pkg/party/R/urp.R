@@ -107,8 +107,8 @@
     kidids <- kidids_node(ret, data, obs = snotNA)
 
     ### compute probability of going left / right
-    prob <- prop.table(table(kidids))
-    names(dimnames(prob)) <- NULL
+    prob <- tabulate(kidids) / length(kidids) ### was: prop.table(table(kidids))
+    # names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
         prob <- as.double((1L:length(prob)) %in% which.max(prob))
     ret$split$prob <- prob
