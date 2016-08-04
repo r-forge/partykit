@@ -103,7 +103,9 @@
                             X <- unclass(x)
                         } else {
                             x[-subset] <- NA
-                            X <- match(x, ux <- sort(unique(x)))
+                            ux <- sort(unique(x))
+                            X <- cut.default(x, breaks = c(-Inf, ux, Inf),
+                                             labels = FALSE, right = TRUE)
                             # X[is.na(X)] <- 0L (NAs are handled by LinStatExpCov)
                             attr(X, "levels") <- ux
                             storage.mode(X) <- "integer"
