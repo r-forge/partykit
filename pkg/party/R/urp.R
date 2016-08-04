@@ -43,8 +43,8 @@
 
     svars <- partyvars
     if (ctrl$mtry < Inf) {
-        mtry <- min(sum(inp), ctrl$mtry)
-        ### sum(inp) == 1 will lead to sample.int instead of sample; 
+        mtry <- min(length(partyvars), ctrl$mtry)
+        ### length(partyvars) == 1 will lead to sample.int instead of sample; 
         ### see example(sample)
         resample <- function(x, ...) x[sample.int(length(x), ...)]
         svars <- resample(partyvars, mtry)

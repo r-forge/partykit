@@ -2,5 +2,7 @@
 import("partykit")
 import("libcoin")
 
+importFrom("stats", "model.weights", "na.pass", "terms", "xtabs")
+
 export(ctree, ctree_control)
 
