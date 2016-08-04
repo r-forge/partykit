@@ -8,6 +8,8 @@
       and hence \code{palmtree}.}
     \item{NA handling by following the majority was 
           potentially incorrect in \code{ctree}.}
+    \item{minor speed improvements.}
+
   }
 }
 
