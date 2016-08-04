@@ -1,16 +1,23 @@
 
 ### conditional inference trees
-.ctree_fit_1d <- function(data, response, trafo,
-                          weights = integer(0), subset, 
-                          block = integer(0), ctrl)
-{
+.ctree_fit_1d <- function
+(
+    data, 				### full data, readonly
+    partyvars, 				### partytioning variables,
+					### a subset of 1:ncol(data)
+    trafo,				### trafo(data, subset, weights)
+    weights = integer(0), 		### an optional vector of case weights
+    subset = integer(0),		### subset of 1:nrow(data)
+    block = integer(0), 		### a blocking factor w/o NA
+    ctrl				### ctree_control()
+) {
 
-    inputs <- !(colnames(data) %in% response)
+    if (length(subset) == 0) subset <- 1:NROW(data)
 
-    if (missing(subset)) subset <- 1:NROW(data)
-
+    ### transform partytioning variables
     X <- vector(mode = "list", length = NCOL(data))
-    X[inputs] <- lapply(data[, inputs, drop = FALSE], function(x) {
+    X[partyvars] <- lapply(partyvars, function(j) {
+        x <- data[[j]]
         if (is.numeric(x)) {
             ret <- x
         } else if (is.ordered(x)) {
@@ -51,14 +58,15 @@
         }
 
         for (j in whichvar) {
+            ### compute linear statistic + expecation and covariance
             lev <- LinStatExpCov(X = X[[j]], Y = Y, subset = subset,
                                  weights = weights, block = block, 
                                  B = ifelse(ctrl$testtype == "MonteCarlo", 
                                             ctrl$nresample, 0L))
+            ### compute test statistic and log(1 - p-value)
             tst <- doTest(lev, teststat = ctrl$teststat, 
                           pvalue = ctrl$testtype != "Teststatistic",
-                          lower = TRUE, 
-                          log = TRUE)
+                          lower = TRUE, log = TRUE)
             ret$p["statistic", j] <- log(tst$TestStatistic)
             ret$p["p.value", j] <- tst$p.value
         }
@@ -88,12 +96,14 @@
                     ret <- partysplit(as.integer(j), index = as.integer(index))
                     break()
                 } else {
+                    ### X being an integer triggers maximally selected stats
                     if (is.factor(x)) {
                         X <- unclass(x)
                     } else {
                         x[-subset] <- NA
                         X <- match(x, ux <- sort(unique(x)))
-                        X[is.na(X)] <- 0L
+                        # X[is.na(X)] <- 0L (NAs are handled by LinStatExpCov)
+                        attr(X, "levels") <- ux
                         storage.mode(X) <- "integer"
                     }
                     lev <- LinStatExpCov(X = X, Y = Y, subset = subset,
@@ -116,26 +126,135 @@
            }
            ret
        }
+       ### splitfun already knows Y by lexical scoping, no need to compute it twice
        ret$splitfun <- splitfun
        ret
     }
 
     tree <- .urp_node(id = 1L, data = data, selectfun = selectfun, 
-                      inputs = inputs, weights = weights, subset = subset, 
+                      partyvars = partyvars, weights = weights, 
+                      subset = subset, 
                       ctrl = ctrl)
 
     return(tree)
 }
 
+ctree_control <- function(teststat = c("quadratic", "maximum"), 
+                          splitstat = c("maximum", "quadratic"),
+                          testtype = c("Bonferroni", "MonteCarlo", 
+                                       "Univariate", "Teststatistic"),
+                          nmax = Inf, mincriterion = 0.95, minsplit = 20L, 
+                          minbucket = 7L, minprob = 0.01, stump = FALSE, 
+                          nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
+                          maxdepth = Inf, multiway = FALSE, splittry = 2L, 
+                          majority = FALSE, applyfun = NULL, cores = NULL) {
 
+    teststat <- match.arg(teststat)
+    splitstat <- match.arg(splitstat)
+    testtype <- match.arg(testtype)
+
+    ## apply infrastructure for determining split points
+    if (is.null(applyfun)) {
+        applyfun <- if(is.null(cores)) {
+            lapply
+        } else {
+            function(X, FUN, ...) 
+                parallel::mclapply(X, FUN, ..., mc.cores = cores)
+        }
+    }
+
+    if (multiway & maxsurrogate > 0)
+        stop("surrogate splits currently not implemented for multiway splits")
+
+    list(teststat = teststat, splitstat = splitstat, 
+         criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
+         testtype = testtype, nmax = nmax, mincriterion = log(mincriterion),
+         minsplit = minsplit, minbucket = minbucket, 
+         minprob = minprob, stump = stump, nresample = nresample, mtry = mtry, 
+         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
+         maxsurrogate = maxsurrogate, majority = majority, 
+         applyfun = applyfun)
+}
+
+ctree <- function(formula, data, weights, subset, na.action = na.pass, 
+                  control = ctree_control(...), ytrafo = NULL, 
+                  scores = NULL, ...) {
+
+    if (missing(data))
+        data <- environment(formula)
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "subset", "weights", "na.action"),
+               names(mf), 0)
+    mf <- mf[c(1, m)]
+    
+    ### only necessary for extended model formulae 
+    ### e.g. multivariate responses
+    formula <- Formula::Formula(formula)
+    mf$formula <- formula
+    mf$drop.unused.levels <- FALSE
+    mf$na.action <- na.action
+    mf[[1]] <- quote(stats::model.frame)
+    mf <- eval(mf, parent.frame())
+
+    response <- names(Formula::model.part(formula, mf, lhs = 1))
+    weights <- model.weights(mf)
+    if (is.null(weights)) weights <- integer(0)
+    fitdat <- mf[, colnames(mf) != "(weights)"]
+
+    ### <FIXME> should be xtrafo
+    if (!is.null(scores)) {
+        for (n in names(scores)) {
+            sc <- scores[[n]]
+            if (is.ordered(fitdat[[n]]) && 
+                nlevels(fitdat[[n]]) == length(sc)) {
+                attr(fitdat[[n]], "scores") <- as.numeric(sc)
+            } else {
+                warning("scores for variable ", sQuote(n), " ignored")
+            }
+        }
+    }
+    #### </FIXME>
+
+    ### <FIXME> implement y ~ x | block or y ~ 1 | x | block ? </FIXME>
+    block <- integer(0)
+
+    if (!is.function(ytrafo)) {
+        Y <- partykit:::.y2infl(fitdat, response, ytrafo = ytrafo)
+        ytrafo <- function(...) Y
+    }
+
+    tree <- .ctree_fit_1d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
+                          trafo = ytrafo, weights = weights, block = block, 
+                          ctrl = control)
+
+    if (length(weights) == 0)
+        weights <- rep.int(1, nrow(fitdat))
+    fitted <- data.frame("(fitted)" = fitted_node(tree, fitdat), 
+                         "(weights)" = weights,
+                         check.names = FALSE)
+    fitted[[3]] <- fitdat[, response, drop = length(response) == 1]
+    names(fitted)[3] <- "(response)"
+    ret <- party(tree, data = fitdat, fitted = fitted, 
+                 info = list(call = match.call(), control = control))
+    class(ret) <- c("constparty", class(ret))
+
+    ### doesn't work for Surv objects
+    # ret$terms <- terms(formula, data = mf)
+    ret$terms <- terms(mf)
+    ### need to adjust print and plot methods
+    ### for multivariate responses
+    ### if (length(response) > 1) class(ret) <- "party"
+    return(ret)
+}
+
+if (FALSE) {
 ### conditional inference trees
-.ctree_fit_2d <- function(data, response, trafo = NULL, 
-                       weights = integer(0), subset, block = integer(0), ctrl)
+.ctree_fit_2d <- function(data, partyvars, trafo = NULL, 
+                          weights = integer(0), subset = integer(0), 
+                          block = integer(0), ctrl)
 {
 
-    inputs <- !(colnames(data) %in% response)
-
-    if (missing(subset)) subset <- 1:NROW(data)
+    if (length(subset) == 0) subset <- 1:NROW(data)
 
     ### needs to return trafo for index only!
     stopifnot(is.null(trafo))
@@ -236,105 +355,4 @@
     return(tree)
 }
 
-
-ctree_control <- function(teststat = c("quadratic", "maximum"), 
-                          splitstat = c("maximum", "quadratic"),
-                          testtype = c("Bonferroni", "MonteCarlo", 
-                                       "Univariate", "Teststatistic"),
-                          nmax = Inf, mincriterion = 0.95, minsplit = 20L, 
-                          minbucket = 7L, minprob = 0.01, stump = FALSE, 
-                          nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
-                          maxdepth = Inf, multiway = FALSE, splittry = 2L, 
-                          majority = FALSE, applyfun = NULL, cores = NULL) {
-
-    teststat <- match.arg(teststat)
-    splitstat <- match.arg(splitstat)
-    testtype <- match.arg(testtype)
-
-    ## apply infrastructure for determining split points
-    if (is.null(applyfun)) {
-        applyfun <- if(is.null(cores)) {
-            lapply
-        } else {
-            function(X, FUN, ...) 
-                parallel::mclapply(X, FUN, ..., mc.cores = cores)
-        }
-    }
-
-    if (multiway & maxsurrogate > 0)
-        stop("surrogate splits currently not implemented for multiway splits")
-
-    list(teststat = teststat, splitstat = splitstat, 
-         criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
-         testtype = testtype, nmax = nmax, mincriterion = log(mincriterion),
-         minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, nresample = nresample, mtry = mtry, 
-         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         maxsurrogate = maxsurrogate, majority = majority, 
-         applyfun = applyfun)
-}
-
-ctree <- function(formula, data, weights, subset, na.action = na.pass, 
-                  control = ctree_control(...), ytrafo = NULL, 
-                  scores = NULL, ...) {
-
-    if (missing(data))
-        data <- environment(formula)
-    mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "weights", "na.action"),
-               names(mf), 0)
-    mf <- mf[c(1, m)]
-    
-    ### only necessary for extended model formulae 
-    ### e.g. multivariate responses
-    formula <- Formula::Formula(formula)
-    mf$formula <- formula
-    mf$drop.unused.levels <- FALSE
-    mf$na.action <- na.action
-    mf[[1]] <- quote(stats::model.frame)
-    mf <- eval(mf, parent.frame())
-
-    response <- names(Formula::model.part(formula, mf, lhs = 1))
-    weights <- model.weights(mf)
-    dat <- mf[, colnames(mf) != "(weights)"]
-    if (!is.null(scores)) {
-        for (n in names(scores)) {
-            sc <- scores[[n]]
-            if (is.ordered(dat[[n]]) && 
-                nlevels(dat[[n]]) == length(sc)) {
-                attr(dat[[n]], "scores") <- as.numeric(sc)
-            } else {
-                warning("scores for variable ", sQuote(n), " ignored")
-            }
-        }
-    }
-
-    ### <FIXME> implement y ~ x | block or y ~ 1 | x | block ? </FIXME>
-    block <- integer(0)
-
-    if (!is.function(ytrafo)) {
-        Y <- partykit:::.y2infl(data, response, ytrafo = ytrafo)
-        ytrafo <- function(...) Y
-    }
-
-    tree <- .ctree_fit_1d(dat, response = response, trafo = ytrafo, 
-                          weights = weights, block = block, ctrl = control)
-
-    if (is.null(weights)) weights <- rep(1, nrow(dat))
-    fitted <- data.frame("(fitted)" = fitted_node(tree, dat), 
-                         "(weights)" = weights,
-                         check.names = FALSE)
-    fitted[[3]] <- dat[, response, drop = length(response) == 1]
-    names(fitted)[3] <- "(response)"
-    ret <- party(tree, data = dat, fitted = fitted, 
-                 info = list(call = match.call(), control = control))
-    class(ret) <- c("constparty", class(ret))
-
-    ### doesn't work for Surv objects
-    # ret$terms <- terms(formula, data = mf)
-    ret$terms <- terms(mf)
-    ### need to adjust print and plot methods
-    ### for multivariate responses
-    ### if (length(response) > 1) class(ret) <- "party"
-    return(ret)
 }
