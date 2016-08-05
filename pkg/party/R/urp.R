@@ -12,7 +12,7 @@
     subset, 			### subset of 1:nrow(data)
                                 ### for identifying obs for this node
     ctrl, 			### ctree_control()
-    cenv = NULL			### environment for depth
+    cenv = NULL			### environment for depth and maxid
 ) {
 
     ### check for stumps
@@ -29,6 +29,7 @@
         if (depth >= ctrl$maxdepth)
             return(partynode(as.integer(id)))
     }
+    assign("maxid", id, envir = cenv)
 
     ### sw is basically the number of observations
     ### which has to be > minsplit in order to consider
@@ -131,7 +132,8 @@
             selectfun = selectfun, partyvars = partyvars, 
             weights = weights, subset = nextsubset, 
             ctrl = ctrl, cenv = cenv)
-        nextid <- max(nodeids(kids[[k]])) + 1
+        ### was: nextid <- max(nodeids(kids[[k]])) + 1
+        nextid <- get("maxid", envir = cenv) + 1L
     }
     ret$kids <- kids
 
