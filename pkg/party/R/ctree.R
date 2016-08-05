@@ -153,8 +153,28 @@
     ctrl                                ### ctree_control()
 ) {
 
-    bdr <- libcoin:::BDR(data, ctrl$nmax)
-    X <- lapply(bdr, function(x) attr(x, "X"))
+    require("BDR")
+    bdr <- BDR::BDR(data, nmax = ctrl$nmax)
+    X <- vector(mode = "list", length = NROW(data))
+    names(X) <- colnames(data)
+    X[partyvars] <- lapply(partyvars, function(j) {
+        x <- attr(bdr[[j]], "levels")
+        if (is.logical(x)) {
+            X <- rbind(0, diag(2))
+        } else if (is.numeric(x)) {
+            X <- rbind(0, matrix(x, ncol = 1L))
+        } else if (is.factor(x) && !is.ordered(x)) {
+            X <- rbind(0, diag(nlevels(x)))
+        } else if (is.ordered(x)) {
+            sc <- attr(data[[j]], "scores")
+            if (is.null(sc)) sc <- 1:nlevels(x)
+            X <- rbind(0, matrix(sc, ncol = 1L))
+        } else {
+            stop("cannot handle predictors of class", " ", sQuote(class(x)))
+        }
+        storage.mode(X) <- "double"
+        return(X)
+    })
 
     return(function(trafo, subset, weights) {
 
@@ -172,8 +192,8 @@
             if (is.null(y)) {
                 tr <- trafo(data = data, subset = subset, 
                            weights = weights)
-                Y <- attr(tr[[1]], "X")
-                iy <- tr[[1]]
+                Y <- attr(tr, "X")
+                iy <- tr
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
@@ -334,21 +354,27 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     ### <FIXME> implement y ~ x | block or y ~ 1 | x | block ? </FIXME>
     block <- integer(0)
 
-    if (!is.function(ytrafo)) {
-        Y <- partykit:::.y2infl(fitdat, response, ytrafo = ytrafo)
-        ytrafo <- function(...) Y
-    }
-
     if (control$nmax < Inf) {
         treefun <- .ctree_fit_2d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
                           block = block, ctrl = control)
-        Y <- libcoin:::BDR(fitdat[response], nmax = control$nmax)
-        tree <- treefun(function(...) Y, subset = 1:nrow(fitdat), weights)
+        Y <- BDR::BDR(fitdat[response], nmax = control$nmax, total = TRUE)
+        if (!is.function(ytrafo)) {
+            X <- rbind(0, partykit:::.y2infl(attr(Y, "levels"), response, ytrafo = ytrafo))
+            storage.mode(X) <- "double"
+            attr(Y, "X") <- X
+            ### attr(Y, "levels") <- 1:NROW(attr(Y, "levels")) ### no data.frames allows in libcoin
+            ytrafo <- function(...) Y
+        }
     } else {
         treefun <- .ctree_fit_1d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
                                  block = block, ctrl = control)
-        tree <- treefun(ytrafo, subset = 1:nrow(fitdat), weights)
+        if (!is.function(ytrafo)) {
+            Y <- partykit:::.y2infl(fitdat, response, ytrafo = ytrafo)
+            ytrafo <- function(...) Y
+        }
     }
+
+    tree <- treefun(ytrafo, subset = 1:nrow(fitdat), weights)
 
     if (length(weights) == 0)
         weights <- rep.int(1, nrow(fitdat))
