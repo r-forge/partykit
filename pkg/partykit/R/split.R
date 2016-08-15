@@ -140,9 +140,11 @@ kidids_split <- function(split, data, vmatch = 1:ncol(data), obs = NULL) {
             stop("variable", " ", vmatch[id], " ", "is not integer")
     } else {
         ### labels = FALSE returns integers and is faster
+        ### <FIXME> use findInterval instead of cut?
         x <- cut.default(as.numeric(x), labels = FALSE,
                  breaks = c(-Inf, breaks_split(split), Inf), 
                  right = right_split(split))
+        ### </FIXME>
     }
     index <- index_split(split)
     ### empty factor levels correspond to NA and return NA here
