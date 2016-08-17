@@ -155,7 +155,7 @@
 
     require("BDR")
     bdr <- BDR::BDR(data, nmax = ctrl$nmax)
-    X <- vector(mode = "list", length = NROW(data))
+    X <- vector(mode = "list", length = NCOL(data))
     names(X) <- colnames(data)
     X[partyvars] <- lapply(partyvars, function(j) {
         x <- attr(bdr[[j]], "levels")
