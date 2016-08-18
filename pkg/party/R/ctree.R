@@ -1,4 +1,37 @@
 
+.cfit <- function(formula, data, weights = NULL, block = NULL, ytrafo = NULL) {
+    f <- Formula(formula)
+    mf <- model.frame(formula = f, data = data)
+    y <- model.part(f, data = mf, lhs = 1, rhs = 0)
+    Y <- partykit:::.y2infl(y, colnames(y), ytrafo = ytrafo)
+    function(subset) {
+        list(estfun = Y)
+    }
+}
+
+.cfit_2d <- function(formula, data, weights = NULL, block = NULL,
+                   nmax = 25, ytrafo = ytrafo) {
+    f <- Formula(formula)
+    mf <- model.frame(formula = f, data = data)
+    y <- model.part(f, data = mf, lhs = 1, rhs = 0)
+    bdr <- BDR::BDR(y, nmax = nmax, total = TRUE)
+    ### y contains missings and index always starts with 1!
+    y <- attr(bdr, "levels")
+    ncc <- which(!complete.cases(y))
+    index <- c(bdr)
+    ### missings are 0 in index
+    index[index %in% ncc] <- 0L
+    cn <- colnames(y)
+    Y <- partykit:::.y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
+    Y[ncc,] <- 0.0
+    ### first row corresponds to zeros
+    Y <- rbind(0, Y)
+    function(subset) {
+        list(estfun = Y, index = index)
+    }
+}
+
+
 ### conditional inference trees
 .ctree_fit_1d <- function
 (
@@ -46,8 +79,7 @@
 
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
-                Y <- trafo(data = data, subset = subset, 
-                           weights = weights)
+                Y <- trafo(subset)$estfun
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
@@ -153,7 +185,6 @@
     ctrl                                ### ctree_control()
 ) {
 
-    require("BDR")
     bdr <- BDR::BDR(data, nmax = ctrl$nmax)
     X <- vector(mode = "list", length = NCOL(data))
     names(X) <- colnames(data)
@@ -190,10 +221,9 @@
             rownames(ret$p) <- c("statistic", "p.value")
 
             if (is.null(y)) {
-                tr <- trafo(data = data, subset = subset, 
-                           weights = weights)
-                Y <- attr(tr, "X")
-                iy <- tr
+                tr <- trafo(subset = subset)
+                Y <- tr$estfun
+                iy <- tr$index
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
@@ -203,7 +233,7 @@
             }
 
             for (j in whichvar) {
-                lev <- LinStatExpCov(X = X[[j]], ix = bdr[[j]], 
+                lev <- LinStatExpCov(X = X[[j]], ix = as.integer(bdr[[j]]), 
                                      Y = Y, iy = iy, subset = subset,
                                      weights = weights, block = block, 
                                      B = ifelse(ctrl$testtype == "MonteCarlo", 
@@ -242,8 +272,8 @@
                     } else {
                         ix <- bdr[[j]]
                         X <- numeric(0) 
-                        ux <- attr(bdr[[j]], "levels")
-                        lev <- LinStatExpCov(X = X, ix = bdr[[j]],
+                        ux <- attr(ix, "levels")
+                        lev <- LinStatExpCov(X = X, ix = as.integer(ix),
                                              Y = Y, iy = iy, subset = subset,
                                              weights = weights, block = block, 
                                              B = 0L, varonly = TRUE)
@@ -316,34 +346,56 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
                   control = ctree_control(...), ytrafo = NULL, 
                   scores = NULL, ...) {
 
-    if (missing(data))
-        data <- environment(formula)
     mf <- match.call(expand.dots = FALSE)
     m <- match(c("formula", "data", "subset", "weights", "na.action"),
                names(mf), 0)
     mf <- mf[c(1, m)]
-    
-    ### only necessary for extended model formulae 
-    ### e.g. multivariate responses
-    formula <- Formula::Formula(formula)
-    mf$formula <- formula
-    mf$drop.unused.levels <- FALSE
+
+    f <- if (inherits(formula, "Formula")) formula else Formula(formula)
+    if (length(length(f)) != 2)
+        stop("incorrect formula")  
+    if (!(length(f)[2] %in% 1:3))
+        stop("incorrect formula")
+    mf$formula <- as.formula(paste("~", paste(all.vars(f), collapse = "+")))
+    mf$drop.unused.levels <- FALSE      
     mf$na.action <- na.action
     mf[[1]] <- quote(stats::model.frame)
     mf <- eval(mf, parent.frame())
 
-    response <- names(Formula::model.part(formula, mf, lhs = 1))
     weights <- model.weights(mf)
     if (is.null(weights)) weights <- integer(0)
-    fitdat <- mf[, colnames(mf) != "(weights)"]
+
+    if (length(f)[2] == 1) { ### y ~ z
+        modelf <- formula(f, lhs = 1, rhs = 0)
+        partf <- formula(f, lhs = 0, rhs = 1) 
+        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 1))
+        blockf <- NULL
+    } else if (length(f)[2] == 2) { ### y ~ x | z
+        modelf <- formula(f, lhs = 1, rhs = 1)   
+        partf <- formula(f, lhs = 0, rhs = 2)    
+        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 2))
+        blockf <- NULL
+    } else if (length(f)[2] == 3) { ### y ~ x | z | block
+        modelf <- formula(f, lhs = 1, rhs = 1)
+        partf <- formula(f, lhs = 0, rhs = 2)
+        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 2))
+        blockf <- formula(f, lhs = 0, rhs = 3)
+    }
+
+    block <- NULL
+    if (!is.null(blockf)) {
+        block <- model.frame(blockf, data = mf)
+        if (length(block) != 1 || !is.factor(block[[1]]))
+            stop("block is not a single factor")
+    }
 
     ### <FIXME> should be xtrafo
     if (!is.null(scores)) {
         for (n in names(scores)) {
             sc <- scores[[n]]
-            if (is.ordered(fitdat[[n]]) && 
-                nlevels(fitdat[[n]]) == length(sc)) {
-                attr(fitdat[[n]], "scores") <- as.numeric(sc)
+            if (is.ordered(mf[[n]]) && 
+                nlevels(mf[[n]]) == length(sc)) {
+                attr(mf[[n]], "scores") <- as.numeric(sc)
             } else {
                 warning("scores for variable ", sQuote(n), " ignored")
             }
@@ -351,39 +403,39 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     }
     #### </FIXME>
 
-    ### <FIXME> implement y ~ x | block or y ~ 1 | x | block ? </FIXME>
-    block <- integer(0)
-
     if (control$nmax < Inf) {
-        treefun <- .ctree_fit_2d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
-                          block = block, ctrl = control)
-        Y <- BDR::BDR(fitdat[response], nmax = control$nmax, total = TRUE)
-        if (!is.function(ytrafo)) {
-            X <- rbind(0, partykit:::.y2infl(attr(Y, "levels"), response, ytrafo = ytrafo))
-            storage.mode(X) <- "double"
-            attr(Y, "X") <- X
-            ### attr(Y, "levels") <- 1:NROW(attr(Y, "levels")) ### no data.frames allows in libcoin
-            ytrafo <- function(...) Y
-        }
-    } else {
-        treefun <- .ctree_fit_1d(fitdat, partyvars = which(!(colnames(fitdat) %in% response)), 
+        treefun <- .ctree_fit_2d(mf, partyvars = match(zvars, colnames(mf)), 
                                  block = block, ctrl = control)
         if (!is.function(ytrafo)) {
-            Y <- partykit:::.y2infl(fitdat, response, ytrafo = ytrafo)
-            ytrafo <- function(...) Y
+            ytrafo <- .cfit_2d(modelf, data = mf, weights = weights, block = block, 
+                               nmax = control$nmax, ytrafo = ytrafo)
+        } else {
+            ytrafo <- ytrafo(modelf, data = mf, weights = weights, block = block,
+                          nmax = control$nmax)
+        }
+    } else {
+        treefun <- .ctree_fit_1d(mf, partyvars = match(zvars, colnames(mf)),
+                                 block = block, ctrl = control)
+        if (!is.function(ytrafo)) {
+            ytrafo <- .cfit(modelf, data = mf, weights = weights, block = block, 
+                            ytrafo = ytrafo)
+        } else {
+            ytrafo <- ytrafo(modelf, data = mf, weights = weights, block = block)
         }
     }
 
-    tree <- treefun(ytrafo, subset = 1:nrow(fitdat), weights)
+    tree <- treefun(ytrafo, subset = 1:nrow(mf), weights)
 
     if (length(weights) == 0)
-        weights <- rep.int(1, nrow(fitdat))
-    fitted <- data.frame("(fitted)" = fitted_node(tree, fitdat), 
+        weights <- rep.int(1, nrow(mf))
+    fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    fitted[[3]] <- fitdat[, response, drop = length(response) == 1]
+    y <- model.part(Formula(modelf), data = mf, lhs = 1, rhs = 0)
+    if (length(y) == 1) y <- y[[1]]
+    fitted[[3]] <- y
     names(fitted)[3] <- "(response)"
-    ret <- party(tree, data = fitdat, fitted = fitted, 
+    ret <- party(tree, data = mf, fitted = fitted, 
                  info = list(call = match.call(), control = control))
     ret$update <- treefun
     class(ret) <- c("constparty", class(ret))
