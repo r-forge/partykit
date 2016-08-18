@@ -830,13 +830,13 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   # -> link functions evaluated at the starting values of the distribution parameters
   
   # if start as input: initial value for distribution parameter -> transform adequately to starting values for the parameters of the linear predictor (here: intercepts)
-  transstart <- function(startpar){
-    starteta <- NA
-    if(np > 0) starteta[1] <- family$mu.linkfun(startpar[1])
-    if(np > 1) starteta[2] <- family$sigma.linkfun(startpar[2])
-    if(np > 2) starteta[3] <- family$nu.linkfun(startpar[3])
-    if(np > 3) starteta[4] <- family$tau.linkfun(startpar[4])
-    return(starteta)
+  transpar <- function(par){
+    eta <- NA
+    if(np > 0) eta[1] <- family$mu.linkfun(par[1])
+    if(np > 1) eta[2] <- family$sigma.linkfun(par[2])
+    if(np > 2) eta[3] <- family$nu.linkfun(par[3])
+    if(np > 3) eta[4] <- family$tau.linkfun(par[4])
+    return(eta)
   }
 
   
@@ -909,7 +909,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     startpar <- distpar(starteta)
   } else {
     startpar <- start
-    starteta <- transstart(startpar)
+    starteta <- transpar(startpar)
   }
   names(starteta) <- eta.names
   names(startpar) <- par.names
@@ -1077,7 +1077,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   )
   
   if(any(family$family%in%.distfit.bi.list)) rval <- c(rval, bd = bd)
-  
+
   class(rval) <- "distfit"
   return(rval)
 }

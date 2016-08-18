@@ -15,7 +15,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO,
     if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
     if(!is.null(offset)) warning("offset not used")
     rval <- distfit(y, family = family, weights = weights, start = start,
-      vcov. = object, estfun = estfun, ...)
+      vcov = object, estfun = estfun, ...)
     rval <- list(
       coefficients = rval$par,
       objfun = rval$opt$value,
@@ -82,3 +82,31 @@ print.disttree <- function(x,
 ##   partykit::plot.modelparty(x, terminal_panel = terminal_panel,
 ##     tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
 ## }
+
+
+if(FALSE){
+  tr <- disttree(dist ~ speed, data = cars)
+  print(tr)
+  
+  plot(tr)
+  plot(as.constparty(tr))
+}
+
+
+if(FALSE){
+  y1 <- rNO(200,1,0.5)
+  y2 <- rNO(200,5,2)
+  y3 <- rNO(200,50,4)
+  y4 <- rNO(200,100,7)
+  x1 <- vector(mode = "numeric",length = length(y1)) + 1
+  x2 <- vector(mode = "numeric",length = length(y2)) + 2
+  x3 <- vector(mode = "numeric",length = length(y3)) + 3
+  x4 <- vector(mode = "numeric",length = length(y4)) + 4
+  d <- as.data.frame(cbind(c(y1,y2,y3,y4),c(x1,x2,x3,x4)))
+  colnames(d) <- c("y","x")
+  
+  test <- disttree(y~x, data = d, family = NO())
+  print(test)
+  plot(test)
+  plot(as.constparty(test))
+}
