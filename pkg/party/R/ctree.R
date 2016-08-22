@@ -206,6 +206,14 @@
         storage.mode(X) <- "double"
         return(X)
     })
+    iX <- vector(mode = "list", length = NCOL(data))
+    names(iX) <- colnames(data)
+    iX[partyvars] <- lapply(partyvars, function(j) {
+        x <- attr(bdr[[j]], "levels")
+        ix <- as.integer(bdr[[j]])
+        attr(ix, "levels") <- x
+        ix
+    })
 
     return(function(trafo, subset, weights) {
 
@@ -233,7 +241,8 @@
             }
 
             for (j in whichvar) {
-                lev <- LinStatExpCov(X = X[[j]], ix = as.integer(bdr[[j]]), 
+                ix <- iX[[j]]
+                lev <- LinStatExpCov(X = X[[j]], ix = ix, 
                                      Y = Y, iy = iy, subset = subset,
                                      weights = weights, block = block, 
                                      B = ifelse(ctrl$testtype == "MonteCarlo", 
@@ -246,6 +255,7 @@
             }
             if (ctrl$testtype == "Bonferroni")
                 ret$p["p.value",] <- ret$p["p.value",] * length(whichvar)
+
 
             ### compute best fitting cutpoint (according to minbucket)
             ### for a subset of observations and variables
@@ -270,10 +280,10 @@
                         ret <- partysplit(as.integer(j), index = as.integer(index))
                         break()
                     } else {
-                        ix <- bdr[[j]]
+                        ix <- iX[[j]]
                         X <- numeric(0) 
                         ux <- attr(ix, "levels")
-                        lev <- LinStatExpCov(X = X, ix = as.integer(ix),
+                        lev <- LinStatExpCov(X = X, ix = ix,
                                              Y = Y, iy = iy, subset = subset,
                                              weights = weights, block = block, 
                                              B = 0L, varonly = TRUE)
