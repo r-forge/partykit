@@ -2,7 +2,7 @@
 ### unbiased recursive partitioning: set up new node
 .urp_node <- function
 (
-    id = 1, 			### id of this node
+    id = 1L, 			### id of this node
     data, 			### full data, readonly
     selectfun, 			### variable selection
                                 ### and split function
@@ -34,11 +34,13 @@
     ### sw is basically the number of observations
     ### which has to be > minsplit in order to consider
     ### the node for splitting
+    ### <FIXME> check ctrl$caseweights
     if (length(weights) > 0) {
         sw <- sum(weights[subset])
     } else {
         sw <- length(subset)
     }
+    ### </FIXME>
     if (sw < ctrl$minsplit) 
         return(partynode(as.integer(id)))
 
