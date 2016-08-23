@@ -572,7 +572,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
         d2ldddt <- function(par) return(family$d2ldddt(y))
       } else {
         d2ldddt <- function(par) {
-          d2ldddt <- list()
+          input <- list()
           input[[1]] <- y
           for (i in 2:length(par.id.d2ldddt)) input[[i]] <- rep.int(par[par.id.d2ldddt[i]], ny)
           return(do.call(family$d2ldddt, input))
@@ -860,7 +860,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   grad <- function(eta, sum = TRUE) {
     par <- distpar(eta)                                  # get distribution parameters
     gr.out <- dldpar(par)                                # outer derivatives
-    gr <- -weights * t(t(gr.out) * dpardeta(eta))        # multiplied with the inner derivatives (componentwise)
+    gr <- -weights * t(t(gr.out) * dpardeta(eta))        # multiplied with the inner derivatives (componentwise) and (-1) because the derivation of the negative ll is needed for optim
     # gr <- as.matrix(gr)                                # for 1 parameter
     if(sum) gr <- colSums(gr)     # *1/nobs ? scale, doesn't influence optimization
     return(gr)
@@ -896,7 +896,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     
     sumhess <- Reduce('+', hess)
     
-    return(-sumhess)   # negative because the optimized function is the neg. logLik (nll) but the derivatives are of the (positive) logLik => *(-1)
+    return(sumhess)
     # the entries of sumhes are the sums of the entries of the hessian matrix evaluated at the observations stored in y and the input parameters
 
   }
@@ -921,27 +921,36 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
 
   ## extract parameters
   eta <- opt$par
-  names(eta) <- eta.names
   par <- distpar(eta)
+  names(eta) <- eta.names
   names(par) <- par.names
+  
+  ## loglikelihood value
+  loglik = -opt$value
+  
+  ## hess matrix for distribution parameter  (FIX ME: until now only analytic, even if type.hessian = "numeric")
+  hess.par.list <- d2ldpar2(par)
+  for(i in 1:ny){
+    hess.par.list[[i]] <- weights[i] * hess.par.list[[i]]
+  }
+  hess.par <- Reduce('+', hess.par.list)
+  colnames(hess.par) <- rownames(hess.par) <- par.names
+  
+  # hess matrix for link coefficients eta
+  if(type.hessian == "analytic") hess.eta <- hess(eta) else hess.eta <- -opt$hessian
+  colnames(hess.eta) <- rownames(hess.eta) <- eta.names
 
 
   ## variance-covariance matrix estimate 
-  if((vcov) && ((type.hessian == "analytic") || (type.hessian == "numeric"))){
+  if(vcov){
     
-    # hess matrix and vcov for distribution parameter
-    hess.par.list <- d2ldpar2(par)
-    for(i in 1:ny){
-      hess.par.list[[i]] <- weights[i] * hess.par.list[[i]]
-    }
-    hess.par <- - Reduce('+', hess.par.list)
+    # vcov for distribution parameter
     vc.par <- solve(hess.par)
-    colnames(hess.par) <- rownames(hess.par) <- colnames(vc.par) <- rownames(vc.par) <- par.names
+    colnames(vc.par) <- rownames(vc.par) <- par.names
     
-    # hess matrix and vcov for link coefficients eta
-    hess.eta <- hess(eta)
-    if(type.hessian == "analytic") vc.eta <- solve(hess.eta) else vc.eta <- solve(opt$hessian)
-    colnames(hess.eta) <- rownames(hess.eta) <- colnames(vc.eta) <- rownames(vc.eta) <- eta.names
+    #vcov for link coefficients eta
+    vc.eta <- solve(hess.eta)
+    colnames(vc.eta) <- rownames(vc.eta) <- eta.names
     
   } else {
     vc <- NULL
@@ -1065,6 +1074,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     hess.eta = hess.eta,
     vcov = vc.par,
     vcov.eta = vc.eta,
+    loglik = loglik,
     call = cl,
     ny = ny,        
     nobs = nobs,
@@ -1120,7 +1130,7 @@ estfun.distfit <- function(object, type = "parameter", ...) {
 }
 
 logLik.distfit <- function(object, ...) {
-  structure(-object$opt$value, df = object$npar, class = "logLik")
+  structure(object$loglik, df = object$npar, class = "logLik")
 }
 
 bread.distfit <- function(object, type = "parameter", ...) {
@@ -1188,7 +1198,7 @@ summary.distfit <- function (object, type = "parameter", ...){
     vcov <- object$vcov
   }
 
-  se <- sqrt(diag(object$vcov))
+  se <- sqrt(diag(vcov))
   TAB <- cbind(Estimate = coef,
                StdErr = se)
   
@@ -1198,7 +1208,8 @@ summary.distfit <- function (object, type = "parameter", ...){
                   Family = object$family,
                   Parameter = TAB,
                   Estimated_covariance_matrix = vcov,
-                  LogLikelihood = logLik(object)
+                  LogLikelihood = object$loglik
+                  # LogLikelihood = logLik(object)
                   )
   class(sumlist) <- "summary.distfit"
   sumlist 
