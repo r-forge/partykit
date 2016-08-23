@@ -75,12 +75,14 @@
         ret
     }
 
+    ### <FIXME> report p-values as _p-values_ and criterion
     ### nothing "significant"
     if (all(crit < ctrl$mincriterion)) {
         return(partynode(as.integer(id), 
                          info = list(criterion = p,
                          p.value = fmP(p))))
     }
+    ### </FIXME>
 
     ### update sample size constraints on possible splits
     mb <- ctrl$minbucket
