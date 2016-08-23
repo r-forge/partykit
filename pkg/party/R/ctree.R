@@ -14,23 +14,18 @@
     f <- Formula(formula)
     mf <- model.frame(formula = f, data = data)
     y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-    bdr <- BDR::BDR(y, nmax = nmax, total = TRUE)
-    ### y contains missings and index always starts with 1!
+    bdr <- BDR::BDR(y, nmax = nmax, total = TRUE, complete.cases.only = TRUE)
     y <- attr(bdr, "levels")
-    ncc <- which(!complete.cases(y))
     index <- c(bdr)
-    ### missings are 0 in index
-    index[index %in% ncc] <- 0L
+    attr(index, "levels") <- 1:NROW(y)
     cn <- colnames(y)
     Y <- partykit:::.y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
-    Y[ncc,] <- 0.0
-    ### first row corresponds to zeros
+    ### first row corresponds to missings
     Y <- rbind(0, Y)
     function(subset) {
         list(estfun = Y, index = index)
     }
 }
-
 
 ### conditional inference trees
 .ctree_fit_1d <- function
@@ -206,14 +201,6 @@
         storage.mode(X) <- "double"
         return(X)
     })
-    iX <- vector(mode = "list", length = NCOL(data))
-    names(iX) <- colnames(data)
-    iX[partyvars] <- lapply(partyvars, function(j) {
-        x <- attr(bdr[[j]], "levels")
-        ix <- as.integer(bdr[[j]])
-        attr(ix, "levels") <- x
-        ix
-    })
 
     return(function(trafo, subset, weights) {
 
@@ -241,7 +228,7 @@
             }
 
             for (j in whichvar) {
-                ix <- iX[[j]]
+                ix <- bdr[[j]]
                 lev <- LinStatExpCov(X = X[[j]], ix = ix, 
                                      Y = Y, iy = iy, subset = subset,
                                      weights = weights, block = block, 
@@ -280,7 +267,7 @@
                         ret <- partysplit(as.integer(j), index = as.integer(index))
                         break()
                     } else {
-                        ix <- iX[[j]]
+                        ix <- bdr[[j]]
                         X <- numeric(0) 
                         ux <- attr(ix, "levels")
                         lev <- LinStatExpCov(X = X, ix = ix,
@@ -413,6 +400,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     }
     #### </FIXME>
 
+    ### <FIXME> call BDR here? </FIXME>
     if (control$nmax < Inf) {
         treefun <- .ctree_fit_2d(mf, partyvars = match(zvars, colnames(mf)), 
                                  block = block, ctrl = control)
