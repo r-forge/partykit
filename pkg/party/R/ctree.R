@@ -11,34 +11,39 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
     if (ctrl$nmax < Inf) {
         if (!is.function(ytrafo))
             return(.cfit_2d(formula, data = data, weights = weights, block = block,
-                            nmax = ctrl$nmax, ytrafo = ytrafo))
+                            ytrafo = ytrafo, ctrl = ctrl))
         return(ytrafo(formula, data = data, weights = weights, block = block,
-                      nmax = ctrl$nmax))
+                      ctrl = ctrl))
     } else {
         if (!is.function(ytrafo))
             return(.cfit(formula, data = data, weights = weights, block = block,
-                         ytrafo = ytrafo))
-        return(ytrafo(formula, data = data, weights = weights, block = block))
+                         ytrafo = ytrafo, ctrl = ctrl))
+        return(ytrafo(formula, data = data, weights = weights, block = block, ctrl = ctrl))
     }
 }
     
 
-.cfit <- function(formula, data, weights = NULL, block = NULL, ytrafo = NULL) {
+.cfit <- function(formula, data, weights = NULL, block = NULL, ytrafo = NULL, ctrl) {
     f <- Formula(formula)
-    mf <- model.frame(formula = f, data = data)
+    mf <- model.frame(formula = f, data = data, na.action = na.pass)
     y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-    Y <- partykit:::.y2infl(y, colnames(y), ytrafo = ytrafo)
+    cc <- complete.cases(y)
+    Yi <- partykit:::.y2infl(y[cc,,drop = FALSE], colnames(y), ytrafo = ytrafo)
+    Y <- matrix(0, nrow = nrow(mf), ncol = NCOL(Yi))
+    Y[cc,] <- Yi
+#    colnames(Y) <- colnames(Yi)
+    storage.mode(Y) <- "double"
     function(subset) {
         list(estfun = Y)
     }
 }
 
 .cfit_2d <- function(formula, data, weights = NULL, block = NULL,
-                   nmax = 25, ytrafo = ytrafo) {
+                     ytrafo = ytrafo, ctrl) {
     f <- Formula(formula)
     mf <- model.frame(formula = f, data = data)
     y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-    bdr <- BDR::BDR(y, nmax = nmax, total = TRUE, complete.cases.only = TRUE)
+    bdr <- BDR::BDR(y, nmax = ctrl$nmax, total = TRUE, complete.cases.only = TRUE)
     y <- attr(bdr, "levels")
     index <- c(bdr)
     attr(index, "levels") <- 1:NROW(y)
@@ -98,14 +103,16 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
 
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
-                Y <- trafo(subset)$estfun
+                tr <- trafo(subset)
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
                 Y <- matrix(0, nrow = NROW(data), ncol = max(y))
                 Y[cbind(subset, y)] <- 1 ### model.matrix(~ as.factor(y) - 1)
                 storage.mode(Y) <- "double"
+                tr <- list(estfun = Y)
             }
+            Y <- tr$estfun
 
             for (j in whichvar) {
                 ### compute linear statistic + expecation and covariance
@@ -122,6 +129,8 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
             }
             if (ctrl$testtype == "Bonferroni")
                 ret$p["p.value",] <- ret$p["p.value",] * length(whichvar)
+
+            ret <- c(ret, tr[names(tr) != "estfun"])
 
             ### compute best fitting cutpoint (according to minbucket)
             ### for a subset of observations and variables
@@ -241,15 +250,16 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
 
             if (is.null(y)) {
                 tr <- trafo(subset = subset)
-                Y <- tr$estfun
-                iy <- tr$index
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
                 Y <- rbind(0, max(y))
                 iy <- numeric(NROW(data))
                 iy[subset] <- as.integer(y)
+                tr <- list(estfun = Y, index = iy)
             }
+            Y <- tr$estfun
+            iy <- tr$index
 
             for (j in whichvar) {
                 ix <- bdr[[j]]
@@ -267,6 +277,7 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
             if (ctrl$testtype == "Bonferroni")
                 ret$p["p.value",] <- ret$p["p.value",] * length(whichvar)
 
+            ret <- c(ret, tr[!(names(tr) %in% c("estfun", "index"))])
 
             ### compute best fitting cutpoint (according to minbucket)
             ### for a subset of observations and variables
@@ -447,10 +458,14 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     }
     #### </FIXME>
 
+    ### returns a _function_ (trafo, subset, weights)
+    ### for growing the tree
     treefun <- ctreegrow(mf, partyvars = match(zvars, colnames(mf)), 
                          block = block, ctrl = control)
+    ### returns a _function_ (subset) for computing estfun (essentially)
     ytrafo <- ctreetrafo(modelf, data = mf, weights = weights, block = block, 
                          ctrl = control, ytrafo = ytrafo)
+    ### grow the tree
     tree <- treefun(ytrafo, subset = 1:nrow(mf), weights)
 
     if (length(weights) == 0)

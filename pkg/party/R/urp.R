@@ -19,21 +19,23 @@
     cenv = NULL			### environment for depth and maxid
 ) {
 
-    ### check for stumps
-    if (id > 1 && ctrl$stump) 
-        return(partynode(as.integer(id)))
 
     ### depth keeps track of the depth of the tree
     ### which has to be < than maxdepth
     if (is.null(cenv)) {
         cenv <- new.env()
         depth <- 0L
+        assign("maxid", id, envir = cenv)
     } else {
         depth <- get("depth", envir = cenv)
+        assign("maxid", id, envir = cenv)
         if (depth >= ctrl$maxdepth)
             return(partynode(as.integer(id)))
     }
-    assign("maxid", id, envir = cenv)
+
+    ### check for stumps
+    if (id > 1 && ctrl$stump) 
+        return(partynode(as.integer(id)))
 
     ### sw is basically the number of observations
     ### which has to be > minsplit in order to consider
@@ -78,12 +80,11 @@
     pmin <- p["p.value", which.max(crit)]
     names(pmin) <- colnames(data)[which.max(crit)]
 
+    info <- c(list(criterion = p, p.value = pmin), sf[!(names(sf) %in% c("p", "splitfun"))])
+
     ### nothing "significant"
-    if (all(crit < ctrl$logmincriterion)) {
-        return(partynode(as.integer(id), 
-                         info = list(criterion = p,
-                                     p.value = pmin)))
-    }
+    if (all(crit < ctrl$logmincriterion))
+        return(partynode(as.integer(id), info = info))
 
     ### update sample size constraints on possible splits
     mb <- ctrl$minbucket
@@ -97,14 +98,12 @@
 
     ### failed split search:
     if (is.null(thissplit))
-        return(partynode(as.integer(id), 
-                         info = list(criterion = p,
-                                     p.value = pmin)))           
+        return(partynode(as.integer(id), info = info))
 
     ### successful split search: set-up node
     ret <- partynode(as.integer(id))
     ret$split <- thissplit
-    ret$info <- list(criterion = p, p.value = pmin)
+    ret$info <- info
     thissurr <- NULL
 
     ### determine observations for splitting (only non-missings)
