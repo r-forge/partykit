@@ -6,12 +6,16 @@
     data, 			### full data, readonly
     selectfun, 			### variable selection
                                 ### and split function
+    svselectfun = selectfun,    ### same for surrogate splits
     partyvars, 			### partytioning variables
                                 ### a subset of 1:ncol(data)
     weights = integer(0),	### optional case weights
     subset, 			### subset of 1:nrow(data)
                                 ### for identifying obs for this node
     ctrl, 			### ctree_control()
+    ### needs: stump, maxdepth, caseweights, minsplit, mtry, criterion,
+    ###        logmincriterion, minbucket, minprob, splittry,
+    ###        majority, maxsurrogate
     cenv = NULL			### environment for depth and maxid
 ) {
 
@@ -56,6 +60,7 @@
     ### compute test statistics and p-values
     ### for _unbiased_ variable selection
     sf <- selectfun(subset = subset, whichvar = svars)
+    ### selectfun might return other things later to be used for info
     p <- sf$p
     crit <- p[ctrl$criterion,,drop = TRUE]
     crit[is.na(crit)] <- -Inf
@@ -74,7 +79,7 @@
     names(pmin) <- colnames(data)[which.max(crit)]
 
     ### nothing "significant"
-    if (all(crit < ctrl$mincriterion)) {
+    if (all(crit < ctrl$logmincriterion)) {
         return(partynode(as.integer(id), 
                          info = list(criterion = p,
                                      p.value = pmin)))
@@ -86,7 +91,7 @@
     swp <- ceiling(sw * mp)
     if (mb < swp) mb <- as.integer(swp)
     jsel <- rev(order(crit))[1:ctrl$splittry]
-    jsel <- jsel[crit[jsel] > ctrl$mincriterion]
+    jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
     ### try to find an admissible split in data[, jsel]
     thissplit <- sf$splitfun(whichvar = jsel, minbucket = mb)
 
@@ -119,7 +124,7 @@
         ret$surrogates <- .urp_surrogates(kidids, data = data, 
             subset = snotNA, 
             partyvars = svars[svars != varid_split(thissplit)],
-            selectfun = selectfun, ctrl = ctrl)
+            selectfun = svselectfun, ctrl = ctrl)
     kidids <- kidids_node(ret, data, obs = subset)
 
     ### proceed recursively

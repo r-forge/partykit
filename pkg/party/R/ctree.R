@@ -1,4 +1,28 @@
 
+ctreegrow <- function(data, partyvars, block, ctrl) {
+    if (ctrl$nmax < Inf)
+        return(.ctree_fit_2d(data = data, partyvars = partyvars, 
+                             block = block, ctrl = ctrl))
+    return(.ctree_fit_1d(data = data, partyvars = partyvars,
+                         block = block, ctrl = ctrl))
+}
+
+ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
+    if (ctrl$nmax < Inf) {
+        if (!is.function(ytrafo))
+            return(.cfit_2d(formula, data = data, weights = weights, block = block,
+                            nmax = ctrl$nmax, ytrafo = ytrafo))
+        return(ytrafo(formula, data = data, weights = weights, block = block,
+                      nmax = ctrl$nmax))
+    } else {
+        if (!is.function(ytrafo))
+            return(.cfit(formula, data = data, weights = weights, block = block,
+                         ytrafo = ytrafo))
+        return(ytrafo(formula, data = data, weights = weights, block = block))
+    }
+}
+    
+
 .cfit <- function(formula, data, weights = NULL, block = NULL, ytrafo = NULL) {
     f <- Formula(formula)
     mf <- model.frame(formula = f, data = data)
@@ -306,7 +330,9 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
                           splitstat = c("maximum", "quadratic"),
                           testtype = c("Bonferroni", "MonteCarlo", 
                                        "Univariate", "Teststatistic"),
-                          nmax = Inf, mincriterion = 0.95, minsplit = 20L, 
+                          nmax = Inf, 
+                          alpha = 0.05, mincriterion = 1 - alpha, 
+                          logmincriterion = log(mincriterion), minsplit = 20L, 
                           minbucket = 7L, minprob = 0.01, stump = FALSE, 
                           nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
                           maxdepth = Inf, multiway = FALSE, splittry = 2L, 
@@ -331,7 +357,7 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
 
     list(teststat = teststat, splitstat = splitstat, 
          criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
-         testtype = testtype, nmax = nmax, mincriterion = log(mincriterion),
+         testtype = testtype, nmax = nmax, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
          minprob = minprob, stump = stump, nresample = nresample, mtry = mtry, 
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
@@ -421,28 +447,10 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     }
     #### </FIXME>
 
-    ### <FIXME> call BDR here? </FIXME>
-    if (control$nmax < Inf) {
-        treefun <- .ctree_fit_2d(mf, partyvars = match(zvars, colnames(mf)), 
-                                 block = block, ctrl = control)
-        if (!is.function(ytrafo)) {
-            ytrafo <- .cfit_2d(modelf, data = mf, weights = weights, block = block, 
-                               nmax = control$nmax, ytrafo = ytrafo)
-        } else {
-            ytrafo <- ytrafo(modelf, data = mf, weights = weights, block = block,
-                          nmax = control$nmax)
-        }
-    } else {
-        treefun <- .ctree_fit_1d(mf, partyvars = match(zvars, colnames(mf)),
-                                 block = block, ctrl = control)
-        if (!is.function(ytrafo)) {
-            ytrafo <- .cfit(modelf, data = mf, weights = weights, block = block, 
-                            ytrafo = ytrafo)
-        } else {
-            ytrafo <- ytrafo(modelf, data = mf, weights = weights, block = block)
-        }
-    }
-
+    treefun <- ctreegrow(mf, partyvars = match(zvars, colnames(mf)), 
+                         block = block, ctrl = control)
+    ytrafo <- ctreetrafo(modelf, data = mf, weights = weights, block = block, 
+                         ctrl = control, ytrafo = ytrafo)
     tree <- treefun(ytrafo, subset = 1:nrow(mf), weights)
 
     if (length(weights) == 0)
