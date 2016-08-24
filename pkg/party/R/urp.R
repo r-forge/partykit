@@ -67,22 +67,18 @@
             order(p["statistic", ties]) / (sum(ties) * 1000)
     }
 
-    ### format p values
-    fmP <- function(p) {
-        if (all(is.na(p["p.value",]))) return(NA)
-        ret <- 1 - exp(p["p.value", which.max(crit)])
-        names(ret) <- colnames(data)[which.max(crit)]
-        ret
-    }
+    ### switch from log(1 - pval) to pval
+    p <- rbind(p, criterion = crit)
+    p["p.value",] <- -expm1(p["p.value",])
+    pmin <- p["p.value", which.max(crit)]
+    names(pmin) <- colnames(data)[which.max(crit)]
 
-    ### <FIXME> report p-values as _p-values_ and criterion
     ### nothing "significant"
     if (all(crit < ctrl$mincriterion)) {
         return(partynode(as.integer(id), 
                          info = list(criterion = p,
-                         p.value = fmP(p))))
+                                     p.value = pmin)))
     }
-    ### </FIXME>
 
     ### update sample size constraints on possible splits
     mb <- ctrl$minbucket
@@ -98,12 +94,12 @@
     if (is.null(thissplit))
         return(partynode(as.integer(id), 
                          info = list(criterion = p,
-                                     p.value = fmP(p))))           
+                                     p.value = pmin)))           
 
     ### successful split search: set-up node
     ret <- partynode(as.integer(id))
     ret$split <- thissplit
-    ret$info <- list(criterion = p[,svars], p.value = fmP(p))
+    ret$info <- list(criterion = p, p.value = pmin)
     thissurr <- NULL
 
     ### determine observations for splitting (only non-missings)

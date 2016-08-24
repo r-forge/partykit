@@ -353,11 +353,13 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
         stop("incorrect formula")  
     if (!(length(f)[2] %in% 1:3))
         stop("incorrect formula")
-    mf$formula <- as.formula(paste("~", paste(all.vars(f), collapse = "+")))
+    mf$formula <- f
     mf$drop.unused.levels <- FALSE      
-    mf$na.action <- na.action
+    mf$na.action <- na.pass
     mf[[1]] <- quote(stats::model.frame)
     mf1 <- eval(mf, parent.frame())
+    mfterms <- terms(mf1)
+    fdot <- attr(mfterms, "Formula_without_dot")
 
     weights <- model.weights(mf1)
     if (is.null(weights)) weights <- integer(0)
@@ -370,29 +372,27 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     if (!all(av %in% colnames(mf1))) {
          mf[[1]] <- quote(stats::get_all_vars)
          mf$drop.unused.levels <- NULL
+         mf$na.action <- NULL
          mf$weights <- NULL
          mf2 <- eval(mf, parent.frame())
          mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
          mf1 <- cbind(mf1, mf2)
     }
-    mf <- mf1
+    mf <- na.action(mf1)
 
-    if (length(f)[2] == 1) { ### y ~ z
-        fdot <- attr(terms(f, data = mf), "Formula_without_dot")
+    if (length(f)[2] == 1) { ### y ~ z _or_ y ~ .
         if (is.null(fdot)) fdot <- f
         modelf <- formula(fdot, lhs = 1, rhs = 0)
         partf <- formula(fdot, lhs = 0, rhs = 1)
         blockf <- NULL
     } else if (length(f)[2] == 2) { ### y ~ x | z
-        if (!is.null(attr(terms(f, data = mf),
-                          "Formula_without_dot")))
+        if (!is.null(fdot))
             stop("dots are not allowed in multipart formulas")
         modelf <- formula(f, lhs = 1, rhs = 1)
         partf <- formula(f, lhs = 0, rhs = 2)
         blockf <- NULL
     } else if (length(f)[2] == 3) { ### y ~ x | z | block
-        if (!is.null(attr(terms(f, data = mf),
-                          "Formula_without_dot")))
+        if (!is.null(fdot))
             stop("dots are not allowed in multipart formulas")
         modelf <- formula(f, lhs = 1, rhs = 1)
         partf <- formula(f, lhs = 0, rhs = 2)
@@ -461,7 +461,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
 
     ### doesn't work for Surv objects
     # ret$terms <- terms(formula, data = mf)
-    ret$terms <- terms(mf)
+    ret$terms <- mfterms
     ### need to adjust print and plot methods
     ### for multivariate responses
     ### if (length(response) > 1) class(ret) <- "party"
