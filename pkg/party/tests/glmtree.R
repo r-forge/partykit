@@ -46,7 +46,9 @@ glmtree <- function(formula, data, family = gaussian(),
                     mod <- glm(ys ~ xs + 0, family = family)
                 }
                 ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-                ret[subset,] <- estfun(mod)
+                Y <- Y / w
+                Y[w == 0,] <- 0
+                ret[subset,] <- Y
                 storage.mode(ret) <- "double"
                 list(estfun = ret, coef = coef(mod), logLik = logLik(mod))
             }
