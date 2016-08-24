@@ -1,0 +1,9 @@
+
+ o info = statistic, p-value, criterion
+
+ o introduce control$logmincriterion
+   introduce control$alpha
+
+ o try weights with coin
+
+
