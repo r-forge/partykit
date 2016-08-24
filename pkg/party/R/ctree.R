@@ -480,6 +480,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     ret <- party(tree, data = mf, fitted = fitted, 
                  info = list(call = match.call(), control = control))
     ret$update <- treefun
+    ret$trafo <- ytrafo
     class(ret) <- c("constparty", class(ret))
 
     ### doesn't work for Surv objects
