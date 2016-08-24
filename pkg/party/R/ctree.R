@@ -357,27 +357,48 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     mf$drop.unused.levels <- FALSE      
     mf$na.action <- na.action
     mf[[1]] <- quote(stats::model.frame)
-    mf <- eval(mf, parent.frame())
+    mf1 <- eval(mf, parent.frame())
 
-    weights <- model.weights(mf)
+    weights <- model.weights(mf1)
     if (is.null(weights)) weights <- integer(0)
+    mf1[["(weights)"]] <- NULL
+    if (!is.null(o <- attr(attr(mf1, "terms"), "offset")))
+        mf1[[attr(attr(mf1, "terms"), "offset")]] <- NULL
+
+    av <- all.vars(f)
+    av <- av[av != "."]
+    if (!all(av %in% colnames(mf1))) {
+         mf[[1]] <- quote(stats::get_all_vars)
+         mf$drop.unused.levels <- NULL
+         mf$weights <- NULL
+         mf2 <- eval(mf, parent.frame())
+         mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
+         mf1 <- cbind(mf1, mf2)
+    }
+    mf <- mf1
 
     if (length(f)[2] == 1) { ### y ~ z
-        modelf <- formula(f, lhs = 1, rhs = 0)
-        partf <- formula(f, lhs = 0, rhs = 1) 
-        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 1))
+        fdot <- attr(terms(f, data = mf), "Formula_without_dot")
+        if (is.null(fdot)) fdot <- f
+        modelf <- formula(fdot, lhs = 1, rhs = 0)
+        partf <- formula(fdot, lhs = 0, rhs = 1)
         blockf <- NULL
     } else if (length(f)[2] == 2) { ### y ~ x | z
-        modelf <- formula(f, lhs = 1, rhs = 1)   
-        partf <- formula(f, lhs = 0, rhs = 2)    
-        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 2))
-        blockf <- NULL
-    } else if (length(f)[2] == 3) { ### y ~ x | z | block
+        if (!is.null(attr(terms(f, data = mf),
+                          "Formula_without_dot")))
+            stop("dots are not allowed in multipart formulas")
         modelf <- formula(f, lhs = 1, rhs = 1)
         partf <- formula(f, lhs = 0, rhs = 2)
-        zvars <- names(model.part(f, data = mf, lhs = 0, rhs = 2))
+        blockf <- NULL
+    } else if (length(f)[2] == 3) { ### y ~ x | z | block
+        if (!is.null(attr(terms(f, data = mf),
+                          "Formula_without_dot")))
+            stop("dots are not allowed in multipart formulas")
+        modelf <- formula(f, lhs = 1, rhs = 1)
+        partf <- formula(f, lhs = 0, rhs = 2)
         blockf <- formula(f, lhs = 0, rhs = 3)
     }
+    zvars <- rownames(attr(terms(partf, data = mf), "factors"))
 
     block <- NULL
     if (!is.null(blockf)) {
