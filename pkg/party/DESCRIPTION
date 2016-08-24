@@ -10,5 +10,5 @@ Authors@R: c(person("Torsten", "Hothorn", role = c("aut", "cre"),
 Description: The successor of party, maybe.
 Depends: partykit, libcoin
 Imports: stats, Formula
-Suggests: BDR, survival, TH.data
+Suggests: BDR, survival, TH.data, mlbench, sandwich
 License: GPL-2
