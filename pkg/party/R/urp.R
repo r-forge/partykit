@@ -194,3 +194,131 @@
     return(ret)
 }
 
+.urp_tree <- function(call, frame, na.action, control, 
+                      growfun, trafofun, scores = NULL, doFit = TRUE)
+{
+
+    m <- match(c("formula", "data", "subset", "weights", "na.action"),
+               names(call), 0)
+    mf <- call[c(1, m)]
+    formula <- eval(mf$formula)
+
+    f <- if (inherits(formula, "Formula")) formula else Formula(formula)
+    if (length(length(f)) != 2)
+        stop("incorrect formula")  
+    if (!(length(f)[2] %in% 1:3))
+        stop("incorrect formula")
+    mf$formula <- f
+    mf$drop.unused.levels <- FALSE      
+    mf$na.action <- na.pass
+    mf[[1]] <- quote(stats::model.frame)
+    mf1 <- eval(mf, frame)
+    mfterms <- terms(mf1)
+    fdot <- attr(mfterms, "Formula_without_dot")
+
+    weights <- model.weights(mf1)
+    if (is.null(weights)) weights <- integer(0)
+    mf1[["(weights)"]] <- NULL
+    if (!is.null(o <- attr(attr(mf1, "terms"), "offset")))
+        mf1[[attr(attr(mf1, "terms"), "offset")]] <- NULL
+
+    av <- all.vars(f)
+    av <- av[av != "."]
+    if (!all(av %in% colnames(mf1))) {
+         mf[[1]] <- quote(stats::get_all_vars)
+         mf$drop.unused.levels <- NULL
+         mf$na.action <- NULL
+         mf$weights <- NULL
+         mf2 <- eval(mf, frame)
+         mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
+         mf1 <- cbind(mf1, mf2)
+    }
+    mf <- na.action(mf1)
+
+    if (length(f)[2] == 1) { ### y ~ z _or_ y ~ .
+        if (is.null(fdot)) fdot <- f
+        modelf <- formula(fdot, lhs = 1, rhs = 0)
+        partf <- formula(fdot, lhs = 0, rhs = 1)
+        blockf <- NULL
+    } else if (length(f)[2] == 2) { ### y ~ x | z
+        if (!is.null(fdot))
+            stop("dots are not allowed in multipart formulas")
+        modelf <- formula(f, lhs = 1, rhs = 1)
+        partf <- formula(f, lhs = 0, rhs = 2)
+        blockf <- NULL
+    } else if (length(f)[2] == 3) { ### y ~ x | z | block
+        if (!is.null(fdot))
+            stop("dots are not allowed in multipart formulas")
+        modelf <- formula(f, lhs = 1, rhs = 1)
+        partf <- formula(f, lhs = 0, rhs = 2)
+        blockf <- formula(f, lhs = 0, rhs = 3)
+    }
+    zvars <- rownames(attr(terms(partf, data = mf), "factors"))
+
+    ### <FIXME> should be xtrafo
+    if (!is.null(scores)) {
+        for (n in names(scores)) {
+            sc <- scores[[n]]
+            if (is.ordered(mf[[n]]) && 
+                nlevels(mf[[n]]) == length(sc)) {
+                attr(mf[[n]], "scores") <- as.numeric(sc)
+            } else {
+                warning("scores for variable ", sQuote(n), " ignored")
+            }
+        }
+    }
+    #### </FIXME>
+
+    block <- NULL
+    if (!is.null(blockf)) {
+        block <- model.frame(blockf, data = mf)
+        if (length(block) != 1 || !is.factor(block[[1]]))
+            stop("block is not a single factor")
+    }
+
+    ### returns a _function_ (trafo, subset, weights)
+    ### for growing the tree
+    treefun <- growfun(mf, partyvars = match(zvars, colnames(mf)), 
+                       block = block, ctrl = control)
+    ### returns a _function_ (subset) for computing estfun (essentially)
+    trafo <- trafofun(modelf, data = mf, weights = weights, block = block, 
+                      ctrl = control)
+    
+    if (length(weights) > 0)    
+        mf[["(weights)"]] <- weights    
+    ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms)
+    if (!doFit)
+        return(ret)
+
+    ### grow the tree
+    tree <- treefun(trafo, subset = 1:nrow(mf), weights)
+    ret$nodes <- tree
+    return(ret)
+}
+
+.urp_control <- function(criterion, logmincriterion, minsplit = 20L,
+                         minbucket = 7L, minprob = 0.01, stump = FALSE,
+                         maxsurrogate = 0L, mtry = Inf,
+                         maxdepth = Inf, multiway = FALSE, splittry = 2L,
+                         majority = FALSE, applyfun = NULL, cores = NULL) {
+
+    ## apply infrastructure for determining split points
+    if (is.null(applyfun)) {
+        applyfun <- if(is.null(cores)) {
+            lapply
+        } else {
+            function(X, FUN, ...)
+                parallel::mclapply(X, FUN, ..., mc.cores = cores)
+        }
+    }
+
+    if (multiway & maxsurrogate > 0)
+        stop("surrogate splits currently not implemented for multiway splits")
+
+    list(criterion = criterion, logmincriterion = logmincriterion,
+         minsplit = minsplit, minbucket = minbucket, 
+         minprob = minprob, stump = stump, mtry = mtry,
+         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
+         maxsurrogate = maxsurrogate, majority = majority,
+         applyfun = applyfun)
+}

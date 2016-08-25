@@ -4,7 +4,9 @@ import("libcoin")
 import("Formula")
 
 importFrom("stats", "model.weights", "na.pass", "terms", "xtabs",
-           "as.formula", "complete.cases", "model.frame")
+           "as.formula", "complete.cases", "model.frame",
+           "coef", "gaussian", "glm", "logLik",
+           "model.matrix", "model.response")
+# importFrom("sandwich", "estfun")
 
-export(ctree, ctree_control)
-
+export(ctree, glmtree, ctree_control)

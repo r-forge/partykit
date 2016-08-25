@@ -1,5 +1,5 @@
 
-ctreegrow <- function(data, partyvars, block, ctrl) {
+.ctreegrow <- function(data, partyvars, block, ctrl) {
     if (ctrl$nmax < Inf)
         return(.ctree_fit_2d(data = data, partyvars = partyvars, 
                              block = block, ctrl = ctrl))
@@ -7,7 +7,7 @@ ctreegrow <- function(data, partyvars, block, ctrl) {
                          block = block, ctrl = ctrl))
 }
 
-ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
+.ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
     if (ctrl$nmax < Inf) {
         if (!is.function(ytrafo))
             return(.cfit_2d(formula, data = data, weights = weights, block = block,
@@ -113,6 +113,13 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
                 tr <- list(estfun = Y)
             }
             Y <- tr$estfun
+            if (!is.null(tr$index)) {
+                if (length(tr$index) != nrow(data))
+                    stop("incorrect index")
+                ### index == 0 means NA
+                subset <- subset[tr$index[subset] > 0]
+                Y <- Y[tr$index + 1L,,drop = FALSE]
+            }
 
             for (j in whichvar) {
                 ### compute linear statistic + expecation and covariance
@@ -260,6 +267,7 @@ ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
             }
             Y <- tr$estfun
             iy <- tr$index
+            if (is.null(iy)) stop("trafo did not return index")
 
             for (j in whichvar) {
                 ix <- bdr[[j]]
@@ -353,139 +361,47 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
     splitstat <- match.arg(splitstat)
     testtype <- match.arg(testtype)
 
-    ## apply infrastructure for determining split points
-    if (is.null(applyfun)) {
-        applyfun <- if(is.null(cores)) {
-            lapply
-        } else {
-            function(X, FUN, ...) 
-                parallel::mclapply(X, FUN, ..., mc.cores = cores)
-        }
-    }
-
-    if (multiway & maxsurrogate > 0)
-        stop("surrogate splits currently not implemented for multiway splits")
-
-    list(teststat = teststat, splitstat = splitstat, 
-         criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
-         testtype = testtype, nmax = nmax, logmincriterion = logmincriterion,
-         minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, nresample = nresample, mtry = mtry, 
-         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         maxsurrogate = maxsurrogate, majority = majority, 
-         applyfun = applyfun)
+    c(.urp_control(criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
+                   logmincriterion = logmincriterion, minsplit = minsplit, minbucket = minbucket, 
+                   minprob = minprob, stump = stump, mtry = mtry,
+                   maxdepth = maxdepth, multiway = multiway, splittry = splittry,
+                   maxsurrogate = maxsurrogate, majority = majority, 
+                   applyfun = applyfun),
+      list(teststat = teststat, splitstat = splitstat, 
+           testtype = testtype, nmax = nmax, nresample = nresample))
 }
 
 ctree <- function(formula, data, weights, subset, na.action = na.pass, 
                   control = ctree_control(...), ytrafo = NULL, 
                   scores = NULL, ...) {
 
-    mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "weights", "na.action"),
-               names(mf), 0)
-    mf <- mf[c(1, m)]
+    call <- match.call(expand.dots = FALSE)
+    frame <- parent.frame()
 
-    f <- if (inherits(formula, "Formula")) formula else Formula(formula)
-    if (length(length(f)) != 2)
-        stop("incorrect formula")  
-    if (!(length(f)[2] %in% 1:3))
-        stop("incorrect formula")
-    mf$formula <- f
-    mf$drop.unused.levels <- FALSE      
-    mf$na.action <- na.pass
-    mf[[1]] <- quote(stats::model.frame)
-    mf1 <- eval(mf, parent.frame())
-    mfterms <- terms(mf1)
-    fdot <- attr(mfterms, "Formula_without_dot")
+    trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
+    tree <- .urp_tree(call, frame, na.action = na.action, control = control,
+                      growfun = .ctreegrow, trafofun = trafofun,
+                      scores = scores, doFit = TRUE)
+    mf <- tree$mf
+    weights <- model.weights(mf)
+    if (is.null(weights)) weights <- rep(1, nrow(mf))
 
-    weights <- model.weights(mf1)
-    if (is.null(weights)) weights <- integer(0)
-    mf1[["(weights)"]] <- NULL
-    if (!is.null(o <- attr(attr(mf1, "terms"), "offset")))
-        mf1[[attr(attr(mf1, "terms"), "offset")]] <- NULL
-
-    av <- all.vars(f)
-    av <- av[av != "."]
-    if (!all(av %in% colnames(mf1))) {
-         mf[[1]] <- quote(stats::get_all_vars)
-         mf$drop.unused.levels <- NULL
-         mf$na.action <- NULL
-         mf$weights <- NULL
-         mf2 <- eval(mf, parent.frame())
-         mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
-         mf1 <- cbind(mf1, mf2)
-    }
-    mf <- na.action(mf1)
-
-    if (length(f)[2] == 1) { ### y ~ z _or_ y ~ .
-        if (is.null(fdot)) fdot <- f
-        modelf <- formula(fdot, lhs = 1, rhs = 0)
-        partf <- formula(fdot, lhs = 0, rhs = 1)
-        blockf <- NULL
-    } else if (length(f)[2] == 2) { ### y ~ x | z
-        if (!is.null(fdot))
-            stop("dots are not allowed in multipart formulas")
-        modelf <- formula(f, lhs = 1, rhs = 1)
-        partf <- formula(f, lhs = 0, rhs = 2)
-        blockf <- NULL
-    } else if (length(f)[2] == 3) { ### y ~ x | z | block
-        if (!is.null(fdot))
-            stop("dots are not allowed in multipart formulas")
-        modelf <- formula(f, lhs = 1, rhs = 1)
-        partf <- formula(f, lhs = 0, rhs = 2)
-        blockf <- formula(f, lhs = 0, rhs = 3)
-    }
-    zvars <- rownames(attr(terms(partf, data = mf), "factors"))
-
-    block <- NULL
-    if (!is.null(blockf)) {
-        block <- model.frame(blockf, data = mf)
-        if (length(block) != 1 || !is.factor(block[[1]]))
-            stop("block is not a single factor")
-    }
-
-    ### <FIXME> should be xtrafo
-    if (!is.null(scores)) {
-        for (n in names(scores)) {
-            sc <- scores[[n]]
-            if (is.ordered(mf[[n]]) && 
-                nlevels(mf[[n]]) == length(sc)) {
-                attr(mf[[n]], "scores") <- as.numeric(sc)
-            } else {
-                warning("scores for variable ", sQuote(n), " ignored")
-            }
-        }
-    }
-    #### </FIXME>
-
-    ### returns a _function_ (trafo, subset, weights)
-    ### for growing the tree
-    treefun <- ctreegrow(mf, partyvars = match(zvars, colnames(mf)), 
-                         block = block, ctrl = control)
-    ### returns a _function_ (subset) for computing estfun (essentially)
-    ytrafo <- ctreetrafo(modelf, data = mf, weights = weights, block = block, 
-                         ctrl = control, ytrafo = ytrafo)
-    ### grow the tree
-    tree <- treefun(ytrafo, subset = 1:nrow(mf), weights)
-
-    if (length(weights) == 0)
-        weights <- rep.int(1, nrow(mf))
-    fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
+    fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    y <- model.part(Formula(modelf), data = mf, lhs = 1, rhs = 0)
+    y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[3]] <- y
     names(fitted)[3] <- "(response)"
-    ret <- party(tree, data = mf, fitted = fitted, 
+    ret <- party(tree$node, data = mf, fitted = fitted, 
                  info = list(call = match.call(), control = control))
-    ret$update <- treefun
-    ret$trafo <- ytrafo
+    ret$update <- tree$treefun
+    ret$trafo <- tree$trafo
     class(ret) <- c("constparty", class(ret))
 
     ### doesn't work for Surv objects
     # ret$terms <- terms(formula, data = mf)
-    ret$terms <- mfterms
+    ret$terms <- tree$terms
     ### need to adjust print and plot methods
     ### for multivariate responses
     ### if (length(response) > 1) class(ret) <- "party"
