@@ -231,6 +231,7 @@
     ### there might be dots in formula, fdot
     ### is formula with dots replaced
     fdot <- attr(mfterms, "Formula_without_dot")
+    if (!is.null(fdot)) fdot <- Formula(formula(fdot, collapse = TRUE))
 
     ### extract weights
     weights <- model.weights(mf1)
@@ -244,6 +245,7 @@
     ### and extract their arguments
     av <- if (!is.null(fdot)) all.vars(fdot) else all.vars(f)
     if (!all(av %in% colnames(mf1))) {
+         ### <FIXME> does this work with subset???
          mf[[1]] <- quote(stats::get_all_vars)
          mf$drop.unused.levels <- NULL
          mf$na.action <- NULL
@@ -251,6 +253,7 @@
          mf2 <- eval(mf, frame)
          mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
          mf1 <- cbind(mf1, mf2)
+         ### </FIXME>
     }
     mf <- na.action(mf1)
 

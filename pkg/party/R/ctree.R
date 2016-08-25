@@ -1,59 +1,63 @@
 
-.ctreegrow <- function(data, partyvars, block, ctrl) {
+.ctreetrafo <- function
+(
+    formula, 
+    data,
+    weights, 
+    block, 
+    ctrl, 
+    ytrafo
+) {
+
+    if (ctrl$nmax < Inf) {
+        if (is.function(ytrafo)) 
+            return(ytrafo(formula, data = data, weights = weights, 
+                          block = block, ctrl = ctrl))
+        f <- Formula(formula)
+        mf <- model.frame(formula = f, data = data)
+        y <- model.part(f, data = mf, lhs = 1, rhs = 0)
+        bdr <- BDR::BDR(y, nmax = ctrl$nmax, total = TRUE, 
+                        complete.cases.only = TRUE)
+        y <- attr(bdr, "levels")
+        index <- c(bdr)
+        attr(index, "levels") <- 1:NROW(y)
+        cn <- colnames(y)
+        Y <- partykit:::.y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
+        ### first row corresponds to missings
+        Y <- rbind(0, Y)  
+        return(function(subset)
+            list(estfun = Y, index = index))
+    } else {
+        if (is.function(ytrafo))
+            return(ytrafo(formula, data = data, weights = weights, 
+                          block = block, ctrl = ctrl))
+        f <- Formula(formula)
+        mf <- model.frame(formula = f, data = data, na.action = na.pass)
+        y <- model.part(f, data = mf, lhs = 1, rhs = 0)
+        cc <- complete.cases(y)
+        Yi <- partykit:::.y2infl(y[cc,,drop = FALSE], colnames(y), ytrafo = ytrafo)
+        Y <- matrix(0, nrow = nrow(mf), ncol = NCOL(Yi))
+        Y[cc,] <- Yi
+        #    colnames(Y) <- colnames(Yi)
+        storage.mode(Y) <- "double"
+        return(function(subset)
+            list(estfun = Y))
+    }
+}
+
+.ctreegrow <- function
+(
+    data, 
+    partyvars, 
+    block, 
+    ctrl
+) {
+
     if (ctrl$nmax < Inf)
         return(.ctree_fit_2d(data = data, partyvars = partyvars, 
                              block = block, ctrl = ctrl))
     return(.ctree_fit_1d(data = data, partyvars = partyvars,
                          block = block, ctrl = ctrl))
-}
-
-.ctreetrafo <- function(formula, data, weights, block, ctrl, ytrafo) {
-    if (ctrl$nmax < Inf) {
-        if (!is.function(ytrafo))
-            return(.cfit_2d(formula, data = data, weights = weights, block = block,
-                            ytrafo = ytrafo, ctrl = ctrl))
-        return(ytrafo(formula, data = data, weights = weights, block = block,
-                      ctrl = ctrl))
-    } else {
-        if (!is.function(ytrafo))
-            return(.cfit(formula, data = data, weights = weights, block = block,
-                         ytrafo = ytrafo, ctrl = ctrl))
-        return(ytrafo(formula, data = data, weights = weights, block = block, ctrl = ctrl))
-    }
-}
-    
-
-.cfit <- function(formula, data, weights = NULL, block = NULL, ytrafo = NULL, ctrl) {
-    f <- Formula(formula)
-    mf <- model.frame(formula = f, data = data, na.action = na.pass)
-    y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-    cc <- complete.cases(y)
-    Yi <- partykit:::.y2infl(y[cc,,drop = FALSE], colnames(y), ytrafo = ytrafo)
-    Y <- matrix(0, nrow = nrow(mf), ncol = NCOL(Yi))
-    Y[cc,] <- Yi
-#    colnames(Y) <- colnames(Yi)
-    storage.mode(Y) <- "double"
-    function(subset) {
-        list(estfun = Y)
-    }
-}
-
-.cfit_2d <- function(formula, data, weights = NULL, block = NULL,
-                     ytrafo = ytrafo, ctrl) {
-    f <- Formula(formula)
-    mf <- model.frame(formula = f, data = data)
-    y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-    bdr <- BDR::BDR(y, nmax = ctrl$nmax, total = TRUE, complete.cases.only = TRUE)
-    y <- attr(bdr, "levels")
-    index <- c(bdr)
-    attr(index, "levels") <- 1:NROW(y)
-    cn <- colnames(y)
-    Y <- partykit:::.y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
-    ### first row corresponds to missings
-    Y <- rbind(0, Y)
-    function(subset) {
-        list(estfun = Y, index = index)
-    }
 }
 
 ### conditional inference trees
@@ -97,9 +101,9 @@
                               weights = integer(0), whichvar) 
         {
 
-            ret <- list(p = matrix(NA, nrow = 2L, ncol = ncol(data)))
-            colnames(criteria) <- names(data)
-            rownames(criteria) <- c("statistic", "p.value")
+            ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
+            colnames(ret$criteria) <- names(data)
+            rownames(ret$criteria) <- c("statistic", "p.value")
 
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
@@ -131,11 +135,11 @@
                 tst <- doTest(lev, teststat = ctrl$teststat, 
                               pvalue = ctrl$testtype != "Teststatistic",
                               lower = TRUE, log = TRUE)
-                criteria["statistic", j] <- log(tst$TestStatistic)
-                criteria["p.value", j] <- tst$p.value
+                ret$criteria["statistic", j] <- log(tst$TestStatistic)
+                ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
-                criteria["p.value",] <- criteria["p.value",] * length(whichvar)
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
 
             ret <- c(ret, tr[names(tr) != "estfun"])
 
@@ -143,8 +147,10 @@
             ### for a subset of observations and variables
             ### y is used for node ids when computing surrogate splits
             ### splitfun as part of the return object of selectfun allows
-            ### returning splits found during selections (ie, exhaustive searchs)
-            ### splitfun already knows Y by lexical scoping, no need to compute it twice
+            ### returning splits found during selections (ie, exhaustive 
+            ### searchs)
+            ### splitfun already knows Y by lexical scoping, no need to 
+            ### compute it twice
             ret$splitfun <- function(whichvar, minbucket) 
             {
  
@@ -152,7 +158,8 @@
                 for (j in whichvar) {
                     x <- data[[j]]
                     ORDERED <- is.ordered(x) || is.numeric(x)
-                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && is.factor(x)) {
+                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && 
+                         is.factor(x)) {
                         index <- 1L:nlevels(x)
                         if (length(weights) > 0) {
                             xt <- xtabs(~ x, subset = subset)
@@ -162,10 +169,11 @@
                         index[xt == 0] <- NA
                         index[xt < minbucket] <- nlevels(x) + 1L
                         index <- unclass(factor(index))
-                        ret <- partysplit(as.integer(j), index = as.integer(index))
+                        ret <- partysplit(as.integer(j), 
+                                          index = as.integer(index))
                         break()
                     } else {
-                        ### X being an integer triggers maximally selected stats
+                        ### integer X trigger maximally selected stats
                         if (is.factor(x)) {
                             X <- unclass(x)
                         } else {
@@ -187,9 +195,11 @@
                             if (length(sp) == 1) {
                                 if (!is.ordered(x))
                                     sp <- ux[sp]
-                                ret <- partysplit(as.integer(j), breaks = sp, index = 1L:2L)
+                                ret <- partysplit(as.integer(j), breaks = sp, 
+                                                  index = 1L:2L)
                             } else {
-                                ret <- partysplit(as.integer(j), index = as.integer(sp) + 1L)
+                                ret <- partysplit(as.integer(j), 
+                                                  index = as.integer(sp) + 1L)
                             }
                             break
                         }
@@ -201,7 +211,8 @@
         }
 
         tree <- .urp_node(id = 1L, data = data, 
-                          selectfun = function(...) selectfun(..., trafo = trafo),
+                          selectfun = function(...) 
+                              selectfun(..., trafo = trafo),
                           partyvars = partyvars, weights = weights, 
                           subset = subset, ctrl = ctrl)
 
@@ -251,7 +262,7 @@
                               weights = integer(0), whichvar) 
         {
     
-            ret <- list(p = matrix(NA, nrow = 2L, ncol = ncol(data)))
+            ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
             colnames(ret$criteria) <- names(data)
             rownames(ret$criteria) <- c("statistic", "p.value")
 
@@ -283,7 +294,8 @@
                 ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
-                ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * 
+                    length(whichvar)
 
             ret <- c(ret, tr[!(names(tr) %in% c("estfun", "index"))])
 
@@ -297,7 +309,8 @@
                 for (j in whichvar) {
                     x <- data[[j]]
                     ORDERED <- is.ordered(x) || is.numeric(x)
-                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && is.factor(x)) {
+                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && 
+                         is.factor(x)) {
                         index <- 1L:nlevels(x)
                         if (length(weights) > 0) {
                             xt <- xtabs(~ x, subset = subset)
@@ -307,7 +320,8 @@
                         index[xt == 0] <- NA
                         index[xt < minbucket] <- nlevels(x) + 1L
                         index <- unclass(factor(index))
-                        ret <- partysplit(as.integer(j), index = as.integer(index))
+                        ret <- partysplit(as.integer(j), 
+                                          index = as.integer(index))
                         break()
                     } else {
                         ix <- bdr[[j]]
@@ -324,9 +338,11 @@
                             if (length(sp) == 1) {
                                 if (!is.ordered(x))
                                     sp <- ux[sp]
-                                ret <- partysplit(as.integer(j), breaks = sp, index = 1L:2L)
+                                ret <- partysplit(as.integer(j), breaks = sp, 
+                                                  index = 1L:2L)
                             } else {
-                                ret <- partysplit(as.integer(j), index = as.integer(sp) + 1L)
+                                ret <- partysplit(as.integer(j), 
+                                                  index = as.integer(sp) + 1L)
                             }
                             break
                         }
@@ -338,25 +354,39 @@
         }
 
         tree <- .urp_node(id = 1L, data = data, 
-                          selectfun = function(...) selectfun(..., trafo = trafo),
+                          selectfun = function(...) 
+                              selectfun(..., trafo = trafo),
                           partyvars = partyvars, weights = weights,
                           subset = subset, ctrl = ctrl)
         return(tree)
     })
 }
 
-ctree_control <- function(teststat = c("quadratic", "maximum"), 
-                          splitstat = c("maximum", "quadratic"),
-                          testtype = c("Bonferroni", "MonteCarlo", 
-                                       "Univariate", "Teststatistic"),
-                          nmax = Inf, 
-                          alpha = 0.05, mincriterion = 1 - alpha, 
-                          logmincriterion = log(mincriterion), minsplit = 20L, 
-                          minbucket = 7L, minprob = 0.01, stump = FALSE, 
-                          nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
-                          maxdepth = Inf, multiway = FALSE, splittry = 2L, 
-                          majority = FALSE, caseweights = TRUE, 
-                          applyfun = NULL, cores = NULL) {
+ctree_control <- function
+(
+    teststat = c("quadratic", "maximum"), 
+    splitstat = c("maximum", "quadratic"),
+    testtype = c("Bonferroni", "MonteCarlo", 
+                 "Univariate", "Teststatistic"),
+    nmax = Inf, 
+    alpha = 0.05, 
+    mincriterion = 1 - alpha, 
+    logmincriterion = log(mincriterion), 
+    minsplit = 20L, 
+    minbucket = 7L, 
+    minprob = 0.01, 
+    stump = FALSE, 
+    nresample = 9999L, 
+    maxsurrogate = 0L, 
+    mtry = Inf, 
+    maxdepth = Inf, 
+    multiway = FALSE, 
+    splittry = 2L, 
+    majority = FALSE, 
+    caseweights = TRUE, 
+    applyfun = NULL, 
+    cores = NULL
+) {
 
     teststat <- match.arg(teststat)
     splitstat <- match.arg(splitstat)
@@ -365,21 +395,34 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
     if (!caseweights)
         stop("only caseweights currently implemented in ctree")
 
-    c(.urp_control(criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
-                   logmincriterion = logmincriterion, minsplit = minsplit, minbucket = minbucket, 
-                   minprob = minprob, stump = stump, mtry = mtry,
-                   maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-                   maxsurrogate = maxsurrogate, majority = majority, 
-                   caseweights = caseweights, applyfun = applyfun),
+    c(.urp_control(criterion = ifelse(testtype == "Teststatistic", 
+                                      "statistic", "p.value"),
+                   logmincriterion = logmincriterion, minsplit = minsplit, 
+                   minbucket = minbucket, minprob = minprob, stump = stump, 
+                   mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
+                   splittry = splittry, maxsurrogate = maxsurrogate, 
+                   majority = majority, caseweights = caseweights, 
+                   applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, 
            testtype = testtype, nmax = nmax, nresample = nresample))
 }
 
-ctree <- function(formula, data, weights, subset, na.action = na.pass, 
-                  control = ctree_control(...), ytrafo = NULL, 
-                  scores = NULL, ...) {
+ctree <- function
+(
+    formula, 
+    data, 
+    weights, 
+    subset, 
+    na.action = na.pass, 
+    control = ctree_control(...), 
+    ytrafo = NULL, 
+    scores = NULL, 
+    ...
+) {
 
+    ### get the call and the calling environment for .urp_tree
     call <- match.call(expand.dots = FALSE)
+    call$na.action <- na.action
     frame <- parent.frame()
 
     ### <FIXME> should be xtrafo
@@ -399,7 +442,7 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     #### </FIXME>
 
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
-    tree <- .urp_tree(call, frame, na.action = na.action, control = control,
+    tree <- .urp_tree(call, frame, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
                       doFit = TRUE)
     mf <- tree$mf

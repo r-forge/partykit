@@ -51,10 +51,11 @@ glmtree <- function(formula, data, weights, subset, na.action = na.pass,
                     family = gaussian(), control = ctree_control(), ...) {
 
     call <- match.call(expand.dots = FALSE)
+    call$na.action <- na.action
     frame <- parent.frame()
     control$family <- family
 
-    tree <- .urp_tree(call, frame, na.action = na.action, control = control,
+    tree <- .urp_tree(call, frame, control = control,
                       growfun = .ctreegrow, trafofun = .glmtrafo,
                       doFit = TRUE)
 
