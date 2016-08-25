@@ -945,11 +945,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   if(vcov){
     
     # vcov for distribution parameter
-    vc.par <- solve(hess.par)
+    vc.par <- solve(-hess.par)
     colnames(vc.par) <- rownames(vc.par) <- par.names
     
     #vcov for link coefficients eta
-    vc.eta <- solve(hess.eta)
+    vc.eta <- solve(-hess.eta)
     colnames(vc.eta) <- rownames(vc.eta) <- eta.names
     
   } else {
