@@ -4,10 +4,11 @@ library("sandwich")
 library("libcoin")
 data("PimaIndiansDiabetes", package = "mlbench")
 
-     ## recursive partitioning of a logistic regression model
-system.time(     pid_tree <- partykit::glmtree(diabetes ~ glucose | pregnant +
+
+## partykit: recursive partitioning of a logistic regression model
+pid_tree <- partykit::glmtree(diabetes ~ glucose | pregnant +
        pressure + triceps + insulin + mass + pedigree + age,
-       data = PimaIndiansDiabetes, family = binomial))
+       data = PimaIndiansDiabetes, family = binomial)
 
 pid_tree
 
@@ -16,11 +17,9 @@ m <- glm(diabetes ~ glucose:nd, data = PimaIndiansDiabetes, family = binomial)
 logLik(m)
 AIC(m)
 
-
-     ## recursive partitioning of a logistic regression model
-system.time(     pid_tree1 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
+pid_tree1 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
        pressure + triceps + insulin + mass + pedigree + age,
-       data = PimaIndiansDiabetes, family = binomial))
+       data = PimaIndiansDiabetes, family = binomial)
 
 pid_tree1
 
@@ -34,13 +33,10 @@ AIC(m1)
 
 table(nd, nd1)
 
-
-
-     ## recursive partitioning of a logistic regression model
-system.time(     pid_tree2 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
+pid_tree2 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
        pressure + triceps + insulin + mass + pedigree + age,
        data = PimaIndiansDiabetes, family = binomial, 
-       control = ctree_control(nmax = 20)))
+       control = ctree_control(nmax = 20))
 
 pid_tree2
 
@@ -54,5 +50,3 @@ AIC(m2)
 
 table(nd, nd2)
 table(nd1, nd2)
-
-

@@ -25,70 +25,17 @@ Attaching package: 'partyNG'
 
 The following objects are masked from 'package:partykit':
 
-    ctree, ctree_control
+    ctree, ctree_control, glmtree
 
 > library("sandwich")
 > library("libcoin")
 > data("PimaIndiansDiabetes", package = "mlbench")
 > 
-> glmtree <- function(formula, data, family = gaussian(), 
-+                     control = ctree_control(), ...) {
-+ 
-+     if (control$nmax < Inf) {
-+         glmtrafo <- function(formula, data, weights, block, ctrl) {
-+             if (!is.null(block)) stop("block not implemented")   
-+             mf <- model.frame(formula, data, na.action = na.pass)
-+             bdr <- BDR::BDR(mf, complete.cases.only = TRUE, total = TRUE)
-+             mf2 <- as.data.frame(bdr)
-+             iy <- c(bdr)
-+             attr(iy, "levels") <- 1:nrow(mf2)
-+             mfs <- model.frame(formula, data = mf2)
-+             y <- model.response(mfs)
-+             x <- model.matrix(formula, data = mf2)
-+             function(subset) {
-+                 w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
-+                 mod <- glm(y ~ x + 0, family = family, weights = w)
-+                 Y <- estfun(mod)
-+                 Y <- Y / w
-+                 Y[w == 0,] <- 0
-+                 ret <- rbind(0, Y)
-+                 list(estfun = ret, index = iy, coef = coef(mod), logLik = logLik(mod))
-+             }
-+         }
-+     } else {
-+         glmtrafo <- function(formula, data, weights, block, ctrl) {
-+             if (!is.null(block)) stop("block not implemented")
-+             mf <- model.frame(formula, data, na.action = na.pass)
-+             cc <- complete.cases(mf)
-+             y <- model.response(mf)
-+             x <- model.matrix(formula, data = mf)
-+             function(subset) {
-+                 s <- subset[cc[subset]]
-+                 ys <- y[s]
-+                 xs <- x[s, , drop = FALSE]
-+                 if (length(weights) > 0) {
-+                     w <- weights[cc[subset]]
-+                     mod <- glm(ys ~ xs + 0, family = family, weights = w)
-+                 } else {
-+                     mod <- glm(ys ~ xs + 0, family = family)
-+                 }
-+                 ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-+                 ret[subset,] <- estfun(mod)
-+                 storage.mode(ret) <- "double"
-+                 list(estfun = ret, coef = coef(mod), logLik = logLik(mod))
-+             }
-+         }
-+     }
-+     ctree(formula, data, ytrafo = glmtrafo, control = control, ...)
-+ }
 > 
-> 
->      ## recursive partitioning of a logistic regression model
-> system.time(     pid_tree <- partykit::glmtree(diabetes ~ glucose | pregnant +
+> ## partykit: recursive partitioning of a logistic regression model
+> pid_tree <- partykit::glmtree(diabetes ~ glucose | pregnant +
 +        pressure + triceps + insulin + mass + pedigree + age,
-+        data = PimaIndiansDiabetes, family = binomial))
-   user  system elapsed 
-  0.880   0.004   0.884 
++        data = PimaIndiansDiabetes, family = binomial)
 > 
 > pid_tree
 Generalized linear model tree (family: binomial)
@@ -122,13 +69,9 @@ Objective function (negative log-likelihood): 355.4578
 > AIC(m)
 [1] 750.4804
 > 
-> 
->      ## recursive partitioning of a logistic regression model
-> system.time(     pid_tree1 <- glmtree(diabetes ~ glucose | pregnant +
+> pid_tree1 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
 +        pressure + triceps + insulin + mass + pedigree + age,
-+        data = PimaIndiansDiabetes, family = binomial))
-   user  system elapsed 
-  0.040   0.000   0.038 
++        data = PimaIndiansDiabetes, family = binomial)
 > 
 > pid_tree1
 
@@ -190,15 +133,10 @@ nd    2   6   7   8  10  11
   4  14  11 276   0   3   0
   5  13   0   0 152  66  66
 > 
-> 
-> 
->      ## recursive partitioning of a logistic regression model
-> system.time(     pid_tree2 <- glmtree(diabetes ~ glucose | pregnant +
+> pid_tree2 <- partyNG::glmtree(diabetes ~ glucose | pregnant +
 +        pressure + triceps + insulin + mass + pedigree + age,
 +        data = PimaIndiansDiabetes, family = binomial, 
-+        control = ctree_control(nmax = 20)))
-   user  system elapsed 
-  0.028   0.000   0.030 
++        control = ctree_control(nmax = 20))
 > 
 > pid_tree2
 
@@ -265,8 +203,6 @@ nd1    2   5   6   7
   10   0   0   0  69
   11   0   0   0  66
 > 
-> 
-> 
 > proc.time()
    user  system elapsed 
-  2.108   0.024   2.130 
+  2.028   0.060   2.087 
