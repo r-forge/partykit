@@ -206,56 +206,50 @@
 ) {
 
     ### call and frame come from user-visible functions, like ctree()
-    m <- match(c("formula", "data", "subset", "weights", "na.action"),
+    m <- match(c("formula", "data", "subset", "weights", "offset", "cluster"),
                names(call), 0L)
     mf <- call[c(1, m)]
     formula <- eval(mf$formula, frame)
-    na.action <- eval(mf$na.action, frame)
+    na.action <- eval(call$na.action, frame)
 
     f <- if (inherits(formula, "Formula")) formula else Formula(formula)
     ### formula must feature one lhs and one rhs
     if (length(length(f)) != 2L)
         stop("incorrect formula") 
     ### three-part formula allowed in rhs 
-    if (!(length(f)[2] %in% 1L:3L))
+    if (!(length(f)[2] %in% 1L:2L))
         stop("incorrect formula")
     ### only simple formula allowed in lhs 
     if (length(f)[1] != 1)
         stop("incorrect formula")
     mf$formula <- f
-    mf$drop.unused.levels <- FALSE      
-    mf$na.action <- na.pass
-    mf[[1]] <- quote(stats::model.frame)
-    mf1 <- eval(mf, frame)
-    mfterms <- terms(mf1)
+    mf[[1]] <- quote(stats::get_all_vars)
+    mf <- eval(mf, frame) 
+    mfterms <- terms(f, data = mf) 
     ### there might be dots in formula, fdot
     ### is formula with dots replaced
     fdot <- attr(mfterms, "Formula_without_dot")
     if (!is.null(fdot)) fdot <- Formula(formula(fdot, collapse = TRUE))
-
-    ### extract weights
-    weights <- model.weights(mf1)
-    if (is.null(weights)) weights <- integer(0L)
-    mf1[["(weights)"]] <- NULL
-    ### offsets are dealt with by models, not the tree
-    if (!is.null(o <- attr(attr(mf1, "terms"), "offset")))
-        mf1[[attr(attr(mf1, "terms"), "offset")]] <- NULL
-
-    ### work around evaluations like offset(), Surv() etc
-    ### and extract their arguments
     av <- if (!is.null(fdot)) all.vars(fdot) else all.vars(f)
-    if (!all(av %in% colnames(mf1))) {
-         ### <FIXME> does this work with subset???
-         mf[[1]] <- quote(stats::get_all_vars)
-         mf$drop.unused.levels <- NULL
-         mf$na.action <- NULL
-         mf$weights <- NULL
-         mf2 <- eval(mf, frame)
-         mf2 <- mf2[, !(colnames(mf2) %in% colnames(mf1)), drop = FALSE]
-         mf1 <- cbind(mf1, mf2)
-         ### </FIXME>
+    nm <- names(mf) 
+    nm[!(nm %in% av)] <- paste("(", nm[!(nm %in% av)], ")", sep = "")
+    names(mf) <- nm 
+
+    ### <FIXME> do we want this? </FIXME>
+    mf <- na.action(mf)
+
+    weights <- model.weights(mf) 
+    if (is.null(weights)) weights <- integer(0)
+    cluster <- mf[["(cluster)"]] 
+    if (!is.null(cluster)) {
+        if (!is.factor(cluster)) stop("cluster is not a factor")
     }
-    mf <- na.action(mf1)
+    subset <- mf[["(subset)"]] 
+    if (!is.null(subset)) {
+        subset <- which(subset)
+    } else {
+        subset <- 1L:nrow(mf)
+    }
 
     if (length(f)[2] == 1L) { ### y ~ z or y ~ .
         if (is.null(fdot)) fdot <- f
@@ -268,43 +262,27 @@
         modelf <- formula(f, lhs = 1L, rhs = 1L)
         partf <- formula(f, lhs = 0L, rhs = 2L)
         blockf <- NULL
-    } else if (length(f)[2] == 3L) { ### y ~ x | z | block
-        if (!is.null(fdot))
-            stop("dots are not allowed in multipart formulas")
-        modelf <- formula(f, lhs = 1L, rhs = 1L)
-        partf <- formula(f, lhs = 0L, rhs = 2L)
-        blockf <- formula(f, lhs = 0L, rhs = 3L)
-    }
+    } 
     zvars <- rownames(attr(terms(partf, data = mf), "factors"))
-
-    block <- NULL
-    if (!is.null(blockf)) {
-        block <- model.frame(blockf, data = mf)
-        if (length(block) != 1 || !is.factor(block[[1]]))
-            stop("block is not a single factor")
-    }
 
     ### returns a _function_ (trafo, subset, weights)
     ### for growing the tree, weights = integer(0) must work
     treefun <- growfun(mf, partyvars = match(zvars, colnames(mf)), 
-                       block = block, ctrl = control)
+                       block = cluster, ctrl = control)
     if (!isTRUE(all.equal(names(formals(treefun)), 
                           c("trafo", "subset", "weights"))))
         stop("growfun return incorrect")
     ### returns a _function_ (subset) for computing estfun (essentially)
-    trafo <- trafofun(modelf, data = mf, weights = weights, block = block, 
-                      ctrl = control)
+    trafo <- trafofun(modelf, data = mf, ctrl = control)
     if (!isTRUE(all.equal(names(formals(trafo)), "subset")))
         stop("trafofun return incorrect")
     
-    if (length(weights) > 0L)    
-        mf[["(weights)"]] <- weights    
     ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms)
     if (!doFit)
         return(ret)
 
     ### grow the tree
-    tree <- treefun(trafo, subset = 1L:nrow(mf), weights)
+    tree <- treefun(trafo, subset = subset, weights)
     ret$nodes <- tree
     return(ret)
 }

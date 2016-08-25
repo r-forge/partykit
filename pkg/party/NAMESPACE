@@ -6,7 +6,7 @@ import("Formula")
 importFrom("stats", "model.weights", "na.pass", "terms", "xtabs",
            "as.formula", "complete.cases", "model.frame",
            "coef", "gaussian", "glm", "logLik",
-           "model.matrix", "model.response")
+           "model.matrix", "model.response", "model.offset")
 # importFrom("sandwich", "estfun")
 
 export(ctree, glmtree, ctree_control)

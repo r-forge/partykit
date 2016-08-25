@@ -1,5 +1,13 @@
 
-.glmtrafo <- function(formula, data, weights, block, ctrl) {
+.glmtrafo <- function(formula, data, ctrl) {
+
+    weights <- model.weights(data)
+    if (is.null(weights)) weights <- integer(0)
+    block <- data[["cluster"]]
+    offset <- model.offset(data)
+
+    ### <FIXME> handle offset and block </FIXME>
+
     if (ctrl$nmax < Inf) {
         if (!is.null(block)) stop("block not implemented")   
         mf <- model.frame(formula, data, na.action = na.pass)

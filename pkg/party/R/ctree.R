@@ -3,11 +3,15 @@
 (
     formula, 
     data,
-    weights, 
-    block, 
     ctrl, 
     ytrafo
 ) {
+
+    weights <- model.weights(data)
+    if (is.null(weights)) weights <- integer(0)
+    block <- data[["cluster"]]
+    offset <- model.offset(data)
+    if (!is.null(offset)) warning("offset ignored by trafo")
 
     if (ctrl$nmax < Inf) {
         if (is.function(ytrafo)) 
@@ -452,7 +456,8 @@ ctree <- function
     fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
+    y <- model.part(Formula(formula), data = model.frame(Formula(formula), data = mf),
+                    lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[3]] <- y
     names(fitted)[3] <- "(response)"
