@@ -199,6 +199,8 @@
 (
     call, 		### match.call of user-visible function
     frame, 		### parent.frame of user-visible function
+    data = NULL, 
+    data_asis = FALSE, 
     control, 		### .urp_control() or more
     growfun, 		### function for growing trees
     trafofun, 		### function for transformations
@@ -223,8 +225,13 @@
     if (length(f)[1] != 1)
         stop("incorrect formula")
     mf$formula <- f
-    mf[[1]] <- quote(stats::get_all_vars)
-    mf <- eval(mf, frame) 
+
+    if (!is.null(data) && data_asis) {
+        mf <- data
+    } else {
+        mf[[1]] <- quote(stats::get_all_vars)
+        mf <- eval(mf, frame) 
+    }
     mfterms <- terms(f, data = mf) 
     ### there might be dots in formula, fdot
     ### is formula with dots replaced
@@ -236,7 +243,8 @@
     names(mf) <- nm 
 
     ### <FIXME> do we want this? </FIXME>
-    mf <- na.action(mf)
+    if (!data_asis)
+        mf <- na.action(mf)
 
     weights <- model.weights(mf) 
     if (is.null(weights)) weights <- integer(0)

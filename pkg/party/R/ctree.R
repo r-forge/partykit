@@ -416,11 +416,13 @@ ctree <- function
     formula, 
     data, 
     weights, 
-    subset, 
+    subset,
+    offset,
+    cluster, 
     na.action = na.pass, 
     control = ctree_control(...), 
     ytrafo = NULL, 
-    scores = NULL, 
+    scores = NULL,
     ...
 ) {
 
@@ -428,6 +430,13 @@ ctree <- function
     call <- match.call(expand.dots = FALSE)
     call$na.action <- na.action
     frame <- parent.frame()
+    if (missing(data)) {
+        data <- NULL
+        data_asis <- FALSE
+    } else {
+        data_asis <- missing(weights) && missing(subset) && 
+                     missing(cluster) && missing(offset)
+    }
 
     ### <FIXME> should be xtrafo
     if (!is.null(scores)) {
@@ -446,7 +455,7 @@ ctree <- function
     #### </FIXME>
 
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
-    tree <- .urp_tree(call, frame, control = control,
+    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
                       doFit = TRUE)
     mf <- tree$mf
