@@ -98,8 +98,8 @@
         {
 
             ret <- list(p = matrix(NA, nrow = 2L, ncol = ncol(data)))
-            colnames(ret$p) <- names(data)
-            rownames(ret$p) <- c("statistic", "p.value")
+            colnames(criteria) <- names(data)
+            rownames(criteria) <- c("statistic", "p.value")
 
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
@@ -131,11 +131,11 @@
                 tst <- doTest(lev, teststat = ctrl$teststat, 
                               pvalue = ctrl$testtype != "Teststatistic",
                               lower = TRUE, log = TRUE)
-                ret$p["statistic", j] <- log(tst$TestStatistic)
-                ret$p["p.value", j] <- tst$p.value
+                criteria["statistic", j] <- log(tst$TestStatistic)
+                criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
-                ret$p["p.value",] <- ret$p["p.value",] * length(whichvar)
+                criteria["p.value",] <- criteria["p.value",] * length(whichvar)
 
             ret <- c(ret, tr[names(tr) != "estfun"])
 
@@ -252,8 +252,8 @@
         {
     
             ret <- list(p = matrix(NA, nrow = 2L, ncol = ncol(data)))
-            colnames(ret$p) <- names(data)
-            rownames(ret$p) <- c("statistic", "p.value")
+            colnames(ret$criteria) <- names(data)
+            rownames(ret$criteria) <- c("statistic", "p.value")
 
             if (is.null(y)) {
                 tr <- trafo(subset = subset)
@@ -279,11 +279,11 @@
                 tst <- doTest(lev, teststat = ctrl$teststat, 
                               pvalue = ctrl$testtype != "Teststatistic",
                               lower = TRUE, log = TRUE)
-                ret$p["statistic", j] <- log(tst$TestStatistic)
-                ret$p["p.value", j] <- tst$p.value
+                ret$criteria["statistic", j] <- log(tst$TestStatistic)
+                ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
-                ret$p["p.value",] <- ret$p["p.value",] * length(whichvar)
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
 
             ret <- c(ret, tr[!(names(tr) %in% c("estfun", "index"))])
 
@@ -355,18 +355,22 @@ ctree_control <- function(teststat = c("quadratic", "maximum"),
                           minbucket = 7L, minprob = 0.01, stump = FALSE, 
                           nresample = 9999L, maxsurrogate = 0L, mtry = Inf, 
                           maxdepth = Inf, multiway = FALSE, splittry = 2L, 
-                          majority = FALSE, applyfun = NULL, cores = NULL) {
+                          majority = FALSE, caseweights = TRUE, 
+                          applyfun = NULL, cores = NULL) {
 
     teststat <- match.arg(teststat)
     splitstat <- match.arg(splitstat)
     testtype <- match.arg(testtype)
+
+    if (!caseweights)
+        stop("only caseweights currently implemented in ctree")
 
     c(.urp_control(criterion = ifelse(testtype == "Teststatistic", "statistic", "p.value"),
                    logmincriterion = logmincriterion, minsplit = minsplit, minbucket = minbucket, 
                    minprob = minprob, stump = stump, mtry = mtry,
                    maxdepth = maxdepth, multiway = multiway, splittry = splittry,
                    maxsurrogate = maxsurrogate, majority = majority, 
-                   applyfun = applyfun),
+                   caseweights = caseweights, applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, 
            testtype = testtype, nmax = nmax, nresample = nresample))
 }
@@ -378,10 +382,26 @@ ctree <- function(formula, data, weights, subset, na.action = na.pass,
     call <- match.call(expand.dots = FALSE)
     frame <- parent.frame()
 
+    ### <FIXME> should be xtrafo
+    if (!is.null(scores)) {
+        if (missing(data))
+            stop("can deal with scores with data being missing")
+        for (n in names(scores)) {
+            sc <- scores[[n]]
+            if (is.ordered(data[[n]]) &&
+                nlevels(data[[n]]) == length(sc)) {
+                attr(data[[n]], "scores") <- as.numeric(sc)
+            } else {
+                warning("scores for variable ", sQuote(n), " ignored")
+            }
+        }
+    }
+    #### </FIXME>
+
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
     tree <- .urp_tree(call, frame, na.action = na.action, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
-                      scores = scores, doFit = TRUE)
+                      doFit = TRUE)
     mf <- tree$mf
     weights <- model.weights(mf)
     if (is.null(weights)) weights <- rep(1, nrow(mf))
