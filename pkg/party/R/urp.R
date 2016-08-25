@@ -67,7 +67,8 @@
     ### crit is maximised, but there might be ties
     ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
     if (length(ties) > 1) {
-        ### add a small value (< 1/1000) to crit derived from order of teststat
+        ### add a small value (< 1/1000) to crit derived from order of 
+        ### teststat
         crit[ties] <- crit[ties] + 
             order(p["statistic", ties]) / (sum(ties) * 1000)
     }
@@ -110,7 +111,7 @@
     kidids <- kidids_node(ret, data, obs = snotNA)
 
     ### compute probability of going left / right
-    prob <- tabulate(kidids) / length(kidids) ### was: prop.table(table(kidids))
+    prob <- tabulate(kidids) / length(kidids) 
     # names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
         prob <- as.double((1L:length(prob)) %in% which.max(prob))
@@ -162,7 +163,8 @@
     ### crit is maximised, but there might be ties
     ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
     if (length(ties) > 1) {
-        ### add a small value (< 1/1000) to crit derived from order of teststat
+        ### add a small value (< 1/1000) to crit derived from order of 
+        ### teststat
         crit[ties] <- crit[ties] + 
             order(p["statistic", ties]) / (sum(ties) * 1000)
     }
@@ -193,15 +195,22 @@
 }
 
 ### parse formula and grow unbiased tree in a generic way
-.urp_tree <- function(call, frame, na.action, control, 
-                      growfun, trafofun, doFit = TRUE)
-{
+.urp_tree <- function
+(
+    call, 		### match.call of user-visible function
+    frame, 		### parent.frame of user-visible function
+    control, 		### .urp_control() or more
+    growfun, 		### function for growing trees
+    trafofun, 		### function for transformations
+    doFit = TRUE	### grow tree or set-up only
+) {
 
     ### call and frame come from user-visible functions, like ctree()
     m <- match(c("formula", "data", "subset", "weights", "na.action"),
                names(call), 0L)
     mf <- call[c(1, m)]
     formula <- eval(mf$formula, frame)
+    na.action <- eval(mf$na.action, frame)
 
     f <- if (inherits(formula, "Formula")) formula else Formula(formula)
     ### formula must feature one lhs and one rhs
@@ -298,12 +307,24 @@
 }
 
 ### control arguments needed in this file
-.urp_control <- function(criterion, logmincriterion, minsplit = 20L,
-                         minbucket = 7L, minprob = 0.01, stump = FALSE,
-                         maxsurrogate = 0L, mtry = Inf,
-                         maxdepth = Inf, multiway = FALSE, splittry = 2L,
-                         majority = FALSE, caseweights = TRUE, 
-                         applyfun = NULL, cores = NULL) {
+.urp_control <- function
+(
+    criterion, 
+    logmincriterion, 
+    minsplit = 20L,
+    minbucket = 7L, 
+    minprob = 0.01, 
+    stump = FALSE,
+    maxsurrogate = 0L, 
+    mtry = Inf,
+    maxdepth = Inf, 
+    multiway = FALSE, 
+    splittry = 2L,
+    majority = FALSE, 
+    caseweights = TRUE, 
+    applyfun = NULL, 
+    cores = NULL
+) {
 
     ## apply infrastructure for determining split points
     if (is.null(applyfun)) {
