@@ -263,20 +263,18 @@
         if (is.null(fdot)) fdot <- f
         modelf <- formula(fdot, lhs = 1L, rhs = 0L)
         partf <- formula(fdot, lhs = 0L, rhs = 1L)
-        blockf <- NULL
     } else if (length(f)[2] == 2L) { ### y ~ x | z
         if (!is.null(fdot))
             stop("dots are not allowed in multipart formulas")
         modelf <- formula(f, lhs = 1L, rhs = 1L)
         partf <- formula(f, lhs = 0L, rhs = 2L)
-        blockf <- NULL
     } 
     zvars <- rownames(attr(terms(partf, data = mf), "factors"))
 
     ### returns a _function_ (trafo, subset, weights)
     ### for growing the tree, weights = integer(0) must work
     treefun <- growfun(mf, partyvars = match(zvars, colnames(mf)), 
-                       block = cluster, ctrl = control)
+                       cluster = cluster, ctrl = control)
     if (!isTRUE(all.equal(names(formals(treefun)), 
                           c("trafo", "subset", "weights"))))
         stop("growfun return incorrect")
@@ -285,7 +283,8 @@
     if (!isTRUE(all.equal(names(formals(trafo)), "subset")))
         stop("trafofun return incorrect")
     
-    ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms)
+    ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms,
+                partyvars = match(zvars, colnames(mf)))
     if (!doFit)
         return(ret)
 
