@@ -1,3 +1,7 @@
 
  o try weights with coin
 
+ o conditional (on blocks) sampling in cforest
+
+ o more detailed split contraints: number of event,
+   number of obs in each level of some factor?
