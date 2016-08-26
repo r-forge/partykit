@@ -8,5 +8,6 @@ importFrom("stats", "model.weights", "na.pass", "terms", "xtabs",
            "coef", "gaussian", "glm", "logLik",
            "model.matrix", "model.response", "model.offset")
 # importFrom("sandwich", "estfun")
+importFrom("utils", "setTxtProgressBar", "txtProgressBar")
 
-export(ctree, glmtree, ctree_control)
+export(ctree, glmtree, ctree_control, cforest)
