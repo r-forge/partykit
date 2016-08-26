@@ -3,13 +3,13 @@
 
     weights <- model.weights(data)
     if (is.null(weights)) weights <- integer(0)
-    block <- data[["cluster"]]
+    cluster <- data[["cluster"]]
     offset <- model.offset(data)
 
-    ### <FIXME> handle offset and block </FIXME>
+    ### <FIXME> handle offset and cluster </FIXME>
 
     if (ctrl$nmax < Inf) {
-        if (!is.null(block)) stop("block not implemented")   
+        if (!is.null(cluster)) stop("cluster not implemented")   
         mf <- model.frame(formula, data, na.action = na.pass)
         bdr <- BDR::BDR(mf, complete.cases.only = TRUE, total = TRUE)
         mf2 <- as.data.frame(bdr)
@@ -28,7 +28,7 @@
             list(estfun = ret, index = iy, coef = coef(mod), logLik = logLik(mod))
         })
     }
-    if (!is.null(block)) stop("block not implemented")
+    if (!is.null(cluster)) stop("cluster not implemented")
     mf <- model.frame(formula, data, na.action = na.pass)
     cc <- complete.cases(mf)
     y <- model.response(mf)
