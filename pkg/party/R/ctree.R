@@ -9,14 +9,14 @@
 
     weights <- model.weights(data)
     if (is.null(weights)) weights <- integer(0)
-    block <- data[["cluster"]]
+    cluster <- data[["cluster"]]
     offset <- model.offset(data)
     if (!is.null(offset)) warning("offset ignored by trafo")
 
     if (ctrl$nmax < Inf) {
         if (is.function(ytrafo)) 
             return(ytrafo(formula, data = data, weights = weights, 
-                          block = block, ctrl = ctrl))
+                          cluster = cluster, ctrl = ctrl))
         f <- Formula(formula)
         mf <- model.frame(formula = f, data = data)
         y <- model.part(f, data = mf, lhs = 1, rhs = 0)
@@ -34,13 +34,13 @@
     } else {
         if (is.function(ytrafo))
             return(ytrafo(formula, data = data, weights = weights, 
-                          block = block, ctrl = ctrl))
+                          cluster = cluster, ctrl = ctrl))
         f <- Formula(formula)
         mf <- model.frame(formula = f, data = data, na.action = na.pass)
         y <- model.part(f, data = mf, lhs = 1, rhs = 0)
         cc <- complete.cases(y)
         Yi <- partykit:::.y2infl(y[cc,,drop = FALSE], colnames(y), ytrafo = ytrafo)
-        Y <- matrix(0, nrow = nrow(mf), ncol = NCOL(Yi))
+        Y <- matrix(NA, nrow = nrow(mf), ncol = NCOL(Yi))
         Y[cc,] <- Yi
         #    colnames(Y) <- colnames(Yi)
         storage.mode(Y) <- "double"
@@ -53,15 +53,15 @@
 (
     data, 
     partyvars, 
-    block, 
+    cluster, 
     ctrl
 ) {
 
     if (ctrl$nmax < Inf)
         return(.ctree_fit_2d(data = data, partyvars = partyvars, 
-                             block = block, ctrl = ctrl))
+                             cluster = cluster, ctrl = ctrl))
     return(.ctree_fit_1d(data = data, partyvars = partyvars,
-                         block = block, ctrl = ctrl))
+                         cluster = cluster, ctrl = ctrl))
 }
 
 ### conditional inference trees
@@ -70,7 +70,7 @@
     data, 				### full data, readonly
     partyvars, 				### partytioning variables,
 					### a subset of 1:ncol(data)
-    block = integer(0), 		### a blocking factor w/o NA
+    cluster = integer(0), 		### a blocking factor w/o NA
     ctrl				### ctree_control()
 ) {
 
@@ -132,7 +132,7 @@
             for (j in whichvar) {
                 ### compute linear statistic + expecation and covariance
                 lev <- LinStatExpCov(X = X[[j]], Y = Y, subset = subset,
-                                     weights = weights, block = block, 
+                                     weights = weights, block = cluster, 
                                      B = ifelse(ctrl$testtype == "MonteCarlo", 
                                                 ctrl$nresample, 0L))
                 ### compute test statistic and log(1 - p-value)
@@ -190,7 +190,7 @@
                             storage.mode(X) <- "integer"
                         }
                         lev <- LinStatExpCov(X = X, Y = Y, subset = subset,
-                                             weights = weights, block = block, 
+                                             weights = weights, block = cluster, 
                                              B = 0L, varonly = TRUE)
                         sp <- doTest(lev, teststat = ctrl$splitstat,
                                      minbucket = minbucket, pvalue = FALSE,
@@ -231,7 +231,7 @@
     data,                               ### full data, readonly
     partyvars,                          ### partytioning variables,
                                         ### a subset of 1:ncol(data)
-    block = integer(0),                 ### a blocking factor w/o NA
+    cluster = integer(0),                 ### a blocking factor w/o NA
     ctrl                                ### ctree_control()
 ) {
 
@@ -288,7 +288,7 @@
                 ix <- bdr[[j]]
                 lev <- LinStatExpCov(X = X[[j]], ix = ix, 
                                      Y = Y, iy = iy, subset = subset,
-                                     weights = weights, block = block, 
+                                     weights = weights, block = cluster, 
                                      B = ifelse(ctrl$testtype == "MonteCarlo", 
                                                 ctrl$nresample, 0L))
                 tst <- doTest(lev, teststat = ctrl$teststat, 
@@ -333,7 +333,7 @@
                         ux <- attr(ix, "levels")
                         lev <- LinStatExpCov(X = X, ix = ix,
                                              Y = Y, iy = iy, subset = subset,
-                                             weights = weights, block = block, 
+                                             weights = weights, block = cluster, 
                                              B = 0L, varonly = TRUE)
                         sp <- doTest(lev, teststat = ctrl$splitstat,
                                      minbucket = minbucket, pvalue = FALSE,
