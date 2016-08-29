@@ -33,9 +33,9 @@ make_dist_list <- function(family) {
     ## remove "bd" from the list of parameters in case it is included
     arg.bd <- FALSE
     if(any(family$family%in%.distfit.bi.list)){
-      if(arguments[length(arguments)] == "bd"){ 
+      if("bd" %in% arguments){ 
         arg.bd <- TRUE
-        arguments <- arguments[1:(length(arguments)-1)]
+        arguments <- arguments[-(match("bd", arguments))]
       }
     }
     
@@ -625,7 +625,9 @@ make_dist_list <- function(family) {
     initialize <- function(y) {
       mu <- NULL
       eval(family$mu.initial)
-      family$mu.linkfun(mean(mu))
+      start.eta <- family$mu.linkfun(mean(mu))
+      names(start.eta) <- eta.names
+      return(start.eta)
     }
     
     
@@ -679,7 +681,9 @@ make_dist_list <- function(family) {
       mu <- sigma <- NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
+      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
+      names(start.eta) <- eta.names
+      return(start.eta)
     }
     
     # define function to get distribution parameters
@@ -734,7 +738,9 @@ make_dist_list <- function(family) {
       eval(family$mu.initial)
       eval(family$sigma.initial)
       eval(family$nu.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
+      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
+      names(start.eta) <- eta.names
+      return(start.eta)
     }
     
     # define function to get distribution parameters
@@ -791,7 +797,9 @@ make_dist_list <- function(family) {
       eval(family$sigma.initial)
       eval(family$nu.initial)
       eval(family$tau.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
+      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
+      names(start.eta) <- eta.names
+      return(start.eta)
     }
     
     # define function to get distribution parameters
@@ -842,18 +850,79 @@ make_dist_list <- function(family) {
   
   
   
-  ddist <- function(y, par, log = TRUE) {
+  ddist <- function(y, par, log = TRUE, type = "parameter") {
+    if(type == "link") par <- distpar(par)
     input <- list()
+    input.names <- c("x", par.names, "log")
     input[[1]] <- y
     for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], ny)   (FIX?)
-    if(any(family$family%in%.distfit.bi.list)) input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
-    
-    eval <- -(1/2) * do.call(family$G.dev.incr, input)
-    if(log == FALSE) eval <- exp(eval)
-    
+    if(any(family$family%in%.distfit.bi.list)) {
+      input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
+      input.names <- c("x", par.names, "bd", "log")
+    }
+    input <- append(input, log)
+    names(input) <- input.names
+    eval <- do.call(get(paste0("d", family$family[[1]])), input)
+
     return(eval)
-    # G.dev.incr ... global deviance function = -2*logLik
   }
+  
+
+  
+  ## additional functions pdist, qdist, rdist
+  if(any(family$family%in%.distfit.bi.list)){
+    if(np == 1L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], bd = bd, log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], bd = bd, log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], bd = bd, log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], bd = bd)
+    }
+    if(np == 2L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], bd = bd, log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], bd = bd, log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], bd = bd, log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], bd = bd)
+    }
+    if(np == 3L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], bd = bd)
+    }
+    if(np == 4L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd)
+    }
+  } else {
+    if(np == 1L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1])
+    }
+    if(np == 2L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2])
+    }
+    if(np == 3L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3])
+    }
+    if(np == 4L) { 
+      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log = log)
+      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = log.p)
+      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = log.p)
+      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4])
+    }
+  }
+    
+   
   
   
   ## score / estfun (for positive loglikelihood)
@@ -945,8 +1014,10 @@ make_dist_list <- function(family) {
 
   use.optim <- TRUE
   
+  if(use.optim) closed.mle <- NULL
   
-  dist_list <- list(ddist = ddist, 
+  dist_list <- list(family.name = paste(c(family$family[2], "Distribution", sep = " ")),
+                    ddist = ddist, 
                     sdist = sdist, 
                     hdist = hdist, 
                     link = link, 
@@ -955,9 +1026,11 @@ make_dist_list <- function(family) {
                     link.inv.der = link.inv.der,
                     start = start,
                     start.eta = start.eta,
-                    use.optim = use.optim
+                    use.optim = use.optim,
+                    closed.mle = closed.mle
                     )
 }
+
 
 
 
@@ -976,9 +1049,11 @@ if(FALSE) {
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     y.w <- (y*weights)[weights != 0]     # just for the calculations where the index of the observations is not of any importance, but zero would have an impact on the result
+    ny.w <- length(y.w)
     mu <- mean(y.w)
-    sigma <- sqrt(1/ny * sum((y.w - mu)^2))
+    sigma <- sqrt(1/ny.w * sum((y.w - mu)^2))
     par <- c(mu, sigma)
+    names(par) <- par.names
     return(par)
   }
   
@@ -998,7 +1073,7 @@ if(FALSE) {
     }
     if(type == "link") {
       eta <- par
-      par <- distpar(eta)                           
+      par <- c(eta[1], exp(eta[2]))                           
       score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
       score <- as.matrix(score)
       colnames(score) <- eta.names
@@ -1028,7 +1103,7 @@ if(FALSE) {
     
     if(type == "link") {
       eta <- par
-      par <- distpar(eta)                           
+      par <- c(eta[1], exp(eta[2]))                           
       
       ## calculate derivative vectors / matrices / lists
       
@@ -1067,30 +1142,39 @@ if(FALSE) {
   
   link.fun <- function(par) {
     eta <- c(par[1], log(par[2]))
+    names(eta) <- eta.names
     return(eta)
   }
   
   
   link.inv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
+    names(par) <- par.names
     return(par)
   }
   
   
   link.inv.der <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- names.par
     return(dpardeta)
   }
   
   
-  start <- NULL
+  start <- closed.mle(y)
   
-  start.eta <- NULL
+  start.eta <- function(y) {
+    start <- closed.mle(y)
+    starteta <- c(start[1], log(start[2])) 
+    names(starteta) <- eta.names
+    return(starteta)
+  }
   
   use.optim <- FALSE
   
   
-  dist_list_normal <- list(ddist = ddist, 
+  dist_list_normal <- list(family.name = "Normal Distribution",
+                           ddist = ddist, 
                            sdist = sdist, 
                            hdist = hdist, 
                            link = link, 
@@ -1099,6 +1183,7 @@ if(FALSE) {
                            link.inv.der = link.inv.der,
                            start = start,
                            start.eta = start.eta,
-                           use.optim = use.optim
+                           use.optim = use.optim,
+                           closed.mle = closed.mle
   )
 }
