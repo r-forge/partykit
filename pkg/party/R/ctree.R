@@ -1,10 +1,105 @@
 
+.ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
+                              weights, cluster, splitonly = TRUE, minbucket) {
+
+    if (splitonly) {
+        if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
+            is.factor(x)) {
+            index <- 1L:nlevels(x)
+            if (length(weights) > 0) {
+                xt <- xtabs(~ x, subset = subset)
+            } else {
+                xt <- xtabs(weights ~ x, subset = subset)
+            }
+            index[xt == 0] <- NA
+            index[xt < minbucket] <- nlevels(x) + 1L
+            index <- unclass(factor(index))
+            return(partysplit(as.integer(j),
+                              index = as.integer(index)))
+        }
+    }
+
+    X <- X[[j]]
+    ux <- NULL
+    ORDERED <- is.ordered(x) || is.numeric(x)
+    if (is.null(bdr)) {
+        ix <- NULL
+        if (ctrl$splittest || splitonly) {
+            ### integer X trigger maximally selected stats
+            if (is.factor(x)) {
+                X <- unclass(x)
+                attr(X, "levels") <- levels(x)
+            } else {
+                x[-subset] <- NA
+                ux <- sort(unique(x))
+                X <- cut.default(x, breaks = c(-Inf, ux, Inf),
+                                 labels = FALSE, right = TRUE)
+                # X[is.na(X)] <- 0L (NAs are handled by LinStatExpCov)
+                attr(X, "levels") <- ux 
+                storage.mode(X) <- "integer"
+            }
+        } 
+    } else {
+         ix <- bdr[[j]]
+         if (ctrl$splittest || splitonly) {
+             X <- numeric(0) 
+             ux <- attr(ix, "levels")
+         } 
+    }
+
+    if (ctrl$splittest || splitonly) {
+        B <- 0L
+        varonly <- TRUE
+        pvalue <- FALSE
+        teststat <- ctrl$splitstat
+    } else {
+        if (ctrl$splittest) {
+            if (ctrl$teststat != ctrl$splitstat)
+                warning("Using different test statistics for testing and splitting")
+        }
+        B <- ifelse(ctrl$testtype == "MonteCarlo",
+                    ctrl$nresample, 0L)
+        varonly <- ctrl$testtype == "MonteCarlo" && 
+                   ctrl$teststat == "maxtype"
+        pvalue <- ctrl$testtype != "Teststatistic"
+        teststat <- ctrl$teststat
+    }
+
+    ### compute linear statistic + expecation and covariance
+    lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
+                         weights = weights, block = cluster,
+                         B = B, varonly = varonly)
+    ### compute test statistic and log(1 - p-value)
+    tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
+                  lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+
+    if (splitonly) {
+         ret <- NULL
+         sp <- tst$index
+         if (!all(is.na(sp))) {
+             if (length(sp) == 1) {
+                 if (!is.ordered(x))
+                     sp <- ux[sp]
+                 ret <- partysplit(as.integer(j), breaks = sp,
+                                   index = 1L:2L)
+             } else {
+                  ret <- partysplit(as.integer(j),
+                                    index = as.integer(sp) + 1L)
+             }
+         }
+         return(ret)
+    }  
+
+    return(list(statistic = log(tst$TestStatistic), p.value = tst$p.value))
+}
+
 .ctreetrafo <- function
 (
     formula, 
     data,
     ctrl, 
-    ytrafo
+    ytrafo,
+    converged = NULL
 ) {
 
     weights <- model.weights(data)
@@ -30,7 +125,11 @@
         ### first row corresponds to missings
         Y <- rbind(0, Y)  
         return(function(subset)
-            list(estfun = Y, index = index))
+            list(estfun = Y, index = index, 
+                 converged =  if (is.null(converged)) 
+                                  TRUE 
+                              else 
+                                  converged(Y, mf, subset)))
     } else {
         if (is.function(ytrafo))
             return(ytrafo(formula, data = data, weights = weights, 
@@ -45,7 +144,10 @@
         #    colnames(Y) <- colnames(Yi)
         storage.mode(Y) <- "double"
         return(function(subset)
-            list(estfun = Y))
+            list(estfun = Y, converged = if (is.null(converged)) 
+                                             TRUE 
+                                         else 
+                                             converged(Y, mf, subset)))
     }
 }
 
@@ -112,6 +214,7 @@
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
                 tr <- trafo(subset)
+                if (!tr$converged) return(ret)
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
@@ -130,16 +233,12 @@
             }
 
             for (j in whichvar) {
-                ### compute linear statistic + expecation and covariance
-                lev <- LinStatExpCov(X = X[[j]], Y = Y, subset = subset,
-                                     weights = weights, block = cluster, 
-                                     B = ifelse(ctrl$testtype == "MonteCarlo", 
-                                                ctrl$nresample, 0L))
-                ### compute test statistic and log(1 - p-value)
-                tst <- doTest(lev, teststat = ctrl$teststat, 
-                              pvalue = ctrl$testtype != "Teststatistic",
-                              lower = TRUE, log = TRUE)
-                ret$criteria["statistic", j] <- log(tst$TestStatistic)
+                tst <- .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl, 
+                                         X = X, Y = Y, iy = NULL, subset = subset, 
+                                         weights = weights, cluster = cluster,
+                                         splitonly = FALSE, minbucket = ctrl$minbucket)
+                ### <FIXME> minbucket is updated in .urp_node but only after testing... </FIXME>
+                ret$criteria["statistic", j] <- tst$statistic
                 ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
@@ -157,61 +256,16 @@
             ### compute it twice
             ret$splitfun <- function(whichvar, minbucket) 
             {
- 
-                ret <- NULL
                 for (j in whichvar) {
-                    x <- data[[j]]
-                    ORDERED <- is.ordered(x) || is.numeric(x)
-                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && 
-                         is.factor(x)) {
-                        index <- 1L:nlevels(x)
-                        if (length(weights) > 0) {
-                            xt <- xtabs(~ x, subset = subset)
-                        } else {
-                            xt <- xtabs(weights ~ x, subset = subset)
-                        }
-                        index[xt == 0] <- NA
-                        index[xt < minbucket] <- nlevels(x) + 1L
-                        index <- unclass(factor(index))
-                        ret <- partysplit(as.integer(j), 
-                                          index = as.integer(index))
-                        break()
-                    } else {
-                        ### integer X trigger maximally selected stats
-                        if (is.factor(x)) {
-                            X <- unclass(x)
-                        } else {
-                            x[-subset] <- NA
-                            ux <- sort(unique(x))
-                            X <- cut.default(x, breaks = c(-Inf, ux, Inf),
-                                             labels = FALSE, right = TRUE)
-                            # X[is.na(X)] <- 0L (NAs are handled by LinStatExpCov)
-                            attr(X, "levels") <- ux
-                            storage.mode(X) <- "integer"
-                        }
-                        lev <- LinStatExpCov(X = X, Y = Y, subset = subset,
-                                             weights = weights, block = cluster, 
-                                             B = 0L, varonly = TRUE)
-                        sp <- doTest(lev, teststat = ctrl$splitstat,
-                                     minbucket = minbucket, pvalue = FALSE,
-                                     ordered = ORDERED)$index
-                        if (!all(is.na(sp))) {
-                            if (length(sp) == 1) {
-                                if (!is.ordered(x))
-                                    sp <- ux[sp]
-                                ret <- partysplit(as.integer(j), breaks = sp, 
-                                                  index = 1L:2L)
-                            } else {
-                                ret <- partysplit(as.integer(j), 
-                                                  index = as.integer(sp) + 1L)
-                            }
-                            break
-                        }
-                    }
-               }
-               ret
-           }
-           ret
+                    ret <- .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl,
+                                             X = X, Y = Y, iy = NULL, subset = subset, 
+                                             weights = weights, cluster = cluster,
+                                             splitonly = TRUE, minbucket = minbucket)
+                    if (!is.null(ret)) break()
+                }
+                ret
+            }
+            ret
         }
 
         tree <- .urp_node(id = 1L, data = data, 
@@ -272,6 +326,7 @@
 
             if (is.null(y)) {
                 tr <- trafo(subset = subset)
+                if (!tr$converged) return(ret)
             } else {
                 ### y is kidids in .csurr and nothing else
                 stopifnot(length(y) == length(subset))
@@ -285,16 +340,11 @@
             if (is.null(iy)) stop("trafo did not return index")
 
             for (j in whichvar) {
-                ix <- bdr[[j]]
-                lev <- LinStatExpCov(X = X[[j]], ix = ix, 
-                                     Y = Y, iy = iy, subset = subset,
-                                     weights = weights, block = cluster, 
-                                     B = ifelse(ctrl$testtype == "MonteCarlo", 
-                                                ctrl$nresample, 0L))
-                tst <- doTest(lev, teststat = ctrl$teststat, 
-                              pvalue = ctrl$testtype != "Teststatistic",
-                              lower = TRUE, log = TRUE)
-                ret$criteria["statistic", j] <- log(tst$TestStatistic)
+                tst <- .ctree_test_split(x = data[[j]], bdr = bdr, j = j, ctrl = ctrl,
+                                         X = X, Y = Y, iy = iy, subset = subset,
+                                         weights = weights, cluster = cluster,
+                                         splitonly = FALSE, minbucket = ctrl$minbucket)
+                ret$criteria["statistic", j] <- tst$statistic
                 ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$testtype == "Bonferroni")
@@ -308,51 +358,14 @@
             ### y is used for node ids when computing surrogate splits
             ret$splitfun <- function(whichvar,  minbucket)
             {
-    
-                ret <- NULL
                 for (j in whichvar) {
-                    x <- data[[j]]
-                    ORDERED <- is.ordered(x) || is.numeric(x)
-                    if ((ctrl$multiway && ctrl$maxsurrogate == 0) && 
-                         is.factor(x)) {
-                        index <- 1L:nlevels(x)
-                        if (length(weights) > 0) {
-                            xt <- xtabs(~ x, subset = subset)
-                        } else {
-                            xt <- xtabs(weights ~ x, subset = subset)
-                        }
-                        index[xt == 0] <- NA
-                        index[xt < minbucket] <- nlevels(x) + 1L
-                        index <- unclass(factor(index))
-                        ret <- partysplit(as.integer(j), 
-                                          index = as.integer(index))
-                        break()
-                    } else {
-                        ix <- bdr[[j]]
-                        X <- numeric(0) 
-                        ux <- attr(ix, "levels")
-                        lev <- LinStatExpCov(X = X, ix = ix,
-                                             Y = Y, iy = iy, subset = subset,
-                                             weights = weights, block = cluster, 
-                                             B = 0L, varonly = TRUE)
-                        sp <- doTest(lev, teststat = ctrl$splitstat,
-                                     minbucket = minbucket, pvalue = FALSE,
-                                     ordered = ORDERED)$index
-                        if (!all(is.na(sp))) {
-                            if (length(sp) == 1) {
-                                if (!is.ordered(x))
-                                    sp <- ux[sp]
-                                ret <- partysplit(as.integer(j), breaks = sp, 
-                                                  index = 1L:2L)
-                            } else {
-                                ret <- partysplit(as.integer(j), 
-                                                  index = as.integer(sp) + 1L)
-                            }
-                            break
-                        }
-                   }
-               }
-               return(ret)
+                    ret <- .ctree_test_split(x = data[[j]], bdr = bdr, j = j, ctrl = ctrl,
+                                             X = X, Y = Y, iy = iy, subset = subset,
+                                             weights = weights, cluster = cluster,
+                                             splitonly = TRUE, minbucket = minbucket)
+                    if (!is.null(ret)) break()
+                }
+                return(ret)
            }
            ret
         }
@@ -369,7 +382,8 @@
 ctree_control <- function
 (
     teststat = c("quadratic", "maximum"), 
-    splitstat = c("maximum", "quadratic"),
+    splitstat = c("quadratic", "maximum"), ### much better for q > 1
+    splittest = FALSE,
     testtype = c("Bonferroni", "MonteCarlo", 
                  "Univariate", "Teststatistic"),
     nmax = Inf, 
@@ -407,7 +421,7 @@ ctree_control <- function
                    splittry = splittry, maxsurrogate = maxsurrogate, 
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
-      list(teststat = teststat, splitstat = splitstat, 
+      list(teststat = teststat, splitstat = splitstat, splittest = splittest,
            testtype = testtype, nmax = nmax, nresample = nresample))
 }
 
@@ -422,6 +436,7 @@ ctree <- function
     na.action = na.pass, 
     control = ctree_control(...), 
     ytrafo = NULL, 
+    converged = NULL,
     scores = NULL,
     ...
 ) {
@@ -454,7 +469,7 @@ ctree <- function
     }
     #### </FIXME>
 
-    trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
+    trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo, converged = converged)
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
                       doFit = TRUE)
@@ -465,7 +480,7 @@ ctree <- function
     fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    y <- model.part(Formula(formula), data = model.frame(Formula(formula), data = mf),
+    y <- model.part(Formula(formula), data = mf, 
                     lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[3]] <- y
