@@ -7,6 +7,7 @@ cforest <- function
     subset, 
     offset, 
     cluster,
+    strata,
     na.action = na.pass,
     control = ctree_control(...),
     ytrafo = NULL, 
@@ -52,6 +53,11 @@ cforest <- function
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
                       doFit = FALSE)
+
+    strata <- tree$mf[["(strata)"]]
+    if (!is.null(strata)) {
+        if (!is.factor(strata)) stop("strata is not a single factor")
+    }
     
     probw <- NULL
     weights <- model.weights(tree$mf)
@@ -62,20 +68,22 @@ cforest <- function
     }
     nvar <- length(tree$partyvars)
     control$mtry <- mtry
+    control$applyfun <- NULL
 
     idx <- 1L:nrow(tree$mf)
-    size <- nrow(tree$mf)
-    if (!perturb$replace) size <- floor(size * perturb$fraction)
-    ### this is different now as we sample subsets and not weights
-    rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
-                    simplify = FALSE)
-#    } else {
-#        stopifnot(nrow(weights) == nrow(dat) && ncol(weights) == ntree)
-#        rw <- as.data.frame(weights)
-#        class(rw) <- "list"
-#    }
+    if (is.null(strata)) {
+        size <- nrow(tree$mf)
+        if (!perturb$replace) size <- floor(size * perturb$fraction)
+        rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
+                        simplify = FALSE)
+    } else {
+        frac <- if (!perturb$replace) perturn$fraction else 1
+        rw <- replicate(ntree, function() 
+            do.call("c", tapply(idx, strata, function(i) sample(i, size = length(i) * frac, 
+                   replace = perturn$replace, prob = probw[i]))))
+    }
 
-        ## apply infrastructure for determining split points
+    ## apply infrastructure for determining split points
     if (is.null(applyfun)) {
         applyfun <- if(is.null(cores)) {
             lapply  
@@ -93,7 +101,7 @@ cforest <- function
     if (trace) close(pb)
 
     fitted <- data.frame(idx = idx)  
-    y <- model.part(Formula(formula), data = mf <- model.frame(Formula(formula), data = tree$mf),
+    y <- model.part(Formula(formula), data = mf <- model.frame(Formula(formula), data = tree$mf, na.action = na.pass),
                     lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[2]] <- y
@@ -102,6 +110,8 @@ cforest <- function
 
     ### turn subsets in weights (maybe we can avoid this?)
     rw <- lapply(rw, function(x) tabulate(x, nbins = length(idx)))
+
+    control$applyfun <- applyfun
 
     ret <- partykit:::constparties(nodes = forest, data = tree$mf, weights = rw,
                         fitted = fitted, terms = terms(mf), 

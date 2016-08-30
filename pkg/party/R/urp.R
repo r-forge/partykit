@@ -63,6 +63,9 @@
     ### selectfun might return other things later to be used for info
     p <- sf$criteria
     crit <- p[ctrl$criterion,,drop = TRUE]
+    if (all(is.na(crit))) 
+        return(partynode(as.integer(id)))
+
     crit[is.na(crit)] <- -Inf
     ### crit is maximised, but there might be ties
     ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
@@ -208,7 +211,8 @@
 ) {
 
     ### call and frame come from user-visible functions, like ctree()
-    m <- match(c("formula", "data", "subset", "weights", "offset", "cluster"),
+    ### strata for cforest only
+    m <- match(c("formula", "data", "subset", "weights", "offset", "cluster", "strata"),
                names(call), 0L)
     mf <- call[c(1, m)]
     formula <- eval(mf$formula, frame)
