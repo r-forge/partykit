@@ -47,7 +47,7 @@
          } 
     }
 
-    if (ctrl$splittest || splitonly) {
+    if (splitonly) {
         B <- 0L
         varonly <- TRUE
         pvalue <- FALSE
@@ -56,13 +56,15 @@
         if (ctrl$splittest) {
             if (ctrl$teststat != ctrl$splitstat)
                 warning("Using different test statistics for testing and splitting")
+            teststat <- ctrl$splitstat
+        } else {
+            teststat <- ctrl$teststat
         }
         B <- ifelse(ctrl$testtype == "MonteCarlo",
                     ctrl$nresample, 0L)
         varonly <- ctrl$testtype == "MonteCarlo" && 
-                   ctrl$teststat == "maxtype"
+                   teststat == "maxtype"
         pvalue <- ctrl$testtype != "Teststatistic"
-        teststat <- ctrl$teststat
     }
 
     ### compute linear statistic + expecation and covariance
@@ -480,7 +482,8 @@ ctree <- function
     fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    y <- model.part(Formula(formula), data = mf, 
+    mf2 <- model.frame(Formula(formula), data = mf, na.action = na.pass)
+    y <- model.part(Formula(formula), data = mf2, 
                     lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[3]] <- y
