@@ -62,7 +62,6 @@ cforest <- function
     }
     nvar <- length(tree$partyvars)
     control$mtry <- mtry
-    applyfun <- control$applyfun
 
     idx <- 1L:nrow(tree$mf)
     size <- nrow(tree$mf)
@@ -85,8 +84,6 @@ cforest <- function
                 parallel::mclapply(X, FUN, ..., mc.cores = cores)
         }
     }
-    ### no parallelization in ctree, only in cforest
-    control$applyfun <- lapply
 
     if (trace) pb <- txtProgressBar(style = 3) 
     forest <- applyfun(1:ntree, function(b) {
