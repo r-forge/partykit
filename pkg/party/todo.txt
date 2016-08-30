@@ -1,11 +1,5 @@
 
  o try weights with coin
 
- o conditional (on blocks) sampling in cforest
-
- o more detailed split contraints: number of event,
-   number of obs in each level of some factor?
-
- o cforest: strata, importance = list(nPerm = 1)
+ o cforest: importance = list(nPerm = 1)
    proximity via predict only?
-   use subset, not weights
