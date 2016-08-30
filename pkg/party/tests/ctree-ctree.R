@@ -72,6 +72,7 @@ fun <- function(args) {
     ct <- partyNG:::ctree_control
     ctrl <- do.call("ct", args[-(1:2)])
     ctrl$nmax <- Inf
+    ctrl$splitstat <- "maximum"
     set.seed(29)
     nt <- system.time(newmod <- try(partyNG:::ctree(y ~ ., data = learn, control = ctrl)))[1]
     if (inherits(newmod, "try-error")) {
