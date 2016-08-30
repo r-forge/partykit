@@ -1,5 +1,5 @@
 
-.glmtrafo <- function(formula, data, ctrl) {
+.glmtrafo <- function(formula, data, ctrl, converged = NULL) {
 
     weights <- model.weights(data)
     if (is.null(weights)) weights <- integer(0)
@@ -25,7 +25,9 @@
             Y <- Y / w
             Y[w == 0,] <- 0
             ret <- rbind(0, Y)
-            list(estfun = ret, index = iy, coef = coef(mod), logLik = logLik(mod))
+            list(estfun = ret, index = iy, coef = coef(mod), logLik = logLik(mod),
+                 converged = if (is.null(converged)) 
+                     mod$converged else converged(mod, mf, subset))
         })
     }
     if (!is.null(cluster)) stop("cluster not implemented")
@@ -51,7 +53,9 @@
         }
         ret[subset,] <- Y
         storage.mode(ret) <- "double"
-        list(estfun = ret, coef = coef(mod), logLik = logLik(mod))
+        list(estfun = ret, coef = coef(mod), logLik = logLik(mod),
+             converged = if (is.null(converged)) 
+                 mod$converged else converged(mod, mf, subset))
     })
 }
 
