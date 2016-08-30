@@ -1016,7 +1016,7 @@ make_dist_list <- function(family) {
   
   if(use.optim) closed.mle <- NULL
   
-  dist_list <- list(family.name = paste(c(family$family[2], "Distribution", sep = " ")),
+  dist_list <- list(family.name = paste(family$family[2], "Distribution", sep = " "),
                     ddist = ddist, 
                     sdist = sdist, 
                     hdist = hdist, 
@@ -1060,7 +1060,9 @@ if(FALSE) {
   
   ddist <-  function(y, par, log = TRUE, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
     if(type == "link") par[2] <- exp(par[2])
-    val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
+    if(log) val <- log(val)
+    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     return(val)
   }
   
@@ -1087,17 +1089,11 @@ if(FALSE) {
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
     if(type == "parameter") {
-      d2ldm2 <- rep.int(-1/par[2]^2, ny)
-      d2ldmdd <- -2*(y-par[1])/par[2]^3                      # should be 0 for exact parameters (here ~ e-17 due to calculations)
-      d2ldd2 <- 1/par[2]^2 - 3*(y-par[1])^2/par[2]^4         # should be -2/sigma^2 for exact parameters
+      d2ldm2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+      d2ldmdd <- sum(weights * (-2)*(y-par[1])/par[2]^3)                      # should be 0 for exact parameters (here ~ e-17 due to calculations)
+      d2ldd2 <- sum(weights * (1/par[2]^2 - 3*(y-par[1])^2/par[2]^4))         # should be -2/sigma^2 for exact parameters 
       
-      hess.list <- list(length = ny)
-      for(i in 1:ny){
-        hess.list[[i]] <- weights[i] * matrix(c(d2ldm2[i], d2ldmdd[i],
-                                                d2ldmdd[i], d2ldd2[i]), nrow = 2)
-      }
-      
-      hess <- Reduce('+', hess.list) 
+      hess <- matrix(c(d2ldm2, d2ldmdd, d2ldmdd, d2ldd2), nrow = 2)
       colnames(hess) <- rownames(hess) <-  par.names
     }
     
@@ -1105,37 +1101,15 @@ if(FALSE) {
       eta <- par
       par <- c(eta[1], exp(eta[2]))                           
       
-      ## calculate derivative vectors / matrices / lists
+      d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+      d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2)          # should be 0 for exact parameters (here ~ e-17 due to calculations)
+      d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2)         
       
-      d2ldm2 <- rep.int(-1/par[2]^2, ny)
-      d2ldmdd <- -2*(y-par[1])/par[2]^3                      # should be 0 for exact parameters (here ~ e-17 due to calculations)
-      d2ldd2 <- 1/par[2]^2 - 3*(y-par[1])^2/par[2]^4         # should be -2/sigma^2 for exact parameters
-      
-      d2ldpar2.list <- list(length = ny)
-      for(i in 1:ny){
-        d2ldpar2.list[[i]] <- weights[i] * matrix(c(d2ldm2[i], d2ldmdd[i],
-                                                d2ldmdd[i], d2ldd2[i]), nrow = 2)
-      }
-      
-      dldpar.mat <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)))
-      
-      dpardeta.vec <- c(1, exp(eta[2]))
-      d2pardeta2.vec <- c(0, exp(eta[2]))
-      
-      ## calculation is split up in 2 parts: 
-      # 2nd outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
-      hess.list <- list(length = ny)
-      for(i in 1:ny){
-        hess.list[[i]] <- weights[i] * (t(d2ldpar2.list[[i]] * dpardeta.vec) * dpardeta.vec + diag(2) * as.vector(dldpar.mat[i,]) * d2pardeta2.vec)
-      }
-      
-      ## calculate the sum over all matrices in the list (each for one observation)  
-      hess <- Reduce('+', hess.list)
+      hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
       colnames(hess) <- rownames(hess) <-  eta.names
     }
     
     return(hess)
-    # return(hess, hess.list)
   }
   
   link <- c("identity", "log")
@@ -1170,6 +1144,7 @@ if(FALSE) {
     return(starteta)
   }
   
+  # use.optim <- TRUE
   use.optim <- FALSE
   
   
