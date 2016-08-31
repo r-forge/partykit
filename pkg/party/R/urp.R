@@ -284,7 +284,7 @@
         stop("growfun return incorrect")
     ### returns a _function_ (subset) for computing estfun (essentially)
     trafo <- trafofun(modelf, data = mf, ctrl = control)
-    if (!isTRUE(all.equal(names(formals(trafo)), "subset")))
+    if (!isTRUE(all.equal(names(formals(trafo))[1L], "subset")))
         stop("trafofun return incorrect")
     
     ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms,
