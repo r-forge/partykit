@@ -49,6 +49,7 @@ cforest <- function
     }
     #### </FIXME>
 
+    call$weights <- NULL ### NOTE: trees are unweighted, weights enter sampling!
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       growfun = .ctreegrow, trafofun = trafofun,
@@ -101,12 +102,14 @@ cforest <- function
     if (trace) close(pb)
 
     fitted <- data.frame(idx = idx)  
-    y <- model.part(Formula(formula), data = mf <- model.frame(Formula(formula), data = tree$mf, na.action = na.pass),
-                    lhs = 1, rhs = 0)
+    mf <- model.frame(Formula(formula), data = tree$mf, na.action = na.pass)
+    y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
     if (length(y) == 1) y <- y[[1]]
     fitted[[2]] <- y
     names(fitted)[2] <- "(response)"
     fitted <- fitted[2]
+    if (length(weights) > 0)
+        fitted[["(weights)"]] <- weights
 
     ### turn subsets in weights (maybe we can avoid this?)
     rw <- lapply(rw, function(x) tabulate(x, nbins = length(idx)))
@@ -116,6 +119,8 @@ cforest <- function
     ret <- partykit:::constparties(nodes = forest, data = tree$mf, weights = rw,
                         fitted = fitted, terms = terms(mf), 
                         info = list(call = match.call(), control = control))
+    ### ret$update <- tree$treefun # not useful
+    ret$trafo <- tree$trafo
     class(ret) <- c("cforest", class(ret))
 
     return(ret)
