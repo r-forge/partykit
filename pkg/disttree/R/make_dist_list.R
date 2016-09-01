@@ -955,6 +955,8 @@ make_dist_list <- function(family) {
         hess.list[[i]] <- weights[i] * hess.list[[i]]
       }
       hess <- Reduce('+', hess.list)
+      # hess sum(weights * hess.list)
+      hess <- as.matrix(hess)
       colnames(hess) <- rownames(hess) <-  par.names
     }
     
@@ -979,6 +981,7 @@ make_dist_list <- function(family) {
       
       ## calculate the sum over all matrices in the list (each for one observation)  
       hess <- Reduce('+', hess.list)
+      hess <- as.matrix(hess)
       colnames(hess) <- rownames(hess) <-  eta.names
     }
     
@@ -996,6 +999,7 @@ make_dist_list <- function(family) {
     if(np > 1) eta[2] <- family$sigma.linkfun(par[2])
     if(np > 2) eta[3] <- family$nu.linkfun(par[3])
     if(np > 3) eta[4] <- family$tau.linkfun(par[4])
+    names(eta) <- eta.names
     return(eta)
   }
   
@@ -1034,7 +1038,7 @@ make_dist_list <- function(family) {
 
 
 
-
+###### dist_list for normal distribution
 if(FALSE) {
   
   dist_list_normal <- list()
@@ -1135,7 +1139,7 @@ if(FALSE) {
   }
   
   
-  start <- closed.mle(y)
+  start <- function(y) closed.mle(y)
   
   start.eta <- function(y) {
     start <- closed.mle(y)
@@ -1144,11 +1148,132 @@ if(FALSE) {
     return(starteta)
   }
   
-  # use.optim <- TRUE
+  
+  dist_list_normal <- list(family.name = "Normal Distribution",
+                           ddist = ddist, 
+                           sdist = sdist, 
+                           hdist = hdist, 
+                           link = link, 
+                           link.fun = link.fun, 
+                           link.inv = link.inv, 
+                           link.inv.der = link.inv.der,
+                           start = start,
+                           start.eta = start.eta,
+                           use.optim = use.optim,
+                           closed.mle = closed.mle
+  )
+}
+
+
+
+
+
+
+
+###### dist_list for Poisson distribution
+if(FALSE) {
+  
+  dist_list_poisson <- list()
+  
+  par.names <- c("mu")
+  eta.names <- c("log(mu)")
+  
+  use.optim <- FALSE
+  
+  closed.mle <- function(y, weights = NULL){
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    y.w <- (y*weights)[weights != 0]     # just for the calculations where the index of the observations is not of any importance, but zero would have an impact on the result
+    ny.w <- length(y.w)
+    mu <- mean(y.w)
+    par <- c(mu)
+    names(par) <- par.names
+    return(par)
+  }
+  
+  
+  ddist <-  function(y, par, log = TRUE, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+    if(type == "link") par <- exp(par)
+    val <- par^y / gamma(y+1) * exp(-par)
+    if(log) val <- log(val)
+    return(val)
+  }
+  
+  
+  sdist <- function(y, par, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+    if(type == "parameter") {
+      score <- y/par - 1
+      score <- as.matrix(score)
+      colnames(score) <- par.names
+    }
+    if(type == "link") {
+      eta <- par
+      par <- exp(eta)                           
+      score <- (y - par)
+      score <- as.matrix(score)
+      colnames(score) <- eta.names
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, par, type = "parameter", weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, length(y))
+    
+    if(type == "parameter") {
+      hess <- -y/(par^2)
+      hess <- as.matrix(sum(weights * hess))
+      colnames(hess) <- rownames(hess) <-  par.names
+    }
+    
+    if(type == "link") {
+      eta <- par
+      par <- exp(eta)                           
+      hess <- rep(-par, ny)
+      hess <- as.matrix(sum(weights * hess))
+      colnames(hess) <- rownames(hess) <-  eta.names
+    }
+    
+    return(hess)
+  }
+  
+  link <- c("log")
+  
+  link.fun <- function(par) {
+    eta <- log(par)
+    names(eta) <- eta.names
+    return(eta)
+  }
+  
+  
+  link.inv <- function(eta) {
+    par <- exp(eta)
+    names(par) <- par.names
+    return(par)
+  }
+  
+  
+  link.inv.der <- function(eta) {
+    dpardeta <- exp(eta)
+    names(dpardeta) <- names.par
+    return(dpardeta)
+  }
+  
+  
+  start <- function(y) closed.mle(y)
+  
+  start.eta <- function(y) {
+    start <- closed.mle(y)
+    starteta <- log(start) 
+    names(starteta) <- eta.names
+    return(starteta)
+  }
+  
   use.optim <- FALSE
   
   
-  dist_list_normal <- list(family.name = "Normal Distribution",
+  dist_list_poisson <- list(family.name = "Poisson Distribution",
                            ddist = ddist, 
                            sdist = sdist, 
                            hdist = hdist, 
