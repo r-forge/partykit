@@ -70,9 +70,11 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   if(is.null(start)){
     starteta <- family$start.eta(y = rep(y, round(weights)))
     startpar <- family$link.inv(starteta)
+    # startpar <- family$start(y)
   } else {
     startpar <- start
     starteta <- family$link.fun(startpar)
+    names(startpar) <- names(family$link.inv(starteta))   ## FIX ME
   }
 
   
@@ -110,10 +112,14 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   ## hess matrix for distribution parameter  (FIX ME: until now only analytic, even if type.hessian = "numeric")
   if(type.hessian == "numeric") {
     hess.eta <- -opt$hessian
+    hess.eta <- as.matrix(hess.eta)
     hess.par <- NULL    ## FIX
+    hess.par <- as.matrix(hess.par)
   } else {
     hess.eta <- family$hdist(y, eta, type = "link", weights = weights)
+    hess.eta <- as.matrix(hess.eta)
     hess.par <- family$hdist(y, par, type = "parameter", weights = weights)
+    hess.par <- as.matrix(hess.par)
   }
       
   
@@ -123,14 +129,17 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     
     # vcov for distribution parameter
     vc.par <- solve(-hess.par)
+    vc.par <- as.matrix(vc.par)
     colnames(vc.par) <- rownames(vc.par) <- colnames(hess.par)
     
     #vcov for link coefficients eta
     vc.eta <- solve(-hess.eta)
+    vc.eta <- as.matrix(vc.eta)
     colnames(vc.eta) <- rownames(vc.eta) <- colnames(hess.eta)
     
   } else {
-    vc <- NULL
+    vc.par <- NULL
+    vc.eta <- NULL
   }
   
   
@@ -293,6 +302,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...)
     confint <- rbind(confint, confint4)
   }
   
+  confint <- as.matrix(confint)
   colnames(confint) <- c(paste0(left," %"), paste0(right," %"))
   rownames(confint) <- names(coef[use.parm])
   
