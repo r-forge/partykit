@@ -1,16 +1,18 @@
-library(lme4)
-library(partykit)
+# install.packages("glmertree", repos="http://R-Forge.R-project.org")
+library(glmertree)
 
-# Evaluate tree sizes
-REEMobtreesize <- vector()
-Mobtreesize <- vector()
+
+## Evaluate tree size:
+
+GLMMtreesize <- vector()
+GLMtreesize <- vector()
 for (c in 1:50){
-  load(paste("treesize.REEMobs", c, sep=""))
-  REEMobtreesize <- c(REEMobtreesize, unlist(treesize.REEMobs))
-  load(paste("treesize.Mobs", c, sep=""))
-  Mobtreesize <- c(Mobtreesize, unlist(treesize.Mobs))  
+  load(paste("treesize.GLMM", c, sep=""))
+  GLMMtreesize <- c(GLMMtreesize, unlist(treesize.GLMM))
+  load(paste("treesize.GLM", c, sep=""))
+  GLMtreesize <- c(GLMtreesize, unlist(treesize.GLM))  
 }
-treespecs <- data.frame(REEMobtreesize, Mobtreesize)
+treespecs <- data.frame(GLMMtreesize, GLMtreesize)
 
 load("descriptions1")
 for (i in 1:length(descriptions)) {
@@ -31,221 +33,280 @@ treespecs$corUbi <- rep(factor(treespecs$corUbi[1:length(descriptions)]), times=
 treespecs$numbclus <- rep(factor(treespecs$numbclus[1:length(descriptions)]), times=50)
 treespecs$sigmabi <- rep(factor(treespecs$sigmabi[1:length(descriptions)]), times=50)
 
-table(treespecs$REEMobtreesize)
-prop.table(table(treespecs$REEMobtreesize))
-mean(treespecs$REEMobtreesize)
-sd(treespecs$REEMobtreesize)
+table(treespecs$GLMMtreesize)
+prop.table(table(treespecs$GLMMtreesize))
+mean(treespecs$GLMMtreesize)
+sd(treespecs$GLMMtreesize)
 
-table(treespecs$Mobtreesize)
-prop.table(table(treespecs$Mobtreesize))
-mean(treespecs$Mobtreesize)
-sd(treespecs$Mobtreesize)
+table(treespecs$GLMtreesize)
+prop.table(table(treespecs$GLMtreesize))
+mean(treespecs$GLMtreesize)
+sd(treespecs$GLMtreesize)
 
-treespecs.long <- data.frame(treesize=stack(treespecs[c("REEMobtreesize","Mobtreesize")]), 
-  N=rep(treespecs$N, 2), rho=rep(treespecs$rho, 2), np=rep(treespecs$np, 2), 
-  treatdiff=rep(treespecs$treatdiff, 2),  corUb=rep(treespecs$corUbi, 2), 
-  numbclus=rep(treespecs$numbclus, 2), sigmab=rep(treespecs$sigmabi, 2),
-  datasetID=factor(rep(1:nrow(treespecs), 2)))
+treespecs.long <- data.frame(treesize=rbind(stack(treespecs[c("GLMMtreesize","GLMtreesize")]),
+                                            data.frame(values = rep(NA, times = nrow(treespecs)), 
+                                                       ind = rep("GLMMsize", times = nrow(treespecs)))), 
+  N=rep(treespecs$N, 3), rho=rep(treespecs$rho, 3), np=rep(treespecs$np, 3), 
+  treatdiff=rep(treespecs$treatdiff, 3),  corUb=rep(treespecs$corUbi, 3), 
+  numbclus=rep(treespecs$numbclus, 3), sigmab=rep(treespecs$sigmabi, 3),
+  datasetID=factor(rep(1:nrow(treespecs), 3)))
 tmp <- as.character(treespecs.long$treesize.ind)
-tmp[treespecs.long$treesize.ind=="REEMobtreesize"] <- "GLMM tree"
-tmp[treespecs.long$treesize.ind=="Mobtreesize"] <- "GLM tree"
+tmp[treespecs.long$treesize.ind=="GLMMtreesize"] <- "GLMM tree"
+tmp[treespecs.long$treesize.ind=="GLMtreesize"] <- "GLM tree"
 treespecs.long$treesize.ind <- factor(tmp)
 
-# calculate correlations of true and predicted treatment diffs (Rsquareds) 
-treespecs$cor_REEMob_true <- NA
-treespecs$cor_mob_true <- NA
-treespecs$cor_mob_REEMob <- NA
+
+
+## Evaluate predictive accuracy:
+
+treespecs$cor_GLMMtree_true <- NA
+treespecs$cor_GLMtree_true <- NA
+treespecs$cor_GLMM_true <- NA
 treespecs$mean_true_diffs <- NA
-treespecs$mean_REEMob_diffs <- NA
-treespecs$mean_mob_diffs <- NA
+treespecs$mean_GLMMtree_diffs <- NA
+treespecs$mean_GLMtree_diffs <- NA
+treespecs$mean_GLMM_diffs <- NA
 treespecs$sd_true_diffs <- NA
-treespecs$sd_REEMob_diffs <- NA
-treespecs$sd_mob_diffs <- NA
+treespecs$sd_GLMMtree_diffs <- NA
+treespecs$sd_GLMtree_diffs <- NA
+treespecs$sd_GLMM_diffs <- NA
 
 for(c in 1:50) {
   print(c)
   load(paste("treatdiffs", c, sep=""))
-  treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),10:12] <- matrix(unlist(lapply(treatdiffs, cor)), ncol=9, byrow=T)[,c(2,3,6)]
-  treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),13:15] <- t(sapply(treatdiffs, apply, 2, mean))
-  treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),16:18] <- t(sapply(treatdiffs, apply, 2, sd))  
+  #treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),10:12] <- matrix(unlist(lapply(treatdiffs, cor)), ncol=9, byrow=T)[,c(2,3,6)]
+  #treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),13:15] <- t(sapply(treatdiffs, apply, 2, mean))
+  #treespecs[(c-1)*length(descriptions)+(1:length(descriptions)),16:18] <- t(sapply(treatdiffs, apply, 2, sd))  
+  for(i in 1:length(descriptions)) {
+    treespecs[(c-1)*length(descriptions)+i, "cor_GLMMtree_true"] <- 
+      with(treatdiffs[[i]], cor(GLMMtree_d_hat, true_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "cor_GLMtree_true"] <-   
+      with(treatdiffs[[i]], cor(GLMtree_d_hat, true_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "cor_GLMM_true"] <- 
+      with(treatdiffs[[i]], cor(GLMM_d_hat, true_d_hat))
+  
+    treespecs[(c-1)*length(descriptions)+i, "mean_true_diffs"] <-
+      with(treatdiffs[[i]], mean(true_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "mean_GLMMtree_diffs"] <- 
+      with(treatdiffs[[i]], mean(GLMMtree_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "mean_GLMtree_diffs"] <- 
+      with(treatdiffs[[i]], mean(GLMtree_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "mean_GLMM_diffs"] <- 
+      with(treatdiffs[[i]], mean(GLMM_d_hat))
+
+    treespecs[(c-1)*length(descriptions)+i, "sd_true_diffs"] <-
+      with(treatdiffs[[i]], sd(true_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "sd_GLMMtree_diffs"] <- 
+      with(treatdiffs[[i]], sd(GLMMtree_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "sd_GLMtree_diffs"] <- 
+      with(treatdiffs[[i]], sd(GLMtree_d_hat))
+    treespecs[(c-1)*length(descriptions)+i, "sd_GLMM_diffs"] <- 
+      with(treatdiffs[[i]], sd(GLMM_d_hat))
+  }
 }
 
-apply(treespecs[,10:18], 2, mean)
-apply(treespecs[,10:18], 2, sd)
+apply(treespecs[,10:20], 2, mean)
+apply(treespecs[,10:20], 2, sd)
 
-treespecs.long <- data.frame(correlation=stack(treespecs[c("cor_REEMob_true","cor_mob_true")]), treespecs.long)
+treespecs.long <- data.frame(correlation = stack(treespecs[
+  c("cor_GLMMtree_true","cor_GLMtree_true", "cor_GLMM_true")]), treespecs.long)
 tmp <- as.character(treespecs.long$correlation.ind)
-tmp[treespecs.long$correlation.ind=="cor_REEMob_true"] <- "GLMM tree"
-tmp[treespecs.long$correlation.ind=="cor_mob_true"] <- "GLM tree"
+tmp[treespecs.long$correlation.ind=="cor_GLMMtree_true"] <- "GLMM tree"
+tmp[treespecs.long$correlation.ind=="cor_GLMtree_true"] <- "GLM tree"
+tmp[treespecs.long$correlation.ind=="cor_GLMM_true"] <- "GLMM"
 treespecs.long$correlation.ind <- factor(tmp)
 
 
 
+## Evaluate tree accuracy:
 
-# check splitting variables and split points
-
-tmp <- data.frame()
-for (c in 1:50){
-  load(paste("splits.Mobs",c,sep=""))
-  tmp <- data.frame(rbind(tmp, splits.Mobs))
-}
-Mobsplits <- data.frame(mobsplitvar=tmp[,1], mobsplitval=tmp[,2])
+# Recover splitting variables and split points:
 
 tmp <- data.frame()
 for (c in 1:50){
-  load(paste("splits.REEMobs",c,sep=""))
-  tmp <- data.frame(rbind(tmp, splits.REEMobs))
+  load(paste("splits.GLM", c, sep=""))
+  tmp <- data.frame(rbind(tmp, splits.GLM))
 }
-REEMobsplits <- data.frame(REEMobsplitvar=tmp[,1], REEMobsplitval=tmp[,2])
+GLMsplits <- data.frame(GLMsplitvar=tmp[,1], GLMsplitval=tmp[,2])
+
+tmp <- data.frame()
+for (c in 1:50){
+  load(paste("splits.GLMM",c,sep=""))
+  tmp <- data.frame(rbind(tmp, splits.GLMM))
+}
+GLMMsplits <- data.frame(GLMMsplitvar=tmp[,1], GLMMsplitval=tmp[,2])
 
 tmp <- vector() 
 tmpnodeno <- vector()
 for (j in 1:nrow(treespecs)) {
   print(j)
-  tmp <- c(tmp, rep(treespecs$Mobtreesize[j], times=(treespecs$Mobtreesize[j]-1)/2))
-  tmpnodeno <- c(tmpnodeno, seq(1,(treespecs$Mobtreesize[j]-1)/2))
+  tmp <- c(tmp, rep(treespecs$GLMtreesize[j], times=(treespecs$GLMtreesize[j]-1)/2))
+  tmpnodeno <- c(tmpnodeno, seq(1,(treespecs$GLMtreesize[j]-1)/2))
 } 
-Mobsplits$treesize <- tmp 
-Mobsplits$nodenumber <- tmpnodeno
+GLMsplits$treesize <- tmp 
+GLMsplits$nodenumber <- tmpnodeno
 
 tmp <- vector() 
 tmpnodeno <- vector()
 for (j in 1:nrow(treespecs)) {
   print(j)
-  tmp <- c(tmp, rep(treespecs$REEMobtreesize[j], times=(treespecs$REEMobtreesize[j]-1)/2))
-  tmpnodeno <- c(tmpnodeno, seq(1,(treespecs$REEMobtreesize[j]-1)/2))
+  tmp <- c(tmp, rep(treespecs$GLMMtreesize[j], times=(treespecs$GLMMtreesize[j]-1)/2))
+  tmpnodeno <- c(tmpnodeno, seq(1,(treespecs$GLMMtreesize[j]-1)/2))
 } 
-REEMobsplits$treesize <- tmp
-REEMobsplits$nodenumber <- tmpnodeno
+GLMMsplits$treesize <- tmp
+GLMMsplits$nodenumber <- tmpnodeno
 
-REEMobsplits$REEMobsplitvar <- factor(REEMobsplits$REEMobsplitvar)
-Mobsplits$mobsplitvar <- factor(Mobsplits$mobsplitvar)
-save(REEMobsplits, file="REEMobsplits");save(Mobsplits, file="Mobsplits")
-load("REEMobsplits"); load("Mobsplits")
+GLMMsplits$GLMMsplitvar <- factor(GLMMsplits$GLMMsplitvar)
+GLMsplits$mobsplitvar <- factor(GLMsplits$GLMsplitvar)
+save(GLMMsplits, file="GLMMsplits")
+save(GLMMsplits, file="GLMMsplits")
+load("GLMMsplits"); load("GLMMsplits")
 
-# Assess accuracy of first split
-table(REEMobsplits[REEMobsplits$nodenumber==1, "REEMobsplitvar"])
-mean(REEMobsplits[REEMobsplits$nodenumber==1, "REEMobsplitval"])
-sd(REEMobsplits[REEMobsplits$nodenumber==1, "REEMobsplitval"])
-table(Mobsplits[Mobsplits$nodenumber==1, "mobsplitvar"])
-mean(Mobsplits[Mobsplits$nodenumber==1 & Mobsplits$mobsplitvar==4, "mobsplitval"])
-sd(Mobsplits[Mobsplits$nodenumber==1 & Mobsplits$mobsplitvar==4, "mobsplitval"])
 
-# identify which split belongs to which tree
-mobtreeno <- rep(1:32400, times=(treespecs$Mobtreesize-1)/2)
-reemobtreeno <- rep(1:32400, times=(treespecs$REEMobtreesize-1)/2)
-REEMobsplits$treeno <- reemobtreeno
-Mobsplits$treeno <- mobtreeno
 
-# Find the true trees (that is, true value plus or minus 5 = .5SD)
-REEMobtruefirstsplit <- REEMobsplits[REEMobsplits$treesize==7 & REEMobsplits$REEMobsplitvar==4 & 
-                                       REEMobsplits$REEMobsplitval>25 & REEMobsplits$REEMobsplitval<35,"treeno"]
-REEMobtruesecsplit <- REEMobsplits[REEMobsplits$treesize==7 & REEMobsplits$REEMobsplitvar==3 & 
-                                     REEMobsplits$REEMobsplitval>12 & REEMobsplits$REEMobsplitval<23,"treeno"]
-REEMobtruethirdsplit <- REEMobsplits[REEMobsplits$treesize==7 & REEMobsplits$REEMobsplitvar==7 & 
-                                       REEMobsplits$REEMobsplitval>58 & REEMobsplits$REEMobsplitval<68,"treeno"]
-REEMobtruetreenos <- REEMobtruefirstsplit[REEMobtruefirstsplit %in% REEMobtruesecsplit][
-  REEMobtruefirstsplit[REEMobtruefirstsplit %in% REEMobtruesecsplit] %in% REEMobtruethirdsplit]
-REEMobsplits$truetree <- REEMobsplits$treeno %in% REEMobtruetreenos
-# get statistics for right trees 
-tapply(REEMobsplits[REEMobsplits$truetree,"REEMobsplitval"],
-       REEMobsplits[REEMobsplits$truetree,"REEMobsplitvar"], length)
-tapply(REEMobsplits[REEMobsplits$truetree,"REEMobsplitval"],
-       REEMobsplits[REEMobsplits$truetree,"REEMobsplitvar"], mean)
-tapply(REEMobsplits[REEMobsplits$truetree,"REEMobsplitval"],
-       REEMobsplits[REEMobsplits$truetree,"REEMobsplitvar"], sd)
-# get statistics for wrong trees
-tapply(REEMobsplits[!REEMobsplits$truetree,"REEMobsplitval"],
-       REEMobsplits[!REEMobsplits$truetree,"REEMobsplitvar"], length)
+# Assess accuracy of splits:
 
-Mobtruefirstsplit <- Mobsplits[Mobsplits$treesize==7 & Mobsplits$mobsplitvar==4 & 
-                                 Mobsplits$mobsplitval>25 & Mobsplits$mobsplitval<35,"treeno"]
-Mobtruesecsplit <- Mobsplits[Mobsplits$treesize==7 & Mobsplits$mobsplitvar==3 & 
-                               Mobsplits$mobsplitval>12 & Mobsplits$mobsplitval<22,"treeno"]
-Mobtruethirdsplit <- Mobsplits[Mobsplits$treesize==7 & Mobsplits$mobsplitvar==7 & 
-                                 Mobsplits$mobsplitval>58 & Mobsplits$mobsplitval<68,"treeno"]
-Mobtruetreenos <- Mobtruefirstsplit[Mobtruefirstsplit %in% Mobtruesecsplit][
-  Mobtruefirstsplit[Mobtruefirstsplit %in% Mobtruesecsplit] %in% Mobtruethirdsplit]
-Mobsplits$truetree <- Mobsplits$treeno %in% Mobtruetreenos
-# get statistics for right trees
-tapply(Mobsplits[Mobsplits$truetree,"mobsplitval"],
-       Mobsplits[Mobsplits$truetree,"mobsplitvar"], length)
-tapply(Mobsplits[Mobsplits$truetree,"mobsplitval"],
-       Mobsplits[Mobsplits$truetree,"mobsplitvar"], mean)
-tapply(Mobsplits[Mobsplits$truetree,"mobsplitval"],
-       Mobsplits[Mobsplits$truetree,"mobsplitvar"], sd)
-# get statistics for wrong trees
-tapply(Mobsplits[!Mobsplits$truetree,"mobsplitval"],
-       Mobsplits[!Mobsplits$truetree,"mobsplitvar"], length)
+# Accuracy of first split:
+table(GLMMsplits[GLMMsplits$nodenumber==1, "GLMMsplitvar"])
+mean(GLMMsplits[GLMMsplits$nodenumber==1, "GLMMsplitval"])
+sd(GLMMsplits[GLMMsplits$nodenumber==1, "GLMMsplitval"])
+table(GLMsplits[GLMsplits$nodenumber==1, "GLMsplitvar"])
+mean(GLMsplits[GLMsplits$nodenumber==1 & GLMsplits$GLMsplitvar==4, "GLMsplitval"])
+sd(GLMsplits[GLMsplits$nodenumber==1 & GLMsplits$GLMsplitvar==4, "GLMsplitval"])
 
+# identify which split belongs to which tree:
+length(GLMMtrees)
+648*50
+GLMtreeno <- rep(1:32400, times=(treespecs$GLMtreesize-1)/2)
+GLMMtreeno <- rep(1:32400, times=(treespecs$GLMMtreesize-1)/2)
+GLMMsplits$treeno <- GLMMtreeno
+GLMsplits$treeno <- GLMtreeno
+
+
+
+# Check which trees were accurately recovered: 
+# 1) true number of splits shoulde be recovered
+# 2) true splitting variables should be recovered 
+# 3) true splitting value plus or minus 5 = .5*\sigma should be recovered
+
+# Find correct GLMM trees:
+GLMMtruefirstsplit <- GLMMsplits[GLMMsplits$treesize==7 & GLMMsplits$GLMMsplitvar==4 & 
+                                   GLMMsplits$nodenumber == 1 &
+                                   GLMMsplits$GLMMsplitval>25 & GLMMsplits$GLMMsplitval<35,"treeno"]
+GLMMtruesecsplit <- GLMMsplits[GLMMsplits$treesize==7 & GLMMsplits$GLMMsplitvar==3 & 
+                                 GLMMsplits$nodenumber == 2 &
+                                     GLMMsplits$GLMMsplitval>12 & GLMMsplits$GLMMsplitval<22,"treeno"]
+GLMMtruethirdsplit <- GLMMsplits[GLMMsplits$treesize==7 & GLMMsplits$GLMMsplitvar==7 & 
+                                   GLMMsplits$nodenumber == 3 &
+                                       GLMMsplits$GLMMsplitval>58 & GLMMsplits$GLMMsplitval<68,"treeno"]
+GLMMtruetreenos <- GLMMtruefirstsplit[GLMMtruefirstsplit %in% GLMMtruesecsplit][
+      GLMMtruefirstsplit[GLMMtruefirstsplit %in% GLMMtruesecsplit] %in% GLMMtruethirdsplit]
+GLMMsplits$truetree <- GLMMsplits$treeno %in% GLMMtruetreenos
+
+# Find correct GLM trees:
+GLMtruefirstsplit <- GLMsplits[GLMsplits$treesize==7 & GLMsplits$GLMsplitvar==4 & 
+                                 GLMsplits$nodenumber == 1 &
+                                 GLMsplits$GLMsplitval>25 & GLMsplits$GLMsplitval<35,"treeno"]
+GLMtruesecsplit <- GLMsplits[GLMsplits$treesize==7 & GLMsplits$GLMsplitvar==3 & 
+                               GLMsplits$nodenumber == 2 &
+                               GLMsplits$GLMsplitval>12 & GLMsplits$GLMsplitval<22,"treeno"]
+GLMtruethirdsplit <- GLMsplits[GLMsplits$treesize==7 & GLMsplits$GLMsplitvar==7 & 
+                                 GLMsplits$nodenumber == 3 &
+                                 GLMsplits$GLMsplitval>58 & GLMsplits$GLMsplitval<68,"treeno"]
+GLMtruetreenos <- GLMtruefirstsplit[GLMtruefirstsplit %in% GLMtruesecsplit][
+  GLMtruefirstsplit[GLMtruefirstsplit %in% GLMtruesecsplit] %in% GLMtruethirdsplit]
+GLMsplits$truetree <- GLMsplits$treeno %in% GLMtruetreenos
+
+
+
+## Assess GLMM accuracy:
+
+# there should be a significant effect of X2:X1, X2:X5, T:X2:X1, T:X2:X5 
+treespecs$trueGLMM <- NA
+for(c in 1:50) {
+  load(paste("GLMMs", c, sep = ""))
+  print(c)
+  for(i in 1:length(descriptions)) {
+    treespecs$trueGLMM[(c-1)*length(descriptions) + i] <- 
+      sum(c("X2", "X1:X2", "X2:X5", "T:X1:X2", "T:X2:X5") %in% 
+            rownames(summary(GLMMs[[i]])$coefficients[abs(summary(
+              GLMMs[[i]])$coefficients[,"t value"])>=1.96,])) == 5
+  }
+}
+
+# Put results together in dataframe and save it:
 treespecs$treeno <- 1:32400
-treespecs$truereemobtree <- treespecs$treeno %in% unique(REEMobsplits$treeno[REEMobsplits$truetree])
-treespecs$truemobtree <- treespecs$treeno %in% unique(Mobsplits$treeno[Mobsplits$truetree])
+treespecs$trueGLMMtree <- treespecs$treeno %in% unique(GLMMsplits$treeno[GLMMsplits$truetree])
+treespecs$trueGLMtree <- treespecs$treeno %in% unique(GLMsplits$treeno[GLMsplits$truetree])
+truetree <- stack(treespecs[c("trueGLMMtree","trueGLMtree", "trueGLMM")])
 
-treespecs.long <- data.frame(truetree=stack(treespecs[c("truereemobtree","truemobtree")]), treespecs.long)
-tmp <- as.character(treespecs.long$truetree.ind)
-tmp[treespecs.long$truetree.ind=="truereemobtree"] <- "GLMM tree"
-tmp[treespecs.long$truetree.ind=="truemobtree"] <- "GLM tree"
-treespecs.long$truetree.ind <- factor(tmp)
-treespecs.long$truetree.values <- factor(treespecs.long$truetree.values)
-prop.table(table(treespecs$truemobtree))
-prop.table(table(treespecs$truereemobtree))
+treespecs.long <- data.frame(truetree, treespecs.long)
+treespecs.long$ind[treespecs.long$ind=="trueGLMMtree"] <- "GLMM tree"
+treespecs.long$ind[treespecs.long$ind=="trueGLMtree"] <- "GLM tree"
+treespecs.long$ind[treespecs.long$ind=="trueGLMM"] <- "GLMM"
+treespecs.long$truetree.values <- factor(treespecs.long$values)
+prop.table(table(treespecs$trueGLMtree))
+prop.table(table(treespecs$trueGLMMtree))
+prop.table(table(treespecs$trueGLMM))
 save("treespecs.long", file="treespecs_long.dat")
 save("treespecs", file="treespecs.dat")
 
 
 
 
-# create lattice xyplots
+## Create plots of outcomes:
 library(lattice)
+load("treespecs_long.dat")
+
+# xyplot for treesize:
+treespecs.long2 <- treespecs.long[treespecs.long$treesize.ind!="GLMMsize",]
+treespecs.long2$treesize.ind <- factor(treespecs.long2$treesize.ind)
 
 treesize.anova <- aov(treesize.values ~ treesize.ind + N + rho + np + treatdiff + numbclus + sigmab + 
                         corUb + treesize.ind*(N + rho + np + treatdiff + numbclus + sigmab + corUb), 
-                      data=treespecs.long)
+                      data=treespecs.long2)
 summary(treesize.anova)[[1]]["Sum Sq"] / sum(summary(treesize.anova)[[1]]["Sum Sq"] )
-# N, sigmab & corUbi have main and interaction effects with eta squared > .01
-treespecs.long$N <- factor(as.numeric(as.character(treespecs.long$N)), ordered=T)
-treespecs.long$sigmab <- factor(as.numeric(as.character(treespecs.long$sigmab)), ordered=T)
+#N, sigmab & corUbi have main and interaction effects with eta squared > .01
+treespecs.long2$N <- factor(as.numeric(as.character(treespecs.long2$N)), ordered=T)
+treespecs.long2$sigmab <- factor(as.numeric(as.character(treespecs.long2$sigmab)), ordered=T)
 aggdata.size <- aggregate(formula=treesize.values ~ treesize.ind + N + sigmab + corUb, FUN=mean, 
-                     data=treespecs.long)
+                     data=treespecs.long2)
 levels(aggdata.size$corUb)[levels(aggdata.size$corUb)=="bi and splitting U correlated"] <- "b correlated with splitting U"
 levels(aggdata.size$corUb)[levels(aggdata.size$corUb)=="bi and non-splitting U correlated"] <- "b correlated with non-splitting U"
 levels(aggdata.size$corUb)[levels(aggdata.size$corUb)=="uncorrelated"] <- "b and U uncorrelated"
-pdf("xy_treesizes_treatsubs.pdf", width=9)
 xyplot(treesize.values ~ sigmab | N + corUb, data = aggdata.size, groups=treesize.ind, type="b", 
        ylab="tree size", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), abline=c(7,0),
        auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
-dev.off()
 
+# xyplot for predictive accuracy on test data:
 correlation.anova <- aov(correlation.values ~ correlation.ind + N + rho + np + treatdiff + numbclus + 
                           sigmab + corUb + correlation.ind*(N + rho + np + treatdiff + numbclus + 
-                            sigmab + corUb), data=treespecs.long)
+                            sigmab + corUb), data=treespecs.long2)
 summary(correlation.anova)[[1]]["Sum Sq"] / sum(summary(correlation.anova)[[1]]["Sum Sq"] )
-# N, treatdiffs & sigmab have main and/or interaction effects with eta squared > .01
-treespecs.long$treatdiff <- factor(as.numeric(as.character(treespecs.long$treatdiff)), ordered=T)
+#N, treatdiffs & sigmab have main and/or interaction effects with eta squared > .01
+treespecs.long2$treatdiff <- factor(as.numeric(as.character(treespecs.long2$treatdiff)), ordered=T)
+treespecs.long2$correlation.ind <- factor(treespecs.long2$correlation.ind)
 aggdata.cor <- aggregate(formula=correlation.values ~ correlation.ind + N + sigmab + treatdiff, FUN=mean, 
-                     data=treespecs.long)
-pdf("xy_correlations.pdf")
+                     data=treespecs.long2)
 xyplot(correlation.values ~ sigmab | N + treatdiff, data = aggdata.cor, groups=correlation.ind, type="b",
        ylab="correlation", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), 
        auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
-dev.off()
 
-plot(glmtree(truetree.values ~ truetree.ind | N + rho + np + treatdiff + corUb + numbclus + sigmab, 
-             data=treespecs.long, maxdepth=4, family="binomial"), type="simple")
-treeacc.glm <- glm(truetree.values ~ truetree.ind + N + rho + np + treatdiff + numbclus + sigmab + corUb +
-                     truetree.ind*(N + rho + np + treatdiff + numbclus + sigmab + corUb), 
-                   data=treespecs.long, family="binomial")
+# xyplot for accuracy of tree recovery:
+treespecs.long2$N <- factor(treespecs.long2$N, ordered = FALSE)
+treespecs.long2$sigmab <- factor(treespecs.long2$sigmab, ordered = FALSE)
+treeacc.glm <- glm(truetree.values+1 ~ correlation.ind + N + rho + np + treatdiff + numbclus + sigmab + corUb +
+                     correlation.ind*(N + rho + np + treatdiff + numbclus + sigmab + corUb), 
+                   data=treespecs.long2, family="binomial")
 summary(treeacc.glm)
-# N, corUb & sigmab have main and/or interaction effects
-treespecs.long$truetree.values <- as.numeric(treespecs.long$truetree.values)-1
-aggdata.acc <- aggregate(formula=truetree.values ~ truetree.ind + N + sigmab + corUb, FUN=mean, 
-                     data=treespecs.long)
+#N, corUb & sigmab have strongest main and/or interaction effects
+treespecs.long2$truetree.values <- as.numeric(treespecs.long2$truetree.values)-1
+aggdata.acc <- aggregate(formula=truetree.values ~ correlation.ind + N + sigmab + corUb, FUN=mean, 
+                     data=treespecs.long2)
 levels(aggdata.acc$corUb)[levels(aggdata.acc$corUb)=="bi and splitting U correlated"] <- "b correlated with splitting U"
 levels(aggdata.acc$corUb)[levels(aggdata.acc$corUb)=="bi and non-splitting U correlated"] <- "b correlated with non-splitting U"
 levels(aggdata.acc$corUb)[levels(aggdata.acc$corUb)=="uncorrelated"] <- "b and U uncorrelated"
-pdf("xy_accuracy.pdf", width=9)
-xyplot(truetree.values ~ sigmab | N + corUb, data = aggdata.acc, groups=truetree.ind, type="b",
+xyplot(truetree.values ~ sigmab | N + corUb, data = aggdata.acc, groups=correlation.ind, type="b",
        ylab="tree accuracy", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), 
        auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
-dev.off()
+

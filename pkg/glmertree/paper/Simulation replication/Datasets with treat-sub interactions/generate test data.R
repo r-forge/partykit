@@ -103,6 +103,8 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b
               r$bi[order(r$bi)] <- int_vals
               if(sigma_bi==0){r$Y <- r$Y}
               if(sigma_bi!=0){r$Y <- r$Y + r$bi}
+              r$cluster <- factor(r$bi)
+              levels(r$cluster) <- 1:length(unique(r$bi))
               
               # generate and add error to Y
               r$errorY <- rnorm(N[[i]], sd=5)
@@ -112,13 +114,13 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b
               counter <- counter+1
               testdata[[counter]] <- list() 
               r$T <- factor(r$T)
-              testdata[[counter]][[3]] <- r[,c(paste("X",1:p, sep=""), "T", "bi", "errorY", "Y")]
+              testdata[[counter]][[3]] <- r[,c(paste("X",1:p, sep=""), "T", "bi", "cluster", "errorY", "Y")]
               r$T <- 1 # dataset[[1]] has T=1
               r$T <- factor(r$T, levels=c(1,2))
-              testdata[[counter]][[1]] <- r[,c(paste("X",1:p, sep=""), "T", "bi")]
+              testdata[[counter]][[1]] <- r[,c(paste("X",1:p, sep=""), "T", "cluster", "bi")]
               r$T <- 2 # dataset[[2]] has T=2
               r$T <- factor(r$T, levels=c(1,2))
-              testdata[[counter]][[2]] <- r[,c(paste("X",1:p, sep=""), "T", "bi")]
+              testdata[[counter]][[2]] <- r[,c(paste("X",1:p, sep=""), "T", "cluster", "bi")]
               testdescriptions[[counter]] <- list(
                 paste("N =", N[[i]]),
                 paste("rho =", rho[[j]][1,2]), 

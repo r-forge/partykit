@@ -1,40 +1,78 @@
 N <- list() # different levels for N
-N[[1]] <- 200; N[[2]] <- 500; N[[3]] <- 1000 
+N[[1]] <- 200
+N[[2]] <- 500
+N[[3]]<- 1000
 
 bi <- list() # different numbers and values for the study intercepts
-bi$numbclus <- c(5,10,25)
-bi$sigmas <- c(0, 5, 10)
+bi$numbclus <- c(25)
+bi$sigmas <- c(2.5, 7.5)
 
 rho <- list() # levels of intercorrelations between the covariates
 rho[[1]] <- matrix(0, nrow=20, ncol=20)
-diag(rho[[1]]) <- 1
 rho[[2]] <- matrix(.3, nrow=20, ncol=20)
+diag(rho[[1]]) <- 1
 diag(rho[[2]]) <- 1
 
 corUbi <- list()
 corUbi[[1]] <- "uncorrelated"
-corUbi[[2]] <- "bi and splitting U correlated"
-corUbi[[3]] <- "bi and non-splitting U correlated" 
+corUbi[[2]] <- "bi and U correlated"
 
 pXj <- list() # levels of number of covariates
-pXj[[1]] <- 5; pXj[[2]] <- 15 
+pXj[[1]] <- 5; pXj[[2]] <- 10 
 
-muYdiff <- list() # different levels for the difference in treatment outcome
-muYdiff[[1]] <- 2.5; muYdiff[[2]] <- 5
+types <- list("linear","both","piecewise") # different levels for the difference in treatment outcome
+
+
+### Get the piecewise nodemeans:
+set.seed(1)
+X1 <- rnorm(10e6, mean = 10, sd = 10)
+X2 <- rnorm(10e6, mean = 30, sd = 10)
+X5 <- rnorm(10e6, mean = 70, sd = 10)
+Treat <- rbinom(10e6, 1, .5)
+node3 = X2<=30 & X1<=17
+node4 = X2<=30 & X1>17
+node6 = X2>30 & X5<=63
+node7 = X2>30 & X5>63
+fact1 <- rep(NA, times = 10e6)
+fact1[node3 & Treat] <- "3T2"
+fact1[node4 & Treat] <- "4T2"
+fact1[node6 & Treat] <- "6T2"
+fact1[node7 & Treat] <- "7T2"
+fact1[node3 & !Treat] <- "3T1"
+fact1[node4 & !Treat] <- "4T1"
+fact1[node6 & !Treat] <- "6T1"
+fact1[node7 & !Treat] <- "7T1"
+fact1 <- factor(fact1)
+## Linear treatment interaction design:
+Y <- rep(0, times = 10e6)
+## Main effect of X2:
+Y <- Y-45 + 1.5*X2
+# Centered interactions:
+Y <- Y + (X2-30)*(X1-10)*-.25
+Y <- Y + (X2-30)*(X5-70)*.25
+# Centered treatment interactions:
+Y <- Y + Treat*(X2-30)*(X1-10)*-.25
+Y <- Y + Treat*(X2-30)*(X5-70)*.25
+tapply(Y, fact1, mean)
+#3T1       3T2       4T1       4T2       6T1       6T2       7T1       7T2 
+#-20.17224 -28.39720  13.75540  39.59950 -13.75933 -39.53344  20.14495  28.37829
+
+
 
 datasets <- list()
 descriptions <- list()
 
 set.seed(23061983)
 
+
 for (c in 1:50) {  
 counter <- 0
 for (d in 1:length(bi$sigmas)) {# d is counter for sigma_b value
-  for (e in 1:length(bi$numbclus)) {# e is counter for no. of clusters
-    numbclus <- bi$numbclus[e] # numbclus is number of different random intercept values
+  for (e in 1:length(bi$numbclus)) {# e is counter for number of clusters
+    numbclus <- bi$numbclus[[e]] # numbclus is number of different random intercept values
     for (f in 1:length(corUbi)) { # f is counter for correlation between U and b
-      for (g in 1:length(muYdiff)) { # g is counter for treatment effect differences
-        diff <- muYdiff[[g]]
+      for (g in 1:length(types)) { # g is counter for type
+        type <- types[[g]]
         for (h in 1:length(pXj)) { # h is counter for number of covariates
           p <- pXj[[h]]
           for (i in 1:length(N)) { # i is counter for sample size N
@@ -64,33 +102,55 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma_b value
               }
               
               # add treatment variable to datasets
-              r$T <- rbinom(N[[i]], 1, .5) + 1
+              r$T <- rbinom(N[[i]], 1, .5)
               
-              # generate initial Y (overall population means within final nodes)
-              r$Y <- NA
-              r$Y[r$X2<=30 & r$X1<=17] <- 15 # node 1
-              r$Y[r$X2<=30 & r$X1>17] <- 30 # node 2
-              r$Y[r$X2>30 & r$X5<=63] <- 30 # node 3 # earlier, x5 was x1 here ..... Oops ....
-              r$Y[r$X2>30 & r$X5>63] <- 45 # node 4
-              
-              # adjust initial Y for differences in endnodes
-              r$Y[r$T==1 & r$X2<=30 & r$X1<=17] <- r$Y[r$T==1 & r$X2<=30 & r$X1<=17]+diff/2 # node 1
-              r$Y[r$T==2 & r$X2<=30 & r$X1<=17] <-  r$Y[r$T==2 & r$X2<=30 & r$X1<=17]-diff/2 # node 2
-              r$Y[r$T==1 & r$X2>30 & r$X5>63] <-  r$Y[r$T==1 & r$X2>30 & r$X5>63]-diff/2 # node 3
-              r$Y[r$T==2 & r$X2>30 & r$X5>63] <- r$Y[r$T==2 & r$X2>30 & r$X5>63]+diff/2 # node 4
-              
+              if(type == "linear" | type == "both") {
+                # Main effect of X2:
+                r$Y <- -45 + 1.5*r$X2
+                # Centered interactions:
+                r$Y <- r$Y + (r$X2-30)*(r$X1-10)*-.25
+                r$Y <- r$Y + (r$X2-30)*(r$X5-70)*.25
+                # Centered treatment interactions:
+                r$Y <- r$Y + r$T*(r$X2-30)*(r$X1-10)*-.25
+                r$Y <- r$Y + r$T*(r$X2-30)*(r$X5-70)*.25
+              } else {
+                node3 = r$X2<=30 & r$X1<=17
+                node4 = r$X2<=30 & r$X1>17
+                node6 = r$X2>30 & r$X5<=63
+                node7 = r$X2>30 & r$X5>63
+                r$Y[node3 & r$T == 0] <- -20.17224
+                r$Y[node3 & r$T == 1] <- -28.39720
+                r$Y[node4 & r$T == 0] <- 13.75540
+                r$Y[node4 & r$T == 1] <- 39.59950
+                r$Y[node6 & r$T == 0] <- -13.75933
+                r$Y[node6 & r$T == 1] <- -39.53344
+                r$Y[node7 & r$T == 0] <- 20.14495
+                r$Y[node7 & r$T == 1] <- 28.37829
+              }
+              if(type == "both") {
+                r$Y <- .5*r$Y
+                node3 = r$X2<=30 & r$X1<=17
+                node4 = r$X2<=30 & r$X1>17
+                node6 = r$X2>30 & r$X5<=63
+                node7 = r$X2>30 & r$X5>63
+                r$Y[node3 & r$T == 0] <- r$Y[node3 & r$T == 0] + .5*-20.17224
+                r$Y[node3 & r$T == 1] <- r$Y[node3 & r$T == 1] + .5*-28.39720
+                r$Y[node4 & r$T == 0] <- r$Y[node4 & r$T == 0] + .5*13.75540
+                r$Y[node4 & r$T == 1] <- r$Y[node4 & r$T == 1] + .5*39.59950
+                r$Y[node6 & r$T == 0] <- r$Y[node6 & r$T == 0] + .5*-13.75933
+                r$Y[node6 & r$T == 1] <- r$Y[node6 & r$T == 1] + .5*-39.53344
+                r$Y[node7 & r$T == 0] <- r$Y[node7 & r$T == 0] + .5*20.14495
+                r$Y[node7 & r$T == 1] <- r$Y[node7 & r$T == 1] + .5*28.37829
+              }
+ 
               # add study intercept variable to datasets, which is randomly correlated with X1 thru X5
               sigma_bi <- bi$sigmas[d]
-              if(sigma_bi==0) {int_vals <- rep(rnorm(numbclus,0,300),each=nobs/numbclus)}
+              #if(sigma_bi==0) {int_vals <- rep(rnorm(numbclus,0,300),each=nobs/numbclus)}
               if(sigma_bi!=0) {int_vals <- rep(rnorm(numbclus,0,bi$sigmas[d]),each=nobs/numbclus)} # generate values to be use as random intercepts
               int_vals <- int_vals[order(int_vals)] # order random intercept values
               
-              if (corUbi[[f]]=="bi and splitting U correlated") {
-                correlated_covariate <- sample(c(1,2,5), 1)
-                r$bi <- r[,paste("X", correlated_covariate, sep="")] + rnorm(nobs, sd=20)
-              }
-              if (corUbi[[f]]=="bi and non-splitting U correlated") {
-                correlated_covariate <- sample(c(3,4), 1)
+              if (corUbi[[f]]=="bi and U correlated") {
+                correlated_covariate <- sample(1:5, 1)
                 r$bi <- r[,paste("X", correlated_covariate, sep="")] + rnorm(nobs, sd=20)
               }
               if (corUbi[[f]]=="uncorrelated") {
@@ -115,7 +175,7 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma_b value
                 paste("N =", N[[i]]),
                 paste("rho =", rho[[j]][1,2]), 
                 paste("number of covariates =", pXj[[h]]),
-                paste("treatment effect difference =", diff),
+                paste("type =", type),
                 paste("correlation between U and bi =", corUbi[[f]]),
                 paste("no. of random intercept values =", numbclus),
                 paste("sigma bi =", bi$sigmas[d]),

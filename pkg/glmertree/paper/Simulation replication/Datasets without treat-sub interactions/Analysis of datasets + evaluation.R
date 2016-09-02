@@ -1,59 +1,59 @@
-library(lme4)
-library(partykit)
-source("lmertree.R")
+# install.packages("glmertree", repos="http://R-Forge.R-project.org") 
+library(glmertree)
+names(datasets[[1]])
 
-for (c in 9:50) {
-  load(paste("datasets", c, sep="")) # loads training data
-  load(paste("descriptions", c, sep="")) # loads trainig data descriptions
-
-  # Fit btrees on training data
-  REEMobtrees <- list()
-  Mobtrees <- list()
+# Fit trees on training data
+for (c in 1:1) {
+  load(paste("datasets", c, sep=""))
+  load(paste("descriptions", c, sep=""))
+  GLMMtrees <- list()
+  GLMtrees <- list()
   for (i in 1:length(datasets)) {
-  print(i)
-  if (descriptions[[i]][[3]] == "number of covariates = 5") {
-    formula <- Y ~ T | X1 + X2 + X3 + X4 + X5
+    print(i)
+    if (descriptions[[i]][[3]] == "number of covariates = 5") {
+      GLMformula <- Y ~ T | X1 + X2 + X3 + X4 + X5
+      GLMMformula <- Y ~ T | cluster | X1 + X2 + X3 + X4 + X5
+    }
+    if (descriptions[[i]][[3]] == "number of covariates = 15") {
+      GLMformula <- Y ~ T | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
+      GLMMformula <- Y ~ T | cluster | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
+    }
+  GLMMtrees[[i]] <- lmertree(GLMMformula, data=datasets[[i]], maxdepth=4)
+  GLMtrees[[i]] <- lmtree(GLMformula, data=datasets[[i]], maxdepth=4)
   }
-  if (descriptions[[i]][[3]] == "number of covariates = 15") {
-    formula <- Y ~ T | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
-  }
-  REEMobtrees[[i]] <- lmertree(lmtreeformula = formula, data=datasets[[i]], 
-                              randomformula = Y~(1|bi), verbose = F, plotting=F, 
-                              ErrorTolerance = 0.001, maxdepth=4)
-  Mobtrees[[i]] <- lmtree(formula = formula, data=datasets[[i]],
-                          maxdepth=4)
-  }
-  save(REEMobtrees, file=paste("REEMobtrees", c, sep=""))
-  save(Mobtrees, file=paste("Mobtrees", c, sep=""))
+  save(GLMMtrees, file=paste("GLMMtrees", c, sep=""))
+  save(GLMtrees, file=paste("GLMtrees", c, sep=""))
 }
 
+# Get tree characteristics
 for(c in 1:50){
-  load(paste("Mobtrees",c,sep=""))
-  load(paste("REEMobtrees",c,sep=""))
-  # Summarize tree characteristics of REEMob trees
-  treesize.REEMobs <- list()
+  load(paste("GLMMtrees", c, sep=""))
+  load(paste("GLMtrees", c, sep=""))
+
+  # characteristics of GLMM trees
+  treesize.GLMM <- list()
   for (i in 1:length(datasets)) {
-    treesize.REEMobs[[i]] <- length(REEMobtrees[[i]]$Tree)
+    treesize.GLMM[[i]] <- length(GLMMtrees[[i]]$tree)
   }
-  save(treesize.REEMobs, file=paste("treesize.REEMobs", c, sep=""))
-  # Summarize tree characteristics of Mob trees
-  treesize.Mobs <- list()
+  save(treesize.GLMM, file=paste("treesize.GLMM", c, sep=""))
+  # characteristics of GLM trees
+  treesize.GLM <- list()
   for (i in 1:length(datasets)) {
-    treesize.Mobs[[i]] <- length(Mobtrees[[i]])
+    treesize.GLM[[i]] <- length(GLMtrees[[i]])
   }
-  save(treesize.Mobs, file=paste("treesize.Mobs", c, sep=""))
+  save(treesize.GLM, file=paste("treesize.GLM", c, sep=""))
 }
 
 # Evaluate tree sizes
-REEMobtreesize <- vector()
-Mobtreesize <- vector()
+GLMMtreesize <- vector()
+GLMtreesize <- vector()
 for (c in 1:50){
-  load(paste("treesize.REEMobs", c, sep=""))
-  REEMobtreesize <- c(REEMobtreesize, unlist(treesize.REEMobs))
-  load(paste("treesize.Mobs", c, sep=""))
-  Mobtreesize <- c(Mobtreesize, unlist(treesize.Mobs))  
+  load(paste("treesize.GLMM", c, sep=""))
+  GLMMtreesize <- c(GLMMtreesize, unlist(treesize.GLMM))
+  load(paste("treesize.GLM", c, sep=""))
+  GLMtreesize <- c(GLMtreesize, unlist(treesize.GLM))  
 }
-treesizes <- data.frame(REEMobtreesize, Mobtreesize)
+treesizes <- data.frame(GLMMtreesize, GLMtreesize)
 
 load("descriptions1")
 for (i in 1:length(descriptions)) {
@@ -66,7 +66,6 @@ for (i in 1:length(descriptions)) {
   treesizes[i,"sigmabi"] <- substr(descriptions[[i]][[7]], 12, 14) # max and -min random intercept value    
 }
 save(treesizes,file="treesizes")
-load("treesizes")
 
 treesizes$N <- factor(treesizes$N)
 treesizes$rho <-  factor(treesizes$rho)            
@@ -84,10 +83,11 @@ treesizes$corUbi <- rep(treesizes$corUbi[1:length(descriptions)], times=1)
 treesizes$numbclus <- rep(treesizes$numbclus[1:length(descriptions)], times=1)
 treesizes$sigmabi <- rep(treesizes$sigmabi[1:length(descriptions)], times=1)
 
-table(treesizes[,1]) # clustermob
-prop.table(table(treesizes[,1])) # clustermob
-table(treesizes[,2]) # mob
-prop.table(table(treesizes[,2])) # mob
+treesizes
+table(treesizes[,1]) # GLMM trees
+prop.table(table(treesizes[,1])) # GLMM trees
+table(treesizes[,2]) # GLM trees
+prop.table(table(treesizes[,2])) # GLM trees
 
 treesizes.long <- data.frame(treesize=stack(treesizes[,1:2]), 
                              N=rep(treesizes$N, 2), rho=rep(treesizes$rho, 2), np=rep(treesizes$np, 2), 
@@ -95,12 +95,13 @@ treesizes.long <- data.frame(treesize=stack(treesizes[,1:2]),
                              numbclus=rep(treesizes$numbclus, 2), sigmabm=rep(treesizes$sigmabi, 2),
                              datasetID=factor(rep(1:nrow(treesizes), 2)))
 tmp <- as.character(treesizes.long$treesize.ind)
-tmp[treesizes.long$treesize.ind=="REEMobtreesize"] <- "GLMM tree"
-tmp[treesizes.long$treesize.ind=="Mobtreesize"] <- "GLM tree"
+
+tmp[treesizes.long$treesize.ind=="GLMMtreesize"] <- "GLMM tree"
+tmp[treesizes.long$treesize.ind=="GLMtreesize"] <- "GLM tree"
 treesizes.long$treesize.ind <- factor(tmp)
 
-mean(treesizes[,1]);sd(treesizes[,1]) # REEMob
-mean(treesizes[,2]);sd(treesizes[,2]) # mob
+mean(treesizes[,1]);sd(treesizes[,1]) # GLMM tree
+mean(treesizes[,2]);sd(treesizes[,2]) # GLM tree
 
 # create lattice xyplots
 library(lattice)
@@ -113,10 +114,7 @@ treesizes.long$sigmabm <- factor(as.numeric(as.character(treesizes.long$sigmabm)
 treesizes.long$N <- factor(as.numeric(as.character(treesizes.long$N)), ordered=T)
 aggdata <- aggregate(formula=treesize.values ~ treesize.ind + N + sigmabm + corUbm, FUN=mean, data=treesizes.long)
 
-# indirect greyscale plot
-pdf("xy_treesizes_maineff.pdf")
 xyplot(treesize.values ~ sigmabm | N + corUbm, data = aggdata, groups=treesize.ind, type="b",
        ylab="tree size", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), abline=c(1,0), 
        auto.key=list(space="top", columns=2, title="Algorithm type", cex.title=1,lines=T, points=T))
-dev.off()
 

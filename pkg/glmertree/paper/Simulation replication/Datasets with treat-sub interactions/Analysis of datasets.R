@@ -1,106 +1,159 @@
-library(lme4)
-library(partykit)
-source("lmertree.R")
+#install.packages("glmertree", repos="http://R-Forge.R-project.org")
+library(glmertree)
 
-# Fit trees on training data
+## Fit GLMM trees on training data:
 for (c in 1:50) {
-  load(paste("datasets", c, sep="")) # load training data
-  load(paste("descriptions", c, sep="")) # load trainig data descriptions
-  REEMobtrees <- list()
-  Mobtrees <- list()
+  load(paste("datasets", c, sep=""))
+  load(paste("descriptions", c, sep=""))
+  GLMMtrees <- list()
   for (i in 1:length(datasets)) {
     print(i)
     if (descriptions[[i]][[3]] == "number of covariates = 5") {
-      formula <- Y ~ T | X1 + X2 + X3 + X4 + X5
+      GLMMtreeformula <- Y ~ T | cluster | X1 + X2 + X3 + X4 + X5
     }
     if (descriptions[[i]][[3]] == "number of covariates = 15") {
-      formula <- Y ~ T | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + 
-                  X11 + X12 + X13 + X14 + X15
+      GLMMtreeformula <- Y ~ T | cluster | X1 + X2 + X3 + X4 + X5 + X6 + X7 + 
+        X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
     }
-    REEMobtrees[[i]] <- lmertree(lmtreeformula = formula, data=datasets[[i]], 
-                                  randomformula = Y~(1|bi), verbose = F, plotting=F, 
-                                  ErrorTolerance = 0.001, maxdepth=4)
-    Mobtrees[[i]] <- lmtree(formula = formula, data=datasets[[i]], maxdepth=4)
+    GLMMtrees[[i]] <- lmertree(GLMMtreeformula, data=datasets[[i]], maxdepth=4)
   }
-  save(REEMobtrees, file=paste("REEMobtrees", c, sep=""))
-  save(Mobtrees, file=paste("Mobtrees", c, sep=""))
+  save(GLMMtrees, file=paste("GLMMtrees", c, sep=""))
+  rm(list=ls())
 }
 
-# get tree characteristics
+## Fit GLM trees on training data:
+for (c in 1:50) {
+  load(paste("datasets", c, sep=""))
+  load(paste("descriptions", c, sep=""))
+  GLMtrees <- list()
+  for (i in 1:length(datasets)) {
+    print(i)
+    if (descriptions[[i]][[3]] == "number of covariates = 5") {
+      GLMtreeformula <- Y ~ T | X1 + X2 + X3 + X4 + X5
+    }
+    if (descriptions[[i]][[3]] == "number of covariates = 15") {
+      GLMtreeformula <- Y ~ T | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + 
+        X10 + X11 + X12 + X13 + X14 + X15
+    }
+    GLMtrees[[i]] <- lmtree(GLMtreeformula, data=datasets[[i]], maxdepth=4)
+  }
+  save(GLMtrees, file=paste("GLMtrees", c, sep=""))
+  rm(list=ls())
+}
+
+## Fit GLMMs on training data:
+for (c in 1:50) {
+  load(paste("datasets", c, sep=""))
+  load(paste("descriptions", c, sep=""))
+  GLMMs <- list()
+  for (i in 1:length(datasets)) {
+    print(i)
+    #if (descriptions[[i]][[3]] == "number of covariates = 5") {
+      GLMMformula <- Y ~ (1 | cluster) + T + X1 + X2 + X3 + X4 + X5 + 
+        T:(X1 + X2 + X3 + X4 + X5) + (X1 + X2 + X3 + X4 + X5)^2 + 
+        T:(X1 + X2 + X3 + X4 + X5)^2
+    #}
+    #if (descriptions[[i]][[3]] == "number of covariates = 15") {
+    #  GLMMformula <- Y ~ (1 | cluster) + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15 + T +
+    #    T:(X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15) + 
+    #    (X1 + X2 + X3 + X4 + X5)^2 +        
+    #    T:(X1 + X2 + X3 + X4 + X5)^2
+    #}
+    dataset <- datasets[[i]]
+    dataset$T <- as.numeric(dataset$T)-1  
+    GLMMs[[i]] <- lmer(GLMMformula, data = dataset)
+  }
+  save(GLMMs, file = paste("GLMMs", c, sep = ""))
+  rm(list=ls())
+}
+
+
+
+## Get tree and model characteristics:
 for(c in 1:50){
   print(c)
-  load(paste("Mobtrees",c,sep=""))
-  load(paste("REEMobtrees",c,sep=""))
-
-  # Summarize tree characteristics of REEMob trees
-  treesize.REEMobs <- list()
-  for (i in 1:length(datasets)) {
-    treesize.REEMobs[[i]] <- length(REEMobtrees[[i]]$Tree)
+  load(paste("GLMMtrees", c, sep=""))
+  load(paste("GLMtrees", c, sep=""))
+  load(paste("GLMMs", c, sep=""))
+  
+  # Characteristics of GLMMs: (get the names of the significant fixed-effect predictor variables):
+  names.GLMMs <- list()
+  for(i in 1:length(datasets)) {
+    names.GLMMs[[i]] <- names(summary(GLMMs[[i]])$coefficients[-1,"t value"][
+      summary(GLMMs[[i]])$coefficients[-1,"t value"] > 1.96])
   }
-  save(treesize.REEMobs, file=paste("treesize.REEMobs", c, sep=""))
-
-  breaks.REEMobs <- list()
-  varids.REEMobs <- list()
+  save(names.GLMMs, file = paste("names.GLMMs", c, sep = ""))
+  
+  # Characteristics of GLMM trees:
+  treesize.GLMM <- list()
   for (i in 1:length(datasets)) {
-    breaks.REEMobs[[i]] <- list()
-    varids.REEMobs[[i]] <- list()
-    for (j in 1:length(REEMobtrees[[i]][[1]])) {
-      varids.REEMobs[[i]][[j]] <- REEMobtrees[[i]][[1]][[j]]$node$split$varid
-      breaks.REEMobs[[i]][[j]] <- REEMobtrees[[i]][[1]][[j]]$node$split$breaks
+    treesize.GLMM[[i]] <- length(GLMMtrees[[i]]$tree)
+  }
+  save(treesize.GLMM, file=paste("treesize.GLMM", c, sep=""))
+
+  breaks.GLMM <- list()
+  varids.GLMM <- list()
+  for (i in 1:length(datasets)) {
+    breaks.GLMM[[i]] <- list()
+    varids.GLMM[[i]] <- list()
+    for (j in 1:length(GLMMtrees[[i]]$tree)) {
+      varids.GLMM[[i]][[j]] <- GLMMtrees[[i]]$tree[[j]]$node$split$varid
+      breaks.GLMM[[i]][[j]] <- GLMMtrees[[i]]$tree[[j]]$node$split$breaks
     }    
   }    
-  splits.REEMobs <- list()
+  splits.GLMM <- list()
   for (i in 1:length(datasets)) {
-    splits.REEMobs[[i]] <- list()
-    for (j in 1:length(varids.REEMobs[[i]])) {
-      splits.REEMobs[[i]][[j]] <- c(varids.REEMobs[[i]][[j]], breaks.REEMobs[[i]][[j]])
+    splits.GLMM[[i]] <- list()
+    for (j in 1:length(varids.GLMM[[i]])) {
+      splits.GLMM[[i]][[j]] <- c(varids.GLMM[[i]][[j]], breaks.GLMM[[i]][[j]])
     }
   }
-  splits.REEMobs <- data.frame(varids=unlist(splits.REEMobs)[1:length(unlist(splits.REEMobs))%%2==1],
-                               breaks=unlist(splits.REEMobs)[1:length(unlist(splits.REEMobs))%%2==0])
-  save(splits.REEMobs, file=paste("splits.REEMobs", c, sep=""))
+  splits.GLMM <- data.frame(varids=unlist(splits.GLMM)[1:length(unlist(splits.GLMM))%%2==1],
+                               breaks=unlist(splits.GLMM)[1:length(unlist(splits.GLMM))%%2==0])
+  save(splits.GLMM, file=paste("splits.GLMM", c, sep=""))
 
-  # Summarize tree characteristics of Mob trees
-  treesize.Mobs <- list()
+  # Characteristics of GLM trees:
+  treesize.GLM <- list()
   for (i in 1:length(datasets)) {
-    treesize.Mobs[[i]] <- length(Mobtrees[[i]])
+    treesize.GLM[[i]] <- length(GLMtrees[[i]])
   }
-  save(treesize.Mobs, file=paste("treesize.Mobs", c, sep=""))
+  save(treesize.GLM, file=paste("treesize.GLM", c, sep=""))
 
-  breaks.Mobs <- list()
-  varids.Mobs <- list()
+  breaks.GLM <- list()
+  varids.GLM <- list()
   for (i in 1:length(datasets)) {
-    breaks.Mobs[[i]] <- list()
-    varids.Mobs[[i]] <- list()
-    for (j in 1:length(Mobtrees[[i]][[1]])) {
-      varids.Mobs[[i]][[j]] <- Mobtrees[[i]][[1]][[j]]$node$split$varid
-      breaks.Mobs[[i]][[j]] <- Mobtrees[[i]][[1]][[j]]$node$split$breaks
+    breaks.GLM[[i]] <- list()
+    varids.GLM[[i]] <- list()
+    for (j in 1:length(GLMtrees[[i]])) {
+      varids.GLM[[i]][[j]] <- GLMtrees[[i]][[j]]$node$split$varid
+      breaks.GLM[[i]][[j]] <- GLMtrees[[i]][[j]]$node$split$breaks
     }    
   }    
-  splits.Mobs <- list()
+  splits.GLM <- list()
   for (i in 1:length(datasets)) {
-    if(length(varids.Mobs[[i]])>0) {
-      splits.Mobs[[i]] <- list()
-      for (j in 1:length(varids.Mobs[[i]])) {  
-        splits.Mobs[[i]][[j]] <- c(varids.Mobs[[i]][[j]], breaks.Mobs[[i]][[j]])
+    if(length(varids.GLM[[i]])>0) {
+      splits.GLM[[i]] <- list()
+      for (j in 1:length(varids.GLM[[i]])) {  
+        splits.GLM[[i]][[j]] <- c(varids.GLM[[i]][[j]], breaks.GLM[[i]][[j]])
       }
     }
   }
-  splits.Mobs <- data.frame(varids=unlist(splits.Mobs)[1:length(unlist(splits.Mobs))%%2==1],
-                            breaks=unlist(splits.Mobs)[1:length(unlist(splits.Mobs))%%2==0])
-  save(splits.Mobs, file=paste("splits.Mobs", c, sep=""))
+  splits.GLM <- data.frame(varids=unlist(splits.GLM)[1:length(unlist(splits.GLM))%%2==1],
+                            breaks=unlist(splits.GLM)[1:length(unlist(splits.GLM))%%2==0])
+  save(splits.GLM, file=paste("splits.GLM", c, sep=""))
 }
 
 
-# Evaluate performance of trees with test data
+## Evaluate predictive accuracy with test data:
 for(c in 1:50){
   print(c)
-  load(paste("Mobtrees",c,sep=""))
-  load(paste("REEMobtrees",c,sep=""))
+  load(paste("GLMMs",c,sep=""))
+  load(paste("GLMtrees",c,sep=""))
+  load(paste("GLMtrees",c,sep=""))
   load(paste("testdatasets", c, sep=""))
   load(paste("testdescriptions", c, sep=""))
 
-  # compare treatment difference estimates of Mob and REEMob with true difference
+  ## Compare treatment difference estimates of GMMM, GLM tree and GLMM tree, and true difference:
   treatdiffs <- list()
   for (i in 1:length(testdata)) {
     diff <- as.numeric(substr(testdescriptions[[i]][[4]], 31, 33))
@@ -111,23 +164,17 @@ for(c in 1:50){
     tmp$true_d_hat[tmp$X2>30 & tmp$X1<=63] <- 0 
     tmp$true_d_hat[tmp$X2>30 & tmp$X5>63] <- -diff
     treatdiffs[[i]] <- data.frame(true_d_hat=tmp$true_d_hat)
-    treatdiffs[[i]]$REEMob_d_hat <- NA
-    treatdiffs[[i]]$REEMob_d_hat <- predict(REEMobtrees[[i]]$Tree, newdata=testdata[[i]][[1]], 
-              type="response") - predict(REEMobtrees[[i]]$Tree, 
+    treatdiffs[[i]]$GLMMtree_d_hat <- NA
+    treatdiffs[[i]]$GLMMtree_d_hat <- predict(GLMMtrees[[i]], newdata=testdata[[i]][[1]], 
+              type="response") - predict(GLMMtrees[[i]], newdata=testdata[[i]][[2]], type="response")
+    treatdiffs[[i]]$GLMtree_d_hat <- predict(GLMtrees[[i]], newdata=testdata[[i]][[1]], 
+              type="response") - predict(GLMtrees[[i]], 
               newdata=testdata[[i]][[2]], type="response")
-    treatdiffs[[i]]$Mob_d_hat <- predict(Mobtrees[[i]], newdata=testdata[[i]][[1]], 
-              type="response") - predict(Mobtrees[[i]], 
-              newdata=testdata[[i]][[2]], type="response")
+    dataset <- testdata[[i]]
+    dataset[[1]]$T <- as.numeric(dataset[[1]]$T)-1
+    dataset[[2]]$T <- as.numeric(dataset[[2]]$T)-1
+    treatdiffs[[i]]$GLMM_d_hat <- predict(GLMMs[[i]], newdata=dataset[[1]]) - 
+      predict(GLMMs[[i]], newdata=dataset[[2]])
   }
   save(treatdiffs, file=paste("treatdiffs", c, sep=""))
-
-  # Compute true and predicted Ys
-  true_pred_Y <- list()
-  for (i in 1:length(testdata)) {
-    true_pred_Y[[i]] <- data.frame(
-      Ytrue = testdata[[1]][[3]]$Y,
-      REEMobYpred = predict(REEMobtrees[[1]]$Tree, newdata=testdata[[1]][[3]]), 
-      MobYpred = predict(Mobtrees[[1]], newdata=testdata[[1]][[3]]))
-    }
-  save(true_pred_Y, file=paste("true_pred_Y", c, sep=""))
 }

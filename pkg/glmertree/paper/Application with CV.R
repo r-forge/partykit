@@ -73,7 +73,7 @@ lm_es
 aggregate(metadata$HRSDt1, by = list(metadata$Tx_group, predict(lm_o, type = "node")), FUN = length)
 
 
-## 50 fold CV
+## 50-fold CV:
 metadata <- metadata[,vars]
 library(peperr)
 set.seed(32)
@@ -109,7 +109,7 @@ for (i in 1:50) {
 }  
 
 
-## Assess 50 fold CV results
+## Assess 50-fold CV results
 lmtreecors <- list()
 lmertreecors <- list()
 for (i in 1:50){
@@ -120,3 +120,28 @@ mean(unlist(lmtreecors))
 mean(unlist(lmertreecors))
 var(unlist(lmtreecors))
 var(unlist(lmertreecors))
+
+
+
+
+## Assess tree stability:
+library(stablelearner)
+# create trees without offset (otherwise, stabletree gives errors):
+lm_tree <- lmtree(HRSDt1 - HRSDfit ~ Tx_group | Age + Gender +
+                    education + ComorbidAnxietyDisorder + HRSDt0, data = metadata)
+lmer_tree <- lmertree(HRSDt1 - HRSDfit ~ Tx_group | (1 | studyid) |
+                        Age + Gender + education + ComorbidAnxietyDisorder + HRSDt0,
+                      data = metadata)
+set.seed(15)
+subsample <- function (S = 500) {
+  sampfun <- function(n) replicate(S, sample(1L:n, round(.9*n), replace = FALSE))
+  list(method = "Subsampling", sampler = sampfun)
+}
+
+s_lm_tree <- stabletree(lm_tree, sampler = subsample)
+s_lmer_tree <- stabletree(lmer_tree, sampler = subsample)
+summary(s_lm_tree)
+plot(s_lm_tree)
+summary(s_lmer_tree)
+plot(s_lmer_tree)
+

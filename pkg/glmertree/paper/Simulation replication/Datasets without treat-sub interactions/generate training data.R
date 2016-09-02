@@ -1,7 +1,7 @@
 N <- list() # different levels for N
 N[[1]] <- 200; N[[2]] <- 500; N[[3]] <- 1000 
 
-bi <- list() # different numbers and values for the study intercepts
+bi <- list() # different number of clusters and variances of random intercepts
 bi$numbclus <- c(5,10,25)
 bi$sigmas <- c(0, 5, 10)
 
@@ -26,7 +26,7 @@ descriptions <- list()
 
 set.seed(24061983)
 
-for (c in 1:50) {  
+for (c in 1:1) {  
 counter <- 0
 for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b_i's
   for (e in 1:length(bi$numbclus)) {# e is counter for number of clusters
@@ -72,7 +72,7 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b_i's
               r$Y[r$T==1] <- r$Y[r$T==1]-diff/2              
               r$Y[r$T==2] <- r$Y[r$T==2]+diff/2
               
-              # add study intercept variable to datasets, which is randomly correlated with X1 thru X5
+              # add cluster-specific intercept to datasets, which is randomly correlated with X1 thru X5
               sigma_bi <- bi$sigmas[d]
               if(sigma_bi==0) {int_vals <- rep(rnorm(numbclus,0,300),each=nobs/numbclus)}
               if(sigma_bi!=0) {int_vals <- rep(rnorm(numbclus,0,bi$sigmas[d]),each=nobs/numbclus)} # generate values to be use as random intercepts
@@ -90,7 +90,9 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b_i's
               r$bi[order(r$bi)] <- int_vals
               if(sigma_bi==0){r$Y <- r$Y}
               if(sigma_bi!=0){r$Y <- r$Y + r$bi}
-          
+              r$cluster <- factor(r$bi)
+              levels(r$cluster) <- 1:length(unique(r$bi))
+              
               # generate and add error to Y
               r$errorY <- rnorm(N[[i]], sd=5)
               r$Y <- r$Y + r$errorY
@@ -98,7 +100,7 @@ for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b_i's
               # write dataset to list and add description
               counter <- counter+1
               r$T <- factor(r$T)
-              datasets[[counter]] <- r[,c(paste("X",1:p, sep=""), "T", "bi", "errorY", "Y")]
+              datasets[[counter]] <- r[,c(paste("X",1:p, sep=""), "T", "bi", "cluster", "errorY", "Y")]
               descriptions[[counter]] <- list(
                 paste("N =", N[[i]]),
                 paste("rho =", rho[[j]][1,2]), 
