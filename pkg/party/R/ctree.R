@@ -2,6 +2,7 @@
 .ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
                               weights, cluster, splitonly = TRUE, minbucket) {
 
+    if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
         if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
             is.factor(x)) {

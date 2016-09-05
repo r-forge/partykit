@@ -78,10 +78,10 @@ cforest <- function
         rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
                         simplify = FALSE)
     } else {
-        frac <- if (!perturb$replace) perturn$fraction else 1
+        frac <- if (!perturb$replace) perturb$fraction else 1
         rw <- replicate(ntree, function() 
             do.call("c", tapply(idx, strata, function(i) sample(i, size = length(i) * frac, 
-                   replace = perturn$replace, prob = probw[i]))))
+                   replace = perturb$replace, prob = probw[i]))))
     }
 
     ## apply infrastructure for determining split points
