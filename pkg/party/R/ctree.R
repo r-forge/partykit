@@ -127,7 +127,7 @@
         Y <- partykit:::.y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
         ### first row corresponds to missings
         Y <- rbind(0, Y)  
-        return(function(subset)
+        return(function(subset, ...)
             list(estfun = Y, index = index, 
                  converged =  if (is.null(converged)) 
                                   TRUE 
@@ -146,7 +146,7 @@
         Y[cc,] <- Yi
         #    colnames(Y) <- colnames(Yi)
         storage.mode(Y) <- "double"
-        return(function(subset)
+        return(function(subset, ...)
             list(estfun = Y, converged = if (is.null(converged)) 
                                              TRUE 
                                          else 
@@ -207,7 +207,7 @@
         ### for a subset of observations and variables
         ### y is used for node ids when computing surrogate splits
         selectfun <- function(y = NULL, trafo, subset = integer(0), 
-                              weights = integer(0), whichvar) 
+                              weights = integer(0), whichvar, info = NULL) 
         {
 
             ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
@@ -216,7 +216,7 @@
 
             if (is.null(y)) {
                 ### nrow(Y) = nrow(data)!!!
-                tr <- trafo(subset)
+                tr <- trafo(subset, info = info)
                 if (!tr$converged) return(ret)
             } else {
                 ### y is kidids in .csurr and nothing else
@@ -320,7 +320,7 @@
         ### for a subset of observations and variables
         ### y is used for node ids when computing surrogate splits
         selectfun <- function(y = NULL, trafo, subset = integer(0), 
-                              weights = integer(0), whichvar) 
+                              weights = integer(0), whichvar, info = NULL) 
         {
     
             ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
@@ -328,7 +328,7 @@
             rownames(ret$criteria) <- c("statistic", "p.value")
 
             if (is.null(y)) {
-                tr <- trafo(subset = subset)
+                tr <- trafo(subset = subset, info = info)
                 if (!tr$converged) return(ret)
             } else {
                 ### y is kidids in .csurr and nothing else

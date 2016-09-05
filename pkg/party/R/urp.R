@@ -13,6 +13,7 @@
     subset, 			### subset of 1:nrow(data)
                                 ### for identifying obs for this node
     ctrl, 			### .urp_control()
+    info = NULL,
     cenv = NULL			### environment for depth and maxid
 ) {
 
@@ -59,7 +60,7 @@
 
     ### compute test statistics and p-values
     ### for _unbiased_ variable selection
-    sf <- selectfun(subset = subset, whichvar = svars)
+    sf <- selectfun(subset = subset, whichvar = svars, info = info)
     ### selectfun might return other things later to be used for info
     p <- sf$criteria
     crit <- p[ctrl$criterion,,drop = TRUE]
@@ -137,7 +138,7 @@
         kids[[k]] <- .urp_node(id = nextid, data = data, 
             selectfun = selectfun, partyvars = partyvars, 
             weights = weights, subset = nextsubset, 
-            ctrl = ctrl, cenv = cenv)
+            ctrl = ctrl, info = info, cenv = cenv)
         ### was: nextid <- max(nodeids(kids[[k]])) + 1L
         nextid <- get("maxid", envir = cenv) + 1L
     }

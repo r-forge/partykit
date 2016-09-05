@@ -18,7 +18,7 @@
         mfs <- model.frame(formula, data = mf2)
         y <- model.response(mfs)
         x <- model.matrix(formula, data = mf2)
-        return(function(subset) {
+        return(function(subset, ...) {
             w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
             mod <- glm(y ~ x + 0, family = ctrl$family, weights = w)
             Y <- sandwich::estfun(mod)
@@ -35,7 +35,7 @@
     cc <- complete.cases(mf)
     y <- model.response(mf)
     x <- model.matrix(formula, data = mf)
-    return(function(subset) {
+    return(function(subset, ...) {
         s <- subset[cc[subset]]
         ys <- y[s]
         xs <- x[s, , drop = FALSE]
