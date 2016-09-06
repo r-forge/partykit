@@ -621,18 +621,19 @@ make_dist_list <- function(family) {
   if(np == 1L){
     
     # define function for the calculation of initial values
-    ## FIXME ## use weights?
-    initialize <- function(y) {
+    ## FIX ME ## use weights?
+    start <- function(y, weights = NULL) {
+      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- NULL
       eval(family$mu.initial)
-      start.eta <- family$mu.linkfun(mean(mu))
-      names(start.eta) <- eta.names
-      return(start.eta)
+      starteta <- family$mu.linkfun(mean(mu))
+      names(starteta) <- eta.names
+      return(starteta)
     }
     
     
     # define function to get distribution parameters
-    distpar <- function(eta){
+    linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]))
       names(par) <- par.names
       return(par)
@@ -677,17 +678,18 @@ make_dist_list <- function(family) {
   if(np == 2L){
     
     # define function for the calculation of initial values
-    initialize <- function(y) {
+    start <- function(y, weights = NULL) {
+      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
-      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
-      names(start.eta) <- eta.names
-      return(start.eta)
+      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
+      names(starteta) <- eta.names
+      return(starteta)
     }
     
     # define function to get distribution parameters
-    distpar <- function(eta){
+    linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]))
       names(par) <- par.names
       return(par)
@@ -733,18 +735,19 @@ make_dist_list <- function(family) {
   if(np == 3L){
     
     # define function for the calculation of initial values
-    initialize <- function(y) {
+    start <- function(y, weights = NULL) {
+      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <-  NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
       eval(family$nu.initial)
-      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
-      names(start.eta) <- eta.names
-      return(start.eta)
+      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
+      names(starteta) <- eta.names
+      return(starteta)
     }
     
     # define function to get distribution parameters
-    distpar <- function(eta){
+    linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]))
       names(par) <- par.names
       return(par)
@@ -791,19 +794,20 @@ make_dist_list <- function(family) {
   if(np == 4L){
     
     # define function for the calculation of initial values
-    initialize <- function(y) {
+    start <- function(y, weights = NULL) {
+      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <- tau <- NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
       eval(family$nu.initial)
       eval(family$tau.initial)
-      start.eta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
-      names(start.eta) <- eta.names
-      return(start.eta)
+      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
+      names(starteta) <- eta.names
+      return(starteta)
     }
     
     # define function to get distribution parameters
-    distpar <- function(eta){
+    linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]), family$tau.linkinv(eta[4]))
       names(par) <- par.names
       return(par)
@@ -850,12 +854,12 @@ make_dist_list <- function(family) {
   
   
   
-  ddist <- function(y, par, log = TRUE, type = "parameter") {
-    if(type == "link") par <- distpar(par)
+  ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
+    par <- linkinv(eta)
     input <- list()
     input.names <- c("x", par.names, "log")
     input[[1]] <- y
-    for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], ny)   (FIX?)
+    for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], length(y))   (FIX?)
     if(any(family$family%in%.distfit.bi.list)) {
       input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
       input.names <- c("x", par.names, "bd", "log")
@@ -863,7 +867,10 @@ make_dist_list <- function(family) {
     input <- append(input, log)
     names(input) <- input.names
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
-
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      eval <- sum(weights * eval)
+    }
     return(eval)
   }
   
@@ -926,74 +933,54 @@ make_dist_list <- function(family) {
   
   
   ## score / estfun (for positive loglikelihood)
-  sdist <- function(y, par, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "parameter") {
-      score <- dldpar(y, par)
-      score <- as.matrix(score)
-      colnames(score) <- par.names
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
+    par <- linkinv(eta)                           
+    score <- t(t(dldpar(y, par)) * dpardeta(eta))
+    score <- as.matrix(score)
+    colnames(score) <- eta.names
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      score <- colSums(weights * score)
     }
-     if(type == "link") {
-       eta <- par
-       par <- distpar(eta)                           
-       score <- t(t(dldpar(y, par)) * dpardeta(eta))
-       score <- as.matrix(score)
-       colnames(score) <- eta.names
-     }
     return(score)
   }
   
   
   ## FIX ME: would it be better to return the list of hessian matrices (one matrix for each observation) ?
   ## hessian (for positive loglikelihood)
-  hdist <- function(y, par, type = "parameter", weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+  hdist <- function(y, eta, weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
-    if(type == "parameter") {
-      hess.list <- d2ldpar2(y, par)
-      for(i in 1:ny){
-        hess.list[[i]] <- weights[i] * hess.list[[i]]
-      }
-      hess <- Reduce('+', hess.list)
-      # hess sum(weights * hess.list)
-      hess <- as.matrix(hess)
-      colnames(hess) <- rownames(hess) <-  par.names
+    par <- linkinv(eta)                           
+    
+    ## calculate derivative vectors / matrices / lists
+    d2ldpar2.list <- d2ldpar2(y, par)
+    dldpar.mat <- dldpar(y, par)
+    
+    dpardeta.vec <- dpardeta(eta)
+    d2pardeta2.vec <- d2pardeta2(eta)
+    
+    ## calculation is split up in 2 parts: 
+    # 2nd outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
+    hess.list <- list()
+    length(hess.list) <- length(d2ldpar2.list)
+    for(i in 1:ny){
+      hess.list[[i]] <- weights[i] * (t(d2ldpar2.list[[i]] * dpardeta.vec) * dpardeta.vec + diag(np) * as.vector(dldpar.mat[i,]) * d2pardeta2.vec)
     }
     
-    if(type == "link") {
-      eta <- par
-      par <- distpar(eta)                           
-      
-      ## calculate derivative vectors / matrices / lists
-      d2ldpar2.list <- d2ldpar2(y, par)
-      dldpar.mat <- dldpar(y, par)
-      
-      dpardeta.vec <- dpardeta(eta)
-      d2pardeta2.vec <- d2pardeta2(eta)
-      
-      ## calculation is split up in 2 parts: 
-      # 2nd outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
-      hess.list <- list()
-      length(hess.list) <- length(d2ldpar2.list)
-      for(i in 1:ny){
-        hess.list[[i]] <- weights[i] * (t(d2ldpar2.list[[i]] * dpardeta.vec) * dpardeta.vec + diag(np) * as.vector(dldpar.mat[i,]) * d2pardeta2.vec)
-      }
-      
-      ## calculate the sum over all matrices in the list (each for one observation)  
-      hess <- Reduce('+', hess.list)
-      hess <- as.matrix(hess)
-      colnames(hess) <- rownames(hess) <-  eta.names
-    }
-    
+    ## calculate the sum over all matrices in the list (each for one observation)  
+    hess <- Reduce('+', hess.list)
+    hess <- as.matrix(hess)
+    colnames(hess) <- rownames(hess) <-  eta.names
     return(hess)
-    # return(hess, hess.list)
   }
-  
+
   
   link <- link.names
   
   
-  link.fun <- function(par) {
+  linkfun <- function(par) {
     eta <- NULL
     if(np > 0) eta[1] <- family$mu.linkfun(par[1])
     if(np > 1) eta[2] <- family$sigma.linkfun(par[2])
@@ -1004,34 +991,24 @@ make_dist_list <- function(family) {
   }
   
   
-  link.inv <- distpar
+  linkinv <- linkinv
   
   
-  link.inv.der <- dpardeta
-  
-  
-  start.eta <- initialize
-  
-  
-  start.par <- function(y) return(distpar(initialize(y)))
-  
+  linkinvdr <- dpardeta
 
-  use.optim <- TRUE
-  
-  if(use.optim) closed.mle <- NULL
+  mle <- FALSE
+
   
   dist_list <- list(family.name = paste(family$family[2], "Distribution", sep = " "),
                     ddist = ddist, 
                     sdist = sdist, 
                     hdist = hdist, 
                     link = link, 
-                    link.fun = link.fun, 
-                    link.inv = link.inv, 
-                    link.inv.der = link.inv.der,
+                    linkfun = linkfun, 
+                    linkinv = linkinv, 
+                    linkinvdr = linkinvdr,
                     start = start,
-                    start.eta = start.eta,
-                    use.optim = use.optim,
-                    closed.mle = closed.mle
+                    mle = mle
                     )
 }
 
@@ -1046,121 +1023,94 @@ if(FALSE) {
   par.names <- c("mu", "sigma")
   eta.names <- c("mu", "log(sigma)")
   
-  use.optim <- FALSE
   
-  
-  closed.mle <- function(y, weights = NULL){
-    ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
-    y.w <- (y*weights)[weights != 0]     # just for the calculations where the index of the observations is not of any importance, but zero would have an impact on the result
-    ny.w <- length(y.w)
-    mu <- mean(y.w)
-    sigma <- sqrt(1/ny.w * sum((y.w - mu)^2))
-    par <- c(mu, sigma)
-    names(par) <- par.names
-    return(par)
-  }
-  
-  
-  ddist <-  function(y, par, log = TRUE, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "link") par[2] <- exp(par[2])
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+    par <- c(eta[1], exp(eta[2]))
     val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
     if(log) val <- log(val)
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val)
+    }
     # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     return(val)
   }
   
   
-  sdist <- function(y, par, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "parameter") {
-      score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)))
-      score <- as.matrix(score)
-      colnames(score) <- par.names
-    }
-    if(type == "link") {
-      eta <- par
-      par <- c(eta[1], exp(eta[2]))                           
-      score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
-      score <- as.matrix(score)
-      colnames(score) <- eta.names
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    par <- c(eta[1], exp(eta[2]))                           
+    score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
+    score <- as.matrix(score)
+    colnames(score) <- eta.names
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      score <- colSums(weights * score)
     }
     return(score)
   }
   
   
-  hdist <- function(y, par, type = "parameter", weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
-    if(type == "parameter") {
-      d2ldm2 <- sum(weights * rep.int(-1/par[2]^2, ny))
-      d2ldmdd <- sum(weights * (-2)*(y-par[1])/par[2]^3)                      # should be 0 for exact parameters (here ~ e-17 due to calculations)
-      d2ldd2 <- sum(weights * (1/par[2]^2 - 3*(y-par[1])^2/par[2]^4))         # should be -2/sigma^2 for exact parameters 
-      
-      hess <- matrix(c(d2ldm2, d2ldmdd, d2ldmdd, d2ldd2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  par.names
-    }
+    par <- c(eta[1], exp(eta[2]))                           
     
-    if(type == "link") {
-      eta <- par
-      par <- c(eta[1], exp(eta[2]))                           
-      
-      d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
-      d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2)          # should be 0 for exact parameters (here ~ e-17 due to calculations)
-      d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2)         
-      
-      hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  eta.names
-    }
+    d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+    d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2)          # should be 0 for exact parameters (here ~ e-17 due to calculations)
+    d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2)         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  eta.names
     
     return(hess)
   }
   
   link <- c("identity", "log")
   
-  link.fun <- function(par) {
+  linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
     names(eta) <- eta.names
     return(eta)
   }
   
   
-  link.inv <- function(eta) {
+  linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
     names(par) <- par.names
     return(par)
   }
   
   
-  link.inv.der <- function(eta) {
+  linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
     names(dpardeta) <- names.par
     return(dpardeta)
   }
   
-  
-  start <- function(y) closed.mle(y)
-  
-  start.eta <- function(y) {
-    start <- closed.mle(y)
-    starteta <- c(start[1], log(start[2])) 
+
+  start <- function(y, weights = NULL){
+    if(!is.null(weights)) y <- rep(y, round(weights))
+    ny <- length(y)
+    mu <- mean(y)
+    sigma <- sqrt(1/ny * sum((y - mu)^2))
+    starteta <- c(mu, log(sigma))
     names(starteta) <- eta.names
     return(starteta)
   }
   
+  mle <- TRUE
   
   dist_list_normal <- list(family.name = "Normal Distribution",
                            ddist = ddist, 
                            sdist = sdist, 
                            hdist = hdist, 
                            link = link, 
-                           link.fun = link.fun, 
-                           link.inv = link.inv, 
-                           link.inv.der = link.inv.der,
+                           linkfun = linkfun, 
+                           linkinv = linkinv, 
+                           linkinvdr = linkinvdr,
                            start = start,
-                           start.eta = start.eta,
-                           use.optim = use.optim,
-                           closed.mle = closed.mle
+                           mle = mle
   )
 }
 
@@ -1178,113 +1128,89 @@ if(FALSE) {
   par.names <- c("mu")
   eta.names <- c("log(mu)")
   
-  use.optim <- FALSE
   
-  closed.mle <- function(y, weights = NULL){
-    ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
-    y.w <- (y*weights)[weights != 0]     # just for the calculations where the index of the observations is not of any importance, but zero would have an impact on the result
-    ny.w <- length(y.w)
-    mu <- mean(y.w)
-    par <- c(mu)
-    names(par) <- par.names
-    return(par)
-  }
-  
-  
-  ddist <-  function(y, par, log = TRUE, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "link") par <- exp(par)
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    par <- exp(eta)
     val <- par^y / gamma(y+1) * exp(-par)
     if(log) val <- log(val)
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val)
+    }
     return(val)
   }
   
   
-  sdist <- function(y, par, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "parameter") {
-      score <- y/par - 1
-      score <- as.matrix(score)
-      colnames(score) <- par.names
-    }
-    if(type == "link") {
-      eta <- par
-      par <- exp(eta)                           
-      score <- (y - par)
-      score <- as.matrix(score)
-      colnames(score) <- eta.names
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    par <- exp(eta)                           
+    score <- (y - par)
+    score <- as.matrix(score)
+    colnames(score) <- eta.names
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      score <- colSums(weights * score)
     }
     return(score)
   }
   
   
-  hdist <- function(y, par, type = "parameter", weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    ny <- length(y)
+  hdist <- function(y, eta, weights = NULL) {
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
-    if(type == "parameter") {
-      hess <- -y/(par^2)
-      hess <- as.matrix(sum(weights * hess))
-      colnames(hess) <- rownames(hess) <-  par.names
-    }
-    
-    if(type == "link") {
-      eta <- par
-      par <- exp(eta)                           
-      hess <- rep(-par, ny)
-      hess <- as.matrix(sum(weights * hess))
-      colnames(hess) <- rownames(hess) <-  eta.names
-    }
+    par <- exp(eta)                           
+    hess <- rep(-par, length(y))
+    hess <- as.matrix(sum(weights * hess))
+    colnames(hess) <- rownames(hess) <-  eta.names
     
     return(hess)
   }
   
   link <- c("log")
   
-  link.fun <- function(par) {
+  linkfun <- function(par) {
     eta <- log(par)
     names(eta) <- eta.names
     return(eta)
   }
   
   
-  link.inv <- function(eta) {
+  linkinv <- function(eta) {
     par <- exp(eta)
     names(par) <- par.names
     return(par)
   }
   
   
-  link.inv.der <- function(eta) {
+  linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
     names(dpardeta) <- names.par
     return(dpardeta)
   }
   
   
-  start <- function(y) closed.mle(y)
-  
-  start.eta <- function(y) {
-    start <- closed.mle(y)
-    starteta <- log(start) 
+  start <- function(y, weights = NULL){
+    if(!is.null(weights)) y <- rep(y, round(weights))
+    ny <- length(y)
+    mu <- mean(y)
+    starteta <- log(mu)
     names(starteta) <- eta.names
     return(starteta)
   }
   
-  use.optim <- FALSE
+  
+  mle <- TRUE
   
   
   dist_list_poisson <- list(family.name = "Poisson Distribution",
-                           ddist = ddist, 
-                           sdist = sdist, 
-                           hdist = hdist, 
-                           link = link, 
-                           link.fun = link.fun, 
-                           link.inv = link.inv, 
-                           link.inv.der = link.inv.der,
-                           start = start,
-                           start.eta = start.eta,
-                           use.optim = use.optim,
-                           closed.mle = closed.mle
+                            ddist = ddist, 
+                            sdist = sdist, 
+                            hdist = hdist, 
+                            link = link, 
+                            linkfun = linkfun, 
+                            linkinv = linkinv, 
+                            linkinvdr = linkinvdr,
+                            start = start,
+                            mle = mle
   )
 }
 
@@ -1293,7 +1219,7 @@ if(FALSE) {
 
 
 
-###### dist_list for Poisson distribution
+###### dist_list for exponential distribution
 if(FALSE) {
   
   dist_list_exp <- list()
@@ -1301,112 +1227,88 @@ if(FALSE) {
   par.names <- c("lambda")
   eta.names <- c("log(lambda)")
   
-  use.optim <- FALSE
   
-  closed.mle <- function(y, weights = NULL){
-    ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
-    y.w <- (y*weights)[weights != 0]     # just for the calculations where the index of the observations is not of any importance, but zero would have an impact on the result
-    ny.w <- length(y.w)
-    lambda <- ny.w / sum(y.w)
-    par <- c(lambda)
-    names(par) <- par.names
-    return(par)
-  }
-  
-  
-  ddist <-  function(y, par, log = TRUE, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "link") par <- exp(par)
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    par <- exp(eta)
     val <- par * exp(-par * y)
     if(log) val <- log(val)
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val)
+    }
     return(val)
   }
   
   
-  sdist <- function(y, par, type = "parameter") {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
-    if(type == "parameter") {
-      score <- 1/par - y
-      score <- as.matrix(score)
-      colnames(score) <- par.names
-    }
-    if(type == "link") {
-      eta <- par
-      par <- exp(eta)                           
-      score <- 1 - y * par
-      score <- as.matrix(score)
-      colnames(score) <- eta.names
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
+    par <- exp(eta)                           
+    score <- 1 - y * par
+    score <- as.matrix(score)
+    colnames(score) <- eta.names
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      score <- colSums(weights * score)
     }
     return(score)
   }
   
   
-  hdist <- function(y, par, type = "parameter", weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
-    if(type == "parameter") {
-      hess <- -1/(par^2)
-      hess <- as.matrix(sum(weights * hess))
-      colnames(hess) <- rownames(hess) <-  par.names
-    }
-    
-    if(type == "link") {
-      eta <- par
-      par <- exp(eta)                           
-      hess <- -y * par
-      hess <- as.matrix(sum(weights * hess))
-      colnames(hess) <- rownames(hess) <-  eta.names
-    }
+    par <- exp(eta)                           
+    hess <- -y * par
+    hess <- as.matrix(sum(weights * hess))
+    colnames(hess) <- rownames(hess) <-  eta.names
     
     return(hess)
   }
   
   link <- c("log")
   
-  link.fun <- function(par) {
+  linkfun <- function(par) {
     eta <- log(par)
     names(eta) <- eta.names
     return(eta)
   }
   
   
-  link.inv <- function(eta) {
+  linkinv <- function(eta) {
     par <- exp(eta)
     names(par) <- par.names
     return(par)
   }
   
   
-  link.inv.der <- function(eta) {
+  linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
     names(dpardeta) <- names.par
     return(dpardeta)
   }
   
   
-  start <- function(y) closed.mle(y)
-  
-  start.eta <- function(y) {
-    start <- closed.mle(y)
-    starteta <- log(start) 
+  start <- function(y, weights = NULL){
+    if(!is.null(weights)) y <- rep(y, round(weights))
+    ny <- length(y)
+    lambda <- ny / sum(y)
+    starteta <- log(lambda)
     names(starteta) <- eta.names
     return(starteta)
   }
   
-  use.optim <- FALSE
+  mle <- TRUE
   
   
   dist_list_exp <- list(family.name = "Exponential Distribution",
-                            ddist = ddist, 
-                            sdist = sdist, 
-                            hdist = hdist, 
-                            link = link, 
-                            link.fun = link.fun, 
-                            link.inv = link.inv, 
-                            link.inv.der = link.inv.der,
-                            start = start,
-                            start.eta = start.eta,
-                            use.optim = use.optim,
-                            closed.mle = closed.mle
+                        ddist = ddist, 
+                        sdist = sdist, 
+                        hdist = hdist, 
+                        link = link, 
+                        linkfun = linkfun, 
+                        linkinv = linkinv, 
+                        linkinvdr = linkinvdr,
+                        start = start,
+                        mle = mle
   )
 }
