@@ -2,7 +2,6 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
 {
   ## match call
   cl <- match.call()
-  
 
   
   ## check whether the input is a gamlss.family object (or function) or a list of the required type
@@ -10,9 +9,8 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family)
   # if(is.character(family)) family <- ...
   if(!is.list(family)) stop ("unknown family specification")
-  if(!(all(c("ddist", "sdist", "hdist", "link", "use.optim") %in% names(family)))) stop("family needs to specify a list with ...")
+  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "start") %in% names(family)))) stop("family needs to specify a list with ...")
 
-  
   
   # FIXME:
   # the input argument fixed can be a character string or a list of character strings with the name(s) of the parameter(s) which are fixed
@@ -41,128 +39,101 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
-  # eta ... coefficients of the linear predictor, here: intercept (g(mu)=eta[1], g(sigma)=eta[2], g(nu)=eta[3], g(tau)=eta[4])
+  # eta ... coefficients of the linear predictor, here: intercept (g1(mu)=eta[1], g2(sigma)=eta[2], g3(nu)=eta[3], g4(tau)=eta[4])
   
-  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g(mu)        g ... link function
-  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g(sigma)     g ... link function
-  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g(nu)        g ... link function
-  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g(tau)       g ... link function
+  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g1(mu)        g1 ... link function
+  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g2(sigma)     g2 ... link function
+  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g3(nu)        g3 ... link function
+  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g4(tau)       g4 ... link function
   
 
   
   ## set up negative log-likelihood
   nll <- function(eta) {
-    nloglik <- -family$ddist(y, eta, log = TRUE, type = "link")
-    nloglik <- sum(weights * nloglik)
+    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     return(nloglik)
   }
   
   
   ## set up gradient
-  grad <- function(eta, sum = TRUE) {
-    gr <- -weights * family$sdist(y, eta, type = "link")
-    if(sum) gr <- colSums(gr)     # *1/nobs ? scale, doesn't influence optimization
+  grad <- function(eta) {
+    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
     return(gr)
   }
   
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
   if(is.null(start)){
-    starteta <- family$start.eta(y = rep(y, round(weights)))
-    startpar <- family$link.inv(starteta)
-    # startpar <- family$start(y)
+    starteta <- family$start(y, weights = weights)
+    # starteta <- family$start(y = rep(y, round(weights)))
   } else {
-    startpar <- start
-    starteta <- family$link.fun(startpar)
-    names(startpar) <- names(family$link.inv(starteta))   ## FIX ME
+    starteta <- family$linkfun(start)
   }
 
   
-  if(family$use.optim) {
-    ## optimize log-likelihood
+  if(!family$mle) {
+    ## optimize negative log-likelihood
     opt <- optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
                  hessian = (type.hessian == "numeric"), control = list(...))
     
     ## extract parameters
     eta <- opt$par
-    par <- family$link.inv(eta)
+    names(eta) <- names(starteta)
+    par <- family$linkinv(eta)
     
     ## loglikelihood value
     loglik = -opt$value
     
     
   } else {
-    par <- family$closed.mle(y, weights)
-    eta <- family$link.fun(par)
-    loglik <- sum(weights * family$ddist(y, par, log = TRUE, type = "parameter"))
+    eta <- family$start(y, weights)
+    par <- family$linkinv(eta)
+    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     
     # use optim if numerically calculated hessian is required
     if(type.hessian == "numeric") {
-      starteta <- eta
-      opt <- optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
+      opt <- optim(par = eta, fn = nll, gr = grad, method = "BFGS",
                    hessian = (type.hessian == "numeric"), control = list(...))
     } else {opt <- NULL}
   }
+
   
-  
-  names(eta) <- names(starteta)
-  names(par) <- names(startpar)
-  
-  
-  ## hess matrix for distribution parameter  (FIX ME: until now only analytic, even if type.hessian = "numeric")
-  if(type.hessian == "numeric") {
-    hess.eta <- -opt$hessian
-    hess.eta <- as.matrix(hess.eta)
-    hess.par <- NULL    ## FIX
-    hess.par <- as.matrix(hess.par)
-  } else {
-    hess.eta <- family$hdist(y, eta, type = "link", weights = weights)
-    hess.eta <- as.matrix(hess.eta)
-    hess.par <- family$hdist(y, par, type = "parameter", weights = weights)
-    hess.par <- as.matrix(hess.par)
-  }
-      
-  
-  
-  ## variance-covariance matrix estimate 
-  if(vcov){
+  ## hess matrix and variance-covariance matrix estimate
+  if(vcov) {
+    if(type.hessian == "numeric") {
+      hess <- -opt$hessian
+      hess <- as.matrix(hess)
+      colnames(hess) <- rownames(hess) <- names(eta)
+    } else {
+      hess <- family$hdist(y, eta, weights = weights)
+      hess <- as.matrix(hess)
+    }      
     
-    # vcov for distribution parameter
-    vc.par <- solve(-hess.par)
-    vc.par <- as.matrix(vc.par)
-    colnames(vc.par) <- rownames(vc.par) <- colnames(hess.par)
     
     #vcov for link coefficients eta
-    vc.eta <- solve(-hess.eta)
-    vc.eta <- as.matrix(vc.eta)
-    colnames(vc.eta) <- rownames(vc.eta) <- colnames(hess.eta)
+    vc <- solve(-hess)
+    vc <- as.matrix(vc)
+    colnames(vc) <- rownames(vc) <- colnames(hess)
     
   } else {
-    vc.par <- NULL
-    vc.eta <- NULL
+    vc <- NULL
   }
   
   
   ## estfun
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
   if(estfun) {
-    
-    # estfun for distribution parameter
-    ef.par <- weights * family$sdist(y, par, type = "parameter")  
-    
     # estfun for link coefficients eta
-    ef.eta <- weights * family$sdist(y, eta, type = "link")
-    
+    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0?
   } else {
-    ef.par <- NULL
-    ef.eta <- NULL                    
+    ef <- NULL                    
   }
   
   
   ##### FIX ME: additional functions with set parameters
   
   ## density function
-  ddist.par <- function(x, log = FALSE) family$ddist(x, par = par, log = log, type = "parameter")
+  ddist.par <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
   
   ## density function
   #ddist <- get(paste0("d",family$family[1]))
@@ -182,26 +153,23 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   ## return value 
   # FIX: return bd? df = np?
   rval <- list(
-    np = length(par),
+    npar = length(par),
     df = length(par),
     y = y,
     weights = weights,
     family = family$family.name,
-    startpar = startpar,
-    starteta = starteta,
+    start = starteta,
     opt = opt,
     par = par,
     eta = eta,
-    hess = hess.par,
-    hess.eta = hess.eta,
-    vcov = vc.par,
-    vcov.eta = vc.eta,
+    hess = hess,
+    vcov = vc,
     loglik = loglik,
     call = cl,
     ny = ny,        
     nobs = nobs,
-    estfun = ef.par,
-    estfun.eta = ef.eta
+    estfun = ef,
+    familylist = family
     #ddist = ddist,
     #pdist = pdist,
     #qdist = qdist,
@@ -227,48 +195,44 @@ nobs.distfit <- function(object, ...) {
   object$nobs
 }
 
-coef.distfit <- function(object, type = "parameter" , ...) {
+coef.distfit <- function(object, type = "link" , ...) {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
   ## FIXME: else, warning
 }
 
-vcov.distfit <- function(object, type = "parameter", ...) {
-  if(type == "link") return(object$vcov.eta)
-  if(type == "parameter") return(object$vcov)
-  ## delta method
-  #delta.m <- diag(object$npar)
-  #delta.m[1,1] <- object$family$mu.dr(object$eta[1])
-  #if(object$npar > 1L) delta.m[2,2] <- object$family$sigma.dr(object$eta[2])
-  #if(object$npar > 2L) delta.m[3,3] <- object$family$nu.dr(object$eta[3])
-  #if(object$npar > 3L) delta.m[4,4] <- object$family$tau.dr(object$eta[4])
-  #colnames(delta.m) <- rownames(delta.m) <- names(object$par)
-  #return(delta.m %*% object$vcov %*% delta.m)
+vcov.distfit <- function(object, type = "link", ...) {
+  if(type == "link") return(object$vcov)
+  if(type == "parameter"){
+    ## delta method
+    delta.m <- diag(object$familylist$linkinvdr(object$eta))
+    colnames(delta.m) <- rownames(delta.m) <- names(object$par)
+    return(delta.m %*% object$vcov %*% delta.m)
+  }
 }
-
-estfun.distfit <- function(object, type = "parameter", ...) {                         
-  if(type == "link") return(object$estfun.eta)
-  if(type == "parameter") return(object$estfun)
+  
+estfun.distfit <- function(object, ...) {                         
+  return(object$estfun)
 }
 
 logLik.distfit <- function(object, ...) {
   structure(object$loglik, df = object$df, class = "logLik")
 }
 
-bread.distfit <- function(object, type = "parameter", ...) {
-  if(type == "link") return(object$vcov.eta * object$nobs)
-  if(type == "parameter") return(object$vcov * object$nobs)
+bread.distfit <- function(object, ...) {
+  return(object$vcov * object$nobs)
 }
 
-confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...) {
+confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
   np <- object$npar
+  
   if(type == "link"){ 
-    vcov <- object$vcov.eta
     coef <- object$eta
+    vcov <- object$vcov
   }
   if(type == "parameter"){ 
-    vcov <- object$vcov
     coef <- object$par
+    vcov <- vcov(object, type = "parameter")
   }
   
   left <- (1-level)/2
@@ -314,11 +278,11 @@ confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...)
 summary.distfit <- function (object, type = "parameter", ...){
   if(type == "link"){ 
     coef <- object$eta
-    vcov <- object$vcov.eta
+    vcov <- object$vcov
   }
   if(type == "parameter"){ 
     coef <- object$par
-    vcov <- object$vcov
+    vcov <- vcov(object, type = "parameter")
   }
   
   se <- sqrt(diag(vcov))
