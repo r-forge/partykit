@@ -1,6 +1,6 @@
 ##### make_dist_list
 # input: gamlss.dist family object
-# builds a list with all necessary functions/informations for distfit
+# builds a list with all necessary functions/informations for distfitlist
 
 make_dist_list <- function(family) {
   
@@ -45,47 +45,47 @@ make_dist_list <- function(family) {
     ## with y
     # if y is one of the input arguments, the derivative function returns a vector of the length of y
     
-    if(arguments[1]=="y"){
+    if(arguments[1] == "y"){
       # 4 Parameter
-      if(length(arguments)==5L) par.id <- c(0,1,2,3,4)        # f(y, mu=m, sigma=s, nu=v, tau=t)
+      if(length(arguments)==5L) par.id <- c(0,1,2,3,4)        # f(y, mu, sigma, nu, tau)
       
       # 3 Parameter
       if(length(arguments)==4L){
         if(arguments[2]=="mu"){
           if(arguments[3]=="sigma"){
             if(arguments[4]=="nu"){
-              par.id <- c(0,1,2,3)                            # f(y, mu=m, sigma=s, nu=v)
+              par.id <- c(0,1,2,3)                            # f(y, mu, sigma, nu)
             } else {
-              par.id <- c(0,1,2,4)                            # f(y, mu=m, sigma=s, tau=t)
+              par.id <- c(0,1,2,4)                            # f(y, mu, sigma, tau)
             }
           } else {
-            par.id <- c(0,1,3,4)                              # f(y, mu=m, nu=v, tau=t)
+            par.id <- c(0,1,3,4)                              # f(y, mu, nu, tau)
           }
         } else {
-          par.id <- c(0,2,3,4)                                # f(y, sigma=s, nu=v, tau=t)
+          par.id <- c(0,2,3,4)                                # f(y, sigma, nu, tau)
         }
       }
       
       # 2 Parameter
       if(length(arguments)==3L){
         if(arguments[2]=="mu"){
-          if(arguments[3]=="sigma") par.id <- c(0,1,2)        # f(y, mu=m, sigma=s)
-          if(arguments[3]=="nu")    par.id <- c(0,1,3)        # f(y, mu=m, nu=v)
-          if(arguments[3]=="tau")   par.id <- c(0,1,4)        # f(y, mu=m, tau=t)
+          if(arguments[3]=="sigma") par.id <- c(0,1,2)        # f(y, mu, sigma)
+          if(arguments[3]=="nu")    par.id <- c(0,1,3)        # f(y, mu, nu)
+          if(arguments[3]=="tau")   par.id <- c(0,1,4)        # f(y, mu, tau)
         }
         if(arguments[2]=="sigma"){
-          if(arguments[3]=="nu")    par.id <- c(0,2,3)        # f(y, sigma=s, nu=v)
-          if(arguments[3]=="tau")   par.id <- c(0,2,4)        # f(y, sigma=s, tau=t)
+          if(arguments[3]=="nu")    par.id <- c(0,2,3)        # f(y, sigma, nu)
+          if(arguments[3]=="tau")   par.id <- c(0,2,4)        # f(y, sigma, tau)
         }
-        if(arguments[2]=="nu")      par.id <- c(0,3,4)        # f(y, nu=v, tau=t)
+        if(arguments[2]=="nu")      par.id <- c(0,3,4)        # f(y, nu, tau)
       }
       
       # 1 Parameter
       if(length(arguments)==2L){
-        if(arguments[2]=="mu")      par.id <- c(0,1)          # f(y, mu=m)
-        if(arguments[2]=="sigma")   par.id <- c(0,2)          # f(y, sigma=s)
-        if(arguments[2]=="nu")      par.id <- c(0,3)          # f(y, nu=v)
-        if(arguments[2]=="tau")     par.id <- c(0,4)          # f(y, tau=t)
+        if(arguments[2]=="mu")      par.id <- c(0,1)          # f(y, mu)
+        if(arguments[2]=="sigma")   par.id <- c(0,2)          # f(y, sigma)
+        if(arguments[2]=="nu")      par.id <- c(0,3)          # f(y, nu)
+        if(arguments[2]=="tau")     par.id <- c(0,4)          # f(y, tau)
       }
       
       # 0 Parameter
@@ -96,45 +96,45 @@ make_dist_list <- function(family) {
       # in this case the functions return only a single value -> create vector by replicating this value ny times (necessary for the matrix (using sum and *1/ny)) 
       
       # 4 Parameter
-      if(length(arguments)==4L) par.id <- c(1,2,3,4)          # f(mu=m, sigma=s, nu=v, tau=t)
+      if(length(arguments)==4L) par.id <- c(1,2,3,4)          # f(mu, sigma, nu, tau)
       
       # 3 Parameter
       if(length(arguments)==3L){
         if(arguments[1]=="mu"){
           if(arguments[2]=="sigma"){
             if(arguments[3]=="nu"){
-              par.id <- c(1,2,3)                              # f(mu=m, sigma=s, nu=v)
+              par.id <- c(1,2,3)                              # f(mu, sigma, nu)
             } else {
-              par.id <- c(1,2,4)                              # f(mu=m, sigma=s, tau=t)
+              par.id <- c(1,2,4)                              # f(mu, sigma, tau)
             }
           } else {
-            par.id <- c(1,3,4)                                # f(mu=m, nu=v, tau=t)
+            par.id <- c(1,3,4)                                # f(mu, nu, tau)
           }
         } else {
-          par.id <- c(2,3,4)                                  # f(sigma=s, nu=v, tau=t)
+          par.id <- c(2,3,4)                                  # f(sigma, nu, tau)
         }
       }
       
       # 2 Parameter
       if(length(arguments)==2L){
         if(arguments[1]=="mu"){
-          if(arguments[2]=="sigma") par.id <- c(1,2)          # f(mu=m, sigma=s)
-          if(arguments[2]=="nu")    par.id <- c(1,3)          # f(mu=m, nu=v)
-          if(arguments[2]=="tau")   par.id <- c(1,4)          # f(mu=m, tau=t)
+          if(arguments[2]=="sigma") par.id <- c(1,2)          # f(mu, sigma)
+          if(arguments[2]=="nu")    par.id <- c(1,3)          # f(mu, nu)
+          if(arguments[2]=="tau")   par.id <- c(1,4)          # f(mu, tau)
         }
         if(arguments[1]=="sigma"){ 
-          if(arguments[2]=="nu")    par.id <- c(2,3)          # f(sigma=s, nu=v)
-          if(arguments[2]=="tau")   par.id <- c(2,4)          # f(sigma=s, tau=t)
+          if(arguments[2]=="nu")    par.id <- c(2,3)          # f(sigma, nu)
+          if(arguments[2]=="tau")   par.id <- c(2,4)          # f(sigma, tau)
         }
-        if(arguments[1]=="nu")      par.id <- c(3,4)          # f(nu=v, tau=t)
+        if(arguments[1]=="nu")      par.id <- c(3,4)          # f(nu, tau)
       }
       
       # 1 Parameter
       if(length(arguments)==1L){
-        if(arguments[1]=="mu")    par.id <- c(1)              # f(mu=m)
-        if(arguments[1]=="sigma") par.id <- c(2)              # f(sigma=s)
-        if(arguments[1]=="nu")    par.id <- c(3)              # f(nu=v)
-        if(arguments[1]=="tau")   par.id <- c(4)              # f(tau=t)
+        if(arguments[1]=="mu")    par.id <- c(1)              # f(mu)
+        if(arguments[1]=="sigma") par.id <- c(2)              # f(sigma)
+        if(arguments[1]=="nu")    par.id <- c(3)              # f(nu)
+        if(arguments[1]=="tau")   par.id <- c(4)              # f(tau)
       }
       
       # 0 Parameter
@@ -154,9 +154,9 @@ make_dist_list <- function(family) {
   if(np > 0L){
     
     # define names
-    par.names <- c("mu")
-    link.names <- c(family$mu.link)
-    if(family$mu.link == "identity") eta.names <- c("mu") else eta.names <- paste0(family$mu.link, "(mu)")
+    parnames <- c("mu")
+    linknames <- c(family$mu.link)
+    if(family$mu.link == "identity") etanames <- c("mu") else etanames <- paste0(family$mu.link, "(mu)")
     
     # inner derivative functions (dmdeta, d2mdeta2)
     dmdeta <- function(eta) return(family$mu.dr(eta[1]))
@@ -234,9 +234,9 @@ make_dist_list <- function(family) {
   if(np > 1L){
     
     # define names
-    par.names <- c(par.names,"sigma")
-    link.names <- c(link.names, family$sigma.link)
-    if(family$sigma.link == "identity") eta.names <- c(eta.names,"sigma") else eta.names <- c(eta.names, paste0(family$sigma.link, "(sigma)"))
+    parnames <- c(parnames,"sigma")
+    linknames <- c(linknames, family$sigma.link)
+    if(family$sigma.link == "identity") etanames <- c(etanames,"sigma") else etanames <- c(etanames, paste0(family$sigma.link, "(sigma)"))
     
     # inner derivative functions (dddeta, d2ddeta2)     
     dddeta <- function(eta) return(family$sigma.dr(eta[2]))
@@ -346,9 +346,9 @@ make_dist_list <- function(family) {
   if(np > 2L){
     
     # define names
-    par.names <- c(par.names,"nu")
-    link.names <- c(link.names, family$nu.link)
-    if(family$nu.link == "identity") eta.names <- c(eta.names,"nu") else eta.names <- c(eta.names, paste0(family$nu.link, "(nu)"))
+    parnames <- c(parnames,"nu")
+    linknames <- c(linknames, family$nu.link)
+    if(family$nu.link == "identity") etanames <- c(etanames,"nu") else etanames <- c(etanames, paste0(family$nu.link, "(nu)"))
     
     # inner derivative functions (dvdeta, d2vdeta2)
     dvdeta <- function(eta) return(family$nu.dr(eta[3]))
@@ -490,9 +490,9 @@ make_dist_list <- function(family) {
   if(np > 3L){
     
     # define names
-    par.names <- c(par.names,"tau")
-    link.names <- c(link.names, family$tau.link)
-    if(family$tau.link == "identity") eta.names <- c(eta.names,"tau") else eta.names <- c(eta.names, paste0(family$tau.link, "(tau)"))
+    parnames <- c(parnames,"tau")
+    linknames <- c(linknames, family$tau.link)
+    if(family$tau.link == "identity") etanames <- c(etanames,"tau") else etanames <- c(etanames, paste0(family$tau.link, "(tau)"))
     
     # note: in this case/section no adaption for families of the list .distfit.bi.list since none of them includes the 4th parameter tau
     
@@ -622,20 +622,26 @@ make_dist_list <- function(family) {
     
     # define function for the calculation of initial values
     ## FIX ME ## use weights?
-    start <- function(y, weights = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- NULL
       eval(family$mu.initial)
       starteta <- family$mu.linkfun(mean(mu))
-      names(starteta) <- eta.names
+      names(starteta) <- etanames
       return(starteta)
     }
     
-    
+    # define link function
+    linkfun <- function(par){
+      eta <- c(family$mu.linkfun(par[1]))
+      names(eta) <- etanames
+      return(eta)
+    }
+  
     # define function to get distribution parameters
     linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]))
-      names(par) <- par.names
+      names(par) <- parnames
       return(par)
     }
     
@@ -678,20 +684,27 @@ make_dist_list <- function(family) {
   if(np == 2L){
     
     # define function for the calculation of initial values
-    start <- function(y, weights = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
       starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
-      names(starteta) <- eta.names
+      names(starteta) <- etanames
       return(starteta)
+    }
+    
+    # define link function
+    linkfun <- function(par){
+      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]))
+      names(eta) <- etanames
+      return(eta)
     }
     
     # define function to get distribution parameters
     linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]))
-      names(par) <- par.names
+      names(par) <- parnames
       return(par)
     }
     
@@ -735,21 +748,28 @@ make_dist_list <- function(family) {
   if(np == 3L){
     
     # define function for the calculation of initial values
-    start <- function(y, weights = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <-  NULL
       eval(family$mu.initial)
       eval(family$sigma.initial)
       eval(family$nu.initial)
       starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
-      names(starteta) <- eta.names
+      names(starteta) <- etanames
       return(starteta)
+    }
+    
+    # define link function
+    linkfun <- function(par){
+      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]), family$mu.linkfun(par[3]))
+      names(eta) <- etanames
+      return(eta)
     }
     
     # define function to get distribution parameters
     linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]))
-      names(par) <- par.names
+      names(par) <- parnames
       return(par)
     }
     
@@ -794,7 +814,7 @@ make_dist_list <- function(family) {
   if(np == 4L){
     
     # define function for the calculation of initial values
-    start <- function(y, weights = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <- tau <- NULL
       eval(family$mu.initial)
@@ -802,14 +822,21 @@ make_dist_list <- function(family) {
       eval(family$nu.initial)
       eval(family$tau.initial)
       starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
-      names(starteta) <- eta.names
+      names(starteta) <- etanames
       return(starteta)
+    }
+    
+    # define link function
+    linkfun <- function(par){
+      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]), family$mu.linkfun(par[3]), family$mu.linkfun(par[4]))
+      names(eta) <- etanames
+      return(eta)
     }
     
     # define function to get distribution parameters
     linkinv <- function(eta){
       par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]), family$tau.linkinv(eta[4]))
-      names(par) <- par.names
+      names(par) <- parnames
       return(par)
     }
     
@@ -857,15 +884,15 @@ make_dist_list <- function(family) {
   ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
     par <- linkinv(eta)
     input <- list()
-    input.names <- c("x", par.names, "log")
+    inputnames <- c("x", parnames, "log")
     input[[1]] <- y
     for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], length(y))   (FIX?)
     if(any(family$family%in%.distfit.bi.list)) {
       input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
-      input.names <- c("x", par.names, "bd", "log")
+      inputnames <- c("x", parnames, "bd", "log")
     }
     input <- append(input, log)
-    names(input) <- input.names
+    names(input) <- inputnames
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
@@ -877,6 +904,7 @@ make_dist_list <- function(family) {
 
   
   ## additional functions pdist, qdist, rdist
+  if(FALSE) {
   if(any(family$family%in%.distfit.bi.list)){
     if(np == 1L) { 
       #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], bd = bd, log = log)
@@ -928,6 +956,7 @@ make_dist_list <- function(family) {
       rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4])
     }
   }
+  }
     
    
   
@@ -937,7 +966,7 @@ make_dist_list <- function(family) {
     par <- linkinv(eta)                           
     score <- t(t(dldpar(y, par)) * dpardeta(eta))
     score <- as.matrix(score)
-    colnames(score) <- eta.names
+    colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       score <- colSums(weights * score)
@@ -946,9 +975,8 @@ make_dist_list <- function(family) {
   }
   
   
-  ## FIX ME: would it be better to return the list of hessian matrices (one matrix for each observation) ?
   ## hessian (for positive loglikelihood)
-  hdist <- function(y, eta, weights = NULL) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
@@ -972,27 +1000,16 @@ make_dist_list <- function(family) {
     ## calculate the sum over all matrices in the list (each for one observation)  
     hess <- Reduce('+', hess.list)
     hess <- as.matrix(hess)
-    colnames(hess) <- rownames(hess) <-  eta.names
+    colnames(hess) <- rownames(hess) <-  etanames
     return(hess)
   }
 
   
-  link <- link.names
+  #link <- linknames      # as defined above (within if(np == ))
   
+  #linkfun <- linkfun     # as defined above (within if(np == ))
   
-  linkfun <- function(par) {
-    eta <- NULL
-    if(np > 0) eta[1] <- family$mu.linkfun(par[1])
-    if(np > 1) eta[2] <- family$sigma.linkfun(par[2])
-    if(np > 2) eta[3] <- family$nu.linkfun(par[3])
-    if(np > 3) eta[4] <- family$tau.linkfun(par[4])
-    names(eta) <- eta.names
-    return(eta)
-  }
-  
-  
-  linkinv <- linkinv
-  
+  #linkinv <- linkinv     # as defined above (within if(np == ))
   
   linkinvdr <- dpardeta
 
@@ -1007,7 +1024,7 @@ make_dist_list <- function(family) {
                     linkfun = linkfun, 
                     linkinv = linkinv, 
                     linkinvdr = linkinvdr,
-                    start = start,
+                    startfun = startfun,
                     mle = mle
                     )
 }
@@ -1020,19 +1037,19 @@ if(FALSE) {
   
   dist_list_normal <- list()
   
-  par.names <- c("mu", "sigma")
-  eta.names <- c("mu", "log(sigma)")
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     # input parameter have to fit the type (par or eta) but in the input line denoted by par for both cases
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- c(eta[1], exp(eta[2]))
     val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
     if(log) val <- log(val)
+    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
     }
-    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     return(val)
   }
   
@@ -1041,7 +1058,7 @@ if(FALSE) {
     par <- c(eta[1], exp(eta[2]))                           
     score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
     score <- as.matrix(score)
-    colnames(score) <- eta.names
+    colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       score <- colSums(weights * score)
@@ -1052,7 +1069,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, length(y))
+    if(is.null(weights)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     
@@ -1061,7 +1078,7 @@ if(FALSE) {
     d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  eta.names
+    colnames(hess) <- rownames(hess) <-  etanames
     
     return(hess)
   }
@@ -1070,32 +1087,32 @@ if(FALSE) {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- eta.names
+    names(eta) <- etanames
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- par.names
+    names(par) <- parnames
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- names.par
+    names(dpardeta) <- parnames
     return(dpardeta)
   }
   
 
-  start <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
     sigma <- sqrt(1/ny * sum((y - mu)^2))
     starteta <- c(mu, log(sigma))
-    names(starteta) <- eta.names
+    names(starteta) <- etanames
     return(starteta)
   }
   
@@ -1109,7 +1126,7 @@ if(FALSE) {
                            linkfun = linkfun, 
                            linkinv = linkinv, 
                            linkinvdr = linkinvdr,
-                           start = start,
+                           startfun = startfun,
                            mle = mle
   )
 }
@@ -1125,8 +1142,8 @@ if(FALSE) {
   
   dist_list_poisson <- list()
   
-  par.names <- c("mu")
-  eta.names <- c("log(mu)")
+  parnames <- c("mu")
+  etanames <- c("log(mu)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -1145,7 +1162,7 @@ if(FALSE) {
     par <- exp(eta)                           
     score <- (y - par)
     score <- as.matrix(score)
-    colnames(score) <- eta.names
+    colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       score <- colSums(weights * score)
@@ -1160,7 +1177,7 @@ if(FALSE) {
     par <- exp(eta)                           
     hess <- rep(-par, length(y))
     hess <- as.matrix(sum(weights * hess))
-    colnames(hess) <- rownames(hess) <-  eta.names
+    colnames(hess) <- rownames(hess) <-  etanames
     
     return(hess)
   }
@@ -1169,31 +1186,31 @@ if(FALSE) {
   
   linkfun <- function(par) {
     eta <- log(par)
-    names(eta) <- eta.names
+    names(eta) <- etanames
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- exp(eta)
-    names(par) <- par.names
+    names(par) <- parnames
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
-    names(dpardeta) <- names.par
+    names(dpardeta) <- parnames
     return(dpardeta)
   }
   
   
-  start <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
     starteta <- log(mu)
-    names(starteta) <- eta.names
+    names(starteta) <- etanames
     return(starteta)
   }
   
@@ -1209,7 +1226,7 @@ if(FALSE) {
                             linkfun = linkfun, 
                             linkinv = linkinv, 
                             linkinvdr = linkinvdr,
-                            start = start,
+                            startfun = startfun,
                             mle = mle
   )
 }
@@ -1224,8 +1241,8 @@ if(FALSE) {
   
   dist_list_exp <- list()
   
-  par.names <- c("lambda")
-  eta.names <- c("log(lambda)")
+  parnames <- c("lambda")
+  etanames <- c("log(lambda)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -1244,7 +1261,7 @@ if(FALSE) {
     par <- exp(eta)                           
     score <- 1 - y * par
     score <- as.matrix(score)
-    colnames(score) <- eta.names
+    colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       score <- colSums(weights * score)
@@ -1260,7 +1277,7 @@ if(FALSE) {
     par <- exp(eta)                           
     hess <- -y * par
     hess <- as.matrix(sum(weights * hess))
-    colnames(hess) <- rownames(hess) <-  eta.names
+    colnames(hess) <- rownames(hess) <-  etanames
     
     return(hess)
   }
@@ -1269,31 +1286,31 @@ if(FALSE) {
   
   linkfun <- function(par) {
     eta <- log(par)
-    names(eta) <- eta.names
+    names(eta) <- etanames
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- exp(eta)
-    names(par) <- par.names
+    names(par) <- parnames
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
-    names(dpardeta) <- names.par
+    names(dpardeta) <- parnames
     return(dpardeta)
   }
   
   
-  start <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     lambda <- ny / sum(y)
     starteta <- log(lambda)
-    names(starteta) <- eta.names
+    names(starteta) <- etanames
     return(starteta)
   }
   
@@ -1308,7 +1325,7 @@ if(FALSE) {
                         linkfun = linkfun, 
                         linkinv = linkinv, 
                         linkinvdr = linkinvdr,
-                        start = start,
+                        startfun = startfun,
                         mle = mle
   )
 }
