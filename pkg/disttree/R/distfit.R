@@ -934,10 +934,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     hess.par.list[[i]] <- weights[i] * hess.par.list[[i]]
   }
   hess.par <- Reduce('+', hess.par.list)
+  hess.par <- as.matrix(hess.par)
   colnames(hess.par) <- rownames(hess.par) <- par.names
   
   # hess matrix for link coefficients eta
   if(type.hessian == "analytic") hess.eta <- hess(eta) else hess.eta <- -opt$hessian
+  hess.eta <- as.matrix(hess.eta)
   colnames(hess.eta) <- rownames(hess.eta) <- eta.names
 
 
@@ -946,14 +948,17 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     
     # vcov for distribution parameter
     vc.par <- solve(-hess.par)
+    vc.par <- as.matrix(vc.par)
     colnames(vc.par) <- rownames(vc.par) <- par.names
     
     #vcov for link coefficients eta
     vc.eta <- solve(-hess.eta)
+    vc.eta <- as.matrix(vc.eta)
     colnames(vc.eta) <- rownames(vc.eta) <- eta.names
     
   } else {
-    vc <- NULL
+    vc.par <- NULL
+    vc.eta <- NULL
   }
     
   
@@ -1180,6 +1185,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...)
     confint <- rbind(confint, confint4)
   }
   
+  confint <- as.matrix(confint)
   colnames(confint) <- c(paste0(left," %"), paste0(right," %"))
   rownames(confint) <- names(coef[use.parm])
   
