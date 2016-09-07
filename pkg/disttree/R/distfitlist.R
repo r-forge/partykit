@@ -9,7 +9,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family)
   # if(is.character(family)) family <- ...
   if(!is.list(family)) stop ("unknown family specification")
-  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "start") %in% names(family)))) stop("family needs to specify a list with ...")
+  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
 
   
   # FIXME:
@@ -64,8 +64,8 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
   if(is.null(start)){
-    starteta <- family$start(y, weights = weights)
-    # starteta <- family$start(y = rep(y, round(weights)))
+    starteta <- family$startfun(y, weights = weights)
+    # starteta <- family$startfun(y = rep(y, round(weights)))
   } else {
     starteta <- family$linkfun(start)
   }
@@ -86,7 +86,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     
     
   } else {
-    eta <- family$start(y, weights)
+    eta <- family$startfun(y, weights)
     par <- family$linkinv(eta)
     loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     
@@ -158,7 +158,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     y = y,
     weights = weights,
     family = family$family.name,
-    start = starteta,
+    starteta = starteta,
     opt = opt,
     par = par,
     eta = eta,
