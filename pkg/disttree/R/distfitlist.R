@@ -50,22 +50,22 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## set up negative log-likelihood
   nll <- function(eta) {
-    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
+    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE, bd = bd)
     return(nloglik)
   }
   
   
   ## set up gradient
   grad <- function(eta) {
-    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
+    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE, bd = bd)
     return(gr)
   }
   
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
   if(is.null(start)){
-    starteta <- family$startfun(y, weights = weights)
-    # starteta <- family$startfun(y = rep(y, round(weights)))
+    starteta <- family$startfun(y, weights = weights, bd = bd)
+    # starteta <- family$startfun(y = rep(y, round(weights)), bd = bd)
   } else {
     starteta <- family$linkfun(start)
   }
@@ -86,9 +86,9 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     
     
   } else {
-    eta <- family$startfun(y, weights)
+    eta <- family$startfun(y, weights, bd = bd)
     par <- family$linkinv(eta)
-    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
+    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE, bd = bd)
     
     # use optim if numerically calculated hessian is required
     if(type.hessian == "numeric") {
@@ -105,7 +105,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
       hess <- as.matrix(hess)
       colnames(hess) <- rownames(hess) <- names(eta)
     } else {
-      hess <- family$hdist(y, eta, weights = weights)
+      hess <- family$hdist(y, eta, weights = weights, bd = bd)
       hess <- as.matrix(hess)
     }      
     
@@ -124,7 +124,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
   if(estfun) {
     # estfun for link coefficients eta
-    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0?
+    ef <- weights * family$sdist(y, eta, sum = FALSE, bd = bd)   ## FIX ME: cut out rows with weight = 0?
   } else {
     ef <- NULL                    
   }
