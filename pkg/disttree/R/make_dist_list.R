@@ -1042,7 +1042,7 @@ if(FALSE) {
   etanames <- c("mu", "log(sigma)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
     par <- c(eta[1], exp(eta[2]))
     val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
     if(log) val <- log(val)
@@ -1055,7 +1055,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {   
     par <- c(eta[1], exp(eta[2]))                           
     score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
     score <- as.matrix(score)
@@ -1068,7 +1068,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL) {    
+  hdist <- function(y, eta, weights = NULL, bd = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
@@ -1107,7 +1107,7 @@ if(FALSE) {
   }
   
 
-  startfun <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL, bd = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
@@ -1147,7 +1147,7 @@ if(FALSE) {
   etanames <- c("log(mu)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
     par <- exp(eta)
     val <- par^y / gamma(y+1) * exp(-par)
     if(log) val <- log(val)
@@ -1159,7 +1159,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {   
     par <- exp(eta)                           
     score <- (y - par)
     score <- as.matrix(score)
@@ -1172,7 +1172,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL) {
+  hdist <- function(y, eta, weights = NULL, bd = NULL) {
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
     par <- exp(eta)                           
@@ -1206,7 +1206,7 @@ if(FALSE) {
   }
   
   
-  startfun <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL, bd = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
@@ -1246,7 +1246,7 @@ if(FALSE) {
   etanames <- c("log(lambda)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
     par <- exp(eta)
     val <- par * exp(-par * y)
     if(log) val <- log(val)
@@ -1258,7 +1258,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {
     par <- exp(eta)                           
     score <- 1 - y * par
     score <- as.matrix(score)
@@ -1271,7 +1271,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL) {    
+  hdist <- function(y, eta, weights = NULL, bd = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
@@ -1306,7 +1306,7 @@ if(FALSE) {
   }
   
   
-  startfun <- function(y, weights = NULL){
+  startfun <- function(y, weights = NULL, bd = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     lambda <- ny / sum(y)
