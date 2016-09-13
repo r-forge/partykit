@@ -11,7 +11,7 @@
     if (ctrl$nmax < Inf) {
         if (!is.null(cluster)) stop("cluster not implemented")   
         mf <- model.frame(formula, data, na.action = na.pass)
-        bdr <- BDR::BDR(mf, complete.cases.only = TRUE, total = TRUE)
+        bdr <- inum::inum(mf, complete.cases.only = TRUE, total = TRUE)
         mf2 <- as.data.frame(bdr)
         iy <- c(bdr)
         attr(iy, "levels") <- 1:nrow(mf2)

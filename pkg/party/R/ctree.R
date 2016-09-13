@@ -118,7 +118,7 @@
         f <- Formula(formula)
         mf <- model.frame(formula = f, data = data)
         y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-        bdr <- BDR::BDR(y, nmax = ctrl$nmax, total = TRUE, 
+        bdr <- inum::inum(y, nmax = ctrl$nmax, total = TRUE, 
                         complete.cases.only = TRUE)
         y <- attr(bdr, "levels")
         index <- c(bdr)
@@ -292,7 +292,7 @@
     ctrl                                ### ctree_control()
 ) {
 
-    bdr <- BDR::BDR(data, nmax = ctrl$nmax)
+    bdr <- inum::inum(data, nmax = ctrl$nmax)
     X <- vector(mode = "list", length = NCOL(data))
     names(X) <- colnames(data)
     X[partyvars] <- lapply(partyvars, function(j) {
