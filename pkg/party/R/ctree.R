@@ -2,6 +2,8 @@
 .ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
                               weights, cluster, splitonly = TRUE, minbucket) {
 
+    MIA <- ctrl$MIA && any(is.na(x))
+
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
         if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
@@ -39,13 +41,36 @@
                 attr(X, "levels") <- ux 
                 storage.mode(X) <- "integer"
             }
+            if (MIA) {
+                Xlev <- attr(X, "levels")
+                Xleft <- X + 1L
+                Xleft[is.na(Xleft)] <- 1L
+                Xright <- X
+                Xright[is.na(Xright)] <- as.integer(length(Xlev) + 1L)
+                attr(Xleft, "levels") <- c(NA, Xlev)
+                attr(Xright, "levels") <- c(Xlev, NA)
+                ixleft <- ixright <- ix
+            }
+        } else {
+            MIA <- FALSE
         } 
     } else {
-         ix <- bdr[[j]]
-         if (ctrl$splittest || splitonly) {
-             X <- numeric(0) 
-             ux <- attr(ix, "levels")
-         } 
+        ix <- bdr[[j]]
+        if (ctrl$splittest || splitonly) {
+            X <- numeric(0) 
+            ux <- attr(ix, "levels")
+            if (MIA) {
+                Xlev <- attr(ix, "levels")
+                ixleft <- ix + 1L
+                ixright <- ix
+                ixright[ixright == 0L] <- as.integer(length(Xlev) + 1L)
+                attr(ixleft, "levels") <- c(NA, Xlev)
+                attr(ixright, "levels") <- c(Xlev, NA)
+                Xleft <- Xright <- X
+           }
+        } else {
+            MIA <- FALSE
+        }
     }
 
     if (splitonly) {
@@ -68,6 +93,7 @@
         pvalue <- ctrl$testtype != "Teststatistic"
     }
 
+    ### if (MIA) use tst as fallback
     ### compute linear statistic + expecation and covariance
     lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                          weights = weights, block = cluster,
@@ -76,24 +102,76 @@
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
                   lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
 
-    if (splitonly) {
-         ret <- NULL
-         sp <- tst$index
-         if (!all(is.na(sp))) {
-             if (length(sp) == 1) {
-                 if (!is.ordered(x))
-                     sp <- ux[sp]
-                 ret <- partysplit(as.integer(j), breaks = sp,
-                                   index = 1L:2L)
-             } else {
-                  ret <- partysplit(as.integer(j),
-                                    index = as.integer(sp) + 1L)
-             }
-         }
-         return(ret)
-    }  
+    if (MIA) {
+        ### compute linear statistic + expecation and covariance
+        lev <- LinStatExpCov(X = Xleft, Y = Y, ix = ixleft, iy = iy, subset = subset,
+                             weights = weights, block = cluster,
+                             B = B, varonly = varonly)
+        ### compute test statistic and log(1 - p-value)
+        tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
+                           lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+        ### compute linear statistic + expecation and covariance
+        lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
+                             weights = weights, block = cluster,
+                             B = B, varonly = varonly)
+        ### compute test statistic and log(1 - p-value)
+        tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
+                           lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+    }
 
-    return(list(statistic = log(tst$TestStatistic), p.value = tst$p.value))
+    if (!splitonly) {
+        if (MIA) {
+            tst <- tstleft
+            if (tst$TestStatistic < tstright$TestStatistic)
+                tst <- tstright
+        }
+        return(list(statistic = log(tst$TestStatistic), p.value = tst$p.value))
+    }
+
+    ret <- NULL
+    if (MIA) {
+        if (ORDERED) {
+            if (tstleft$TestStatistic >= tstright$TestStatistic) {
+                if (tst$index == 1) { ### case C
+                    ret <- partysplit(as.integer(j), breaks = Inf, 
+                                      index = 1L:2L, prob = as.double(rev(0:1)))
+                } else {
+                    sp <- tstleft$index - 1L ### case A
+                    if (!is.ordered(x)) sp <- ux[sp]
+                    ret <- partysplit(as.integer(j), breaks = sp,
+                                      index = 1L:2L, prob = as.double(rev(0:1)))
+                }
+            } else {
+                ### case C was handled above (tstleft = tstright in this case)
+                sp <- tstright$index ### case B
+                if (!is.ordered(x)) sp <- ux[sp]
+                ret <- partysplit(as.integer(j), breaks = sp,
+                                  index = 1L:2L, prob = as.double(0:1))
+            }
+        } else {
+            sp <- tstleft$index[-1L] ### tstleft = tstright for unordered factors
+            if (all(sp == 0)) { ### case C
+                ret <- partysplit(as.integer(j), index = as.integer(tst$index) + 1L)
+            } else { ### always case A
+                ret <- partysplit(as.integer(j),
+                                  index = as.integer(sp) + 1L, 
+                                  prob = as.double(rev(0:1)))
+            }
+        }
+    } else {
+        sp <- tst$index
+        if (all(is.na(sp))) return(NULL)
+        if (ORDERED) {
+            if (!is.ordered(x))
+                sp <- ux[sp]
+                ret <- partysplit(as.integer(j), breaks = sp,
+                                  index = 1L:2L)
+        } else {
+            ret <- partysplit(as.integer(j),
+                              index = as.integer(sp) + 1L)
+        }
+    }
+    return(ret)
 }
 
 .ctreetrafo <- function
@@ -398,6 +476,7 @@ ctree_control <- function
     minprob = 0.01, 
     stump = FALSE, 
     nresample = 9999L, 
+    MIA = FALSE,
     maxsurrogate = 0L, 
     mtry = Inf, 
     maxdepth = Inf, 
@@ -421,7 +500,7 @@ ctree_control <- function
                    logmincriterion = logmincriterion, minsplit = minsplit, 
                    minbucket = minbucket, minprob = minprob, stump = stump, 
                    mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-                   splittry = splittry, maxsurrogate = maxsurrogate, 
+                   splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest,

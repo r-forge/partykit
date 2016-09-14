@@ -119,7 +119,8 @@
     # names(dimnames(prob)) <- NULL
     if (ctrl$majority)  ### go with majority
         prob <- as.double((1L:length(prob)) %in% which.max(prob))
-    ret$split$prob <- prob
+    if (is.null(ret$split$prob))
+        ret$split$prob <- prob
 
     ### compute surrogate splits
     if (ctrl$maxsurrogate > 0L)
@@ -308,6 +309,7 @@
     minbucket = 7L, 
     minprob = 0.01, 
     stump = FALSE,
+    MIA = FALSE,
     maxsurrogate = 0L, 
     mtry = Inf,
     maxdepth = Inf, 
@@ -333,10 +335,13 @@
     if (multiway & maxsurrogate > 0L)
         stop("surrogate splits currently not implemented for multiway splits")
 
+    if (MIA && maxsurrogate > 0)
+        warning("Mixing MIA splits with surrogate splits does not make sense")
+
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
          minprob = minprob, stump = stump, mtry = mtry,
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         maxsurrogate = maxsurrogate, majority = majority,
+         MIA = MIA, maxsurrogate = maxsurrogate, majority = majority,
          caseweights = caseweights, applyfun = applyfun)
 }
