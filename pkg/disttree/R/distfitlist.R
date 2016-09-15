@@ -6,10 +6,12 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## check whether the input is a gamlss.family object (or function) or a list of the required type
   if(is.function(family)) family <- family()
-  if(inherits(family, "gamlss.family")) family <- make_dist_list(family)
-  # if(is.character(family)) family <- ...
+  if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+  # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
   if(!is.list(family)) stop ("unknown family specification")
   if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+  
+  if(type.hessian == "numeric") family$hdist <- NULL
 
   
   # FIXME:
@@ -50,22 +52,22 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## set up negative log-likelihood
   nll <- function(eta) {
-    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE, bd = bd)
+    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     return(nloglik)
   }
   
   
   ## set up gradient
   grad <- function(eta) {
-    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE, bd = bd)
+    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
     return(gr)
   }
   
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
   if(is.null(start)){
-    starteta <- family$startfun(y, weights = weights, bd = bd)
-    # starteta <- family$startfun(y = rep(y, round(weights)), bd = bd)
+    starteta <- family$startfun(y, weights = weights)
+    # starteta <- family$startfun(y = rep(y, round(weights)))
   } else {
     starteta <- family$linkfun(start)
   }
@@ -86,28 +88,26 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     
     
   } else {
-    eta <- family$startfun(y, weights, bd = bd)
+    eta <- family$startfun(y, weights)
     par <- family$linkinv(eta)
-    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE, bd = bd)
-    
-    # use optim if numerically calculated hessian is required
-    if(type.hessian == "numeric") {
-      opt <- optim(par = eta, fn = nll, gr = grad, method = "BFGS",
-                   hessian = (type.hessian == "numeric"), control = list(...))
-    } else {opt <- NULL}
+    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
+    opt <- NULL
   }
 
   
-  ## hess matrix and variance-covariance matrix estimate
+  ## hess matrix (second-order partial derivatives of the (positive) log-likelihood function) and Hessian estimate for the variance-covariance matrix
   if(vcov) {
-    if(type.hessian == "numeric") {
-      hess <- -opt$hessian
-      hess <- as.matrix(hess)
-      colnames(hess) <- rownames(hess) <- names(eta)
+    if(is.null(family$hdist)) {
+      hess <- if(family$mle) {
+        -optim(par = eta, fn = nll, gr = grad, method = "BFGS", hessian = TRUE, control = list(...))$hessian
+      } else {
+        -opt$hessian
+      }
     } else {
-      hess <- family$hdist(y, eta, weights = weights, bd = bd)
-      hess <- as.matrix(hess)
-    }      
+      hess <- family$hdist(y, eta, weights = weights)
+    }
+    hess <- as.matrix(hess)
+    colnames(hess) <- rownames(hess) <- names(eta)
     
     
     #vcov for link coefficients eta
@@ -122,9 +122,10 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## estfun
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
+  # (first-order partial derivatives of the (positive) log-likelihood function)
   if(estfun) {
     # estfun for link coefficients eta
-    ef <- weights * family$sdist(y, eta, sum = FALSE, bd = bd)   ## FIX ME: cut out rows with weight = 0?
+    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0?
   } else {
     ef <- NULL                    
   }
@@ -151,11 +152,11 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   
   ## return value 
-  # FIX: return bd? df = np?
   rval <- list(
     npar = length(par),
-    df = length(par),
     y = y,
+    ny = ny,        
+    nobs = nobs,
     weights = weights,
     family = family$family.name,
     starteta = starteta,
@@ -166,8 +167,6 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     vcov = vc,
     loglik = loglik,
     call = cl,
-    ny = ny,        
-    nobs = nobs,
     estfun = ef,
     familylist = family
     #ddist = ddist,
@@ -175,8 +174,6 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     #qdist = qdist,
     #rdist = rdist
   )
-  
-  #if(any(family$family%in%.distfit.bi.list)) rval <- c(rval, bd = bd)
   
   class(rval) <- "distfit"
   return(rval)
@@ -216,7 +213,7 @@ estfun.distfit <- function(object, ...) {
 }
 
 logLik.distfit <- function(object, ...) {
-  structure(object$loglik, df = object$df, class = "logLik")
+  structure(object$loglik, df = object$npar, class = "logLik")
 }
 
 bread.distfit <- function(object, ...) {
@@ -301,3 +298,77 @@ summary.distfit <- function (object, type = "parameter", ...){
   class(sumlist) <- "summary.distfit"
   sumlist 
 }
+
+
+
+
+if(FALSE) {
+  
+  family <- ZABI()
+  y <- rZABI(1000, bd = 10, mu = 0.5, sigma = 0.2)
+  ny <- length(y)
+  start <- c(0.8, 0.1)
+  weights <- rbinom(ny, 1, 0.75)
+  
+  df <- distfitlist(y, family, weights = weights, start = start, bd = 10)
+  df2 <- distfitlist(y, family, bd = 10)
+  
+}
+
+
+
+
+if(FALSE){
+  ######### examples
+  ## simulate artifical negative binomial data
+  set.seed(0)
+  y <- rnbinom(1000, size = 1, mu = 2)
+  
+  ## simple distfit
+  df <- distfitlist(y, family = NBI)
+  coef(df)
+  confint(df)
+  logLik(df)
+  
+  ## using tabulated data
+  ytab <- table(y)
+  df2 <- distfitlist(as.numeric(names(ytab)), family = NBI, weights = ytab)
+  coef(df2)
+  confint(df2)
+  logLik(df2)
+  
+  ## coefficients tests
+  if(require("lmtest")) {
+    coeftest(df)
+    coeftest(df2)
+  }
+  
+  ## censored logistic example
+  if(require("crch") & require("gamlss.cens")) {
+    library("crch")
+    data("RainIbk", package = "crch")
+    m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic")
+    
+    library("gamlss.cens")
+    gen.cens(LO, type = "left")
+    RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
+    m2 <- distfitlist(RainIbk$rains, family = LOlc)
+    
+    coef(m1)
+    coef(m2)
+    logLik(m1)
+    logLik(m2)
+  }
+}
+
+
+
+if(FALSE){
+  family <- BCCG()
+  family$nopar
+  family$family
+  y <- rBCCG(1000, 1, 0.8, 0.3)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, BCCG())
+}
+
