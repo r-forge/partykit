@@ -2,7 +2,23 @@
 # input: gamlss.dist family object
 # builds a list with all necessary functions/informations for distfitlist
 
-make_dist_list <- function(family) {
+# distfit(y, family = make_dist_list(BI, bd = 10))
+# distfit(y, family = BI, bd = 10)
+
+#### TO DO: 
+
+# seperate make_dist_list (as a function outside of distfitlist)
+# bd can be an input argument in make_dist_list ( => bd is stored in the local environment), but once the list is returned, bd should not appear any more
+# such that when writing a list (for distributions without bd) the parameter bd should not appear at any time
+# wrap another function around gamlss.dist family object functions  such that bd is fixed inside this wrapper function and then the dldm etc. functions are called
+# input of wrapper function mustn't include bd (make_dist_list is already the wrapper function for all included functions)
+
+# within distfitlist: if hdist is available in the list, the hessian should be calculated analytically using hdist
+# while building the list: if hdist is availabe, but the input argument type.hessian is set to "numeric" -> remove hdist
+
+
+
+make_dist_list <- function(family, bd = 1) {
   
   
   ## list of families which require an additional parameter bd (binomial denominator)
@@ -29,124 +45,58 @@ make_dist_list <- function(family) {
   # get parameters of a function f, return vector with the indices of the necessary input parameters 
   getpar <- function(f){
     arguments <- names(formals(f))
-    
-    ## remove "bd" from the list of parameters in case it is included
-    arg.bd <- FALSE
-    if(any(family$family%in%.distfit.bi.list)){
-      if("bd" %in% arguments){ 
-        arg.bd <- TRUE
-        arguments <- arguments[-(match("bd", arguments))]
-      }
-    }
-    
-    
-    ## 2 cases: with or without y as input
-    
-    ## with y
-    # if y is one of the input arguments, the derivative function returns a vector of the length of y
-    
-    if(arguments[1] == "y"){
-      # 4 Parameter
-      if(length(arguments)==5L) par.id <- c(0,1,2,3,4)        # f(y, mu, sigma, nu, tau)
-      
-      # 3 Parameter
-      if(length(arguments)==4L){
-        if(arguments[2]=="mu"){
-          if(arguments[3]=="sigma"){
-            if(arguments[4]=="nu"){
-              par.id <- c(0,1,2,3)                            # f(y, mu, sigma, nu)
-            } else {
-              par.id <- c(0,1,2,4)                            # f(y, mu, sigma, tau)
-            }
-          } else {
-            par.id <- c(0,1,3,4)                              # f(y, mu, nu, tau)
-          }
-        } else {
-          par.id <- c(0,2,3,4)                                # f(y, sigma, nu, tau)
-        }
-      }
-      
-      # 2 Parameter
-      if(length(arguments)==3L){
-        if(arguments[2]=="mu"){
-          if(arguments[3]=="sigma") par.id <- c(0,1,2)        # f(y, mu, sigma)
-          if(arguments[3]=="nu")    par.id <- c(0,1,3)        # f(y, mu, nu)
-          if(arguments[3]=="tau")   par.id <- c(0,1,4)        # f(y, mu, tau)
-        }
-        if(arguments[2]=="sigma"){
-          if(arguments[3]=="nu")    par.id <- c(0,2,3)        # f(y, sigma, nu)
-          if(arguments[3]=="tau")   par.id <- c(0,2,4)        # f(y, sigma, tau)
-        }
-        if(arguments[2]=="nu")      par.id <- c(0,3,4)        # f(y, nu, tau)
-      }
-      
-      # 1 Parameter
-      if(length(arguments)==2L){
-        if(arguments[2]=="mu")      par.id <- c(0,1)          # f(y, mu)
-        if(arguments[2]=="sigma")   par.id <- c(0,2)          # f(y, sigma)
-        if(arguments[2]=="nu")      par.id <- c(0,3)          # f(y, nu)
-        if(arguments[2]=="tau")     par.id <- c(0,4)          # f(y, tau)
-      }
-      
-      # 0 Parameter
-      if(length(arguments)==1L)     par.id <- c(0)            # f(y)
-    } else {
-      
-      ## without y
-      # in this case the functions return only a single value -> create vector by replicating this value ny times (necessary for the matrix (using sum and *1/ny)) 
-      
-      # 4 Parameter
-      if(length(arguments)==4L) par.id <- c(1,2,3,4)          # f(mu, sigma, nu, tau)
-      
-      # 3 Parameter
-      if(length(arguments)==3L){
-        if(arguments[1]=="mu"){
-          if(arguments[2]=="sigma"){
-            if(arguments[3]=="nu"){
-              par.id <- c(1,2,3)                              # f(mu, sigma, nu)
-            } else {
-              par.id <- c(1,2,4)                              # f(mu, sigma, tau)
-            }
-          } else {
-            par.id <- c(1,3,4)                                # f(mu, nu, tau)
-          }
-        } else {
-          par.id <- c(2,3,4)                                  # f(sigma, nu, tau)
-        }
-      }
-      
-      # 2 Parameter
-      if(length(arguments)==2L){
-        if(arguments[1]=="mu"){
-          if(arguments[2]=="sigma") par.id <- c(1,2)          # f(mu, sigma)
-          if(arguments[2]=="nu")    par.id <- c(1,3)          # f(mu, nu)
-          if(arguments[2]=="tau")   par.id <- c(1,4)          # f(mu, tau)
-        }
-        if(arguments[1]=="sigma"){ 
-          if(arguments[2]=="nu")    par.id <- c(2,3)          # f(sigma, nu)
-          if(arguments[2]=="tau")   par.id <- c(2,4)          # f(sigma, tau)
-        }
-        if(arguments[1]=="nu")      par.id <- c(3,4)          # f(nu, tau)
-      }
-      
-      # 1 Parameter
-      if(length(arguments)==1L){
-        if(arguments[1]=="mu")    par.id <- c(1)              # f(mu)
-        if(arguments[1]=="sigma") par.id <- c(2)              # f(sigma)
-        if(arguments[1]=="nu")    par.id <- c(3)              # f(nu)
-        if(arguments[1]=="tau")   par.id <- c(4)              # f(tau)
-      }
-      
-      # 0 Parameter
-      if(length(arguments)==0L)  par.id <- NULL       ## fix: possible case? of which class is f when the derivative is a constant?
-    }
-    
-    ## attach index for the binomial denominator parameter bd if it has been removed earlier
-    if(arg.bd) par.id <- c(par.id,5)
-    
+    par.id <- c()
+    if("mu" %in% arguments) par.id <- c(par.id, 1)
+    if("sigma" %in% arguments) par.id <- c(par.id, 2)
+    if("nu" %in% arguments) par.id <- c(par.id, 3)
+    if("tau" %in% arguments) par.id <- c(par.id, 4)
     return(par.id)
   }
   
+  
+  # get derivative function as required in the list (input: gamlss.dist derivative function)
+  getderivfun <- function(fun){
+    arg <- names(formals(fun))
+    par.id <- getpar(fun)
+    if("y" %in% arg) {
+      if("bd" %in% arg) {
+        derivfun <- function(y, par) {
+          input <- list()
+          input$y <- y
+          input <- c(input, par[par.id])
+          input$bd <- bd
+          val <- do.call(fun, input)
+          if(length(val) == 1L) val <- rep(val, length(y))
+          return(val)
+        }
+      } else {
+        derivfun <- function(y, par) {
+          input <- list()
+          input$y <- y
+          input <- c(input, par[par.id])
+          val <- do.call(fun, input)
+          if(length(val) == 1L) val <- rep(val, length(y))
+          return(val)
+        }    
+      } 
+    } else {
+      if("bd" %in% arg) {
+        derivfun <- function(y, par) {
+          input <- list()
+          input <- c(input, par[par.id])
+          input$bd <- bd
+          return(rep(do.call(fun, input), length(y)))
+        }
+      } else {
+        derivfun <- function(y, par) {
+          input <- list()
+          input <- c(input, par[par.id])
+          return(rep(do.call(fun, input), length(y)))
+        }    
+      }
+    }
+    return(derivfun)
+  }
   
   
   ## define inner and outer derivative functions
@@ -158,6 +108,7 @@ make_dist_list <- function(family) {
     linknames <- c(family$mu.link)
     if(family$mu.link == "identity") etanames <- c("mu") else etanames <- paste0(family$mu.link, "(mu)")
     
+    
     # inner derivative functions (dmdeta, d2mdeta2)
     dmdeta <- function(eta) return(family$mu.dr(eta[1]))
     if(family$mu.link=="identity") d2mdeta2 <- function(eta) return(0)
@@ -165,71 +116,24 @@ make_dist_list <- function(family) {
     if(family$mu.link=="logit")    d2mdeta2 <- function(eta) return(exp(eta[1]) * (exp(eta[1])-1) / ((1+exp(eta[1]))^3)) 
     
     # outer derivative functions (dldm, d2ldm2)
-    par.id.dldm <- getpar(family$dldm)
-    if(par.id.dldm[1] == 0L) {
-      if(length(par.id.dldm) == 1L){
-        dldm <- function(y, par, bd = NULL) return(family$dldm(y))
-      } else {
-        dldm <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldm){
-            for (i in 2:(length(par.id.dldm)-1)) input[[i]] <- rep.int(par[par.id.dldm[i]], ny)
-            input[[length(par.id.dldm)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldm)) input[[i]] <- rep.int(par[par.id.dldm[i]], ny)
-          }
-          return(do.call(family$dldm, input))
-        }
-      }
-    } else {
-      dldm <- function(y, par, bd = NULL) {
-        ny <- length(y)
+    dldm <- getderivfun(family$dldm)
+    d2ldm2 <- getderivfun(family$d2ldm2)
+    
+    ## FIX ME: alternative version, pro: shorter, contra: if-conditions inside the function 
+    if(FALSE){
+      arg.dldm <- names(formals(family$dldm))
+      par.id.dldm <- getpar(family$dldm)
+      dldm <- function(y, par){
         input <- list()
-        if(5%in%par.id.dldm){
-          for (i in 1:(length(par.id.dldm)-1)) input[[i]] <- par[par.id.dldm[i]]
-          input[[length(par.id.dldm)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldm)) input[[i]] <- par[par.id.dldm[i]]
-        }
-        return(rep.int(do.call(family$dldm, input), ny))
+        if("y" %in% arg.dldm) input$y <- y
+        input <- c(input, par[par.id.dldm])
+        if("bd" %in% arg.dldm) input$bd <- bd
+        return(do.call(family$dldm, input))
       }
     }
     
-    par.id.d2ldm2 <- getpar(family$d2ldm2)
-    if(par.id.d2ldm2[1] == 0L){
-      if(length(par.id.d2ldm2) == 1L){
-        d2ldm2 <- function(y, par, bd = NULL) return(family$d2ldm2(y))
-      } else {
-        d2ldm2 <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldm2){
-            for (i in 2:(length(par.id.d2ldm2)-1)) input[[i]] <- rep.int(par[par.id.d2ldm2[i]], ny)
-            input[[length(par.id.d2ldm2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldm2)) input[[i]] <- rep.int(par[par.id.d2ldm2[i]], ny)
-          }
-          return(do.call(family$d2ldm2, input))
-        }
-      }
-    } else {
-      d2ldm2 <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldm2){
-          for (i in 1:(length(par.id.d2ldm2)-1)) input[[i]] <- par[par.id.d2ldm2[i]]
-          input[[length(par.id.d2ldm2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldm2)) input[[i]] <- par[par.id.d2ldm2[i]]
-        }
-        return(rep.int(do.call(family$d2ldm2, input), ny))
-      }
-    }
   }
-  
+    
   
   if(np > 1L){
     
@@ -245,101 +149,10 @@ make_dist_list <- function(family) {
     if(family$sigma.link=="logit")    d2ddeta2 <- function(eta) return(exp(eta[2]) * (exp(eta[2])-1) / ((1+exp(eta[2]))^3)) 
     
     # outer derivative functions (dldd, d2ldd2, d2ldmdd)
-    par.id.dldd <- getpar(family$dldd)
-    if(par.id.dldd[1] == 0L){
-      if(length(par.id.dldd) == 1L){
-        dldd <- function(y, par, bd = NULL) return(family$dldd(y))
-      } else {
-        dldd <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldd){
-            for (i in 2:(length(par.id.dldd)-1)) input[[i]] <- rep.int(par[par.id.dldd[i]], ny)
-            input[[length(par.id.dldd)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldd)) input[[i]] <- rep.int(par[par.id.dldd[i]], ny)
-          }
-          return(do.call(family$dldd, input))
-        }
-      }
-    } else {
-      dldd <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.dldd){
-          for (i in 1:(length(par.id.dldd)-1)) input[[i]] <- par[par.id.dldd[i]]
-          input[[length(par.id.dldd)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldd)) input[[i]] <- par[par.id.dldd[i]]
-        }
-        return(rep.int(do.call(family$dldd, input), ny))
-      }
-    }
-    
-    par.id.d2ldd2 <- getpar(family$d2ldd2)
-    if(par.id.d2ldd2[1] == 0L){
-      if(length(par.id.d2ldd2) == 1L){
-        d2ldd2 <- function(y, par, bd = NULL) return(family$d2ldd2(y))
-      } else {
-        d2ldd2 <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldd2){
-            for (i in 2:(length(par.id.d2ldd2)-1)) input[[i]] <- rep.int(par[par.id.d2ldd2[i]], ny)
-            input[[length(par.id.d2ldd2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldd2)) input[[i]] <- rep.int(par[par.id.d2ldd2[i]], ny)
-          }
-          return(do.call(family$d2ldd2, input))
-        }
-      }
-    } else {
-      d2ldd2 <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldd2){
-          for (i in 1:(length(par.id.d2ldd2)-1)) input[[i]] <- par[par.id.d2ldd2[i]]
-          input[[length(par.id.d2ldd2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldd2)) input[[i]] <- par[par.id.d2ldd2[i]]
-        }
-        return(rep.int(do.call(family$d2ldd2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdd <- getpar(family$d2ldmdd)
-    if(par.id.d2ldmdd[1] == 0L){
-      if(length(par.id.d2ldmdd) == 1L){
-        d2ldmdd <- function(y, par, bd = NULL) return(family$d2ldmdd(y))
-      } else {
-        d2ldmdd <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldmdd){
-            for (i in 2:(length(par.id.d2ldmdd)-1)) input[[i]] <- rep.int(par[par.id.d2ldmdd[i]], ny)
-            input[[length(par.id.d2ldmdd)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldmdd)) input[[i]] <- rep.int(par[par.id.d2ldmdd[i]], ny)
-          }
-          return(do.call(family$d2ldmdd, input))
-        }
-      }
-    } else {
-      d2ldmdd <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldmdd){
-          for (i in 1:(length(par.id.d2ldmdd)-1)) input[[i]] <- par[par.id.d2ldmdd[i]]
-          input[[length(par.id.d2ldmdd)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldmdd)) input[[i]] <- par[par.id.d2ldmdd[i]]
-        }
-        return(rep.int(do.call(family$d2ldmdd, input), ny))
-      }
-    }
+    dldd <- getderivfun(family$dldd)
+    d2ldd2 <- getderivfun(family$d2ldd2)
+    d2ldmdd <- getderivfun(family$d2ldmdd)
+
   }
   
   
@@ -357,133 +170,10 @@ make_dist_list <- function(family) {
     if(family$nu.link=="logit")    d2vdeta2 <- function(eta) return(exp(eta[3]) * (exp(eta[3])-1) / ((1+exp(eta[3]))^3)) 
     
     # outer derivatives (dldv, d2ldv2, d2ldmdv, d2ldddv)
-    par.id.dldv <- getpar(family$dldv)
-    if(par.id.dldv[1] == 0L){
-      if(length(par.id.dldv) == 1L){
-        dldv <- function(y, par, bd = NULL) return(family$dldv(y))
-      } else {
-        dldv <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldv){
-            for (i in 2:(length(par.id.dldv)-1)) input[[i]] <- rep.int(par[par.id.dldv[i]], ny)
-            input[[length(par.id.dldv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldv)) input[[i]] <- rep.int(par[par.id.dldv[i]], ny)
-          }
-          return(do.call(family$dldv, input))
-        }
-      }
-    } else {
-      dldv <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.dldv){
-          for (i in 1:(length(par.id.dldv)-1)) input[[i]] <- par[par.id.dldv[i]]
-          input[[length(par.id.dldv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldv)) input[[i]] <- par[par.id.dldv[i]]
-        }
-        return(rep.int(do.call(family$dldv, input), ny))
-      }
-    }
-    
-    par.id.d2ldv2 <- getpar(family$d2ldv2)
-    if(par.id.d2ldv2[1] == 0L){
-      if(length(par.id.d2ldv2) == 1L){
-        d2ldv2 <- function(y, par, bd = NULL) return(family$d2ldv2(y))
-      } else {
-        d2ldv2 <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldv2){
-            for (i in 2:(length(par.id.d2ldv2)-1)) input[[i]] <- rep.int(par[par.id.d2ldv2[i]], ny)
-            input[[length(par.id.d2ldv2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldv2)) input[[i]] <- rep.int(par[par.id.d2ldv2[i]], ny)
-          }
-          return(do.call(family$d2ldv2, input))
-        }
-      }
-    } else {
-      d2ldv2 <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldv2){
-          for (i in 1:(length(par.id.d2ldv2)-1)) input[[i]] <- par[par.id.d2ldv2[i]]
-          input[[length(par.id.d2ldv2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldv2)) input[[i]] <- par[par.id.d2ldv2[i]]
-        }
-        return(rep.int(do.call(family$d2ldv2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdv <- getpar(family$d2ldmdv)
-    if(par.id.d2ldmdv[1] == 0L) { 
-      if(length(par.id.d2ldmdv) == 1L){
-        d2ldmdv <- function(y, par, bd = NULL) return(family$d2ldmdv(y))
-      } else {
-        d2ldmdv <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldmdv){
-            for (i in 2:(length(par.id.d2ldmdv)-1)) input[[i]] <- rep.int(par[par.id.d2ldmdv[i]], ny)
-            input[[length(par.id.d2ldmdv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldmdv)) input[[i]] <- rep.int(par[par.id.d2ldmdv[i]], ny)
-          }
-          return(do.call(family$d2ldmdv, input))
-        }
-      }
-    } else {
-      d2ldmdv <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldmdv){
-          for (i in 1:(length(par.id.d2ldmdv)-1)) input[[i]] <- par[par.id.d2ldmdv[i]]
-          input[[length(par.id.d2ldmdv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldmdv)) input[[i]] <- par[par.id.d2ldmdv[i]]
-        }
-        return(rep.int(do.call(family$d2ldmdv, input), ny))
-      }
-    }
-    
-    par.id.d2ldddv <- getpar(family$d2ldddv)
-    if(par.id.d2ldddv[1] == 0L) { 
-      if(length(par.id.d2ldddv) == 1L){
-        d2ldddv <- function(y, par, bd = NULL) return(family$d2ldddv(y))
-      } else {
-        d2ldddv <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldddv){
-            for (i in 2:(length(par.id.d2ldddv)-1)) input[[i]] <- rep.int(par[par.id.d2ldddv[i]], ny)
-            input[[length(par.id.d2ldddv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldddv)) input[[i]] <- rep.int(par[par.id.d2ldddv[i]], ny)
-          }
-          return(do.call(family$d2ldddv, input))
-        }
-      }
-    } else {
-      d2ldddv <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        if(5%in%par.id.d2ldddv){
-          for (i in 1:(length(par.id.d2ldddv)-1)) input[[i]] <- par[par.id.d2ldddv[i]]
-          input[[length(par.id.d2ldddv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldddv)) input[[i]] <- par[par.id.d2ldddv[i]]
-        }
-        return(rep.int(do.call(family$d2ldddv, input), ny))
-      }
-    }
+    dldv <- getderivfun(family$dldv)
+    d2ldv2 <- getderivfun(family$d2ldv2)
+    d2ldmdv <- getderivfun(family$d2ldmdv)
+    d2ldddv <- getderivfun(family$d2ldddv)
   }
   
   
@@ -503,115 +193,12 @@ make_dist_list <- function(family) {
     if(family$tau.link=="logit")     d2tdeta2 <- function(eta) return(exp(eta[4]) * (exp(eta[4])-1) / ((1+exp(eta[4]))^3)) 
     
     # outer derivatives (dldt, d2ldt2, d2ldmdt, d2ldddt, d2ldvdt)
-    par.id.dldt <- getpar(family$dldt)
-    if(par.id.dldt[1] == 0L){
-      if(length(par.id.dldt) == 1L){
-        dldt <- function(y, par, bd = NULL) return(family$dldt(y))
-      } else {
-        dldt <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.dldt)) input[[i]] <- rep.int(par[par.id.dldt[i]], ny)
-          return(do.call(family$dldt, input))
-        }
-      }
-    } else {
-      dldt <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        for (i in 1:length(par.id.dldt)) input[[i]] <- par[par.id.dldt[i]]
-        return(rep.int(do.call(family$dldt, input), ny))
-      }
-    }
+    dldt <- getderivfun(family$dldt)
+    d2ldt2 <- getderivfun(family$d2ldt2)
+    d2ldmdt <- getderivfun(family$d2ldmdt)
+    d2ldddt <- getderivfun(family$d2ldddt)
+    d2ldvdt <- getderivfun(family$d2ldvdt)
     
-    par.id.d2ldt2 <- getpar(family$d2ldt2)
-    if(par.id.d2ldt2[1] == 0L){
-      if(length(par.id.d2ldt2) == 1L){
-        d2ldt2 <- function(y, par, bd = NULL) return(family$d2ldt2(y))
-      } else {
-        d2ldt2 <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldt2)) input[[i]] <- rep.int(par[par.id.d2ldt2[i]], ny)
-          return(do.call(family$d2ldt2, input))
-        }
-      }
-    } else {
-      d2ldt2 <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        for (i in 1:length(par.id.d2ldt2)) input[[i]] <- par[par.id.d2ldt2[i]]
-        return(rep.int(do.call(family$d2ldt2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdt <- getpar(family$d2ldmdt)
-    if(par.id.d2ldmdt[1] == 0L) { 
-      if(length(par.id.d2ldmdt) == 1L){
-        d2ldmdt <- function(y, par, bd = NULL) return(family$d2ldmdt(y))
-      } else {
-        d2ldmdt <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldmdt)) input[[i]] <- rep.int(par[par.id.d2ldmdt[i]], ny)
-          return(do.call(family$d2ldmdt, input))
-        }
-      }
-    } else {
-      d2ldmdt <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        for (i in 1:length(par.id.d2ldmdt)) input[[i]] <- par[par.id.d2ldmdt[i]]
-        return(rep.int(do.call(family$d2ldmdt, input), ny))
-      }
-    } 
-    
-    par.id.d2ldddt <- getpar(family$d2ldddt)
-    if(par.id.d2ldddt[1] == 0L) { 
-      if(length(par.id.d2ldddt) == 1L){
-        d2ldddt <- function(y, par, bd = NULL) return(family$d2ldddt(y))
-      } else {
-        d2ldddt <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldddt)) input[[i]] <- rep.int(par[par.id.d2ldddt[i]], ny)
-          return(do.call(family$d2ldddt, input))
-        }
-      }
-    } else {
-      d2ldddt <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        for (i in 1:length(par.id.d2ldddt)) input[[i]] <- par[par.id.d2ldddt[i]]
-        return(rep.int(do.call(family$d2ldddt, input), ny))
-      }
-    }
-    
-    par.id.d2ldvdt <- getpar(family$d2ldvdt)
-    if(par.id.d2ldvdt[1] == 0L) { 
-      if(length(par.id.d2ldvdt) == 1L){
-        d2ldvdt <- function(y, par, bd = NULL) return(family$d2ldvdt(y))
-      } else {
-        d2ldvdt <- function(y, par, bd = NULL) {
-          ny <- length(y)
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldvdt)) input[[i]] <- rep.int(par[par.id.d2ldvdt[i]], ny)
-          return(do.call(family$d2ldvdt, input))
-        }
-      }
-    } else {
-      d2ldvdt <- function(y, par, bd = NULL) {
-        ny <- length(y)
-        input <- list()
-        for (i in 1:length(par.id.d2ldvdt)) input[[i]] <- par[par.id.d2ldvdt[i]]
-        return(rep.int(do.call(family$d2ldvdt, input), ny))
-      }
-    }
   }
   
   
@@ -622,7 +209,7 @@ make_dist_list <- function(family) {
     
     # define function for the calculation of initial values
     ## FIX ME ## use weights?
-    startfun <- function(y, weights = NULL, bd = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       # if((any(family$family%in%.distfit.bi.list) && is.null(bd)) bd <- 1
       mu <- NULL
@@ -657,14 +244,14 @@ make_dist_list <- function(family) {
     
     
     # define functions that return outer derivatives as matrix / list of matrices:
-    dldpar <- function(y, par, bd = NULL){
-      dmatrix <- cbind(dldm(y, par, bd = bd))
+    dldpar <- function(y, par){
+      dmatrix <- cbind(dldm(y, par))
       return(dmatrix)
     }
     
-    d2ldpar2 <- function(y, par, bd = NULL){
+    d2ldpar2 <- function(y, par){
       
-      d2matrix <- rbind(cbind(d2ldm2(y, par, bd = bd)))
+      d2matrix <- rbind(cbind(d2ldm2(y, par)))
       
       # d2matrix is of size (1*ny x 1) 
       # transform to a list of matrices (length of the list equals the number of observations ny)
@@ -672,6 +259,7 @@ make_dist_list <- function(family) {
       
       d2list <- list()
       ny <- length(y)
+      if(is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i),]
@@ -685,7 +273,7 @@ make_dist_list <- function(family) {
   if(np == 2L){
     
     # define function for the calculation of initial values
-    startfun <- function(y, weights = NULL, bd = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- NULL
       eval(family$mu.initial)
@@ -720,15 +308,15 @@ make_dist_list <- function(family) {
     
     
     # define functions that return outer derivatives as matrix / list of matrices:
-    dldpar <- function(y, par, bd = NULL){
-      dmatrix <- cbind(dldm(y, par, bd = bd), dldd(y, par, bd = bd))
+    dldpar <- function(y, par){
+      dmatrix <- cbind(dldm(y, par), dldd(y, par))
       return(dmatrix)
     }
     
-    d2ldpar2 <- function(y, par, bd = NULL){
+    d2ldpar2 <- function(y, par){
       
-      d2matrix <- rbind(cbind(d2ldm2(y, par, bd = bd), d2ldmdd(y, par, bd = bd)),
-                        cbind(d2ldmdd(y, par, bd = bd), d2ldd2(y, par, bd = bd)))
+      d2matrix <- rbind(cbind(d2ldm2(y, par), d2ldmdd(y, par)),
+                        cbind(d2ldmdd(y, par), d2ldd2(y, par)))
       
       # d2matrix is of size (2*ny x 2) 
       # transform to a list of matrices (length of the list equals the number of observations ny)
@@ -736,6 +324,7 @@ make_dist_list <- function(family) {
       
       d2list <- list()
       ny <- length(y)
+      if(is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i),]
@@ -749,7 +338,7 @@ make_dist_list <- function(family) {
   if(np == 3L){
     
     # define function for the calculation of initial values
-    startfun <- function(y, weights = NULL, bd = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <-  NULL
       eval(family$mu.initial)
@@ -785,16 +374,16 @@ make_dist_list <- function(family) {
     
     
     # define functions that return outer derivatives as matrix / list:
-    dldpar <- function(y, par, bd = NULL){
-      dmatrix <- cbind(dldm(y, par, bd = bd), dldd(y, par, bd = bd), dldv(y, par, bd = bd))
+    dldpar <- function(y, par){
+      dmatrix <- cbind(dldm(y, par), dldd(y, par), dldv(y, par))
       return(dmatrix)
     }
     
-    d2ldpar2 <- function(y, par, bd = NULL){
+    d2ldpar2 <- function(y, par){
       
-      d2matrix <- rbind(cbind(d2ldm2(y, par, bd = bd), d2ldmdd(y, par, bd = bd), d2ldmdv(y, par, bd = bd)),
-                        cbind(d2ldmdd(y, par, bd = bd), d2ldd2(y, par, bd = bd), d2ldddv(y, par, bd = bd)),
-                        cbind(d2ldmdv(y, par, bd = bd), d2ldddv(y, par, bd = bd), d2ldv2(y, par, bd = bd)))
+      d2matrix <- rbind(cbind(d2ldm2(y, par), d2ldmdd(y, par), d2ldmdv(y, par)),
+                        cbind(d2ldmdd(y, par), d2ldd2(y, par), d2ldddv(y, par)),
+                        cbind(d2ldmdv(y, par), d2ldddv(y, par), d2ldv2(y, par)))
       
       # d2matrix is of size (3*ny x 3) 
       # transform to a list of matrices (length of the list equals the number of observations ny)
@@ -802,6 +391,7 @@ make_dist_list <- function(family) {
       
       d2list <- list()
       ny <- length(y)
+      if(is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
@@ -815,7 +405,7 @@ make_dist_list <- function(family) {
   if(np == 4L){
     
     # define function for the calculation of initial values
-    startfun <- function(y, weights = NULL, bd = NULL) {
+    startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <- tau <- NULL
       eval(family$mu.initial)
@@ -852,17 +442,17 @@ make_dist_list <- function(family) {
     
     
     # define functions that return outer derivatives as matrix / list :
-    dldpar <- function(y, par, bd = NULL){
-      dmatrix <- cbind(dldm(y, par, bd = bd), dldd(y, par, bd = bd), dldv(y, par, bd = bd), dldt(y, par, bd = bd))
+    dldpar <- function(y, par){
+      dmatrix <- cbind(dldm(y, par), dldd(y, par), dldv(y, par), dldt(y, par))
       return(dmatrix)
     }
     
-    d2ldpar2 <- function(y, par, bd = NULL){
+    d2ldpar2 <- function(y, par){
       
-      d2matrix <- rbind(cbind(d2ldm2(y, par, bd = bd), d2ldmdd(y, par, bd = bd), d2ldmdv(y, par, bd = bd), d2ldmdt(y, par, bd = bd)),
-                        cbind(d2ldmdd(y, par, bd = bd), d2ldd2(y, par, bd = bd), d2ldddv(y, par, bd = bd), d2ldddt(y, par, bd = bd)),
-                        cbind(d2ldmdv(y, par, bd = bd), d2ldddv(y, par, bd = bd), d2ldv2(y, par, bd = bd), d2ldvdt(y, par, bd = bd)),
-                        cbind(d2ldmdt(y, par, bd = bd), d2ldddt(y, par, bd = bd), d2ldvdt(y, par, bd = bd), d2ldt2(y, par, bd = bd)))
+      d2matrix <- rbind(cbind(d2ldm2(y, par), d2ldmdd(y, par), d2ldmdv(y, par), d2ldmdt(y, par)),
+                        cbind(d2ldmdd(y, par), d2ldd2(y, par), d2ldddv(y, par), d2ldddt(y, par)),
+                        cbind(d2ldmdv(y, par), d2ldddv(y, par), d2ldv2(y, par), d2ldvdt(y, par)),
+                        cbind(d2ldmdt(y, par), d2ldddt(y, par), d2ldvdt(y, par), d2ldt2(y, par)))
       
       # d2matrix is of size (4*ny x 4) 
       # transform to a list of matrices (length of the list equals the number of observations ny)
@@ -870,6 +460,7 @@ make_dist_list <- function(family) {
       
       d2list <- list()
       ny <- length(y)
+      if(is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
@@ -882,17 +473,17 @@ make_dist_list <- function(family) {
   
   
   
-  ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {
+  ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
     par <- linkinv(eta)
     input <- list()
     inputnames <- c("x", parnames, "log")
     input[[1]] <- y
-    for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], length(y))   (FIX?)
+    input <- c(input, par)                          # <- rep.int(par[i-1], length(y))   (FIX?)
     if(any(family$family%in%.distfit.bi.list)) {
-      input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
+      input <- c(input, bd)      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
       inputnames <- c("x", parnames, "bd", "log")
     }
-    input <- append(input, log)
+    input <- c(input, log)
     names(input) <- inputnames
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
@@ -962,10 +553,10 @@ make_dist_list <- function(family) {
    
   
   
-  ## score / estfun (for positive loglikelihood)
-  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {
+  ## score / estfun (first-order partial derivatives of the (positive) log-likelihood function)
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
     par <- linkinv(eta)                           
-    score <- t(t(dldpar(y, par, bd = bd)) * dpardeta(eta))
+    score <- t(t(dldpar(y, par)) * dpardeta(eta))
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
@@ -976,22 +567,23 @@ make_dist_list <- function(family) {
   }
   
   
-  ## hessian (for positive loglikelihood)
-  hdist <- function(y, eta, weights = NULL, bd = NULL) {    
+  ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
+    if(is.Surv(y)) ny <- dim(y)[1]
     if(is.null(weights)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)                           
     
     ## calculate derivative vectors / matrices / lists
-    d2ldpar2.list <- d2ldpar2(y, par, bd = bd)
-    dldpar.mat <- dldpar(y, par, bd = bd)
+    d2ldpar2.list <- d2ldpar2(y, par)
+    dldpar.mat <- dldpar(y, par)
     
     dpardeta.vec <- dpardeta(eta)
     d2pardeta2.vec <- d2pardeta2(eta)
     
     ## calculation is split up in 2 parts: 
-    # 2nd outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
+    # second outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
     hess.list <- list()
     length(hess.list) <- length(d2ldpar2.list)
     for(i in 1:ny){
@@ -1042,7 +634,7 @@ if(FALSE) {
   etanames <- c("mu", "log(sigma)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- c(eta[1], exp(eta[2]))
     val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
     if(log) val <- log(val)
@@ -1055,7 +647,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {   
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
     par <- c(eta[1], exp(eta[2]))                           
     score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
     score <- as.matrix(score)
@@ -1068,7 +660,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL, bd = NULL) {    
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
@@ -1107,7 +699,7 @@ if(FALSE) {
   }
   
 
-  startfun <- function(y, weights = NULL, bd = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
@@ -1147,7 +739,7 @@ if(FALSE) {
   etanames <- c("log(mu)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- exp(eta)
     val <- par^y / gamma(y+1) * exp(-par)
     if(log) val <- log(val)
@@ -1159,7 +751,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {   
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
     par <- exp(eta)                           
     score <- (y - par)
     score <- as.matrix(score)
@@ -1172,7 +764,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL, bd = NULL) {
+  hdist <- function(y, eta, weights = NULL) {
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
     par <- exp(eta)                           
@@ -1206,7 +798,7 @@ if(FALSE) {
   }
   
   
-  startfun <- function(y, weights = NULL, bd = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     mu <- mean(y)
@@ -1246,7 +838,7 @@ if(FALSE) {
   etanames <- c("log(lambda)")
   
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, bd = NULL) {     
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- exp(eta)
     val <- par * exp(-par * y)
     if(log) val <- log(val)
@@ -1258,7 +850,7 @@ if(FALSE) {
   }
   
   
-  sdist <- function(y, eta, weights = NULL, sum = FALSE, bd = NULL) {
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
     par <- exp(eta)                           
     score <- 1 - y * par
     score <- as.matrix(score)
@@ -1271,7 +863,7 @@ if(FALSE) {
   }
   
   
-  hdist <- function(y, eta, weights = NULL, bd = NULL) {    
+  hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
@@ -1306,7 +898,7 @@ if(FALSE) {
   }
   
   
-  startfun <- function(y, weights = NULL, bd = NULL){
+  startfun <- function(y, weights = NULL){
     if(!is.null(weights)) y <- rep(y, round(weights))
     ny <- length(y)
     lambda <- ny / sum(y)
