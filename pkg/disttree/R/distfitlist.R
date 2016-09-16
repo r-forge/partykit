@@ -364,11 +364,83 @@ if(FALSE){
 
 
 if(FALSE){
+  family <- BE()
+  family$nopar
+  family$family
+  y <- rBE(10000, 0.5, 0.3)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BE(), weights = weights)
+  t$par
+}
+
+if(FALSE){
   family <- BCCG()
   family$nopar
   family$family
-  y <- rBCCG(1000, 1, 0.8, 0.3)
+  y <- rBCCG(10000, 1, 0.1, 0.1)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, BCCG())
+  t <- distfitlist(y, family = BCCG(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- BCPE()
+  family$nopar
+  family$family
+  y <- rBCPE(10000, 5, 0.1, 1, 2)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BCPE(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- BCT()
+  family$nopar
+  family$family
+  y <- rBCT(10000, 5, 0.1, 1, 2)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BCT(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- EGB2()
+  family$nopar
+  family$family
+  y <- rEGB2(10000, 0, 1, 1, 0.5)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = EGB2(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- LO()
+  family$nopar
+  family$family
+  y <- rLO(1000, 0, 1)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = LO(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- JSUo()
+  family$nopar
+  family$family
+  y <- rJSUo(1000, 0, 1, 0, 0.5)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = JSUo(), weights = weights)
+  t$par
+}
+
+
+if(FALSE){
+  family <- LNO()
+  family$nopar
+  family$family
+  y <- rLNO(10000, 1, 0.8, 0.3)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = LNO(), weights = weights)
+  t$par
 }
 
