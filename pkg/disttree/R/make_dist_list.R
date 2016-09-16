@@ -28,6 +28,27 @@ make_dist_list <- function(family, bd = 1) {
 
   np <- sum(family$parameter == TRUE)
   
+  ## families which have fixed parameters: LNO (log normal (Box-Cox)), NET
+  # define fixed parameters locally within make_dist_list, such that the fixed parameters don't appear in the output list anymore
+  # for LNO a value. nu.start is needed for the evaluation of mu.initial
+  if(family$family[1] == "LNO") nu.start <- NULL
+  
+  if(FALSE) {
+    if(family$nopar != np){
+      if(family$family[1] == "LNO") nu <- nu.start <- 0
+      if(family$family[1] == "NET") {
+        nu <- 1.5
+        tau <- 2
+      }
+      
+      #general form: (problem: y required in .initial)
+      #if(!family$parameters$mu) {eval(family$mu.initial)}
+      #if(!family$parameters$sigma) {eval(family$sigma.initial)}
+      #if(!family$parameters$nu) {eval(family$nu.initial)}
+      #if(!family$parameters$tau) {eval(family$tau.initial)}
+    }
+  }
+  
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
@@ -50,6 +71,12 @@ make_dist_list <- function(family, bd = 1) {
     if("sigma" %in% arguments) par.id <- c(par.id, 2)
     if("nu" %in% arguments) par.id <- c(par.id, 3)
     if("tau" %in% arguments) par.id <- c(par.id, 4)
+    
+    #if(family$nopar != np){
+    #  if((family$family[1] == "LNO") par.id <- par.id[par.id != 3]
+    #  if(family$family[1] == "NET") par.id <- par.id[par.id != c(3,4)]
+    #}
+    
     return(par.id)
   }
   
@@ -211,7 +238,6 @@ make_dist_list <- function(family, bd = 1) {
     ## FIX ME ## use weights?
     startfun <- function(y, weights = NULL) {
       if(!is.null(weights)) y <- rep(y, round(weights))
-      # if((any(family$family%in%.distfit.bi.list) && is.null(bd)) bd <- 1
       mu <- NULL
       eval(family$mu.initial)
       starteta <- family$mu.linkfun(mean(mu))
@@ -475,6 +501,13 @@ make_dist_list <- function(family, bd = 1) {
   
   ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
     par <- linkinv(eta)
+    
+    # fixed parameters do not need to be added here, because in the density function dLNO and dNET nu (and tau) are by default set to to c(0) or c(1.5, 2) respectively
+    #if(family$nopar != np){
+    #  if(family$family[1] == "LNO") par <- c(par, 0)
+    #  if(family$family[1] == "NET") par <- c(par, 1.5, 2)
+    #}
+    
     input <- list()
     inputnames <- c("x", parnames, "log")
     input[[1]] <- y
@@ -492,7 +525,6 @@ make_dist_list <- function(family, bd = 1) {
     }
     return(eval)
   }
-  
 
   
   ## additional functions pdist, qdist, rdist
@@ -555,7 +587,18 @@ make_dist_list <- function(family, bd = 1) {
   
   ## score / estfun (first-order partial derivatives of the (positive) log-likelihood function)
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {
-    par <- linkinv(eta)                           
+    par <- linkinv(eta) 
+    
+    if(family$nopar != np){
+      if(family$family[1] == "LNO") {
+        par <- c(par, 0)
+        eta <- c(eta, 0)
+      }
+      if(family$family[1] == "NET") {
+        par <- c(par, 1.5, 2)
+        eta <- c(eta, 1.5, 2)
+      }
+    }
     score <- t(t(dldpar(y, par)) * dpardeta(eta))
     score <- as.matrix(score)
     colnames(score) <- etanames
@@ -573,7 +616,18 @@ make_dist_list <- function(family, bd = 1) {
     if(is.Surv(y)) ny <- dim(y)[1]
     if(is.null(weights)) weights <- rep.int(1, ny)
     
-    par <- linkinv(eta)                           
+    par <- linkinv(eta)
+    
+    if(family$nopar != np){
+      if(family$family[1] == "LNO") {
+        par <- c(par, 0)
+        eta <- c(eta, 0)
+      }
+      if(family$family[1] == "NET") {
+        par <- c(par, 1.5, 2)
+        eta <- c(eta, 1.5, 2)
+      }
+    }
     
     ## calculate derivative vectors / matrices / lists
     d2ldpar2.list <- d2ldpar2(y, par)
