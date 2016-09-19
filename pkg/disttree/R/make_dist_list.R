@@ -18,13 +18,13 @@
 
 
 
-make_dist_list <- function(family, bd = 1) {
+make_dist_list <- function(family, bd = NULL) {
   
   
   ## list of families which require an additional parameter bd (binomial denominator)
-  # by default bd is set to 1 
+  # by default bd is set to to 10 for BB() and to 1 for all the others
   .distfit.bi.list <- c("BI", "Binomial", "BB", "Beta Binomial", "ZIBI", "ZIBB", "ZABI", "ZABB") # binomial denominators
-  # if(any(family$family%in%.distfit.bi.list)) 
+  if(any(family$family%in%.distfit.bi.list) && is.null(bd)) ifelse(family$family[1] == "BB", bd <- 10, bd <- 1)
 
   np <- sum(family$parameter == TRUE)
   
@@ -311,7 +311,7 @@ make_dist_list <- function(family, bd = 1) {
     
     # define link function
     linkfun <- function(par){
-      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]))
+      eta <- c(family$mu.linkfun(par[1]), family$sigma.linkfun(par[2]))
       names(eta) <- etanames
       return(eta)
     }
@@ -377,7 +377,7 @@ make_dist_list <- function(family, bd = 1) {
     
     # define link function
     linkfun <- function(par){
-      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]), family$mu.linkfun(par[3]))
+      eta <- c(family$mu.linkfun(par[1]), family$sigma.linkfun(par[2]), family$nu.linkfun(par[3]))
       names(eta) <- etanames
       return(eta)
     }
@@ -445,7 +445,7 @@ make_dist_list <- function(family, bd = 1) {
     
     # define link function
     linkfun <- function(par){
-      eta <- c(family$mu.linkfun(par[1]), family$mu.linkfun(par[2]), family$mu.linkfun(par[3]), family$mu.linkfun(par[4]))
+      eta <- c(family$mu.linkfun(par[1]), family$sigma.linkfun(par[2]), family$nu.linkfun(par[3]), family$tau.linkfun(par[4]))
       names(eta) <- etanames
       return(eta)
     }
@@ -501,14 +501,22 @@ make_dist_list <- function(family, bd = 1) {
   
   ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
     par <- linkinv(eta)
-    
-    # fixed parameters do not need to be added here, because in the density function dLNO and dNET nu (and tau) are by default set to to c(0) or c(1.5, 2) respectively
-    #if(family$nopar != np){
-    #  if(family$family[1] == "LNO") par <- c(par, 0)
-    #  if(family$family[1] == "NET") par <- c(par, 1.5, 2)
-    #}
-    
     input <- list()
+    
+    # fixed parameters do not need to be added here (for nu = 0 and c(nu, tau) = c(1.5, 2) respectively), 
+    # because in the density function dLNO and dNET nu (and tau) are by default set to to c(0) or c(1.5, 2) respectively
+    #  => following if conditions only necessary for different values for nu (and tau)
+    if(family$nopar != np) {
+      if(family$family[1] == "LNO") {
+        par <- c(par, 0)
+        parnames <- c(parnames, "nu")
+      }
+      if(family$family[1] == "NET") {
+        par <- c(par, 1.5, 2)
+        parnames <- c(parnames, "nu", "tau")
+      }
+    }
+
     inputnames <- c("x", parnames, "log")
     input[[1]] <- y
     input <- c(input, par)                          # <- rep.int(par[i-1], length(y))   (FIX?)
@@ -599,6 +607,7 @@ make_dist_list <- function(family, bd = 1) {
         eta <- c(eta, 1.5, 2)
       }
     }
+    
     score <- t(t(dldpar(y, par)) * dpardeta(eta))
     score <- as.matrix(score)
     colnames(score) <- etanames
