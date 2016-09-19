@@ -1,4 +1,4 @@
-distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, bd = 1, fixed = NULL, fixed.values = NULL, ...)
+distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL, ...)
 {
   ## match call
   cl <- match.call()
