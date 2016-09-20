@@ -9,7 +9,8 @@
     \item{NA handling by following the majority was 
           potentially incorrect in \code{ctree}.}
     \item{minor speed improvements.}
-
+    \item{breaking ties before variable selection was
+          suboptimal for very small log-p-values.}
   }
 }
 
