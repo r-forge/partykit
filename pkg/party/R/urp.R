@@ -69,12 +69,12 @@
 
     crit[is.na(crit)] <- -Inf
     ### crit is maximised, but there might be ties
-    ties <- which(abs(crit - max(crit, na.rm = TRUE)) < .Machine$double.eps)
+    ties <- which(abs(crit - max(crit, na.rm = TRUE)) < sqrt(.Machine$double.xmin))
     if (length(ties) > 1) {
-        ### add a small value (< 1/1000) to crit derived from order of 
+        ### add a small value (< 1/1000) to crit derived from rank of 
         ### teststat
         crit[ties] <- crit[ties] + 
-            order(p["statistic", ties]) / (sum(ties) * 1000)
+            rank(p["statistic", ties]) / (sum(ties) * 1000)
     }
 
     ### switch from log(1 - pval) to pval for info slots
