@@ -153,10 +153,10 @@
         do.call(ctrl$cfun, x[-1])))
     crit <- p[1,,drop = TRUE]
     ### crit is maximised, but there might be ties
-    ties <- which(abs(crit - max(crit)) < .Machine$double.eps)
+    ties <- which(abs(crit - max(crit)) < sqrt(.Machine$double.xmin))
     if (length(ties) > 1) {
         ### add a small value (< 1/1000) to crit derived from order of teststats
-        crit[ties] <- crit[ties] + order(p["statistic", ties]) / (sum(ties) * 1000)
+        crit[ties] <- crit[ties] + rank(p["statistic", ties]) / (sum(ties) * 1000)
     }
     p <- p[-1,,drop = FALSE]
     colnames(p) <- colnames(data)[inp]
