@@ -230,14 +230,14 @@ make_dist_list <- function(family, bd = NULL) {
   
   
   
-  ## define complete derivative functions dpardeta, d2pardeta2, dldpar, d2ldpar2 according to the number of parameters
+  ## define startfunction, complete derivative functions dpardeta, d2pardeta2, dldpar, d2ldpar2 according to the number of parameters
   
   if(np == 1L){
     
     # define function for the calculation of initial values
     ## FIX ME ## use weights?
     startfun <- function(y, weights = NULL) {
-      if(!is.null(weights)) y <- rep(y, round(weights))
+      if(!is.null(weights)) y <- rep(y, round(weights))  # FIX ME: only for integer valued weights
       mu <- NULL
       eval(family$mu.initial)
       starteta <- family$mu.linkfun(mean(mu))
