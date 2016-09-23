@@ -10,8 +10,10 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
   if(!is.list(family)) stop ("unknown family specification")
   if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+  # linkinvdr only used in the method vcov for type = "parameter"
   
   if(type.hessian == "numeric") family$hdist <- NULL
+  if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
 
   
   # FIXME:
@@ -37,7 +39,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## number of observations = sum of weights (i.e., case weights)
   ## FIXME ## also need proportionality weights, i.e., weights = sum(weights > 0) ?
-  nobs <- sum(weights)
+  # nobs <- sum(weights)
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
@@ -52,7 +54,17 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   
   ## set up negative log-likelihood
   nll <- function(eta) {
-    nloglik <- - family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
+    
+    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
+    if(inherits(rval, "try-error")) return(Inf)
+    if(any(is.na(rval))) return(Inf)
+    nloglik <- - sum(weights * rval)
+    
+    #rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE), silent = TRUE))
+    #if(inherits(rval, "try-error")) return(Inf)
+    #if(is.na(rval)) return(Inf)
+    #nloglik <- - rval
+
     return(nloglik)
   }
   
@@ -155,8 +167,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   rval <- list(
     npar = length(par),
     y = y,
-    ny = ny,        
-    nobs = nobs,
+    ny = ny,
     weights = weights,
     family = family$family.name,
     starteta = starteta,
@@ -189,7 +200,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
 
 ## print, summary?, predict?
 nobs.distfit <- function(object, ...) {
-  object$nobs
+  object$ny
 }
 
 coef.distfit <- function(object, type = "link" , ...) {
@@ -217,7 +228,7 @@ logLik.distfit <- function(object, ...) {
 }
 
 bread.distfit <- function(object, ...) {
-  return(object$vcov * object$nobs)
+  return(object$vcov * object$ny)
 }
 
 confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
@@ -226,6 +237,7 @@ confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
   if(type == "link"){ 
     coef <- object$eta
     vcov <- object$vcov
+    # FIX ME: vcov on link scale: values around zero might be negative => error using sqrt
   }
   if(type == "parameter"){ 
     coef <- object$par
@@ -239,29 +251,40 @@ confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
     use.parm <- rep(TRUE,length = np)
   } else {
     use.parm <- logical(length = np)
-    if(("mu" %in% parm)    || (paste0(object$family$mu.link,"(mu)") %in% parm)       || 1 %in% parm) use.parm[1] <- TRUE
-    if(("sigma" %in% parm) || (paste0(object$family$sigma.link,"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
-    if(("nu" %in% parm)    || (paste0(object$family$nu.link,"(nu)") %in% parm)       || 3 %in% parm) use.parm[3] <- TRUE
-    if(("tau" %in% parm)   || (paste0(object$family$tau.link,"(tau)") %in% parm)     || 4 %in% parm) use.parm[4] <- TRUE
+    if(("mu" %in% parm) || (paste0(object$familylist$link[1],"(mu)") %in% parm) || 1 %in% parm) use.parm[1] <- TRUE
+    if(np > 1L) {
+      if(("sigma" %in% parm) || (paste0(object$familylist$link[2],"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
+      if(np > 2L) {
+        if(("nu" %in% parm) || (paste0(object$familylist$link[3],"(nu)") %in% parm) || 3 %in% parm) use.parm[3] <- TRUE
+        if(np > 3L) if(("tau" %in% parm) || (paste0(object$familylist$link[4],"(tau)") %in% parm) || 4 %in% parm) use.parm[4] <- TRUE
+      }
+    }
   }
   
   confint <- NULL
-  if((np > 0L) && use.parm[1]){
+  if(use.parm[1]) {
     confint1 <- c(coef[1] + qnorm(left) * sqrt(vcov[1,1]), coef[1] + qnorm(right) * sqrt(vcov[1,1]))
     confint <- rbind(confint, confint1)
   } 
-  if((np > 1L) && use.parm[2]){
-    confint2 <- c(coef[2] + qnorm(left) * sqrt(vcov[2,2]), coef[2] + qnorm(right) * sqrt(vcov[2,2]))
-    confint <- rbind(confint, confint2)
+  if(np > 1L) {
+    if(use.parm[2]) {
+      confint2 <- c(coef[2] + qnorm(left) * sqrt(vcov[2,2]), coef[2] + qnorm(right) * sqrt(vcov[2,2]))
+      confint <- rbind(confint, confint2)
+    }
+    if(np > 2L) {
+      if(use.parm[3]) {
+        confint3 <- c(coef[3] + qnorm(left) * sqrt(vcov[3,3]), coef[3] + qnorm(right) * sqrt(vcov[3,3]))
+        confint <- rbind(confint, confint3)
+      }
+      if(np > 3L) {
+        if(use.parm[4]) { 
+          confint4 <- c(coef[4] + qnorm(left) * sqrt(vcov[4,4]), coef[4] + qnorm(right) * sqrt(vcov[4,4]))
+          confint <- rbind(confint, confint4)
+        }
+      }
+    }
   }
-  if((np > 2L) && use.parm[3]){
-    confint3 <- c(coef[3] + qnorm(left) * sqrt(vcov[3,3]), coef[3] + qnorm(right) * sqrt(vcov[3,3]))
-    confint <- rbind(confint, confint3)
-  }
-  if((np > 3L) && use.parm[4]){ 
-    confint4 <- c(coef[4] + qnorm(left) * sqrt(vcov[4,4]), coef[4] + qnorm(right) * sqrt(vcov[4,4]))
-    confint <- rbind(confint, confint4)
-  }
+
   
   confint <- as.matrix(confint)
   colnames(confint) <- c(paste0(left," %"), paste0(right," %"))
@@ -285,8 +308,6 @@ summary.distfit <- function (object, type = "parameter", ...){
   se <- sqrt(diag(vcov))
   TAB <- cbind(Estimate = coef,
                StdErr = se)
-  
-  
   
   sumlist <- list(Call = object$call,
                   Family = object$family,
