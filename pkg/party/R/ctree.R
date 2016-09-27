@@ -342,6 +342,9 @@
                                              X = X, Y = Y, iy = NULL, subset = subset, 
                                              weights = weights, cluster = cluster,
                                              splitonly = TRUE, minbucket = minbucket)
+                    ### <FIXME> it would be better to check if trafo can be 
+                    ### successfully applies to both daugther nodes (converged = TRUE)
+                    ### here </FIXME>
                     if (!is.null(ret)) break()
                 }
                 ret
