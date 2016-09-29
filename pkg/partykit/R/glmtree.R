@@ -35,7 +35,7 @@ glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
   m$maxit <- maxit
   if("..." %in% names(m)) m[["..."]] <- NULL
   if(!fam) m$family <- family
-  m[[1L]] <- as.name("mob")
+  m[[1L]] <- as.call(quote(partykit::mob))
   rval <- eval(m, parent.frame())
   
   ## extend class and keep original call

@@ -46,7 +46,7 @@ lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, .
   m$fit <- lmfit
   m$control <- control
   if("..." %in% names(m)) m[["..."]] <- NULL
-  m[[1L]] <- as.name("mob")
+  m[[1L]] <- as.call(quote(partykit::mob))
   rval <- eval(m, parent.frame())
   
   ## extend class and keep original call
