@@ -128,6 +128,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
     colnames(vc) <- rownames(vc) <- colnames(hess)
     
   } else {
+    hess <- NULL
     vc <- NULL
   }
   
@@ -137,7 +138,7 @@ distfitlist <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, ty
   # (first-order partial derivatives of the (positive) log-likelihood function)
   if(estfun) {
     # estfun for link coefficients eta
-    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0?
+    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
   } else {
     ef <- NULL                    
   }
