@@ -254,7 +254,7 @@ bool Tree::calculateTotalCosts(int method, double alpha, int sumWeights, double 
     if(method == 1){
        this->performance = 2.0*(((double) sumWeights)-this->calculateTotalMC(0)) + alpha*(this->nNodes+1.0)*log(((double)sumWeights));
     }else{
-               double SMSE = max(this->calculateTotalSE(0)/(populationMSE), 0.001);
+               double SMSE = fmax2(this->calculateTotalSE(0)/(populationMSE), 0.001);
                this->performance = (
                   ((double) sumWeights)*log(SMSE)+alpha*4.0*log(((double) sumWeights))*((double)this->nNodes+2.0)
                +  ((double) sumWeights)*7.0  // constant such that formula is alway positive

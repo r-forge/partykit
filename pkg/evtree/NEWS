@@ -1,10 +1,17 @@
+Changes in Version 1.0-1
+
+  o Replaced math.h functions 'max', 'min' and 'round' with  
+	the appropriate Rmath.h functions ('imax2', 'imin2', 'fmax2', 'fmin2' and 'fround').
+	
+  o Added importFrom("stats", "model.weights", "runif", "var") to NAMESPACE file.
+
 Changes in Version 1.0-0
 
   o New release accompanying the paper about evtree in the Journal of
     Statistical Software, see citation("evtree").
 
   o Replaced C level random number generator rand() with R random number
-    handling and the unif_rand() function.
+    handing and the unif_rand() function.
 
 
 Changes in Version 0.1-5
