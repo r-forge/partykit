@@ -2,7 +2,15 @@
 \name{NEWS}
 \title{NEWS file for the partykit package}
 
-\section{Changes in Version 1.1-1 (2016-mm-dd)}{
+\section{Changes in Version 1.1-2 (2016-mm-dd)}{
+  \itemize{
+    \item{\code{node_barplot} gained a \code{text} argument
+          that can be used to draw text labels for the
+	  percentages displayed.}
+  }
+}
+
+\section{Changes in Version 1.1-1 (2016-09-20)}{
   \itemize{
     \item{Proper support of quasi-families in \code{glmtree}
       and hence \code{palmtree}.}
@@ -11,9 +19,6 @@
     \item{minor speed improvements.}
     \item{breaking ties before variable selection was
           suboptimal for very small log-p-values.}
-    \item{\code{node_barplot} gained a \code{text} argument
-          that can be used to draw text labels for the
-	  percentages displayed.}
   }
 }
 
