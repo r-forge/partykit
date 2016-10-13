@@ -11,6 +11,9 @@
     \item{minor speed improvements.}
     \item{breaking ties before variable selection was
           suboptimal for very small log-p-values.}
+    \item{\code{node_barplot} gained a \code{text} argument
+          that can be used to draw text labels for the
+	  percentages displayed.}
   }
 }
 

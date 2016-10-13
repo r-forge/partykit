@@ -431,6 +431,7 @@ node_barplot <- function(obj,
 			 just = c("center", "top"),
 		         id = TRUE,
                          mainlab = NULL,
+			 text = c("none", "horizontal", "vertical"),
 			 gp = gpar())
 {   
     ## extract response
@@ -476,6 +477,11 @@ node_barplot <- function(obj,
     if(is.null(reverse)) reverse <- !beside
     if(is.null(fill)) fill <- gray.colors(length(ylevels))
     if(is.null(ylines)) ylines <- if(beside) c(3, 2) else c(1.5, 2.5)
+
+    ## text labels?
+    if(isTRUE(text)) text <- "horizontal"
+    if(!is.character(text)) text <- "none"
+    text <- match.arg(text, c("none", "horizontal", "vertical"))
 
     ### panel function for barplots in nodes
     rval <- function(node) {
@@ -549,6 +555,13 @@ node_barplot <- function(obj,
                       width = widths[i],
 	              just = c("center", "bottom"), default.units = "native",
 	              gp = gpar(col = col[i], fill = fill[i]))
+            if(text != "none") {
+              grid.text(x = xcenter[i], y = pred[i] + 0.025,
+	        label = paste(format(round(100 * pred[i], 1), nsmall = 1), "%", sep = ""),
+	        just = if(text == "horizontal") c("center", "bottom") else c("left", "center"),
+	        rot = if(text == "horizontal") 0 else 90,
+		default.units = "native")
+            }
 	  }
 	} else {
   	  ycenter <- cumsum(pred) - pred
