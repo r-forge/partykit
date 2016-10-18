@@ -1,17 +1,20 @@
-distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, bd = 1, fixed = NULL, fixed.values = NULL, ...)
+distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL, ...)
 {
   ## match call
   cl <- match.call()
+
   
-  ## list of families which require an additional parameter bd (binomial denominator)
-  # by default bd is set to 1
-  .distfit.bi.list<-c("BI", "Binomial", "BB", "Beta Binomial", "ZIBI", "ZIBB", "ZABI", "ZABB") # binomial denominators
-  # if(any(family$family%in%.distfit.bi.list)) 
-  
-  ## number of distribution parameters (mu, sigma, nu, tau)
+  ## check whether the input is a gamlss.family object (or function) or a list of the required type
   if(is.function(family)) family <- family()
-  np <- sum(family$parameter == TRUE)
+  if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+  # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
+  if(!is.list(family)) stop ("unknown family specification")
+  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+  # linkinvdr only used in the method vcov for type = "parameter"
   
+  if(type.hessian == "numeric") family$hdist <- NULL
+  if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
+
   
   # FIXME:
   # the input argument fixed can be a character string or a list of character strings with the name(s) of the parameter(s) which are fixed
@@ -36,1063 +39,154 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   
   ## number of observations = sum of weights (i.e., case weights)
   ## FIXME ## also need proportionality weights, i.e., weights = sum(weights > 0) ?
-  nobs <- sum(weights)
+  # nobs <- sum(weights)
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
-  # eta ... coefficients of the linear predictor, here: intercept (g(mu)=eta[1], g(sigma)=eta[2], g(nu)=eta[3], g(tau)=eta[4])
+  # eta ... coefficients of the linear predictor, here: intercept (g1(mu)=eta[1], g2(sigma)=eta[2], g3(nu)=eta[3], g4(tau)=eta[4])
   
-  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g(mu)        g ... link function
-  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g(sigma)     g ... link function
-  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g(nu)        g ... link function
-  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g(tau)       g ... link function
-  
-  
-  
-  ## Define all necessary functions depending on the number of parameters
-  
-  # get parameters of a function f, return vector with the indices of the necessary input parameters 
-  getpar <- function(f){
-    arguments <- names(formals(f))
-    
-    ## remove "bd" from the list of parameters in case it is included
-    arg.bd <- FALSE
-    if(any(family$family%in%.distfit.bi.list)){
-      if(arguments[length(arguments)] == "bd"){ 
-        arg.bd <- TRUE
-        arguments <- arguments[1:(length(arguments)-1)]
-      }
-    }
-    
-    
-    ## 2 cases: with or without y as input
-    
-    ## with y
-    # if y is one of the input arguments, the derivative function returns a vector of the length of y
-    
-    if(arguments[1]=="y"){
-      # 4 Parameter
-      if(length(arguments)==5L) par.id <- c(0,1,2,3,4)        # f(y, mu=m, sigma=s, nu=v, tau=t)
-      
-      # 3 Parameter
-      if(length(arguments)==4L){
-        if(arguments[2]=="mu"){
-          if(arguments[3]=="sigma"){
-            if(arguments[4]=="nu"){
-              par.id <- c(0,1,2,3)                            # f(y, mu=m, sigma=s, nu=v)
-            } else {
-              par.id <- c(0,1,2,4)                            # f(y, mu=m, sigma=s, tau=t)
-            }
-          } else {
-            par.id <- c(0,1,3,4)                              # f(y, mu=m, nu=v, tau=t)
-          }
-        } else {
-          par.id <- c(0,2,3,4)                                # f(y, sigma=s, nu=v, tau=t)
-        }
-      }
-      
-      # 2 Parameter
-      if(length(arguments)==3L){
-        if(arguments[2]=="mu"){
-          if(arguments[3]=="sigma") par.id <- c(0,1,2)        # f(y, mu=m, sigma=s)
-          if(arguments[3]=="nu")    par.id <- c(0,1,3)        # f(y, mu=m, nu=v)
-          if(arguments[3]=="tau")   par.id <- c(0,1,4)        # f(y, mu=m, tau=t)
-        }
-        if(arguments[2]=="sigma"){
-          if(arguments[3]=="nu")    par.id <- c(0,2,3)        # f(y, sigma=s, nu=v)
-          if(arguments[3]=="tau")   par.id <- c(0,2,4)        # f(y, sigma=s, tau=t)
-        }
-        if(arguments[2]=="nu")      par.id <- c(0,3,4)        # f(y, nu=v, tau=t)
-      }
-      
-      # 1 Parameter
-      if(length(arguments)==2L){
-        if(arguments[2]=="mu")      par.id <- c(0,1)          # f(y, mu=m)
-        if(arguments[2]=="sigma")   par.id <- c(0,2)          # f(y, sigma=s)
-        if(arguments[2]=="nu")      par.id <- c(0,3)          # f(y, nu=v)
-        if(arguments[2]=="tau")     par.id <- c(0,4)          # f(y, tau=t)
-      }
-      
-      # 0 Parameter
-      if(length(arguments)==1L)     par.id <- c(0)            # f(y)
-    } else {
-      
-      ## without y
-      # in this case the functions return only a single value -> create vector by replicating this value ny times (necessary for the matrix (using sum and *1/ny)) 
-      
-      # 4 Parameter
-      if(length(arguments)==4L) par.id <- c(1,2,3,4)          # f(mu=m, sigma=s, nu=v, tau=t)
-      
-      # 3 Parameter
-      if(length(arguments)==3L){
-        if(arguments[1]=="mu"){
-          if(arguments[2]=="sigma"){
-            if(arguments[3]=="nu"){
-              par.id <- c(1,2,3)                              # f(mu=m, sigma=s, nu=v)
-            } else {
-              par.id <- c(1,2,4)                              # f(mu=m, sigma=s, tau=t)
-            }
-          } else {
-            par.id <- c(1,3,4)                                # f(mu=m, nu=v, tau=t)
-          }
-        } else {
-          par.id <- c(2,3,4)                                  # f(sigma=s, nu=v, tau=t)
-        }
-      }
-      
-      # 2 Parameter
-      if(length(arguments)==2L){
-        if(arguments[1]=="mu"){
-          if(arguments[2]=="sigma") par.id <- c(1,2)          # f(mu=m, sigma=s)
-          if(arguments[2]=="nu")    par.id <- c(1,3)          # f(mu=m, nu=v)
-          if(arguments[2]=="tau")   par.id <- c(1,4)          # f(mu=m, tau=t)
-        }
-        if(arguments[1]=="sigma"){ 
-          if(arguments[2]=="nu")    par.id <- c(2,3)          # f(sigma=s, nu=v)
-          if(arguments[2]=="tau")   par.id <- c(2,4)          # f(sigma=s, tau=t)
-        }
-        if(arguments[1]=="nu")      par.id <- c(3,4)          # f(nu=v, tau=t)
-      }
-      
-      # 1 Parameter
-      if(length(arguments)==1L){
-        if(arguments[1]=="mu")    par.id <- c(1)              # f(mu=m)
-        if(arguments[1]=="sigma") par.id <- c(2)              # f(sigma=s)
-        if(arguments[1]=="nu")    par.id <- c(3)              # f(nu=v)
-        if(arguments[1]=="tau")   par.id <- c(4)              # f(tau=t)
-      }
-      
-      # 0 Parameter
-      if(length(arguments)==0L)  par.id <- NULL       ## fix: possible case? of which class is f when the derivative is a constant?
-    }
-    
-    ## attach index for the binomial denominator parameter bd if it has been removed earlier
-    if(arg.bd) par.id <- c(par.id,5)
-    
-    return(par.id)
-  }
-  
-  
-  
-  ## define inner and outer derivative functions
-  
-  if(np > 0L){
-    
-    # define names
-    par.names <- c("mu")
-    if(family$mu.link == "identity") eta.names <- c("mu") else eta.names <- paste0(family$mu.link, "(mu)")
-    
-    # inner derivative functions (dmdeta, d2mdeta2)
-    dmdeta <- function(eta) return(family$mu.dr(eta[1]))
-    if(family$mu.link=="identity") d2mdeta2 <- function(eta) return(0)
-    if(family$mu.link=="log")      d2mdeta2 <- function(eta) return(exp(eta[1]))
-    if(family$mu.link=="logit")    d2mdeta2 <- function(eta) return(exp(eta[1]) * (exp(eta[1])-1) / ((1+exp(eta[1]))^3)) 
-    
-    # outer derivative functions (dldm, d2ldm2)
-    par.id.dldm <- getpar(family$dldm)
-    if(par.id.dldm[1] == 0L) {
-      if(length(par.id.dldm) == 1L){
-        dldm <- function(par) return(family$dldm(y))
-      } else {
-        dldm <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldm){
-            for (i in 2:(length(par.id.dldm)-1)) input[[i]] <- rep.int(par[par.id.dldm[i]], ny)
-            input[[length(par.id.dldm)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldm)) input[[i]] <- rep.int(par[par.id.dldm[i]], ny)
-          }
-          return(do.call(family$dldm, input))
-        }
-      }
-    } else {
-      dldm <- function(par) {
-        input <- list()
-        if(5%in%par.id.dldm){
-          for (i in 1:(length(par.id.dldm)-1)) input[[i]] <- par[par.id.dldm[i]]
-          input[[length(par.id.dldm)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldm)) input[[i]] <- par[par.id.dldm[i]]
-        }
-        return(rep.int(do.call(family$dldm, input), ny))
-      }
-    }
-    
-    par.id.d2ldm2 <- getpar(family$d2ldm2)
-    if(par.id.d2ldm2[1] == 0L){
-      if(length(par.id.d2ldm2) == 1L){
-        d2ldm2 <- function(par) return(family$d2ldm2(y))
-      } else {
-        d2ldm2 <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldm2){
-            for (i in 2:(length(par.id.d2ldm2)-1)) input[[i]] <- rep.int(par[par.id.d2ldm2[i]], ny)
-            input[[length(par.id.d2ldm2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldm2)) input[[i]] <- rep.int(par[par.id.d2ldm2[i]], ny)
-          }
-          return(do.call(family$d2ldm2, input))
-        }
-      }
-    } else {
-      d2ldm2 <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldm2){
-          for (i in 1:(length(par.id.d2ldm2)-1)) input[[i]] <- par[par.id.d2ldm2[i]]
-          input[[length(par.id.d2ldm2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldm2)) input[[i]] <- par[par.id.d2ldm2[i]]
-        }
-        return(rep.int(do.call(family$d2ldm2, input), ny))
-      }
-    }
-  }
-  
-  
-  if(np > 1L){
-    
-    # define names
-    par.names <- c(par.names,"sigma")
-    if(family$sigma.link == "identity") eta.names <- c(eta.names,"sigma") else eta.names <- c(eta.names, paste0(family$sigma.link, "(sigma)"))
-    
-    # inner derivative functions (dddeta, d2ddeta2)     
-    dddeta <- function(eta) return(family$sigma.dr(eta[2]))
-    if(family$sigma.link=="identity") d2ddeta2 <- function(eta) return(0)
-    if(family$sigma.link=="log")      d2ddeta2 <- function(eta) return(exp(eta[2]))
-    if(family$sigma.link=="logit")    d2ddeta2 <- function(eta) return(exp(eta[2]) * (exp(eta[2])-1) / ((1+exp(eta[2]))^3)) 
-    
-    # outer derivative functions (dldd, d2ldd2, d2ldmdd)
-    par.id.dldd <- getpar(family$dldd)
-    if(par.id.dldd[1] == 0L){
-      if(length(par.id.dldd) == 1L){
-        dldd <- function(par) return(family$dldd(y))
-      } else {
-        dldd <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldd){
-            for (i in 2:(length(par.id.dldd)-1)) input[[i]] <- rep.int(par[par.id.dldd[i]], ny)
-            input[[length(par.id.dldd)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldd)) input[[i]] <- rep.int(par[par.id.dldd[i]], ny)
-          }
-          return(do.call(family$dldd, input))
-        }
-      }
-    } else {
-      dldd <- function(par) {
-        input <- list()
-        if(5%in%par.id.dldd){
-          for (i in 1:(length(par.id.dldd)-1)) input[[i]] <- par[par.id.dldd[i]]
-          input[[length(par.id.dldd)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldd)) input[[i]] <- par[par.id.dldd[i]]
-        }
-        return(rep.int(do.call(family$dldd, input), ny))
-      }
-    }
-    
-    par.id.d2ldd2 <- getpar(family$d2ldd2)
-    if(par.id.d2ldd2[1] == 0L){
-      if(length(par.id.d2ldd2) == 1L){
-        d2ldd2 <- function(par) return(family$d2ldd2(y))
-      } else {
-        d2ldd2 <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldd2){
-            for (i in 2:(length(par.id.d2ldd2)-1)) input[[i]] <- rep.int(par[par.id.d2ldd2[i]], ny)
-            input[[length(par.id.d2ldd2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldd2)) input[[i]] <- rep.int(par[par.id.d2ldd2[i]], ny)
-          }
-          return(do.call(family$d2ldd2, input))
-        }
-      }
-    } else {
-      d2ldd2 <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldd2){
-          for (i in 1:(length(par.id.d2ldd2)-1)) input[[i]] <- par[par.id.d2ldd2[i]]
-          input[[length(par.id.d2ldd2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldd2)) input[[i]] <- par[par.id.d2ldd2[i]]
-        }
-        return(rep.int(do.call(family$d2ldd2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdd <- getpar(family$d2ldmdd)
-    if(par.id.d2ldmdd[1] == 0L){
-      if(length(par.id.d2ldmdd) == 1L){
-        d2ldmdd <- function(par) return(family$d2ldmdd(y))
-      } else {
-        d2ldmdd <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldmdd){
-            for (i in 2:(length(par.id.d2ldmdd)-1)) input[[i]] <- rep.int(par[par.id.d2ldmdd[i]], ny)
-            input[[length(par.id.d2ldmdd)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldmdd)) input[[i]] <- rep.int(par[par.id.d2ldmdd[i]], ny)
-          }
-          return(do.call(family$d2ldmdd, input))
-        }
-      }
-    } else {
-      d2ldmdd <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldmdd){
-          for (i in 1:(length(par.id.d2ldmdd)-1)) input[[i]] <- par[par.id.d2ldmdd[i]]
-          input[[length(par.id.d2ldmdd)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldmdd)) input[[i]] <- par[par.id.d2ldmdd[i]]
-        }
-        return(rep.int(do.call(family$d2ldmdd, input), ny))
-      }
-    }
-  }
-  
-  
-  if(np > 2L){
-    
-    # define names
-    par.names <- c(par.names,"nu")
-    if(family$nu.link == "identity") eta.names <- c(eta.names,"nu") else eta.names <- c(eta.names, paste0(family$nu.link, "(nu)"))
-    
-    # inner derivative functions (dvdeta, d2vdeta2)
-    dvdeta <- function(eta) return(family$nu.dr(eta[3]))
-    if(family$nu.link=="identity") d2vdeta2 <- function(eta) return(0)
-    if(family$nu.link=="log")      d2vdeta2 <- function(eta) return(exp(eta[3]))
-    if(family$nu.link=="logit")    d2vdeta2 <- function(eta) return(exp(eta[3]) * (exp(eta[3])-1) / ((1+exp(eta[3]))^3)) 
-    
-    # outer derivatives (dldv, d2ldv2, d2ldmdv, d2ldddv)
-    par.id.dldv <- getpar(family$dldv)
-    if(par.id.dldv[1] == 0L){
-      if(length(par.id.dldv) == 1L){
-        dldv <- function(par) return(family$dldv(y))
-      } else {
-        dldv <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.dldv){
-            for (i in 2:(length(par.id.dldv)-1)) input[[i]] <- rep.int(par[par.id.dldv[i]], ny)
-            input[[length(par.id.dldv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.dldv)) input[[i]] <- rep.int(par[par.id.dldv[i]], ny)
-          }
-          return(do.call(family$dldv, input))
-        }
-      }
-    } else {
-      dldv <- function(par) {
-        input <- list()
-        if(5%in%par.id.dldv){
-          for (i in 1:(length(par.id.dldv)-1)) input[[i]] <- par[par.id.dldv[i]]
-          input[[length(par.id.dldv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.dldv)) input[[i]] <- par[par.id.dldv[i]]
-        }
-        return(rep.int(do.call(family$dldv, input), ny))
-      }
-    }
-    
-    par.id.d2ldv2 <- getpar(family$d2ldv2)
-    if(par.id.d2ldv2[1] == 0L){
-      if(length(par.id.d2ldv2) == 1L){
-        d2ldv2 <- function(par) return(family$d2ldv2(y))
-      } else {
-        d2ldv2 <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldv2){
-            for (i in 2:(length(par.id.d2ldv2)-1)) input[[i]] <- rep.int(par[par.id.d2ldv2[i]], ny)
-            input[[length(par.id.d2ldv2)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldv2)) input[[i]] <- rep.int(par[par.id.d2ldv2[i]], ny)
-          }
-          return(do.call(family$d2ldv2, input))
-        }
-      }
-    } else {
-      d2ldv2 <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldv2){
-          for (i in 1:(length(par.id.d2ldv2)-1)) input[[i]] <- par[par.id.d2ldv2[i]]
-          input[[length(par.id.d2ldv2)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldv2)) input[[i]] <- par[par.id.d2ldv2[i]]
-        }
-        return(rep.int(do.call(family$d2ldv2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdv <- getpar(family$d2ldmdv)
-    if(par.id.d2ldmdv[1] == 0L) { 
-      if(length(par.id.d2ldmdv) == 1L){
-        d2ldmdv <- function(par) return(family$d2ldmdv(y))
-      } else {
-        d2ldmdv <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldmdv){
-            for (i in 2:(length(par.id.d2ldmdv)-1)) input[[i]] <- rep.int(par[par.id.d2ldmdv[i]], ny)
-            input[[length(par.id.d2ldmdv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldmdv)) input[[i]] <- rep.int(par[par.id.d2ldmdv[i]], ny)
-          }
-          return(do.call(family$d2ldmdv, input))
-        }
-      }
-    } else {
-      d2ldmdv <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldmdv){
-          for (i in 1:(length(par.id.d2ldmdv)-1)) input[[i]] <- par[par.id.d2ldmdv[i]]
-          input[[length(par.id.d2ldmdv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldmdv)) input[[i]] <- par[par.id.d2ldmdv[i]]
-        }
-        return(rep.int(do.call(family$d2ldmdv, input), ny))
-      }
-    }
-    
-    par.id.d2ldddv <- getpar(family$d2ldddv)
-    if(par.id.d2ldddv[1] == 0L) { 
-      if(length(par.id.d2ldddv) == 1L){
-        d2ldddv <- function(par) return(family$d2ldddv(y))
-      } else {
-        d2ldddv <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          if(5%in%par.id.d2ldddv){
-            for (i in 2:(length(par.id.d2ldddv)-1)) input[[i]] <- rep.int(par[par.id.d2ldddv[i]], ny)
-            input[[length(par.id.d2ldddv)]] <- rep.int(bd, ny)
-          } else {
-            for (i in 2:length(par.id.d2ldddv)) input[[i]] <- rep.int(par[par.id.d2ldddv[i]], ny)
-          }
-          return(do.call(family$d2ldddv, input))
-        }
-      }
-    } else {
-      d2ldddv <- function(par) {
-        input <- list()
-        if(5%in%par.id.d2ldddv){
-          for (i in 1:(length(par.id.d2ldddv)-1)) input[[i]] <- par[par.id.d2ldddv[i]]
-          input[[length(par.id.d2ldddv)]] <- bd
-        } else {
-          for (i in 1:length(par.id.d2ldddv)) input[[i]] <- par[par.id.d2ldddv[i]]
-        }
-        return(rep.int(do.call(family$d2ldddv, input), ny))
-      }
-    }
-  }
-  
-  
-  if(np > 3L){
-    
-    # define names
-    par.names <- c(par.names,"tau")
-    if(family$tau.link == "identity") eta.names <- c(eta.names,"tau") else eta.names <- c(eta.names, paste0(family$tau.link, "(tau)"))
-    
-    # note: in this case/section no adaption for families of the list .distfit.bi.list since none of them includes the 4th parameter tau
-    
-    # inner derivatives (dtdeta, d2tdeta2)    
-    dtdeta <- function(eta) return(family$tau.dr(eta[4]))
-    if(family$tau.link=="identity")  d2tdeta2 <- function(eta) return(0)
-    if(family$tau.link=="log")       d2tdeta2 <- function(eta) return(exp(eta[4]))
-    if(family$tau.link=="logit")     d2tdeta2 <- function(eta) return(exp(eta[4]) * (exp(eta[4])-1) / ((1+exp(eta[4]))^3)) 
-    
-    # outer derivatives (dldt, d2ldt2, d2ldmdt, d2ldddt, d2ldvdt)
-    par.id.dldt <- getpar(family$dldt)
-    if(par.id.dldt[1] == 0L){
-      if(length(par.id.dldt) == 1L){
-        dldt <- function(par) return(family$dldt(y))
-      } else {
-        dldt <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.dldt)) input[[i]] <- rep.int(par[par.id.dldt[i]], ny)
-          return(do.call(family$dldt, input))
-        }
-      }
-    } else {
-      dldt <- function(par) {
-        input <- list()
-        for (i in 1:length(par.id.dldt)) input[[i]] <- par[par.id.dldt[i]]
-        return(rep.int(do.call(family$dldt, input), ny))
-      }
-    }
-    
-    par.id.d2ldt2 <- getpar(family$d2ldt2)
-    if(par.id.d2ldt2[1] == 0L){
-      if(length(par.id.d2ldt2) == 1L){
-        d2ldt2 <- function(par) return(family$d2ldt2(y))
-      } else {
-        d2ldt2 <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldt2)) input[[i]] <- rep.int(par[par.id.d2ldt2[i]], ny)
-          return(do.call(family$d2ldt2, input))
-        }
-      }
-    } else {
-      d2ldt2 <- function(par) {
-        input <- list()
-        for (i in 1:length(par.id.d2ldt2)) input[[i]] <- par[par.id.d2ldt2[i]]
-        return(rep.int(do.call(family$d2ldt2, input), ny))
-      }
-    }
-    
-    par.id.d2ldmdt <- getpar(family$d2ldmdt)
-    if(par.id.d2ldmdt[1] == 0L) { 
-      if(length(par.id.d2ldmdt) == 1L){
-        d2ldmdt <- function(par) return(family$d2ldmdt(y))
-      } else {
-        d2ldmdt <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldmdt)) input[[i]] <- rep.int(par[par.id.d2ldmdt[i]], ny)
-          return(do.call(family$d2ldmdt, input))
-        }
-      }
-    } else {
-      d2ldmdt <- function(par) {
-        input <- list()
-        for (i in 1:length(par.id.d2ldmdt)) input[[i]] <- par[par.id.d2ldmdt[i]]
-        return(rep.int(do.call(family$d2ldmdt, input), ny))
-      }
-    } 
-    
-    par.id.d2ldddt <- getpar(family$d2ldddt)
-    if(par.id.d2ldddt[1] == 0L) { 
-      if(length(par.id.d2ldddt) == 1L){
-        d2ldddt <- function(par) return(family$d2ldddt(y))
-      } else {
-        d2ldddt <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldddt)) input[[i]] <- rep.int(par[par.id.d2ldddt[i]], ny)
-          return(do.call(family$d2ldddt, input))
-        }
-      }
-    } else {
-      d2ldddt <- function(par) {
-        input <- list()
-        for (i in 1:length(par.id.d2ldddt)) input[[i]] <- par[par.id.d2ldddt[i]]
-        return(rep.int(do.call(family$d2ldddt, input), ny))
-      }
-    }
-    
-    par.id.d2ldvdt <- getpar(family$d2ldvdt)
-    if(par.id.d2ldvdt[1] == 0L) { 
-      if(length(par.id.d2ldvdt) == 1L){
-        d2ldvdt <- function(par) return(family$d2ldvdt(y))
-      } else {
-        d2ldvdt <- function(par) {
-          input <- list()
-          input[[1]] <- y
-          for (i in 2:length(par.id.d2ldvdt)) input[[i]] <- rep.int(par[par.id.d2ldvdt[i]], ny)
-          return(do.call(family$d2ldvdt, input))
-        }
-      }
-    } else {
-      d2ldvdt <- function(par) {
-        input <- list()
-        for (i in 1:length(par.id.d2ldvdt)) input[[i]] <- par[par.id.d2ldvdt[i]]
-        return(rep.int(do.call(family$d2ldvdt, input), ny))
-      }
-    }
-  }
-  
-  
-  
-  ## define complete derivative functions dpardeta, d2pardeta2, dldpar, d2ldpar2 according to the number of parameters
-  
-  if(np == 1L){
-    
-    # define function for the calculation of initial values
-    ## FIXME ## use weights?
-    initialize <- function(y) {
-      mu <- NULL
-      eval(family$mu.initial)
-      family$mu.linkfun(mean(mu))
-    }
-
-      
-    # define function to get distribution parameters
-    distpar <- function(eta){
-      par <- c(family$mu.linkinv(eta[1]))
-      return(par)
-    }
-    
-    # define functions that return inner derivatives as vector / matrix:
-    dpardeta <- function(eta){
-      return(c(dmdeta(eta)))
-    }
-    
-    d2pardeta2 <- function(eta){
-      return(c(d2mdeta2(eta)))
-    }
-    
-    
-    # define functions that return outer derivatives as matrix / list of matrices:
-    dldpar <- function(par){
-      dmatrix <- cbind(dldm(par))
-      return(dmatrix)
-    }
-    
-    d2ldpar2 <- function(par){
-      
-      d2matrix <- rbind(cbind(d2ldm2(par)))
-      
-      # d2matrix is of size (1*ny x 1) 
-      # transform to a list of matrices (length of the list equals the number of observations ny)
-      # for each observation a matrix of size (1x1) is stored in d2list
-      
-      d2list <- list()
-      length(d2list) <- ny
-      for(i in 1:ny){
-        d2list[[i]] <- d2matrix[c(i),]
-      }
-      
-      return(d2list)
-    }
-  }
-  
-  
-  if(np == 2L){
-    
-    # define function for the calculation of initial values
-    initialize <- function(y) {
-      mu <- sigma <- NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
-    }
-    
-    # define function to get distribution parameters
-    distpar <- function(eta){
-      par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]))
-      return(par)
-    }
-    
-    # define functions that return inner derivatives as vector / matrix:
-    dpardeta <- function(eta){
-      return(c(dmdeta(eta), dddeta(eta)))
-    }
-    
-    d2pardeta2 <- function(eta){
-      return(c(d2mdeta2(eta), d2ddeta2(eta)))
-    }
-    
-    
-    # define functions that return outer derivatives as matrix / list of matrices:
-    dldpar <- function(par){
-      dmatrix <- cbind(dldm(par), dldd(par))
-      return(dmatrix)
-    }
-    
-    d2ldpar2 <- function(par){
-      
-      d2matrix <- rbind(cbind(d2ldm2(par), d2ldmdd(par)),
-                        cbind(d2ldmdd(par), d2ldd2(par)))
-      
-      # d2matrix is of size (2*ny x 2) 
-      # transform to a list of matrices (length of the list equals the number of observations ny)
-      # for each observation a matrix of size (2x2) is stored in d2list
-      
-      d2list <- list()
-      length(d2list) <- ny
-      for(i in 1:ny){
-        d2list[[i]] <- d2matrix[c(i, ny+i),]
-        }
-
-      return(d2list)
-    }
-  }
-  
-  
-  if(np == 3L){
-    
-    # define function for the calculation of initial values
-    initialize <- function(y) {
-      mu <- sigma <- nu <-  NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      eval(family$nu.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
-    }
-    
-    # define function to get distribution parameters
-    distpar <- function(eta){
-      par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]))
-      return(par)
-    }
-    
-    # define functions that return inner derivatives as vector / matrix:
-    dpardeta <- function(eta){
-      return(c(dmdeta(eta), dddeta(eta), dvdeta(eta)))
-    }
-    
-    d2pardeta2 <- function(eta){
-      return(c(d2mdeta2(eta), d2ddeta2(eta), d2vdeta2(eta)))
-    }
-    
-    
-    # define functions that return outer derivatives as matrix / list:
-    dldpar <- function(par){
-      dmatrix <- cbind(dldm(par), dldd(par), dldv(par))
-      return(dmatrix)
-    }
-    
-    d2ldpar2 <- function(par){
-      
-      d2matrix <- rbind(cbind(d2ldm2(par), d2ldmdd(par), d2ldmdv(par)),
-                        cbind(d2ldmdd(par), d2ldd2(par), d2ldddv(par)),
-                        cbind(d2ldmdv(par), d2ldddv(par), d2ldv2(par)))
-      
-      # d2matrix is of size (3*ny x 3) 
-      # transform to a list of matrices (length of the list equals the number of observations ny)
-      # for each observation a matrix of size (3x3) is stored in d2list
-      
-      d2list <- list()
-      length(d2list) <- ny
-      for(i in 1:ny){
-        d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
-      }
-
-      return(d2list)
-    }
-  }
-  
-  
-  if(np == 4L){
-    
-    # define function for the calculation of initial values
-    initialize <- function(y) {
-      mu <- sigma <- nu <- tau <- NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      eval(family$nu.initial)
-      eval(family$tau.initial)
-      c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
-    }
-
-    # define function to get distribution parameters
-    distpar <- function(eta){
-      par <- c(family$mu.linkinv(eta[1]), family$sigma.linkinv(eta[2]), family$nu.linkinv(eta[3]), family$tau.linkinv(eta[4]))
-      return(par)
-    }
-    
-    # define functions that return inner derivatives as vector / matrix:
-    dpardeta <- function(eta){
-      return(c(dmdeta(eta), dddeta(eta), dvdeta(eta), dtdeta(eta)))
-    }
-    
-    d2pardeta2 <- function(eta){
-      return(c(d2mdeta2(eta), d2ddeta2(eta), d2vdeta2(eta), d2tdeta2(eta)))
-    }
-    
-    
-    # define functions that return outer derivatives as matrix / list :
-    dldpar <- function(par){
-      dmatrix <- cbind(dldm(par), dldd(par), dldv(par), dldt(par))
-      return(dmatrix)
-    }
-    
-    d2ldpar2 <- function(par){
-      
-      d2matrix <- rbind(cbind(d2ldm2(par), d2ldmdd(par), d2ldmdv(par), d2ldmdt(par)),
-                        cbind(d2ldmdd(par), d2ldd2(par), d2ldddv(par), d2ldddt(par)),
-                        cbind(d2ldmdv(par), d2ldddv(par), d2ldv2(par), d2ldvdt(par)),
-                        cbind(d2ldmdt(par), d2ldddt(par), d2ldvdt(par), d2ldt2(par)))
-      
-      # d2matrix is of size (4*ny x 4) 
-      # transform to a list of matrices (length of the list equals the number of observations ny)
-      # for each observation a matrix of size (4x4) is stored in d2list
-      
-      d2list <- list()
-      length(d2list) <- ny
-      for(i in 1:ny){
-        d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
-      }
-      
-      return(d2list)
-    }
-  }
-    
+  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g1(mu)        g1 ... link function
+  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g2(sigma)     g2 ... link function
+  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g3(nu)        g3 ... link function
+  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g4(tau)       g4 ... link function
   
 
-  # starting values for the optimization: parameters of the linear predictor (here: no covariables -> linear predictor = const = intercept) 
-  # -> link functions evaluated at the starting values of the distribution parameters
-  
-  # if start as input: initial value for distribution parameter -> transform adequately to starting values for the parameters of the linear predictor (here: intercepts)
-  transpar <- function(par){
-    eta <- NA
-    if(np > 0) eta[1] <- family$mu.linkfun(par[1])
-    if(np > 1) eta[2] <- family$sigma.linkfun(par[2])
-    if(np > 2) eta[3] <- family$nu.linkfun(par[3])
-    if(np > 3) eta[4] <- family$tau.linkfun(par[4])
-    return(eta)
-  }
-
-  
   
   ## set up negative log-likelihood
   nll <- function(eta) {
-    # define input list
-    par <- distpar(eta)
-    input <- list()
-    input[[1]] <- y
-    for(i in 2:(length(par)+1)) input[[i]] <- par[i-1]                           # <- rep.int(par[i-1], ny)   (FIX?)
-    if(any(family$family%in%.distfit.bi.list)) input[[length(par)+2]] <- bd      # additional parameter bd (binomial denominator for families in .distfit.bi.list)
-    # G.dev.incr ... global deviance function = -2*logLik
-    nloglik <- do.call(family$G.dev.incr, input)
-    nloglik <- sum(weights * nloglik/2)
+    
+    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
+    if(inherits(rval, "try-error")) return(Inf)
+    if(any(is.na(rval))) return(Inf)
+    nloglik <- - sum(weights * rval)
+    
+    #rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE), silent = TRUE))
+    #if(inherits(rval, "try-error")) return(Inf)
+    #if(is.na(rval)) return(Inf)
+    #nloglik <- - rval
+
     return(nloglik)
   }
-    
   
-  ## set up gradient/scores 
-  grad <- function(eta, sum = TRUE) {
-    par <- distpar(eta)                                  # get distribution parameters
-    gr.out <- dldpar(par)                                # outer derivatives
-    gr <- -weights * t(t(gr.out) * dpardeta(eta))        # multiplied with the inner derivatives (componentwise) and (-1) because the derivation of the negative ll is needed for optim
-    # gr <- as.matrix(gr)                                # for 1 parameter
-    if(sum) gr <- colSums(gr)     # *1/nobs ? scale, doesn't influence optimization
+  
+  ## set up gradient
+  grad <- function(eta) {
+    gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
     return(gr)
   }
   
   
-
-  ## set up analytical hessian 
-
-  hess <- function(eta){
-    
-    ## get distribution parameter
-    par <- distpar(eta)
-    
-    ## calculate derivative vectors / matrices / lists
-    d2ldpar2.list <- d2ldpar2(par)
-    dldpar.mat <- dldpar(par)
-    
-    dpardeta.vec <- dpardeta(eta)
-    d2pardeta2.vec <- d2pardeta2(eta)
-    
-    ## calculation is split up in 2 parts: 
-    # 2nd outer derivatives times first inner derivatives and a diagonal matrix with the first outer and the second inner derivatives
-    
-    hess <- list()
-    length(hess) <- length(d2ldpar2.list)
-    for(i in 1:ny){
-      hess[[i]] <- weights[i] * (t(d2ldpar2.list[[i]] * dpardeta.vec) * dpardeta.vec + diag(np) * as.vector(dldpar.mat[i,]) * d2pardeta2.vec)
-    }
-    
-
-    ## calculate the sum over all matrices in the list (each for one observation)  
-    
-    sumhess <- Reduce('+', hess)
-    
-    return(sumhess)
-    # the entries of sumhes are the sums of the entries of the hessian matrix evaluated at the observations stored in y and the input parameters
-
-  }
-  
-
-
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
   if(is.null(start)){
-    starteta <- initialize(y = rep(y, round(weights)))
-    startpar <- distpar(starteta)
+    starteta <- family$startfun(y, weights = weights)
+    # starteta <- family$startfun(y = rep(y, round(weights)))
   } else {
-    startpar <- start
-    starteta <- transpar(startpar)
+    starteta <- family$linkfun(start)
   }
-  names(starteta) <- eta.names
-  names(startpar) <- par.names
-  
-  
-  ## optimize log-likelihood
-  opt <- optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
-               hessian = (vcov && (type.hessian == "numeric")), control = list(...))
 
-  ## extract parameters
-  eta <- opt$par
-  par <- distpar(eta)
-  names(eta) <- eta.names
-  names(par) <- par.names
   
-  ## loglikelihood value
-  loglik = -opt$value
-  
-  ## hess matrix for distribution parameter  (FIX ME: until now only analytic, even if type.hessian = "numeric")
-  hess.par.list <- d2ldpar2(par)
-  for(i in 1:ny){
-    hess.par.list[[i]] <- weights[i] * hess.par.list[[i]]
-  }
-  hess.par <- Reduce('+', hess.par.list)
-  hess.par <- as.matrix(hess.par)
-  colnames(hess.par) <- rownames(hess.par) <- par.names
-  
-  # hess matrix for link coefficients eta
-  if(type.hessian == "analytic") hess.eta <- hess(eta) else hess.eta <- -opt$hessian
-  hess.eta <- as.matrix(hess.eta)
-  colnames(hess.eta) <- rownames(hess.eta) <- eta.names
-
-
-  ## variance-covariance matrix estimate 
-  if(vcov){
+  if(!family$mle) {
+    ## optimize negative log-likelihood
+    opt <- optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
+                 hessian = (type.hessian == "numeric"), control = list(...))
     
-    # vcov for distribution parameter
-    vc.par <- solve(-hess.par)
-    vc.par <- as.matrix(vc.par)
-    colnames(vc.par) <- rownames(vc.par) <- par.names
+    ## extract parameters
+    eta <- opt$par
+    names(eta) <- names(starteta)
+    par <- family$linkinv(eta)
+    
+    ## loglikelihood value
+    loglik = -opt$value
+    
+    
+  } else {
+    eta <- family$startfun(y, weights)
+    par <- family$linkinv(eta)
+    loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
+    opt <- NULL
+  }
+
+  
+  ## hess matrix (second-order partial derivatives of the (positive) log-likelihood function) and Hessian estimate for the variance-covariance matrix
+  if(vcov) {
+    if(is.null(family$hdist)) {
+      hess <- if(family$mle) {
+        -optim(par = eta, fn = nll, gr = grad, method = "BFGS", hessian = TRUE, control = list(...))$hessian
+      } else {
+        -opt$hessian
+      }
+    } else {
+      hess <- family$hdist(y, eta, weights = weights)
+    }
+    hess <- as.matrix(hess)
+    colnames(hess) <- rownames(hess) <- names(eta)
+    
     
     #vcov for link coefficients eta
-    vc.eta <- solve(-hess.eta)
-    vc.eta <- as.matrix(vc.eta)
-    colnames(vc.eta) <- rownames(vc.eta) <- eta.names
+    vc <- solve(-hess)
+    vc <- as.matrix(vc)
+    colnames(vc) <- rownames(vc) <- colnames(hess)
     
   } else {
-    vc.par <- NULL
-    vc.eta <- NULL
+    hess <- NULL
+    vc <- NULL
   }
-    
+  
   
   ## estfun
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
+  # (first-order partial derivatives of the (positive) log-likelihood function)
   if(estfun) {
-    
-    # estfun for distribution parameter
-    ef.par <- weights * dldpar(par)  
-    ef.par <- as.matrix(ef.par) 
-    colnames(ef.par) <- par.names
-    
     # estfun for link coefficients eta
-    ef.eta <- -grad(eta, sum = FALSE)
-    ef.eta <- as.matrix(ef.eta)                                   # FIX: in case ef.eta is a vector (for np=1)
-    colnames(ef.eta) <- eta.names
+    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
+  } else {
+    ef <- NULL                    
+  }
   
-  } else {
-    ef.par <- NULL
-    ef.eta <- NULL                    
-  }
-
+  
+  ##### FIX ME: additional functions with set parameters
+  
   ## density function
-  #ddist <- get(paste0("d",family$family[1]))
-  if(any(family$family%in%.distfit.bi.list)){
-    ddist <- function(x, log = FALSE){
-      if(np == 1L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], bd = bd, log = FALSE)
-      if(np == 2L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], bd = bd, log = FALSE)
-      if(np == 3L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log = FALSE)
-      if(np == 4L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log = FALSE)
-      fy
-    }
-  } else {
-    ddist <- function(x, log = FALSE){
-      if(np == 1L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], log = FALSE)
-      if(np == 2L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], log = FALSE)
-      if(np == 3L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], log = FALSE)
-      if(np == 4L) fy <- get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log = FALSE)
-      fy
-    }
-  }
+  ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
+  
+  ## density function
+  # ddist <- family$ddist
   
   ## cumulative distribution function
-  #pdist <- get(paste0("p",family$family[1]))
-  if(any(family$family%in%.distfit.bi.list)){
-    pdist <- function(q, log.p = FALSE){
-      if(np == 1L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], bd = bd, log.p = FALSE)
-      if(np == 2L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], bd = bd, log.p = FALSE)
-      if(np == 3L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = FALSE)
-      if(np == 4L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = FALSE)
-      cdf
-    }
-  } else {
-    pdist <- function(q, log.p = FALSE){
-      if(np == 1L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], log.p = FALSE)
-      if(np == 2L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], log.p = FALSE)
-      if(np == 3L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], log.p = FALSE)
-      if(np == 4L) cdf <- get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = FALSE)
-      cdf
-    }
-  }
+  # pdist <- family$pdist
   
   ## quantile function
-  #qdist <- get(paste0("q",family$family[1]))
-  if(any(family$family%in%.distfit.bi.list)){
-    qdist <- function(p, log.p = FALSE){
-      if(np == 1L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], bd = bd, log.p = FALSE)
-      if(np == 2L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], bd = bd, log.p = FALSE)
-      if(np == 3L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = FALSE)
-      if(np == 4L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = FALSE)
-      q
-    }
-  } else {
-    qdist <- function(p, log.p = FALSE){
-      if(np == 1L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], log.p = FALSE)
-      if(np == 2L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], log.p = FALSE)
-      if(np == 3L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], log.p = FALSE)
-      if(np == 4L) q <- get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = FALSE)
-      q
-    }
-  }
+  # qdist <- family$qdist
   
   ## random function
-  #rdist <- get(paste0("r",family$family[1]))
-  if(any(family$family%in%.distfit.bi.list)){
-    rdist <- function(n){
-      if(np == 1L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], bd = bd)
-      if(np == 2L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], bd = bd)
-      if(np == 3L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], bd = bd)
-      if(np == 4L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd)
-      r
-    }
-  } else {
-    rdist <- function(n){
-      if(np == 1L) r <- get(paste0("r",family$family[1]))(n, mu = par[1])
-      if(np == 2L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2])
-      if(np == 3L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3])
-      if(np == 4L) r <- get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4])
-      r
-    }
-  }
+  # rdist <- family$rdist
+  
+
   
   
   ## return value 
-  # FIX: return bd? df = np?
   rval <- list(
-    npar = np,
-    df = np,
+    npar = length(par),
     y = y,
+    ny = ny,
     weights = weights,
-    family = family,
-    startpar = startpar,
+    family = family$family.name,
     starteta = starteta,
     opt = opt,
     par = par,
     eta = eta,
-    hess = hess.par,
-    hess.eta = hess.eta,
-    vcov = vc.par,
-    vcov.eta = vc.eta,
+    hess = hess,
+    vcov = vc,
     loglik = loglik,
     call = cl,
-    ny = ny,        
-    nobs = nobs,
-    estfun = ef.par,
-    estfun.eta = ef.eta,
-    ddist = ddist,
-    pdist = pdist,
-    qdist = qdist,
-    rdist = rdist
+    estfun = ef,
+    familylist = family,
+    ddist = ddist
+    #pdist = pdist,
+    #qdist = qdist,
+    #rdist = rdist
   )
   
-  if(any(family$family%in%.distfit.bi.list)) rval <- c(rval, bd = bd)
-
   class(rval) <- "distfit"
   return(rval)
 }
@@ -1104,86 +198,93 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
 
 
 
-
 ## print, summary?, predict?
 nobs.distfit <- function(object, ...) {
-  object$nobs
+  object$ny
 }
 
-coef.distfit <- function(object, type = "parameter" , ...) {
+coef.distfit <- function(object, type = "link" , ...) {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
   ## FIXME: else, warning
 }
 
-vcov.distfit <- function(object, type = "parameter", ...) {
-  if(type == "link") return(object$vcov.eta)
-  if(type == "parameter") return(object$vcov)
+vcov.distfit <- function(object, type = "link", ...) {
+  if(type == "link") return(object$vcov)
+  if(type == "parameter"){
     ## delta method
-    #delta.m <- diag(object$npar)
-    #delta.m[1,1] <- object$family$mu.dr(object$eta[1])
-    #if(object$npar > 1L) delta.m[2,2] <- object$family$sigma.dr(object$eta[2])
-    #if(object$npar > 2L) delta.m[3,3] <- object$family$nu.dr(object$eta[3])
-    #if(object$npar > 3L) delta.m[4,4] <- object$family$tau.dr(object$eta[4])
-    #colnames(delta.m) <- rownames(delta.m) <- names(object$par)
-    #return(delta.m %*% object$vcov %*% delta.m)
+    delta.m <- diag(object$familylist$linkinvdr(object$eta))
+    colnames(delta.m) <- rownames(delta.m) <- names(object$par)
+    return(delta.m %*% object$vcov %*% delta.m)
+  }
 }
-
-estfun.distfit <- function(object, type = "parameter", ...) {                         
-  if(type == "link") return(object$estfun.eta)
-  if(type == "parameter") return(object$estfun)
+  
+estfun.distfit <- function(object, ...) {                         
+  return(object$estfun)
 }
 
 logLik.distfit <- function(object, ...) {
   structure(object$loglik, df = object$npar, class = "logLik")
 }
 
-bread.distfit <- function(object, type = "parameter", ...) {
-  if(type == "link") return(object$vcov.eta * object$nobs)
-  if(type == "parameter") return(object$vcov * object$nobs)
+bread.distfit <- function(object, ...) {
+  return(object$vcov * object$ny)
 }
 
-confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...) {
+confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
   np <- object$npar
+  
   if(type == "link"){ 
-    vcov <- object$vcov.eta
     coef <- object$eta
+    vcov <- object$vcov
+    # FIX ME: vcov on link scale: values around zero might be negative => error using sqrt
   }
   if(type == "parameter"){ 
-    vcov <- object$vcov
     coef <- object$par
+    vcov <- vcov(object, type = "parameter")
   }
   
   left <- (1-level)/2
   right <- 1-left
   
   if(missing(parm)){
-    use.parm <- rep(TRUE,length=np)
+    use.parm <- rep(TRUE,length = np)
   } else {
-    use.parm <- logical(length=np)
-    if(("mu" %in% parm)    || (paste0(object$family$mu.link,"(mu)") %in% parm)       || 1 %in% parm) use.parm[1] <- TRUE
-    if(("sigma" %in% parm) || (paste0(object$family$sigma.link,"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
-    if(("nu" %in% parm)    || (paste0(object$family$nu.link,"(nu)") %in% parm)       || 3 %in% parm) use.parm[3] <- TRUE
-    if(("tau" %in% parm)   || (paste0(object$family$tau.link,"(tau)") %in% parm)     || 4 %in% parm) use.parm[4] <- TRUE
+    use.parm <- logical(length = np)
+    if(("mu" %in% parm) || (paste0(object$familylist$link[1],"(mu)") %in% parm) || 1 %in% parm) use.parm[1] <- TRUE
+    if(np > 1L) {
+      if(("sigma" %in% parm) || (paste0(object$familylist$link[2],"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
+      if(np > 2L) {
+        if(("nu" %in% parm) || (paste0(object$familylist$link[3],"(nu)") %in% parm) || 3 %in% parm) use.parm[3] <- TRUE
+        if(np > 3L) if(("tau" %in% parm) || (paste0(object$familylist$link[4],"(tau)") %in% parm) || 4 %in% parm) use.parm[4] <- TRUE
+      }
+    }
   }
   
   confint <- NULL
-  if((np > 0L) && use.parm[1]){
+  if(use.parm[1]) {
     confint1 <- c(coef[1] + qnorm(left) * sqrt(vcov[1,1]), coef[1] + qnorm(right) * sqrt(vcov[1,1]))
     confint <- rbind(confint, confint1)
   } 
-  if((np > 1L) && use.parm[2]){
-    confint2 <- c(coef[2] + qnorm(left) * sqrt(vcov[2,2]), coef[2] + qnorm(right) * sqrt(vcov[2,2]))
-    confint <- rbind(confint, confint2)
+  if(np > 1L) {
+    if(use.parm[2]) {
+      confint2 <- c(coef[2] + qnorm(left) * sqrt(vcov[2,2]), coef[2] + qnorm(right) * sqrt(vcov[2,2]))
+      confint <- rbind(confint, confint2)
+    }
+    if(np > 2L) {
+      if(use.parm[3]) {
+        confint3 <- c(coef[3] + qnorm(left) * sqrt(vcov[3,3]), coef[3] + qnorm(right) * sqrt(vcov[3,3]))
+        confint <- rbind(confint, confint3)
+      }
+      if(np > 3L) {
+        if(use.parm[4]) { 
+          confint4 <- c(coef[4] + qnorm(left) * sqrt(vcov[4,4]), coef[4] + qnorm(right) * sqrt(vcov[4,4]))
+          confint <- rbind(confint, confint4)
+        }
+      }
+    }
   }
-  if((np > 2L) && use.parm[3]){
-    confint3 <- c(coef[3] + qnorm(left) * sqrt(vcov[3,3]), coef[3] + qnorm(right) * sqrt(vcov[3,3]))
-    confint <- rbind(confint, confint3)
-  }
-  if((np > 3L) && use.parm[4]){ 
-    confint4 <- c(coef[4] + qnorm(left) * sqrt(vcov[4,4]), coef[4] + qnorm(right) * sqrt(vcov[4,4]))
-    confint <- rbind(confint, confint4)
-  }
+
   
   confint <- as.matrix(confint)
   colnames(confint) <- c(paste0(left," %"), paste0(right," %"))
@@ -1197,18 +298,16 @@ confint.distfit <- function(object, parm, level = 0.95, type = "parameter", ...)
 summary.distfit <- function (object, type = "parameter", ...){
   if(type == "link"){ 
     coef <- object$eta
-    vcov <- object$vcov.eta
+    vcov <- object$vcov
   }
   if(type == "parameter"){ 
     coef <- object$par
-    vcov <- object$vcov
+    vcov <- vcov(object, type = "parameter")
   }
-
+  
   se <- sqrt(diag(vcov))
   TAB <- cbind(Estimate = coef,
                StdErr = se)
-  
-  
   
   sumlist <- list(Call = object$call,
                   Family = object$family,
@@ -1216,42 +315,51 @@ summary.distfit <- function (object, type = "parameter", ...){
                   Estimated_covariance_matrix = vcov,
                   LogLikelihood = object$loglik
                   # LogLikelihood = logLik(object)
-                  )
+  )
   class(sumlist) <- "summary.distfit"
   sumlist 
 }
 
 
-# print.summary.distfit <- function(){}
+plot.distfit <- function(object,
+                         main = "", xlab = "", ylab = "Density",
+                         fill = "lightgray", col = "darkred", lwd = 1.5,
+                         ...)
+{
+  histogram <- c(
+    list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+    list(...)
+  )
+  histogram$freq <- FALSE
+  histogram$probability <- TRUE
+  histogram <- do.call("hist", histogram)
+  yrange <- seq(from = histogram$breaks[1L],
+                to = histogram$breaks[length(histogram$breaks)],
+                length.out = 100L)
+  if(isTRUE(all.equal(object$y, round(object$y)))) yrange <- round(yrange)
+  ## FIXME: for discrete (e.g., Pois/NB) different breaks?
+  lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
+  ## FIXME: ddist arguments/par?
+}
+
+
 
 
 if(FALSE) {
-
-family <- ZABI()
-y <- rZABI(1000, bd = 10, mu = 0.5, sigma = 0.2)
-ny <- length(y)
-start <- c(0.8, 0.1)
-weights <- rbinom(ny, 1, 0.75)
-
-df <- distfit(y, family, weights = weights, start = start, bd = 10)
-df2 <- distfit(y, family, bd = 10)
-
+  
+  family <- ZABI()
+  y <- rZABI(1000, bd = 10, mu = 0.5, sigma = 0.2)
+  ny <- length(y)
+  start <- c(0.8, 0.1)
+  weights <- rbinom(ny, 1, 0.75)
+  
+  df <- distfitlist(y, family, weights = weights, start = start, bd = 10)
+  df2 <- distfitlist(y, family, bd = 10)
+  
 }
 
 
-if(FALSE){
-  testfit <- function(y, x=NULL, start=NULL, weights=NULL, offset=NULL,...,
-                      estfun=FALSE, object=FALSE){
-    testobj <- distfit(y, family=NO)
-    return(list(
-      coefficients <- testobj$par,
-      objfun <- testobj$opt$value,
-      estfun <- testobj$estfun,
-      object <- testobj
-      )
-      )
-  }
-}
+
 
 if(FALSE){
   ######### examples
@@ -1260,14 +368,14 @@ if(FALSE){
   y <- rnbinom(1000, size = 1, mu = 2)
   
   ## simple distfit
-  df <- distfit(y, family = NBI)
+  df <- distfitlist(y, family = NBI)
   coef(df)
   confint(df)
   logLik(df)
   
   ## using tabulated data
   ytab <- table(y)
-  df2 <- distfit(as.numeric(names(ytab)), family = NBI, weights = ytab)
+  df2 <- distfitlist(as.numeric(names(ytab)), family = NBI, weights = ytab)
   coef(df2)
   confint(df2)
   logLik(df2)
@@ -1294,5 +402,88 @@ if(FALSE){
     logLik(m1)
     logLik(m2)
   }
+}
+
+
+
+if(FALSE){
+  family <- BE()
+  family$nopar
+  family$family
+  y <- rBE(10000, 0.5, 0.3)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BE(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- BCCG()
+  family$nopar
+  family$family
+  y <- rBCCG(10000, 1, 0.1, 0.1)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BCCG(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- BCPE()
+  family$nopar
+  family$family
+  y <- rBCPE(10000, 5, 0.1, 1, 2)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BCPE(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- BCT()
+  family$nopar
+  family$family
+  y <- rBCT(10000, 5, 0.1, 1, 2)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = BCT(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- EGB2()
+  family$nopar
+  family$family
+  y <- rEGB2(10000, 0, 1, 1, 0.5)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = EGB2(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- LO()
+  family$nopar
+  family$family
+  y <- rLO(1000, 0, 1)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = LO(), weights = weights)
+  t$par
+}
+
+if(FALSE){
+  family <- JSUo()
+  family$nopar
+  family$family
+  y <- rJSUo(1000, 0, 1, 0, 0.5)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = JSUo(), weights = weights)
+  t$par
+}
+
+
+if(FALSE){
+  family <- LNO()
+  family$nopar
+  family$family
+  y <- rLNO(10000, 1, 0.8, 0.3)
+  weights <- rbinom(length(y), 1, 0.8)
+  t <- distfitlist(y, family = LNO(), weights = weights)
+  t$par
 }
 
