@@ -689,7 +689,7 @@ if(FALSE) {
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
     names(eta) <- etanames
-    return(eta)
+    return(eta)pd
   }
   
   
