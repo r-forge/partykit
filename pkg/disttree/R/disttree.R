@@ -5,21 +5,19 @@ disttree <- function(formula, data, na.action, cluster, family = NO,
   ## keep call
   cl <- match.call(expand.dots = TRUE)
 
-  ## process family if necessary
-  if(is.function(family)) family <- family()
 
   ## glue code for calling distfit() with given family in mob()
   dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
-    cluster = NULL, ..., estfun = FALSE, object = FALSE)
+    cluster = NULL, ..., vcov = FALSE, estfun = TRUE, object = FALSE, type.hessian = "analytic")
   {
     if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
     if(!is.null(offset)) warning("offset not used")
     rval <- distfit(y, family = family, weights = weights, start = start,
-      vcov = object, estfun = estfun, ...)
+      vcov = vcov, estfun = estfun, type.hessian = type.hessian, ...)
     rval <- list(
       coefficients = rval$par,
-      objfun = rval$opt$value,
-      estfun = if(estfun) rval$estfun else NULL,
+      objfun = -rval$loglik,
+      estfun = if(estfun) rval$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
       object = if(object) rval else NULL
     )
     return(rval)
@@ -105,7 +103,7 @@ if(FALSE){
   d <- as.data.frame(cbind(c(y1,y2,y3,y4),c(x1,x2,x3,x4)))
   colnames(d) <- c("y","x")
   
-  test <- disttree(y~x, data = d, family = NO())
+  test <- disttree(y~x, data = d, family = dist_list_normal)
   print(test)
   plot(test)
   plot(as.constparty(test))
