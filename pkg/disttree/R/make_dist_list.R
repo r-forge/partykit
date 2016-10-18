@@ -1,21 +1,6 @@
 ##### make_dist_list
 # input: gamlss.dist family object
-# builds a list with all necessary functions/informations for distfitlist
-
-# distfit(y, family = make_dist_list(BI, bd = 10))
-# distfit(y, family = BI, bd = 10)
-
-#### TO DO: 
-
-# seperate make_dist_list (as a function outside of distfitlist)
-# bd can be an input argument in make_dist_list ( => bd is stored in the local environment), but once the list is returned, bd should not appear any more
-# such that when writing a list (for distributions without bd) the parameter bd should not appear at any time
-# wrap another function around gamlss.dist family object functions  such that bd is fixed inside this wrapper function and then the dldm etc. functions are called
-# input of wrapper function mustn't include bd (make_dist_list is already the wrapper function for all included functions)
-
-# within distfitlist: if hdist is available in the list, the hessian should be calculated analytically using hdist
-# while building the list: if hdist is availabe, but the input argument type.hessian is set to "numeric" -> remove hdist
-
+# builds a list with all necessary functions/informations for distfit
 
 
 make_dist_list <- function(family, bd = NULL) {
@@ -232,15 +217,24 @@ make_dist_list <- function(family, bd = NULL) {
   
   ## define startfunction, complete derivative functions dpardeta, d2pardeta2, dldpar, d2ldpar2 according to the number of parameters
   
+  ## TO DO: change starting expressions: eg. mean -> weighted.mean (use gsub to substitute function names)
+  weight_mean_expression <- function(e) {
+    e <- deparse(e)
+    e <- gsub("mean(y)", "weighted.mean(y, weights)", e, fixed = TRUE)
+    e <- parse(text = e)
+    e <- eval(e)
+    return(e)
+  }
+  
+  
   if(np == 1L){
     
     # define function for the calculation of initial values
     ## FIX ME ## use weights?
     startfun <- function(y, weights = NULL) {
-      if(!is.null(weights)) y <- rep(y, round(weights))  # FIX ME: only for integer valued weights
       mu <- NULL
-      eval(family$mu.initial)
-      starteta <- family$mu.linkfun(mean(mu))
+      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
+      starteta <- c(family$mu.linkfun(weighted.mean(mu)))
       names(starteta) <- etanames
       return(starteta)
     }
@@ -285,7 +279,7 @@ make_dist_list <- function(family, bd = NULL) {
       
       d2list <- list()
       ny <- length(y)
-      if(is.Surv(y)) ny <- dim(y)[1]
+      if(survival::is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i),]
@@ -300,11 +294,10 @@ make_dist_list <- function(family, bd = NULL) {
     
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
-      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
+      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
+      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
+      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)))
       names(starteta) <- etanames
       return(starteta)
     }
@@ -350,7 +343,7 @@ make_dist_list <- function(family, bd = NULL) {
       
       d2list <- list()
       ny <- length(y)
-      if(is.Surv(y)) ny <- dim(y)[1]
+      if(survival::is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i),]
@@ -365,12 +358,11 @@ make_dist_list <- function(family, bd = NULL) {
     
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
-      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <-  NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      eval(family$nu.initial)
-      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
+      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
+      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
+      if(is.null(weights)) eval(family$nu.initial) else eval(weight_mean_expression(family$nu.initial))
+      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)), family$nu.linkfun(weighted.mean(nu)))
       names(starteta) <- etanames
       return(starteta)
     }
@@ -417,7 +409,7 @@ make_dist_list <- function(family, bd = NULL) {
       
       d2list <- list()
       ny <- length(y)
-      if(is.Surv(y)) ny <- dim(y)[1]
+      if(survival::is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
@@ -432,13 +424,12 @@ make_dist_list <- function(family, bd = NULL) {
     
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
-      if(!is.null(weights)) y <- rep(y, round(weights))
       mu <- sigma <- nu <- tau <- NULL
-      eval(family$mu.initial)
-      eval(family$sigma.initial)
-      eval(family$nu.initial)
-      eval(family$tau.initial)
-      starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
+      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
+      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
+      if(is.null(weights)) eval(family$nu.initial) else eval(weight_mean_expression(family$nu.initial))
+      if(is.null(weights)) eval(family$tau.initial) else eval(weight_mean_expression(family$tau.initial))
+      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)), family$nu.linkfun(weighted.mean(nu)), family$tau.linkfun(weighted.mean(tau)))
       names(starteta) <- etanames
       return(starteta)
     }
@@ -486,7 +477,7 @@ make_dist_list <- function(family, bd = NULL) {
       
       d2list <- list()
       ny <- length(y)
-      if(is.Surv(y)) ny <- dim(y)[1]
+      if(survival::is.Surv(y)) ny <- dim(y)[1]
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
@@ -535,64 +526,6 @@ make_dist_list <- function(family, bd = NULL) {
   }
 
   
-  ## additional functions pdist, qdist, rdist
-  if(FALSE) {
-  if(any(family$family%in%.distfit.bi.list)){
-    if(np == 1L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], bd = bd, log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], bd = bd, log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], bd = bd, log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], bd = bd)
-    }
-    if(np == 2L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], bd = bd, log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], bd = bd, log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], bd = bd, log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], bd = bd)
-    }
-    if(np == 3L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], bd = bd, log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], bd = bd)
-    }
-    if(np == 4L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd, log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], bd = bd)
-    }
-  } else {
-    if(np == 1L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1])
-    }
-    if(np == 2L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2])
-    }
-    if(np == 3L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3])
-    }
-    if(np == 4L) { 
-      #ddist <- function(x, par, log = FALSE) get(paste0("d",family$family[1]))(x, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log = log)
-      pdist <- function(q, par, log.p = FALSE) get(paste0("p",family$family[1]))(q, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = log.p)
-      qdist <- function(p, par, log.p = FALSE) get(paste0("q",family$family[1]))(p, mu = par[1], sigma = par[2], nu = par[3], tau = par[4], log.p = log.p)
-      rdist <- function(n, par) get(paste0("r",family$family[1]))(n, mu = par[1], sigma = par[2], nu = par[3], tau = par[4])
-    }
-  }
-  }
-    
-   
-  
-  
   ## score / estfun (first-order partial derivatives of the (positive) log-likelihood function)
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {
     par <- linkinv(eta) 
@@ -622,7 +555,7 @@ make_dist_list <- function(family, bd = NULL) {
   ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.Surv(y)) ny <- dim(y)[1]
+    if(survival::is.Surv(y)) ny <- dim(y)[1]
     if(is.null(weights)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)
@@ -661,11 +594,13 @@ make_dist_list <- function(family, bd = NULL) {
   }
 
   
+  ## additional functions pdist, qdist, rdist
+  pdist <- get(paste0("p",family$family[1]))
+  qdist <- get(paste0("q",family$family[1]))
+  rdist <- get(paste0("r",family$family[1]))  
+  
+  
   link <- linknames      # as defined above (within if(np == ))
-  
-  #linkfun <- linkfun     # as defined above (within if(np == ))
-  
-  #linkinv <- linkinv     # as defined above (within if(np == ))
   
   linkinvdr <- dpardeta
 
@@ -675,7 +610,10 @@ make_dist_list <- function(family, bd = NULL) {
   dist_list <- list(family.name = paste(family$family[2], "Distribution", sep = " "),
                     ddist = ddist, 
                     sdist = sdist, 
-                    hdist = hdist, 
+                    hdist = hdist,
+                    pdist = pdist,
+                    qdist = qdist,
+                    rdist = rdist,
                     link = link, 
                     linkfun = linkfun, 
                     linkinv = linkinv, 
@@ -739,6 +677,13 @@ if(FALSE) {
     return(hess)
   }
   
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- pnorm
+  qdist <- qnorm
+  rdist <- rnorm  
+  
+  
   link <- c("identity", "log")
   
   linkfun <- function(par) {
@@ -763,10 +708,13 @@ if(FALSE) {
   
 
   startfun <- function(y, weights = NULL){
-    if(!is.null(weights)) y <- rep(y, round(weights))
-    ny <- length(y)
-    mu <- mean(y)
-    sigma <- sqrt(1/ny * sum((y - mu)^2))
+    if(is.null(weights)) {
+      mu <- mean(y)
+      sigma <- sqrt(1/length(y) * sum((y - mu)^2))
+    } else {
+      mu <- weighted.mean(y, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (y - mu)^2))
+    }
     starteta <- c(mu, log(sigma))
     names(starteta) <- etanames
     return(starteta)
@@ -777,7 +725,10 @@ if(FALSE) {
   dist_list_normal <- list(family.name = "Normal Distribution",
                            ddist = ddist, 
                            sdist = sdist, 
-                           hdist = hdist, 
+                           hdist = hdist,
+                           pdist = pdist,
+                           qdist = qdist,
+                           rdist = rdist,
                            link = link, 
                            linkfun = linkfun, 
                            linkinv = linkinv, 
@@ -786,8 +737,6 @@ if(FALSE) {
                            mle = mle
   )
 }
-
-
 
 
 
@@ -838,6 +787,13 @@ if(FALSE) {
     return(hess)
   }
   
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- ppois
+  qdist <- qpois
+  rdist <- rpois 
+  
+  
   link <- c("log")
   
   linkfun <- function(par) {
@@ -862,9 +818,7 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    if(!is.null(weights)) y <- rep(y, round(weights))
-    ny <- length(y)
-    mu <- mean(y)
+    mu <- if(is.null(weights)) mean(y) else weighted.mean(y, weights)
     starteta <- log(mu)
     names(starteta) <- etanames
     return(starteta)
@@ -878,6 +832,9 @@ if(FALSE) {
                             ddist = ddist, 
                             sdist = sdist, 
                             hdist = hdist, 
+                            pdist = pdist,
+                            qdist = qdist,
+                            rdist = rdist,
                             link = link, 
                             linkfun = linkfun, 
                             linkinv = linkinv, 
@@ -886,7 +843,6 @@ if(FALSE) {
                             mle = mle
   )
 }
-
 
 
 
@@ -938,6 +894,11 @@ if(FALSE) {
     return(hess)
   }
   
+  ## additional functions pdist, qdist, rdist
+  pdist <- pexp
+  qdist <- qexp
+  rdist <- rexp
+  
   link <- c("log")
   
   linkfun <- function(par) {
@@ -962,9 +923,7 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    if(!is.null(weights)) y <- rep(y, round(weights))
-    ny <- length(y)
-    lambda <- ny / sum(y)
+    lambda <- if(is.null(weights)) length(y)/sum(y) else sum(weights)/sum(weights * y)
     starteta <- log(lambda)
     names(starteta) <- etanames
     return(starteta)
@@ -976,7 +935,10 @@ if(FALSE) {
   dist_list_exp <- list(family.name = "Exponential Distribution",
                         ddist = ddist, 
                         sdist = sdist, 
-                        hdist = hdist, 
+                        hdist = hdist,
+                        pdist = pdist,
+                        qdist = qdist,
+                        rdist = rdist,
                         link = link, 
                         linkfun = linkfun, 
                         linkinv = linkinv, 
@@ -985,3 +947,117 @@ if(FALSE) {
                         mle = mle
   )
 }
+
+
+
+
+
+###### dist_list for gamma distribution
+if(FALSE) {
+  
+  dist_list_gamma <- list()
+  
+  parnames <- c("shape", "scale")
+  etanames <- c("log(shape)", "log(scale)")
+  
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    par <- c(exp(eta[1]), exp(eta[2]))
+    val <- -par[1] * log(par[2]) + (par[1]-1) * log(y) - y / par[2] - lgamma(par[1])
+    if(!log) val <- exp(val)
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    par <- c(exp(eta[1]), exp(eta[2]))                           
+    score <- cbind((-log(par[2]) + log(y) - 1/lgamma(par[1]) * digamma(par[1])) * par[1], 
+                   (-par[1]/par[2] + y/par[2]^2) * par[2])
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      score <- colSums(weights * score)
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(exp(eta[1]), exp(eta[2]))                          
+    
+    d2ld.etamu2 <- sum(weights * ((1/lgamma(par[1])^2 * digamma(par[1])^2 - 1/lgamma(par[1]) * trigamma(par[1])) * par[1]^2 + (-log(par[2]) + log(y) - 1/lgamma(par[1]) * digamma(par[1])) * par[1]))
+    d2ld.etamu.d.etasigma <- sum(weights * (-par[1]))          # FIX ME: should be ... for exact parameters (here ~ e-17 due to calculations)
+    d2ld.etasigma2 <- sum(weights * (par[1]/par[2]^2 - 2*y/par[2]^3) * par[2]^2 + (-par[1]/par[2] + y/par[2]^2) * par[2])         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- pgamma
+  qdist <- qgamma
+  rdist <- rgamma
+  
+  
+  link <- c("log", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(log(par[1]), log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(exp(eta[1]), exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(exp(eta[1]), exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    y.m <- if(is.null(weights)) mean(y) else weighted.mean(y, weights)
+    y.sd <- if(is.null(weights)) sd(y) else sqrt(Hmisc::wtd.var(y, weights))
+    shape <- (y.m/y.sd)^2
+    scale <- y.m/shape     # <- y.sd^2/y.m
+    starteta <- c(log(shape), log(scale))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_gamma <- list(family.name = "Gamma Distribution",
+                          ddist = ddist, 
+                          sdist = sdist, 
+                          hdist = hdist,
+                          pdist = pdist,
+                          qdist = qdist,
+                          rdist = rdist,
+                          link = link, 
+                          linkfun = linkfun, 
+                          linkinv = linkinv, 
+                          linkinvdr = linkinvdr,
+                          startfun = startfun,
+                          mle = mle
+  )
+}
+
