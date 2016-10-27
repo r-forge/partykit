@@ -1,36 +1,97 @@
-## high-level convenience interface to mob()
-disttree <- function(formula, data, na.action, cluster, family = NO,
-  control = mob_control(...), ocontrol = list(), ...)
+## high-level convenience interface to mob() and ctree()
+disttree <- function(formula, data, na.action, cluster, family = NO(),
+                     type.tree = "mob",
+                     control = mob_control(...), ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
-
-
-  ## glue code for calling distfit() with given family in mob()
-  dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
-    cluster = NULL, ..., vcov = FALSE, estfun = TRUE, object = FALSE, type.hessian = "analytic")
-  {
-    if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
-    if(!is.null(offset)) warning("offset not used")
-    rval <- distfit(y, family = family, weights = weights, start = start,
-      vcov = vcov, estfun = estfun, type.hessian = type.hessian, ...)
-    rval <- list(
-      coefficients = rval$par,
-      objfun = -rval$loglik,
-      estfun = if(estfun) rval$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
-      object = if(object) rval else NULL
-    )
-    return(rval)
+  
+  if(type.tree == "mob") {
+    
+    ## glue code for calling distfit() with given family in mob()
+    dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
+                                cluster = NULL, ..., vcov = FALSE, estfun = TRUE, object = FALSE, type.hessian = "analytic")
+    {
+      if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
+      if(!is.null(offset)) warning("offset not used")
+      rval <- distfit(y, family = family, weights = weights, start = start,
+                      vcov = vcov, estfun = estfun, type.hessian = type.hessian, ...)
+      rval <- list(
+        coefficients = rval$par,
+        objfun = -rval$loglik,
+        estfun = if(estfun) rval$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
+        object = if(object) rval else NULL
+      )
+      return(rval)
+    }
+    
+    ## call mob
+    m <- match.call(expand.dots = FALSE)
+    m$fit <- dist_family_fit
+    m$family <- m$ocontrol <- NULL
+    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    if("..." %in% names(m)) m[["..."]] <- NULL
+    m[[1L]] <- as.name("mob")
+    rval <- eval(m, parent.frame())
   }
-
-  ## call mob
-  m <- match.call(expand.dots = FALSE)
-  m$fit <- dist_family_fit
-  m$family <- m$ocontrol <- NULL
-  for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
-  if("..." %in% names(m)) m[["..."]] <- NULL
-  m[[1L]] <- as.name("mob")
-  rval <- eval(m, parent.frame())
+  
+  
+  if(type.tree == "ctree") {
+    
+    ## wrapper function to apply distfit in ctree
+    # input: data, family, weights
+    # output: scores (estfun)
+    # FIX ME: hand family over to ctree (instead of defining it here in the function modelscores) ?
+    # by default decorrelate should be "none" (now set to "opg" for simulation, such that the whole function can be passed on)
+    modelscores_decor <- function(data, family = family, weights = NULL, decorrelate = "opg") {
+      
+      # FIX ME: the family object given as an input is an integer vector of 1s (modelscores_decor is called within ctree)
+      family <- dist_list_normal  
+      
+      y <- as.vector(data[,"y"])
+      model <- distfit(y, family = family, weights = weights, start = NULL,
+                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
+      
+      ef <- as.matrix(sandwich::estfun(model))
+      n <- NROW(ef)
+      ef <- ef/sqrt(n)
+      
+      ## decorrelate = c("none", "opg", "vcov")   # error if argument is not one of these three options
+      if(decorrelate != "none") {
+        vcov <- if(decorrelate == "vcov") {
+          vcov(model) * n
+        } else {
+          solve(crossprod(ef))
+        }
+        
+        root.matrix <- function(X) {
+          if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+            X.eigen <- eigen(X, symmetric = TRUE)
+            if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+            sqomega <- sqrt(diag(X.eigen$values))
+            V <- X.eigen$vectors
+            return(V %*% sqomega %*% t(V))
+          }
+        }
+        ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+      }
+      return(ef)
+    }
+    
+    
+    ## call ctree
+    m <- match.call(expand.dots = FALSE)
+    m$ytrafo <- modelscores_decor
+    m$ocontrol <- NULL
+    # m$family <- m$ocontrol <- NULL
+    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    if("..." %in% names(m)) m[["..."]] <- NULL
+    m[[1L]] <- as.name("ctree")
+    rval <- eval(m, parent.frame())
+  
+  }
+  
+  
   
   ## extend class and keep original call/family/control
   rval$info$call <- cl
