@@ -3,7 +3,8 @@
 # builds a list with all necessary functions/informations for distfit
 
 
-make_dist_list <- function(family, bd = NULL) {
+make_dist_list <- function(family, bd = NULL) 
+  {
   
   
   ## list of families which require an additional parameter bd (binomial denominator)
@@ -219,10 +220,19 @@ make_dist_list <- function(family, bd = NULL) {
   
   ## TO DO: change starting expressions: eg. mean -> weighted.mean (use gsub to substitute function names)
   weight_mean_expression <- function(e) {
-    e <- deparse(e)
-    e <- gsub("mean(y)", "weighted.mean(y, weights)", e, fixed = TRUE)
-    e <- parse(text = e)
-    e <- eval(e)
+    if(!("censored" %in% strsplit(family$family[2], split = " ")[[1]])) {
+      e <- deparse(e)
+      e <- gsub("mean(y)", "weighted.mean(y, weights)", e, fixed = TRUE)
+      e <- parse(text = e)
+      e <- eval(e)
+    }
+    
+    # if("censored" %in% strsplit(family$family[2], split = " ")[[1]]) {
+    #   e <- gsub("mean(y[,1])", "weighted.mean(y[,1], weights)", e, fixed = TRUE)
+    # } else {
+    #   e <- gsub("mean(y)", "weighted.mean(y, weights)", e, fixed = TRUE)
+    # }
+    
     return(e)
   }
   
@@ -594,10 +604,12 @@ make_dist_list <- function(family, bd = NULL) {
   }
 
   
+  # FIX ME: rdist doesn't exist for all gamlss families (e.g. censored logistic, rLOlc)
+  # FIX ME: input arguments, match with functions from list
   ## additional functions pdist, qdist, rdist
-  pdist <- get(paste0("p",family$family[1]))
-  qdist <- get(paste0("q",family$family[1]))
-  rdist <- get(paste0("r",family$family[1]))  
+  # pdist <- get(paste0("p",family$family[1]))
+  # qdist <- get(paste0("q",family$family[1]))
+  # rdist <- get(paste0("r",family$family[1]))  
   
   
   link <- linknames      # as defined above (within if(np == ))
@@ -611,9 +623,9 @@ make_dist_list <- function(family, bd = NULL) {
                     ddist = ddist, 
                     sdist = sdist, 
                     hdist = hdist,
-                    pdist = pdist,
-                    qdist = qdist,
-                    rdist = rdist,
+                    # pdist = pdist,
+                    # qdist = qdist,
+                    # rdist = rdist,
                     link = link, 
                     linkfun = linkfun, 
                     linkinv = linkinv, 
@@ -735,6 +747,130 @@ if(FALSE) {
                            linkinvdr = linkinvdr,
                            startfun = startfun,
                            mle = mle
+  )
+}
+
+
+
+
+
+###### dist_list for censored normal distribution
+if(FALSE) {
+  
+  dist_list_cens_normal <- list()
+  
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
+  
+  ## FIX ME: additional input arguments "left" and "right"
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
+    par <- c(eta[1], exp(eta[2]))
+    val <- crch::dcnorm(x = y[,1], mean = par[1], sd = par[2], left = left, right = right, log = log)
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
+      val <- sum(weights * val)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
+    par <- c(eta[1], exp(eta[2]))          
+    # FIX ME: y[,1]
+    score <- cbind(crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "mu", left = left, right = right), 
+                   crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right))
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
+      score <- colSums(weights * score)
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
+    ny <- dim(y)[1]
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(eta[1], exp(eta[2]))                           
+    
+    d2mu <- crch:::hcnorm(x = y[,1], mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::hcnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dsigma <- crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    
+    d2ld.etamu2 <- sum(weights * d2mu)
+    d2ld.etamu.d.etasigma <- 0  
+    d2ld.etasigma2 <- sum(weights * (d2sigma * par[2]^2 + dsigma * par[2]))         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- crch:::pcnorm
+  qdist <- crch:::qcnorm
+  rdist <- crch:::rcnorm  
+  
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    yc <- y[,1]
+    yc[yc<0] <- 0  # optional ?
+    if(is.null(weights)) {
+      mu <- mean(yc)
+      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    } else {
+      mu <- weighted.mean(yc, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+    }
+    # FIX ME: assuring that starting value for mu can not be negative for left censored at 0
+    mu <- max(mu,0)
+    starteta <- c(mu, log(sigma))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_cens_normal <- list(family.name = "censored Normal Distribution",
+                                ddist = ddist, 
+                                sdist = sdist, 
+                                hdist = hdist,
+                                pdist = pdist,
+                                qdist = qdist,
+                                rdist = rdist,
+                                link = link, 
+                                linkfun = linkfun, 
+                                linkinv = linkinv, 
+                                linkinvdr = linkinvdr,
+                                startfun = startfun,
+                                mle = mle
   )
 }
 
@@ -884,6 +1020,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
+    if(survival::is.Surv(y)) ny <- dim(y)[1]
     if(is.null(weights)) weights <- rep.int(1, length(y))
     
     par <- exp(eta)                           
