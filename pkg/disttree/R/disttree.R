@@ -1,4 +1,5 @@
 ## high-level convenience interface to mob() and ctree()
+# FIX ME: default settings for family
 disttree <- function(formula, data, na.action, cluster, family = NO(),
                      type.tree = "mob",
                      control = mob_control(...), ocontrol = list(), ...)
@@ -43,12 +44,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # output: scores (estfun)
     # FIX ME: hand family over to ctree (instead of defining it here in the function modelscores) ?
     # by default decorrelate should be "none" (now set to "opg" for simulation, such that the whole function can be passed on)
-    modelscores_decor <- function(data, family = family, weights = NULL, decorrelate = "opg") {
+    modelscores_decor <- function(data, weights = NULL, family = family, decorrelate = "opg") {
       
-      # FIX ME: the family object given as an input is an integer vector of 1s (modelscores_decor is called within ctree)
+      # FIX ME: the family object is not passed on correctly (modelscores_decor is called within ctree)
       family <- dist_list_normal  
+      # family <- dist_list_cens_normal  
       
       y <- as.vector(data[,"y"])
+      # y <- data[,1]
+      
       model <- distfit(y, family = family, weights = weights, start = NULL,
                        vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
       
