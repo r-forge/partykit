@@ -326,20 +326,49 @@ plot.distfit <- function(object,
                          fill = "lightgray", col = "darkred", lwd = 1.5,
                          ...)
 {
-  histogram <- c(
-    list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
-    list(...)
-  )
-  histogram$freq <- FALSE
-  histogram$probability <- TRUE
-  histogram <- do.call("hist", histogram)
-  yrange <- seq(from = histogram$breaks[1L],
-                to = histogram$breaks[length(histogram$breaks)],
-                length.out = 100L)
-  if(isTRUE(all.equal(object$y, round(object$y)))) yrange <- round(yrange)
-  ## FIXME: for discrete (e.g., Pois/NB) different breaks?
-  lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
-  ## FIXME: ddist arguments/par?
+  ## FIX ME: barplot instead of hist for discrete distributions
+  if(isTRUE(all.equal(object$y, round(object$y)))) {
+    
+    ## barplot instead of hist:
+    #ytab <- table(object$y)
+    #values <- as.numeric(names(ytab))
+    #absfreq <- as.numeric(ytab)
+    #relfreq <- absfreq / sum(absfreq)
+    #relytab <- ytab / sum(absfreq)
+    #bars <- barplot(relytab, xlim = c(min(values), max(values)), ylim = c(-0.1, 1.1),
+    #                xlab = xlab , ylab = ylab)
+    #abline(h = 0)
+    #lines(values*1.2 + 0.7, object$ddist(values), type = "b", lwd = 2, pch = 19, col = 2)
+    
+    # using hist:
+    histogram <- c(
+      list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+      list(...)
+    )
+    histogram$freq <- FALSE
+    histogram$probability <- TRUE
+    histogram$breaks <- seq(from = min(object$y), to = max(object$y) + 1) - 0.5
+    # histogram$breaks <- seq(from = min(object$y), to = 2*max(object$y) + 1)/2 - 0.25
+    histogram <- do.call("hist", histogram)
+    yrange <- seq(from = min(object$y), to = max(object$y))
+    lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
+    
+  } else {
+    
+    histogram <- c(
+      list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+      list(...)
+    )
+    histogram$freq <- FALSE
+    histogram$probability <- TRUE
+  
+    histogram <- do.call("hist", histogram)
+    yrange <- seq(from = histogram$breaks[1L],
+                  to = histogram$breaks[length(histogram$breaks)],
+                  length.out = 100L)
+    lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
+    ## FIXME: ddist arguments/par?
+  }
 }
 
 
@@ -353,8 +382,8 @@ if(FALSE) {
   start <- c(0.8, 0.1)
   weights <- rbinom(ny, 1, 0.75)
   
-  df <- distfitlist(y, family, weights = weights, start = start, bd = 10)
-  df2 <- distfitlist(y, family, bd = 10)
+  df <- distfit(y, family, weights = weights, start = start, bd = 10)
+  df2 <- distfit(y, family, bd = 10)
   
 }
 
@@ -368,14 +397,14 @@ if(FALSE){
   y <- rnbinom(1000, size = 1, mu = 2)
   
   ## simple distfit
-  df <- distfitlist(y, family = NBI)
+  df <- distfit(y, family = NBI)
   coef(df)
   confint(df)
   logLik(df)
   
   ## using tabulated data
   ytab <- table(y)
-  df2 <- distfitlist(as.numeric(names(ytab)), family = NBI, weights = ytab)
+  df2 <- distfit(as.numeric(names(ytab)), family = NBI, weights = ytab)
   coef(df2)
   confint(df2)
   logLik(df2)
@@ -396,6 +425,8 @@ if(FALSE){
     gen.cens(LO, type = "left")
     RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
     m2 <- distfit(RainIbk$rains, family = LOlc)
+    # FIX ME: calculation of starting values for censored distributions
+    # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
     coef(m1)
     coef(m2)
@@ -412,7 +443,7 @@ if(FALSE){
   family$family
   y <- rBE(10000, 0.5, 0.3)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = BE(), weights = weights)
+  t <- distfit(y, family = BE(), weights = weights)
   t$par
 }
 
@@ -422,7 +453,7 @@ if(FALSE){
   family$family
   y <- rBCCG(10000, 1, 0.1, 0.1)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = BCCG(), weights = weights)
+  t <- distfit(y, family = BCCG(), weights = weights)
   t$par
 }
 
@@ -432,7 +463,7 @@ if(FALSE){
   family$family
   y <- rBCPE(10000, 5, 0.1, 1, 2)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = BCPE(), weights = weights)
+  t <- distfit(y, family = BCPE(), weights = weights)
   t$par
 }
 
@@ -442,7 +473,7 @@ if(FALSE){
   family$family
   y <- rBCT(10000, 5, 0.1, 1, 2)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = BCT(), weights = weights)
+  t <- distfit(y, family = BCT(), weights = weights)
   t$par
 }
 
@@ -452,7 +483,7 @@ if(FALSE){
   family$family
   y <- rEGB2(10000, 0, 1, 1, 0.5)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = EGB2(), weights = weights)
+  t <- distfit(y, family = EGB2(), weights = weights)
   t$par
 }
 
@@ -462,7 +493,7 @@ if(FALSE){
   family$family
   y <- rLO(1000, 0, 1)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = LO(), weights = weights)
+  t <- distfit(y, family = LO(), weights = weights)
   t$par
 }
 
@@ -472,7 +503,7 @@ if(FALSE){
   family$family
   y <- rJSUo(1000, 0, 1, 0, 0.5)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = JSUo(), weights = weights)
+  t <- distfit(y, family = JSUo(), weights = weights)
   t$par
 }
 
@@ -483,7 +514,7 @@ if(FALSE){
   family$family
   y <- rLNO(10000, 1, 0.8, 0.3)
   weights <- rbinom(length(y), 1, 0.8)
-  t <- distfitlist(y, family = LNO(), weights = weights)
+  t <- distfit(y, family = LNO(), weights = weights)
   t$par
 }
 
