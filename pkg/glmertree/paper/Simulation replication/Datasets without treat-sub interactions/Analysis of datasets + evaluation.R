@@ -1,9 +1,8 @@
 # install.packages("glmertree", repos="http://R-Forge.R-project.org") 
 library(glmertree)
-names(datasets[[1]])
 
 # Fit trees on training data
-for (c in 1:1) {
+for (c in 1:50) {
   load(paste("datasets", c, sep=""))
   load(paste("descriptions", c, sep=""))
   GLMMtrees <- list()
@@ -65,7 +64,6 @@ for (i in 1:length(descriptions)) {
   treesizes[i,"numbclus"] <- substr(descriptions[[i]][[6]], 34, 35) # is number of random intercept values
   treesizes[i,"sigmabi"] <- substr(descriptions[[i]][[7]], 12, 14) # max and -min random intercept value    
 }
-save(treesizes,file="treesizes")
 
 treesizes$N <- factor(treesizes$N)
 treesizes$rho <-  factor(treesizes$rho)            
@@ -83,7 +81,6 @@ treesizes$corUbi <- rep(treesizes$corUbi[1:length(descriptions)], times=1)
 treesizes$numbclus <- rep(treesizes$numbclus[1:length(descriptions)], times=1)
 treesizes$sigmabi <- rep(treesizes$sigmabi[1:length(descriptions)], times=1)
 
-treesizes
 table(treesizes[,1]) # GLMM trees
 prop.table(table(treesizes[,1])) # GLMM trees
 table(treesizes[,2]) # GLM trees
@@ -99,12 +96,16 @@ tmp <- as.character(treesizes.long$treesize.ind)
 tmp[treesizes.long$treesize.ind=="GLMMtreesize"] <- "GLMM tree"
 tmp[treesizes.long$treesize.ind=="GLMtreesize"] <- "GLM tree"
 treesizes.long$treesize.ind <- factor(tmp)
-
 mean(treesizes[,1]);sd(treesizes[,1]) # GLMM tree
 mean(treesizes[,2]);sd(treesizes[,2]) # GLM tree
 
+save(treesizes.long, file="noint_treesizes_long.dat")
+load("noint_treesizes_long.dat")
+
 # create lattice xyplots
 library(lattice)
+
+## ANOVA for treesize
 treesize.anova <- aov(treesize.values ~ treesize.ind + N + rho + np + treatdiff + numbclus + sigmabm + corUbm +
                         treesize.ind*(N + rho + np + treatdiff + numbclus + sigmabm + corUbm), 
                       data=treesizes.long)
@@ -117,4 +118,24 @@ aggdata <- aggregate(formula=treesize.values ~ treesize.ind + N + sigmabm + corU
 xyplot(treesize.values ~ sigmabm | N + corUbm, data = aggdata, groups=treesize.ind, type="b",
        ylab="tree size", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), abline=c(1,0), 
        auto.key=list(space="top", columns=2, title="Algorithm type", cex.title=1,lines=T, points=T))
+
+
+## GLM for Type-I probability
+treesizes.long$treesize.valuesD <- as.numeric(treesizes.long$treesize.values>1)
+
+treesize.glm <- glm(treesize.valuesD ~ treesize.ind + N + rho + np + treatdiff + numbclus + 
+                     sigmabm + corUbm +
+                     treesize.ind*(N + rho + np + treatdiff + numbclus + sigmabm + corUbm), 
+                   data=treesizes.long, family="binomial")
+summary(treesize.glm)
+#N, corUb & sigmab have strongest main and/or interaction effects
+aggdata.size <- aggregate(formula=treesize.valuesD ~ treesize.ind + N + sigmabm + corUbm, FUN=mean, 
+                         data=treesizes.long)
+levels(aggdata.size$corUbm)[levels(aggdata.size$corUbm)=="b and random U correlated"] <- 
+  "b and U correlated"
+levels(aggdata.size$corUbm)[levels(aggdata.size$corUbm)=="uncorrelated"] <- 
+  "b and U uncorrelated"
+xyplot(treesize.valuesD ~ sigmabm | N + corUbm, data = aggdata.size, groups=treesize.ind, type="b",
+       ylab="tree accuracy", xlab="sigma_b", par.settings=standard.theme("pdf",color=F), 
+       auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
 
