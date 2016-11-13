@@ -1,17 +1,22 @@
 ## high-level convenience interface to mob() and ctree()
-# FIX ME: default settings for family
+# FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
 disttree <- function(formula, data, na.action, cluster, family = NO(),
-                     type.tree = "mob",
+                     type.tree = "mob", decorrelate = "none",
                      control = mob_control(...), ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
   
+  # check input arguments
+  if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
+  if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
+  
   if(type.tree == "mob") {
     
     ## glue code for calling distfit() with given family in mob()
     dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
-                                cluster = NULL, ..., vcov = FALSE, estfun = TRUE, object = FALSE, type.hessian = "analytic")
+                                cluster = NULL, vcov = FALSE, estfun = TRUE, 
+                                object = FALSE, type.hessian = "analytic", ...)
     {
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
@@ -42,26 +47,22 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     ## wrapper function to apply distfit in ctree
     # input: data, family, weights
     # output: scores (estfun)
-    # FIX ME: hand family over to ctree (instead of defining it here in the function modelscores) ?
-    # by default decorrelate should be "none" (now set to "opg" for simulation, such that the whole function can be passed on)
-    modelscores_decor <- function(data, weights = NULL, family = family, decorrelate = "opg") {
+    modelscores_decor <- function(data, weights = NULL) {
       
-      # FIX ME: the family object is not passed on correctly (modelscores_decor is called within ctree)
-      family <- dist_list_normal  
-      # family <- dist_list_cens_normal  
-      
-      y <- as.vector(data[,"y"])
-      # y <- data[,1]
+      y <- data[,1]
+      #if(survival::is.Surv(y)) y <- data[,1] else y <- as.vector(data[,"y"])
       
       model <- distfit(y, family = family, weights = weights, start = NULL,
                        vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
       
       ef <- as.matrix(sandwich::estfun(model))
-      n <- NROW(ef)
-      ef <- ef/sqrt(n)
+      #n <- NROW(ef)
+      #ef <- ef/sqrt(n)
       
-      ## decorrelate = c("none", "opg", "vcov")   # error if argument is not one of these three options
       if(decorrelate != "none") {
+        n <- NROW(ef)
+        ef <- ef/sqrt(n)
+        
         vcov <- if(decorrelate == "vcov") {
           vcov(model) * n
         } else {
