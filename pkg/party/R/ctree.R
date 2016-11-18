@@ -342,9 +342,14 @@
                                              X = X, Y = Y, iy = NULL, subset = subset, 
                                              weights = weights, cluster = cluster,
                                              splitonly = TRUE, minbucket = minbucket)
-                    ### <FIXME> it would be better to check if trafo can be 
-                    ### successfully applies to both daugther nodes (converged = TRUE)
-                    ### here </FIXME>
+                    ### check if trafo can be successfully applied to all daugther nodes 
+                    ### (converged = TRUE)
+                    if (ctrl$lookahead & !is.null(ret)) {
+                        sp <- kidids_split(ret, data, obs = subset)
+                        conv <- sapply(unique(sp), function(i)
+                            trafo(subset[sp == i], info = info, estfun = FALSE)$converged)
+                        if (!all(conv)) ret <- NULL
+                    }
                     if (!is.null(ret)) break()
                 }
                 ret
@@ -478,6 +483,7 @@ ctree_control <- function
     minbucket = 7L, 
     minprob = 0.01, 
     stump = FALSE, 
+    lookahead = TRUE,	### try trafo() for daugther nodes before implementing the split
     nresample = 9999L, 
     MIA = FALSE,
     maxsurrogate = 0L, 
@@ -507,7 +513,7 @@ ctree_control <- function
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest,
-           testtype = testtype, nmax = nmax, nresample = nresample))
+           testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead))
 }
 
 ctree <- function
