@@ -483,7 +483,7 @@ ctree_control <- function
     minbucket = 7L, 
     minprob = 0.01, 
     stump = FALSE, 
-    lookahead = TRUE,	### try trafo() for daugther nodes before implementing the split
+    lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
     nresample = 9999L, 
     MIA = FALSE,
     maxsurrogate = 0L, 
