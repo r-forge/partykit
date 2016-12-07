@@ -2,6 +2,8 @@
 .ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
                               weights, cluster, splitonly = TRUE, minbucket) {
 
+    ### <FIXME> check if x and/or Y have only unique values and return immediately? </FIXME>
+
     MIA <- ctrl$MIA && any(is.na(x))
 
     if (is.null(cluster)) cluster <- integer(0)
