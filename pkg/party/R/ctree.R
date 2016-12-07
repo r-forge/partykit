@@ -487,7 +487,7 @@ ctree_control <- function
     stump = FALSE, 
     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
     nresample = 9999L, 
-    MIA = FALSE,
+    MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     maxsurrogate = 0L, 
     mtry = Inf, 
     maxdepth = Inf, 
