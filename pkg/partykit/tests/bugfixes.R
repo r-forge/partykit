@@ -693,8 +693,8 @@ tdata$language <-  factor(tdata$language)
 tdata$ytrain <- factor(tdata$ytrain)
 
 ### was: error
-model <- ctree(ytrain ~ ., data = tdata, 
-    control = ctree_control(testtype = "Univariate"))
+(model <- ctree(ytrain ~ ., data = tdata, 
+    control = ctree_control(testtype = "Univariate")))
 
 library("coin")
 ### check against coin (independence_test automatically
