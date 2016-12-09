@@ -1,5 +1,5 @@
 
-library("partyNG")
+library("partykit")
 set.seed(29)
 
 n <- 100
