@@ -997,7 +997,8 @@ data("HuntingSpiders", package = "partykit")
 sptree <- ctree(arct.lute + pard.lugu + zora.spin + pard.nigr +
   pard.pull + aulo.albi + troc.terr + alop.cune + pard.mont + alop.acce +
   alop.fabr + arct.peri ~ herbs + reft + moss + sand + twigs + water,
-  data = HuntingSpiders, teststat = "max", minsplit = 5)
+  data = HuntingSpiders, teststat = "max", minsplit = 5,
+  pargs = GenzBretz(abseps = .1, releps = .1))
 @
 
 \setkeys{Gin}{width=\textwidth, keepaspectratio=TRUE}
