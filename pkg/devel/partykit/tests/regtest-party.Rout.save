@@ -1,7 +1,7 @@
 
-R version 3.2.1 (2015-06-18) -- "World-Famous Astronaut"
-Copyright (C) 2015 The R Foundation for Statistical Computing
-Platform: x86_64-unknown-linux-gnu (64-bit)
+R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -18,6 +18,7 @@ Type 'q()' to quit R.
 > ## load package and fix seed
 > library("partykit")
 Loading required package: grid
+Loading required package: libcoin
 > set.seed(1)
 > 
 > ## rpart: kyphosis data
@@ -1473,14 +1474,13 @@ Number of inner nodes:    2
 Number of terminal nodes: 3
 > (ntp <- nodeprune(nt, 4)) ### partynode method
 [1] root
-|   [2] V4 <= 1.9 *
-|   [3] V4 > 1.9
-|   |   [4] V5 <= 1.7 *
-|   |   [5] V5 > 1.7 *
+|   [2] V3 <= 1.9 *
+|   [3] V3 > 1.9
+|   |   [4] V4 <= 1.7 *
+|   |   [5] V4 > 1.7 *
 > 
 > ### check if both methods do the same
-> p1 <- predict(party(ntp, 
-+     data = model.frame(terms(ct), data = iris)), type = "node")
+> p1 <- predict(party(ntp, data = iris), type = "node")
 > p2 <- predict(ctp, type = "node")
 > stopifnot(max(abs(p1 - p2)) == 0)
 > 
@@ -1635,102 +1635,102 @@ Call: ecdf(y)
 $`1`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c9f0>
+<environment: 0x754efc0>
 
 $`2`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c9f0>
+<environment: 0x754efc0>
 
 $`3`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c9f0>
+<environment: 0x754efc0>
 
 $`4`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c9f0>
+<environment: 0x754efc0>
 
 $`5`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c9f0>
+<environment: 0x754efc0>
 
 $`6`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c070>
+<environment: 0x754e9d8>
 
 $`7`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c070>
+<environment: 0x754e9d8>
 
 $`8`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2c070>
+<environment: 0x754e9d8>
 
 $`9`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x1b2b840>
+<environment: 0x754f358>
 
 > predict(ct, newdata = nd, type = "density")
 $`1`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x25e7580>
+<bytecode: 0x7312800>
+<environment: 0x76468c0>
 
 $`2`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x25e7580>
+<bytecode: 0x7312800>
+<environment: 0x76468c0>
 
 $`3`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x25e7580>
+<bytecode: 0x7312800>
+<environment: 0x76468c0>
 
 $`4`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x25e7580>
+<bytecode: 0x7312800>
+<environment: 0x76468c0>
 
 $`5`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x25e7580>
+<bytecode: 0x7312800>
+<environment: 0x76468c0>
 
 $`6`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x2c610c8>
+<bytecode: 0x7312800>
+<environment: 0x76727f0>
 
 $`7`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x2c610c8>
+<bytecode: 0x7312800>
+<environment: 0x76727f0>
 
 $`8`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x2c610c8>
+<bytecode: 0x7312800>
+<environment: 0x76727f0>
 
 $`9`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x301b270>
-<environment: 0x2c7e178>
+<bytecode: 0x7312800>
+<environment: 0x769cb10>
 
 > predict(ct, newdata = nd, type = "density", at = (1:9) / 10)
         [,1]       [,2]       [,3]       [,4]       [,5]       [,6]      [,7]
@@ -1756,4 +1756,4 @@ function (v)
 > 
 > proc.time()
    user  system elapsed 
-  1.585   0.098   1.480 
+  1.904   0.108   1.683 
