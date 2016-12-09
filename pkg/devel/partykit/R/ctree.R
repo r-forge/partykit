@@ -130,7 +130,8 @@
             if (tst$TestStatistic < tstright$TestStatistic)
                 tst <- tstright
         }
-        return(list(statistic = log(tst$TestStatistic), p.value = tst$p.value))
+        return(list(statistic = log(pmax(tst$TestStatistic, .Machine$double.eps)), 
+                    p.value = tst$p.value))
     }
 
     ret <- NULL
