@@ -1,4 +1,6 @@
 
+set.seed(290875)
+
 datLB <-
 structure(list(Site = c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 

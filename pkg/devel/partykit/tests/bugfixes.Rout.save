@@ -16,6 +16,8 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 Type 'q()' to quit R.
 
 > 
+> set.seed(290875)
+> 
 > datLB <-
 + structure(list(Site = c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
 + 1L, 1L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 
@@ -338,6 +340,7 @@ Type 'q()' to quit R.
 > library("partykit")
 Loading required package: grid
 Loading required package: libcoin
+Loading required package: mvtnorm
 > library("rpart")
 > 
 > fac <- c(1,3,6)
@@ -954,7 +957,6 @@ Number of terminal nodes: 7
 > 
 > detach(package:partykit)
 > library("party")
-Loading required package: mvtnorm
 Loading required package: modeltools
 Loading required package: stats4
 Loading required package: strucchange
@@ -1006,4 +1008,4 @@ Number of observations:  60
 > 
 > proc.time()
    user  system elapsed 
-  3.184   0.076   3.286 
+  2.640   0.032   2.669 
