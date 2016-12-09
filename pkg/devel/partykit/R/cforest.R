@@ -57,7 +57,7 @@ cforest <- function
     cluster,
     strata,
     na.action = na.pass,
-    control = ctree_control(...),
+    control = ctree_control(mincriterion = 0, ...),
     ytrafo = NULL, 
     scores = NULL, 
     ntree = 500L, 
