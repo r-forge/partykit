@@ -11,9 +11,8 @@
 }
 
 \usage{
-cforest(formula, data, weights, subset, na.action = na.pass, 
-        control = ctree_control(teststat = "quad",
-                                testtype = "Univ", mincriterion = 0, ...), 
+cforest(formula, data, weights, subset, offset, cluster, strata, 
+        na.action = na.pass, control = ctree_control(...),
         ytrafo = NULL, scores = NULL, ntree = 500L, 
         perturb = list(replace = FALSE, fraction = 0.632), 
         mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL, 
@@ -40,6 +39,10 @@ cforest(formula, data, weights, subset, na.action = na.pass,
     else. Alternatively, \code{weights} can be a double matrix defining
     case weights for all \code{ncol(weights)} trees in the forest directly.
     This requires more storage but gives the user more control.}
+  \item{offset}{ an optional vector of offset values.}
+  \item{cluster}{ an optional factor indicating independent clusters.
+                  Highly experimental, use at your own risk.}
+  \item{strata}{ an optional factor for stratified sampling.}
   \item{na.action}{a function which indicates what should happen when the data
                    contain missing value.}
   \item{control}{a list with control parameters, see

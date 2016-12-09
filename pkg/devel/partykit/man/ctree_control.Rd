@@ -7,26 +7,52 @@
 
 }
 \usage{
-ctree_control(teststat = c("quad", "max"),
-    testtype = c("Bonferroni", "Univariate", "Teststatistic"),
-    mincriterion = 0.95, minsplit = 20L, minbucket = 7L, 
-    minprob = 0.01, stump = FALSE, maxsurrogate = 0L, mtry = Inf, 
-    maxdepth = Inf, multiway = FALSE, splittry = 2L, majority = FALSE,
+ctree_control(teststat = c("quadratic", "maximum"),
+    splitstat = c("quadratic", "maximum"),
+    splittest = FALSE,
+    testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
+    pargs = GenzBretz(),
+    nmax = Inf, alpha = 0.05, mincriterion = 1 - alpha,
+    logmincriterion = log(mincriterion), minsplit = 20L, minbucket = 7L, 
+    minprob = 0.01, stump = FALSE, lookahead = FALSE, nresample = 9999L, 
+    MIA = FALSE, maxsurrogate = 0L, mtry = Inf, maxdepth = Inf, 
+    multiway = FALSE, splittry = 2L, majority = FALSE, caseweights = TRUE,
     applyfun = NULL, cores = NULL)
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
-                       to be applied. }
+                       to be applied for variable selection. }
+  \item{splitstat}{ a character specifying the type of the test statistic
+                       to be applied for splitpoint selection. Prior to
+                       version 2.0-0, \code{maximum} was implemented only.}
+  \item{splittest}{ a logical changing linear (the default \code{FALSE}) to 
+                    maximally selected statistics for
+                    variable selection.}
   \item{testtype}{ a character specifying how to compute the distribution of
                    the test statistic. }
+  \item{pargs}{ control parameters for the computation of multivariate
+                normal probabilities, see \code{\link[mvtnorm]{GenzBretz}}.}
+  \item{nmax}{ an integer defining the number of bins each variable
+               is divided into prior to tree building. The default \code{Inf}
+               does not apply any binning. Highly experimental, use at your own
+               risk.}
+  \item{alpha}{ a double, the significance level for variable selection.}
   \item{mincriterion}{ the value of the test statistic or 1 - p-value that
                        must be exceeded in order to implement a split. }
+  \item{logmincriterion}{ the value of the test statistic or 1 - p-value that
+                       must be exceeded in order to implement a split on 
+                       the log-scale. }
   \item{minsplit}{ the minimum sum of weights in a node in order to be considered
                    for splitting. }
   \item{minbucket}{ the minimum sum of weights in a terminal node. }
   \item{minprob}{ proportion of observations needed to establish a terminal node.}
   \item{stump}{ a logical determining whether a stump (a tree with three
                 nodes only) is to be computed. }
+  \item{lookahead}{ a logical determining whether a split is implemented only
+                    after checking if tests in both daugther nodes can be performed.}
+  \item{nresample}{ number of permutations for \code{testtype = "MonteCarlo"}.}
+  \item{MIA}{ a logical determining the treatment of \code{NA} as a category in split,
+              see Twala et al. (2008).}
   \item{maxsurrogate}{ number of surrogate splits to evaluate. Note the
                        currently only surrogate splits in ordered
                        covariables are implemented. }
@@ -43,6 +69,7 @@ ctree_control(teststat = c("quad", "max"),
                    daughter node because of missing information are randomly
                    assigned (following the node distribution). If \code{FALSE},
                    they go with the majority (the default in \code{\link[party]{ctree}}).}
+  \item{caseweights}{ a logical interpreting \code{weights} as case weights.}
   \item{applyfun}{an optional \code{\link[base]{lapply}}-style function with arguments
                   \code{function(X, FUN, \dots)}. It is used for computing the variable selection criterion. 
                   The default is to use the basic \code{lapply}
@@ -84,5 +111,12 @@ ctree_control(teststat = c("quad", "max"),
 }
 \value{
   A list.
+}
+\references{
+
+  B. E. T. H. Twala, M. C. Jones, and D. J. Hand (2008), 
+  Good Methods for Coping with Missing Data in Decision Trees,
+  \emph{Pattern Recognition Letters}, \bold{29}(7), 950--956.
+
 }
 \keyword{misc}

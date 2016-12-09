@@ -10,8 +10,9 @@
 }
 
 \usage{
-ctree(formula, data, weights, subset, na.action = na.pass,
-    control = ctree_control(\dots), ytrafo = NULL, scores = NULL, \dots)
+ctree(formula, data, weights, subset, offset, cluster, 
+    na.action = na.pass, control = ctree_control(\dots), ytrafo = NULL, 
+    converged = NULL, scores = NULL, \dots)
 }
 
 \arguments{
@@ -22,6 +23,9 @@ ctree(formula, data, weights, subset, na.action = na.pass,
   \item{weights}{ an optional vector of weights to be used in the fitting
                   process. Only non-negative integer valued weights are
                   allowed.}
+  \item{offset}{ an optional vector of offset values.}
+  \item{cluster}{ an optional factor indicating independent clusters. 
+                  Highly experimental, use at your own risk.}
   \item{na.action}{a function which indicates what should happen when the data
                    contain missing value.}
   \item{control}{a list with control parameters, see
@@ -34,6 +38,9 @@ ctree(formula, data, weights, subset, na.action = na.pass,
                 \code{weights}. In this case, the transformation is computed for
                 every node. This feature is experimental and the user interface 
                 likely to change.}
+  \item{converged}{an optional function for checking user-defined criteria
+                   before splits are implemented. This is not to be used and
+                   very likely to change.}
   \item{scores}{an optional named list of scores to be attached to ordered
                 factors.}
   \item{\dots}{arguments passed to \code{\link{ctree_control}}.}
