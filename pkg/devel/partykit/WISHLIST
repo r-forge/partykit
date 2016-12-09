@@ -1,4 +1,7 @@
 
+ o cforest: importance = list(nPerm = 1)
+   proximity via predict only?
+
 - test/ctree-ctree.R: check results and make this a permanent test against
   party (but only doing the troublesome checks) (TH)
 
@@ -13,9 +16,9 @@ x - model.frame in predict -> na.action?
     call, na.action, ...) (Z)
 
 - ctree (TH):
-  - MonteCarlo
+x  - MonteCarlo
 x  - ytrafo 
-  - ytrafo in inner nodes? with weights?
+x  - ytrafo in inner nodes? with weights?
   - xtrafo
 x  - scores for ordinal variables
 x  - nice predictions for multivariate responses
