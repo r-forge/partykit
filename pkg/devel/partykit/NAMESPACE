@@ -4,6 +4,7 @@ import("graphics")
 import("grid")
 import("Formula")
 import("libcoin")
+import("mvtnorm")
 importFrom("survival",
   "survfit"
 )
