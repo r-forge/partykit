@@ -1,5 +1,0 @@
-
- o try weights with coin
-
- o cforest: importance = list(nPerm = 1)
-   proximity via predict only?
