@@ -3,6 +3,18 @@
 \title{NEWS file for the \pkg{partykit} package}
 
 \section{Changes in Version 2.0-0 (2017-mm-dd)}{
+  \subsection{New Features}{
+    \itemize{
+      \item{Quadratic test statistics for splitpoint selection are now available for \code{ctree} via 
+            \code{ctree_control(splitstat = "quadratic")}.}
+      \item{Maximally selected test statistics for variable selection are now available for \code{ctree} via 
+            \code{ctree_control(splittest = TRUE)}.}
+      \item{Missing values can be treated as a separate category, also
+            for splits in numeric variables in \code{ctree} via
+            \code{ctree_control(MIA = TRUE)}.}
+     \item{New \code{offset} argument in \code{ctree}.}
+    }
+  }
   \itemize{
     \item{Use \pkg{libcoin} for computing linear test statistics 
           and p-values for \code{ctree}.}
