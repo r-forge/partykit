@@ -102,7 +102,8 @@
                          B = B, varonly = varonly)
     ### compute test statistic and log(1 - p-value)
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                  lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+                  lower = TRUE, log = TRUE, ordered = ORDERED, 
+                  minbucket = minbucket, pargs = ctrl$pargs)
 
     if (MIA) {
         ### compute linear statistic + expecation and covariance
@@ -111,14 +112,16 @@
                              B = B, varonly = varonly)
         ### compute test statistic and log(1 - p-value)
         tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                           lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+                          lower = TRUE, log = TRUE, ordered = ORDERED, 
+                          minbucket = minbucket, pargs = ctrl$pargs)
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
                              weights = weights, block = cluster,
                              B = B, varonly = varonly)
         ### compute test statistic and log(1 - p-value)
         tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                           lower = TRUE, log = TRUE, ordered = ORDERED, minbucket = minbucket)
+                           lower = TRUE, log = TRUE, ordered = ORDERED, 
+                           minbucket = minbucket, pargs = ctrl$pargs)
     }
 
     if (!splitonly) {
@@ -488,6 +491,7 @@ ctree_control <- function
     splittest = FALSE,
     testtype = c("Bonferroni", "MonteCarlo", 
                  "Univariate", "Teststatistic"),
+    pargs = GenzBretz(),
     nmax = Inf, 
     alpha = 0.05, 
     mincriterion = 1 - alpha, 
@@ -525,7 +529,7 @@ ctree_control <- function
                    splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
-      list(teststat = teststat, splitstat = splitstat, splittest = splittest,
+      list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
            testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead))
 }
 
