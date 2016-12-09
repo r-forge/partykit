@@ -16,7 +16,8 @@ node_inner <- function(obj, id = TRUE, pval = TRUE, abbreviate = FALSE, fill = "
 
     ## FIXME: make more flexible rather than special-casing p-value
     if(pval) {
-      pval <- suppressWarnings(try(!is.null(info_node(node)$p.value), silent = TRUE))
+      nullna <- function(x) is.null(x) || is.na(x)
+      pval <- suppressWarnings(try(!nullna(info_node(node)$p.value), silent = TRUE))
       pval <- if(inherits(pval, "try-error")) FALSE else pval
     }
     if(pval) {
