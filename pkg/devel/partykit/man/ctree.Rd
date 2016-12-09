@@ -146,27 +146,33 @@ table(predict(irisct), iris$Species)
 tr <- predict(irisct, newdata = iris[1:10,], type = "prob")
 
 ### survival analysis
-if (require("TH.data") && require("survival") && require("coin")) {
+if (require("TH.data") && require("survival") && 
+    require("coin") && require("Formula")) {
 
   data("GBSG2", package = "TH.data")
-  GBSG2ct <- ctree(Surv(time, cens) ~ ., data = GBSG2)
+  (GBSG2ct <- ctree(Surv(time, cens) ~ ., data = GBSG2))
   predict(GBSG2ct, newdata = GBSG2[1:2,], type = "response")	  
   plot(GBSG2ct)
 
   ### with weight-dependent log-rank scores
-  ctree(Surv(time, cens) ~ ., data = GBSG2)
-
   ### log-rank trafo for observations in this node only (= weights > 0)
-  h <- function(data, weights) {
-    s <- data[, "Surv(time, cens)"]
-    s <- logrank_trafo(s[weights > 0,])
-    r <- rep(0, nrow(data))
-    r[weights > 0] <- s
-    matrix(as.double(r), ncol = 1)
+  h <- function(formula, data, ...) {
+      f <- Formula(formula)
+      mf <- model.frame(formula = f, data = data)
+      s <- model.part(f, data = mf, lhs = 1, rhs = 0)[[1]]
+      weights <- 1:nrow(mf)
+      return(function(subset, ...) {
+          w <- as.integer(weights)
+          w[-subset] <- 0L
+          s <- logrank_trafo(s[w > 0,,drop = FALSE])
+          r <- rep(0, nrow(mf))
+          r[w > 0] <- s
+          list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
+      })
   }
 
   ### very much the same tree
-  ctree(Surv(time, cens) ~ ., data = GBSG2, ytrafo = list("time" = h))
+  (ctree(Surv(time, cens) ~ ., data = GBSG2, ytrafo = h))
 }
 
 ### multivariate responses
