@@ -94,6 +94,8 @@
                    teststat == "maxtype"
         pvalue <- ctrl$testtype != "Teststatistic"
     }
+    ### see libcoin/src/C_ordered_Xfactor_block
+    if (length(cluster) > 0) varonly <- FALSE 
 
     ### if (MIA) use tst as fallback
     ### compute linear statistic + expecation and covariance
