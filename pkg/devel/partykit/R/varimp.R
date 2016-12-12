@@ -16,12 +16,16 @@ logLik.constparty <- function(object, newdata, weights, ...) {
                (y - tapply(y, nd, mean)[pnd])^2
            },
           "factor" = {
-              probs <- do.call("rbind", tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              -log(pmax(probs[cbind(1:length(y), unclass(y))], sqrt(.Machine$double.eps)))
+              probs <- do.call("rbind", 
+                  tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
+              -log(pmax(probs[cbind(1:length(y), unclass(y))], 
+                        sqrt(.Machine$double.eps)))
           },
           "ordered" = {
-              probs <- do.call("rbind", tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              -log(pmax(probs[cbind(1:length(y), unclass(y))], sqrt(.Machine$double.eps)))
+              probs <- do.call("rbind", 
+                  tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
+              -log(pmax(probs[cbind(1:length(y), unclass(y))], 
+                        sqrt(.Machine$double.eps)))
           },
           "Surv" = stop("not yet implemented"),
           stop("not yet implemented")   
@@ -49,7 +53,7 @@ miscls <- function(object, newdata, weights, ...) {
 varimp <- function(object, nperm = 1L, ...)
     UseMethod("varimp")
 
-varimp.constparty <- function(object, nperm = 1L, weights, risk = logLik, conditions = NULL, 
+varimp.constparty <- function(object, nperm = 1L, risk = logLik, conditions = NULL, 
                               mincriterion = 0, ...) {
 
     if (mincriterion > 0) 
@@ -64,17 +68,19 @@ varimp.constparty <- function(object, nperm = 1L, weights, risk = logLik, condit
     ret <- numeric(length(psplitvars))
     names(ret) <- psplitvars
 
-    for (p in 1:nperm) {
-        for (vn in psplitvars) {
-            if (is.null(conditions[[vn]])) {
+    for (vn in psplitvars) {
+        cvn <- conditions[[vn]]
+        if (is.null(cvn)) {
+            for (p in 1:nperm)
                 ret[vn] <- ret[vn] + risk(object, newdata = object$data, 
                                           perm = vn, ...)
-            } else {
-                perm <- do.call("c", tapply(1:nrow(object$data), conditions[[vn]], sample))
-                perm <- list(perm)
-                names(perm) <- vn
-                ret[vn] <- ret[vn] + risk(object, newdata = object$data, 
-                                          perm = perm, ...)
+        } else {
+            blocks <- .get_psplits(object, cvn) 
+            for (p in 1:nperm) {
+                perm <- do.call("c", tapply(1:nrow(object$data), blocks, sample))
+                tmp <- object$data
+                tmp[[vn]] <- tmp[[vn]][perm]
+                ret[vn] <- ret[vn] + risk(object, newdata = tmp, ...)
            }
         }
     }
@@ -83,19 +89,82 @@ varimp.constparty <- function(object, nperm = 1L, weights, risk = logLik, condit
     ret
 }
 
-varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = logLik, ...) {
+gettree <- function(object, tree = 1L, ...)
+    UseMethod("gettree")
+
+gettree.cforest <- function(object, tree = 1L, ...) {
+    ret <- party(object$nodes[[tree]], data = object$data, fitted = object$fitted)
+    class(ret) <- c("constparty", class(ret))
+    ret
+}
+
+.create_cond_list <- function(object, threshold) {
+
+    d <- object$data
+    response <- names(d)[attr(object$terms, "response")]
+    xnames <- all.vars(object$terms)
+    xnames <- xnames[xnames != response]
+
+    ret <- lapply(xnames, function(x) {
+        tmp <- ctree(as.formula(paste(x, "~", paste(xnames[xnames != x], collapse = "+"))),
+                     data = d, control = ctree_control(teststat = "quad", testtype = "Univariate",
+                                                       stump = TRUE))
+        pval <- info_node(node_party(tmp))$criterion["p.value",]
+        pval[is.na(pval)] <- 1
+        ret <- names(pval)[pval < threshold]
+        if (length(ret) == 0) return(NULL)
+        return(ret)
+    })
+    names(ret) <- xnames
+    return(ret)
+}
+
+.get_psplits <- function(object, xnames) {
+
+    d <- object$data
+    ret <- lapply(xnames, function(xn) {
+        id <- which(colnames(d) == xn)
+        psplits <- nodeapply(node_party(object), 
+            ids = nodeids(node_party(object)),
+            FUN = function(x) {
+                if (is.null(x)) return(NULL)
+                if (is.terminal(x)) return(NULL)
+                if (split_node(x)$varid == id)
+                    return(split_node(x))
+                return(NULL)
+            })
+        psplits <- psplits[!sapply(psplits, is.null)]
+        if (length(psplits) > 0)
+            return(do.call("interaction", lapply(psplits, kidids_split, data = d))[, drop = TRUE])
+        return(NULL)
+    })
+    ret <- ret[!sapply(ret, is.null)]
+    if (length(ret) > 0)
+        return(factor(do.call("interaction", ret)[, drop = TRUE], exclude = NULL))
+    return(NULL)
+}
+
+varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = logLik, conditional = FALSE, 
+                           threshold = .2, ...) {
 
     ret <- matrix(0, nrow = length(object$nodes), ncol = ncol(object$data))
     colnames(ret) <- names(object$data)
 
+    if (conditional) {
+        conditions <- .create_cond_list(object, threshold)
+    } else {
+        conditions <- NULL
+    }
+
     for (b in 1:length(object$nodes)) {
-        tree <- party(object$nodes[[b]], data = object$data, fitted = object$fitted)
-        class(tree) <- c("constparty", class(tree))
+        tree <- gettree(object, b)
         if (OOB) {
             oobw <- as.integer(object$weights[[b]] == 0)
-            vi <- varimp(tree, nperm = nperm, risk = risk, weights = oobw, ...)
+            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions, 
+                         weights = oobw, ...)
         } else {
-            vi <- varimp(tree, nperm = nperm, risk = risk, ...)
+            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions, 
+                         ...)
         }
         ret[b, match(names(vi), colnames(ret))] <- vi
     }
@@ -108,6 +177,9 @@ library("partykit")
 airq <- subset(airquality, !is.na(Ozone))
 airct <- ctree(Ozone ~ ., data = airq)
 
+
+predict(airct, newdata = airq, perm = "Temp")
+
 mean((airq$Ozone - predict(airct))^2)
 logLik(airct)
 logLik(airct, airq, perm = "Temp")
@@ -118,16 +190,10 @@ aircf <- cforest(Ozone ~ ., data = airq, ntree = 100)
 
 varimp(aircf)
 
-#library("party")
-#
-#aircf2 <- party::cforest(Ozone ~ ., data = airq)
-#party::varimp(aircf2)
+varimp(aircf, conditional = TRUE)
 
 ict <- cforest(Species ~ ., data = iris)
 varimp(ict)
 varimp(ict, risk = miscls)
+varimp(ict, risk = miscls, conditional = TRUE)
 
-library("party")
-
-ict2 <- party::cforest(Species ~ ., data = iris)
-party::varimp(ict2)
