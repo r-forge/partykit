@@ -76,8 +76,10 @@ varimp.constparty <- function(object, nperm = 1L, risk = logLik, conditions = NU
                                           perm = vn, ...)
         } else {
             blocks <- .get_psplits(object, cvn) 
+            if (length(blocks) == 0) blocks <- rep(1, nrow(object$data))
+            resample <- function(x, ...) x[sample.int(length(x), ...)]
             for (p in 1:nperm) {
-                perm <- do.call("c", tapply(1:nrow(object$data), blocks, sample))
+                perm <- do.call("c", tapply(1:nrow(object$data), blocks, resample))
                 tmp <- object$data
                 tmp[[vn]] <- tmp[[vn]][perm]
                 ret[vn] <- ret[vn] + risk(object, newdata = tmp, ...)
@@ -177,9 +179,6 @@ library("partykit")
 airq <- subset(airquality, !is.na(Ozone))
 airct <- ctree(Ozone ~ ., data = airq)
 
-
-predict(airct, newdata = airq, perm = "Temp")
-
 mean((airq$Ozone - predict(airct))^2)
 logLik(airct)
 logLik(airct, airq, perm = "Temp")
@@ -195,5 +194,7 @@ varimp(aircf, conditional = TRUE)
 ict <- cforest(Species ~ ., data = iris)
 varimp(ict)
 varimp(ict, risk = miscls)
+
+set.seed(29)
 varimp(ict, risk = miscls, conditional = TRUE)
 
