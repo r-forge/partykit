@@ -176,7 +176,7 @@ varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = logLik, condit
 library("partykit")
 
 ### regression
-airq <- subset(airquality, !is.na(Ozone))
+airq <- subset(airquality, complete.cases(airquality))
 airct <- ctree(Ozone ~ ., data = airq)
 
 mean((airq$Ozone - predict(airct))^2)
