@@ -37,6 +37,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     m$family <- m$ocontrol <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
+    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("mob")
     rval <- eval(m, parent.frame())
   }
@@ -91,6 +92,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # m$family <- m$ocontrol <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
+    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
   
