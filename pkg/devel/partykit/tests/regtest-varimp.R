@@ -1,4 +1,6 @@
+
 library("partykit")
+set.seed(290875)
 
 ### regression
 airq <- subset(airquality, complete.cases(airquality))

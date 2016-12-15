@@ -15,10 +15,12 @@ Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
 
+> 
 > library("partykit")
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+> set.seed(290875)
 > 
 > ### regression
 > airq <- subset(airquality, complete.cases(airquality))
@@ -31,32 +33,32 @@ Loading required package: mvtnorm
 > 
 > varimp(airct)
     Temp     Wind 
-666.0736 233.0749 
+705.5733 362.8331 
 > 
 > aircf <- cforest(Ozone ~ ., data = airq, ntree = 100)
 > 
 > varimp(aircf)
-     Ozone    Solar.R       Wind       Temp      Month        Day 
-  0.000000  91.214863 263.858221 876.764652  13.869959   4.581781 
+    Ozone   Solar.R      Wind      Temp     Month       Day 
+  0.00000  96.52545 258.02515 889.86298  18.65313  22.55868 
 > 
 > varimp(aircf, conditional = TRUE)
-      Ozone     Solar.R        Wind        Temp       Month         Day 
-   0.000000   87.323895  266.257429 1051.519331   13.286773    5.322417 
+     Ozone    Solar.R       Wind       Temp      Month        Day 
+   0.00000   94.30445  288.57149 1041.74139   17.94444   24.79951 
 > 
 > ict <- cforest(Species ~ ., data = iris, ntree = 100)
 > varimp(ict)
-Sepal.Length  Sepal.Width Petal.Length  Petal.Width      Species 
--0.001006119  0.003708886  7.369641608  1.150763396  0.000000000 
+ Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
+ 0.0023291422 -0.0007026725  7.3763262393  1.1134168332  0.0000000000 
 > varimp(ict, risk = "misclass")
  Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
--0.0006214286  0.0014357143  0.4071523810  0.3019738095  0.0000000000 
+-0.0004404762 -0.0004000000  0.4125261905  0.3023500000  0.0000000000 
 > 
 > set.seed(29)
 > varimp(ict, risk = "misclass", conditional = TRUE)
  Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
--0.0006214286  0.0014357143  0.3037595238  0.0998309524  0.0000000000 
+-0.0004404762 -0.0004000000  0.3027047619  0.1011000000  0.0000000000 
 > 
 > 
 > proc.time()
    user  system elapsed 
-  7.856   0.024   7.882 
+   7.72    0.02    7.74 
