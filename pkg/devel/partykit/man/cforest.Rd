@@ -269,7 +269,7 @@ if (require("TH.data") && require("survival")) {
     ### estimate conditional Kaplan-Meier curves
     print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
 
-    print(bst$nodes[[1]])
+    print(gettree(bst))
 }
 }
 }
