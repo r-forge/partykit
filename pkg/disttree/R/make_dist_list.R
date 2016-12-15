@@ -227,6 +227,7 @@ make_dist_list <- function(family, bd = NULL)
       e <- eval(e)
     }
     
+    # FIX ME: adapt for censored distribution
     # if("censored" %in% strsplit(family$family[2], split = " ")[[1]]) {
     #   e <- gsub("mean(y[,1])", "weighted.mean(y[,1], weights)", e, fixed = TRUE)
     # } else {
@@ -649,9 +650,9 @@ if(FALSE) {
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- c(eta[1], exp(eta[2]))
-    val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
-    if(log) val <- log(val)
-    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    # val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
+    # if(log) val <- log(val)
+    val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
@@ -765,7 +766,7 @@ if(FALSE) {
   ## FIX ME: additional input arguments "left" and "right"
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
     par <- c(eta[1], exp(eta[2]))
-    val <- crch::dcnorm(x = y[,1], mean = par[1], sd = par[2], left = left, right = right, log = log)
+    val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
       val <- sum(weights * val)
@@ -776,9 +777,8 @@ if(FALSE) {
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
     par <- c(eta[1], exp(eta[2]))          
-    # FIX ME: y[,1]
-    score <- cbind(crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "mu", left = left, right = right), 
-                   crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right))
+    score <- cbind(crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right), 
+                   crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right))
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
@@ -790,14 +790,14 @@ if(FALSE) {
   
   
   hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
-    ny <- dim(y)[1]
+    ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     
-    d2mu <- crch:::hcnorm(x = y[,1], mean = par[1], sd = par[2], which = "mu", left = left, right = right)
-    d2sigma <- crch:::hcnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-    dsigma <- crch:::scnorm(x = y[,1], mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
     
     d2ld.etamu2 <- sum(weights * d2mu)
     d2ld.etamu.d.etasigma <- 0  
@@ -840,7 +840,7 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    yc <- y[,1]
+    yc <- y
     yc[yc<0] <- 0  # optional ?
     if(is.null(weights)) {
       mu <- mean(yc)
@@ -877,6 +877,166 @@ if(FALSE) {
 
 
 
+## FIX ME: adapt initial values for Weibull distribution
+###### dist_list for Weibull distribution
+if(FALSE) {
+  
+  dist_list_weibull <- list()
+  
+  parnames <- c("mean", "scale")
+  etanames <- c("mean", "log(scale)")
+  
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    par <- c(eta[1], exp(eta[2]))
+    
+    if(any(par==Inf)) {
+      print(c(eta,"initial values are Inf"))
+      #par[2] <- 1
+      # par <- c(2,1)
+      return(1.7e308)   ### FIX
+    }
+    
+    # val <- 1/(par[2]*exp(par[1])) * (y/exp(par[1]))^(1/par[2]-1) * exp(-(y/exp(par[1]))^(1/par[2]))
+    # if(log) val <- log(val)
+    
+    val <- -eta[2] + expm1(-eta[2]) * log(y) - eta[1]*exp(-eta[2]) - (y/exp(eta[1]))^exp(-eta[2])
+    # (y/exp(eta[1]))^exp(-eta[2]) = exp(exp(-eta[2]) * (log(y) - eta[1]))
+    if(!log) val <- exp(val)
+    
+    # val <- survival:::dsurvreg(y, mean = par[1], scale = par[2])
+    # val <- dweibull(y, shape = 1/par[2], scale = exp(par[1]), log = log)
+    
+    # if(val<=0) print(c("negative val", eta))    ### FIX
+    #if(any(val == -Inf)) print(c("infinite values in ddist",par, y))
+    #if(any(is.na(val))) print(c("NAs in ddist", par, y))
+    #if(any(val == -Inf)) print(c("infinite values in ddist",par))
+    #if(any(is.na(val))) print(c("NAs in ddist", par))
+    
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val)
+    }
+    if(any(abs(val) == Inf) || any(is.na(val))) return(1.7e308)
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    par <- c(eta[1], exp(eta[2]))     
+    score_m <- (1/par[2]) * (-1 + (y/exp(par[1]))^(1/par[2]))
+    
+    # score_m <- exp(-eta[2] + log((y/exp(eta[1]))^exp(-eta[2]) -1))
+    
+    score_s <- ((-1/par[2]) - (log(y)-par[1])/(par[2]^2) * (1 - (y/exp(par[1]))^(1/par[2]))) * par[2]
+    score <- cbind(score_m, score_s)
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      # replace score with 1.7e308 because Inf*0 would lead to NaN
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score)
+    }
+    # if(any(is.null(score)) || any(is.na(score))) print(c("gr is NULL or NA", score, "y", y, eta, weights))
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(eta[1], exp(eta[2]))                           
+    
+    d2ld.etamu2 <- sum(weights * (-1/par[2]^2) * ((y/exp(par[1]))^(1/par[2])))
+    d2ld.etamu.d.etasigma <- sum(weights * (1/par[2]) * (1 - (y/exp(par[1]))^(1/par[2]) * (1 + (log(y)-par[1])/par[2])))
+    d2ld.etasigma2 <- sum(weights * 
+                            ((log(y)-par[1])/par[2]) * 
+                            (1 - (y/exp(par[1]))^(1/par[2]) * (1 + ((log(y)-par[1])/par[2]))))
+    #d2ld.etasigma2 <- sum(weights * 
+    #                        (log(y)-par[1])/par[2] - ((log(y)-par[1])/par[2]) * (y/exp(par[1]))^(1/par[2])
+    #                      - ((log(y)-par[1])/par[2])^2 * (y/exp(par[1]))^(1/par[2]))
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- survival:::psurvreg
+  qdist <- survival:::qsurvreg
+  rdist <- survival:::rsurvreg 
+  
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  ## FIX ME: adapt starting values for Weibull distribution
+  startfun <- function(y, weights = NULL){
+    
+    # the 0.632 quantile of the distribution is an estimator for lambda
+    # with lambda being the scale parameter in the rweibull parametrization
+    # -> mean = log(lambda)
+    # lambda <- if(is.null(weights)) quantile(y, p=0.632) else quantile(rep(y, round(weights)), p=0.632)
+    # mean <- log(lambda)
+    
+    # using the initial values for the exponential distribution (scale_survreg = 1)
+    # mean = log(1/lambda) with lambda being the rate parameter of the Exp. distribution
+    # (lambda = 1/scale_dweibull)
+    lambda <- if(is.null(weights)) length(y)/sum(y) else sum(weights)/sum(weights * y)
+    mean <- log(1/lambda)
+    
+    scale <- 1
+    starteta <- c(mean, log(scale))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_weibull <- list(family.name = "Weibull Distribution",
+                           ddist = ddist, 
+                           sdist = sdist, 
+                           hdist = hdist,
+                           pdist = pdist,
+                           qdist = qdist,
+                           rdist = rdist,
+                           link = link, 
+                           linkfun = linkfun, 
+                           linkinv = linkinv, 
+                           linkinvdr = linkinvdr,
+                           startfun = startfun,
+                           mle = mle
+  )
+}
+
+
+
+
+
 
 ###### dist_list for Poisson distribution
 if(FALSE) {
@@ -889,8 +1049,9 @@ if(FALSE) {
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- exp(eta)
-    val <- par^y / gamma(y+1) * exp(-par)
-    if(log) val <- log(val)
+    #val <- par^y / gamma(y+1) * exp(-par)
+    #if(log) val <- log(val)
+    val <- dpois(x = y, lambda = par, log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
@@ -995,8 +1156,9 @@ if(FALSE) {
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- exp(eta)
-    val <- par * exp(-par * y)
-    if(log) val <- log(val)
+    #val <- par * exp(-par * y)
+    #if(log) val <- log(val)
+    val <- dexp(x = y, rate = par, log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
@@ -1100,8 +1262,9 @@ if(FALSE) {
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
     par <- c(exp(eta[1]), exp(eta[2]))
-    val <- -par[1] * log(par[2]) + (par[1]-1) * log(y) - y / par[2] - lgamma(par[1])
-    if(!log) val <- exp(val)
+    # val <- -par[1] * log(par[2]) + (par[1]-1) * log(y) - y / par[2] - lgamma(par[1])
+    # if(!log) val <- exp(val)
+    val <- dgamma(x = y, shape = par[1], scale = par[2], log = log)
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
