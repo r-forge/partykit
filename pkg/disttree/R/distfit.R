@@ -55,23 +55,41 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   ## set up negative log-likelihood
   nll <- function(eta) {
     
-    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
-    if(inherits(rval, "try-error")) return(Inf)
-    if(any(is.na(rval))) return(Inf)
-    nloglik <- - sum(weights * rval)
+    #rval <- family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE)
     
-    #rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE), silent = TRUE))
-    #if(inherits(rval, "try-error")) return(Inf)
-    #if(is.na(rval)) return(Inf)
-    #nloglik <- - rval
-
-    return(nloglik)
-  }
+    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
+    if(inherits(rval, "try-error")) {
+      #print("try-error in ddist")
+      return(1.7e+308)
+    } else {
+      if(any(is.na(rval))) {
+        #print("NAs in ddist")
+        return(1.7e+308)
+      } else {
+        if(any(abs(rval) == Inf)) {
+          #print(c("Infinity in ddist"))
+          return(1.7e+308)
+        } else {
+          nloglik <- - sum(weights * rval)
+          if(abs(nloglik) == Inf) return(1.7e+308)
+          return(nloglik)
+        }
+      }
+    }
+  }  
   
   
   ## set up gradient
   grad <- function(eta) {
     gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
+    if(any(gr == -Inf)) {
+      gr[gr==-Inf] = -1
+      #print(c(eta,"gr = -Inf"))
+    }
+    if(any(gr ==  Inf)) {
+      gr[gr== Inf] =  1
+      #print(c(eta,"gr = Inf"))
+    }
     return(gr)
   }
   
@@ -87,8 +105,18 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   
   if(!family$mle) {
     ## optimize negative log-likelihood
-    opt <- optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
-                 hessian = (type.hessian == "numeric"), control = list(...))
+    opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "L-BFGS-B",
+                 hessian = (type.hessian == "numeric"), control = list(...)))
+    if(inherits(opt, "try-error")) {
+      #print("opt try-error with gr=grad, L-BFGS-B")
+      opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
+                       hessian = (type.hessian == "numeric"), control = list(...)))
+      if(inherits(opt, "try-error")) {
+        #print("opt try-error with gr = grad, BFGS")
+        opt <- optim(par = starteta, fn = nll, method = "BFGS",
+                         hessian = (type.hessian == "numeric"), control = list(...))
+      }
+    }
     
     ## extract parameters
     eta <- opt$par
@@ -110,10 +138,22 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   ## hess matrix (second-order partial derivatives of the (positive) log-likelihood function) and Hessian estimate for the variance-covariance matrix
   if(vcov) {
     if(is.null(family$hdist)) {
-      hess <- if(family$mle) {
-        -optim(par = eta, fn = nll, gr = grad, method = "BFGS", hessian = TRUE, control = list(...))$hessian
+      if(family$mle) {
+        nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "L-BFGS-B",
+                         hessian = TRUE, control = list(...))$hessian)
+        if(inherits(nhess, "try-error")) {
+          #print("opt try-error in hess with gr=grad, L-BFGS-B")
+          nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "BFGS",
+                       hessian = TRUE, control = list(...))$hessian)
+          if(inherits(nhess, "try-error")) {
+            #print("opt try-error in hess with gr=grad, BFGS")
+            nhess <- optim(par = eta, fn = nll, method = "BFGS",
+                               hessian = TRUE, control = list(...))$hessian
+          }
+        }
+        hess <- -nhess
       } else {
-        -opt$hessian
+        hess <- -opt$hessian
       }
     } else {
       hess <- family$hdist(y, eta, weights = weights)
@@ -388,6 +428,35 @@ if(FALSE) {
 }
 
 
+if(FALSE) {
+  
+  family <- NO()
+  y <- rNO(1000, mu = 5, sigma = 2)
+  ny <- length(y)
+  start <- c(2, 1)
+  weights <- rbinom(ny, 1, 0.75)
+  
+  df <- distfit(y, family, weights = weights, start = start)
+  df2 <- distfit(y, family = dist_list_normal, start = start)
+  df3 <- distfit(y, family, weights = weights, start = start, type.hessian = "numeric")
+  df4 <- distfit(y, family = dist_list_normal, start = start, type.hessian = "numeric")
+  
+  coef(df)
+  coef(df2)
+  coef(df3)
+  coef(df4)
+  vcov(df)
+  vcov(df2)
+  vcov(df3)
+  vcov(df4)
+  solve(vcov(df))
+  solve(vcov(df2))
+  solve(vcov(df3))
+  solve(vcov(df4))
+}
+
+
+
 
 
 if(FALSE){
@@ -434,6 +503,25 @@ if(FALSE){
     logLik(m2)
   }
 }
+
+
+
+if(FALSE){
+  library("disttree")
+  family <- dist_list_weibull
+  family$family.name
+  y <- survival:::rsurvreg(1000, mean = 5, scale = 2) 
+  # y <- rweibull(1000, shape = 1/2, scale = exp(5))
+  weights <- rbinom(length(y), 4, 0.8)
+  t <- distfit(y, family = family, weights = weights, vcov = TRUE, type.hessian = "numeric")
+  t$par
+  start <- c(3, 1)
+  ts <- distfit(y, family = family, weights = weights, start = start, vcov = FALSE)
+  ts$par
+
+  # different parametrizations in WEI, WEI2 and WEI3 (calculated based on mu, sigma)
+}
+
 
 
 
