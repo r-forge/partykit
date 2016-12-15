@@ -10,22 +10,22 @@ logLik.constparty <- function(object, newdata, weights, ...) {
     }
     ll <- switch(class(y)[1], 
            "integer" = {
-               (y - tapply(y, nd, mean)[pnd])^2
+               -(y - tapply(y, nd, mean)[pnd])^2
            },
            "numeric" = {
-               (y - tapply(y, nd, mean)[pnd])^2
+               -(y - tapply(y, nd, mean)[pnd])^2
            },
           "factor" = {
               probs <- do.call("rbind", 
                   tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              -log(pmax(probs[cbind(1:length(y), unclass(y))], 
+              log(pmax(probs[cbind(1:length(y), unclass(y))], 
                         sqrt(.Machine$double.eps)))
           },
           "ordered" = {
               probs <- do.call("rbind", 
                   tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              -log(pmax(probs[cbind(1:length(y), unclass(y))], 
-                        sqrt(.Machine$double.eps)))
+              log(pmax(probs[cbind(1:length(y), unclass(y))], 
+                       sqrt(.Machine$double.eps)))
           },
           "Surv" = stop("not yet implemented"),
           stop("not yet implemented")   
@@ -58,7 +58,8 @@ varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassif
 
     if (!is.function(risk)) {
         risk <- match.arg(risk)
-        risk <- switch(risk, "loglik" = logLik,
+        ### risk is _NEGATIVE_ log-likelihood
+        risk <- switch(risk, "loglik" = function(...) -logLik(...),
                              "misclassification" = miscls)
     }
 
@@ -102,6 +103,7 @@ gettree <- function(object, tree = 1L, ...)
 
 gettree.cforest <- function(object, tree = 1L, ...) {
     ret <- party(object$nodes[[tree]], data = object$data, fitted = object$fitted)
+    ret$terms <- object$terms
     class(ret) <- c("constparty", class(ret))
     ret
 }
