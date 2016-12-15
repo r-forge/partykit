@@ -53,8 +53,14 @@ miscls <- function(object, newdata, weights, ...) {
 varimp <- function(object, nperm = 1L, ...)
     UseMethod("varimp")
 
-varimp.constparty <- function(object, nperm = 1L, risk = logLik, conditions = NULL, 
+varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassification"), conditions = NULL, 
                               mincriterion = 0, ...) {
+
+    if (!is.function(risk)) {
+        risk <- match.arg(risk)
+        risk <- switch(risk, "loglik" = logLik,
+                             "misclassification" = miscls)
+    }
 
     if (mincriterion > 0) 
         stop("mincriterion not yet implemented") ### use nodeprune
@@ -146,8 +152,8 @@ gettree.cforest <- function(object, tree = 1L, ...) {
     return(NULL)
 }
 
-varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = logLik, conditional = FALSE, 
-                           threshold = .2, ...) {
+varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"), 
+                           conditional = FALSE, threshold = .2, ...) {
 
     ret <- matrix(0, nrow = length(object$nodes), ncol = ncol(object$data))
     colnames(ret) <- names(object$data)
@@ -172,29 +178,4 @@ varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = logLik, condit
     }
     colMeans(ret)
 }
-
-library("partykit")
-
-### regression
-airq <- subset(airquality, complete.cases(airquality))
-airct <- ctree(Ozone ~ ., data = airq)
-
-mean((airq$Ozone - predict(airct))^2)
-logLik(airct)
-logLik(airct, airq, perm = "Temp")
-
-varimp(airct)
-
-aircf <- cforest(Ozone ~ ., data = airq, ntree = 100)
-
-varimp(aircf)
-
-varimp(aircf, conditional = TRUE)
-
-ict <- cforest(Species ~ ., data = iris)
-varimp(ict)
-varimp(ict, risk = miscls)
-
-set.seed(29)
-varimp(ict, risk = miscls, conditional = TRUE)
 

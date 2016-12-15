@@ -1,5 +1,7 @@
 \name{cforest}
 \alias{cforest}
+\alias{gettree}
+\alias{gettree.cforest}
 \alias{predict.cforest}
 \encoding{latin1}
 
@@ -20,6 +22,7 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
 \method{predict}{cforest}(object, newdata = NULL, 
         type = c("response", "prob", "weights", "node"),
         OOB = FALSE, FUN = NULL, simplify = TRUE, ...)
+\method{gettree}{cforest}(object, tree = 1L, ...)
 }
 
 \arguments{
@@ -110,6 +113,7 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
     a logical indicating whether the resulting list
                    of predictions should be converted to a suitable
                    vector or matrix (if possible).}
+  \item{tree}{ an integer, the number of the tree to extract from the forest.}
   \item{\dots}{ additional arguments. }
 }
 

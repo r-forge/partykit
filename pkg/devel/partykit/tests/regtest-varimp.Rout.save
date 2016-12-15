@@ -1,0 +1,62 @@
+
+R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library("partykit")
+Loading required package: grid
+Loading required package: libcoin
+Loading required package: mvtnorm
+> 
+> ### regression
+> airq <- subset(airquality, complete.cases(airquality))
+> airct <- ctree(Ozone ~ ., data = airq)
+> 
+> mean((airq$Ozone - predict(airct))^2)
+[1] 374.0113
+> #logLik(airct)
+> #logLik(airct, airq, perm = "Temp")
+> 
+> varimp(airct)
+    Temp     Wind 
+666.0736 233.0749 
+> 
+> aircf <- cforest(Ozone ~ ., data = airq, ntree = 100)
+> 
+> varimp(aircf)
+     Ozone    Solar.R       Wind       Temp      Month        Day 
+  0.000000  91.214863 263.858221 876.764652  13.869959   4.581781 
+> 
+> varimp(aircf, conditional = TRUE)
+      Ozone     Solar.R        Wind        Temp       Month         Day 
+   0.000000   87.323895  266.257429 1051.519331   13.286773    5.322417 
+> 
+> ict <- cforest(Species ~ ., data = iris, ntree = 100)
+> varimp(ict)
+Sepal.Length  Sepal.Width Petal.Length  Petal.Width      Species 
+-0.001006119  0.003708886  7.369641608  1.150763396  0.000000000 
+> varimp(ict, risk = "misclass")
+ Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
+-0.0006214286  0.0014357143  0.4071523810  0.3019738095  0.0000000000 
+> 
+> set.seed(29)
+> varimp(ict, risk = "misclass", conditional = TRUE)
+ Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
+-0.0006214286  0.0014357143  0.3037595238  0.0998309524  0.0000000000 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+  7.856   0.024   7.882 
