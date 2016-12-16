@@ -93,7 +93,7 @@ varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassif
            }
         }
     }
-    ret <- (ret - risk(object)) / nperm
+    ret <- (ret - risk(object, newdata = object$data)) / nperm
 
     ret
 }
