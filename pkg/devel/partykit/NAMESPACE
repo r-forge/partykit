@@ -159,6 +159,7 @@ S3method("as.simpleparty", "constparty")
 S3method("plot", "constparty")
 S3method("predict_party", "constparty")
 S3method("print", "constparty")
+S3method("varimp", "constparty")
 
 ## methods for class simpleparty
 S3method("as.simpleparty", "simpleparty")
