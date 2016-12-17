@@ -1,5 +1,7 @@
 library(foreign)
 library(glmertree)
+library(lmerTest)
+source("C:\\Users\\tobii\\Desktop\\swReg\\glmertree\\R\\glmertree.R")
 
 # DATA PREPARATION
 metadata <- read.dta("Database IPDMA CBT PHA Version 11.dta")
@@ -32,6 +34,15 @@ lmer_f <- lmertree(HRSDt1 ~ Tx_group | (1 | studyid) + offset(HRSDfit) |
 plot(lm_f); print(lm_f)
 plot(lm_o); print(lm_o)
 plot(lmer_f); print(lmer_f)
+
+## Fit GLMM wit h pre-specified interactions:
+metadata2 <- metadata
+metadata2$education <- as.numeric(metadata2$education)
+GLMM <- lmer(HRSDt1 - HRSDfit ~ (1 | studyid) +  Tx_group*(Age + Gender + education + 
+           ComorbidAnxietyDisorder + HRSDt0), data = metadata2)
+summary(GLMM)
+
+
 
 ## calculate predictions
 metadata$lmtreepred <- predict(lm_f, newdata = metadata)
@@ -82,6 +93,10 @@ testdata <- list()
 traindata <- list()
 lmertrees <- list()
 lmtrees <- list()
+GLMMs <- list()
+GLMMs2 <- list()
+traindata2 <- list()
+testdata2 <- list()
 for (i in 1:50) {
   print(i)
   trainids <- samplething$sample.index[[i]]
@@ -92,35 +107,71 @@ for (i in 1:50) {
   traindata[[i]]$HRSDfit <- fitted(lm(HRSDt1 ~ HRSDt0, data = traindata[[i]]))
   testdata[[i]]$HRSDfit <- predict(lm(HRSDt1 ~ HRSDt0, data = traindata[[i]]), newdata = testdata[[i]])
 
+  # fit GLMM:
+  traindata2[[i]] <- traindata[[i]]
+  traindata2[[i]]$education <- as.numeric(traindata2[[i]]$education)
+  testdata2[[i]] <- testdata[[i]]
+  testdata2[[i]]$education <- as.numeric(testdata2[[i]]$education)
+  
+  traindata2[[i]] <- data.frame(studyid = traindata2[[i]]$studyid, 
+                                HRSDt1 = traindata2[[i]]$HRSDt1,
+                                HRSDfit = traindata2[[i]]$HRSDfit,
+                                model.matrix(~ Tx_group*(Age + Gender + education + 
+                                                           ComorbidAnxietyDisorder + HRSDt0), 
+                                             data  = traindata2[[i]]))
+  
+  testdata2[[i]] <- data.frame(studyid = testdata2[[i]]$studyid, 
+                               HRSDt1 = testdata2[[i]]$HRSDt1,
+                               HRSDfit = testdata2[[i]]$HRSDfit,
+                               model.matrix(~Tx_group*(Age + Gender + education + 
+                                                         ComorbidAnxietyDisorder + HRSDt0), 
+                                            data  = testdata2[[i]]))
+  
+  newform <- formula(paste("(HRSDt1 - HRSDfit) ~ (1|studyid) + ", 
+                           paste(names(traindata2[[i]])[-(1:4)], collapse = " + ")))
+  
+  GLMMs[[i]] <- lmer(newform, data = traindata2[[i]])
+  
+  newform2 <- formula(paste("(HRSDt1 - HRSDfit) ~ (1|studyid) + ", 
+                            paste(rownames(summary(GLMMs[[1]])$coefficients)[-1][summary(GLMMs[[1]])$coefficients[-1,"Pr(>|t|)"] < .05], 
+                                  collapse = " + ")))
+  
+  GLMMs2[[i]] <- lmer(newform2, data = traindata2[[i]])
+  # calculate GLMM predictions:
+  testdata[[i]]$GLMMpreds <- predict(GLMMs2[[i]], newdata = testdata2[[i]])
+  
   # grow lmtree
   lmtrees[[i]] <- lmtree(HRSDt1 ~ Tx_group + offset(HRSDfit) | Age + Gender + 
                            education + ComorbidAnxietyDisorder + HRSDt0, data = traindata[[i]])  
   # calculate lmtree predictions
   testdata[[i]]$lmtreepreds <- predict(lmtrees[[i]], newdata = testdata[[i]])
 
-  ## grow lmertree
+  # grow lmertree
   lmertrees[[i]] <- lmertree(HRSDt1 ~ Tx_group | (1 | studyid) + offset(HRSDfit) | 
                               Age + Gender + education + ComorbidAnxietyDisorder + HRSDt0,
                             data = traindata[[i]], ranefstart = traindata[[i]]$HRSDfit)
  
   # calculate lmertree predictions
-  testdata[[i]]$lmertreepreds <- predict(lmertrees[[i]]$tree, newdata = testdata[[i]]) + 
-    predict(lmertrees[[i]]$lmer, newdata = testdata[[i]])   
+  testdata[[i]]$lmertreepreds <- predict(lmertrees[[i]], newdata = testdata[[i]])
 }  
+
 
 
 ## Assess 50-fold CV results
 lmtreecors <- list()
 lmertreecors <- list()
+GLMMcors <- list()
 for (i in 1:50){
   lmertreecors[[i]] <- cor(testdata[[i]]$lmertreepreds, testdata[[i]]$HRSDt1)
   lmtreecors[[i]] <- cor(testdata[[i]]$lmtreepreds, testdata[[i]]$HRSDt1)  
+  GLMMcors[[i]] <- cor(testdata[[i]]$GLMMpreds, testdata[[i]]$HRSDt1)
 }
 mean(unlist(lmtreecors))
 mean(unlist(lmertreecors))
+mean(unlist(GLMMcors))
 var(unlist(lmtreecors))
 var(unlist(lmertreecors))
-
+var(unlist(GLMMcors))
 
 
 
@@ -144,4 +195,7 @@ summary(s_lm_tree)
 plot(s_lm_tree)
 summary(s_lmer_tree)
 plot(s_lmer_tree)
+
+
+
 
