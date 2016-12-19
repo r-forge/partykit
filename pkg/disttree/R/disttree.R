@@ -34,7 +34,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     ## call mob
     m <- match.call(expand.dots = FALSE)
     m$fit <- dist_family_fit
-    m$family <- m$ocontrol <- NULL
+    m$family <- NULL
+    # m$family <- m$ocontrol <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
@@ -88,7 +89,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     ## call ctree
     m <- match.call(expand.dots = FALSE)
     m$ytrafo <- modelscores_decor
-    m$ocontrol <- NULL
+    # m$ocontrol <- NULL
     # m$family <- m$ocontrol <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
