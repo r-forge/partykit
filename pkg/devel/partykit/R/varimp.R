@@ -78,20 +78,16 @@ varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassif
     for (vn in psplitvars) {
         cvn <- conditions[[vn]]
         if (is.null(cvn)) {
-            for (p in 1:nperm)
-                ret[vn] <- ret[vn] + risk(object, newdata = object$data, 
-                                          perm = vn, ...)
+            perm <- vn
         } else {
             blocks <- .get_psplits(object, cvn) 
-            if (length(blocks) == 0) blocks <- rep(1, nrow(object$data))
-            resample <- function(x, ...) x[sample.int(length(x), ...)]
-            for (p in 1:nperm) {
-                perm <- do.call("c", tapply(1:nrow(object$data), blocks, resample))
-                tmp <- object$data
-                tmp[[vn]] <- tmp[[vn]][perm]
-                ret[vn] <- ret[vn] + risk(object, newdata = tmp, ...)
+            if (length(blocks) == 0) blocks <- factor(rep(1, nrow(object$data)))
+            perm <- vector(mode = "list", length = 1)
+            names(perm) <- vn
+            perm[[vn]] <- blocks
            }
-        }
+        for (p in 1:nperm)
+            ret[vn] <- ret[vn] + risk(object, newdata = object$data, perm = perm, ...)
     }
     ret <- (ret - risk(object, newdata = object$data)) / nperm
 

@@ -266,8 +266,18 @@ predict.party <- function(object, newdata = NULL, perm = NULL, ...)
         ### the splits of nodes with a primary split in perm
         ### will be permuted
         if (!is.null(perm)) {
-            stopifnot(all(perm %in% vnames))
-            perm <- match(perm, vnames)
+            if (is.character(perm)) {
+                stopifnot(all(perm %in% vnames))
+                perm <- match(perm, vnames)
+            } else {
+                ### perm is a named list of factors coding strata
+                ### (for varimp(..., conditional = TRUE)
+                stopifnot(all(names(perm) %in% vnames))
+                stopifnot(all(sapply(perm, is.factor)))
+                tmp <- vector(mode = "list", length = length(vnames))
+                tmp[match(names(perm), vnames)] <- perm
+                perm <- tmp
+            }
         }
 
         ## ## FIXME: the is.na() call takes loooong on large data sets

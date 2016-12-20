@@ -197,8 +197,15 @@ kidids_node <- function(node, data, vmatch = 1:ncol(data), obs = NULL,
 
     ### permute variable `perm' _after_ dealing with surrogates etc.
     if (!is.null(perm)) {
-        if (varid_split(primary) %in% perm)
-            return(sample(x))
+        if (is.integer(perm)) {
+            if (varid_split(primary) %in% perm)
+                return(.resample(x))
+        } else {
+            if (is.null(obs)) obs <- 1:nrow(data)
+            strata <- perm[[varid_split(primary)]]
+            if (!is.null(strata))
+                return(do.call("c", tapply(x, strata[obs, drop = TRUE], .resample)))
+        }
     }
     return(x)
 }

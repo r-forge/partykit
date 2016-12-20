@@ -1,4 +1,8 @@
 
+### length(x) == 1 will lead to sample.int instead of sample;
+### see example(sample)
+.resample <- function(x, ...) x[sample.int(length(x), ...)]   
+
 .median_survival_time <- function(x) {
     minmin <- function(y, xx) {
         if (any(!is.na(y) & y==.5)) {
