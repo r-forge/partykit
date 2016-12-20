@@ -42,23 +42,23 @@ Loading required package: mvtnorm
   0.00000  96.52545 258.02515 889.86298  18.65313  22.55868 
 > 
 > varimp(aircf, conditional = TRUE)
-     Ozone    Solar.R       Wind       Temp      Month        Day 
-   0.00000   94.30445  288.57149 1041.74139   17.94444   24.79951 
+    Ozone   Solar.R      Wind      Temp     Month       Day 
+  0.00000  99.23001 274.52356 919.88565  17.83296  22.02352 
 > 
 > ict <- cforest(Species ~ ., data = iris, ntree = 100)
 > varimp(ict)
- Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
- 0.0023291422 -0.0007026725  7.3763262393  1.1134168332  0.0000000000 
+Sepal.Length  Sepal.Width Petal.Length  Petal.Width      Species 
+-0.000173585  0.006678499  6.896402536  1.282036439  0.000000000 
 > varimp(ict, risk = "misclass")
  Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
--0.0004404762 -0.0004000000  0.4125261905  0.3023500000  0.0000000000 
+-8.571429e-05  1.414286e-03  3.958119e-01  3.328024e-01  0.000000e+00 
 > 
 > set.seed(29)
 > varimp(ict, risk = "misclass", conditional = TRUE)
  Sepal.Length   Sepal.Width  Petal.Length   Petal.Width       Species 
--0.0004404762 -0.0004000000  0.3027047619  0.1011000000  0.0000000000 
+-8.571429e-05  1.414286e-03  2.847405e-01  1.147667e-01  0.000000e+00 
 > 
 > 
 > proc.time()
    user  system elapsed 
-   7.72    0.02    7.74 
+  9.716   0.040   9.756 
