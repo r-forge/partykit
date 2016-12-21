@@ -16,8 +16,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
     logmincriterion = log(mincriterion), minsplit = 20L, minbucket = 7L, 
     minprob = 0.01, stump = FALSE, lookahead = FALSE, nresample = 9999L, 
     MIA = FALSE, maxsurrogate = 0L, mtry = Inf, maxdepth = Inf, 
-    multiway = FALSE, splittry = 2L, majority = FALSE, caseweights = TRUE,
-    applyfun = NULL, cores = NULL)
+    multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
+    caseweights = TRUE, applyfun = NULL, cores = NULL)
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
@@ -65,6 +65,10 @@ ctree_control(teststat = c("quadratic", "maximum"),
                    are implemented for unordered factors.}
   \item{splittry}{ number of variables that are inspected for admissible splits
                    if the best split doesn't meet the sample size constraints.}
+  \item{intersplit}{ a logical indicating if splits in numeric variables
+                     are simply \code{x <= a} (the default) or interpolated 
+                     \code{x <= (a + b) / 2}. The latter feature is experimental, see
+                     Galili and Meilijson (2016).}
   \item{majority}{ if \code{FALSE}, observations which can't be classified to a
                    daughter node because of missing information are randomly
                    assigned (following the node distribution). If \code{FALSE},
@@ -117,6 +121,11 @@ ctree_control(teststat = c("quadratic", "maximum"),
   B. E. T. H. Twala, M. C. Jones, and D. J. Hand (2008), 
   Good Methods for Coping with Missing Data in Decision Trees,
   \emph{Pattern Recognition Letters}, \bold{29}(7), 950--956.
+
+  Tal Galili, Isaac Meilijson (2016), Splitting Matters: How 
+  Monotone Transformation of Predictor Variables May Improve the 
+  Predictions of Decision Tree Models, \url{https://arxiv.org/abs/1611.04561}.
+
 
 }
 \keyword{misc}

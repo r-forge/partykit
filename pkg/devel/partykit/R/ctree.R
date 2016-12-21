@@ -145,14 +145,28 @@
                                       index = 1L:2L, prob = as.double(rev(0:1)))
                 } else {
                     sp <- tstleft$index - 1L ### case A
-                    if (!is.ordered(x)) sp <- ux[sp]
+                    if (!is.ordered(x)) {
+                        ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+                        if (ctrl$intersplit & sp < length(ux)) {     
+                            sp <- (ux[sp] + ux[sp + 1]) / 2
+                        } else {
+                            sp <- ux[sp]  ### X <= sp vs. X > sp
+                        }
+                    }
                     ret <- partysplit(as.integer(j), breaks = sp,
                                       index = 1L:2L, prob = as.double(rev(0:1)))
                 }
             } else {
                 ### case C was handled above (tstleft = tstright in this case)
                 sp <- tstright$index ### case B
-                if (!is.ordered(x)) sp <- ux[sp]
+                if (!is.ordered(x)) {
+                    ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+                    if (ctrl$intersplit & sp < length(ux)) {     
+                        sp <- (ux[sp] + ux[sp + 1]) / 2
+                    } else {
+                        sp <- ux[sp]  ### X <= sp vs. X > sp
+                    }
+                }
                 ret <- partysplit(as.integer(j), breaks = sp,
                                   index = 1L:2L, prob = as.double(0:1))
             }
@@ -171,7 +185,12 @@
         if (all(is.na(sp))) return(NULL)
         if (ORDERED) {
             if (!is.ordered(x))
-                sp <- ux[sp]
+                ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+                if (ctrl$intersplit & sp < length(ux)) {
+                    sp <- (ux[sp] + ux[sp + 1]) / 2 
+                } else {
+                    sp <- ux[sp]  ### X <= sp vs. X > sp
+                }
                 ret <- partysplit(as.integer(j), breaks = sp,
                                   index = 1L:2L)
         } else {
@@ -511,6 +530,7 @@ ctree_control <- function
     maxdepth = Inf, 
     multiway = FALSE, 
     splittry = 2L, 
+    intersplit = FALSE,
     majority = FALSE, 
     caseweights = TRUE, 
     applyfun = NULL, 
@@ -533,7 +553,8 @@ ctree_control <- function
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-           testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead))
+           testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
+           intersplit = intersplit))
 }
 
 ctree <- function
