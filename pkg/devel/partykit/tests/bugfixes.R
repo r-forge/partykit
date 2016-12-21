@@ -822,26 +822,16 @@ stopifnot(all.equal(ct12$node$info$p.value,
 ### spotted by Peter Philip Stephensen (DREAM) <PSP@dreammodel.dk>
 ### splits x >= max(x) where possible in partykit::ctree
 library("partykit")
-nAge = 30
-d = data.frame(Age=rep(1:nAge,2),y=c(rep(1,nAge),rep(0,nAge)),
-n=rep(0,2*nAge))
-ntot = 100
-alpha = .5
+nAge <- 30
+d <- data.frame(Age=rep(1:nAge,2),y=c(rep(1,nAge),rep(0,nAge)), 
+                n = rep(0,2*nAge))
+ntot <- 100
+alpha <- .5
 d[d$y==1,]$n = floor(ntot * alpha * d[d$y==1,]$Age / nAge)
 d[d$y==0,]$n = ntot - d[d$y==1,]$n
 d$n <- as.integer(d$n)
-ctrl = partykit::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
-tree = partykit::ctree(y ~ Age, weights=n, data=d, control=ctrl)
+ctrl <- partykit::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
+tree <- partykit::ctree(y ~ Age, weights=n, data=d, control=ctrl)
 tree
 
 (w1 <- predict(tree, type = "node"))
-
-detach(package:partykit)
-library("party")
-ctrl = party::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
-tree2 = party::ctree(y ~ Age, weights=d$n, data=d, control=ctrl)
-tree2
-
-(w2 <- where(tree2))
-
-stopifnot(max(abs(w1 - w2)) == 0)

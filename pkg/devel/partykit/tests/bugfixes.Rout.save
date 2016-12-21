@@ -914,16 +914,16 @@ Number of terminal nodes: 6
 > ### spotted by Peter Philip Stephensen (DREAM) <PSP@dreammodel.dk>
 > ### splits x >= max(x) where possible in partykit::ctree
 > library("partykit")
-> nAge = 30
-> d = data.frame(Age=rep(1:nAge,2),y=c(rep(1,nAge),rep(0,nAge)),
-+ n=rep(0,2*nAge))
-> ntot = 100
-> alpha = .5
+> nAge <- 30
+> d <- data.frame(Age=rep(1:nAge,2),y=c(rep(1,nAge),rep(0,nAge)), 
++                 n = rep(0,2*nAge))
+> ntot <- 100
+> alpha <- .5
 > d[d$y==1,]$n = floor(ntot * alpha * d[d$y==1,]$Age / nAge)
 > d[d$y==0,]$n = ntot - d[d$y==1,]$n
 > d$n <- as.integer(d$n)
-> ctrl = partykit::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
-> tree = partykit::ctree(y ~ Age, weights=n, data=d, control=ctrl)
+> ctrl <- partykit::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
+> tree <- partykit::ctree(y ~ Age, weights=n, data=d, control=ctrl)
 > tree
 
 Model formula:
@@ -955,57 +955,6 @@ Number of terminal nodes: 7
 12 12 12 12 13 13 13 13 
 12 12 12 12 13 13 13 13 
 > 
-> detach(package:partykit)
-> library("party")
-Loading required package: modeltools
-Loading required package: stats4
-Loading required package: strucchange
-Loading required package: zoo
-
-Attaching package: 'zoo'
-
-The following objects are masked from 'package:base':
-
-    as.Date, as.Date.numeric
-
-Loading required package: sandwich
-> ctrl = party::ctree_control(maxdepth=3, minbucket = min(d$n) + 1)
-> tree2 = party::ctree(y ~ Age, weights=d$n, data=d, control=ctrl)
-> tree2
-
-	 Conditional inference tree with 7 terminal nodes
-
-Response:  y 
-Input:  Age 
-Number of observations:  60 
-
-1) Age <= 15; criterion = 1, statistic = 329.686
-  2) Age <= 7; criterion = 1, statistic = 69.708
-    3) Age <= 4; criterion = 1, statistic = 13.374
-      4)*  weights = 400 
-    3) Age > 4
-      5)*  weights = 300 
-  2) Age > 7
-    6) Age <= 11; criterion = 0.995, statistic = 7.719
-      7)*  weights = 400 
-    6) Age > 11
-      8)*  weights = 400 
-1) Age > 15
-  9) Age <= 22; criterion = 1, statistic = 33.464
-    10)*  weights = 700 
-  9) Age > 22
-    11) Age <= 26; criterion = 0.972, statistic = 4.8
-      12)*  weights = 400 
-    11) Age > 26
-      13)*  weights = 400 
-> 
-> (w2 <- where(tree2))
- [1]  4  4  4  4  5  5  5  7  7  7  7  8  8  8  8 10 10 10 10 10 10 10 12 12 12
-[26] 12 13 13 13 13  4  4  4  4  5  5  5  7  7  7  7  8  8  8  8 10 10 10 10 10
-[51] 10 10 12 12 12 12 13 13 13 13
-> 
-> stopifnot(max(abs(w1 - w2)) == 0)
-> 
 > proc.time()
    user  system elapsed 
-  2.640   0.032   2.669 
+  2.548   0.036   2.580 
