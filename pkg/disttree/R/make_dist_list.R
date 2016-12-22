@@ -649,26 +649,37 @@ if(FALSE) {
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
-    par <- c(eta[1], exp(eta[2]))
-    # val <- 1/sqrt(2*pi*par[2]^2) * exp(- (y-par[1])^2 / (2*par[2]^2))
-    # if(log) val <- log(val)
-    val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    
+    val <- -1/2 * (log(2*pi) + 2*eta[2] + exp(log((y-eta[1])^2) - 2*eta[2]))
+    if(!log) val <- exp(val)
+    
+    # par <- c(eta[1], exp(eta[2]))
+    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
-      val <- sum(weights * val)
+      val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
   }
   
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-    par <- c(eta[1], exp(eta[2]))                           
-    score <- cbind(1/par[2]^2 * (y-par[1]), (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
+      
+    score <- cbind(exp(-2*eta[2]) * (y-eta[1]), 
+                   -1 + exp(-2*eta[2] + log((y-eta[1])^2)))
+    
+    # par <- c(eta[1], exp(eta[2])) 
+    # score <- cbind(1/par[2]^2 * (y-par[1]), 
+    #                (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
+    
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
-      score <- colSums(weights * score)
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
     }
     return(score)
   }
@@ -678,11 +689,14 @@ if(FALSE) {
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
-    par <- c(eta[1], exp(eta[2]))                           
+    d2ld.etamu2 <- sum(weights * rep.int(-exp(-2*eta[2]), ny))
+    d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-eta[1]) * exp(-2*eta[2]), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    d2ld.etasigma2 <- sum(weights * (-2)*exp(log((y-eta[1])^2) - 2*eta[2]), na.rm = TRUE)    
     
-    d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
-    d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2)          # should be 0 for exact parameters (here ~ e-17 due to calculations)
-    d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2)         
+    # par <- c(eta[1], exp(eta[2]))                           
+    # d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+    # d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    # d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2, na.rm = TRUE)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
     colnames(hess) <- rownames(hess) <-  etanames
@@ -768,22 +782,28 @@ if(FALSE) {
     par <- c(eta[1], exp(eta[2]))
     val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
-      val <- sum(weights * val)
+      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
   }
   
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
-    par <- c(eta[1], exp(eta[2]))          
-    score <- cbind(crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right), 
-                   crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right))
+    par <- c(eta[1], exp(eta[2]))
+    # y[y==0] <- 1e-323
+    
+    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right),
+    score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+    score <- cbind(score_m, score_s)
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
-      score <- colSums(weights * score)
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+      #if(any(is.nan(score))) print(c(eta, "y", y))
     }
     return(score)
   }
@@ -794,16 +814,20 @@ if(FALSE) {
     if(is.null(weights)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
+    # y[y==0] <- 1e-323
     
     d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
     d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+    dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
     dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
     
-    d2ld.etamu2 <- sum(weights * d2mu)
-    d2ld.etamu.d.etasigma <- 0  
-    d2ld.etasigma2 <- sum(weights * (d2sigma * par[2]^2 + dsigma * par[2]))         
+    d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+    d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+    d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+    d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
     
-    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
     colnames(hess) <- rownames(hess) <-  etanames
     
     return(hess)
@@ -900,7 +924,7 @@ if(FALSE) {
     # val <- 1/(par[2]*exp(par[1])) * (y/exp(par[1]))^(1/par[2]-1) * exp(-(y/exp(par[1]))^(1/par[2]))
     # if(log) val <- log(val)
     
-    val <- -eta[2] + expm1(-eta[2]) * log(y) - eta[1]*exp(-eta[2]) - (y/exp(eta[1]))^exp(-eta[2])
+    val <- -eta[2] + expm1(-eta[2]) * log(y) - eta[1]*exp(-eta[2]) - exp(exp(-eta[2]) * (log(y) - eta[1]))
     # (y/exp(eta[1]))^exp(-eta[2]) = exp(exp(-eta[2]) * (log(y) - eta[1]))
     if(!log) val <- exp(val)
     
@@ -915,7 +939,7 @@ if(FALSE) {
     
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
-      val <- sum(weights * val)
+      val <- sum(weights * val, na.rm = TRUE)
     }
     if(any(abs(val) == Inf) || any(is.na(val))) return(1.7e308)
     return(val)
@@ -923,20 +947,22 @@ if(FALSE) {
   
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-    par <- c(eta[1], exp(eta[2]))     
-    score_m <- (1/par[2]) * (-1 + (y/exp(par[1]))^(1/par[2]))
+       
+    score_m <- exp(-eta[2]) * (exp(exp(-eta[2]) * (log(y) - eta[1])) -1) 
+    score_s <- -1 - (log(y) - eta[1]) * (exp(-eta[2])) * (1 - exp(exp(-eta[2]) * (log(y) - eta[1])))
+      
+    # par <- c(eta[1], exp(eta[2]))  
+    # score_m <- (1/par[2]) * (-1 + (y/exp(par[1]))^(1/par[2]))
+    # score_s <- ((-1/par[2]) - (log(y)-par[1])/(par[2]^2) * (1 - (y/exp(par[1]))^(1/par[2]))) * par[2]
     
-    # score_m <- exp(-eta[2] + log((y/exp(eta[1]))^exp(-eta[2]) -1))
-    
-    score_s <- ((-1/par[2]) - (log(y)-par[1])/(par[2]^2) * (1 - (y/exp(par[1]))^(1/par[2]))) * par[2]
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
-      # replace score with 1.7e308 because Inf*0 would lead to NaN
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
-      score <- colSums(weights * score)
+      score <- colSums(weights * score, na.rm = TRUE)
     }
     # if(any(is.null(score)) || any(is.na(score))) print(c("gr is NULL or NA", score, "y", y, eta, weights))
     return(score)
@@ -947,16 +973,25 @@ if(FALSE) {
     ny <- length(y)
     if(is.null(weights)) weights <- rep.int(1, ny)
     
-    par <- c(eta[1], exp(eta[2]))                           
-    
-    d2ld.etamu2 <- sum(weights * (-1/par[2]^2) * ((y/exp(par[1]))^(1/par[2])))
-    d2ld.etamu.d.etasigma <- sum(weights * (1/par[2]) * (1 - (y/exp(par[1]))^(1/par[2]) * (1 + (log(y)-par[1])/par[2])))
+    d2ld.etamu2 <- sum(weights * 
+                         (-exp(-2*eta[2]) * exp(exp(-eta[2]) * (log(y) - eta[1]))), 
+                       na.rm = TRUE) 
+    d2ld.etamu.d.etasigma <- sum(weights * 
+                                   exp(-eta[2]) * (1 - exp(exp(-eta[2]) * (log(y) - eta[1])) * (1 + exp(-eta[2]) * (log(y) - eta[1]))), 
+                                 na.rm = TRUE)
     d2ld.etasigma2 <- sum(weights * 
-                            ((log(y)-par[1])/par[2]) * 
-                            (1 - (y/exp(par[1]))^(1/par[2]) * (1 + ((log(y)-par[1])/par[2]))))
-    #d2ld.etasigma2 <- sum(weights * 
-    #                        (log(y)-par[1])/par[2] - ((log(y)-par[1])/par[2]) * (y/exp(par[1]))^(1/par[2])
-    #                      - ((log(y)-par[1])/par[2])^2 * (y/exp(par[1]))^(1/par[2]))
+                            (log(y) - eta[1]) * exp(-eta[2]) * (1 - exp(exp(-eta[2]) * (log(y) - eta[1])) * (1 + (log(y) - eta[1]) * exp(-eta[2]))),
+                          na.rm = TRUE)
+    
+    # par <- c(eta[1], exp(eta[2]))                           
+    # d2ld.etamu2 <- sum(weights * (-1/par[2]^2) * ((y/exp(par[1]))^(1/par[2])))
+    # d2ld.etamu.d.etasigma <- sum(weights * (1/par[2]) * (1 - (y/exp(par[1]))^(1/par[2]) * (1 + (log(y)-par[1])/par[2])))
+    # d2ld.etasigma2 <- sum(weights * 
+    #                         ((log(y)-par[1])/par[2]) * 
+    #                         (1 - (y/exp(par[1]))^(1/par[2]) * (1 + ((log(y)-par[1])/par[2]))))
+    # d2ld.etasigma2 <- sum(weights * 
+    #                         (log(y)-par[1])/par[2] - ((log(y)-par[1])/par[2]) * (y/exp(par[1]))^(1/par[2])
+    #                       - ((log(y)-par[1])/par[2])^2 * (y/exp(par[1]))^(1/par[2]))
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
     colnames(hess) <- rownames(hess) <-  etanames
@@ -1067,6 +1102,8 @@ if(FALSE) {
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
     }
     return(score)
@@ -1174,6 +1211,8 @@ if(FALSE) {
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
     }
     return(score)
@@ -1281,6 +1320,8 @@ if(FALSE) {
     colnames(score) <- etanames
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
     }
     return(score)
