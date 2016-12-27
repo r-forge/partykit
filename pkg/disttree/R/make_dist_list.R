@@ -793,7 +793,7 @@ if(FALSE) {
     par <- c(eta[1], exp(eta[2]))
     # y[y==0] <- 1e-323
     
-    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right),
+    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
     score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
