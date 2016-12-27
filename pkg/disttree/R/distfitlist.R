@@ -232,7 +232,7 @@ bread.distfit <- function(object, ...) {
   return(object$vcov * object$ny)
 }
 
-confint.distfit <- function(object, parm, type = "link", level = 0.95, ...) {
+confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
   np <- object$npar
   
   if(type == "link"){ 
