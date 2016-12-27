@@ -1,9 +1,15 @@
 import("partykit")
 import("gamlss.dist")
+importFrom("graphics",
+  "plot",
+  "hist",
+  "lines"
+)
 importFrom("stats",
   "nobs",
   "optim",
-  "qnorm"
+  "qnorm",
+  "weighted.mean"
 )
 importFrom("sandwich",
   "bread",
