@@ -21,7 +21,8 @@
 
 \usage{
   distfit(y, family, weights = NULL, start = NULL,
-    vcov. = TRUE, estfun = TRUE, \dots)
+    vcov = TRUE, type.hessian = "analytic", estfun = TRUE,
+    bd = NULL, fixed = NULL, fixed.values = NULL, \dots)
 }
 
 \arguments{
@@ -31,10 +32,14 @@
     a function generating such a family.}
   \item{weights}{optional numeric vector of case weights.}
   \item{start}{FIXME}
-  \item{vcov.}{logical or character. FIXME}
+  \item{vcov}{logical or character. FIXME}
+  \item{type.hessian}{FIXME}
   \item{estfun}{logical. Should the matrix of observation-wise
     score contributions (or empirical estimating functions) be
     returned?}
+  \item{bd}{FIXME}
+  \item{fixed}{FIXME}
+  \item{fixed.values}{FIXME}
   \item{\dots}{further arguments passed to \code{control} for
     \code{\link[stats]{optim}}.}
 }
