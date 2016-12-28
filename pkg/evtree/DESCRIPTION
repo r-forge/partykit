@@ -1,7 +1,7 @@
 Package: evtree
 Title: Evolutionary Learning of Globally Optimal Trees
 Version: 1.0-2
-Date: 2016-12-27
+Date: 2016-12-29
 Authors@R: c(person(given = "Thomas", family = "Grubinger", role = c("aut", "cre"), email = "Thomas.Grubinger@scch.at"),
              person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org"),
              person(given = "Karl-Peter", family = "Pfeiffer", role = "aut", email = "Karl-Peter.Pfeiffer@i-med.ac.at"))	 
@@ -16,15 +16,6 @@ Description: Commonly used classification and regression tree methods like the C
 	     the 'partykit' package is leveraged to represent the resulting trees in R, providing
 	     unified infrastructure for summaries, visualizations, and predictions.
 Depends: R (>= 3.1.0), partykit
-Suggests: Formula, kernlab, lattice, mlbench, multcomp, party, rpart,
-        xtable
+Suggests: Formula, kernlab, lattice, mlbench, multcomp, party, rpart, xtable
 LazyData: yes
 License: GPL-2 | GPL-3
-Packaged: 2016-10-11 16:03:21 UTC; grubinger
-Author: Thomas Grubinger [aut, cre],
-  Achim Zeileis [aut],
-  Karl-Peter Pfeiffer [aut]
-Maintainer: Thomas Grubinger <Thomas.Grubinger@scch.at>
-NeedsCompilation: yes
-Repository: CRAN
-Date/Publication: 2014-10-15 13:16:40

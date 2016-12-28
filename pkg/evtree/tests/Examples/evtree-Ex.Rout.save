@@ -1,13 +1,11 @@
 
-R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
 Copyright (C) 2016 The R Foundation for Statistical Computing
-Platform: x86_64-w64-mingw32/x64 (64-bit)
+Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -23,6 +21,8 @@ Type 'q()' to quit R.
 > library('evtree')
 Loading required package: partykit
 Loading required package: grid
+Loading required package: libcoin
+Loading required package: mvtnorm
 > 
 > base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
 > cleanEx()
@@ -76,7 +76,6 @@ Loading required package: grid
 > 
 > 
 > cleanEx()
-
 > nameEx("ContraceptiveChoice")
 > ### * ContraceptiveChoice
 > 
@@ -417,7 +416,7 @@ Number of terminal nodes: 4
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  50.428 0.156 50.632 0 0 
+Time elapsed:  6.144 0.008 6.151 0 0 
 > grDevices::dev.off()
 null device 
           1 
