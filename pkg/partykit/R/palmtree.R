@@ -150,7 +150,9 @@ print.palmtree <- function(x, title = NULL, ...)
       sprintf("Partially additive generalized linear model tree (family: %s)", x$family$family)
     }
   }
-  print(x$tree, title = title, ...)
+  tr <- x$tree
+  tr$info$formula <- x$formula
+  print(tr, title = title, ...)
   if(length(coef(x$palm)[-grep(".tree", names(coef(x$palm)))]) > 1L) {
     cat("\nLinear fixed effects (from palm model):\n")
     print(coef(x, model = "palm"))
