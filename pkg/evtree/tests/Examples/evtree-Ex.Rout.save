@@ -383,7 +383,10 @@ Number of terminal nodes: 3
 [1] 321.8798
 > 
 > ## classification
+> ## (note that different equivalent "perfect" splits for the setosa species
+> ## in the iris data may be found on different architectures/systems)
 > ev_iris <- evtree(Species ~ .,data = iris)
+> ## IGNORE_RDIFF_BEGIN
 > ev_iris
 
 Model formula:
@@ -400,6 +403,7 @@ Fitted party:
 
 Number of inner nodes:    3
 Number of terminal nodes: 4
+> ## IGNORE_RDIFF_END
 > plot(ev_iris)
 > table(predict(ev_iris), iris$Species)
             
@@ -416,7 +420,7 @@ Number of terminal nodes: 4
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  6.144 0.008 6.151 0 0 
+Time elapsed:  6.392 0.028 6.424 0 0 
 > grDevices::dev.off()
 null device 
           1 
