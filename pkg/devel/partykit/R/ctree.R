@@ -81,18 +81,20 @@
         pvalue <- FALSE
         teststat <- ctrl$splitstat
     } else {
-        if (ctrl$splittest) {
-            if (ctrl$teststat != ctrl$splitstat)
-                warning("Using different test statistics for testing and splitting")
-            teststat <- ctrl$splitstat
-        } else {
-            teststat <- ctrl$teststat
-        }
         B <- ifelse(ctrl$testtype == "MonteCarlo",
                     ctrl$nresample, 0L)
         varonly <- ctrl$testtype == "MonteCarlo" && 
                    teststat == "maxtype"
         pvalue <- ctrl$testtype != "Teststatistic"
+        if (ctrl$splittest) {
+            if (ctrl$teststat != ctrl$splitstat)
+                warning("Using different test statistics for testing and splitting")
+            teststat <- ctrl$splitstat
+            if (B == 0) 
+                stop("MonteCarlo approximation mandatory for splittest = TRUE")
+        } else {
+            teststat <- ctrl$teststat
+        }
     }
     ### see libcoin/src/C_ordered_Xfactor_block
     if (length(cluster) > 0) varonly <- FALSE 

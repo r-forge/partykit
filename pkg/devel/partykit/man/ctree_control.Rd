@@ -27,7 +27,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
                        version 2.0-0, \code{maximum} was implemented only.}
   \item{splittest}{ a logical changing linear (the default \code{FALSE}) to 
                     maximally selected statistics for
-                    variable selection.}
+                    variable selection. Currently needs \code{testtype = "MonteCarlo"}.}
   \item{testtype}{ a character specifying how to compute the distribution of
                    the test statistic. }
   \item{pargs}{ control parameters for the computation of multivariate
