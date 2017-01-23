@@ -137,7 +137,7 @@ Loading required package: mvtnorm
 > data("GermanCredit")
 > summary(GermanCredit)
                                         status       duration   
- ... < 100 DM                              :274   Min.   : 4.0  
+ ... < 0 DM                                :274   Min.   : 4.0  
  0 <= ... < 200 DM                         :269   1st Qu.:12.0  
  ... >= 200 DM / salary for at least 1 year: 63   Median :18.0  
  no checking account                       :394   Mean   :20.9  
