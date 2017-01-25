@@ -12,9 +12,9 @@
             is.factor(x)) {
             index <- 1L:nlevels(x)
             if (length(weights) > 0) {
-                xt <- xtabs(~ x, subset = subset)
-            } else {
                 xt <- xtabs(weights ~ x, subset = subset)
+            } else {
+                xt <- xtabs(~ x, subset = subset)
             }
             index[xt == 0] <- NA
             index[xt < minbucket] <- nlevels(x) + 1L
