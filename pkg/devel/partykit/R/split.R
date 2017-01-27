@@ -142,7 +142,7 @@ kidids_split <- function(split, data, vmatch = 1:ncol(data), obs = NULL) {
         ### labels = FALSE returns integers and is faster
         ### <FIXME> use findInterval instead of cut?
         x <- cut.default(as.numeric(x), labels = FALSE,
-                 breaks = c(-Inf, breaks_split(split), Inf), 
+                 breaks = unique(c(-Inf, breaks_split(split), Inf)),  ### breaks_split(split) = Inf possible (MIA)
                  right = right_split(split))
         ### </FIXME>
     }

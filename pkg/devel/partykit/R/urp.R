@@ -336,6 +336,9 @@
     if (MIA && maxsurrogate > 0)
         warning("Mixing MIA splits with surrogate splits does not make sense")
 
+    if (MIA && majority)
+        warning("Mixing MIA splits with majority does not make sense")
+
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
          minprob = minprob, stump = stump, mtry = mtry,

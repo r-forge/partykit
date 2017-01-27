@@ -4,7 +4,10 @@
 
     ### <FIXME> check if x and/or Y have only unique values and return immediately? </FIXME>
 
-    MIA <- ctrl$MIA && any(is.na(x))
+    ### <FIXME> MIA splits only estimated in the presence of missings
+    ###         new missings in predict(<>, newdata) will cause trouble
+    ### </FIXME>
+    MIA <- ctrl$MIA && any(is.na(x[subset]))
 
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
@@ -144,7 +147,7 @@
             if (tstleft$TestStatistic >= tstright$TestStatistic) {
                 if (tst$index == 1) { ### case C
                     ret <- partysplit(as.integer(j), breaks = Inf, 
-                                      index = 1L:2L, prob = as.double(rev(0:1)))
+                                      index = 1L:2L, prob = as.double(0:1))
                 } else {
                     sp <- tstleft$index - 1L ### case A
                     if (!is.ordered(x)) {
