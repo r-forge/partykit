@@ -17,7 +17,7 @@
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
         if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
-            is.factor(x)) {
+            is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
             index <- 1L:nlevels(x)
             if (length(weights) > 0) {
                 xt <- xtabs(weights ~ x, subset = subset)
