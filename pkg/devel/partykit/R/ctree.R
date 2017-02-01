@@ -9,6 +9,11 @@
     ### </FIXME>
     MIA <- ctrl$MIA && any(is.na(x[subset]))
 
+    if (all(is.na(x[subset]))) { ### all x values are missing
+        if (splitonly) return(NULL)
+        return(list(statistic = NA, p.value = NA))
+    }
+
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
         if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
