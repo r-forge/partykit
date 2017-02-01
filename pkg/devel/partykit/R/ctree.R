@@ -147,7 +147,7 @@
     }
 
     ret <- NULL
-    if (MIA) {
+    if (MIA && !any(is.na(tst$index))) {
         if (ORDERED) {
             if (tstleft$TestStatistic >= tstright$TestStatistic) {
                 if (tst$index == 1) { ### case C
