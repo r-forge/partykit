@@ -236,7 +236,9 @@
         mf[[1]] <- quote(stats::get_all_vars)
         mf <- eval(mf, frame) 
     }
-    mfterms <- terms(f, data = mf) 
+    ### Note: get terms from data and not mf as the latter
+    ### might include variables "weights" or "subset"
+    mfterms <- terms(f, data = data) 
     ### there might be dots in formula, fdot
     ### is formula with dots replaced
     fdot <- attr(mfterms, "Formula_without_dot")
