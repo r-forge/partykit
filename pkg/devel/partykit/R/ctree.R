@@ -150,7 +150,7 @@
     if (MIA && !any(is.na(tst$index))) {
         if (ORDERED) {
             if (tstleft$TestStatistic >= tstright$TestStatistic) {
-                if (tst$index == 1) { ### case C
+                if (all(tst$index == 1)) { ### case C
                     ret <- partysplit(as.integer(j), breaks = Inf, 
                                       index = 1L:2L, prob = as.double(0:1))
                 } else {
@@ -182,7 +182,7 @@
             }
         } else {
             sp <- tstleft$index[-1L] ### tstleft = tstright for unordered factors
-            if (all(sp == 0)) { ### case C
+            if (length(unique(sp)) == 1L) { ### case C
                 ret <- partysplit(as.integer(j), index = as.integer(tst$index) + 1L)
             } else { ### always case A
                 ret <- partysplit(as.integer(j),
