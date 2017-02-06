@@ -1225,18 +1225,7 @@ wbreg <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
 }
 @
 %
-As the \pkg{survreg} package currently does not provide a \code{logLik()}
-method for `\code{survreg}' objects, this needs to be added here:
-%
-<<logLik.survreg>>=
-logLik.survreg <- function(object, ...)
-  structure(object$loglik[2], df = sum(object$df), class = "logLik")
-@
-%
-Without the \code{logLik()} method, \code{mob()} would not know how to extract
-the optimized objective function from the fitted model.
-
-With the functions above available, a censored Weibull-regression-tree can
+With this function a censored Weibull-regression-tree can
 be fitted: The dependent variable is the censored survival time and the
 two regressor variables are the main risk factor (number of positive lymph nodes)
 and the treatment variable (hormonal therapy). All remaining variables are
