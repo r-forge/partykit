@@ -319,6 +319,7 @@
         } else if (is.factor(x)) {
             ret <- matrix(0, nrow = nrow(data), ncol = nlevels(x))
             ret[cbind(1:length(x), unclass(x))] <- 1 ### model.matrix(~ x - 1)
+            ret[is.na(x),] <- NA
         } else {
             stop("cannot handle class", class(x))
         }
