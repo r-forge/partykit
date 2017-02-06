@@ -20,7 +20,7 @@ layout(matrix(1:4, nrow = 2))
 
 partykit <- c()
 partykit$model <- partykit::cforest(y ~ ., data=myData,trace=TRUE,ntree=ntree, mtry = 3,
-    control = partykit::ctree_control(teststat = "quad", alpha = 0, 
+    control = partykit::ctree_control(teststat = "quad",  
                             testtype = "Univ", mincriterion = 0, minsplit = 10,minbucket = 10))
 partykit$y_hat <- predict(partykit$model, OOB=TRUE)
 plot(y,partykit$y_hat) #does not look reansonable
