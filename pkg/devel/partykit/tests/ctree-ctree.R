@@ -59,20 +59,24 @@ fun <- function(args) {
     ct <- party:::ctree_control
     ctrl <- do.call("ct", args[-(1:2)])
     ot <- system.time(oldmod <- party:::ctree(y ~ ., data = learn, control = ctrl))[1]
-    old <- treeresponse(oldmod, newdata = test)
+    old <- predict(oldmod, newdata = test, type = "node")
     ct <- partykit:::ctree_control
     ctrl <- do.call("ct", args[-(1:2)])
     ctrl$majority <- TRUE
     ctrl$nmax <- Inf
     ctrl$splitstat <- "maximum"
+    ctrl$numsurrogate <- TRUE
     nt <- system.time(newmod <- try(partykit:::ctree(y ~ ., data = learn, control = ctrl)))[1]
     if (inherits(newmod, "try-error")) {
         new <- as.list(rep(1, length(old)))
     } else {
-        new <- predict(newmod, newdata = test, simp = FALSE, 
-            type = ifelse(args$response == "numeric", "response", "prob"))
+        new <- predict(newmod, newdata = test, type = "node")
     }
-    list(error = max(abs(unlist(old) - unlist(new))), time = c(ot, nt))
+    tb <- table(old, new) > 0
+    err <- !(unique(rowSums(tb)) == 1 && unique(colSums(tb)) == 1)
+    print(err)
+    cat("---\n")
+    list(error = err, time = c(ot, nt))
 }
 
 ret <- lapply(1:nrow(gr), function(i) { print(i); fun(gr[i, ,drop = FALSE]); })
