@@ -39,7 +39,7 @@ constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info
             rw <- rmultinom(1, size = length(prob), prob = prob)
         } else {
             rw <- integer(length(prob))
-            i <- sample(1:length(prob), floor(fraction * length(prob)), prob = prob)
+            i <- sample(1:length(prob), ceiling(fraction * length(prob)), prob = prob)
             rw[i] <- 1L
         }
         as.integer(rw)
