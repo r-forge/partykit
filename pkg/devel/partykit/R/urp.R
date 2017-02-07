@@ -120,11 +120,15 @@
         ret$split$prob <- prob
 
     ### compute surrogate splits
-    if (ctrl$maxsurrogate > 0L)
+    if (ctrl$maxsurrogate > 0L) {
+        pv <- svars[svars != varid_split(thissplit)]
+        if (ctrl$numsurrogate)
+            pv <- pv[sapply(data[, pv], is.numeric)]
         ret$surrogates <- .urp_surrogates(kidids, data = data, 
             weights = weights, subset = snotNA, 
-            partyvars = svars[svars != varid_split(thissplit)],
+            partyvars = pv,
             selectfun = svselectfun, ctrl = ctrl)
+    }
     kidids <- kidids_node(ret, data, obs = subset)
 
     ### proceed recursively
@@ -311,6 +315,7 @@
     stump = FALSE,
     MIA = FALSE,
     maxsurrogate = 0L, 
+    numsurrogate = FALSE,
     mtry = Inf,
     maxdepth = Inf, 
     multiway = FALSE, 

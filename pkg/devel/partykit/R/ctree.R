@@ -537,6 +537,7 @@ ctree_control <- function
     nresample = 9999L, 
     MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     maxsurrogate = 0L, 
+    numsurrogate = FALSE,
     mtry = Inf, 
     maxdepth = Inf, 
     multiway = FALSE, 
@@ -561,6 +562,7 @@ ctree_control <- function
                    minbucket = minbucket, minprob = minprob, stump = stump, 
                    mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
                    splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+                   numsurrogate = numsurrogate,
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,

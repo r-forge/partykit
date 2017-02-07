@@ -15,7 +15,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
     nmax = Inf, alpha = 0.05, mincriterion = 1 - alpha,
     logmincriterion = log(mincriterion), minsplit = 20L, minbucket = 7L, 
     minprob = 0.01, stump = FALSE, lookahead = FALSE, nresample = 9999L, 
-    MIA = FALSE, maxsurrogate = 0L, mtry = Inf, maxdepth = Inf, 
+    MIA = FALSE, maxsurrogate = 0L, numsurrogate = FALSE, mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
     caseweights = TRUE, applyfun = NULL, cores = NULL)
 }
@@ -56,6 +56,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
   \item{maxsurrogate}{ number of surrogate splits to evaluate. Note the
                        currently only surrogate splits in ordered
                        covariables are implemented. }
+  \item{numsurrogate}{ a logical for backward-compatibility with party. If
+                       \code{TRUE}, only numeric variables are considered for surrogate splits.}
   \item{mtry}{ number of input variables randomly sampled as candidates
                at each node for random forest like algorithms. The default
                \code{mtry = Inf} means that no random selection takes place.}
