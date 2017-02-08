@@ -55,8 +55,8 @@
                     length(sright) < minbucket)
                     next();
             }
-            ltr <- trafo(sleft, info = linfo)
-            rtr <- trafo(sright, info = rinfo)
+            ltr <- trafo(sleft, info = linfo, estfun = FALSE)
+            rtr <- trafo(sright, info = rinfo, estfun = FALSE)
             ll <- ltr$logLik + rtr$logLik
             linfo <- ltr$info
             rinfo <- rtr$info
@@ -79,8 +79,8 @@
                     length(sright) < minbucket)
                     next();
             }
-            ltr <- trafo(sleft, info = linfo)
-            rtr <- trafo(sright, info = rinfo)
+            ltr <- trafo(sleft, info = linfo, estfun = FALSE)
+            rtr <- trafo(sright, info = rinfo, estfun = FALSE)
             ll <- ltr$logLik + rtr$logLik
             linfo <- ltr$info
             rinfo <- rtr$info

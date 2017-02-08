@@ -165,14 +165,17 @@ if (FALSE) {
         mfs <- model.frame(formula, data = mf2)
         y <- model.response(mfs)
         x <- model.matrix(formula, data = mf2)
-        return(function(subset, ...) {
+        return(function(subset, estfun = TRUE, info = NULL, ...) {
             w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
-            mod <- glm(y ~ x + 0, family = ctrl$family, weights = w)
-            Y <- sandwich::estfun(mod)
-            Y <- Y / w
-            Y[w == 0,] <- 0
-            ret <- rbind(0, Y)
-            list(estfun = ret, index = iy, coef = coef(mod), logLik = logLik(mod),
+            mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info)
+            ret <- NULL
+            if (estfun) {
+                Y <- sandwich::estfun(mod)
+                Y <- Y / w
+                Y[w == 0,] <- 0
+                ret <- rbind(0, Y)
+            }
+            list(estfun = ret, index = iy, info = coef(mod), logLik = logLik(mod),
                  converged = if (is.null(converged)) 
                      mod$converged else converged(mod, mf, subset))
         })
@@ -182,25 +185,28 @@ if (FALSE) {
     cc <- complete.cases(mf)
     y <- model.response(mf)
     x <- model.matrix(formula, data = mf)
-    return(function(subset, ...) {
+    return(function(subset, estfun = TRUE, info = NULL, ...) {
         s <- subset[cc[subset]]
         ys <- y[s]
         xs <- x[s, , drop = FALSE]
         if (length(weights) > 0) {
             w <- weights[cc[subset]]
-            mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w)
+            mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info)
         } else {
-             mod <- glm(ys ~ xs + 0, family = ctrl$family)
+             mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info)
         }
-        ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-        Y <- sandwich::estfun(mod)
-        if (length(weights) > 0) {
-            Y <- Y / w
-            Y[w == 0,] <- 0
+        ret <- NULL
+        if (estfun) {
+            ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+            Y <- sandwich::estfun(mod)
+            if (length(weights) > 0) {
+                Y <- Y / w
+                Y[w == 0,] <- 0
+            }
+            ret[subset,] <- Y
+            storage.mode(ret) <- "double"
         }
-        ret[subset,] <- Y
-        storage.mode(ret) <- "double"
-        list(estfun = ret, coef = coef(mod), logLik = logLik(mod),
+        list(estfun = ret, info = coef(mod), logLik = logLik(mod),
              converged = if (is.null(converged)) 
                  mod$converged else converged(mod, mf, subset))
     })
