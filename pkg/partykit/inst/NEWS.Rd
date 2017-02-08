@@ -7,6 +7,8 @@
     \item{\code{node_barplot} gained a \code{text} argument
           that can be used to draw text labels for the
 	  percentages displayed.}
+    \item{The \code{margins} used in \code{plot.party} can now
+          also be set by the user.}
     \item{The \code{as.party} method for \code{rpart} objects
           without any splits only returned a naked \code{partynode}
 	  rather than a full \code{party}. This has been corrected

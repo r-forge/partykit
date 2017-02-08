@@ -308,7 +308,8 @@ plot.party <- function(x, main = NULL,
 		       inner_panel = node_inner, ip_args = list(),
                        edge_panel = edge_simple, ep_args = list(),
 		       drop_terminal = FALSE, tnex = 1, 
-		       newpage = TRUE, pop = TRUE, gp = gpar(), ...)
+		       newpage = TRUE, pop = TRUE, gp = gpar(),
+		       margins = NULL, ...)
 {
 
     ### extract tree
@@ -322,10 +323,15 @@ plot.party <- function(x, main = NULL,
     if (newpage) grid.newpage()
 
     ## setup root viewport
+    margins <- if(is.null(margins)) {
+      c(1, 1, if(is.null(main)) 0 else 3, 1)
+    } else {
+      rep_len(margins, 4L)
+    }
     root_vp <- viewport(layout = grid.layout(3, 3, 
-    			heights = unit(c(ifelse(is.null(main), 0, 3), 1, 1), 
+    			heights = unit(c(margins[3L], 1, margins[1L]), 
                                       c("lines", "null", "lines")),
-    			widths = unit(c(1, 1, 1), 
+    			widths = unit(c(margins[2L], 1, margins[4L]), 
                                      c("lines", "null", "lines"))), 
     			name = "root",
 			gp = gp)       
@@ -356,7 +362,8 @@ plot.party <- function(x, main = NULL,
 
 
     if((nx <= 1 & ny <= 1)) {
-      pushViewport(plotViewport(margins = rep(1.5, 4), name = paste("Node", id_node(node), sep = "")))
+      if(is.null(margins)) margins <- rep.int(1.5, 4)
+      pushViewport(plotViewport(margins = margins, name = paste("Node", id_node(node), sep = "")))
       terminal_panel(node)
     } else {
       ## call the workhorse
