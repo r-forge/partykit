@@ -92,7 +92,9 @@
     mp <- ctrl$minprob
     swp <- ceiling(sw * mp)
     if (mb < swp) mb <- as.integer(swp)
-    jsel <- rev(order(crit))[1:ctrl$splittry]
+    ### at most ctrl$splittry variables with meaningful criterion
+    st <- pmin(sum(is.finite(crit)), ctrl$splittry)
+    jsel <- rev(order(crit))[1:st]
     jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
     ### try to find an admissible split in data[, jsel]
     thissplit <- sf$splitfun(whichvar = jsel, minbucket = mb)
