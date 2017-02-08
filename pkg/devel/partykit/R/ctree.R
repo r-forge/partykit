@@ -26,6 +26,7 @@
             }
             index[xt == 0] <- NA
             index[xt < minbucket] <- nlevels(x) + 1L
+            if (length(unique(index)) == 1) return(NULL)
             index <- unclass(factor(index))
             return(partysplit(as.integer(j),
                               index = as.integer(index)))
