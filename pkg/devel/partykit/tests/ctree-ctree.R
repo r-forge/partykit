@@ -58,6 +58,9 @@ fun <- function(args) {
 
     ct <- party:::ctree_control
     ctrl <- do.call("ct", args[-(1:2)])
+    sd <- round(runif(1) * 1000)
+    os <- .Random.seed
+    set.seed(sd)
     ot <- system.time(oldmod <- party:::ctree(y ~ ., data = learn, control = ctrl))[1]
     old <- predict(oldmod, newdata = test, type = "node")
     ct <- partykit:::ctree_control
@@ -66,12 +69,14 @@ fun <- function(args) {
     ctrl$nmax <- Inf
     ctrl$splitstat <- "maximum"
     ctrl$numsurrogate <- TRUE
+    set.seed(sd)
     nt <- system.time(newmod <- try(partykit:::ctree(y ~ ., data = learn, control = ctrl)))[1]
     if (inherits(newmod, "try-error")) {
         new <- as.list(rep(1, length(old)))
     } else {
         new <- predict(newmod, newdata = test, type = "node")
     }
+    set.seed(os)
     tb <- table(old, new) > 0
     err <- !(unique(rowSums(tb)) == 1 && unique(colSums(tb)) == 1)
     print(err)
@@ -87,8 +92,4 @@ err <- sapply(ret, function(x) x$error)
 save(ret, tm, tgr, fun, gr, dgp, err, file = "results-regtest.Rda")
 
 gr <- cbind(gr, err = err)
-subset(gr, !na & err > 0.01)
-
-### most of the differences come from the fact that in the absence of
-### a surrogate splits observations are randomly assigned to daugther nodes
-### slightly differently in the two implementations
+subset(gr, err)
