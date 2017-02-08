@@ -215,12 +215,13 @@ if (FALSE) {
 library("partykit")
 library("Formula")
 
-set.seed(29)
+set.seed(290)
 n <- 1000
 x <- runif(n)
 z <- runif(n)
+noise <- runif(n)
 y <- rnorm(n, mean = x * c(-1, 1)[(z > 0.5) + 1], sd = 3)
-d <- data.frame(y = y, x = x, z = z)
+d <- data.frame(y = y, x = x, z = z, noise = noise)
 
 glmtree <- function
 (
@@ -251,7 +252,7 @@ glmtree <- function
 
     trafofun <- function(...) .glmtrafo(..., converged = converged)
     tree <- partykit:::.urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      growfun = partykit:::.urp_fit, trafofun = trafofun,
+                      growfun = .urp_fit, trafofun = trafofun,
                       doFit = TRUE)
     ### <FIXME> change this to modelparty 
     mf <- tree$mf
@@ -281,20 +282,30 @@ glmtree <- function
     return(ret)
 }
 
-ctrl <- partykit:::ctree_control(stump = TRUE)
+ctrl <- ctree_control()
 ctrl$family <- gaussian()
 ctrl$splitflavour <- "exhaustive"
+ctrl$trim <- 0.1
 
-system.time(m1 <- glmtree(y ~ x | z, data = d, control = ctrl))
+system.time(m1 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
 m1
+
+ctrl$testflavour <- "mfluc"
+ctrl$breakties <- FALSE
+
+system.time(m2 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
+m2
 
 ctrl$splitflavour <- "ctree"
 
-system.time(m2 <- glmtree(y ~ x | z, data = d, control = ctrl))
-m2
-
-system.time(m3 <- lmtree(y ~ x | z, data = d))
+system.time(m3 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
 m3
+
+system.time(m4 <- lmtree(y ~ x | z + noise, data = d))
+m4
+
+system.time(m5 <- partykit::glmtree(y ~ x | z + noise, data = d))
+m5
 
 ll <- function(m)
 logLik(lm(y ~ x, data = d, subset = fitted_node(m, data = d) == 2)) +
