@@ -145,6 +145,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
 
 ### proof of concept for reimplementation of glmtree using urp_tree
 if (FALSE) {
+
 .glmtrafo <- function(formula, data, ctrl, converged = NULL) {
 
     weights <- model.weights(data)
@@ -205,18 +206,47 @@ if (FALSE) {
     })
 }
 
-glmtree <- function(formula, data, weights, subset, na.action = na.pass, 
-                    family = gaussian(), control = ctree_control(), ...) {
+library("partykit")
+library("Formula")
 
+set.seed(29)
+n <- 1000
+x <- runif(n)
+z <- runif(n)
+y <- rnorm(n, mean = x * c(-1, 1)[(z > 0.5) + 1], sd = 3)
+d <- data.frame(y = y, x = x, z = z)
+
+glmtree <- function
+(
+    formula, 
+    data, 
+    weights, 
+    subset,
+    offset,
+    cluster, 
+    na.action = na.pass, 
+    control = ctree_control(...), 
+    converged = NULL,
+    scores = NULL,
+    ...
+) {
+
+    ### get the call and the calling environment for .urp_tree
     call <- match.call(expand.dots = FALSE)
     call$na.action <- na.action
     frame <- parent.frame()
-    control$family <- family
+    if (missing(data)) {
+        data <- NULL
+        data_asis <- FALSE
+    } else {
+        data_asis <- missing(weights) && missing(subset) && 
+                     missing(cluster) && missing(offset)
+    }
 
-    tree <- .urp_tree(call, frame, control = control,
-                      growfun = .ctreegrow, trafofun = .glmtrafo,
+    trafofun <- function(...) .glmtrafo(..., converged = converged)
+    tree <- partykit:::.urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
+                      growfun = partykit:::.urp_fit, trafofun = trafofun,
                       doFit = TRUE)
-
     ### <FIXME> change this to modelparty 
     mf <- tree$mf
     weights <- model.weights(mf)
@@ -244,4 +274,28 @@ glmtree <- function(formula, data, weights, subset, na.action = na.pass,
     ### </FIXME>
     return(ret)
 }
+
+ctrl <- partykit:::ctree_control(stump = TRUE)
+ctrl$family <- gaussian()
+ctrl$splitflavour <- "exhaustive"
+
+system.time(m1 <- glmtree(y ~ x | z, data = d, control = ctrl))
+m1
+
+ctrl$splitflavour <- "ctree"
+
+system.time(m2 <- glmtree(y ~ x | z, data = d, control = ctrl))
+m2
+
+system.time(m3 <- lmtree(y ~ x | z, data = d))
+m3
+
+ll <- function(m)
+logLik(lm(y ~ x, data = d, subset = fitted_node(m, data = d) == 2)) +
+logLik(lm(y ~ x, data = d, subset = fitted_node(m, data = d) == 3))
+
+ll(m1$node)
+ll(m2$node)
+ll(m3$node)
+
 }
