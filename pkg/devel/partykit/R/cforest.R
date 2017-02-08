@@ -100,7 +100,7 @@ cforest <- function
     call$weights <- NULL ### NOTE: trees are unweighted, weights enter sampling!
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      growfun = .ctreegrow, trafofun = trafofun,
+                      growfun = .urp_fit, trafofun = trafofun,
                       doFit = FALSE)
 
     strata <- tree$mf[["(strata)"]]

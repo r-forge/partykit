@@ -77,8 +77,23 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x28df680>
+<bytecode: 0x166b290>
 <environment: namespace:base>
+
+$testflavour
+[1] "ctree"
+
+$splitflavour
+[1] "ctree"
+
+$vcov
+[1] "opg"
+
+$ordinal
+[1] "chisq"
+
+$nrep
+[1] 10000
 
 $teststat
 [1] "maximum"
@@ -169,8 +184,23 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x28df680>
+<bytecode: 0x166b290>
 <environment: namespace:base>
+
+$testflavour
+[1] "ctree"
+
+$splitflavour
+[1] "ctree"
+
+$vcov
+[1] "opg"
+
+$ordinal
+[1] "chisq"
+
+$nrep
+[1] 10000
 
 $teststat
 [1] "quadratic"
@@ -261,8 +291,23 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x28df680>
+<bytecode: 0x166b290>
 <environment: namespace:base>
+
+$testflavour
+[1] "ctree"
+
+$splitflavour
+[1] "ctree"
+
+$vcov
+[1] "opg"
+
+$ordinal
+[1] "chisq"
+
+$nrep
+[1] 10000
 
 $teststat
 [1] "quadratic"
@@ -353,8 +398,23 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x28df680>
+<bytecode: 0x166b290>
 <environment: namespace:base>
+
+$testflavour
+[1] "ctree"
+
+$splitflavour
+[1] "ctree"
+
+$vcov
+[1] "opg"
+
+$ordinal
+[1] "chisq"
+
+$nrep
+[1] 10000
 
 $teststat
 [1] "quadratic"
@@ -445,8 +505,23 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x28df680>
+<bytecode: 0x166b290>
 <environment: namespace:base>
+
+$testflavour
+[1] "ctree"
+
+$splitflavour
+[1] "ctree"
+
+$vcov
+[1] "opg"
+
+$ordinal
+[1] "chisq"
+
+$nrep
+[1] 10000
 
 $teststat
 [1] "quadratic"
@@ -694,4 +769,4 @@ Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  3.660   0.044   3.699 
+  3.840   0.032   3.873 
