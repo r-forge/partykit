@@ -1,4 +1,241 @@
 
+.urp_fit_1d <- function
+(
+    data, 				### full data, readonly
+    partyvars, 				### partytioning variables,
+					### a subset of 1:ncol(data)
+    cluster = integer(0), 		### a blocking factor w/o NA
+    ctrl				### control
+) {
+
+    ### transform partytioning variables
+    X <- vector(mode = "list", length = NCOL(data))
+    X[partyvars] <- lapply(partyvars, function(j) {
+        x <- data[[j]]
+        if (is.numeric(x)) {
+            ret <- x
+        } else if (is.ordered(x)) {
+            sc <- 1:nlevels(x)
+            if (!is.null(attr(x, "scores")))
+                sc <- attr(x, "scores")
+            ret <- matrix(sc[x], ncol = 1)
+        } else if (is.factor(x)) {
+            ret <- matrix(0, nrow = nrow(data), ncol = nlevels(x))
+            ret[cbind(1:length(x), unclass(x))] <- 1 ### model.matrix(~ x - 1)
+            ret[is.na(x),] <- NA
+        } else {
+            stop("cannot handle class", class(x))
+        }
+        storage.mode(ret) <- "double"
+        ret
+    })
+
+    ### this is the update function
+    return(function(trafo, subset, weights) {
+
+        ### compute statistics and (optionally) p-values
+        ### for a subset of observations and variables
+        ### y is used for node ids when computing surrogate splits
+        selectfun <- function(y = NULL, trafo, subset = integer(0), 
+                              weights = integer(0), whichvar, info = NULL) 
+        {
+
+            ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
+            colnames(ret$criteria) <- names(data)
+            rownames(ret$criteria) <- c("statistic", "p.value")
+
+            if (is.null(y)) {
+                ### nrow(Y) = nrow(data)!!!
+                tr <- trafo(subset, info = info)
+                if (!tr$converged) return(ret)
+            } else {
+                ### y is kidids in .csurr and nothing else
+                stopifnot(length(y) == length(subset))
+                Y <- matrix(0, nrow = NROW(data), ncol = max(y))
+                Y[cbind(subset, y)] <- 1 ### model.matrix(~ as.factor(y) - 1)
+                storage.mode(Y) <- "double"
+                tr <- list(estfun = Y)
+            }
+            Y <- tr$estfun
+            if (!is.null(tr$index)) {
+                if (length(tr$index) != nrow(data))
+                    stop("incorrect index")
+                ### index == 0 means NA
+                subset <- subset[tr$index[subset] > 0]
+                Y <- Y[tr$index + 1L,,drop = FALSE]
+            }
+
+            for (j in whichvar) {
+                tst <- switch(ctrl$testflavour, 
+                    "ctree" = .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl, 
+                                                X = X, Y = Y, iy = NULL, subset = subset, 
+                                                weights = weights, cluster = cluster,
+                                                splitonly = FALSE, minbucket =
+                                                ctrl$minbucket),
+                    stop(ctrl$testflavour, "not yet implemented")
+                )
+                ### <FIXME> minbucket is updated in .urp_node but only after testing... </FIXME>
+                ret$criteria["statistic", j] <- tst$statistic
+                ret$criteria["p.value", j] <- tst$p.value
+            }
+            if (ctrl$testtype == "Bonferroni")
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
+
+            ret <- c(ret, tr[names(tr) != "estfun"])
+
+            ### compute best fitting cutpoint (according to minbucket)
+            ### for a subset of observations and variables
+            ### y is used for node ids when computing surrogate splits
+            ### splitfun as part of the return object of selectfun allows
+            ### returning splits found during selections (ie, exhaustive 
+            ### searchs)
+            ### splitfun already knows Y by lexical scoping, no need to 
+            ### compute it twice
+            ret$splitfun <- function(whichvar, minbucket) 
+            {
+                for (j in whichvar) {
+                    ret <- switch(ctrl$splitflavour, 
+                        "ctree" = .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl,
+                                                    X = X, Y = Y, iy = NULL, subset = subset, 
+                                                    weights = weights, cluster = cluster,
+                                                    splitonly = TRUE, minbucket =
+                                                    minbucket),
+                        stop(ctrl$splitflavour, "not yet implemented")
+                    )
+                    ### check if trafo can be successfully applied to all daugther nodes 
+                    ### (converged = TRUE)
+                    if (ctrl$lookahead & !is.null(ret)) {
+                        sp <- kidids_split(ret, data, obs = subset)
+                        conv <- sapply(unique(sp), function(i)
+                            trafo(subset[sp == i], info = info, estfun = FALSE)$converged)
+                        if (!all(conv)) ret <- NULL
+                    }
+                    if (!is.null(ret)) break()
+                }
+                ret
+            }
+            ret
+        }
+
+        tree <- .urp_node(id = 1L, data = data, 
+                          selectfun = function(...) 
+                              selectfun(..., trafo = trafo),
+                          partyvars = partyvars, weights = weights, 
+                          subset = subset, ctrl = ctrl)
+
+        return(tree)
+    })
+}
+
+### faster but approximate version
+.urp_fit_2d <- function
+(
+    data,                               ### full data, readonly
+    partyvars,                          ### partytioning variables,
+                                        ### a subset of 1:ncol(data)
+    cluster = integer(0),                 ### a blocking factor w/o NA
+    ctrl                                ### ctree_control()
+) {
+
+    bdr <- inum::inum(data, nmax = ctrl$nmax)
+    X <- vector(mode = "list", length = NCOL(data))
+    names(X) <- colnames(data)
+    X[partyvars] <- lapply(partyvars, function(j) {
+        x <- attr(bdr[[j]], "levels")
+        if (is.logical(x)) {
+            X <- rbind(0, diag(2))
+        } else if (is.numeric(x)) {
+            X <- rbind(0, matrix(x, ncol = 1L))
+        } else if (is.factor(x) && !is.ordered(x)) {
+            X <- rbind(0, diag(nlevels(x)))
+        } else if (is.ordered(x)) {
+            sc <- attr(data[[j]], "scores")
+            if (is.null(sc)) sc <- 1:nlevels(x)
+            X <- rbind(0, matrix(sc, ncol = 1L))
+        } else {
+            stop("cannot handle predictors of class", " ", sQuote(class(x)))
+        }
+        storage.mode(X) <- "double"
+        return(X)
+    })
+
+    return(function(trafo, subset, weights) {
+
+        ### compute statistics and (optionally) p-values
+        ### for a subset of observations and variables
+        ### y is used for node ids when computing surrogate splits
+        selectfun <- function(y = NULL, trafo, subset = integer(0), 
+                              weights = integer(0), whichvar, info = NULL) 
+        {
+    
+            ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(data)))
+            colnames(ret$criteria) <- names(data)
+            rownames(ret$criteria) <- c("statistic", "p.value")
+
+            if (is.null(y)) {
+                tr <- trafo(subset = subset, info = info)
+                if (!tr$converged) return(ret)
+            } else {
+                ### y is kidids in .csurr and nothing else
+                stopifnot(length(y) == length(subset))
+                Y <- rbind(0, max(y))
+                iy <- numeric(NROW(data))
+                iy[subset] <- as.integer(y)
+                tr <- list(estfun = Y, index = iy)
+            }
+            Y <- tr$estfun
+            iy <- tr$index
+            if (is.null(iy)) stop("trafo did not return index")
+
+            for (j in whichvar) {
+                tst <- switch(ctrl$testflavour, 
+                    "ctree" = .ctree_test_split(x = data[[j]], bdr = bdr, j = j, ctrl = ctrl,
+                                                X = X, Y = Y, iy = iy, subset = subset,
+                                                weights = weights, cluster = cluster,
+                                                splitonly = FALSE, minbucket =
+                                                ctrl$minbucket),
+                    stop(ctrl$testflavour, "not yet implemented")
+                )
+                ret$criteria["statistic", j] <- tst$statistic
+                ret$criteria["p.value", j] <- tst$p.value
+            }
+            if (ctrl$testtype == "Bonferroni")
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * 
+                    length(whichvar)
+
+            ret <- c(ret, tr[!(names(tr) %in% c("estfun", "index"))])
+
+            ### compute best fitting cutpoint (according to minbucket)
+            ### for a subset of observations and variables
+            ### y is used for node ids when computing surrogate splits
+            ret$splitfun <- function(whichvar,  minbucket)
+            {
+                for (j in whichvar) {
+                    ret <- switch(ctrl$splitflavour, 
+                        "ctree" = .ctree_test_split(x = data[[j]], bdr = bdr, j = j, ctrl = ctrl,
+                                                    X = X, Y = Y, iy = iy, subset = subset,
+                                                    weights = weights, cluster = cluster,
+                                                    splitonly = TRUE, minbucket =
+                                                    minbucket),
+                        stop(ctrl$splitflavour, "not yet implemented")
+                    )
+                    if (!is.null(ret)) break()
+                }
+                return(ret)
+           }
+           ret
+        }
+
+        tree <- .urp_node(id = 1L, data = data, 
+                          selectfun = function(...) 
+                              selectfun(..., trafo = trafo),
+                          partyvars = partyvars, weights = weights,
+                          subset = subset, ctrl = ctrl)
+        return(tree)
+    })
+}
+
+
 ### unbiased recursive partitioning: set up new node
 .urp_node <- function
 (
@@ -325,7 +562,9 @@
     majority = FALSE, 
     caseweights = TRUE, 
     applyfun = NULL, 
-    cores = NULL
+    cores = NULL,
+    testflavour = "ctree",
+    splitflavour = "ctree"
 ) {
 
     ## apply infrastructure for determining split points
@@ -353,5 +592,7 @@
          minprob = minprob, stump = stump, mtry = mtry,
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
          MIA = MIA, maxsurrogate = maxsurrogate, majority = majority,
-         caseweights = caseweights, applyfun = applyfun)
+         caseweights = caseweights, applyfun = applyfun,
+         testflavour = match.arg(testflavour), 
+         splitflavour = match.arg(splitflavour))
 }
