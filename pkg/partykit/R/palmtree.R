@@ -1,7 +1,7 @@
 utils::globalVariables(c(".tree", ".lm", ".weights"))
 
 palmtree <- function(formula, data, weights = NULL, family = NULL,
-  lmstart = NULL, abstol = 0.001, maxit = 100, intercept = TRUE,
+  lmstart = NULL, abstol = 0.001, maxit = 100, 
   dfsplit = TRUE, verbose = FALSE, plot = FALSE, ...)
 {
   ## remember call
@@ -19,16 +19,14 @@ palmtree <- function(formula, data, weights = NULL, family = NULL,
   ff <- Formula::as.Formula(formula)
   tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
   rf <- formula(ff, lhs = 1L, rhs = 1L)
-
-  ## intercept in "lm" and/or "palm"
-  intercept <- c("lm" = attr(terms(rf), "intercept") > 0L, "palm" = intercept)
-  rf <- if(intercept["lm"] & !intercept["palm"]) update(rf, . ~ . - 1) else update(rf, . ~ . + 1)
-  
+  ## intercept in lmtree?
+  intercept <- attr(terms(rf), "intercept") > 0L
+  if(!intercept) rf <- update(rf, . ~ . + 1)
   ## without tree
   rf0 <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
     lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   ## with tree
-  rf <- if(intercept["lm"]) update(rf, . ~ .tree / .) else update(rf, . ~ .tree:.)
+  rf <- if(intercept) update(rf, . ~ .tree / .) else update(rf, . ~ .tree:.)
   rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
     lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
 
@@ -80,7 +78,7 @@ palmtree <- function(formula, data, weights = NULL, family = NULL,
     }
     b <- palm$coefficients
     if(length(levels(data$.tree)) > 1L) {
-      palm$coefficients[substr(names(b), 1L, 5L) %in% c(if(intercept["palm"]) "(Inte" else NULL, ".tree")] <- 0
+      palm$coefficients[substr(names(b), 1L, 5L) %in% c(if(intercept) "(Inte" else NULL, ".tree")] <- 0
     } else {
       palm$coefficients[names(coef(tree))] <- 0
     }
@@ -125,7 +123,7 @@ coef.palmtree <- function(object, model = c("all", "tree", "palm"), ...)
   
   cf_all  <- coef(object$palm)
   cf_tree <- coef(object$tree, drop = FALSE)
-  excl <- which(substr(names(cf_all), 1L, 5L) %in% c(if(object$intercept["palm"]) "(Inte" else NULL, ".tree"))
+  excl <- which(substr(names(cf_all), 1L, 5L) %in% c(if(object$intercept) "(Inte" else NULL, ".tree"))
   excl <- c(excl, which(names(cf_all) %in% colnames(cf_tree)))
   return(cf_all[-excl])
 }
