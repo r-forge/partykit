@@ -281,21 +281,6 @@
     }
 }
 
-.ctreegrow <- function
-(
-    data, 
-    partyvars, 
-    cluster, 
-    ctrl
-) {
-
-    if (ctrl$nmax < Inf)
-        return(.urp_fit_2d(data = data, partyvars = partyvars, 
-                           cluster = cluster, ctrl = ctrl))
-    return(.urp_fit_1d(data = data, partyvars = partyvars,
-                       cluster = cluster, ctrl = ctrl))
-}
-
 ctree_control <- function
 (
     teststat = c("quadratic", "maximum"), 
@@ -396,7 +381,7 @@ ctree <- function
 
     trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo, converged = converged)
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      growfun = .ctreegrow, trafofun = trafofun,
+                      growfun = .urp_fit, trafofun = trafofun,
                       doFit = TRUE)
     mf <- tree$mf
     weights <- model.weights(mf)

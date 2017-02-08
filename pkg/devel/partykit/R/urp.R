@@ -1,4 +1,118 @@
 
+.logLik_test_split <- function(trafo, info = info, x, bdr = NULL, j, ctrl, subset, 
+                               weights, cluster, splitonly = TRUE, 
+                               minbucket) {
+
+    if (all(is.na(x[subset]))) { ### all x values are missing
+        if (splitonly) return(NULL)
+        return(list(statistic = NA, p.value = NA))
+    }
+
+    if (is.null(cluster)) cluster <- integer(0)
+    if (splitonly) {
+        if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
+            is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
+            index <- 1L:nlevels(x)
+            if (length(weights) > 0) {
+                xt <- xtabs(weights ~ x, subset = subset)
+            } else {
+                xt <- xtabs(~ x, subset = subset)
+            }
+            index[xt == 0] <- NA
+            index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
+            if (length(unique(index)) == 1) return(NULL)
+            index <- unclass(factor(index))
+            return(partysplit(as.integer(j),
+                              index = as.integer(index)))
+        }
+    }
+
+    ux <- NULL
+    ORDERED <- is.ordered(x) || is.numeric(x)
+    if (is.null(bdr)) {
+        if (!is.factor(x)) {
+            x[-subset] <- NA
+            ux <- sort(unique(x))
+        }
+    } else {
+        ix <- bdr[[j]]
+        ux <- attr(ix, "levels")
+    }
+
+    if (ORDERED) {
+        sp <- NULL
+        maxlogLik <- -Inf
+        linfo <- rinfo <- info
+        for (u in 1:length(ux)) {
+            sleft <- subset[LEFT <- x[subset] <= ux[u]]
+            sright <- subset[!LEFT]
+            if (length(weights) > 0) {
+                if (sum(weights[sleft]) < minbucket ||
+                    sum(weights[sright]) < minbucket)
+                    next();
+            } else {
+                if (length(sleft) < minbucket || 
+                    length(sright) < minbucket)
+                    next();
+            }
+            ltr <- trafo(sleft, info = linfo)
+            rtr <- trafo(sright, info = rinfo)
+            ll <- ltr$logLik + rtr$logLik
+            linfo <- ltr$info
+            rinfo <- rtr$info
+            if (ll > maxlogLik) {
+                sp <- u
+                maxlogLik <- ll
+            }
+        }
+    } else {
+        splits <- mob_grow_getlevels(x)
+        for (u in 1:nrow(splits)) {
+            sleft <- subset[LEFT <- x[subset] %in% levels(x)[splits[u,]]]
+            sright <- subset[!LEFT]
+            if (length(weights) > 0) {
+                if (sum(weights[sleft]) < minbucket ||
+                    sum(weights[sright]) < minbucket)
+                    next();
+            } else {
+                if (length(sleft) < minbucket || 
+                    length(sright) < minbucket)
+                    next();
+            }
+            ltr <- trafo(sleft, info = linfo)
+            rtr <- trafo(sright, info = rinfo)
+            ll <- ltr$logLik + rtr$logLik
+            linfo <- ltr$info
+            rinfo <- rtr$info
+            if (ll > maxlogLik) {
+                sp <- splits[u,] + 1L
+                maxlogLik <- ll
+            }
+        }
+    }
+
+    if (!splitonly)
+        return(statistic = maxlogLik, p.value = NA)
+
+    if (all(is.na(sp))) return(NULL)
+    if (ORDERED) {
+        if (!is.ordered(x))
+            ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+            if (ctrl$intersplit & sp < length(ux)) {
+                sp <- (ux[sp] + ux[sp + 1]) / 2 
+            } else {
+                sp <- ux[sp]  ### x <= sp vs. x > sp
+            }
+            ret <- partysplit(as.integer(j), breaks = sp,
+                              index = 1L:2L)
+    } else {
+        ret <- partysplit(as.integer(j),
+                          index = as.integer(sp) + 1L)
+    }
+    return(ret)
+}
+
+
 .urp_fit_1d <- function
 (
     data, 				### full data, readonly
@@ -72,6 +186,11 @@
                                                 weights = weights, cluster = cluster,
                                                 splitonly = FALSE, minbucket =
                                                 ctrl$minbucket),
+                    "exhaustive" = .logLik_test_split(trafo = trafo, info = info, x = data[[j]], 
+                                                      bdr = NULL, j = j, ctrl = ctrl, 
+                                                      subset = subset,  weights = weights, 
+                                                      cluster = cluster, splitonly = FALSE, 
+                                                      minbucket = ctrl$minbucket),
                     stop(ctrl$testflavour, "not yet implemented")
                 )
                 ### <FIXME> minbucket is updated in .urp_node but only after testing... </FIXME>
@@ -100,6 +219,11 @@
                                                     weights = weights, cluster = cluster,
                                                     splitonly = TRUE, minbucket =
                                                     minbucket),
+                        "exhaustive" = .logLik_test_split(trafo = trafo, info = info, x = data[[j]], 
+                                                          bdr = NULL, j = j, ctrl = ctrl, 
+                                                          subset = subset,  weights = weights, 
+                                                          cluster = cluster, splitonly = TRUE, 
+                                                          minbucket = ctrl$minbucket),
                         stop(ctrl$splitflavour, "not yet implemented")
                     )
                     ### check if trafo can be successfully applied to all daugther nodes 
@@ -234,6 +358,22 @@
         return(tree)
     })
 }
+
+.urp_fit <- function
+(
+    data, 
+    partyvars, 
+    cluster, 
+    ctrl
+) {
+
+    if (ctrl$nmax < Inf)
+        return(.urp_fit_2d(data = data, partyvars = partyvars, 
+                           cluster = cluster, ctrl = ctrl))
+    return(.urp_fit_1d(data = data, partyvars = partyvars,
+                       cluster = cluster, ctrl = ctrl))
+}
+
 
 
 ### unbiased recursive partitioning: set up new node
@@ -440,6 +580,7 @@
     return(ret)
 }
 
+
 ### parse formula and grow unbiased tree in a generic way
 .urp_tree <- function
 (
@@ -563,8 +704,11 @@
     caseweights = TRUE, 
     applyfun = NULL, 
     cores = NULL,
-    testflavour = "ctree",
-    splitflavour = "ctree"
+    testflavour = c("ctree", "exhaustive"),
+    splitflavour = c("ctree", "exhaustive"),
+    vcov = c("opg", "info", "sandwich"), ### mob_control
+    ordinal = c("chisq", "max", "L2"),   ### mob_control
+    nrep = 10000                         ### mob_control
 ) {
 
     ## apply infrastructure for determining split points
@@ -594,5 +738,8 @@
          MIA = MIA, maxsurrogate = maxsurrogate, majority = majority,
          caseweights = caseweights, applyfun = applyfun,
          testflavour = match.arg(testflavour), 
-         splitflavour = match.arg(splitflavour))
+         splitflavour = match.arg(splitflavour),
+         vcov = match.arg(vcov),
+         ordinal = match.arg(ordinal),
+         nrep = nrep)
 }
