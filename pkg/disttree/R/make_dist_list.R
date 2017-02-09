@@ -79,7 +79,9 @@ make_dist_list <- function(family, bd = NULL)
           input <- c(input, par[par.id])
           input$bd <- bd
           val <- do.call(fun, input)
-          if(length(val) == 1L) val <- rep(val, length(y))
+          ny <- length(y)
+          if(survival::is.Surv(y)) ny <- dim(y)[1]
+          if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }
       } else {
@@ -88,7 +90,9 @@ make_dist_list <- function(family, bd = NULL)
           input$y <- y
           input <- c(input, par[par.id])
           val <- do.call(fun, input)
-          if(length(val) == 1L) val <- rep(val, length(y))
+          ny <- length(y)
+          if(survival::is.Surv(y)) ny <- dim(y)[1]
+          if(length(val) == 1L) val <- rep(val, ny)
           return(val)
         }    
       } 
@@ -98,13 +102,17 @@ make_dist_list <- function(family, bd = NULL)
           input <- list()
           input <- c(input, par[par.id])
           input$bd <- bd
-          return(rep(do.call(fun, input), length(y)))
+          ny <- length(y)
+          if(survival::is.Surv(y)) ny <- dim(y)[1]
+          return(rep(do.call(fun, input), ny))
         }
       } else {
         derivfun <- function(y, par) {
           input <- list()
           input <- c(input, par[par.id])
-          return(rep(do.call(fun, input), length(y)))
+          ny <- length(y)
+          if(survival::is.Surv(y)) ny <- dim(y)[1]
+          return(rep(do.call(fun, input), ny))
         }    
       }
     }
@@ -748,7 +756,7 @@ if(FALSE) {
   }
   
   mle <- TRUE
-  
+
   dist_list_normal <- list(family.name = "Normal Distribution",
                            ddist = ddist, 
                            sdist = sdist, 
@@ -799,7 +807,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, dim(y)[1])
+      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
