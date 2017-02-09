@@ -105,6 +105,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$call <- cl
   rval$info$family <- family
   rval$info$ocontrol <- ocontrol
+  rval$info$formula <- rval$info$call$formula
   class(rval) <- c("disttree", class(rval))
   return(rval)
 }
@@ -114,7 +115,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
 print.disttree <- function(x,
   title = NULL, objfun = "negative log-likelihood", ...)
 {
-  if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", x$info$family$family[2L])
+  if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", x$info$family$family.name)
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
@@ -172,8 +173,11 @@ if(FALSE){
   d <- as.data.frame(cbind(c(y1,y2,y3,y4),c(x1,x2,x3,x4)))
   colnames(d) <- c("y","x")
   
-  test <- disttree(y~x, data = d, family = dist_list_normal)
-  print(test)
-  plot(test)
-  plot(as.constparty(test))
+  test_mob <- disttree(y~x, data = d, family = dist_list_normal, type.tree = "mob")
+  test_ctree <- disttree(y~x, data = d, family = dist_list_normal, type.tree = "ctree", control = ctree_control())
+  print(test_mob)
+  plot(test_mob)
+  plot(as.constparty(test_mob))
+  print(test_ctree)
+  plot(test_ctree)
 }
