@@ -184,7 +184,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
     cc <- complete.cases(mf)
     y <- model.response(mf)
     x <- model.matrix(formula, data = mf)
-    return(function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
+    glmfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
         s <- subset[cc[subset]]
         ys <- y[s]
         xs <- x[s, , drop = FALSE]
@@ -211,7 +211,8 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
              object = if (object) mod else NULL, nobs = nobs,
              converged = if (is.null(converged)) 
                  mod$converged else converged(mod, mf, subset))
-    })
+    }
+    return(glmfit)
 }
 
 glmtree2 <- function
