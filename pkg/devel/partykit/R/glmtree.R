@@ -241,8 +241,7 @@ glmtree2 <- function
 
     trafofun <- function(...) .glmtrafo(..., converged = converged)
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      growfun = .urp_fit, trafofun = trafofun,
-                      doFit = TRUE)
+                      trafofun = trafofun, doFit = TRUE)
     ### <FIXME> change this to modelparty 
     mf <- tree$mf
     weights <- model.weights(mf)
