@@ -235,9 +235,6 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
 
 
 
-
-
-
 ## print, summary?, predict?
 nobs.distfit <- function(object, ...) {
   object$ny
@@ -247,6 +244,19 @@ coef.distfit <- function(object, type = "link" , ...) {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
   ## FIXME: else, warning
+}
+
+# FIX: complete with other types ?
+predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
+  # calculation of the expected value 
+  # of the given distribution with the calculated parameters
+  if(type == "response"){
+    f <- function(x){x * object$ddist(x, log = FALSE)}
+    expv <- integrate(f,-Inf,Inf )
+    return(expv[[1]])
+  }
+  
+  ## FIX: if censored distribution -> change integration boundaries
 }
 
 vcov.distfit <- function(object, type = "link", ...) {
@@ -429,16 +439,16 @@ if(FALSE) {
 
 
 if(FALSE) {
-  
+  ####### example normal distribution
   family <- NO()
   y <- rNO(1000, mu = 5, sigma = 2)
   ny <- length(y)
   start <- c(2, 1)
   weights <- rbinom(ny, 1, 0.75)
   
-  df <- distfit(y, family, weights = weights, start = start)
+  df <- distfit(y, family, start = start)
   df2 <- distfit(y, family = dist_list_normal, start = start)
-  df3 <- distfit(y, family, weights = weights, start = start, type.hessian = "numeric")
+  df3 <- distfit(y, family, start = start, type.hessian = "numeric")
   df4 <- distfit(y, family = dist_list_normal, start = start, type.hessian = "numeric")
   
   coef(df)
@@ -501,7 +511,32 @@ if(FALSE){
     coef(m2)
     logLik(m1)
     logLik(m2)
+    vcov(m1)
+    vcov(m2)
   }
+  
+  
+  
+  ## censored normal example
+  y <- rnorm(500,3,2)
+  y[y<0] <- 0
+  m1 <- crch(y ~ 1, left = 0, dist = "gaussian")
+  m2 <- distfit(Surv(y, y>0, type="left"), family = NOlc)
+  m3 <- distfit(y, family = dist_list_cens_normal)
+  
+  coef(m1)
+  coef(m2)
+  coef(m3)
+  logLik(m1)
+  logLik(m2)
+  logLik(m3)
+  vcov(m1)
+  vcov(m2)
+  vcov(m3)
+  solve(vcov(m1))
+  solve(vcov(m2))
+  solve(vcov(m3))
+  
 }
 
 
