@@ -16,6 +16,10 @@ ctrl$splitflavour <- "exhaustive"
 system.time(m1 <- glmtree2(y ~ x | z, data = d, control = ctrl))
 m1
 
+system.time(m1m <- mob2(fit = partykit:::.glmtrafo, y ~ x | z, data = d, control = ctrl))
+m1m
+
+
 ctrl$splitflavour <- "ctree"
 
 system.time(m2 <- glmtree2(y ~ x | z, data = d, control = ctrl))

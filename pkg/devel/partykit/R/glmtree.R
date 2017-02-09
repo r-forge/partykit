@@ -227,45 +227,67 @@ glmtree2 <- function
     ...
 ) {
 
-    ### get the call and the calling environment for .urp_tree
-    call <- match.call(expand.dots = FALSE)
-    call$na.action <- na.action
-    frame <- parent.frame()
-    if (missing(data)) {
-        data <- NULL
-        data_asis <- FALSE
-    } else {
-        data_asis <- missing(weights) && missing(subset) && 
-                     missing(cluster) && missing(offset)
-    }
+  mob2(fit = .glmtrafo, formula = formula, data = data, weights = weights,
+       subset = subset, offset = offset, cluster = cluster, na.action = na.action,
+       control = control, converged = converged, scores = scores, ...)
+}
 
-    trafofun <- function(...) .glmtrafo(..., converged = converged)
-    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      trafofun = trafofun, doFit = TRUE)
-    ### <FIXME> change this to modelparty 
-    mf <- tree$mf
-    weights <- model.weights(mf)
-    if (is.null(weights)) weights <- rep(1, nrow(mf))
 
-    fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf),
-                         "(weights)" = weights,
-                         check.names = FALSE)
-    y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
-    if (length(y) == 1) y <- y[[1]]
-    fitted[[3]] <- y
-    names(fitted)[3] <- "(response)"
-    ret <- party(tree$node, data = mf, fitted = fitted,
-                 info = list(call = match.call(), control = control))
-    ret$update <- tree$treefun
-    ret$trafo <- tree$trafo
-    class(ret) <- c("constparty", class(ret))
-
-    ### doesn't work for Surv objects
-    # ret$terms <- terms(formula, data = mf)
-    ret$terms <- tree$terms
-    ### need to adjust print and plot methods
-    ### for multivariate responses
-    ### if (length(response) > 1) class(ret) <- "party"
-    ### </FIXME>
-    return(ret)
+mob2 <- function
+(
+  fit,
+  formula, 
+  data, 
+  weights, 
+  subset,
+  offset,
+  cluster, 
+  na.action = na.pass, 
+  control = ctree_control(...), 
+  converged = NULL,
+  scores = NULL,
+  ...
+) {
+  
+  ### get the call and the calling environment for .urp_tree
+  call <- match.call(expand.dots = FALSE)
+  call$na.action <- na.action
+  frame <- parent.frame()
+  if (missing(data)) {
+    data <- NULL
+    data_asis <- FALSE
+  } else {
+    data_asis <- missing(weights) && missing(subset) && 
+      missing(cluster) && missing(offset)
+  }
+  
+  trafofun <- function(...) fit(..., converged = converged)
+  tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
+                    trafofun = trafofun, doFit = TRUE)
+  ### <FIXME> change this to modelparty 
+  mf <- tree$mf
+  weights <- model.weights(mf)
+  if (is.null(weights)) weights <- rep(1, nrow(mf))
+  
+  fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf),
+                       "(weights)" = weights,
+                       check.names = FALSE)
+  y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
+  if (length(y) == 1) y <- y[[1]]
+  fitted[[3]] <- y
+  names(fitted)[3] <- "(response)"
+  ret <- party(tree$node, data = mf, fitted = fitted,
+               info = list(call = match.call(), control = control))
+  ret$update <- tree$treefun
+  ret$trafo <- tree$trafo
+  class(ret) <- c("constparty", class(ret))
+  
+  ### doesn't work for Surv objects
+  # ret$terms <- terms(formula, data = mf)
+  ret$terms <- tree$terms
+  ### need to adjust print and plot methods
+  ### for multivariate responses
+  ### if (length(response) > 1) class(ret) <- "party"
+  ### </FIXME>
+  return(ret)
 }

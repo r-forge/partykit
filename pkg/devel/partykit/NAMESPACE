@@ -44,6 +44,7 @@ export(
 
   ## mobsters (urp-based)
   "glmtree2",
+  "mob2",
 
   ## new cforest implementation
   "cforest",
