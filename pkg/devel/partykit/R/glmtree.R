@@ -190,8 +190,10 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         xs <- x[s, , drop = FALSE]
         if (length(weights) > 0) {
             w <- weights[cc[subset]]
+            nobs <- sum(w)
             mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info$coef)
         } else {
+             nobs <- NROW(ys)
              mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info$coef)
         }
         ret <- NULL
@@ -206,7 +208,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
             storage.mode(ret) <- "double"
         }
         list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod),
-             object = if (object) mod else NULL,
+             object = if (object) mod else NULL, nobs = nobs,
              converged = if (is.null(converged)) 
                  mod$converged else converged(mod, mf, subset))
     })
@@ -264,30 +266,56 @@ mob2 <- function
   trafofun <- function(...) fit(..., converged = converged)
   tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                     trafofun = trafofun, doFit = TRUE)
-  ### <FIXME> change this to modelparty 
+  
+  
+  
+  ### prepare as modelparty
+  ## formula FIXME: y ~ . or y ~ x | .
+  oformula <- as.formula(formula)
+  formula <- Formula::as.Formula(formula)
+  if(length(formula)[2L] < 2L) {
+    formula <- Formula::Formula(formula(Formula::as.Formula(formula(formula), ~ 0), rhs = 2L:1L))
+    xreg <- FALSE
+  } else {
+    if(length(formula)[2L] > 2L) {
+      formula <- Formula::Formula(formula(formula, rhs = 1L:2L))
+      warning("Formula must not have more than two RHS parts")
+    }
+    xreg <- TRUE
+  }
+  mt <- terms(formula, data = data)
+  mtY <- terms(formula, data = data, rhs = if(xreg) 1L else 0L)
+  mtZ <- delete.response(terms(formula, data = data, rhs = 2L))
+  
   mf <- tree$mf
   weights <- model.weights(mf)
   if (is.null(weights)) weights <- rep(1, nrow(mf))
   
-  fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf),
+  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
+  y <- model.part(formula, data = mf, lhs = 1, rhs = 0)
   if (length(y) == 1) y <- y[[1]]
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
-  ret <- party(tree$node, data = mf, fitted = fitted,
-               info = list(call = match.call(), control = control))
-  ret$update <- tree$treefun
-  ret$trafo <- tree$trafo
-  class(ret) <- c("constparty", class(ret))
   
-  ### doesn't work for Surv objects
-  # ret$terms <- terms(formula, data = mf)
-  ret$terms <- tree$terms
-  ### need to adjust print and plot methods
-  ### for multivariate responses
-  ### if (length(response) > 1) class(ret) <- "party"
-  ### </FIXME>
-  return(ret)
+  ## return party object
+  rval <- party(tree$nodes, 
+                data = mf,
+                fitted = fitted,
+                terms = mt,
+                info = list(
+                  call = match.call(),
+                  formula = oformula,
+                  Formula = formula,
+                  terms = list(response = mtY, partitioning = mtZ),
+                  fit = fit,
+                  control = control,
+                  dots = list(...)
+                  # nreg = max(0L, as.integer(xreg) * (nyx - NCOL(Y))))
+                )
+  )
+  class(rval) <- c("modelparty", class(rval))
+  return(rval)
+
 }
