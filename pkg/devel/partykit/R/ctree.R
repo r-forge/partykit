@@ -2,17 +2,28 @@
 .ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
                               weights, cluster, splitonly = TRUE, minbucket) {
 
-    ### <FIXME> check if x and/or Y have only unique values and return immediately? </FIXME>
+    ### check if x and/or Y have only unique values or are missing 
+    ### completely; return immediately in these cases
+    if (splitonly) {
+        ret <- NULL
+    } else {
+        ret <- list(statistic = NA, p.value = NA)
+    }
+    xs <- x[subset]
+    if (all(is.na(xs)) || length(unique(xs)) == 1) return(ret)
+    Ys <- Y[subset,,drop = FALSE]
+    if (all(!complete.cases(Ys)) || 
+        all(apply(Ys, 2, function(y) length(unique(y)) == 1)))
+        return(ret)
+    if (!is.null(iy))
+        if (length(unique(iy)) == 1) return(ret)
+    if (!is.null(bdr)) 
+        if (length(unique(bdr[[j]])) == 1) return(ret)
 
-    ### <FIXME> MIA splits only estimated in the presence of missings
+    ### <FIXME> MIA splits are only estimated in the presence of missings
     ###         new missings in predict(<>, newdata) will cause trouble
     ### </FIXME>
     MIA <- ctrl$MIA && any(is.na(x[subset]))
-
-    if (all(is.na(x[subset]))) { ### all x values are missing
-        if (splitonly) return(NULL)
-        return(list(statistic = NA, p.value = NA))
-    }
 
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
