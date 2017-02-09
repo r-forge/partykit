@@ -42,6 +42,9 @@ export(
   "glmtree",
   "palmtree",
 
+  ## mobsters (urp-based)
+  "glmtree2",
+
   ## new cforest implementation
   "cforest",
   "predict.cforest",

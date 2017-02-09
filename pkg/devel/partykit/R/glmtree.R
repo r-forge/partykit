@@ -144,8 +144,6 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
 }
 
 ### proof of concept for reimplementation of glmtree using urp_tree
-if (FALSE) {
-
 .glmtrafo <- function(formula, data, ctrl, converged = NULL) {
 
     weights <- model.weights(data)
@@ -165,9 +163,9 @@ if (FALSE) {
         mfs <- model.frame(formula, data = mf2)
         y <- model.response(mfs)
         x <- model.matrix(formula, data = mf2)
-        return(function(subset, estfun = TRUE, info = NULL, ...) {
+        return(function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
             w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
-            mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info)
+            mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info$coef)
             ret <- NULL
             if (estfun) {
                 Y <- sandwich::estfun(mod)
@@ -175,7 +173,8 @@ if (FALSE) {
                 Y[w == 0,] <- 0
                 ret <- rbind(0, Y)
             }
-            list(estfun = ret, index = iy, info = coef(mod), logLik = logLik(mod),
+            list(estfun = ret, index = iy, coefficients = coef(mod), objfun = logLik(mod),
+                 object = if (object) mod else NULL,
                  converged = if (is.null(converged)) 
                      mod$converged else converged(mod, mf, subset))
         })
@@ -185,15 +184,15 @@ if (FALSE) {
     cc <- complete.cases(mf)
     y <- model.response(mf)
     x <- model.matrix(formula, data = mf)
-    return(function(subset, estfun = TRUE, info = NULL, ...) {
+    return(function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
         s <- subset[cc[subset]]
         ys <- y[s]
         xs <- x[s, , drop = FALSE]
         if (length(weights) > 0) {
             w <- weights[cc[subset]]
-            mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info)
+            mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info$coef)
         } else {
-             mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info)
+             mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info$coef)
         }
         ret <- NULL
         if (estfun) {
@@ -206,24 +205,14 @@ if (FALSE) {
             ret[subset,] <- Y
             storage.mode(ret) <- "double"
         }
-        list(estfun = ret, info = coef(mod), logLik = logLik(mod),
+        list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod),
+             object = if (object) mod else NULL,
              converged = if (is.null(converged)) 
                  mod$converged else converged(mod, mf, subset))
     })
 }
 
-library("partykit")
-library("Formula")
-
-set.seed(290)
-n <- 1000
-x <- runif(n)
-z <- runif(n)
-noise <- runif(n)
-y <- rnorm(n, mean = x * c(-1, 1)[(z > 0.5) + 1], sd = 3)
-d <- data.frame(y = y, x = x, z = z, noise = noise)
-
-glmtree <- function
+glmtree2 <- function
 (
     formula, 
     data, 
@@ -280,39 +269,4 @@ glmtree <- function
     ### if (length(response) > 1) class(ret) <- "party"
     ### </FIXME>
     return(ret)
-}
-
-ctrl <- ctree_control()
-ctrl$family <- gaussian()
-ctrl$splitflavour <- "exhaustive"
-ctrl$trim <- 0.1
-
-system.time(m1 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
-m1
-
-ctrl$testflavour <- "mfluc"
-ctrl$breakties <- FALSE
-
-system.time(m2 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
-m2
-
-ctrl$splitflavour <- "ctree"
-
-system.time(m3 <- glmtree(y ~ x | z + noise, data = d, control = ctrl))
-m3
-
-system.time(m4 <- lmtree(y ~ x | z + noise, data = d))
-m4
-
-system.time(m5 <- partykit::glmtree(y ~ x | z + noise, data = d))
-m5
-
-ll <- function(m)
-logLik(lm(y ~ x, data = d, subset = fitted_node(m, data = d) == 2)) +
-logLik(lm(y ~ x, data = d, subset = fitted_node(m, data = d) == 3))
-
-ll(m1$node)
-ll(m2$node)
-ll(m3$node)
-
 }

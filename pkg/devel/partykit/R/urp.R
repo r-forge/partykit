@@ -206,7 +206,7 @@
             }
             ltr <- trafo(sleft, info = linfo, estfun = FALSE)
             rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-            ll <- ltr$logLik + rtr$logLik
+            ll <- ltr$objfun + rtr$objfun
             linfo <- ltr$info
             rinfo <- rtr$info
             if (ll > maxlogLik) {
@@ -230,7 +230,7 @@
             }
             ltr <- trafo(sleft, info = linfo, estfun = FALSE)
             rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-            ll <- ltr$logLik + rtr$logLik
+            ll <- ltr$objfun + rtr$objfun
             linfo <- ltr$info
             rinfo <- rtr$info
             if (ll > maxlogLik) {
