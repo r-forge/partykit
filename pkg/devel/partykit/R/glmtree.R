@@ -240,7 +240,7 @@ glmtree2 <- function
     }
 
     trafofun <- function(...) .glmtrafo(..., converged = converged)
-    tree <- partykit:::.urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
+    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       growfun = .urp_fit, trafofun = trafofun,
                       doFit = TRUE)
     ### <FIXME> change this to modelparty 
