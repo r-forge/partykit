@@ -21,7 +21,13 @@ export(
   "distfit",
 
   ## distributional tree
-  "disttree"
+  "disttree",
+
+  ## distributional forest
+  "distforest",
+
+  ## family list generating function
+  "make_dist_list"
 )
 
 ## methods
@@ -32,5 +38,9 @@ S3method("estfun", "distfit")
 S3method("logLik", "distfit")
 S3method("nobs", "distfit")
 S3method("vcov", "distfit")
+S3method("predict", "distfit")
 
 S3method("print", "disttree")
+
+S3method("predict", "distforest")
+S3method("logLik", "distforest")
