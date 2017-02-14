@@ -9,16 +9,19 @@
     } else {
         ret <- list(statistic = NA, p.value = NA)
     }
-    xs <- x[subset]
-    if (all(is.na(xs)) || length(unique(xs)) == 1) return(ret)
-    Ys <- Y[subset,,drop = FALSE]
-    if (all(!complete.cases(Ys)) || 
-        all(apply(Ys, 2, function(y) length(unique(y)) == 1)))
-        return(ret)
-    if (!is.null(iy))
-        if (length(unique(iy)) == 1) return(ret)
-    if (!is.null(bdr)) 
+
+    if (is.null(bdr)) {
+        xs <- x[subset]
+        if (all(is.na(xs)) || length(unique(xs)) == 1) return(ret)
+        Ys <- Y[subset,,drop = FALSE]
+        if (all(!complete.cases(Ys)) || 
+            all(apply(Ys, 2, function(y) length(unique(y)) == 1)))
+            return(ret)
+    } else {
+        if (!is.null(iy))
+            if (length(unique(iy)) == 1) return(ret)
         if (length(unique(bdr[[j]])) == 1) return(ret)
+    }
 
     ### <FIXME> MIA splits are only estimated in the presence of missings
     ###         new missings in predict(<>, newdata) will cause trouble
