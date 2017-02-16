@@ -204,7 +204,8 @@ kidids_node <- function(node, data, vmatch = 1:ncol(data), obs = NULL,
             if (is.null(obs)) obs <- 1:nrow(data)
             strata <- perm[[varid_split(primary)]]
             if (!is.null(strata))
-                return(do.call("c", tapply(x, strata[obs, drop = TRUE], .resample)))
+                return(do.call("c", tapply(x, strata[obs, drop = TRUE], 
+                                           .resample, simplify = FALSE)))
         }
     }
     return(x)
