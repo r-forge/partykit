@@ -495,8 +495,6 @@ sctest.constparty <- function(object, node = NULL, ...)
         crit <- info_node(n)$criterion
         if (is.null(crit)) return(NULL)
         ret <- crit[c("statistic", "p.value"),,drop = FALSE]
-        ret["statistic",] <- exp(ret["statistic",])
-        ret <- ret[,-1,drop = FALSE] ### remove NA for response
         ret
     })
     names(rval) <- ids

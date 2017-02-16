@@ -342,7 +342,10 @@
     }
 
     ### switch from log(1 - pval) to pval for info slots
+    ### switch from log(statistic) to statistic
+    ### criterion stays on log scale to replicate variable selection
     p <- rbind(p, criterion = crit)
+    p["statistic",] <- exp(p["statistic",])
     p["p.value",] <- -expm1(p["p.value",])
     pmin <- p["p.value", which.max(crit)]
     names(pmin) <- colnames(data)[which.max(crit)]
