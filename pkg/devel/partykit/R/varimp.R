@@ -153,7 +153,7 @@ gettree.cforest <- function(object, tree = 1L, ...) {
 varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"), 
                            conditional = FALSE, threshold = .2, ...) {
 
-    ret <- matrix(0, nrow = length(object$nodes), ncol = ncol(object$data))
+    ret <- matrix(NA, nrow = length(object$nodes), ncol = ncol(object$data))
     colnames(ret) <- names(object$data)
 
     if (conditional) {
