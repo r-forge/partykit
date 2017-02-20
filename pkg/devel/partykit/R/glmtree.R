@@ -51,14 +51,14 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
 {
   ## catch control arguments
   args <- list(...)
-  ctrl <- list()
+  control <- list()
   for(n in c("epsilon", "maxit")) {
     if(n %in% names(args)) {
-      ctrl[[n]] <- args[[n]]
+      control[[n]] <- args[[n]]
       args[[n]] <- NULL
     }
   }
-  args$control <- do.call("glm.control", ctrl)
+  args$control <- do.call("glm.control", control)
   
   ## add intercept-only regressor matrix (if missing)
   ## NOTE: does not have terms/formula
@@ -215,6 +215,9 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
     return(glmfit)
 }
 
+
+
+
 glmtree2 <- function
 (
     formula, 
@@ -224,11 +227,16 @@ glmtree2 <- function
     offset,
     cluster, 
     na.action = na.pass, 
-    control = ctree_control(...), 
+    family = gaussian, 
+    epsilon = 1e-8, ## TODO: make use of this
+    maxit = 25, ## TODO: make use of this
     converged = NULL,
     scores = NULL,
     ...
 ) {
+  ## use dots for setting up mob_control
+  control <- mob2_control(...)
+  control$family <- family
 
   mob2(fit = .glmtrafo, formula = formula, data = data, weights = weights,
        subset = subset, offset = offset, cluster = cluster, na.action = na.action,
@@ -246,11 +254,12 @@ mob2 <- function
   offset,
   cluster, 
   na.action = na.pass, 
-  control = ctree_control(...), 
+  control = mob2_control(...), 
   converged = NULL,
   scores = NULL,
   ...
 ) {
+  
   
   ### get the call and the calling environment for .urp_tree
   call <- match.call(expand.dots = FALSE)

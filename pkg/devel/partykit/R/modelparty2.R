@@ -1,3 +1,125 @@
+mob2_control <- function(
+  alpha = 0.05,
+  minsplit = 20L, 
+  minbucket = 20L, 
+  minprob = 0.01, 
+  stump = FALSE, 
+  mtry = Inf, 
+  maxdepth = Inf, 
+  multiway = FALSE, 
+  splittry = 2L, 
+  MIA = FALSE, 
+  maxsurrogate = 0L, 
+  numsurrogate = FALSE,
+  majority = TRUE, 
+  caseweights = TRUE, 
+  applyfun = NULL, 
+  testflavour = "mfluc", 
+  splitflavour = "exhaustive",
+  nmax = Inf,
+  breakties = FALSE,
+  bonferroni = TRUE,
+  testtype = "Bonferroni",
+  intersplit = FALSE,
+  lookahead = FALSE
+) {
+  
+  if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
+    stop("Arguments bonferroni and testtype must align.")
+  
+  c(.urp_control(criterion = "p.value",
+                 logmincriterion = log(1-alpha), minsplit = minsplit, 
+                 minbucket = minbucket, minprob = minprob, stump = stump, 
+                 mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
+                 splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+                 numsurrogate = numsurrogate,
+                 majority = majority, caseweights = caseweights, 
+                 applyfun = applyfun, testflavour = testflavour, 
+                 splitflavour = splitflavour),
+    list(nmax = nmax, breakties = breakties, testtype = testtype, 
+         intersplit = intersplit, lookahead = lookahead)
+    # list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
+    #      testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
+    #      intersplit = intersplit)
+    )
+}
+
+# ## control splitting parameters
+# mob2_control <- function(
+#   alpha = 0.05, bonferroni = TRUE, minsize = NULL, maxdepth = Inf,
+#   mtry = Inf, trim = 0.1, breakties = FALSE, parm = NULL, dfsplit = TRUE, prune = NULL, restart = TRUE,
+#   verbose = FALSE, caseweights = TRUE, ytype = "vector", xtype = "matrix",
+#   terminal = "object", inner = terminal, model = TRUE,
+#   numsplit = "left", catsplit = "binary", vcov = "opg", ordinal = "chisq", nrep = 10000,
+#   minsplit = minsize, minbucket = minsize,
+#   applyfun = NULL, cores = NULL,
+#   ## NEW
+#   testflavour = "mfluc", 
+#   splitflavour = "exhaustive",
+#   pargs = GenzBretz(),
+#   mincriterion = 1 - alpha,
+#   logmincriterion = log(mincriterion),
+#   minprob = 0.01,
+#   stump = FALSE,
+#   lookahead = FALSE,
+#   MIA = FALSE,
+#   maxsurrogate = 0L,
+#   numsurrogate = FALSE,
+#   splittry = 2L,
+#   intersplit = FALSE,
+#   majority = FALSE
+# )
+# {
+#   
+#   if (!caseweights)
+#     stop("only caseweights currently implemented")
+#   
+#   ## no mtry if infinite or non-positive
+#   if(is.finite(mtry)) {
+#     mtry <- if(mtry < 1L) Inf else as.integer(mtry)
+#   }
+#   
+#   ## data types for formula processing
+#   ytype <- match.arg(ytype, c("vector", "data.frame", "matrix"))
+#   xtype <- match.arg(xtype, c("data.frame", "matrix"))
+#   
+#   ## what to store in inner/terminal nodes
+#   if(!is.null(terminal)) terminal <- as.vector(sapply(terminal, match.arg, c("estfun", "object")))
+#   if(!is.null(inner))    inner    <- as.vector(sapply(inner,    match.arg, c("estfun", "object")))
+#   
+#   ## how to split and how to select splitting variables
+#   numsplit <- match.arg(tolower(numsplit), c("left", "center", "centre"))
+#   if(numsplit == "centre") numsplit <- "center"
+#   catsplit <- match.arg(tolower(catsplit), c("binary", "multiway"))
+#   vcov <- match.arg(tolower(vcov), c("opg", "info", "sandwich"))
+#   ordinal <- match.arg(tolower(ordinal), c("l2", "max", "chisq"))
+#   
+#   ## apply infrastructure for determining split points
+#   if(is.null(applyfun)) {
+#     applyfun <- if(is.null(cores)) {
+#       lapply
+#     } else {
+#       function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = cores)
+#     }
+#   }
+#   
+#   ## return list with all options
+#   c(.urp_control(criterion = ifelse(testtype == "Teststatistic", 
+#                                     "statistic", "p.value"),
+#                  logmincriterion = logmincriterion, minsplit = minsplit, 
+#                  minbucket = minbucket, minprob = minprob, stump = stump, 
+#                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
+#                  splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+#                  numsurrogate = numsurrogate,
+#                  majority = majority, caseweights = caseweights, 
+#                  applyfun = applyfun, testflavour = testflavour, 
+#                  splitflavour = splitflavour),
+#     list(
+#       lookahead = lookahead, intersplit = intersplit))
+#   return(rval)
+# }
+
+
 ## variable selection: given model scores, conduct
 ## all M-fluctuation tests for orderins in z
 .fluct_test_split <- function(estfun, z, weights, obj = NULL, cluster = NULL, control)
@@ -34,9 +156,9 @@
     }
   }
   J12 <- strucchange::root.matrix(switch(vcov,
-                            "opg" = chol2inv(chol(meat)),
-                            "info" = bread,
-                            "sandwich" = bread %*% meat %*% bread
+                                         "opg" = chol2inv(chol(meat)),
+                                         "info" = bread,
+                                         "sandwich" = bread %*% meat %*% bread
   ))
   process <- t(J12 %*% t(process))  
   
@@ -149,113 +271,113 @@
 .objfun_test_split <- function(trafo, info = info, x, bdr = NULL, j, ctrl, subset, 
                                weights, cluster, splitonly = TRUE, 
                                minbucket) {
-
-    if (all(is.na(x[subset]))) { ### all x values are missing
-        if (splitonly) return(NULL)
-        return(list(statistic = NA, p.value = NA))
+  
+  if (all(is.na(x[subset]))) { ### all x values are missing
+    if (splitonly) return(NULL)
+    return(list(statistic = NA, p.value = NA))
+  }
+  
+  if (is.null(cluster)) cluster <- integer(0)
+  if (splitonly) {
+    if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
+        is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
+      index <- 1L:nlevels(x)
+      if (length(weights) > 0) {
+        xt <- xtabs(weights ~ x, subset = subset)
+      } else {
+        xt <- xtabs(~ x, subset = subset)
+      }
+      index[xt == 0] <- NA
+      index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
+      if (length(unique(index)) == 1) return(NULL)
+      index <- unclass(factor(index))
+      return(partysplit(as.integer(j),
+                        index = as.integer(index)))
     }
-
-    if (is.null(cluster)) cluster <- integer(0)
-    if (splitonly) {
-        if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
-            is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
-            index <- 1L:nlevels(x)
-            if (length(weights) > 0) {
-                xt <- xtabs(weights ~ x, subset = subset)
-            } else {
-                xt <- xtabs(~ x, subset = subset)
-            }
-            index[xt == 0] <- NA
-            index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
-            if (length(unique(index)) == 1) return(NULL)
-            index <- unclass(factor(index))
-            return(partysplit(as.integer(j),
-                              index = as.integer(index)))
-        }
+  }
+  
+  ux <- NULL
+  ORDERED <- is.ordered(x) || is.numeric(x)
+  if (is.null(bdr)) {
+    if (!is.factor(x)) {
+      x[-subset] <- NA
+      ux <- sort(unique(x))
     }
-
-    ux <- NULL
-    ORDERED <- is.ordered(x) || is.numeric(x)
-    if (is.null(bdr)) {
-        if (!is.factor(x)) {
-            x[-subset] <- NA
-            ux <- sort(unique(x))
-        }
-    } else {
-        ix <- bdr[[j]]
-        ux <- attr(ix, "levels")
+  } else {
+    ix <- bdr[[j]]
+    ux <- attr(ix, "levels")
+  }
+  
+  if (ORDERED) {
+    sp <- NULL
+    maxlogLik <- -Inf
+    linfo <- rinfo <- info
+    for (u in 1:length(ux)) {
+      sleft <- subset[LEFT <- x[subset] <= ux[u]]
+      sright <- subset[!LEFT]
+      if (length(weights) > 0) {
+        if (sum(weights[sleft]) < minbucket ||
+            sum(weights[sright]) < minbucket)
+          next();
+      } else {
+        if (length(sleft) < minbucket || 
+            length(sright) < minbucket)
+          next();
+      }
+      ltr <- trafo(sleft, info = linfo, estfun = FALSE)
+      rtr <- trafo(sright, info = rinfo, estfun = FALSE)
+      ll <- ltr$objfun + rtr$objfun
+      linfo <- ltr$info
+      rinfo <- rtr$info
+      if (ll > maxlogLik) {
+        sp <- u
+        maxlogLik <- ll
+      }
     }
-
-    if (ORDERED) {
-        sp <- NULL
-        maxlogLik <- -Inf
-        linfo <- rinfo <- info
-        for (u in 1:length(ux)) {
-            sleft <- subset[LEFT <- x[subset] <= ux[u]]
-            sright <- subset[!LEFT]
-            if (length(weights) > 0) {
-                if (sum(weights[sleft]) < minbucket ||
-                    sum(weights[sright]) < minbucket)
-                    next();
-            } else {
-                if (length(sleft) < minbucket || 
-                    length(sright) < minbucket)
-                    next();
-            }
-            ltr <- trafo(sleft, info = linfo, estfun = FALSE)
-            rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-            ll <- ltr$objfun + rtr$objfun
-            linfo <- ltr$info
-            rinfo <- rtr$info
-            if (ll > maxlogLik) {
-                sp <- u
-                maxlogLik <- ll
-            }
-        }
-    } else {
-        splits <- mob_grow_getlevels(x)
-        for (u in 1:nrow(splits)) {
-            sleft <- subset[LEFT <- x[subset] %in% levels(x)[splits[u,]]]
-            sright <- subset[!LEFT]
-            if (length(weights) > 0) {
-                if (sum(weights[sleft]) < minbucket ||
-                    sum(weights[sright]) < minbucket)
-                    next();
-            } else {
-                if (length(sleft) < minbucket || 
-                    length(sright) < minbucket)
-                    next();
-            }
-            ltr <- trafo(sleft, info = linfo, estfun = FALSE)
-            rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-            ll <- ltr$objfun + rtr$objfun
-            linfo <- ltr$info
-            rinfo <- rtr$info
-            if (ll > maxlogLik) {
-                sp <- splits[u,] + 1L
-                maxlogLik <- ll
-            }
-        }
+  } else {
+    splits <- mob_grow_getlevels(x)
+    for (u in 1:nrow(splits)) {
+      sleft <- subset[LEFT <- x[subset] %in% levels(x)[splits[u,]]]
+      sright <- subset[!LEFT]
+      if (length(weights) > 0) {
+        if (sum(weights[sleft]) < minbucket ||
+            sum(weights[sright]) < minbucket)
+          next();
+      } else {
+        if (length(sleft) < minbucket || 
+            length(sright) < minbucket)
+          next();
+      }
+      ltr <- trafo(sleft, info = linfo, estfun = FALSE)
+      rtr <- trafo(sright, info = rinfo, estfun = FALSE)
+      ll <- ltr$objfun + rtr$objfun
+      linfo <- ltr$info
+      rinfo <- rtr$info
+      if (ll > maxlogLik) {
+        sp <- splits[u,] + 1L
+        maxlogLik <- ll
+      }
     }
-
-    if (!splitonly)
-        return(statistic = maxlogLik, p.value = NA)
-
-    if (all(is.na(sp))) return(NULL)
-    if (ORDERED) {
-        if (!is.ordered(x))
-            ### interpolate split-points, see https://arxiv.org/abs/1611.04561
-            if (ctrl$intersplit & sp < length(ux)) {
-                sp <- (ux[sp] + ux[sp + 1]) / 2 
-            } else {
-                sp <- ux[sp]  ### x <= sp vs. x > sp
-            }
-            ret <- partysplit(as.integer(j), breaks = sp,
-                              index = 1L:2L)
-    } else {
-        ret <- partysplit(as.integer(j),
-                          index = as.integer(sp) + 1L)
-    }
-    return(ret)
+  }
+  
+  if (!splitonly)
+    return(statistic = maxlogLik, p.value = NA)
+  
+  if (all(is.na(sp))) return(NULL)
+  if (ORDERED) {
+    if (!is.ordered(x))
+      ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+      if (ctrl$intersplit & sp < length(ux)) {
+        sp <- (ux[sp] + ux[sp + 1]) / 2 
+      } else {
+        sp <- ux[sp]  ### x <= sp vs. x > sp
+      }
+    ret <- partysplit(as.integer(j), breaks = sp,
+                      index = 1L:2L)
+  } else {
+    ret <- partysplit(as.integer(j),
+                      index = as.integer(sp) + 1L)
+  }
+  return(ret)
 }
 
