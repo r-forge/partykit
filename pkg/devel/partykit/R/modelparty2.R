@@ -21,7 +21,10 @@ mob2_control <- function(
   testtype = "Bonferroni",
   bonferroni = TRUE,
   breakties = FALSE,
-  intersplit = FALSE
+  intersplit = FALSE,
+  teststat = "quadratic",  # used for testflavour/splitflavour = "ctree"
+  splitstat = "quadratic", # used for testflavour/splitflavour = "ctree"
+  splittest = FALSE        # used for testflavour/splitflavour = "ctree"
 ) {
   
   if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
@@ -37,7 +40,8 @@ mob2_control <- function(
                  applyfun = applyfun, testflavour = testflavour, 
                  splitflavour = splitflavour),
     list(nmax = nmax, breakties = breakties, testtype = testtype, 
-         intersplit = intersplit, lookahead = lookahead)
+         intersplit = intersplit, lookahead = lookahead,
+         teststat = teststat, splitstat = splitstat, splittest = splittest)
     # list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
     #      testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
     #      intersplit = intersplit)
@@ -361,7 +365,7 @@ mob2_control <- function(
   }
   
   if (!splitonly)
-    return(statistic = maxlogLik, p.value = NA)
+    return(list(statistic = maxlogLik, p.value = NA))
   
   if (all(is.na(sp))) return(NULL)
   if (ORDERED) {
