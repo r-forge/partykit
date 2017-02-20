@@ -11,17 +11,17 @@ mob2_control <- function(
   MIA = FALSE, 
   maxsurrogate = 0L, 
   numsurrogate = FALSE,
-  majority = TRUE, 
+  majority = FALSE, 
   caseweights = TRUE, 
   applyfun = NULL, 
   testflavour = "mfluc", 
   splitflavour = "exhaustive",
   nmax = Inf,
-  breakties = FALSE,
-  bonferroni = TRUE,
+  lookahead = FALSE,
   testtype = "Bonferroni",
-  intersplit = FALSE,
-  lookahead = FALSE
+  bonferroni = TRUE,
+  breakties = FALSE,
+  intersplit = FALSE
 ) {
   
   if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
