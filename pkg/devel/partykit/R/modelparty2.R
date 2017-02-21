@@ -16,7 +16,6 @@ mob2_control <- function(
   applyfun = NULL, 
   testflavour = "mfluc", 
   splitflavour = "exhaustive",
-  nmax = Inf,
   lookahead = FALSE,
   testtype = "Bonferroni",
   bonferroni = TRUE,
@@ -30,7 +29,7 @@ mob2_control <- function(
   if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
     stop("Arguments bonferroni and testtype must align.")
   
-  c(.urp_control(criterion = "p.value",
+  c(.urp_control(criterion = ifelse(testflavour == "exhaustive", "statistic", "p.value"),
                  logmincriterion = log(1-alpha), minsplit = minsplit, 
                  minbucket = minbucket, minprob = minprob, stump = stump, 
                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
@@ -39,7 +38,7 @@ mob2_control <- function(
                  majority = majority, caseweights = caseweights, 
                  applyfun = applyfun, testflavour = testflavour, 
                  splitflavour = splitflavour),
-    list(nmax = nmax, breakties = breakties, testtype = testtype, 
+    list(nmax = Inf, breakties = breakties, testtype = testtype, 
          intersplit = intersplit, lookahead = lookahead,
          teststat = teststat, splitstat = splitstat, splittest = splittest)
     # list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
