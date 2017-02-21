@@ -73,7 +73,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
                      Galili and Meilijson (2016).}
   \item{majority}{ if \code{FALSE}, observations which can't be classified to a
                    daughter node because of missing information are randomly
-                   assigned (following the node distribution). If \code{FALSE},
+                   assigned (following the node distribution). If \code{TRUE},
                    they go with the majority (the default in \code{\link[party]{ctree}}).}
   \item{caseweights}{ a logical interpreting \code{weights} as case weights.}
   \item{applyfun}{an optional \code{\link[base]{lapply}}-style function with arguments
