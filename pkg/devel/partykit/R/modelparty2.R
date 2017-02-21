@@ -29,6 +29,8 @@ mob2_control <- function(
   if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
     stop("Arguments bonferroni and testtype must align.")
   
+  if(testflavour == "exhaustive") alpha <- 1
+  
   c(.urp_control(criterion = ifelse(testflavour == "exhaustive", "statistic", "p.value"),
                  logmincriterion = log(1-alpha), minsplit = minsplit, 
                  minbucket = minbucket, minprob = minprob, stump = stump, 

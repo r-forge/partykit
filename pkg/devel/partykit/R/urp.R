@@ -354,7 +354,7 @@
                    sf[!(names(sf) %in% c("criteria", "splitfun"))])
 
     ### nothing "significant"
-    if (all(crit < ctrl$logmincriterion))
+    if (all(crit <= ctrl$logmincriterion))
         return(partynode(as.integer(id), info = info))
 
     ### update sample size constraints on possible splits
