@@ -70,7 +70,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   for(i in 1:nrow(data)){
     wi <- w[,i]
     # personalized model for observation data[i,]
-    pm <-  distfit(data$y, family = family, weights = wi)
+    pm <-  distfit(data$y, family = family, weights = wi, vcov = FALSE)
     fitted[i,] <- predict(pm)
     fitted.par[i,] <- coef(pm, type = "parameter")
     loglik[i,] <- pm$ddist(data[i,1], log = TRUE)
@@ -151,7 +151,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pr
       nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(object$data$y, family = object$family, weights = nw[,1])
+      pm <-  distfit(object$data$y, family = object$family, weights = nw[,1], vcov = FALSE)
       pred.val1 <- predict(pm)
       pred.par1 <- coef(pm, type = "parameter")
         
@@ -164,7 +164,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pr
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data$y, family = object$family, weights = nwi)
+          pm <-  distfit(object$data$y, family = object$family, weights = nwi, vcov = FALSE)
           pred.val[i,] <- predict(pm)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
