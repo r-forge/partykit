@@ -163,7 +163,21 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     
     
     #vcov for link coefficients eta
-    vc <- solve(-hess)
+    vc <- try(solve(-hess), silent = TRUE)
+    if(inherits(vc, "try-error")) {
+      vc <- try(qr.solve(-hess), silent = TRUE)
+    }
+    if(inherits(vc, "try-error")) {
+      vc <- try(chol2inv(chol(-hess)))
+    }
+    if(inherits(vc, "try-error")) {
+      print(-hess)
+      print("hessian matrix is 'numerically' singular")
+    }
+    # if(inherits(vc, "try-error")) {
+    #   vc <- MASS::ginv(-hess)
+    # }
+    
     vc <- as.matrix(vc)
     colnames(vc) <- rownames(vc) <- colnames(hess)
     
@@ -246,16 +260,26 @@ coef.distfit <- function(object, type = "link" , ...) {
   ## FIXME: else, warning
 }
 
-# FIX: complete with other types ?
+# FIX: complete with other types?
 predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
   # calculation of the expected value 
   # of the given distribution with the calculated parameters
-  if(type == "response"){
+  if(type == "response") {
     f <- function(x){x * object$ddist(x, log = FALSE)}
-    expv <- integrate(f,-Inf,Inf )
+    expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
+    if(inherits(expv, "try-error")) {
+      expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-03))
+    }
+    if(inherits(expv, "try-error")) {
+      expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-02))
+    }
+    if(inherits(expv, "try-error")) {
+      print("rel.tol had to be set to 0.1 to calculated expected values for predictions")
+      print(coef(object))
+      expv <- integrate(f,-Inf, Inf, rel.tol = 1e-01)
+    }
     return(expv[[1]])
   }
-  
   ## FIX: if censored distribution -> change integration boundaries
 }
 
