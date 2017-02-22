@@ -313,10 +313,11 @@ mob2_control <- function(
     ux <- attr(ix, "levels")
   }
   
+  linfo <- rinfo <- info
+  maxlogLik <- -Inf
+  sp <- NULL
+  
   if (ORDERED) {
-    sp <- NULL
-    maxlogLik <- -Inf
-    linfo <- rinfo <- info
     for (u in 1:length(ux)) {
       sleft <- subset[LEFT <- x[subset] <= ux[u]]
       sright <- subset[!LEFT]
@@ -369,6 +370,7 @@ mob2_control <- function(
     return(list(statistic = maxlogLik, p.value = NA))
   
   if (all(is.na(sp))) return(NULL)
+  print(ORDERED)
   if (ORDERED) {
     if (!is.ordered(x))
       ### interpolate split-points, see https://arxiv.org/abs/1611.04561
@@ -381,7 +383,7 @@ mob2_control <- function(
                       index = 1L:2L)
   } else {
     ret <- partysplit(as.integer(j),
-                      index = as.integer(sp) + 1L)
+                      index = as.integer(sp))
   }
   return(ret)
 }
