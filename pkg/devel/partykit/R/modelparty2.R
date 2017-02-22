@@ -314,7 +314,7 @@ mob2_control <- function(
   }
   
   linfo <- rinfo <- info
-  maxlogLik <- -Inf
+  maxlogLik <- nosplitll <- trafo(subset, info = info, estfun = FALSE)$objfun
   sp <- NULL
   
   if (ORDERED) {
@@ -366,11 +366,12 @@ mob2_control <- function(
     }
   }
   
-  if (!splitonly)
+  if (!splitonly){
+    ## split only if logLik improves due to splitting
+    maxlogLik <- ifelse(maxlogLik == nosplitll, NA, maxlogLik)
     return(list(statistic = maxlogLik, p.value = NA))
-  
+  }
   if (all(is.na(sp))) return(NULL)
-  print(ORDERED)
   if (ORDERED) {
     if (!is.ordered(x))
       ### interpolate split-points, see https://arxiv.org/abs/1611.04561
