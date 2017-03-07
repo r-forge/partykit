@@ -327,9 +327,16 @@ ctree_control <- function
     cores = NULL
 ) {
 
-    teststat <- match.arg(teststat)
+    testtype <- match.arg(testtype, several.ok = TRUE)
+    if (length(testtype) == 4) testtype <- testtype[1]
+    ttesttype <- testtype
+    if (length(testtype) > 1) {
+        stopifnot(all(testtype %in% c("Bonferroni", "MonteCarlo")))
+        ttesttype <- "MonteCarlo"
+    }
+
     splitstat <- match.arg(splitstat)
-    testtype <- match.arg(testtype)
+    teststat <- match.arg(teststat)
 
     if (!caseweights)
         stop("only caseweights currently implemented in ctree")
@@ -337,15 +344,17 @@ ctree_control <- function
     c(.urp_control(criterion = ifelse(testtype == "Teststatistic", 
                                       "statistic", "p.value"),
                    logmincriterion = logmincriterion, minsplit = minsplit, 
-                   minbucket = minbucket, minprob = minprob, stump = stump, 
+                   minbucket = minbucket, minprob = minprob, 
+                   nmax = nmax, stump = stump, lookahead = lookahead,
                    mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
                    splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
                    numsurrogate = numsurrogate,
                    majority = majority, caseweights = caseweights, 
                    applyfun = applyfun, testflavour = "ctree", 
+                   bonferroni = "Bonferroni" %in% testtype, 
                    splitflavour = "ctree"),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-           testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
+           testtype = ttesttype, nresample = nresample,
            intersplit = intersplit))
 }
 

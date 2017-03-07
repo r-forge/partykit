@@ -85,7 +85,7 @@
                 ret$criteria["statistic", j] <- tst$statistic
                 ret$criteria["p.value", j] <- tst$p.value
             }
-            if (ctrl$testtype == "Bonferroni")
+            if (ctrl$bonferroni)
                 ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
 
             ret <- c(ret, tr[names(tr) != "estfun"])
@@ -213,7 +213,7 @@
                 ret$criteria["statistic", j] <- tst$statistic
                 ret$criteria["p.value", j] <- tst$p.value
             }
-            if (ctrl$testtype == "Bonferroni")
+            if (ctrl$bonferroni)
                 ret$criteria["p.value",] <- ret$criteria["p.value",] * 
                     length(whichvar)
 
@@ -584,7 +584,9 @@
     minsplit = 20L,
     minbucket = 7L, 
     minprob = 0.01, 
+    nmax = Inf,
     stump = FALSE,
+    lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
     MIA = FALSE,
     maxsurrogate = 0L, 
     numsurrogate = FALSE,
@@ -597,6 +599,7 @@
     applyfun = NULL, 
     cores = NULL,
     testflavour = c("ctree", "exhaustive", "mfluc"),
+    bonferroni = FALSE,
     splitflavour = c("ctree", "exhaustive"),
     vcov = c("opg", "info", "sandwich"), ### mob_control
     ordinal = c("chisq", "max", "L2"),   ### mob_control
@@ -626,12 +629,14 @@
 
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, mtry = mtry,
+         minprob = minprob, stump = stump, nmax = nmax,
+         lookahead = lookahead, mtry = mtry,
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
          MIA = MIA, maxsurrogate = maxsurrogate, 
          numsurrogate = numsurrogate, majority = majority,
          caseweights = caseweights, applyfun = applyfun,
          testflavour = match.arg(testflavour), 
+         bonferroni = bonferroni,
          splitflavour = match.arg(splitflavour),
          vcov = match.arg(vcov),
          ordinal = match.arg(ordinal),
