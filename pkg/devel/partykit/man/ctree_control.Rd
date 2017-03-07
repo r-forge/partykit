@@ -29,7 +29,14 @@ ctree_control(teststat = c("quadratic", "maximum"),
                     maximally selected statistics for
                     variable selection. Currently needs \code{testtype = "MonteCarlo"}.}
   \item{testtype}{ a character specifying how to compute the distribution of
-                   the test statistic. }
+                   the test statistic. The first three options refer to
+                   p-values as criterion, \code{Teststatistic} uses the raw
+                   statistic as criterion. \code{Bonferroni} and
+                   \code{Univariate} relate to p-values from the asymptotic
+                   distribution (adjusted or unadjusted).
+                   Bonferroni-adjusted Monte-Carlo p-values are computed
+                   when both \code{Bonferroni} and \code{MonteCarlo} are
+                   given.}
   \item{pargs}{ control parameters for the computation of multivariate
                 normal probabilities, see \code{\link[mvtnorm]{GenzBretz}}.}
   \item{nmax}{ an integer defining the number of bins each variable
@@ -53,11 +60,9 @@ ctree_control(teststat = c("quadratic", "maximum"),
   \item{nresample}{ number of permutations for \code{testtype = "MonteCarlo"}.}
   \item{MIA}{ a logical determining the treatment of \code{NA} as a category in split,
               see Twala et al. (2008).}
-  \item{maxsurrogate}{ number of surrogate splits to evaluate. Note the
-                       currently only surrogate splits in ordered
-                       covariables are implemented. }
+  \item{maxsurrogate}{ number of surrogate splits to evaluate.}
   \item{numsurrogate}{ a logical for backward-compatibility with party. If
-                       \code{TRUE}, only numeric variables are considered for surrogate splits.}
+                       \code{TRUE}, only at least ordered variables are considered for surrogate splits.}
   \item{mtry}{ number of input variables randomly sampled as candidates
                at each node for random forest like algorithms. The default
                \code{mtry = Inf} means that no random selection takes place.}

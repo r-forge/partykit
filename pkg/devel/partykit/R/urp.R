@@ -395,7 +395,7 @@
     if (ctrl$maxsurrogate > 0L) {
         pv <- svars[svars != varid_split(thissplit)]
         if (ctrl$numsurrogate)
-            pv <- pv[sapply(data[, pv], is.numeric)]
+            pv <- pv[sapply(data[, pv], function(x) is.numeric(x) || is.ordered(x))]
         ret$surrogates <- .urp_surrogates(kidids, data = data, 
             weights = weights, subset = snotNA, 
             partyvars = pv,
