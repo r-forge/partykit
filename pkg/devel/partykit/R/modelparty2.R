@@ -33,15 +33,15 @@ mob2_control <- function(
   
   c(.urp_control(criterion = ifelse(testflavour == "exhaustive", "statistic", "p.value"),
                  logmincriterion = log(1-alpha), minsplit = minsplit, 
-                 minbucket = minbucket, minprob = minprob, stump = stump, 
+                 minbucket = minbucket, minprob = minprob, nmax = Inf, 
+                 stump = stump, lookahead = lookahead,
                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
                  splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
                  numsurrogate = numsurrogate,
                  majority = majority, caseweights = caseweights, 
                  applyfun = applyfun, testflavour = testflavour, 
                  splitflavour = splitflavour),
-    list(nmax = Inf, breakties = breakties, testtype = testtype, 
-         intersplit = intersplit, lookahead = lookahead,
+    list(breakties = breakties, testtype = testtype, intersplit = intersplit, 
          teststat = teststat, splitstat = splitstat, splittest = splittest)
     # list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
     #      testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
