@@ -53,7 +53,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
                    for splitting. }
   \item{minbucket}{ the minimum sum of weights in a terminal node. }
   \item{minprob}{ proportion of observations needed to establish a terminal node.}
-  \item{stump}{ a logical determining whether a stump (a tree with three
+  \item{stump}{ a logical determining whether a stump (a tree with a maximum of three
                 nodes only) is to be computed. }
   \item{lookahead}{ a logical determining whether a split is implemented only
                     after checking if tests in both daugther nodes can be performed.}
