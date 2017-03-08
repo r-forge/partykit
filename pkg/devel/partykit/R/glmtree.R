@@ -261,6 +261,13 @@ mob2 <- function
 ) {
   
   
+  ### make sure right criterion is used for exhaustive search
+  if(control$testflavour == "exhaustive"){
+    control$criterion <- "statistic"
+    control$logmincriterion <- -Inf
+  }
+  
+  
   ### get the call and the calling environment for .urp_tree
   call <- match.call(expand.dots = FALSE)
   call$na.action <- na.action
