@@ -29,9 +29,9 @@ mob_args <- list(fit = fit,
                  control = mob_ctrl)
 
 
-system.time(m_glmtree <- do.call(glmtree, args = glmtree_args))
-system.time(m_glmtree2 <- do.call(glmtree2, args = glmtree_args))
-system.time(m_mob2 <- do.call(mob2, args = mob_args))
+(m_glmtree <- do.call(glmtree, args = glmtree_args))
+(m_glmtree2 <- do.call(glmtree2, args = glmtree_args))
+(m_mob2 <- do.call(mob2, args = mob_args))
 
 
 ## ctree like testing
@@ -44,8 +44,8 @@ mob_args_c <- list(fit = fit,
                  data = d,
                  control = mob_ctrl_c)
 
-system.time(m_glmtree2_c <- do.call(glmtree2, args = glmtree_args_c))
-system.time(m_mob2_c <- do.call(mob2, args = mob_args_c))
+(m_glmtree2_c <- do.call(glmtree2, args = glmtree_args_c))
+(m_mob2_c <- do.call(mob2, args = mob_args_c))
 
 
 ## exhaustive search
@@ -58,28 +58,14 @@ mob_args_e <- list(fit = fit,
                    data = d,
                    control = mob_ctrl_e)
 
-system.time(m_glmtree2_e <- do.call(glmtree2, args = glmtree_args_e))
-system.time(m_mob2_e <- do.call(mob2, args = mob_args_e))
+(m_glmtree2_e <- do.call(glmtree2, args = glmtree_args_e))
+(m_mob2_e <- do.call(mob2, args = mob_args_e))
 
-
-m_glmtree2_e_small <- glmtree2(fmla, data = d, testflavour = "exhaustive", maxdepth = 2)
-m_glmtree2_c_small <- glmtree2(fmla, data = d, testflavour = "ctree", maxdepth = 2)
-m_glmtree2_e_small
-m_glmtree2_c_small
-
-## compare
-m_glmtree
-m_glmtree2
-m_mob2
-
-m_glmtree2_c
-m_mob2_c
-
-m_glmtree2_e
-m_mob2_e
 
 width(m_glmtree2_e)
 width(m_mob2_e)
+
+(m_glmtree2_e_small <- glmtree2(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 1))
 
 ## check lookahead
 # smpl <- sample(1:NROW(d), size = 15)

@@ -194,19 +194,60 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
             mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info$coef)
         } else {
              nobs <- NROW(ys)
-             mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info$coef)
+             # mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info$coef)
+             mod <- glm.fit(x = xs, y = ys, start = info$coef, family = ctrl$family)
         }
+        
+
+        
+        ## degrees of freedom
+        df <- mod$rank
+        if(mod$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
+        if(substr(mod$family$family, 1L, 5L) != "quasi") objfun <- mod$aic/2 - df else objfun <- mod$deviance
+
+        
+        ## add estimating functions (if desired)
         ret <- NULL
-        if (estfun) {
-            ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-            Y <- sandwich::estfun(mod)
-            if (length(weights) > 0) {
-                Y <- Y / w
-                Y[w == 0,] <- 0
-            }
-            ret[subset,] <- Y
-            storage.mode(ret) <- "double"
+        if(estfun) {
+          ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+          wres <- as.vector(mod$residuals) * mod$weights
+          dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
+            1
+          } else {
+            sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
+          }
+          Y <- wres * xs/dispersion
+          ret[subset,] <- Y
+          storage.mode(ret) <- "double"
         }
+        # ret <- NULL
+        # if (estfun) {
+        #     ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+        #     Y <- sandwich::estfun(mod)
+        #     if (length(weights) > 0) {
+        #         Y <- Y / w
+        #         Y[w == 0,] <- 0
+        #     }
+        #     ret[subset,] <- Y
+        #     storage.mode(ret) <- "double"
+        # }
+        
+        class(mod) <- c("glm", "lm")
+        ## add model (if desired)
+        if(object) {
+          mod$offset <- if(is.null(offset)) 0 else offset
+          mod$contrasts <- attr(xs, "contrasts")
+          mod$xlevels <- attr(xs, "xlevels")    
+          
+          cl <- as.call(expression(glm))
+          cl$formula <- attr(xs, "formula")	
+          if(!is.null(offset)) cl$offset <- attr(x, "offset")
+          mod$call <- cl
+          mod$terms <- attr(xs, "terms")
+        }
+        
+        
+
         list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod),
              object = if (object) mod else NULL, nobs = nobs,
              converged = if (is.null(converged)) 
@@ -327,8 +368,8 @@ mob2 <- function
   for (i in 1:length(idx)) {
     
     if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
-      ff <- fit(formula = tree_ret$info$terms$response, data = data, ctrl = control)
-      tree_ret[[c(1, idx[[i]])]]$info <- ff(subset = which(subset_term == terminals[i]), estfun = FALSE)
+      tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]), 
+                                                    estfun = FALSE)
     }
   }
   
