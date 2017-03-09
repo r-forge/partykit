@@ -269,7 +269,7 @@ glmtree2 <- function
     offset,
     cluster, 
     na.action = na.pass, 
-    family = gaussian, 
+    family = gaussian(), 
     epsilon = 1e-8, ## TODO: make use of this
     maxit = 25, ## TODO: make use of this
     converged = NULL,
@@ -362,7 +362,7 @@ mob2 <- function
   ### add modelinfo if not there yet 
   # TODO: check if this can be done prettier
   terminals <- nodeids(rval, terminal = TRUE)
-  idx <- lapply(terminals, partykit:::.get_path, obj = tree$nodes)
+  idx <- lapply(terminals, .get_path, obj = tree$nodes)
   tree_ret <- unclass(rval)
   subset_term <- predict(rval, type = "node")
   
