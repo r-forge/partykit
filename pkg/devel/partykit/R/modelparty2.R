@@ -26,12 +26,17 @@ mob2_control <- function(
   splittest = FALSE        # used for testflavour/splitflavour = "ctree"
 ) {
   
-  if((testtype == "Bonferroni") != (bonferroni)) ## bonferroni actually not need
+  if(("Bonferroni" %in% testtype) != (bonferroni))
     stop("Arguments bonferroni and testtype must align.")
   
-  if(testflavour == "exhaustive") alpha <- 1
+  if(testflavour == "exhaustive") { 
+    alpha <- 1
+    criterion <- "statistic"
+  } else {
+    criterion <- "p.value"
+  }
   
-  c(.urp_control(criterion = ifelse(testflavour == "exhaustive", "statistic", "p.value"),
+  c(.urp_control(criterion = criterion,
                  logmincriterion = log(1-alpha), minsplit = minsplit, 
                  minbucket = minbucket, minprob = minprob, nmax = Inf, 
                  stump = stump, lookahead = lookahead,

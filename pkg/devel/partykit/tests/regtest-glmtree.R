@@ -62,6 +62,11 @@ system.time(m_glmtree2_e <- do.call(glmtree2, args = glmtree_args_e))
 system.time(m_mob2_e <- do.call(mob2, args = mob_args_e))
 
 
+m_glmtree2_e_small <- glmtree2(fmla, data = d, testflavour = "exhaustive", maxdepth = 1)
+m_glmtree2_c_small <- glmtree2(fmla, data = d, testflavour = "ctree", maxdepth = 2)
+# debug(partykit:::print.partynode)
+# debug(formatinfo_node)
+m_glmtree2_c_small
 
 ## compare
 m_glmtree
@@ -73,3 +78,16 @@ m_mob2_c
 
 m_glmtree2_e
 m_mob2_e
+
+
+
+
+## check lookahead
+# smpl <- sample(1:NROW(d), size = 15)
+# m_l <- glmtree2(formula = fmla, data = d[smpl, ], family = fmly, 
+#                 lookahead = TRUE, testflavour = "exhaustive", 
+#                 minbucket = 6, minsplit = 2)
+# 
+# m_d <- glmtree2(formula = fmla, data = d, family = fmly, 
+#                  testflavour = "exhaustive", 
+#                 minbucket = 2, minsplit = 2)
