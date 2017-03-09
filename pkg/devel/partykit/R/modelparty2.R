@@ -6,6 +6,7 @@ mob2_control <- function(
   stump = FALSE, 
   mtry = Inf, 
   maxdepth = Inf, 
+  nmax = Inf, 
   multiway = FALSE, 
   splittry = 2L, 
   MIA = FALSE, 
@@ -38,7 +39,7 @@ mob2_control <- function(
   
   c(.urp_control(criterion = criterion,
                  logmincriterion = log(1-alpha), minsplit = minsplit, 
-                 minbucket = minbucket, minprob = minprob, nmax = Inf, 
+                 minbucket = minbucket, minprob = minprob, nmax = nmax, 
                  stump = stump, lookahead = lookahead,
                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
                  splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 

@@ -163,21 +163,39 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         mfs <- model.frame(formula, data = mf2)
         y <- model.response(mfs)
         x <- model.matrix(formula, data = mf2)
-        return(function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
-            w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
-            mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info$coef)
-            ret <- NULL
-            if (estfun) {
-                Y <- sandwich::estfun(mod)
-                Y <- Y / w
-                Y[w == 0,] <- 0
-                ret <- rbind(0, Y)
+        glmfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
+          w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
+          mod <- glm.fit(x = x, y = y, weights = w, start = info$coef, family = ctrl$family)
+          
+          ret <- NULL
+          if(estfun) {
+            wres <- as.vector(mod$residuals) * mod$weights
+            dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
+              1
+            } else {
+              sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
             }
-            list(estfun = ret, index = iy, coefficients = coef(mod), objfun = logLik(mod),
-                 object = if (object) mod else NULL,
-                 converged = if (is.null(converged)) 
-                     mod$converged else converged(mod, mf, subset))
-        })
+            Y <- wres * x/dispersion
+            Y <- Y / w
+            Y[w == 0,] <- 0
+            ret <- rbind(0, Y)
+          }
+          
+          # mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info$coef)
+          # ret <- NULL
+          # if (estfun) {
+          #   Y <- sandwich::estfun(mod)
+          #   Y <- Y / w
+          #   Y[w == 0,] <- 0
+          #   ret <- rbind(0, Y)
+          # }
+          class(mod) <- c("glm", "lm")
+          list(estfun = ret, index = iy, coefficients = coef(mod), objfun = logLik(mod),
+               object = if (object) mod else NULL,
+               converged = if (is.null(converged)) 
+                 mod$converged else converged(mod, mf, subset))
+        }
+        return(glmfit)
     }
     if (!is.null(cluster)) stop("cluster not implemented")
     mf <- model.frame(formula, data, na.action = na.pass)
@@ -210,7 +228,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         ## add estimating functions (if desired)
         ret <- NULL
         if(estfun) {
-          ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+          ret <- matrix(0, nrow = NROW(xs), ncol = NCOL(xs))
           wres <- as.vector(mod$residuals) * mod$weights
           dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
             1

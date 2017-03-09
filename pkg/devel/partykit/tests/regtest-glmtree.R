@@ -15,6 +15,7 @@ fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
 
+(m1 <- glmtree2(formula = fmla, data = d, nmax = 20, testflavour = "ctree", splitflavour = "ctree"))
 
 ## default settings
 glmtree_args <- list(formula = fmla, 
@@ -65,7 +66,6 @@ mob_args_e <- list(fit = fit,
 width(m_glmtree2_e)
 width(m_mob2_e)
 
-(m_glmtree2_e_small <- glmtree2(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 1))
 
 ## check lookahead
 # smpl <- sample(1:NROW(d), size = 15)
