@@ -191,7 +191,8 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         if (length(weights) > 0) {
             w <- weights[cc[subset]]
             nobs <- sum(w)
-            mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info$coef)
+            mod <- glm.fit(x = xs, y = ys, weights = w, start = info$coef, family = ctrl$family)
+            # mod <- glm(ys ~ xs + 0, family = ctrl$family, weights = w, start = info$coef)
         } else {
              nobs <- NROW(ys)
              # mod <- glm(ys ~ xs + 0, family = ctrl$family, start = info$coef)
