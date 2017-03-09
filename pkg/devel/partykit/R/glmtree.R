@@ -334,7 +334,8 @@ mob2 <- function
   )
   class(rval) <- c("modelparty", class(rval))
   
-  ### add modelinfo if not there yet TODO: check if this can be done prettier
+  ### add modelinfo if not there yet 
+  # TODO: check if this can be done prettier
   terminals <- nodeids(rval, terminal = TRUE)
   idx <- lapply(terminals, partykit:::.get_path, obj = tree$nodes)
   tree_ret <- unclass(rval)
@@ -343,8 +344,6 @@ mob2 <- function
   for (i in 1:length(idx)) {
     
     if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
-      data_term <- data_party(rval, terminals[i])
-      
       ff <- fit(formula = tree_ret$info$terms$response, data = data, ctrl = control)
       tree_ret[[c(1, idx[[i]])]]$info <- ff(subset = which(subset_term == terminals[i]), estfun = FALSE)
     }
