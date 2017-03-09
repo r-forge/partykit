@@ -284,34 +284,17 @@ mob2 <- function
   tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                     trafofun = trafofun, doFit = TRUE)
   
-  
-  
   ### prepare as modelparty
-  ## formula FIXME: y ~ . or y ~ x | .
-  oformula <- as.formula(formula)
-  formula <- Formula::as.Formula(formula)
-  if(length(formula)[2L] < 2L) {
-    formula <- Formula::Formula(formula(Formula::as.Formula(formula(formula), ~ 0), rhs = 2L:1L))
-    xreg <- FALSE
-  } else {
-    if(length(formula)[2L] > 2L) {
-      formula <- Formula::Formula(formula(formula, rhs = 1L:2L))
-      warning("Formula must not have more than two RHS parts")
-    }
-    xreg <- TRUE
-  }
-  mt <- terms(formula, data = data)
-  mtY <- terms(formula, data = data, rhs = if(xreg) 1L else 0L)
-  mtZ <- delete.response(terms(formula, data = data, rhs = 2L))
-  
   mf <- tree$mf
   weights <- model.weights(mf)
   if (is.null(weights)) weights <- rep(1, nrow(mf))
+  mtY <- terms(tree$modelf, data = mf)
+  mtZ <- delete.response(terms(tree$partf, data = mf))
   
   fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  y <- model.part(formula, data = mf, lhs = 1, rhs = 0)
+  y <- model.part(as.Formula(tree$modelf), data = mf, lhs = 1, rhs = 0)
   if (length(y) == 1) y <- y[[1]]
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
@@ -320,11 +303,11 @@ mob2 <- function
   rval <- party(tree$nodes, 
                 data = mf,
                 fitted = fitted,
-                terms = mt,
+                terms = tree$terms,
                 info = list(
                   call = match.call(),
-                  formula = oformula,
-                  Formula = formula,
+                  formula = formula,
+                  Formula = as.Formula(formula),
                   terms = list(response = mtY, partitioning = mtZ),
                   fit = fit,
                   control = control,

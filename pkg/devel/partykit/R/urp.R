@@ -566,7 +566,8 @@
         stop("trafofun return incorrect")
     
     ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms,
-                partyvars = match(zvars, colnames(mf)))
+                partyvars = match(zvars, colnames(mf)), 
+                modelf = modelf, partf = partf)
     if (!doFit)
         return(ret)
 
