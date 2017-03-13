@@ -106,6 +106,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$family <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
+  rval$fitted.par <- coef(rval)[paste(rval$fitted[,1]),]
+  rownames(rval$fitted.par) <- c(1:length(rval$fitted.par[,1]))
   class(rval) <- c("disttree", class(rval))
   return(rval)
 }
