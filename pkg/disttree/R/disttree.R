@@ -106,8 +106,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$family <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
-  rval$fitted.par <- coef(rval)[paste(rval$fitted[,1]),]
-  rownames(rval$fitted.par) <- c(1:length(rval$fitted.par[,1]))
+  groupcoef <- coef(rval)
+  if(!(is.null(groupcoef))){
+    if(is.vector(groupcoef)) {
+      groupcoef <- t(as.data.frame(groupcoef))
+      rownames(groupcoef) <- 1
+    }
+    rval$fitted.par <- as.data.frame(groupcoef[paste(rval$fitted[,1]),])
+    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
+  }
   class(rval) <- c("disttree", class(rval))
   return(rval)
 }
