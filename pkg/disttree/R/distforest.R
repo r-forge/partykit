@@ -178,8 +178,20 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pr
 
 
 
-logLik.distforest <- function(object) {
-  structure(sum(object$loglik), df = object$npar, class = "logLik")
+logLik.distforest <- function(object, newdata = NULL) {
+  if(is.null(newdata)) {
+    return(structure(sum(object$loglik), df = object$npar, class = "logLik"))
+  } else {
+    ll <- 0
+    pred.par <- predict(object, newdata = newdata, type = "response")[,-1]
+    np <- ncol(pred.par)
+    for(i in 1:(nrow(newdata))){
+      par <- pred.par[i,(1:np)]
+      eta <-  as.numeric(object$family$linkfun(par))
+      ll <- ll + object$family$ddist(newdata[i,1], eta = eta,  log=TRUE)
+    }
+    return(ll)
+  }
 }
 
 
