@@ -106,14 +106,17 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$family <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
-  groupcoef <- coef(rval)
-  if(!(is.null(groupcoef))){
-    if(is.vector(groupcoef)) {
-      groupcoef <- t(as.data.frame(groupcoef))
-      rownames(groupcoef) <- 1
+  
+  if(type.tree == "mob") {
+    groupcoef <- coef(rval)
+    if(!(is.null(groupcoef))){
+      if(is.vector(groupcoef)) {
+        groupcoef <- t(as.data.frame(groupcoef))
+        rownames(groupcoef) <- 1
+      }
+      rval$fitted.par <- as.data.frame(groupcoef[paste(rval$fitted[,1]),])
+      rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
     }
-    rval$fitted.par <- as.data.frame(groupcoef[paste(rval$fitted[,1]),])
-    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
   }
   class(rval) <- c("disttree", class(rval))
   return(rval)
@@ -121,12 +124,36 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
 
 
 ## methods
-print.disttree <- function(x,
-  title = NULL, objfun = "negative log-likelihood", ...)
+print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
   if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", x$info$family$family.name)
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
+
+
+
+predict.disttree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
+{
+  # if mob was applied
+  if(inherits(object, "modelparty")){
+    if((type == "node") || (type == "response")) return(predict.modelparty(object = object, newdata = newdata, type = type))
+    if(type == "parameter") {
+      pred.subgroup <- predict.modelparty(object, newdata =  newdata, type = "node")
+      pred.par <- as.data.frame(coef(object)[paste(pred.subgroup),])
+      rownames(pred.par) <- c(1: (length(pred.par[,1])))
+      return(pred.par)
+    }
+  }
+  
+  # if ctree was applied
+  if(inherits(object, "constparty")){
+    if(type == "parameter") stop("parameters can not be predicted if ctree was applied")
+    return(predict(as.constpart(object), newdata = newdata, type = type))
+  }
+}
+  
+
+
 
 ## predict.disttree <- function(object, newdata = NULL,
 ##   type = c("worth", "rank", "best", "node"), ...)
