@@ -1,6 +1,4 @@
 #include <iostream>
-#include <Rmath.h>
-#include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Utils.h>
 #include <cstdlib>
@@ -13,10 +11,10 @@ class Container{
 	 public:
          int nInstances;
          int nVariables;
-	 variable **variables;
+	     variable **variables;
          double **data;
          int *weights;
-         int* elitismList;
+         int *elitismList;
          int nTrees;
          int minBucket;
          int minSplit;
