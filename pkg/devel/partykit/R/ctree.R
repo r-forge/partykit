@@ -252,6 +252,8 @@
             if (!is.null(sc)) attr(mf[[nm]], "scores") <- sc
         }
         y <- model.part(f, data = mf, lhs = 1, rhs = 0)
+        if (!is.factor(y))
+            warning("nmax < Inf for non-categorical response not recommended")
         bdr <- inum::inum(y, nmax = ctrl$nmax, total = TRUE, 
                           complete.cases.only = TRUE)
         y <- attr(bdr, "levels")
