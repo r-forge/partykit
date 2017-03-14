@@ -156,7 +156,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
 
     ### <FIXME> handle offset and cluster </FIXME>
 
-    if (ctrl$nmax < Inf) {
+    if (ctrl$nmax < Inf) { ## TODO: check if this does the right thing 
         if (!is.null(cluster)) stop("cluster not implemented")   
         mf <- model.frame(formula, data, na.action = na.pass)
         bdr <- inum::inum(mf, complete.cases.only = TRUE, total = TRUE)

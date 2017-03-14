@@ -7,7 +7,7 @@ mob2_control <- function(
   stump = FALSE, 
   mtry = Inf, 
   maxdepth = Inf, 
-  nmax = Inf, 
+  # nmax = Inf, # TODO: check if this works first
   multiway = FALSE, 
   splittry = 2L, 
   MIA = FALSE, 
@@ -44,9 +44,10 @@ mob2_control <- function(
     warning("When criterion = 'statistic', mincriterion is the test statistic that must be exceeded. 
             Are you sure you chose the correct value for mincriterion?")
   
+  
   c(.urp_control(criterion = criterion,
                  logmincriterion = log(mincriterion), minsplit = minsplit, 
-                 minbucket = minbucket, minprob = minprob, nmax = nmax, 
+                 minbucket = minbucket, minprob = minprob, nmax = Inf, 
                  stump = stump, lookahead = lookahead,
                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
                  splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
