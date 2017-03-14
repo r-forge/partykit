@@ -163,7 +163,9 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         mfs <- model.frame(formula, data = mf2)
         y <- model.response(mfs)
         x <- model.matrix(formula, data = mf2)
+        
         glmfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
+          nobs <- length(subset)
           w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
           mod <- glm.fit(x = x, y = y, weights = w, start = info$coef, family = ctrl$family)
           
@@ -191,7 +193,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
           # }
           class(mod) <- c("glm", "lm")
           list(estfun = ret, index = iy, coefficients = coef(mod), objfun = logLik(mod),
-               object = if (object) mod else NULL,
+               object = if (object) mod else NULL, nobs = nobs,
                converged = if (is.null(converged)) 
                  mod$converged else converged(mod, mf, subset))
         }
@@ -228,7 +230,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
         ## add estimating functions (if desired)
         ret <- NULL
         if(estfun) {
-          ret <- matrix(0, nrow = NROW(xs), ncol = NCOL(xs))
+          ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
           wres <- as.vector(mod$residuals) * mod$weights
           dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
             1

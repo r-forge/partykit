@@ -15,7 +15,8 @@ fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
 
-(m1 <- glmtree2(formula = fmla, data = d, nmax = 20, testflavour = "ctree", splitflavour = "ctree"))
+(m1 <- glmtree2(formula = fmla, data = d, nmax = 1000, testflavour = "ctree", splitflavour = "ctree"))
+(m2 <- glmtree2(formula = fmla, data = d, testflavour = "ctree", splitflavour = "ctree"))
 
 ## default settings
 glmtree_args <- list(formula = fmla, 
