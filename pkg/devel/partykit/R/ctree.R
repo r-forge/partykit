@@ -104,7 +104,7 @@
         pvalue <- FALSE
         teststat <- ctrl$splitstat
     } else {
-        B <- ifelse(ctrl$testtype == "MonteCarlo",
+        B <- ifelse("MonteCarlo" %in% ctrl$testtype,
                     ctrl$nresample, 0L)
         if (ctrl$splittest) {
             if (ctrl$teststat != ctrl$splitstat)
@@ -115,9 +115,9 @@
         } else {
             teststat <- ctrl$teststat
         }
-        varonly <- ctrl$testtype == "MonteCarlo" && 
+        varonly <- "MonteCarlo" %in% ctrl$testtype && 
                    teststat == "maxtype"
-        pvalue <- ctrl$testtype != "Teststatistic"
+        pvalue <- !("Teststatistic" %in% ctrl$testtype) 
     }
     ### see libcoin/src/C_ordered_Xfactor_block
     if (length(cluster) > 0) varonly <- FALSE 
@@ -341,7 +341,7 @@ ctree_control <- function
     if (!caseweights)
         stop("only caseweights currently implemented in ctree")
 
-    c(.urp_control(criterion = ifelse(testtype == "Teststatistic", 
+    c(.urp_control(criterion = ifelse("Teststatistic" %in% testtype, 
                                       "statistic", "p.value"),
                    logmincriterion = logmincriterion, minsplit = minsplit, 
                    minbucket = minbucket, minprob = minprob, 

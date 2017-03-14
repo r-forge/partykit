@@ -1,5 +1,6 @@
 mob2_control <- function(
   alpha = 0.05,
+  mincriterion = 1 - alpha,
   minsplit = 20L, 
   minbucket = 20L, 
   minprob = 0.01, 
@@ -20,6 +21,7 @@ mob2_control <- function(
   lookahead = FALSE,
   testtype = "Bonferroni",
   bonferroni = TRUE,
+  nresample = 9999L,   # used for testtype = "MonteCarlo"
   breakties = FALSE,
   intersplit = FALSE,
   teststat = "quadratic",  # used for testflavour/splitflavour = "ctree"
@@ -34,11 +36,16 @@ mob2_control <- function(
     alpha <- 1
     criterion <- "statistic"
   } else {
-    criterion <- "p.value"
+    criterion <- ifelse("Teststatistic" %in% testtype, 
+                        "statistic", "p.value")
   }
   
+  if("statistic" %in% criterion & mincriterion < 1 & mincriterion >= 0.9)
+    warning("When criterion = 'statistic', mincriterion is the test statistic that must be exceeded. 
+            Are you sure you chose the correct value for mincriterion?")
+  
   c(.urp_control(criterion = criterion,
-                 logmincriterion = log(1-alpha), minsplit = minsplit, 
+                 logmincriterion = log(mincriterion), minsplit = minsplit, 
                  minbucket = minbucket, minprob = minprob, nmax = nmax, 
                  stump = stump, lookahead = lookahead,
                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
@@ -46,12 +53,10 @@ mob2_control <- function(
                  numsurrogate = numsurrogate,
                  majority = majority, caseweights = caseweights, 
                  applyfun = applyfun, testflavour = testflavour, 
-                 splitflavour = splitflavour),
-    list(breakties = breakties, testtype = testtype, intersplit = intersplit, 
-         teststat = teststat, splitstat = splitstat, splittest = splittest)
-    # list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-    #      testtype = testtype, nmax = nmax, nresample = nresample, lookahead = lookahead,
-    #      intersplit = intersplit)
+                 splitflavour = splitflavour, bonferroni = bonferroni),
+    list(breakties = breakties, testtype = testtype, nresample = nresample, 
+         intersplit = intersplit, teststat = teststat, splitstat = splitstat, 
+         splittest = splittest)
     )
 }
 
@@ -377,7 +382,7 @@ mob2_control <- function(
     maxlogLik <- ifelse(maxlogLik == nosplitll, NA, maxlogLik)
     return(list(statistic = maxlogLik, p.value = NA))
   }
-  if (all(is.na(sp))) return(NULL)
+  if (is.null(sp) || all(is.na(sp))) return(NULL)
   if (ORDERED) {
     if (!is.ordered(x))
       ### interpolate split-points, see https://arxiv.org/abs/1611.04561

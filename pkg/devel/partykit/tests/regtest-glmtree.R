@@ -15,8 +15,51 @@ fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
 
+
+## check testtype
+tts <- list("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic",
+            c("Bonferroni", "MonteCarlo"))
+
+ms <- list()
+for(tt in tts) {
+  nam <- paste(tt, collapse = "")
+  ms[[nam]] <- glmtree2(formula = fmla, data = d, family = fmly, testflavour = "ctree",
+                      testtype = tt, bonferroni = "Bonferroni" %in% tt)
+}
+
+ms
+
+
+## Check if Bonferroni correction leads to a smaller tree
+k <- 20
+zs_noise <- matrix(rnorm(n*k), nrow = n)
+colnames(zs_noise) <- paste0("z_noise", 1:k)
+d2 <- cbind(d, zs_noise)
+fmla2 <- as.formula(paste("y ~ x | z + z_noise +", 
+                          paste0("z_noise", 1:k, collapse = " + ")))
+
+(m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
+                 testtype = "MonteCarlo", bonferroni = FALSE))
+
+(m_bmc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
+                  testtype = c("Bonferroni", "MonteCarlo"), bonferroni = TRUE))
+
+width(m_mc)
+width(m_bmc)
+
+## check lookahead
+smpl <- sample(1:NROW(d), size = 15)
+(m_l <- glmtree2(formula = fmla, data = d[smpl, ], family = fmly,
+                 lookahead = TRUE, 
+                 testflavour = "exhaustive",
+                 minbucket = 2, minsplit = 2))
+
+
+## check nmax 
 (m1 <- glmtree2(formula = fmla, data = d, nmax = 1000, testflavour = "ctree", splitflavour = "ctree"))
-(m2 <- glmtree2(formula = fmla, data = d, testflavour = "ctree", splitflavour = "ctree"))
+(m2 <- glmtree2(formula = fmla, data = d, nmax = Inf, testflavour = "ctree", splitflavour = "ctree"))
+
+
 
 ## default settings
 glmtree_args <- list(formula = fmla, 
@@ -68,21 +111,7 @@ width(m_glmtree2_e)
 width(m_mob2_e)
 
 
-## check lookahead
-smpl <- sample(1:NROW(d), size = 15)
-(m_l <- glmtree2(formula = fmla, data = d[smpl, ], family = fmly,
-                 lookahead = TRUE, 
-                 testflavour = "exhaustive",
-                 minbucket = 2, minsplit = 2))
 
-
-## check testtype
-tts <- list("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic",
-            c("Bonferroni", "MonteCarlo"))
-
-for(tt in tts) 
-  print(m_t <- glmtree2(formula = fmla, data = d, family = fmly,
-                        testtype = tt, bonferroni = "Bonferroni" %in% tt))
 
 
 
