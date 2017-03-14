@@ -143,6 +143,9 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
   }
 }
 
+
+
+
 ### proof of concept for reimplementation of glmtree using urp_tree
 .glmtrafo <- function(formula, data, ctrl, converged = NULL) {
 
@@ -292,7 +295,7 @@ glmtree2 <- function
     family = gaussian(), 
     epsilon = 1e-8, ## TODO: make use of this
     maxit = 25, ## TODO: make use of this
-    converged = NULL,
+    converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
     scores = NULL,
     ...
 ) {

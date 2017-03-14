@@ -42,9 +42,9 @@ glmtree_args_c <- c(glmtree_args, testflavour = "ctree")
 mob_ctrl_c <- partykit:::mob2_control(testflavour = "ctree")
 mob_ctrl_c$family <- fmly
 mob_args_c <- list(fit = fit,
-                 formula = fmla,
-                 data = d,
-                 control = mob_ctrl_c)
+                   formula = fmla,
+                   data = d,
+                   control = mob_ctrl_c)
 
 (m_glmtree2_c <- do.call(glmtree2, args = glmtree_args_c))
 (m_mob2_c <- do.call(mob2, args = mob_args_c))
@@ -69,11 +69,20 @@ width(m_mob2_e)
 
 
 ## check lookahead
-# smpl <- sample(1:NROW(d), size = 15)
-# m_l <- glmtree2(formula = fmla, data = d[smpl, ], family = fmly, 
-#                 lookahead = TRUE, testflavour = "exhaustive", 
-#                 minbucket = 6, minsplit = 2)
-# 
-# m_d <- glmtree2(formula = fmla, data = d, family = fmly, 
-#                  testflavour = "exhaustive", 
-#                 minbucket = 2, minsplit = 2)
+smpl <- sample(1:NROW(d), size = 15)
+(m_l <- glmtree2(formula = fmla, data = d[smpl, ], family = fmly,
+                 lookahead = TRUE, 
+                 testflavour = "exhaustive",
+                 minbucket = 2, minsplit = 2))
+
+
+## check testtype
+tts <- list("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic",
+            c("Bonferroni", "MonteCarlo"))
+
+for(tt in tts) 
+  print(m_t <- glmtree2(formula = fmla, data = d, family = fmly,
+                        testtype = tt, bonferroni = "Bonferroni" %in% tt))
+
+
+
