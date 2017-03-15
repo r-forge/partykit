@@ -114,8 +114,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
         groupcoef <- t(as.data.frame(groupcoef))
         rownames(groupcoef) <- 1
       }
-      rval$fitted.par <- as.data.frame(groupcoef[paste(rval$fitted[,1]),])
+      rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
       rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
+      rval$fitted.par <- as.data.frame(rval$fitted.par)
     }
   }
   class(rval) <- c("disttree", class(rval))
@@ -139,8 +140,14 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
     if((type == "node") || (type == "response")) return(predict.modelparty(object = object, newdata = newdata, type = type))
     if(type == "parameter") {
       pred.subgroup <- predict.modelparty(object, newdata =  newdata, type = "node")
-      pred.par <- as.data.frame(coef(object)[paste(pred.subgroup),])
+      groupcoef <- coef(object)
+      if(is.vector(groupcoef)) {
+        groupcoef <- t(as.data.frame(groupcoef))
+        rownames(groupcoef) <- 1
+      }
+      pred.par <- groupcoef[paste(pred.subgroup),]
       rownames(pred.par) <- c(1: (length(pred.par[,1])))
+      pred.par <- as.data.frame(pred.par)
       return(pred.par)
     }
   }
