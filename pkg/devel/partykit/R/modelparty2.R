@@ -8,7 +8,6 @@ mob2_control <- function(
   mtry = Inf, 
   maxdepth = Inf, 
   # nmax = Inf, # TODO: check if this works first
-  multiway = FALSE, 
   splittry = 2L, 
   MIA = FALSE, 
   maxsurrogate = 0L, 
@@ -24,14 +23,18 @@ mob2_control <- function(
   bonferroni = TRUE,
   nresample = 9999L,   # used for testtype = "MonteCarlo"
   breakties = FALSE,
-  intersplit = FALSE,
   teststat = "quadratic",  # used for testflavour/splitflavour = "ctree"
   splitstat = "quadratic", # used for testflavour/splitflavour = "ctree"
-  splittest = FALSE        # used for testflavour/splitflavour = "ctree"
+  splittest = FALSE,        # used for testflavour/splitflavour = "ctree"
+  numsplit = "left",
+  catsplit = "binary"
 ) {
   
   if(("Bonferroni" %in% testtype) != (bonferroni))
     stop("Arguments bonferroni and testtype must align.")
+  
+  intersplit <- numsplit == "center"
+  multiway <- catsplit == "multiway"
   
   if(testflavour == "exhaustive") { 
     alpha <- 1
@@ -40,6 +43,7 @@ mob2_control <- function(
     criterion <- ifelse("Teststatistic" %in% testtype, 
                         "statistic", "p.value")
   }
+  
   
   if("statistic" %in% criterion & mincriterion < 1 & mincriterion >= 0.9)
     warning("When criterion = 'statistic', mincriterion is the test statistic that must be exceeded. 
