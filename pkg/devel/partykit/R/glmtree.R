@@ -184,6 +184,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
             Y <- Y / w
             Y[w == 0,] <- 0
             ret <- rbind(0, Y)
+            if(!is.null(ctrl$parm)) ret <- ret[ , ctrl$parm, drop = FALSE]
           }
           
           # mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info$coef)
@@ -242,6 +243,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
           }
           Y <- wres * xs/dispersion
           ret[subset,] <- Y
+          if(!is.null(ctrl$parm)) ret <- ret[ , ctrl$parm, drop = FALSE]
           storage.mode(ret) <- "double"
         }
         # ret <- NULL

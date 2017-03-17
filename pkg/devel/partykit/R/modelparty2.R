@@ -27,11 +27,17 @@ mob2_control <- function(
   splitstat = "quadratic", # used for testflavour/splitflavour = "ctree"
   splittest = FALSE,        # used for testflavour/splitflavour = "ctree"
   numsplit = "left",
-  catsplit = "binary"
+  catsplit = "binary",
+  trim = 0.1, 
+  parm = NULL
 ) {
   
-  if(("Bonferroni" %in% testtype) != (bonferroni))
-    stop("Arguments bonferroni and testtype must align.")
+  if(("Bonferroni" %in% testtype) != (bonferroni)) {
+    warning("Arguments bonferroni and testtype must align. 
+            Turning Bonferroni adjustment on.")
+    bonferroni <- TRUE
+    if(!("Bonferroni" %in% testtype)) testtype <- c(testtype, "Bonferroni")
+  }
   
   intersplit <- numsplit == "center"
   multiway <- catsplit == "multiway"
@@ -58,87 +64,14 @@ mob2_control <- function(
                  MIA = MIA, maxsurrogate = maxsurrogate, numsurrogate = numsurrogate, 
                  majority = majority, caseweights = caseweights, 
                  applyfun = applyfun, cores = cores, testflavour = testflavour, 
-                 splitflavour = splitflavour, bonferroni = bonferroni),
+                 splitflavour = splitflavour, bonferroni = bonferroni, trim = trim),
     list(breakties = breakties, testtype = testtype, nresample = nresample, 
          intersplit = intersplit, teststat = teststat, splitstat = splitstat, 
-         splittest = splittest)
+         splittest = splittest, parm = parm)
     )
 }
 
-# ## control splitting parameters
-# mob2_control <- function(
-#   alpha = 0.05, bonferroni = TRUE, minsize = NULL, maxdepth = Inf,
-#   mtry = Inf, trim = 0.1, breakties = FALSE, parm = NULL, dfsplit = TRUE, prune = NULL, restart = TRUE,
-#   verbose = FALSE, caseweights = TRUE, ytype = "vector", xtype = "matrix",
-#   terminal = "object", inner = terminal, model = TRUE,
-#   numsplit = "left", catsplit = "binary", vcov = "opg", ordinal = "chisq", nrep = 10000,
-#   minsplit = minsize, minbucket = minsize,
-#   applyfun = NULL, cores = NULL,
-#   ## NEW
-#   testflavour = "mfluc", 
-#   splitflavour = "exhaustive",
-#   pargs = GenzBretz(),
-#   mincriterion = 1 - alpha,
-#   logmincriterion = log(mincriterion),
-#   minprob = 0.01,
-#   stump = FALSE,
-#   lookahead = FALSE,
-#   MIA = FALSE,
-#   maxsurrogate = 0L,
-#   numsurrogate = FALSE,
-#   splittry = 2L,
-#   intersplit = FALSE,
-#   majority = FALSE
-# )
-# {
-#   
-#   if (!caseweights)
-#     stop("only caseweights currently implemented")
-#   
-#   ## no mtry if infinite or non-positive
-#   if(is.finite(mtry)) {
-#     mtry <- if(mtry < 1L) Inf else as.integer(mtry)
-#   }
-#   
-#   ## data types for formula processing
-#   ytype <- match.arg(ytype, c("vector", "data.frame", "matrix"))
-#   xtype <- match.arg(xtype, c("data.frame", "matrix"))
-#   
-#   ## what to store in inner/terminal nodes
-#   if(!is.null(terminal)) terminal <- as.vector(sapply(terminal, match.arg, c("estfun", "object")))
-#   if(!is.null(inner))    inner    <- as.vector(sapply(inner,    match.arg, c("estfun", "object")))
-#   
-#   ## how to split and how to select splitting variables
-#   numsplit <- match.arg(tolower(numsplit), c("left", "center", "centre"))
-#   if(numsplit == "centre") numsplit <- "center"
-#   catsplit <- match.arg(tolower(catsplit), c("binary", "multiway"))
-#   vcov <- match.arg(tolower(vcov), c("opg", "info", "sandwich"))
-#   ordinal <- match.arg(tolower(ordinal), c("l2", "max", "chisq"))
-#   
-#   ## apply infrastructure for determining split points
-#   if(is.null(applyfun)) {
-#     applyfun <- if(is.null(cores)) {
-#       lapply
-#     } else {
-#       function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = cores)
-#     }
-#   }
-#   
-#   ## return list with all options
-#   c(.urp_control(criterion = ifelse(testtype == "Teststatistic", 
-#                                     "statistic", "p.value"),
-#                  logmincriterion = logmincriterion, minsplit = minsplit, 
-#                  minbucket = minbucket, minprob = minprob, stump = stump, 
-#                  mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-#                  splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
-#                  numsurrogate = numsurrogate,
-#                  majority = majority, caseweights = caseweights, 
-#                  applyfun = applyfun, testflavour = testflavour, 
-#                  splitflavour = splitflavour),
-#     list(
-#       lookahead = lookahead, intersplit = intersplit))
-#   return(rval)
-# }
+
 
 
 ## variable selection: given model scores, conduct
