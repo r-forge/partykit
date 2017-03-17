@@ -174,6 +174,6 @@ varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "m
         }
         ret[b, match(names(vi), colnames(ret))] <- vi
     }
-    colMeans(ret)
+    colMeans(ret, na.rm = TRUE)
 }
 
