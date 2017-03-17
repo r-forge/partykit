@@ -30,6 +30,7 @@
 
     if (is.null(cluster)) cluster <- integer(0)
     if (splitonly) {
+        ### multiway is already handled by urp, but keep it still here
         if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
             is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
             index <- 1L:nlevels(x)

@@ -101,19 +101,39 @@
             ret$splitfun <- function(whichvar, minbucket) 
             {
                 for (j in whichvar) {
-                    ret <- switch(ctrl$splitflavour, 
-                        "ctree" = .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl,
-                                                    X = X, Y = Y, iy = NULL, subset = subset, 
-                                                    weights = weights, cluster = cluster,
-                                                    splitonly = TRUE, minbucket =
-                                                    minbucket),
-                        "exhaustive" = .objfun_test_split(trafo = trafo, info = info, x = data[[j]], 
-                                                          bdr = NULL, j = j, ctrl = ctrl, 
-                                                          subset = subset,  weights = weights, 
-                                                          cluster = cluster, splitonly = TRUE, 
-                                                          minbucket = ctrl$minbucket),
-                        stop(ctrl$splitflavour, "not yet implemented")
-                    )
+                    x <- data[[j]]
+                    if (ctrl$multiway && is.factor(x) && !is.ordered(x) &&
+                        (ctrl$maxsurrogate == 0) && 
+                        nlevels(x[subset, drop = TRUE]) > 1) {
+                        index <- 1L:nlevels(x)
+                        if (length(weights) > 0) {
+                            xt <- xtabs(weights ~ x, subset = subset)
+                        } else {
+                            xt <- xtabs(~ x, subset = subset)
+                        }
+                        index[xt == 0] <- NA
+                        index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
+                        if (length(unique(index)) == 1) {
+                            ret <- NULL
+                        } else {
+                            index <- unclass(factor(index))
+                            ret <- partysplit(as.integer(j), index = as.integer(index))
+                        }
+                    } else {
+                        ret <- switch(ctrl$splitflavour, 
+                            "ctree" = .ctree_test_split(x = data[[j]], bdr = NULL, j = j, ctrl = ctrl,
+                                                        X = X, Y = Y, iy = NULL, subset = subset, 
+                                                        weights = weights, cluster = cluster,
+                                                        splitonly = TRUE, minbucket =
+                                                        minbucket),
+                            "exhaustive" = .objfun_test_split(trafo = trafo, info = info, x = data[[j]], 
+                                                              bdr = NULL, j = j, ctrl = ctrl, 
+                                                              subset = subset,  weights = weights, 
+                                                              cluster = cluster, splitonly = TRUE, 
+                                                              minbucket = ctrl$minbucket),
+                             stop(ctrl$splitflavour, "not yet implemented")
+                        )
+                    }
                     ### check if trafo can be successfully applied to all daugther nodes 
                     ### (converged = TRUE)
                     if (ctrl$lookahead & !is.null(ret)) {
