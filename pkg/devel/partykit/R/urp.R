@@ -112,6 +112,8 @@
                             xt <- xtabs(~ x, subset = subset)
                         }
                         index[xt == 0] <- NA
+                        ### maybe multiway is not so smart here as
+                        ### nodes with nobs < minbucket could result
                         index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
                         if (length(unique(index)) == 1) {
                             ret <- NULL
