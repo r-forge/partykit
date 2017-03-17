@@ -1,8 +1,9 @@
 mob2_control <- function(
   alpha = 0.05,
   mincriterion = 1 - alpha,
-  minsplit = 20L, 
-  minbucket = 20L, 
+  minsize = 20L,
+  minsplit = minsize, 
+  minbucket = minsize, 
   minprob = 0.01, 
   stump = FALSE, 
   mtry = Inf, 

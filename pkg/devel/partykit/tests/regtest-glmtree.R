@@ -22,14 +22,20 @@ fmla2 <- as.formula(paste("y ~ x | z + z_noise +",
                           paste0("z_noise_", 1:k, collapse = " + ")))
 
 
+d3 <- d2
+d3$z <- factor(sample(1:3, size = n, replace = TRUE, prob = c(0.1, 0.5, 0.4)))
+d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
+
+
+
 fmla <- as.formula("y ~ x | z + z_noise")
 fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
 
 ## check multiway
-
-
+(m_mult <- glmtree2(formula = fmla2, data = d3, catsplit = "multiway", minsize = 80))
+(mo_mult <- glmtree(formula = fmla2, data = d3, catsplit = "multiway", minsize = 80))
 
 
 ## check parm
