@@ -33,6 +33,23 @@ fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
 
+
+## Check if Bonferroni correction leads to a smaller tree
+(m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
+                  testtype = "MonteCarlo", bonferroni = FALSE))
+
+(m_bmc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
+                   testtype = c("Bonferroni", "MonteCarlo"), bonferroni = TRUE))
+
+width(m_mc)
+width(m_bmc)
+
+# logLik(m_mc)
+# logLik(m_bmc)
+
+
+
+
 ## check multiway
 (m_mult <- glmtree2(formula = fmla2, data = d3, catsplit = "multiway", minsize = 80))
 (mo_mult <- glmtree(formula = fmla2, data = d3, catsplit = "multiway", minsize = 80))
@@ -51,8 +68,8 @@ fmla_p <- as.formula("y ~ x + z_noise + z_noise_1 | z + z_noise_2")
 (m_tt <- glmtree2(formula = fmla, data = d, trim = 0.2))
 (mo_tt <- glmtree(formula = fmla, data = d, trim = 0.2))
 
-(m_tf <- glmtree2(formula = fmla, data = d, trim = 300))
-(mo_tf <- glmtree(formula = fmla, data = d, trim = 300))
+(m_tf <- glmtree2(formula = fmla, data = d, trim = 300, minsize = 300))
+(mo_tf <- glmtree(formula = fmla, data = d, trim = 300, minsize = 300))
 
 
 
@@ -80,15 +97,7 @@ for(tt in tts) {
 ms
 
 
-## Check if Bonferroni correction leads to a smaller tree
-(m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
-                 testtype = "MonteCarlo", bonferroni = FALSE))
 
-(m_bmc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
-                  testtype = c("Bonferroni", "MonteCarlo"), bonferroni = TRUE))
-
-width(m_mc)
-width(m_bmc)
 
 
 ## check splittry

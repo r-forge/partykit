@@ -366,6 +366,10 @@ mob2 <- function
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
   
+  control$ytype <- ifelse(is.vector(y), "vector", class(y))
+  x <- model.part(as.Formula(tree$modelf), data = mf, lhs = 0, rhs = 1)
+  control$xtype <- class(x)
+  
   ## return party object
   rval <- party(tree$nodes, 
                 data = mf,
@@ -378,8 +382,8 @@ mob2 <- function
                   terms = list(response = mtY, partitioning = mtZ),
                   fit = fit,
                   control = control,
-                  dots = list(...)
-                  # nreg = max(0L, as.integer(xreg) * (nyx - NCOL(Y))))
+                  dots = list(...),
+                  nreg = NCOL(x)
                 )
   )
   class(rval) <- c("modelparty", class(rval))
