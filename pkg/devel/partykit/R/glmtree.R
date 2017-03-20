@@ -156,53 +156,6 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
 
     ### <FIXME> handle offset and cluster </FIXME>
 
-    if (ctrl$nmax < Inf) { ## TODO: check if this does the right thing 
-        if (!is.null(cluster)) stop("cluster not implemented")   
-        mf <- model.frame(formula, data, na.action = na.pass)
-        bdr <- inum::inum(mf, complete.cases.only = TRUE, total = TRUE)
-        mf2 <- as.data.frame(bdr)
-        iy <- c(bdr)
-        attr(iy, "levels") <- 1:nrow(mf2)
-        mfs <- model.frame(formula, data = mf2)
-        y <- model.response(mfs)
-        x <- model.matrix(formula, data = mf2)
-        
-        glmfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
-          nobs <- length(subset)
-          w <- c(libcoin::ctabs(iy, weights = weights, subset = subset)[-1L])
-          mod <- glm.fit(x = x, y = y, weights = w, start = info$coef, family = ctrl$family)
-          
-          ret <- NULL
-          if(estfun) {
-            wres <- as.vector(mod$residuals) * mod$weights
-            dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
-              1
-            } else {
-              sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
-            }
-            Y <- wres * x/dispersion
-            Y <- Y / w
-            Y[w == 0,] <- 0
-            ret <- rbind(0, Y)
-            if(!is.null(ctrl$parm)) ret <- ret[ , ctrl$parm, drop = FALSE]
-          }
-          
-          # mod <- glm(y ~ x + 0, family = ctrl$family, weights = w, start = info$coef)
-          # ret <- NULL
-          # if (estfun) {
-          #   Y <- sandwich::estfun(mod)
-          #   Y <- Y / w
-          #   Y[w == 0,] <- 0
-          #   ret <- rbind(0, Y)
-          # }
-          class(mod) <- c("glm", "lm")
-          list(estfun = ret, index = iy, coefficients = coef(mod), objfun = logLik(mod),
-               object = if (object) mod else NULL, nobs = nobs,
-               converged = if (is.null(converged)) 
-                 mod$converged else converged(mod, mf, subset))
-        }
-        return(glmfit)
-    }
     if (!is.null(cluster)) stop("cluster not implemented")
     mf <- model.frame(formula, data, na.action = na.pass)
     cc <- complete.cases(mf)
@@ -246,17 +199,7 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
           if(!is.null(ctrl$parm)) ret <- ret[ , ctrl$parm, drop = FALSE]
           storage.mode(ret) <- "double"
         }
-        # ret <- NULL
-        # if (estfun) {
-        #     ret <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-        #     Y <- sandwich::estfun(mod)
-        #     if (length(weights) > 0) {
-        #         Y <- Y / w
-        #         Y[w == 0,] <- 0
-        #     }
-        #     ret[subset,] <- Y
-        #     storage.mode(ret) <- "double"
-        # }
+
         
         class(mod) <- c("glm", "lm")
         ## add model (if desired)
