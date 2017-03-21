@@ -1,3 +1,58 @@
+.modeltrafo <- function(formula, data, ctrl, converged = NULL, fit, ...) {
+  
+  weights <- model.weights(data)
+  if (is.null(weights)) weights <- integer(0)
+  cluster <- data[["cluster"]]
+  offset <- model.offset(data)
+  
+  ### <FIXME> handle offset and cluster </FIXME>
+  if (!is.null(cluster)) stop("cluster not implemented")
+  mf <- model.frame(formula, data, na.action = na.pass)
+  cc <- complete.cases(mf)
+  y <- model.response(mf)
+  x <- model.matrix(formula, data = mf)
+  n <- NROW(mf)
+  
+  modelfit <- function(subset, estfun = TRUE, object = FALSE, info, ...) {
+    s <- subset[cc[subset]]
+    ys <- y[s]
+    xs <- x[s, , drop = FALSE]
+    nobs <- NROW(xs)
+    
+    if (length(weights) > 0) {
+      weights <- weights[cc[subset]]
+      nobs <- sum(weights)
+    } else {
+      weights <- NULL
+    }
+    
+    args <- c(list(x = xs, y = ys, start = info$coef, converged = converged,
+                   n = n, subset = subset, weights = weights, object = TRUE),
+              ctrl, ...)
+
+    ret <- do.call("fit", args = args)
+    
+    ## get convergence info
+    if (is.null(converged)) {
+      cv <- if (is.null(ret$object$converged)) TRUE else ret$object$converged
+    } else {
+      cv <- converged(ret$object, mf, subset)
+    }
+    
+    ef <- matrix(0, nrow = n, ncol = NCOL(x))
+    ef[subset,] <- ret$estfun
+    
+    list(estfun = ef, coefficients = ret$coefficients, objfun = ret$objfun,
+      object = if (object) ret$object else NULL, nobs = nobs, 
+      converged = cv)
+    
+  }
+  
+  return(modelfit)
+}
+
+
+
 mob2_control <- function(
   alpha = 0.05,
   mincriterion = 1 - alpha,

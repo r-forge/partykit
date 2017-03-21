@@ -32,6 +32,70 @@ fmla <- as.formula("y ~ x | z + z_noise")
 fmly <- gaussian()
 fit <- partykit:::.glmtrafo
 
+# (m <- glmtree2(formula = fmla, data = d,
+#                testflavour = "ctree", 
+#                splitflavour = "ctree",
+#                bonferroni = FALSE,
+#                testtype = "Univariate"))
+
+## modeltrafo
+myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
+                     estfun = TRUE, object = FALSE) {
+  args <- list(...)
+  
+  ## call glm fitting function
+  args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
+  args_fit <- args[names(args) %in% names(formals(glm.fit))]
+  mod <- do.call("glm.fit", args_fit)
+  
+  ## add estimating functions (if desired)
+  ret <- NULL
+  if(estfun) {
+    # ret <- matrix(0, nrow = args$n, ncol = NCOL(x))
+    wres <- as.vector(mod$residuals) * mod$weights
+    dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
+      1
+    } else {
+      sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
+    }
+    ret <- wres * x/dispersion
+    # ret[args$subset,] <- Y
+    if(!is.null(args$parm)) ret <- ret[ , args$parm, drop = FALSE]
+    storage.mode(ret) <- "double"
+  }
+  
+  
+  ## add model (if desired)
+  class(mod) <- c("glm", "lm")
+  if(object) {
+    mod$offset <- if(is.null(offset)) 0 else offset
+    mod$contrasts <- attr(x, "contrasts")
+    mod$xlevels <- attr(x, "xlevels")    
+    
+    cl <- as.call(expression(glm))
+    cl$formula <- attr(x, "formula")	
+    if(!is.null(offset)) cl$offset <- attr(x, "offset")
+    mod$call <- cl
+    mod$terms <- attr(x, "terms")
+  }
+
+  
+  list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod),
+       object = if (object) mod else NULL)  
+  
+}
+(m2 <- mob2(formula = fmla, data = d, fit = myglmfit, 
+           control = partykit:::mob2_control(testflavour = "ctree",
+                                             splitflavour = "ctree",
+                                             bonferroni = FALSE,
+                                             testtype = "Univariate")))
+
+(m2 <- mob2(formula = fmla, data = d, fit = myglmfit, 
+           control = partykit:::mob2_control(testflavour = "ctree",
+                                             splitflavour = "ctree")))
+
+(mmfluc <- mob2(formula = fmla, data = d, fit = myglmfit))
+
 
 
 ## Check if Bonferroni correction leads to a smaller tree
@@ -91,7 +155,7 @@ ms <- list()
 for(tt in tts) {
   nam <- paste(tt, collapse = "")
   ms[[nam]] <- glmtree2(formula = fmla, data = d, family = fmly, testflavour = "ctree",
-                      testtype = tt, bonferroni = "Bonferroni" %in% tt)
+                        testtype = tt, bonferroni = "Bonferroni" %in% tt)
 }
 
 ms

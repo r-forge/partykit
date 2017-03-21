@@ -290,7 +290,8 @@ mob2 <- function
       missing(cluster) && missing(offset)
   }
   
-  trafofun <- function(...) fit(..., converged = converged)
+  # trafofun <- function(...) fit(..., converged = converged)
+  trafofun <- function(...) .modeltrafo(..., converged = converged, fit = fit)
   tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                     trafofun = trafofun, doFit = TRUE)
   
