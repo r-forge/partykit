@@ -166,10 +166,16 @@ glmtree2 <- function
   ## use dots for setting up mob_control
   control <- mob2_control(...)
   control$family <- family
-
-  mob2(fit = glmfit, formula = formula, data = data, weights = weights,
-       subset = subset, offset = offset, cluster = cluster, na.action = na.action,
-       control = control, converged = converged, scores = scores, ...)
+  
+  rval <- mob2(fit = glmfit, formula = formula, data = data, weights = weights,
+              subset = subset, offset = offset, cluster = cluster, na.action = na.action,
+              control = control, converged = converged, scores = scores, ...)
+  
+  ## extend class and keep original call
+  rval$info$call <- match.call(expand.dots = TRUE)
+  rval$info$family <- family$family
+  class(rval) <- c("glmtree", class(rval))
+  return(rval)
 }
 
 

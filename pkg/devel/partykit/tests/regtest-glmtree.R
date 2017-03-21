@@ -100,6 +100,9 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
 (mmfluc3 <- glmtree2(formula = fmla, data = d))
 (mmfluc4 <- glmtree(formula = fmla, data = d))
 
+x <- mmfluc3
+info <- nodeapply(x, ids = nodeids(x, terminal = TRUE),
+                  FUN = function(n) info_node(n)$objfun)
 
 ## Check if Bonferroni correction leads to a smaller tree
 (m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
