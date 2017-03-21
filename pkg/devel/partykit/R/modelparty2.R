@@ -35,6 +35,14 @@
     ret <- do.call("fit", args = args)
     
     
+    ## if ret is not a list of object, estfun, ...
+    if(class(ret)[1] != "list") {
+      ret <- list(estfun = estfun(ret), coefficients = coef(ret), 
+                  objfun = - logLik(ret), object = ret)
+    }
+    
+    
+    
     ## get convergence info
     if (is.null(converged)) {
       cv <- if (is.null(ret$object$converged)) TRUE else ret$object$converged

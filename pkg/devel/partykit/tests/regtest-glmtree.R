@@ -32,11 +32,6 @@ fmla <- as.formula("y ~ x | z + z_noise")
 fmly <- gaussian()
 fit <- partykit:::glmfit
 
-# (m <- glmtree2(formula = fmla, data = d,
-#                testflavour = "ctree", 
-#                splitflavour = "ctree",
-#                bonferroni = FALSE,
-#                testtype = "Univariate"))
 
 ## modeltrafo
 myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
@@ -239,6 +234,18 @@ width(m_mob2_e)
 
 
 
-
-
-
+### example from mob vignette
+# data("PimaIndiansDiabetes", package = "mlbench")
+# 
+# logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+#   glm(y ~ 0 + x, family = binomial, start = start, ...)
+# }
+# 
+# pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps + 
+#   insulin + mass + pedigree + age
+# 
+# pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
+# pid_tree
+# 
+# pid_tree2 <- mob2(pid_formula, data = PimaIndiansDiabetes, fit = logit)
+# pid_tree2
