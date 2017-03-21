@@ -67,12 +67,13 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
   
   ## call glm fitting function
   args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
-  z <- do.call("glm.fit", args)
+  args_fit <- args[names(args) %in% names(formals(glm.fit))]
+  z <- do.call("glm.fit", args_fit)
 
   ## degrees of freedom
   df <- z$rank
   if(z$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
-  if(substr(z$family$family, 1L, 5L) != "quasi") objfun <- z$aic/2 - df else objfun <- z$deviance
+  if(substr(z$family$family, 1L, 5L) != "quasi") objfun <- - z$aic/2 - df else objfun <- - z$deviance
 
   ## list structure
   rval <- list(

@@ -11,9 +11,11 @@
   cc <- complete.cases(mf)
   y <- model.response(mf)
   x <- model.matrix(formula, data = mf)
-  n <- NROW(mf)
   
+  ## function for model fitting
   modelfit <- function(subset, estfun = TRUE, object = FALSE, info, ...) {
+    
+    ## get subset of the data
     s <- subset[cc[subset]]
     ys <- y[s]
     xs <- x[s, , drop = FALSE]
@@ -26,11 +28,12 @@
       weights <- NULL
     }
     
+    ## call the fit function
     args <- c(list(x = xs, y = ys, start = info$coef, converged = converged,
-                   n = n, subset = subset, weights = weights, object = TRUE),
+                   subset = subset, weights = weights, object = TRUE, estfun = TRUE),
               ctrl, ...)
-
     ret <- do.call("fit", args = args)
+    
     
     ## get convergence info
     if (is.null(converged)) {
@@ -39,9 +42,12 @@
       cv <- converged(ret$object, mf, subset)
     }
     
-    ef <- matrix(0, nrow = n, ncol = NCOL(x))
+    ## correct dimension of estfun 
+    ef <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
     ef[subset,] <- ret$estfun
     
+    
+    ## return
     list(estfun = ef, coefficients = ret$coefficients, objfun = ret$objfun,
       object = if (object) ret$object else NULL, nobs = nobs, 
       converged = cv)

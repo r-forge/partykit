@@ -41,6 +41,7 @@ fit <- partykit:::.glmtrafo
 ## modeltrafo
 myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
                      estfun = TRUE, object = FALSE) {
+  
   args <- list(...)
   
   ## call glm fitting function
@@ -48,10 +49,16 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
   args_fit <- args[names(args) %in% names(formals(glm.fit))]
   mod <- do.call("glm.fit", args_fit)
   
+  
+  ## objfun
+  df <- mod$rank
+  if(mod$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
+  if(substr(mod$family$family, 1L, 5L) != "quasi") objfun <- mod$aic/2 - df else objfun <- mod$deviance
+  
+  
   ## add estimating functions (if desired)
   ret <- NULL
   if(estfun) {
-    # ret <- matrix(0, nrow = args$n, ncol = NCOL(x))
     wres <- as.vector(mod$residuals) * mod$weights
     dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
       1
@@ -59,7 +66,6 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
       sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
     }
     ret <- wres * x/dispersion
-    # ret[args$subset,] <- Y
     if(!is.null(args$parm)) ret <- ret[ , args$parm, drop = FALSE]
     storage.mode(ret) <- "double"
   }
@@ -80,7 +86,7 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
   }
 
   
-  list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod),
+  list(estfun = ret, coefficients = coef(mod), objfun = -objfun,
        object = if (object) mod else NULL)  
   
 }
@@ -95,7 +101,7 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
                                              splitflavour = "ctree")))
 
 (mmfluc <- mob2(formula = fmla, data = d, fit = myglmfit))
-
+(mmfluc1 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
 
 
 ## Check if Bonferroni correction leads to a smaller tree
