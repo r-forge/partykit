@@ -73,7 +73,7 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
   ## degrees of freedom
   df <- z$rank
   if(z$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
-  if(substr(z$family$family, 1L, 5L) != "quasi") objfun <- - z$aic/2 - df else objfun <- - z$deviance
+  if(substr(z$family$family, 1L, 5L) != "quasi") objfun <- z$aic/2 - df else objfun <- z$deviance
 
   ## list structure
   rval <- list(
@@ -249,7 +249,7 @@ glmtree2 <- function
   control <- mob2_control(...)
   control$family <- family
 
-  mob2(fit = .glmtrafo, formula = formula, data = data, weights = weights,
+  mob2(fit = glmfit, formula = formula, data = data, weights = weights,
        subset = subset, offset = offset, cluster = cluster, na.action = na.action,
        control = control, converged = converged, scores = scores, ...)
 }

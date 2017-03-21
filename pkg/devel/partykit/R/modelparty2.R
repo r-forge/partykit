@@ -13,7 +13,7 @@
   x <- model.matrix(formula, data = mf)
   
   ## function for model fitting
-  modelfit <- function(subset, estfun = TRUE, object = FALSE, info, ...) {
+  modelfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
     
     ## get subset of the data
     s <- subset[cc[subset]]
@@ -48,7 +48,7 @@
     
     
     ## return
-    list(estfun = ef, coefficients = ret$coefficients, objfun = ret$objfun,
+    list(estfun = ef, coefficients = ret$coefficients, objfun = - ret$objfun,
       object = if (object) ret$object else NULL, nobs = nobs, 
       converged = cv)
     
@@ -96,9 +96,10 @@ mob2_control <- function(
   
   if(("Bonferroni" %in% testtype) != (bonferroni)) {
     warning("Arguments bonferroni and testtype must align. 
-            Turning Bonferroni adjustment on.")
-    bonferroni <- TRUE
-    if(!("Bonferroni" %in% testtype)) testtype <- c(testtype, "Bonferroni")
+            Turning Bonferroni adjustment off.")
+    bonferroni <- FALSE
+    if("Bonferroni" %in% testtype) testtype <- testtype[testtype != "Bonferroni"]
+    if(length(testtype) == 0) testtype <- "Univariate"
   }
   
   intersplit <- numsplit == "center"

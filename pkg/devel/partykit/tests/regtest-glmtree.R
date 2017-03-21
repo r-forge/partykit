@@ -30,7 +30,7 @@ d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
 
 fmla <- as.formula("y ~ x | z + z_noise")
 fmly <- gaussian()
-fit <- partykit:::.glmtrafo
+fit <- partykit:::glmfit
 
 # (m <- glmtree2(formula = fmla, data = d,
 #                testflavour = "ctree", 
@@ -86,7 +86,7 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
   }
 
   
-  list(estfun = ret, coefficients = coef(mod), objfun = -objfun,
+  list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod), #-objfun,
        object = if (object) mod else NULL)  
   
 }
@@ -100,8 +100,10 @@ myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
            control = partykit:::mob2_control(testflavour = "ctree",
                                              splitflavour = "ctree")))
 
-(mmfluc <- mob2(formula = fmla, data = d, fit = myglmfit))
-(mmfluc1 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
+(mmfluc1 <- mob2(formula = fmla, data = d, fit = myglmfit))
+(mmfluc2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
+(mmfluc3 <- glmtree2(formula = fmla, data = d))
+(mmfluc4 <- glmtree(formula = fmla, data = d))
 
 
 ## Check if Bonferroni correction leads to a smaller tree
@@ -171,11 +173,11 @@ ms
 
 
 ## check splittry
-m_s2 <- glmtree2(formula = fmla, data = d2, splittry = 2, bonferroni = FALSE)
-m_s5 <- glmtree2(formula = fmla, data = d2, splittry = 5, bonferroni = FALSE)
+(m_s2 <- glmtree2(formula = fmla2, data = d2, splittry = 1, bonferroni = FALSE,
+                  testflavour = "ctree"))
+(m_s5 <- glmtree2(formula = fmla2, data = d2, splittry = 5, bonferroni = FALSE,
+                  testflavour = "ctree"))
 
-m_s2
-m_s5
 
 
 ## check lookahead
