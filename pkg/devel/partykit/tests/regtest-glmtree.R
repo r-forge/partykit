@@ -1,6 +1,6 @@
 
 library("partykit")
-library("Formula")
+library("sandwich")
 
 set.seed(29)
 n <- 1000
@@ -33,69 +33,17 @@ fmly <- gaussian()
 fit <- partykit:::glmfit
 
 
-## modeltrafo
-myglmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...,
-                     estfun = TRUE, object = FALSE) {
-  
-  args <- list(...)
-  
-  ## call glm fitting function
-  args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
-  args_fit <- args[names(args) %in% names(formals(glm.fit))]
-  mod <- do.call("glm.fit", args_fit)
-  
-  
-  ## objfun
-  df <- mod$rank
-  if(mod$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
-  if(substr(mod$family$family, 1L, 5L) != "quasi") objfun <- mod$aic/2 - df else objfun <- mod$deviance
-  
-  
-  ## add estimating functions (if desired)
-  ret <- NULL
-  if(estfun) {
-    wres <- as.vector(mod$residuals) * mod$weights
-    dispersion <- if(substr(mod$family$family, 1L, 17L) %in% c("poisson", "binomial", "Negative Binomial")) {
-      1
-    } else {
-      sum(wres^2, na.rm = TRUE)/sum(mod$weights, na.rm = TRUE)
-    }
-    ret <- wres * x/dispersion
-    if(!is.null(args$parm)) ret <- ret[ , args$parm, drop = FALSE]
-    storage.mode(ret) <- "double"
-  }
-  
-  
-  ## add model (if desired)
-  class(mod) <- c("glm", "lm")
-  if(object) {
-    mod$offset <- if(is.null(offset)) 0 else offset
-    mod$contrasts <- attr(x, "contrasts")
-    mod$xlevels <- attr(x, "xlevels")    
-    
-    cl <- as.call(expression(glm))
-    cl$formula <- attr(x, "formula")	
-    if(!is.null(offset)) cl$offset <- attr(x, "offset")
-    mod$call <- cl
-    mod$terms <- attr(x, "terms")
-  }
-
-  
-  list(estfun = ret, coefficients = coef(mod), objfun = logLik(mod), #-objfun,
-       object = if (object) mod else NULL)  
-  
-}
-(m2 <- mob2(formula = fmla, data = d, fit = myglmfit, 
+(m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
            control = partykit:::mob2_control(testflavour = "ctree",
                                              splitflavour = "ctree",
                                              bonferroni = FALSE,
                                              testtype = "Univariate")))
 
-(m2 <- mob2(formula = fmla, data = d, fit = myglmfit, 
+(m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
            control = partykit:::mob2_control(testflavour = "ctree",
                                              splitflavour = "ctree")))
 
-(mmfluc1 <- mob2(formula = fmla, data = d, fit = myglmfit))
+
 (mmfluc2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
 (mmfluc3 <- glmtree2(formula = fmla, data = d))
 (mmfluc4 <- glmtree(formula = fmla, data = d))
@@ -238,17 +186,17 @@ width(m_mob2_e)
 
 
 ### example from mob vignette
-# data("PimaIndiansDiabetes", package = "mlbench")
-# 
-# logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
-#   glm(y ~ 0 + x, family = binomial, start = start, ...)
-# }
-# 
-# pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps + 
-#   insulin + mass + pedigree + age
-# 
-# pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
-# pid_tree
-# 
-# pid_tree2 <- mob2(pid_formula, data = PimaIndiansDiabetes, fit = logit)
-# pid_tree2
+data("PimaIndiansDiabetes", package = "mlbench")
+
+logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+  glm(y ~ 0 + x, family = binomial, start = start, ...)
+}
+
+pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps +
+  insulin + mass + pedigree + age
+
+pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
+pid_tree
+
+pid_tree2 <- mob2(pid_formula, data = PimaIndiansDiabetes, fit = logit)
+pid_tree2

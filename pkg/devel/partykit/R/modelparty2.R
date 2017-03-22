@@ -29,9 +29,11 @@
     }
     
     ## call the fit function
-    args <- c(list(x = xs, y = ys, start = info$coef, converged = converged,
-                   subset = subset, weights = weights, object = TRUE, estfun = TRUE),
-              ctrl, ...)
+    args <- c(list(x = xs, y = ys, start = info$coef, weights = weights),
+              list(object = TRUE, estfun = TRUE)[c("estfun", "object") %in% 
+                                                   names(formals(fit))],
+              ...)
+    
     ret <- do.call("fit", args = args)
     
     

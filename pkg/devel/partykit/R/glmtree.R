@@ -67,8 +67,7 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
   
   ## call glm fitting function
   args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
-  args_fit <- args[names(args) %in% names(formals(glm.fit))]
-  z <- do.call("glm.fit", args_fit)
+  z <- do.call("glm.fit", args)
 
   ## degrees of freedom
   df <- z$rank
@@ -165,11 +164,10 @@ glmtree2 <- function
 ) {
   ## use dots for setting up mob_control
   control <- mob2_control(...)
-  control$family <- family
   
   rval <- mob2(fit = glmfit, formula = formula, data = data, weights = weights,
               subset = subset, offset = offset, cluster = cluster, na.action = na.action,
-              control = control, converged = converged, scores = scores, ...)
+              control = control, converged = converged, scores = scores, family = family, ...)
   
   ## extend class and keep original call
   rval$info$call <- match.call(expand.dots = TRUE)
