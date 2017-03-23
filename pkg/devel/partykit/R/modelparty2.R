@@ -101,7 +101,8 @@ mob2_control <- function(
   numsplit = "left",
   catsplit = "binary",
   trim = 0.1, 
-  parm = NULL
+  parm = NULL,
+  dfsplit = TRUE
 ) {
   
   if(("Bonferroni" %in% testtype) != (bonferroni)) {
@@ -140,7 +141,7 @@ mob2_control <- function(
                  splitflavour = splitflavour, bonferroni = bonferroni, trim = trim),
     list(breakties = breakties, testtype = testtype, nresample = nresample, 
          intersplit = intersplit, teststat = teststat, splitstat = splitstat, 
-         splittest = splittest, parm = parm)
+         splittest = splittest, parm = parm, dfsplit = dfsplit)
     )
 }
 
