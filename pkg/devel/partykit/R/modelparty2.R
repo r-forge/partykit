@@ -102,7 +102,9 @@ mob2_control <- function(
   catsplit = "binary",
   trim = 0.1, 
   parm = NULL,
-  dfsplit = TRUE
+  dfsplit = TRUE,
+  prune = NULL, # not yet used
+  restart = FALSE
 ) {
   
   if(("Bonferroni" %in% testtype) != (bonferroni)) {
@@ -141,7 +143,7 @@ mob2_control <- function(
                  splitflavour = splitflavour, bonferroni = bonferroni, trim = trim),
     list(breakties = breakties, testtype = testtype, nresample = nresample, 
          intersplit = intersplit, teststat = teststat, splitstat = splitstat, 
-         splittest = splittest, parm = parm, dfsplit = dfsplit)
+         splittest = splittest, parm = parm, dfsplit = dfsplit, restart = restart)
     )
 }
 
@@ -353,11 +355,15 @@ mob2_control <- function(
             length(sright) < minbucket)
           next();
       }
-      ltr <- trafo(sleft, info = linfo, estfun = FALSE)
-      rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-      ll <- ltr$objfun + rtr$objfun
-      linfo <- ltr$info
-      rinfo <- rtr$info
+      if (ctrl$restart) {
+        linfo <- NULL
+        rinfo <- NULL
+      }
+      linfo <- trafo(sleft, info = linfo, estfun = FALSE)
+      rinfo <- trafo(sright, info = rinfo, estfun = FALSE)
+      ll <- linfo$objfun + rinfo$objfun
+      # linfo <- ltr$info
+      # rinfo <- rtr$info
       if (ll > maxlogLik) {
         sp <- u
         maxlogLik <- ll
@@ -377,11 +383,15 @@ mob2_control <- function(
             length(sright) < minbucket)
           next();
       }
-      ltr <- trafo(sleft, info = linfo, estfun = FALSE)
-      rtr <- trafo(sright, info = rinfo, estfun = FALSE)
-      ll <- ltr$objfun + rtr$objfun
-      linfo <- ltr$info
-      rinfo <- rtr$info
+      if (ctrl$restart) {
+        linfo <- NULL
+        rinfo <- NULL
+      }
+      linfo <- trafo(sleft, info = linfo, estfun = FALSE)
+      rinfo <- trafo(sright, info = rinfo, estfun = FALSE)
+      ll <- linfo$objfun + rinfo$objfun
+      # linfo <- ltr$info
+      # rinfo <- rtr$info
       if (ll > maxlogLik) {
         sp <- splits[u,] + 1L
         maxlogLik <- ll
