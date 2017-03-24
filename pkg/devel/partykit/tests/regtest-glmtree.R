@@ -93,9 +93,14 @@ arguments <- list("inner",
 for (o in options) {
   print(o)
   x <- glmtree2(formula = fmla, data = d, inner = o)
-  str(nodeapply(x, ids = nodeids(x), function(n) n$info), 2)
+  str(nodeapply(x, ids = nodeids(x), function(n) n$info[c("object", "estfun")]), 2)
 }
 
+for (o in options) {
+  print(o)
+  x <- glmtree2(formula = fmla, data = d, terminal = o)
+  str(nodeapply(x, ids = nodeids(x), function(n) n$info[c("object", "estfun")]), 2)
+}
 
 
 ## check model

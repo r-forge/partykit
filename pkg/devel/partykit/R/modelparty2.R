@@ -113,8 +113,15 @@ mob2_control <- function(
   ordinal = "chisq",
   nrep = 10000L,
   terminal = "object", 
-  inner = terminal
+  inner = "object"
 ) {
+  
+  
+  if("estfun" %in% inner) {
+    inner <- inner[inner != "estfun"]
+    warning("estfun can no longer be stored in inner nodes")
+    if(length(inner) == 0) inner <- NULL
+  }
   
   if(("Bonferroni" %in% testtype) != (bonferroni)) {
     bonferroni <- FALSE
