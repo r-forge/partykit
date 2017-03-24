@@ -363,7 +363,7 @@ mob2_control <- function(
   sp <- NULL
   
   if (ORDERED) {
-    for (u in 1:length(ux)) {
+    ll <- ctrl$applyfun(1:length(ux), function(u) {
       sleft <- subset[LEFT <- x[subset] <= ux[u]]
       sright <- subset[!LEFT]
       if (length(weights) > 0) {
@@ -384,14 +384,13 @@ mob2_control <- function(
       ll <- linfo$objfun + rinfo$objfun
       # linfo <- ltr$info
       # rinfo <- rtr$info
-      if (ll > maxlogLik) {
-        sp <- u
-        maxlogLik <- ll
-      }
-    }
+      return(ll)
+    })
+    sp <- which.max(ll)
+    maxlogLik <- max(ll)
   } else {
     splits <- mob_grow_getlevels(x)
-    for (u in 1:nrow(splits)) {
+    ll <- ctrl$applyfun(1:nrow(splits), function(u) {
       sleft <- subset[LEFT <- x[subset] %in% levels(x)[splits[u,]]]
       sright <- subset[!LEFT]
       if (length(weights) > 0) {
@@ -412,11 +411,10 @@ mob2_control <- function(
       ll <- linfo$objfun + rinfo$objfun
       # linfo <- ltr$info
       # rinfo <- rtr$info
-      if (ll > maxlogLik) {
-        sp <- splits[u,] + 1L
-        maxlogLik <- ll
-      }
-    }
+      return(ll)
+    })
+    sp <- splits[which.max(ll),] + 1L
+    maxlogLik <- max(ll)
   }
   
   if (!splitonly){
