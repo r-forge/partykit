@@ -58,6 +58,7 @@
     if(estfun) {
       ef <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
       ef[subset,] <- ret$estfun
+      if(!is.null(ctrl$parm)) ef <- ef[, ctrl$parm]
     }
     
     ## return

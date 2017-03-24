@@ -32,19 +32,7 @@ d3$z <- factor(sample(1:3, size = n, replace = TRUE, prob = c(0.1, 0.5, 0.4)))
 d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
 
 
-
-
-(m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
-            control = partykit:::mob2_control(testflavour = "ctree",
-                                              splitflavour = "ctree",
-                                              bonferroni = FALSE,
-                                              testtype = "Univariate")))
-
-(m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
-            control = partykit:::mob2_control(testflavour = "ctree",
-                                              splitflavour = "ctree")))
-
-
+## check dfsplit
 (mmfluc2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
 (mmfluc3 <- glmtree2(formula = fmla, data = d))
 (mmfluc4 <- glmtree(formula = fmla, data = d))
@@ -52,20 +40,23 @@ d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
 (mmfluc4_dfsplit <- glmtree(formula = fmla, data = d, dfsplit = 10))
 
 
+## check tests
 library("strucchange")
+sctest(mmfluc3, node = 1) # does not yet work
 sctest(mmfluc4, node = 1)
-sctest(mmfluc3, node = 1)
 
-x <- mmfluc4
-tst4 <- nodeapply(x, ids = nodeids(x), function(n) n$info$test)
 x <- mmfluc3
 tst3 <- nodeapply(x, ids = nodeids(x), function(n) n$info$criterion)
+x <- mmfluc4
+tst4 <- nodeapply(x, ids = nodeids(x), function(n) n$info$test)
 
+# should be the same, is not -> TODO: figure out why
 lapply(nodeids(x), function(i) cbind(tst3[[i]][c("statistic", "p.value"), 
                                                c("z", "z_noise")],
                                      tst4[[i]]))
 
 
+## check logLik and AIC
 logLik(mmfluc2)
 logLik(mmfluc3)
 logLik(mmfluc4)
@@ -111,10 +102,10 @@ dim(m_mt$data)
 dim(m_mf$data)
 
 
-## Check restart
-(m_rt <- glmtree2(formula = fmla, data = d, restart = TRUE, testflavour = "exhaustive"))
-(m_rf <- glmtree2(formula = fmla, data = d, restart = FALSE, testflavour = "exhaustive"))
-
+## Check restart (restart = TRUE should take longer, but results should be the same)
+t_rt <- system.time(m_rt <- glmtree2(formula = fmla, data = d, restart = TRUE, testflavour = "exhaustive"))
+t_rf <- system.time(m_rf <- glmtree2(formula = fmla, data = d, restart = FALSE, testflavour = "exhaustive"))
+t_rt["elapsed"] > t_rf["elapsed"] # good if TRUE
 
 ## Check if Bonferroni correction leads to a smaller tree
 (m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
@@ -180,11 +171,11 @@ ms
 
 
 
-## check splittry
+## check splittry 
 (m_s2 <- glmtree2(formula = fmla2, data = d2, splittry = 1, bonferroni = FALSE,
-                  testflavour = "ctree"))
+                  testflavour = "ctree", testtype = "Univariate"))
 (m_s5 <- glmtree2(formula = fmla2, data = d2, splittry = 5, bonferroni = FALSE,
-                  testflavour = "ctree"))
+                  testflavour = "ctree", testtype = "Univariate"))
 
 
 
@@ -196,22 +187,7 @@ smpl <- sample(1:NROW(d), size = 15)
                  minbucket = 2, minsplit = 2))
 
 
-## default settings
-glmtree_args <- list(formula = fmla, 
-                     data = d,
-                     family = fmly)
 
-mob_ctrl <- partykit:::mob2_control()
-mob_ctrl$family <- fmly
-mob_args <- list(fit = fit,
-                 formula = fmla,
-                 data = d,
-                 control = mob_ctrl)
-
-
-(m_glmtree <- do.call(glmtree, args = glmtree_args))
-(m_glmtree2 <- do.call(glmtree2, args = glmtree_args))
-(m_mob2 <- do.call(mob2, args = mob_args))
 
 
 ## ctree like testing
@@ -225,7 +201,7 @@ mob_args_c <- list(fit = fit,
                    control = mob_ctrl_c)
 
 (m_glmtree2_c <- do.call(glmtree2, args = glmtree_args_c))
-(m_mob2_c <- do.call(mob2, args = mob_args_c))
+# (m_mob2_c <- do.call(mob2, args = mob_args_c))
 
 
 ## exhaustive search
@@ -239,7 +215,7 @@ mob_args_e <- list(fit = fit,
                    control = mob_ctrl_e)
 
 (m_glmtree2_e <- do.call(glmtree2, args = glmtree_args_e))
-(m_mob2_e <- do.call(mob2, args = mob_args_e))
+m_mob2_e <- do.call(mob2, args = mob_args_e)
 
 
 width(m_glmtree2_e)
@@ -259,6 +235,10 @@ pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps +
 
 pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
 pid_tree
+nodeapply(pid_tree, ids = nodeids(pid_tree), function(n) n$info$test)
 
 pid_tree2 <- mob2(pid_formula, data = PimaIndiansDiabetes, fit = logit)
 pid_tree2
+nodeapply(pid_tree2, ids = nodeids(pid_tree2), function(n) n$info$criterion)
+
+
