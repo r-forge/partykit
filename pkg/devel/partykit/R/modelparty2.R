@@ -13,7 +13,8 @@
   x <- model.matrix(formula, data = mf)
   
   ## function for model fitting
-  modelfit <- function(subset, estfun = TRUE, object = FALSE, info = NULL, ...) {
+  modelfit <- function(subset, estfun = TRUE, object = "object" %in% ctrl$inner, 
+                       info = NULL, ...) {
     
     ## get subset of the data
     s <- subset[cc[subset]]
@@ -53,9 +54,11 @@
     }
     
     ## correct dimension of estfun 
-    ef <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
-    ef[subset,] <- ret$estfun
-    
+    ef <- NULL
+    if(estfun) {
+      ef <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+      ef[subset,] <- ret$estfun
+    }
     
     ## return
     list(estfun = ef, coefficients = ret$coefficients, objfun = - ret$objfun,
@@ -104,15 +107,22 @@ mob2_control <- function(
   parm = NULL,
   dfsplit = TRUE,
   prune = NULL, # not yet used
-  restart = FALSE
+  restart = FALSE,
+  model = TRUE,
+  vcov = "opg",
+  ordinal = "chisq",
+  nrep = 10000L,
+  terminal = "object", 
+  inner = terminal
 ) {
   
   if(("Bonferroni" %in% testtype) != (bonferroni)) {
-    warning("Arguments bonferroni and testtype must align. 
-            Turning Bonferroni adjustment off.")
     bonferroni <- FALSE
     if("Bonferroni" %in% testtype) testtype <- testtype[testtype != "Bonferroni"]
     if(length(testtype) == 0) testtype <- "Univariate"
+    if(testflavour == "ctree") 
+      warning("Arguments bonferroni and testtype must align. 
+            Turning Bonferroni adjustment off.")
   }
   
   intersplit <- numsplit == "center"
@@ -143,7 +153,9 @@ mob2_control <- function(
                  splitflavour = splitflavour, bonferroni = bonferroni, trim = trim),
     list(breakties = breakties, testtype = testtype, nresample = nresample, 
          intersplit = intersplit, teststat = teststat, splitstat = splitstat, 
-         splittest = splittest, parm = parm, dfsplit = dfsplit, restart = restart)
+         splittest = splittest, parm = parm, dfsplit = dfsplit, restart = restart,
+         model = model, vcov = vcov, ordinal = ordinal, nrep = nrep, 
+         terminal = terminal, inner = inner)
     )
 }
 

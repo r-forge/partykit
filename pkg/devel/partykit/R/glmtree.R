@@ -269,7 +269,7 @@ mob2 <- function
   
   ## return party object
   rval <- party(tree$nodes, 
-                data = mf,
+                data = if(control$model) mf else mf[0,],
                 fitted = fitted,
                 terms = tree$terms,
                 info = list(
@@ -285,40 +285,52 @@ mob2 <- function
   )
   class(rval) <- c("modelparty", class(rval))
   
-  # ### add modelinfo if not there yet and change sign of objfun
-  # # TODO: check if this can be done prettier
-  # terminals <- nodeids(rval, terminal = TRUE)  
-  # alls <- nodeids(rval)
-  # 
-  # idx <- lapply(alls, .get_path, obj = tree$nodes)
-  # names(idx) <- alls
-  # tree_ret <- unclass(rval)
-  # subset_term <- predict(rval, type = "node")
-  # 
-  # for (i in alls) {
-  #   ichar <- as.character(i)
-  #   if (i %in% terminals){
-  #     if(is.null(tree_ret[[c(1, idx[[ichar]])]]$info)) {
-  #       tree_ret[[c(1, idx[[ichar]])]]$info <- tree$trafo(subset = which(subset_term == i), 
-  #                                                         estfun = FALSE)
-  #     }
-  #   }
-  #   tree_ret[[c(1, idx[[ichar]])]]$info$objfun <- - tree_ret[[c(1, idx[[ichar]])]]$info$objfun
-  # }
-  
-  ### add modelinfo if not there yet
-  terminals <- nodeids(rval, terminal = TRUE)
-  idx <- lapply(terminals, .get_path, obj = tree$nodes)
+  ### add modelinfo (object) and estfun if not there yet, but wanted
+  # TODO: check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+    
+  idx <- lapply(which_all, .get_path, obj = tree$nodes)
+  names(idx) <- which_all
   tree_ret <- unclass(rval)
   subset_term <- predict(rval, type = "node")
 
-  for (i in 1:length(idx)) {
-
-    if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
-      tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]),
-                                                    estfun = FALSE)
+  for (i in which_all) {
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+    
+    if (i %in% which_terminals) winfo <- control$terminal else 
+      winfo <- control$inner
+    
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) | any(! winfo %in% names(iinfo))) {
+        iinfo <- tree$trafo(subset = which(subset_term == i),
+                            estfun = ("estfun" %in% winfo),
+                            object = ("object" %in% winfo))
+      }
     }
+    
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
   }
+    
+    
+  
+  # ### add modelinfo if not there yet
+  # terminals <- nodeids(rval, terminal = TRUE)
+  # idx <- lapply(terminals, .get_path, obj = tree$nodes)
+  # tree_ret <- unclass(rval)
+  # subset_term <- predict(rval, type = "node")
+  # 
+  # for (i in 1:length(idx)) {
+  # 
+  #   if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
+  #     tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]),
+  #                                                   estfun = FALSE)
+  #   }
+  # }
 
   class(tree_ret) <- class(rval)
 

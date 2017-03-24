@@ -10,6 +10,11 @@ y <- rnorm(n, mean = x * c(-1, 1)[(z > 0.7) + 1], sd = 3)
 z_noise <- factor(sample(1:3, size = n, replace = TRUE))
 d <- data.frame(y = y, x = x, z = z, z_noise = z_noise)
 
+
+fmla <- as.formula("y ~ x | z + z_noise")
+fmly <- gaussian()
+fit <- partykit:::glmfit
+
 # versions of the data
 d1 <- d
 d1$z <- signif(d1$z, digits = 1)
@@ -28,29 +33,83 @@ d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
 
 
 
-fmla <- as.formula("y ~ x | z + z_noise")
-fmly <- gaussian()
-fit <- partykit:::glmfit
-
 
 (m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
-           control = partykit:::mob2_control(testflavour = "ctree",
-                                             splitflavour = "ctree",
-                                             bonferroni = FALSE,
-                                             testtype = "Univariate")))
+            control = partykit:::mob2_control(testflavour = "ctree",
+                                              splitflavour = "ctree",
+                                              bonferroni = FALSE,
+                                              testtype = "Univariate")))
 
 (m2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit, 
-           control = partykit:::mob2_control(testflavour = "ctree",
-                                             splitflavour = "ctree")))
+            control = partykit:::mob2_control(testflavour = "ctree",
+                                              splitflavour = "ctree")))
 
 
 (mmfluc2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))
 (mmfluc3 <- glmtree2(formula = fmla, data = d))
 (mmfluc4 <- glmtree(formula = fmla, data = d))
+(mmfluc3_dfsplit <- glmtree2(formula = fmla, data = d, dfsplit = 10))
+(mmfluc4_dfsplit <- glmtree(formula = fmla, data = d, dfsplit = 10))
 
+
+library("strucchange")
+sctest(mmfluc4, node = 1)
+sctest(mmfluc3, node = 1)
+
+x <- mmfluc4
+tst4 <- nodeapply(x, ids = nodeids(x), function(n) n$info$test)
 x <- mmfluc3
-info <- nodeapply(x, ids = nodeids(x, terminal = TRUE),
-                  FUN = function(n) info_node(n)$objfun)
+tst3 <- nodeapply(x, ids = nodeids(x), function(n) n$info$criterion)
+
+lapply(nodeids(x), function(i) cbind(tst3[[i]][c("statistic", "p.value"), 
+                                               c("z", "z_noise")],
+                                     tst4[[i]]))
+
+
+logLik(mmfluc2)
+logLik(mmfluc3)
+logLik(mmfluc4)
+logLik(mmfluc3_dfsplit)
+logLik(mmfluc4_dfsplit)
+
+AIC(mmfluc3)
+AIC(mmfluc3_dfsplit)
+AIC(mmfluc4)
+AIC(mmfluc4_dfsplit)
+
+
+
+## check inner and terminal
+options <- list(NULL, 
+                "object",
+                "estfun",
+                c("object", "estfun"))
+
+arguments <- list("inner",
+                  "terminal",
+                  c("inner", "terminal"))
+
+
+for (o in options) {
+  print(o)
+  x <- glmtree2(formula = fmla, data = d, inner = o)
+  str(nodeapply(x, ids = nodeids(x), function(n) n$info), 2)
+}
+
+
+
+## check model
+m_mt <- glmtree2(formula = fmla, data = d, model = TRUE)
+m_mf <- glmtree2(formula = fmla, data = d, model = FALSE)
+
+dim(m_mt$data)
+dim(m_mf$data)
+
+
+## Check restart
+(m_rt <- glmtree2(formula = fmla, data = d, restart = TRUE, testflavour = "exhaustive"))
+(m_rf <- glmtree2(formula = fmla, data = d, restart = FALSE, testflavour = "exhaustive"))
+
 
 ## Check if Bonferroni correction leads to a smaller tree
 (m_mc <- glmtree2(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
@@ -62,10 +121,8 @@ info <- nodeapply(x, ids = nodeids(x, terminal = TRUE),
 width(m_mc)
 width(m_bmc)
 
-# logLik(m_mc)
-# logLik(m_bmc)
-
-
+logLik(m_mc)
+logLik(m_bmc)
 
 
 ## check multiway
