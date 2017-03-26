@@ -6,13 +6,15 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   cl <- match.call(expand.dots = TRUE)
   np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   
+  resp.name <- as.character(formula[2])
+  
   ## wrapper function to apply distfit in cforest
   # input: data, family, weights
   # output: scores (estfun)
   modelscores_decor <- function(data, weights = NULL) {
     
-    y <- data[,1]
-    #if(survival::is.Surv(y)) y <- data[,1] else y <- as.vector(data[,"y"])
+    y <- data[,resp.name]
+    #if(survival::is.Surv(y)) y <- data[,resp.name] else y <- as.vector(data[,resp.name])
     
     model <- distfit(y, family = family, weights = weights, start = NULL,
                      vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
@@ -67,14 +69,15 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   
   # extract weights
   w <- predict.cforest(rval, type = "weights", OOB = fitted.OOB)
+  
   for(i in 1:nrow(data)){
     wi <- w[,i]
     # personalized model for observation data[i,]
-    pm <-  distfit(data$y, family = family, weights = wi, vcov = FALSE)
-    fitted[i,] <- predict(pm)
+    pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE)
+    fitted[i,] <- predict(pm, type = "response")
     fitted.par[i,] <- coef(pm, type = "parameter")
-    loglik[i,] <- pm$ddist(data[i,1], log = TRUE)
-    logscore[i,] <- pm$familylist$sdist(data[i,1], eta = coef(pm, type = "link"), sum = FALSE)
+    loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
+    logscore[i,] <- pm$familylist$sdist(data[i,resp.name], eta = coef(pm, type = "link"), sum = FALSE)
   }
   
   names(fitted) <- "(response)"
@@ -151,7 +154,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pr
       nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(object$data$y, family = object$family, weights = nw[,1], vcov = FALSE)
+      resp.name <- as.character(object$info$call$formula[2])
+      pm <-  distfit(object$data[,resp.name], family = object$family, weights = nw[,1], vcov = FALSE)
       pred.val1 <- predict(pm)
       pred.par1 <- coef(pm, type = "parameter")
         
@@ -164,7 +168,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pr
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data$y, family = object$family, weights = nwi, vcov = FALSE)
+          pm <-  distfit(object$data[,resp.name], family = object$family, weights = nwi, vcov = FALSE)
           pred.val[i,] <- predict(pm)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
