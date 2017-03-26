@@ -7,6 +7,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   ## keep call
   cl <- match.call(expand.dots = TRUE)
   
+  resp.name <- as.character(formula[2])
+  
   # check input arguments
   if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
@@ -51,7 +53,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # output: scores (estfun)
     modelscores_decor <- function(data, weights = NULL) {
       
-      y <- data[,1]
+      y <- data[,resp.name]
       #if(survival::is.Surv(y)) y <- data[,1] else y <- as.vector(data[,"y"])
       
       model <- distfit(y, family = family, weights = weights, start = NULL,
@@ -137,7 +139,7 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
 {
   # if mob was applied
   if(inherits(object, "modelparty")){
-    if((type == "node") || (type == "response")) return(predict.modelparty(object = object, newdata = newdata, type = type))
+    if((type == "node") || (type == "response")) return(predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
     if(type == "parameter") {
       pred.subgroup <- predict.modelparty(object, newdata =  newdata, type = "node")
       groupcoef <- coef(object)
