@@ -260,11 +260,22 @@ coef.distfit <- function(object, type = "link" , ...) {
   ## FIXME: else, warning
 }
 
-# FIX: complete with other types?
+## FIX: censored logistic distribution
 predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
   # calculation of the expected value 
   # of the given distribution with the calculated parameters
   if(type == "response") {
+    
+    if(object$family %in% c("Normal Distribution",
+                            "censored Normal Distribution",
+                            "right censored Normal Distribution", "left censored Normal Distribution",
+                            "censored Logistic Distribution",
+                            "right censored Logistic Distribution", "left censored Logistic Distribution")) {
+      par <- coef(object, type = "parameter")
+      expv <- par[1]
+      return(expv)
+    } 
+    
     f <- function(x){x * object$ddist(x, log = FALSE)}
     expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
     if(inherits(expv, "try-error")) {
@@ -280,7 +291,6 @@ predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
     }
     return(expv[[1]])
   }
-  ## FIX: if censored distribution -> change integration boundaries
 }
 
 vcov.distfit <- function(object, type = "link", ...) {
