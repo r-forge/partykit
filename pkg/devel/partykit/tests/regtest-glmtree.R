@@ -31,6 +31,14 @@ d3 <- d2
 d3$z <- factor(sample(1:3, size = n, replace = TRUE, prob = c(0.1, 0.5, 0.4)))
 d3$y <- rnorm(n, mean = x * c(-1, 1)[(d3$z == 2) + 1], sd = 3)
 
+## check weights 
+w <- rep(1, n)
+w[1:10] <- 2
+(mw1 <- glmtree2(formula = fmla, data = d, weights = w))
+w[11:20] <- 0
+(mw1 <- glmtree2(formula = fmla, data = d, weights = w))
+
+
 
 ## check dfsplit
 (mmfluc2 <- mob2(formula = fmla, data = d, fit = partykit:::glmfit))

@@ -23,11 +23,12 @@
     nobs <- NROW(xs)
     
     if (length(weights) > 0) {
-      weights <- weights[cc[subset]]
-      nobs <- sum(weights)
+      weights <- weights[s]
+      if (ctrl$caseweights) nobs <- sum(weights) else nobs <- sum(weights > 0)
     } else {
       weights <- NULL
     }
+    
     
     ## call the fit function
     args <- c(list(x = xs, y = ys, start = info$coef, weights = weights),
@@ -117,6 +118,9 @@ mob2_control <- function(
   inner = "object"
 ) {
   
+  
+  ## FIXME: Involve caseweights in stopping (minbucket, minsize, etc)
+  ##        For now only used to compute correct n (e.g. for printing)
   
   if("estfun" %in% inner) {
     inner <- inner[inner != "estfun"]
@@ -369,11 +373,11 @@ mob2_control <- function(
       if (length(weights) > 0) {
         if (sum(weights[sleft]) < minbucket ||
             sum(weights[sright]) < minbucket)
-          next();
+          return(-Inf);
       } else {
         if (length(sleft) < minbucket || 
             length(sright) < minbucket)
-          next();
+          return(-Inf);
       }
       if (ctrl$restart) {
         linfo <- NULL
@@ -382,12 +386,12 @@ mob2_control <- function(
       linfo <- trafo(sleft, info = linfo, estfun = FALSE)
       rinfo <- trafo(sright, info = rinfo, estfun = FALSE)
       ll <- linfo$objfun + rinfo$objfun
-      # linfo <- ltr$info
-      # rinfo <- rtr$info
       return(ll)
     })
-    sp <- which.max(ll)
-    maxlogLik <- max(ll)
+    maxlogLik <- max(unlist(ll))
+    if(maxlogLik > nosplitll)
+      sp <- which.max(unlist(ll))
+    
   } else {
     splits <- mob_grow_getlevels(x)
     ll <- ctrl$applyfun(1:nrow(splits), function(u) {
@@ -396,11 +400,11 @@ mob2_control <- function(
       if (length(weights) > 0) {
         if (sum(weights[sleft]) < minbucket ||
             sum(weights[sright]) < minbucket)
-          next();
+          return(-Inf);
       } else {
         if (length(sleft) < minbucket || 
             length(sright) < minbucket)
-          next();
+          return(-Inf);
       }
       if (ctrl$restart) {
         linfo <- NULL
@@ -409,12 +413,12 @@ mob2_control <- function(
       linfo <- trafo(sleft, info = linfo, estfun = FALSE)
       rinfo <- trafo(sright, info = rinfo, estfun = FALSE)
       ll <- linfo$objfun + rinfo$objfun
-      # linfo <- ltr$info
-      # rinfo <- rtr$info
       return(ll)
     })
-    sp <- splits[which.max(ll),] + 1L
-    maxlogLik <- max(ll)
+    maxlogLik <- max(unlist(ll))
+    if(maxlogLik > nosplitll)
+      sp <- splits[which.max(unlist(ll)),] + 1L
+      
   }
   
   if (!splitonly){

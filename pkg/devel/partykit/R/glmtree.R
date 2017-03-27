@@ -223,6 +223,11 @@ mob2 <- function
 ) {
   
   
+  ### weights cannot be 0, otherwise logLik is Inf
+  if(any(weights == 0)) {
+    stop("Cannot yet handle zero weights.")
+  }
+  
   ### make sure right criterion is used for exhaustive search
   if(control$testflavour == "exhaustive"){
     control$criterion <- "statistic"
