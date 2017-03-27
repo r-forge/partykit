@@ -64,8 +64,8 @@
     
     ## return
     list(estfun = ef, coefficients = ret$coefficients, objfun = - ret$objfun,
-      object = if (object) ret$object else NULL, nobs = nobs, 
-      converged = cv)
+         object = if (object) ret$object else NULL, nobs = nobs, 
+         converged = cv)
     
   }
   
@@ -75,47 +75,44 @@
 
 
 mob2_control <- function(
-  alpha = 0.05,
-  mincriterion = 1 - alpha,
-  minsize = 20L,
-  minsplit = minsize, 
-  minbucket = minsize, 
-  minprob = 0.01, 
-  stump = FALSE, 
-  mtry = Inf, 
-  maxdepth = Inf, 
-  # nmax = Inf, # TODO: check if this works first
-  splittry = 2L, 
-  MIA = FALSE, 
-  maxsurrogate = 0L, 
-  numsurrogate = FALSE,
-  majority = FALSE, 
-  caseweights = TRUE, 
-  applyfun = NULL, 
-  cores = NULL, 
-  testflavour = "mfluc", 
-  splitflavour = "exhaustive",
-  lookahead = FALSE,
+  testflavour = "mfluc",
   testtype = "Bonferroni",
-  bonferroni = TRUE,
-  nresample = 9999L,   # used for testtype = "MonteCarlo"
-  breakties = FALSE,
-  teststat = "quadratic",  # used for testflavour/splitflavour = "ctree"
-  splitstat = "quadratic", # used for testflavour/splitflavour = "ctree"
-  splittest = FALSE,        # used for testflavour/splitflavour = "ctree"
-  numsplit = "left",
-  catsplit = "binary",
-  trim = 0.1, 
+  alpha = 0.05,
   parm = NULL,
-  dfsplit = TRUE,
-  prune = NULL, # not yet used
-  restart = FALSE,
-  model = TRUE,
-  vcov = "opg",
-  ordinal = "chisq",
+  bonferroni = TRUE,
+  breakties = FALSE,
   nrep = 10000L,
-  terminal = "object", 
-  inner = "object"
+  ordinal = "chisq",
+  trim = 0.1,
+  nresample = 9999L,
+  teststat = "quadratic",
+  splittry = 2,
+  vcov = "opg",
+  splitflavour = "exhaustive",
+  splittest = FALSE,
+  splitstat = "quadratic",
+  catsplit = "binary",
+  numsplit = "left",
+  majority = FALSE,
+  maxsurrogate = 0,
+  MIA = FALSE,
+  numsurrogate = FALSE,
+  lookahead = FALSE,
+  maxdepth = Inf,
+  minbucket = minsize,
+  minprob = 0.01,
+  minsplit = minsize,
+  minsize = 20L,
+  stump = FALSE,
+  caseweights = TRUE,
+  dfsplit = TRUE,
+  applyfun = NULL,
+  cores = NULL,
+  restart = FALSE,
+  inner = "object",
+  model = TRUE,
+  terminal = "object",
+  mtry = Inf
 ) {
   
   
@@ -168,7 +165,7 @@ mob2_control <- function(
          splittest = splittest, parm = parm, dfsplit = dfsplit, restart = restart,
          model = model, vcov = vcov, ordinal = ordinal, nrep = nrep, 
          terminal = terminal, inner = inner)
-    )
+  )
 }
 
 
@@ -418,7 +415,7 @@ mob2_control <- function(
     maxlogLik <- max(unlist(ll))
     if(maxlogLik > nosplitll)
       sp <- splits[which.max(unlist(ll)),] + 1L
-      
+    
   }
   
   if (!splitonly){
