@@ -45,9 +45,9 @@ be exceeded in order to implement a split.}
 \item{parm}{numeric or character. Number or name of model parameters included
 in the parameter instability tests (by default all parameters are included).}
  
-\item{bonferroni}{logical. Should p vlaues be Bonferroni corrected?}
+\item{bonferroni}{logical. Should p values be Bonferroni corrected?}
  
-\item{breakties}{logical. Only relevant iif testflavour =  "mfluc".  Should
+\item{breakties}{logical. Only relevant if testflavour =  "mfluc".  Should
 ties in numeric variables be broken randomly for computing the associated
 parameter instability test?}
  
@@ -71,7 +71,7 @@ size.}
  
 \item{nresample}{number of permutations for testtype = "MonteCarlo".}
  
-\item{teststat}{Only relevant if testflavour =  "ctree". A character specfying
+\item{teststat}{Only relevant if testflavour =  "ctree". A character specifying
 the type of the test statistic ("quadratic" or "maximum") to be applied for
 variable selection}
  
@@ -91,7 +91,7 @@ Split point selection:
  
 \item{splitflavour}{split point selection strategy. The default, "exhaustive",
 goes through all possible split points and chooses the one corresponding to the
-greatest sum of objective functions in the leaf node models; "ctree" usese
+greatest sum of objective functions in the leaf node models; "ctree" uses
 permutation tests}
  
 \item{splittest}{Only relevant if splitflavour =  "ctree". A logical changing
@@ -99,7 +99,7 @@ linear (the default FALSE) to maximally selected statistics for variable
 selection. Currently needs testtype = "MonteCarlo".}
  
 \item{splitstat}{Only relevant if splitflavour =  "ctree". A character
-specfying the type of the test statistic ("quadratic" or "maximum") to be
+specifying the type of the test statistic ("quadratic" or "maximum") to be
 applied for split point selection}
  
 \item{catsplit}{character indicating how (unordered) categorical variables
@@ -120,7 +120,7 @@ intersplit = TRUE in ctree_control). }
 
 Splitting in case of missings:
 
-\item{majority}{if FALSE, observations wich can't be classified to a daughter
+\item{majority}{if FALSE, observations which can't be classified to a daughter
 node because of missing information are randomly assigned (following the node
 distribution). If TRUE (default), they go with the majority.}
  
@@ -254,8 +254,8 @@ how to do variable and split point selection.
     
     \item \bold{Conditional inference tests (\code{"ctree"}):} This version of split
     point selection goes through all possible split points of the selected variable,
-    computes the condidtional inference test with Null hypothesis of no difference in
-    score contributions in the two child nodes (or in other words: indpendence between
+    computes the conditional inference test with Null hypothesis of no difference in
+    score contributions in the two child nodes (or in other words: independence between
     child nodes and scores) and chooses the split point corresponding to the greatest 
     test statistic.
   }

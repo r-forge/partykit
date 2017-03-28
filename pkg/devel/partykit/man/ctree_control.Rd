@@ -56,7 +56,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
   \item{stump}{ a logical determining whether a stump (a tree with a maximum of three
                 nodes only) is to be computed. }
   \item{lookahead}{ a logical determining whether a split is implemented only
-                    after checking if tests in both daugther nodes can be performed.}
+                    after checking if tests in both daughter nodes can be performed.}
   \item{nresample}{ number of permutations for \code{testtype = "MonteCarlo"}.}
   \item{MIA}{ a logical determining the treatment of \code{NA} as a category in split,
               see Twala et al. (2008).}
