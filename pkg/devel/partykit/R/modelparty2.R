@@ -78,6 +78,7 @@ mob2_control <- function(
   testflavour = "mfluc",
   testtype = "Bonferroni",
   alpha = 0.05,
+  mincriterion = 1 - alpha,
   parm = NULL,
   bonferroni = TRUE,
   breakties = FALSE,
@@ -146,10 +147,14 @@ mob2_control <- function(
   }
   
   
-  if("statistic" %in% criterion & mincriterion < 1 & mincriterion >= 0.9)
-    warning("When criterion = 'statistic', mincriterion is the test statistic that must be exceeded. 
+  if ("statistic" %in% criterion) { 
+    if (mincriterion < 1 & mincriterion >= 0.9)
+      warning("When criterion = 'statistic', mincriterion is the test statistic that must be exceeded. 
             Are you sure you chose the correct value for mincriterion?")
-  
+  } else {
+    if (mincriterion <= 0 | mincriterion >= 1)
+      stop("mincriterion = 1 - alpha must be between 0 and 1.")
+  }
   
   c(.urp_control(criterion = criterion,
                  logmincriterion = log(mincriterion), minsplit = minsplit, 

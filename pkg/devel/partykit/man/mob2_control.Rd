@@ -38,6 +38,9 @@ how to compute the distribution of the test statistic ("Bonferroni",
  
 \item{alpha}{a double, the significance level for variable selection. If
 testflavour = "exhaustive" this is ignored.}
+
+\item{mincriterion}{the value of the test statistic or 1 - p-value that must 
+be exceeded in order to implement a split.}
  
 \item{parm}{numeric or character. Number or name of model parameters included
 in the parameter instability tests (by default all parameters are included).}
@@ -204,19 +207,57 @@ random selection takes place}
 }
 
 \details{
+The most important decisions to be made when computing a model-based tree is on
+how to do variable and split point selection.
 
   \subsection{Variable selection (\code{testflavour})}{
   \itemize{
-    \item \bold{M-Fluctuation tests (\code{"mfluc"}):} 
-    \item \bold{Conditional inference tests (\code{"ctree"})}
-    \item \bold{Exhaustive search (\code{"exhaustive"})}
+    \item \bold{M-Fluctuation tests (\code{"mfluc"}):} This test type is the default
+    for model-based recursive partitioning. It searches for break points in the 
+    score contributions (see \code{\link[sandwich]{estfun}}). By default p-values are Bonferroni corrected. To turn this 
+    off, set \code{bonferroni = FALSE}.
+    
+    \item \bold{Conditional inference tests (\code{"ctree"}):} This test type has 
+    in the past been used only for conditional inference trees (\code{\link{ctree}}). In
+    \code{\link{mob}} it is used to find variables that correlate with the model
+    score contributions (\code{\link[sandwich]{estfun}}). There are several options on
+    how to do conditional inference tests:
+    \itemize{
+    \item \code{testtype = "Bonferroni"} Bonferroni adjusted
+    p-values based on the asymptotic distribution are used (default).
+    \item \code{testtype = "Univariate"} Non-adjusted
+    p-values based on the asymptotic distribution are used.
+    \item \code{testtype = "MonteCarlo"} Non-adjusted
+    p-values permutation based are used.
+    \item \code{testtype = c("MonteCarlo", "Bonferroni")} Bonferroni adjusted
+    p-values permutation based are used.
+    \item \code{testtype = "Teststatistic"} Instead of the p-value the test 
+    statistic is used. In this case \code{mincriterion} is the value of the 
+    test statistic that must be exceeded.
+    }
+    Using the p-value to select the variable means choosing the variable corresponding to most significant
+    deviation from independence between scores and partitioning variable. Using the test
+    statistic means choosing the variable with the strongest correlation to the scores.
+    
+    \item \bold{Exhaustive search (\code{"exhaustive"}):} In exhaustive search all 
+    all possible two-way splits of all variables are implemented and the objective
+    function (\code{\link{logLik}}) is computed. The variable is selected that leads
+    to the greatest sum in objective functions of two child nodes.
   }
   }
   
   \subsection{Split point selection (\code{splitflavour})}{
   \itemize{
-    \item \bold{Exahustive search (\code{"exhaustive"})}
-    \item \bold{Conditional inference tests (\code{"ctree"})}
+    \item \bold{Exhaustive search (\code{"exhaustive"}):} Exhaustive search goes through
+    all possible split points of the selected variable and chooses the one leading to
+    the maximum sum of objective function (\code{\link{logLik}}) in the child nodes.
+    
+    \item \bold{Conditional inference tests (\code{"ctree"}):} This version of split
+    point selection goes through all possible split points of the selected variable,
+    computes the condidtional inference test with Null hypothesis of no difference in
+    score contributions in the two child nodes (or in other words: indpendence between
+    child nodes and scores) and chooses the split point corresponding to the greatest 
+    test statistic.
   }
   }
 
