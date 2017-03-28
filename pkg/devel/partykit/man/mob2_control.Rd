@@ -32,22 +32,31 @@ uses M-fluctuation tests; "ctree" uses permutation tests as in ctree and
 corresponding to the greatest sum of objective functions in the leaf node
 models.}
  
-\item{testtype}{Only relevant if testflavour =  "ctree". A character specifying
-how to compute the distribution of the test statistic ("Bonferroni",
-"MonteCarlo", "Univariate", "Teststatistic")}
- 
 \item{alpha}{a double, the significance level for variable selection. If
 testflavour = "exhaustive" this is ignored.}
-
-\item{mincriterion}{the value of the test statistic or 1 - p-value that must 
-be exceeded in order to implement a split.}
  
 \item{parm}{numeric or character. Number or name of model parameters included
 in the parameter instability tests (by default all parameters are included).}
  
-\item{bonferroni}{logical. Should p values be Bonferroni corrected?}
+\item{splittry}{number of variables that are inspected for admissible splits if
+the best split doesn't meet the sample size constraints}
  
-\item{breakties}{logical. Only relevant if testflavour =  "mfluc".  Should
+\item{testtype}{Only relevant if testflavour =  "ctree". A character specifying
+how to compute the distribution of the test statistic ("Bonferroni",
+"MonteCarlo", "Univariate", "Teststatistic")}
+ 
+\item{mincriterion}{the value of the test statistic or 1 - p-value that must be
+exceeded in order to implement a split.}
+ 
+\item{nresample}{number of permutations for testtype = "MonteCarlo".}
+ 
+\item{teststat}{Only relevant if testflavour =  "ctree". A character specfying
+the type of the test statistic ("quadratic" or "maximum") to be applied for
+variable selection}
+ 
+\item{bonferroni}{logical. Should p vlaues be Bonferroni corrected?}
+ 
+\item{breakties}{logical. Only relevant iif testflavour =  "mfluc".  Should
 ties in numeric variables be broken randomly for computing the associated
 parameter instability test?}
  
@@ -69,15 +78,6 @@ the trimming in the parameter instability test for the numerical variables. If
 smaller than 1, it is interpreted as the fraction relative to the current node
 size.}
  
-\item{nresample}{number of permutations for testtype = "MonteCarlo".}
- 
-\item{teststat}{Only relevant if testflavour =  "ctree". A character specifying
-the type of the test statistic ("quadratic" or "maximum") to be applied for
-variable selection}
- 
-\item{splittry}{number of variables that are inspected for admissible splits if
-the best split doesn't meet the sample size constraints}
- 
 \item{vcov}{character indicating which type of covariance matrix estimator
 should be employed in the parameter instability tests. Only relevant if
 testflavour =  "mfluc". The default is the outer product of gradients ("opg").
@@ -91,16 +91,8 @@ Split point selection:
  
 \item{splitflavour}{split point selection strategy. The default, "exhaustive",
 goes through all possible split points and chooses the one corresponding to the
-greatest sum of objective functions in the leaf node models; "ctree" uses
+greatest sum of objective functions in the leaf node models; "ctree" usese
 permutation tests}
- 
-\item{splittest}{Only relevant if splitflavour =  "ctree". A logical changing
-linear (the default FALSE) to maximally selected statistics for variable
-selection. Currently needs testtype = "MonteCarlo".}
- 
-\item{splitstat}{Only relevant if splitflavour =  "ctree". A character
-specifying the type of the test statistic ("quadratic" or "maximum") to be
-applied for split point selection}
  
 \item{catsplit}{character indicating how (unordered) categorical variables
 should be splitted. By default the best "binary"split is searched (by
@@ -117,10 +109,21 @@ compatibility; equal to intersplit = FALSE in ctree_control) or
 "center"-justified using the midpoint of the possible interval (equal to
 intersplit = TRUE in ctree_control). }
  
+\item{splittest}{Only relevant if splitflavour =  "ctree". A logical changing
+linear (the default FALSE) to maximally selected statistics for variable
+selection. Currently needs testtype = "MonteCarlo".}
+ 
+\item{splitstat}{Only relevant if splitflavour =  "ctree". A character
+specfying the type of the test statistic ("quadratic" or "maximum") to be
+applied for split point selection}
+
+
+
+
 
 Splitting in case of missings:
-
-\item{majority}{if FALSE, observations which can't be classified to a daughter
+ 
+\item{majority}{if FALSE, observations wich can't be classified to a daughter
 node because of missing information are randomly assigned (following the node
 distribution). If TRUE (default), they go with the majority.}
  
@@ -132,11 +135,11 @@ see Twala et al. (2008)}
  
 \item{numsurrogate}{a logical for backward-compatibility with party. If TRUE,
 only numeric variables are considered for surrogate splits}
- 
+
 
 
 Stopping:
-
+ 
 \item{lookahead}{a logical determining whether a split is implemented only
 after checking if tests in both daughter nodes can be performed.}
  
@@ -154,20 +157,20 @@ for splitting}
  
 \item{stump}{a logical determining whether a stump (a tree with a maximum three
 nodes) is to be computed}
- 
+
 
 
 Observation number and degrees of freedom:
-
+ 
 \item{caseweights}{a logical interpreting weights as case weights}
  
 \item{dfsplit}{logical or numeric. as.integer(dfsplit) is the degrees of
 freedom per selected split employed when computing information criteria etc.}
- 
+
 
 
 Computation:
-
+ 
 \item{applyfun}{an optional lapply-style function with arguments function(X,
 FUN, …). It is used for computing the variable selection criterion. The default
 is to use the basic lapply function unless the cores argument is specified (see
@@ -181,11 +184,11 @@ variable: Should model estimation be restarted with NULL starting values for
 each split? If FALSE (default), then the parameter estimates from the previous
 split point are used as starting values for the next split point (because in
 practice the difference are often not huge).}
- 
+
 
 
 Return options:
-
+ 
 \item{inner}{character. Specification of whether the model object should be
 stored in each node. If NULL, no additional information is stored.}
  
@@ -195,16 +198,19 @@ object?}
 \item{terminal}{character. Specification of which additional information
 ("estfun", "object", or both) should be stored in each node. If NULL, no
 additional information is stored.}
- 
+
+
 
 
 For extensions:
-
+ 
 \item{mtry}{number of input variables randomly sampled as candidates at each
 node for random forest like algorithms. The default mtry = Inf means that no
 random selection takes place}
- 
+
 }
+
+
 
 \details{
 The most important decisions to be made when computing a model-based tree is on

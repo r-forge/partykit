@@ -211,7 +211,7 @@ mob2 <- function
   fit,
   formula, 
   data, 
-  weights, 
+  weights = NULL, 
   subset,
   offset,
   cluster, 
