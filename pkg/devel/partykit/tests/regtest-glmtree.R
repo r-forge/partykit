@@ -69,6 +69,7 @@ logLik(mmfluc3)
 logLik(mmfluc4)
 logLik(mmfluc3_dfsplit)
 logLik(mmfluc4_dfsplit)
+logLik(glm(y ~ x, data = d))
 
 AIC(mmfluc3)
 AIC(mmfluc3_dfsplit)
