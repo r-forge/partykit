@@ -38,12 +38,12 @@ make_dist_list <- function(family, bd = NULL)
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
-  # eta ... coefficients of the linear predictor, here: intercept (g(mu)=eta[1], g(sigma)=eta[2], g(nu)=eta[3], g(tau)=eta[4])
+  # eta ... coefficients of the linear predictor, here: intercept (g1(mu)=eta[1], g2(sigma)=eta[2], g3(nu)=eta[3], g4(tau)=eta[4])
   
-  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g(mu)        g ... link function
-  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g(sigma)     g ... link function
-  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g(nu)        g ... link function
-  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g(tau)       g ... link function
+  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g1(mu)        g1 ... link function
+  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g2(sigma)     g2 ... link function
+  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g3(nu)        g3 ... link function
+  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g4(tau)       g4 ... link function
   
   
   
@@ -306,7 +306,32 @@ make_dist_list <- function(family, bd = NULL)
       
       return(d2list)
     }
-  }
+    
+    
+    # define p-, q- and r-function  (r-function not available for all GAMLSS families, e.g. rLOlc)
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("p",family$family[1])), 
+              list(q, par[1], par[2], 
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("q",family$family[1])), 
+              list(p, par[1], par[2], 
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
+    if(inherits(rfun.available, "try-error")) {
+      warning("r-function not available for this family object")
+      rdist <- NULL
+    } else {
+      rdist <- function(n, eta) {
+        par <- linkinv(eta)
+        do.call(get(paste0("r",family$family[1])), list(n, par[1], par[2]))
+      }
+    }
+  }  
   
   
   if(np == 2L){
@@ -369,6 +394,31 @@ make_dist_list <- function(family, bd = NULL)
       }
       
       return(d2list)
+    }
+    
+    
+    # define p-, q- and r-function  (r-function not available for all GAMLSS families, e.g. rLOlc)
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("p",family$family[1])), 
+              list(q, par[1], par[2], 
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("q",family$family[1])), 
+              list(p, par[1], par[2], 
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
+    if(inherits(rfun.available, "try-error")) {
+      warning("r-function not available for this family object")
+      rdist <- NULL
+    } else {
+      rdist <- function(n, eta) {
+        par <- linkinv(eta)
+        do.call(get(paste0("r",family$family[1])), list(n, par[1], par[2]))
+      }
     }
   }
   
@@ -435,6 +485,31 @@ make_dist_list <- function(family, bd = NULL)
       }
       
       return(d2list)
+    }
+    
+    
+    # define p-, q- and r-function  (r-function not available for all GAMLSS families, e.g. rLOlc)
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("p",family$family[1])), 
+              list(q, par[1], par[2], par[3], 
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("q",family$family[1])), 
+              list(p, par[1], par[2], par[3],
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
+    if(inherits(rfun.available, "try-error")) {
+      warning("r-function not available for this family object")
+      rdist <- NULL
+    } else {
+      rdist <- function(n, eta) {
+        par <- linkinv(eta)
+        do.call(get(paste0("r",family$family[1])), list(n, par[1], par[2], par[3]))
+      }
     }
   }
   
@@ -503,6 +578,31 @@ make_dist_list <- function(family, bd = NULL)
       }
       
       return(d2list)
+    }
+    
+    
+    # define p-, q- and r-function  (r-function not available for all GAMLSS families, e.g. rLOlc)
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("p",family$family[1])), 
+              list(q, par[1], par[2], par[3], par[4],
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+      par <- linkinv(eta)
+      do.call(get(paste0("q",family$family[1])), 
+              list(p, par[1], par[2], par[3], par[4],
+                   lower.tail = lower.tail, log.p = log.p))
+    }
+    rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
+    if(inherits(rfun.available, "try-error")) {
+      warning("r-function not available for this family object")
+      rdist <- NULL
+    } else {
+      rdist <- function(n, eta) {
+        par <- linkinv(eta)
+        do.call(get(paste0("r",family$family[1])), list(n, par[1], par[2], par[3], par[4]))
+      }
     }
   }
   
@@ -611,15 +711,6 @@ make_dist_list <- function(family, bd = NULL)
     colnames(hess) <- rownames(hess) <-  etanames
     return(hess)
   }
-
-  
-  # FIX ME: rdist doesn't exist for all gamlss families (e.g. censored logistic, rLOlc)
-  # FIX ME: input arguments, match with functions from list
-  ## additional functions pdist, qdist, rdist
-  # pdist <- get(paste0("p",family$family[1]))
-  # qdist <- get(paste0("q",family$family[1]))
-  # rdist <- get(paste0("r",family$family[1]))  
-  
   
   link <- linknames      # as defined above (within if(np == ))
   
@@ -632,9 +723,9 @@ make_dist_list <- function(family, bd = NULL)
                     ddist = ddist, 
                     sdist = sdist, 
                     hdist = hdist,
-                    # pdist = pdist,
-                    # qdist = qdist,
-                    # rdist = rdist,
+                    pdist = pdist,
+                    qdist = qdist,
+                    rdist = rdist,
                     link = link, 
                     linkfun = linkfun, 
                     linkinv = linkinv, 
@@ -714,9 +805,11 @@ if(FALSE) {
   
   
   ## additional functions pdist, qdist, rdist
-  pdist <- pnorm
-  qdist <- qnorm
-  rdist <- rnorm  
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = eta[2])
   
   
   link <- c("identity", "log")
@@ -866,10 +959,26 @@ make_censored_dist_list <- function(distribution = c("normal","logistic"),
   
   
   ## additional functions pdist, qdist, rdist
-  pdist <- crch:::pcnorm
-  qdist <- crch:::qcnorm
-  rdist <- crch:::rcnorm  
+  if(distribution == "normal") {
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+                                                                              lower.tail = lower.tail, log.p = log.p, 
+                                                                              left = left, right = right)
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+                                                                              lower.tail = lower.tail, log.p = log.p, 
+                                                                              left = left, right = right)
+    rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+  }
   
+  if(distribution == "logistic") {
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pclogis(q, mean = eta[1], sd = eta[2], 
+                                                                              lower.tail = lower.tail, log.p = log.p, 
+                                                                              left = left, right = right)
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qclogis(p, mean = eta[1], sd = eta[2], 
+                                                                              lower.tail = lower.tail, log.p = log.p, 
+                                                                              left = left, right = right)
+    rdist <- function(n, eta) crch:::rclogis(n, mean = eta[1], sd = eta[2], left = left, right = right)
+  }
+
   
   link <- c("identity", "log")
   
@@ -1006,10 +1115,14 @@ if(FALSE) {
   
   
   ## additional functions pdist, qdist, rdist
-  pdist <- crch:::pcnorm
-  qdist <- crch:::qcnorm
-  rdist <- crch:::rcnorm  
-  
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+
   
   link <- c("identity", "log")
   
@@ -1168,10 +1281,14 @@ if(FALSE) {
   }
   
   
+  
+
   ## additional functions pdist, qdist, rdist
-  pdist <- survival:::psurvreg
-  qdist <- survival:::qsurvreg
-  rdist <- survival:::rsurvreg 
+  
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pweibull(q, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qweibull(p, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+    rdist <- function(n, eta) rweibull(n, shape = 1/exp(eta[2]), scale = exp(eta[1]))
+  
   
   
   link <- c("identity", "log")
@@ -1290,11 +1407,14 @@ if(FALSE) {
   }
   
   
+  # FIX ME: adapt lambda
   ## additional functions pdist, qdist, rdist
-  pdist <- ppois
-  qdist <- qpois
-  rdist <- rpois 
-  
+  {
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) ppois(q, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qpois(p, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+    rdist <- function(n, eta) rpois(n, lambda = exp(eta[1]))
+  }
+
   
   link <- c("log")
   
@@ -1400,10 +1520,14 @@ if(FALSE) {
     return(hess)
   }
   
+
   ## additional functions pdist, qdist, rdist
-  pdist <- pexp
-  qdist <- qexp
-  rdist <- rexp
+  {
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pexp(q, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qexp(p, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
+    rdist <- function(n, eta) rexp(n, rate = exp(eta))
+  }
+  
   
   link <- c("log")
   
@@ -1514,9 +1638,12 @@ if(FALSE) {
   
   
   ## additional functions pdist, qdist, rdist
-  pdist <- pgamma
-  qdist <- qgamma
-  rdist <- rgamma
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pgamma(q, shape = exp(eta[1]), scale = exp(eta[2]), 
+                                                                    lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qgamma(p, shape = exp(eta[1]), scale = exp(eta[2]),
+                                                                    lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rgamma(n, shape = exp(eta[1]), scale = exp(eta[2]))
+
   
   
   link <- c("log", "log")
