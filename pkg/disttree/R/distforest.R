@@ -1,6 +1,7 @@
 distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree = 500L,
                        perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
-                       control = ctree_control(...), ocontrol = list(), ...)
+                       control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
+                       ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
@@ -53,6 +54,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   ## call cforest
   m <- match.call(expand.dots = FALSE)
   m$ytrafo <- modelscores_decor
+  m$control <- control
   # m$data <- data
   m$family <- m$decorrelate <- NULL
   # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
