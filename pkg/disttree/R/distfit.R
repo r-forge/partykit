@@ -203,17 +203,16 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   ## density function
   ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
   
-  ## density function
-  # ddist <- family$ddist
-  
   ## cumulative distribution function
-  # pdist <- family$pdist
+  pdist <- function(q, lower.tail = TRUE, log.p = FALSE) family$pdist(q, eta = eta, lower.tail = lower.tail, log.p = log.p)
   
   ## quantile function
-  # qdist <- family$qdist
+  qdist <- function(p, lower.tail = TRUE, log.p = FALSE) family$qdist(p, eta = eta, lower.tail = lower.tail, log.p = log.p)
   
   ## random function
-  # rdist <- family$rdist
+  rdist <- if(is.null(family$rdist)) NULL else function(n) family$rdist(n, eta = eta)
+
+  
   
 
   
@@ -235,10 +234,10 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     call = cl,
     estfun = ef,
     familylist = family,
-    ddist = ddist
-    #pdist = pdist,
-    #qdist = qdist,
-    #rdist = rdist
+    ddist = ddist,
+    pdist = pdist,
+    qdist = qdist,
+    rdist = rdist
   )
   
   class(rval) <- "distfit"
