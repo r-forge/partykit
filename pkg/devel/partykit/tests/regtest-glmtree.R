@@ -57,7 +57,7 @@ tst3 <- nodeapply(x, ids = nodeids(x), function(n) n$info$criterion)
 x <- mmfluc4
 tst4 <- nodeapply(x, ids = nodeids(x), function(n) n$info$test)
 
-# should be the same, is not -> TODO: figure out why
+# must be the same
 lapply(nodeids(x), function(i) cbind(tst3[[i]][c("statistic", "p.value"), 
                                                c("z", "z_noise")],
                                      tst4[[i]]))
