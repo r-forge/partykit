@@ -45,6 +45,9 @@ glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
   return(rval)
 }
 
+
+
+
 ## actual fitting function for mob()
 glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...,
   estfun = FALSE, object = FALSE)
@@ -59,12 +62,12 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
     }
   }
   args$control <- do.call("glm.control", control)
-  
+
   ## add intercept-only regressor matrix (if missing)
   ## NOTE: does not have terms/formula
   if(is.null(x)) x <- matrix(1, nrow = NROW(y), ncol = 1L,
     dimnames = list(NULL, "(Intercept)"))
-  
+
   ## call glm fitting function
   args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
   z <- do.call("glm.fit", args)
@@ -98,10 +101,10 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
     class(z) <- c("glm", "lm")
     z$offset <- if(is.null(offset)) 0 else offset
     z$contrasts <- attr(x, "contrasts")
-    z$xlevels <- attr(x, "xlevels")    
+    z$xlevels <- attr(x, "xlevels")
 
     cl <- as.call(expression(glm))
-    cl$formula <- attr(x, "formula")	
+    cl$formula <- attr(x, "formula")
     if(!is.null(offset)) cl$offset <- attr(x, "offset")
     z$call <- cl
     z$terms <- attr(x, "terms")

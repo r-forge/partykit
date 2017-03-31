@@ -178,7 +178,7 @@ mob2_control <- function(
 
 ## variable selection: given model scores, conduct
 ## all M-fluctuation tests for orderins in z
-.fluct_test_split <- function(estfun, z, weights, obj = NULL, cluster = NULL, control)
+.fluct_test_split <- function(estfun, z, subset, weights, obj = NULL, cluster = NULL, control)
 {  
   
   if(length(weights) == 0) weights <- rep(1, NROW(estfun))
@@ -192,6 +192,7 @@ mob2_control <- function(
   ## estimating functions (dropping zero weight observations)
   process <- as.matrix(estfun)
   ww0 <- (weights > 0)
+  ww0[!(seq_along(ww0) %in% subset)] <- FALSE
   process <- process[ww0, , drop = FALSE]
   z <- z[ww0]
   k <- NCOL(process)

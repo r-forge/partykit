@@ -46,6 +46,7 @@ export(
   "glmtree2",
   "mob2",
   "lmtree2",
+  "prune.modelparty",
 
   ## new cforest implementation
   "cforest",

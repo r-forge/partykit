@@ -77,7 +77,7 @@
                                                       subset = subset,  weights = weights, 
                                                       cluster = cluster, splitonly = FALSE, 
                                                       minbucket = ctrl$minbucket),
-                    "mfluc" = .fluct_test_split(estfun = Y, z = data[[j]], weights = weights,
+                    "mfluc" = .fluct_test_split(estfun = Y, z = data[[j]], subset = subset, weights = weights,
                                                 cluster = cluster, control = ctrl),
                     stop(ctrl$testflavour, "not yet implemented")
                 )
@@ -305,7 +305,6 @@
     info = NULL,
     cenv = NULL			### environment for depth and maxid
 ) {
-
 
     ### depth keeps track of the depth of the tree
     ### which has to be < than maxdepth
