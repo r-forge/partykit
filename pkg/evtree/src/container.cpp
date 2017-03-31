@@ -13,6 +13,18 @@ void freememory(void){
 }// cleanup
 }//extern "C"
 
+static const R_CMethodDef CEntries[] = {
+    {"freememory", (DL_FUNC) &freememory,  0},
+    {"tree",       (DL_FUNC) &tree,       21},
+    {NULL, NULL, 0}
+};
+
+void R_init_evtree(DllInfo *dll)
+{
+    R_registerRoutines(dll, CEntries, NULL, NULL, NULL);
+    R_useDynamicSymbols(dll, FALSE);
+}
+
 static void chkIntFn(void *dummy) {
      R_CheckUserInterrupt();
 }

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <ctime> 
 #include "tree.h"
+#include <R_ext/Rdynload.h>
 
 using namespace std;
 
