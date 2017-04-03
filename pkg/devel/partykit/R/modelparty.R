@@ -1,155 +1,155 @@
-mob <- function(formula, data, subset, na.action, weights, offset, cluster,
-  fit, control = mob_control(), ...)
-{
-  ## check fitting function
-  fitargs <- names(formals(fit))
-  if(!all(c("y", "x", "start", "weights", "offset") %in% fitargs)) {
-    stop("no suitable fitting function specified")
-  }
-
-  ## augment fitting function (if necessary)
-  if(!all(c("estfun", "object") %in% fitargs)) {
-    afit <- function(y,
-      x = NULL, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...,
-      estfun = FALSE, object = FALSE)
-    {
-      obj <- if("cluster" %in% fitargs) {
-        fit(y = y, x = x, start = start, weights = weights, offset = offset, cluster = cluster, ...)
-      } else {
-        fit(y = y, x = x, start = start, weights = weights, offset = offset, ...)
-      }
-      list(
-        coefficients = coef(obj),
-        objfun = -as.numeric(logLik(obj)),
-        estfun = if(estfun) sandwich::estfun(obj) else NULL,
-        object = if(object) obj else NULL
-      )
-    }
-  } else {
-    if("cluster" %in% fitargs) {
-      afit <- fit
-    } else {
-      afit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ..., estfun = FALSE, object = FALSE) {
-        fit(y = y, x = x, start = start, weights = weights, offset = offset, ..., estfun = estfun, object = object)
-      }
-    }
-  }
-
-  ## call
-  cl <- match.call()
-  if(missing(data)) data <- environment(formula)
-  mf <- match.call(expand.dots = FALSE)
-  m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
-  mf <- mf[c(1L, m)]
-  mf$drop.unused.levels <- TRUE
-
-  ## formula FIXME: y ~ . or y ~ x | .
-  oformula <- as.formula(formula)
-  formula <- Formula::as.Formula(formula)
-  if(length(formula)[2L] < 2L) {
-    formula <- Formula::Formula(formula(Formula::as.Formula(formula(formula), ~ 0), rhs = 2L:1L))
-    xreg <- FALSE
-  } else {
-    if(length(formula)[2L] > 2L) {
-      formula <- Formula::Formula(formula(formula, rhs = 1L:2L))
-      warning("Formula must not have more than two RHS parts")
-    }
-    xreg <- TRUE
-  }
-  mf$formula <- formula
-
-  ## evaluate model.frame
-  mf[[1L]] <- quote(stats::model.frame)
-  mf <- eval(mf, parent.frame())
-
-  ## extract terms, response, regressor matrix (if any), partitioning variables
-  mt <- terms(formula, data = data)
-  mtY <- terms(formula, data = data, rhs = if(xreg) 1L else 0L)
-  mtZ <- delete.response(terms(formula, data = data, rhs = 2L))
-  Y <- switch(control$ytype,
-    "vector" = Formula::model.part(formula, mf, lhs = 1L)[[1L]],
-    "matrix" = model.matrix(~ 0 + ., Formula::model.part(formula, mf, lhs = 1L)),
-    "data.frame" = Formula::model.part(formula, mf, lhs = 1L)
-  )
-  X <- if(!xreg) NULL else switch(control$xtype,
-    "matrix" = model.matrix(mtY, mf),
-    "data.frame" = Formula::model.part(formula, mf, rhs = 1L)
-  )
-  if(!is.null(X) && ncol(X) < 1L) {
-    X <- NULL
-    xreg <- FALSE
-  }
-  if(xreg) {
-    attr(X, "formula") <- formula(formula, rhs = 1L)
-    attr(X, "terms") <- mtY
-    attr(X, "offset") <- cl$offset
-  }
-  Z <- Formula::model.part(formula, mf, rhs = 2L)
-  n <- nrow(Z)
-  nyx <- length(mf) - length(Z) - as.numeric("(weights)" %in% names(mf)) - as.numeric("(offset)" %in% names(mf)) - as.numeric("(cluster)" %in% names(mf))
-  varindex <- match(names(Z), names(mf))
-
-  ## weights and offset
-  weights <- model.weights(mf)
-  if(is.null(weights)) weights <- 1L
-  if(length(weights) == 1L) weights <- rep.int(weights, n)
-  weights <- as.vector(weights)
-  offset <- if(xreg) model.offset(mf) else NULL
-  cluster <- mf[["(cluster)"]]
-
-  ## process pruning options (done here because of "n")
-  if(!is.null(control$prune)) {
-    if(is.character(control$prune)) {
-      control$prune <- tolower(control$prune)
-      control$prune <- match.arg(control$prune, c("aic", "bic", "none"))
-      control$prune <- switch(control$prune,
-        "aic" = {
-	  function(objfun, df, nobs) (2 * objfun[1L] + 2 * df[1L]) < (2 * objfun[2L] + 2 * df[2L])
-	}, "bic" = {
-	  function(objfun, df, nobs) (2 * objfun[1L] + log(n) * df[1L]) < (2 * objfun[2L] + log(n) * df[2L])
-	}, "none" = {
-	  NULL
-	})      
-    }
-    if(!is.function(control$prune)) {
-      warning("Unknown specification of 'prune'")
-      control$prune <- NULL
-    }
-  }
-
-  ## grow the actual tree
-  nodes <- mob_partynode(Y = Y, X = X, Z = Z, weights = weights, offset = offset, cluster = cluster,
-    fit = afit, control = control, varindex = varindex, ...)
-
-  ## compute terminal node number for each observation
-  fitted <- fitted_node(nodes, data = mf)
-  fitted <- data.frame(
-      "(fitted)" = fitted,
-      ## "(response)" = Y, ## probably not really needed
-      check.names = FALSE,
-      row.names = rownames(mf))
-  if(!identical(weights, rep.int(1L, n))) fitted[["(weights)"]] <- weights
-  if(!is.null(offset)) fitted[["(offset)"]] <- offset
-  if(!is.null(cluster)) fitted[["(cluster)"]] <- cluster
-
-  ## return party object
-  rval <- party(nodes, 
-    data = if(control$model) mf else mf[0,],
-    fitted = fitted,
-    terms = mt,
-    info = list(
-      call = cl,
-      formula = oformula,
-      Formula = formula,
-      terms = list(response = mtY, partitioning = mtZ),
-      fit = afit,
-      control = control,
-      dots = list(...),
-      nreg = max(0L, as.integer(xreg) * (nyx - NCOL(Y))))
-  )
-  class(rval) <- c("modelparty", class(rval))
-  return(rval)
-}
+# mob <- function(formula, data, subset, na.action, weights, offset, cluster,
+#   fit, control = mob_control(), ...)
+# {
+#   ## check fitting function
+#   fitargs <- names(formals(fit))
+#   if(!all(c("y", "x", "start", "weights", "offset") %in% fitargs)) {
+#     stop("no suitable fitting function specified")
+#   }
+# 
+#   ## augment fitting function (if necessary)
+#   if(!all(c("estfun", "object") %in% fitargs)) {
+#     afit <- function(y,
+#       x = NULL, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...,
+#       estfun = FALSE, object = FALSE)
+#     {
+#       obj <- if("cluster" %in% fitargs) {
+#         fit(y = y, x = x, start = start, weights = weights, offset = offset, cluster = cluster, ...)
+#       } else {
+#         fit(y = y, x = x, start = start, weights = weights, offset = offset, ...)
+#       }
+#       list(
+#         coefficients = coef(obj),
+#         objfun = -as.numeric(logLik(obj)),
+#         estfun = if(estfun) sandwich::estfun(obj) else NULL,
+#         object = if(object) obj else NULL
+#       )
+#     }
+#   } else {
+#     if("cluster" %in% fitargs) {
+#       afit <- fit
+#     } else {
+#       afit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ..., estfun = FALSE, object = FALSE) {
+#         fit(y = y, x = x, start = start, weights = weights, offset = offset, ..., estfun = estfun, object = object)
+#       }
+#     }
+#   }
+# 
+#   ## call
+#   cl <- match.call()
+#   if(missing(data)) data <- environment(formula)
+#   mf <- match.call(expand.dots = FALSE)
+#   m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
+#   mf <- mf[c(1L, m)]
+#   mf$drop.unused.levels <- TRUE
+# 
+#   ## formula FIXME: y ~ . or y ~ x | .
+#   oformula <- as.formula(formula)
+#   formula <- Formula::as.Formula(formula)
+#   if(length(formula)[2L] < 2L) {
+#     formula <- Formula::Formula(formula(Formula::as.Formula(formula(formula), ~ 0), rhs = 2L:1L))
+#     xreg <- FALSE
+#   } else {
+#     if(length(formula)[2L] > 2L) {
+#       formula <- Formula::Formula(formula(formula, rhs = 1L:2L))
+#       warning("Formula must not have more than two RHS parts")
+#     }
+#     xreg <- TRUE
+#   }
+#   mf$formula <- formula
+# 
+#   ## evaluate model.frame
+#   mf[[1L]] <- quote(stats::model.frame)
+#   mf <- eval(mf, parent.frame())
+# 
+#   ## extract terms, response, regressor matrix (if any), partitioning variables
+#   mt <- terms(formula, data = data)
+#   mtY <- terms(formula, data = data, rhs = if(xreg) 1L else 0L)
+#   mtZ <- delete.response(terms(formula, data = data, rhs = 2L))
+#   Y <- switch(control$ytype,
+#     "vector" = Formula::model.part(formula, mf, lhs = 1L)[[1L]],
+#     "matrix" = model.matrix(~ 0 + ., Formula::model.part(formula, mf, lhs = 1L)),
+#     "data.frame" = Formula::model.part(formula, mf, lhs = 1L)
+#   )
+#   X <- if(!xreg) NULL else switch(control$xtype,
+#     "matrix" = model.matrix(mtY, mf),
+#     "data.frame" = Formula::model.part(formula, mf, rhs = 1L)
+#   )
+#   if(!is.null(X) && ncol(X) < 1L) {
+#     X <- NULL
+#     xreg <- FALSE
+#   }
+#   if(xreg) {
+#     attr(X, "formula") <- formula(formula, rhs = 1L)
+#     attr(X, "terms") <- mtY
+#     attr(X, "offset") <- cl$offset
+#   }
+#   Z <- Formula::model.part(formula, mf, rhs = 2L)
+#   n <- nrow(Z)
+#   nyx <- length(mf) - length(Z) - as.numeric("(weights)" %in% names(mf)) - as.numeric("(offset)" %in% names(mf)) - as.numeric("(cluster)" %in% names(mf))
+#   varindex <- match(names(Z), names(mf))
+# 
+#   ## weights and offset
+#   weights <- model.weights(mf)
+#   if(is.null(weights)) weights <- 1L
+#   if(length(weights) == 1L) weights <- rep.int(weights, n)
+#   weights <- as.vector(weights)
+#   offset <- if(xreg) model.offset(mf) else NULL
+#   cluster <- mf[["(cluster)"]]
+# 
+#   ## process pruning options (done here because of "n")
+#   if(!is.null(control$prune)) {
+#     if(is.character(control$prune)) {
+#       control$prune <- tolower(control$prune)
+#       control$prune <- match.arg(control$prune, c("aic", "bic", "none"))
+#       control$prune <- switch(control$prune,
+#         "aic" = {
+# 	  function(objfun, df, nobs) (2 * objfun[1L] + 2 * df[1L]) < (2 * objfun[2L] + 2 * df[2L])
+# 	}, "bic" = {
+# 	  function(objfun, df, nobs) (2 * objfun[1L] + log(n) * df[1L]) < (2 * objfun[2L] + log(n) * df[2L])
+# 	}, "none" = {
+# 	  NULL
+# 	})      
+#     }
+#     if(!is.function(control$prune)) {
+#       warning("Unknown specification of 'prune'")
+#       control$prune <- NULL
+#     }
+#   }
+# 
+#   ## grow the actual tree
+#   nodes <- mob_partynode(Y = Y, X = X, Z = Z, weights = weights, offset = offset, cluster = cluster,
+#     fit = afit, control = control, varindex = varindex, ...)
+# 
+#   ## compute terminal node number for each observation
+#   fitted <- fitted_node(nodes, data = mf)
+#   fitted <- data.frame(
+#       "(fitted)" = fitted,
+#       ## "(response)" = Y, ## probably not really needed
+#       check.names = FALSE,
+#       row.names = rownames(mf))
+#   if(!identical(weights, rep.int(1L, n))) fitted[["(weights)"]] <- weights
+#   if(!is.null(offset)) fitted[["(offset)"]] <- offset
+#   if(!is.null(cluster)) fitted[["(cluster)"]] <- cluster
+# 
+#   ## return party object
+#   rval <- party(nodes, 
+#     data = if(control$model) mf else mf[0,],
+#     fitted = fitted,
+#     terms = mt,
+#     info = list(
+#       call = cl,
+#       formula = oformula,
+#       Formula = formula,
+#       terms = list(response = mtY, partitioning = mtZ),
+#       fit = afit,
+#       control = control,
+#       dots = list(...),
+#       nreg = max(0L, as.integer(xreg) * (nyx - NCOL(Y))))
+#   )
+#   class(rval) <- c("modelparty", class(rval))
+#   return(rval)
+# }
 
 ## set up partynode object
 mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL,

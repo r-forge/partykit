@@ -14,7 +14,7 @@
   
   ## function for model fitting
   modelfit <- function(subset, estfun = TRUE, object = "object" %in% ctrl$inner, 
-                       info = NULL, ...) {
+                       info = NULL) {
     
     ## get subset of the data
     s <- subset[cc[subset]]
@@ -34,7 +34,7 @@
     args <- c(list(x = xs, y = ys, start = info$coef, weights = weights),
               list(object = TRUE, estfun = TRUE)[c("estfun", "object") %in% 
                                                    names(formals(fit))],
-              ...)
+              list(...))
     
     ret <- do.call("fit", args = args)
     
@@ -74,7 +74,7 @@
 
 
 
-mob2_control <- function(
+mob_control <- function(
   testflavour = "mfluc",
   testtype = "Bonferroni",
   alpha = 0.05,
@@ -172,6 +172,147 @@ mob2_control <- function(
          terminal = terminal, inner = inner)
   )
 }
+
+
+
+mob <- function
+(
+  fit,
+  formula, 
+  data, 
+  weights = NULL, 
+  subset,
+  offset,
+  cluster, 
+  na.action = na.pass, 
+  control = mob_control(...), 
+  converged = NULL,
+  scores = NULL,
+  ...
+) {
+  
+  
+  ### weights cannot be 0, otherwise logLik is Inf
+  if(any(weights == 0)) {
+    stop("Cannot yet handle zero weights.")
+  }
+  
+  ### make sure right criterion is used for exhaustive search
+  if(control$testflavour == "exhaustive"){
+    control$criterion <- "statistic"
+    control$logmincriterion <- -Inf
+  }
+  
+  
+  ### get the call and the calling environment for .urp_tree
+  call <- match.call(expand.dots = FALSE)
+  call$na.action <- na.action
+  frame <- parent.frame()
+  if (missing(data)) {
+    data <- NULL
+    data_asis <- FALSE
+  } else {
+    data_asis <- missing(weights) && missing(subset) && 
+      missing(cluster) && missing(offset)
+  }
+  
+  # trafofun <- function(...) .modeltrafo(..., converged = converged, fit = fit)
+  dots <- list(...)
+  trafofun <- function(...) do.call(".modeltrafo", c(list(...), dots, converged = converged, fit = fit))
+  tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
+                    trafofun = trafofun, doFit = TRUE)
+  
+  
+  ### prepare as modelparty
+  mf <- tree$mf
+  weights <- model.weights(mf)
+  if (is.null(weights)) weights <- rep(1, nrow(mf))
+  mtY <- terms(tree$modelf, data = mf)
+  mtZ <- delete.response(terms(tree$partf, data = mf))
+  
+  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
+                       "(weights)" = weights,
+                       check.names = FALSE)
+  y <- model.part(as.Formula(tree$modelf), data = mf, lhs = 1, rhs = 0)
+  if (length(y) == 1) y <- y[[1]]
+  fitted[[3]] <- y
+  names(fitted)[3] <- "(response)"
+  
+  control$ytype <- ifelse(is.vector(y), "vector", class(y))
+  x <- model.part(as.Formula(tree$modelf), data = mf, lhs = 0, rhs = 1)
+  control$xtype <- "matrix" # TODO: find out when to use data.frame
+  
+  ## return party object
+  rval <- party(tree$nodes, 
+                data = if(control$model) mf else mf[0,],
+                fitted = fitted,
+                terms = tree$terms,
+                info = list(
+                  call = match.call(),
+                  formula = formula,
+                  Formula = as.Formula(formula),
+                  terms = list(response = mtY, partitioning = mtZ),
+                  fit = fit,
+                  control = control,
+                  dots = list(...),
+                  nreg = NCOL(x)
+                )
+  )
+  class(rval) <- c("modelparty", class(rval))
+  
+  ### add modelinfo (object) and estfun if not there yet, but wanted
+  # TODO: check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+  
+  idx <- lapply(which_all, .get_path, obj = tree$nodes)
+  names(idx) <- which_all
+  tree_ret <- unclass(rval)
+  subset_term <- predict(rval, type = "node")
+  
+  for (i in which_all) {
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+    
+    if (i %in% which_terminals) winfo <- control$terminal else 
+      winfo <- control$inner
+    
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) | any(! winfo %in% names(iinfo))) {
+        iinfo <- tree$trafo(subset = which(subset_term == i),
+                            estfun = ("estfun" %in% winfo),
+                            object = ("object" %in% winfo))
+      }
+    }
+    
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
+  }
+  
+  
+  
+  # ### add modelinfo if not there yet
+  # terminals <- nodeids(rval, terminal = TRUE)
+  # idx <- lapply(terminals, .get_path, obj = tree$nodes)
+  # tree_ret <- unclass(rval)
+  # subset_term <- predict(rval, type = "node")
+  # 
+  # for (i in 1:length(idx)) {
+  # 
+  #   if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
+  #     tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]),
+  #                                                   estfun = FALSE)
+  #   }
+  # }
+  
+  class(tree_ret) <- class(rval)
+  
+  return(tree_ret)
+  
+}
+
 
 
 

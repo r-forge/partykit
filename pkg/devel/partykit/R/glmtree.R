@@ -1,49 +1,49 @@
-## simple wrapper function to specify fitter and return class
-glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
-  family = gaussian, epsilon = 1e-8, maxit = 25, ...)
-{
-  ## use dots for setting up mob_control
-  control <- mob_control(...)
-
-  ## keep call
-  cl <- match.call(expand.dots = TRUE)
-
-  ## extend formula if necessary
-  f <- Formula::Formula(formula)
-  if(length(f)[2L] == 1L) {
-    attr(f, "rhs") <- c(list(1), attr(f, "rhs"))
-    formula[[3L]] <- formula(f)[[3L]]
-  } else {
-    f <- NULL
-  }
-
-  ## process family
-  if(inherits(family, "family")) {
-    fam <- TRUE
-  } else {
-    fam <- FALSE
-    if(is.character(family)) family <- get(family)
-    if(is.function(family)) family <- family()
-  }
-
-  ## call mob
-  m <- match.call(expand.dots = FALSE)
-  if(!is.null(f)) m$formula <- formula
-  m$fit <- glmfit
-  m$control <- control
-  m$epsilon <- epsilon
-  m$maxit <- maxit
-  if("..." %in% names(m)) m[["..."]] <- NULL
-  if(!fam) m$family <- family
-  m[[1L]] <- as.call(quote(partykit::mob))
-  rval <- eval(m, parent.frame())
-  
-  ## extend class and keep original call
-  rval$info$call <- cl
-  rval$info$family <- family$family
-  class(rval) <- c("glmtree", class(rval))
-  return(rval)
-}
+# ## simple wrapper function to specify fitter and return class
+# glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
+#   family = gaussian, epsilon = 1e-8, maxit = 25, ...)
+# {
+#   ## use dots for setting up mob_control
+#   control <- mob_control(...)
+# 
+#   ## keep call
+#   cl <- match.call(expand.dots = TRUE)
+# 
+#   ## extend formula if necessary
+#   f <- Formula::Formula(formula)
+#   if(length(f)[2L] == 1L) {
+#     attr(f, "rhs") <- c(list(1), attr(f, "rhs"))
+#     formula[[3L]] <- formula(f)[[3L]]
+#   } else {
+#     f <- NULL
+#   }
+# 
+#   ## process family
+#   if(inherits(family, "family")) {
+#     fam <- TRUE
+#   } else {
+#     fam <- FALSE
+#     if(is.character(family)) family <- get(family)
+#     if(is.function(family)) family <- family()
+#   }
+# 
+#   ## call mob
+#   m <- match.call(expand.dots = FALSE)
+#   if(!is.null(f)) m$formula <- formula
+#   m$fit <- glmfit
+#   m$control <- control
+#   m$epsilon <- epsilon
+#   m$maxit <- maxit
+#   if("..." %in% names(m)) m[["..."]] <- NULL
+#   if(!fam) m$family <- family
+#   m[[1L]] <- as.call(quote(partykit::mob))
+#   rval <- eval(m, parent.frame())
+#   
+#   ## extend class and keep original call
+#   rval$info$call <- cl
+#   rval$info$family <- family$family
+#   class(rval) <- c("glmtree", class(rval))
+#   return(rval)
+# }
 
 
 
@@ -157,14 +157,14 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
 
 
 ## simple wrapper function to specify fitter and return class
-glmtree2 <- function(formula, data, subset, na.action, weights, offset, cluster,
+glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
                     family = gaussian, epsilon = 1e-8, maxit = 25,
                     converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
                     scores = NULL, # TODO: figure out how to use this and implement correctly
                     ...)
 {
   ## use dots for setting up mob_control
-  control <- mob2_control(...)
+  control <- mob_control(...)
   
   ## keep call
   cl <- match.call(expand.dots = TRUE)
@@ -198,7 +198,7 @@ glmtree2 <- function(formula, data, subset, na.action, weights, offset, cluster,
   if(!fam) m$family <- family
   m$converged <- converged
   m$scores <- scores
-  m[[1L]] <- as.call(quote(partykit::mob2))
+  m[[1L]] <- as.call(quote(partykit::mob))
   rval <- eval(m, parent.frame())
   
   ## extend class and keep original call
@@ -208,140 +208,3 @@ glmtree2 <- function(formula, data, subset, na.action, weights, offset, cluster,
   return(rval)
 }
 
-
-mob2 <- function
-(
-  fit,
-  formula, 
-  data, 
-  weights = NULL, 
-  subset,
-  offset,
-  cluster, 
-  na.action = na.pass, 
-  control = mob2_control(...), 
-  converged = NULL,
-  scores = NULL,
-  ...
-) {
-  
-  
-  ### weights cannot be 0, otherwise logLik is Inf
-  if(any(weights == 0)) {
-    stop("Cannot yet handle zero weights.")
-  }
-  
-  ### make sure right criterion is used for exhaustive search
-  if(control$testflavour == "exhaustive"){
-    control$criterion <- "statistic"
-    control$logmincriterion <- -Inf
-  }
-  
-  
-  ### get the call and the calling environment for .urp_tree
-  call <- match.call(expand.dots = FALSE)
-  call$na.action <- na.action
-  frame <- parent.frame()
-  if (missing(data)) {
-    data <- NULL
-    data_asis <- FALSE
-  } else {
-    data_asis <- missing(weights) && missing(subset) && 
-      missing(cluster) && missing(offset)
-  }
-  
-  # trafofun <- function(...) fit(..., converged = converged)
-  trafofun <- function(...) .modeltrafo(..., converged = converged, fit = fit)
-  tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                    trafofun = trafofun, doFit = TRUE)
-  
-
-  ### prepare as modelparty
-  mf <- tree$mf
-  weights <- model.weights(mf)
-  if (is.null(weights)) weights <- rep(1, nrow(mf))
-  mtY <- terms(tree$modelf, data = mf)
-  mtZ <- delete.response(terms(tree$partf, data = mf))
-  
-  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
-                       "(weights)" = weights,
-                       check.names = FALSE)
-  y <- model.part(as.Formula(tree$modelf), data = mf, lhs = 1, rhs = 0)
-  if (length(y) == 1) y <- y[[1]]
-  fitted[[3]] <- y
-  names(fitted)[3] <- "(response)"
-  
-  control$ytype <- ifelse(is.vector(y), "vector", class(y))
-  x <- model.part(as.Formula(tree$modelf), data = mf, lhs = 0, rhs = 1)
-  control$xtype <- "matrix" # TODO: find out when to use data.frame
-  
-  ## return party object
-  rval <- party(tree$nodes, 
-                data = if(control$model) mf else mf[0,],
-                fitted = fitted,
-                terms = tree$terms,
-                info = list(
-                  call = match.call(),
-                  formula = formula,
-                  Formula = as.Formula(formula),
-                  terms = list(response = mtY, partitioning = mtZ),
-                  fit = fit,
-                  control = control,
-                  dots = list(...),
-                  nreg = NCOL(x)
-                )
-  )
-  class(rval) <- c("modelparty", class(rval))
-  
-  ### add modelinfo (object) and estfun if not there yet, but wanted
-  # TODO: check if this can be done prettier
-  which_terminals <- nodeids(rval, terminal = TRUE)
-  which_all <- nodeids(rval)
-    
-  idx <- lapply(which_all, .get_path, obj = tree$nodes)
-  names(idx) <- which_all
-  tree_ret <- unclass(rval)
-  subset_term <- predict(rval, type = "node")
-
-  for (i in which_all) {
-    ichar <- as.character(i)
-    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
-    
-    if (i %in% which_terminals) winfo <- control$terminal else 
-      winfo <- control$inner
-    
-    if (is.null(winfo)) {
-      iinfo$object <- NULL
-      iinfo$estfun <- NULL
-    } else {
-      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) | any(! winfo %in% names(iinfo))) {
-        iinfo <- tree$trafo(subset = which(subset_term == i),
-                            estfun = ("estfun" %in% winfo),
-                            object = ("object" %in% winfo))
-      }
-    }
-    
-    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
-  }
-    
-    
-  
-  # ### add modelinfo if not there yet
-  # terminals <- nodeids(rval, terminal = TRUE)
-  # idx <- lapply(terminals, .get_path, obj = tree$nodes)
-  # tree_ret <- unclass(rval)
-  # subset_term <- predict(rval, type = "node")
-  # 
-  # for (i in 1:length(idx)) {
-  # 
-  #   if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
-  #     tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]),
-  #                                                   estfun = FALSE)
-  #   }
-  # }
-
-  class(tree_ret) <- class(rval)
-
-  return(tree_ret)
-
-}

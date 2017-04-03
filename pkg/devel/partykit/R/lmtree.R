@@ -1,36 +1,76 @@
+# ## simple wrapper function to specify fitter and return class
+# lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, ...)
+# {
+#   ## TODO: variance as model parameter
+# 
+#   ## use dots for setting up mob_control
+#   control <- mob_control(...)
+#   if(control$vcov == "info") {
+#     warning('vcov = "info" not supported in lmtree')
+#     control$vcov <- "opg"
+#   }
+#   if(!is.null(control$prune)) {
+#     if(is.character(control$prune)) {
+#       control$prune <- tolower(control$prune)
+#       control$prune <- match.arg(control$prune, c("aic", "bic", "none"))
+#       control$prune <- switch(control$prune,
+#         "aic" = {
+# 	  function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(objfun[2L]) + 2 * df[2L])
+# 	}, "bic" = {
+# 	  function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(objfun[2L]) + log(nobs[2L]) * df[2L])
+# 	}, "none" = {
+# 	  NULL
+# 	})      
+#     }
+#     if(!is.function(control$prune)) {
+#       warning("unknown specification of 'prune'")
+#       control$prune <- NULL
+#     }
+#   }
+# 
+#   ## keep call
+#   cl <- match.call(expand.dots = TRUE)
+# 
+#   ## extend formula if necessary
+#   f <- Formula::Formula(formula)
+#   if(length(f)[2L] == 1L) {
+#     attr(f, "rhs") <- c(list(1), attr(f, "rhs"))
+#     formula[[3L]] <- formula(f)[[3L]]
+#   } else {
+#     f <- NULL
+#   }
+# 
+#   ## call mob
+#   m <- match.call(expand.dots = FALSE)
+#   if(!is.null(f)) m$formula <- formula
+#   m$fit <- lmfit
+#   m$control <- control
+#   if("..." %in% names(m)) m[["..."]] <- NULL
+#   m[[1L]] <- as.call(quote(partykit::mob))
+#   rval <- eval(m, parent.frame())
+#   
+#   ## extend class and keep original call
+#   rval$info$call <- cl
+#   class(rval) <- c("lmtree", class(rval))
+#   return(rval)
+# }
+
+
 ## simple wrapper function to specify fitter and return class
 lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, ...)
 {
   ## TODO: variance as model parameter
-
+  
   ## use dots for setting up mob_control
   control <- mob_control(...)
   if(control$vcov == "info") {
     warning('vcov = "info" not supported in lmtree')
     control$vcov <- "opg"
   }
-  if(!is.null(control$prune)) {
-    if(is.character(control$prune)) {
-      control$prune <- tolower(control$prune)
-      control$prune <- match.arg(control$prune, c("aic", "bic", "none"))
-      control$prune <- switch(control$prune,
-        "aic" = {
-	  function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(objfun[2L]) + 2 * df[2L])
-	}, "bic" = {
-	  function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(objfun[2L]) + log(nobs[2L]) * df[2L])
-	}, "none" = {
-	  NULL
-	})      
-    }
-    if(!is.function(control$prune)) {
-      warning("unknown specification of 'prune'")
-      control$prune <- NULL
-    }
-  }
-
+  
   ## keep call
   cl <- match.call(expand.dots = TRUE)
-
+  
   ## extend formula if necessary
   f <- Formula::Formula(formula)
   if(length(f)[2L] == 1L) {
@@ -39,7 +79,7 @@ lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, .
   } else {
     f <- NULL
   }
-
+  
   ## call mob
   m <- match.call(expand.dots = FALSE)
   if(!is.null(f)) m$formula <- formula
@@ -47,64 +87,6 @@ lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, .
   m$control <- control
   if("..." %in% names(m)) m[["..."]] <- NULL
   m[[1L]] <- as.call(quote(partykit::mob))
-  rval <- eval(m, parent.frame())
-  
-  ## extend class and keep original call
-  rval$info$call <- cl
-  class(rval) <- c("lmtree", class(rval))
-  return(rval)
-}
-
-
-## simple wrapper function to specify fitter and return class
-lmtree2 <- function(formula, data, subset, na.action, weights, offset, cluster, ...)
-{
-  ## TODO: variance as model parameter
-  
-  ## use dots for setting up mob_control
-  control <- mob2_control(...)
-  if(control$vcov == "info") {
-    warning('vcov = "info" not supported in lmtree')
-    control$vcov <- "opg"
-  }
-  if(!is.null(control$prune)) {
-    if(is.character(control$prune)) {
-      control$prune <- tolower(control$prune)
-      control$prune <- match.arg(control$prune, c("aic", "bic", "none"))
-      control$prune <- switch(control$prune,
-                              "aic" = {
-                                function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(objfun[2L]) + 2 * df[2L])
-                              }, "bic" = {
-                                function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(objfun[2L]) + log(nobs[2L]) * df[2L])
-                              }, "none" = {
-                                NULL
-                              })      
-    }
-    if(!is.function(control$prune)) {
-      warning("unknown specification of 'prune'")
-      control$prune <- NULL
-    }
-  }
-  
-  ## keep call
-  cl <- match.call(expand.dots = TRUE)
-  
-  ## extend formula if necessary
-  f <- Formula::Formula(formula)
-  if(length(f)[2L] == 1L) {
-    attr(f, "rhs") <- c(list(1), attr(f, "rhs"))
-    formula[[3L]] <- formula(f)[[3L]]
-  } else {
-    f <- NULL
-  }
-  
-  ## call mob
-  m <- match.call(expand.dots = FALSE)
-  if(!is.null(f)) m$formula <- formula
-  m$fit <- lmfit
-  m$control <- control
-  if("..." %in% names(m)) m[["..."]] <- NULL
-  m[[1L]] <- as.call(quote(partykit::mob2))
   rval <- eval(m, parent.frame())
   
   ## extend class and keep original call
