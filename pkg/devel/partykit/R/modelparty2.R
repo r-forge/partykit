@@ -20,6 +20,10 @@
     s <- subset[cc[subset]]
     ys <- y[s]
     xs <- x[s, , drop = FALSE]
+    attr(xs, "formula") <- formula
+    attr(xs, "terms") <- terms(formula, data = data[s, ])
+    attr(xs, "offset") <- offset
+    
     nobs <- NROW(xs)
     
     if (length(weights) > 0) {
@@ -239,7 +243,7 @@ mob <- function
   names(fitted)[3] <- "(response)"
   
   control$ytype <- ifelse(is.vector(y), "vector", class(y))
-  x <- model.part(as.Formula(tree$modelf), data = mf, lhs = 0, rhs = 1)
+  x <- model.matrix(tree$modelf, data = mf)
   control$xtype <- "matrix" # TODO: find out when to use data.frame
   
   ## return party object
