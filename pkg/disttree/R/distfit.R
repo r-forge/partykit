@@ -198,7 +198,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   }
   
   
-  ##### FIX ME: additional functions with set parameters
+  ##### additional functions with set parameters
   
   ## density function
   ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
@@ -531,21 +531,27 @@ if(FALSE){
   if(require("crch") & require("gamlss.cens")) {
     library("crch")
     data("RainIbk", package = "crch")
-    m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic")
+    system.time(m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic"))
     
     library("gamlss.cens")
     gen.cens(LO, type = "left")
     RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-    m2 <- distfit(RainIbk$rains, family = LOlc)
+    system.time(m2 <- distfit(RainIbk$rains, family = LOlc))
     # FIX ME: calculation of starting values for censored distributions
     # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
+    dist_list_cens_log <- make_censored_dist_list(dist = "logistic", type = "left", censpoint = 0)
+    system.time(m3 <- distfit(RainIbk$rain, family = dist_list_cens_log))
+    
     coef(m1)
     coef(m2)
+    coef(m3)
     logLik(m1)
     logLik(m2)
+    logLik(m3)
     vcov(m1)
     vcov(m2)
+    vcov(m3)
   }
   
   
@@ -575,7 +581,6 @@ if(FALSE){
 
 
 if(FALSE){
-  library("disttree")
   family <- dist_list_weibull
   family$family.name
   y <- survival:::rsurvreg(1000, mean = 5, scale = 2) 
