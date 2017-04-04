@@ -237,7 +237,9 @@ mob <- function
   fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  y <- model.part(as.Formula(tree$modelf), data = mf, lhs = 1, rhs = 0)
+  mfm <- as.Formula(tree$modelf)
+  mmf <- model.frame(mfm, data = mf)
+  y <- model.part(mfm, data = mmf, lhs = 1, rhs = 0)
   if (length(y) == 1) y <- y[[1]]
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
