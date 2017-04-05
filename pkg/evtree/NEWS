@@ -1,6 +1,12 @@
+Changes in Version 1.0-5
+
+  o CRAN checks turned up problems in C++ code oldrel Windows.
+    These are fixed now.
+
+
 Changes in Version 1.0-4
 
-  o CRAN checks turned up problems in C++ code on Solaris and oldrel windows.
+  o CRAN checks turned up problems in C++ code on Solaris.
     These are fixed now.
 
 	
