@@ -117,9 +117,17 @@ mob_control <- function(
   inner = "object",
   model = TRUE,
   terminal = "object",
-  mtry = Inf
+  mtry = Inf, 
+  # deprecated
+  verbose, xtype, ytype
 ) {
   
+  if (!missing("verbose"))
+    warning("argument verbose deprecated")
+  if (!missing("xtype"))
+    warning("argument xtype deprecated")
+  if (!missing("ytype"))
+    warning("argument ytype deprecated")
   
   ## FIXME: Involve caseweights in stopping (minbucket, minsize, etc)
   ##        For now only used to compute correct n (e.g. for printing)
@@ -237,7 +245,7 @@ mob <- function
   fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  mfm <- as.Formula(tree$modelf)
+  mfm <- as.Formula(formula)
   mmf <- model.frame(mfm, data = mf)
   y <- model.part(mfm, data = mmf, lhs = 1, rhs = 0)
   if (length(y) == 1) y <- y[[1]]
