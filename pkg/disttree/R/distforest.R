@@ -1,10 +1,12 @@
 distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree = 500L,
                        perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
+                       cens = "none", censpoint = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
                        ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
+  if(is.function(family)) family <- family()
   np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   
   resp.name <- as.character(formula[2])
@@ -18,7 +20,8 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
     #if(survival::is.Surv(y)) y <- data[,resp.name] else y <- as.vector(data[,resp.name])
     
     model <- distfit(y, family = family, weights = weights, start = NULL,
-                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
+                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE,
+                     cens = cens, censpoint = censpoint)
     
     ef <- as.matrix(sandwich::estfun(model))
     #n <- NROW(ef)
