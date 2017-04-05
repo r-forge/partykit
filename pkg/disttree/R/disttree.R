@@ -2,6 +2,7 @@
 # FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
 disttree <- function(formula, data, na.action, cluster, family = NO(),
                      type.tree = "mob", decorrelate = "none",
+                     cens = "none", censpoint = NULL,
                      control = mob_control(...), ocontrol = list(), ...)
 {
   ## keep call
@@ -13,6 +14,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   
+
+  
   if(type.tree == "mob") {
     
     ## glue code for calling distfit() with given family in mob()
@@ -22,8 +25,11 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     {
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
+      
       rval <- distfit(y, family = family, weights = weights, start = start,
-                      vcov = vcov, estfun = estfun, type.hessian = type.hessian, ...)
+                      vcov = vcov, estfun = estfun, type.hessian = type.hessian,
+                      cens = cens, censpoint = censpoint, ...)
+      
       rval <- list(
         coefficients = rval$par,
         objfun = -rval$loglik,
@@ -36,7 +42,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     ## call mob
     m <- match.call(expand.dots = FALSE)
     m$fit <- dist_family_fit
-    m$family <- NULL
+    m$family <- m$censpoint <- m$cens <- NULL
     # m$family <- m$ocontrol <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
@@ -54,10 +60,10 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     modelscores_decor <- function(data, weights = NULL) {
       
       y <- data[,resp.name]
-      #if(survival::is.Surv(y)) y <- data[,1] else y <- as.vector(data[,"y"])
       
       model <- distfit(y, family = family, weights = weights, start = NULL,
-                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE)
+                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                       estfun = TRUE, cens = cens, censpoint = censpoint, ...)
       
       ef <- as.matrix(sandwich::estfun(model))
       #n <- NROW(ef)
@@ -92,7 +98,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     m <- match.call(expand.dots = FALSE)
     m$ytrafo <- modelscores_decor
     # m$ocontrol <- NULL
-    # m$family <- m$ocontrol <- NULL
+    m$family <- m$cens <- m$censpoint <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
@@ -199,6 +205,7 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
 
 if(FALSE){
   tr <- disttree(dist ~ speed, data = cars)
+  # tr <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
   print(tr)
   
   plot(tr)
