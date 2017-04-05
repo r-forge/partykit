@@ -1,4 +1,5 @@
-distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL, ...)
+distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+                    bd = NULL, fixed = NULL, fixed.values = NULL, cens = "none", censpoint = NULL, ...)
 {
   ## match call
   cl <- match.call()
@@ -6,6 +7,19 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   
   ## check whether the input is a gamlss.family object (or function) or a list of the required type
   if(is.function(family)) family <- family()
+  
+  # if family is a gamlss.dist family object and the distribution is censored:
+  # data has to be converted to a Survival object (necessary input arguments: cens and censpoint)
+  if(inherits(family, "gamlss.family")) {
+    if(("censored" %in% strsplit(family$family[2], " ")[[1]]) && (!survival::is.Surv(y))) {
+      if(cens == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments cens and censpoint)")
+      if(cens == "left") y <- survival::Surv(y, y > censpoint, type = "left")
+      if(cens == "right") y <- survival::Surv(y, y < censpoint, type = "right")
+      ## FIX ME: interval censored
+      #if(cen == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+    }
+  }
+  
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
   # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
   if(!is.list(family)) stop ("unknown family specification")
@@ -535,8 +549,8 @@ if(FALSE){
     
     library("gamlss.cens")
     gen.cens(LO, type = "left")
-    RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-    system.time(m2 <- distfit(RainIbk$rains, family = LOlc))
+    #RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
+    system.time(m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0))
     # FIX ME: calculation of starting values for censored distributions
     # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
@@ -552,16 +566,20 @@ if(FALSE){
     vcov(m1)
     vcov(m2)
     vcov(m3)
+    solve(vcov(m1))
+    solve(vcov(m2))
+    solve(vcov(m3))
   }
   
   
   
   ## censored normal example
+  gen.cens(NO, type = "left")
   y <- rnorm(500,3,2)
-  y[y<0] <- 0
-  m1 <- crch(y ~ 1, left = 0, dist = "gaussian")
-  m2 <- distfit(Surv(y, y>0, type="left"), family = NOlc)
-  m3 <- distfit(y, family = dist_list_cens_normal)
+  y <- pmax(y,0)
+  system.time(m1 <- crch(y ~ 1, left = 0, dist = "gaussian"))
+  system.time(m2 <- distfit(y, censpoint = 0, cens="left", family = NOlc))
+  system.time(m3 <- distfit(y, family = dist_list_cens_normal))
   
   coef(m1)
   coef(m2)
