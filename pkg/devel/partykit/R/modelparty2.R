@@ -18,7 +18,11 @@
     
     ## get subset of the data
     s <- subset[cc[subset]]
-    ys <- y[s]
+    if(is.matrix(y)) {
+      ys <- y[s, , drop = FALSE]
+    } else {
+      ys <- y[s]
+    }
     xs <- x[s, , drop = FALSE]
     attr(xs, "formula") <- formula
     attr(xs, "terms") <- terms(formula, data = data[s, ])
@@ -35,11 +39,11 @@
     
     
     ## call the fit function
-    args <- c(list(x = xs, y = ys, start = info$coef, weights = weights),
+    args <- c(list(x = if (ncol(xs) == 0) NULL else xs, y = ys, start = info$coef, weights = weights),
               list(object = TRUE, estfun = TRUE)[c("estfun", "object") %in% 
                                                    names(formals(fit))],
               list(...))
-    
+
     ret <- do.call("fit", args = args)
     
     
