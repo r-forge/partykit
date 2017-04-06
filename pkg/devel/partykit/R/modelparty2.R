@@ -45,7 +45,7 @@
     
     ## if ret is not a list of object, estfun, ...
     if(class(ret)[1] != "list") {
-      ret <- list(estfun = estfun(ret), coefficients = coef(ret), 
+      ret <- list(estfun = sandwich::estfun(ret), coefficients = coef(ret), 
                   objfun = - logLik(ret), object = ret)
     }
     
@@ -61,7 +61,7 @@
     ## correct dimension of estfun 
     ef <- NULL
     if(estfun) {
-      ef <- matrix(0, nrow = NROW(x), ncol = NCOL(x))
+      ef <- matrix(0, nrow = NROW(x), ncol = NCOL(ret$estfun))
       ef[subset,] <- ret$estfun
       if(!is.null(ctrl$parm)) ef <- ef[, ctrl$parm]
     }
@@ -119,7 +119,7 @@ mob_control <- function(
   terminal = "object",
   mtry = Inf, 
   # deprecated
-  verbose, xtype, ytype
+  verbose, xtype, ytype, prune
 ) {
   
   if (!missing("verbose"))
@@ -128,6 +128,9 @@ mob_control <- function(
     warning("argument xtype deprecated")
   if (!missing("ytype"))
     warning("argument ytype deprecated")
+  if (!missing("prune"))
+    warning("argument prune deprecated")
+    
   
   ## FIXME: Involve caseweights in stopping (minbucket, minsize, etc)
   ##        For now only used to compute correct n (e.g. for printing)
@@ -204,10 +207,7 @@ mob <- function
 ) {
   
   
-  ### weights cannot be 0, otherwise logLik is Inf
-  if(any(weights == 0)) {
-    stop("Cannot yet handle zero weights.")
-  }
+
   
   ### make sure right criterion is used for exhaustive search
   if(control$testflavour == "exhaustive"){
@@ -237,7 +237,10 @@ mob <- function
   
   ### prepare as modelparty
   mf <- tree$mf
+  
+  # weights cannot be 0, otherwise logLik is Inf
   weights <- model.weights(mf)
+  if(any(weights == 0)) stop("Cannot yet handle zero weights.")
   if (is.null(weights)) weights <- rep(1, nrow(mf))
   mtY <- terms(tree$modelf, data = mf)
   mtZ <- delete.response(terms(tree$partf, data = mf))
