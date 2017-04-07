@@ -1,5 +1,5 @@
-\name{mob2_control}
-\alias{mob2_control}
+\name{mob_control}
+\alias{mob_control}
 
 \title{Control Parameters for Model-Based Partitioning}
 
@@ -9,7 +9,7 @@
 }
 
 \usage{
-mob2_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
+mob_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
  parm = NULL, bonferroni = TRUE, breakties = FALSE, nrep = 10000L,
  ordinal = "chisq", trim = 0.1, nresample = 9999L, teststat = "quadratic",
  splittry = 2, vcov = "opg", splitflavour = "exhaustive",
@@ -19,7 +19,8 @@ mob2_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
  minbucket = minsize, minprob = 0.01, minsplit = minsize, minsize = 20L,
  stump = FALSE, caseweights = TRUE, dfsplit = TRUE, applyfun = NULL,
  cores = NULL, restart = FALSE, inner = "object", model = TRUE,
- terminal = "object", mtry = Inf)
+ terminal = "object", mtry = Inf,
+ verbose, xtype, ytype, prune)
 }
 
 \arguments{
@@ -172,7 +173,7 @@ freedom per selected split employed when computing information criteria etc.}
 Computation:
  
 \item{applyfun}{an optional lapply-style function with arguments function(X,
-FUN, …). It is used for computing the variable selection criterion. The default
+FUN, ...). It is used for computing the variable selection criterion. The default
 is to use the basic lapply function unless the cores argument is specified (see
 below).}
  
@@ -201,12 +202,17 @@ additional information is stored.}
 
 
 
-
 For extensions:
  
 \item{mtry}{number of input variables randomly sampled as candidates at each
 node for random forest like algorithms. The default mtry = Inf means that no
 random selection takes place}
+
+
+
+Deprecated:
+
+\item{verbose, xtype, ytype, prune} deprecated.
 
 }
 

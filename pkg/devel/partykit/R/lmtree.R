@@ -57,7 +57,9 @@
 
 
 ## simple wrapper function to specify fitter and return class
-lmtree <- function(formula, data, subset, na.action, weights, offset, cluster, ...)
+lmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
+                   converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged }, 
+                   ...)
 {
   ## TODO: variance as model parameter
   

@@ -13,7 +13,9 @@
 }
 
 \usage{
-lmtree(formula, data, subset, na.action, weights, offset, cluster, \dots)
+lmtree(formula, data, subset, na.action, weights, offset, cluster,
+  converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged }, 
+  \dots)
 }
 
 \arguments{

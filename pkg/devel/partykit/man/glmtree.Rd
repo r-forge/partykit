@@ -13,7 +13,9 @@
 
 \usage{
 glmtree(formula, data, subset, na.action, weights, offset, cluster,
-  family = gaussian, epsilon = 1e-8, maxit = 25, \dots)
+  family = gaussian, epsilon = 1e-8, maxit = 25,
+  converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
+  scores = NULL, \dots)
 }
 
 \arguments{
