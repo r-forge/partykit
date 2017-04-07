@@ -10,9 +10,9 @@
 
 \usage{
 mob_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
- parm = NULL, bonferroni = TRUE, breakties = FALSE, nrep = 10000L,
- ordinal = "chisq", trim = 0.1, nresample = 9999L, teststat = "quadratic",
- splittry = 2, vcov = "opg", splitflavour = "exhaustive",
+ mincriterion = 1 - alpha, parm = NULL, bonferroni = TRUE, breakties = FALSE, 
+ nrep = 10000L, ordinal = "chisq", trim = 0.1, nresample = 9999L, 
+ teststat = "quadratic", splittry = 2, vcov = "opg", splitflavour = "exhaustive",
  splittest = FALSE, splitstat = "quadratic", catsplit = "binary",
  numsplit = "left", majority = FALSE, maxsurrogate = 0, MIA = FALSE,
  numsurrogate = FALSE, lookahead = FALSE, maxdepth = Inf,
@@ -212,7 +212,7 @@ random selection takes place}
 
 Deprecated:
 
-\item{verbose, xtype, ytype, prune} deprecated.
+\item{verbose, xtype, ytype, prune}{deprecated.}
 
 }
 

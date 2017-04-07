@@ -1,4 +1,4 @@
-nodeprune2.party <- function(x, ids, ...) {
+nodeprune.party <- function(x, ids, ...) {
   
   ### map names to nodeids
   if (!is.numeric(ids))
@@ -124,7 +124,7 @@ prune.modelparty <- function(object, type = "AIC")
     if(length(pnode) < 1L) break
     
     ## prune
-    object <- nodeprune2.party(object, ids = pnode)
+    object <- nodeprune.party(object, ids = pnode)
     node <- object$node
     nd <- as.list(node)
     

@@ -33,6 +33,9 @@ lmtree(formula, data, subset, na.action, weights, offset, cluster,
   \item{cluster}{optional vector (typically numeric or factor) with a
     cluster ID to be employed for clustered covariances in the parameter
     stability tests.}
+  \item{converged}{an optional function for checking user-defined criteria before 
+    splits are implemented. The default is to check if the log Likelihood is finite
+    and the model converged.}
   \item{\dots}{optional control parameters passed to
     \code{\link{mob_control}}.}
 }

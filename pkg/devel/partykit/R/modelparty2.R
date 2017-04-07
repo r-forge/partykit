@@ -196,14 +196,14 @@ mob_control <- function(
 
 mob <- function
 (
-  fit,
   formula, 
   data, 
-  weights = NULL, 
   subset,
+  na.action = na.pass, 
+  weights = NULL, 
   offset,
   cluster, 
-  na.action = na.pass, 
+  fit,
   control = mob_control(...), 
   converged = NULL,
   scores = NULL,

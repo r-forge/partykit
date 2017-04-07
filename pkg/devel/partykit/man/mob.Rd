@@ -28,8 +28,9 @@
 }
 
 \usage{
-mob(formula, data, subset, na.action, weights, offset, cluster,
-  fit, control = mob_control(), \dots)
+mob(formula, data, subset, na.action = na.pass, weights = NULL, offset, 
+  cluster, fit, control = mob_control(\dots), converged = NULL, scores = NULL, 
+  \dots)
 }
 
 \arguments{
@@ -51,6 +52,9 @@ mob(formula, data, subset, na.action, weights, offset, cluster,
     For details see below.}
   \item{control}{A list with control parameters as returned by
     \code{\link{mob_control}}.}
+  \item{converged}{an optional function for checking user-defined criteria before 
+    splits are implemented.}
+  \item{scores}{ }
   \item{\dots}{Additional arguments passed to the \code{fit} function.}
 }
 
