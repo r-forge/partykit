@@ -360,6 +360,10 @@ mob <- function
   k <- NCOL(process)
   n <- NROW(process)
   
+  ## stop if all collumn values in process are the same
+  if(all(apply(process, 2, function(x) length(unique(x))) == 1)) 
+    return(list(statistic = NA, p.value = NA))
+  
   ## scale process
   process <- process/sqrt(n)
   vcov <- control$vcov
@@ -558,9 +562,10 @@ mob <- function
       sp <- which.max(unlist(ll))
     
   } else {
-    splits <- mob_grow_getlevels(x)
+    xsubs <- factor(x[subset])
+    splits <- mob_grow_getlevels(xsubs)
     ll <- ctrl$applyfun(1:nrow(splits), function(u) {
-      sleft <- subset[LEFT <- x[subset] %in% levels(x)[splits[u,]]]
+      sleft <- subset[LEFT <- xsubs %in% levels(xsubs)[splits[u,]]]
       sright <- subset[!LEFT]
       if (length(weights) > 0) {
         if (sum(weights[sleft]) < minbucket ||
@@ -581,9 +586,14 @@ mob <- function
       return(ll)
     })
     maxlogLik <- max(unlist(ll))
-    if(maxlogLik > nosplitll)
+    if(maxlogLik > nosplitll) {
       sp <- splits[which.max(unlist(ll)),] + 1L
-    
+      levs <- levels(x)
+      if(length(sp) != length(levs)) {
+        sp <- sp[levs]
+        names(sp) <- levs
+      }
+    }
   }
   
   if (!splitonly){
