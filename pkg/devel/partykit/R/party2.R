@@ -112,6 +112,7 @@ prune.modelparty <- function(object, type = "AIC")
     ## pruning node information
     pnode <- which(check)
     objfun <- sapply(nd, function(x) x$info$objfun)
+    n <- nrow(object$fitted)
     pok <- sapply(pnode, function(i) type(
       objfun = c(objfun[i], sum(objfun[kids[[i]]])),
       df = c(length(nd[[1]]$info$coefficients), length(kids[[i]]) * length(nd[[1]]$info$coefficients) + as.integer(dfsplit)),
