@@ -563,6 +563,14 @@ mob <- function
     
   } else {
     xsubs <- factor(x[subset])
+    ## stop if only one level left
+    if(nlevels(xsubs) < 2) {
+      if (splitonly) {
+        return(NULL)
+      } else {
+        return(list(statistic = NA, p.value = NA))
+      } 
+    }
     splits <- mob_grow_getlevels(xsubs)
     ll <- ctrl$applyfun(1:nrow(splits), function(u) {
       sleft <- subset[LEFT <- xsubs %in% levels(xsubs)[splits[u,]]]
