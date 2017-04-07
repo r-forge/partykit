@@ -522,7 +522,7 @@ mob <- function
   ux <- NULL
   ORDERED <- is.ordered(x) || is.numeric(x)
   if (is.null(bdr)) {
-    if (!is.factor(x)) {
+    if (ORDERED) {
       x[-subset] <- NA
       ux <- sort(unique(x))
     }
