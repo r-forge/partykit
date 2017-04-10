@@ -68,3 +68,28 @@
   obj
 }
 ### </TH>
+
+## determine all possible splits for a factor, both nominal and ordinal
+.mob_grow_getlevels <- function(z) {
+  nl <- nlevels(z)
+  if(inherits(z, "ordered")) {
+    indx <- diag(nl)
+    indx[lower.tri(indx)] <- 1
+    indx <- indx[-nl, , drop = FALSE]
+    rownames(indx) <- levels(z)[-nl]
+  } else {
+    mi <- 2^(nl - 1L) - 1L
+    indx <- matrix(0, nrow = mi, ncol = nl)
+    for (i in 1L:mi) {
+      ii <- i
+      for (l in 1L:nl) {
+        indx[i, l] <- ii %% 2L
+        ii <- ii %/% 2L   
+      }
+    }
+    rownames(indx) <- apply(indx, 1L, function(x) paste(levels(z)[x > 0], collapse = "+"))
+  }
+  colnames(indx) <- as.character(levels(z))
+  storage.mode(indx) <- "logical"
+  indx
+}

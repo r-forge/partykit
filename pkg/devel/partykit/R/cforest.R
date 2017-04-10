@@ -208,9 +208,11 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
         fdata <- fitted_node(forest[[b]], object$data, ...)
         tw <- rw[[b]]
-        if (OOB) tw <- as.integer(tw == 0)
         pw <- sapply(ids, function(i) tw * (fdata == i))
-        return(pw[, match(fnewdata, ids), drop = FALSE])
+        ret <- pw[, match(fnewdata, ids), drop = FALSE]
+        ### obs which are in-bag for this tree don't contribute
+        if (OOB) ret[,tw > 0] <- 0
+        ret
     })
 
     w <- Reduce("+", bw)

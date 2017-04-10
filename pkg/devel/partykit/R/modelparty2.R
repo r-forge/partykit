@@ -555,7 +555,7 @@ mob <- function
         return(list(statistic = NA, p.value = NA))
       } 
     }
-    splits <- mob_grow_getlevels(xsubs)
+    splits <- .mob_grow_getlevels(xsubs)
     ll <- ctrl$applyfun(1:nrow(splits), function(u) {
       sleft <- subset[LEFT <- xsubs %in% levels(xsubs)[splits[u,]]]
       sright <- subset[!LEFT]
