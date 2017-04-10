@@ -54,7 +54,7 @@ mob(formula, data, subset, na.action = na.pass, weights = NULL, offset,
     \code{\link{mob_control}}.}
   \item{converged}{an optional function for checking user-defined criteria before 
     splits are implemented.}
-  \item{scores}{ }
+  \item{scores}{?}
   \item{\dots}{Additional arguments passed to the \code{fit} function.}
 }
 
