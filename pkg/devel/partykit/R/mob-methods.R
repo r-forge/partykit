@@ -354,3 +354,86 @@ plot.modelparty <- function(x, terminal_panel = NULL, FUN = NULL, ...) {
   }
   plot.party(x, terminal_panel = terminal_panel, ...)
 }
+
+### AIC-based pruning
+prune.modelparty <- function(object, type = "AIC")
+{
+  
+  ## prepare pruning function
+  if(is.character(type)) {
+    type <- tolower(type)
+    type <- match.arg(type, c("aic", "bic", "none"))
+    
+    if("lmtree" %in% class(object)) {
+      type <- switch(type,
+                     "aic" = {
+                       function(objfun, df, nobs) (nobs[1L] * log(- objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(- objfun[2L]) + 2 * df[2L])
+                     }, "bic" = {
+                       function(objfun, df, nobs) (nobs[1L] * log(- objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(- objfun[2L]) + log(nobs[2L]) * df[2L])
+                     }, "none" = {
+                       NULL
+                     })
+    } else {
+      type <- switch(type,
+                     "aic" = {
+                       function(objfun, df, nobs) (2 * - objfun[1L] + 2 * df[1L]) < (2 * - objfun[2L] + 2 * df[2L])
+                     }, "bic" = {
+                       function(objfun, df, nobs) (2 * - objfun[1L] + log(n) * df[1L]) < (2 * - objfun[2L] + log(n) * df[2L])
+                     }, "none" = {
+                       NULL
+                     })   
+    }
+  }
+  if(!is.function(type)) {
+    warning("Unknown specification of 'prune'")
+    type <- NULL
+  }
+  
+  ## degrees of freedom
+  dfsplit <- object$info$control$dfsplit
+  
+  ## turn node to list
+  node <- object$node
+  nd <- as.list(node)
+  
+  ## if no pruning selected
+  if(is.null(type)) return(nd)
+  
+  ## node information (IDs, kids, ...)
+  id <- seq_along(nd)
+  kids <- lapply(nd, "[[", "kids")
+  tmnl <- sapply(kids, is.null)
+  
+  ## check nodes that only have terminal kids
+  check <- sapply(id, function(i) !tmnl[i] && all(tmnl[kids[[i]]]))
+  while(any(check)) {
+    
+    ## pruning node information
+    pnode <- which(check)
+    objfun <- sapply(nd, function(x) x$info$objfun)
+    n <- nrow(object$fitted)
+    pok <- sapply(pnode, function(i) type(
+      objfun = c(objfun[i], sum(objfun[kids[[i]]])),
+      df = c(length(nd[[1]]$info$coefficients), length(kids[[i]]) * length(nd[[1]]$info$coefficients) + as.integer(dfsplit)),
+      nobs = c(nd[[i]]$info$nobs, n)
+    ))
+    
+    ## do any nodes need pruning?
+    pnode <- pnode[pok]
+    if(length(pnode) < 1L) break
+    
+    ## prune
+    object <- nodeprune.party(object, ids = pnode)
+    node <- object$node
+    nd <- as.list(node)
+    
+    ## node information
+    kids <- lapply(nd, "[[", "kids")
+    tmnl <- sapply(kids, is.null)
+    id <- seq_along(nd)
+    check <- sapply(id, function(i) !tmnl[i] && all(tmnl[kids[[i]]]))
+  }
+  
+  ## return pruned tree
+  return(object)
+}

@@ -1,7 +1,17 @@
+
 ## actual fitting function for mob()
-glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...,
-  estfun = FALSE, object = FALSE)
-{
+glmfit <- function(
+  y, 
+  x, 
+  start = NULL, 
+  weights = NULL, 
+  offset = NULL, 
+  cluster = NULL, 
+  ...,
+  estfun = FALSE, 
+  object = FALSE
+){
+
   ## catch control arguments
   args <- list(...)
   control <- list()
@@ -19,13 +29,18 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
     dimnames = list(NULL, "(Intercept)"))
 
   ## call glm fitting function
-  args <- c(list(x = x, y = y, start = start, weights = weights, offset = offset), args)
+  args <- c(list(x = x, y = y, start = start, weights = weights, 
+                 offset = offset), args)
   z <- do.call("glm.fit", args)
 
   ## degrees of freedom
   df <- z$rank
-  if(z$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) df <- df + 1
-  if(substr(z$family$family, 1L, 5L) != "quasi") objfun <- z$aic/2 - df else objfun <- z$deviance
+  if(z$family$family %in% c("gaussian", "Gamma", "inverse.gaussian")) 
+    df <- df + 1
+  if(substr(z$family$family, 1L, 5L) != "quasi") 
+    objfun <- z$aic/2 - df 
+  else 
+    objfun <- z$deviance
 
   ## list structure
   rval <- list(
@@ -75,7 +90,6 @@ print.glmtree <- function(x,
   print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
-
 predict.glmtree <- function(object, newdata = NULL, type = "response", ...)
 {
   ## FIXME: possible to get default?
@@ -98,14 +112,23 @@ plot.glmtree <- function(x, terminal_panel = node_bivplot,
   }
 }
 
-
 ## simple wrapper function to specify fitter and return class
-glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
-                    family = gaussian, epsilon = 1e-8, maxit = 25,
-                    converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
-                    scores = NULL, # TODO: figure out how to use this and implement correctly
-                    ...)
-{
+glmtree <- function(
+  formula, 
+  data, 
+  subset, 
+  na.action, 
+  weights, 
+  offset, 
+  cluster,
+  family = gaussian, 
+  epsilon = 1e-8, 
+  maxit = 25,
+  converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
+  scores = NULL, # TODO: figure out how to use this and implement correctly
+  ...
+) {
+
   ## use dots for setting up mob_control
   control <- mob_control(...)
   
@@ -150,4 +173,3 @@ glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
   class(rval) <- c("glmtree", class(rval))
   return(rval)
 }
-
