@@ -247,7 +247,7 @@
             return(ytrafo(formula, data = data, weights = weights, 
                           cluster = cluster, ctrl = ctrl))
         f <- Formula(formula)
-        mf <- model.frame(formula = f, data = data)
+        mf <- model.frame(formula = f, data = data, na.action = na.pass)
         for (nm in names(mf)[names(mf) %in% names(data)]) {
             sc <- attr(data[[nm]], "scores")
             if (!is.null(sc)) attr(mf[[nm]], "scores") <- sc
