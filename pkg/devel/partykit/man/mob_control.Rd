@@ -22,7 +22,7 @@ mob_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
  splittest = FALSE, splitstat = "quadratic", catsplit = "binary",
  numsplit = "left", majority = FALSE, maxsurrogate = 0, MIA = FALSE,
  numsurrogate = FALSE, lookahead = FALSE, maxdepth = Inf,
- minbucket = minsize, minprob = 0.01, minsplit = minsize, minsize = 20L,
+ minbucket = minsize, minprob = 0.01, minsplit = minsize, minsize = NULL,
  stump = FALSE, caseweights = TRUE, dfsplit = TRUE, applyfun = NULL,
  cores = NULL, restart = FALSE, inner = "object", model = TRUE,
  terminal = "object", mtry = Inf,
@@ -276,9 +276,6 @@ how to do variable and split point selection.
     test statistic.
   }
   }
-
-  \if{html}{\figure{mobcontrol.pdf}}
-  \if{latex}{\figure{mobcontrol.pdf}{options: width=5.5in}}
 
   See \code{\link{mob}} for more details and references.
 }

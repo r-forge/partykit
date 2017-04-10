@@ -120,7 +120,7 @@ mob_control <- function(
   minbucket = minsize,
   minprob = 0.01,
   minsplit = minsize,
-  minsize = 20L,
+  minsize = NULL,
   stump = FALSE,
   caseweights = TRUE,
   dfsplit = TRUE,
@@ -186,6 +186,12 @@ mob_control <- function(
       stop("mincriterion = 1 - alpha must be between 0 and 1.")
   }
   
+  ### make sure right criterion is used for exhaustive search
+  if(testflavour == "exhaustive"){
+    criterion <- "statistic"
+    logmincriterion <- -Inf
+  }
+  
   c(.urp_control(criterion = criterion,
                  logmincriterion = log(mincriterion), minsplit = minsplit, 
                  minbucket = minbucket, minprob = minprob, nmax = Inf, 
@@ -220,10 +226,18 @@ mob <- function
   ...
 ) {
 
-  ### make sure right criterion is used for exhaustive search
-  if(control$testflavour == "exhaustive"){
-    control$criterion <- "statistic"
-    control$logmincriterion <- -Inf
+
+  
+  ### if minsize is NULL, set to 10 * number of parameters
+  if (is.null(control$minbucket) | is.null(control$minsplit)) {
+    Fmla <- as.Formula(formula)
+    n_coef <- length(attr(terms(Fmla, lhs = 0, rhs = 1), "term.labels"))
+    if(n_coef == 0) n_coef <- 1
+    n_y <- length(attr(terms(Fmla, lhs = 1, rhs = 0), "term.labels"))
+    if(n_y == 0) n_y <- 1
+    minsize <- as.integer(ceiling(10L * n_coef/n_y))
+    if (is.null(control$minbucket)) control$minbucket <- minsize
+    if (is.null(control$minsplit)) control$minsplit <- minsize
   }
   
   ### get the call and the calling environment for .urp_tree

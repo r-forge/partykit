@@ -1170,7 +1170,7 @@ problems in the logistic regression.
 %
 <<Titanic-tree>>=
 ttnc_tree <- glmtree(Survived ~ Treatment | Class + Gender + Age,
-  data = ttnc, family = binomial, alpha = 0.01, minbucket = 25)
+  data = ttnc, family = binomial, alpha = 0.01)
 ttnc_tree
 @
 %
