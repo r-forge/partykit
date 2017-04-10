@@ -4,8 +4,14 @@
 \title{Control Parameters for Model-Based Partitioning}
 
 \description{
-  Various parameters that control aspects the fitting algorithm
-  for recursively partitioned \code{\link{mob}} models.
+  Various parameters that control aspects of the fitting algorithm
+  for recursively partitioned \code{\link{mob}} models. These types of 
+  models are very flexible which leads to many control parameters. For
+  a guide on how to decide on the most important control parameters, see
+  Section \bold{Details}. \bold{Arguments} are grouped in variable selection,
+  split point selection, splitting in case of missings, stopping, 
+  observation number and degrees of freedom, computation, return options, 
+  for extensions, and deprecated.
 }
 
 \usage{
@@ -24,9 +30,7 @@ mob_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
 }
 
 \arguments{
-
-Variable selection:
-
+\bold{Variable selection:} 
 \item{testflavour}{split variable selection strategy. The default,  "mfluc",
 uses M-fluctuation tests; "ctree" uses permutation tests as in ctree and
 "exhaustive" goes through all variables and splits and selects the one
@@ -88,7 +92,7 @@ likelihood estimation).}
 
 
 
-Split point selection:
+\bold{Split point selection:}
  
 \item{splitflavour}{split point selection strategy. The default, "exhaustive",
 goes through all possible split points and chooses the one corresponding to the
@@ -122,7 +126,7 @@ applied for split point selection}
 
 
 
-Splitting in case of missings:
+\bold{Splitting in case of missings:}
  
 \item{majority}{if FALSE, observations wich can't be classified to a daughter
 node because of missing information are randomly assigned (following the node
@@ -139,7 +143,7 @@ only numeric variables are considered for surrogate splits}
 
 
 
-Stopping:
+\bold{Stopping:}
  
 \item{lookahead}{a logical determining whether a split is implemented only
 after checking if tests in both daughter nodes can be performed.}
@@ -161,7 +165,7 @@ nodes) is to be computed}
 
 
 
-Observation number and degrees of freedom:
+\bold{Observation number and degrees of freedom:}
  
 \item{caseweights}{a logical interpreting weights as case weights}
  
@@ -170,7 +174,7 @@ freedom per selected split employed when computing information criteria etc.}
 
 
 
-Computation:
+\bold{Computation:}
  
 \item{applyfun}{an optional lapply-style function with arguments function(X,
 FUN, ...). It is used for computing the variable selection criterion. The default
@@ -188,7 +192,7 @@ practice the difference are often not huge).}
 
 
 
-Return options:
+\bold{Return options:}
  
 \item{inner}{character. Specification of whether the model object should be
 stored in each node. If NULL, no additional information is stored.}
@@ -202,7 +206,7 @@ additional information is stored.}
 
 
 
-For extensions:
+\bold{For extensions:}
  
 \item{mtry}{number of input variables randomly sampled as candidates at each
 node for random forest like algorithms. The default mtry = Inf means that no
@@ -210,7 +214,7 @@ random selection takes place}
 
 
 
-Deprecated:
+\bold{Deprecated:}
 
 \item{verbose, xtype, ytype, prune}{deprecated.}
 
@@ -273,10 +277,13 @@ how to do variable and split point selection.
   }
   }
 
+  \if{html}{\figure{mobcontrol.pdf}}
+  \if{latex}{\figure{mobcontrol.pdf}{options: width=5.5in}}
+
   See \code{\link{mob}} for more details and references.
 }
 
-\seealso{\code{\link{mob}}}
+\seealso{\code{\link{mob}}, \code{\link{glmtree}}, \code{\link{lmtree}}}
 
 \value{
   A list of class \code{mob_control} containing the control parameters.

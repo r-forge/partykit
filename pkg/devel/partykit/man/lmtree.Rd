@@ -25,8 +25,8 @@ lmtree(formula, data, subset, na.action, weights, offset, cluster,
   \item{data, subset, na.action}{arguments controlling formula processing
     via \code{\link[stats]{model.frame}}.}
   \item{weights}{optional numeric vector of weights. By default these are
-    treated as case weights but the default can be changed in
-    \code{\link{mob_control}}.}
+    treated as case weights but the default can be changed by setting 
+    \code{caseweights = FALSE} (see \code{\link{mob_control}}).}
   \item{offset}{optional numeric vector with an a priori known component to be
     included in the model \code{y ~ x1 + \dots + xk} (i.e., only when
     \code{x} variables are specified).}
