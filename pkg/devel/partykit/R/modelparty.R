@@ -266,21 +266,22 @@ mob <- function
   weights <- model.weights(mf)
   if(any(weights == 0)) stop("Cannot yet handle zero weights.")
   if (is.null(weights)) weights <- rep(1, nrow(mf))
-  mtY <- terms(tree$modelf, data = mf)
-  mtZ <- delete.response(terms(tree$partf, data = mf))
+  modelf <- as.Formula(tree$modelf)
+  partf <- as.Formula(tree$partf)
+  mtY <- terms(modelf, data = mf)
+  mtZ <- delete.response(terms(partf, data = mf))
   
   fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  mfm <- as.Formula(formula)
-  mmf <- model.frame(mfm, data = mf)
-  y <- model.part(mfm, data = mmf, lhs = 1, rhs = 0)
+  mmf <- model.frame(modelf, data = mf)
+  y <- model.part(modelf, data = mmf, lhs = 1, rhs = 0)
   if (length(y) == 1) y <- y[[1]]
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
   
   control$ytype <- ifelse(is.vector(y), "vector", class(y))
-  x <- model.matrix(tree$modelf, data = mf)
+  x <- model.matrix(modelf, data = mmf)
   control$xtype <- "matrix" # TODO: find out when to use data.frame
   
   ## return party object
