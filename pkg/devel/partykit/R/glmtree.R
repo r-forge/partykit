@@ -1,53 +1,3 @@
-# ## simple wrapper function to specify fitter and return class
-# glmtree <- function(formula, data, subset, na.action, weights, offset, cluster,
-#   family = gaussian, epsilon = 1e-8, maxit = 25, ...)
-# {
-#   ## use dots for setting up mob_control
-#   control <- mob_control(...)
-# 
-#   ## keep call
-#   cl <- match.call(expand.dots = TRUE)
-# 
-#   ## extend formula if necessary
-#   f <- Formula::Formula(formula)
-#   if(length(f)[2L] == 1L) {
-#     attr(f, "rhs") <- c(list(1), attr(f, "rhs"))
-#     formula[[3L]] <- formula(f)[[3L]]
-#   } else {
-#     f <- NULL
-#   }
-# 
-#   ## process family
-#   if(inherits(family, "family")) {
-#     fam <- TRUE
-#   } else {
-#     fam <- FALSE
-#     if(is.character(family)) family <- get(family)
-#     if(is.function(family)) family <- family()
-#   }
-# 
-#   ## call mob
-#   m <- match.call(expand.dots = FALSE)
-#   if(!is.null(f)) m$formula <- formula
-#   m$fit <- glmfit
-#   m$control <- control
-#   m$epsilon <- epsilon
-#   m$maxit <- maxit
-#   if("..." %in% names(m)) m[["..."]] <- NULL
-#   if(!fam) m$family <- family
-#   m[[1L]] <- as.call(quote(partykit::mob))
-#   rval <- eval(m, parent.frame())
-#   
-#   ## extend class and keep original call
-#   rval$info$call <- cl
-#   rval$info$family <- family$family
-#   class(rval) <- c("glmtree", class(rval))
-#   return(rval)
-# }
-
-
-
-
 ## actual fitting function for mob()
 glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...,
   estfun = FALSE, object = FALSE)
@@ -125,13 +75,6 @@ print.glmtree <- function(x,
   print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
-# print.glmtree <- function(x,
-#   title = NULL, objfun = NULL, ...)
-# {
-#   if(is.null(title)) title <- sprintf("Generalized linear model tree (family: %s)", x$info$family)
-#   if(is.null(objfun)) objfun <- if(substr(x$info$family, 1L, 5L) != "quasi") "negative log-likelihood" else "deviance"
-#   print.modelparty(x, title = title, objfun = objfun, ...)
-# }
 
 predict.glmtree <- function(object, newdata = NULL, type = "response", ...)
 {

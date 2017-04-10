@@ -312,22 +312,6 @@ mob <- function
     tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
   }
   
-  
-  
-  # ### add modelinfo if not there yet
-  # terminals <- nodeids(rval, terminal = TRUE)
-  # idx <- lapply(terminals, .get_path, obj = tree$nodes)
-  # tree_ret <- unclass(rval)
-  # subset_term <- predict(rval, type = "node")
-  # 
-  # for (i in 1:length(idx)) {
-  # 
-  #   if(is.null(tree_ret[[c(1, idx[[i]])]]$info)) {
-  #     tree_ret[[c(1, idx[[i]])]]$info <- tree$trafo(subset = which(subset_term == terminals[i]),
-  #                                                   estfun = FALSE)
-  #   }
-  # }
-  
   class(tree_ret) <- class(rval)
   
   return(tree_ret)
