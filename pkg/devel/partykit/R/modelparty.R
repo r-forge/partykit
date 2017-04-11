@@ -16,12 +16,9 @@
   ### <FIXME> handle offset and cluster </FIXME>
   if (!is.null(cluster)) stop("cluster not implemented")
   mf <- model.frame(formula, data, na.action = na.pass)
-  cc <- complete.cases(mf)
   y <- model.response(mf)
   x <- model.matrix(formula, data = mf)
-  
-  ## In psychotree missings in y are allowed
-  if(class(y) == "paircomp") cc <- complete.cases(x)
+  cc <- complete.cases(x)
   
   ## function for model fitting
   modelfit <- function(subset, estfun = TRUE, object = "object" %in% ctrl$inner, 
@@ -234,11 +231,20 @@ mob <- function
   scores = NULL,
   ...
 ) {
-
+  ### get the call and the calling environment for .urp_tree
+  call <- match.call(expand.dots = FALSE)
+  call$na.action <- na.action
+  frame <- parent.frame()
+  if (missing(data)) {
+    data <- NULL
+    data_asis <- FALSE
+  } else {
+    data_asis <- missing(weights) && missing(subset) && 
+      missing(cluster) && missing(offset)
+  }
   
   Formula <- as.Formula(formula)
   weights <- model.weights(data)
-  if (is.null(weights)) weights <- integer(0)
   mf <- model.frame(Formula, data, na.action = na.pass)
   y <- model.response(mf)
   x <- model.matrix(Formula, data = mf)
@@ -251,7 +257,8 @@ mob <- function
     
     args <- c(list(x = if (ncol(x) == 0) NULL else x, y = y, 
                    weights = weights, offset = offset),
-              list(object = FALSE, estfun = FALSE),
+              list(object = FALSE, estfun = FALSE)[c("estfun", "object") %in% 
+                                                     names(formals(fit))],
               list(...))
     mod0 <- do.call("fit", args = args)
     
@@ -264,17 +271,7 @@ mob <- function
     if (is.null(control$minsplit)) control$minsplit <- minsize
   }
   
-  ### get the call and the calling environment for .urp_tree
-  call <- match.call(expand.dots = FALSE)
-  call$na.action <- na.action
-  frame <- parent.frame()
-  if (missing(data)) {
-    data <- NULL
-    data_asis <- FALSE
-  } else {
-    data_asis <- missing(weights) && missing(subset) && 
-      missing(cluster) && missing(offset)
-  }
+
   
   # trafofun <- function(...) .modeltrafo(..., converged = converged, fit = fit)
   dots <- list(...)
