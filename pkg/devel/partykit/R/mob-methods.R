@@ -161,7 +161,7 @@ summary.modelparty <- function(object, node = NULL, ...)
 sctest.modelparty <- function(object, node = NULL, ...)
 {
   ids <- if(is.null(node)) nodeids(object, terminal = FALSE) else node
-  rval <- nodeapply(object, ids, function(n) info_node(n)$test)
+  rval <- nodeapply(object, ids, function(n) info_node(n)$criterion)
   names(rval) <- ids
   if(length(ids) == 1L) rval[[1L]] else rval  
 }
@@ -205,7 +205,7 @@ print.modelparty <- function(x, node = NULL,
   } else {
     node <- as.integer(node)
     info <- nodeapply(x, ids = node,
-      FUN = function(n) info_node(n)[c("coefficients", "objfun", "test")])    
+      FUN = function(n) info_node(n)[c("coefficients", "objfun", "criterion")])    
     for(i in seq_along(node)) {
       if(i == 1L) {
         cat(paste(title, "\n", collapse = ""))
@@ -217,7 +217,7 @@ print.modelparty <- function(x, node = NULL,
       print(info[[i]]$coefficients)
       cat(sprintf("\nObjective function:\n%s\n", format(info[[i]]$objfun)))
       cat("\nParameter instability tests:\n")
-      print(info[[i]]$test)
+      print(info[[i]]$criterion)
     }
   }
   invisible(x)

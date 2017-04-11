@@ -20,6 +20,9 @@
   y <- model.response(mf)
   x <- model.matrix(formula, data = mf)
   
+  ## In psychotree missings in y are allowed
+  if(class(y) == "paircomp") cc <- complete.cases(x)
+  
   ## function for model fitting
   modelfit <- function(subset, estfun = TRUE, object = "object" %in% ctrl$inner, 
                        info = NULL) {
@@ -232,14 +235,29 @@ mob <- function
   ...
 ) {
 
-
+  
+  Formula <- as.Formula(formula)
+  weights <- model.weights(data)
+  if (is.null(weights)) weights <- integer(0)
+  mf <- model.frame(Formula, data, na.action = na.pass)
+  y <- model.response(mf)
+  x <- model.matrix(Formula, data = mf)
   
   ### if minsize is NULL, set to 10 * number of parameters
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
-    Fmla <- as.Formula(formula)
-    n_coef <- length(attr(terms(Fmla, lhs = 0, rhs = 1), "term.labels"))
+    cluster <- data[["cluster"]]
+    offset <- model.offset(data)
+    cc <- complete.cases(mf)
+    
+    args <- c(list(x = if (ncol(x) == 0) NULL else x, y = y, 
+                   weights = weights, offset = offset),
+              list(object = FALSE, estfun = FALSE),
+              list(...))
+    mod0 <- do.call("fit", args = args)
+    
+    n_coef <- ifelse(is.list(mod0), length(mod0$coefficients), coef(mod0))
     if(n_coef == 0) n_coef <- 1
-    n_y <- length(attr(terms(Fmla, lhs = 1, rhs = 0), "term.labels"))
+    n_y <- length(attr(terms(Formula, lhs = 1, rhs = 0), "term.labels"))
     if(n_y == 0) n_y <- 1
     minsize <- as.integer(ceiling(10L * n_coef/n_y))
     if (is.null(control$minbucket)) control$minbucket <- minsize
@@ -267,8 +285,8 @@ mob <- function
   
   ### prepare as modelparty
   mf <- tree$mf
-  weights <- model.weights(mf)
-  if (is.null(weights)) weights <- rep(1, nrow(mf))
+  # weights <- model.weights(mf)
+  if (length(weights) == 0) weights <- rep(1, nrow(mf))
   modelf <- as.Formula(tree$modelf)
   partf <- as.Formula(tree$partf)
   mtY <- terms(modelf, data = mf)
@@ -278,13 +296,13 @@ mob <- function
                        "(weights)" = weights,
                        check.names = FALSE)
   mmf <- model.frame(modelf, data = mf)
-  y <- model.part(modelf, data = mmf, lhs = 1, rhs = 0)
-  if (length(y) == 1) y <- y[[1]]
+  # y <- model.part(modelf, data = mmf, lhs = 1, rhs = 0)
+  # if (length(y) == 1) y <- y[[1]]
   fitted[[3]] <- y
   names(fitted)[3] <- "(response)"
   
   control$ytype <- ifelse(is.vector(y), "vector", class(y))
-  x <- model.matrix(modelf, data = mmf)
+  # x <- model.matrix(modelf, data = mmf)
   control$xtype <- "matrix" # TODO: find out when to use data.frame
   
   ## return party object
@@ -623,13 +641,13 @@ mob <- function
   }
   if (is.null(sp) || all(is.na(sp))) return(NULL)
   if (ORDERED) {
-    if (!is.ordered(x))
-      ### interpolate split-points, see https://arxiv.org/abs/1611.04561
-      if (ctrl$intersplit & sp < length(ux)) {
-        sp <- (ux[sp] + ux[sp + 1]) / 2 
-      } else {
-        sp <- ux[sp]  ### x <= sp vs. x > sp
-      }
+    ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+    if (!is.factor(x) & ctrl$intersplit & sp < length(ux)) {
+      sp <- (ux[sp] + ux[sp + 1]) / 2 
+    } else {
+      sp <- ux[sp]  ### x <= sp vs. x > sp
+    }
+    if (is.factor(sp)) sp <- as.integer(sp)
     ret <- partysplit(as.integer(j), breaks = sp,
                       index = 1L:2L)
   } else {

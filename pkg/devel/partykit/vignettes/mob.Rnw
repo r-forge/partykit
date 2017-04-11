@@ -1010,7 +1010,8 @@ with Charles river) and thus needs to be turned into a factor. Furthermore, the 
 values. Hence, it is most appropriately treated as an ordered factor.
 Note that both transformations only affect the parameter stability test chosen (step~2), not the splitting
 procedure (step~3).
-%
+% Note that with splittry = 0 (according to old version of mob) there is no
+% split in dis
 <<BostonHousing-tree>>=
 bh_tree <- lmtree(medv ~ log(lstat) + I(rm^2) | zn + indus + chas + nox +
   age + dis + rad + tax + crim + b + ptratio, data = BostonHousing)
