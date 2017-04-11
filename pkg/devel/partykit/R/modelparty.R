@@ -45,10 +45,16 @@
       weights <- NULL
     }
     
+    if (length(offset) > 0) {
+      offset <- offset[s]
+    } else {
+      offset <- NULL
+    }
+    
     
     ## call the fit function
     args <- c(list(x = if (ncol(xs) == 0) NULL else xs, y = ys, 
-                   start = info$coef, weights = weights),
+                   start = info$coef, weights = weights, offset = offset),
               list(object = TRUE, estfun = TRUE)[c("estfun", "object") %in% 
                                                    names(formals(fit))],
               list(...))
@@ -75,7 +81,7 @@
     ef <- NULL
     if(estfun) {
       ef <- matrix(0, nrow = NROW(x), ncol = NCOL(ret$estfun))
-      ef[subset,] <- ret$estfun
+      ef[s,] <- ret$estfun
       if(!is.null(ctrl$parm)) ef <- ef[, ctrl$parm]
     }
     
@@ -261,10 +267,7 @@ mob <- function
   
   ### prepare as modelparty
   mf <- tree$mf
-  
-  # weights cannot be 0, otherwise logLik is Inf
   weights <- model.weights(mf)
-  if(any(weights == 0)) stop("Cannot yet handle zero weights.")
   if (is.null(weights)) weights <- rep(1, nrow(mf))
   modelf <- as.Formula(tree$modelf)
   partf <- as.Formula(tree$partf)
