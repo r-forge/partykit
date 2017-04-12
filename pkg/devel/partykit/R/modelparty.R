@@ -206,6 +206,7 @@ mob_control <- function(
                  MIA = MIA, maxsurrogate = maxsurrogate, 
                  numsurrogate = numsurrogate, majority = majority, 
                  caseweights = caseweights, applyfun = applyfun, cores = cores, 
+                 saveinfo = TRUE, ### always
                  testflavour = testflavour, splitflavour = splitflavour, 
                  bonferroni = bonferroni, trim = trim),
     list(breakties = breakties, testtype = testtype, nresample = nresample, 

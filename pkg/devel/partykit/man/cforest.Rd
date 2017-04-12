@@ -14,7 +14,7 @@
 
 \usage{
 cforest(formula, data, weights, subset, offset, cluster, strata, 
-        na.action = na.pass, control = ctree_control(mincriterion = 0, ...),
+        na.action = na.pass, control = ctree_control(mincriterion = 0, saveinfo = FALSE, ...),
         ytrafo = NULL, scores = NULL, ntree = 500L, 
         perturb = list(replace = FALSE, fraction = 0.632), 
         mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL, 
@@ -51,7 +51,8 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
   \item{control}{a list with control parameters, see
                  \code{\link{ctree_control}}. The default values correspond to those
                  of the default values used by \code{\link[party]{cforest}} from the
-                 \code{party} package.}
+                 \code{party} package. \code{saveinfo = FALSE} leads to less
+                 memory hungry representations of trees.}
   \item{ytrafo}{an optional named list of functions to be applied to the response
                 variable(s) before testing their association with the explanatory
                 variables. Note that this transformation is only

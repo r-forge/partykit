@@ -327,7 +327,8 @@ ctree_control <- function
     majority = FALSE, 
     caseweights = TRUE, 
     applyfun = NULL, 
-    cores = NULL
+    cores = NULL,
+    saveinfo = TRUE
 ) {
 
     testtype <- match.arg(testtype, several.ok = TRUE)
@@ -353,7 +354,8 @@ ctree_control <- function
                    splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
                    numsurrogate = numsurrogate,
                    majority = majority, caseweights = caseweights, 
-                   applyfun = applyfun, testflavour = "ctree", 
+                   applyfun = applyfun, saveinfo = saveinfo,  ### always
+                   testflavour = "ctree", 
                    bonferroni = "Bonferroni" %in% testtype, 
                    splitflavour = "ctree"),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,

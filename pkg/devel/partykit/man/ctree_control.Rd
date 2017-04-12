@@ -17,7 +17,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
     minprob = 0.01, stump = FALSE, lookahead = FALSE, nresample = 9999L, 
     MIA = FALSE, maxsurrogate = 0L, numsurrogate = FALSE, mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
-    caseweights = TRUE, applyfun = NULL, cores = NULL)
+    caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE)
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
@@ -87,6 +87,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
                   function unless the \code{cores} argument is specified (see below).}
   \item{cores}{numeric. If set to an integer the \code{applyfun} is set to
                \code{\link[parallel]{mclapply}} with the desired number of \code{cores}.}
+  \item{saveinfo}{logical. Store information about variable selection
+                  procedure in \code{info} slot of each \code{partynode}.}
 
 }
 \details{

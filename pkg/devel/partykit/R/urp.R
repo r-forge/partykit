@@ -371,8 +371,9 @@
     pmin <- p["p.value", which.max(crit)]
     names(pmin) <- colnames(data)[which.max(crit)]
 
-    info <- c(list(criterion = p, p.value = pmin), 
+    info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
                    sf[!(names(sf) %in% c("criteria", "splitfun"))])
+    if (!ctrl$saveinfo) info <- NULL
 
     ### nothing "significant"
     if (all(crit <= ctrl$logmincriterion))
@@ -433,7 +434,7 @@
         kids[[k]] <- .urp_node(id = nextid, data = data, 
             selectfun = selectfun, partyvars = partyvars, 
             weights = weights, subset = nextsubset, 
-            ctrl = ctrl, info = info, cenv = cenv)
+            ctrl = ctrl, info = nodeinfo, cenv = cenv)
         ### was: nextid <- max(nodeids(kids[[k]])) + 1L
         nextid <- get("maxid", envir = cenv) + 1L
     }
@@ -620,6 +621,7 @@
     caseweights = TRUE, 
     applyfun = NULL, 
     cores = NULL,
+    saveinfo = TRUE,
     testflavour = c("ctree", "exhaustive", "mfluc"),
     bonferroni = FALSE,
     splitflavour = c("ctree", "exhaustive"),
@@ -657,7 +659,7 @@
          MIA = MIA, maxsurrogate = maxsurrogate, 
          numsurrogate = numsurrogate, majority = majority,
          caseweights = caseweights, applyfun = applyfun,
-         testflavour = match.arg(testflavour), 
+         saveinfo = saveinfo, testflavour = match.arg(testflavour), 
          bonferroni = bonferroni,
          splitflavour = match.arg(splitflavour),
          vcov = match.arg(vcov),
