@@ -197,13 +197,13 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     ### extract weights
     rw <- object$weights
 
-    # w <- matrix(0L, nrow = NROW(responses), ncol = length(nam))
+    w <- 0L
 
     applyfun <- lapply
     if (!is.null(object$info))
         applyfun <- object$info$control$applyfun
 
-    bw <- applyfun(1:length(forest), function(b) {
+    for (b in 1:length(forest)) {
         ids <- nodeids(forest[[b]], terminal = TRUE)
         fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
         fdata <- fitted_node(forest[[b]], object$data, ...)
@@ -212,10 +212,10 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         ret <- pw[, match(fnewdata, ids), drop = FALSE]
         ### obs which are in-bag for this tree don't contribute
         if (OOB) ret[,tw > 0] <- 0
-        ret
-    })
+        w <- w + ret
+    }
 
-    w <- Reduce("+", bw)
+    #w <- Reduce("+", bw)
     if (!is.matrix(w)) w <- matrix(w, ncol = 1)
 
     if (type == "weights") {
