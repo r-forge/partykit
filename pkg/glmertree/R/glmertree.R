@@ -63,7 +63,8 @@ lmertree <- function(formula, data, weights = NULL,
       } else {
         lme <- lmer(rf, data = data, weights = .weights)
       }
-      b <- structure(lme@beta, .Names = names(coef(lme)[[1L]]))
+      #b <- structure(lme@beta, .Names = names(coef(lme)[[1L]]))
+      b <- structure(lme@beta, .Names = names(fixef(lme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
       data$.ranef <- suppressWarnings(suppressMessages(predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
@@ -169,7 +170,8 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       } else {
         glme <- glmer(rf, data = data, family = family, weights = .weights)
       }
-      b <- structure(glme@beta, .Names = names(coef(glme)[[1L]]))
+      #b <- structure(glme@beta, .Names = names(coef(glme)[[1L]]))
+      b <- structure(glme@beta, .Names = names(fixef(glme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
       data$.ranef <- suppressWarnings(suppressMessages(predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
@@ -278,7 +280,8 @@ print.glmertree <- function(x, title = "Generalized linear mixed model tree", ..
   invisible(x)
 }
 
-predict.lmertree <- function(object, newdata = NULL, type = "response", ...) { 
+predict.lmertree <- function(object, newdata = NULL, type = "response", 
+                             re.form = NULL, ...) { 
   if(is.null(newdata)) {
     newdata <- object$data
   }
@@ -289,15 +292,16 @@ predict.lmertree <- function(object, newdata = NULL, type = "response", ...) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
       levels(newdata$.tree) <- levels(object$data$.tree)
-      predict(object$lmer, newdata = newdata, type = type, ...)
+      predict(object$lmer, newdata = newdata, type = type, re.form = re.form, ...)
     } else {
-      newdata$.ranef <- predict(object$lmer, newdata = newdata, ...)
+      newdata$.ranef <- predict(object$lmer, newdata = newdata, re.form, ...)
       predict(object$tree, newdata = newdata, type = type)
     }
   }
 }
 
-predict.glmertree <- function(object, newdata = NULL, type = "response", ...) { 
+predict.glmertree <- function(object, newdata = NULL, type = "response", 
+                              re.form = NULL, ...) { 
   if(is.null(newdata)) {
     newdata <- object$data
   }
@@ -308,9 +312,11 @@ predict.glmertree <- function(object, newdata = NULL, type = "response", ...) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
       levels(newdata$.tree) <- levels(object$data$.tree)
-      predict(object$glmer, newdata = newdata, type = type, ...)
+      predict(object$glmer, newdata = newdata, type = type, re.form = re.form, 
+              ...)
     } else {
-      newdata$.ranef <- predict(object$glmer, newdata = newdata, type = "link", ...)
+      newdata$.ranef <- predict(object$glmer, newdata = newdata, type = "link", 
+                                re.form = re.form, ...)
       predict(object$tree, newdata = newdata, type = type)
     }
   }
