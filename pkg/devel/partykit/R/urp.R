@@ -85,8 +85,10 @@
                 ret$criteria["statistic", j] <- tst$statistic
                 ret$criteria["p.value", j] <- tst$p.value
             }
-            if (ctrl$bonferroni)
-                ret$criteria["p.value",] <- ret$criteria["p.value",] * length(whichvar)
+            if (ctrl$bonferroni) 
+                ### make sure to correct for _non-constant_ variables only
+                ret$criteria["p.value",] <- ret$criteria["p.value",] * 
+                                            sum(!is.na(ret$criteria["p.value",]))
 
             ret <- c(ret, tr[names(tr) != "estfun"])
 
@@ -236,8 +238,9 @@
                 ret$criteria["p.value", j] <- tst$p.value
             }
             if (ctrl$bonferroni)
+                ### make sure to correct for _non-constant_ variables only
                 ret$criteria["p.value",] <- ret$criteria["p.value",] * 
-                    length(whichvar)
+                                            sum(!is.na(ret$criteria["p.value",]))
 
             ret <- c(ret, tr[!(names(tr) %in% c("estfun", "index"))])
 
