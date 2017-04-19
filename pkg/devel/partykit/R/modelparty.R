@@ -248,7 +248,12 @@ mob <- function
   weights <- model.weights(data)
   mf <- model.frame(Formula, data, na.action = na.pass)
   y <- model.response(mf)
-  x <- model.matrix(Formula, data = mf)
+  if(length(Formula)[2] == 2) {
+    modelfmla <- formula(Formula, lhs = 1L, rhs = 1L)
+  } else {
+    modelfmla <- formula(Formula, lhs = 1L, rhs = 0L)
+  }
+  x <- model.matrix(modelfmla, data = mf)
   
   ### if minsize is NULL, set to 10 * number of parameters
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
@@ -377,6 +382,7 @@ mob <- function
   ww0 <- (weights > 0)
   ww0[!(seq_along(ww0) %in% subset)] <- FALSE
   process <- process[ww0, , drop = FALSE]
+  cluster <- cluster[ww0]
   z <- z[ww0]
   k <- NCOL(process)
   n <- NROW(process)
