@@ -270,8 +270,7 @@ mob <- function
     
     n_coef <- ifelse(is.list(mod0), length(mod0$coefficients), coef(mod0))
     if(n_coef == 0) n_coef <- 1
-    n_y <- length(attr(terms(Formula, lhs = 1, rhs = 0), "term.labels"))
-    if(n_y == 0) n_y <- 1
+    n_y <- NCOL(y)
     minsize <- as.integer(ceiling(10L * n_coef/n_y))
     if (is.null(control$minbucket)) control$minbucket <- minsize
     if (is.null(control$minsplit)) control$minsplit <- minsize
