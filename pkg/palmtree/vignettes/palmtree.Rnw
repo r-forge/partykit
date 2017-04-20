@@ -1,0 +1,523 @@
+\documentclass[nojss]{jss}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\newcommand{\TODO}[1]{{\color{red} #1}}
+
+% for verbatim environment with commands
+\usepackage{alltt}
+
+
+\author{Heidi Seibold\\ University of Zurich \And
+        Torsten Hothorn\\ University of Zurich \And
+        Achim Zeileis\\ University of Innsbruck}
+\Plainauthor{Achim Zeileis, Torsten Hothorn}
+
+\title{PALM tree Vignette}
+
+
+\Keywords{model-based recursive partitioning, subgroup analyses, GLM}
+
+\Abstract{  
+Both generalised linear models (GLMs) and GLM trees are common and useful
+methods to analyse a wide variety of data. In GLMs effects are linear whereas
+in GLM trees they are subgroup-wise linear. PALM trees provides provides a
+compromise between the two by allowing for subgroup-wise linear effects next to
+globally linear effects. We show how PALM trees can be applied using the
+function \code{palmtree} in the \proglang{R} \pkg{partykit} package.
+}
+
+\Address{
+  Heidi Seibold\\
+  Department of Biostatistics\\
+  Epidemiology, Biostatistics and Prevention Institute\\
+  University of Zurich\\
+  Hirschengraben 84\\
+  CH-8001 Zurich, Switzerland\\
+  E-mail: \email{Heidi.Seibold@uzh.ch}\\
+  URL: \url{http://www.ebpi.uzh.ch/en/aboutus/departments/biostatistics/teambiostats/seibold.html}\\
+
+  Torsten Hothorn\\
+  Department of Biostatistics\\
+  Epidemiology, Biostatistics and Prevention Institute\\
+  University of Zurich \\
+  Hirschengraben 84\\
+  CH-8001 Zurich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+  
+  Achim Zeileis \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  University of Innsbruck \\
+  Universit\"atsstr.~15 \\
+  AT-6020 Innsbruck, Austria \\
+  E-mail: \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{http://eeecon.uibk.ac.at/~zeileis/} \\
+}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section{Overview}
+The \pkg{partykit} package \citep{Hothorn+Zeileis:2015} provides an interface
+to work with recursive partitioning methods. The two major model classes are
+conditional inference trees \citep[function \code{ctree()},
+][]{Hothorn+Hornik+Zeileis:2006} and model-based trees \citep[so far functions
+\code{mob()}, \code{lmtree()} and \code{glmtree()},
+][]{Zeileis+Hothorn+Hornik:2008}. The model-based tree family has now a new
+member, \code{palmtree()}.  
+
+This vignette introduces when and how PALM trees can be used and how they can
+be computed in \proglang{R}. In terms of the methodology we focus on the
+essential and refer to \cite{Seibold+Hothorn+Zeileis:2016} for more details.
+Section~\ref{sec:palmtree} gives a short theoretical introduction followed by
+two illustrative applications with simple PALM trees.
+Section~\ref{sec:advanced_palmtree} shows the more detailed settings that can
+be made (\ref{sec:settings}) and goes into detail of model choices and with
+this also explains when PALM trees are not needed (\ref{sec:design}).
+
+
+
+\section{Basic PALM trees}\label{sec:palmtree}
+PALM trees are (generalised) linear model trees containing subgroup-wise
+varying linear effects $\boldsymbol{\beta}(\mathbf{z})$ for some covariates
+$\mathbf{x}_V$ ($V$ for varying) and additionally
+globally linear effects $\boldsymbol{\gamma}$ for covariates $\mathbf{x}_F$
+($F$ for fixed). Thus they provide a compromise between (G)LMs where all
+effects are linear and (G)LM trees where all effects are subgroup dependent.
+The PALM tree model 
+\begin{align}
+  g(\boldsymbol{\mu}) = \mathbf{x}_V^\top 
+		\boldsymbol{\beta}(\mathbf{z}) + 
+		\mathbf{x}_F^\top \boldsymbol{\gamma}
+		\label{mod:palmtree}
+\end{align}
+with expected response $\boldsymbol{\mu} = \mathbb{E}(\mathbf{y})$ and link
+function $g$ is estimated via an EM-type algorithm that iterates between
+estimating the model and estimating the tree structure. The tree structure
+defines the subgroups and is estimated based on split variables $\mathbf{z}$.
+Hence the varying parameter vector for each observation $i$ is defined as
+\begin{align}\label{eq:egbeta}
+        \boldsymbol{\beta}(\mathbf{z}_i) &= \begin{cases}
+          \boldsymbol{\beta}_1 & \quad \text{if $i$ in subgroup 1} \\
+          \boldsymbol{\beta}_2 & \quad \text{if $i$ in subgroup 2} \\
+          \vdots & 
+        \end{cases}
+\end{align}
+The algorithm goes as follows:
+\begin{itemize}
+  \item Initialize (G)LM with main effects of $\mathbf{x}_V$ and
+   $\mathbf{x}_F$, i.e.\ $g(\boldsymbol{\mu}) = \mathbf{x}_V^\top 
+                \boldsymbol{\beta} + 
+                \mathbf{x}_F^\top \boldsymbol{\gamma}$.
+  \item Iterate until convergence of the log-likelihood.
+  \begin{enumerate}
+    \item Estimate (G)LM tree while keeping the global effects
+     $\boldsymbol{\gamma}$ fixed by including them as an offset.
+    \item Estimate (G)LM by including the tree structure via interaction terms,
+     i.e.\ $g(\boldsymbol{\mu}) = (\mathbf{x}_V \circ \text{subgroup})^\top 
+                \boldsymbol{\beta} + 
+                \mathbf{x}_F^\top \boldsymbol{\gamma}$
+     (with $\mathbf{x}_V \circ \text{subgroup}$ interaction term between
+      $\mathbf{x}_V$ and the subgroups).
+  \end{enumerate} 
+\end{itemize}
+The estimation of the tree follows the standard (G)LM tree algorithm, i.e.
+split variables are found via parameter instability tests (possibly with
+Bonferroni correction) and split points are found via an exhaustive search
+maximising the sum of likelihoods in the emerging subgroups.  We encourage the
+reader to look at the algorithm in detail, e.g.\ via
+<<eval=FALSE>>=
+page(palmtree)
+@
+
+To estimate a PALM tree in \proglang{R} with the \code{palmtree()} function one
+needs to at least specify the \code{formula} and the \code{data}: 
+<<eval=FALSE>>=
+palmtree(formula, data)
+@
+The \code{formula} consists of four parts: 
+\begin{itemize}
+  \item outcome $y$, 
+  \item covariates with possibly variable effects $\mathbf{x}_V$, 
+  \item covariates with globally fixed effects $\mathbf{x}_F$, and 
+  \item covariates used for subgroup definition $\mathbf{z}$, i.e.
+\end{itemize}
+\begin{center}
+  \texttt{
+  formula =
+  y $\sim ~ \overbrace{\text{x\_V1 + \dots + x\_Vk}}^{\mathbf{x}_V} ~|~ 
+   \overbrace{\text{x\_F1 + \dots + x\_Fq}}^{\mathbf{x}_F} ~|~ 
+   \overbrace{\text{z\_1 + \dots + z\_p}}^{\mathbf{z}}$
+  }
+\end{center}
+In the following we illustrate the usage of PALM trees in two different
+settings. Section~\ref{sec:sim} shows simulated data according to a clinical
+trial. Knowing the data generating process helps in understanding when PALM
+trees are useful. Section~\ref{sec:math} shows an application of a PALM tree on
+data from a mathematics exam where students self selected in two exam groups.
+
+
+
+\subsection{Simulated data}\label{sec:sim}
+We use simulated data that resembles a clinical trial with treatment indicator 
+\begin{align}
+	x_V &= \left\{ \begin{array}{rll}
+	  1 & \text{if treatment is given}\\
+	  0 & \text{if placebo is given.}
+	\end{array} \right.
+\end{align} 
+30 patient characteristics $\mathbf{z} = ({x}_1, \dots, {x}_{30})$ are
+simulated from a multivariate normal distribution with correlation $0.2$.
+Patient characteristics $x_1$ and $x_2$ are the patient characteristics
+defining the subgroups given in Figure~\ref{fig:sim-figure}.  The treatment
+effect is defined as
+\begin{align}\label{eq:simbeta}
+	\beta(\mathbf{z}) &= \left\{ \begin{array}{rll}
+	  -0.375 &= \beta_1 & \quad \text{if } x_1 \leq 0 \\
+	  ~0.125 &= \beta_2 = \beta_1 + 0.5 & 
+		\quad \text{if } x_1 > 0 ~\wedge~ x_2 \leq 0 \\
+	  ~0.625 &= \beta_3 = \beta_2 + 0.5 & 
+		\quad \text{if } x_1 > 0 ~\wedge~ x_2 > 0.
+	\end{array} \right.
+\end{align} 
+
+\begin{figure}
+\centering
+<<sim-figure, echo=FALSE, fig=TRUE, height=4>>=
+library("partykit")
+
+fig1 <- party(
+  partynode(1L,
+    split = partysplit(1L, breaks = 0),
+    kids = list(
+      partynode(2L, info = expression(beta[1])),
+      partynode(3L,
+        split = partysplit(2L, breaks = 0),
+        kids = list(
+          partynode(4L, info = expression(beta[2])),
+          partynode(5L, info = expression(beta[3]))
+    )
+      )
+    )
+  ),
+  data.frame(z1 = numeric(0), z2 = numeric(0))
+)
+plot(fig1, drop = TRUE, ip_args = list(id = FALSE),
+  tp_args = list(FUN = identity, width = 9, id = FALSE)) 
+@
+\caption{Tree according to data generating process.}
+\label{fig:sim-figure}
+\end{figure}
+
+Patient characteristics $x_3$ and $x_4$ are covariates with a direct effect on
+the primary outcome, i.e.\ $\mathbf{x}_F = (x_3, x_4)^\top$.  Patient
+characteristics $x_5$ to $x_{30}$ are noise variables that have no impact on
+neither the treatment effect $\beta(\mathbf{z})$ nor the primary outcome.
+Accordingly we simulate the primary outcome (a health score) $\mathbf{y}$ with
+\begin{align}
+	\mathbf{y} = & {x}_V \beta(\mathbf{z}) + 
+	  \mathbf{x}_F \boldsymbol{\gamma} +
+	  \boldsymbol{\epsilon}\\
+	= & I(x_1 \leq 0) {x}_V \beta_1 + \nonumber \\
+	  & I(x_1 > 0 \wedge x_2 \leq 0) {x}_V \beta_2 + \nonumber \\
+	  & I(x_1 > 0 \wedge x_2 > 0) {x}_V \beta_3 + \nonumber \\
+          & \mathbf{x}_F \boldsymbol{\gamma} +
+          \boldsymbol{\epsilon} \nonumber
+\end{align}
+where $\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, 1.5)$ is the error
+term.  The following \proglang{R} function can be used to generate the described
+data:
+<<sim-dgp>>=
+dgp <- function() {
+  
+  nobs <- 1000
+  npc <- 30
+  
+  ## patient characteristics
+  x <- mvtnorm::rmvnorm(nobs, mean = rep(0, npc), 
+                        sigma = diag(1 - 0.2, npc) + 0.2)
+  colnames(x) <- paste0("x", 1:npc)
+  d <- as.data.frame(x)
+  
+  ## treatment xV
+  d$xV<- rbinom(nobs, size = 1, prob = 0.5)
+  
+  ## error term
+  d$err <- rnorm(nobs, mean = 0, sd = 1.5)
+  
+  ## predictive and prognostic factors
+  which_pred <- 1:2  
+  which_prog <- 3:4
+  
+  ## define subgroups
+  rules <- t(t(x[, which_pred]) > c(0, 0))
+  d$group <- 1
+  d$group[rules[, 1] == 1] <- 2
+  d$group[rowSums(rules) == 2] <- 3
+  d$group <- as.factor(d$group)
+  
+  ## response function mu
+  eff_trt <- c(-0.375, 0.125, 0.625)
+  modelmat <- model.matrix(~ group - 1, data = d)
+  d$trt_effect <- modelmat %*% eff_trt 
+  d$mu0 <- as.vector(x[ , which_prog] %*% c(1, 1))
+  d$mu1 <- as.vector(d$mu0 + d$trt_effect)
+  idmu <- cbind(seq_len(nrow(d)), d$xV + 1)
+  d$mu <- d[ , c("mu0", "mu1")][idmu]
+  
+  ## outcome y
+  d$y <- d$mu + d$err
+  
+  d$xV <- factor(d$xV)
+  return(d)
+}
+@
+The results of a simulation study using this data generating process and 
+variations thereof can be found in \cite{Seibold+Hothorn+Zeileis:2016}.
+
+
+In order to apply a PALM tree to a data set simulated from this data generating
+process, we first need to generate a data set:
+<<sim-sim>>=
+set.seed(123)
+data_sim <- dgp()
+@
+Next we construct the formula and estimate and plot the PALM tree
+\begin{center}
+<<sim-palmtree, fig=TRUE, height=4>>=
+x_sim <- paste0("x", 1:30) 
+fmla_sim <- as.formula(
+  paste("y ~ xV | x3 + x4 |", 
+        paste(x_sim, collapse = " + "))
+)
+
+(palmtree_sim <- palmtree(fmla_sim, data = data_sim))
+
+plot(palmtree_sim)
+@
+\end{center}
+Note that if we redraw a new data set from the same data generating process, we
+get different results.
+
+
+<<sim-repeat, results=hide>>=
+set.seed(222)
+for(i in 1:3) {
+  data_sim_i <- dgp()
+  palmtree_sim_i <- palmtree(fmla_sim, data = data_sim_i)
+  plot(palmtree_sim_i)
+}
+@
+
+<<echo=FALSE, width=4.1, height=5.5>>=
+set.seed(222)
+for(i in 1:3) {
+  data_sim_i <- dgp()
+  palmtree_sim_i <- palmtree(fmla_sim, data = data_sim_i)
+  pdf(file = paste0("vignette_sim-repeat-", i, ".pdf"),
+      width = 4, height = 5.5)
+  plot(palmtree_sim_i)
+  dev.off()
+}
+@
+\includegraphics[width = 0.33\textwidth]{vignette_sim-repeat-1}
+\includegraphics[width = 0.33\textwidth]{vignette_sim-repeat-2}
+\includegraphics[width = 0.33\textwidth]{vignette_sim-repeat-3}
+
+
+
+
+\subsection{Mathematics exam}
+We analyse the data of the first-year mathematics exam of business and
+economics students at the University of Innsbruck in the fall semester 2014/15.
+The data can be accessed via
+<<math>>=
+data("MathExam14W", package = "psychotools")
+
+## scale points achieved to [0, 100] percent
+MathExam14W$tests <- 100 * MathExam14W$tests/26
+MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
+
+## select variables to be used
+MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
+                             "attempt", "semester", "gender")]
+@
+Due to the large number of students (\Sexpr{nrow(MathExam)}) the students were
+asked to select a group, where the first group worte the exam in the morning
+and the second group right after the first group finished. The students in the
+two groups received slightly different tasks. The variable \code{group}
+contains the information on the selected group of each students. We are
+interested in whether the exam was fair in the sense that both groups performed
+similarly in the exam.  The performance is measure in percentage of correctly
+answered questions (\code{pcorrect}).  To account for possibly varying skills
+in the two groups the performance during the semester which was measured by
+biweekly online tests (\code{tests}) can be used.  Further student
+characteristics were obtained, which are the type of \code{study} (three year
+bachelor program vs. four year diploma program), the number of times the
+student has already attempted the exam (\code{attempt}), the \code{semester}
+the student is in and the \code{gender}. A summary of the data is given below:
+<<math-summary>>=
+summary(MathExam)
+@
+
+
+A PALM tree for the mathematics exam data can be estimated via
+<<math-palmtree, message=FALSE>>=
+(palmtree_math <- palmtree(pcorrect ~ group | tests | tests + study +
+                            attempt + semester + gender, data = MathExam))
+@
+The plot
+\begin{center}
+<<math-palmtree-1, height=5, fig=TRUE>>=
+plot(palmtree_math)
+@
+\end{center}
+reaveals that we need to differentate between students who attempt the exam for
+the first time and students who have attempted the exam before.  For the
+studentes who attempt the exam for the first time, we need to differentiate
+between student who scored very high (more than 92.308 \%) in the online tests
+that were written during the semester and the students who did not score as
+high.
+
+To obtain coefficients from the PALM tree there are three different options
+<<>>=
+coef(palmtree_math)
+coef(palmtree_math$palm)
+coef(palmtree_math$tree)
+@
+where the first two are equivalent. They return coefficients of the model
+<<>>=
+(palmmod1 <- lm(pcorrect ~ .tree + group:.tree + tests, 
+                data = palmtree_math$data))
+@
+whereas the third option returns coefficients of the model
+<<>>=
+(palmmod2 <- lm(pcorrect ~ 0 + .tree + group:.tree + tests, 
+                data = palmtree_math$data))
+@
+Hence the difference is in the sense that \code{palmmod1} estimates a model
+with intercept, which in this case can be interpreted as the expected
+percentage points in the exam for a student in node 3 (first subgroup), who has
+no correct answers in the online tests and self selected into exam group 1. The
+effects denoted by \code{.tree4} and \code{.tree5} give how many percentage
+points more are expected for a student who has no correct answers in the online
+tests and self selected into exam group 1 if she is in node 4 (second subgroup)
+or 5 (third subgroup) respectively. In contrast \code{palmmod2} estimates a
+model without intercept and hence the effects denoted by \code{.tree3},
+\code{.tree4} and \code{.tree5} give the expected percentage points for a
+student who has no correct answers in the online tests and self selected into
+exam group 1 within the three subgroups.
+
+
+\section{Advanced PALM trees}\label{sec:advanced_palmtree}
+\subsection{Settings for PALM trees}\label{sec:settings}
+Additional to the arguments \code{formula} and \code{data} there are several
+other arguments that can be set in the \code{palmtree()} function. 
+<<set, eval=FALSE>>=
+palmtree(formula, data, weights = NULL, family = NULL,
+         lmstart = NULL, abstol = 0.001, maxit = 100, 
+         dfsplit = TRUE, verbose = FALSE, plot = FALSE, ...)
+@
+The \code{family} argument can be used to compute PALM trees for models of the
+generalised linear model family. If it is NULL a linear model will be computed.
+The argument \code{lmstart} allows for different initialisation of the
+algorithm than with the global model, which is computed using the first three
+parts of the PALM tree formula, i.e.\ \code{y ~ x_v1 + \dots + x_vk + x_f1 +
+\dots + x_fq}. For the math exam PALM tree computed above, this is global model
+is 
+<<eval=FALSE>>=
+lm(pcorrect ~ group + tests, data = MathExam)
+@
+Convergence conditions and maximum number of iterations are given by arguments
+\code{abstol} and \code{maxit}.  The ellipsis (\code{...}) are further
+arguments that are passed on to \code{mob_control()}, which control the tree
+growing algorithm such as turning off Bonferroni correction or regulating tree
+and node size.
+
+
+\subsection{Model design}\label{sec:design}
+The decision on whether to use a (G)LM, a (G)LM tree or a PALM tree strongly
+impacts the result of the analysis. The decision between a (G)LM and a
+model-based tree should be based on the believe in subgroups where the effect
+between subgroups differ.  If one decides on a model-based tree for modelling
+data, there are two further model design decisions that have to be made. The
+first being whether there is the need to differentiate between a varying and a
+fixed model part and, if one decides that the differentiation is needed, which
+covariates of the model shall be part of the fixed and which shall be part of
+the varying model part.  The first is essentially the decision between
+\code{glmtree} or \code{lmtree} and \code{palmtree}. Do we belive that there
+are covariates that merely have a direct linear effect on the outcome? If so,
+we can limit the number of paramters and estimate globally fixed effects for
+these covariates.  The second decision should be already contained in the first
+decision. If we believe that certain covariates have a direct linear effect on
+the outcome, then it should be already clear which those are.
+
+In the case of a clinical trial subgroup analysis we are primarily interested
+in whether different patients react differently to the same treatment. There 
+are several considerations to be made:
+\begin{itemize}
+  \item Are predictive factors known?
+  \item Is the tree structure known?
+  \item Are prognostic factors known?
+\end{itemize}
+Predictive factors are patient characteristics that have an impact on the
+relation between treatment and primary endpoint, i.e.\ on the treatment effect.
+Prognostic factors are patient characteristics that have an effect on the
+primary enpoint. Below we list some of the computations that can be performed
+for possible answers to these questions in the case of the simulated data
+present.
+
+\begin{itemize}
+\item Everything known
+<<eval=FALSE>>=
+lm(y ~ x3 + x4 +
+     xV * I(x1 > 0 & x2 <= 0) + 
+     xV * I(x1 > 0 & x2 > 0), data = data_sim)
+@
+\item Tree structure unknown, relevant factors known, no relevant unknown
+factors
+<<eval=FALSE>>=
+palmtree(y ~ xV | x3 + x4 | x1 + x2, data = data_sim)
+@
+\item Tree structure unknown, relevant factors known, known prognostic factors
+known to be linear and not additionally predictive, possibly relevant unknown
+factors 
+<<eval=FALSE>>=
+palmtree(y ~ xV | x3 + x4 | x1 + x2 + x5 + x6 + x7 + x8 + x9 + 
+           x10 + x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18 + x19 + 
+           x20 + x21 + x22 + x23 + x24 + x25 + x26 + x27 + x28 + x29 + 
+           x30, data = data_sim)
+@
+\item Tree structure unknown, relevant factors known, known prognostic factors
+may not be linear or additionally predictive, possibly relevant unknown
+factors 
+<<eval=FALSE>>=
+lmtree(y ~ xV + x3 + x4 | x1 + x2 + x5 + x6 + x7 + x8 + x9 + 
+           x10 + x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18 + x19 + 
+           x20 + x21 + x22 + x23 + x24 + x25 + x26 + x27 + x28 + x29 + 
+           x30, data = data_sim)
+@
+\item Tree structure unknown, relevant factors known, known prognostic factors
+could also be predictive, possibly relevant unknown factors 
+<<eval=FALSE>>=
+palmtree(y ~ xV | x3 + x4 | x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + 
+           x10 + x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18 + x19 + 
+           x20 + x21 + x22 + x23 + x24 + x25 + x26 + x27 + x28 + x29 + 
+           x30, data = data_sim)
+@
+\item Relevant prognostic factors unknown
+<<eval=FALSE>>=
+lmtree(y ~ xV | x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9 + 
+         x10 + x11 + x12 + x13 + x14 + x15 + x16 + x17 + x18 + x19 + 
+         x20 + x21 + x22 + x23 + x24 + x25 + x26 + x27 + x28 + x29 + 
+         x30, data = data_sim)
+@
+\end{itemize}
+
+
+\section{Conclusion}\label{sec:conclusion}
+
+\bibliography{vignette_palmtree}
+\end{document}
