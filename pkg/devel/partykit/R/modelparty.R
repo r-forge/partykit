@@ -13,8 +13,6 @@
   cluster <- data[["cluster"]]
   offset <- model.offset(data)
   
-  ### <FIXME> handle offset and cluster </FIXME>
-  if (!is.null(cluster)) stop("cluster not implemented")
   mf <- model.frame(formula, data, na.action = na.pass)
   y <- model.response(mf)
   x <- model.matrix(formula, data = mf)
@@ -55,8 +53,8 @@
     ## call the fit function
     args <- c(list(x = if (ncol(xs) == 0) NULL else xs, y = ys, 
                    start = info$coef, weights = weights, offset = offset),
-              list(object = TRUE, estfun = TRUE)[c("estfun", "object") %in% 
-                                                   names(formals(fit))],
+              list(object = TRUE, estfun = TRUE, cluster = cluster)[
+                  c("estfun", "object", "cluster") %in% names(formals(fit))],
               list(...))
 
     ret <- do.call("fit", args = args)
