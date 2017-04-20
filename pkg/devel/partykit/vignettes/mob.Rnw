@@ -73,7 +73,6 @@ options(prompt = "R> ", continue = "+  ", digits = 4, useFancyQuotes = FALSE)
 }
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 \section{Overview}
 
 To implement the model-based recursive partitioning (MOB) algorithm of 
