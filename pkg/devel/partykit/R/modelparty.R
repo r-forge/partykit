@@ -132,7 +132,7 @@ mob_control <- function(
   dfsplit = TRUE,
   applyfun = NULL,
   cores = NULL,
-  restart = FALSE,
+  restart = TRUE, ### TODO: change default to FALSE
   inner = "object",
   model = TRUE,
   terminal = "object",

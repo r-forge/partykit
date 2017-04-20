@@ -24,7 +24,7 @@ mob_control(testflavour = "mfluc", testtype = "Bonferroni", alpha = 0.05,
  numsurrogate = FALSE, lookahead = FALSE, maxdepth = Inf,
  minbucket = minsize, minprob = 0.01, minsplit = minsize, minsize = NULL,
  stump = FALSE, caseweights = TRUE, dfsplit = TRUE, applyfun = NULL,
- cores = NULL, restart = FALSE, inner = "object", model = TRUE,
+ cores = NULL, restart = TRUE, inner = "object", model = TRUE,
  terminal = "object", mtry = Inf,
  verbose, xtype, ytype, prune)
 }
@@ -186,7 +186,7 @@ the desired number of cores.}
  
 \item{restart}{logical. When determining the optimal split point in a numerical
 variable: Should model estimation be restarted with NULL starting values for
-each split? If FALSE (default), then the parameter estimates from the previous
+each split? If FALSE, then the parameter estimates from the previous
 split point are used as starting values for the next split point (because in
 practice the difference are often not huge).}
 
