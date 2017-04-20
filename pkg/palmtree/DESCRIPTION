@@ -1,10 +1,12 @@
 Package: palmtree
 Title: Partially additive (generalized) linear model trees
 Date: 2016-09-29
-Version: 1.1-2
+Version: 0.0-0
 Authors@R: c(person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org"),
 	     person(given = "Heidi", family = "Seibold", role = "aut", email = "Heidi.Seibold@uzh.ch"),             
              person(given = "Torsten", family = "Hothorn", role = c("aut"), email = "Torsten.Hothorn@R-project.org"))
 Description: Model-based trees whith global model parameters.
 Depends: R (>= 3.1.0), partykit
+Imports: Formula (>= 1.2-1)
+Suggests: mvtnorm
 License: GPL-2 | GPL-3
