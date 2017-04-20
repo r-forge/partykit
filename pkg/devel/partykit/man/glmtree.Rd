@@ -15,7 +15,7 @@
 glmtree(formula, data, subset, na.action, weights, offset, cluster,
   family = gaussian, epsilon = 1e-8, maxit = 25,
   converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
-  scores = NULL, \dots)
+  \dots)
 }
 
 \arguments{
@@ -39,7 +39,6 @@ glmtree(formula, data, subset, na.action, weights, offset, cluster,
   \item{converged}{an optional function for checking user-defined criteria before 
     splits are implemented. The default is to check if the log Likelihood is finite
     and the model converged.}
-  \item{scores}{?}
   \item{\dots}{optional control parameters passed to
     \code{\link{mob_control}}.}
 }

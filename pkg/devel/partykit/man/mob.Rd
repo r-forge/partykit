@@ -29,7 +29,7 @@
 
 \usage{
 mob(formula, data, subset, na.action = na.pass, weights = NULL, offset, 
-  cluster, fit, control = mob_control(\dots), converged = NULL, scores = NULL, 
+  cluster, fit, control = mob_control(\dots), converged = NULL,  
   \dots)
 }
 
@@ -54,7 +54,6 @@ mob(formula, data, subset, na.action = na.pass, weights = NULL, offset,
     \code{\link{mob_control}}.}
   \item{converged}{an optional function for checking user-defined criteria before 
     splits are implemented.}
-  \item{scores}{?}
   \item{\dots}{Additional arguments passed to the \code{fit} function.}
 }
 

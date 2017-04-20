@@ -125,7 +125,6 @@ glmtree <- function(
   epsilon = 1e-8, 
   maxit = 25,
   converged = function(mod, ...) { (logLik(mod) < Inf) & mod$converged },
-  scores = NULL, # TODO: figure out how to use this and implement correctly
   ...
 ) {
 
@@ -163,7 +162,6 @@ glmtree <- function(
   if("..." %in% names(m)) m[["..."]] <- NULL
   if(!fam) m$family <- family
   m$converged <- converged
-  m$scores <- scores
   m[[1L]] <- as.call(quote(partykit::mob))
   rval <- eval(m, parent.frame())
   

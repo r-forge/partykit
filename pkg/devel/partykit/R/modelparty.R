@@ -229,7 +229,6 @@ mob <- function
   fit,
   control = mob_control(...), 
   converged = NULL,
-  scores = NULL,
   ...
 ) {
   ### get the call and the calling environment for .urp_tree
