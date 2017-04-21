@@ -1,9 +1,9 @@
 utils::globalVariables(c(".tree", ".ranef", ".weights"))
 
 lmertree <- function(formula, data, weights = NULL,
-  ranefstart = NULL, abstol = 0.001, maxit = 100, 
-  joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
-  lmer.control = lmerControl(), ...)
+                     ranefstart = NULL, abstol = 0.001, maxit = 100, 
+                     joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
+                     lmer.control = lmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
@@ -20,11 +20,11 @@ lmertree <- function(formula, data, weights = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 1L)
     rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
-      lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+                  lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
-
+  
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
@@ -34,14 +34,14 @@ lmertree <- function(formula, data, weights = NULL,
   }
   continue <- TRUE
   oldloglik <- -Inf
-
+  
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
-
+  
   ## iterate between lmer and lmtree estimation
   while (continue) {
     iteration <- iteration + 1L
-
+    
     ## lmtree
     tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, dfsplit = FALSE, ...)
     if(plot) plot(tree)
@@ -50,7 +50,7 @@ lmertree <- function(formula, data, weights = NULL,
     } else {
       predict(tree, newdata = data, type = "response")
     }
-
+    
     ## lmer
     if(joint) {
       ## estimate full lmer model but force all coefficients from the
@@ -73,7 +73,7 @@ lmertree <- function(formula, data, weights = NULL,
       lme <- lmer(rf, data = data, offset = .tree, weights = .weights)
       data$.ranef <- predict(lme, newdata = data)    
     }
-
+    
     ## iteration information
     newloglik <- logLik(lme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
@@ -108,9 +108,9 @@ lmertree <- function(formula, data, weights = NULL,
 }
 
 glmertree <- function(formula, data, family = "binomial", weights = NULL,
-  ranefstart = NULL, abstol = 0.001, maxit = 100, 
-  joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
-  glmer.control = glmerControl(), ...)
+                      ranefstart = NULL, abstol = 0.001, maxit = 100, 
+                      joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
+                      glmer.control = glmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
@@ -127,11 +127,11 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 1L)
     rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
-      lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+                  lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
-
+  
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
@@ -141,14 +141,14 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   }
   continue <- TRUE
   oldloglik <- -Inf
-
+  
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
-
+  
   ## iterate between glmer and glmtree estimation
   while (continue) {
     iteration <- iteration + 1L
-
+    
     ## glmtree
     tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, dfsplit = FALSE, ...)
     if(plot) plot(tree)
@@ -157,7 +157,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     } else {
       predict(tree, newdata = data, type = "link")
     }
-
+    
     ## glmer
     if(joint) {
       ## estimate full glmer model but force all coefficients from the
@@ -180,7 +180,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       glme <- glmer(rf, data = data, family = family, offset = .tree, weights = .weights)
       data$.ranef <- predict(glme, newdata = data, type = "link")
     }
-
+    
     ## iteration information
     newloglik <- logLik(glme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
@@ -294,7 +294,7 @@ predict.lmertree <- function(object, newdata = NULL, type = "response",
       levels(newdata$.tree) <- levels(object$data$.tree)
       predict(object$lmer, newdata = newdata, type = type, re.form = re.form, ...)
     } else {
-      newdata$.ranef <- predict(object$lmer, newdata = newdata, re.form, ...)
+      newdata$.ranef <- predict(object$lmer, newdata = newdata, re.form = re.form, ...)
       predict(object$tree, newdata = newdata, type = type)
     }
   }
