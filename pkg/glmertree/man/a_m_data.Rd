@@ -8,7 +8,7 @@ Artificial dataset to illustrate fitting (G)LMM trees.
 }
 
 \usage{
-data("exampledata")
+data("a_m_data")
 }
 
 \format{
