@@ -218,9 +218,18 @@ coef.lmertree <- coef.glmertree <- function(object, ...) {
   coef(object$tree, ...)
 }
 
-plot.lmertree <- plot.glmertree <- function(x, ...) {
+plot.lmertree <- plot.glmertree <- function(x, plotranef = FALSE, ...) {    
   plot(x$tree, ...)
+  if(plotranef) {
+    if (requireNamespace("lattice")) {
+      orig_devAsk <- devAskNewPage()
+      devAskNewPage(ask = TRUE)
+      print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), main = TRUE))
+    }
+    grDevices::devAskNewPage(ask = orig_devAsk)
+  }
 }
+
 
 ranef.lmertree <- ranef.glmertree <- function(object, ...) {
   object$ranef
