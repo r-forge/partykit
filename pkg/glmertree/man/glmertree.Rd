@@ -11,6 +11,8 @@
 \alias{predict.lmertree}
 \alias{terms.lmertree}
 \alias{as.party.lmertree}
+\alias{residuals.lmertree}
+\alias{resid.lmertree}
 
 \alias{print.glmertree}
 \alias{plot.glmertree}
@@ -21,6 +23,8 @@
 \alias{predict.glmertree}
 \alias{terms.glmertree}
 \alias{as.party.glmertree}
+\alias{residuals.glmertree}
+\alias{resid.glmertree}
 
 \encoding{latin1}
 
@@ -156,20 +160,22 @@ data("TreatmentSubgroups", package = "glmertree")
 lt <- lmertree(ynum ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
   data = TreatmentSubgroups)
 print(lt)
-plot(lt)
+plot(lt, ranef = TRUE)
 coef(lt)
 ranef(lt)
 predict(lt, type = "response") # default behavior, type may also be "node" 
+residuals(lt)
 
 \donttest{
 ## fit logistic regression GLMM tree for binary outcome
 gt <- glmertree(ybin ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
   data = TreatmentSubgroups)
 print(gt)
-plot(gt)
+plot(gt, ranef = TRUE)
 coef(gt)
 ranef(gt)
 predict(gt, type = "response") # default behavior, type may also be "node", or "link"
+residuals(gt)
 }
 }
 
