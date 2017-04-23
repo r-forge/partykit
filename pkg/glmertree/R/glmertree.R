@@ -230,6 +230,27 @@ plot.lmertree <- plot.glmertree <- function(x, plotranef = FALSE, ...) {
   }
 }
 
+residuals.lmertree <- resid.lmertree <- residuals.glmertree <- resid.glmertree <- 
+  function(object, type = NULL, scaled = FALSE, ...) {    
+  if(object$joint) {
+    if(is.null(type)) {
+      resids <- residuals(object$lmer, scaled = scaled)
+    } else {
+      resids <- residuals(object$lmer, type = type, scaled = scaled)      
+    }
+  } else {
+    if(!is.null(object$glmer)) {
+      stop("method is not implemented yet for glmertree models which are not jointly estimated.")
+    } else {
+      resids <- object$data[, all.vars(object$formula[[2]])] - predict(
+        object, newdata = NULL)
+      if(scaled) {
+        resids <- scale(resids, center = FALSE, scale = TRUE)
+      }
+    }
+  } 
+  return(resids)
+}
 
 ranef.lmertree <- ranef.glmertree <- function(object, ...) {
   object$ranef
