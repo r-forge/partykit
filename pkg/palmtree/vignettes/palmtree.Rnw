@@ -293,6 +293,7 @@ fmla_sim <- as.formula(
         paste(x_sim, collapse = " + "))
 )
 
+library("palmtree")
 (palmtree_sim <- palmtree(fmla_sim, data = data_sim))
 
 plot(palmtree_sim)
