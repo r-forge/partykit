@@ -221,8 +221,12 @@ The \pkg{RWeka} package \citep{RWeka} provides an interface to the
 \pkg{Weka} machine learning library and we can use the \fct{J48} function to
 fit a J4.8 tree to the Titanic data
 <<J48>>=
-library("RWeka")
-(j48 <- J48(Survived ~ ., data = ttnc))
+if (require("RWeka")) {
+  j48 <- J48(Survived ~ ., data = ttnc)
+} else {
+  j48 <- rpart(Survived ~ ., data = ttnc)
+}
+print(j48)
 @
 This object can be coerced to a \class{party} object using
 <<J48-party>>=

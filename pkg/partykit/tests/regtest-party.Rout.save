@@ -1,6 +1,6 @@
 
-R version 3.3.2 (2016-10-31) -- "Sincere Pumpkin Patch"
-Copyright (C) 2016 The R Foundation for Statistical Computing
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -19,6 +19,7 @@ Type 'q()' to quit R.
 > library("partykit")
 Loading required package: grid
 Loading required package: libcoin
+Loading required package: mvtnorm
 > set.seed(1)
 > 
 > ## rpart: kyphosis data
@@ -30,34 +31,36 @@ Loading required package: libcoin
 [1] TRUE
 > 
 > ## J48: iris data
-> library("RWeka")
-> data("iris", package = "datasets")
-> itree <- J48(Species ~ ., data = iris)
-> pitree <- as.party(itree)
-> stopifnot(all(predict(pitree) == predict(pitree, newdata = iris[, 3:4])))
-> 
-> all.equal(predict(itree, type = "prob", newdata = iris),
-+           predict(pitree, type = "prob", newdata = iris))
+> if (require("RWeka")) {
++     data("iris", package = "datasets")
++     itree <- J48(Species ~ ., data = iris)
++     pitree <- as.party(itree)
++     stopifnot(all(predict(pitree) == predict(pitree, newdata = iris[, 3:4])))
++ 
++     print(all.equal(predict(itree, type = "prob", newdata = iris),
++               predict(pitree, type = "prob", newdata = iris)))
++     print(all.equal(predict(itree,  newdata = iris),
++               predict(pitree, newdata = iris)))
++ 
++     ## rpart/J48: GlaucomaM data
++     data("GlaucomaM", package = "TH.data")
++     w <- runif(nrow(GlaucomaM))
++     fit <- rpart(Class ~ ., data = GlaucomaM, weights = w)
++     pfit <- as.party(fit)
++     print(all(predict(pfit, type = "node") == fit$where))
++     tmp <- GlaucomaM[sample(1:nrow(GlaucomaM), 100),]
++     print(all.equal(predict(fit, type = "prob", newdata = tmp), predict(pfit, type = "prob", newdata = tmp)))
++     print(all.equal(predict(fit, type = "class", newdata = tmp), predict(pfit, newdata = tmp)))
++     itree <- J48(Class ~ ., data = GlaucomaM)
++     pitree <- as.party(itree)
++     print(all.equal(predict(itree, newdata = tmp, type = "prob"), predict(pitree, newdata = tmp, type = "prob")))
++ }
+Loading required package: RWeka
 [1] TRUE
-> all.equal(predict(itree,  newdata = iris),
-+           predict(pitree, newdata = iris))
 [1] "names for current but not for target"
-> 
-> ## rpart/J48: GlaucomaM data
-> data("GlaucomaM", package = "TH.data")
-> w <- runif(nrow(GlaucomaM))
-> fit <- rpart(Class ~ ., data = GlaucomaM, weights = w)
-> pfit <- as.party(fit)
-> all(predict(pfit, type = "node") == fit$where)
 [1] TRUE
-> tmp <- GlaucomaM[sample(1:nrow(GlaucomaM), 100),]
-> all.equal(predict(fit, type = "prob", newdata = tmp), predict(pfit, type = "prob", newdata = tmp))
 [1] TRUE
-> all.equal(predict(fit, type = "class", newdata = tmp), predict(pfit, newdata = tmp))
 [1] TRUE
-> itree <- J48(Class ~ ., data = GlaucomaM)
-> pitree <- as.party(itree)
-> all.equal(predict(itree, newdata = tmp, type = "prob"), predict(pitree, newdata = tmp, type = "prob"))
 [1] TRUE
 > 
 > ## rpart: airquality data
@@ -1635,102 +1638,102 @@ Call: ecdf(y)
 $`1`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754efc0>
+<environment: 0x82f8178>
 
 $`2`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754efc0>
+<environment: 0x82f8178>
 
 $`3`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754efc0>
+<environment: 0x82f8178>
 
 $`4`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754efc0>
+<environment: 0x82f8178>
 
 $`5`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754efc0>
+<environment: 0x82f8178>
 
 $`6`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754e9d8>
+<environment: 0x82f77c0>
 
 $`7`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754e9d8>
+<environment: 0x82f77c0>
 
 $`8`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754e9d8>
+<environment: 0x82f77c0>
 
 $`9`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x754f358>
+<environment: 0x82f6e08>
 
 > predict(ct, newdata = nd, type = "density")
 $`1`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76468c0>
+<bytecode: 0x855a218>
+<environment: 0x81e1108>
 
 $`2`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76468c0>
+<bytecode: 0x855a218>
+<environment: 0x81e1108>
 
 $`3`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76468c0>
+<bytecode: 0x855a218>
+<environment: 0x81e1108>
 
 $`4`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76468c0>
+<bytecode: 0x855a218>
+<environment: 0x81e1108>
 
 $`5`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76468c0>
+<bytecode: 0x855a218>
+<environment: 0x81e1108>
 
 $`6`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76727f0>
+<bytecode: 0x855a218>
+<environment: 0x817d1b0>
 
 $`7`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76727f0>
+<bytecode: 0x855a218>
+<environment: 0x817d1b0>
 
 $`8`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x76727f0>
+<bytecode: 0x855a218>
+<environment: 0x817d1b0>
 
 $`9`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7312800>
-<environment: 0x769cb10>
+<bytecode: 0x855a218>
+<environment: 0x814e5e0>
 
 > predict(ct, newdata = nd, type = "density", at = (1:9) / 10)
         [,1]       [,2]       [,3]       [,4]       [,5]       [,6]      [,7]
@@ -1756,4 +1759,4 @@ function (v)
 > 
 > proc.time()
    user  system elapsed 
-  1.904   0.108   1.683 
+  4.700   0.120   3.642 
