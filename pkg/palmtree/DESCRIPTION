@@ -1,5 +1,5 @@
 Package: palmtree
-Title: Partially additive (generalized) linear model trees
+Title: Partially Additive (Generalized) Linear Model Trees
 Date: 2016-09-29
 Version: 0.0-0
 Authors@R: c(person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org"),
