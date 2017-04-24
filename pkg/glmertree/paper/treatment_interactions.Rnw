@@ -483,7 +483,7 @@ For MERT, predicted treatment-effect differences were obtained by fitting two ME
 \subsubsection{Results}
 
 <<simulation-data>>=
-load("treespecs_study1.dat")
+load("treespecs_studyI.dat")
 treespecs.long$N <- factor(as.numeric(as.character(treespecs.long$N)), ordered = TRUE)
 treespecs.long$sigmab <- factor(as.numeric(as.character(treespecs.long$sigmab)), ordered = TRUE)
 treespecs.long$treatdiff <- factor(as.numeric(as.character(treespecs.long$treatdiff)), ordered = TRUE)
@@ -590,7 +590,7 @@ To assess the Type-I error rates of LM and LMM trees, tree sizes were calculated
 \begin{figure}[tb!]
 \centering
 <<treesize-nointeract-xyplot, fig=TRUE, width=9, height=7>>=
-load("noint_treesizes_long.dat")
+load("treespecs_studyII.dat")
 treesizes.long$sigmabm <- factor(as.numeric(as.character(treesizes.long$sigmabm)), ordered = TRUE)
 treesizes.long$N <- factor(as.numeric(as.character(treesizes.long$N)), ordered = TRUE)
 treesizes.long$treesize.valuesD <- as.numeric(treesizes.long$treesize.values>1)
@@ -670,7 +670,7 @@ Predictive accuracy was assessed in terms of the correlation between the true an
 \begin{figure}[tb!]
 \centering
 <<correlation-pw-xyplot, fig=TRUE, width=9, height=7>>=
-load("pw_treespecs_long.dat")
+load("treespecs_studyIII.dat")
 treespecs.long$N <- factor(as.numeric(as.character(treespecs.long$N)), ordered=T)
 treespecs.long$sigmab <- factor(as.numeric(as.character(treespecs.long$sigmab)), ordered=T)
 treespecs.long$type <- factor(treespecs.long$type, ordered = TRUE, levels = 
