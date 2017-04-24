@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 2.0-0 (2017-mm-dd)}{
+\section{Changes in Version 1.2-0 (2017-mm-dd)}{
   \subsection{New Features}{
     \itemize{
       \item{Quadratic test statistics for splitpoint selection are now available for \code{ctree} via 
@@ -19,11 +19,6 @@
     \item{Use \pkg{libcoin} for computing linear test statistics 
           and p-values for \code{ctree}.}
     \item{Use \pkg{inum} for binning.}
-  }
-}
-
-\section{Changes in Version 1.1-2 (2016-mm-dd)}{
-  \itemize{
     \item{\code{node_barplot} gained a \code{text} argument
           that can be used to draw text labels for the
 	  percentages displayed.}

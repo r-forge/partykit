@@ -17,3 +17,4 @@ tests/ctree-ctree.R
 WISHLIST
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^.*R1.*$
