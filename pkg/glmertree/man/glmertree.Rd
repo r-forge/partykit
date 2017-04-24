@@ -160,7 +160,7 @@ data("TreatmentSubgroups", package = "glmertree")
 lt <- lmertree(ynum ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
   data = TreatmentSubgroups)
 print(lt)
-plot(lt, ranef = TRUE)
+plot(lt, which = "all") # default behavior, which may also be "tree" or "ranef" 
 coef(lt)
 ranef(lt)
 predict(lt, type = "response") # default behavior, type may also be "node" 
@@ -171,7 +171,7 @@ residuals(lt)
 gt <- glmertree(ybin ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
   data = TreatmentSubgroups)
 print(gt)
-plot(gt, ranef = TRUE)
+plot(gt, which = "all") # default behavior, which may also be "tree" or "ranef" 
 coef(gt)
 ranef(gt)
 predict(gt, type = "response") # default behavior, type may also be "node", or "link"

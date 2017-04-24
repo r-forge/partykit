@@ -218,20 +218,39 @@ coef.lmertree <- coef.glmertree <- function(object, ...) {
   coef(object$tree, ...)
 }
 
-plot.lmertree <- plot.glmertree <- function(x, plotranef = FALSE, ...) {    
-  plot(x$tree, ...)
-  if(plotranef) {
-    if (requireNamespace("lattice")) {
+plot.lmertree <- plot.glmertree <- function(x, which = "all", ...) {    
+  if(which != "ranef") {
+    plot(x$tree, ...)
+  }
+  if(which != "tree") {
+    if(which == "all") {
       orig_devAsk <- devAskNewPage()
       devAskNewPage(ask = TRUE)
+    }
+    if (requireNamespace("lattice")) {
       print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), main = TRUE))
     }
-    grDevices::devAskNewPage(ask = orig_devAsk)
+    if(which == "all") {grDevices::devAskNewPage(ask = orig_devAsk)}
   }
 }
 
-residuals.lmertree <- resid.lmertree <- residuals.glmertree <- resid.glmertree <- 
-  function(object, type = NULL, scaled = FALSE, ...) {    
+plot.glmertree <- function(x, plotranef = FALSE, which = "all", ...) {
+  if(which != "ranef") {
+    plot(x$tree, ...)
+  }
+  if(which != "tree") {
+    if(which == "all") {
+      orig_devAsk <- devAskNewPage()
+      devAskNewPage(ask = TRUE)
+    }
+    if (requireNamespace("lattice")) {
+      print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), main = TRUE))
+    }
+    if(which == "all") {grDevices::devAskNewPage(ask = orig_devAsk)}
+  }
+}
+
+residuals.lmertree <- resid.lmertree <- function(object, type = NULL, scaled = FALSE, ...) {    
   if(object$joint) {
     if(is.null(type)) {
       resids <- residuals(object$lmer, scaled = scaled)
@@ -239,15 +258,24 @@ residuals.lmertree <- resid.lmertree <- residuals.glmertree <- resid.glmertree <
       resids <- residuals(object$lmer, type = type, scaled = scaled)      
     }
   } else {
-    if(!is.null(object$glmer)) {
-      stop("method is not implemented yet for glmertree models which are not jointly estimated.")
-    } else {
-      resids <- object$data[, all.vars(object$formula[[2]])] - predict(
+    resids <- object$data[, all.vars(object$formula[[2]])] - predict(
         object, newdata = NULL)
-      if(scaled) {
-        resids <- scale(resids, center = FALSE, scale = TRUE)
-      }
+    if(scaled) {
+      resids <- scale(resids, center = FALSE, scale = TRUE)
     }
+  }
+  return(resids)
+}
+
+residuals.glmertree <- resid.glmertree <- function(object, type = NULL, scaled = FALSE, ...) {    
+  if(object$joint) {
+    if(is.null(type)) {
+      resids <- residuals(object$glmer, scaled = scaled)
+    } else {
+      resids <- residuals(object$glmer, type = type, scaled = scaled)      
+    }
+  } else {
+    stop("To obtain residuals please fit the model with the default glmertree(..., joint = TRUE)")
   } 
   return(resids)
 }
