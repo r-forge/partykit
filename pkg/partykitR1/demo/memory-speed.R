@@ -1,7 +1,7 @@
 ### packages and data
 library("rpart")
 library("RWeka")
-library("partykit")
+library("partykitR1")
 data("Shuttle", package = "mlbench")
 
 ### fit rpart and J48 trees
