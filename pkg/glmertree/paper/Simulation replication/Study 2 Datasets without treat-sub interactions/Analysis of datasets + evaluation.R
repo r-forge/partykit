@@ -3,8 +3,8 @@ library(glmertree)
 
 # Fit trees on training data
 for (c in 1:50) {
-  load(paste("datasets", c, sep=""))
-  load(paste("descriptions", c, sep=""))
+  load(paste("datasets", c, sep = ""))
+  load(paste("descriptions", c, sep = ""))
   GLMMtrees <- list()
   GLMtrees <- list()
   for (i in 1:length(datasets)) {
@@ -17,11 +17,11 @@ for (c in 1:50) {
       GLMformula <- Y ~ T | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
       GLMMformula <- Y ~ T | cluster | X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10 + X11 + X12 + X13 + X14 + X15
     }
-  GLMMtrees[[i]] <- lmertree(GLMMformula, data=datasets[[i]], maxdepth=4)
-  GLMtrees[[i]] <- lmtree(GLMformula, data=datasets[[i]], maxdepth=4)
+  GLMMtrees[[i]] <- lmertree(GLMMformula, data=datasets[[i]], maxdepth = 4)
+  GLMtrees[[i]] <- lmtree(GLMformula, data=datasets[[i]], maxdepth = 4)
   }
-  save(GLMMtrees, file=paste("GLMMtrees", c, sep=""))
-  save(GLMtrees, file=paste("GLMtrees", c, sep=""))
+  save(GLMMtrees, file = paste("GLMMtrees", c, sep = ""))
+  save(GLMtrees, file = paste("GLMtrees", c, sep = ""))
 }
 
 # Get tree characteristics
@@ -99,8 +99,7 @@ treesizes.long$treesize.ind <- factor(tmp)
 mean(treesizes[,1]);sd(treesizes[,1]) # GLMM tree
 mean(treesizes[,2]);sd(treesizes[,2]) # GLM tree
 
-save(treesizes.long, file="noint_treesizes_long.dat")
-load("noint_treesizes_long.dat")
+save(treesizes.long, file="treespecs_studyII.dat")
 
 # create lattice xyplots
 library(lattice)

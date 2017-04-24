@@ -26,7 +26,7 @@ descriptions <- list()
 
 set.seed(24061983)
 
-for (c in 1:1) {  
+for (c in 1:50) {  
 counter <- 0
 for (d in 1:length(bi$sigmas)) {# d is counter for sigma of b_i's
   for (e in 1:length(bi$numbclus)) {# e is counter for number of clusters

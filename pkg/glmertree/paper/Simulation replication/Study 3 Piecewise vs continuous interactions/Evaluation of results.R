@@ -193,7 +193,7 @@ treespecs.long <- data.frame(truevars = c(treespecs$trueGLMMtree, treespecs$true
                              truevars.ind = rep(c("GLMMtree","GLMM"), each = 7200), treespecs.long)
 mean(treespecs$trueGLMMtree)
 mean(treespecs$trueGLMM)
-save("treespecs.long", file="pw_treespecs_long.dat")
+save("treespecs.long", file="treespecs_studyIII.dat")
 save("treespecs", file="treespecs.dat")
 
 
@@ -206,7 +206,7 @@ save("treespecs", file="treespecs.dat")
 
 
 ## Create plots of outcomes:
-load("pw_treespecs_long.dat")
+load("treespecs_studyIII.dat")
 library(lattice)
 
 tapply(treespecs.long$truevars, treespecs.long$truevars.ind, mean)
