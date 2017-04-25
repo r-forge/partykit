@@ -402,10 +402,20 @@ mob <- function
         by = list(cluster), FUN = sum)[, -1L, drop = FALSE]))
     }
   }
-  J12 <- strucchange::root.matrix(switch(vcov,
-                                         "opg" = chol2inv(chol(meat)),
-                                         "info" = bread,
-                                         "sandwich" = bread %*% meat %*% bread
+  ## from strucchange
+  root.matrix <- function(X) {
+    if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+      X.eigen <- eigen(X, symmetric = TRUE)
+      if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+      sqomega <- sqrt(diag(X.eigen$values))
+      V <- X.eigen$vectors
+      return(V %*% sqomega %*% t(V))
+    }
+  }
+  J12 <- root.matrix(switch(vcov,
+         		    "opg" = chol2inv(chol(meat)),
+         		    "info" = bread,
+         		    "sandwich" = bread %*% meat %*% bread
   ))
   process <- t(J12 %*% t(process))  
   
