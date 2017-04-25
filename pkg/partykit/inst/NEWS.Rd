@@ -32,11 +32,11 @@
 \section{Changes in Version 1.1-1 (2016-09-20)}{
   \itemize{
     \item{Proper support of quasi-families in \code{glmtree}
-      and hence \code{palmtree}.}
+          and hence \code{palmtree}.}
     \item{NA handling by following the majority was 
           potentially incorrect in \code{ctree}.}
-    \item{minor speed improvements.}
-    \item{breaking ties before variable selection was
+    \item{Minor speed improvements.}
+    \item{Breaking ties before variable selection was
           suboptimal for very small log-p-values.}
   }
 }
