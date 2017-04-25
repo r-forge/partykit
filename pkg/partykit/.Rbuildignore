@@ -17,4 +17,5 @@ tests/ctree-ctree.R
 WISHLIST
 ^.*\.Rproj$
 ^\.Rproj\.user$
+vignettes/urp.Rnw
 ^.*R1.*$
