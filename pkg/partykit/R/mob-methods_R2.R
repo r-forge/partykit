@@ -9,8 +9,11 @@ getCall.modelparty <- function(x, ...) x$info$call
 
 model.frame.modelparty <- function(formula, ...)
 {
+  ### formula$data is get_all_vars, not model.frame
   mf <- formula$data
-  if(nrow(mf) > 0L) return(mf)
+  ### always compute model.frame
+  if(nrow(mf) > 0L) 
+      return(model.frame(formula$info$Formula, data = mf))
 
   dots <- list(...)
   nargs <- dots[match(c("data", "na.action", "subset"), names(dots), 0L)]

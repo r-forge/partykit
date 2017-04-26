@@ -1266,7 +1266,7 @@ gbsg2node <- function(mobobj,
   id = TRUE, xlab = FALSE, ylab = FALSE)
 {
   ## obtain dependent variable
-  mf <- model.frame(mobobj$info$Formula, data = model.frame(mobobj))
+  mf <- model.frame(mobobj)
   y <- Formula::model.part(mobobj$info$Formula, mf, lhs = 1L, rhs = 0L)
   if(isTRUE(ylab)) ylab <- names(y)[1L]
   if(identical(ylab, FALSE)) ylab <- ""

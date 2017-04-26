@@ -7,7 +7,7 @@ node_bivplot <- function(mobobj, which = NULL, id = TRUE, pop = TRUE,
                          mainlab = NULL, ...)
 {
   ## obtain dependent variable
-  mf <- model.frame(mobobj$info$Formula, data = model.frame(mobobj))
+  mf <- model.frame(mobobj)
   y <- Formula::model.part(mobobj$info$Formula, mf, lhs = 1L, rhs = 0L)
   if(isTRUE(ylab)) ylab <- names(y)
   if(identical(ylab, FALSE)) ylab <- ""
