@@ -7,6 +7,8 @@ formula.modelparty <- function(x, extended = FALSE, ...)
 
 getCall.modelparty <- function(x, ...) x$info$call
 
+### temporarily moved to modelparty_R2.R
+if (FALSE) {
 model.frame.modelparty <- function(formula, ...)
 {
   ### formula$data is get_all_vars, not model.frame
@@ -25,6 +27,7 @@ model.frame.modelparty <- function(formula, ...)
   if(is.null(env <- environment(formula$info$terms))) env <- parent.frame()
   mf$formula <- Formula::Formula(as.formula(mf$formula))
   eval(mf, env)
+}
 }
 
 weights.modelparty <- function(object, ...) {

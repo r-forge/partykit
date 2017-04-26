@@ -667,3 +667,25 @@ mob <- function
   return(ret)
 }
 
+### this needs to be in mob-methods_R2.R
+### but will be overwritten by modelparty_R1.R
+### so, write it over again
+model.frame.modelparty <- function(formula, ...)
+{
+  ### formula$data is get_all_vars, not model.frame
+  mf <- formula$data
+  ### always compute model.frame
+  if(nrow(mf) > 0L) 
+      return(model.frame(formula$info$Formula, data = mf))
+
+  dots <- list(...)
+  nargs <- dots[match(c("data", "na.action", "subset"), names(dots), 0L)]
+  mf <- formula$info$call
+  mf <- mf[c(1L, match(c("formula", "data", "subset", "na.action"), names(mf), 0L))]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf[names(nargs)] <- nargs
+  if(is.null(env <- environment(formula$info$terms))) env <- parent.frame()
+  mf$formula <- Formula::Formula(as.formula(mf$formula))
+  eval(mf, env)
+}
