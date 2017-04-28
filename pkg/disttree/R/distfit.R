@@ -18,6 +18,14 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
       ## FIX ME: interval censored
       #if(cen == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
     }
+  } else {
+    if(survival::is.Surv(y)) {
+      yc <- y
+      y <- y[,1]
+      # if(!("censored" %in% (strsplit(family$family.name, " ")[[1]]))) {
+      # warning("response is Surv object but given distribution is not censored")
+      # }
+    }
   }
   
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
@@ -73,15 +81,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     
     rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
     if(inherits(rval, "try-error")) {
-      #print("try-error in ddist")
+      print("try-error in ddist")
       return(1.7e+308)
     } else {
       if(any(is.na(rval))) {
-        #print("NAs in ddist")
+        print("NAs in ddist")
         return(1.7e+308)
       } else {
         if(any(abs(rval) == Inf)) {
-          #print(c("Infinity in ddist"))
+          print(c("Infinity in ddist"))
           return(1.7e+308)
         } else {
           nloglik <- - sum(weights * rval)
@@ -96,13 +104,18 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   ## set up gradient
   grad <- function(eta) {
     gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
-    if(any(gr == -Inf)) {
-      gr[gr==-Inf] = -1
-      #print(c(eta,"gr = -Inf"))
-    }
-    if(any(gr ==  Inf)) {
-      gr[gr== Inf] =  1
-      #print(c(eta,"gr = Inf"))
+    if(any(is.na(gr))) {
+      gr[is.na(gr)] =  1.7e+308
+      print(c(eta,"gradient = NaN"))
+    } else {
+      if(any(gr == -Inf)) {
+        gr[gr==-Inf] = -1.7e+308
+        print(c(eta,"gradient = -Inf"))
+      }
+      if(any(gr ==  Inf)) {
+        gr[gr== Inf] =  1.7e+308
+        print(c(eta,"gradient = Inf"))
+      }
     }
     return(gr)
   }
@@ -127,7 +140,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
                        hessian = (type.hessian == "numeric"), control = list(...)))
       if(inherits(opt, "try-error")) {
         #print("opt try-error with gr = grad, BFGS")
-        opt <- optim(par = starteta, fn = nll, method = "BFGS",
+        opt <- optim(par = starteta, fn = nll, gr = grad, method = "Nelder-Mead",
                          hessian = (type.hessian == "numeric"), control = list(...))
       }
     }
@@ -180,14 +193,16 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     vc <- try(solve(-hess), silent = TRUE)
     if(inherits(vc, "try-error")) {
       vc <- try(qr.solve(-hess), silent = TRUE)
+      if(inherits(vc, "try-error")) {
+        vc <- try(chol2inv(chol(-hess)))
+        if(inherits(vc, "try-error")) {
+          print(-hess)
+          print("hessian matrix is 'numerically' singular")
+        }
+      }
     }
-    if(inherits(vc, "try-error")) {
-      vc <- try(chol2inv(chol(-hess)))
-    }
-    if(inherits(vc, "try-error")) {
-      print(-hess)
-      print("hessian matrix is 'numerically' singular")
-    }
+    
+
     # if(inherits(vc, "try-error")) {
     #   vc <- MASS::ginv(-hess)
     # }
@@ -279,28 +294,28 @@ predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
   # of the given distribution with the calculated parameters
   if(type == "response") {
     
-    if(object$family %in% c("Normal Distribution",
-                            "censored Normal Distribution",
-                            "right censored Normal Distribution", "left censored Normal Distribution",
-                            "censored Logistic Distribution",
-                            "right censored Logistic Distribution", "left censored Logistic Distribution")) {
+    if("censored" %in% strsplit(object$family, " ")[[1]])
+    {
       par <- coef(object, type = "parameter")
       expv <- par[1]
+      #lat.expv <- par[1]
+      #object$ddist() / object$pdist()
       return(expv)
     } 
+    
     
     f <- function(x){x * object$ddist(x, log = FALSE)}
     expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
     if(inherits(expv, "try-error")) {
       expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-03))
-    }
-    if(inherits(expv, "try-error")) {
-      expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-02))
-    }
-    if(inherits(expv, "try-error")) {
-      print("rel.tol had to be set to 0.1 to calculated expected values for predictions")
-      print(coef(object))
-      expv <- integrate(f,-Inf, Inf, rel.tol = 1e-01)
+      if(inherits(expv, "try-error")) {
+        expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-02))
+        if(inherits(expv, "try-error")) {
+          print("rel.tol had to be set to 0.1 to calculated expected values for predictions")
+          print(coef(object))
+          expv <- integrate(f,-Inf, Inf, rel.tol = 1e-01)
+        }
+      }
     }
     return(expv[[1]])
   }
@@ -550,7 +565,7 @@ if(FALSE){
     library("gamlss.cens")
     gen.cens(LO, type = "left")
     #RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-    system.time(m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0))
+    system.time(m2 <- distfit(RainIbk$rains, family = LOlc, cens = "left", censpoint = 0))
     # FIX ME: calculation of starting values for censored distributions
     # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
@@ -575,7 +590,7 @@ if(FALSE){
   
   ## censored normal example
   gen.cens(NO, type = "left")
-  y <- rnorm(500,3,2)
+  y <- rnorm(500,-1,2)
   y <- pmax(y,0)
   system.time(m1 <- crch(y ~ 1, left = 0, dist = "gaussian"))
   system.time(m2 <- distfit(y, censpoint = 0, cens="left", family = NOlc))
