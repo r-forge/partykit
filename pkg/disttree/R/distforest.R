@@ -1,4 +1,4 @@
-distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree = 500L,
+distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree = 500L, fit = TRUE,
                        perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
                        cens = "none", censpoint = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
@@ -17,11 +17,10 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   modelscores_decor <- function(data, weights = NULL) {
     
     y <- data[,resp.name]
-    #if(survival::is.Surv(y)) y <- data[,resp.name] else y <- as.vector(data[,resp.name])
     
     model <- distfit(y, family = family, weights = weights, start = NULL,
-                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", estfun = TRUE,
-                     cens = cens, censpoint = censpoint)
+                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                     estfun = TRUE, cens = cens, censpoint = censpoint, ...)
     
     ef <- as.matrix(sandwich::estfun(model))
     #n <- NROW(ef)
@@ -59,40 +58,51 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   m$ytrafo <- modelscores_decor
   m$control <- control
   # m$data <- data
-  m$family <- m$decorrelate <- NULL
+  m$family <- m$decorrelate <- m$cens <- m$censpoint <- NULL
   # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
   # if("..." %in% names(m)) m[["..."]] <- NULL
   # if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
   m[[1L]] <- as.name("cforest")
   rval <- eval(m, parent.frame())
   
-  ### calculate fitted value, fitted distribution parameters, loglikelihood and log scores for every observation
-  fitted <- data.frame(idx = 1:nrow(data))
-  fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
-  loglik <- data.frame(idx = 1:nrow(data))
-  logscore <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
-  
-  # extract weights
-  w <- predict.cforest(rval, type = "weights", OOB = fitted.OOB)
-  
-  for(i in 1:nrow(data)){
-    wi <- w[,i]
-    # personalized model for observation data[i,]
-    pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE)
-    fitted[i,] <- predict(pm, type = "response")
-    fitted.par[i,] <- coef(pm, type = "parameter")
-    loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
-    logscore[i,] <- pm$familylist$sdist(data[i,resp.name], eta = coef(pm, type = "link"), sum = FALSE)
+  if(fit) {
+    ### calculate fitted value, fitted distribution parameters, loglikelihood (and log scores) for every observation
+    fitted <- data.frame(idx = 1:nrow(data))
+    fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
+    loglik <- data.frame(idx = 1:nrow(data))
+    # logscore <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
+    
+    # extract weights
+    w <- predict.cforest(rval, type = "weights", OOB = fitted.OOB)
+    
+    for(i in 1:nrow(data)){
+      wi <- w[,i]
+      # personalized model for observation data[i,]
+      pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint)
+      fitted[i,] <- predict(pm, type = "response")
+      fitted.par[i,] <- coef(pm, type = "parameter")
+      if(inherits(family, "gamlss.family")) {
+        if(("censored" %in% strsplit(family$family[2], " ")[[1]]) && (!survival::is.Surv(data[i,resp.name]))) {
+          if(cens == "left") loglik[i,] <- pm$ddist(survival::Surv(data[i,resp.name], data[i,resp.name] > censpoint, type = "left"), log = TRUE)
+          if(cens == "right") loglik[i,] <- pm$ddist(survival::Surv(data[i,resp.name], data[i,resp.name] < censpoint, type = "right"), log = TRUE)
+          ## FIX ME: interval censored
+          #if(cen == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+        } else loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
+      } else loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
+      
+      # logscore[i,] <- pm$familylist$sdist(data[i,resp.name], eta = coef(pm, type = "link"), sum = FALSE)
+    }
+    
+    names(fitted) <- "(response)"
+    rval$fitted <- fitted
+    
+    names(fitted.par) <- names(coef(pm, type = "parameter"))
+    # names(logscore) <- names(coef(pm, type = "parameter"))
+    rval$fitted.par <- fitted.par
+    
+    rval$loglik <- loglik
+    # rval$logscore <- logscore
   }
-  
-  names(fitted) <- "(response)"
-  rval$fitted <- fitted
-  
-  names(fitted.par) <- names(logscore) <- names(coef(pm, type = "parameter"))
-  rval$fitted.par <- fitted.par
-  
-  rval$loglik <- loglik
-  rval$logscore <- logscore
   
   rval$family <- family
   rval$npar <- np
