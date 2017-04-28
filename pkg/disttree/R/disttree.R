@@ -119,7 +119,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # first iteration out of loop:
     model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
-                     estfun = TRUE, cens = cens, censpoint = censpoint)
+                     estfun = FALSE, cens = cens, censpoint = censpoint)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -134,7 +134,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       for(i in (2:n_tn)){
         model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                          vcov = FALSE, type.hessian = "analytic", 
-                         estfun = TRUE, cens = cens, censpoint = censpoint)
+                         estfun = FALSE, cens = cens, censpoint = censpoint)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
       }
