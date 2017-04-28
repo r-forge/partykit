@@ -2,7 +2,7 @@
 # FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
 disttree <- function(formula, data, na.action, cluster, family = NO(),
                      type.tree = "mob", decorrelate = "none",
-                     cens = "none", censpoint = NULL,
+                     cens = "none", censpoint = NULL, weights = NULL,
                      control = mob_control(...), ocontrol = list(), ...)
 {
   ## keep call
@@ -49,6 +49,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("mob")
     rval <- eval(m, parent.frame())
+    rval$coefficients <- coef(rval)
   }
   
   
@@ -104,7 +105,42 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
-  
+    
+
+    # number of terminal nodes
+    n_tn <- width(rval)
+    # ids of terminal nodes
+    id_tn <- as.vector(unique(predict(rval, type = "node")))
+    # predicted terminal nodes for the given data
+    pred_tn <- predict(rval, type = "node")
+    
+    if(is.null(weights)) weights <- numeric(length(data[,1])) + 1
+    # get coefficients for terminal nodes:
+    # first iteration out of loop:
+    model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+                     vcov = FALSE, type.hessian = "analytic", 
+                     estfun = TRUE, cens = cens, censpoint = censpoint)
+    coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
+    # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
+    colnames(coefficients_par) <- names(model1$par)
+    # colnames(coefficients_eta) <- names(model1$eta)
+    rownames(coefficients_par) <- as.character(id_tn)
+    # rownames(coefficients_eta) <- as.character(id_tn)
+    
+    coefficients_par[1,] <- model1$par
+    # coefficients_eta[1,] <- model1$eta
+    
+    if(n_tn>1){
+      for(i in (2:n_tn)){
+        model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+                         vcov = FALSE, type.hessian = "analytic", 
+                         estfun = TRUE, cens = cens, censpoint = censpoint)
+        coefficients_par[i,] <- model$par
+        # coefficients_eta[i,] <- model$eta
+      }
+    }
+    
+    rval$coefficients <- coefficients_par
   }
   
   
@@ -115,17 +151,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
   
-  if(type.tree == "mob") {
-    groupcoef <- coef(rval)
-    if(!(is.null(groupcoef))){
-      if(is.vector(groupcoef)) {
-        groupcoef <- t(as.data.frame(groupcoef))
-        rownames(groupcoef) <- 1
-      }
-      rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-      rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
-      rval$fitted.par <- as.data.frame(rval$fitted.par)
+  groupcoef <- rval$coefficients
+  if(!(is.null(groupcoef))){
+    if(is.vector(groupcoef)) {
+      groupcoef <- t(as.data.frame(groupcoef))
+      rownames(groupcoef) <- 1
     }
+    rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
+    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
+    rval$fitted.par <- as.data.frame(rval$fitted.par)
   }
   class(rval) <- c("disttree", class(rval))
   return(rval)
@@ -143,32 +177,37 @@ print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 predict.disttree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
 {
-  # if mob was applied
-  if(inherits(object, "modelparty")){
-    if((type == "node") || (type == "response")) return(predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
-    if(type == "parameter") {
-      pred.subgroup <- predict.modelparty(object, newdata =  newdata, type = "node")
-      groupcoef <- coef(object)
-      if(is.vector(groupcoef)) {
-        groupcoef <- t(as.data.frame(groupcoef))
-        rownames(groupcoef) <- 1
-      }
-      pred.par <- groupcoef[paste(pred.subgroup),]
-      rownames(pred.par) <- c(1: (length(pred.par[,1])))
-      pred.par <- as.data.frame(pred.par)
-      return(pred.par)
+  if((type == "node") || (type == "response")) {
+    # if mob was applied
+    if(inherits(object, "modelparty")){
+      return(predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
+    }
+    # if ctree was applied
+    if(inherits(object, "constparty")){
+      return(partykit:::predict.party(object = object, newdata = newdata, type = type, OOB = OOB, ...))
     }
   }
-  
-  # if ctree was applied
-  if(inherits(object, "constparty")){
-    if(type == "parameter") stop("parameters can not be predicted if ctree was applied")
-    return(predict(as.constpart(object), newdata = newdata, type = type))
+  if(type == "parameter") {
+    if(inherits(object, "constparty")) pred.subgroup <- partykit:::predict.party(object, newdata =  newdata, type = "node")
+    if(inherits(object, "modelparty")) pred.subgroup <- predict.modelparty(object, newdata =  newdata, type = "node")
+    groupcoef <- coef(object)
+    if(is.vector(groupcoef)) {
+      groupcoef <- t(as.data.frame(groupcoef))
+      rownames(groupcoef) <- 1
+    }
+    pred.par <- groupcoef[paste(pred.subgroup),]
+    rownames(pred.par) <- c(1: (length(pred.par[,1])))
+    pred.par <- as.data.frame(pred.par)
+    return(pred.par)
   }
 }
+
   
 
 
+coef.disttree <- function(object){
+  object$coefficients
+}
 
 ## predict.disttree <- function(object, newdata = NULL,
 ##   type = c("worth", "rank", "best", "node"), ...)
