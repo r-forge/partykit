@@ -303,23 +303,23 @@ make_dist_list <- function(family, bd = NULL)
     pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
       par <- linkinv(eta)
       do.call(get(paste0("p",family$family[1])), 
-              list(q, par[1], par[2], 
+              list(q, par[1], 
                    lower.tail = lower.tail, log.p = log.p))
     }
     qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
       par <- linkinv(eta)
       do.call(get(paste0("q",family$family[1])), 
-              list(p, par[1], par[2], 
+              list(p, par[1], 
                    lower.tail = lower.tail, log.p = log.p))
     }
     rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
     if(inherits(rfun.available, "try-error")) {
-      warning("r-function not available for this family object")
+      # warning("r-function not available for this family object")
       rdist <- NULL
     } else {
       rdist <- function(n, eta) {
         par <- linkinv(eta)
-        do.call(get(paste0("r",family$family[1])), list(n, par[1], par[2]))
+        do.call(get(paste0("r",family$family[1])), list(n, par[1]))
       }
     }
   }  
@@ -402,7 +402,7 @@ make_dist_list <- function(family, bd = NULL)
     }
     rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
     if(inherits(rfun.available, "try-error")) {
-      warning("r-function not available for this family object")
+      # warning("r-function not available for this family object")
       rdist <- NULL
     } else {
       rdist <- function(n, eta) {
@@ -492,7 +492,7 @@ make_dist_list <- function(family, bd = NULL)
     }
     rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
     if(inherits(rfun.available, "try-error")) {
-      warning("r-function not available for this family object")
+      # warning("r-function not available for this family object")
       rdist <- NULL
     } else {
       rdist <- function(n, eta) {
@@ -584,7 +584,7 @@ make_dist_list <- function(family, bd = NULL)
     }
     rfun.available <- try(get(paste0("r",family$family[1])), silent = TRUE)
     if(inherits(rfun.available, "try-error")) {
-      warning("r-function not available for this family object")
+      # warning("r-function not available for this family object")
       rdist <- NULL
     } else {
       rdist <- function(n, eta) {
