@@ -734,7 +734,7 @@ In RCTs, ANCOVAs are often employed, to linearly control post-treatment values o
 
 \paragraph{Models and comparisons}
 
-As the outcome variable is continuous, we employed an identity link and Gaussian error distribution. The tree resulting from GLMM tree will therefore be refered to as an LMM tree. To compare the accuracy of the LMM tree, we also fitted an LM tree and an LMM with pre-specified interactions to the data. In the LMM, the outcome variable was regressed on a random intercept, main effects of treatment and the potential moderators (partitioning variables) and interactions between treatment and the potential moderators. As it is not known in advance how to interact the potential moderators, higher-order interactions were not included.
+As the outcome variable is continuous, we employed an identity link and Gaussian response distribution. The resulting GLMM tree will therefore be refered to as an LMM tree. To compare the accuracy of the LMM tree, we also fitted an LM tree and an LMM with pre-specified interactions to the data. In the LMM, the outcome variable was regressed on a random intercept, main effects of treatment and the potential moderators (partitioning variables) and interactions between treatment and the potential moderators. As it is not known in advance how to interact the potential moderators, higher-order interactions were not included.
 
 \paragraph{Effect size}
 
@@ -744,7 +744,7 @@ To provide a standardized estimate of the treatment effect differences in the fi
 
 Predictive accuracy of each method was assessed by calculating average correlation between observed and predicted HAM-D post-treatment scores, based on 50-fold cross validation. 
 
-The results of recursive partitioning techniques are known to be potentially unstable, in the sense that small changes in the dataset may substantially alter the variables or values selected for partitioning. Therefore, we used the R~package \verb|stablelearner| \cite{PhilyZeil16} to assess the stability of the selected splitting variables and values. Using the \verb|stabletree| function, we calculated the number of times a variable and value were selected for partitioning over 500 subsamples of size $.9 \times N$ of the dataset.  
+The results of recursive partitioning techniques are known to be potentially unstable, in the sense that small changes in the dataset may substantially alter the variables or values selected for partitioning. Therefore, following \citeA{PhilyZeil16}, subsampling is used to assess the stability of the selected splitting variables and values. More precisely, variable selection frequencies of the trees are computed from 500 subsamples, each comprising 90\% of the full dataset.
 
 <<depression-trees>>=
 ## offset
@@ -845,7 +845,7 @@ combine_panels <- function(panel1, panel2, party2 = NULL) {
 
 \subsubsection{Results}
 
-The trees and effect sizes resulting from application of LMM and LM tree are presented in Figure~\ref{fig:lmertree_C&W} and Figure~\ref{fig:lmtree_C&W}, respectively. The LM tree (Figure~\ref{fig:lmtree_C&W}) selected level of education as the first partitioning variable, and presence of a comorbid anxiety disorder as a second partitioning variable, for observations with a higher level of education. By taking into account study-specific intercepts, the LMM tree (Figure~\ref{fig:lmertree_C&W}) indicates that the first split in the LM tree may be spurious. The LMM tree selected presence of a comorbid anxiety disorder as the only partitioning variable. The terminal nodes of Figure~\ref{fig:lmertree_C&W} show only a single treatment-subgroup interaction: for patients without a comorbid anxiety disorder, CBT and PHA provide more or less the same reduction in HAM-D scores (Cohen's $d = 0.05$). For patients with a comorbid anxiety disorder, PHA provides a greater reduction in HAM-D scores (Cohen's $d = 0.39$). The estimated intraclass correlation coefficient for the GLMM tree was .05. 
+The trees and effect sizes resulting from application of LMM and LM trees are presented in Figure~\ref{fig:lmertree_C&W} and Figure~\ref{fig:lmtree_C&W}, respectively. The LM tree (Figure~\ref{fig:lmtree_C&W}) selected level of education as the first partitioning variable, and presence of a comorbid anxiety disorder as a second partitioning variable, for observations with a higher level of education. By taking into account study-specific intercepts, the LMM tree (Figure~\ref{fig:lmertree_C&W}) indicates that the first split in the LM tree may be spurious. The LMM tree selected presence of a comorbid anxiety disorder as the only partitioning variable. The terminal nodes of Figure~\ref{fig:lmertree_C&W} show only a single treatment-subgroup interaction: for patients without a comorbid anxiety disorder, CBT and PHA provide more or less the same reduction in HAM-D scores (Cohen's $d = 0.05$). For patients with a comorbid anxiety disorder, PHA provides a greater reduction in HAM-D scores (Cohen's $d = 0.39$). The estimated intraclass correlation coefficient for the GLMM tree was .05. 
 
 \begin{figure}[tb!]
 \centering
@@ -875,12 +875,13 @@ plot(lmtree_app, tnex = 3.5, terminal_panel = combine_panels(
 \label{fig:lmtree_C&W}
 \end{figure}
 
-The LMM with pre-specified treatment interactions yielded three significant predictors of treatment outcome: like in the GLMM tree, an effect of the presence of a comorbid anxiety disorder was found (main effect: b = 2.29, p = .002; interaction with treatment: b = -2.10, p = .028). Also, the GLMM indicated an interaction between treatment and age (b = .10, p = .018). 
+The LMM with pre-specified treatment interactions yielded three significant predictors of treatment outcome: like in the GLMM tree, an effect of the presence of a comorbid anxiety disorder was found (main effect: $b = 2.29$, $p = .002$; interaction with treatment: $b = -2.10$, $p = .028$). Also, the GLMM indicated an interaction between treatment and age ($b = .10$, $p = .018$). 
 
 Assessment of predictive accuracy by means of 50-fold cross validation indicated better predictive accuracy for the LMM tree than for the LM tree and the LMM. The correlation between true and predicted post-treatment HAM-D total scores averaged over 50 folds was .272 ($\mathit{var}=.067$) for LMM tree, .233 ($\mathit{var}=.064$) for the LMM with pre-specified interactions and .190 ($\mathit{var}=.084$) for the LM tree.
+\readme{SD rather than var is used in the manuscript up to this point.}
 
 Table~\ref{tab:stability} presents statistics on the variables selected for partitioning in subsamples of the dataset. Presence of a comorbid anxiety disorder was selected for partitioning in the majority of LMM trees grown on subsamples of the dataset, while the other variables were selected in at most 4\% of the subsamples. As the comorbid anxiety disorder variable involved only a single splitting value, further assessment of the stability of splitting values was not necessary.
-
+\readme{Practitioners might still worry that the CAD variable is not selected more often -- only in a bit more than 50\% of the cases. Maybe this would be better in bootstrap sampling rather than resampling because the sample size is not reduzed?}
 
 \begin{table}[tb!]
 	\small
