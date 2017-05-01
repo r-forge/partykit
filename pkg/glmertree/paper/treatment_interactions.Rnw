@@ -265,6 +265,8 @@ In Figure~\ref{fig:example_glimmertree}, the result of applying the GLMM tree al
 
 \section{Tutorial}
 
+\readme{This tutorial should be turned into a vignette and then the R output, graphics, etc. should be shown as well.}
+
 We implemented the GLMM tree algorithm in the R package \verb|glmertree| (version 0.1-0; \citeNP{FokkyZeil15}; available from R-Forge). The package makes use of the \verb|partykit| package \cite{HothyZeil15} and \verb|lme4| package \cite{BateyMeac12} to estimate trees and mixed-effects models, respectively. The latest version of the \verb|glmertree| package can be downloaded, installed and loaded as follows:
 
 \begin{small}
@@ -282,7 +284,7 @@ Package documentation and examples can be accessed as follows:
 @
 \end{small}
 
-The main functions in the \verb|glmertree| package are \verb|lmtree()|, for continuous outcome variables, and \verb|glmertree()|, for binary or count outcome variables. Both functions require the user to specify at least two arguments: \verb|formula| and \verb|data|. The data we will be using is the motivating example dataset described in the previous section. This dataset is included in the \verb|partykit| package and can be loaded as follows: 
+The main functions in the \verb|glmertree| package are \verb|lmertree()|, for continuous outcome variables, and \verb|glmertree()|, for binary or count outcome variables. Both functions require the user to specify at least two arguments: \verb|formula| and \verb|data|. The data we will be using is the motivating example dataset described in the previous section. This dataset is included in the \verb|partykit| package and can be loaded as follows: 
 
 \begin{small}
 <<eval = FALSE, echo = TRUE>>=
@@ -312,7 +314,8 @@ plot(exampleglmmtree)
 
 In every inner node of the tree, the splitting variable and corresponding p-value from the parameter stability test is reported. To control for multiple testing, the p-values are Bonferroni corrected, by default. This can be turned off by adding \verb|bonferroni = FALSE| to the function call, yielding a less conservative criterion for the parameter stability tests, but note that this will increase the likelihood of overfitting. The significance level $\alpha$ equals .05 by default, but a different value, say for example .01, can be specified by including \verb|alpha = .01| in the function call.  
 
-The predictions of the random effects can be plotted by adding \verb|plotranef = TRUE| to the function call: 
+The predictions of the random effects can be plotted by adding \verb|plotranef = TRUE| to the function call:
+\readme{As already indicated by e-mail, plotranef is an awkward name and should be improved, e.g., to which.}
 
 \begin{small}
 <<eval = FALSE, echo = TRUE>>=
