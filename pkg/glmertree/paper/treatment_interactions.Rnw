@@ -366,7 +366,7 @@ The first plot did not indicate substantial variation in error variances across 
 
 \section{Simulation-based evaluation}
 
-To assess the performance of GLMM tree, we carried out three simulation studies: In Study I we assessed and compared the accuracy of GLMM tree, linear-model based MOB and mixed-effects regression trees (MERTs) in datasets with treatment-subgroup interactions. In Study II, we assessed and compared the Type-I error of GLMM tree and linear-model based MOB in datasets without treatment-subgroup interactions. In Study III, we assessed and compared the performance of GLMM tree and linear mixed-effects models (LMMs) with pre-specified interactions in datasets with piecewise and continuous interactions. As the outcome variable was continuous in all simulated dataset, the GLMM tree algorithm and the trees resulting from its application will be referred to as LMM tree(s).  
+To assess the performance of GLMM trees, we carried out three simulation studies: In Study~I we assessed and compared the accuracy of GLMM trees, linear-model based MOB and mixed-effects regression trees (MERTs) in datasets with treatment-subgroup interactions. In Study~II, we assessed and compared the Type-I error of GLMM trees and linear-model based MOB in datasets without treatment-subgroup interactions. In Study~III, we assessed and compared the performance of GLMM trees and linear mixed-effects models (LMMs) with pre-specified interactions in datasets with piecewise and continuous interactions. As the outcome variable was continuous in all simulated dataset, the GLMM tree algorithm and the trees resulting from its application will be referred to as LMM tree(s).  
 
 
 
@@ -379,7 +379,7 @@ In all simulation studies, the following data-generating parameters were varied:
 \item Number of potential partitioning covariates $U_1$ through $U_K$: $K=5$ and $K=15$.
 \item Intercorrelation between the potential partitioning covariates $U_1$ through $U_K$: $\rho_{U_k,U_{k'}}=0.0$, $\rho_{U_k,U_{k'}}=0.3$.
 \item Number of clusters: $M=5$, $M=10$, $M=25$.
-\item Population SD of the normal distribution from which the cluster specific intercepts were drawn: $\sigma_{b}=0$, $\sigma_{b}=5$, $\sigma_{b}=10$.
+\item Population standard deviation (SD) of the normal distribution from which the cluster specific intercepts were drawn: $\sigma_{b}=0$, $\sigma_{b}=5$, $\sigma_{b}=10$.
 \item Intercorrelation between $b$ and one of the $U_k$ variables: $b$ and all $U_k$ covariates uncorrelated, $b$ correlated with one of the $U_k$ covariates ($r = .42$).  
 \end{enumerate}
 
@@ -396,10 +396,10 @@ Due to the large number of cells in the simulation design, the most important pr
 
 R \cite{R} was used for data generation and analyses. The \verb|partykit| package (version 1.0-2; \citeNP{HothyZeil15}) was employed for estimating LM trees, using the \verb|lmtree| function. For estimation of LMM trees the \verb|lmertree| function of the \verb|glmertree| package (version 0.1-0; \citeNP{FokkyZeil15}; available from R-Forge) was used. The significance level $\alpha$ for the parameter instability tests was set to .05 for all trees, with a Bonferroni correction applied for multiple testing. The minimum number of observations per node in trees was set to 20 and maximum tree depth was set to three, thus limiting the number of terminal nodes to eight in every tree.
 
-The \verb|REEMtree| package \cite{SelaySimo11} was employed for estimating MERTs, using default settings. For estimating LMMs the \verb|lmer| function function from the \verb|lme4| package (version 1.1-7; \citeNP{BateyMeac12}) was employed, using restricted maximum likelihood (REML) estimation. The \verb|lmerTest| package (version 2.0-32; \citeNP{KuznyBroc16}) was used to assess statistical significance of fixed-effects predictors in LMMs in Study III. The \verb|lmerTest| package calculates effective degrees of freedom and $p$-values based on Satterthwaite approximations.
+The \verb|REEMtree| package \cite{SelaySimo11} was employed for estimating MERTs, using default settings. For estimating LMMs the \verb|lmer| function function from the \verb|lme4| package (version 1.1-7; \citeNP{BateyMeac12}) was employed, using restricted maximum likelihood (REML) estimation. The \verb|lmerTest| package (version 2.0-32; \citeNP{KuznyBroc16}) was used to assess statistical significance of fixed-effects predictors in LMMs in Study~III. The \verb|lmerTest| package calculates effective degrees of freedom and $p$-values based on Satterthwaite approximations.
 
 
-\subsection{Study I: Performance of LMM tree, LM tree and MERT in datasets with treatment-subgroup interactions}
+\subsection{Study~I: Performance of LMM tree, LM tree and MERT in datasets with treatment-subgroup interactions}
 
 \subsubsection{Method}
 
@@ -485,7 +485,7 @@ For MERT, the number of nodes and tree accuracy was not assessed, as the treatme
 
 Predictive accuracy of each method was assessed by calculating the correlation between true and predicted treatment-effect differences. To prevent overly optimistic estimates of predictive accuracy \cite{HastyTibs09}, predictive accuracy was assessed using test datasets. Test datasets were generated from the same population as training datasets, but test observations were not drawn from the same clusters as the training observations, but from `new' clusters.
 
-For MERT, predicted treatment-effect differences were obtained by fitting two MERTS on the training data: one using observations in the first treatment condition and one using observations in the second treatment condition. Predictions of treatment-effect differences for test observations were obtained by dropping test observations down both trees and taking the difference between the two predicted values. This approach was taken as it yielded higher predictive accuracy than the alternative of fitting a single MERT using treatment as a potential partitioning variable. 
+For MERT, predicted treatment-effect differences were obtained by fitting two MERTs on the training data: one using observations in the first treatment condition and one using observations in the second treatment condition. Predictions of treatment-effect differences for test observations were obtained by dropping test observations down both trees and taking the difference between the two predicted values. This approach was taken as it yielded higher predictive accuracy than the alternative of fitting a single MERT using treatment as a potential partitioning variable. 
 
 
 \subsubsection{Results}
@@ -527,7 +527,7 @@ xyplot(treesize.values ~ sigmab | N + corUb, data = aggdata.size, groups = trees
 \label{fig:xyplot_treesize}
 \end{figure}
 
-The average size of LMM trees was 7.15 nodes ($\mathrm{SD}=0.61$), whereas the average size of LM trees was 8.15 nodes ($\mathrm{SD}=2.05$), indicating that LM trees tend to involve more spurious splits than LMM trees. The effects of the most important predictors of tree size are depicted in Figure~\ref{fig:xyplot_treesize}. The average size of LMM trees was close to the true tree size in all conditions. In the absence of random effects, this was also the case for LM trees. In the presence of random effects that are correlated to a (potential) partitioning variable, LM tree starts to create spurious splits, especially with larger $\sigma_b$ values. In the presence of random effects that are uncorrelated to the other variables in the model, LM trees lack power to detect treatment-subgroup interactions if sample size is small (i.e., $N=200$). With larger sample sizes, LM trees showed about the true tree size, on average.  
+The average size of LMM trees was 7.15 nodes ($\mathrm{SD}=0.61$), whereas the average size of LM trees was 8.15 nodes ($\mathrm{SD}=2.05$), indicating that LM trees tend to involve more spurious splits than LMM trees. The effects of the most important predictors of tree size are depicted in Figure~\ref{fig:xyplot_treesize}. The average size of LMM trees was close to the true tree size in all conditions. In the absence of random effects, this was also the case for LM trees. In the presence of random effects that are correlated to a (potential) partitioning variable, LM trees start to create spurious splits, especially with larger $\sigma_b$ values. In the presence of random effects that are uncorrelated to the other variables in the model, LM trees lack power to detect treatment-subgroup interactions if sample size is small (i.e., $N=200$). With larger sample sizes, LM trees showed about the true tree size, on average.  
 
 
 \paragraph{Accuracy of recovered trees}
@@ -546,9 +546,9 @@ auto.key = list(space = "top", columns = 2, title = " ", cex.title = 1, lines = 
 \label{fig:xyplot_treeaccuracy}
 \end{figure}
 
-The estimated probability that a dataset was erroneously not partitioned (Type-II error) was 0 for both algorithms. For the first split, LMM tree selected the true partitioning variable ($U_2$) in all datasets, and LM tree in all but one datasets. The mean splitting value of the first split was 29.94 for LM as well as LMM trees, which is very close to the true splitting value of 30 (Figure~\ref{fig:modelC}).
+The estimated probability that a dataset was erroneously not partitioned (Type-II error) was 0 for both algorithms. For the first split, LMM trees selected the true partitioning variable ($U_2$) in all datasets, and LM trees in all but one datasets. The mean splitting value of the first split was 29.94 for LM as well as LMM trees, which is very close to the true splitting value of 30 (Figure~\ref{fig:modelC}).
 
-Further splits were more accurately recovered by LMM tree, which accurately recovered the partition in 90.40\% of datasets, whereas LM tree accurately recovered the partition in 61.44\% of datasets. The effects of the four most important predictors of tree accuracy are depicted in Figure~\ref{fig:xyplot_treeaccuracy}. In the absence of random effects, LM and LMM tree were about equally accurate. In the presence of random effects, LM trees were much less accurate than LMM trees when random effects were correlated with a partitioning covariate. When random intercepts were not correlated with one of the $U_k$ variables, LMM trees outperformed LM trees only when sample size was small (i.e., $N = 200$).
+Further splits were more accurately recovered by LMM trees yielding 90.40\% accuracy for the full partition comparted to only 61.44\% for LM trees. The effects of the four most important predictors of tree accuracy are depicted in Figure~\ref{fig:xyplot_treeaccuracy}. In the absence of random effects, LM and LMM tree were about equally accurate. In the presence of random effects, LM trees were much less accurate than LMM trees when random effects were correlated with a partitioning covariate. When random intercepts were not correlated with one of the $U_k$ variables, LMM trees outperformed LM trees only when sample size was small (i.e., $N = 200$).
 
 
 
@@ -569,11 +569,11 @@ scales = list(y = list(limits = c(-.1,1.1)))))
 \label{fig:xyplot_correlations}
 \end{figure}
 
-The predicted treatment-effect differences of LMM tree showed an average correlation of .93 (SD = .13) with the true differences. LM tree and MERT showed lower accuracy, with an average correlations of .88 ($\mathrm{SD}=.19$) and .75 ($\mathrm{SD}=.21$), respectively. The most important predictors of predictive accuracy are depicted in Figure~\ref{fig:xyplot_correlations}. Performance of all three algorithms improves with increasing sample size and treatment-effect differences. Furthermore, LMM tree and MERT are not much affected by the presence and magnitude of random effects in the data. LMM tree performs most accurate in most conditions and is never outperformed by the other methods. MERT performs least accurate in most conditions and never outperforms the other methods. The differences in accuracy become less pronounced with larger sample and effect sizes.
+The predicted treatment-effect differences of LMM tree show an average correlation of .93 (SD = .13) with the true differences. LM trees and MERT show lower accuracy, with an average correlations of .88 ($\mathrm{SD}=.19$) and .75 ($\mathrm{SD}=.21$), respectively. The most important predictors of predictive accuracy are depicted in Figure~\ref{fig:xyplot_correlations} \readme{Is it necessary to span the whole unit interval on the y-axis? Using 0.3 to 1.1 should be more than sufficient, I guess}. Performance of all three algorithms improves with increasing sample size and treatment-effect differences. Furthermore, LMM trees and MERT are not much affected by the presence and magnitude of random effects in the data. LMM trees perform most accurately in most conditions and are never outperformed by the other methods. MERT performs least accurately in most conditions and never outperforms the other methods. The differences in accuracy become less pronounced with larger sample and effect sizes.
 
 \FloatBarrier
 
-\subsection{Study II: Type-I error of LM and LMM trees}
+\subsection{Study~II: Type-I error of LM and LMM trees}
 
 \subsubsection{Method}
 
@@ -581,7 +581,7 @@ The predicted treatment-effect differences of LMM tree showed an average correla
 
 In the second simulation study we assessed the Type-I error rate of LM and LMM tree. In the datasets in this study there was only a main effect of treatment in the population. Put differently, there was only a single global value of $\beta_j = \beta$ in every dataset. A Type-I error was defined as the proportion of datasets without treatment-subgroup interactions which were erroneously partitioned by the algorithm. 
 
-To assess the effect of the treatment-effect difference $\beta$, an additional facet wasadded to the \textit{General simulation design}: 
+To assess the effect of the treatment-effect difference $\beta$, an additional facet was added to the \textit{General simulation design}: 
 \begin{enumerate}
 \item[7.] Two levels for $\beta$, the global mean difference in treatment outcomes: $\beta = 2.5$ (corresponding to a medium effect size, Cohen's $d = 0.5$) and $\beta = 5.0$ (corresponding to a large effect size; Cohen's $d = 1.0$). 
 \end{enumerate}
@@ -590,7 +590,7 @@ For each cell in the simulation design, 50 datasets were generated. In every dat
 
 \paragraph{Assessment of performance}
 
-To assess the Type-I error rates of LM and LMM trees, tree sizes were calculated and trees of size $>1$ were classified as Type-I errors. The nominal Type-I error rate for both LM and LMM tree equals .05, corresponding to the pre-specified significance level $\alpha$ for the parameter instability tests. 
+To assess the Type-I error rates of LM and LMM trees, tree sizes were calculated and trees of size $>1$ were classified as Type-I errors. The nominal Type-I error rate for both LM and LMM trees equals .05, corresponding to the pre-specified significance level $\alpha$ for the parameter instability tests. 
 
 
 \subsubsection{Results}
@@ -619,24 +619,24 @@ auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
 \label{fig:xyplot_treesize_nointeract}
 \end{figure}
 
-In datasets without treatment-subgroup interactions, average tree size was 1.09 ($\mathrm{SD}=0.44$) for LMM tree, and 2.02 ($\mathrm{SD}=1.68$) for LM tree. The average Type-I error rate was only .04 for LMM tree, and .33 for LM tree. Main predictors of type-I error are depicted in Figure~\ref{fig:xyplot_treesize_nointeract}, which shows that LMM trees have a Type-I error rate somewhat below the pre-specified $\alpha$ level in all conditions. The same goes for LM tree, when random effects are absent, or uncorrelated to one of the partitioning covariates. When the random intercept is correlated with one of the potential partitioning covariates, the type-I error rapidly increases for LM tree. With increasing sample size or random-effects variance, LM tree will yield a larger number of spurious splits.
+In datasets without treatment-subgroup interactions, average tree size was 1.09 ($\mathrm{SD}=0.44$) for LMM trees, and 2.02 ($\mathrm{SD}=1.68$) for LM trees. The average Type-I error rate was only .04 for LMM trees, and .33 for LM trees. Main predictors of type-I error are depicted in Figure~\ref{fig:xyplot_treesize_nointeract}, which shows that LMM trees have a Type-I error rate somewhat below the pre-specified $\alpha$ level in all conditions. The same goes for LM trees, when random effects are absent, or uncorrelated to one of the partitioning covariates. When the random intercept is correlated with one of the potential partitioning covariates, the type-I error rapidly increases for LM trees. With increasing sample size or random-effects variance, LM trees will yield a larger number of spurious splits.
 
 \FloatBarrier
 
 
-\subsection{Study III: Recovery of piecewise and continuous interactions by LMM trees and LMMs with pre-specified interactions} 
+\subsection{Study~III: Recovery of piecewise and continuous interactions by LMM trees and LMMs with pre-specified interactions} 
 
 \subsubsection{Method}
 
 \paragraph{Interaction design}
 
-The treatment-subgroup interactions in Study I (Figure~\ref{fig:modelC}) can be referred to as piecewise interactions, as their effect is a stepwise function of the moderator (partitioning) variables. Trees are pre-eminently suited for recovering such piecewise interactions, but may have difficulty when the true interactions are continuous functions of moderator variables (for example, $U_1 \cdot U_2$). At the same time, linear regression models with pre-specified interaction terms may perform well in recovering continuous interactions, but may have difficulty in recovering piecewise interactions. Therefore, in the third simulation study, we added a seventh facet to the \textit{General simulation design} described above:
+The treatment-subgroup interactions in Study~I (Figure~\ref{fig:modelC}) can be referred to as piecewise interactions, as their effect is a stepwise function of the moderator (partitioning) variables. Trees are pre-eminently suited for recovering such piecewise interactions, but may have difficulty when the true interactions are continuous functions of moderator variables (for example, $U_1 \cdot U_2$). At the same time, linear regression models with pre-specified interaction terms may perform well in recovering continuous interactions, but may have difficulty in recovering piecewise interactions. Therefore, in the third simulation study, we added a seventh facet to the \textit{General simulation design} described above:
 
 \begin{enumerate}
 	\item[7.] Three levels for interaction type: continuous, piecewise and combined piecewise-continuous interactions. 
 \end{enumerate}
 
-For datasets with purely piecewise interactions, the same partition as in Study I (Figure~\ref{fig:modelC}) was used. In other words, the outcome variable in this design was calculated as $y_i = x_{i}^{\top}\beta_{j} + z_{i}^{\top}b + \epsilon_i$, with the value of $\beta_j$ depending on the values of $U_2$, $U_1$ and $U_5$. 
+For datasets with purely piecewise interactions, the same partition as in Study~I (Figure~\ref{fig:modelC}) was used. In other words, the outcome variable in this design was calculated as $y_i = x_{i}^{\top}\beta_{j} + z_{i}^{\top}b + \epsilon_i$, with the value of $\beta_j$ depending on the values of $U_2$, $U_1$ and $U_5$. 
 
 For the datasets with both piecewise and continuous interactions, the partition as depicted in Figure~\ref{fig:modelC} was also used. However, the fixed-effects part $x_{i}^{\top}\beta_{j}$ in each of the terminal nodes now comprised continuous main and (treatment) interaction effects of the partitioning variables. The corresponding node-specific parameters are presented in Table~\ref{tab:continuous_terms}. The $\beta_j$ values were chosen to yield the same treatment-subgroup means as in Figure~\ref{fig:modelC}. The interaction terms were created using centered $U_k$ variables, calculated by subtracting their variable means. 
 
@@ -662,7 +662,7 @@ $U_2 \cdot U_5 \cdot \mbox{treatment}$	&	0		&	0		&	0		&	.151		&&	.151		\\ \hline
 \label{tab:continuous_terms}
 \end{table}
 
-Furthermore, in this simulation study, the number of cells in the design was reduced by limiting the fourth facet of the data-generating design to a single level ($M=25$ clusters), as Study I and II indicated no effects of the number of clusters. The fifth facet of the data-generating design was limited to two levels ($\sigma_b = 2.5$ and $\sigma_b = 7.5$). For every cell of the design, 50 datasets were generated.
+Furthermore, in this simulation study, the number of cells in the design was reduced by limiting the fourth facet of the data-generating design to a single level ($M=25$ clusters), as Study~I and II indicated no effects of the number of clusters. The fifth facet of the data-generating design was limited to two levels ($\sigma_b = 2.5$ and $\sigma_b = 7.5$). For every cell of the design, 50 datasets were generated.
 
 \paragraph{LMMs with pre-specified interactions}
 LMMs were estimated by specifying main effects for all covariates $U_k$ and the treatment indicator, first-order interactions between all pairs of covariates $U_k$, and second-order interactions between all pairs of covariates $U_k$ and treatment. Continuous predictor variables were centered by subtracting the mean value, before calculating and including the interaction term in the LMM. 
@@ -695,9 +695,9 @@ scales=list(y=list(limits = c(-.1,1.1))))
 \label{fig:xyplot_correlation_pw}
 \end{figure}
 
-On average, LMM tree showed somewhat higher accuracy: the average correlation between true and predicted treatment-effect differences was .54 (SD = .40) for LMM trees and .51 (SD = .43) for LMMs. The effects of the most important predictors of predictive accuracy are depicted in Figure~\ref{fig:xyplot_correlation_pw}. As Figure~\ref{fig:xyplot_correlation_pw} indicates, LMM trees show highest predictive accuracy in datasets with purely piecewise interactions, whereas LMMs show highest predictive accuracy in datasets with purely continuous interactions. LMMs perform poorly when interactions are not purely piecewise, and LMM trees perform poorly only when interactions are purely linear.
+On average, LMM trees showed somewhat higher accuracy: the average correlation between true and predicted treatment-effect differences was .54 (SD = .40) for LMM trees and .51 (SD = .43) for LMMs. The effects of the most important predictors of predictive accuracy are depicted in Figure~\ref{fig:xyplot_correlation_pw}. As Figure~\ref{fig:xyplot_correlation_pw} indicates, LMM trees show highest predictive accuracy in datasets with purely piecewise interactions, whereas LMMs show highest predictive accuracy in datasets with purely continuous interactions. LMMs perform poorly when interactions are not purely piecewise, and LMM trees perform poorly only when interactions are purely linear.
 
-Performance of both methods improves with increasing sample size. Furthermore, performance of LMM tree is not affected by the number of covariates, whereas the predictive accuracy of LMMs deteriorates when the number of covariates increases, especially when the true interactions are not purely continuous. This indicates that LMM tree is especially useful for exploratory purposes, where there are many potential moderator variables. 
+Performance of both methods improves with increasing sample size. Furthermore, performance of LMM trees is not affected by the number of covariates, whereas the predictive accuracy of LMMs deteriorates when the number of covariates increases, especially when the true interactions are not purely continuous. This indicates that LMM trees are especially useful for exploratory purposes, where there are many potential moderator variables. 
 
 In terms of interpretability, LMM trees will often provide simpler models: The LMMs included 12.30 significant terms on average, whereas LMM trees had 3.38 inner nodes on average, requiring only about 3-4 variables to be evaluated for making predictions. 
 
@@ -726,7 +726,7 @@ metadata$Tx_group <- factor(metadata$Tx_group)
 \subsubsection{Method}
 
 \paragraph{Dataset}
-To illustrate the application of GLMM tree on real data, we use a dataset from an individual-patient data meta-analysis of \citeA{CuijyWeit14}. This meta-analysis was based on patient-level observations from 14 RCTs, comparing the effects of psychotherapy (cognitive behavioral therapy; CBT) and pharmacotherapy (PHA) in the treatment of depression. The study of \citeA{CuijyWeit14} was aimed at establishing whether gender is a predictor or moderator of the outcomes of psychological and pharmacological treatments for depression. Treatment outcomes were assessed by means of the 17-item Hamilton Rating Scale for Depression (HAM-D; \citeNP{Hami60}). \citeA{CuijyWeit14} found no indication that gender predicted or moderated treatment outcome.
+To illustrate the use of GLMM trees in real application, we employ a dataset from an individual-patient data meta-analysis of \citeA{CuijyWeit14}. This meta-analysis was based on patient-level observations from 14 RCTs, comparing the effects of psychotherapy (cognitive behavioral therapy; CBT) and pharmacotherapy (PHA) in the treatment of depression. The study of \citeA{CuijyWeit14} was aimed at establishing whether gender is a predictor or moderator of the outcomes of psychological and pharmacological treatments for depression. Treatment outcomes were assessed by means of the 17-item Hamilton Rating Scale for Depression (HAM-D; \citeNP{Hami60}). \citeA{CuijyWeit14} found no indication that gender predicted or moderated treatment outcome.
 
 In our analyses, post-treatment HAM-D score was the outcome variable, and potential partitioning variables were age, gender, level of education, presence of a comorbid anxiety disorder at baseline, and pre-treatment HAM-D score. The predictor variable in the linear model was treatment type (0 = CBT and 1 = PHA). An indicator for study was used as the cluster indicator.
 
