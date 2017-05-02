@@ -1,5 +1,5 @@
-\name{a_m_data}
-\alias{a_m_data}
+\name{DepressionDemo}
+\alias{DepressionDemo}
 
 \title{Artificial Motivating Dataset}
 
@@ -8,7 +8,7 @@ Artificial dataset to illustrate fitting (G)LMM trees.
 }
 
 \usage{
-data("a_m_data")
+data("DepressionDemo")
 }
 
 \format{
@@ -32,8 +32,8 @@ The outcome is assesse by the continuous variable depression.
 \seealso{\code{\link{lmertree}}}
 
 \examples{
-data("a_m_data", package = "glmertree")
-summary(a_m_data)
+data("DepressionDemo", package = "glmertree")
+summary(DepressionDemo)
 }
 
 \keyword{datasets}
