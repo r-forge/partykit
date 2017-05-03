@@ -55,8 +55,7 @@ Generalized linear mixed-effects model trees estimate a global random-effects mo
 The main functions in the \code{glmertree} package are \code{lmertree()}, for continuous outcome variables, and \code{glmertree()}, for binary or count outcome variables. Both functions require the user to specify at least two arguments: \code{formula} and \code{data}. The data we will be using is an artificial motivating dataset from \cite{FokkySmit17} and can be loaded as follows: 
 
 <<echo = TRUE>>=
-load("C:\\Users\\fokkemam\\Desktop\\swReg\\glmertree\\data\\DepressionDemo.rda")
-#data(DepressionDemo)
+data(DepressionDemo)
 summary(DepressionDemo)
 @
 
