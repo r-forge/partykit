@@ -48,6 +48,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     if("..." %in% names(m)) m[["..."]] <- NULL
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("mob")
+    #m[[1L]] <- as.name("partykitR1::mob")
     rval <- eval(m, parent.frame())
     rval$coefficients <- coef(rval)
   }
@@ -58,51 +59,81 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     ## wrapper function to apply distfit in ctree
     # input: data, family, weights
     # output: scores (estfun)
-    modelscores_decor <- function(data, weights = NULL) {
+    ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
       
-      y <- data[,resp.name]
-      
-      model <- distfit(y, family = family, weights = weights, start = NULL,
-                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                       estfun = TRUE, cens = cens, censpoint = censpoint, ...)
-      
-      ef <- as.matrix(sandwich::estfun(model))
-      #n <- NROW(ef)
-      #ef <- ef/sqrt(n)
-      
-      if(decorrelate != "none") {
-        n <- NROW(ef)
-        ef <- ef/sqrt(n)
-        
-        vcov <- if(decorrelate == "vcov") {
-          vcov(model) * n
-        } else {
-          solve(crossprod(ef))
-        }
-        
-        root.matrix <- function(X) {
-          if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-            X.eigen <- eigen(X, symmetric = TRUE)
-            if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-            sqomega <- sqrt(diag(X.eigen$values))
-            V <- X.eigen$vectors
-            return(V %*% sqomega %*% t(V))
-          }
-        }
-        ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+      if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
+      if(!(is.numeric(formula[[3]]))) {
+        print(formula)
+        stop("covariates can only be used as splitting variables (formula has to be of type y~1 |x)")
       }
-      return(ef)
-    }
-    
+      
+      decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
+      
+      modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
+
+        ys <- data[subset,resp.name]
+        subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
+        # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
+        start <- info$coefficients
+        
+        model <- distfit(ys, family = family, weights = subweights, start = start,
+                         vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                         estfun = estfun, cens = cens, censpoint = censpoint, ...)
+        
+        
+        ef <- as.matrix(sandwich::estfun(model))
+        #n <- NROW(ef)
+        #ef <- ef/sqrt(n)
+        
+        if(decorrelate != "none") {
+          n <- NROW(ef)
+          ef <- ef/sqrt(n)
+          
+          vcov <- if(decorrelate == "vcov") {
+            vcov(model) * n
+          } else {
+            solve(crossprod(ef))
+          }
+          
+          root.matrix <- function(X) {
+            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+              X.eigen <- eigen(X, symmetric = TRUE)
+              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+              sqomega <- sqrt(diag(X.eigen$values))
+              V <- X.eigen$vectors
+              return(V %*% sqomega %*% t(V))
+            }
+          }
+          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        }
+        
+        if(estfun) {
+          estfun <- matrix(ncol = ncol(ef), nrow = nrow(data)) 
+          estfun[subset,] <- ef
+        } else estfun <- NULL
+        
+        object <-  if(object) model else NULL
+        
+        ret <- list(estfun = estfun,
+                    coefficients = coef(model),
+                    objfun = family$ddist,
+                    object = object,
+                    converged = TRUE  # FIX ME: warnings is distfit does not converge
+        )
+        return(ret)
+      }
+      return(modelscores_decor)
+    }    
     
     ## call ctree
     m <- match.call(expand.dots = FALSE)
-    m$ytrafo <- modelscores_decor
+    m$ytrafo <- ytrafo
     # m$ocontrol <- NULL
     m$family <- m$cens <- m$censpoint <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
+    #m[[1L]] <- as.name("partykitR1::ctree")
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
     
@@ -114,7 +145,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # predicted terminal nodes for the given data
     pred_tn <- predict(rval, type = "node")
     
-    if(is.null(weights)) weights <- numeric(length(data[,1])) + 1
+    if(is.null(weights) || (length(weights)==0L)) weights <- numeric(length(data[,1])) + 1
     # get coefficients for terminal nodes:
     # first iteration out of loop:
     model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
