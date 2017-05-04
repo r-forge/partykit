@@ -51,7 +51,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   ny <- NROW(y)
   
   ## weights
-  if(is.null(weights)) weights <- 1
+  if(is.null(weights) || (length(weights)==0L)) weights <- 1
   if(length(weights) == 1L) weights <- rep.int(weights, ny)
   weights <- as.vector(weights)
   
@@ -565,7 +565,7 @@ if(FALSE){
     library("gamlss.cens")
     gen.cens(LO, type = "left")
     #RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-    system.time(m2 <- distfit(RainIbk$rains, family = LOlc, cens = "left", censpoint = 0))
+    system.time(m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0))
     # FIX ME: calculation of starting values for censored distributions
     # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
