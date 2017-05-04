@@ -244,8 +244,13 @@ make_dist_list <- function(family, bd = NULL)
     ## FIX ME ## use weights?
     startfun <- function(y, weights = NULL) {
       mu <- NULL
-      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
-      starteta <- c(family$mu.linkfun(weighted.mean(mu)))
+      if(is.null(weights) || (length(weights)==0L)) {
+        eval(family$mu.initial)
+        starteta <- c(family$mu.linkfun(mean(mu)))
+      } else {
+        eval(weight_mean_expression(family$mu.initial))
+        starteta <- c(family$mu.linkfun(weighted.mean(mu, weights)))
+      }
       names(starteta) <- etanames
       return(starteta)
     }
@@ -330,9 +335,15 @@ make_dist_list <- function(family, bd = NULL)
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
       mu <- sigma <- NULL
-      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
-      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
-      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)))
+      if(is.null(weights) || (length(weights)==0L)) {
+        eval(family$mu.initial)
+        eval(family$sigma.initial)
+        starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)))
+      } else {
+        eval(weight_mean_expression(family$mu.initial))
+        eval(weight_mean_expression(family$sigma.initial))
+        starteta <- c(family$mu.linkfun(weighted.mean(mu, weights)), family$sigma.linkfun(weighted.mean(sigma, weights)))
+      }
       names(starteta) <- etanames
       return(starteta)
     }
@@ -418,10 +429,18 @@ make_dist_list <- function(family, bd = NULL)
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
       mu <- sigma <- nu <-  NULL
-      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
-      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
-      if(is.null(weights)) eval(family$nu.initial) else eval(weight_mean_expression(family$nu.initial))
-      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)), family$nu.linkfun(weighted.mean(nu)))
+      if(is.null(weights) || (length(weights)==0L)) {
+        eval(family$mu.initial)
+        eval(family$sigma.initial)
+        eval(family$nu.initial)
+        starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)))
+      } else {
+        eval(weight_mean_expression(family$mu.initial))
+        eval(weight_mean_expression(family$sigma.initial))
+        eval(weight_mean_expression(family$nu.initial))
+        starteta <- c(family$mu.linkfun(weighted.mean(mu, weights)), family$sigma.linkfun(weighted.mean(sigma, weights)), family$nu.linkfun(weighted.mean(nu, weights)))
+      }
+
       names(starteta) <- etanames
       return(starteta)
     }
@@ -508,12 +527,21 @@ make_dist_list <- function(family, bd = NULL)
     # define function for the calculation of initial values
     startfun <- function(y, weights = NULL) {
       mu <- sigma <- nu <- tau <- NULL
-      if(is.null(weights)) eval(family$mu.initial) else eval(weight_mean_expression(family$mu.initial))
-      if(is.null(weights)) eval(family$sigma.initial) else eval(weight_mean_expression(family$sigma.initial))
-      if(is.null(weights)) eval(family$nu.initial) else eval(weight_mean_expression(family$nu.initial))
-      if(is.null(weights)) eval(family$tau.initial) else eval(weight_mean_expression(family$tau.initial))
-      starteta <- c(family$mu.linkfun(weighted.mean(mu)), family$sigma.linkfun(weighted.mean(sigma)), family$nu.linkfun(weighted.mean(nu)), family$tau.linkfun(weighted.mean(tau)))
-      names(starteta) <- etanames
+      if(is.null(weights) || (length(weights)==0L)) {
+        eval(family$mu.initial)
+        eval(family$sigma.initial)
+        eval(family$nu.initial)
+        eval(family$tau.initial)
+        starteta <- c(family$mu.linkfun(mean(mu)), family$sigma.linkfun(mean(sigma)), family$nu.linkfun(mean(nu)), family$tau.linkfun(mean(tau)))
+      } else {
+        eval(weight_mean_expression(family$mu.initial))
+        eval(weight_mean_expression(family$sigma.initial))
+        eval(weight_mean_expression(family$nu.initial))
+        eval(weight_mean_expression(family$tau.initial))
+        starteta <- c(family$mu.linkfun(weighted.mean(mu, weights)), family$sigma.linkfun(weighted.mean(sigma, weights)), family$nu.linkfun(weighted.mean(nu, weights)), family$tau.linkfun(weighted.mean(tau, weights)))
+      }
+      
+     names(starteta) <- etanames
       return(starteta)
     }
     
@@ -626,7 +654,7 @@ make_dist_list <- function(family, bd = NULL)
     names(input) <- inputnames
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
-      if(is.null(weights)) {
+      if(is.null(weights) || (length(weights)==0L)) {
         ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
         weights <- rep.int(1, ny)
       }
@@ -656,7 +684,7 @@ make_dist_list <- function(family, bd = NULL)
     colnames(score) <- etanames
     if(sum) {
       ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-      if(is.null(weights)) weights <- rep.int(1, ny)
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       score <- colSums(weights * score)
     }
     return(score)
@@ -666,7 +694,7 @@ make_dist_list <- function(family, bd = NULL)
   ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
   hdist <- function(y, eta, weights = NULL) {    
     ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)
     
@@ -747,7 +775,7 @@ if(FALSE) {
     # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -766,7 +794,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -777,7 +805,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     d2ld.etamu2 <- sum(weights * rep.int(-exp(-2*eta[2]), ny))
     d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-eta[1]) * exp(-2*eta[2]), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
@@ -827,7 +855,7 @@ if(FALSE) {
   
 
   startfun <- function(y, weights = NULL){
-    if(is.null(weights)) {
+    if(is.null(weights) || (length(weights)==0L)) {
       mu <- mean(y)
       sigma <- sqrt(1/length(y) * sum((y - mu)^2))
     } else {
@@ -897,7 +925,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
     par <- c(eta[1], exp(eta[2]))
     val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -914,7 +942,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -926,7 +954,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     # y[y==0] <- 1e-323
@@ -956,7 +984,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
       par <- c(eta[1], exp(eta[2]))
       val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
       if(sum) {
-        if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+        if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
         val <- sum(weights * val, na.rm = TRUE)
       }
       return(val)
@@ -973,7 +1001,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
       score <- as.matrix(score)
       colnames(score) <- etanames
       if(sum) {
-        if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
         # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
         score[score==Inf] = 1.7e308
         score <- colSums(weights * score, na.rm = TRUE)
@@ -985,7 +1013,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
     
     hdist <- function(y, eta, weights = NULL) {    
       ny <- length(y)
-      if(is.null(weights)) weights <- rep.int(1, ny)
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       
       par <- c(eta[1], exp(eta[2]))                           
       # y[y==0] <- 1e-323
@@ -1029,7 +1057,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
       par <- c(eta[1], exp(eta[2]))
       val <- crch::dclogis(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
       if(sum) {
-        if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+        if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
         val <- sum(weights * val, na.rm = TRUE)
       }
       return(val)
@@ -1046,7 +1074,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
       score <- as.matrix(score)
       colnames(score) <- etanames
       if(sum) {
-        if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
         # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
         score[score==Inf] = 1.7e308
         score <- colSums(weights * score, na.rm = TRUE)
@@ -1058,7 +1086,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
     
     hdist <- function(y, eta, weights = NULL) {    
       ny <- length(y)
-      if(is.null(weights)) weights <- rep.int(1, ny)
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       
       par <- c(eta[1], exp(eta[2]))                           
       # y[y==0] <- 1e-323
@@ -1125,7 +1153,7 @@ make_censored_dist_list <- function(dist = c("normal","logistic"),
     if(type == "left") yc <- pmax(censpoint,y) 
     if(type == "right") yc <- pmin(censpoint,y) 
     
-    if(is.null(weights)) {
+    if(is.null(weights) || (length(weights)==0L)) {
       mu <- mean(yc)
       sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
     } else {
@@ -1176,7 +1204,7 @@ if(FALSE) {
     par <- c(eta[1], exp(eta[2]))
     val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -1193,7 +1221,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -1205,7 +1233,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     # y[y==0] <- 1e-323
@@ -1263,7 +1291,7 @@ if(FALSE) {
   
   startfun <- function(y, weights = NULL){
     yc <- pmax(0,y)  # optional ?
-    if(is.null(weights)) {
+    if(is.null(weights) || (length(weights)==0L)) {
       mu <- mean(yc)
       sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
     } else {
@@ -1333,7 +1361,7 @@ if(FALSE) {
     #if(any(is.na(val))) print(c("NAs in ddist", par))
     
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     if(any(abs(val) == Inf) || any(is.na(val))) return(1.7e308)
@@ -1354,7 +1382,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -1366,7 +1394,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     d2ld.etamu2 <- sum(weights * 
                          (-exp(-2*eta[2]) * exp(exp(-eta[2]) * (log(y) - eta[1]))), 
@@ -1434,13 +1462,13 @@ if(FALSE) {
     # the 0.632 quantile of the distribution is an estimator for lambda
     # with lambda being the scale parameter in the rweibull parametrization
     # -> mean = log(lambda)
-    # lambda <- if(is.null(weights)) quantile(y, p=0.632) else quantile(rep(y, round(weights)), p=0.632)
+    # lambda <- if(is.null(weights) || (length(weights)==0L)) quantile(y, p=0.632) else quantile(rep(y, round(weights)), p=0.632)
     # mean <- log(lambda)
     
     # using the initial values for the exponential distribution (scale_survreg = 1)
     # mean = log(1/lambda) with lambda being the rate parameter of the Exp. distribution
     # (lambda = 1/scale_dweibull)
-    lambda <- if(is.null(weights)) length(y)/sum(y) else sum(weights)/sum(weights * y)
+    lambda <- if(is.null(weights) || (length(weights)==0L)) length(y)/sum(y) else sum(weights)/sum(weights * y)
     mean <- log(1/lambda)
     
     scale <- 1
@@ -1487,7 +1515,7 @@ if(FALSE) {
     #if(log) val <- log(val)
     val <- dpois(x = y, lambda = par, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
     }
     return(val)
@@ -1500,7 +1528,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
@@ -1510,7 +1538,7 @@ if(FALSE) {
   
   
   hdist <- function(y, eta, weights = NULL) {
-    if(is.null(weights)) weights <- rep.int(1, length(y))
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
     par <- exp(eta)                           
     hess <- rep(-par, length(y))
@@ -1553,7 +1581,7 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    mu <- if(is.null(weights)) mean(y) else weighted.mean(y, weights)
+    mu <- if(is.null(weights) || (length(weights)==0L)) mean(y) else weighted.mean(y, weights)
     starteta <- log(mu)
     names(starteta) <- etanames
     return(starteta)
@@ -1598,7 +1626,7 @@ if(FALSE) {
     #if(log) val <- log(val)
     val <- dexp(x = y, rate = par, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
     }
     return(val)
@@ -1611,7 +1639,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
@@ -1621,7 +1649,7 @@ if(FALSE) {
   
   
   hdist <- function(y, eta, weights = NULL) {    
-    if(is.null(weights)) weights <- rep.int(1, length(y))
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
     par <- exp(eta)                           
     hess <- -y * par
@@ -1664,7 +1692,7 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    lambda <- if(is.null(weights)) length(y)/sum(y) else sum(weights)/sum(weights * y)
+    lambda <- if(is.null(weights) || (length(weights)==0L)) length(y)/sum(y) else sum(weights)/sum(weights * y)
     starteta <- log(lambda)
     names(starteta) <- etanames
     return(starteta)
@@ -1708,7 +1736,7 @@ if(FALSE) {
     # if(!log) val <- exp(val)
     val <- dgamma(x = y, shape = par[1], scale = par[2], log = log)
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val)
     }
     return(val)
@@ -1722,7 +1750,7 @@ if(FALSE) {
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score)
@@ -1733,7 +1761,7 @@ if(FALSE) {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(exp(eta[1]), exp(eta[2]))                          
     
@@ -1781,8 +1809,8 @@ if(FALSE) {
   
   
   startfun <- function(y, weights = NULL){
-    y.m <- if(is.null(weights)) mean(y) else weighted.mean(y, weights)
-    y.sd <- if(is.null(weights)) sd(y) else sqrt(Hmisc::wtd.var(y, weights))
+    y.m <- if(is.null(weights) || (length(weights)==0L)) mean(y) else weighted.mean(y, weights)
+    y.sd <- if(is.null(weights) || (length(weights)==0L)) sd(y) else sqrt(Hmisc::wtd.var(y, weights))
     shape <- (y.m/y.sd)^2
     scale <- y.m/shape     # <- y.sd^2/y.m
     starteta <- c(log(shape), log(scale))
