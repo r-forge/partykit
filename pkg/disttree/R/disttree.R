@@ -63,8 +63,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       
       if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
       if(!(is.numeric(formula[[3]]))) {
-        print(formula)
-        stop("covariates can only be used as splitting variables (formula has to be of type y~1 |x)")
+        #print(formula)
+        stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
       }
       
       decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
@@ -275,7 +275,7 @@ coef.disttree <- function(object){
 
 if(FALSE){
   tr <- disttree(dist ~ speed, data = cars)
-  # tr <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
+  # trc <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
   print(tr)
   
   plot(tr)
