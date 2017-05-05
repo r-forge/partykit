@@ -51,8 +51,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     #m[[1L]] <- as.name("partykitR1::mob")
     rval <- eval(m, parent.frame())
     
-    rval$fitted$`(response)` <- predict(rval, type = "response")
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
+    rval$fitted$`(response)` <- data[,paste(formula[[2]])]
+    rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$coefficients <- coef(rval)
   }
   
@@ -139,7 +140,6 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     #m[[1L]] <- as.name("partykitR1::ctree")
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
-    
 
     # number of terminal nodes
     n_tn <- width(rval)
@@ -175,6 +175,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     }
     
     rval$coefficients <- coefficients_par
+    rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
   }
   
   
