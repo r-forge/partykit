@@ -50,6 +50,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     m[[1L]] <- as.name("mob")
     #m[[1L]] <- as.name("partykitR1::mob")
     rval <- eval(m, parent.frame())
+    
+    rval$fitted$`(response)` <- predict(rval, type = "response")
+    rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
     rval$coefficients <- coef(rval)
   }
   
@@ -116,7 +119,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
         
         ret <- list(estfun = estfun,
                     coefficients = coef(model),
-                    objfun = family$ddist,
+                    objfun = logLik(model)  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
                     converged = TRUE  # FIX ME: warnings is distfit does not converge
         )
