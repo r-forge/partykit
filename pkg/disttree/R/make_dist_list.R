@@ -240,8 +240,7 @@ make_dist_list <- function(family, bd = NULL)
   
   if(np == 1L){
     
-    # define function for the calculation of initial values
-    ## FIX ME ## use weights?
+    # define function for the calculation of initial values on the link scale
     startfun <- function(y, weights = NULL) {
       mu <- NULL
       if(is.null(weights) || (length(weights)==0L)) {
@@ -332,7 +331,7 @@ make_dist_list <- function(family, bd = NULL)
   
   if(np == 2L){
     
-    # define function for the calculation of initial values
+    # define function for the calculation of initial values on the link scale
     startfun <- function(y, weights = NULL) {
       mu <- sigma <- NULL
       if(is.null(weights) || (length(weights)==0L)) {
