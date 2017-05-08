@@ -1,6 +1,9 @@
-distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
                     bd = NULL, fixed = NULL, fixed.values = NULL, cens = "none", censpoint = NULL, ...)
 {
+  ## start on link scale
+  ## start.par on parameter scale
+  
   ## match call
   cl <- match.call()
 
@@ -121,14 +124,31 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
   }
   
   
-  ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values for the intercepts
-  if(is.null(start)){
+  ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
+  if(is.null(start) && is.null(start.eta)){
     starteta <- family$startfun(y, weights = weights)
+    if(any(is.na(starteta))) {
+      print(y)
+      print(weights)
+      print("start = NaN")
     # starteta <- family$startfun(y = rep(y, round(weights)))
+    }
   } else {
-    starteta <- family$linkfun(start)
+    if(!(is.null(start))){
+      # check that those parameters with a log-function in the linkfun are not negative
+      if(start[(family$link == "log" | family$link == "logit")]<0) 
+        start[(family$link == "log" | family$link == "logit")] <- 1e-10
+      starteta <- family$linkfun(start)
+    }
+    if(!(is.null(start.eta))){
+      starteta <- start.eta
+    }
+    if(any(is.na(starteta))) {
+      print(y)
+      print(weights)
+      print(start)
+    }
   }
-
   
   if(!family$mle) {
     ## optimize negative log-likelihood
@@ -140,6 +160,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
                        hessian = (type.hessian == "numeric"), control = list(...)))
       if(inherits(opt, "try-error")) {
         #print("opt try-error with gr = grad, BFGS")
+        print(starteta)
         opt <- optim(par = starteta, fn = nll, gr = grad, method = "Nelder-Mead",
                          hessian = (type.hessian == "numeric"), control = list(...))
       }
@@ -254,6 +275,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, vcov = TRUE, type.h
     weights = weights,
     family = family$family.name,
     starteta = starteta,
+    start = start,
     opt = opt,
     par = par,
     eta = eta,
@@ -282,7 +304,7 @@ nobs.distfit <- function(object, ...) {
   object$ny
 }
 
-coef.distfit <- function(object, type = "link" , ...) {
+coef.distfit <- function(object, type = "parameter" , ...) {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
   ## FIXME: else, warning
@@ -312,7 +334,7 @@ predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
         expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-02))
         if(inherits(expv, "try-error")) {
           print("rel.tol had to be set to 0.1 to calculated expected values for predictions")
-          print(coef(object))
+          #print(coef(object))
           expv <- integrate(f,-Inf, Inf, rel.tol = 1e-01)
         }
       }
