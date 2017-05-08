@@ -26,15 +26,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
       
-      rval <- distfit(y, family = family, weights = weights, start = start,
+      mod <- distfit(y, family = family, weights = weights, start = start,
                       vcov = vcov, estfun = estfun, type.hessian = type.hessian,
                       cens = cens, censpoint = censpoint, ...)
       
       rval <- list(
-        coefficients = rval$par,
-        objfun = -rval$loglik,
-        estfun = if(estfun) rval$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
-        object = if(object) rval else NULL
+        coefficients = mod$par,
+        objfun = - mod$loglik,      #FIX ME: before: return minimized function, now: maximized?
+        estfun = if(estfun) mod$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
+        object = if(object) mod else NULL
       )
       return(rval)
     }
@@ -54,15 +54,14 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
     rval$fitted$`(response)` <- data[,paste(formula[[2]])]
     rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
-    rval$coefficients <- coef(rval)
+    rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
+    rval$loglik <- logLik(rval)
   }
   
   
   if(type.tree == "ctree") {
     
     ## wrapper function to apply distfit in ctree
-    # input: data, family, weights
-    # output: scores (estfun)
     ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
       
       if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
@@ -112,17 +111,17 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
         }
         
         if(estfun) {
-          estfun <- matrix(ncol = ncol(ef), nrow = nrow(data)) 
+          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
           estfun[subset,] <- ef
         } else estfun <- NULL
         
         object <-  if(object) model else NULL
         
         ret <- list(estfun = estfun,
-                    coefficients = coef(model),
+                    coefficients = coef(model, type = "parameter"),
                     objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
-                    converged = TRUE  # FIX ME: warnings is distfit does not converge
+                    converged = TRUE  # FIX ME: warnings if distfit does not converge
         )
         return(ret)
       }
@@ -148,7 +147,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # predicted terminal nodes for the given data
     pred_tn <- predict(rval, type = "node")
     
-    if(is.null(weights) || (length(weights)==0L)) weights <- numeric(length(data[,1])) + 1
+    if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
+    
     # get coefficients for terminal nodes:
     # first iteration out of loop:
     model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
@@ -164,6 +164,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     coefficients_par[1,] <- model1$par
     # coefficients_eta[1,] <- model1$eta
     
+    loglik <- sum(model1$ddist(data[(id_tn[1]==pred_tn),resp.name], log = TRUE))
+    
     if(n_tn>1){
       for(i in (2:n_tn)){
         model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
@@ -171,11 +173,13 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
                          estfun = FALSE, cens = cens, censpoint = censpoint)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
+        loglik <- loglik + sum(model$ddist(data[(id_tn[i]==pred_tn),resp.name], log = TRUE))
       }
     }
     
     rval$coefficients <- coefficients_par
     rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
+    rval$loglik <- loglik
   }
   
   
@@ -189,13 +193,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
     if(is.vector(groupcoef)) {
-      groupcoef <- t(as.data.frame(groupcoef))
+      groupcoef <- t(as.matrix(groupcoef))
       rownames(groupcoef) <- 1
     }
     rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
     rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
     rval$fitted.par <- as.data.frame(rval$fitted.par)
   }
+  
+  
   class(rval) <- c("disttree", class(rval))
   return(rval)
 }
@@ -243,6 +249,37 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
 coef.disttree <- function(object){
   object$coefficients
 }
+
+
+logLik.disttree <- function(object, newdata = NULL) {
+  if(is.null(newdata)) {
+    return(structure(object$loglik, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
+  } else {
+    ll <- 0
+    # predicted nodes for the new dataset
+    pred.node <- predict(object, newdata = newdata, type = "node")
+    # coefficients in the terminal nodes
+    coef_tn <- coef(object)
+    # number of terminal nodes
+    n_tn <- width(object) # <- nrow(coef_tn)
+    # id of terminal nodes
+    id_tn <- rownames(coef_tn)
+    # get link fun and ddist from distribution list
+    distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
+    linkfun <- distlist$linkfun
+    ddist <- distlist$ddist
+    for(i in 1:n_tn){
+      par <- coef_tn[i,]
+      eta <-  as.numeric(linkfun(par))
+      # response variable of the observations that end up in this terminal node
+      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+    }
+    return(ll)
+  }
+}
+
+
 
 ## predict.disttree <- function(object, newdata = NULL,
 ##   type = c("worth", "rank", "best", "node"), ...)
