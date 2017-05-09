@@ -11,7 +11,7 @@ inst/NUS-2014
 R/asymptote.R
 R/meanvartree.R
 R/mtree.R
-src/
+src
 tests/ctree-ctree.R
 vignettes/mob.Rout.save
 vignettes/urp.*
