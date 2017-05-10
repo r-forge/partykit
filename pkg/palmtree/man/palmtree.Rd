@@ -79,7 +79,7 @@ The function returns a list with the following objects:
   \item{tree}{The final \code{lmtree}/\code{glmtree}.}
   \item{palm}{The final \code{lm}/\code{glm} model.}
   \item{data}{The dataset specified with the \code{data} argument
-    including added auxiliary variables \code{.ranef} and \code{.treeresponse}
+    including added auxiliary variables \code{.lm} and \code{.tree}
     from the last iteration.}
   \item{nobs}{Number of observations.}
   \item{loglik}{The log-likelihood value of the last iteration.}
