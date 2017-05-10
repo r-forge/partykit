@@ -121,7 +121,7 @@ The function returns a list with the following objects:
   \item{varcorr}{The corresponding \code{VarCorr(lmer)}.}
   \item{variance}{The corresponding \code{attr(VarCorr(lmer), "sc")^2}.}
   \item{data}{The dataset specified with the \code{data} argument
-    including added auxiliary variables \code{.ranef} and \code{.treeresponse}
+    including added auxiliary variables \code{.ranef} and \code{.tree}
     from the last iteration.}
   \item{loglik}{The log-likelihood value of the last iteration.}
   \item{iterations}{The number of iterations used to estimate the \code{lmertree}.} 
