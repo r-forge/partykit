@@ -106,10 +106,8 @@ logLik.lagsarlmtree <- function(object, dfsplit = NULL, ...)
 print.lagsarlmtree <- function(x, title = "Spatial lag model tree", ...)
 {
   print(x$tree, title = title, ...)
-  if(length(coef(x$lagsarlm)[-grep(".tree", names(coef(x$lagsarlm)))]) > 1L) {
-    cat("\nRho (from lagsarlm model):\n")
-    print(coef(x, model = "rho"))
-  }
+  cat("\nRho (from lagsarlm model):\n")
+  print(coef(x, model = "rho"))
   invisible(x)
 }
 

@@ -6,7 +6,8 @@ import("Formula")
 import("spdep")
 
 export(
-  "lagsarlmtree"
+  "lagsarlmtree",
+  "sctest.lagsarlmtree"
 )
 
 ## methods for class lmtree
