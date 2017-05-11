@@ -635,7 +635,7 @@ pruned or \code{FALSE} if not. The arguments supplied are a vector of objective 
 the current node and the sum of all child nodes, a vector of corresponding degrees of freedom,
 and the number of observations in the current node and in total. For example if the objective
 function used is the negative log-likelihood, then for BIC-based pruning the \code{prune} function
-is: \code{(2 * objfun[1] + log(nobs[2]) * df[1]) < (2 * objfun[2] + nobs[2] * df[2])}. As the
+is: \code{(2 * objfun[1] + log(nobs[2]) * df[1]) < (2 * objfun[2] + log(nobs[2]) * df[2])}. As the
 negative log-likelihood is the default objective function when using the ``simple'' \code{fit}
 interface, \code{prune} can also be set to \code{"AIC"} or \code{"BIC"} and then suitable
 functions will be set up internally. Note, however, that for other objective functions this
