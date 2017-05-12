@@ -1,8 +1,12 @@
 distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
                     bd = NULL, fixed = NULL, fixed.values = NULL, cens = "none", censpoint = NULL, ...)
 {
-  ## start on link scale
-  ## start.par on parameter scale
+  ## start on par scale
+  ## start.eta on link scale
+  
+  
+  ## FIX ME: what to do if weights consists of zeros only
+  
   
   ## match call
   cl <- match.call()
@@ -251,7 +255,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
   ##### additional functions with set parameters
   
   ## density function
-  ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
+  if(inherits(cl$family, "gamlss.family") && ("censored" %in% strsplit(family$family.name, " ")[[1]])){
+    ddist <- function(x, log = FALSE) {
+      if(!survival::is.Surv(x)){
+        if(cens == "left") family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
+        if(cens == "right") family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
+        ## FIX ME: interval censored
+      } else family$ddist(x, eta = eta,  log=log)
+    }
+  } else ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
   
   ## cumulative distribution function
   pdist <- function(q, lower.tail = TRUE, log.p = FALSE) family$pdist(q, eta = eta, lower.tail = lower.tail, log.p = log.p)
