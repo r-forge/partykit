@@ -2,7 +2,9 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
                        perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
                        cens = "none", censpoint = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
-                       ocontrol = list(), ...)
+                       ocontrol = list(), na.action = na.pass, cores = NULL, applyfun = NULL,
+                       type.tree = "ctree",
+                       ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
@@ -11,87 +13,214 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   
   resp.name <- as.character(formula[2])
   
-  ## wrapper function to apply distfit in cforest
-  ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
+  if(type.tree == "ctree") {
     
-    if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
-    if(!(is.numeric(formula[[3]]))) {
-      #print(formula)
-      stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
-    }
-    
-    decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
-    
-    modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
+    ## wrapper function to apply distfit in cforest
+    ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
       
-      ys <- data[subset,resp.name]
-      subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
-      # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-      start <- info$coefficients
-      
-      model <- distfit(ys, family = family, weights = subweights, start = start,
-                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                       estfun = estfun, cens = cens, censpoint = censpoint, ...)
-      
-      
-      ef <- as.matrix(sandwich::estfun(model))
-      #n <- NROW(ef)
-      #ef <- ef/sqrt(n)
-      
-      if(decorrelate != "none") {
-        n <- NROW(ef)
-        ef <- ef/sqrt(n)
-        
-        vcov <- if(decorrelate == "vcov") {
-          vcov(model) * n
-        } else {
-          solve(crossprod(ef))
-        }
-        
-        root.matrix <- function(X) {
-          if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-            X.eigen <- eigen(X, symmetric = TRUE)
-            if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-            sqomega <- sqrt(diag(X.eigen$values))
-            V <- X.eigen$vectors
-            return(V %*% sqomega %*% t(V))
-          }
-        }
-        ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+      if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
+      if(!(is.numeric(formula[[3]]))) {
+        #print(formula)
+        stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
       }
       
-      if(estfun) {
-        estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
-        estfun[subset,] <- ef
-      } else estfun <- NULL
+      # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
       
-      object <-  if(object) model else NULL
-      
-      ret <- list(estfun = estfun,
-                  coefficients = coef(model, type = "parameter"),
-                  objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
-                  object = object,
-                  converged = TRUE  # FIX ME: warnings is distfit does not converge
-      )
-      return(ret)
+      modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
+        
+        ys <- data[subset,resp.name]
+        subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
+        # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
+        start <- info$coefficients
+        
+        model <- distfit(ys, family = family, weights = subweights, start = start,
+                         vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                         estfun = estfun, cens = cens, censpoint = censpoint, ...)
+        
+        
+        ef <- as.matrix(model$estfun)
+        #n <- NROW(ef)
+        #ef <- ef/sqrt(n)
+        
+        if(decorrelate != "none") {
+          n <- NROW(ef)
+          ef <- ef/sqrt(n)
+          
+          vcov <- if(decorrelate == "vcov") {
+            vcov(model) * n
+          } else {
+            solve(crossprod(ef))
+          }
+          
+          root.matrix <- function(X) {
+            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+              X.eigen <- eigen(X, symmetric = TRUE)
+              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+              sqomega <- sqrt(diag(X.eigen$values))
+              V <- X.eigen$vectors
+              return(V %*% sqomega %*% t(V))
+            }
+          }
+          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        }
+        
+        if(estfun) {
+          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
+          estfun[subset,] <- ef
+        } else estfun <- NULL
+        
+        object <-  if(object) model else NULL
+        
+        ret <- list(estfun = estfun,
+                    coefficients = coef(model, type = "parameter"),
+                    objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
+                    object = object,
+                    converged = TRUE  # FIX ME: warnings is distfit does not converge
+        )
+        return(ret)
+      }
+      return(modelscores_decor)
+    }    
+    
+    
+    # rval <- cforest(formula, data, ytrafo = modelscores_decor, ntree = ntree)
+    
+    ## call cforest
+    m <- match.call(expand.dots = FALSE)
+    m$ytrafo <- ytrafo
+    m$cores <- cores
+    m$applyfun <- applyfun
+    m$control <- control
+    # m$data <- data
+    m$family <- m$decorrelate <- m$cens <- m$censpoint <- NULL
+    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    if("..." %in% names(m)) m[["..."]] <- NULL
+    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
+    m[[1L]] <- as.name("cforest")
+    rval <- eval(m, parent.frame())
+  }
+  
+  
+  # first approach to building a forest using mob
+  ## FIX ME: applies mob and extracts nodes slot
+  if(type.tree == "mob") {
+    
+    if(!("control" %in% names(cl))) {
+      control <- mob_control()
+      warning("for type.tree = 'mob' the control argument is by default set to mob_control()") 
     }
-    return(modelscores_decor)
-  }    
+    
+    cl$na.action <- na.action
+    frame <- parent.frame()
+
+    ## FIX ME: weights?
+    # weights <- rep.int(1, nrow(data))
+    
+    cl$weights <- NULL ### NOTE: trees are unweighted, weights enter sampling!
+    
+    ## glue code for calling distfit() with given family in mob()
+    dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
+                                cluster = NULL, vcov = FALSE, estfun = TRUE, 
+                                object = FALSE, type.hessian = "analytic", ...)
+    {
+      if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
+      if(!is.null(offset)) warning("offset not used")
+      
+      mod <- distfit(y, family = family, weights = weights, start = start,
+                     vcov = vcov, estfun = estfun, type.hessian = type.hessian,
+                     cens = cens, censpoint = censpoint, ...)
+      
+      rval <- list(
+        coefficients = mod$par,
+        objfun = - mod$loglik,      #FIX ME: before: return minimized function, now: maximized?
+        estfun = if(estfun) mod$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
+        object = if(object) mod else NULL
+      )
+      return(rval)
+    }
+    
+    tree <- mob(formula, data = data,
+                fit= dist_family_fit, control = control)
+    
+    tree$mf <- model.frame(formula, data)
+    strata <- tree$mf[["(strata)"]]
+    if (!is.null(strata)) {
+      if (!is.factor(strata)) stop("strata is not a single factor")
+    }
+    
+    probw <- NULL
+    weights <- model.weights(tree$mf)
+    if (!is.null(weights)) {
+      probw <- weights / sum(weights)
+    } else {
+      weights <- integer(0)
+    }
+    nvar <- length(tree$partyvars)
+    #control$mtry <- mtry
+    #control$applyfun <- applyfun
+    
+    idx <- 1L:nrow(tree$mf)
+    if (is.null(strata)) {
+      size <- nrow(tree$mf)
+      if (!perturb$replace) size <- floor(size * perturb$fraction)
+      rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
+                      simplify = FALSE)
+    } else {
+      frac <- if (!perturb$replace) perturb$fraction else 1
+      rw <- replicate(ntree, function() 
+        do.call("c", tapply(idx, strata, function(i) sample(i, size = length(i) * frac, 
+                                                            replace = perturb$replace, prob = probw[i]))))
+    }
+    
+    ## FIX ME: hand over applyfun (via control)?
+    if(is.null(applyfun)) applyfun <- control$applyfun
+    # cores <- NULL
+    # applyfun <- tree$info$control$applyfun()
+    ## apply infrastructure for determining split points
+    if (is.null(applyfun)) {
+      applyfun <- if(is.null(cores)) {
+        lapply  
+      } else {
+        function(X, FUN, ...)
+          parallel::mclapply(X, FUN, ..., mc.cores = cores)
+      }
+    }
+    
+    forest <- applyfun(1:ntree, function(b) {
+      sdata <- data[rw[[b]],]
+      mob(formula, data = sdata, fit= dist_family_fit, control = control)$node
+    })
+    
+    #forest <- list()
+    #for(b in 1:ntree){
+    #  forest[[b]] <- mob(formula, data = data, subset = rw[[b]], fit= dist_family_fit, control = mob_control())$node
+    #}
+    
+    
+    fitted <- data.frame(idx = idx)  
+    mf <- model.frame(Formula::Formula(formula), data = tree$mf, na.action = na.pass)
+    y <- Formula::model.part(Formula::Formula(formula), data = mf, lhs = 1, rhs = 0)
+    if (length(y) == 1) y <- y[[1]]
+    fitted[[2]] <- y
+    names(fitted)[2] <- "(response)"
+    fitted <- fitted[2]
+    if (length(weights) > 0)
+      fitted[["(weights)"]] <- weights
+    
+    ### turn subsets in weights (maybe we can avoid this?)
+    rw <- lapply(rw, function(x) tabulate(x, nbins = length(idx)))
+    
+    control$applyfun <- applyfun
+    
+    rval <- partykit:::constparties(nodes = forest, data = tree$mf, weights = rw,
+                                   fitted = fitted, terms = terms(mf), 
+                                   info = list(call = match.call(), control = control))
+    
+    #rval$fit <- tree$fit
+    class(rval) <- c("distforest", class(rval))
+  }
+
   
-  
-  # rval <- cforest(formula, data, ytrafo = modelscores_decor, ntree = ntree)
-  
-  ## call cforest
-  m <- match.call(expand.dots = FALSE)
-  m$ytrafo <- ytrafo
-  m$control <- control
-  # m$data <- data
-  m$family <- m$decorrelate <- m$cens <- m$censpoint <- NULL
-  # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
-  # if("..." %in% names(m)) m[["..."]] <- NULL
-  # if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-  m[[1L]] <- as.name("cforest")
-  rval <- eval(m, parent.frame())
   
   if(fit) {
     ### calculate fitted value, fitted distribution parameters, loglikelihood (and log scores) for every observation
@@ -109,15 +238,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
       pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
-      if(inherits(family, "gamlss.family")) {
-        if(("censored" %in% strsplit(family$family[2], " ")[[1]]) && (!survival::is.Surv(data[i,resp.name]))) {
-          if(cens == "left") loglik[i,] <- pm$ddist(survival::Surv(data[i,resp.name], data[i,resp.name] > censpoint, type = "left"), log = TRUE)
-          if(cens == "right") loglik[i,] <- pm$ddist(survival::Surv(data[i,resp.name], data[i,resp.name] < censpoint, type = "right"), log = TRUE)
-          ## FIX ME: interval censored
-          #if(cen == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
-        } else loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
-      } else loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
-      
+      loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
       # logscore[i,] <- pm$familylist$sdist(data[i,resp.name], eta = coef(pm, type = "link"), sum = FALSE)
     }
     
@@ -138,17 +259,20 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
     # rval$logscore <- logscore
   }
   
+  rval$info$call <- cl
   rval$info$family <- family
   rval$info$npar <- np
   rval$info$formula <- formula
+  rval$info$cens <- cens
+  rval$info$censpoint
   
   class(rval) <- c("distforest", class(rval))
   return(rval)
 }
-
-
-
-
+  
+  
+  
+  
 
 
 ###################
@@ -202,7 +326,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
     if(!is.null(newdata)) {
 
       # get weights for new data
-      nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
+      #nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = OOB)
+      nw <- w
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
       resp.name <- as.character(object$info$call$formula[2])
@@ -264,22 +389,27 @@ logLik.distforest <- function(object, newdata = NULL) {
     ll <- 0
     pred.par <- predict(object, newdata = newdata, type = "parameter")
     distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
-    for(i in 1:(nrow(newdata))){
-      par <- pred.par[i,]
-      eta <-  as.numeric(distlist$linkfun(par))
-      ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
+    
+    if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
+      cens <- object$info$cens
+      censpoint <- object$info$censpoint
+      for(i in 1:(nrow(newdata))){
+        par <- pred.par[i,]
+        eta <-  as.numeric(distlist$linkfun(par))
+        ydata <- newdata[i,paste(object$info$formula[[2]])]
+        if(!survival::is.Surv(ydata)) {
+          if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
+          if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eat, log = TRUE)
+          ## FIX ME: interval censored
+        } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
+      }
+    } else {
+      for(i in 1:(nrow(newdata))){
+        par <- pred.par[i,]
+        eta <-  as.numeric(distlist$linkfun(par))
+        ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
+      }
+      return(ll)
     }
-      
-    return(ll)
   }
 }
-
-
-
-
-
-
-
-
-
-
