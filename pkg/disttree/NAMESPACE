@@ -41,8 +41,12 @@ S3method("vcov", "distfit")
 S3method("predict", "distfit")
 
 S3method("print", "disttree")
+S3method("coef", "disttree")
 S3method("predict", "disttree")
 S3method("logLik", "disttree")
+
+S3method("predict", "distforest")
+S3method("logLik", "distforest")
 
 S3method("predict", "distforest")
 S3method("logLik", "distforest")
