@@ -70,7 +70,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
         stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
       }
       
-      decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
+      # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
       
       modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
 
@@ -84,7 +84,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
                          estfun = estfun, cens = cens, censpoint = censpoint, ...)
         
         
-        ef <- as.matrix(sandwich::estfun(model))
+        ef <- as.matrix(model$estfun)
         #n <- NROW(ef)
         #ef <- ef/sqrt(n)
         
@@ -136,7 +136,6 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    #m[[1L]] <- as.name("partykitR1::ctree")
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
 
@@ -189,6 +188,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   rval$info$family <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
+  rval$info$censpoint <- censpoint
+  rval$info$cens <- cens
   
   groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
@@ -268,12 +269,30 @@ logLik.disttree <- function(object, newdata = NULL) {
     distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
     linkfun <- distlist$linkfun
     ddist <- distlist$ddist
-    for(i in 1:n_tn){
-      par <- coef_tn[i,]
-      eta <-  as.numeric(linkfun(par))
-      # response variable of the observations that end up in this terminal node
-      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-      ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+    
+    
+    if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
+      cens <- object$info$cens
+      censpoint <- object$info$censpoint
+      for(i in 1:n_tn){
+        par <- coef_tn[i,]
+        eta <-  as.numeric(linkfun(par))
+        # response variable of the observations that end up in this terminal node
+        nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+        if(!survival::is.Surv(nobs_tn)) {
+          if(cens == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
+          if(cens == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eat, log = TRUE, sum = TRUE)
+          ## FIX ME: interval censored
+        } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+      }
+    } else {
+      for(i in 1:n_tn){
+        par <- coef_tn[i,]
+        eta <-  as.numeric(linkfun(par))
+        # response variable of the observations that end up in this terminal node
+        nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+        ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+      }
     }
     return(ll)
   }
