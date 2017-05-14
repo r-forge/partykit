@@ -5,6 +5,7 @@
 \alias{coef.lagsarlmtree}
 \alias{logLik.lagsarlmtree}
 \alias{predict.lagsarlmtree}
+\alias{sctest.lagsarlmtree}
 
 \title{Spatial Lag Model Trees}
 
@@ -85,7 +86,7 @@ The function returns a list with the following objects:
 
 \references{ 
   Wagner M, Zeileis A (2017).
-    Heterogeneity of Regional Growth in the EU: A Recursive Partitioning Approach.
+    Heterogeneity and Spatial Dependence of Regional Growth in the EU: A Recursive Partitioning Approach.
     Unpublished manuscript.
 }
 
