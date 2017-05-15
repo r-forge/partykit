@@ -173,7 +173,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
     }
     
     ## FIX ME: hand over applyfun (via control)?
-    if(is.null(applyfun)) applyfun <- control$applyfun
+    # if(is.null(applyfun)) applyfun <- control$applyfun
     # cores <- NULL
     # applyfun <- tree$info$control$applyfun()
     ## apply infrastructure for determining split points
@@ -384,7 +384,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
 
 logLik.distforest <- function(object, newdata = NULL) {
   if(is.null(newdata)) {
-    return(structure(object$loglik, df = object$npar, class = "logLik"))
+    return(structure(object$loglik, df = NA, class = "logLik"))
   } else {
     ll <- 0
     pred.par <- predict(object, newdata = newdata, type = "parameter")
@@ -409,7 +409,7 @@ logLik.distforest <- function(object, newdata = NULL) {
         eta <-  as.numeric(distlist$linkfun(par))
         ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
       }
-      return(ll)
     }
+    return(structure(ll, df = NA, class = "logLik"))
   }
 }
