@@ -102,6 +102,15 @@ cforest <- function
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
                       trafofun = trafofun, doFit = FALSE)
 
+    nvar <- length(tree$partyvars)
+    control$mtry <- mtry
+    control$applyfun <- NULL
+ 
+    ### <FIXME> we need tree$partyvars here, avoid calling .urp_tree twice
+    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
+                      trafofun = trafofun, doFit = FALSE)
+    ### </FIXME>
+
     strata <- tree$mf[["(strata)"]]
     if (!is.null(strata)) {
         if (!is.factor(strata)) stop("strata is not a single factor")
@@ -114,9 +123,6 @@ cforest <- function
     } else {
         weights <- integer(0)
     }
-    nvar <- length(tree$partyvars)
-    control$mtry <- mtry
-    control$applyfun <- NULL
 
     idx <- 1L:nrow(tree$mf)
     if (is.null(strata)) {
