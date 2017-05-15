@@ -13,6 +13,8 @@
 #' the model objects use \code{identity}.
 #'
 #' @return depends on fun.
+#' 
+#' @export
 pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = coef) {
   
   ## compute similarity weights

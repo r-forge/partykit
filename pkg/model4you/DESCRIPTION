@@ -1,0 +1,15 @@
+Package: model4you
+Title: Personalised models.
+Date: 2017-05-15
+Version: 0.0-1
+Authors@R: c(person(given = "Heidi", family = "Seibold", role = c("aut", "cre"), email = "Heidi.Seibold@uzh.ch"),
+	     person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org"),
+             person(given = "Torsten", family = "Hothorn", role = "aut", email = "Torsten.Hothorn@R-project.org"))
+Description: Personalised models based on model-based trees and forests.
+Depends:
+    R (>= 3.1.0),
+    partykit
+Imports:
+    sandwich
+License: GPL-2 | GPL-3
+RoxygenNote: 5.0.1
