@@ -294,7 +294,7 @@ logLik.disttree <- function(object, newdata = NULL) {
         ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
       }
     }
-    return(ll)
+    return(structure(ll, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
   }
 }
 
