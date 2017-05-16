@@ -5,7 +5,7 @@
 #' @param object a model object.
 #' @param data data. If NULL (default) the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
-#' If \code{NULL} (default) all variables in data that are not in the model are used (i.e. \code{~ .}).
+#' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).
 #' @param ntree number of trees.
 #' @param control control parameters, see \code{\link[partykit]{ctree_control}}.
 #' @param ... additional parameters passed on to model fit such as weights.
@@ -13,7 +13,7 @@
 #' @return cforest object
 #' 
 #' @export
-pmforest <- function(object, data = NULL, zformula = NULL, ntree = 2,
+pmforest <- function(object, data = NULL, zformula = ~., ntree = 2,
                      control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo = FALSE, ...), 
                      ...) {
   

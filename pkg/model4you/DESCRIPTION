@@ -1,5 +1,5 @@
 Package: model4you
-Title: Personalised models.
+Title: Personalised models
 Date: 2017-05-15
 Version: 0.0-1
 Authors@R: c(person(given = "Heidi", family = "Seibold", role = c("aut", "cre"), email = "Heidi.Seibold@uzh.ch"),
@@ -10,6 +10,7 @@ Depends:
     R (>= 3.1.0),
     partykit
 Imports:
-    sandwich
+    sandwich,
+    stats
 License: GPL-2 | GPL-3
 RoxygenNote: 5.0.1

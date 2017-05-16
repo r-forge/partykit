@@ -1,0 +1,132 @@
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+[Previously saved workspace restored]
+
+> library("model4you")
+Loading required package: partykit
+Loading required package: grid
+Loading required package: libcoin
+Loading required package: mvtnorm
+> library("survival")
+> 
+> ## function to simulate the data
+> sim_data <- function(n = 500, p = 10, beta = 3, sd = 1){
++   
++   ## treatment
++   lev <- c("C", "A")
++   a <- rep(factor(lev, labels = lev, levels = lev), length = n)
++   
++   ## correlated z variables
++   sigma <- diag(p) 
++   sigma[sigma == 0] <- 0.2
++   ztemp <- mvtnorm::rmvnorm(n, sigma = sigma)
++   z <- (pnorm(ztemp) * 2 * pi) - pi  
++   colnames(z) <- paste0("z", 1:ncol(z))
++   z1 <- z[,1]
++   
++   ## outcome
++   y <- 7 + 0.2 * (a %in% "A") + beta * cos(z1) * (a %in% "A") + rnorm(n, 0, sd)
++   
++   data.frame(y = y, a = a, z)
++ }
+> 
+> 
+> ## simulate data
+> set.seed(123)
+> beta <- 3
+> ntrain <- 500
+> ntest <- 100
+> simdata <- sim_data(p = 5, beta = beta, n = ntrain)
+> tsimdata <- sim_data(p = 5, beta = beta, n = ntest)
+> cens <- rep(1, ntrain)
+> tcens <- rep(1, ntest)
+> 
+> ## base model
+> basemodel_lm <- lm(y ~ a, data = simdata)
+> basemodel_wb <- survreg(Surv(y, cens) ~ a, data = simdata)
+> 
+> ## forest
+> frst_lm <- pmforest(basemodel_lm, ntree = 50, 
++                     perturb = list(replace = FALSE, fraction = 0.632),
++                     control = ctree_control(mincriterion = 0))
+> # vi_lm <- varimp(frst_lm)
+> frst_wb <- pmforest(basemodel_wb, ntree = 50, 
++                     perturb = list(replace = FALSE, fraction = 0.632),
++                     control = ctree_control(mincriterion = 0))
+> 
+> ## personalised models
+> coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
+> summary(coefs_lm)
+  (Intercept)          aA         
+ Min.   :6.317   Min.   :-2.1677  
+ 1st Qu.:6.896   1st Qu.:-0.8306  
+ Median :7.037   Median : 0.2939  
+ Mean   :7.042   Mean   : 0.1132  
+ 3rd Qu.:7.274   3rd Qu.: 0.9377  
+ Max.   :7.416   Max.   : 2.3544  
+> 
+> 
+> coeffun <- function(model) {
++   ## model coefficients
++   coefs <- c(coef(model), scale = model$scale)
++   
++   ## difference in median survival 
++   p = 0.5
++   coefs["median_s0"] <- qweibull(p = p, shape = 1/coefs["scale"], 
++                        scale = exp(coefs["(Intercept)"]))
++   coefs["median_s1"] <- qweibull(p = p, shape = 1/coefs["scale"], 
++                        scale = exp(coefs["(Intercept)"] + coefs["aA"]))
++   coefs["median_sdiff"] <- coefs["median_s1"] - coefs["median_s0"]
++   
++   return(coefs)
++ }
+> coefs_wb <- pmodel(x = frst_wb, newdata = cbind(tsimdata, cens = tcens),
++                    fun = coeffun)
+> summary(coefs_wb)
+  (Intercept)          aA               scale          median_s0    
+ Min.   :1.862   Min.   :-0.19879   Min.   :0.1249   Min.   :5.687  
+ 1st Qu.:1.963   1st Qu.: 0.04238   1st Qu.:0.1705   1st Qu.:6.575  
+ Median :1.992   Median : 0.13236   Median :0.2020   Median :6.844  
+ Mean   :1.985   Mean   : 0.10827   Mean   :0.2038   Mean   :6.766  
+ 3rd Qu.:2.011   3rd Qu.: 0.20391   3rd Qu.:0.2257   3rd Qu.:7.002  
+ Max.   :2.056   Max.   : 0.29372   Max.   :0.3570   Max.   :7.332  
+   median_s1      median_sdiff    
+ Min.   :5.756   Min.   :-1.2659  
+ 1st Qu.:6.871   1st Qu.: 0.2848  
+ Median :7.623   Median : 0.9069  
+ Mean   :7.586   Mean   : 0.8194  
+ 3rd Qu.:8.336   3rd Qu.: 1.5212  
+ Max.   :9.129   Max.   : 2.0654  
+> 
+> 
+> 
+> ## dependence plot
+> # library("ggplot2")
+> # dp_lm <- cbind(coefs_lm, tsimdata)
+> # dp_wb <- cbind(coefs_wb, tsimdata)
+> # ggplot(tsimdata) + 
+> #   stat_function(fun = function(z1) 0.2 + beta * cos(z1), aes(color = "true treatment\neffect")) + 
+> #   geom_point(data = dp_lm, aes(y = aA, x = z1, color = "estimates lm"), alpha = 0.5) + 
+> #   geom_point(data = dp_wb, aes(y = median_sdiff, x = z1, color = "estimates wb"), alpha = 0.5)
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 16.644   0.048  16.693 

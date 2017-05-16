@@ -4,7 +4,7 @@
 \alias{pmforest}
 \title{Compute model-based forest from model.}
 \usage{
-pmforest(object, data = NULL, zformula = NULL, ntree = 2,
+pmforest(object, data = NULL, zformula = ~., ntree = 2,
   control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo =
   FALSE, ...), ...)
 }
@@ -14,7 +14,7 @@ pmforest(object, data = NULL, zformula = NULL, ntree = 2,
 \item{data}{data. If NULL (default) the data from the model object are used.}
 
 \item{zformula}{formula describing which variable should be used for partitioning.
-If \code{NULL} (default) all variables in data that are not in the model are used (i.e. \code{~ .}).}
+Default is to use all variables in data that are not in the model (i.e. \code{~ .}).}
 
 \item{ntree}{number of trees.}
 

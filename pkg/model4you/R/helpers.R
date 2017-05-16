@@ -18,6 +18,8 @@
 #' \item{object}{ the model object. }
 #' \item{converged}{ Did the model converge? }
 #' \item{estfun}{ \code{estfun}. }
+#' 
+#' @importFrom sandwich estfun
 .modelfit <- function(formula, # ignored but needed for .ctreetrafo
                       model, data, weights, cluster, ctrl, parm = NULL) {
   

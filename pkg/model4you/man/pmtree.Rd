@@ -4,8 +4,7 @@
 \alias{pmtree}
 \title{Compute model-based forest from model.}
 \usage{
-pmtree(object, data = NULL, zformula = NULL, control = ctree_control(),
-  ...)
+pmtree(object, data = NULL, zformula = ~., control = ctree_control(), ...)
 }
 \arguments{
 \item{object}{a model object.}
@@ -13,14 +12,14 @@ pmtree(object, data = NULL, zformula = NULL, control = ctree_control(),
 \item{data}{data. If NULL (default) the data from the model object are used.}
 
 \item{zformula}{formula describing which variable should be used for partitioning.
-If \code{NULL} (default) all variables in data that are not in the model are used (i.e. \code{~ .}).}
+Default is to use all variables in data that are not in the model (i.e. \code{~ .}).}
 
 \item{control}{control parameters, see \code{\link[partykit]{ctree_control}}.}
 
 \item{...}{additional parameters passed on to model fit such as weights.}
 }
 \value{
-cforest object
+ctree object
 }
 \description{
 Input a parametric model and get a forest.
