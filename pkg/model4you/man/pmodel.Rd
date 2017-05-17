@@ -27,4 +27,3 @@ depends on fun.
 \description{
 Compute personalised models from cforest object.
 }
-

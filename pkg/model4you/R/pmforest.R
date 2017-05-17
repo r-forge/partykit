@@ -13,6 +13,7 @@
 #' @return cforest object
 #' 
 #' @export
+#' @importFrom partykit ctree_control
 pmforest <- function(object, data = NULL, zformula = ~., ntree = 2,
                      control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo = FALSE, ...), 
                      ...) {

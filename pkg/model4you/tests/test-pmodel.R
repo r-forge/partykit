@@ -1,5 +1,6 @@
 library("model4you")
 library("survival")
+library("mvtnorm")
 
 ## function to simulate the data
 sim_data <- function(n = 500, p = 10, beta = 3, sd = 1){
@@ -11,7 +12,7 @@ sim_data <- function(n = 500, p = 10, beta = 3, sd = 1){
   ## correlated z variables
   sigma <- diag(p) 
   sigma[sigma == 0] <- 0.2
-  ztemp <- mvtnorm::rmvnorm(n, sigma = sigma)
+  ztemp <- rmvnorm(n, sigma = sigma)
   z <- (pnorm(ztemp) * 2 * pi) - pi  
   colnames(z) <- paste0("z", 1:ncol(z))
   z1 <- z[,1]

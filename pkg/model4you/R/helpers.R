@@ -20,8 +20,9 @@
 #' \item{estfun}{ \code{estfun}. }
 #' 
 #' @importFrom sandwich estfun
-.modelfit <- function(formula, # ignored but needed for .ctreetrafo
-                      model, data, weights, cluster, ctrl, parm = NULL) {
+#' @importFrom stats update coef logLik getCall as.formula
+.modelfit <- function(formula, # ignored but needed for .ctreetrafo predict
+                      model, data, coeffun = coef, weights, cluster, ctrl, parm = NULL) {
   
   fitfun <- function(subset, estfun = TRUE, object = FALSE, info = NULL) { 
     
@@ -48,7 +49,7 @@
     }
     
     ## prepare return list
-    ret <- list(coefficients = coef(mod), objfun = logLik(mod),
+    ret <- list(coefficients = coeffun(mod), objfun = logLik(mod),
                 object = if(object) mod else NULL,
                 converged = conv)
     

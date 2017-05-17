@@ -28,4 +28,3 @@ cforest object
 \description{
 Input a parametric model and get a forest.
 }
-
