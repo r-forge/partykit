@@ -13,6 +13,7 @@
             for splits in numeric variables in \code{ctree} via
             \code{ctree_control(MIA = TRUE)}.}
      \item{New \code{offset} argument in \code{ctree}.}
+     \item{New \code{get_paths} for computing paths to nodes.}
     }
   }
   \itemize{

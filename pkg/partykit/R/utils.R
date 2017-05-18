@@ -16,6 +16,24 @@
     return(med)
 }
 
+get_paths <- function(obj, i) {
+
+    id0 <- nodeids(obj)
+    if (inherits(obj, "party")) obj <- node_party(obj)
+    if (!inherits(obj, "partynode"))
+        stop(sQuote("obj"), " is not an object of class partynode")
+
+    i <- as.integer(i)
+    if (!all(i %in% id0))
+        stop(sQuote("i"), " does not match node identifiers of ", 
+             sQuote("obj"))
+
+    lapply(i, function(id) {
+        if (id == 1L) return(1L)
+        .get_path(obj, id)
+    })
+}
+    
 ### get the recursive index
 ### obj is of class "partynode"
 .get_path <- function(obj, i) {
