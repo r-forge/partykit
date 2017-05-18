@@ -42,7 +42,7 @@ export(
   "glmtree",
 
   ## mobsters (urp-based)
-  "prune.modelparty",
+  # "prune.modelparty",
 
   ## new cforest implementation
   "cforest",
