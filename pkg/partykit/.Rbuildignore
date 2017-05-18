@@ -8,6 +8,7 @@ inst/useR-2009
 inst/ERCIM-2011
 inst/Psychoco-2014
 inst/NUS-2014
+inst/urp.Rnw
 R/asymptote.R
 R/meanvartree.R
 R/mtree.R
