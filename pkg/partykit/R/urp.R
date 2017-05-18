@@ -374,6 +374,9 @@
     pmin <- p["p.value", which.max(crit)]
     names(pmin) <- colnames(data)[which.max(crit)]
 
+    ### report on tests actually performed only
+    p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
+           drop = FALSE]
     info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
                    sf[!(names(sf) %in% c("criteria", "splitfun"))])
     if (!ctrl$saveinfo) info <- NULL
