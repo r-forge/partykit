@@ -1288,6 +1288,10 @@ whereas \code{ctree} only works with the score functions.
 Argument \code{xtrafo} allowing the user to change the transformations $g_j$ of the
 covariates are removed from the user interface.
 
+<<closing, echo = FALSE, results = hide>>=
+detach(package:party)
+@
+
 \bibliography{party}
 
 \end{document}

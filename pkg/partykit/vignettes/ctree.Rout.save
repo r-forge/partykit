@@ -24,6 +24,15 @@ The following objects are masked from ‘package:base’:
 
 Loading required package: sandwich
 
+> require("coin")
+
+> require("Formula")
+Loading required package: Formula
+
+> require("survival")
+
+> require("sandwich")
+
 > set.seed(290875)
 
 > ctree_control(teststat = "max")
@@ -45,6 +54,12 @@ $minprob
 $stump
 [1] FALSE
 
+$nmax
+[1] Inf
+
+$lookahead
+[1] FALSE
+
 $mtry
 [1] Inf
 
@@ -63,6 +78,9 @@ $MIA
 $maxsurrogate
 [1] 0
 
+$numsurrogate
+[1] FALSE
+
 $majority
 [1] FALSE
 
@@ -77,11 +95,17 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x166b290>
+<bytecode: 0x1ede1b8>
 <environment: namespace:base>
+
+$saveinfo
+[1] TRUE
 
 $testflavour
 [1] "ctree"
+
+$bonferroni
+[1] TRUE
 
 $splitflavour
 [1] "ctree"
@@ -94,6 +118,9 @@ $ordinal
 
 $nrep
 [1] 10000
+
+$trim
+[1] 0.1
 
 $teststat
 [1] "maximum"
@@ -120,14 +147,8 @@ attr(,"class")
 $testtype
 [1] "Bonferroni"
 
-$nmax
-[1] Inf
-
 $nresample
 [1] 9999
-
-$lookahead
-[1] FALSE
 
 $intersplit
 [1] FALSE
@@ -152,6 +173,12 @@ $minprob
 $stump
 [1] FALSE
 
+$nmax
+[1] Inf
+
+$lookahead
+[1] FALSE
+
 $mtry
 [1] Inf
 
@@ -170,6 +197,9 @@ $MIA
 $maxsurrogate
 [1] 0
 
+$numsurrogate
+[1] FALSE
+
 $majority
 [1] FALSE
 
@@ -184,11 +214,17 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x166b290>
+<bytecode: 0x1ede1b8>
 <environment: namespace:base>
+
+$saveinfo
+[1] TRUE
 
 $testflavour
 [1] "ctree"
+
+$bonferroni
+[1] TRUE
 
 $splitflavour
 [1] "ctree"
@@ -201,6 +237,9 @@ $ordinal
 
 $nrep
 [1] 10000
+
+$trim
+[1] 0.1
 
 $teststat
 [1] "quadratic"
@@ -227,14 +266,8 @@ attr(,"class")
 $testtype
 [1] "Bonferroni"
 
-$nmax
-[1] Inf
-
 $nresample
 [1] 9999
-
-$lookahead
-[1] FALSE
 
 $intersplit
 [1] FALSE
@@ -259,6 +292,12 @@ $minprob
 $stump
 [1] FALSE
 
+$nmax
+[1] Inf
+
+$lookahead
+[1] FALSE
+
 $mtry
 [1] Inf
 
@@ -277,6 +316,9 @@ $MIA
 $maxsurrogate
 [1] 0
 
+$numsurrogate
+[1] FALSE
+
 $majority
 [1] FALSE
 
@@ -291,11 +333,17 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x166b290>
+<bytecode: 0x1ede1b8>
 <environment: namespace:base>
+
+$saveinfo
+[1] TRUE
 
 $testflavour
 [1] "ctree"
+
+$bonferroni
+[1] TRUE
 
 $splitflavour
 [1] "ctree"
@@ -308,6 +356,9 @@ $ordinal
 
 $nrep
 [1] 10000
+
+$trim
+[1] 0.1
 
 $teststat
 [1] "quadratic"
@@ -334,14 +385,8 @@ attr(,"class")
 $testtype
 [1] "Bonferroni"
 
-$nmax
-[1] Inf
-
 $nresample
 [1] 9999
-
-$lookahead
-[1] FALSE
 
 $intersplit
 [1] FALSE
@@ -366,6 +411,12 @@ $minprob
 $stump
 [1] FALSE
 
+$nmax
+[1] Inf
+
+$lookahead
+[1] FALSE
+
 $mtry
 [1] Inf
 
@@ -384,6 +435,9 @@ $MIA
 $maxsurrogate
 [1] 0
 
+$numsurrogate
+[1] FALSE
+
 $majority
 [1] FALSE
 
@@ -398,11 +452,17 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x166b290>
+<bytecode: 0x1ede1b8>
 <environment: namespace:base>
+
+$saveinfo
+[1] TRUE
 
 $testflavour
 [1] "ctree"
+
+$bonferroni
+[1] TRUE
 
 $splitflavour
 [1] "ctree"
@@ -415,6 +475,9 @@ $ordinal
 
 $nrep
 [1] 10000
+
+$trim
+[1] 0.1
 
 $teststat
 [1] "quadratic"
@@ -441,14 +504,8 @@ attr(,"class")
 $testtype
 [1] "Bonferroni"
 
-$nmax
-[1] Inf
-
 $nresample
 [1] 9999
-
-$lookahead
-[1] FALSE
 
 $intersplit
 [1] FALSE
@@ -473,6 +530,12 @@ $minprob
 $stump
 [1] FALSE
 
+$nmax
+[1] Inf
+
+$lookahead
+[1] FALSE
+
 $mtry
 [1] Inf
 
@@ -491,6 +554,9 @@ $MIA
 $maxsurrogate
 [1] 3
 
+$numsurrogate
+[1] FALSE
+
 $majority
 [1] FALSE
 
@@ -505,11 +571,17 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x166b290>
+<bytecode: 0x1ede1b8>
 <environment: namespace:base>
+
+$saveinfo
+[1] TRUE
 
 $testflavour
 [1] "ctree"
+
+$bonferroni
+[1] TRUE
 
 $splitflavour
 [1] "ctree"
@@ -522,6 +594,9 @@ $ordinal
 
 $nrep
 [1] 10000
+
+$trim
+[1] 0.1
 
 $teststat
 [1] "quadratic"
@@ -548,14 +623,8 @@ attr(,"class")
 $testtype
 [1] "Bonferroni"
 
-$nmax
-[1] Inf
-
 $nresample
 [1] 9999
-
-$lookahead
-[1] FALSE
 
 $intersplit
 [1] FALSE
@@ -759,14 +828,578 @@ Call: survfit(formula = Surv(time, cens) ~ 1, data = GBSG2, subset = (n ==
 > sptree <- ctree(arct.lute + pard.lugu + zora.spin + 
 +     pard.nigr + pard.pull + aulo.albi + troc.terr + alop.cune + 
 +     pard.mont + alop.acce  .... [TRUNCATED] 
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: N > 1000 or N < 1
 
 > plot(sptree, terminal_panel = node_barplot)
 
 > plot(sptree)
 
+> library("party")
+Loading required package: modeltools
+Loading required package: stats4
+
+Attaching package: ‘party’
+
+The following objects are masked from ‘package:partykit’:
+
+    cforest, ctree, ctree_control, edge_simple, mob,
+    mob_control, node_barplot, node_bivplot, node_boxplot,
+    node_inner, node_surv, node_terminal, varimp
+
+
+> set.seed(290875)
+
+> data("airquality", package = "datasets")
+
+> airq <- subset(airquality, !is.na(Ozone))
+
+> (airct_party <- party::ctree(Ozone ~ ., data = airq, 
++     controls = party::ctree_control(maxsurrogate = 3)))
+
+	 Conditional inference tree with 5 terminal nodes
+
+Response:  Ozone 
+Inputs:  Solar.R, Wind, Temp, Month, Day 
+Number of observations:  116 
+
+1) Temp <= 82; criterion = 1, statistic = 56.086
+  2) Wind <= 6.9; criterion = 0.998, statistic = 12.969
+    3)*  weights = 10 
+  2) Wind > 6.9
+    4) Temp <= 77; criterion = 0.997, statistic = 11.599
+      5)*  weights = 48 
+    4) Temp > 77
+      6)*  weights = 21 
+1) Temp > 82
+  7) Wind <= 10.3; criterion = 0.997, statistic = 11.712
+    8)*  weights = 30 
+  7) Wind > 10.3
+    9)*  weights = 7 
+
+> mean((airq$Ozone - predict(airct_party))^2)
+[1] 403.6668
+
+> (airct_partykit <- partykit::ctree(Ozone ~ ., data = airq, 
++     control = partykit::ctree_control(maxsurrogate = 3, numsurrogate = TRUE)))
+
+Model formula:
+Ozone ~ Solar.R + Wind + Temp + Month + Day
+
+Fitted party:
+[1] root
+|   [2] Temp <= 82
+|   |   [3] Wind <= 6.9: 55.600 (n = 10, err = 21946.4)
+|   |   [4] Wind > 6.9
+|   |   |   [5] Temp <= 77: 18.479 (n = 48, err = 3956.0)
+|   |   |   [6] Temp > 77: 31.143 (n = 21, err = 4620.6)
+|   [7] Temp > 82
+|   |   [8] Wind <= 10.3: 81.633 (n = 30, err = 15119.0)
+|   |   [9] Wind > 10.3: 48.714 (n = 7, err = 1183.4)
+
+Number of inner nodes:    4
+Number of terminal nodes: 5
+
+> mean((airq$Ozone - predict(airct_partykit))^2)
+[1] 403.6668
+
+> table(predict(airct_party, type = "node"), predict(airct_partykit, 
++     type = "node"))
+   
+     3  5  6  8  9
+  3 10  0  0  0  0
+  5  0 48  0  0  0
+  6  0  0 21  0  0
+  8  0  0  0 30  0
+  9  0  0  0  0  7
+
+> max(abs(predict(airct_party) - predict(airct_partykit)))
+[1] 0
+
+> airct_party@tree$criterion
+$statistic
+    Solar.R        Wind        Temp       Month         Day 
+13.34761286 41.61369618 56.08632426  3.11265955  0.02011554 
+
+$criterion
+     Solar.R         Wind         Temp        Month          Day 
+9.987069e-01 1.000000e+00 1.000000e+00 6.674119e-01 1.824984e-05 
+
+$maxcriterion
+[1] 1
+
+
+> info_node(node_party(airct_partykit))
+$criterion
+               Solar.R          Wind          Temp      Month
+statistic 13.347612859  4.161370e+01  5.608632e+01  3.1126596
+p.value    0.001293090  5.560572e-10  3.467894e-13  0.3325881
+criterion -0.001293926 -5.560572e-10 -3.467894e-13 -0.4043478
+                   Day
+statistic   0.02011554
+p.value     0.99998175
+criterion -10.91135399
+
+$p.value
+        Temp 
+3.467894e-13 
+
+$converged
+[1] TRUE
+
+
+> (irisct_party <- party::ctree(Species ~ ., data = iris))
+
+	 Conditional inference tree with 4 terminal nodes
+
+Response:  Species 
+Inputs:  Sepal.Length, Sepal.Width, Petal.Length, Petal.Width 
+Number of observations:  150 
+
+1) Petal.Length <= 1.9; criterion = 1, statistic = 140.264
+  2)*  weights = 50 
+1) Petal.Length > 1.9
+  3) Petal.Width <= 1.7; criterion = 1, statistic = 67.894
+    4) Petal.Length <= 4.8; criterion = 0.999, statistic = 13.865
+      5)*  weights = 46 
+    4) Petal.Length > 4.8
+      6)*  weights = 8 
+  3) Petal.Width > 1.7
+    7)*  weights = 46 
+
+> (irisct_partykit <- partykit::ctree(Species ~ ., data = iris, 
++     control = partykit::ctree_control(splitstat = "maximum")))
+
+Model formula:
+Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width
+
+Fitted party:
+[1] root
+|   [2] Petal.Length <= 1.9: setosa (n = 50, err = 0.0%)
+|   [3] Petal.Length > 1.9
+|   |   [4] Petal.Width <= 1.7
+|   |   |   [5] Petal.Length <= 4.8: versicolor (n = 46, err = 2.2%)
+|   |   |   [6] Petal.Length > 4.8: versicolor (n = 8, err = 50.0%)
+|   |   [7] Petal.Width > 1.7: virginica (n = 46, err = 2.2%)
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+
+> table(predict(irisct_party, type = "node"), predict(irisct_partykit, 
++     type = "node"))
+   
+     2  5  6  7
+  2 50  0  0  0
+  5  0 46  0  0
+  6  0  0  8  0
+  7  0  0  0 46
+
+> tr_party <- treeresponse(irisct_party, newdata = iris)
+
+> tr_partykit <- predict(irisct_partykit, type = "prob", 
++     newdata = iris)
+
+> max(abs(do.call("rbind", tr_party) - tr_partykit))
+[1] 0
+
+> data("mammoexp", package = "TH.data")
+
+> (mammoct_party <- party::ctree(ME ~ ., data = mammoexp))
+
+	 Conditional inference tree with 3 terminal nodes
+
+Response:  ME 
+Inputs:  SYMPT, PB, HIST, BSE, DECT 
+Number of observations:  412 
+
+1) SYMPT <= Agree; criterion = 1, statistic = 29.933
+  2)*  weights = 113 
+1) SYMPT > Agree
+  3) PB <= 8; criterion = 0.988, statistic = 9.17
+    4)*  weights = 208 
+  3) PB > 8
+    5)*  weights = 91 
+
+> tr_party <- treeresponse(mammoct_party, newdata = mammoexp)
+
+> (mammoct_partykit <- partykit::ctree(ME ~ ., data = mammoexp))
+
+Model formula:
+ME ~ SYMPT + PB + HIST + BSE + DECT
+
+Fitted party:
+[1] root
+|   [2] SYMPT <= Agree: Never (n = 113, err = 15.9%)
+|   [3] SYMPT > Agree
+|   |   [4] PB <= 8: Never (n = 208, err = 60.1%)
+|   |   [5] PB > 8: Never (n = 91, err = 38.5%)
+
+Number of inner nodes:    2
+Number of terminal nodes: 3
+
+> tr_partykit <- predict(mammoct_partykit, newdata = mammoexp, 
++     type = "prob")
+
+> max(abs(do.call("rbind", tr_party) - tr_partykit))
+[1] 0
+
+> data("GBSG2", package = "TH.data")
+
+> (GBSG2ct_party <- party::ctree(Surv(time, cens) ~ 
++     ., data = GBSG2))
+
+	 Conditional inference tree with 4 terminal nodes
+
+Response:  Surv(time, cens) 
+Inputs:  horTh, age, menostat, tsize, tgrade, pnodes, progrec, estrec 
+Number of observations:  686 
+
+1) pnodes <= 3; criterion = 1, statistic = 56.156
+  2) horTh == {yes}; criterion = 0.965, statistic = 8.113
+    3)*  weights = 128 
+  2) horTh == {no}
+    4)*  weights = 248 
+1) pnodes > 3
+  5) progrec <= 20; criterion = 0.999, statistic = 14.941
+    6)*  weights = 144 
+  5) progrec > 20
+    7)*  weights = 166 
+
+> (GBSG2ct_partykit <- partykit::ctree(Surv(time, cens) ~ 
++     ., data = GBSG2))
+
+Model formula:
+Surv(time, cens) ~ horTh + age + menostat + tsize + tgrade + 
+    pnodes + progrec + estrec
+
+Fitted party:
+[1] root
+|   [2] pnodes <= 3
+|   |   [3] horTh in no: 2093.000 (n = 248)
+|   |   [4] horTh in yes: Inf (n = 128)
+|   [5] pnodes > 3
+|   |   [6] progrec <= 20: 624.000 (n = 144)
+|   |   [7] progrec > 20: 1701.000 (n = 166)
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+
+> tr_party <- treeresponse(GBSG2ct_party, newdata = GBSG2)
+
+> tr_partykit <- predict(GBSG2ct_partykit, newdata = GBSG2, 
++     type = "prob")
+
+> all.equal(lapply(tr_party, function(x) unclass(x)[!(names(x) %in% 
++     "call")]), lapply(tr_partykit, function(x) unclass(x)[!(names(x) %in% 
++    .... [TRUNCATED] 
+[1] TRUE
+
+> (airct_partykit_1 <- partykit::ctree(Ozone ~ ., data = airq, 
++     control = partykit::ctree_control(maxsurrogate = 3, alpha = 0.001, 
++         nu .... [TRUNCATED] 
+
+Model formula:
+Ozone ~ Solar.R + Wind + Temp + Month + Day
+
+Fitted party:
+[1] root
+|   [2] Temp <= 82: 26.544 (n = 79, err = 42531.6)
+|   [3] Temp > 82: 75.405 (n = 37, err = 22452.9)
+
+Number of inner nodes:    1
+Number of terminal nodes: 2
+
+> depth(airct_partykit_1)
+[1] 1
+
+> mean((airq$Ozone - predict(airct_partykit_1))^2)
+[1] 560.2113
+
+> (airct_partykit <- partykit::ctree(Ozone ~ ., data = airq, 
++     control = partykit::ctree_control(maxsurrogate = 3, splittest = TRUE, 
++         t .... [TRUNCATED] 
+
+Model formula:
+Ozone ~ Solar.R + Wind + Temp + Month + Day
+
+Fitted party:
+[1] root
+|   [2] Temp <= 82
+|   |   [3] Wind <= 6.9: 55.600 (n = 10, err = 21946.4)
+|   |   [4] Wind > 6.9
+|   |   |   [5] Solar.R <= 78: 12.222 (n = 18, err = 777.1)
+|   |   |   [6] Solar.R > 78
+|   |   |   |   [7] Temp <= 77: 21.182 (n = 33, err = 2460.9)
+|   |   |   |   [8] Temp > 77: 34.556 (n = 18, err = 3108.4)
+|   [9] Temp > 82
+|   |   [10] Temp <= 87
+|   |   |   [11] Wind <= 8.6: 72.308 (n = 13, err = 8176.8)
+|   |   |   [12] Wind > 8.6: 45.571 (n = 7, err = 617.7)
+|   |   [13] Temp > 87: 90.059 (n = 17, err = 3652.9)
+
+Number of inner nodes:    6
+Number of terminal nodes: 7
+
+> (airct_party_1 <- party::ctree(Ozone ~ ., data = airq, 
++     controls = party::ctree_control(maxsurrogate = 3, savesplitstats = FALSE)))
+
+	 Conditional inference tree with 5 terminal nodes
+
+Response:  Ozone 
+Inputs:  Solar.R, Wind, Temp, Month, Day 
+Number of observations:  116 
+
+1) Temp <= 82; criterion = 1, statistic = 56.086
+  2) Wind <= 6.9; criterion = 0.998, statistic = 12.969
+    3)*  weights = 10 
+  2) Wind > 6.9
+    4) Temp <= 77; criterion = 0.997, statistic = 11.599
+      5)*  weights = 48 
+    4) Temp > 77
+      6)*  weights = 21 
+1) Temp > 82
+  7) Wind <= 10.3; criterion = 0.997, statistic = 11.712
+    8)*  weights = 30 
+  7) Wind > 10.3
+    9)*  weights = 7 
+
+> object.size(airct_party_1)
+411888 bytes
+
+> object.size(airct_party_1@tree)
+58272 bytes
+
+> object.size(airct_partykit_1)
+890440 bytes
+
+> object.size(node_party(airct_partykit_1))
+11848 bytes
+
+> (airct_partykit_2 <- partykit::ctree(Ozone ~ ., data = airq, 
++     control = partykit::ctree_control(maxsurrogate = 3, saveinfo = FALSE)))
+
+Model formula:
+Ozone ~ Solar.R + Wind + Temp + Month + Day
+
+Fitted party:
+[1] root
+|   [2] Temp <= 82
+|   |   [3] Wind <= 6.9: 55.600 (n = 10, err = 21946.4)
+|   |   [4] Wind > 6.9
+|   |   |   [5] Temp <= 77: 18.479 (n = 48, err = 3956.0)
+|   |   |   [6] Temp > 77: 31.143 (n = 21, err = 4620.6)
+|   [7] Temp > 82
+|   |   [8] Wind <= 10.3: 81.633 (n = 30, err = 15119.0)
+|   |   [9] Wind > 10.3: 48.714 (n = 7, err = 1183.4)
+
+Number of inner nodes:    4
+Number of terminal nodes: 5
+
+> object.size(airct_partykit_2)
+902112 bytes
+
+> object.size(node_party(airct_partykit_2))
+23680 bytes
+
+> (irisct_partykit_1 <- partykit::ctree(Species ~ ., 
++     data = iris, control = partykit::ctree_control(splitstat = "maximum", 
++         nmax = 25 .... [TRUNCATED] 
+
+Model formula:
+Species ~ Sepal.Length + Sepal.Width + Petal.Length + Petal.Width
+
+Fitted party:
+[1] root
+|   [2] Petal.Width <= 0.6: setosa (n = 50, err = 0.0%)
+|   [3] Petal.Width > 0.6
+|   |   [4] Petal.Width <= 1.7
+|   |   |   [5] Petal.Length <= 4.8: versicolor (n = 46, err = 2.2%)
+|   |   |   [6] Petal.Length > 4.8: versicolor (n = 8, err = 50.0%)
+|   |   [7] Petal.Width > 1.7: virginica (n = 46, err = 2.2%)
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+
+> table(predict(irisct_partykit), predict(irisct_partykit_1))
+            
+             setosa versicolor virginica
+  setosa         50          0         0
+  versicolor      0         54         0
+  virginica       0          0        46
+
+> GBSG2$tgrade <- factor(GBSG2$tgrade, ordered = FALSE)
+
+> (GBSG2ct_partykit <- partykit::ctree(Surv(time, cens) ~ 
++     tgrade, data = GBSG2, control = partykit::ctree_control(multiway = TRUE, 
++     alpha .... [TRUNCATED] 
+
+Model formula:
+Surv(time, cens) ~ tgrade
+
+Fitted party:
+[1] root
+|   [2] tgrade in I: Inf (n = 81)
+|   [3] tgrade in II: 1730.000 (n = 444)
+|   [4] tgrade in III: 1337.000 (n = 161)
+
+Number of inner nodes:    1
+Number of terminal nodes: 3
+
+> airq$month <- factor(airq$Month)
+
+> (airct_partykit_3 <- partykit::ctree(Ozone ~ Solar.R + 
++     Wind + Temp, data = airq, cluster = month, control = partykit::ctree_control(maxsurrog .... [TRUNCATED] 
+
+Model formula:
+Ozone ~ Solar.R + Wind + Temp
+
+Fitted party:
+[1] root
+|   [2] Temp <= 82
+|   |   [3] Temp <= 76: 18.250 (n = 48, err = 4199.0)
+|   |   [4] Temp > 76
+|   |   |   [5] Wind <= 6.9: 71.857 (n = 7, err = 15510.9)
+|   |   |   [6] Wind > 6.9: 29.917 (n = 24, err = 4873.8)
+|   [7] Temp > 82: 75.405 (n = 37, err = 22452.9)
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+
+> info_node(node_party(airct_partykit_3))
+$criterion
+                Solar.R          Wind          Temp
+statistic 14.4805065501  3.299881e+01  4.783766e+01
+p.value    0.0004247923  2.766464e-08  1.389038e-11
+criterion -0.0004248826 -2.766464e-08 -1.389038e-11
+
+$p.value
+        Temp 
+1.389038e-11 
+
+$converged
+[1] TRUE
+
+
+> mean((airq$Ozone - predict(airct_partykit_3))^2)
+[1] 405.488
+
+> h <- function(formula, data, ...) {
++     f <- Formula(formula)
++     mf <- model.frame(formula = f, data = data)
++     s <- model.part(f, data = mf .... [TRUNCATED] 
+
+> partykit::ctree(Surv(time, cens) ~ ., data = GBSG2, 
++     ytrafo = h)
+
+Model formula:
+Surv(time, cens) ~ horTh + age + menostat + tsize + tgrade + 
+    pnodes + progrec + estrec
+
+Fitted party:
+[1] root
+|   [2] pnodes <= 3
+|   |   [3] horTh in no: 2093.000 (n = 248)
+|   |   [4] horTh in yes: Inf (n = 128)
+|   [5] pnodes > 3
+|   |   [6] progrec <= 20: 624.000 (n = 144)
+|   |   [7] progrec > 20: 1701.000 (n = 166)
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+
+> h <- function(formula, data, ...) {
++     f <- Formula(formula)
++     mf <- model.frame(formula = f, data = data)
++     s <- model.part(f, data = mf .... [TRUNCATED] 
+
+> (airct_partykit_4 <- partykit::ctree(Ozone ~ Temp | 
++     Solar.R + Wind, data = airq, cluster = month, ytrafo = h, 
++     control = partykit::ctre .... [TRUNCATED] 
+
+Model formula:
+Ozone ~ Temp + (Solar.R + Wind)
+
+Fitted party:
+[1] root
+|   [2] Wind <= 5.7: 98.692 (n = 13, err = 11584.8)
+|   [3] Wind > 5.7
+|   |   [4] Wind <= 8: 52.839 (n = 31, err = 26884.2)
+|   |   [5] Wind > 8: 27.306 (n = 72, err = 25705.3)
+
+Number of inner nodes:    2
+Number of terminal nodes: 3
+
+> airq$node <- factor(predict(airct_partykit_4, type = "node"))
+
+> summary(m <- glm(Ozone ~ node + node:Temp - 1, data = airq))
+
+Call:
+glm(formula = Ozone ~ node + node:Temp - 1, data = airq)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-45.801  -11.227   -0.894   11.107   53.615  
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+node2       300.0527    92.7914   3.234  0.00161 ** 
+node4      -201.5062    38.1128  -5.287 6.37e-07 ***
+node5       -82.2722    17.8621  -4.606 1.11e-05 ***
+node2:Temp   -2.2922     1.0548  -2.173  0.03191 *  
+node4:Temp    3.0932     0.4618   6.698 9.34e-10 ***
+node5:Temp    1.4769     0.2390   6.178 1.12e-08 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for gaussian family taken to be 324.5145)
+
+    Null deviance: 331029  on 116  degrees of freedom
+Residual deviance:  35697  on 110  degrees of freedom
+AIC: 1007.8
+
+Number of Fisher Scoring iterations: 2
+
+
+> mean((predict(m) - airq$Ozone)^2)
+[1] 307.7292
+
+> airq_lmtree <- partykit::lmtree(Ozone ~ Temp | Solar.R + 
++     Wind, data = airq, cluster = month)
+
+> info_node(node_party(airq_lmtree))
+$coefficients
+(Intercept)        Temp 
+ -147.64607     2.43911 
+
+$objfun
+[1] 62367.44
+
+$object
+
+Call:
+lm(formula = Ozone ~ Temp)
+
+Coefficients:
+(Intercept)         Temp  
+   -147.646        2.439  
+
+
+$nobs
+[1] 111
+
+$p.value
+[1] 0.003498545
+
+$test
+            Solar.R         Wind
+statistic 8.5761635 18.881769795
+p.value   0.2771841  0.003498545
+
+
+> mean((predict(airq_lmtree, newdata = airq) - airq$Ozone)^2)
+[1] 446.0366
+
+> detach(package:party)
+
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  3.840   0.032   3.873 
+  7.548   0.092   7.638 
