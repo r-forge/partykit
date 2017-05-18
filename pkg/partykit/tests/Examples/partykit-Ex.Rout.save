@@ -1986,13 +1986,13 @@ $levels
 > 
 >    # standard importance
 >    varimp(readingSkills.cf)
-nativeSpeaker           age      shoeSize         score 
-     13.34263      61.83160      18.76774           NaN 
+nativeSpeaker           age      shoeSize 
+     13.34263      61.83160      18.76774 
 > 
 >    # conditional importance, may take a while...
 >    varimp(readingSkills.cf, conditional = TRUE)
-nativeSpeaker           age      shoeSize         score 
-     13.08412      60.37591      19.76839           NaN 
+nativeSpeaker           age      shoeSize 
+     13.08412      60.37591      19.76839 
 > 
 > 
 > 
@@ -2001,7 +2001,7 @@ nativeSpeaker           age      shoeSize         score
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  12.736 0.096 12.834 0 0 
+Time elapsed:  12.848 0.092 12.942 0 0 
 > grDevices::dev.off()
 null device 
           1 

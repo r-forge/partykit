@@ -53,8 +53,8 @@ miscls <- function(object, newdata, weights, ...) {
 varimp <- function(object, nperm = 1L, ...)
     UseMethod("varimp")
 
-varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassification"), conditions = NULL, 
-                              mincriterion = 0, ...) {
+varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassification"), 
+                              conditions = NULL, mincriterion = 0, ...) {
 
     if (!is.function(risk)) {
         risk <- match.arg(risk)
@@ -174,6 +174,6 @@ varimp.cforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "m
         }
         ret[b, match(names(vi), colnames(ret))] <- vi
     }
-    colMeans(ret, na.rm = TRUE)
+    ret <- colMeans(ret, na.rm = TRUE)
+    ret[!sapply(ret, is.na)]
 }
-

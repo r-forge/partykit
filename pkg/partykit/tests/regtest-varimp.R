@@ -12,13 +12,13 @@ mean((airq$Ozone - predict(airct))^2)
 
 varimp(airct)
 
-aircf <- cforest(Ozone ~ ., data = airq, ntree = 100)
+aircf <- cforest(Ozone ~ ., data = airq, ntree = 100, mtry = 3)
 
 varimp(aircf)
 
 varimp(aircf, conditional = TRUE)
 
-ict <- cforest(Species ~ ., data = iris, ntree = 100)
+ict <- cforest(Species ~ ., data = iris, ntree = 100, mtry = 3)
 varimp(ict)
 varimp(ict, risk = "misclass")
 
