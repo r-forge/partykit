@@ -1,7 +1,7 @@
 \documentclass[nojss]{jss}
 
 %\VignetteIndexEntry{ctree: Conditional Inference Trees}
-%\VignetteDepends{coin, TH.data, survival, strucchange, Formula, sandwich}
+%\VignetteDepends{coin, TH.data, survival, strucchange, Formula, sandwich, datasets}
 %\VignetteKeywords{conditional inference, non-parametric models, recursive partitioning}
 %\VignettePackage{partykit}
 
@@ -1034,7 +1034,7 @@ regression tree after removal of missing response values. There are missing
 values in one of the explanatory variables, so we ask for three surrogate
 splits to be set-up:
 <<party-airq, echo = TRUE>>=
-data("airquality", package = "party")
+data("airquality", package = "datasets")
 airq <- subset(airquality, !is.na(Ozone))
 (airct_party <- party::ctree(Ozone ~ ., data = airq, 
      controls = party::ctree_control(maxsurrogate = 3)))
