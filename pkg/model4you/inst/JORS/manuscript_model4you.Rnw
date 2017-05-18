@@ -24,17 +24,25 @@ Please submit the completed paper to: editor.jors@ubiquitypress.com
 \vspace{0.5cm}
 
 \section*{Title}
+model4you: An R package for personalised treatment effect estimation
 
-\textcolor{blue}{The title of the software paper should focus on the software, e.g. “Text mining software from the X project”. If the software is closely linked to a specific research paper, then “Software from Paper Title” is appropriate. The title should be factual, relating to the functionality of the software and the area it relates to rather than making claims about the software, e.g. “Easy-to-use”.}
 
 \section*{Paper Authors}
+1. Seibold, Heidi; 2. Zeileis, Achim; 3. Hothorn, Torsten
 
-\textcolor{blue}{1. Last name, first name; (Lead/corresponding author first) \\
-2. Last name, first name; etc.}
+
 
 \section*{Paper Author Roles and Affiliations}
-\textcolor{blue}{1. First author role and affiliation \\
-2. Second author role and affiliation etc.}
+1. PhD student; Biostatistics Department, Epidemiology, Biostatistics \& Prevention
+Institute, University of Zurich
+
+2. Professor; Department of Statistics, Faculty of Economics and Statistics, University of
+Innsbruck
+
+3. Professor; Biostatistics Department, Epidemiology, Biostatistics \& Prevention
+Institute, University of Zurich
+
+
 
 \section*{Abstract}
 
@@ -42,19 +50,27 @@ Please submit the completed paper to: editor.jors@ubiquitypress.com
 
 \section*{Keywords}
 
-\textcolor{blue}{keyword 1; keyword 2; etc. \\
-Keywords should make it easy to identify who and what the software will be useful for.}
+personalised medicine; subgroup analysis; model-based recursive partitioning; unbiased trees;
+treatment effect; random forest
+
 
 \section*{Introduction}
 
 \textcolor{blue}{An overview of the software, how it was produced, and the research for which it has been used, including references to relevant research articles. A short comparison with software which implements similar functionality should be included in this section. }
 
+
+
 \section*{Implementation and architecture}
+
+Based on partykit, merely convenience interface.
 
 \textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
 
 
+
 \section*{Quality control}
+
+Tests, code in this manual, examples in documentation
 
 \textcolor{blue}{Detail the level of testing that has been carried out on the code (e.g. unit, functional, load etc.), and in which environments. If not already included in the software documentation, provide details of how a user could quickly understand if the software is working (e.g. providing examples of running the software with sample input and output data). }
 
@@ -62,33 +78,33 @@ Keywords should make it easy to identify who and what the software will be usefu
 \vspace{0.5cm}
 \section*{Operating system}
 
+Should work on all operating systems that run R.
 \textcolor{blue}{Please include minimum version compatibility.}
 
 \section*{Programming language}
-
-\textcolor{blue}{Please include minimum version compatibility.}
+R (version 3.1.0 or higher)
 
 \section*{Additional system requirements}
-
+None.
 \textcolor{blue}{E.g. memory, disk space, processor, input devices, output devices.}
 
 \section*{Dependencies}
-
-\textcolor{blue}{E.g. libraries, frameworks, incl. minimum version compatibility.}
+R, partykit package (version 1.2 or higher)
 
 \section*{List of contributors}
+Same as the authors:
+Heidi Seibold, Achim Zeileis and Torsten Hothorn
 
-\textcolor{blue}{Please list anyone who helped to create the software (who may also not be an author of this paper), including their roles and affiliations.}
 
 \section*{Software location:}
 
-{\bf Archive} \textcolor{blue}{(e.g. institutional repository, general repository) (required – please see instructions on journal website for depositing archive copy of software in a suitable repository)} 
+{\bf Archive} \textcolor{blue}{(e.g. institutional repository, general repository) (required ??? please see instructions on journal website for depositing archive copy of software in a suitable repository)} 
 
 \begin{description}[noitemsep,topsep=0pt]
-	\item[Name:] \textcolor{blue}{The name of the archive.}
-	\item[Persistent identifier:] \textcolor{blue}{e.g. DOI, handle, PURL, etc.}
-	\item[Licence:] \textcolor{blue}{Open license under which the software is licensed.}
-	\item[Publisher:]  \textcolor{blue}{Name of the person who deposited the software.}
+	\item[Name:] CRAN
+	\item[Persistent identifier:] \url{https://cran.r-project.org/web/packages/model4you/index.html} %TODO upload to CRAN
+	\item[Licence:] GPL-2
+	\item[Publisher:] Heidi Seibold 
 	\item[Version published:] \textcolor{blue}{The version number of the software archived.}
 	\item[Date published:] \textcolor{blue}{dd/mm/yy}
 \end{description}
@@ -98,26 +114,30 @@ Keywords should make it easy to identify who and what the software will be usefu
 {\bf Code repository} \textcolor{blue}{(e.g. SourceForge, GitHub etc.) (required)}
 
 \begin{description}[noitemsep,topsep=0pt]
-	\item[Name:] \textcolor{blue}{The name of the archive.}
-	\item[Persistent identifier:] \textcolor{blue}{e.g. DOI, handle, PURL, etc.}
-	\item[Licence:] \textcolor{blue}{Open license under which the software is licensed.}
-	\item[Date published:] \textcolor{blue}{dd/mm/yy}
+	\item[Name:] R-forge
+	\item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
+	\item[Licence:] GPL-2
+	\item[Date published:] 
 \end{description}
 
-{\bf Emulation environment} \textcolor{blue}{(if appropriate)}
-
-\begin{description}[noitemsep,topsep=0pt]
-	\item[Name:] \textcolor{blue}{The name of the archive.}
-	\item[Persistent identifier:] \textcolor{blue}{e.g. DOI, handle, PURL, etc.}
-	\item[Licence:] \textcolor{blue}{Open license under which the software is licensed.}
-	\item[Date published:] \textcolor{blue}{dd/mm/yy}
-\end{description}
 
 \section*{Language}
 
-\textcolor{blue}{Language of repository, software and supporting files.}
+English
+
 
 \section*{(3) Reuse potential}
+
+The software is intentionally written to make usage as simple as possible. We hope that researchers use it for analysis of:
+\begin{itemize}
+  \item Clinical trials
+  \item A-B testing
+  \item Other situations where the comparison of two decisions is of interest
+\end{itemize}
+We encourage users to use the partykit forum on R-forge
+(\url{https://r-forge.r-project.org/forum/forum.php?forum_id=852}) or the party
+tag on Stackoverflow (\url{http://stackoverflow.com/questions/tagged/party}) in
+case of questions or problems.
 
 \textcolor{blue}{Please describe in as much detail as possible the ways in which the software could be reused by other researchers both within and outside of your field. This should include the use cases for the software, and also details of how the software might be modified or extended (including how contributors should contact you) if appropriate. Also you must include details of what support mechanisms are in place for this software (even if there is no support).}
 
@@ -125,15 +145,19 @@ Keywords should make it easy to identify who and what the software will be usefu
 
 \textcolor{blue}{Please add any relevant acknowledgements to anyone else who supported the project in which the software was created, but did not work directly on the software itself.}
 
+
 \section*{Funding statement}
+Heidi Seibold and Torsten Hothorn were financially supported by the Swiss
+National Science Foundation (grant 205321\_163456).
 
 \textcolor{blue}{If the software resulted from funded research please give the funder and grant number.}
 
+
+
 \section*{Competing interests}
 
-\textcolor{blue}{If any of the authors have any competing interests then these must be declared. The authors’ initials should be used to denote differing competing interests. For example: “BH has minority shares in [company name], which part funded the research grant for this project. All other authors have no competing interests." \\
-If there are no competing interests, please add the statement:
-“The authors declare that they have no competing interests.” }
+The authors declare that they have no competing interests.
+
 
 \section*{References}
 
