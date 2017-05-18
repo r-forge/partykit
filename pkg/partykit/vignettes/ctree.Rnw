@@ -1181,7 +1181,7 @@ control = partykit::ctree_control(splitstat = "maximum", nmax = 25)))
 table(predict(irisct_partykit), predict(irisct_partykit_1))
 @
 
-\item[\code{multiway}]: Implements multiways splits in unordered factors,
+\item[\code{multiway}]: Implements multiway splits in unordered factors,
 each level defines a corresponding daughter node:
 <<nf-multiway, echo = TRUE>>=
 GBSG2$tgrade <- factor(GBSG2$tgrade, ordered = FALSE)
