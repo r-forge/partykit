@@ -29,24 +29,6 @@
     MIA <- ctrl$MIA && any(is.na(x[subset]))
 
     if (is.null(cluster)) cluster <- integer(0)
-    if (splitonly) {
-        ### multiway is already handled by urp, but keep it still here
-        if ((ctrl$multiway && ctrl$maxsurrogate == 0) &&
-            is.factor(x) && nlevels(x[subset, drop = TRUE]) > 1) {
-            index <- 1L:nlevels(x)
-            if (length(weights) > 0) {
-                xt <- xtabs(weights ~ x, subset = subset)
-            } else {
-                xt <- xtabs(~ x, subset = subset)
-            }
-            index[xt == 0] <- NA
-            index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
-            if (length(unique(index)) == 1) return(NULL)
-            index <- unclass(factor(index))
-            return(partysplit(as.integer(j),
-                              index = as.integer(index)))
-        }
-    }
 
     X <- X[[j]]
     ux <- NULL
