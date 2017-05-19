@@ -2,29 +2,21 @@
 logLik.constparty <- function(object, newdata, weights, ...) {
 
     y <- object$fitted[["(response)"]]
-    nd <- factor(object$fitted[["(fitted)"]])
-    if (missing(newdata)) {
-        pnd <- nd
-    } else {
-        pnd <- factor(predict(object, newdata = newdata, type = "node", ...))
-    }
+    pr <- predict(object, newdata = newdata, 
+                  type = ifelse(inherits(y, "factor"), "prob", "response"), ...)
     ll <- switch(class(y)[1], 
            "integer" = {
-               -(y - tapply(y, nd, mean)[pnd])^2
+               -(y - pr)^2
            },
            "numeric" = {
-               -(y - tapply(y, nd, mean)[pnd])^2
+               -(y - pr)^2
            },
           "factor" = {
-              probs <- do.call("rbind", 
-                  tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              log(pmax(probs[cbind(1:length(y), unclass(y))], 
+              log(pmax(pr[cbind(1:length(y), unclass(y))], 
                         sqrt(.Machine$double.eps)))
           },
           "ordered" = {
-              probs <- do.call("rbind", 
-                  tapply(y, nd, function(x) prop.table(table(x))))[pnd,]
-              log(pmax(probs[cbind(1:length(y), unclass(y))], 
+              log(pmax(pr[cbind(1:length(y), unclass(y))], 
                        sqrt(.Machine$double.eps)))
           },
           "Surv" = stop("not yet implemented"),
@@ -38,13 +30,8 @@ miscls <- function(object, newdata, weights, ...) {
 
     y <- object$fitted[["(response)"]]
     stopifnot(is.factor(y))
-    nd <- factor(object$fitted[["(fitted)"]])
-    if (missing(newdata)) {
-        pnd <- nd
-    } else {
-        pnd <- factor(predict(object, newdata = newdata, type = "node", ...))
-    }
-    ll <- unclass(y) != c(tapply(y, nd, function(x) which.max(table(x))))[pnd]
+    pr <- predict(object, newdata = newdata, type = "response", ...)
+    ll <- unclass(y) != unclass(pr)
 
     if (missing(weights)) return(sum(ll) / length(y))
     return(sum(weights * ll) / sum(weights))
@@ -89,7 +76,7 @@ varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassif
         for (p in 1:nperm)
             ret[vn] <- ret[vn] + risk(object, newdata = object$data, perm = perm, ...)
     }
-    ret <- (ret - risk(object, newdata = object$data)) / nperm
+    ret <- (ret - risk(object, newdata = object$data, ...)) / nperm
 
     ret
 }
@@ -98,7 +85,9 @@ gettree <- function(object, tree = 1L, ...)
     UseMethod("gettree")
 
 gettree.cforest <- function(object, tree = 1L, ...) {
-    ret <- party(object$nodes[[tree]], data = object$data, fitted = object$fitted)
+    ft <- object$fitted
+    ft[["(weights)"]] <- object$weights[[tree]]
+    ret <- party(object$nodes[[tree]], data = object$data, fitted = ft)
     ret$terms <- object$terms
     class(ret) <- c("constparty", class(ret))
     ret
