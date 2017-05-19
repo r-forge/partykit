@@ -1,0 +1,201 @@
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library("partykit")
+Loading required package: grid
+Loading required package: libcoin
+Loading required package: mvtnorm
+> stopifnot(require("party"))
+Loading required package: party
+Loading required package: modeltools
+Loading required package: stats4
+Loading required package: strucchange
+Loading required package: zoo
+
+Attaching package: 'zoo'
+
+The following objects are masked from 'package:base':
+
+    as.Date, as.Date.numeric
+
+Loading required package: sandwich
+
+Attaching package: 'party'
+
+The following objects are masked from 'package:partykit':
+
+    cforest, ctree, ctree_control, edge_simple, mob, mob_control,
+    node_barplot, node_bivplot, node_boxplot, node_inner, node_surv,
+    node_terminal, varimp
+
+> set.seed(29)
+> 
+> ### regression
+> airq <- airquality[complete.cases(airquality),]
+> 
+> mtry <- ncol(airq) - 1L
+> ntree <- 25
+> 
+> cf_partykit <- partykit::cforest(Ozone ~ ., data = airq,
++     ntree = ntree, mtry = mtry)
+> 
+> w <- do.call("cbind", cf_partykit$weights)
+> 
+> cf_party <- party::cforest(Ozone ~ ., data = airq, 
++     control = party::cforest_control(ntree = ntree, mtry = mtry),
++     weights = w)
+> 
+> p_partykit <- predict(cf_partykit)
+> p_party <- predict(cf_party)
+> 
+> stopifnot(max(abs(p_partykit - p_party)) < .Machine$double.eps)
+> 
+> prettytree(cf_party@ensemble[[1]], inames = names(airq)[-1])
+1) Wind <= 5.7; criterion = 5.545, statistic = 5.545
+  2)*  weights = 0 
+1) Wind > 5.7
+  3) Temp <= 84; criterion = 5.499, statistic = 5.499
+    4) Temp <= 77; criterion = 3.236, statistic = 3.236
+      5) Wind <= 9.2; criterion = 1.622, statistic = 1.622
+        6)*  weights = 0 
+      5) Wind > 9.2
+        7) Solar.R <= 112; criterion = 1.68, statistic = 1.68
+          8)*  weights = 0 
+        7) Solar.R > 112
+          9)*  weights = 0 
+    4) Temp > 77
+      10) Day <= 13; criterion = 2.341, statistic = 2.341
+        11)*  weights = 0 
+      10) Day > 13
+        12)*  weights = 0 
+  3) Temp > 84
+    13)*  weights = 0 
+> party(cf_partykit$nodes[[1]], data = airq)
+[1] root
+|   [2] Wind <= 5.7: *
+|   [3] Wind > 5.7
+|   |   [4] Temp <= 84
+|   |   |   [5] Temp <= 77
+|   |   |   |   [6] Wind <= 9.2: *
+|   |   |   |   [7] Wind > 9.2
+|   |   |   |   |   [8] Solar.R <= 112: *
+|   |   |   |   |   [9] Solar.R > 112: *
+|   |   |   [10] Temp > 77
+|   |   |   |   [11] Day <= 13: *
+|   |   |   |   [12] Day > 13: *
+|   |   [13] Temp > 84: *
+> 
+> v_party <- do.call("rbind", lapply(1:5, function(i) party::varimp(cf_party)))
+> 
+> v_partykit <- do.call("rbind", lapply(1:5, function(i) partykit::varimp(cf_partykit)))
+> 
+> summary(v_party)
+    Solar.R           Wind            Temp           Month        Day       
+ Min.   :23.21   Min.   :177.0   Min.   :845.6   Min.   :0   Min.   :1.496  
+ 1st Qu.:27.52   1st Qu.:182.1   1st Qu.:862.8   1st Qu.:0   1st Qu.:3.238  
+ Median :29.46   Median :182.6   Median :886.5   Median :0   Median :3.298  
+ Mean   :29.71   Mean   :182.5   Mean   :889.2   Mean   :0   Mean   :3.849  
+ 3rd Qu.:30.27   3rd Qu.:184.4   3rd Qu.:922.9   3rd Qu.:0   3rd Qu.:3.703  
+ Max.   :38.09   Max.   :186.6   Max.   :928.3   Max.   :0   Max.   :7.512  
+> summary(v_partykit)
+    Solar.R           Wind            Temp            Day        
+ Min.   :22.34   Min.   :173.9   Min.   :756.2   Min.   : 4.016  
+ 1st Qu.:26.06   1st Qu.:191.2   1st Qu.:796.4   1st Qu.: 8.594  
+ Median :35.52   Median :191.7   Median :797.3   Median :10.578  
+ Mean   :35.38   Mean   :204.4   Mean   :805.6   Mean   :17.053  
+ 3rd Qu.:44.06   3rd Qu.:231.5   3rd Qu.:800.3   3rd Qu.:24.488  
+ Max.   :48.94   Max.   :233.8   Max.   :878.0   Max.   :37.589  
+> 
+> party::varimp(cf_party, conditional = TRUE)
+   Solar.R       Wind       Temp      Month        Day 
+ 11.863663  68.549668 524.100126   0.000000   4.129284 
+> partykit::varimp(cf_partykit, conditional = TRUE)
+   Solar.R       Wind       Temp        Day 
+ 44.917584 182.831446 923.219214   8.369255 
+> 
+> ### classification
+> set.seed(29)
+> mtry <- ncol(iris) - 1L
+> ntree <- 25
+> 
+> cf_partykit <- partykit::cforest(Species ~ ., data = iris,
++     ntree = ntree, mtry = mtry)
+> 
+> w <- do.call("cbind", cf_partykit$weights)
+> 
+> cf_party <- party::cforest(Species ~ ., data = iris, 
++     control = party::cforest_control(ntree = ntree, mtry = mtry),
++     weights = w)
+> 
+> p_partykit <- predict(cf_partykit, type = "prob")
+> p_party <- do.call("rbind", treeresponse(cf_party))
+> 
+> stopifnot(max(abs(unclass(p_partykit) - unclass(p_party))) < .Machine$double.eps)
+> 
+> prettytree(cf_party@ensemble[[1]], inames = names(iris)[-5])
+1) Petal.Length <= 1.9; criterion = 8.89, statistic = 8.89
+  2)*  weights = 0 
+1) Petal.Length > 1.9
+  3) Petal.Width <= 1.6; criterion = 6.487, statistic = 6.487
+    4) Sepal.Width <= 2.5; criterion = 1.821, statistic = 1.821
+      5)*  weights = 0 
+    4) Sepal.Width > 2.5
+      6)*  weights = 0 
+  3) Petal.Width > 1.6
+    7)*  weights = 0 
+> party(cf_partykit$nodes[[1]], data = iris)
+[1] root
+|   [2] Petal.Length <= 1.9: *
+|   [3] Petal.Length > 1.9
+|   |   [4] Petal.Width <= 1.6
+|   |   |   [5] Sepal.Width <= 2.5: *
+|   |   |   [6] Sepal.Width > 2.5: *
+|   |   [7] Petal.Width > 1.6: *
+> 
+> v_party <- do.call("rbind", lapply(1:5, function(i) party::varimp(cf_party)))
+> 
+> v_partykit <- do.call("rbind", lapply(1:5, function(i)
++     partykit::varimp(cf_partykit, risk = "mis")))
+> 
+> summary(v_party)
+  Sepal.Length  Sepal.Width  Petal.Length     Petal.Width    
+ Min.   :0     Min.   :0    Min.   :0.4279   Min.   :0.2664  
+ 1st Qu.:0     1st Qu.:0    1st Qu.:0.4286   1st Qu.:0.2700  
+ Median :0     Median :0    Median :0.4314   Median :0.2750  
+ Mean   :0     Mean   :0    Mean   :0.4347   Mean   :0.2751  
+ 3rd Qu.:0     3rd Qu.:0    3rd Qu.:0.4371   3rd Qu.:0.2771  
+ Max.   :0     Max.   :0    Max.   :0.4486   Max.   :0.2871  
+> summary(v_partykit)
+  Sepal.Width  Petal.Length     Petal.Width    
+ Min.   :0    Min.   :0.4164   Min.   :0.2586  
+ 1st Qu.:0    1st Qu.:0.4279   1st Qu.:0.2657  
+ Median :0    Median :0.4293   Median :0.2664  
+ Mean   :0    Mean   :0.4293   Mean   :0.2667  
+ 3rd Qu.:0    3rd Qu.:0.4357   3rd Qu.:0.2707  
+ Max.   :0    Max.   :0.4371   Max.   :0.2721  
+> 
+> party::varimp(cf_party, conditional = TRUE)
+Sepal.Length  Sepal.Width Petal.Length  Petal.Width 
+  0.00000000   0.00000000   0.30142857   0.08285714 
+> partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE)
+ Sepal.Width Petal.Length  Petal.Width 
+  0.00000000   0.32785714   0.06857143 
+> 
+> proc.time()
+   user  system elapsed 
+  6.832   0.040   6.870 
