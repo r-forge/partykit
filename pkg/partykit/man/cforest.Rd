@@ -15,7 +15,9 @@
 \usage{
 cforest(formula, data, weights, subset, offset, cluster, strata, 
         na.action = na.pass,
-	control = ctree_control(mincriterion = 0, saveinfo = FALSE, \dots),
+	control = ctree_control(testtype = "Teststatistic", 
+            teststat = "maximum", mincriterion = qnorm(.9), 
+            saveinfo = FALSE, \dots),
         ytrafo = NULL, scores = NULL, ntree = 500L, 
         perturb = list(replace = FALSE, fraction = 0.632), 
         mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL, 
