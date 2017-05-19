@@ -57,7 +57,7 @@ The following objects are masked from 'package:partykit':
 > w <- do.call("cbind", cf_partykit$weights)
 > 
 > cf_party <- party::cforest(Ozone ~ ., data = airq, 
-+     control = party::cforest_control(ntree = ntree, mtry = mtry),
++     control = party::cforest_unbiased(ntree = ntree, mtry = mtry),
 +     weights = w)
 > 
 > p_partykit <- predict(cf_partykit)
@@ -66,20 +66,20 @@ The following objects are masked from 'package:partykit':
 > stopifnot(max(abs(p_partykit - p_party)) < .Machine$double.eps)
 > 
 > prettytree(cf_party@ensemble[[1]], inames = names(airq)[-1])
-1) Wind <= 5.7; criterion = 5.545, statistic = 5.545
+1) Wind <= 5.7; criterion = 1, statistic = 30.75
   2)*  weights = 0 
 1) Wind > 5.7
-  3) Temp <= 84; criterion = 5.499, statistic = 5.499
-    4) Temp <= 77; criterion = 3.236, statistic = 3.236
-      5) Wind <= 9.2; criterion = 1.622, statistic = 1.622
+  3) Temp <= 84; criterion = 1, statistic = 30.238
+    4) Temp <= 77; criterion = 0.999, statistic = 10.471
+      5) Wind <= 9.2; criterion = 0.895, statistic = 2.632
         6)*  weights = 0 
       5) Wind > 9.2
-        7) Solar.R <= 112; criterion = 1.68, statistic = 1.68
+        7) Solar.R <= 112; criterion = 0.907, statistic = 2.823
           8)*  weights = 0 
         7) Solar.R > 112
           9)*  weights = 0 
     4) Temp > 77
-      10) Day <= 13; criterion = 2.341, statistic = 2.341
+      10) Day <= 13; criterion = 0.981, statistic = 5.479
         11)*  weights = 0 
       10) Day > 13
         12)*  weights = 0 
@@ -105,28 +105,42 @@ The following objects are masked from 'package:partykit':
 > v_partykit <- do.call("rbind", lapply(1:5, function(i) partykit::varimp(cf_partykit)))
 > 
 > summary(v_party)
-    Solar.R           Wind            Temp           Month        Day       
- Min.   :23.21   Min.   :177.0   Min.   :845.6   Min.   :0   Min.   :1.496  
- 1st Qu.:27.52   1st Qu.:182.1   1st Qu.:862.8   1st Qu.:0   1st Qu.:3.238  
- Median :29.46   Median :182.6   Median :886.5   Median :0   Median :3.298  
- Mean   :29.71   Mean   :182.5   Mean   :889.2   Mean   :0   Mean   :3.849  
- 3rd Qu.:30.27   3rd Qu.:184.4   3rd Qu.:922.9   3rd Qu.:0   3rd Qu.:3.703  
- Max.   :38.09   Max.   :186.6   Max.   :928.3   Max.   :0   Max.   :7.512  
+    Solar.R           Wind            Temp           Month       
+ Min.   :22.87   Min.   :146.3   Min.   :760.9   Min.   :0.5159  
+ 1st Qu.:25.06   1st Qu.:152.8   1st Qu.:784.3   1st Qu.:0.5236  
+ Median :26.11   Median :176.0   Median :806.2   Median :0.6119  
+ Mean   :26.90   Mean   :171.9   Mean   :813.8   Mean   :0.7391  
+ 3rd Qu.:26.26   3rd Qu.:189.3   3rd Qu.:841.5   3rd Qu.:0.9886  
+ Max.   :34.18   Max.   :195.1   Max.   :875.9   Max.   :1.0556  
+      Day       
+ Min.   :2.051  
+ 1st Qu.:2.512  
+ Median :2.689  
+ Mean   :3.409  
+ 3rd Qu.:3.487  
+ Max.   :6.304  
 > summary(v_partykit)
-    Solar.R           Wind            Temp            Day        
- Min.   :22.34   Min.   :173.9   Min.   :756.2   Min.   : 4.016  
- 1st Qu.:26.06   1st Qu.:191.2   1st Qu.:796.4   1st Qu.: 8.594  
- Median :35.52   Median :191.7   Median :797.3   Median :10.578  
- Mean   :35.38   Mean   :204.4   Mean   :805.6   Mean   :17.053  
- 3rd Qu.:44.06   3rd Qu.:231.5   3rd Qu.:800.3   3rd Qu.:24.488  
- Max.   :48.94   Max.   :233.8   Max.   :878.0   Max.   :37.589  
+    Solar.R           Wind            Temp           Month       
+ Min.   :23.35   Min.   :161.7   Min.   :760.8   Min.   :-2.446  
+ 1st Qu.:24.81   1st Qu.:190.1   1st Qu.:763.4   1st Qu.: 2.983  
+ Median :26.93   Median :199.4   Median :768.7   Median : 3.440  
+ Mean   :29.65   Mean   :195.5   Mean   :777.1   Mean   : 2.662  
+ 3rd Qu.:31.46   3rd Qu.:205.0   3rd Qu.:769.2   3rd Qu.: 4.575  
+ Max.   :41.69   Max.   :221.5   Max.   :823.4   Max.   : 4.757  
+      Day         
+ Min.   :-1.1396  
+ 1st Qu.:-0.4362  
+ Median :24.3535  
+ Mean   :17.7578  
+ 3rd Qu.:31.8914  
+ Max.   :34.1200  
 > 
 > party::varimp(cf_party, conditional = TRUE)
-   Solar.R       Wind       Temp      Month        Day 
- 11.863663  68.549668 524.100126   0.000000   4.129284 
+    Solar.R        Wind        Temp       Month         Day 
+ 16.7190604 100.7812597 534.9587763  -0.2538655   4.4848324 
 > partykit::varimp(cf_partykit, conditional = TRUE)
-   Solar.R       Wind       Temp        Day 
- 44.917584 182.831446 923.219214   8.369255 
+   Solar.R       Wind       Temp      Month        Day 
+ 45.434278 189.920166 810.238464   2.632983   6.594069 
 > 
 > ### classification
 > set.seed(29)
@@ -139,7 +153,7 @@ The following objects are masked from 'package:partykit':
 > w <- do.call("cbind", cf_partykit$weights)
 > 
 > cf_party <- party::cforest(Species ~ ., data = iris, 
-+     control = party::cforest_control(ntree = ntree, mtry = mtry),
++     control = party::cforest_unbiased(ntree = ntree, mtry = mtry),
 +     weights = w)
 > 
 > p_partykit <- predict(cf_partykit, type = "prob")
@@ -148,16 +162,19 @@ The following objects are masked from 'package:partykit':
 > stopifnot(max(abs(unclass(p_partykit) - unclass(p_party))) < .Machine$double.eps)
 > 
 > prettytree(cf_party@ensemble[[1]], inames = names(iris)[-5])
-1) Petal.Length <= 1.9; criterion = 8.89, statistic = 8.89
+1) Petal.Length <= 1.9; criterion = 1, statistic = 86.933
   2)*  weights = 0 
 1) Petal.Length > 1.9
-  3) Petal.Width <= 1.6; criterion = 6.487, statistic = 6.487
-    4) Sepal.Width <= 2.5; criterion = 1.821, statistic = 1.821
+  3) Petal.Width <= 1.6; criterion = 1, statistic = 42.075
+    4) Sepal.Width <= 2.5; criterion = 0.931, statistic = 3.316
       5)*  weights = 0 
     4) Sepal.Width > 2.5
       6)*  weights = 0 
   3) Petal.Width > 1.6
-    7)*  weights = 0 
+    7) Petal.Length <= 5.1; criterion = 0.774, statistic = 1.466
+      8)*  weights = 0 
+    7) Petal.Length > 5.1
+      9)*  weights = 0 
 > party(cf_partykit$nodes[[1]], data = iris)
 [1] root
 |   [2] Petal.Length <= 1.9: *
@@ -165,7 +182,9 @@ The following objects are masked from 'package:partykit':
 |   |   [4] Petal.Width <= 1.6
 |   |   |   [5] Sepal.Width <= 2.5: *
 |   |   |   [6] Sepal.Width > 2.5: *
-|   |   [7] Petal.Width > 1.6: *
+|   |   [7] Petal.Width > 1.6
+|   |   |   [8] Petal.Length <= 5.1: *
+|   |   |   [9] Petal.Length > 5.1: *
 > 
 > v_party <- do.call("rbind", lapply(1:5, function(i) party::varimp(cf_party)))
 > 
@@ -174,28 +193,28 @@ The following objects are masked from 'package:partykit':
 > 
 > summary(v_party)
   Sepal.Length  Sepal.Width  Petal.Length     Petal.Width    
- Min.   :0     Min.   :0    Min.   :0.4279   Min.   :0.2664  
- 1st Qu.:0     1st Qu.:0    1st Qu.:0.4286   1st Qu.:0.2700  
- Median :0     Median :0    Median :0.4314   Median :0.2750  
- Mean   :0     Mean   :0    Mean   :0.4347   Mean   :0.2751  
- 3rd Qu.:0     3rd Qu.:0    3rd Qu.:0.4371   3rd Qu.:0.2771  
- Max.   :0     Max.   :0    Max.   :0.4486   Max.   :0.2871  
+ Min.   :0     Min.   :0    Min.   :0.3786   Min.   :0.3014  
+ 1st Qu.:0     1st Qu.:0    1st Qu.:0.3807   1st Qu.:0.3029  
+ Median :0     Median :0    Median :0.4000   Median :0.3050  
+ Mean   :0     Mean   :0    Mean   :0.3941   Mean   :0.3111  
+ 3rd Qu.:0     3rd Qu.:0    3rd Qu.:0.4036   3rd Qu.:0.3121  
+ Max.   :0     Max.   :0    Max.   :0.4079   Max.   :0.3343  
 > summary(v_partykit)
   Sepal.Width  Petal.Length     Petal.Width    
- Min.   :0    Min.   :0.4164   Min.   :0.2586  
- 1st Qu.:0    1st Qu.:0.4279   1st Qu.:0.2657  
- Median :0    Median :0.4293   Median :0.2664  
- Mean   :0    Mean   :0.4293   Mean   :0.2667  
- 3rd Qu.:0    3rd Qu.:0.4357   3rd Qu.:0.2707  
- Max.   :0    Max.   :0.4371   Max.   :0.2721  
+ Min.   :0    Min.   :0.3869   Min.   :0.2971  
+ 1st Qu.:0    1st Qu.:0.3921   1st Qu.:0.3036  
+ Median :0    Median :0.3966   Median :0.3057  
+ Mean   :0    Mean   :0.3952   Mean   :0.3117  
+ 3rd Qu.:0    3rd Qu.:0.4003   3rd Qu.:0.3179  
+ Max.   :0    Max.   :0.4003   Max.   :0.3343  
 > 
 > party::varimp(cf_party, conditional = TRUE)
 Sepal.Length  Sepal.Width Petal.Length  Petal.Width 
-  0.00000000   0.00000000   0.30142857   0.08285714 
+   0.0000000    0.0000000    0.2778571    0.1014286 
 > partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE)
  Sepal.Width Petal.Length  Petal.Width 
-  0.00000000   0.32785714   0.06857143 
+   0.0000000    0.2946429    0.1078571 
 > 
 > proc.time()
    user  system elapsed 
-  6.832   0.040   6.870 
+  7.176   0.036   7.211 

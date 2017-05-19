@@ -15,7 +15,7 @@ cf_partykit <- partykit::cforest(Ozone ~ ., data = airq,
 w <- do.call("cbind", cf_partykit$weights)
 
 cf_party <- party::cforest(Ozone ~ ., data = airq, 
-    control = party::cforest_control(ntree = ntree, mtry = mtry),
+    control = party::cforest_unbiased(ntree = ntree, mtry = mtry),
     weights = w)
 
 p_partykit <- predict(cf_partykit)
@@ -47,7 +47,7 @@ cf_partykit <- partykit::cforest(Species ~ ., data = iris,
 w <- do.call("cbind", cf_partykit$weights)
 
 cf_party <- party::cforest(Species ~ ., data = iris, 
-    control = party::cforest_control(ntree = ntree, mtry = mtry),
+    control = party::cforest_unbiased(ntree = ntree, mtry = mtry),
     weights = w)
 
 p_partykit <- predict(cf_partykit, type = "prob")

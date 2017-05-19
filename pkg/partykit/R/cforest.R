@@ -57,8 +57,8 @@ cforest <- function
     cluster,
     strata,
     na.action = na.pass,
-    control = ctree_control(testtype = "Teststatistic", 
-        teststat = "maximum", mincriterion = qnorm(.9), 
+    control = ctree_control(
+        teststat = "quad", testtype = "Univ", mincriterion = 0,
         saveinfo = FALSE, ...),
     ytrafo = NULL, 
     scores = NULL, 
