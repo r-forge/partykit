@@ -30,10 +30,10 @@ pmtree <- function(object, data = NULL, zformula = ~.,
   
   ### add modelinfo to teminal nodes if not there yet, but wanted
   which_terminals <- nodeids(ret, terminal = TRUE)
-  which_all <- nodeids(ret)
+  # which_all <- nodeids(ret)
   
-  idx <- lapply(which_all, partykit:::.get_path, obj = nodeapply(ret)[[1]])
-  names(idx) <- which_all
+  idx <- get_paths(nodeapply(ret)[[1]], which_terminals)
+  names(idx) <- which_terminals
   tree_ret <- unclass(ret)
   subset_term <- predict(ret, type = "node")
   

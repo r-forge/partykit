@@ -14,6 +14,8 @@
 #'
 #' @return depends on fun.
 #' 
+#' @example inst/examples/ex-pmodel.R
+#' 
 #' @export
 pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = coef) {
   

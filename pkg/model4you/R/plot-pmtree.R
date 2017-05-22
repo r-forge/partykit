@@ -14,7 +14,7 @@
 #'   survplot(survreg(Surv(futime, fustat) ~ ecog.ps + rx, ovarian))
 #' }
 #' 
-#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string coord_cartesian
 #' @importFrom stats model.frame predict formula terms get_all_vars
 #' @importFrom survival Surv survreg
 #' @importFrom Formula as.Formula 
@@ -25,8 +25,10 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
   xformula <- formula(modformula, lhs = 0, rhs = 1)
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
   if(is.null(data)) data <- eval(modcall$data)
   xdat <- unique(get_all_vars(xformula, data = data))
+  ymax <- max(model.frame(yformula, data = data))
   
   ## get survivor functions for each treatment group
   p <- seq(.01, .99, by=.01)
@@ -42,7 +44,7 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   xnam <- attr(terms(xformula), "term.labels")
   ggplot(data = pr, aes_string(x = "pr", y = "prob", group = xnam, 
                                color = xnam)) + 
-    geom_line() + theme
+    geom_line() + coord_cartesian(xlim = c(0, ymax)) + theme
 }
 
 
@@ -114,7 +116,7 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
     )
     pushViewport(node_vp)
     
-    grid.rect()
+    grid.rect(gp = gpar(fill = "white"))
     
     ## table
     tablevp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
