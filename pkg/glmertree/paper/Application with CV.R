@@ -1,9 +1,8 @@
 library(foreign)
-library(glmertree)
 library(lmerTest)
-source("C:\\Users\\tobii\\Desktop\\swReg\\glmertree\\R\\glmertree.R")
+library(glmertree)
 
-# DATA PREPARATION
+## Prepara data
 metadata <- read.dta("Database IPDMA CBT PHA Version 11.dta")
 metadata[metadata == 999] <- NA
 metadata[metadata == 888] <- NA
@@ -17,7 +16,7 @@ metadata <- metadata[!metadata$Tx_group == "placebo",] # remove placebo observat
 metadata$Tx_group <- factor(metadata$Tx_group)
 summary(metadata)
 
-## calculate trees
+## Fit trees
 hrsd <- lm(HRSDt1 ~ HRSDt0, data = metadata) 
 metadata$HRSDfit <- fitted(hrsd) 
 lm_f <- lmtree(HRSDt1 ~ Tx_group + offset(HRSDfit) | Age + Gender +
@@ -35,7 +34,7 @@ plot(lm_f); print(lm_f)
 plot(lm_o); print(lm_o)
 plot(lmer_f); print(lmer_f)
 
-## Fit GLMM wit h pre-specified interactions:
+## Fit GLMM with pre-specified interactions:
 metadata2 <- metadata
 metadata2$education <- as.numeric(metadata2$education)
 GLMM <- lmer(HRSDt1 - HRSDfit ~ (1 | studyid) +  Tx_group*(Age + Gender + education + 
@@ -43,8 +42,7 @@ GLMM <- lmer(HRSDt1 - HRSDfit ~ (1 | studyid) +  Tx_group*(Age + Gender + educat
 summary(GLMM)
 
 
-
-## calculate predictions
+## Get training data predictions:
 metadata$lmtreepred <- predict(lm_f, newdata = metadata)
 metadata$lmertreepred <- predict(lmer_f, newdata = metadata) 
 mean(metadata$HRSDt1); hist(metadata$HRSDt1)
@@ -53,17 +51,6 @@ mean(metadata$lmertreepred); hist(metadata$lmertreepred)
 cor(metadata$lmertreepred, metadata$HRSDt1)
 cor(metadata$lmtreepred, metadata$HRSDt1)
 cor(metadata$lmertreepred, metadata$lmtreepred)
-
-## calculate amount of variance explained
-lmer_f$varcorr[[1]][[1]] # variance component for random effects
-var(metadata$HRSDt1) # total variance
-lmer_f$varcor[[1]][[1]] / var(metadata$HRSDt1) # variance explained by random effects
-var(metadata$lmertreepred) / var(metadata$HRSDt1) # Total variance explained by lmertree
-var(metadata$lmtreepred) / var(metadata$HRSDt1) # variance explained by the lmtree
-var(metadata$HRSDt0) / var(metadata$HRSDt1) # variance explained by HRSDt0
-cor(metadata$HRSDt1, metadata$lmertreepred)^2 # lmertree explains 11% of variance in outcome variable
-cor(metadata$HRSDt1, metadata$lmtreepred)^2 # lmtree explains 9% of variance outcome variable
-
 
 ## Calculate effect sizes: Cohen's d = x1 - x2 / pooled_sd
 mu_mu <- predict(lm(HRSDt1 ~ HRSDt0, data = metadata), newdata = list(HRSDt0 = mean(metadata$HRSDt0)))
@@ -84,7 +71,7 @@ lm_es
 aggregate(metadata$HRSDt1, by = list(metadata$Tx_group, predict(lm_o, type = "node")), FUN = length)
 
 
-## 50-fold CV:
+## Perform 50-fold CV:
 metadata <- metadata[,vars]
 library(peperr)
 set.seed(32)
@@ -169,9 +156,9 @@ for (i in 1:50){
 mean(unlist(lmtreecors))
 mean(unlist(lmertreecors))
 mean(unlist(GLMMcors))
-var(unlist(lmtreecors))
-var(unlist(lmertreecors))
-var(unlist(GLMMcors))
+sd(unlist(lmtreecors))
+sd(unlist(lmertreecors))
+sd(unlist(GLMMcors))
 
 
 
@@ -195,6 +182,12 @@ summary(s_lm_tree)
 plot(s_lm_tree)
 summary(s_lmer_tree)
 plot(s_lmer_tree)
+
+set.seed(15)
+subsample <- function (S = 500) {
+  sampfun <- function(n) replicate(S, sample(1L:n, round(.9*n), replace = FALSE))
+  list(method = "Subsampling", sampler = sampfun)
+}
 
 
 
