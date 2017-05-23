@@ -154,11 +154,11 @@ Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2015).
 
 \examples{
 ## artificial example data
-data("TreatmentSubgroups", package = "glmertree")
+data("DepressionDemo", package = "glmertree")
 
 ## fit normal linear regression LMM tree for continuous outcome
-lt <- lmertree(ynum ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
-  data = TreatmentSubgroups)
+lt <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
+  data = DepressionDemo)
 print(lt)
 plot(lt, which = "all") # default behavior, which may also be "tree" or "ranef" 
 coef(lt)
@@ -168,13 +168,13 @@ residuals(lt)
 
 \donttest{
 ## fit logistic regression GLMM tree for binary outcome
-gt <- glmertree(ybin ~ treatment | cluster | u1 + u2 + u3 + u4 + u5,
-  data = TreatmentSubgroups)
+gt <- glmertree(depression_bin ~ treatment | cluster | age + anxiety + duration,
+  data = DepressionDemo)
 print(gt)
 plot(gt, which = "all") # default behavior, which may also be "tree" or "ranef" 
 coef(gt)
 ranef(gt)
-predict(gt, type = "response") # default behavior, type may also be "node", or "link"
+predict(gt, type = "response") # default behavior, type may also be "node" or "link"
 residuals(gt)
 }
 }
