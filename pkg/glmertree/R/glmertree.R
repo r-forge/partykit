@@ -218,35 +218,35 @@ coef.lmertree <- coef.glmertree <- function(object, ...) {
   coef(object$tree, ...)
 }
 
-plot.lmertree <- plot.glmertree <- function(x, which = "all", ...) {    
-  if(which != "ranef") {
+plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, ...) {    
+  if (which != "ranef") {
     plot(x$tree, ...)
   }
-  if(which != "tree") {
-    if(which == "all") {
+  if (which != "tree") {
+    if (which == "all" && ask == TRUE) {
       orig_devAsk <- devAskNewPage()
       devAskNewPage(ask = TRUE)
     }
     if (requireNamespace("lattice")) {
       print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), main = TRUE))
     }
-    if(which == "all") {grDevices::devAskNewPage(ask = orig_devAsk)}
+    if (which == "all" && ask == TRUE) {grDevices::devAskNewPage(ask = orig_devAsk)}
   }
 }
 
-plot.glmertree <- function(x, plotranef = FALSE, which = "all", ...) {
-  if(which != "ranef") {
+plot.glmertree <- function(x, plotranef = FALSE, which = "all", ask = TRUE, ...) {
+  if (which != "ranef") {
     plot(x$tree, ...)
   }
-  if(which != "tree") {
-    if(which == "all") {
+  if (which != "tree") {
+    if (which == "all" && ask == TRUE) {
       orig_devAsk <- devAskNewPage()
       devAskNewPage(ask = TRUE)
     }
     if (requireNamespace("lattice")) {
       print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), main = TRUE))
     }
-    if(which == "all") {grDevices::devAskNewPage(ask = orig_devAsk)}
+    if (which == "all" && ask == TRUE) {grDevices::devAskNewPage(ask = orig_devAsk)}
   }
 }
 
