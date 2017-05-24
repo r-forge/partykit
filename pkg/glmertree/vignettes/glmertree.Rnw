@@ -15,8 +15,8 @@
 
 \title{Detecting Treatment-Subgroup Interactions with Generalized Linear Mixed-Effects Model Trees}
 \Shorttitle{Generalized Linear Mixed-Effects Model Trees}
-\author{Marjolein Fokkema\\Universiteit Leiden}
-\Plainauthor{Marjolein Fokkema}
+\author{Marjolein Fokkema\\Universiteit Leiden \And Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Marjolein Fokkema, Achim Zeileis}
 
 \Abstract{
 This vignette describes how generalized linear mixed-effects model trees (glmertrees or GLMM trees) can be fit. In the example, trees are fit to detect treatment-subgroup interactions in clustered datasets, which is only one possible application. The \code{glmertree} package allows for fitting a wider range of partitioned generalized linear mixed-effects models. 
@@ -26,11 +26,21 @@ This vignette describes how generalized linear mixed-effects model trees (glmert
 
 \Address{
   Marjolein Fokkema\\
-  epartment of Methods \& Statistics, Intitute of Psychology\\
+  Department of Methods \& Statistics, Intitute of Psychology\\
   Universiteit Leiden\\
   Wassenaarseweg 52\\
   2333 AK Leiden, The Netherlands\\
   E-mail: \email{m.fokkema@fsw.leidenuniv.nl}\\
+  URL: \url{http://www.marjoleinfokkema.nl/}\\
+  \\
+  Achim Zeileis \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{http://eeecon.uibk.ac.at/~zeileis/} \\
 }
 
 
