@@ -20,6 +20,9 @@
     \item{Use \pkg{libcoin} for computing linear test statistics 
           and p-values for \code{ctree}.}
     \item{Use \pkg{inum} for binning.}
+    \item{Avoid log(p) values of -Inf inside mob() by replacing weighted averaging
+          with naive averaging in the response surface regression output in case
+	  the p values are below machine precision.}
     \item{\code{node_barplot} gained a \code{text} argument
           that can be used to draw text labels for the
 	  percentages displayed.}

@@ -270,23 +270,25 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
       } else {
         ## use Hansen (1997) approximation
         nb <- ncol(beta) - 1L
-        if(lambda<1) tau <- lambda
-        else tau <- 1/(1 + sqrt(lambda))
+        tau <- if(lambda < 1) lambda else 1/(1 + sqrt(lambda))
         beta <- beta[(((k - 1) * 25 + 1):(k * 25)),]
-        dummy <- beta[,(1L:nb)]%*%x^(0:(nb-1))
-        dummy <- dummy*(dummy>0)
+        dummy <- beta[,(1L:nb)] %*% x^(0:(nb-1))
+        dummy <- dummy * (dummy > 0)
         pp <- pchisq(dummy, beta[,(nb+1)], lower.tail = FALSE, log.p = TRUE)
-        if(tau == 0.5)
+        if(tau == 0.5) {
           p <- pchisq(x, k, lower.tail = FALSE, log.p = TRUE)
-        else if(tau <= 0.01)
+        } else if(tau <= 0.01) {
           p <- pp[25L]
-        else if(tau >= 0.49)
+        } else if(tau >= 0.49) {
           p <- log((exp(log(0.5 - tau) + pp[1L]) + exp(log(tau - 0.49) + pchisq(x, k, lower.tail = FALSE, log.p = TRUE))) * 100)
-        else
-        {
+	  ## if p becomes so small that 'correct' weighted averaging does not work, resort to 'naive' averaging
+	  if(!is.finite(p)) p <- mean(c(pp[1L], pchisq(x, k, lower.tail = FALSE, log.p = TRUE)))
+        } else {
   	  taua <- (0.51 - tau) * 50
     	  tau1 <- floor(taua)
   	  p <- log(exp(log(tau1 + 1 - taua) + pp[tau1]) + exp(log(taua-tau1) + pp[tau1 + 1L]))
+	  ## if p becomes so small that 'correct' weighted averaging does not work, resort to 'naive' averaging
+	  if(!is.finite(p)) p <- mean(pp[tau1 + 0L:1L])
         }
       }
       return(as.vector(p))
