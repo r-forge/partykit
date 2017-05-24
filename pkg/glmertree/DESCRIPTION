@@ -1,23 +1,13 @@
 Package: glmertree
 Title: Generalized Linear Mixed Model Trees
-Date: 2017-04-26
+Date: 2017-05-25
 Version: 0.1-1
 Authors@R: c(person(given = "Marjolein", family = "Fokkema", role = c("aut", "cre"), email = "M.Fokkema@fsw.leidenuniv.nl"),
              person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org"))
 Description: Recursive partitioning based on (generalized) linear mixed models
     (GLMMs) using lmer()/glmer() from lme4 and lmtree()/glmtree() from partykit.
-Depends:
-    R (>= 3.1.0),
-    lme4,
-    partykit (>= 1.0-4)
-Imports:
-    Formula,
-    graphics,
-    stats,
-    utils
-Suggests:
-    vcd,
-    lattice
+Depends: R (>= 3.1.0), lme4, partykit (>= 1.0-4)
+Imports: graphics, stats, utils, Formula
+Suggests: vcd, lattice
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 5.0.1
