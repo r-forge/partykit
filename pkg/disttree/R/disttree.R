@@ -1,22 +1,45 @@
 ## high-level convenience interface to mob() and ctree()
 # FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
+# FIX ME: 'starting weights' in trees?
+# FIX ME: ocontrol directly handed over to optim, dist_control
 disttree <- function(formula, data, na.action, cluster, family = NO(),
-                     type.tree = "mob", decorrelate = "none",
+                     type.tree = "mob", decorrelate = "none", offset,
                      cens = "none", censpoint = NULL, weights = NULL,
                      control = mob_control(...), ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
+  if(missing(data)) data <- environment(formula)
+  ## for gamlss.family function: turn into gamlss. family object
+  if(is.function(family)) family <- family()
   
   resp.name <- as.character(formula[2])
   
   # check input arguments
-  if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
+  type.tree <- match.arg(type.tree, c("mob", "ctree"))
+  # if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   
-
+  m <- match.call(expand.dots = FALSE)
+  # m$drop.unused.levels <- TRUE
+  
+  ## FIX ME: doesn't work for ctree
+  ## formula
+  #oformula <- as.formula(formula)
+  #formula <- as.Formula(formula)
+  #if(length(formula)[2L]  >= 2L) {
+  #  stop("formula can only have one RHS consisting of the partitioning variables")
+  #}
+  #if(length(formula)[1L]  >= 2L) {
+  #  stop("formula can only have one LHS consisting of the response variable")
+  #}
+  #m$formula <- formula
   
   if(type.tree == "mob") {
+    
+    # choose arguments for mob and put them in the right order
+    mo <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "control"), names(m), 0L)
+    m <- m[c(1L, mo)]
     
     ## glue code for calling distfit() with given family in mob()
     dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
@@ -28,27 +51,26 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       
       mod <- distfit(y, family = family, weights = weights, start = start,
                       vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                      cens = cens, censpoint = censpoint, ...)
+                      cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
       
       rval <- list(
         coefficients = mod$par,
         objfun = - mod$loglik,      #FIX ME: before: return minimized function, now: maximized?
-        estfun = if(estfun) mod$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
+        estfun = if(estfun) mod$estfun else NULL, 
         object = if(object) mod else NULL
       )
       return(rval)
     }
     
     ## call mob
-    m <- match.call(expand.dots = FALSE)
     m$fit <- dist_family_fit
-    m$family <- m$censpoint <- m$cens <- NULL
+    # m$family <- m$censpoint <- m$cens <- NULL
     # m$family <- m$ocontrol <- NULL
-    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
-    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
+    # if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("mob")
-    #m[[1L]] <- as.name("partykitR1::mob")
+    # m[[1L]] <- as.name("partykitR1::mob")
     rval <- eval(m, parent.frame())
     
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
@@ -60,6 +82,10 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   
   
   if(type.tree == "ctree") {
+    
+    # put arguments in the right order for ctree
+    mo <- match(c("formula", "data", "weights", "subset", "offset", "cluster", "na.action", "control"), names(m), 0L)
+    m <- m[c(1L, mo)]
     
     ## wrapper function to apply distfit in ctree
     ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
@@ -81,10 +107,16 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
         
         model <- distfit(ys, family = family, weights = subweights, start = start,
                          vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, cens = cens, censpoint = censpoint, ...)
+                         estfun = estfun, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
         
-        
-        ef <- as.matrix(model$estfun)
+        ef <- NULL
+        # if(estfun) ef <- as.matrix(model$estfun)
+        # unweighted estfun:
+        if(estfun) {
+          ef <- as.matrix(model$familylist$sdist(ys, model$eta, sum = FALSE))
+          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
+          estfun[subset,] <- ef
+        }
         #n <- NROW(ef)
         #ef <- ef/sqrt(n)
         
@@ -109,19 +141,16 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
           }
           ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
         }
-        
-        if(estfun) {
-          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
-          estfun[subset,] <- ef
-        } else estfun <- NULL
-        
+    
+       
         object <-  if(object) model else NULL
         
         ret <- list(estfun = estfun,
                     coefficients = coef(model, type = "parameter"),
                     objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
-                    converged = TRUE  # FIX ME: warnings if distfit does not converge
+                    converged = (model$opt$convergence == 0)  # FIX ME: warnings if distfit does not converge
+                                  # optim returns 0 for successul completion 
         )
         return(ret)
       }
@@ -129,22 +158,21 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     }    
     
     ## call ctree
-    m <- match.call(expand.dots = FALSE)
     m$ytrafo <- ytrafo
-    # m$ocontrol <- NULL
-    m$family <- m$cens <- m$censpoint <- NULL
-    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    #m$ocontrol <- NULL
+    #m$family <- m$cens <- m$censpoint <- NULL
+    # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
-    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
+    #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
 
     # number of terminal nodes
     n_tn <- width(rval)
-    # ids of terminal nodes
-    id_tn <- as.vector(unique(predict(rval, type = "node")))
     # predicted terminal nodes for the given data
     pred_tn <- predict(rval, type = "node")
+    # ids of terminal nodes
+    id_tn <- as.vector(unique(pred_tn))
     
     if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
     
@@ -152,7 +180,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # first iteration out of loop:
     model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
-                     estfun = FALSE, cens = cens, censpoint = censpoint)
+                     estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -169,7 +197,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       for(i in (2:n_tn)){
         model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                          vcov = FALSE, type.hessian = "analytic", 
-                         estfun = FALSE, cens = cens, censpoint = censpoint)
+                         estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
         loglik <- loglik + sum(model$ddist(data[(id_tn[i]==pred_tn),resp.name], log = TRUE))
@@ -185,7 +213,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   
   ## extend class and keep original call/family/control
   rval$info$call <- cl
-  rval$info$family <- family
+  rval$info$family <- family   # FIX ME: family list is only generated within distfit -> not always returned
+  #rval$info$family <-  family$family.name
+  #rval$info$familylist <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- rval$info$call$formula
   rval$info$censpoint <- censpoint
@@ -211,7 +241,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
 ## methods
 print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
-  if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", x$info$family$family.name)
+  if(inherits(x$info$family, "gamlss.family")) familyname <- paste(x$info$family[[1]][2], "Distribution")
+  if(is.list(family)) familyname <- x$info$family$family.name
+  if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", familyname)
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
 
@@ -323,6 +355,8 @@ logLik.disttree <- function(object, newdata = NULL) {
 ##   partykit::predict.modelparty(object, newdata = newdata, type = pred, ...)
 ## }
 
+
+## FIX: adapt for disttree_mob
 ## plot.disttree <- function(x, terminal_panel = node_histogram,
 ##   tp_args = list(...), tnex = NULL, drop_terminal = NULL, ...)
 ## {
