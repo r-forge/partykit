@@ -3,14 +3,18 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
                        cens = "none", censpoint = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
                        ocontrol = list(), na.action = na.pass, cores = NULL, applyfun = NULL,
-                       type.tree = "ctree",
+                       type.tree = "ctree", mtry = ceiling(sqrt(nvar)),
                        ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
+  
+  ## for gamlss.family function: turn into gamlss. family object
   if(is.function(family)) family <- family()
+  
   np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   
+  type.tree <- match.arg(type.tree, c("mob", "ctree"))
   resp.name <- as.character(formula[2])
   
   if(type.tree == "ctree") {
@@ -75,7 +79,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
                     coefficients = coef(model, type = "parameter"),
                     objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
-                    converged = TRUE  # FIX ME: warnings is distfit does not converge
+                    converged = model$opt$convergence  # FIX ME: warnings is distfit does not converge
         )
         return(ret)
       }
@@ -90,7 +94,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
     m$ytrafo <- ytrafo
     m$cores <- cores
     m$applyfun <- applyfun
-    m$control <- control
+    m$mtry <- mtry
     # m$data <- data
     m$family <- m$decorrelate <- m$cens <- m$censpoint <- NULL
     for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
@@ -156,7 +160,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
       weights <- integer(0)
     }
     nvar <- length(tree$partyvars)
-    #control$mtry <- mtry
+    control$mtry <- mtry
     #control$applyfun <- applyfun
     
     idx <- 1L:nrow(tree$mf)
@@ -186,6 +190,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
       }
     }
     
+    control$mtry <- mtry
     forest <- applyfun(1:ntree, function(b) {
       sdata <- data[rw[[b]],]
       mob(formula, data = sdata, fit= dist_family_fit, control = control)$node
@@ -260,7 +265,9 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   }
   
   rval$info$call <- cl
-  rval$info$family <- family
+  rval$info$family <-  family
+  #rval$info$family <-  family$family.name
+  #rval$info$familylist <- family
   rval$info$npar <- np
   rval$info$formula <- formula
   rval$info$cens <- cens
@@ -382,34 +389,34 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
 
 
 
-logLik.distforest <- function(object, newdata = NULL) {
+logLik.distforest <- function(object, newdata = NULL, ...) {
   if(is.null(newdata)) {
-    return(structure(object$loglik, df = NA, class = "logLik"))
-  } else {
-    ll <- 0
-    pred.par <- predict(object, newdata = newdata, type = "parameter")
-    distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
-    
-    if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
-      cens <- object$info$cens
-      censpoint <- object$info$censpoint
-      for(i in 1:(nrow(newdata))){
-        par <- pred.par[i,]
-        eta <-  as.numeric(distlist$linkfun(par))
-        ydata <- newdata[i,paste(object$info$formula[[2]])]
-        if(!survival::is.Surv(ydata)) {
-          if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
-          if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eat, log = TRUE)
-          ## FIX ME: interval censored
-        } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
-      }
-    } else {
-      for(i in 1:(nrow(newdata))){
-        par <- pred.par[i,]
-        eta <-  as.numeric(distlist$linkfun(par))
-        ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
-      }
+    if(!is.null(object$loglik)) return(structure(object$loglik, df = NA, class = "logLik"))
+    newdata <- data
+  } 
+  ll <- 0
+  pred.par <- predict(object, newdata = newdata, type = "parameter")
+  distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
+  
+  if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
+    cens <- object$info$cens
+    censpoint <- object$info$censpoint
+    for(i in 1:(nrow(newdata))){
+      par <- pred.par[i,]
+      eta <-  as.numeric(distlist$linkfun(par))
+      ydata <- newdata[i,paste(object$info$formula[[2]])]
+      if(!survival::is.Surv(ydata)) {
+        if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
+        if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eat, log = TRUE)
+        ## FIX ME: interval censored
+      } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
     }
-    return(structure(ll, df = NA, class = "logLik"))
+  } else {
+    for(i in 1:(nrow(newdata))){
+      par <- pred.par[i,]
+      eta <-  as.numeric(distlist$linkfun(par))
+      ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
+    }
   }
+  return(structure(ll, df = NA, class = "logLik"))
 }
