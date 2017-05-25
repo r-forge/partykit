@@ -1,16 +1,25 @@
-distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
-                    bd = NULL, fixed = NULL, fixed.values = NULL, cens = "none", censpoint = NULL, ...)
+distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
+                    vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+                    bd = NULL, fixed = NULL, fixed.values = NULL, 
+                    cens = "none", censpoint = NULL, ocontrol = list(), ...)
 {
   ## start on par scale
   ## start.eta on link scale
   
   
   ## FIX ME: what to do if weights consists of zeros only
-  
+  ## FIX ME: hand over ocontrol arguments to optim in the right form/order
   
   ## match call
   cl <- match.call()
 
+  ## number of observations
+  ny <- NROW(y)
+  
+  ## check weights
+  if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, ny))
+  if(length(weights) != ny) stop("number of observations and length of weights are not equal")
+    
   
   ## check whether the input is a gamlss.family object (or function) or a list of the required type
   if(is.function(family)) family <- family()
@@ -54,13 +63,6 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
   # any(family$parameters == FALSE)
   
   
-  ## number of observations
-  ny <- NROW(y)
-  
-  ## weights
-  if(is.null(weights) || (length(weights)==0L)) weights <- 1
-  if(length(weights) == 1L) weights <- rep.int(weights, ny)
-  weights <- as.vector(weights)
   
   ## store y and select observations with weight > 0 
   #FIXME# y.store <- y          
@@ -86,7 +88,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
     
     #rval <- family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE)
     
-    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = FALSE), silent = TRUE))
+    rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE), silent = TRUE))
     if(inherits(rval, "try-error")) {
       print("try-error in ddist")
       return(1.7e+308)
@@ -99,7 +101,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
           print(c("Infinity in ddist"))
           return(1.7e+308)
         } else {
-          nloglik <- - sum(weights * rval)
+          nloglik <- - rval
           if(abs(nloglik) == Inf) return(1.7e+308)
           return(nloglik)
         }
@@ -148,6 +150,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
       starteta <- start.eta
     }
     if(any(is.na(starteta))) {
+      warning("NAs in starteta")
       print(y)
       print(weights)
       print(start)
@@ -157,16 +160,16 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
   if(!family$mle) {
     ## optimize negative log-likelihood
     opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "L-BFGS-B",
-                 hessian = (type.hessian == "numeric"), control = list(...)))
+                 hessian = (type.hessian == "numeric"), control = ocontrol))
     if(inherits(opt, "try-error")) {
       #print("opt try-error with gr=grad, L-BFGS-B")
       opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
-                       hessian = (type.hessian == "numeric"), control = list(...)))
+                       hessian = (type.hessian == "numeric"), control = ocontrol))
       if(inherits(opt, "try-error")) {
         #print("opt try-error with gr = grad, BFGS")
         print(starteta)
         opt <- optim(par = starteta, fn = nll, gr = grad, method = "Nelder-Mead",
-                         hessian = (type.hessian == "numeric"), control = list(...))
+                         hessian = (type.hessian == "numeric"), control = ocontrol)
       }
     }
     
@@ -243,7 +246,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, v
   
   ## estfun
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
-  # (first-order partial derivatives of the (positive) log-likelihood function)
+  # (first-order partial derivatives of the distribution function)
   if(estfun) {
     # estfun for link coefficients eta
     ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
