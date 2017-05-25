@@ -71,35 +71,16 @@ treatment effect; random forest
 
 \textcolor{blue}{An overview of the software, how it was produced, and the research for which it has been used, including references to relevant research articles. A short comparison with software which implements similar functionality should be included in this section. }
 
+\begin{figure}
+\centering
+\include{treefamily}
+\caption{The family of model-based trees and forests.}
+\end{figure}
+
 
 \begin{figure}
 \centering
-
-\tikzstyle{block} = [rectangle, draw,
-    text width=10em, text centered, rounded corners, minimum height=4em]
-\tikzstyle{exp} = [rectangle,
-    text width=10em, rounded corners, minimum height=4em]
-\tikzstyle{line} = [draw, ->, line width=0.2em]
-
-\begin{tikzpicture}[node distance = 7em, auto]
-  \node [block] (clin) {Clinical trial};
-  \node [block, below of=clin] (pdat) {Patient and treatment information, trial outcome};
-  \node [block, below of=pdat] (frst) {Model-based forest};
-  \node [block, below of=frst] (pmod) {Personalised models};
-  \node [block, below of=pmod] (plot) {Dependence plot};
-
-  \node [exp, right=1em of clin] {Real world};
-  \node [exp, right=1em of pdat] {Data};
-  \node [exp, right=1em of frst] {Black box model};
-  \node [exp, right=1em of pmod] {Interpretable model};
-  \node [exp, right=1em of plot] {Visual explanation};
-
-  \path [line] (clin) -- (pdat) node [pos=0.5, left] {data collection};
-  \path [line] (pdat) -- (frst) node [pos=0.5, left] {computation of forest};
-  \path [line] (frst) -- (pmod) node [pos=0.5, left] {similarity weights};
-  \path [line] (pmod) -- (plot) node [pos=0.5, left] {model coefficients};
-\end{tikzpicture}
-
+\include{pmworkflow}
 \caption{Personalised models workflow: from real world to interpretable
 visualisation.}
 \end{figure}
@@ -142,10 +123,18 @@ plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot,
                                           confint = TRUE))
 @
 
+<<GBSG2_forest>>=
+frst <- pmforest(object = bmod, ntree = 100)
+@
+
+<<GBSG_pmod1>>=
+newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
+                         pnodes = 3, progrec = 50, estrec = 60)
+mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
+@
+
 
 <<GBSG2_pmod>>=
-frst <- pmforest(object = bmod, ntree = 100)
-
 coeffun <- function(model) {
   ## model coefficients
   coefs <- c(coef(model), scale = model$scale)
