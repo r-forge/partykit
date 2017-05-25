@@ -195,15 +195,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(is.null(family$hdist)) {
       if(family$mle) {
         nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "L-BFGS-B",
-                         hessian = TRUE, control = list(...))$hessian)
+                         hessian = TRUE, control = ocontrol)$hessian)
         if(inherits(nhess, "try-error")) {
           #print("opt try-error in hess with gr=grad, L-BFGS-B")
           nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "BFGS",
-                       hessian = TRUE, control = list(...))$hessian)
+                       hessian = TRUE, control = ocontrol)$hessian)
           if(inherits(nhess, "try-error")) {
             #print("opt try-error in hess with gr=grad, BFGS")
             nhess <- optim(par = eta, fn = nll, method = "BFGS",
-                               hessian = TRUE, control = list(...))$hessian
+                               hessian = TRUE, control = ocontrol)$hessian
           }
         }
         hess <- -nhess
