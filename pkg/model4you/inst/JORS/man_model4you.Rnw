@@ -18,8 +18,9 @@
 
 \begin{document}
 
+
 <<setup, echo=FALSE>>=
-knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(cache = TRUE, message = FALSE)
 @
 
 
