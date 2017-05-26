@@ -8,16 +8,27 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
-  
+  if(missing(data)) data <- environment(formula)
   ## for gamlss.family function: turn into gamlss. family object
   if(is.function(family)) family <- family()
   
-  np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
-  
-  type.tree <- match.arg(type.tree, c("mob", "ctree"))
   resp.name <- as.character(formula[2])
+  np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
+  nvar <- (length(formula[[3]]) + 1)/2    # number of variables (RHS minus nr of arithmetic symbols)
+  
+  # check input arguments
+  type.tree <- match.arg(type.tree, c("mob", "ctree"))
+  # if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
+  if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
+  
+  m <- match.call(expand.dots = FALSE)
   
   if(type.tree == "ctree") {
+    
+    # select arguments for cforest and put them in the right order
+    mo <- match(c("formula", "data", "weights", "subset", "offset", "cluster", 
+                  "strata", "na.action", "control", "ntree", "perturb", "mtry", "applyfun", "cores"), names(m), 0L)
+    m <- m[c(1L, mo)]
     
     ## wrapper function to apply distfit in cforest
     ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
@@ -86,20 +97,11 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
       return(modelscores_decor)
     }    
     
-    
-    # rval <- cforest(formula, data, ytrafo = modelscores_decor, ntree = ntree)
-    
     ## call cforest
-    m <- match.call(expand.dots = FALSE)
     m$ytrafo <- ytrafo
-    m$cores <- cores
-    m$applyfun <- applyfun
-    m$mtry <- mtry
-    # m$data <- data
-    m$family <- m$decorrelate <- m$cens <- m$censpoint <- NULL
-    for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
+    #for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
-    if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
+    #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("cforest")
     rval <- eval(m, parent.frame())
   }
@@ -159,7 +161,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
     } else {
       weights <- integer(0)
     }
-    nvar <- length(tree$partyvars)
+    # nvar <- length(tree$partyvars) # doesn't work for modelparty tree
     control$mtry <- mtry
     #control$applyfun <- applyfun
     
@@ -190,7 +192,6 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
       }
     }
     
-    control$mtry <- mtry
     forest <- applyfun(1:ntree, function(b) {
       sdata <- data[rw[[b]],]
       mob(formula, data = sdata, fit= dist_family_fit, control = control)$node
