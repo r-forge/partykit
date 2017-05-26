@@ -14,6 +14,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   if(is.function(family)) family <- family()
   
   resp.name <- as.character(formula[2])
+  np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   
   # check input arguments
   type.tree <- match.arg(type.tree, c("mob", "ctree"))
@@ -28,7 +29,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   #oformula <- as.formula(formula)
   #formula <- as.Formula(formula)
   #if(length(formula)[2L]  >= 2L) {
-  #  stop("formula can only have one RHS consisting of the partitioning variables")
+  #  stop("formula can have only one RHS consisting of the partitioning variables") 
   #}
   #if(length(formula)[1L]  >= 2L) {
   #  stop("formula can only have one LHS consisting of the response variable")
@@ -37,7 +38,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   
   if(type.tree == "mob") {
     
-    # choose arguments for mob and put them in the right order
+    # select arguments for mob and put them in the right order
     mo <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "control"), names(m), 0L)
     m <- m[c(1L, mo)]
     
@@ -83,7 +84,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   
   if(type.tree == "ctree") {
     
-    # put arguments in the right order for ctree
+    # select arguments for ctree and put them in the right order
     mo <- match(c("formula", "data", "weights", "subset", "offset", "cluster", "na.action", "control"), names(m), 0L)
     m <- m[c(1L, mo)]
     
@@ -159,8 +160,6 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     
     ## call ctree
     m$ytrafo <- ytrafo
-    #m$ocontrol <- NULL
-    #m$family <- m$cens <- m$censpoint <- NULL
     # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
