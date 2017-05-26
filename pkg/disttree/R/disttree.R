@@ -150,8 +150,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
                     coefficients = coef(model, type = "parameter"),
                     objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
-                    converged = (model$opt$convergence == 0)  # FIX ME: warnings if distfit does not converge
-                                  # optim returns 0 for successul completion 
+                    converged = model$converged  # FIX ME: warnings if distfit does not converge
         )
         return(ret)
       }
