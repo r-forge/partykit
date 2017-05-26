@@ -90,7 +90,7 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
                     coefficients = coef(model, type = "parameter"),
                     objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
                     object = object,
-                    converged = model$opt$convergence  # FIX ME: warnings is distfit does not converge
+                    converged = model$converged  # FIX ME: warnings if distfit does not converge
         )
         return(ret)
       }
