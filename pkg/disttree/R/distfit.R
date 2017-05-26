@@ -181,12 +181,14 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     ## loglikelihood value
     loglik = -opt$value
     
+    converged <- (opt$convergence == 0)   # optim returns 0 for successul completion 
     
   } else {
     eta <- family$startfun(y, weights)
     par <- family$linkinv(eta)
     loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     opt <- NULL
+    converged <- TRUE
   }
 
   
@@ -279,9 +281,6 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
   
   
-
-  
-  
   ## return value 
   rval <- list(
     npar = length(par),
@@ -292,6 +291,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     starteta = starteta,
     start = start,
     opt = opt,
+    converged = converged,
     par = par,
     eta = eta,
     hess = hess,
