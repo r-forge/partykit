@@ -2,13 +2,19 @@
 % Please edit documentation in R/pmtree.R
 \name{print.pmtree}
 \alias{print.pmtree}
-\title{Print method for pmtree}
+\alias{summary.pmtree}
+\alias{print.summary.pmtree}
+\title{Methods for pmtree}
 \usage{
 \method{print}{pmtree}(x, node = NULL, FUN = NULL,
   digits = getOption("digits") - 4L, footer = TRUE, ...)
+
+\method{summary}{pmtree}(object, node = NULL)
+
+\method{print}{summary.pmtree}(x, digits = 4)
 }
 \arguments{
-\item{x}{pmtree object.}
+\item{x}{object.}
 
 \item{node}{node number, if any.}
 
@@ -18,11 +24,15 @@
 
 \item{footer}{should footer be included?}
 
-\item{...}{further arguments passed on to prin.party.}
+\item{...}{further arguments passed on to \code{\link[partykit]{print.party}}.}
+
+\item{object}{object.}
+
+\item{digits}{minimal number of significant digits, see \code{\link[base]{print.default}}}
 }
 \value{
 print
 }
 \description{
-Print pmtree
+Print and summary methods for pmtree objects.
 }

@@ -57,6 +57,7 @@ pmtree <- function(object, data = NULL, zformula = ~.,
   ## prepare return object
   class(tree_ret) <- c("pmtree", class(ret))
   tree_ret$info$object <- object
+  tree_ret
   tree_ret$info$zformula <- if(is.null(zformula)) as.formula("~ .") else 
     as.formula(zformula)
   # tree_ret$data <- data
@@ -65,16 +66,16 @@ pmtree <- function(object, data = NULL, zformula = ~.,
 
 
 
-#' Print method for pmtree
+#' Methods for pmtree
 #'
-#' Print pmtree
+#' Print and summary methods for pmtree objects.
 #'
-#' @param x pmtree object.
+#' @param x object.
 #' @param node node number, if any.
 #' @param FUN formatinfo function.
 #' @param digits number of digits.
 #' @param footer should footer be included?
-#' @param ... further arguments passed on to prin.party.
+#' @param ... further arguments passed on to \code{\link[partykit]{print.party}}.
 #'
 #' @return print
 #' @export
@@ -133,4 +134,69 @@ print.pmtree <- function(x, node = NULL,
     }
   }
   invisible(x)
+}
+
+
+
+#' @rdname print.pmtree 
+#' 
+#' @param object object.
+#' @export
+summary.pmtree <- function(object, node = NULL) {
+  
+  ids <- if(is.null(node)) nodeids(object, terminal = TRUE) else node
+  info <- nodeapply(object, ids = ids, function(x) x$info)
+  
+  ## coefficients
+  coefs <- sapply(info, function(x) x$coefficients)
+  colnames(coefs) <- paste("node", colnames(coefs))
+  
+  ## objective functions
+  objfuns <- sapply(info, function(x) x$objfun)
+  if(is.null(node)) {
+    brobjf <- paste0("(", round(objfuns, 2), ")")
+    sobjf <- paste(brobjf, collapse = " + ")
+    objfs <- paste(sobjf, "=", round(sum(objfuns), 2))
+  } else {
+    objfs <- objfuns
+    names(objfs) <- paste("node", ids)
+  }
+  
+  ## call
+  cl <- getCall(object$info$object)
+  
+  ## nobs
+  nobs <- sapply(info, function(x) x$nobs)
+  nullnobs <- sapply(nobs, is.null)
+  if(1 %in% ids & any(nullnobs)) 
+    nobs[nullnobs] <- nrow(object$data)
+  names(nobs) <- paste("node", ids)
+    
+  
+  
+  ret <- list(ids = ids, call = cl, coefs = coefs, objfs = objfs, nobs = nobs)
+  class(ret) <- "summary.pmtree"
+  return(ret)
+}
+
+
+#' @rdname print.pmtree 
+#' 
+#' @param digits minimal number of significant digits, see \code{\link[base]{print.default}}
+#' @export
+print.summary.pmtree <- function(x, digits = 4) {
+  cat("Stratified model for node(s)", paste(x$ids, collapse = ", "))
+  cat("\n\nModel call:\n", paste(deparse(x$call), sep = "\n", collapse = "\n"), 
+      "\n\n", sep = "")
+  
+  cat("Coefficients:\n")
+  print(x$coefs, digits = digits)
+  
+  cat("\nNumber of obervations:\n")
+  print(unlist(x$nobs))
+  
+  cat("\nObjective function:\n")
+  if(is.character(x$objfs)) cat(x$objfs) else {
+    print(x$objfs)
+  }
 }
