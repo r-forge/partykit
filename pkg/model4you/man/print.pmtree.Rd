@@ -9,9 +9,9 @@
 \method{print}{pmtree}(x, node = NULL, FUN = NULL,
   digits = getOption("digits") - 4L, footer = TRUE, ...)
 
-\method{summary}{pmtree}(object, node = NULL)
+\method{summary}{pmtree}(object, node = NULL, ...)
 
-\method{print}{summary.pmtree}(x, digits = 4)
+\method{print}{summary.pmtree}(x, digits = 4, ...)
 }
 \arguments{
 \item{x}{object.}
@@ -27,8 +27,6 @@
 \item{...}{further arguments passed on to \code{\link[partykit]{print.party}}.}
 
 \item{object}{object.}
-
-\item{digits}{minimal number of significant digits, see \code{\link[base]{print.default}}}
 }
 \value{
 print

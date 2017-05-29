@@ -13,7 +13,8 @@
 #'
 #' @return ctree object
 #' 
-#' @example inst/examples/ex-pmtree.R
+#' @example inst/examples/ex-pmtree.R 
+#' @example inst/examples/ex-pmtree-methods.R
 #' 
 #' @export
 #' @import partykit 

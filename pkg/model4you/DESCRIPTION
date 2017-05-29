@@ -21,6 +21,8 @@ Imports:
     gridExtra,
     survival
 Suggests:
-    mvtnorm
+    mvtnorm,
+    TH.data,
+    psychotools
 License: GPL-2 | GPL-3
 RoxygenNote: 6.0.1
