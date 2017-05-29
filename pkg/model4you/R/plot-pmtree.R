@@ -1,3 +1,42 @@
+lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
+  
+  ## get formula and data
+  modcall <- getCall(mod)
+  modformula <- as.Formula(eval(modcall$formula))
+  xformula <- formula(modformula, lhs = 0, rhs = 1)
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
+  if(is.null(data)) data <- eval(modcall$data)
+  xdat <- unique(get_all_vars(xformula, data = data))
+  ynam <- as.character(yformula[[2]])
+  yrange <- range(data[, ynam])
+  
+  ## get density functions for each treatment group
+  k <- 50
+  means <- cbind(mean = predict(mod, newdata = xdat), 
+                 xdat)
+  sigma <- summary(mod)$sigma
+  ygrid <- seq(from = yrange[1], to = yrange[2], length.out = k)
+  rows <- rep(seq_len(NROW(means)), each = k)
+  
+  dens <- cbind(ygrid, means[rows, ], 
+                density = dnorm(ygrid, mean = means$mean[rows], sd = sigma))
+  
+  if(densest) {
+    p <- ggplot() + 
+      geom_line(data = cbind(data, estimate = "kernel density"), 
+                aes_string(x = ynam, color = names(xdat), linetype = "estimate"), 
+                stat = "density") +
+      geom_line(data = cbind(dens, estimate = "model"), 
+                aes_string(x = "ygrid", y = "density", color = names(xdat), linetype = "estimate"))
+  } else {
+    p <- ggplot() + 
+      geom_line(data = dens, 
+                aes_string(x = "ygrid", y = "density", color = names(xdat))) +
+      xlab(ynam)
+  }
+  p + theme
+}
+
 
 #' Survival plot for a given survreg model
 #'
@@ -31,7 +70,7 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   ymax <- max(model.frame(yformula, data = data))
   
   ## get survivor functions for each treatment group
-  p <- seq(.01, .99, by=.01)
+  p <- seq(.01, .99, by=.02)
   pr_raw <- predict(mod, newdata = xdat,
                     type = "quantile", p = p)
   pr <- do.call("rbind", 
@@ -62,6 +101,7 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
 #' \code{function(mod, data)} where \code{mod} is the model object. 
 #' See examples for more details.
 #' @param nid function to retrieve info on what is plottet as node ids.
+#' @param ... arguments passed on to plotfun.
 #'
 #' @examples
 #' if(require("survival")) {
@@ -82,7 +122,8 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
 #' @importFrom gridExtra tableGrob ttheme_minimal 
 #' @importFrom partykit id_node
 node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun, 
-                            nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs))
+                            nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs),
+                            ...)
 {
   
   nam <- names(obj)
@@ -129,7 +170,7 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
                        width = unit(0.95, "npc"),
                        height = unit(0.95, "npc"))
     pushViewport(plotvp)
-    pl <- plotfun(nmod, data = dat)
+    pl <- plotfun(nmod, data = dat, ...)
     print(pl, vp = plotvp)
     popViewport()
     

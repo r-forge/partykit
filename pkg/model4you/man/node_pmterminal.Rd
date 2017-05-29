@@ -5,7 +5,8 @@
 \title{Panel-Generator for Visualization of pmtrees}
 \usage{
 node_pmterminal(obj, digits = 2, confint = TRUE, plotfun,
-  nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs))
+  nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs),
+  ...)
 }
 \arguments{
 \item{obj}{an object of class party.}
@@ -19,6 +20,8 @@ node_pmterminal(obj, digits = 2, confint = TRUE, plotfun,
 See examples for more details.}
 
 \item{nid}{function to retrieve info on what is plottet as node ids.}
+
+\item{...}{arguments passed on to plotfun.}
 }
 \description{
 The plot method for party and constparty objects are rather flexible and can 
