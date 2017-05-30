@@ -19,6 +19,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ## check weights
   if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, ny))
   if(length(weights) != ny) stop("number of observations and length of weights are not equal")
+  if(is.table(weights)) weights <- as.vector(weights)
     
   
   ## check whether the input is a gamlss.family object (or function) or a list of the required type
