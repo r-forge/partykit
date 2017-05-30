@@ -33,7 +33,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{y}{numeric vector.}
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object or
-    family list (see below for details).}
+    family list (see below for details, FIX ME).}
   \item{weights}{optional numeric vector of case weights.}
   \item{start}{starting values for the distribution parameters handed over to \code{optim}}
   \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{optim}}}
@@ -67,19 +67,22 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 \value{
   \code{distfit} returns an object of class \code{"distfit"} which is a list with
   the following components:
+  \item{npar}{npar,}
   \item{y}{y,}
+  \item{ny}{ny,}
   \item{weights}{weights,}
   \item{family}{family,}
-  \item{startpar}{startpar,}
+  \item{familylist}{familylist,}
+  \item{start}{start,}
   \item{starteta}{starteta,}
   \item{opt}{opt,}
+  \item{converged}{converged,}
   \item{par}{par,}
   \item{eta}{eta,}
   \item{hess}{hessian,}
-  \item{call}{cl,}
-  \item{ny}{ny,}	
-  \item{nobs}{nobs,}	
   \item{vcov}{vc,}
+  \item{loglik}{ll,}
+  \item{call}{cl,}
   \item{estfun}{ef,}
   \item{ddist}{ddist,}
   \item{pdist}{pdist,}
