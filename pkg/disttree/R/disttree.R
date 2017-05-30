@@ -277,12 +277,12 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   
 
 
-coef.disttree <- function(object){
+coef.disttree <- function(object, ...){
   object$coefficients
 }
 
 
-logLik.disttree <- function(object, newdata = NULL) {
+logLik.disttree <- function(object, newdata = NULL, ...) {
   if(is.null(newdata)) {
     return(structure(object$loglik, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
   } else {
