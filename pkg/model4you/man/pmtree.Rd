@@ -59,6 +59,7 @@ if(require("psychotools")) {
   
   ## compute base model
   bmod_math <- lm(pcorrect ~ group, data = MathExam)
+  lmplot(bmod_math, densest = TRUE)
   
   ## compute tree
   (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))

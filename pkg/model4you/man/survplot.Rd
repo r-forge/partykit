@@ -13,9 +13,6 @@ survplot(mod, data = NULL, theme = theme_classic())
 
 \item{theme}{A ggplot2 theme.}
 }
-\value{
-RETURN DESCRIPTION
-}
 \description{
 Can be used on its own but is also useable as plotfun in 
 \code{\link{node_pmterminal}}.

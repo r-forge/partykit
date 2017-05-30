@@ -1,3 +1,19 @@
+
+#' Density plot for a given lm model
+#'
+#' Can be used on its own but is also useable as plotfun in 
+#' \code{\link{node_pmterminal}}.
+#'
+#' @param mod A model of class lm.
+#' @param data optional data frame. If NULL the data stored in mod is used.
+#' @param densest should additional to the model density kernel density estimates
+#'  (see \code{\link[ggplot2]{geom_density}}) be computed?
+#' @param theme A ggplot2 theme.
+#'
+#' @examples inst/examples/ex-pmtree-methods.R
+#' 
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab
+#' @export
 lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   
   ## get formula and data
@@ -22,19 +38,21 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
                 density = dnorm(ygrid, mean = means$mean[rows], sd = sigma))
   
   if(densest) {
-    p <- ggplot() + 
-      geom_line(data = cbind(data, estimate = "kernel density"), 
+    des <- factor(c("model", "kernel"), levels = c("model", "kernel"))
+    p <- ggplot() +
+      geom_line(data = cbind(dens, estimate = des[1]), 
+                aes_string(x = "ygrid", y = "density", color = names(xdat), linetype = "estimate")) + 
+      geom_line(data = cbind(data, estimate = des[2]), 
                 aes_string(x = ynam, color = names(xdat), linetype = "estimate"), 
-                stat = "density") +
-      geom_line(data = cbind(dens, estimate = "model"), 
-                aes_string(x = "ygrid", y = "density", color = names(xdat), linetype = "estimate"))
+                stat = "density") + 
+      scale_linetype_discrete(drop = FALSE)
   } else {
     p <- ggplot() + 
       geom_line(data = dens, 
                 aes_string(x = "ygrid", y = "density", color = names(xdat))) +
       xlab(ynam)
   }
-  p + theme
+  p + theme + xlim(yrange)
 }
 
 
@@ -47,7 +65,6 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
 #' @param data optional data frame. If NULL the data stored in mod is used.
 #' @param theme A ggplot2 theme.
 #'
-#' @return RETURN DESCRIPTION
 #' @examples
 #' if(require("survival")) {
 #'   survplot(survreg(Surv(futime, fustat) ~ ecog.ps + rx, ovarian))
@@ -76,14 +93,16 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   pr <- do.call("rbind", 
                 lapply(1:NROW(xdat), 
                        function(i) data.frame(xdat[i, , drop = FALSE],
-                                              pr = pr_raw[i, ], prob = rev(p),
+                                              pr = pr_raw[i, ], probability = rev(p),
                                               row.names = NULL)))
   
   ## plot
   xnam <- attr(terms(xformula), "term.labels")
-  ggplot(data = pr, aes_string(x = "pr", y = "prob", group = xnam, 
+  ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam, 
                                color = xnam)) + 
-    geom_line() + coord_cartesian(xlim = c(0, ymax)) + theme
+    geom_line() + coord_cartesian(xlim = c(0, ymax)) + 
+    xlab(as.character(yformula[[2]])[2]) + 
+    theme
 }
 
 
@@ -170,7 +189,7 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
                        width = unit(0.95, "npc"),
                        height = unit(0.95, "npc"))
     pushViewport(plotvp)
-    pl <- plotfun(nmod, data = dat, ...)
+    pl <- plotfun(nmod, data = subset(dat, (wterminals == id_node(node))), ...)
     print(pl, vp = plotvp)
     popViewport()
     
