@@ -8,7 +8,9 @@
   The function \code{make_dist_list} generates a list with all the necessary elements to fit a parametric model in \code{distfit}
 }
 
-\usage{make_dist_list <- function(family, bd = NULL) }
+\usage{
+  make_dist_list(family, bd = NULL) 
+} 
 
 \arguments{
   \item{family}{a \code{\link[gamlss.dist]{gamlss.family}} object}
