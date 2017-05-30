@@ -168,7 +168,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       if(inherits(opt, "try-error")) {
         #print("opt try-error with gr = grad, BFGS")
         print(starteta)
-        opt <- optim(par = starteta, fn = nll, gr = grad, method = "Nelder-Mead",
+        opt <- optim(par = starteta, fn = nll, method = "Nelder-Mead",
                          hessian = (type.hessian == "numeric"), control = ocontrol)
       }
     }
@@ -248,7 +248,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   ## estfun
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
-  # (first-order partial derivatives of the distribution function)
+  # (first-order partial derivatives of the (positive) log-likelihood function)
   if(estfun) {
     # estfun for link coefficients eta
     ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
@@ -288,8 +288,9 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     ny = ny,
     weights = weights,
     family = family$family.name,
-    starteta = starteta,
+    familylist = family,
     start = start,
+    starteta = starteta,
     opt = opt,
     converged = converged,
     par = par,
@@ -299,7 +300,6 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     loglik = loglik,
     call = cl,
     estfun = ef,
-    familylist = family,
     ddist = ddist,
     pdist = pdist,
     qdist = qdist,
