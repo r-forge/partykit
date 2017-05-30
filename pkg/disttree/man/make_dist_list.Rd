@@ -23,21 +23,6 @@ The function \code{make_dist_list} is applied in distfit in case the family obje
 \value{
   \code{make_dist_list} returns a list with
   the following components:
-    dist_list <- list(family.name = paste(family$family[2], "Distribution", sep = " "),
-                    ddist = ddist, 
-                    sdist = sdist, 
-                    hdist = hdist,
-                    pdist = pdist,
-                    qdist = qdist,
-                    rdist = rdist,
-                    link = link, 
-                    linkfun = linkfun, 
-                    linkinv = linkinv, 
-                    linkinvdr = linkinvdr,
-                    startfun = startfun,
-                    mle = mle
-                    )
-                    
   \item{family.name }{family.name}
   \item{ddist}{ddist,}
   \item{sdist}{sdist,}
