@@ -9,12 +9,29 @@ importFrom("stats",
   "nobs",
   "optim",
   "qnorm",
-  "weighted.mean"
+  "weighted.mean",
+  "coef",
+  "complete.cases",
+  "delete.response",
+  "family",
+  "integrate",
+  "logLik",
+  "model.frame",
+  "model.offset",
+  "model.response",
+  "model.weights",
+  "na.pass", 
+  "predict", 
+  "rmultinom", 
+  "terms"
 )
 importFrom("sandwich",
   "bread",
   "estfun"
 )
+importFrom("utils", 
+  "data")
+
 
 export(
   ## core distribution fitting function
