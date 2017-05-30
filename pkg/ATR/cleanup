@@ -1,0 +1,10 @@
+#!/bin/bash
+
+rm -rf *~
+
+rm -rf R/*~
+
+rm -rf man/*~
+
+rm -rf tests/*~
+
