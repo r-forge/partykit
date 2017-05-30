@@ -1,4 +1,6 @@
 \name{make_dist_list}
+\alias{make_dist_list}
+
 
 \title{Family list generating function applied in distfit}
 
