@@ -311,7 +311,7 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
         nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
         if(!survival::is.Surv(nobs_tn)) {
           if(cens == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
-          if(cens == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eat, log = TRUE, sum = TRUE)
+          if(cens == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
           ## FIX ME: interval censored
         } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
       }
