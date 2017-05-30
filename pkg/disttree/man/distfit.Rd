@@ -7,6 +7,9 @@
 \alias{logLik.distfit}
 \alias{nobs.distfit}
 \alias{vcov.distfit}
+\alias{predict.distfit}
+\alias{summary.distfit}
+\alias{plot.distfit}
 
 \title{Maximum-Likelihood Fitting of Parametric Distributions}
 
@@ -20,26 +23,31 @@
 }
 
 \usage{
-  distfit(y, family, weights = NULL, start = NULL,
-    vcov = TRUE, type.hessian = "analytic", estfun = TRUE,
-    bd = NULL, fixed = NULL, fixed.values = NULL, \dots)
+distfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
+                    vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+                    bd = NULL, fixed = NULL, fixed.values = NULL, 
+                    cens = "none", censpoint = NULL, ocontrol = list(), ...)
 }
 
 \arguments{
   \item{y}{numeric vector.}
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object or
-    a function generating such a family.}
+    family list (see below for details).}
   \item{weights}{optional numeric vector of case weights.}
-  \item{start}{FIXME}
+  \item{start}{starting values for the distribution parameters handed over to \code{optim}}
+  \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{optim}}}
   \item{vcov}{logical or character. FIXME}
   \item{type.hessian}{FIXME}
   \item{estfun}{logical. Should the matrix of observation-wise
     score contributions (or empirical estimating functions) be
     returned?}
-  \item{bd}{FIXME}
+  \item{bd}{binomial denominator}
   \item{fixed}{FIXME}
   \item{fixed.values}{FIXME}
+  \item{cens}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
+  \item{censpoint}{numeric value. Censoring point can be set for censored response.}
+  \item{ocontrol}{control list handed over to \code{optim}}}
   \item{\dots}{further arguments passed to \code{control} for
     \code{\link[stats]{optim}}.}
 }
@@ -53,7 +61,7 @@
   \code{\link[partykit]{mob}}.
 
   The resulting object of class \code{"distfit"} comes with a set of 
-  standard methods to generic functions including \code{coef}, FIXME.
+  standard methods to generic functions including \code{coef}, \code{estfun}, \code{vcov}, \code{predict} and \code{logLik}. FIX ME
 }
 
 \value{
@@ -96,7 +104,7 @@ Venables WN, Ripley BD (2002).
 ## simulate artifical negative binomial data
 set.seed(0)
 y <- rnbinom(1000, size = 1, mu = 2)
-
+  
 ## simple distfit
 df <- distfit(y, family = NBI)
 coef(df)
@@ -118,19 +126,23 @@ if(require("lmtest")) {
 
 ## censored logistic example
 if(require("crch") & require("gamlss.cens")) {
-library("crch")
-data("RainIbk", package = "crch")
-m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic")
-
-library("gamlss.cens")
-gen.cens(LO, type = "left")
-RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-m2 <- distfit(RainIbk$rains, family = LOlc)
-
-coef(m1)
-coef(m2)
-logLik(m1)
-logLik(m2)
+    library("crch")
+    data("RainIbk", package = "crch")
+    m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic")
+  
+    library("gamlss.cens")
+    gen.cens(LO, type = "left")
+    m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0)
+    
+    dist_list_cens_log <- make_censored_dist_list(dist = "logistic", type = "left", censpoint = 0)
+    m3 <- distfit(RainIbk$rain, family = dist_list_cens_log)
+    
+    coef(m1)
+    coef(m2)
+    coef(m3)
+    logLik(m1)
+    logLik(m2)
+    logLik(m3)
 }
 }
 
