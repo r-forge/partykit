@@ -1,9 +1,11 @@
-distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree = 500L, fit = TRUE,
-                       perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
-                       cens = "none", censpoint = NULL,
+distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(), 
+                       type.tree = "ctree", decorrelate = "none", offset,
+                       cens = "none", censpoint = NULL, weights = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
-                       ocontrol = list(), na.action = na.pass, cores = NULL, applyfun = NULL,
-                       type.tree = "ctree", mtry = ceiling(sqrt(nvar)),
+                       ocontrol = list(),
+                       ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
+                       cores = NULL, applyfun = NULL,
+                       mtry = ceiling(sqrt(nvar)),
                        ...)
 {
   ## keep call
@@ -277,8 +279,6 @@ distforest <- function(formula, data, family = NO(), decorrelate = "none", ntree
   class(rval) <- c("distforest", class(rval))
   return(rval)
 }
-  
-  
   
   
 
