@@ -7,6 +7,7 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows,positioning}
 
+%% commands
 
 
 %% Set the header information
@@ -20,7 +21,13 @@
 
 
 <<setup, echo=FALSE>>=
+library("knitr")
 knitr::opts_chunk$set(cache = TRUE, message = FALSE)
+
+knit_hooks$set(inline = function(x) { 
+  if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
+  highr:::hi_latex(x) 
+}) 
 @
 
 
@@ -58,8 +65,19 @@ Institute, University of Zurich
 
 
 \section*{Abstract}
+Typical models estimating treatment effecs assume that the treatment effect is the same for all 
+individuals observed and 
+for possible future individuals. Model-based recursive partitioning allows to relax this assumption.
+With model-based trees one can compute treatment effects for different strata of individuals. The
+strata are found in a data driven fashion and depend on characteristics of the individuals. 
+Model-based random forests allow for a similarity estimation between individuals in terms of 
+model estimates and through this we can estimate personalised models.
+The R package \emph{model4you} (available on CRAN) implements these stratified and personalised models with a
+focus on ease of use and interpretability so that clinicians and other users can take
+the model they usually use for the estimation of the average treatment 
+effect and with a few lines of code get a visualisation that is easy to understand and interpret.
 
-\textcolor{blue}{A short (ca. 100 word) summary of the software being described: what problem the software addresses, how it was implemented and architected, where it is stored, and its reuse potential.}
+%\textcolor{blue}{A short (ca. 100 word) summary of the software being described: what problem the software addresses, how it was implemented and architected, where it is stored, and its reuse potential.}
 
 \section*{Keywords}
 
@@ -69,7 +87,48 @@ treatment effect; random forest
 
 \section*{Introduction}
 
-\textcolor{blue}{An overview of the software, how it was produced, and the research for which it has been used, including references to relevant research articles. A short comparison with software which implements similar functionality should be included in this section. }
+%\textcolor{blue}{An overview of the software, how it was produced, and the research for which it has been used, including references to relevant research articles. A short comparison with software which implements similar functionality should be included in this section. }
+Studies in various fields randomly assign individuals one of two groups with
+different exposure and then measure a response. For example, in clinical trials
+patients are assigned to one of two treatment groups where usually one treatment
+group receives a new treatment or drug and the other treatment group receives
+the standard of care or a placebo.
+
+Treatment effect estimation is often done using simple models with the binary
+treatment indicator as only covariate. In the example of a clinical trial the
+treatment indicator would be $1$ if the patient receives the new treatment and
+$0$ if the patient receives standard of care.
+In R such a simple model can be estimated as follows:
+<<eval=FALSE>>=
+base_model <- model(response ~ treatment, data)
+@
+with \Sexpr{'response'} being the response measured, \Sexpr{'treatment'} being the
+treatment indicator and \Sexpr{'data'} being the data set containing these variables.
+The function \Sexpr{'model()'} can be replaced for example by \Sexpr{'lm()'} to estimate
+a linear model, \Sexpr{'glm()'} to estimate a generalised linear model or 
+\Sexpr{'survreg()'} to estimate a parametric survival model. 
+These models estimate intercept and treatment effect for
+all individuals in the \Sexpr{'data'} and allow for predicting the response 
+of other individuals given they do or don't receive the treatment of interest.
+
+If you do not believe that all individuals have the same intercept and treatment
+effect the R package \emph{model4you} gives you two options to loosen up this 
+strict model: 
+\paragraph{(1) Model-based trees} identify subgroups where within the subgroups the model 
+parameters are similar and between groups the model parameters are different. 
+<<eval=FALSE>>=
+strat_models <- pmtree(base_model)
+@
+
+\paragraph{(2) Personalised models} use model-based random forests to estimate similarity
+of individuals in terms of model parameters. For each individual a personalised model can
+be estimated based on a weighted set of the original data, where the similarity measure 
+corresponds to the weight.
+<<eval=FALSE>>=
+pers_models <- pmodel(base_model)
+@ 
+ 
+
 
 \begin{figure}
 \centering
@@ -89,8 +148,6 @@ visualisation.}
 <<GBSG2_prep>>=
 library("model4you")
 library("survival")
-library("ggplot2")
-library("gridExtra")
 data("GBSG2", package = "TH.data")
 
 set.seed(2017)
