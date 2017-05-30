@@ -47,7 +47,8 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{fixed.values}{FIXME}
   \item{cens}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
-  \item{ocontrol}{control list handed over to \code{optim}}}
+  \item{ocontrol}{List with control parameters passed to
+    \code{\link[stats]{optim}}.}
   \item{\dots}{further arguments passed to \code{control} for
     \code{\link[stats]{optim}}.}
 }
