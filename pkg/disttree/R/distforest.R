@@ -408,7 +408,7 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
       ydata <- newdata[i,paste(object$info$formula[[2]])]
       if(!survival::is.Surv(ydata)) {
         if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
-        if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eat, log = TRUE)
+        if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
         ## FIX ME: interval censored
       } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
     }
