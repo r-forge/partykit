@@ -92,7 +92,7 @@ lmm_tree <- lmertree(depression ~ treatment | cluster |
   age + duration + anxiety, data = DepressionDemo)
 @
 %
-Note that in the example above, the partitioning variables are continuous, but (ordered) categorical partitioning variables may also be specified. Also, we specified only a single variable in the random-effects part, resulting in estimation of a random intercept with respect to \code{cluster}. More complex random effects can also be specified: for example, specifying the random-effects part as \code{(1 + age | cluster)} would yield a model with a random intercept as well as a random slope for age with respect to cluster. The brackets are necessary to protect the vertical bars in the formulation of the randomeffects.
+Note that in the example above, the partitioning variables are continuous, but (ordered) categorical partitioning variables may also be specified. Also, we specified only a single variable in the random-effects part, resulting in estimation of a random intercept with respect to \code{cluster}. More complex random effects can also be specified: for example, specifying the random-effects part as \code{(1 + age | cluster)} would yield a model with a random intercept as well as a random slope for age with respect to cluster. The brackets are necessary to protect the vertical bars in the formulation of the random effects.
 
 Alternativelty, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for the dichotomized response \code{depression_bin} could be obained by:
 %
@@ -131,7 +131,7 @@ The plotted tree is depicted in Figure~\ref{fig:tree}. In every inner node of th
 
 The plotted tree shows that there are three subgroups with differential treatment effectiveness: node 3 indicates that for patients with lower duration and lower anxiety, Treatment 1 leads to lower post-treatment depression. Node 4 indicates that for patients with lower duration and higher anxiety, both treatments yield more or less the same expected outcome. Node 5 indicates, that for patients with higher duration, Treatment 2 leads to lower post-treatment depression.
 
-The predicted random effects are plotted in Figure~\ref{fig:ranef}. Patients from cluster 10 have somewhat higher expected post-treatment depression scores, whereas patients from cluster 4 have somewhat lower expected post-treatment depression scores.
+The predicted random effects are plotted in Figure~\ref{fig:ranef}. On average, patients from cluster 10 have somewhat higher expected post-treatment depression scores, whereas patients from cluster 4 have somewhat lower expected post-treatment depression scores.
 
 To obtain numerical results, \code{print}, \code{coef} and \code{ranef} methods are available:
 %
