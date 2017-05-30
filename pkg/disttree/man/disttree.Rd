@@ -46,7 +46,7 @@ disttree(formula, data, na.action, cluster, family = NO(),
   \item{cens}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
   \item{weights}{optional numeric vector of case weights.}
-  \item{control, \dots}{Arguments passed to \code{\link[partykit]{mob_control}}.}
+  \item{control}{Arguments passed to \code{\link[partykit]{mob_control}}.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
   \item{\dots}{further arguments passed to \code{control} for
