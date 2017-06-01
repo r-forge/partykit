@@ -654,7 +654,7 @@ if(FALSE){
 if(FALSE){
   family <- dist_list_weibull
   family$family.name
-  y <- survival:::rsurvreg(1000, mean = 5, scale = 2) 
+  y <- survival::rsurvreg(1000, mean = 5, scale = 2) 
   # y <- rweibull(1000, shape = 1/2, scale = exp(5))
   weights <- rbinom(length(y), 4, 0.8)
   t <- distfit(y, family = family, weights = weights, vcov = TRUE, type.hessian = "numeric")

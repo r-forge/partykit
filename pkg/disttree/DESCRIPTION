@@ -7,7 +7,7 @@ Authors@R: c(person(given = "Lisa", family = "Schlosser", role = c("aut", "cre")
 Description: Infrastructure for fitting distributional regression trees and forests
   based on gamlss.dist families.
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
-Imports: graphics, stats, sandwich, utils
+Imports: graphics, stats, utils, Formula, sandwich
 Suggests: crch, gamlss.cens, lmtest, survival
 LazyData: yes
 License: GPL-2 | GPL-3

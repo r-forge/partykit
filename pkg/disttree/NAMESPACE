@@ -8,7 +8,10 @@ importFrom("graphics",
 importFrom("stats",
   "nobs",
   "optim",
+  "dnorm",
+  "pnorm",
   "qnorm",
+  "rnorm",
   "weighted.mean",
   "coef",
   "complete.cases",
@@ -31,6 +34,10 @@ importFrom("sandwich",
 )
 importFrom("utils", 
   "data")
+importFrom("Formula",
+  "Formula",
+  "model.part"
+)
 
 
 export(

@@ -220,7 +220,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     control$applyfun <- applyfun
     
-    rval <- partykit:::constparties(nodes = forest, data = tree$mf, weights = rw,
+    ## FIXME: export constparties() from partykit
+    rval <- constparties(nodes = forest, data = tree$mf, weights = rw,
                                    fitted = fitted, terms = terms(mf), 
                                    info = list(call = match.call(), control = control))
     
@@ -420,4 +421,41 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     }
   }
   return(structure(ll, df = NA, class = "logLik"))
+}
+
+## -----------------------------------------------------------------------------
+
+## FIXME: currently copied from partykit:::constparties
+## -> check with TH whether this can be documented/exported from partykit
+constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info = NULL) {
+
+    stopifnot(all(sapply(nodes, function(x) inherits(x, "partynode"))))
+    stopifnot(inherits(data, "data.frame"))
+    stopifnot(inherits(weights, "list"))
+
+    if(!is.null(fitted)) {
+        stopifnot(inherits(fitted, "data.frame"))
+        stopifnot(nrow(data) == 0L | nrow(data) == nrow(fitted))
+        if (nrow(data) == 0L)
+            stopifnot("(response)" %in% names(fitted))
+    } else {
+        stopifnot(nrow(data) > 0L)
+        stopifnot(!is.null(terms))
+        fitted <- data.frame("(response)" = model.response(model.frame(terms, data = data, 
+                                                                       na.action = na.pass)),
+                             check.names = FALSE)
+    }
+
+    ret <- list(nodes = nodes, data = data, weights = weights, fitted = fitted)
+    class(ret) <- c("constparties", "parties")
+
+    if(!is.null(terms)) {
+        stopifnot(inherits(terms, "terms"))
+        ret$terms <- terms
+    }
+
+    if (!is.null(info))
+        ret$info <- info
+
+    ret
 }
