@@ -64,7 +64,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
           ef <- ef/sqrt(n)
           
           vcov <- if(decorrelate == "vcov") {
-            vcov(model) * n
+            vcov(model, type = "link") * n
           } else {
             solve(crossprod(ef))
           }
