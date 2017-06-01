@@ -22,7 +22,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.table(weights)) weights <- as.vector(weights)
     
   
-  ## check whether the input is a gamlss.family object (or function) or a list of the required type
+  ## check whether the input is a a character string, a gamlss.family object (or function), a function or a list of the required type
+  if(is.character(family)) {
+    family <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+    if(inherits(family, "try-error")) family <- try(getAnywhere(family), silent = TRUE)
+    if(inherits(family, "try-error")) stop("unknown 'family' specification")
+  }
   if(is.function(family)) family <- family()
   
   # if family is a gamlss.dist family object and the distribution is censored:
@@ -44,7 +49,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       # }
     }
   }
-  
+
   if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
   # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
   if(!is.list(family)) stop ("unknown family specification")
