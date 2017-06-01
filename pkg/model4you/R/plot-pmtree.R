@@ -30,7 +30,7 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   k <- 50
   means <- cbind(mean = predict(mod, newdata = xdat), 
                  xdat)
-  sigma <- summary(mod)$sigma
+  sigma <- sigma(mod)
   ygrid <- seq(from = yrange[1], to = yrange[2], length.out = k)
   rows <- rep(seq_len(NROW(means)), each = k)
   
@@ -49,10 +49,9 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   } else {
     p <- ggplot() + 
       geom_line(data = dens, 
-                aes_string(x = "ygrid", y = "density", color = names(xdat))) +
-      xlab(ynam)
+                aes_string(x = "ygrid", y = "density", color = names(xdat)))
   }
-  p + theme + xlim(yrange)
+  p + theme + xlim(yrange) + xlab(ynam)
 }
 
 

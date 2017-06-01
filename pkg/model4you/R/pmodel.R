@@ -41,5 +41,8 @@ pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = co
   }
   
   ret <- apply(pweights, 2, get_pmod)
-  if(class(ret) == "matrix") return(t(ret)) else return(ret)
+  if(class(ret) == "matrix") ret <- t(ret)
+  attr(ret, "modelcall") <- getCall(object)
+  
+  return(ret)
 }

@@ -14,7 +14,7 @@
 #' 
 #' @export
 #' @importFrom partykit ctree_control
-pmforest <- function(object, data = NULL, zformula = ~., ntree = 2,
+pmforest <- function(object, data = NULL, zformula = ~., ntree = 100,
                      control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo = FALSE, ...), 
                      ...) {
   
@@ -25,6 +25,7 @@ pmforest <- function(object, data = NULL, zformula = ~., ntree = 2,
   args$ytrafo <- function(...) .modelfit(model = object, ...)
   ret <- do.call("cforest", args)
   ret$info$object <- object
+  ret$info$zformula <- zformula
   
   return(ret)
 }
