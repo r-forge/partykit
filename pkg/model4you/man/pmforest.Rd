@@ -4,7 +4,7 @@
 \alias{pmforest}
 \title{Compute model-based forest from model.}
 \usage{
-pmforest(object, data = NULL, zformula = ~., ntree = 2,
+pmforest(object, data = NULL, zformula = ~., ntree = 100,
   control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo =
   FALSE, ...), ...)
 }

@@ -1,9 +1,36 @@
+
+#' Objective function
+#'
+#' Get the contributions of an objective function. For \code{\link[stats]{glm}}
+#' these are the (weighted) log-likelihood contributions, for \code{\link[stats]{lm}} the
+#' negative (weighted) squared error.
+#'
+#' @param x model object.
+#' @param newdata optional. New data frame. Can be useful for model evaluation / benchmarking.
+#' @param weights optional. Prior weights. See \code{\link[stats]{glm}} or \code{\link[stats]{lm}}.
+#' @param log should the log-Likelihood contributions or the Likelhood contributions be returned?
+#' @param ... further arguments passed on to \code{objfun} methods.
+#'
+#' @return RETURN vector of objective function contributions.
+#' @examples
+#' ## Example taken from ?stats::glm
+#' ## Dobson (1990) Page 93: Randomized Controlled Trial :
+#' counts <- c(18,17,15,20,10,20,25,13,12) 
+#' outcome <- gl(3,1,9)
+#' treatment <- gl(3,3)
+#' print(d.AD <- data.frame(treatment, outcome, counts))
+#' glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
+#' logLik_contributions <- objfun(glm.D93)
+#' sum(logLik_contributions)
+#' logLik(glm.D93)
+#' 
+#' @export
 objfun <- function(x, newdata = NULL, ...)
 {
   UseMethod("objfun")
 }
 
-
+#' @rdname objfun
 objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
 {
   if (!missing(...)) 
@@ -38,7 +65,7 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
     }
   }
   
-  val <- w * res^2
+  val <- - (w * res^2)
 
   attr(val, "nobs") <- N
   attr(val, "df") <- p + 1
@@ -46,7 +73,7 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
   val
 }
 
-
+#' @rdname objfun
 objfun.glm <- function(x, newdata = NULL, weights = NULL, log = TRUE, ...) 
   {
   if (!missing(...)) 
@@ -77,9 +104,6 @@ objfun.glm <- function(x, newdata = NULL, weights = NULL, log = TRUE, ...)
     p <- p + 1
   
   ## likelihood
-  # dev <- family$dev.resids(y, yhat, w)
-  # val <- sapply(1:n, function(i) 1 - family$aic(y[i], 1, yhat[i], w[i], dev[i])/2)
-  
   # FIXME check what to do in binomial if tabular data is given
   # FIXME add options for all glm families
   if(!fam %in% c("gaussian", "poisson", "binomial")) stop("Haven't implemented objfun for family", fam, "yet. Let me know if you want me to do that!")
