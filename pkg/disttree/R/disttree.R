@@ -126,7 +126,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
           ef <- ef/sqrt(n)
           
           vcov <- if(decorrelate == "vcov") {
-            vcov(model) * n
+            vcov(model, type = "link") * n
           } else {
             solve(crossprod(ef))
           }
@@ -256,11 +256,11 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
     }
     # if ctree was applied
     if(inherits(object, "constparty")){
-      return(partykit::predict.party(object = object, newdata = newdata, type = type, OOB = OOB, ...))
+      return(partykit::predict_party(object = object, newdata = newdata, type = type, OOB = OOB, ...))
     }
   }
   if(type == "parameter") {
-    if(inherits(object, "constparty")) pred.subgroup <- partykit::predict.party(object, newdata =  newdata, type = "node")
+    if(inherits(object, "constparty")) pred.subgroup <- partykit::predict_party(object, newdata =  newdata, type = "node")
     if(inherits(object, "modelparty")) pred.subgroup <- partykit::predict.modelparty(object, newdata =  newdata, type = "node")
     groupcoef <- coef(object)
     if(is.vector(groupcoef)) {
