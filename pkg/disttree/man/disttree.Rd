@@ -16,9 +16,9 @@
 
 \usage{
 disttree(formula, data, na.action, cluster, family = NO(),
-                     type.tree = "mob", decorrelate = "none", offset,
-                     cens = "none", censpoint = NULL, weights = NULL,
-                     control = mob_control(...), ocontrol = list(), ...)
+         type.tree = "mob", decorrelate = "none", offset,
+         cens = "none", censpoint = NULL, weights = NULL,
+         control = mob_control(...), ocontrol = list(), ...)
 }
 
 \arguments{
