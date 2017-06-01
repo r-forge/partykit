@@ -24,13 +24,13 @@
 
 \usage{
 distfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
-                    bd = NULL, fixed = NULL, fixed.values = NULL, 
-                    cens = "none", censpoint = NULL, ocontrol = list(), ...)
+        vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+        bd = NULL, fixed = NULL, fixed.values = NULL, 
+        cens = "none", censpoint = NULL, ocontrol = list(), ...)
 }
 
 \arguments{
-  \item{y}{numeric vector.}
+  \item{y}{numeric vector of the response}
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object or
     family list (see below for details, FIX ME).}
@@ -68,13 +68,13 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 \value{
   \code{distfit} returns an object of class \code{"distfit"} which is a list with
   the following components:
-  \item{npar}{npar,}
-  \item{y}{y,}
-  \item{ny}{ny,}
-  \item{weights}{weights,}
-  \item{family}{family,}
-  \item{familylist}{familylist,}
-  \item{start}{start,}
+  \item{npar}{number of parameter}
+  \item{y}{numeric vector of the response}
+  \item{ny}{number of observations}
+  \item{weights}{numeric vector of case weights handed over as input argument}
+  \item{family}{name of the distribution family}
+  \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
+  \item{start}{used starting values in optim that were handed over as input argument}
   \item{starteta}{starteta,}
   \item{opt}{opt,}
   \item{converged}{converged,}
