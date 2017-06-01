@@ -70,6 +70,7 @@ export(
 
   ## exported methods (to facilitate re-use)
   "plot.party",
+  "predict.party",
   "print.party",
   "plot.modelparty",
   "predict.modelparty",
