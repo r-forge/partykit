@@ -1,3 +1,4 @@
+###### Gaussian distribution
 dist_gaussian <- function() {
 
   parnames <- c("mu", "sigma")
@@ -126,13 +127,11 @@ dist_gaussian <- function() {
 
 
 
-##------------------------------------------------------------------------------
 
+
+###### Weibull distribution
 ## FIX ME: adapt initial values for Weibull distribution
-###### dist_list for Weibull distribution
-if(FALSE) {
-  
-  dist_list_weibull <- list()
+dist_weibull <- function() {
   
   parnames <- c("mean", "scale")
   etanames <- c("mean", "log(scale)")
@@ -174,10 +173,10 @@ if(FALSE) {
   
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-       
+    
     score_m <- exp(-eta[2]) * (exp(exp(-eta[2]) * (log(y) - eta[1])) -1) 
     score_s <- -1 - (log(y) - eta[1]) * (exp(-eta[2])) * (1 - exp(exp(-eta[2]) * (log(y) - eta[1])))
-      
+    
     # par <- c(eta[1], exp(eta[2]))  
     # score_m <- (1/par[2]) * (-1 + (y/exp(par[1]))^(1/par[2]))
     # score_s <- ((-1/par[2]) - (log(y)-par[1])/(par[2]^2) * (1 - (y/exp(par[1]))^(1/par[2]))) * par[2]
@@ -228,12 +227,12 @@ if(FALSE) {
   
   
   
-
+  
   ## additional functions pdist, qdist, rdist
   
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pweibull(q, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qweibull(p, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-    rdist <- function(n, eta) rweibull(n, shape = 1/exp(eta[2]), scale = exp(eta[1]))
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pweibull(q, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qweibull(p, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rweibull(n, shape = 1/exp(eta[2]), scale = exp(eta[1]))
   
   
   
@@ -283,19 +282,19 @@ if(FALSE) {
   
   mle <- FALSE
   
-  dist_list_weibull <- list(family.name = "Weibull Distribution",
-                           ddist = ddist, 
-                           sdist = sdist, 
-                           hdist = hdist,
-                           pdist = pdist,
-                           qdist = qdist,
-                           rdist = rdist,
-                           link = link, 
-                           linkfun = linkfun, 
-                           linkinv = linkinv, 
-                           linkinvdr = linkinvdr,
-                           startfun = startfun,
-                           mle = mle
+  list(family.name = "Weibull Distribution",
+       ddist = ddist, 
+       sdist = sdist, 
+       hdist = hdist,
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link, 
+       linkfun = linkfun, 
+       linkinv = linkinv, 
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = mle
   )
 }
 
@@ -304,10 +303,8 @@ if(FALSE) {
 
 
 
-###### dist_list for Poisson distribution
-if(FALSE) {
-  
-  dist_list_poisson <- list()
+###### Poisson distribution
+dist_poisson <- function() {
   
   parnames <- c("mu")
   etanames <- c("log(mu)")
@@ -354,12 +351,11 @@ if(FALSE) {
   
   
   ## additional functions pdist, qdist, rdist
-  {
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) ppois(q, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qpois(p, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-    rdist <- function(n, eta) rpois(n, lambda = exp(eta[1]))
-  }
-
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) ppois(q, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qpois(p, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rpois(n, lambda = exp(eta[1]))
+  
+  
   
   link <- c("log")
   
@@ -395,19 +391,19 @@ if(FALSE) {
   mle <- TRUE
   
   
-  dist_list_poisson <- list(family.name = "Poisson Distribution",
-                            ddist = ddist, 
-                            sdist = sdist, 
-                            hdist = hdist, 
-                            pdist = pdist,
-                            qdist = qdist,
-                            rdist = rdist,
-                            link = link, 
-                            linkfun = linkfun, 
-                            linkinv = linkinv, 
-                            linkinvdr = linkinvdr,
-                            startfun = startfun,
-                            mle = mle
+  list(family.name = "Poisson Distribution",
+       ddist = ddist, 
+       sdist = sdist, 
+       hdist = hdist, 
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link, 
+       linkfun = linkfun, 
+       linkinv = linkinv, 
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = mle
   )
 }
 
@@ -415,10 +411,8 @@ if(FALSE) {
 
 
 
-###### dist_list for exponential distribution
-if(FALSE) {
-  
-  dist_list_exp <- list()
+###### Exponential distribution
+dist_exponential <- function() {
   
   parnames <- c("lambda")
   etanames <- c("log(lambda)")
@@ -463,13 +457,11 @@ if(FALSE) {
     return(hess)
   }
   
-
+  
   ## additional functions pdist, qdist, rdist
-  {
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pexp(q, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qexp(p, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
-    rdist <- function(n, eta) rexp(n, rate = exp(eta))
-  }
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pexp(q, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qexp(p, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rexp(n, rate = exp(eta))
   
   
   link <- c("log")
@@ -505,19 +497,19 @@ if(FALSE) {
   mle <- TRUE
   
   
-  dist_list_exp <- list(family.name = "Exponential Distribution",
-                        ddist = ddist, 
-                        sdist = sdist, 
-                        hdist = hdist,
-                        pdist = pdist,
-                        qdist = qdist,
-                        rdist = rdist,
-                        link = link, 
-                        linkfun = linkfun, 
-                        linkinv = linkinv, 
-                        linkinvdr = linkinvdr,
-                        startfun = startfun,
-                        mle = mle
+  list(family.name = "Exponential Distribution",
+       ddist = ddist, 
+       sdist = sdist, 
+       hdist = hdist,
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link, 
+       linkfun = linkfun, 
+       linkinv = linkinv, 
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = mle
   )
 }
 
@@ -525,10 +517,8 @@ if(FALSE) {
 
 
 
-###### dist_list for gamma distribution
-if(FALSE) {
-  
-  dist_list_gamma <- list()
+###### Gamma distribution
+dist_gamma <- function() {
   
   parnames <- c("shape", "scale")
   etanames <- c("log(shape)", "log(scale)")
@@ -582,11 +572,11 @@ if(FALSE) {
   
   ## additional functions pdist, qdist, rdist
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pgamma(q, shape = exp(eta[1]), scale = exp(eta[2]), 
-                                                                    lower.tail = lower.tail, log.p = log.p)
+                                                                     lower.tail = lower.tail, log.p = log.p)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qgamma(p, shape = exp(eta[1]), scale = exp(eta[2]),
-                                                                    lower.tail = lower.tail, log.p = log.p)
+                                                                     lower.tail = lower.tail, log.p = log.p)
   rdist <- function(n, eta) rgamma(n, shape = exp(eta[1]), scale = exp(eta[2]))
-
+  
   
   
   link <- c("log", "log")
@@ -624,19 +614,19 @@ if(FALSE) {
   
   mle <- FALSE
   
-  dist_list_gamma <- list(family.name = "Gamma Distribution",
-                          ddist = ddist, 
-                          sdist = sdist, 
-                          hdist = hdist,
-                          pdist = pdist,
-                          qdist = qdist,
-                          rdist = rdist,
-                          link = link, 
-                          linkfun = linkfun, 
-                          linkinv = linkinv, 
-                          linkinvdr = linkinvdr,
-                          startfun = startfun,
-                          mle = mle
+  list(family.name = "Gamma Distribution",
+       ddist = ddist, 
+       sdist = sdist, 
+       hdist = hdist,
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link, 
+       linkfun = linkfun, 
+       linkinv = linkinv, 
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = mle
   )
 }
 
