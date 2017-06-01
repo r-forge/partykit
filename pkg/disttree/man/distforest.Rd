@@ -14,14 +14,14 @@
 
 \usage{
 distforest(formula, data, na.action = na.pass, cluster, family = NO(), 
-                       type.tree = "ctree", decorrelate = "none", offset,
-                       cens = "none", censpoint = NULL, weights = NULL,
-                       control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
-                       ocontrol = list(),
-                       ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
-                       cores = NULL, applyfun = NULL,
-                       mtry = ceiling(sqrt(nvar)),
-                       ...)        
+           type.tree = "ctree", decorrelate = "none", offset,
+           cens = "none", censpoint = NULL, weights = NULL,
+           control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...),
+           ocontrol = list(),
+           ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
+           cores = NULL, applyfun = NULL,
+           mtry = ceiling(sqrt(nvar)),
+           ...)        
 }
 
 \arguments{
