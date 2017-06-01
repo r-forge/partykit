@@ -1,4 +1,6 @@
-man_model4you.pdf: man_model4you.tex
+man_model4you.pdf: man_model4you.tex ref_model4you.bib
+	pdflatex man_model4you.tex
+	bibtex man_model4you
 	texi2pdf --clean man_model4you.tex
 
 man_model4you.tex: man_model4you.Rnw

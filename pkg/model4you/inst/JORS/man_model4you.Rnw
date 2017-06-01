@@ -3,11 +3,14 @@
 \documentclass{jors}
 
 %% packages
+\usepackage{natbib}
+
+\usepackage{subfig}
 \usepackage{amsmath}
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows,positioning}
 
-%% commands
+
 
 
 %% Set the header information
@@ -22,7 +25,7 @@
 
 <<setup, echo=FALSE>>=
 library("knitr")
-knitr::opts_chunk$set(cache = TRUE, message = FALSE)
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, fig.align = "center")
 
 knit_hooks$set(inline = function(x) { 
   if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
@@ -115,7 +118,15 @@ If you do not believe that all individuals have the same intercept and treatment
 effect the R package \emph{model4you} gives you two options to loosen up this 
 strict model: 
 \paragraph{(1) Model-based trees} identify subgroups where within the subgroups the model 
-parameters are similar and between groups the model parameters are different. 
+parameters are similar and between groups the model parameters are different. This is 
+achieved by finding instabilities in the model parameters with respect to a 
+variable (characteristicum) and recursively partitioning the data into groups. If, for
+example the algorithm finds that men and women have differing treatment effects, the
+data is partitioned into two subgroups. Details on model-based trees in general can 
+be found in \citep{zeileis_model-based_2008} and for the special use case in clinical 
+trial in \citep{seibold_model-based_2016}.
+
+Just a single line of code lets the user compute a model-based tree in R:
 <<eval=FALSE>>=
 strat_models <- pmtree(base_model)
 @
@@ -123,19 +134,15 @@ strat_models <- pmtree(base_model)
 \paragraph{(2) Personalised models} use model-based random forests to estimate similarity
 of individuals in terms of model parameters. For each individual a personalised model can
 be estimated based on a weighted set of the original data, where the similarity measure 
-corresponds to the weight.
+corresponds to the weight. Details on the personalised models can be found in 
+\citep{seibold_individual_2017}.
+
+In R, to get from the initial base model to personalised models for all observations
+in the training data, type:
 <<eval=FALSE>>=
-pers_models <- pmodel(base_model)
+pm_forest <- pmforest(base_model)
+pers_models <- pmodel(pm_forest)
 @ 
- 
-
-
-\begin{figure}
-\centering
-\include{treefamily}
-\caption{The family of model-based trees and forests.}
-\end{figure}
-
 
 \begin{figure}
 \centering
@@ -145,12 +152,96 @@ visualisation.}
 \end{figure}
 
 
-<<GBSG2_prep>>=
+In the following we will present two example applications for model-based trees
+and personalised models. For this we need to load the package and -- to ensure
+reproducibility -- set a random seed. Also for plots we will need the \emph{ggplot2}
+package and we use a black and white theme.
+<<prep>>=
 library("model4you")
+set.seed(2017)
+
+library("ggplot2")
+theme_set(theme_classic())
+@
+
+\paragraph{Mathematics exam analysis}
+<<math_data>>=
+data("MathExam14W", package = "psychotools")
+
+## scale points achieved to [0, 100] percent
+MathExam14W$tests <- 100 * MathExam14W$tests/26
+MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
+
+## select variables to be used
+MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
+                             "attempt", "semester", "gender")]
+@
+
+<<math_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for Mathematics Exam data.">>=  
+## compute base model
+bmod_math <- lm(pcorrect ~ group, data = MathExam)
+lmplot(bmod_math, densest = TRUE)
+@
+
+<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for GBSG2 data.">>=  
+## compute tree
+(tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
+plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
+                                               confint = TRUE))
+@
+
+<<math_methods>>=  
+## predict
+newdat <- MathExam[1:5, ]
+
+# terminal nodes
+(nodes <- predict(tr_math, type = "node", newdata = newdat))
+
+# response
+(pr <- predict(tr_math, type = "pass", newdata = newdat))
+
+# response including confidence intervals, see ?predict.lm
+(pr1 <- predict(tr_math, type = "pass", newdata = newdat,
+                predict_args = list(interval = "confidence")))
+@
+
+<<math_pmodl>>=
+forest_math <- pmforest(bmod_math)
+pmod_math <- pmodel(forest_math)
+head(pmod_math)
+@
+
+
+<<math_dp1, fig.width=4, fig.height=4, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot.", "Bee plot.")>>=
+dpdat_math <- cbind(pmod_math, MathExam)
+
+ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
+  geom_point(alpha = 0.2, size = 1) + 
+  geom_smooth(fill = NA, method = "loess") +
+  theme(legend.position = "none")
+
+library("ggbeeswarm")
+ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
+  geom_quasirandom(alpha = 0.5, size = 1) +
+  theme(legend.position = "none")
+@
+
+<<math_dp2, fig.width=4, fig.height=4, out.width='.48\\linewidth', fig.cap="Dependence plots for the number of previous attempts and gender.", fig.subcap=c('Number of previous attempts.', 'Gender.')>>=
+ggplot(dpdat_math, aes(x = attempt, y = group2, color = attempt)) +
+  geom_quasirandom(alpha = 0.5) +
+  theme(legend.position = "none")
+
+ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
+  geom_quasirandom(alpha = 0.5) +
+  theme(legend.position = "none")
+@
+
+
+\paragraph{Analysis of the German Breast Cancer Study Group 2}
+
+<<GBSG2_prep>>=
 library("survival")
 data("GBSG2", package = "TH.data")
-
-set.seed(2017)
 @
 
 <<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
@@ -181,15 +272,14 @@ plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot,
 @
 
 <<GBSG2_forest>>=
-frst <- pmforest(object = bmod, ntree = 100)
+frst <- pmforest(bmod)
 @
 
 <<GBSG_pmod1>>=
 newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
-                         pnodes = 3, progrec = 50, estrec = 60)
+                           pnodes = 3, progrec = 50, estrec = 60)
 mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
 @
-
 
 <<GBSG2_pmod>>=
 coeffun <- function(model) {
@@ -228,12 +318,18 @@ do.call(grid.arrange, lapply(dps, function(p) {
   dmin <- min(dpdat$median_sdiff)
   dq <- quantile(dpdat$median_sdiff, 0.99)
   p + coord_cartesian(ylim = c(dmin, dq))
-  }))
+}))
 @
 
 \section*{Implementation and architecture}
 
 Based on partykit, merely convenience interface.
+
+\begin{figure}
+\centering
+\include{treefamily}
+\caption{The family of model-based trees and forests.}
+\end{figure}
 
 \textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
 
@@ -272,12 +368,12 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 {\bf Archive} \textcolor{blue}{(e.g. institutional repository, general repository) (required ??? please see instructions on journal website for depositing archive copy of software in a suitable repository)} 
 
 \begin{description}[noitemsep,topsep=0pt]
-	\item[Name:] CRAN
-	\item[Persistent identifier:] \url{https://cran.r-project.org/web/packages/model4you/index.html} %TODO upload to CRAN
-	\item[Licence:] GPL-2
-	\item[Publisher:] Heidi Seibold 
-	\item[Version published:] \textcolor{blue}{The version number of the software archived.}
-	\item[Date published:] \textcolor{blue}{dd/mm/yy}
+\item[Name:] CRAN
+\item[Persistent identifier:] \url{https://cran.r-project.org/web/packages/model4you/index.html} %TODO upload to CRAN
+\item[Licence:] GPL-2
+\item[Publisher:] Heidi Seibold 
+\item[Version published:] \textcolor{blue}{The version number of the software archived.}
+\item[Date published:] \textcolor{blue}{dd/mm/yy}
 \end{description}
 
 
@@ -285,10 +381,10 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 {\bf Code repository} \textcolor{blue}{(e.g. SourceForge, GitHub etc.) (required)}
 
 \begin{description}[noitemsep,topsep=0pt]
-	\item[Name:] R-forge
-	\item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
-	\item[Licence:] GPL-2
-	\item[Date published:] 
+\item[Name:] R-forge
+\item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
+\item[Licence:] GPL-2
+\item[Date published:] 
 \end{description}
 
 
@@ -301,9 +397,9 @@ English
 
 The software is intentionally written to make usage as simple as possible. We hope that researchers use it for analysis of:
 \begin{itemize}
-  \item Clinical trials
-  \item A-B testing
-  \item Other situations where the comparison of two decisions is of interest
+\item Clinical trials
+\item A-B testing
+\item Other situations where the comparison of two decisions is of interest
 \end{itemize}
 We encourage users to use the partykit forum on R-forge
 (\url{https://r-forge.r-project.org/forum/forum.php?forum_id=852}) or the party
@@ -330,11 +426,13 @@ National Science Foundation (grant 205321\_163456).
 The authors declare that they have no competing interests.
 
 
-\section*{References}
+% \section*{References}
+\bibliographystyle{plain}
+\bibliography{ref_model4you}
 
-\textcolor{blue}{Please enter references in the Harvard style and include a DOI where available, citing them in the text with a number in square brackets, e.g. \\ }
-
-\textcolor{blue}{[1] Piwowar, H A 2011 Who Shares? Who Doesn't? Factors Associated with Openly Archiving Raw Research Data. PLoS ONE 6(7): e18657. DOI: \\ http://dx.doi.org/10.1371/journal.pone.0018657.}
+% \textcolor{blue}{Please enter references in the Harvard style and include a DOI where available, citing them in the text with a number in square brackets, e.g. \\ }
+% 
+% \textcolor{blue}{[1] Piwowar, H A 2011 Who Shares? Who Doesn't? Factors Associated with Openly Archiving Raw Research Data. PLoS ONE 6(7): e18657. DOI: \\ http://dx.doi.org/10.1371/journal.pone.0018657.}
 
 \vspace{2cm}
 

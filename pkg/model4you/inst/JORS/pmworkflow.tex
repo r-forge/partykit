@@ -1,10 +1,14 @@
-\tikzstyle{block} = [rectangle, draw,
-    text width=13em, text centered, rounded corners, minimum height=3em]
+
+
+% nodes
+\tikzstyle{block} = [rectangle, draw, 
+    text width=13em, text centered, rounded corners, minimum height=2em]
 \tikzstyle{exp} = [rectangle,
     text width=10em, rounded corners, minimum height=4em]
 \tikzstyle{line} = [draw, ->, line width=0.2em]
 
-\begin{tikzpicture}[node distance = 7em, auto]
+\begin{tikzpicture}[node distance = 5em, auto]
+\footnotesize
   \node [block] (clin) {Clinical trial};
   \node [block, below of=clin] (pdat) {Patient and treatment information, trial outcome};
   \node [block, below of=pdat] (frst) {Model-based forest};

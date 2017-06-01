@@ -5,6 +5,12 @@
 % \begin{document}
 
 \tikzstyle{every node}=[font=\scriptsize\ttfamily]
+  {\scriptsize
+    \pgfmathparse{10em}
+    \global\let\pgfmathresult=\pgfmathresult
+  }
+  \let\nwidth=\pgfmathresult
+
 % Nodes
 \tikzstyle{fun} = [rectangle, draw, align=center, fill=white,
     minimum width=8em, text centered, rounded corners, minimum height=1.5em]
