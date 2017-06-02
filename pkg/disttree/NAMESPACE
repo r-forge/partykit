@@ -55,7 +55,13 @@ importFrom("Formula",
   "Formula",
   "model.part"
 )
-
+importFrom("survival",
+  "Surv",
+  "is.Surv"
+)
+importFrom("Hmisc",
+  "wtd.var"
+)
 
 export(
   ## core distribution fitting function
