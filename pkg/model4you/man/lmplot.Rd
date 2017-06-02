@@ -21,42 +21,14 @@ Can be used on its own but is also useable as plotfun in
 \code{\link{node_pmterminal}}.
 }
 \examples{
+## exmaple taken from ?lm
+ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+group <- gl(2, 10, 20, labels = c("Ctl","Trt"))
+weight <- c(ctl, trt)
+data <- data.frame(weight, group)
+lm.D9 <- lm(weight ~ group, data = data)
+lmplot(lm.D9)
 
 
-if(require("psychotools")) {
-  data("MathExam14W", package = "psychotools")
-  
-  ## scale points achieved to [0, 100] percent
-  MathExam14W$tests <- 100 * MathExam14W$tests/26
-  MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
-  
-  ## select variables to be used
-  MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
-                               "attempt", "semester", "gender")]
-  
-  ## compute base model
-  bmod_math <- lm(pcorrect ~ group, data = MathExam)
-  lmplot(bmod_math, densest = TRUE)
-  
-  ## compute tree
-  (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
-                                                 confint = TRUE))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
-                                                 densest = TRUE,
-                                                 confint = TRUE))
-  
-  ## predict
-  newdat <- MathExam[1:5, ]
-  
-  # terminal nodes
-  (nodes <- predict(tr_math, type = "node", newdata = newdat))
-  
-  # response
-  (pr <- predict(tr_math, type = "pass", newdata = newdat))
-  
-  # response including confidence intervals, see ?predict.lm
-  (pr1 <- predict(tr_math, type = "pass", newdata = newdat,
-                  predict_args = list(interval = "confidence")))
-}
 }

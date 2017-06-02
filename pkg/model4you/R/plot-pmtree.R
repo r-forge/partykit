@@ -10,7 +10,16 @@
 #'  (see \code{\link[ggplot2]{geom_density}}) be computed?
 #' @param theme A ggplot2 theme.
 #'
-#' @example inst/examples/ex-pmtree-methods.R
+#' @examples 
+#' ## exmaple taken from ?lm
+#' ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+#' trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+#' group <- gl(2, 10, 20, labels = c("Ctl","Trt"))
+#' weight <- c(ctl, trt)
+#' data <- data.frame(weight, group)
+#' lm.D9 <- lm(weight ~ group, data = data)
+#' lmplot(lm.D9)
+#' 
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export
@@ -21,10 +30,11 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   modformula <- as.Formula(eval(modcall$formula))
   xformula <- formula(modformula, lhs = 0, rhs = 1)
   yformula <- formula(modformula, lhs = 1, rhs = 0)
-  if(is.null(data)) data <- eval(modcall$data)
+  # if(is.null(data)) data <- eval(modcall$data)
   xdat <- unique(get_all_vars(xformula, data = data))
-  ynam <- as.character(yformula[[2]])
-  yrange <- range(data[, ynam])
+  ydat <- get_all_vars(yformula, data = data)
+  ynam <- names(ydat) # as.character(yformula[[2]])
+  yrange <- range(ydat)
   
   ## get density functions for each treatment group
   k <- 50
@@ -66,7 +76,7 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
 #'
 #' @examples
 #' if(require("survival")) {
-#'   survplot(survreg(Surv(futime, fustat) ~ ecog.ps + rx, ovarian))
+#'   survplot(survreg(Surv(futime, fustat) ~ factor(rx), ovarian))
 #' }
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string coord_cartesian

@@ -19,7 +19,7 @@ Can be used on its own but is also useable as plotfun in
 }
 \examples{
 if(require("survival")) {
-  survplot(survreg(Surv(futime, fustat) ~ ecog.ps + rx, ovarian))
+  survplot(survreg(Surv(futime, fustat) ~ factor(rx), ovarian))
 }
 
 }

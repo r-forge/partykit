@@ -13,7 +13,7 @@
 #' 
 #' @importFrom stats dbinom dnorm dpois sigma
 #'
-#' @return RETURN vector of objective function contributions.
+#' @return vector of objective function contributions.
 #' @examples
 #' ## Example taken from ?stats::glm
 #' ## Dobson (1990) Page 93: Randomized Controlled Trial :

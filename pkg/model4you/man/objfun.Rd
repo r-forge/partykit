@@ -24,7 +24,7 @@ objfun(x, newdata = NULL, ...)
 \item{log}{should the log-Likelihood contributions or the Likelhood contributions be returned?}
 }
 \value{
-RETURN vector of objective function contributions.
+vector of objective function contributions.
 }
 \description{
 Get the contributions of an objective function. For \code{\link[stats]{glm}}
