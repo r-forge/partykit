@@ -62,7 +62,9 @@ if(require("mvtnorm") & require("survival")) {
                     aes(color = "true treatment\neffect")) +
       geom_point(data = dp_lm, 
                  aes(y = aA, x = z1, color = "estimates lm"), 
-                 alpha = 0.5) 
+                 alpha = 0.5)  +
+      ylab("treatment effect") + 
+      xlab("patient characteristic z1")
   }
 }
 

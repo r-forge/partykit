@@ -81,7 +81,12 @@
   # modargs <- as.list(modcall)[-1]
   
   ## formula and data
-  if(is.null(data)) data <- eval(modcall$data)
+  if(is.null(data)) {
+    if(is.null(data <- eval(modcall$data))) 
+      stop("Need an object with data component, if data is NULL. 
+           Solutions: specify data in function call of this function 
+           or of the model.")
+  }
   args$data <- data
   modformula <- eval(modcall$formula)
   

@@ -23,6 +23,8 @@ Imports:
 Suggests:
     mvtnorm,
     TH.data,
-    psychotools
+    psychotools,
+    strucchange,
+    plyr
 License: GPL-2 | GPL-3
 RoxygenNote: 6.0.1

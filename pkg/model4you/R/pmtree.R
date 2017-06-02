@@ -43,16 +43,19 @@ pmtree <- function(object, data = NULL, zformula = ~.,
   if(control$saveinfo) {
     for (i in which_terminals) {
       ichar <- as.character(i)
-      iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+      idn <- idx[[ichar]]
+      
+      if(length(idn) > 1) idn <- c(1, idn)
+      iinfo <- tree_ret[[idn]]$info
       subsi <- subset_term == i
       
       if (is.null(iinfo)) {
         umod <- update(object, subset = subsi)
         iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
                       objfun = logLik(umod), object = NULL)
-        tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
+        tree_ret[[idn]]$info <- iinfo
       } 
-      tree_ret[[c(1, idx[[ichar]])]]$info$nobs <- sum(subsi)
+      tree_ret[[idn]]$info$nobs <- sum(subsi)
       
     }
   }
