@@ -17,12 +17,13 @@
 #' 
 #' @example inst/examples/ex-pmtree-methods.R
 #' 
+#' @importFrom partykit predict.party
 #' @export
 predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args = list(), ...) {
   
   ## node
-  terminals <- nodeids(object, terminal = TRUE)
-  node <- partykit:::predict.party(object, newdata = newdata, type = "node")
+  # terminals <- nodeids(object, terminal = TRUE)
+  node <- predict.party(object, newdata = newdata, type = "node")
   if(type == "node") return(node)
   
   if(is.null(newdata)) newdata <- object$data

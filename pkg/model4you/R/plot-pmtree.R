@@ -10,9 +10,9 @@
 #'  (see \code{\link[ggplot2]{geom_density}}) be computed?
 #' @param theme A ggplot2 theme.
 #'
-#' @examples inst/examples/ex-pmtree-methods.R
+#' @example inst/examples/ex-pmtree-methods.R
 #' 
-#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export
 lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   

@@ -10,6 +10,8 @@
 #' @param weights optional. Prior weights. See \code{\link[stats]{glm}} or \code{\link[stats]{lm}}.
 #' @param log should the log-Likelihood contributions or the Likelhood contributions be returned?
 #' @param ... further arguments passed on to \code{objfun} methods.
+#' 
+#' @importFrom stats dbinom dnorm dpois sigma
 #'
 #' @return RETURN vector of objective function contributions.
 #' @examples
@@ -31,6 +33,7 @@ objfun <- function(x, newdata = NULL, ...)
 }
 
 #' @rdname objfun
+#' @export
 objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
 {
   if (!missing(...)) 
@@ -74,6 +77,7 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
 }
 
 #' @rdname objfun
+#' @export
 objfun.glm <- function(x, newdata = NULL, weights = NULL, log = TRUE, ...) 
   {
   if (!missing(...)) 
@@ -111,6 +115,7 @@ objfun.glm <- function(x, newdata = NULL, weights = NULL, log = TRUE, ...)
                  gaussian = weights * dnorm(y, mean = yhat, sd = sigma(x), log = log),
                  poisson = weights * dpois(y, lambda = yhat, log = log),
                  binomial = {
+                   n <- 1L
                    eval(family$initialize)
                    m <- if (any(n > 1)) n else weights 
                    dbinom(m * y, size = n, prob = yhat, log = log)
