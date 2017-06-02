@@ -46,8 +46,13 @@ if(require("mvtnorm") & require("survival")) {
                       control = ctree_control(mincriterion = 0))
   
   ## personalised models
+  pmodels_lm <- pmodel(x = frst_lm, newdata = tsimdata, fun = identity)
   coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
   
+  # compare predictive log-Likelihoods of personalised models versus
+  # base model
+  logLik(pmodels_lm)
+  sum(objfun(basemodel_lm, newdata = tsimdata))
   
   coeffun <- function(model) {
     ## model coefficients

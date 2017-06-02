@@ -11,13 +11,18 @@
 #' @param fun function to apply on the personalised model before returning. The
 #' default \code{coef} returns a matrix of personalised coefficients. For returning
 #' the model objects use \code{identity}.
+#' @param return_attr which attributes to add to the object returned. If it contains
+#' \code{"modelcall"} the call of the base model is returned, if it contains 
+#' \code{"data"} the data, and if it contains \code{"similarity"} the matrix of 
+#' similarity weights is added.
 #'
 #' @return depends on fun.
 #' 
 #' @example inst/examples/ex-pmodel.R
 #' 
 #' @export
-pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = coef) {
+pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = coef,
+                   return_attr = c("modelcall", "data", "similarity")) {
   
   ## compute similarity weights
   if(is.matrix(x)) {
@@ -42,7 +47,12 @@ pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = co
   
   ret <- apply(pweights, 2, get_pmod)
   if(class(ret) == "matrix") ret <- t(ret)
-  attr(ret, "modelcall") <- getCall(object)
+  if(all.equal(fun, identity) == TRUE) class(ret) <- c("pmodel.identity", class(ret))
+  class(ret) <- c("pmodel", class(ret))
+  
+  if("modelcall" %in% return_attr) attr(ret, "modelcall") <- getCall(object)
+  if("data" %in% return_attr) attr(ret, "data") <- newdata
+  if("similarity" %in% return_attr) attr(ret, "similarity") <- pweights
   
   return(ret)
 }

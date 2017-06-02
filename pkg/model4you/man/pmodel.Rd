@@ -5,7 +5,7 @@
 \title{Personalised model}
 \usage{
 pmodel(x = NULL, object = NULL, newdata = NULL, OOB = TRUE,
-  fun = coef)
+  fun = coef, return_attr = c("modelcall", "data", "similarity"))
 }
 \arguments{
 \item{x}{cforest object or matrix of weights.}
@@ -20,6 +20,11 @@ computed out of bag?}
 \item{fun}{function to apply on the personalised model before returning. The
 default \code{coef} returns a matrix of personalised coefficients. For returning
 the model objects use \code{identity}.}
+
+\item{return_attr}{which attributes to add to the object returned. If it contains
+\code{"modelcall"} the call of the base model is returned, if it contains 
+\code{"data"} the data, and if it contains \code{"similarity"} the matrix of 
+similarity weights is added.}
 }
 \value{
 depends on fun.
@@ -76,8 +81,13 @@ if(require("mvtnorm") & require("survival")) {
                       control = ctree_control(mincriterion = 0))
   
   ## personalised models
+  pmodels_lm <- pmodel(x = frst_lm, newdata = tsimdata, fun = identity)
   coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
   
+  # compare predictive log-Likelihoods of personalised models versus
+  # base model
+  logLik(pmodels_lm)
+  sum(objfun(basemodel_lm, newdata = tsimdata))
   
   coeffun <- function(model) {
     ## model coefficients
