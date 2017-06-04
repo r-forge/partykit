@@ -32,13 +32,12 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 \arguments{
   \item{y}{numeric vector of the response}
   \item{family}{specification of the response distribution.
-    Either a \code{\link[gamlss.dist]{gamlss.family}} object or
-    family list (see below for details, FIX ME).}
+    Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
   \item{weights}{optional numeric vector of case weights.}
   \item{start}{starting values for the distribution parameters handed over to \code{optim}}
   \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{optim}}}
-  \item{vcov}{logical or character. FIXME}
-  \item{type.hessian}{FIXME}
+  \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
+  \item{type.hessian}{character. Can be "analytic" or "numeric" and specifies how the hessian matrix should be calculated.}
   \item{estfun}{logical. Should the matrix of observation-wise
     score contributions (or empirical estimating functions) be
     returned?}
@@ -62,7 +61,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \code{\link[partykit]{mob}}.
 
   The resulting object of class \code{"distfit"} comes with a set of 
-  standard methods to generic functions including \code{coef}, \code{estfun}, \code{vcov}, \code{predict} and \code{logLik}. FIX ME
+  standard methods to generic functions including \code{coef}, \code{estfun}, \code{vcov}, \code{predict} and \code{logLik}.
 }
 
 \value{
@@ -75,20 +74,20 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{family}{name of the distribution family}
   \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
   \item{start}{used starting values in optim that were handed over as input argument}
-  \item{starteta}{starteta,}
-  \item{opt}{opt,}
-  \item{converged}{converged,}
-  \item{par}{par,}
-  \item{eta}{eta,}
-  \item{hess}{hessian,}
-  \item{vcov}{vc,}
-  \item{loglik}{ll,}
-  \item{call}{cl,}
-  \item{estfun}{ef,}
-  \item{ddist}{ddist,}
-  \item{pdist}{pdist,}
-  \item{qdist}{qdist,}
-  \item{rdist}{rdist.}
+  \item{starteta}{starting value on the link scale used in \code{optim}}
+  \item{opt}{list returned by optim}
+  \item{converged}{logical. TRUE if \code{optim} returnes convergence = 0 and FALSE else.}
+  \item{par}{fitted distribution parameters (on parameter scale)}
+  \item{eta}{fitted distribution parameters (on link scale)}
+  \item{hess}{hessian matrix}
+  \item{vcov}{variance-covariance matrix}
+  \item{loglik}{value of the maximized log-likelihood function}
+  \item{call}{function call}
+  \item{estfun}{matrix with the scores for the estimated parameters. Each line represents an observation and each column a parameter.}
+  \item{ddist}{density function with the estimated distribution parameters already plugged in}
+  \item{pdist}{probability function with the estimated distribution parameters already plugged in}
+  \item{qdist}{quantile function with the estimated distribution parameters already plugged in}
+  \item{rdist}{random number generating function with the estimated distribution parameters already plugged in}
 }
 
 \references{
