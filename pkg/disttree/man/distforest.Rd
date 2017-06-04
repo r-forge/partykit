@@ -36,8 +36,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(),
     cluster ID to be employed for clustered covariances in the parameter
     stability tests.}
   \item{family}{specification of the response distribution.
-    Either a \code{\link[gamlss.dist]{gamlss.family}} object or
-    family list (see below for details, FIX ME).}
+    Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
   \item{type.tree}{Specification of the type of tree learner, either
     \code{"mob"} or \code{"ctree"}.}
   \item{decorrelate}{Specification of the type of decorrelation for the
