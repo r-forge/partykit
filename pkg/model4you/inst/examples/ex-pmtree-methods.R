@@ -18,7 +18,7 @@ if(require("psychotools")) {
   ## compute tree
   (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
   plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
-                                                 confint = TRUE))
+                                                 confint = FALSE))
   plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
                                                  densest = TRUE,
                                                  confint = TRUE))

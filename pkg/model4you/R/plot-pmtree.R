@@ -30,7 +30,7 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   modformula <- as.Formula(eval(modcall$formula))
   xformula <- formula(modformula, lhs = 0, rhs = 1)
   yformula <- formula(modformula, lhs = 1, rhs = 0)
-  # if(is.null(data)) data <- eval(modcall$data)
+  if(is.null(data)) data <- eval(modcall$data)
   xdat <- unique(get_all_vars(xformula, data = data))
   ydat <- get_all_vars(yformula, data = data)
   ynam <- names(ydat) # as.character(yformula[[2]])
