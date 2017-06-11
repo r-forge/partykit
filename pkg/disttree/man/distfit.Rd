@@ -8,7 +8,11 @@
 \alias{nobs.distfit}
 \alias{vcov.distfit}
 \alias{predict.distfit}
+\alias{print.distfit}
 \alias{summary.distfit}
+\alias{print.summary.distfit}
+\alias{getSummary.distfit}
+\alias{residuals.distfit}
 \alias{plot.distfit}
 
 \title{Maximum-Likelihood Fitting of Parametric Distributions}
@@ -48,8 +52,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
-  \item{\dots}{further arguments passed to \code{control} for
-    \code{\link[stats]{optim}}.}
+  \item{\dots}{further arguments passed to \code{\link[stats]{optim}}.}
 }
 
 \details{
@@ -88,6 +91,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{pdist}{probability function with the estimated distribution parameters already plugged in}
   \item{qdist}{quantile function with the estimated distribution parameters already plugged in}
   \item{rdist}{random number generating function with the estimated distribution parameters already plugged in}
+  \item{method}{optimization method applied in \code{optim}}
 }
 
 \references{
