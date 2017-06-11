@@ -81,7 +81,11 @@ export(
   "dist_weibull",
   "dist_poisson",
   "dist_exponential",
-  "dist_gamma"
+  "dist_gamma",
+  
+  
+  ## additional summary function
+  "getSummary.distfit"
 )
 
 ## methods
@@ -93,6 +97,11 @@ S3method("logLik", "distfit")
 S3method("nobs", "distfit")
 S3method("vcov", "distfit")
 S3method("predict", "distfit")
+S3method("print", "distfit")
+S3method("residuals", "distfit")
+S3method("summary", "distfit")
+S3method("print", "summary.distfit")
+S3method("plot", "distfit") # FIXME
 
 S3method("print", "disttree")
 S3method("coef", "disttree")
