@@ -462,27 +462,27 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
   confint
 }
 
-print.distfit <- function(object, digits = max(3, getOption("digits") - 3), ...)
+print.distfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("Fitted distributional model (", object$family, ")\n\n")
-  if(!(object$familylist$mle) && !object$converged) {
+  cat("Fitted distributional model (", x$family, ")\n\n")
+  if(!(x$familylist$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {
-    if(length(object$par)) {
+    if(length(x$par)) {
       cat("Distribution parameter(s):\n")
-      print.default(format(object$par, digits = digits), print.gap = 2, quote = FALSE)
+      print.default(format(x$par, digits = digits), print.gap = 2, quote = FALSE)
       cat("\n")
     } else {
       cat("No parameters \n\n")
     }
-    cat(paste("Log-likelihood: ", format(object$loglik, digits = digits), "\n", sep = ""))
-    if(length(object$npar)) {
-      cat(paste("Df: ", format(object$npar, digits = digits), "\n", sep = ""))
+    cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+    if(length(x$npar)) {
+      cat(paste("Df: ", format(x$npar, digits = digits), "\n", sep = ""))
     }
     cat("\n")
   }
   
-  invisible(object)
+  invisible(x)
 }
 
 summary.distfit <- function(object, ...)
@@ -576,16 +576,16 @@ residuals.distfit <- function(object, type = c("standardized", "pearson", "respo
 
 
 ## FIX ME:
-plot.distfit <- function(object,
+plot.distfit <- function(x,
                          main = "", xlab = "", ylab = "Density",
                          fill = "lightgray", col = "darkred", lwd = 1.5,
                          ...)
 {
   ## FIX ME: barplot instead of hist for discrete distributions
-  if(isTRUE(all.equal(object$y, round(object$y)))) {
+  if(isTRUE(all.equal(x$y, round(x$y)))) {
     
     ## barplot instead of hist:
-    #ytab <- table(object$y)
+    #ytab <- table(x$y)
     #values <- as.numeric(names(ytab))
     #absfreq <- as.numeric(ytab)
     #relfreq <- absfreq / sum(absfreq)
@@ -593,25 +593,25 @@ plot.distfit <- function(object,
     #bars <- barplot(relytab, xlim = c(min(values), max(values)), ylim = c(-0.1, 1.1),
     #                xlab = xlab , ylab = ylab)
     #abline(h = 0)
-    #lines(values*1.2 + 0.7, object$ddist(values), type = "b", lwd = 2, pch = 19, col = 2)
+    #lines(values*1.2 + 0.7, x$ddist(values), type = "b", lwd = 2, pch = 19, col = 2)
     
     # using hist:
     histogram <- c(
-      list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+      list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
       list(...)
     )
     histogram$freq <- FALSE
     histogram$probability <- TRUE
-    histogram$breaks <- seq(from = min(object$y), to = max(object$y) + 1) - 0.5
-    # histogram$breaks <- seq(from = min(object$y), to = 2*max(object$y) + 1)/2 - 0.25
+    histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
+    # histogram$breaks <- seq(from = min(x$y), to = 2*max(x$y) + 1)/2 - 0.25
     histogram <- do.call("hist", histogram)
-    yrange <- seq(from = min(object$y), to = max(object$y))
-    lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
+    yrange <- seq(from = min(x$y), to = max(x$y))
+    lines(yrange, x$ddist(yrange), col = col, lwd = lwd)
     
   } else {
     
     histogram <- c(
-      list(x = object$y, main = main, xlab = xlab, ylab = ylab, col = fill),
+      list(x = x$y, main = main, xlab = xlab, ylab = ylab, col = fill),
       list(...)
     )
     histogram$freq <- FALSE
@@ -621,7 +621,7 @@ plot.distfit <- function(object,
     yrange <- seq(from = histogram$breaks[1L],
                   to = histogram$breaks[length(histogram$breaks)],
                   length.out = 100L)
-    lines(yrange, object$ddist(yrange), col = col, lwd = lwd)
+    lines(yrange, x$ddist(yrange), col = col, lwd = lwd)
     ## FIXME: ddist arguments/par?
   }
 }
