@@ -1,11 +1,10 @@
 ## high-level convenience interface to mob() and ctree()
 # FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
 # FIX ME: 'starting weights' in trees?
-# FIX ME: ocontrol directly handed over to optim, dist_control
 disttree <- function(formula, data, na.action, cluster, family = NO(),
                      type.tree = "mob", decorrelate = "none", offset,
                      cens = "none", censpoint = NULL, weights = NULL,
-                     control = mob_control(...), ocontrol = list(), ...)
+                     control = mob_control(), ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
@@ -178,7 +177,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     # first iteration out of loop:
     model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
-                     estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol)
+                     estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -195,7 +194,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       for(i in (2:n_tn)){
         model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                          vcov = FALSE, type.hessian = "analytic", 
-                         estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol)
+                         estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
         loglik <- loglik + sum(model$ddist(data[(id_tn[i]==pred_tn),resp.name], log = TRUE))
@@ -239,8 +238,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
 ## methods
 print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
-  if(inherits(x$info$family, "gamlss.family")) familyname <- paste(x$info$family[[1]][2], "Distribution")
-  if(is.list(family)) familyname <- x$info$family$family.name
+  familyname <- if(inherits(x$info$family, "gamlss.family")) {
+    paste(x$info$family[[1]][2], "Distribution")
+  } else {x$info$family$family.name}
   if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", familyname)
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
