@@ -8,10 +8,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   
   ## FIX ME: what to do if weights consists of zeros only
-  ## FIX ME: hand over ocontrol arguments to optim in the right form/order
   
   ## match call
   cl <- match.call()
+  
+  ## check if 'method' is an additional argument (for optim)
+  method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
 
   ## number of observations
   ny <- NROW(y)
@@ -22,7 +24,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.table(weights)) weights <- as.vector(weights)
     
   
-  ## check whether the input is a a character string, a gamlss.family object (or function), a function or a list of the required type
+  ## check whether the input is a character string, a gamlss.family object (or function), a function or a list of the required type
   if(is.character(family)) {
     family <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
     if(inherits(family, "try-error")) family <- try(getAnywhere(family), silent = TRUE)
@@ -165,20 +167,37 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   if(!family$mle) {
     ## optimize negative log-likelihood
-    opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "L-BFGS-B",
-                 hessian = (type.hessian == "numeric"), control = ocontrol))
+    
+    # (in case 'method' is handed over via '...' it is not set as an argument)
+    if(is.null(cl$method)) {
+      opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
+                       hessian = (type.hessian == "numeric"), control = ocontrol, ...))
+    } else {
+      opt <- try(optim(par = starteta, fn = nll, gr = grad,
+                       hessian = (type.hessian == "numeric"), control = ocontrol, ...))
+    }
     if(inherits(opt, "try-error")) {
-      #print("opt try-error with gr=grad, L-BFGS-B")
-      opt <- try(optim(par = starteta, fn = nll, gr = grad, method = "BFGS",
+      if(method != "L-BFGS-B") method <- "L-BFGS-B"
+      warning("Error in 'optim()' for given method and additional arguments in '...', 
+              optimization restarted with 'L-BFGS-B' and additional arguments ignored")
+      opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
                        hessian = (type.hessian == "numeric"), control = ocontrol))
       if(inherits(opt, "try-error")) {
-        #print("opt try-error with gr = grad, BFGS")
-        print(starteta)
-        opt <- optim(par = starteta, fn = nll, method = "Nelder-Mead",
-                         hessian = (type.hessian == "numeric"), control = ocontrol)
+        warning("Error in 'optim()' for method 'L-BFGS-B',
+                optimization restarted with 'BFGS' and additional argumetns ignored")
+        method <- "BFGS"
+        opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
+                         hessian = (type.hessian == "numeric"), control = ocontrol))
+        if(inherits(opt, "try-error")) {
+          warning("Error in 'optim()' for method 'L-BFGS-B',
+                optimization restarted with 'Nelder-Mead' and additional argumetns ignored")
+          print(starteta)
+          method <- "Nelder-Mead"
+          opt <- optim(par = starteta, fn = nll, method = method,
+                       hessian = (type.hessian == "numeric"), control = ocontrol)
+        }
       }
-    }
-    
+    }    
     ## extract parameters
     eta <- opt$par
     names(eta) <- names(starteta)
@@ -203,15 +222,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(is.null(family$hdist)) {
       if(family$mle) {
         nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "L-BFGS-B",
-                         hessian = TRUE, control = ocontrol)$hessian)
+                         hessian = TRUE, control = ocontrol, ...)$hessian)
         if(inherits(nhess, "try-error")) {
           #print("opt try-error in hess with gr=grad, L-BFGS-B")
           nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "BFGS",
-                       hessian = TRUE, control = ocontrol)$hessian)
+                       hessian = TRUE, control = ocontrol, ...)$hessian)
           if(inherits(nhess, "try-error")) {
             #print("opt try-error in hess with gr=grad, BFGS")
             nhess <- optim(par = eta, fn = nll, method = "BFGS",
-                               hessian = TRUE, control = ocontrol)$hessian
+                               hessian = TRUE, control = ocontrol, ...)$hessian
           }
         }
         hess <- -nhess
@@ -306,6 +325,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     loglik = loglik,
     call = cl,
     estfun = ef,
+    method = method,
     ddist = ddist,
     pdist = pdist,
     qdist = qdist,
@@ -320,19 +340,16 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
 
 
-## print, summary?, predict?
-nobs.distfit <- function(object, ...) {
-  object$ny
-}
+## methods
+nobs.distfit <- function(object, ...) return(object$ny)
 
 coef.distfit <- function(object, type = "parameter" , ...) {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
-  ## FIXME: else, warning
 }
 
 ## FIX: censored logistic distribution
-predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
+predict.distfit <- function(object, type = c("response", "parameter"), ...){
   # calculation of the expected value 
   # of the given distribution with the calculated parameters
   if(type == "response") {
@@ -361,7 +378,7 @@ predict.distfit <- function(object, type = "response", OOB = FALSE, ...){
       }
     }
     return(expv[[1]])
-  }
+  } else return(object$par)
 }
 
 vcov.distfit <- function(object, type = "link", ...) {
@@ -374,16 +391,13 @@ vcov.distfit <- function(object, type = "link", ...) {
   }
 }
   
-estfun.distfit <- function(object, ...) {                         
-  return(object$estfun)
-}
+estfun.distfit <- function(object, ...) return(object$estfun)
 
-logLik.distfit <- function(object, ...) {
-  structure(object$loglik, df = object$npar, class = "logLik")
-}
+logLik.distfit <- function(object, ...) structure(object$loglik, df = object$npar, class = "logLik")
 
-bread.distfit <- function(object, ...) {
-  return(object$vcov * object$ny)
+bread.distfit <- function(object, type = c("parameter", "link"), ...) {
+  if(type == "parameter") return(vcov(object, type = "parameter") * object$ny)
+  if(type == "link") return(object$vcov * object$ny)
 }
 
 confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
@@ -448,34 +462,120 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
   confint
 }
 
+print.distfit <- function(object, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("Fitted distributional model (", object$family, ")\n\n")
+  if(!(object$familylist$mle) && !object$converged) {
+    cat("Model did not converge\n")
+  } else {
+    if(length(object$par)) {
+      cat("Distribution parameter(s):\n")
+      print.default(format(object$par, digits = digits), print.gap = 2, quote = FALSE)
+      cat("\n")
+    } else {
+      cat("No parameters \n\n")
+    }
+    cat(paste("Log-likelihood: ", format(object$loglik, digits = digits), "\n", sep = ""))
+    if(length(object$npar)) {
+      cat(paste("Df: ", format(object$npar, digits = digits), "\n", sep = ""))
+    }
+    cat("\n")
+  }
+  
+  invisible(object)
+}
 
-## FIXME: summary (further information)
-summary.distfit <- function (object, type = "parameter", ...){
-  if(type == "link"){ 
-    coef <- object$eta
-    vcov <- object$vcov
-  }
-  if(type == "parameter"){ 
-    coef <- object$par
-    vcov <- vcov(object, type = "parameter")
-  }
+summary.distfit <- function(object, ...)
+{
+  ## residuals
+  object$residuals <- object$y - predict.distfit(object, type = "response")
+  if(length(object$par)>1) {
+    object$residuals <- object$residuals / object$par[2]
+  } else {warning("one-parametric distribution, residuals are not standardized")}
   
-  se <- sqrt(diag(vcov))
-  TAB <- cbind(Estimate = coef,
-               StdErr = se)
+  ## extend coefficient table
+  cf <- as.vector(object$par)
+  se <- sqrt(diag(vcov(object, type = "parameter")))
+  cf <- cbind(cf, se)
+  colnames(cf) <- c("Estimate", "Std. Error")
+  rownames(cf) <- names(object$par)
+  object$coefficients <- cf
   
-  sumlist <- list(Call = object$call,
-                  Family = object$family,
-                  Parameter = TAB,
-                  Estimated_covariance_matrix = vcov,
-                  LogLikelihood = object$loglik
-                  # LogLikelihood = logLik(object)
-  )
-  class(sumlist) <- "summary.distfit"
-  sumlist 
+  ## return
+  class(object) <- "summary.distfit"
+  object
 }
 
 
+print.summary.distfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+{
+  cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
+  
+  if(!(x$familylist$mle) && !x$converged) {
+    cat("model did not converge\n")
+  } else {
+    cat(paste("Distribution Family:\n", x$family, "\n\n", sep = ""))
+    
+    cat(paste("Standardized residuals:\n", sep = ""))
+    print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
+                    .Names = c("Min", "1Q", "Median", "3Q", "Max")))
+    
+    if(NROW(x$coefficients)) {
+      cat(paste("\nDistribution parameter(s):\n", sep = ""))
+      printCoefmat(as.data.frame(x$coefficients), digits = digits, signif.legend = FALSE)
+    } else cat("\nNo parameters\n")
+
+    cat("\nLog-likelihood:", formatC(x$loglik, digits = digits), "on", x$npar, "Df\n")
+    if(!x$familylist$mle)
+      cat(paste("Number of iterations in", x$method, "optimization:\n", 
+                "function:", x$opt$counts[1L], "\n",
+                "gradient:", x$opt$counts[2L]))
+  }
+  
+  invisible(x)
+}
+
+
+getSummary.distfit <- function(obj, alpha = 0.05, ...) {
+  ## extract coefficient summary
+  s <- summary(obj)
+  cf <- s$coefficients
+  ## augment with confidence intervals
+  cval <- qnorm(1 - alpha/2)
+  cf <- cbind(cf,
+              cf[, 1] - cval * cf[, 2],
+              cf[, 1] + cval * cf[, 2])
+  
+  colnames(cf) <- c("est", "se", "lwr", "upr")
+  
+  ## return everything
+  return(list(
+    family = obj$family,
+    coef = cf,
+    sumstat = c(
+      "N" = obj$nobs,
+      "logLik" = as.vector(logLik(obj)),
+      "AIC" = AIC(obj),
+      "BIC" = AIC(obj, k = log(obj$ny))
+    ),
+    call = obj$call
+  ))
+}
+
+
+residuals.distfit <- function(object, type = c("standardized", "pearson", "response"), ...) {
+  if(match.arg(type) == "response") {
+    object$y - predict.distfit(object, type = "response")
+  } else {
+    if(length(object$par)>1) {
+      (object$y - predict.distfit(object, type = "response")) / object$par[2]
+    } else {stop("one-parametric distribution, residuals are not standardized")}
+  }
+}
+
+
+
+## FIX ME:
 plot.distfit <- function(object,
                          main = "", xlab = "", ylab = "Density",
                          fill = "lightgray", col = "darkred", lwd = 1.5,
@@ -525,6 +625,37 @@ plot.distfit <- function(object,
     ## FIXME: ddist arguments/par?
   }
 }
+
+
+
+
+
+## FIXME: summary (also on link scale?)
+#summary.distfit <- function (object, type = "parameter", ...){
+#  if(type == "link"){ 
+#    coef <- object$eta
+#    vcov <- object$vcov
+#  }
+#  if(type == "parameter"){ 
+#    coef <- object$par
+#    vcov <- vcov(object, type = "parameter")
+#  }
+#  
+#  se <- sqrt(diag(vcov))
+#  TAB <- cbind(Estimate = coef,
+#               StdErr = se)
+#  
+#  sumlist <- list(Call = object$call,
+#                  Family = object$family,
+#                  Parameter = TAB,
+#                  Estimated_covariance_matrix = vcov,
+#                  LogLikelihood = object$loglik
+#                  # LogLikelihood = logLik(object)
+#  )
+#  class(sumlist) <- "summary.distfit"
+#  sumlist 
+#}
+
 
 
 
