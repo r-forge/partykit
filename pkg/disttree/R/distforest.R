@@ -52,7 +52,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
         
         model <- distfit(ys, family = family, weights = subweights, start = start,
                          vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, cens = cens, censpoint = censpoint, ...)
+                         estfun = estfun, cens = cens, censpoint = censpoint,
+                         ocontrol = ocontrol, ...)
         
         
         ef <- as.matrix(model$estfun)
@@ -115,6 +116,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     if(!("control" %in% names(cl))) {
       control <- mob_control()
+      ## FIX ME: change control arguments such as mincriterion etc for forest (compare cforest)
       warning("for type.tree = 'mob' the control argument is by default set to mob_control()") 
     }
     
@@ -136,7 +138,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       
       mod <- distfit(y, family = family, weights = weights, start = start,
                      vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                     cens = cens, censpoint = censpoint, ...)
+                     cens = cens, censpoint = censpoint,
+                     ocontrol = ocontrol, ...)
       
       rval <- list(
         coefficients = mod$par,
@@ -244,7 +247,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     for(i in 1:nrow(data)){
       wi <- w[,i]
       # personalized model for observation data[i,]
-      pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint)
+      pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
       loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
@@ -340,7 +343,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
       resp.name <- as.character(object$info$call$formula[2])
-      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE)
+      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
       pred.val1 <- predict(pm, type = "response")
         
       pred.val <- data.frame(idx = 1:nrow(nd))
@@ -350,7 +353,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE)
+          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
           pred.val[i,] <- predict(pm, type = "response")
         }
       }
@@ -368,7 +371,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
       resp.name <- as.character(object$info$call$formula[2])
-      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE)
+      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
       pred.par1 <- coef(pm, type = "parameter")
 
       pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = length(pred.par1)))
@@ -378,7 +381,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE)
+          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
       }
@@ -459,3 +462,13 @@ constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info
 
     ret
 }
+
+
+
+## FIXME: error handling: if no split found -> start for next ieteration includes NA
+# weights are all zero
+# simlist <- sim_fun(fun = fun, kappa.start = 1, nsteps = 4, stepsize = 1,
+#+                 ntree = 10, nobs = 100, nrep = 2, type.gfun = "nonparametric",  
+#+                 covariate = c("x1","x2"), plot = "none", g.interact = FALSE, type.tree = "ctree",
+#+                 ctree_minbucket = 20, ctree_mincrit = 0.2,
+#+                 cforest_minbucket = 20, cforest_mincrit = 0)
