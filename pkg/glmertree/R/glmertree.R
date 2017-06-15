@@ -59,9 +59,9 @@ lmertree <- function(formula, data, weights = NULL,
         rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
                                               formula(ff, lhs = 0L, rhs = 2L)), 
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        lme <- lmer(rf.alt, data = data, weights = .weights)
+        lme <- lmer(rf.alt, data = data, weights = .weights, control = lmer.control)
       } else {
-        lme <- lmer(rf, data = data, weights = .weights)
+        lme <- lmer(rf, data = data, weights = .weights, control = lmer.control)
       }
       #b <- structure(lme@beta, .Names = names(coef(lme)[[1L]]))
       b <- structure(lme@beta, .Names = names(fixef(lme)))
@@ -70,7 +70,7 @@ lmertree <- function(formula, data, weights = NULL,
     } else {
       ## estimate only a partial lmer model using the .tree fitted
       ## values as an offset
-      lme <- lmer(rf, data = data, offset = .tree, weights = .weights)
+      lme <- lmer(rf, data = data, offset = .tree, weights = .weights, control = lmer.control)
       data$.ranef <- predict(lme, newdata = data)    
     }
     
@@ -166,9 +166,11 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
         rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
                                               formula(ff, lhs = 0L, rhs = 2L)), 
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        glme <- glmer(rf.alt, data = data, family = family, weights = .weights)
+        glme <- glmer(rf.alt, data = data, family = family, weights = .weights,
+                      control = glmer.control)
       } else {
-        glme <- glmer(rf, data = data, family = family, weights = .weights)
+        glme <- glmer(rf, data = data, family = family, weights = .weights,
+                      control = glmer.control)
       }
       #b <- structure(glme@beta, .Names = names(coef(glme)[[1L]]))
       b <- structure(glme@beta, .Names = names(fixef(glme)))
@@ -177,7 +179,8 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     } else {
       ## estimate only a partial glmer model using the .tree fitted
       ## values as an offset
-      glme <- glmer(rf, data = data, family = family, offset = .tree, weights = .weights)
+      glme <- glmer(rf, data = data, family = family, offset = .tree, 
+                    weights = .weights, control = glmer.control)
       data$.ranef <- predict(glme, newdata = data, type = "link")
     }
     
