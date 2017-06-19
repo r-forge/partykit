@@ -38,8 +38,8 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
   \item{weights}{optional numeric vector of case weights.}
-  \item{start}{starting values for the distribution parameters handed over to \code{optim}}
-  \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{optim}}}
+  \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
+  \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
   \item{type.hessian}{character. Can be "analytic" or "numeric" and specifies how the hessian matrix should be calculated.}
   \item{estfun}{logical. Should the matrix of observation-wise
@@ -57,18 +57,18 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
 \details{
   The function \code{distfit} fits distributions,
-  similar to \code{fitdistr} from MASS (Venables and Ripley 2002)
+  similar to \code{\link[MASS]{fitdistr}} from \pkg{MASS} (Venables and Ripley 2002)
   but based on GAMLSS families (Stasinopoulos and Rigby 2007).
   
   Provides analytical gradients and hessian, can be plugged into
   \code{\link[partykit]{mob}}.
 
-  The resulting object of class \code{"distfit"} comes with a set of 
+  The resulting object of class \code{distfit} comes with a set of 
   standard methods to generic functions including \code{coef}, \code{estfun}, \code{vcov}, \code{predict} and \code{logLik}.
 }
 
 \value{
-  \code{distfit} returns an object of class \code{"distfit"} which is a list with
+  \code{distfit} returns an object of class \code{distfit} which is a list with
   the following components:
   \item{npar}{number of parameter}
   \item{y}{numeric vector of the response}
@@ -76,10 +76,10 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{weights}{numeric vector of case weights handed over as input argument}
   \item{family}{name of the distribution family}
   \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
-  \item{start}{used starting values in optim that were handed over as input argument}
-  \item{starteta}{starting value on the link scale used in \code{optim}}
-  \item{opt}{list returned by optim}
-  \item{converged}{logical. TRUE if \code{optim} returnes convergence = 0 and FALSE else.}
+  \item{start}{used starting values in \code{\link[stats]{optim}} that were handed over as input argument}
+  \item{starteta}{starting value on the link scale used in \code{\link[stats]{optim}}}
+  \item{opt}{list returned by \code{\link[stats]{optim}}}
+  \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returnes convergence = 0 and FALSE else.}
   \item{par}{fitted distribution parameters (on parameter scale)}
   \item{eta}{fitted distribution parameters (on link scale)}
   \item{hess}{hessian matrix}
@@ -91,7 +91,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{pdist}{probability function with the estimated distribution parameters already plugged in}
   \item{qdist}{quantile function with the estimated distribution parameters already plugged in}
   \item{rdist}{random number generating function with the estimated distribution parameters already plugged in}
-  \item{method}{optimization method applied in \code{optim}}
+  \item{method}{optimization method applied in \code{\link[stats]{optim}}}
 }
 
 \references{

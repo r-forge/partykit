@@ -47,8 +47,8 @@ disttree(formula, data, na.action, cluster, family = NO(),
   \item{weights}{optional numeric vector of case weights.}
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
   \item{ocontrol}{List with control parameters passed to
-    \code{\link[stats]{optim}} in \code{distfit}.}
-  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{distfit}.}
+    \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
+  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
 }
 
 \details{
@@ -58,10 +58,10 @@ disttree(formula, data, na.action, cluster, family = NO(),
 }
 
 \value{
-  An object of S3 class \code{"disttree"} inheriting from class \code{"modelparty"} or \code{"constparty"}.
+  An object of S3 class \code{disttree} inheriting from class \code{modelparty} or \code{constparty}.
 }
 
-\seealso{\code{\link[partykit]{mob}}, \code{\link[partykit]{ctree}}, \code{\link{distfit}}}
+\seealso{\code{\link[partykit]{mob}}, \code{\link[partykit]{ctree}}, \code{\link[disttree]{distfit}}}
 
 \examples{
 tr <- disttree(dist ~ speed, data = cars)

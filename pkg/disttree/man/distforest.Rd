@@ -57,7 +57,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(),
     resampling with \code{replace = TRUE} referring to the n-out-of-n bootstrap and
     \code{replace = FALSE} to sample splitting. \code{fraction} is the number of observations to draw without
     replacement. }
-  \item{fitted.OOB}{logical. if fitted.OOB=TRUE the weights for each observation of the learning data are predicted by \code{predict.cforest} with the argument OOB=TRUE (only relevant if fit=TRUE)}
+  \item{fitted.OOB}{logical. if fitted.OOB=TRUE the weights for each observation of the learning data are predicted by \code{\link[partykit]{predict.cforest}} with the argument OOB=TRUE (only relevant if fit=TRUE)}
   \item{cores}{numeric. If set to an integer the \code{applyfun} is set to
                \code{\link[parallel]{mclapply}} with the desired number of \code{cores}.}
   \item{applyfun}{an optional \code{\link[base]{lapply}}-style function with arguments
@@ -69,7 +69,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(),
     of a random forest without random input variable sampling, can
     be performed by setting \code{mtry} either equal to \code{Inf} or
     manually equal to the number of input variables.}
-  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{distfit}.}
+  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
 }
 
 \details{
@@ -78,7 +78,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(),
 }
 
 \value{
-  An object of S3 class \code{"distforest"} inheriting from class \code{"cforest"}.
+  An object of S3 class \code{distforest} inheriting from class \code{cforest}.
 }
 
 \seealso{\code{\link[partykit]{mob}}, \code{\link[partykit]{ctree}}, \code{\link[partykit]{cforest}}, \code{\link{distfit}}}
