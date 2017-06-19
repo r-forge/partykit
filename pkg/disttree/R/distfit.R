@@ -622,7 +622,6 @@ plot.distfit <- function(x,
                   to = histogram$breaks[length(histogram$breaks)],
                   length.out = 100L)
     lines(yrange, x$ddist(yrange), col = col, lwd = lwd)
-    ## FIXME: ddist arguments/par?
   }
 }
 
