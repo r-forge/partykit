@@ -1102,7 +1102,7 @@ residuals.modelparty <- function(object, ...)
   return(rval)
 }
 
-plot.modelparty <- function(x, terminal_panel = NULL, FUN = NULL, ...) {
+plot.modelparty <- function(x, terminal_panel = NULL, FUN = NULL, tp_args = NULL, ...) {
   if(is.null(terminal_panel)) {
     if(is.null(FUN)) {
       FUN <- function(x) {
@@ -1112,7 +1112,7 @@ plot.modelparty <- function(x, terminal_panel = NULL, FUN = NULL, ...) {
           strwrap(capture.output(print(cf, digits = 4L))[-1L]))
       }
     }
-    terminal_panel <- node_terminal(x, FUN = FUN)
+    terminal_panel <- do.call("node_terminal", c(list(obj = x, FUN = FUN), tp_args))
   }
   plot.party(x, terminal_panel = terminal_panel, ...)
 }
