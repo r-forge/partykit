@@ -417,7 +417,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
   if(!(any(dt.par, df.par, g.par, all.par))){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "true parameters", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 2, col = 'black')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 2, col = 'black')
