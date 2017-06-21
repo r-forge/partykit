@@ -1,0 +1,1353 @@
+\documentclass[11pt,compress,t]{beamer}
+
+\usepackage{Sweave} 
+\usepackage{graphicx}
+\setbeamertemplate{caption}{\insertcaption} 
+\usetheme{Z}
+%% includes a replacement for \usepackage{Sweave}
+\usepackage{amsmath,tikz}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
+\graphicspath{{plots/}}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+ 
+%% need no \usepackage{Sweave}
+\definecolor{InputColor}{rgb}{0,0,0.3}
+\definecolor{OutputColor}{rgb}{0.2,0.2,0.2}
+
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+library("ggplot2")
+theme_set(theme_bw(base_size = 18))
+library("disttree")
+#library("partykitR1")
+library("gamlss")
+library("lattice")
+library("crch")
+library("latex2exp")
+library("parallel")
+library("gamlss.cens")
+gen.cens(NO, type = "left")
+
+## define distribution list:
+# dist_list_normal
+{
+  
+  dist_list_normal <- list()
+  
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
+  
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    
+    val <- -1/2 * (log(2*pi) + 2*eta[2] + exp(log((y-eta[1])^2) - 2*eta[2]))
+    if(!log) val <- exp(val)
+    
+    # par <- c(eta[1], exp(eta[2]))
+    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    
+    score <- cbind(exp(-2*eta[2]) * (y-eta[1]), 
+                   -1 + exp(-2*eta[2] + log((y-eta[1])^2)))
+    
+    # par <- c(eta[1], exp(eta[2])) 
+    # score <- cbind(1/par[2]^2 * (y-par[1]), 
+    #                (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
+    
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    d2ld.etamu2 <- sum(weights * rep.int(-exp(-2*eta[2]), ny))
+    d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-eta[1]) * exp(-2*eta[2]), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    d2ld.etasigma2 <- sum(weights * (-2)*exp(log((y-eta[1])^2) - 2*eta[2]), na.rm = TRUE)    
+    
+    # par <- c(eta[1], exp(eta[2]))                           
+    # d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+    # d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    # d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2, na.rm = TRUE)         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- pnorm
+  qdist <- qnorm
+  rdist <- rnorm  
+  
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    if(is.null(weights)) {
+      mu <- mean(y)
+      sigma <- sqrt(1/length(y) * sum((y - mu)^2))
+    } else {
+      mu <- weighted.mean(y, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (y - mu)^2))
+    }
+    starteta <- c(mu, log(sigma))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- TRUE
+  
+  dist_list_normal <- list(family.name = "Normal Distribution",
+                           ddist = ddist, 
+                           sdist = sdist, 
+                           hdist = hdist,
+                           pdist = pdist,
+                           qdist = qdist,
+                           rdist = rdist,
+                           link = link, 
+                           linkfun = linkfun, 
+                           linkinv = linkinv, 
+                           linkinvdr = linkinvdr,
+                           startfun = startfun,
+                           mle = mle
+  )
+}
+
+
+# dist_list_cens_normal
+{
+  
+  dist_list_cens_normal <- list()
+  
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
+    par <- c(eta[1], exp(eta[2]))
+    val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
+    if(sum) {
+      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
+    par <- c(eta[1], exp(eta[2]))
+    # y[y==0] <- 1e-323
+    
+    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+    score <- cbind(score_m, score_s)
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+      #if(any(is.nan(score))) print(c(eta, "y", y))
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(eta[1], exp(eta[2]))                           
+    # y[y==0] <- 1e-323
+    
+    d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+    dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+    dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    
+    d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+    d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+    d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+    d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    yc <- pmax(0,y)  # optional ?
+    if(is.null(weights)) {
+      mu <- mean(yc)
+      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    } else {
+      mu <- weighted.mean(yc, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+    }
+    starteta <- c(mu, log(sigma))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_cens_normal <- list(family.name = "censored Normal Distribution",
+                                ddist = ddist, 
+                                sdist = sdist, 
+                                hdist = hdist,
+                                pdist = pdist,
+                                qdist = qdist,
+                                rdist = rdist,
+                                link = link, 
+                                linkfun = linkfun, 
+                                linkinv = linkinv, 
+                                linkinvdr = linkinvdr,
+                                startfun = startfun,
+                                mle = mle
+  )
+}
+
+
+
+######## data generating process based on a predefined tree or a parameter function
+# if tree: 2 splits => 3 terminal nodes
+# 10 split variables (x1, ..., x10) are availabe (5 numeric, 2 binary, 3 categorical)
+#
+# input: n            ..... nr of observations
+#        family       ..... distribution of the generated observations
+#        split.matrix ..... indices of the variables used for the splits together with the corresponding split points
+#        parm.matrix  ..... set of distribution parameters for each subgroup
+#        fun          ..... parameter function
+#
+# output: data.frame with generated observations y (generated seperatly in each subgroups with given distributions parameters),
+#                         the given split variables x1, ..., x10 for each observation and
+#                         the index of the subgroup for each observation or
+#                         the distribution parameter for each observation
+
+# FIX: until now only complete lists can be handed over (dist_list...)
+dgp <- function(n, family = dist_list_normal, 
+                fun = NULL,
+                split.matrix = matrix(nrow = 2, ncol = 2), 
+                par.matrix = matrix(nrow = 3, ncol = 2), 
+                round.sp = 3)
+{
+  
+  # generating the possible split variables
+  x1 <- runif(n,-0.4,1)
+  x2 <- runif(n,-10,10)
+  x3 <- runif(n,0,100)
+  x4 <- x1 + rnorm(n, sd = 0.1)
+  x5 <- x1 + rnorm(n, sd = 0.3)
+  x6 <- rbinom(n,1,0.5)
+  x7 <- rbinom(n,1,0.5)
+  x8 <- sample(1:4, n, replace = TRUE) 
+  x9 <- sample(1:5, n, replace = TRUE) 
+  x10 <- sample(1:7, n, replace = TRUE)
+  #x11 <- runif(n,-0.5,1)
+  x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+  # reduce nr of possible split points by rounding values of split variables
+  x <- round(x, digits = round.sp)
+  
+  y <- vector(mode = "numeric", length = n)
+  
+  # getting the random function
+  if(is.function(family)) family <- family()
+  if(inherits(family, "gamlss.family")) {
+    rfun <- get(paste0("r",family$family[[1]]))
+  } else {
+    if(family$family.name == "Normal Distribution") rfun <- rNO
+    if(family$family.name == "censored Normal Distribution") rfun <- rNO
+    if(family$family.name == "Poisson Distribution") rfun <- rPO
+    if(family$family.name == "Weibull Distribution") rfun <- survival:::rsurvreg 
+  }
+  
+  
+  if(is.null(fun)) {
+    index <- vector(mode = "numeric", length = n)
+    sv = split.matrix[,1]    # index of split variables
+    sp = split.matrix[,2]    # split points
+    par = par.matrix
+    
+    # splitting based on the given split variables and split points and
+    # generating the observations seperatly for each subgroup (with the corresponding given distribution parameters)
+    for(k in 1:n){
+      if(x[k, sv[1]] <= sp[1]){
+        y[k] <- do.call(rfun, as.list(c(1,par[1,])))
+        index[k] <- 2L
+      } else {
+        if(x[k, sv[2]] <= sp[2]){
+          y[k] <- do.call(rfun, as.list(c(1,par[2,]))) 
+          index[k] <- 4L
+        } else {
+          y[k] <- do.call(rfun, as.list(c(1,par[3,])))
+          index[k] <- 5L
+        }
+      }
+    }
+    d <- as.data.frame(cbind(y, x, index))
+    colnames(d) <- c("y", paste0("x", c(1:10)), "index")
+    
+  } else {
+    
+    dpar <- fun(x)
+    
+    if(!(family$family.name == "Poisson Distribution")){
+      y <- rfun(n, dpar[,1], dpar[,2])
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
+    } else {
+      y <- rfun(n, dpar)
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
+    }
+  }
+  
+  
+  if(family$family.name == "censored Normal Distribution") {
+    #d$ystar <- d$y
+    d$y <- pmax(d$y, 0)
+  }
+  
+  return(d)
+}
+
+
+
+
+
+
+############################################ 
+# parameter functions
+
+### plotting function for one data set
+plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par = FALSE, g.par = FALSE, dt.par = FALSE) 
+{
+  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
+                    df$fitted.par,
+                    dt$fitted.par,
+                    #coef(dt)[paste(dt$fitted[,1]),],
+                    g$mu.fv, g$sigma.fv)
+  
+  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
+                          "fitted.mu.df","fitted.sigma.df",
+                          "fitted.mu.dt","fitted.sigma.dt",
+                          "fitted.mu.g","fitted.sigma.g")
+  sp <- plotdata[order(plotdata["x1"]),]
+  
+
+  if(!(any(dt.par, df.par, g.par, all.par))){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "true parameters", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 2, col = 'black')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 2, col = 'black')
+    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
+           col = c('black','grey'), lty = 1, bty = 'n')
+  }
+  
+  # disttree
+  if(dt.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = 'green4')
+    lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+           col = c('black','grey','green4', 'greenyellow'), lty = 1, bty = 'n')
+  }
+  
+  # distforest
+  if(df.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = 'red')
+    lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
+    lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
+    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+           col = c('black','grey','red', 'orange'), lty = 1, bty = 'n')
+  }
+
+  
+  # gamlss
+  if(g.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = 'blue')
+    lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
+           col = c('black','grey','blue', 'lightblue'), lty = 1, bty = 'n')
+  }
+  
+  # disttree vs distforest vs gamlss
+  if(all.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = 'green4')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = 'red')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = 'blue')
+    legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
+                        TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
+           col = c('black','green4','red','blue'), lty = 1, bty = 'n')
+  }
+}
+
+
+
+### plotting function for one data set and sigma only
+plot1sigma <- function(learndata, dt=NULL, df=NULL, g=NULL) 
+{
+  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
+                    df$fitted.par,
+                    dt$fitted.par,
+                    #coef(dt)[paste(dt$fitted[,1]),],
+                    g$mu.fv, g$sigma.fv)
+  
+  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
+                          "fitted.mu.df","fitted.sigma.df",
+                          "fitted.mu.dt","fitted.sigma.dt",
+                          "fitted.mu.g","fitted.sigma.g")
+  sp <- plotdata[order(plotdata["x1"]),]
+  
+  plot(y = sp$y-sp$true.mu, x = sp$x, type = "p", col="grey", xlab = "x", ylab = "y",  main = "disttree", xaxt='n', yaxt='n', xlab = "", ylab = "")
+  lines(x = sp$x, y = sp$true.sigma, type = "l", col = 'black')
+  lines(x = sp$x, y = -sp$true.sigma, type = "l", col = 'black')
+  lines(x = sp$x, y = sp$fitted.sigma.dt, type = "l", col = 'green4')
+  lines(x = sp$x, y = -sp$fitted.sigma.dt, type = "l", col = 'green4')
+  lines(x = sp$x, y = sp$fitted.sigma.df, type = "l", col = 'red')
+  lines(x = sp$x, y = -sp$fitted.sigma.df, type = "l", col = 'red')
+  lines(x = sp$x, y = sp$fitted.sigma.g, type = "l", col = 'blue')
+  lines(x = sp$x, y = -sp$fitted.sigma.g, type = "l", col = 'blue')
+  legend('topleft', c(TeX('$\\sigma$'), TeX('$\\hat{\\sigma}$ disttree'),
+                      TeX('$\\hat{\\sigma}$ distforest'), TeX('$\\hat{\\sigma}$ gamlss')), 
+         col = c('black','green4','red','blue'), lty = 1)
+}
+
+@
+
+
+
+%\bibliography{ref.bib}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\title{Distributional Trees and Forests}
+\author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+\URL{https://R-Forge.R-project.org/projects/partykit/}
+
+
+\section{Distributional Trees and Forests}
+
+\subsection{Motivation}
+
+\begin{frame}[fragile]
+\frametitle{Motivation}
+\vspace{0.5cm}
+\begin{figure}[!htb]
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GLM, echo=FALSE, results=hide>>=
+nobs <- 200
+## GLM
+set.seed(7)
+x <- c(1:nobs)/nobs
+ytrue <- 1+x*1.5
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+\visible<1->{
+<<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+lines(x = x, y = ytrue, col = "red", lwd = 1.5, main = "")
+@
+}
+\end{center}
+\endminipage
+\visible<2->{{\LARGE$\rightarrow$}}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GAM, echo=FALSE, results=hide>>=
+## GAM
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3 
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+\visible<2->{
+<<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+lines(x = x, y = ytrue, col = "red", lwd = 1.5, main = "")
+@
+}
+\end{center}
+\endminipage
+\visible<3->{{\LARGE$\rightarrow$}}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GAMLSS, echo=FALSE, results=hide>>=
+## GAMLSS
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3
+var <- exp(-(2*x)^2)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+@
+\visible<3->{
+<<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+lines(x = x, y = ytrue, col = "red", lwd = 1.5)
+lines(x = x, y = ytrue+0.1+var, col = "red", lty = 2)
+lines(x = x, y = ytrue-0.1-var, col = "red", lty = 2)
+@
+}
+\end{center}
+\endminipage
+
+\vspace{0.5cm}
+\minipage{0.25\textwidth}
+\begin{center}
+\visible<1->{
+LM, GLM\\
+\vspace{0.5cm}
+\code{lm}\\
+\code{glm}\\
+\vspace{1.5cm}}
+\end{center}
+\endminipage
+\hspace{1.1cm}
+\minipage{0.25\textwidth}
+\begin{center}
+\visible<2->{
+GAM\\
+\vspace{0.5cm}
+\code{mgcv}\\
+\code{VGAM}\\
+$\ldots$\\
+\vspace{1cm}}
+\end{center}
+\endminipage
+\hspace{1.1cm}
+\minipage{0.25\textwidth}
+\begin{center}
+\visible<3->{
+GAMLSS\\
+\vspace{0.5cm}
+\code{gamlss}\\
+\code{mgcv}\\
+\code{VGAM}\\
+\code{gamboostLSS}\\
+$\ldots$}
+\end{center}
+\endminipage
+\end{figure}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+\frametitle{Motivation}
+\vspace{0.1cm}
+\begin{figure}[!htb]
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_regtree, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(7)
+kappa <- 12
+x <- c(1:nobs)/nobs
+ytrue <- ytree <- yforest <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
+y <- ytrue + rnorm(nobs,0,0.3)
+for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
+lines(x = x, y = ytree, col = "red", lwd = 1.5)
+@
+\visible<1->{
+<<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
+lines(x = x, y = ytree, col = "red", lwd = 1.5)
+@
+}
+\end{center}
+
+\endminipage
+\visible<2->{{\LARGE$\rightarrow$}}
+\minipage{0.29\textwidth}
+ \begin{center}
+<<motivation_randforest, echo=FALSE, results=hide>>=
+## Random Forest
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
+lines(x = x, y = yforest, col = "red", lwd = 1.5, main = "")
+@
+\visible<2->{
+<<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
+lines(x = x, y = ytree, col = "red", lwd = 1.5)
+@
+}
+\end{center}
+
+\endminipage
+\visible<3->{{\LARGE$\rightarrow$}}
+\minipage{0.29\textwidth}
+  \visible<3->{
+  \begin{center}
+  \begin{tikzpicture}
+  \draw[line width=0.01mm, black] (0,0) rectangle (2.6,2.24);
+  \node[rectangle, align=center] (sq) at (1.3, 1.12) {\Huge{?}};
+  \end{tikzpicture}
+  \end{center}}
+\endminipage
+
+\minipage{0.29\textwidth}
+\begin{center}
+\vspace{0.0cm}
+\visible<1->{
+Regression Tree\\
+\vspace{0.5cm}
+\resizebox{0.3\textwidth}{!}{
+\begin{tikzpicture}
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (1, 2) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (0.5, 1) {};
+  \draw[-, line width=1pt] (n0) -- (n1);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (1.5, 1) {};
+  \draw[-, line width=1pt] (n0) -- (n2);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (1, 0) {};
+  \draw[-, line width=1pt] (n2) -- (n3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (2, 0) {};
+  \draw[-, line width=1pt] (n2) -- (n4);
+\end{tikzpicture}}
+\vspace{0.3cm}\\
+\code{rpart}\\
+\code{party(kit)}\\
+\vspace{1cm}}
+\end{center}
+\endminipage
+\hspace{0.65cm}
+\minipage{0.29\textwidth}
+\begin{center}
+\vspace{0.0cm}
+\visible<2->{
+Random Forest\\
+\vspace{0.5cm}
+\resizebox{0.9\textwidth}{!}{
+\begin{tikzpicture}
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n00) at (1, 2) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n01) at (0.5, 1) {};
+  \draw[-, line width=1pt] (n00) -- (n01);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n02) at (1.5, 1) {};
+  \draw[-, line width=1pt] (n00) -- (n02);
+  
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n10) at (3, 2) {};
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n11) at (2.5, 1) {};
+  \draw[-, line width=1pt] (n10) -- (n11);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n12) at (3.5, 1) {};
+  \draw[-, line width=1pt] (n10) -- (n12);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n13) at (2, 0) {};
+  \draw[-, line width=1pt] (n11) -- (n13);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n14) at (2.8, 0) {};
+  \draw[-, line width=1pt] (n11) -- (n14);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n15) at (3.2, 0) {};
+  \draw[-, line width=1pt] (n12) -- (n15);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n16) at (4, 0) {};
+  \draw[-, line width=1pt] (n12) -- (n16);
+  
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n20) at (5, 2) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n21) at (4.5, 1) {};
+  \draw[-, line width=1pt] (n20) -- (n21);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n22) at (5.5, 1) {};
+  \draw[-, line width=1pt] (n20) -- (n22);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n23) at (5, 0) {};
+  \draw[-, line width=1pt] (n22) -- (n23);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n24) at (6, 0) {};
+  \draw[-, line width=1pt] (n22) -- (n24);
+\end{tikzpicture}
+}
+\vspace{0.5cm}\\
+\code{randomForest}\\
+\code{ranger}\\
+\code{party(kit)}\\
+$\ldots$}
+\end{center}
+\endminipage
+\hspace{0.65cm}
+\minipage{0.28\textwidth}
+\begin{center}
+\vspace{0.68cm}
+\visible<3->{
+Distributional Trees and Forests\\
+\vspace{1.7cm}
+\code{disttree}\\
+based on \code{partykit}\\
+\vspace{1cm}}
+\end{center}
+\endminipage
+\end{figure}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Goals}
+\vspace{1cm}
+{\bf Tree:}
+\begin{itemize}
+  \item Specify the complete distribution in each subgroup.\\
+  (location, scale and shape)
+  \item Automatic detection of steps and abrupt changes. %(data driven)
+  \item Capture non-linear and non-additive effects and interactions.
+\end{itemize}
+\vspace{0.5cm}
+{\bf Forest:}
+\begin{itemize}
+  \item Smoother effects.
+  \item Stabelization of the model.
+\end{itemize}
+\end{frame}
+
+
+\subsection{Building Distributional Trees and Forests}
+\begin{frame}
+\frametitle{Building Distributional Trees and Forests}
+{\bf Tree:}
+\begin{enumerate}
+\item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
+\item Estimate $\hat{\theta}$ via maximum likelihood.
+\item Test for associations or instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each partitioning variable $x_i$.
+%\item Assess whether the \emph{model scores} are associated with
+%    (or change along) any of the available covariates -- e.g.,
+%    using parameter instability tests (\emph{strucchange}) or
+%    conditional inference (\emph{coin}).
+\item Split the sample along the partitioning variable with the strongest association or instability.
+    Choose breakpoint with highest improvement in log-likelihood.
+\item Repeat steps 2--4 recursively in the subgroups
+    until some stopping criterion is met.
+    %-- e.g., for significance or sample size.
+%\item Choose the variable with the strongest association
+%\item Choose the split point which leads to the highest improvement of the model
+%\item Split and repeat 2-6 in each node until a stopping criterion is met
+\end{enumerate}
+
+\vspace{0.4cm}
+{\bf Forest:} Ensemble of trees.
+\begin{itemize}
+\item Bootstrap or subsamples.
+\item Random input variable sampling.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Prediction}
+\vspace{1cm}
+{\bf Tree:}\\
+\vspace{0.1cm}
+\hspace{0.7cm} Estimate $\hat{\theta}$ on the subsample of the learning data which \\
+\hspace{0.7cm} ends up in the same terminal node as the new observation.
+%\item Evaluate final node for new observation
+%\item Return corresponding distribution (parameters)
+
+\vspace{0.5cm}
+
+{\bf Forest:}\\
+\vspace{0.1cm}
+\hspace{0.7cm} Estimate $\hat{\theta}$ on the whole learning data but weighted by \\
+\hspace{0.7cm} the number of trees in which a learning observation ends up\\
+\hspace{0.7cm} in the same terminal node as the new observation.
+% but weighted by similarities of the learning data and the new observation over all trees
+%\item Evaluate final node for new observation in each of the trees and investigate similarities with each of the learning observations
+%\item Fit a distributional model for the new observation with different influences of the learning observations defined by weights
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Fitting a Tree}
+\vspace*{-0.4cm}
+\begin{center} 
+DGP:  $Y \sim \mathcal{N}(\mu(X), \sigma(X))$
+<<dgp_tree, echo=FALSE, results=hide>>=
+data <- data.frame(x = numeric(0), x = numeric(0), x = numeric(0))
+names(data) <- c("","","")
+fig <- party(
+  partynode(1L,
+            split = partysplit(2L, breaks = 0.4),
+            kids = list(
+              partynode(2L, info = c(
+                "n = 200",
+                "True parameters:",
+                expression(mu == '4'),
+                expression(sigma == '1')
+              )),
+              partynode(3L,
+                        split = partysplit(3L, breaks = 0.8),
+                        kids = list(
+                          partynode(4L, info = c(
+                            "n = 200",
+                            "True parameters:",
+                            expression(mu == '12'),
+                            expression(sigma == '3')
+                          )),
+                          partynode(5L, info = c(
+                            "n = 100",
+                            "True parameters:",
+                            expression(mu == '4'),
+                            expression(sigma == '3')
+                          )))))),
+  data
+)
+@
+
+\setkeys{Gin}{width=0.75\linewidth}
+<<plottree_dgp, fig=TRUE, echo=FALSE>>=
+pal <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+plot(fig,
+     tp_args = list(FUN = identity, width = 18.7, fill = pal[c(1, 3)]), 
+     ip_args = list(fill = pal[c(2, 3)], pval = FALSE),
+     drop_terminal = TRUE, tnex = 1.5)
+@
+\end{center}
+\end{frame}
+
+<<tree, echo=FALSE, results=hide>>=
+set.seed(7)
+nobs <- 500
+x <- runif(nobs, 0, 1)
+mu <- sigma <- ytrue <- numeric(length = nobs)
+for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+y <- rnorm(nobs, mean = mu, sd = sigma)
+#y <- rcnorm(nobs, mean = mu, sd = sigma, left = 0)
+ytrue <- mu
+data <- data.frame(cbind(y,x, ytrue))
+tree <- disttree(y~x, data = data, family = NO(), type.tree = "mob")
+#tree <- disttree(y~x, data = data, family = dist_list_cens_normal)
+
+#FUN <- function(x) {
+#                cf <- x$coefficients
+#                cf <- matrix(cf, ncol = 1, dimames = list(c(expression(mu), expression(sigma)), ""))
+#                c(sprintf("n = %s", x$nobs), "Estimated parameters:", 
+#                  strwrap(capture.output(print(cf, digits = 4L))[-1L]))
+#}
+
+#FUN <- function(x) {
+#                cf <- x$coefficients
+#                cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), 
+#                  ""))
+#                c(sprintf("n = %s", x$nobs), "Estimated parameters:", 
+#                  strwrap(capture.output(print(cf, digits = 4L))[-1L]))
+#            }
+#FUN <- function (x) 
+#{
+#  cf <- x$coefficients
+#  cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), ""))
+#  c(sprintf("n = %s", x$nobs), "Estimated parameters:", c(c(expression(mu), round(cf[1],3)), 
+#                                                          c(expression(sigma), round(cf[2],3))))
+#}
+@
+
+\begin{frame}[fragile]
+\frametitle{Fitting a Tree}
+\begin{center}
+\vspace*{-0.4cm}
+Model: \code{disttree(y~x)}\\
+\setkeys{Gin}{width=0.75\linewidth}
+<<plottree_estpar, fig=TRUE, echo=FALSE>>=
+pal <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+plot(tree, drop = TRUE, tnex = 1.5, #FUN = FUN,
+     tp_args = list(fill = pal[c(1, 3)]), 
+     ip_args = list(fill = pal[c(2, 3)]))
+@
+\end{center}
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Fitting a Tree}
+%\center
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{tree_estpar}
+%\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Fitting a Tree}
+\begin{center}
+\vspace*{-0.4cm}
+Model: \code{disttree(y~x)}\\
+\setkeys{Gin}{width=0.75\linewidth}
+<<plottree_box, fig=TRUE, echo=FALSE>>=
+plot(as.constparty(tree), tnex = 1.5,
+     tp_args = list(fill = pal[c(1, 3)]), 
+     ip_args = list(fill = pal[c(2, 3)]))
+@
+\end{center}
+\end{frame}
+
+%\begin{frame}
+%\frametitle{Fitting a Tree}
+%\center
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{tree_box}
+%\end{frame}
+
+
+
+<<prelimminaries2, echo=FALSE, results=hide>>=
+set.seed(54)
+nobs <- 500
+x <- runif(nobs, 0, 1)
+mu <- sigma <- ytrue <- numeric(length = nobs)
+for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+y <- rnorm(nobs, mean = mu, sd = sigma)
+ytrue <- mu
+data <- data.frame(cbind(y,x, ytrue))
+
+alldata <- cbind(data, mu, sigma)
+odata <- alldata[order(alldata["x"]),]
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Fitting a Tree}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<plottree_xyplot, fig=TRUE, echo=FALSE>>=
+par(mar=c(5.1,4.1,4.1,3.1))
+plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "darkgrey")
+#plot(y=odata$y, x=odata$x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+lines(x = odata$x, y = odata$mu, col = "red", lwd = 1.5, main = "")
+lines(x = odata$x, y = odata$mu + odata$sigma, col = "red", lwd = 1.5, lty = 2, main = "")
+lines(x = odata$x, y = odata$mu - odata$sigma, col = "red", lwd = 1.5, lty = 2, main = "")
+@
+\end{center}
+\end{frame}
+
+
+%\begin{frame}
+%\frametitle{Fitting a Tree}
+%\center
+%\vspace*{-0.7cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{tree_xyplot}
+%\end{frame}
+
+
+
+
+%\SweaveOpts{eval=FALSE}
+<<echo = FALSE, results=hide>>=
+set.seed(723)
+fun <- function(x){cbind(10*exp(-((4*x[,1]-2)^4)), 0.5 + 2*abs(x[,1]))}
+learndata <- dgp(300, family = dist_list_normal, round.sp = 4, fun = fun)
+control <-  ctree_control(teststat = "quad", testtype = "Bonferroni", mincriterion = 0.7, minbucket = 20L)
+dt <- disttree(y~x1, data=learndata, family=dist_list_normal, type.tree = "ctree", control = control)
+control <-  ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L)
+df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, type.tree = "ctree", control = control)
+g <- gamlss(y ~ pb(x1), sigma.formula = ~pb(x1), data = learndata, trace = FALSE)
+@
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1_dt, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g, dt.par = TRUE)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1_g, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g, g.par = TRUE)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1_df, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g, df.par = TRUE)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1_all, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g, all.par = TRUE)
+@
+\end{center}
+\end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Simulation}
+%\begin{center}
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%<<oneforest_exp1_sigma, fig=TRUE, echo=FALSE>>=
+%plot1sigma(learndata,dt, df, g)
+%@
+%\end{center}
+%\end{frame}
+
+<<preliminaries3, echo=FALSE, results=hide>>=
+load("~/svn/partykit/pkg/disttree/presentation/simlist20170621.rda")
+
+# plots for various data sets
+# results given in simlist
+# plot RMSE
+plot_rmse <- function(simlist, type = c("exp", "par")){
+  
+  if(type == "exp"){
+    #dev.off() 
+    rmse <- cbind(simlist$av.rmse.exp.true.dt, simlist$av.rmse.exp.true.df, simlist$av.rmse.exp.true.g,
+                  simlist$av.rmse.exp.obs.dt, simlist$av.rmse.exp.obs.df, simlist$av.rmse.exp.obs.g)
+    colnames(rmse) <- c("dt.true", "df.true", "g.true", "dt.obs", "df.obs", "g.obs")
+    ylim <- c(min(rmse), max(rmse))
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = "forestgreen", ylim = ylim,
+         xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
+    lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = 'forestgreen')
+    lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = 'red')
+    lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = 'red')
+    lines(x = simlist$x.axis, y = rmse[,"g.true"], type = "l", col = 'blue')
+    lines(x = simlist$x.axis, y = rmse[,"g.obs"], type = "l", lty = 2, col = 'blue')
+    #legend('left', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
+    mtext(text= "smooth", side = 1, line = 2, adj = 0)
+    mtext(text= "steep", side = 1, line = 2, adj = 1)
+    mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+    mtext(text= "RMSE", side = 2, line = 1)
+    mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = 6.5)
+    mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = 13)
+    mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = 16)
+  
+    
+    # add arrows
+    parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='', ylab='', col='white', axes = FALSE) 
+    
+    #add arrow on the right side (downwards, for RMSE)
+    arrows(0.99,0.47, 0.99,0.3,lwd=1) ## add arrow
+    text(0.99,0.5, 'better')
+    segments(0.99,0.53,0.99,0.7,lwd=1)
+        
+    #add arrows below
+    arrows(0.45,0.05,0.3,0.05,lwd=1) ## add arrow
+    arrows(0.6,0.05,0.75,0.05,lwd=1) ## add arrow
+    
+    # plot parameters  reset to prior values
+    par(parsave)
+  } 
+  
+  if(type == "par"){
+    rmse <- cbind(simlist$av.rmse.mu.dt, simlist$av.rmse.mu.df, simlist$av.rmse.mu.g, 
+                  simlist$av.rmse.sigma.dt, simlist$av.rmse.sigma.df, simlist$av.rmse.sigma.g)
+    colnames(rmse) <- c("mu.dt", "mu.df", "mu.g", "sigma.dt", "sigma.df", "sigma.g")
+    ylim <- c(min(rmse), max(rmse))
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = "forestgreen", ylim = ylim,
+         xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
+    lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = 'forestgreen')
+    lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = 'red')
+    lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = 'red')
+    lines(x = simlist$x.axis, y = rmse[,"mu.g"], type = "l", col = 'blue')
+    lines(x = simlist$x.axis, y = rmse[,"sigma.g"], type = "l", lty = 2, col = 'blue')
+    #legend('topleft', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
+    mtext(text= "smooth", side = 1, line = 2, adj = 0)
+    mtext(text= "steep", side = 1, line = 2, adj = 1)
+    mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+    mtext(text= "RMSE", side = 2, line = 1)
+    mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = -4)
+    mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = 8)
+    mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = 14)
+    
+    # add arrows
+    parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='',ylab='',col='white', axes = FALSE) 
+    
+    #add arrow on the right side (downwards, for RMSE)
+    arrows(0.99,0.47,0.99,0.3,lwd=1) ## add arrow
+    text(0.99,0.5, 'better')
+    segments(0.99,0.53,0.99,0.7,lwd=1)
+    
+    #add arrows below
+    arrows(0.45,0.05,0.3,0.05,lwd=1) ## add arrow
+    arrows(0.6,0.05,0.75,0.05,lwd=1) ## add arrow
+    
+    # plot parameters  reset to prior values
+    par(parsave)
+  }
+}
+
+# plot loglikelihood
+plot_ll <- function(simlist){
+  ll <- cbind(simlist$av.loglik.dt, simlist$av.loglik.df, simlist$av.loglik.g)
+  colnames(ll) <- c("dt", "df","g")
+  ylim <- c(min(ll), max(ll))
+  par(mar=c(5.1,4.1,4.1,3.1))
+  plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = "forestgreen", ylim = ylim,
+       xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
+  lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = 'red')
+  lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = 'blue')
+  #legend('topright', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
+  mtext(text= "smooth", side = 1, line = 2, adj = 0)
+  mtext(text= "steep", side = 1, line = 2, adj = 1)
+  mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+  mtext(text= "Log-Likelihood", side = 2, line = 1)
+  mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = 12)
+  mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = -8.5)
+  mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = -16)
+  
+  # add arrows
+  parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+  plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='',ylab='',col='white', axes = FALSE) 
+  
+  #add arrow on the right side (upwards, for LL)
+  arrows(0.99,0.53,0.99,0.7,lwd=1) ## add arrow
+  text(0.99,0.5, 'better')
+  segments(0.99,0.3,0.99,0.47,lwd=1)
+    
+  #add arrows below
+  arrows(0.45,0.05,0.25,0.05,lwd=1) ## add arrow
+  arrows(0.6,0.05,0.8,0.05,lwd=1) ## add arrow
+
+  # plot parameters  reset to prior values
+  par(parsave)
+}
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<plotsim_ll, fig=TRUE, echo=FALSE>>=
+plot_ll(simlist)
+@
+\end{center}
+\end{frame}
+
+
+
+
+%\begin{frame}[fragile]
+%\frametitle{Simulation}
+%\begin{center}
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{sim_ll}
+%\end{center}
+%\end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Simulation}
+%\begin{center}
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{sim_RMSE_par}
+%\end{center}
+%\end{frame}
+
+%\begin{frame}[fragile]
+%\frametitle{Simulation}
+%\begin{center}
+%\vspace*{-1cm}
+%\setkeys{Gin}{width=0.8\linewidth}
+%\includegraphics{sim_RMSE_exp}
+%\end{center}
+%\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Software}
+\vspace{0.4cm}
+R-package \pkg{disttree} available on R-Forge:\\
+\vspace{0.2cm}
+\url{https://R-Forge.R-project.org/projects/partykit/}
+\vspace{1cm}
+Main functions:
+\vspace{0.2cm}
+\begin{itemize}
+\item \code{distfit()}
+\item \code{disttree()}
+\item \code{distforest()}
+\end{itemize}
+\end{frame}
+
+
+
+
+
+\begin{frame}
+\frametitle{References}
+\nocite{*}
+%\nocite{hothorn2006unbiased, zeileis2008model, hothorn2015partykit, stasinopoulos2007generalized, seibold2016model}
+{\footnotesize
+\bibliography{ref.bib}}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<plotsim_RMSE_par, fig=TRUE, echo=FALSE>>=
+plot_rmse(simlist, type = "par")
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<plotsim_RMSE_exp, fig=TRUE, echo=FALSE>>=
+plot_rmse(simlist, type = "exp")
+@
+\end{center}
+\end{frame}
+
+
+\end{document}
+
+
+
+
