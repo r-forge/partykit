@@ -39,7 +39,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
     Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
   \item{weights}{optional numeric vector of case weights.}
   \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
-  \item{start.eta}{{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}}
+  \item{start.eta}{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}.}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
   \item{type.hessian}{character. Can be "analytic" or "numeric" and specifies how the hessian matrix should be calculated.}
   \item{estfun}{logical. Should the matrix of observation-wise
