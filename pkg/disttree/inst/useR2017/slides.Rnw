@@ -1,7 +1,5 @@
 \documentclass[11pt,compress,t]{beamer}
 
-\usepackage{Sweave} 
-\usepackage{graphicx}
 \setbeamertemplate{caption}{\insertcaption} 
 \usetheme{Z}
 %% includes a replacement for \usepackage{Sweave}
@@ -525,7 +523,6 @@ plot1sigma <- function(learndata, dt=NULL, df=NULL, g=NULL)
 %\bibliography{ref.bib}
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
@@ -797,19 +794,24 @@ based on \code{partykit}\\
 
 \begin{frame}
 \frametitle{Goals}
-\vspace{1cm}
+
+\textbf{Distributional:} Specify the complete probability distribution
+(including location, scale and shape).
+
+\medskip
+
 {\bf Tree:}
 \begin{itemize}
-  \item Specify the complete distribution in each subgroup.\\
-  (location, scale and shape)
   \item Automatic detection of steps and abrupt changes. %(data driven)
   \item Capture non-linear and non-additive effects and interactions.
 \end{itemize}
-\vspace{0.5cm}
+
+\medskip
+
 {\bf Forest:}
 \begin{itemize}
   \item Smoother effects.
-  \item Stabelization of the model.
+  \item Stabilization and regularization of the model.
 \end{itemize}
 \end{frame}
 
@@ -927,8 +929,8 @@ y <- rnorm(nobs, mean = mu, sd = sigma)
 #y <- rcnorm(nobs, mean = mu, sd = sigma, left = 0)
 ytrue <- mu
 data <- data.frame(cbind(y,x, ytrue))
-tree <- disttree(y~x, data = data, family = NO(), type.tree = "mob")
-#tree <- disttree(y~x, data = data, family = dist_list_cens_normal)
+tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
+#tree <- disttree(y ~ x, data = data, family = dist_list_cens_normal)
 
 #FUN <- function(x) {
 #                cf <- x$coefficients
@@ -957,7 +959,7 @@ tree <- disttree(y~x, data = data, family = NO(), type.tree = "mob")
 \frametitle{Fitting a Tree}
 \begin{center}
 \vspace*{-0.4cm}
-Model: \code{disttree(y~x)}\\
+Model: \code{disttree(y ~ x)}\\
 \setkeys{Gin}{width=0.75\linewidth}
 <<plottree_estpar, fig=TRUE, echo=FALSE>>=
 pal <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
@@ -1123,7 +1125,7 @@ plot1(learndata, dt=dt, df=df, g=g, all.par = TRUE)
 %\end{frame}
 
 <<preliminaries3, echo=FALSE, results=hide>>=
-load("~/svn/partykit/pkg/disttree/presentation/simlist20170621.rda")
+load("simlist20170621.rda")
 
 # plots for various data sets
 # results given in simlist
