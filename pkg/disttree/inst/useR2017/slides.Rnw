@@ -1088,7 +1088,7 @@ plot(as.constparty(tree), tnex = 1.4,
 
 
 
-<<prelimminaries2, echo=FALSE, results=hide>>=
+<<treedata, echo=FALSE, results=hide>>=
 set.seed(54)
 nobs <- 500
 x <- runif(nobs, 0, 1)
@@ -1148,6 +1148,7 @@ if(file.exists("sim_forest.rda")){
   df$info <- df$fitted <- df$weights <- df$nodes <- df$data <- df$terms <- df$loglik <- df$trafo <- NULL
   save(df, file = "sim_forest.rda")
 }
+
 g <- gamlss(y ~ pb(x1), sigma.formula = ~pb(x1), data = learndata, trace = FALSE)
 @
 
@@ -1217,8 +1218,15 @@ plot1(learndata, dt=dt, df=df, g=g, all.par = TRUE)
 %\end{center}
 %\end{frame}
 
-<<preliminaries3, echo=FALSE, results=hide>>=
-load("simlist20170621b.rda")
+<<get_simlist, echo=FALSE, results=hide>>=
+if(file.exists("simlist.rda")){
+  load("simlist.rda")
+} else {
+  source("gensimlist.R")
+  simlist <- gensimlist(seed = 7, nrep = 100, ntree = 100)
+  save(simlist, file = "simlist.rda")
+}
+
 
 # plots for various data sets
 # results given in simlist
