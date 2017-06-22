@@ -10,6 +10,7 @@
 %% colors
 \definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
 \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+
  
 %% need no \usepackage{Sweave}
 \definecolor{InputColor}{rgb}{0,0,0.3}
@@ -29,6 +30,10 @@ library("latex2exp")
 library("parallel")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
+
+coltree <- hcl(c(128,100,30))
+colforest <- hcl(c(10,100,30))
+colgamlss <- hcl(c(260,100,30))
 
 ## define distribution list:
 # dist_list_normal
@@ -432,12 +437,12 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = 'green4')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = coltree)
     lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
     lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey','green4', 'greenyellow'), lty = 1, bty = 'n')
+           col = c('black','grey',coltree, 'greenyellow'), lty = 1, bty = 'n')
   }
   
   # distforest
@@ -447,12 +452,12 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = 'red')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = colforest)
     lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
     lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey','red', 'orange'), lty = 1, bty = 'n')
+           col = c('black','grey',colforest, 'orange'), lty = 1, bty = 'n')
   }
 
   
@@ -463,12 +468,12 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = 'blue')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = colgamlss)
     lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
     lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
-           col = c('black','grey','blue', 'lightblue'), lty = 1, bty = 'n')
+           col = c('black','grey',colgamlss, 'lightblue'), lty = 1, bty = 'n')
   }
   
   # disttree vs distforest vs gamlss
@@ -476,44 +481,13 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = 'green4')
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = 'red')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = 'blue')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = coltree)
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = colforest)
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = colgamlss)
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
                         TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
-           col = c('black','green4','red','blue'), lty = 1, bty = 'n')
+           col = c('black',coltree,colforest,colgamlss), lty = 1, bty = 'n')
   }
-}
-
-
-
-### plotting function for one data set and sigma only
-plot1sigma <- function(learndata, dt=NULL, df=NULL, g=NULL) 
-{
-  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
-                    df$fitted.par,
-                    dt$fitted.par,
-                    #coef(dt)[paste(dt$fitted[,1]),],
-                    g$mu.fv, g$sigma.fv)
-  
-  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
-                          "fitted.mu.df","fitted.sigma.df",
-                          "fitted.mu.dt","fitted.sigma.dt",
-                          "fitted.mu.g","fitted.sigma.g")
-  sp <- plotdata[order(plotdata["x1"]),]
-  
-  plot(y = sp$y-sp$true.mu, x = sp$x, type = "p", col="grey", xlab = "x", ylab = "y",  main = "disttree", xaxt='n', yaxt='n', xlab = "", ylab = "")
-  lines(x = sp$x, y = sp$true.sigma, type = "l", col = 'black')
-  lines(x = sp$x, y = -sp$true.sigma, type = "l", col = 'black')
-  lines(x = sp$x, y = sp$fitted.sigma.dt, type = "l", col = 'green4')
-  lines(x = sp$x, y = -sp$fitted.sigma.dt, type = "l", col = 'green4')
-  lines(x = sp$x, y = sp$fitted.sigma.df, type = "l", col = 'red')
-  lines(x = sp$x, y = -sp$fitted.sigma.df, type = "l", col = 'red')
-  lines(x = sp$x, y = sp$fitted.sigma.g, type = "l", col = 'blue')
-  lines(x = sp$x, y = -sp$fitted.sigma.g, type = "l", col = 'blue')
-  legend('topleft', c(TeX('$\\sigma$'), TeX('$\\hat{\\sigma}$ disttree'),
-                      TeX('$\\hat{\\sigma}$ distforest'), TeX('$\\hat{\\sigma}$ gamlss')), 
-         col = c('black','green4','red','blue'), lty = 1)
 }
 
 @
@@ -535,7 +509,7 @@ plot1sigma <- function(learndata, dt=NULL, df=NULL, g=NULL)
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-\vspace{0.5cm}
+\vspace{-0.41cm}
 \begin{figure}[!htb]
 \minipage{0.29\textwidth}
 \begin{center}
@@ -551,7 +525,8 @@ y <- ytrue + rnorm(nobs,0,0.3)
 <<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-lines(x = x, y = ytrue, col = "red", lwd = 1.5, main = "")
+box(lwd=5)
+lines(x = x, y = ytrue, col = "red", lwd = 5, main = "")
 @
 }
 \end{center}
@@ -571,7 +546,8 @@ y <- ytrue + rnorm(nobs,0,0.3)
 <<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-lines(x = x, y = ytrue, col = "red", lwd = 1.5, main = "")
+box(lwd=5)
+lines(x = x, y = ytrue, col = "red", lwd = 5, main = "")
 @
 }
 \end{center}
@@ -592,7 +568,8 @@ y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 <<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-lines(x = x, y = ytrue, col = "red", lwd = 1.5)
+box(lwd=5)
+lines(x = x, y = ytrue, col = "red", lwd=5)
 lines(x = x, y = ytrue+0.1+var, col = "red", lty = 2)
 lines(x = x, y = ytrue-0.1-var, col = "red", lty = 2)
 @
@@ -644,7 +621,7 @@ $\ldots$}
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-\vspace{0.1cm}
+\vspace{-0.2cm}
 \begin{figure}[!htb]
 \minipage{0.29\textwidth}
 \begin{center}
@@ -658,15 +635,17 @@ for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.
 y <- ytrue + rnorm(nobs,0,0.3)
 for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
 plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = ytree, col = "red", lwd = 1.5)
+lines(x = x, y = ytree, col = "red", lwd=5)
 @
 \visible<1->{
 <<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = ytree, col = "red", lwd = 1.5)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+lines(x = x, y = ytree, col = "red", lwd=5)
 @
 }
 \end{center}
@@ -678,16 +657,14 @@ lines(x = x, y = ytree, col = "red", lwd = 1.5)
 <<motivation_randforest, echo=FALSE, results=hide>>=
 ## Random Forest
 for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = yforest, col = "red", lwd = 1.5, main = "")
 @
 \visible<2->{
 <<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = ytree, col = "red", lwd = 1.5)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+lines(x = x, y = yforest, col = "red", lwd=5, main = "")
 @
 }
 \end{center}
@@ -698,7 +675,7 @@ lines(x = x, y = ytree, col = "red", lwd = 1.5)
   \visible<3->{
   \begin{center}
   \begin{tikzpicture}
-  \draw[line width=0.01mm, black] (0,0) rectangle (2.6,2.24);
+  \draw[line width=0.2mm, black] (0,0) rectangle (2.6,2.24);
   \node[rectangle, align=center] (sq) at (1.3, 1.12) {\Huge{?}};
   \end{tikzpicture}
   \end{center}}
@@ -780,7 +757,7 @@ $\ldots$}
 \begin{center}
 \vspace{0.68cm}
 \visible<3->{
-Distributional Trees and Forests\\
+Distributional trees and forests\\
 \vspace{1.7cm}
 \code{disttree}\\
 based on \code{partykit}\\
@@ -795,8 +772,9 @@ based on \code{partykit}\\
 \begin{frame}
 \frametitle{Goals}
 
-\textbf{Distributional:} Specify the complete probability distribution
-(including location, scale and shape).
+\textbf{Distributional:} \\
+\hspace{0.3cm} Specify the complete probability distribution\\
+\hspace{0.3cm} (including location, scale and shape).
 
 \medskip
 
@@ -849,21 +827,19 @@ based on \code{partykit}\\
 
 \begin{frame}
 \frametitle{Prediction}
-\vspace{1cm}
+%\vspace{1cm}
 {\bf Tree:}\\
-\vspace{0.1cm}
-\hspace{0.7cm} Estimate $\hat{\theta}$ on the subsample of the learning data which \\
-\hspace{0.7cm} ends up in the same terminal node as the new observation.
-%\item Evaluate final node for new observation
-%\item Return corresponding distribution (parameters)
-
+\begin{enumerate}
+\item Select the subsample of the learning data which ends up in the same terminal node as the new observation.
+\item Estimate $\hat{\theta}$ on this subsample.
+\end{enumerate}
 \vspace{0.5cm}
 
 {\bf Forest:}\\
-\vspace{0.1cm}
-\hspace{0.7cm} Estimate $\hat{\theta}$ on the whole learning data but weighted by \\
-\hspace{0.7cm} the number of trees in which a learning observation ends up\\
-\hspace{0.7cm} in the same terminal node as the new observation.
+\begin{enumerate}
+\item For each learning observation calculate a weight by counting the number of trees in which it ends up in the same terminal node as the new observation.
+\item Estimate $\hat{\theta}$ on the wheighted learning data.
+\end{enumerate}
 % but weighted by similarities of the learning data and the new observation over all trees
 %\item Evaluate final node for new observation in each of the trees and investigate similarities with each of the learning observations
 %\item Fit a distributional model for the new observation with different influences of the learning observations defined by weights
@@ -872,19 +848,20 @@ based on \code{partykit}\\
 
 \begin{frame}
 \frametitle{Fitting a Tree}
-\vspace*{-0.4cm}
+\vspace*{-0.5cm}
 \begin{center} 
 DGP:  $Y \sim \mathcal{N}(\mu(X), \sigma(X))$
+\vspace*{-0.21cm}
 <<dgp_tree, echo=FALSE, results=hide>>=
 data <- data.frame(x = numeric(0), x = numeric(0), x = numeric(0))
-names(data) <- c("","","")
+names(data) <- c("x","x","x")
 fig <- party(
   partynode(1L,
             split = partysplit(2L, breaks = 0.4),
             kids = list(
               partynode(2L, info = c(
                 "n = 200",
-                "True parameters:",
+                "   True parameters:   ",
                 expression(mu == '4'),
                 expression(sigma == '1')
               )),
@@ -893,27 +870,110 @@ fig <- party(
                         kids = list(
                           partynode(4L, info = c(
                             "n = 200",
-                            "True parameters:",
+                            "   True parameters:   ",
                             expression(mu == '12'),
                             expression(sigma == '3')
                           )),
                           partynode(5L, info = c(
                             "n = 100",
-                            "True parameters:",
+                            "   True parameters:   ",
                             expression(mu == '4'),
                             expression(sigma == '3')
                           )))))),
   data
 )
+
+
+node_inner_ext <- function (obj, id = TRUE, pval = TRUE, abbreviate = FALSE, fill = "white", 
+    gp = gpar()) 
+{
+    meta <- obj$data
+    nam <- names(obj)
+    extract_label <- function(node) {
+        if (is.terminal(node)) 
+            return(rep.int("", 2L))
+        varlab <- character_split(split_node(node), meta)$name
+        if (abbreviate > 0L) 
+            varlab <- abbreviate(varlab, as.integer(abbreviate))
+        if (pval) {
+            nullna <- function(x) is.null(x) || is.na(x)
+            pval <- suppressWarnings(try(!nullna(info_node(node)$p.value), 
+                silent = TRUE))
+            pval <- if (inherits(pval, "try-error")) 
+                FALSE
+            else pval
+        }
+        if (pval) {
+            pvalue <- node$info$p.value
+            plab <- ifelse(pvalue < 10^(-3L), paste("p <", 10^(-3L)), 
+                paste("p =", round(pvalue, digits = 3L)))
+        }
+        else {
+            plab <- ""
+        }
+        return(c(varlab, plab))
+    }
+    maxstr <- function(node) {
+        lab <- extract_label(node)
+        klab <- if (is.terminal(node)) 
+            ""
+        else unlist(lapply(kids_node(node), maxstr))
+        lab <- c(lab, klab)
+        lab <- unlist(lapply(lab, function(x) strsplit(x, "\n")))
+        lab <- lab[which.max(nchar(lab))]
+        if (length(lab) < 1L) 
+            lab <- ""
+        return(lab)
+    }
+    nstr <- maxstr(node_party(obj))
+    if (nchar(nstr) < 6) 
+        nstr <- "aAAAAa"
+    rval <- function(node) {
+        node_vp <- viewport(x = unit(0.5, "npc"), y = unit(0.5, 
+            "npc"), width = unit(1, "strwidth", nstr) * 1.3, 
+            height = unit(3, "lines"), name = paste("node_inner", 
+                id_node(node), sep = ""), gp = gp)
+        pushViewport(node_vp)
+        xell <- c(seq(0, 0.2, by = 0.01), seq(0.2, 0.8, by = 0.05), 
+            seq(0.8, 1, by = 0.01))
+        yell <- sqrt(xell * (1 - xell))
+        xell <- xell*1.11 - 0.055             # to adapt size of the ellipse to the size with p-value
+        lab <- extract_label(node)
+        fill <- rep(fill, length.out = 2L)
+        grid.polygon(x = unit(c(xell, rev(xell)), "npc"), y = unit(c(yell, 
+            -yell) + 0.5, "npc"), gp = gpar(fill = fill[1]))
+        grid.text(lab[1L], y = unit(1.5 + 0.5,                  # to adapt position of x to its position with p-value
+            "lines"))
+        #grid.text(lab[1L], y = unit(1.5 + 0.5 * (lab[2L] != ""), 
+        #    "lines"))
+        grid.text(lab[2L], y = unit(1, "lines"))
+        if (id) {
+            nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, 
+                "npc"), width = max(unit(1, "lines"), unit(1.3, 
+                "strwidth", nam[id_node(node)])), height = max(unit(1, 
+                "lines"), unit(1.3, "strheight", nam[id_node(node)])))
+            pushViewport(nodeIDvp)
+            grid.rect(gp = gpar(fill = fill[2]))
+            grid.text(nam[id_node(node)])
+            popViewport()
+        }
+        upViewport()
+    }
+    return(rval)
+}
+
+class(node_inner_ext) <- "grapcon_generator"
+
+
 @
 
-\setkeys{Gin}{width=0.75\linewidth}
+\setkeys{Gin}{width=0.74\linewidth}
 <<plottree_dgp, fig=TRUE, echo=FALSE>>=
 pal <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
-plot(fig,
-     tp_args = list(FUN = identity, width = 18.7, fill = pal[c(1, 3)]), 
-     ip_args = list(fill = pal[c(2, 3)], pval = FALSE),
-     drop_terminal = TRUE, tnex = 1.5)
+plot(fig, inner_panel = node_inner_ext,
+     tp_args = list(FUN = identity, width = 18, fill = pal[c(1, 3)]), 
+     ip_args = list(fill = pal[c(2, 3)]),
+     drop_terminal = TRUE, tnex = 1.4)
 @
 \end{center}
 \end{frame}
@@ -958,14 +1018,16 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-0.4cm}
+\vspace*{-0.5cm}
 Model: \code{disttree(y ~ x)}\\
-\setkeys{Gin}{width=0.75\linewidth}
+\vspace*{-0.2cm}
+\setkeys{Gin}{width=0.74\linewidth}
 <<plottree_estpar, fig=TRUE, echo=FALSE>>=
 pal <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
-plot(tree, drop = TRUE, tnex = 1.5, #FUN = FUN,
+plot(tree, drop = TRUE, tnex = 1.4, #FUN = FUN,
      tp_args = list(fill = pal[c(1, 3)]), 
      ip_args = list(fill = pal[c(2, 3)]))
+
 @
 \end{center}
 \end{frame}
@@ -981,11 +1043,12 @@ plot(tree, drop = TRUE, tnex = 1.5, #FUN = FUN,
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-0.4cm}
-Model: \code{disttree(y~x)}\\
-\setkeys{Gin}{width=0.75\linewidth}
+\vspace*{-0.5cm}
+Model: \code{disttree(y ~ x)}\\
+\vspace*{-0.2cm}
+\setkeys{Gin}{width=0.74\linewidth}
 <<plottree_box, fig=TRUE, echo=FALSE>>=
-plot(as.constparty(tree), tnex = 1.5,
+plot(as.constparty(tree), tnex = 1.4,
      tp_args = list(fill = pal[c(1, 3)]), 
      ip_args = list(fill = pal[c(2, 3)]))
 @
@@ -1047,14 +1110,21 @@ lines(x = odata$x, y = odata$mu - odata$sigma, col = "red", lwd = 1.5, lty = 2, 
 
 
 %\SweaveOpts{eval=FALSE}
-<<echo = FALSE, results=hide>>=
+<<sim_1dataset, echo=FALSE, results=hide>>=
 set.seed(723)
 fun <- function(x){cbind(10*exp(-((4*x[,1]-2)^4)), 0.5 + 2*abs(x[,1]))}
 learndata <- dgp(300, family = dist_list_normal, round.sp = 4, fun = fun)
 control <-  ctree_control(teststat = "quad", testtype = "Bonferroni", mincriterion = 0.7, minbucket = 20L)
 dt <- disttree(y~x1, data=learndata, family=dist_list_normal, type.tree = "ctree", control = control)
-control <-  ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L)
-df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, type.tree = "ctree", control = control)
+
+if(file.exists("sim_forest.rda")){
+  load("sim_forest.rda")
+} else {
+  control <-  ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L)
+  df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, type.tree = "ctree", control = control)
+  df$info <- df$fitted <- df$weights <- df$nodes <- df$data <- df$terms <- df$loglik <- df$trafo <- NULL
+  save(df, file = "sim_forest.rda")
+}
 g <- gamlss(y ~ pb(x1), sigma.formula = ~pb(x1), data = learndata, trace = FALSE)
 @
 
@@ -1139,21 +1209,21 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     colnames(rmse) <- c("dt.true", "df.true", "g.true", "dt.obs", "df.obs", "g.obs")
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = "forestgreen", ylim = ylim,
+    plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = coltree, ylim = ylim,
          xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
-    lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = 'forestgreen')
-    lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = 'red')
-    lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = 'red')
-    lines(x = simlist$x.axis, y = rmse[,"g.true"], type = "l", col = 'blue')
-    lines(x = simlist$x.axis, y = rmse[,"g.obs"], type = "l", lty = 2, col = 'blue')
-    #legend('left', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
-    mtext(text= "smooth", side = 1, line = 2, adj = 0)
-    mtext(text= "steep", side = 1, line = 2, adj = 1)
+    lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = coltree)
+    lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = colforest)
+    lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = colforest)
+    lines(x = simlist$x.axis, y = rmse[,"g.true"], type = "l", col = colgamlss)
+    lines(x = simlist$x.axis, y = rmse[,"g.obs"], type = "l", lty = 2, col = colgamlss)
+    #legend('left', c("disttree", "distforest", "gamlss"), col = c(coltree, colforest, colgamlss), lty = 1)
+    mtext(text= "smooth", side = 1, line = 1, adj = 0)
+    mtext(text= "steep", side = 1, line = 1, adj = 1)
     mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
     mtext(text= "RMSE", side = 2, line = 1)
-    mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = 6.5)
-    mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = 13)
-    mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = 16)
+    mtext(text= "disttree", side = 2, col = coltree, las = 1, line = 0.2, padj = 6.5)
+    mtext(text= "distforest", side = 2, col = colforest, las = 1, line = 0.2, padj = 13)
+    mtext(text= "gamlss", side = 2, col = colgamlss, las = 1, line = 0.3, padj = 16)
   
     
     # add arrows
@@ -1166,8 +1236,8 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     segments(0.99,0.53,0.99,0.7,lwd=1)
         
     #add arrows below
-    arrows(0.45,0.05,0.3,0.05,lwd=1) ## add arrow
-    arrows(0.6,0.05,0.75,0.05,lwd=1) ## add arrow
+    arrows(0.45,0.09,0.3,0.09,lwd=1) ## add arrow
+    arrows(0.6,0.09,0.75,0.09,lwd=1) ## add arrow
     
     # plot parameters  reset to prior values
     par(parsave)
@@ -1179,21 +1249,21 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     colnames(rmse) <- c("mu.dt", "mu.df", "mu.g", "sigma.dt", "sigma.df", "sigma.g")
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = "forestgreen", ylim = ylim,
+    plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = coltree, ylim = ylim,
          xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
-    lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = 'forestgreen')
-    lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = 'red')
-    lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = 'red')
-    lines(x = simlist$x.axis, y = rmse[,"mu.g"], type = "l", col = 'blue')
-    lines(x = simlist$x.axis, y = rmse[,"sigma.g"], type = "l", lty = 2, col = 'blue')
-    #legend('topleft', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
-    mtext(text= "smooth", side = 1, line = 2, adj = 0)
-    mtext(text= "steep", side = 1, line = 2, adj = 1)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = coltree)
+    lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = colforest)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = colforest)
+    lines(x = simlist$x.axis, y = rmse[,"mu.g"], type = "l", col = colgamlss)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.g"], type = "l", lty = 2, col = colgamlss)
+    #legend('topleft', c("disttree", "distforest", "gamlss"), col = c(coltree, colforest,colgamlss), lty = 1)
+    mtext(text= "smooth", side = 1, line = 1, adj = 0)
+    mtext(text= "steep", side = 1, line = 1, adj = 1)
     mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
     mtext(text= "RMSE", side = 2, line = 1)
-    mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = -4)
-    mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = 8)
-    mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = 14)
+    mtext(text= "disttree", side = 2, col = coltree, las = 1, line = 0.2, padj = -4)
+    mtext(text= "distforest", side = 2, col = colforest, las = 1, line = 0.2, padj = 8)
+    mtext(text= "gamlss", side = 2, col = colgamlss, las = 1, line = 0.3, padj = 14)
     
     # add arrows
     parsave <- par(new = TRUE,  mar = c(0,0,0,0))
@@ -1205,8 +1275,8 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     segments(0.99,0.53,0.99,0.7,lwd=1)
     
     #add arrows below
-    arrows(0.45,0.05,0.3,0.05,lwd=1) ## add arrow
-    arrows(0.6,0.05,0.75,0.05,lwd=1) ## add arrow
+    arrows(0.45,0.09,0.3,0.09,lwd=1) ## add arrow
+    arrows(0.6,0.09,0.75,0.09,lwd=1) ## add arrow
     
     # plot parameters  reset to prior values
     par(parsave)
@@ -1219,18 +1289,18 @@ plot_ll <- function(simlist){
   colnames(ll) <- c("dt", "df","g")
   ylim <- c(min(ll), max(ll))
   par(mar=c(5.1,4.1,4.1,3.1))
-  plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = "forestgreen", ylim = ylim,
+  plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = coltree, ylim = ylim,
        xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n')
-  lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = 'red')
-  lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = 'blue')
-  #legend('topright', c("disttree", "distforest", "gamlss"), col = c('forestgreen', 'red','blue'), lty = 1)
-  mtext(text= "smooth", side = 1, line = 2, adj = 0)
-  mtext(text= "steep", side = 1, line = 2, adj = 1)
+  lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = colforest)
+  lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = colgamlss)
+  #legend('topright', c("disttree", "distforest", "gamlss"), col = c(coltree, colforest,colgamlss), lty = 1)
+  mtext(text= "smooth", side = 1, line = 1, adj = 0)
+  mtext(text= "steep", side = 1, line = 1, adj = 1)
   mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
   mtext(text= "Log-Likelihood", side = 2, line = 1)
-  mtext(text= "disttree", side = 2, col = "darkgreen", las = 1, line = 0.2, padj = 12)
-  mtext(text= "distforest", side = 2, col = "red", las = 1, line = 0.2, padj = -8.5)
-  mtext(text= "gamlss", side = 2, col = "blue", las = 1, line = 0.3, padj = -16)
+  mtext(text= "disttree", side = 2, col = coltree, las = 1, line = 0.2, padj = 12)
+  mtext(text= "distforest", side = 2, col = colforest, las = 1, line = 0.2, padj = -8.5)
+  mtext(text= "gamlss", side = 2, col = colgamlss, las = 1, line = 0.3, padj = -16)
   
   # add arrows
   parsave <- par(new = TRUE,  mar = c(0,0,0,0))
@@ -1242,9 +1312,9 @@ plot_ll <- function(simlist){
   segments(0.99,0.3,0.99,0.47,lwd=1)
     
   #add arrows below
-  arrows(0.45,0.05,0.25,0.05,lwd=1) ## add arrow
-  arrows(0.6,0.05,0.8,0.05,lwd=1) ## add arrow
-
+  arrows(0.45,0.09,0.3,0.09,lwd=1) ## add arrow
+  arrows(0.6,0.09,0.75,0.09,lwd=1) ## add arrow
+    
   # plot parameters  reset to prior values
   par(parsave)
 }
@@ -1299,7 +1369,7 @@ plot_ll(simlist)
 \vspace{0.4cm}
 R-package \pkg{disttree} available on R-Forge:\\
 \vspace{0.2cm}
-\url{https://R-Forge.R-project.org/projects/partykit/}
+\url{https://R-Forge.R-project.org/projects/partykit/}\\
 \vspace{1cm}
 Main functions:
 \vspace{0.2cm}
