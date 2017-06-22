@@ -222,6 +222,54 @@ gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
   }
   
   
+  ### get logLik from disttree object for new data 
+  dtll.newdata <- function(object, newdata){
+    ll <- 0
+    nd <- newdata[,-c(1,ncol(newdata)-1, ncol(newdata))]
+    if(is.null(coef(object))){
+      readline(prompt="Press [enter] to continue")
+      print(object$info$call)
+      print(object$data)
+      return(NULL)
+    } else {
+      pred.par <- predict(object, newdata = nd, type = "parameter")
+      for(i in 1:(nrow(newdata))){
+        eta <- as.numeric(object$info$family$linkfun(pred.par[i,]))
+        ll <- ll + object$info$family$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta, log=TRUE)
+      }
+      if(is.na(ll)) print("dt.ll = NA")
+      return(ll)
+    }
+  }
+  
+  
+  
+  ### get logLik from gamlss object for new data and normal distribution
+  gll.newdata <- function(object, newdata, data){
+    if(is.null(object)) {
+      warning("error in gamlss")
+      return(NA)
+    }
+    ll <- 0
+    nd <- newdata[,-c(1,ncol(newdata)-1, ncol(newdata))]
+    pred.par <- cbind(predict(object, newdata = nd, what = "mu", type = "response", data = data),
+                      predict(object, newdata = nd, what = "sigma", type = "response", data = data))
+    #np <- ncol(pred.par)
+    distfun <- if(object$family[1] == "NOlc") {
+      function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
+    } else {
+      function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
+    }
+    for(i in 1:(nrow(newdata))){
+      par <- pred.par[i,]
+      ll <- ll + distfun(newdata[i,1], mean = par[1], sd = par[2])
+    }
+    if(is.na(ll)) print("g.ll = NA")
+    if(is.null(ll)) print("g.ll = NULL")
+    return(ll)
+  }
+  
+  
   
   ### simulation wrapper function
   # (optionally with plot)
