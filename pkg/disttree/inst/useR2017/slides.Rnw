@@ -5,6 +5,7 @@
 %% includes a replacement for \usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
+%\usepackage[style=authoryear, backend=bibtex]{biblatex}
 \graphicspath{{plots/}}
 
 %% colors
