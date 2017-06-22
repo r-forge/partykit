@@ -427,7 +427,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 2, col = 'black')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 2, col = 'black')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
-           col = c('black','grey'), lty = 1, bty = 'n')
+           col = c('black','black'), lty = c(1,2,2), bty = 'n')
   }
   
   # disttree
@@ -468,7 +468,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 1.5)
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
     lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
     lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
@@ -1217,7 +1217,7 @@ plot1(learndata, dt=dt, df=df, g=g, all.par = TRUE)
 %\end{frame}
 
 <<preliminaries3, echo=FALSE, results=hide>>=
-load("simlist20170621.rda")
+load("simlist20170621b.rda")
 
 # plots for various data sets
 # results given in simlist
@@ -1243,9 +1243,9 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     mtext(text= "steep", side = 1, line = 1, adj = 1)
     mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
     mtext(text= "RMSE", side = 2, line = 1)
-    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 6.5)
+    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 5)
     mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = 13)
-    mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = 16)
+    mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = 16.5)
   
     
     # add arrows
@@ -1283,7 +1283,7 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     mtext(text= "steep", side = 1, line = 1, adj = 1)
     mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
     mtext(text= "RMSE", side = 2, line = 1)
-    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = -4)
+    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = -7)
     mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = 8)
     mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = 14)
     
@@ -1320,8 +1320,8 @@ plot_ll <- function(simlist){
   mtext(text= "steep", side = 1, line = 1, adj = 1)
   mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
   mtext(text= "Log-Likelihood", side = 2, line = 1)
-  mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 12)
-  mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = -8.5)
+  mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 16)
+  mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = -8)
   mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = -16)
   
   # add arrows
