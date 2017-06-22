@@ -109,8 +109,12 @@ node_terminal <- function(obj,
       lab <- extract_label(node)
       klab <- if(is.terminal(node)) "" else unlist(lapply(kids_node(node), maxstr))
       lab <- c(lab, klab)
-      lab <- unlist(lapply(lab, function(x) strsplit(x, "\n")))
-      return(lab[which.max(nchar(lab))])
+      lab <- try(unlist(lapply(lab, function(x) strsplit(x, "\n"))), silent = TRUE)
+      if(inherits(lab, "try-error")) {
+        paste(rep("a", 9L), collapse = "") ## FIXME: completely ad-hoc: possibly throw warning?
+      } else {
+        return(lab[which.max(nchar(lab))])
+      }
   }
 
   nstr <- if(is.null(width)) maxstr(node_party(obj)) else paste(rep("a", width), collapse = "")
