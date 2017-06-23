@@ -569,11 +569,12 @@ y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 \visible<3->{
 <<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
-box(lwd=5)
-lines(x = x, y = ytrue, col = pal["forest"], lwd=5)
-lines(x = x, y = ytrue+0.1+var, col = pal["forest"], lty = 1, lwd = 2)
-lines(x = x, y = ytrue-0.1-var, col = pal["forest"], lty = 1, lwd = 2)
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = hcl(10, 100, 50, alpha = 0.2), border = "transparent")
+lines(x, ytrue, col = pal["forest"], lwd=5)
+points(x, y, col = "slategray", pch = 19)
+box(lwd = 5)
 @
 }
 \end{center}
