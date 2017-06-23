@@ -1429,9 +1429,9 @@ Main functions:
 \begin{itemize}
 \item \code{distfit()}: distributional fit, no covariates, gamlss.family, ML
 \item \code{disttree()}: tree algorithm \code{ctree} or \code{mob}, \\
-\hspace{2.18cm} covariates as splitting variables
+\hspace{2.17cm} covariates as splitting variables
 \item \code{distforest()}: ensemble of trees,\\
-\hspace{2.58cm} covariates as splitting variables
+\hspace{2.57cm} covariates as splitting variables
 \end{itemize}
 \end{frame}
 
