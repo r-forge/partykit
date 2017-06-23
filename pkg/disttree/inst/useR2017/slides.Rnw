@@ -1427,11 +1427,11 @@ R-package \pkg{disttree} available on R-Forge:\\
 Main functions:
 \vspace{0.2cm}
 \begin{itemize}
-\item \code{distfit()}: distributional fit, no covariates, gamlss.family, ML
-\item \code{disttree()}: tree algorithm \code{ctree} or \code{mob}, \\
-\hspace{2.17cm} covariates as splitting variables
-\item \code{distforest()}: ensemble of trees,\\
-\hspace{2.57cm} covariates as splitting variables
+\item \code{distfit()}: Distributional fit, no covariates, gamlss.family, ML.
+\item \code{disttree()}: Tree algorithm \code{ctree} or \code{mob}, \\
+\hspace{2.17cm} covariates as splitting variables.
+\item \code{distforest()}: Ensemble of trees,\\
+\hspace{2.57cm} covariates as splitting variables.
 \end{itemize}
 \end{frame}
 
