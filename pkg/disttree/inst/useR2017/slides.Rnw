@@ -1223,7 +1223,7 @@ if(file.exists("simlist.rda")){
   load("simlist.rda")
 } else {
   source("gensimlist.R")
-  simlist <- gensimlist(seed = 7, nrep = 100, ntree = 100)
+  simlist <- gensimlist(seed = 9, nrep = 150, ntree = 100)
   save(simlist, file = "simlist.rda")
 }
 
