@@ -434,8 +434,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   col = transpgrey, border = "transparent")
     #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
     #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
-           col = c('black',transpgrey, transpgrey), lty = c(1,1,1), bty = 'n')
+    legend('topleft', expression(mu %+-% sigma), bty = 'n')
   }
   
   # disttree
@@ -1420,19 +1419,28 @@ plot_ll(simlist)
 \begin{frame}
 \frametitle{Software}
 \vspace{0.4cm}
-R-package \pkg{disttree} available on R-Forge:\\
-\vspace{0.2cm}
+\textbf{Package:} \emph{disttree} available on R-Forge at\\
+
+\medskip
+
 \url{https://R-Forge.R-project.org/projects/partykit/}\\
-\vspace{1cm}
-Main functions:
-\vspace{0.2cm}
-\begin{itemize}
-\item \code{distfit()}: Distributional fit, no covariates, gamlss.family, ML.
-\item \code{disttree()}: Tree algorithm \code{ctree} or \code{mob}, \\
-\hspace{2.17cm} covariates as splitting variables.
-\item \code{distforest()}: Ensemble of trees,\\
-\hspace{2.57cm} covariates as splitting variables.
-\end{itemize}
+
+\bigskip
+\bigskip
+
+\textbf{Main functions:}
+
+\medskip
+
+\begin{tabular}{ll}
+\code{distfit}    & Distributional fits (ML, \code{gamlss.family} or custom \code{list}).\\
+                  & No covariates. \\
+\code{disttree}   & Distributional trees (\code{ctree}/\code{mob} + \code{distfit}).\\
+                  & Covariates as partitioning variables. \\
+\code{distforest} & Distributional forests (ensemble of \code{disttree}s).\\
+                  & Covariates as partitioning variables.
+\end{tabular}
+
 \end{frame}
 
 
@@ -1446,40 +1454,50 @@ Main functions:
 
 \footnotesize
 
-Hothorn T, Hornik K, Zeileis A (2006).\\
- \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}\\
+Hothorn T, Hornik K, Zeileis A (2006).
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
  \textit{Journal of Computational and Graphical Statistics},
- \textbf{15}(3), 651--674.\\
- %URL~\url{http://    }
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
  
-\bigskip
+\medskip
 
-Zeileis A, Hothorn T, Hornik K (2008).\\
- \dquote{Model-Based Recursive Partitioning.}\\
+Zeileis A, Hothorn T, Hornik K (2008).
+ \dquote{Model-Based Recursive Partitioning.}
   \textit{Journal of Computational and Graphical Statistics},
-  \textbf{17}(2), 492--514.\\
-  %\doi{10.1198/106186008X319331}
+  \textbf{17}(2), 492--514.
+  \doi{10.1198/106186008X319331}
 
-\bigskip
+\medskip
 
-Hothorn T, Zeileis A (2015).\\
- \dquote{Partykit: A Modular Toolkit for Recursive Partytioning in R.}\\
+Hothorn T, Zeileis A (2015).
+ \dquote{partykit: A Modular Toolkit for Recursive Partytioning in R.}
  \textit{Journal of Machine Learning Research},
- \textbf{16}, 3905--3909.\\
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
 
-\bigskip
+\medskip
 
-Stasinopoulos DM, Rigby RA, et al. (2007).\\
-  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.}\\
+Stasinopoulos DM, Rigby RA (2007).
+  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.}
   \textit{Journal of Statistical Software}, 
-  \textbf{23}(7), 1--46.\\
+  \textbf{23}(7), 1--46.
+  \doi{10.18637/jss.v023.i07}
   
-\bigskip
+\medskip
 
-Seibold H, Zeileis A, Hothorn T (2016).\\
-  \dquote{Model-Based Recursive Partitioning for Subgroup Analyses.}\\
-  \textit{The international journal of biostatistics}, 
-  \textbf{12}(1), 45--63.\\
+Seibold H, Zeileis A, Hothorn T (2017).
+  \dquote{Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.}
+  \textit{Statistical Methods in Medical Research}, 
+  \textbf{12}(1), 45--63.
+  \doi{10.1177/0962280217693034}
+
+\medskip
+
+Hothorn T, Zeileis A (2017).
+  \dquote{Transformation Forests.}
+  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+  \url{http://arxiv.org/abs/1701.02110}
 
 \end{frame}
 
