@@ -32,6 +32,7 @@ library("parallel")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
 
+## HCL palette
 pal <- hcl(c(10, 128, 260), 100, 50)
 names(pal) <- c("forest", "tree", "gamlss")
 
@@ -477,10 +478,10 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
            col = c('black','grey',pal["gamlss"], 'lightblue'), lty = 1, bty = 'n')
   }
   
-  # disttree vs distforest vs gamlss
+  # disttree vs. distforest vs. gamlss
   if(all.par){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
     lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
@@ -525,9 +526,9 @@ y <- ytrue + rnorm(nobs,0,0.3)
 \visible<1->{
 <<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = "red", lwd = 5, main = "")
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 5, main = "")
 @
 }
 \end{center}
@@ -546,9 +547,9 @@ y <- ytrue + rnorm(nobs,0,0.3)
 \visible<2->{
 <<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = "red", lwd = 5, main = "")
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 5, main = "")
 @
 }
 \end{center}
@@ -568,11 +569,11 @@ y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 \visible<3->{
 <<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = "red", lwd=5)
-lines(x = x, y = ytrue+0.1+var, col = "red", lty = 2)
-lines(x = x, y = ytrue-0.1-var, col = "red", lty = 2)
+lines(x = x, y = ytrue, col = pal["forest"], lwd=5)
+lines(x = x, y = ytrue+0.1+var, col = pal["forest"], lty = 1, lwd = 2)
+lines(x = x, y = ytrue-0.1-var, col = pal["forest"], lty = 1, lwd = 2)
 @
 }
 \end{center}
@@ -635,18 +636,18 @@ ytrue <- ytree <- yforest <- numeric(length = length(x))
 for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
 y <- ytrue + rnorm(nobs,0,0.3)
 for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = ytree, col = "red", lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=5)
 @
 \visible<1->{
 <<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
-lines(x = x, y = ytree, col = "red", lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=5)
 @
 }
 \end{center}
@@ -662,10 +663,10 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*
 \visible<2->{
 <<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
+plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
-lines(x = x, y = yforest, col = "red", lwd=5, main = "")
+lines(x = x, y = yforest, col = pal["forest"], lwd=5, main = "")
 @
 }
 \end{center}
@@ -1007,35 +1008,8 @@ FUN <- function (x)
 {
   cf <- x$coefficients
   cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), ""))
-  c(sprintf("n = %s", x$nobs), "Estimated parameters:", parse(text = paste("mu == ", round(cf[1],3))), 
-                                                        parse(text = paste("sigma == ", round(cf[2],3))))
-}
-
-
-# alternative to using FUN:
-# change info slot in each terminal node and use FUN = identity
-if(FALSE){
-info2 <- tree$node$kids[[1]]$info 
-info4 <- tree$node$kids[[2]]$kids[[1]]$info 
-info5 <- tree$node$kids[[2]]$kids[[2]]$info 
-
-cf <- info2$coefficients
-info2 <- c(sprintf("n = %s", info2$nobs), "Estimated parameters:", parse(text = paste("mu == ", round(cf[1],3))), 
-                                                          parse(text = paste("sigma == ", round(cf[2],3))))
-
-cf <- info4$coefficients
-info4 <- c(sprintf("n = %s", info4$nobs), "Estimated parameters:", parse(text = paste("mu == ", round(cf[1],3))), 
-                                                          parse(text = paste("sigma == ", round(cf[2],3))))
-
-cf <- info5$coefficients
-info5 <- c(sprintf("n = %s", info5$nobs), "Estimated parameters:", parse(text = paste("sigma == ", round(cf[2],3))), 
-                                                          parse(text = paste("mu == ", round(cf[1],3))))
-
-tree$node$kids[[1]]$info <- info2
-tree$node$kids[[2]]$kids[[1]]$info <- info4 
-tree$node$kids[[2]]$kids[[2]]$info <- info5
-
-class(tree) <- "party"
+  c(sprintf("n = %s", x$nobs), "Estimated parameters:", parse(text = paste0("mu == '", format(round(cf[1], 2), nsmall = 2), "'")), 
+                                                        parse(text = paste0("sigma == '", format(round(cf[2], 2), nsmall = 2), "'")))
 }
 
 pal2 <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
@@ -1044,13 +1018,6 @@ pal2 <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
 plot(tree, drop = TRUE, tnex = 1.4, FUN = FUN,
      tp_args = list(fill = pal2[c(1, 3)], width = 18), 
      ip_args = list(fill = pal2[c(2, 3)]))
-
-## plot version using replaced info slots and tree of class 'party'
-if(FALSE){
-  plot(tree, drop = TRUE, tnex = 1.4,
-       tp_args = list(fill = pal2[c(1, 3)], FUN = identity, width = 18), 
-       ip_args = list(fill = pal2[c(2, 3)]))
-}
 @
 \end{center}
 \end{frame}
@@ -1111,11 +1078,11 @@ odata <- alldata[order(alldata["x"]),]
 \setkeys{Gin}{width=0.8\linewidth}
 <<plottree_xyplot, fig=TRUE, echo=FALSE>>=
 par(mar=c(5.1,4.1,4.1,3.1))
-plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "darkgrey")
-#plot(y=odata$y, x=odata$x, xaxt='n', yaxt='n', ann=FALSE, col = "darkgrey")
-lines(x = odata$x, y = odata$mu, col = "red", lwd = 1.5, main = "")
-lines(x = odata$x, y = odata$mu + odata$sigma, col = "red", lwd = 1.5, lty = 2, main = "")
-lines(x = odata$x, y = odata$mu - odata$sigma, col = "red", lwd = 1.5, lty = 2, main = "")
+plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "slategray")
+#plot(y=odata$y, x=odata$x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray")
+lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
+lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
+lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 @
 \end{center}
 \end{frame}
@@ -1241,7 +1208,7 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = pal["tree"], ylim = ylim,
-         xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', lwd = 2)
+         xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = pal["forest"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
@@ -1281,7 +1248,7 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = pal["tree"], ylim = ylim,
-         xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', lwd = 2)
+         xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = pal["forest"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
@@ -1321,7 +1288,7 @@ plot_ll <- function(simlist){
   ylim <- c(min(ll), max(ll))
   par(mar=c(5.1,4.1,4.1,3.1))
   plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = pal["tree"], ylim = ylim,
-       xlab = "", ylab = "", main = "disttree vs distforest vs gamlss", xaxt='n', yaxt='n', lwd = 2)
+       xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
   lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = pal["forest"], lwd = 2)
   lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = pal["gamlss"], lwd = 2)
   #legend('topright', c("disttree", "distforest", "gamlss"), col = c(pal["tree"], pal["forest"],pal["gamlss"]), lty = 1)
