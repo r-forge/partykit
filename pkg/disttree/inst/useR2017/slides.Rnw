@@ -36,6 +36,10 @@ gen.cens(NO, type = "left")
 pal <- hcl(c(10, 128, 260), 100, 50)
 names(pal) <- c("forest", "tree", "gamlss")
 
+pallight <- hcl(c(10, 128, 260), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss")
+
+transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 ## define distribution list:
 # dist_list_normal
@@ -407,7 +411,7 @@ dgp <- function(n, family = dist_list_normal,
 # parameter functions
 
 ### plotting function for one data set
-plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par = FALSE, g.par = FALSE, dt.par = FALSE) 
+plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par = FALSE, g.par = FALSE, dt.par = FALSE, all.var = FALSE) 
 {
   plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
                     df$fitted.par,
@@ -422,14 +426,16 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   sp <- plotdata[order(plotdata["x1"]),]
   
 
-  if(!(any(dt.par, df.par, g.par, all.par))){
+  if(!(any(dt.par, df.par, g.par, all.par, all.var))){
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 2, col = 'black')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 2, col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+  col = transpgrey, border = "transparent")
+    #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
+    #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
-           col = c('black','black'), lty = c(1,2,2), bty = 'n')
+           col = c('black',transpgrey, transpgrey), lty = c(1,1,1), bty = 'n')
   }
   
   # disttree
@@ -437,14 +443,18 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
-    lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
-    lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey',pal["tree"], 'greenyellow'), lty = 1, bty = 'n')
+           col = c('black','grey',pal["tree"], pallight["tree"]), lty = 1, bty = 'n')
   }
   
   # distforest
@@ -452,14 +462,18 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
-    lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
-    lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey',pal["forest"], 'orange'), lty = 1, bty = 'n')
+           col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = 'n')
   }
 
   
@@ -468,14 +482,18 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
     lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
-    lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
-    lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
                         TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
-           col = c('black','grey',pal["gamlss"], 'lightblue'), lty = 1, bty = 'n')
+           col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = 'n')
   }
   
   # disttree vs. distforest vs. gamlss
@@ -489,6 +507,31 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
     legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
                         TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
            col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = 'n')
+  }
+  
+  # variance: disttree vs. distforest vs. gamlss
+  if(all.var){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
+                        TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
+           col = c('black',pallight["tree"],pallight["forest"],pallight["gamlss"]), lty = 1, bty = 'n')
   }
 }
 
@@ -528,7 +571,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = pal["forest"], lwd = 5, main = "")
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 @
 }
 \end{center}
@@ -549,7 +592,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = pal["forest"], lwd = 5, main = "")
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 @
 }
 \end{center}
@@ -571,11 +614,12 @@ y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 par(mar=c(2,0,2,0))
 plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
 polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
-  col = hcl(10, 100, 50, alpha = 0.2), border = "transparent")
-lines(x, ytrue, col = pal["forest"], lwd=5)
+  col = pallight["forest"], border = "transparent")
+lines(x, ytrue, col = pal["forest"], lwd=7)
 points(x, y, col = "slategray", pch = 19)
 box(lwd = 5)
 @
+
 }
 \end{center}
 \endminipage
@@ -637,10 +681,6 @@ ytrue <- ytree <- yforest <- numeric(length = length(x))
 for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
 y <- ytrue + rnorm(nobs,0,0.3)
 for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
-box(lwd=5)
-#lines(x = x, y = ytrue, col = "grey", lwd = 1.5, main = "")
-lines(x = x, y = ytree, col = pal["forest"], lwd=5)
 @
 \visible<1->{
 <<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
@@ -648,7 +688,7 @@ par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
-lines(x = x, y = ytree, col = pal["forest"], lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 @
 }
 \end{center}
@@ -667,7 +707,7 @@ par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
-lines(x = x, y = yforest, col = pal["forest"], lwd=5, main = "")
+lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 @
 }
 \end{center}
@@ -1079,11 +1119,14 @@ odata <- alldata[order(alldata["x"]),]
 \setkeys{Gin}{width=0.8\linewidth}
 <<plottree_xyplot, fig=TRUE, echo=FALSE>>=
 par(mar=c(5.1,4.1,4.1,3.1))
-plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "slategray")
+plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "grey")
 #plot(y=odata$y, x=odata$x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray")
 lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
-lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
-lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
+polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
+  col = pallight["forest"], border = "transparent")
+
+#lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
+#lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 @
 \end{center}
 \end{frame}
@@ -1171,6 +1214,17 @@ plot1(learndata, dt=dt, df=df, g=g, df.par = TRUE)
 \setkeys{Gin}{width=0.8\linewidth}
 <<oneforest_exp1_all, fig=TRUE, echo=FALSE>>=
 plot1(learndata, dt=dt, df=df, g=g, all.par = TRUE)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Simulation}
+\begin{center}
+\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<oneforest_exp1_allvar, fig=TRUE, echo=FALSE>>=
+plot1(learndata, dt=dt, df=df, g=g, all.var = TRUE)
 @
 \end{center}
 \end{frame}
@@ -1373,9 +1427,11 @@ R-package \pkg{disttree} available on R-Forge:\\
 Main functions:
 \vspace{0.2cm}
 \begin{itemize}
-\item \code{distfit()}
-\item \code{disttree()}
-\item \code{distforest()}
+\item \code{distfit()}: distributional fit, no covariates, gamlss.family, ML
+\item \code{disttree()}: tree algorithm \code{ctree} or \code{mob}, \\
+\hspace{2.18cm} covariates as splitting variables
+\item \code{distforest()}: ensemble of trees,\\
+\hspace{2.58cm} covariates as splitting variables
 \end{itemize}
 \end{frame}
 
@@ -1383,12 +1439,48 @@ Main functions:
 
 
 
+\subsection{References}
+
 \begin{frame}
 \frametitle{References}
-\nocite{*}
-%\nocite{hothorn2006unbiased, zeileis2008model, hothorn2015partykit, stasinopoulos2007generalized, seibold2016model}
-{\footnotesize
-\bibliography{ref.bib}}
+
+\footnotesize
+
+Hothorn T, Hornik K, Zeileis A (2006).\\
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}\\
+ \textit{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.\\
+ %URL~\url{http://    }
+ 
+\bigskip
+
+Zeileis A, Hothorn T, Hornik K (2008).\\
+ \dquote{Model-Based Recursive Partitioning.}\\
+  \textit{Journal of Computational and Graphical Statistics},
+  \textbf{17}(2), 492--514.\\
+  %\doi{10.1198/106186008X319331}
+
+\bigskip
+
+Hothorn T, Zeileis A (2015).\\
+ \dquote{Partykit: A Modular Toolkit for Recursive Partytioning in R.}\\
+ \textit{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.\\
+
+\bigskip
+
+Stasinopoulos DM, Rigby RA, et al. (2007).\\
+  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.}\\
+  \textit{Journal of Statistical Software}, 
+  \textbf{23}(7), 1--46.\\
+  
+\bigskip
+
+Seibold H, Zeileis A, Hothorn T (2016).\\
+  \dquote{Model-Based Recursive Partitioning for Subgroup Analyses.}\\
+  \textit{The international journal of biostatistics}, 
+  \textbf{12}(1), 45--63.\\
+
 \end{frame}
 
 
