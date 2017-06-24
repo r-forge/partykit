@@ -428,19 +428,21 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
   if(!(any(dt.par, df.par, g.par, all.par, all.var))){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
   col = transpgrey, border = "transparent")
     #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
     #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    legend('topleft', expression(mu %+-% sigma), bty = 'n')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
+    #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
   }
   
   # disttree
   if(dt.par){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", col.main = pal["tree"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
     #col = transpgrey, border = "transparent")
@@ -451,15 +453,16 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   col = pallight["tree"], border = "transparent")
     #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
     #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
-    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey',pal["tree"], pallight["tree"]), lty = 1, bty = 'n')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey', pal["tree"], pallight["tree"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
   }
   
   # distforest
   if(df.par){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", col.main = pal["forest"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
     #col = transpgrey, border = "transparent")
@@ -470,16 +473,17 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   col = pallight["forest"], border = "transparent")
     #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
     #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
-    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-           col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = 'n')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
   }
 
   
   # gamlss
   if(g.par){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
     #col = transpgrey, border = "transparent")
@@ -490,28 +494,42 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   col = pallight["gamlss"], border = "transparent")
     #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
     #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
-    legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-                        TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
-           col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = 'n')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
+    #       col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
   }
   
   # disttree vs. distforest vs. gamlss
   if(all.par){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
     lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
     lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
-    legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
-                        TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
-           col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = 'n')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
+    #                    TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 13.95, expression(mu), bty = "n")
   }
   
   # variance: disttree vs. distforest vs. gamlss
   if(all.var){
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', xlab = "", ylab = "")
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
     #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
     #col = transpgrey, border = "transparent")
     lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
@@ -528,17 +546,18 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
   col = pallight["gamlss"], border = "transparent")
     #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
     #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-    legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
-                        TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
-           col = c('black',pallight["tree"],pallight["forest"],pallight["gamlss"]), lty = 1, bty = 'n')
+    #legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
+    #                    TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+  legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
   }
+  
 }
 
 @
 
 
 
-%\bibliography{ref.bib}
 
 \begin{document}
 
@@ -568,7 +587,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 \visible<1->{
 <<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 @
@@ -589,7 +608,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 \visible<2->{
 <<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(y=y , x=x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 @
@@ -684,7 +703,7 @@ for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
 \visible<1->{
 <<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
@@ -703,7 +722,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*
 \visible<2->{
 <<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
-plot(x = x, y = y, xaxt='n', yaxt='n', ann=FALSE, col = "slategray", pch = 19)
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
 lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
@@ -1013,7 +1032,7 @@ class(node_inner_ext) <- "grapcon_generator"
 <<plottree_dgp, fig=TRUE, echo=FALSE>>=
 pal2 <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
 plot(fig, inner_panel = node_inner_ext,
-     tp_args = list(FUN = identity, width = 18, fill = pal2[c(1, 3)]), 
+     tp_args = list(FUN = identity, width = 18, height = 5.002, fill = pal2[c(1, 3)]), 
      ip_args = list(fill = pal2[c(2, 3)]),
      drop_terminal = TRUE, tnex = 1.4)
 @
@@ -1119,11 +1138,11 @@ odata <- alldata[order(alldata["x"]),]
 <<plottree_xyplot, fig=TRUE, echo=FALSE>>=
 par(mar=c(5.1,4.1,4.1,3.1))
 plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "grey")
-#plot(y=odata$y, x=odata$x, xaxt='n', yaxt='n', ann=FALSE, col = "slategray")
+#plot(y=odata$y, x=odata$x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray")
 lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
 polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
   col = pallight["forest"], border = "transparent")
-
+legend(x = -0.071, y = 21.6, expression(mu  %+-%  sigma), bty = "n")
 #lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 #lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 @
@@ -1262,7 +1281,12 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = pal["tree"], ylim = ylim,
-         xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
+         xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
     lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = pal["forest"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
@@ -1280,7 +1304,7 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     
     # add arrows
     parsave <- par(new = TRUE,  mar = c(0,0,0,0))
-    plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='', ylab='', col='white', axes = FALSE) 
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='', ylab='', col='white', axes = FALSE) 
     
     #add arrow on the right side (downwards, for RMSE)
     arrows(0.99,0.47, 0.99,0.3,lwd=1) ## add arrow
@@ -1302,7 +1326,12 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     ylim <- c(min(rmse), max(rmse))
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = pal["tree"], ylim = ylim,
-         xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
+         xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
     lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = pal["forest"], lwd = 2)
     lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
@@ -1319,7 +1348,7 @@ plot_rmse <- function(simlist, type = c("exp", "par")){
     
     # add arrows
     parsave <- par(new = TRUE,  mar = c(0,0,0,0))
-    plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='',ylab='',col='white', axes = FALSE) 
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='',ylab='',col='white', axes = FALSE) 
     
     #add arrow on the right side (downwards, for RMSE)
     arrows(0.99,0.47,0.99,0.3,lwd=1) ## add arrow
@@ -1342,21 +1371,32 @@ plot_ll <- function(simlist){
   ylim <- c(min(ll), max(ll))
   par(mar=c(5.1,4.1,4.1,3.1))
   plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = pal["tree"], ylim = ylim,
-       xlab = "", ylab = "", main = "disttree vs. distforest vs. gamlss", xaxt='n', yaxt='n', lwd = 2)
+       xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+  title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+  title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+  title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+  title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+  title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
   lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = pal["forest"], lwd = 2)
   lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = pal["gamlss"], lwd = 2)
   #legend('topright', c("disttree", "distforest", "gamlss"), col = c(pal["tree"], pal["forest"],pal["gamlss"]), lty = 1)
+  #mtext(text= "disttree", side = 3, col = pal["tree"], line = 1, adj = 0.3)
+  #mtext(text= "distforest", side = 3, col = pal["forest"], line = 1, adj = 0.5)
+  #mtext(text= "gamlss", side = 3, col = pal["gamlss"], line = 1, adj = 0.7)
+  #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.4)
+  #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.6)
   mtext(text= "smooth", side = 1, line = 1, adj = 0)
   mtext(text= "steep", side = 1, line = 1, adj = 1)
   mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
   mtext(text= "Log-Likelihood", side = 2, line = 1)
-  mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 16)
+  mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 16.7)
   mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = -8)
   mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = -16)
   
   # add arrows
   parsave <- par(new = TRUE,  mar = c(0,0,0,0))
-  plot(0,0,xlim=c(0,1),ylim=c(0,1),type='n',xlab='',ylab='',col='white', axes = FALSE) 
+  plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='', ylab='', col='white', axes = FALSE) 
   
   #add arrow on the right side (upwards, for LL)
   arrows(0.99,0.53,0.99,0.7,lwd=1) ## add arrow
