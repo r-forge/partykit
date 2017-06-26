@@ -1081,13 +1081,6 @@ plot(tree, drop = TRUE, tnex = 1.4, FUN = FUN,
 \end{center}
 \end{frame}
 
-%\begin{frame}
-%\frametitle{Fitting a Tree}
-%\center
-%\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%\includegraphics{tree_estpar}
-%\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
@@ -1097,13 +1090,108 @@ Model: \code{disttree(y ~ x)}\\
 \vspace*{-0.2cm}
 \setkeys{Gin}{width=0.74\linewidth}
 <<plottree_box, fig=TRUE, echo=FALSE>>=
-plot(as.constparty(tree), tnex = 1.4,
+plot(as.constparty(tree), tnex = 1.4, drop = TRUE,
      tp_args = list(fill = paltrees[c(1, 3)]), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
 \end{center}
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{Fitting a Tree}
+\begin{center}
+\vspace*{-0.5cm}
+Model: \code{disttree(y ~ x)}\\
+\vspace*{-0.2cm}
+\setkeys{Gin}{width=0.74\linewidth}
+<<plottree_dens_h, fig=TRUE, echo=FALSE>>=
+node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
+                          main = "", xlab = "", ylab = "Density", id = TRUE,
+                          fill = "lightgray", col = "darkred", lwd = 1.5, ...) 
+{
+  ylines <- 3
+  if (is.null(xscale)) xscale <- c(-5.1,22.5)
+  if (is.null(yscale)) yscale <- c(-0.05,0.5)
+  xr <- xscale
+  yr <- yscale
+  
+  if (horizontal) {
+    yyy <- xscale
+    xscale <- yscale
+    yscale <- yyy
+  }
+  
+  rval <- function(node) {
+    yrange <- seq(from = -20, to = 90)/4
+    ydens <- node$info$object$ddist(yrange)
+    
+    top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
+                                            widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
+                                            heights = unit(c(1, 1), c("lines", "null"))), 
+                       width = unit(1, "npc"), 
+                       height = unit(1, "npc") - unit(2, "lines"), 
+                       name = paste("node_density",node$id, sep = ""))
+    pushViewport(top_vp)
+    grid.rect(gp = gpar(fill = "white", col = 0))
+    top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+    pushViewport(top)
+    mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
+    
+    grid.text(mainlab)
+    popViewport()
+    plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
+                     xscale = xscale, yscale = yscale, 
+                     name = paste("node_density",  node$id, "plot", sep = ""))
+    pushViewport(plot)
+    yd <- ydens
+    xd <- yrange
+    if (horizontal) {
+      yyy <- xd
+      xd <- yd
+      yd <- yyy
+      yyy <- xr
+      xr <- yr
+      yr <- yyy
+    }
+    
+    grid.lines(x = xd, y = yd, default.units = "native", 
+               gp = gpar(col = col))
+    grid.xaxis()
+    grid.yaxis()
+    grid.rect(gp = gpar(fill = "transparent"))
+    upViewport(2)
+  }
+  return(rval)
+}
+
+class(node_density) <- "grapcon_generator"
+
+
+plot(tree, tnex = 1.4, drop = TRUE,
+     terminal_panel = node_density(horizontal = TRUE, col = pal["forest"], lwd = 5),
+     tp_args = list(fill = paltrees[c(1, 3)]), 
+     ip_args = list(fill = paltrees[c(2, 3)]))
+@
+\end{center}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Fitting a Tree}
+\begin{center}
+\vspace*{-0.5cm}
+Model: \code{disttree(y ~ x)}\\
+\vspace*{-0.2cm}
+\setkeys{Gin}{width=0.74\linewidth}
+<<plottree_dens_v, fig=TRUE, echo=FALSE>>=
+plot(tree, tnex = 1.4, drop = TRUE,
+     terminal_panel = node_density(horizontal = FALSE),
+     tp_args = list(fill = paltrees[c(1, 3)]), 
+     ip_args = list(fill = paltrees[c(2, 3)]))
+@
+\end{center}
+\end{frame}
 %\begin{frame}
 %\frametitle{Fitting a Tree}
 %\center
