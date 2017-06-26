@@ -1156,7 +1156,7 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
     }
     
     grid.lines(x = xd, y = yd, default.units = "native", 
-               gp = gpar(col = col))
+               gp = gpar(col = col, lwd = lwd))
     grid.xaxis()
     grid.yaxis()
     grid.rect(gp = gpar(fill = "transparent"))
@@ -1169,7 +1169,7 @@ class(node_density) <- "grapcon_generator"
 
 
 plot(tree, tnex = 1.4, drop = TRUE,
-     terminal_panel = node_density(horizontal = TRUE, col = pal["forest"], lwd = 5),
+     terminal_panel = node_density(horizontal = TRUE, col = pal["forest"], lwd = 2),
      tp_args = list(fill = paltrees[c(1, 3)]), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
@@ -1186,7 +1186,7 @@ Model: \code{disttree(y ~ x)}\\
 \setkeys{Gin}{width=0.74\linewidth}
 <<plottree_dens_v, fig=TRUE, echo=FALSE>>=
 plot(tree, tnex = 1.4, drop = TRUE,
-     terminal_panel = node_density(horizontal = FALSE),
+     terminal_panel = node_density(horizontal = FALSE, col = pal["forest"], lwd = 2),
      tp_args = list(fill = paltrees[c(1, 3)]), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
