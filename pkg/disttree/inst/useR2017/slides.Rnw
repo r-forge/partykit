@@ -1,7 +1,14 @@
-\documentclass[11pt,compress,t]{beamer}
+\documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
+\usetheme[nototalframenumber]{uibk}
+\setfaculty{volkswirtschaftundstatistik}{en}
+
+\title{Distributional Trees and Forests}
+\author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+\URL{http://R-Forge.R-project.org/projects/partykit}
+\Conference{useR! 2017}
+\date{2017-07-05}
 
 \setbeamertemplate{caption}{\insertcaption} 
-\usetheme{Z}
 %% includes a replacement for \usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
@@ -560,11 +567,6 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 
 \begin{document}
-
-\title{Distributional Trees and Forests}
-\author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
-\URL{https://R-Forge.R-project.org/projects/partykit/}
-
 
 \section{Distributional Trees and Forests}
 
@@ -1153,8 +1155,15 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
       yyy <- xr
       xr <- yr
       yr <- yyy
+      rxd <- rep(0, length(xd))
+      ryd <- rev(yd)
+    } else {
+      rxd <- rev(xd)
+      ryd <- rep(0, length(yd))
     }
     
+    grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
+              gp = gpar(col = "black", fill = fill))
     grid.lines(x = xd, y = yd, default.units = "native", 
                gp = gpar(col = col, lwd = lwd))
     grid.xaxis()
@@ -1561,7 +1570,7 @@ plot_ll(simlist)
 \medskip
 
 \begin{tabular}{ll}
-\code{distfit}    & Distributional fits (ML, \code{gamlss.family} or custom \code{list}).\\
+\code{distfit}    & Distributional fits (ML, \code{gamlss.family}/custom \code{list}).\\
                   & No covariates. \\
 \code{disttree}   & Distributional trees (\code{ctree}/\code{mob} + \code{distfit}).\\
                   & Covariates as partitioning variables. \\
