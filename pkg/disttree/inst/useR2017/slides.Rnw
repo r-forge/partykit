@@ -1,6 +1,6 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber]{uibk}
-\setfaculty{volkswirtschaftundstatistik}{en}
+\usetheme[nototalframenumber, noslidenumber]{uibk}
+%\setfaculty{volkswirtschaftundstatistik}{en}
 
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
@@ -836,8 +836,9 @@ based on \code{partykit}\\
 \frametitle{Goals}
 
 \textbf{Distributional:} \\
-\hspace{0.3cm} Specify the complete probability distribution\\
-\hspace{0.3cm} (including location, scale and shape).
+\vspace{0.1 cm}
+\hspace{0.5cm} Specify the complete probability distribution\\
+\hspace{0.5cm} (including location, scale and shape).
 
 \medskip
 
@@ -911,7 +912,7 @@ based on \code{partykit}\\
 
 \begin{frame}
 \frametitle{Fitting a Tree}
-\vspace*{-0.5cm}
+\vspace*{-0.1cm}
 \begin{center} 
 DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
 \vspace*{-0.21cm}
@@ -1030,13 +1031,13 @@ class(node_inner_ext) <- "grapcon_generator"
 
 @
 
-\setkeys{Gin}{width=0.74\linewidth}
+\setkeys{Gin}{width=0.65\linewidth, height=0.65\linewidth}
 <<plottree_dgp, fig=TRUE, echo=FALSE>>=
 paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
 plot(fig, inner_panel = node_inner_ext,
      tp_args = list(FUN = identity, width = 18, fill = paltrees[c(1, 3)]), 
      ip_args = list(fill = paltrees[c(2, 3)]),
-     drop_terminal = TRUE, tnex = 1.4)
+     drop_terminal = TRUE, tnex = 1.7)
 @
 \end{center}
 \end{frame}
@@ -1059,10 +1060,10 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-0.5cm}
+\vspace*{-0.1cm}
 Model: \code{disttree(y ~ x)}\\
 \vspace*{-0.2cm}
-\setkeys{Gin}{width=0.74\linewidth}
+\setkeys{Gin}{width=0.65\linewidth, height=0.65\linewidth}
 <<plottree_estpar, fig=TRUE, echo=FALSE>>=
 # function for output in terminal panels
 FUN <- function (x) 
@@ -1076,7 +1077,7 @@ FUN <- function (x)
 paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
 
 ## plot version using FUN and tree of class 'disttree'
-plot(tree, drop = TRUE, tnex = 1.4, FUN = FUN,
+plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
      tp_args = list(fill = paltrees[c(1, 3)], width = 18), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
@@ -1087,32 +1088,34 @@ plot(tree, drop = TRUE, tnex = 1.4, FUN = FUN,
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-0.5cm}
+\vspace*{-0.1cm}
 Model: \code{disttree(y ~ x)}\\
 \vspace*{-0.2cm}
-\setkeys{Gin}{width=0.74\linewidth}
+\setkeys{Gin}{width=0.65\linewidth, height=0.65\linewidth}
 <<plottree_box, fig=TRUE, echo=FALSE>>=
-plot(as.constparty(tree), tnex = 1.4, drop = TRUE,
-     tp_args = list(fill = paltrees[c(1, 3)]), 
+plot(as.constparty(tree), tnex = 1.7, drop = TRUE,
+     tp_args = list(fill = paltrees[c(1, 3)], ylines = 1.5), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
 \end{center}
 \end{frame}
 
 
+
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-0.5cm}
+\vspace*{-0.1cm}
 Model: \code{disttree(y ~ x)}\\
 \vspace*{-0.2cm}
-\setkeys{Gin}{width=0.74\linewidth}
-<<plottree_dens_h, fig=TRUE, echo=FALSE>>=
+\setkeys{Gin}{width=0.65\linewidth, height=0.65\linewidth}
+<<plottree_dens, fig=TRUE, echo=FALSE>>=
 node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
-                          main = "", xlab = "", ylab = "Density", id = TRUE,
-                          fill = "lightgray", col = "darkred", lwd = 1.5, ...) 
+                          main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
+                          fill = paltrees[c(1, 3)], col = "black", lwd = 0.5, ...) 
 {
-  ylines <- 3
+  yobs <- tree$data[,as.character(tree$info$formula[[2]])]
+  ylines <- 1.5
   if (is.null(xscale)) xscale <- c(-5.1,22.5)
   if (is.null(yscale)) yscale <- c(-0.05,0.5)
   xr <- xscale
@@ -1162,10 +1165,27 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
       ryd <- rep(0, length(yd))
     }
     
+    if (rug) {
+      nodeobs <- node$info$object$y
+      if (horizontal) {
+        grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
+                  default.units = "native", just = c("right", "bottom"))
+      } else {
+        grid.rect(x = nodeobs, y = yscale[1], 
+                  width = 0, height = abs(yscale[1]), default.units = "native", 
+                  just = c("center", "bottom"))
+        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+        #           default.units = "native")
+        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+        #           default.units = "native")
+      }
+    }
+
+    
     grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
-              gp = gpar(col = "black", fill = fill))
-    grid.lines(x = xd, y = yd, default.units = "native", 
-               gp = gpar(col = col, lwd = lwd))
+              gp = gpar(col = "black", fill = fill, lwd = lwd))
+    #grid.lines(x = xd, y = yd, default.units = "native", 
+    #           gp = gpar(col = col, lwd = lwd))
     grid.xaxis()
     grid.yaxis()
     grid.rect(gp = gpar(fill = "transparent"))
@@ -1176,26 +1196,8 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
 
 class(node_density) <- "grapcon_generator"
 
-
-plot(tree, tnex = 1.4, drop = TRUE,
-     terminal_panel = node_density(horizontal = TRUE, col = pal["forest"], lwd = 2),
-     tp_args = list(fill = paltrees[c(1, 3)]), 
-     ip_args = list(fill = paltrees[c(2, 3)]))
-@
-\end{center}
-\end{frame}
-
-
-\begin{frame}[fragile]
-\frametitle{Fitting a Tree}
-\begin{center}
-\vspace*{-0.5cm}
-Model: \code{disttree(y ~ x)}\\
-\vspace*{-0.2cm}
-\setkeys{Gin}{width=0.74\linewidth}
-<<plottree_dens_v, fig=TRUE, echo=FALSE>>=
-plot(tree, tnex = 1.4, drop = TRUE,
-     terminal_panel = node_density(horizontal = FALSE, col = pal["forest"], lwd = 2),
+plot(tree, tnex = 1.7, drop = TRUE,
+     terminal_panel = node_density,
      tp_args = list(fill = paltrees[c(1, 3)]), 
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
@@ -1230,7 +1232,7 @@ odata <- alldata[order(alldata["x"]),]
 \begin{frame}[fragile]
 \frametitle{Fitting a Tree}
 \begin{center}
-\vspace*{-1cm}
+\vspace*{-1.03cm}
 \setkeys{Gin}{width=0.8\linewidth}
 <<plottree_xyplot, fig=TRUE, echo=FALSE>>=
 par(mar=c(5.1,4.1,4.1,3.1))
@@ -1239,7 +1241,7 @@ plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "grey")
 lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
 polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
   col = pallight["forest"], border = "transparent")
-legend(x = -0.0715, y = 21.65, expression(mu  %+-%  sigma), bty = "n")
+legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 #lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 #lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
 @
