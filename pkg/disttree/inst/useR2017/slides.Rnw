@@ -1169,11 +1169,13 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
       nodeobs <- node$info$object$y
       if (horizontal) {
         grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
-                  default.units = "native", just = c("right", "bottom"))
+                  default.units = "native", just = c("right", "bottom"),
+		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
       } else {
         grid.rect(x = nodeobs, y = yscale[1], 
                   width = 0, height = abs(yscale[1]), default.units = "native", 
-                  just = c("center", "bottom"))
+                  just = c("center", "bottom"),
+		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
         #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
         #           default.units = "native")
         #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
