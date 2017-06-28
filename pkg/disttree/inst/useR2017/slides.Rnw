@@ -3,7 +3,8 @@
 %\setfaculty{volkswirtschaftundstatistik}{en}
 
 \title{Distributional Trees and Forests}
-\author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+\author{Lisa Schlosser, Torsten Hothorn, \\
+Heidi Seibold, Achim Zeileis}
 \URL{http://R-Forge.R-project.org/projects/partykit}
 \Conference{useR! 2017}
 \date{2017-07-05}
@@ -1117,7 +1118,7 @@ node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE
   yobs <- tree$data[,as.character(tree$info$formula[[2]])]
   ylines <- 1.5
   if (is.null(xscale)) xscale <- c(-5.1,22.5)
-  if (is.null(yscale)) yscale <- c(-0.05,0.5)
+  if (is.null(yscale)) yscale <- c(-0.05,0.45)
   xr <- xscale
   yr <- yscale
   
