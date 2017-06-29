@@ -1,19 +1,17 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
 \usetheme[nototalframenumber, noslidenumber]{uibk}
-%\setfaculty{volkswirtschaftundstatistik}{en}
 
 \title{Distributional Trees and Forests}
-\author{Lisa Schlosser, Torsten Hothorn, \\
-Heidi Seibold, Achim Zeileis}
-\URL{http://R-Forge.R-project.org/projects/partykit}
-\Conference{useR! 2017}
-\date{2017-07-05}
+\author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Achim Zeileis}
+\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+\URL{https://R-Forge.R-project.org/projects/partykit/}
+\headerimage{3}
+
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
-%\usepackage[style=authoryear, backend=bibtex]{biblatex}
 \graphicspath{{plots/}}
 
 %% colors
@@ -21,10 +19,6 @@ Heidi Seibold, Achim Zeileis}
 \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
 
  
-%% need no \usepackage{Sweave}
-\definecolor{InputColor}{rgb}{0,0,0.3}
-\definecolor{OutputColor}{rgb}{0.2,0.2,0.2}
-
 \SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
 <<preliminaries, echo=FALSE, results=hide>>=
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
