@@ -1,6 +1,6 @@
 %% Journal of Open Research Software Latex template -- Created By Stephen Bonner and John Brennan, Durham Universtiy, UK.
 
-\documentclass{jors}
+\documentclass{josr}
 
 %% packages
 \usepackage{natbib}
@@ -68,15 +68,17 @@ Prevention Institute, University of Zurich
 
 
 \section*{Abstract}
-Typical models estimating treatment effecs assume that the treatment effect is
-the same for all individuals observed and for possible future individuals.
-Model-based recursive partitioning allows to relax this assumption.  With
+Typical models estimating treatment effects assume that the treatment effect is
+the same for all individuals.
+Model-based recursive partitioning allows to relax this assumption and allows for
+the estimation of stratified treatment effects (model-based trees) or even
+personalised treatment effects (model-based forests).  With
 model-based trees one can compute treatment effects for different strata of
 individuals. The strata are found in a data driven fashion and depend on
 characteristics of the individuals.  Model-based random forests allow for a
-similarity estimation between individuals in terms of model estimates and
-through this we can estimate personalised models.  The R package
-\emph{model4you} (available on CRAN) implements these stratified and
+similarity estimation between individuals in terms of model estimates. The similarity
+measure can then be used to estimate personalised models. 
+The R package \emph{model4you} implements these stratified and
 personalised models with a focus on ease of use and interpretability so that
 clinicians and other users can take the model they usually use for the
 estimation of the average treatment effect and with a few lines of code get a
@@ -93,7 +95,7 @@ unbiased trees; treatment effect; random forest
 \section*{Introduction}
 
 %\textcolor{blue}{An overview of the software, how it was produced, and the research for which it has been used, including references to relevant research articles. A short comparison with software which implements similar functionality should be included in this section. }
-Studies in various fields randomly assign individuals one of two groups with
+Studies in various fields randomly assign individuals to one of two groups with
 different exposure and then measure a response. For example, in clinical trials
 patients are assigned to one of two treatment groups where usually one
 treatment group receives a new treatment or drug and the other treatment group
@@ -116,9 +118,11 @@ survival model.  These models estimate intercept and treatment effect for all
 individuals in the \Sexpr{'data'} and allow for predicting the response of
 other individuals given they do or don't receive the treatment of interest.
 
-If you do not believe that all individuals have the same intercept and
-treatment effect the R package \emph{model4you} gives you two options to loosen
-up this strict model: \paragraph{(1) Model-based trees} identify subgroups
+For cases where the assumption that all individuals have the same intercept
+and treatment effect is too strict the R package \emph{model4you} offers two 
+options: 
+
+\paragraph{(1) Model-based trees} identify subgroups
 where within the subgroups the model parameters are similar and between groups
 the model parameters are different. This is achieved by finding instabilities
 in the model parameters with respect to a variable (characteristicum) and
@@ -127,7 +131,6 @@ finds that men and women have differing treatment effects, the data is
 partitioned into two subgroups. Details on model-based trees in general can be
 found in \citep{zeileis_model-based_2008} and for the special use case in
 clinical trial in \citep{seibold_model-based_2016}.
-
 Just a single line of code lets the user compute a model-based tree in R:
 <<eval=FALSE>>=
 strat_models <- pmtree(base_model)
@@ -138,35 +141,39 @@ similarity of individuals in terms of model parameters. For each individual a
 personalised model can be estimated based on a weighted set of the original
 data, where the similarity measure corresponds to the weight. Details on the
 personalised models can be found in \citep{seibold_individual_2017}.
-
-In R, to get from the initial base model to personalised models for all
-observations in the training data, type:
+To compute personalised models for all observations in the training data is 
+simple:
 <<eval=FALSE>>=
 pm_forest <- pmforest(base_model)
 pers_models <- pmodel(pm_forest)
 @ 
 
-\begin{figure}
-\centering
-\include{pmworkflow}
-\caption{Personalised models workflow: from real world to interpretable
-visualisation.}
-\end{figure}
+% \begin{figure}
+% \centering
+% \include{pmworkflow}
+% \caption{Personalised models workflow: from real world to interpretable
+% visualisation.}
+% \end{figure}
 
 
 In the following we will present two example applications for model-based trees
 and personalised models. For this we need to load the package and -- to ensure
-reproducibility -- set a random seed. Also for plots we will need the
-\emph{ggplot2} package and we use a black and white theme.
+reproducibility -- set a random seed. Also for plots we will need packages
+\emph{ggplot2} and \emph{gridExtra}.
 <<prep>>=
 library("model4you")
 set.seed(2017)
 
 library("ggplot2")
 theme_set(theme_classic())
+library("gridExtra")
 @
 
 \paragraph{Mathematics exam analysis}
+In 2014 first-year business and economics students at the University of Innsbruck
+were divided into two examination groups. Group 1 wrote the exam in the morning and
+group 2 started after the first group finished.
+
 <<math_data>>=
 data("MathExam14W", package = "psychotools")
 
@@ -183,6 +190,23 @@ MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
 ## compute base model
 bmod_math <- lm(pcorrect ~ group, data = MathExam)
 lmplot(bmod_math, densest = TRUE)
+
+## extract coefficients and confidence intervals
+coefs <- coef(bmod_math)
+ci <- confint(bmod_math)
+coefs <- cbind(coefs, ci)
+
+## prepare for plotting
+digits <- 2
+cf <- format(round(coefs, digits), nsmall = digits)
+colnams <- colnames(cf)
+colnams[1] <- "theta"
+gridExtra::grid.table(
+  cf, cols = colnams,
+  theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
+  vp = viewport(x = 0.5, y = 0, width = 0.7, height = 0.4,
+                just = c("center", "bottom"))
+)
 @
 
 <<math_tree, fig.width = 13, fig.cap = "Personalised model tree for GBSG2 data.">>=  
@@ -240,99 +264,117 @@ ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
 @
 
 
-\paragraph{Analysis of the German Breast Cancer Study Group 2}
-
-<<GBSG2_prep>>=
-library("survival")
-data("GBSG2", package = "TH.data")
-@
-
-<<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
-bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
-survplot(bmod)
-
-## extract coefficients and confidence intervals
-coefs <- coef(bmod)
-ci <- confint(bmod)
-coefs <- cbind(coefs, ci)
-
-## prepare for plotting
-digits <- 2
-cf <- format(round(coefs, digits), nsmall = digits)
-colnams <- colnames(cf)
-colnams[1] <- "theta"
-grid.table(cf, cols = colnams,
-           theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
-           vp = viewport(x = 0, y = 0, 
-                         width = 0.7, height = 0.4,
-                         just = c("left", "bottom")))
-@
-
-<<GBSG2_tree, fig.width = 9, fig.cap = "Personalised model tree for GBSG2 data.">>=
-tr <- pmtree(bmod)
-plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot, 
-                                          confint = TRUE))
-@
-
-<<GBSG2_forest>>=
-frst <- pmforest(bmod)
-@
-
-<<GBSG_pmod1>>=
-newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
-                           pnodes = 3, progrec = 50, estrec = 60)
-mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
-@
-
-<<GBSG2_pmod>>=
-coeffun <- function(model) {
-  ## model coefficients
-  coefs <- c(coef(model), scale = model$scale)
-  
-  ## difference in median survival 
-  p = 0.5
-  coefs["median_s0"] <- qweibull(p = p, shape = 1/coefs["scale"], 
-                                 scale = exp(coefs["(Intercept)"]))
-  coefs["median_s1"] <- qweibull(p = p, shape = 1/coefs["scale"], 
-                                 scale = exp(coefs["(Intercept)"] + coefs[2]))
-  coefs["median_sdiff"] <- coefs["median_s1"] - coefs["median_s0"]
-  
-  return(coefs)
-}
-coefs <- pmodel(x = frst, fun = coeffun, OOB = TRUE)
-
-## add to data and plot
-dpdat <- cbind(coefs, GBSG2)
-znam <- names(GBSG2)[!(names(GBSG2) %in% c("horTh", "time", "cens"))]
-
-dplot <- function(z) {
-  p <- ggplot(dpdat, aes_string(x = z, y = "median_sdiff")) 
-  if(is.factor(dpdat[, z])) {
-    p + geom_boxplot()
-  } else {
-    p + geom_point(alpha = 0.2) + 
-      geom_smooth(fill = NA, method = "loess")
-  }
-}
-dps <- lapply(znam, dplot)
-do.call(grid.arrange, dps)
-
-do.call(grid.arrange, lapply(dps, function(p) {
-  dmin <- min(dpdat$median_sdiff)
-  dq <- quantile(dpdat$median_sdiff, 0.99)
-  p + coord_cartesian(ylim = c(dmin, dq))
-}))
-@
+% \paragraph{Analysis of the German Breast Cancer Study Group 2}
+% 
+% <<GBSG2_prep>>=
+% library("survival")
+% data("GBSG2", package = "TH.data")
+% @
+% 
+% <<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
+% bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
+% survplot(bmod)
+% 
+% ## extract coefficients and confidence intervals
+% coefs <- coef(bmod)
+% ci <- confint(bmod)
+% coefs <- cbind(coefs, ci)
+% 
+% ## prepare for plotting
+% digits <- 2
+% cf <- format(round(coefs, digits), nsmall = digits)
+% colnams <- colnames(cf)
+% colnams[1] <- "theta"
+% gridExtra::grid.table(
+%   cf, cols = colnams,
+%   theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
+%   vp = viewport(x = 0, y = 0, width = 0.7, height = 0.4,
+%                 just = c("left", "bottom"))
+% )
+% @
+% 
+% <<GBSG2_tree, fig.width = 9, fig.cap = "Personalised model tree for GBSG2 data.">>=
+% tr <- pmtree(bmod)
+% plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot, 
+%                                           confint = TRUE))
+% @
+% 
+% <<GBSG2_forest>>=
+% frst <- pmforest(bmod)
+% @
+% 
+% <<GBSG_pmod1>>=
+% newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
+%                            pnodes = 3, progrec = 50, estrec = 60)
+% mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
+% @
+% 
+% <<GBSG2_pmod>>=
+% coeffun <- function(model) {
+%   ## model coefficients
+%   coefs <- c(coef(model), scale = model$scale)
+%   
+%   ## difference in median survival 
+%   p = 0.5
+%   coefs["median_s0"] <- qweibull(p = p, shape = 1/coefs["scale"], 
+%                                  scale = exp(coefs["(Intercept)"]))
+%   coefs["median_s1"] <- qweibull(p = p, shape = 1/coefs["scale"], 
+%                                  scale = exp(coefs["(Intercept)"] + coefs[2]))
+%   coefs["median_sdiff"] <- coefs["median_s1"] - coefs["median_s0"]
+%   
+%   return(coefs)
+% }
+% coefs <- pmodel(x = frst, fun = coeffun, OOB = TRUE)
+% 
+% ## add to data and plot
+% dpdat <- cbind(coefs, GBSG2)
+% znam <- names(GBSG2)[!(names(GBSG2) %in% c("horTh", "time", "cens"))]
+% 
+% dplot <- function(z) {
+%   p <- ggplot(dpdat, aes_string(x = z, y = "median_sdiff")) 
+%   if(is.factor(dpdat[, z])) {
+%     p + geom_boxplot()
+%   } else {
+%     p + geom_point(alpha = 0.2) + 
+%       geom_smooth(fill = NA, method = "loess")
+%   }
+% }
+% dps <- lapply(znam, dplot)
+% do.call(grid.arrange, dps)
+% 
+% do.call(grid.arrange, lapply(dps, function(p) {
+%   dmin <- min(dpdat$median_sdiff)
+%   dq <- quantile(dpdat$median_sdiff, 0.99)
+%   p + coord_cartesian(ylim = c(dmin, dq))
+% }))
+% @
 
 \section*{Implementation and architecture}
-
-Based on partykit, merely convenience interface.
-
 \begin{figure}
 \centering
 \include{treefamily}
-\caption{The family of model-based trees and forests.}
+\caption{The family of model-based trees and forests. Square nodes represent
+functions, round nodes represent function arguments. Solid lines represent 
+direct usage, dashed lines indirect usage (iteration between tree and model 
+estimation), and dotted lines represent close similarity but no dependency.}
+\label{fig:family}
 \end{figure}
+
+The R package \emph{model4you} is based on the \emph{partykit} package. In fact, 
+everything that can be done with \emph{model4you} can already be done with 
+\emph{partykit} (version $\geq$ 1.2-0). \emph{model4you} is merely a convenience 
+interface and focusses on ease of use and interpretability. Various other packages
+depend on \emph{partykit}. Figure~\ref{fig:family} shows all packages depending
+on \emph{partykit} that deal with model-based trees and forests. Functions 
+\Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::mob()'} provide the basis for all
+others. Note that \Sexpr{'partykit::ctree()'} computes conditional inference trees
+but by specifying argument \Sexpr{'ytrafo'} appropriately, it can also compute
+model-based trees. This functionality is used for packages \emph{disttree} 
+(partitioning of Generalized Additive Models for Location, Scale and Shape),
+\emph{trtf} (partitioning of transformation models) and \emph{model4you}. 
+Many of the packages shown in Figure~\ref{fig:family} are available on CRAN. 
+The remaining packages are under development and available on 
+\url{https://r-forge.r-project.org/projects/partykit/}.
 
 \textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
 
