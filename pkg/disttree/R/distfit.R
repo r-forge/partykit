@@ -142,9 +142,13 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.null(start) && is.null(start.eta)){
     starteta <- family$startfun(y, weights = weights)
     if(any(is.na(starteta))) {
-      print(y)
-      print(weights)
-      print("start = NaN")
+      if(all(weights == 0)) {
+        print("all weights are 0")
+      } else {
+        print(y)
+        print(weights)
+        print("start = NaN but weights are not all 0")
+      }
     # starteta <- family$startfun(y = rep(y, round(weights)))
     }
   } else {
@@ -616,7 +620,7 @@ plot.distfit <- function(x,
     )
     histogram$freq <- FALSE
     histogram$probability <- TRUE
-  
+    #histogram$breaks <- seq(from = min(x$y), to = max(x$y) + 1) - 0.5
     histogram <- do.call("hist", histogram)
     yrange <- seq(from = histogram$breaks[1L],
                   to = histogram$breaks[length(histogram$breaks)],
