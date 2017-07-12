@@ -46,7 +46,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
         
         ys <- data[subset,resp.name]
-        subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
+        subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
         start <- info$coefficients
         
@@ -55,38 +55,37 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
                          estfun = estfun, cens = cens, censpoint = censpoint,
                          ocontrol = ocontrol, ...)
         
-        
-        ef <- as.matrix(model$estfun)
-        #n <- NROW(ef)
-        #ef <- ef/sqrt(n)
-        
-        if(decorrelate != "none") {
-          n <- NROW(ef)
-          ef <- ef/sqrt(n)
-          
-          vcov <- if(decorrelate == "vcov") {
-            vcov(model, type = "link") * n
-          } else {
-            solve(crossprod(ef))
-          }
-          
-          root.matrix <- function(X) {
-            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-              X.eigen <- eigen(X, symmetric = TRUE)
-              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-              sqomega <- sqrt(diag(X.eigen$values))
-              V <- X.eigen$vectors
-              return(V %*% sqomega %*% t(V))
-            }
-          }
-          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
-        }
-        
         if(estfun) {
+          ef <- as.matrix(model$estfun)
+          
+          if(decorrelate != "none") {
+            n <- NROW(ef)
+            ef <- ef/sqrt(n)
+            
+            vcov <- if(decorrelate == "vcov") {
+              vcov(model, type = "link") * n
+            } else {
+              solve(crossprod(ef))
+            }
+            
+            root.matrix <- function(X) {
+              if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+                X.eigen <- eigen(X, symmetric = TRUE)
+                if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+                sqomega <- sqrt(diag(X.eigen$values))
+                V <- X.eigen$vectors
+                return(V %*% sqomega %*% t(V))
+              }
+            }
+            ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+          }
+          
           estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
           estfun[subset,] <- ef
+          if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
         } else estfun <- NULL
         
+
         object <-  if(object) model else NULL
         
         ret <- list(estfun = estfun,
@@ -136,16 +135,44 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
       
-      mod <- distfit(y, family = family, weights = weights, start = start,
+      model <- distfit(y, family = family, weights = weights, start = start,
                      vcov = vcov, estfun = estfun, type.hessian = type.hessian,
                      cens = cens, censpoint = censpoint,
                      ocontrol = ocontrol, ...)
       
+      ef <- NULL
+      if(estfun) {
+        ef <- as.matrix(model$estfun)
+        
+        if(decorrelate != "none") {
+          n <- NROW(ef)
+          ef <- ef/sqrt(n)
+          
+          vcov <- if(decorrelate == "vcov") {
+            vcov(model, type = "link") * n
+          } else {
+            solve(crossprod(ef))
+          }
+          
+          root.matrix <- function(X) {
+            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+              X.eigen <- eigen(X, symmetric = TRUE)
+              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+              sqomega <- sqrt(diag(X.eigen$values))
+              V <- X.eigen$vectors
+              return(V %*% sqomega %*% t(V))
+            }
+          }
+          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        }
+      }
+      estfun <- ef
+      
       rval <- list(
-        coefficients = mod$par,
-        objfun = - mod$loglik,      #FIX ME: before: return minimized function, now: maximized?
-        estfun = if(estfun) mod$estfun else NULL,   ## rval$estfun contains the scores of the positive loglik 
-        object = if(object) mod else NULL
+        coefficients = model$par,
+        objfun = - model$loglik,      
+        estfun = estfun,   ## rval$estfun contains the scores of the positive loglik 
+        object = if(object) model else NULL
       )
       return(rval)
     }
@@ -402,6 +429,7 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
   ll <- 0
   pred.par <- predict(object, newdata = newdata, type = "parameter")
   distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
+  ## FIXME: get family for all types of input for 'family'
   
   if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
     cens <- object$info$cens
