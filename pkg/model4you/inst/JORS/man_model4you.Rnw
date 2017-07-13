@@ -381,8 +381,9 @@ under development and available on
 
 
 \section*{Quality control}
-
-Tests, code in this manual, examples in documentation
+All packages on CRAN undergo standard checks for compatibility with the R
+package ecosystem.  The R package contains examples and tests. These were run
+and checked on Linux 86\_64 and Windows. 
 
 \textcolor{blue}{Detail the level of testing that has been carried out on the code (e.g. unit, functional, load etc.), and in which environments. If not already included in the software documentation, provide details of how a user could quickly understand if the software is working (e.g. providing examples of running the software with sample input and output data). }
 
@@ -440,17 +441,24 @@ English
 
 \section*{(3) Reuse potential}
 
-The software is intentionally written to make usage as simple as possible. We
-hope that researchers use it for analysis of:
-\begin{itemize}
-\item Clinical trials
-\item A-B testing
-\item Other situations where the comparison of two decisions is of interest
-\end{itemize}
-We encourage users to use the partykit forum on R-forge
-(\url{https://r-forge.r-project.org/forum/forum.php?forum_id=852}) or the party
-tag on Stackoverflow (\url{http://stackoverflow.com/questions/tagged/party}) in
-case of questions or problems.
+The software is intentionally written to make usage as simple as possible. The
+most prominent use case are clinical trials where the assumption of an average
+treatment effect for all patients is too strict and the efficacy of the
+treatment depends on patient characteristics (e.g. gender, biomarkers, etc.).
+For subgroup analyses (stratified treatment effects) model-based trees
+(\Sexpr{'pmtree()'}) can be used; For personalised treatment effects
+model-based forests (\Sexpr{'pmforest()'}) provide a way of estimating
+similarity between patients and using this similarity measure to estimate
+personalised models (\Sexpr{'pmodel()'}).  The target audience are people who
+deal with heterogeneous treatment effects, such as medical researchers,
+pharmaceutical companies or analysts in marketing (A-B testing).  In general
+the software is useful to researchers dealing with scenarios where two
+exposures are compared and responses of subjects possibly depend on other
+variables.
+
+We encourage users to use the party tag on Stackoverflow
+(\url{http://stackoverflow.com/questions/tagged/party}) in case of questions or
+problems. 
 
 \textcolor{blue}{Please describe in as much detail as possible the ways in which the software could be reused by other researchers both within and outside of your field. This should include the use cases for the software, and also details of how the software might be modified or extended (including how contributors should contact you) if appropriate. Also you must include details of what support mechanisms are in place for this software (even if there is no support).}
 
