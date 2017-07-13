@@ -69,16 +69,15 @@ Prevention Institute, University of Zurich
 
 \section*{Abstract}
 Typical models estimating treatment effects assume that the treatment effect is
-the same for all individuals.
-Model-based recursive partitioning allows to relax this assumption and allows for
-the estimation of stratified treatment effects (model-based trees) or even
-personalised treatment effects (model-based forests).  With
-model-based trees one can compute treatment effects for different strata of
-individuals. The strata are found in a data driven fashion and depend on
-characteristics of the individuals.  Model-based random forests allow for a
-similarity estimation between individuals in terms of model estimates. The similarity
-measure can then be used to estimate personalised models. 
-The R package \emph{model4you} implements these stratified and
+the same for all individuals.  Model-based recursive partitioning allows to
+relax this assumption and allows for the estimation of stratified treatment
+effects (model-based trees) or even personalised treatment effects (model-based
+forests).  With model-based trees one can compute treatment effects for
+different strata of individuals. The strata are found in a data driven fashion
+and depend on characteristics of the individuals.  Model-based random forests
+allow for a similarity estimation between individuals in terms of model
+estimates. The similarity measure can then be used to estimate personalised
+models.  The R package \emph{model4you} implements these stratified and
 personalised models with a focus on ease of use and interpretability so that
 clinicians and other users can take the model they usually use for the
 estimation of the average treatment effect and with a few lines of code get a
@@ -118,20 +117,20 @@ survival model.  These models estimate intercept and treatment effect for all
 individuals in the \Sexpr{'data'} and allow for predicting the response of
 other individuals given they do or don't receive the treatment of interest.
 
-For cases where the assumption that all individuals have the same intercept
-and treatment effect is too strict the R package \emph{model4you} offers two 
+For cases where the assumption that all individuals have the same intercept and
+treatment effect is too strict the R package \emph{model4you} offers two
 options: 
 
-\paragraph{(1) Model-based trees} identify subgroups
-where within the subgroups the model parameters are similar and between groups
-the model parameters are different. This is achieved by finding instabilities
-in the model parameters with respect to a variable (characteristicum) and
-recursively partitioning the data into groups. If, for example the algorithm
-finds that men and women have differing treatment effects, the data is
-partitioned into two subgroups. Details on model-based trees in general can be
-found in \citep{zeileis_model-based_2008} and for the special use case in
-clinical trial in \citep{seibold_model-based_2016}.
-Just a single line of code lets the user compute a model-based tree in R:
+\paragraph{(1) Model-based trees} identify subgroups where within the subgroups
+the model parameters are similar and between groups the model parameters are
+different. This is achieved by finding instabilities in the model parameters
+with respect to a variable (characteristicum) and recursively partitioning the
+data into groups. If, for example the algorithm finds that men and women have
+differing treatment effects, the data is partitioned into two subgroups.
+Details on model-based trees in general can be found in
+\citep{zeileis_model-based_2008} and for the special use case in clinical trial
+in \citep{seibold_model-based_2016}.  Just a single line of code lets the user
+compute a model-based tree in R:
 <<eval=FALSE>>=
 strat_models <- pmtree(base_model)
 @
@@ -140,8 +139,8 @@ strat_models <- pmtree(base_model)
 similarity of individuals in terms of model parameters. For each individual a
 personalised model can be estimated based on a weighted set of the original
 data, where the similarity measure corresponds to the weight. Details on the
-personalised models can be found in \citep{seibold_individual_2017}.
-To compute personalised models for all observations in the training data is 
+personalised models can be found in \citep{seibold_individual_2017}.  To
+compute personalised models for all observations in the training data is
 simple:
 <<eval=FALSE>>=
 pm_forest <- pmforest(base_model)
@@ -354,26 +353,27 @@ ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
 \centering
 \include{treefamily}
 \caption{The family of model-based trees and forests. Square nodes represent
-functions, round nodes represent function arguments. Solid lines represent 
-direct usage, dashed lines indirect usage (iteration between tree and model 
+functions, round nodes represent function arguments. Solid lines represent
+direct usage, dashed lines indirect usage (iteration between tree and model
 estimation), and dotted lines represent close similarity but no dependency.}
 \label{fig:family}
 \end{figure}
 
-The R package \emph{model4you} is based on the \emph{partykit} package. In fact, 
-everything that can be done with \emph{model4you} can already be done with 
-\emph{partykit} (version $\geq$ 1.2-0). \emph{model4you} is merely a convenience 
-interface and focusses on ease of use and interpretability. Various other packages
-depend on \emph{partykit}. Figure~\ref{fig:family} shows all packages depending
-on \emph{partykit} that deal with model-based trees and forests. Functions 
-\Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::mob()'} provide the basis for all
-others. Note that \Sexpr{'partykit::ctree()'} computes conditional inference trees
-but by specifying argument \Sexpr{'ytrafo'} appropriately, it can also compute
-model-based trees. This functionality is used for packages \emph{disttree} 
-(partitioning of Generalized Additive Models for Location, Scale and Shape),
-\emph{trtf} (partitioning of transformation models) and \emph{model4you}. 
-Many of the packages shown in Figure~\ref{fig:family} are available on CRAN. 
-The remaining packages are under development and available on 
+The R package \emph{model4you} is based on the \emph{partykit} package. In
+fact, everything that can be done with \emph{model4you} can already be done
+with \emph{partykit} (version $\geq$ 1.2-0). \emph{model4you} is merely a
+convenience interface and focusses on ease of use and interpretability. Various
+other packages depend on \emph{partykit}. Figure~\ref{fig:family} shows all
+packages depending on \emph{partykit} that deal with model-based trees and
+forests. Functions \Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::mob()'}
+provide the basis for all others. Note that \Sexpr{'partykit::ctree()'}
+computes conditional inference trees but by specifying argument
+\Sexpr{'ytrafo'} appropriately, it can also compute model-based trees. This
+functionality is used for packages \emph{disttree} (partitioning of Generalized
+Additive Models for Location, Scale and Shape), \emph{trtf} (partitioning of
+transformation models) and \emph{model4you}.  Many of the packages shown in
+Figure~\ref{fig:family} are available on CRAN.  The remaining packages are
+under development and available on
 \url{https://r-forge.r-project.org/projects/partykit/}.
 
 \textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
