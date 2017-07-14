@@ -1,0 +1,249 @@
+\documentclass[nojss]{jss}
+\usepackage{amsmath,thumbpdf}
+\usepackage{subfig}
+
+\author{Achim Zeileis\\Universit\"at Innsbruck \And
+        Torsten Hothorn\\Universit\"at Z\"urich}
+\Plainauthor{Achim Zeileis, Torsten Hothorn}
+
+\title{pkg{model4you}: Stratified and personalised treatment effects in \proglang{R}}
+\Plaintitle{model4you: Stratified and personalised treatment effects in R}
+
+
+\Keywords{model-based recursive partitioning, tree, random forest, treatment effect, personalised medicine}
+
+\Abstract{  
+
+}
+
+\Address{
+  Achim Zeileis \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{http://eeecon.uibk.ac.at/~zeileis/} \\
+
+  Torsten Hothorn\\
+  Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
+  Universit\"at Z\"urich \\
+  Hirschengraben 84\\
+  CH-8001 Z\"urich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+}
+
+
+
+
+
+\begin{document}
+\section{Overview}
+
+<<setup, echo=FALSE>>=
+library("knitr")
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, fig.align = "center")
+
+knit_hooks$set(inline = function(x) { 
+  if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
+  highr:::hi_latex(x) 
+}) 
+@
+
+
+<<pkg>>=
+library("model4you")
+library("ggplot2")
+library("gridExtra")
+library("survival")
+@
+\paragraph{Mathematics exam analysis}
+In 2014 first-year business and economics students at the University of Innsbruck
+were divided into two examination groups. Group 1 wrote the exam in the morning and
+group 2 started after the first group finished.
+
+<<math_data>>=
+data("MathExam14W", package = "psychotools")
+
+## scale points achieved to [0, 100] percent
+MathExam14W$tests <- 100 * MathExam14W$tests/26
+MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
+
+## select variables to be used
+MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
+                             "attempt", "semester", "gender")]
+@
+
+<<math_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for Mathematics Exam data.">>=  
+## compute base model
+bmod_math <- lm(pcorrect ~ group, data = MathExam)
+lmplot(bmod_math, densest = TRUE)
+
+## extract coefficients and confidence intervals
+coefs <- coef(bmod_math)
+ci <- confint(bmod_math)
+coefs <- cbind(coefs, ci)
+
+## prepare for plotting
+digits <- 2
+cf <- format(round(coefs, digits), nsmall = digits)
+colnams <- colnames(cf)
+colnams[1] <- "theta"
+gridExtra::grid.table(
+  cf, cols = colnams,
+  theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
+  vp = viewport(x = 0.5, y = 0, width = 0.7, height = 0.4,
+                just = c("center", "bottom"))
+)
+@
+
+<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for math exam.">>=  
+## compute tree
+(tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
+plot(tr_math, terminal_panel = node_pmterminal(tr_math, 
+                                               plotfun = lmplot, 
+                                               confint = TRUE))
+@
+
+<<math_methods>>=  
+## predict
+newdat <- MathExam[1:5, ]
+
+# terminal nodes
+(nodes <- predict(tr_math, type = "node", newdata = newdat))
+
+# response
+(pr <- predict(tr_math, type = "pass", newdata = newdat))
+
+# response including confidence intervals, see ?predict.lm
+(pr1 <- predict(tr_math, type = "pass", newdata = newdat,
+                predict_args = list(interval = "confidence")))
+@
+
+<<math_pmodl>>=
+forest_math <- pmforest(bmod_math)
+pmod_math <- pmodel(forest_math)
+head(pmod_math)
+@
+
+
+<<math_dp1, fig.width=4, fig.height=4, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot.", "Bee plot.")>>=
+dpdat_math <- cbind(pmod_math, MathExam)
+
+ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
+  geom_point(alpha = 0.2, size = 1) + 
+  geom_smooth(fill = NA, method = "loess") +
+  theme(legend.position = "none")
+
+library("ggbeeswarm")
+ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
+  geom_quasirandom(alpha = 0.5, size = 1) +
+  theme(legend.position = "none")
+@
+
+Bla
+<<math_dp2, fig.width=4, fig.height=4, out.width='.48\\linewidth', fig.cap="Dependence plots for the number of previous attempts and gender.", fig.subcap=c('Number of previous attempts.', 'Gender.')>>=
+ggplot(dpdat_math, aes(x = attempt, y = group2, color = attempt)) +
+  geom_quasirandom(alpha = 0.5) +
+  theme(legend.position = "none")
+
+ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
+  geom_quasirandom(alpha = 0.5) +
+  theme(legend.position = "none")
+@
+
+
+\paragraph{Analysis of the German Breast Cancer Study Group 2}
+686 node positive breast cancer patients were randomly assigned to two treatment groups:
+hormonal Therapy and no hormonal Therapy. The survival time was assesed.
+<<GBSG2_prep>>=
+library("survival")
+data("GBSG2", package = "TH.data")
+@
+
+<<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
+bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
+survplot(bmod)
+
+## extract coefficients and confidence intervals
+coefs <- coef(bmod)
+ci <- confint(bmod)
+coefs <- cbind(coefs, ci)
+
+## prepare for plotting
+digits <- 2
+cf <- format(round(coefs, digits), nsmall = digits)
+colnams <- colnames(cf)
+colnams[1] <- "theta"
+gridExtra::grid.table(
+  cf, cols = colnams,
+  theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
+  vp = viewport(x = 0, y = 0, width = 0.7, height = 0.4,
+                just = c("left", "bottom"))
+)
+@
+
+<<GBSG2_tree, fig.width = 9, fig.cap = "Personalised model tree for GBSG2 data.">>=
+tr <- pmtree(bmod)
+plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot,
+                                          confint = TRUE))
+@
+
+<<GBSG2_forest>>=
+frst <- pmforest(bmod)
+@
+
+<<GBSG_pmod1>>=
+newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
+                           pnodes = 3, progrec = 50, estrec = 60)
+mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
+@
+
+<<GBSG2_pmod>>=
+coeffun <- function(model) {
+  ## model coefficients
+  coefs <- c(coef(model), scale = model$scale)
+
+  ## difference in median survival
+  p = 0.5
+  coefs["median_s0"] <- qweibull(p = p, shape = 1/coefs["scale"],
+                                 scale = exp(coefs["(Intercept)"]))
+  coefs["median_s1"] <- qweibull(p = p, shape = 1/coefs["scale"],
+                                 scale = exp(coefs["(Intercept)"] + coefs[2]))
+  coefs["median_sdiff"] <- coefs["median_s1"] - coefs["median_s0"]
+
+  return(coefs)
+}
+coefs <- pmodel(x = frst, fun = coeffun, OOB = TRUE)
+
+## add to data and plot
+dpdat <- cbind(coefs, GBSG2)
+znam <- names(GBSG2)[!(names(GBSG2) %in% c("horTh", "time", "cens"))]
+
+dplot <- function(z) {
+  p <- ggplot(dpdat, aes_string(x = z, y = "median_sdiff"))
+  if(is.factor(dpdat[, z])) {
+    p + geom_boxplot()
+  } else {
+    p + geom_point(alpha = 0.2) +
+      geom_smooth(fill = NA, method = "loess")
+  }
+}
+dps <- lapply(znam, dplot)
+do.call(grid.arrange, dps)
+
+do.call(grid.arrange, lapply(dps, function(p) {
+  dmin <- min(dpdat$median_sdiff)
+  dq <- quantile(dpdat$median_sdiff, 0.99)
+  p + coord_cartesian(ylim = c(dmin, dq))
+}))
+@
+
+
+
+
+% \bibliography{party}
+
+\end{document}

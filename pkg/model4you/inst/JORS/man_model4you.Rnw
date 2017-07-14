@@ -25,7 +25,7 @@
 
 <<setup, echo=FALSE>>=
 library("knitr")
-knitr::opts_chunk$set(cache = TRUE, message = FALSE, fig.align = "center")
+knitr::opts_chunk$set(cache = FALSE, message = FALSE, fig.align = "center")
 
 knit_hooks$set(inline = function(x) { 
   if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
@@ -208,7 +208,7 @@ gridExtra::grid.table(
 )
 @
 
-<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for GBSG2 data.">>=  
+<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for math exam.">>=  
 ## compute tree
 (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
 plot(tr_math, terminal_panel = node_pmterminal(tr_math, 
@@ -262,91 +262,6 @@ ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
   theme(legend.position = "none")
 @
 
-
-% \paragraph{Analysis of the German Breast Cancer Study Group 2}
-% 
-% <<GBSG2_prep>>=
-% library("survival")
-% data("GBSG2", package = "TH.data")
-% @
-% 
-% <<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
-% bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
-% survplot(bmod)
-% 
-% ## extract coefficients and confidence intervals
-% coefs <- coef(bmod)
-% ci <- confint(bmod)
-% coefs <- cbind(coefs, ci)
-% 
-% ## prepare for plotting
-% digits <- 2
-% cf <- format(round(coefs, digits), nsmall = digits)
-% colnams <- colnames(cf)
-% colnams[1] <- "theta"
-% gridExtra::grid.table(
-%   cf, cols = colnams,
-%   theme = ttheme_minimal(colhead = list(fg_params = list(parse = TRUE))),
-%   vp = viewport(x = 0, y = 0, width = 0.7, height = 0.4,
-%                 just = c("left", "bottom"))
-% )
-% @
-% 
-% <<GBSG2_tree, fig.width = 9, fig.cap = "Personalised model tree for GBSG2 data.">>=
-% tr <- pmtree(bmod)
-% plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot, 
-%                                           confint = TRUE))
-% @
-% 
-% <<GBSG2_forest>>=
-% frst <- pmforest(bmod)
-% @
-% 
-% <<GBSG_pmod1>>=
-% newpatient_i <- data.frame(age = 60, menostat = "Post", tsize = 20, tgrade = "II",
-%                            pnodes = 3, progrec = 50, estrec = 60)
-% mod_i <- pmodel(x = frst, fun = identity, newdata = newpatient_i)
-% @
-% 
-% <<GBSG2_pmod>>=
-% coeffun <- function(model) {
-%   ## model coefficients
-%   coefs <- c(coef(model), scale = model$scale)
-%   
-%   ## difference in median survival 
-%   p = 0.5
-%   coefs["median_s0"] <- qweibull(p = p, shape = 1/coefs["scale"], 
-%                                  scale = exp(coefs["(Intercept)"]))
-%   coefs["median_s1"] <- qweibull(p = p, shape = 1/coefs["scale"], 
-%                                  scale = exp(coefs["(Intercept)"] + coefs[2]))
-%   coefs["median_sdiff"] <- coefs["median_s1"] - coefs["median_s0"]
-%   
-%   return(coefs)
-% }
-% coefs <- pmodel(x = frst, fun = coeffun, OOB = TRUE)
-% 
-% ## add to data and plot
-% dpdat <- cbind(coefs, GBSG2)
-% znam <- names(GBSG2)[!(names(GBSG2) %in% c("horTh", "time", "cens"))]
-% 
-% dplot <- function(z) {
-%   p <- ggplot(dpdat, aes_string(x = z, y = "median_sdiff")) 
-%   if(is.factor(dpdat[, z])) {
-%     p + geom_boxplot()
-%   } else {
-%     p + geom_point(alpha = 0.2) + 
-%       geom_smooth(fill = NA, method = "loess")
-%   }
-% }
-% dps <- lapply(znam, dplot)
-% do.call(grid.arrange, dps)
-% 
-% do.call(grid.arrange, lapply(dps, function(p) {
-%   dmin <- min(dpdat$median_sdiff)
-%   dq <- quantile(dpdat$median_sdiff, 0.99)
-%   p + coord_cartesian(ylim = c(dmin, dq))
-% }))
-% @
 
 \section*{Implementation and architecture}
 \begin{figure}
