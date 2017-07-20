@@ -145,7 +145,7 @@ if(require("crch") & require("gamlss.cens")) {
     #m3 <- distfit(RainIbk$rain, family = dist_list_cens_log)
     
     coef(m1)
-    coef(m2)
+    coef(m2, type = "link")
     #coef(m3)
     logLik(m1)
     logLik(m2)
