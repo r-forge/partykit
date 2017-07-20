@@ -142,7 +142,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.null(start) && is.null(start.eta)){
     starteta <- family$startfun(y, weights = weights)
     all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
-    if((starteta[(family$link == "log" | family$link == "logit")] == -Inf) && all0)
+    if(any((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & all0))
       starteta[(family$link == "log" | family$link == "logit")] <- log(0.0001)
     if(any(is.na(starteta))) {
       if(all(weights == 0)) {
