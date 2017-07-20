@@ -141,6 +141,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
   if(is.null(start) && is.null(start.eta)){
     starteta <- family$startfun(y, weights = weights)
+    if((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & all(y==0))
+      starteta[(family$link == "log" | family$link == "logit")] <- log(0.0001)
     if(any(is.na(starteta))) {
       if(all(weights == 0)) {
         print("all weights are 0")
