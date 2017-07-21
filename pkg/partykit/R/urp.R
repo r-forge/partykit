@@ -573,11 +573,13 @@
         if (is.null(fdot)) fdot <- f
         modelf <- formula(fdot, lhs = 1L, rhs = 0L)
         partf <- formula(fdot, lhs = 0L, rhs = 1L)
+        predictf <- formula(fdot, lhs = 0L) ### = delete.response
     } else if (length(f)[2] == 2L) { ### y ~ x | z
         if (!is.null(fdot))
             stop("dots are not allowed in multipart formulas")
         modelf <- formula(f, lhs = 1L, rhs = 1L)
         partf <- formula(f, lhs = 0L, rhs = 2L)
+        predictf <- formula(f, lhs = 0L) ### = delete.response
     } 
     zvars <- rownames(attr(terms(partf, data = mf), "factors"))
 
@@ -595,7 +597,7 @@
     
     ret <- list(treefun = treefun, trafo = trafo, mf = mf, terms = mfterms,
                 partyvars = match(zvars, colnames(mf)), 
-                modelf = modelf, partf = partf)
+                modelf = modelf, partf = partf, predictf = predictf)
     if (!doFit)
         return(ret)
 

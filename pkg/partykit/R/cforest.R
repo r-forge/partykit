@@ -176,6 +176,7 @@ cforest <- function
                         info = list(call = match.call(), control = control))
     ### ret$update <- tree$treefun # not useful
     ret$trafo <- tree$trafo
+    ret$predictf <- tree$predictf
     class(ret) <- c("cforest", class(ret))
 
     return(ret)
@@ -189,7 +190,7 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     nd <- object$data
     vmatch <- 1:ncol(nd)
     if (!is.null(newdata)) {
-        nd <- model.frame(delete.response(object$terms), 
+        nd <- model.frame(object$predictf, ### all variables W/O response
                           data = newdata, na.action = na.pass)
         OOB <- FALSE
         vmatch <- match(names(object$data), names(nd))

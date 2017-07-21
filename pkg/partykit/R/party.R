@@ -302,6 +302,8 @@ predict.party <- function(object, newdata = NULL, perm = NULL, ...)
                         vmatch = vmatch, perm = perm)
         } else {
             if (!is.null(object$terms)) {
+                ### <FIXME> this won't work for multivariate responses
+                ### </FIXME>
                 mf <- model.frame(delete.response(object$terms), newdata)
                 fitted_node(node_party(object), data = mf, 
                             vmatch = match(vnames, names(mf)), perm = perm)
