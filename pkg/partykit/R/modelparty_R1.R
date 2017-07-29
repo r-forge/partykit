@@ -223,20 +223,21 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
     z <- z[ww0, , drop = FALSE]
     k <- NCOL(process)
     n <- NROW(process)
+    nobs <- if(control$caseweights && any(weights != 1L)) sum(weights) else n
 
     ## scale process
-    process <- process/sqrt(n)
+    process <- process/sqrt(nobs)
     vcov <- control$vcov
     if(is.null(obj)) vcov <- "opg"
     if(vcov != "opg") {
-      bread <- vcov(obj) * n
+      bread <- vcov(obj) * nobs
     }
     if(vcov != "info") {
       meat <- if(is.null(cluster)) {
-        crossprod(process)
+        crossprod(process/sqrt(weights))
       } else {
         ## nclus <- length(unique(cluster)) ## nclus / (nclus - 1L) * 
-        crossprod(as.matrix(aggregate(process, by = list(cluster), FUN = sum)[, -1L, drop = FALSE]))
+        crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum)))
       }
     }
     J12 <- root.matrix(switch(vcov,
@@ -251,10 +252,10 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
     k <- NCOL(process)
 
     ## get critical values for supLM statistic
-    from <- if(control$trim > 1) control$trim else ceiling(n * control$trim)
+    from <- if(control$trim > 1) control$trim else ceiling(nobs * control$trim)
     from <- max(from, minsize)
-    to <- n - from
-    lambda <- ((n - from) * to)/(from * (n - to))
+    to <- nobs - from
+    lambda <- ((nobs - from) * to)/(from * (nobs - to))
 
     beta <- mob_beta_suplm
     logp.supLM <- function(x, k, lambda)
@@ -298,16 +299,18 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
     for(i in mtest) {
       zi <- z[,i]
       if(is.factor(zi)) {
-        proci <- process[order(zi), , drop = FALSE]
+        oi <- order(zi)
+        proci <- process[oi, , drop = FALSE]
         ifac[i] <- TRUE
 	iord <- is.ordered(zi) & (control$ordinal != "chisq")
 
         ## order partitioning variable
-        zi <- zi[order(zi)]
+        zi <- zi[oi]
         # re-apply factor() added to drop unused levels
         zi <- factor(zi, levels = unique(zi))
         # compute segment weights
-        segweights <- as.vector(table(zi))/n
+        segweights <- if(control$caseweights) tapply(weights[oi], zi, sum) else table(zi)
+	segweights <- as.vector(segweights)/nobs
 
         # compute statistic only if at least two levels are left
         if(length(segweights) < 2L) {
@@ -315,9 +318,10 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
 	  pval[i] <- NA_real_
         } else if(iord) {
           proci <- apply(proci, 2L, cumsum)
+	  tt0 <- head(cumsum(table(zi)), -1L)
           tt <- head(cumsum(segweights), -1L)
           if(control$ordinal == "max") {
-  	    stat[i] <- max(abs(proci[round(tt * n), ] / sqrt(tt * (1-tt))))
+  	    stat[i] <- max(abs(proci[tt0, ] / sqrt(tt * (1-tt))))
 	    pval[i] <- log(as.numeric(1 - mvtnorm::pmvnorm(
 	      lower = -stat[i], upper = stat[i],
 	      mean = rep(0, length(tt)),
@@ -326,7 +330,7 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
 	      )^k))
 	  } else {
 	    proci <- rowSums(proci^2)
-  	    stat[i] <- max(proci[round(tt * n)] / (tt * (1-tt)))
+  	    stat[i] <- max(proci[tt0] / (tt * (1-tt)))
 	    pval[i] <- log(strucchange::ordL2BB(segweights, nproc = k, nrep = control$nrep)$computePval(stat[i], nproc = k))
 	  }
 	} else {      
@@ -343,10 +347,11 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
         }
         proci <- process[oi, , drop = FALSE]
         proci <- apply(proci, 2L, cumsum)
+	tt0 <- if(control$caseweights && any(weights != 1L)) cumsum(weights[oi]) else 1:n
         stat[i] <- if(from < to) {
 	  xx <- rowSums(proci^2)
-	  xx <- xx[from:to]
-	  tt <- (from:to)/n
+	  xx <- xx[tt0 >= from & tt0 <= to]
+	  tt <- tt0[tt0 >= from & tt0 <= to]/nobs
 	  max(xx/(tt * (1 - tt)))	  
 	} else {
 	  0

@@ -20,7 +20,11 @@
     \item{Use \pkg{libcoin} for computing linear test statistics 
           and p-values for \code{ctree}.}
     \item{Use \pkg{inum} for binning.}
-    \item{Avoid log(p) values of -Inf inside mob() by replacing weighted averaging
+    \item{Bug fix in code{mob()} if \code{weights} are used and \code{caseweights = TRUE} (the default).
+          The statistics for the parameter instability tests were computed incorrectly and
+	  consequently the selection of splitting variables and also the stopping criterion
+	  were affected/incorrect.} 
+    \item{Avoid log(p) values of \code{-Inf} inside \code{mob()} by replacing weighted averaging
           with naive averaging in the response surface regression output in case
 	  the p values are below machine precision.}
     \item{\code{node_barplot} gained a \code{text} argument
