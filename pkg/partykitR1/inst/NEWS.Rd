@@ -2,10 +2,18 @@
 \name{NEWS}
 \title{NEWS file for the partykit package}
 
+\section{Changes in Version 1.1-3 (2017-mm-dd)}{
+  \itemize{
+    \item{Backported a bug fix for the handling of case weights in \code{mob()}.
+          Test statistics were computed incorrectly and hence splitting/stopping
+	  affected/incorrect.}
+  }
+}
+
 \section{Changes in Version 1.1-2 (2017-04-24)}{
   \itemize{
     \item{Create patch package \code{partykitR1} for
-          internal R-forge use only.}
+          internal R-Forge use only.}
     \item{\code{node_barplot} gained a \code{text} argument
           that can be used to draw text labels for the
 	  percentages displayed.}
