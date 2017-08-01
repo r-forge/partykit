@@ -90,7 +90,7 @@ glmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = 
     } else {
       sum(wres^2, na.rm = TRUE)/sum(z$weights, na.rm = TRUE)
     }
-    rval$estfun <- wres * x/dispersion
+    rval$estfun <- wres * x[, !is.na(z$coefficients), drop = FALSE]/dispersion
   }
 
   ## add model (if desired)
