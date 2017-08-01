@@ -298,6 +298,7 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
     ## compute statistic and p-value for each ordering
     for(i in mtest) {
       zi <- z[,i]
+      if(length(unique(zi)) < 2L) next      
       if(is.factor(zi)) {
         oi <- order(zi)
         proci <- process[oi, , drop = FALSE]
