@@ -75,7 +75,7 @@ lmfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = N
 
   ## add estimating functions (if desired)
   if(estfun) {
-    rval$estfun <- as.vector(z$residuals) * weights * x
+    rval$estfun <- as.vector(z$residuals) * weights * x[, !is.na(z$coefficients), drop = FALSE]
   }
 
   ## add model (if desired)
