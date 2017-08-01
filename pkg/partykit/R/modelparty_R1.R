@@ -1118,8 +1118,9 @@ plot.modelparty <- function(x, terminal_panel = NULL, FUN = NULL, tp_args = NULL
       }
     }
     terminal_panel <- do.call("node_terminal", c(list(obj = x, FUN = FUN), tp_args))
+    tp_args <- NULL
   }
-  plot.party(x, terminal_panel = terminal_panel, ...)
+  plot.party(x, terminal_panel = terminal_panel, tp_args = tp_args, ...)
 }
 
 ### empty function (thus NAMESPACE does not need to be touched)
