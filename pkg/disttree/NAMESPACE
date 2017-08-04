@@ -14,6 +14,7 @@ importFrom("utils",
   "data", 
   "getAnywhere")
 importFrom("Formula",
+  "as.Formula",
   "Formula",
   "model.part"
 )
