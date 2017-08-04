@@ -12,34 +12,52 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   ## for gamlss.family function: turn into gamlss. family object
   if(is.function(family)) family <- family()
   
-  resp.name <- as.character(formula[2])
+  
   np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   
   # check input arguments
   type.tree <- match.arg(type.tree, c("mob", "ctree"))
-  # if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
+  if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   
   m <- match.call(expand.dots = FALSE)
-  # m$drop.unused.levels <- TRUE
+  #m$drop.unused.levels <- TRUE
   
-  ## FIX ME: doesn't work for ctree
   ## formula
-  #oformula <- as.formula(formula)
-  #formula <- as.Formula(formula)
-  #if(length(formula)[2L]  >= 2L) {
-  #  stop("formula can have only one RHS consisting of the partitioning variables") 
-  #}
-  #if(length(formula)[1L]  >= 2L) {
-  #  stop("formula can only have one LHS consisting of the response variable")
-  #}
-  #m$formula <- formula
+  oformula <- as.formula(formula)
+  formula <- as.Formula(formula)
+  if(length(formula)[2L] > 1L) {
+    formula <- Formula(formula(formula, rhs = 2L))  
+    ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
+  }
+  
+  m$formula <- formula
+  
+  #store modelframe separately
+  mf <- m
+  mfnames <- match(c("formula", "data", "na.action"), names(mf), 0L)
+  mf <- mf[c(1L, mfnames)]
+  
+  ## evaluate model.frame
+  mf[[1L]] <- as.name("model.frame")
+  mf <- eval(mf, parent.frame())
+  
+  ## extract terms, model matrix, response
+  mt <- terms(formula, data = data)
+  mtZ <- terms(formula, data = data, rhs = 1L)
+  attributes(mtZ)$intercept <- 0
+  Y <- model.response(mf, "numeric")
+  Z <- model.matrix(mtZ, mf)
+  
+
+  
   
   if(type.tree == "mob") {
     
     # select arguments for mob and put them in the right order
-    mo <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "control"), names(m), 0L)
-    m <- m[c(1L, mo)]
+    mnames <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "control"), names(m), 0L)
+    m <- m[c(1L, mnames)]
     
     ## glue code for calling distfit() with given family in mob()
     dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
@@ -102,7 +120,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     rval <- eval(m, parent.frame())
     
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
-    rval$fitted$`(response)` <- data[,paste(formula[[2]])]
+    rval$fitted$`(response)` <- Y    ## FIX ME: now returns transformed response (if there is a transformation in formula)
     rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
     rval$loglik <- logLik(rval)
@@ -112,23 +130,48 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   if(type.tree == "ctree") {
     
     # select arguments for ctree and put them in the right order
-    mo <- match(c("formula", "data", "weights", "subset", "offset", "cluster", "na.action", "control"), names(m), 0L)
-    m <- m[c(1L, mo)]
+    mnames <- match(c("formula", "data", "weights", "subset", "offset", "cluster", "na.action", "control"), names(m), 0L)
+    m <- m[c(1L, mnames)]
     
     ## wrapper function to apply distfit in ctree
     ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
       
       if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
-      if(!(is.numeric(formula[[3]]))) {
-        #print(formula)
-        stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
+      
+      cl <- match.call()
+      if(missing(data)) data <- environment(formula)
+      mf <- match.call(expand.dots = FALSE)
+      mfnames <- match(c("formula", "data"), names(mf), 0L)
+      mf <- mf[c(1L, mfnames)]
+      mf$drop.unused.levels <- TRUE
+      
+      ## formula
+      oformula <- as.formula(formula)
+      formula <- as.Formula(formula)
+      if(length(formula)[2L] > 2L) {
+        formula <- Formula(formula(formula, rhs = 2L))  
+        ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+        warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
       }
+      
+      mf$formula <- formula
+      
+      ## evaluate model.frame
+      mf[[1L]] <- as.name("model.frame")
+      mf <- eval(mf, parent.frame())
+      
+      ## extract terms, model matrix, response
+      mt <- terms(formula, data = data)
+      mtZ <- terms(formula, data = data, rhs = 1L)
+      attributes(mtZ)$intercept <- 0
+      Y <- model.response(mf, "numeric")
+      Z <- model.matrix(mtZ, mf)
       
       # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
       
       modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
 
-        ys <- data[subset,resp.name]
+        ys <- Y[subset]
         subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
         start <- info$coefficients
@@ -202,7 +245,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     
     # get coefficients for terminal nodes:
     # first iteration out of loop:
-    model1 <- distfit(y = data[(id_tn[1]==pred_tn),resp.name], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+    model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
                      estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
@@ -215,16 +258,16 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     coefficients_par[1,] <- model1$par
     # coefficients_eta[1,] <- model1$eta
     
-    loglik <- sum(model1$ddist(data[(id_tn[1]==pred_tn),resp.name], log = TRUE))
+    loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
     
     if(n_tn>1){
       for(i in (2:n_tn)){
-        model <- distfit(y = data[(id_tn[i]==pred_tn),resp.name], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+        model <- distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                          vcov = FALSE, type.hessian = "analytic", 
                          estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
-        loglik <- loglik + sum(model$ddist(data[(id_tn[i]==pred_tn),resp.name], log = TRUE))
+        loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
       }
     }
     
@@ -241,7 +284,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   #rval$info$family <-  family$family.name
   #rval$info$familylist <- family
   rval$info$ocontrol <- ocontrol
-  rval$info$formula <- rval$info$call$formula
+  rval$info$formula <- m$formula
   rval$info$censpoint <- censpoint
   rval$info$cens <- cens
   
@@ -382,14 +425,106 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
 
 
 ## FIX: adapt for disttree_mob
-## plot.disttree <- function(x, terminal_panel = node_histogram,
-##   tp_args = list(...), tnex = NULL, drop_terminal = NULL, ...)
-## {
-##   if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L
-##   if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
-##   partykit::plot.modelparty(x, terminal_panel = terminal_panel,
-##     tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
-## }
+# argument 'type' can be "density" (FIX), "coef" and "hist" (FIX)
+#plot.disttree <- function(x, type = "coef",
+#   tp_args = list(...), tnex = NULL, drop_terminal = NULL, ...)
+# {
+#  if(type == "density"){
+#    node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
+#                              main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
+#                              fill = "lightgrey", col = "black", lwd = 0.5, ...) {
+#      yobs <- tree$data[,as.character(tree$info$formula[[2]])]
+#      ylines <- 1.5
+#      if (is.null(xscale)) xscale <- c(-5.1,50)
+#      if (is.null(yscale)) yscale <- c(-0.05,0.25)
+#      xr <- xscale
+#      yr <- yscale
+#      
+#      if (horizontal) {
+#        yyy <- xscale
+#        xscale <- yscale
+#        yscale <- yyy
+#      }
+#      
+#      rval <- function(node) {
+#        yrange <- seq(from = -20, to = 200)/4
+#        ydens <- node$info$object$ddist(yrange)
+#        
+#        top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
+#                                                widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
+#                                                heights = unit(c(1, 1), c("lines", "null"))), 
+#                           width = unit(1, "npc"), 
+#                           height = unit(1, "npc") - unit(2, "lines"), 
+#                           name = paste("node_density",node$id, sep = ""))
+#        pushViewport(top_vp)
+#        grid.rect(gp = gpar(fill = "white", col = 0))
+#        top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+#        pushViewport(top)
+#        mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
+#        
+#        grid.text(mainlab)
+#        popViewport()
+#        plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
+#                         xscale = xscale, yscale = yscale, 
+#                         name = paste("node_density",  node$id, "plot", sep = ""))
+#        pushViewport(plot)
+#        yd <- ydens
+#        xd <- yrange
+#        if (horizontal) {
+#          yyy <- xd
+#          xd <- yd
+#          yd <- yyy
+#          yyy <- xr
+#          xr <- yr
+#          yr <- yyy
+#          rxd <- rep(0, length(xd))
+#          ryd <- rev(yd)
+#        } else {
+#          rxd <- rev(xd)
+#          ryd <- rep(0, length(yd))
+#        }
+#        
+#        if (rug) {
+#          nodeobs <- node$info$object$y
+#          if (horizontal) {
+#            grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
+#                      default.units = "native", just = c("right", "bottom"),
+#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+#          } else {
+#            grid.rect(x = nodeobs, y = yscale[1], 
+#                      width = 0, height = abs(yscale[1]), default.units = "native", 
+#                      just = c("center", "bottom"),
+#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+#          }
+#        }
+#        
+#        
+#        grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
+#                     gp = gpar(col = "black", fill = fill, lwd = lwd))
+#        grid.xaxis()
+#        grid.yaxis()
+#        grid.rect(gp = gpar(fill = "transparent"))
+#        upViewport(2)
+#      }
+#      return(rval)
+#    }
+#    class(node_density) <- "grapcon_generator"
+#    
+#    plot.modelparty(x, tnex = 1.7, drop = TRUE,
+#         terminal_panel = node_density)
+#  }
+#  
+#  if(type == "coef") plot.modelparty(x)
+#  
+#  #if(type == "hist"){
+#  #  terminal_panel = node_histogram
+#  #  if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L
+#  #  if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
+#  #  partykit::plot.modelparty(x, terminal_panel = terminal_panel,
+#  #                            tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
+#  #}
+#   
+#}
 
 
 if(FALSE){
