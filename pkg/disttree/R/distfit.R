@@ -122,16 +122,17 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   grad <- function(eta) {
     gr <- - family$sdist(y, eta, weights = weights, sum = TRUE)
     if(any(is.na(gr))) {
-      gr[is.na(gr)] =  1.7e+308
+      gr[is.na(gr)] =  1.7e+300
       print(c(eta,"gradient = NaN"))
     } else {
       if(any(gr == -Inf)) {
-        gr[gr==-Inf] = -1.7e+308
+        gr[gr==-Inf] = -1.7e+300
         print(c(eta,"gradient = -Inf"))
       }
       if(any(gr ==  Inf)) {
-        gr[gr== Inf] =  1.7e+308
+        gr[gr== Inf] =  1.7e+300
         print(c(eta,"gradient = Inf"))
+        print(length(y))
       }
     }
     return(gr)
@@ -140,17 +141,28 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
   if(is.null(start) && is.null(start.eta)){
-    starteta <- family$startfun(y, weights = weights)
-    all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
-    if(any((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & all0))
-      starteta[(family$link == "log" | family$link == "logit")] <- log(0.0001)
+    if(NROW(y)>1) {
+      starteta <- family$startfun(y, weights = weights)
+    } else {
+      ## FIX ME: replacements of starting values apart from location
+      if(NROW(y)==1) starteta <- c(y, rep.int(1e-10, length(family$link)-1))
+      else warning("only 1 observation in distfit")
+    }
+    #all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
+    allequ <- (length(unique(y))==1)
+    if(any((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & allequ)){
+      starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.0001)
+      print("one node with all equal observations")
+    }
     if(any(is.na(starteta))) {
       if(all(weights == 0)) {
         print("all weights are 0")
       } else {
-        print(y)
-        print(weights)
         print("start = NaN but weights are not all 0")
+        print("y=")
+        print(y)
+        print("weights=")
+        print(weights)
       }
     # starteta <- family$startfun(y = rep(y, round(weights)))
     }
@@ -166,8 +178,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     }
     if(any(is.na(starteta))) {
       warning("NAs in starteta")
+      print("y=")
       print(y)
+      print("weights=")
       print(weights)
+      print("start=")
       print(start)
     }
   }
@@ -178,23 +193,23 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     # (in case 'method' is handed over via '...' it is not set as an argument)
     if(is.null(cl$method)) {
       opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol, ...))
+                       hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
     } else {
       opt <- try(optim(par = starteta, fn = nll, gr = grad,
-                       hessian = (type.hessian == "numeric"), control = ocontrol, ...))
+                       hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
     }
     if(inherits(opt, "try-error")) {
       if(method != "L-BFGS-B") method <- "L-BFGS-B"
       warning("Error in 'optim()' for given method and additional arguments in '...', 
               optimization restarted with 'L-BFGS-B' and additional arguments ignored")
       opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol))
+                       hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'BFGS' and additional argumetns ignored")
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                         hessian = (type.hessian == "numeric"), control = ocontrol))
+                         hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
         if(inherits(opt, "try-error")) {
           warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'Nelder-Mead' and additional argumetns ignored")
