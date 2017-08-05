@@ -1,0 +1,16 @@
+bibentry(bibtype = "Article",
+  title        = "Heterogeneity and Spatial Dependence of Regional Growth in the {EU}: A Recursive Partitioning Approach",
+  author       = c(person("Martin", "Wagner"),
+                   person("Achim", "Zeileis", email = "Achim.Zeileis@R-project.org")),
+  journal      = "German Economic Review",
+  year         = "2017",
+  volume       = "Forthcoming",
+  url          = "https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2017.pdf",
+
+  header       = "To cite lagsarlmtree in publications use:",
+  textVersion  =
+  paste("Martin Wagner, Achim Zeileis (2017).",
+        "Heterogeneity and Spatial Dependence of Regional Growth in the EU: A Recursive Partitioning Approach.",
+        "German Economic Review, Forthcoming.",
+        "URL https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2017.pdf")
+)

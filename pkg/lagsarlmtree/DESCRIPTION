@@ -1,7 +1,7 @@
 Package: lagsarlmtree
 Title: Spatial Lag Model Trees
-Date: 2017-05-14
-Version: 0.1-0
+Date: 2017-08-05
+Version: 0.1-1
 Authors@R: c(person(given = "Martin", family = "Wagner", role = "aut", email = "mwagner@statistik.tu-dortmund.de"),
 	     person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org"))
 Description: Model-based linear model trees adjusting for spatial correlation using a

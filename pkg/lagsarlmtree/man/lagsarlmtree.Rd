@@ -87,7 +87,8 @@ The function returns a list with the following objects:
 \references{ 
   Wagner M, Zeileis A (2017).
     Heterogeneity and Spatial Dependence of Regional Growth in the EU: A Recursive Partitioning Approach.
-    Unpublished manuscript.
+    German Economic Review, Forthcoming.
+    \url{https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2017.pdf}
 }
 
 \examples{
