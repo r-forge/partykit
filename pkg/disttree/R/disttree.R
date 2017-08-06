@@ -34,24 +34,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   
   m$formula <- formula
   
-  #store modelframe separately
-  mf <- m
-  mfnames <- match(c("formula", "data", "na.action"), names(mf), 0L)
-  mf <- mf[c(1L, mfnames)]
-  
-  ## evaluate model.frame
-  mf[[1L]] <- as.name("model.frame")
-  mf <- eval(mf, parent.frame())
-  
-  ## extract terms, model matrix, response
-  mt <- terms(formula, data = data)
-  mtZ <- terms(formula, data = data, rhs = 1L)
-  attributes(mtZ)$intercept <- 0
-  Y <- model.response(mf, "numeric")
-  Z <- model.matrix(mtZ, mf)
-  
 
-  
   
   if(type.tree == "mob") {
     
@@ -120,7 +103,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     rval <- eval(m, parent.frame())
     
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
-    rval$fitted$`(response)` <- Y    ## FIX ME: now returns transformed response (if there is a transformation in formula)
+    rval$fitted$`(response)` <- model.response(rval$data)
     rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
     rval$loglik <- logLik(rval)
@@ -161,11 +144,11 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
       mf <- eval(mf, parent.frame())
       
       ## extract terms, model matrix, response
-      mt <- terms(formula, data = data)
-      mtZ <- terms(formula, data = data, rhs = 1L)
-      attributes(mtZ)$intercept <- 0
+      #mt <- terms(formula, data = data)
+      #mtZ <- terms(formula, data = data, rhs = 1L)
+      #attributes(mtZ)$intercept <- 0
       Y <- model.response(mf, "numeric")
-      Z <- model.matrix(mtZ, mf)
+      #Z <- model.matrix(mtZ, mf)
       
       # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
       
@@ -243,7 +226,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
     
     if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
     
-    # get coefficients for terminal nodes:
+    ## get coefficients for terminal nodes:
+    Y <- rval$fitted$`(response)`
     # first iteration out of loop:
     model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
@@ -338,7 +322,7 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
       rownames(groupcoef) <- 1
     }
     pred.par <- groupcoef[paste(pred.subgroup),]
-    rownames(pred.par) <- c(1: (length(pred.par[,1])))
+    rownames(pred.par) <- c(1: (NROW(pred.par)))
     pred.par <- as.data.frame(pred.par)
     return(pred.par)
   }
