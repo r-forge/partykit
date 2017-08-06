@@ -14,7 +14,6 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   ## for gamlss.family function: turn into gamlss. family object
   if(is.function(family)) family <- family()
   
-  resp.name <- as.character(formula[2])
   np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
   nvar <- (length(formula[[3]]) + 1)/2    # number of variables (RHS minus nr of arithmetic symbols)
   
@@ -24,28 +23,64 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   
   m <- match.call(expand.dots = FALSE)
+  #m$drop.unused.levels <- TRUE
+  
+  ## formula
+  oformula <- as.formula(formula)
+  formula <- as.Formula(formula)
+  if(length(formula)[2L] > 1L) {
+    formula <- Formula(formula(formula, rhs = 2L))  
+    ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
+  }
+  
+  m$formula <- formula
+
   
   if(type.tree == "ctree") {
     
     # select arguments for cforest and put them in the right order
-    mo <- match(c("formula", "data", "weights", "subset", "offset", "cluster", 
+    mnames <- match(c("formula", "data", "weights", "subset", "offset", "cluster", 
                   "strata", "na.action", "control", "ntree", "perturb", "mtry", "applyfun", "cores"), names(m), 0L)
-    m <- m[c(1L, mo)]
+    m <- m[c(1L, mnames)]
+    
     
     ## wrapper function to apply distfit in cforest
     ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
       
       if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
-      if(!(is.numeric(formula[[3]]))) {
-        #print(formula)
-        stop("covariates can only be used as splitting variables (formula has to be of type y~1|x or y~0|x)")
+      
+      cl <- match.call()
+      if(missing(data)) data <- environment(formula)
+      
+      mf <- match.call(expand.dots = FALSE)
+      mfnames <- match(c("formula", "data"), names(mf), 0L)
+      mf <- mf[c(1L, mfnames)]
+      mf$drop.unused.levels <- TRUE
+      
+      ## formula
+      oformula <- as.formula(formula)
+      formula <- as.Formula(formula)
+      if(length(formula)[2L] > 2L) {
+        formula <- Formula(formula(formula, rhs = 2L))  
+        ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+        warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
       }
+      
+      mf$formula <- formula
+      
+      ## evaluate model.frame
+      mf[[1L]] <- as.name("model.frame")
+      mf <- eval(mf, parent.frame())
+      
+      ## extract response
+      Y <- model.response(mf, "numeric")
       
       # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
       
       modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
         
-        ys <- data[subset,resp.name]
+        ys <- Y[subset]
         subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
         start <- info$coefficients
@@ -271,23 +306,21 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     # extract weights
     w <- predict.cforest(rval, type = "weights", OOB = fitted.OOB)
     
+    Y <- rval$fitted$`(response)`
+    
     for(i in 1:nrow(data)){
       wi <- w[,i]
       # personalized model for observation data[i,]
-      pm <-  distfit(data[,resp.name], family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+      pm <-  distfit(Y, family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
-      loglik[i,] <- pm$ddist(data[i,resp.name], log = TRUE)
-      # logscore[i,] <- pm$familylist$sdist(data[i,resp.name], eta = coef(pm, type = "link"), sum = FALSE)
+      loglik[i,] <- pm$ddist(Y[i], log = TRUE)
+      # logscore[i,] <- pm$familylist$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
     }
     
     if(is.null(weights) || (length(weights)==0L || is.function(weights))) weights <- numeric(nrow(data)) + 1
-    rval$fitted <- as.data.frame(weights, nrow = length(weights))
-    colnames(rval$fitted) <- "(weights)"
-    colnames(fitted) <- "(fitted.response)"
-    rval$fitted$`(response)` <- data[,resp.name]
+    rval$fitted$`(weights)` <- weights
     rval$fitted$`(fitted.response)` <- fitted
-    #colnames(rval$fitted) <- c("(weights)", "(response)", "(fitted.response)")
     
     
     names(fitted.par) <- names(coef(pm, type = "parameter"))
@@ -306,6 +339,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   rval$info$formula <- formula
   rval$info$cens <- cens
   rval$info$censpoint
+  #rval$data <- mf
   
   class(rval) <- c("distforest", class(rval))
   return(rval)
@@ -369,8 +403,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       nw <- w
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      resp.name <- as.character(object$info$call$formula[2])
-      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
+      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
       pred.val1 <- predict(pm, type = "response")
         
       pred.val <- data.frame(idx = 1:nrow(nd))
@@ -380,7 +413,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
+          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
           pred.val[i,] <- predict(pm, type = "response")
         }
       }
@@ -397,8 +430,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      resp.name <- as.character(object$info$call$formula[2])
-      pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
+      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
       pred.par1 <- coef(pm, type = "parameter")
 
       pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = length(pred.par1)))
@@ -408,7 +440,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(object$data[,resp.name], family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
+          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
       }
@@ -426,6 +458,13 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     if(!is.null(object$loglik)) return(structure(object$loglik, df = NA, class = "logLik"))
     newdata <- data
   } 
+  
+  #store modelframe for newdata
+  mf <- model.frame(formula = object$info$formula, data = newdata)
+  
+  # extract response
+  Y <- model.response(mf, "numeric")
+  
   ll <- 0
   pred.par <- predict(object, newdata = newdata, type = "parameter")
   distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
@@ -437,7 +476,7 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     for(i in 1:(nrow(newdata))){
       par <- pred.par[i,]
       eta <-  as.numeric(distlist$linkfun(par))
-      ydata <- newdata[i,paste(object$info$formula[[2]])]
+      ydata <- Y
       if(!survival::is.Surv(ydata)) {
         if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
         if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
@@ -448,7 +487,7 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     for(i in 1:(nrow(newdata))){
       par <- pred.par[i,]
       eta <-  as.numeric(distlist$linkfun(par))
-      ll <- ll + distlist$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta,  log=TRUE)
+      ll <- ll + distlist$ddist(Y[i], eta = eta,  log=TRUE)
     }
   }
   return(structure(ll, df = NA, class = "logLik"))
