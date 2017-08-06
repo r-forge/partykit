@@ -138,6 +138,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     return(gr)
   }
   
+  # check if all observations are equal
+  allequ <- (length(unique(y))==1)
   
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
   if(is.null(start) && is.null(start.eta)){
@@ -145,11 +147,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       starteta <- family$startfun(y, weights = weights)
     } else {
       ## FIX ME: replacements of starting values apart from location
-      if(NROW(y)==1) starteta <- c(y, rep.int(1e-10, length(family$link)-1))
-      else warning("only 1 observation in distfit")
+      if(NROW(y)==1){ 
+        starteta <- c(y, rep.int(1e-10, length(family$link)-1))
+        warning("only 1 observation in distfit")
+      } else warning("no observation in distfit")
     }
     #all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
-    allequ <- (length(unique(y))==1)
     if(any((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & allequ)){
       starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.0001)
       print("one node with all equal observations")
@@ -297,8 +300,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # each column represents one distribution parameter (1.col -> dldm * dmdpar = "dldeta.mu", 2.col -> dldd * dddpar = "dldeta.sigma", ...)
   # (first-order partial derivatives of the (positive) log-likelihood function)
   if(estfun) {
+    ef <- if(allequ) {
+      matrix(0, ncol = length(eta), nrow = ny) 
+    } else { 
     # estfun for link coefficients eta
-    ef <- weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
+    weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
+    }
   } else {
     ef <- NULL                    
   }
