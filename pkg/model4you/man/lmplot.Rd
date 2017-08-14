@@ -4,7 +4,8 @@
 \alias{lmplot}
 \title{Density plot for a given lm model}
 \usage{
-lmplot(mod, data = NULL, densest = FALSE, theme = theme_classic())
+lmplot(mod, data = NULL, densest = FALSE, theme = theme_classic(),
+  yrange = NULL)
 }
 \arguments{
 \item{mod}{A model of class lm.}

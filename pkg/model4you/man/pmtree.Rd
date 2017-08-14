@@ -2,7 +2,7 @@
 % Please edit documentation in R/pmtree.R
 \name{pmtree}
 \alias{pmtree}
-\title{Compute model-based forest from model.}
+\title{Compute model-based tree from model.}
 \usage{
 pmtree(object, data = NULL, zformula = ~., control = ctree_control(),
   coeffun = coef, ...)

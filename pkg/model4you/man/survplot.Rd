@@ -4,7 +4,7 @@
 \alias{survplot}
 \title{Survival plot for a given survreg model}
 \usage{
-survplot(mod, data = NULL, theme = theme_classic())
+survplot(mod, data = NULL, theme = theme_classic(), yrange = NULL)
 }
 \arguments{
 \item{mod}{A model of class survreg.}
