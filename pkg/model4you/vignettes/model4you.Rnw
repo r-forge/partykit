@@ -2,6 +2,12 @@
 \usepackage{amsmath,thumbpdf}
 \usepackage{subfig}
 
+%\VignetteIndexEntry{model4you: Stratified and personalised treatment effects in R}
+%\VignetteDepends{knitr, ggplot2, gridExtra, ggbeeswarm}
+%\VignetteEngine{knitr::knitr}
+%\VignetteKeywords{model-based recursive partitioning, tree, random forest, treatment effect, personalised medicine}
+%\VignettePackage{model4you}
+
 \author{Achim Zeileis\\Universit\"at Innsbruck \And
         Torsten Hothorn\\Universit\"at Z\"urich}
 \Plainauthor{Achim Zeileis, Torsten Hothorn}

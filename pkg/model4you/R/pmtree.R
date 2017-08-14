@@ -1,4 +1,4 @@
-#' Compute model-based forest from model.
+#' Compute model-based tree from model.
 #'
 #' Input a parametric model and get a forest.
 #'

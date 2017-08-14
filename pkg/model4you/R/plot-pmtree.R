@@ -23,7 +23,8 @@
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export
-lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
+lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
+                   yrange = NULL) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -34,7 +35,7 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
   xdat <- unique(get_all_vars(xformula, data = data))
   ydat <- get_all_vars(yformula, data = data)
   ynam <- names(ydat) # as.character(yformula[[2]])
-  yrange <- range(ydat)
+  if(is.null(yrange)) yrange <- range(ydat)
   
   ## get density functions for each treatment group
   k <- 50
@@ -84,7 +85,8 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic()) {
 #' @importFrom survival Surv survreg
 #' @importFrom Formula as.Formula 
 #' @export
-survplot <- function(mod, data = NULL, theme = theme_classic()) {
+survplot <- function(mod, data = NULL, theme = theme_classic(),
+                     yrange = NULL) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -93,7 +95,10 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   yformula <- formula(modformula, lhs = 1, rhs = 0)
   if(is.null(data)) data <- eval(modcall$data)
   xdat <- unique(get_all_vars(xformula, data = data))
-  ymax <- max(model.frame(yformula, data = data))
+  if(is.null(yrange)) {
+    ymax <- max(model.frame(yformula, data = data))
+    yrange <- c(0, ymax)
+  }
   
   ## get survivor functions for each treatment group
   p <- seq(.01, .99, by=.02)
@@ -109,7 +114,7 @@ survplot <- function(mod, data = NULL, theme = theme_classic()) {
   xnam <- attr(terms(xformula), "term.labels")
   ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam, 
                                color = xnam)) + 
-    geom_line() + coord_cartesian(xlim = c(0, ymax)) + 
+    geom_line() + coord_cartesian(xlim = yrange) + 
     xlab(as.character(yformula[[2]])[2]) + 
     theme
 }
@@ -158,6 +163,12 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
   mod <- obj$info$object
   wterminals <- predict(obj, type = "node")
   dat <- obj$data
+  mod <- obj$info$object
+  modcall <- getCall(mod)
+  modformula <- as.Formula(eval(modcall$formula))
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
+  ydat <- get_all_vars(yformula, data = dat)
+  yrange <- range(ydat)
   
   ### panel function for the inner nodes
   rval <- function(node, .nid = nid) {  
@@ -198,7 +209,8 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
                        width = unit(0.95, "npc"),
                        height = unit(0.95, "npc"))
     pushViewport(plotvp)
-    pl <- plotfun(nmod, data = subset(dat, (wterminals == id_node(node))), ...)
+    pl <- plotfun(nmod, data = subset(dat, (wterminals == id_node(node))), 
+                  yrange = yrange, ...)
     print(pl, vp = plotvp)
     popViewport()
     
