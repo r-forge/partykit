@@ -12,6 +12,9 @@ survplot(mod, data = NULL, theme = theme_classic(), yrange = NULL)
 \item{data}{optional data frame. If NULL the data stored in mod is used.}
 
 \item{theme}{A ggplot2 theme.}
+
+\item{yrange}{Range of the y variable to be used for plotting. 
+If NULL it will be 0 to max(y).}
 }
 \description{
 Can be used on its own but is also useable as plotfun in 

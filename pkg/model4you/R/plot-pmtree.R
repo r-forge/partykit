@@ -9,6 +9,8 @@
 #' @param densest should additional to the model density kernel density estimates
 #'  (see \code{\link[ggplot2]{geom_density}}) be computed?
 #' @param theme A ggplot2 theme.
+#' @param yrange Range of the y variable to be used for plotting. 
+#'  If NULL the range in the data will be used.
 #'
 #' @examples 
 #' ## exmaple taken from ?lm
@@ -74,6 +76,8 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 #' @param mod A model of class survreg.
 #' @param data optional data frame. If NULL the data stored in mod is used.
 #' @param theme A ggplot2 theme.
+#' @param yrange Range of the y variable to be used for plotting. 
+#'  If NULL it will be 0 to max(y).
 #'
 #' @examples
 #' if(require("survival")) {
