@@ -26,7 +26,8 @@ Suggests:
     psychotools,
     strucchange,
     plyr,
-    knitr
+    knitr,
+    ggbeeswarm
 License: GPL-2 | GPL-3
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
