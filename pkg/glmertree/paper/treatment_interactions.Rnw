@@ -52,16 +52,16 @@ to thank Prof.~Pim Cuijpers, Prof.~Jeanne Miranda, Dr.~Boadie Dunlop, Prof.~Rob 
 \section{Abstract}
 Identification of subgroups of patients for whom treatment A is more effective than treatment B, and vice versa, is of key importance to the development of personalized medicine. Tree-based algorithms are helpful tools for the  detection of such interactions, but none of the available algorithms allow for taking into account clustered or nested dataset structures, which are particularly common in psychological research. Therefore, we propose the generalized linear mixed-effects model tree (GLMM tree) algorithm, which allows for the detection of treatment-subgroup interactions, while accounting for the clustered structure of a dataset. The algorithm uses model-based recursive partitioning to detect treatment-subgroup interactions, and a GLMM to estimate the random-effects parameters. In a simulation study, GLMM trees show higher accuracy in recovering treatment-subgroup interactions, higher predictive accuracy, and lower Type-II error rates than linear-model based recursive partitioning and mixed-effects regression trees. Also, GLMM trees show somewhat higher predictive accuracy than linear mixed-effects models with pre-specified interaction effects, on average. We illustrate the application of GLMM trees on an individual patient-level data meta-analysis on treatments for depression. We conclude that GLMM trees are a promising exploratory tool for the detection of treatment-subgroup interactions in clustered datasets.\\
 \\
-\textit{Keywords}: model-based recursive partitioning, treatment-subgroup interactions, random effects, generalized linear mixed-effects model, classification and regression trees
+\textit{Keywords}: model-based recursive partitioning, treatment-subgroup interactions, mixed-effects models, classification and regression trees
 
 
 \section{Introduction}
 
 In research on the efficacy of treatments for somatic and psychological disorders, the one-size-fits-all paradigm is slowly losing ground, and personalized or stratified medicine is becoming increasingly important. Stratified medicine presents the challenge of discovering which patients respond best to which treatments. This can be referred to as the detection of treatment-subgroup interactions \cite<e.g., >{DoovyDuss14}. Often, treatment-subgroup interactions are studied using linear models, such as factorial analysis of variance techniques, in which potential moderators have to be specified a-priori, have to be checked one at a time, and continuous moderator variables have to be discretized. This may hamper identification of which treatment works best for whom, especially when there are no a-priori hypotheses about treatment-subgroup interactions. As noted by \citeA{KreayFran06}, there is a need for methods that generate instead of test such hypotheses.
 
-Tree-based methods are such hypothesis-generating methods. Tree-based methods, also known as recursive partitioning methods, split observations repeatedly into groups so that they become increasingly similar with respect to the outcome within each group. Several tree-based methods take the mean of a continuous dependent variable or the majority class of a categorical dependent variable as the outcome, one of the earliest and most well-know examples being the classification and regression tree (CART) approach of \citeA{BreiyFrie84}. Other tree-based methods take the estimated parameters of a more complex model, of which the RECPAM approach of \citeA{Ciam91} is the earliest example.
+Tree-based methods are such hypothesis-generating methods. Tree-based methods, also known as recursive partitioning methods, split observations repeatedly into groups so that they become increasingly similar with respect to the outcome within each group. Several tree-based methods take the mean of a continuous dependent variable or the majority class of a categorical dependent variable as the outcome, one of the earliest and most well-know examples being the classification and regression tree (CART) approach of \citeA{BreiyFrie84}. Other tree-based methods take the estimated parameters of a more complex model, of which the RECPAM (recursive partition and amalgamation) approach of \citeA{Ciam91} is the earliest example.
 
-Due to the recursive nature of the splitting, the rectangular regions of a recursive partition can be graphically depicted as nodes in a decision tree, as shown in the artificial example in Figure~\ref{fig:exampletree}. The partition in Figure~\ref{fig:exampletree} is rather simple, based on the values of two predictor variables: duration and anxiety. The resulting tree has a depth of two, as the longest path travels along two splits. Each of the splits in the tree is defined by a splitting variable and value. The first split in the tree separates the observations into two subgroups, based on the duration variable and a splitting value of 8, yielding two rectangular regions, represented by node~2 and node~3. As the observations in node~2 are not further split, node~2 is a terminal node. Node~3 is an inner node, as the observations in this node are further split into nodes~4 and~5, based on the anxiety variable.
+Due to the recursive nature of the splitting, the rectangular regions of a recursive partition can be graphically depicted as nodes in a decision tree, as shown in the artificial example in Figure~\ref{fig:exampletree}. The partition in Figure~\ref{fig:exampletree} is rather simple, based on the values of two predictor variables: duration and anxiety. The resulting tree has a depth of two, as the longest path travels along two splits. Each of the splits in the tree is defined by a splitting variable and value. The first split in the tree separates the observations into two subgroups, based on the duration variable and a splitting value of eight, yielding two rectangular regions, represented by node~2 and node~5. Node~2 is an inner node, as the observations in this node are further split into terminal nodes~3 and~4, based on the anxiety variable. The observations in node~5 are not further split and this is therefore a terminal node. 
 
 If the partition in Figure~\ref{fig:exampletree} would be used for prediction of a new observation, the new observation would be assigned to one of the terminal nodes according to its values on the splitting variables. The prediction is then based on the estimated distribution of the outcome variable within that terminal node. For example, the prediction may be the node-specific mean of a single continuous variable. In the current paper, we focus on trees where the terminal nodes consist of a linear (LM) or generalized linear model (GLM), in which case the predicted value for a new observation is determined by the node-specific parameter estimates of the (G)LM, while also adjusting for random effects.
 
@@ -97,7 +97,7 @@ fig1 <- party(
 plot(fig1)
 @
 }
-\caption{\small Example of a recursive partition. In the left panel, the partition is depicted as a set of rectangular areas. In the right panel, the same partition is depicted as a decision tree.}
+\caption{\small Example recursive partition defined by two partitioning variables (duration and anxiety). In the left panel, the partition is depicted as a set of rectangular areas. In the right panel, the same partition is depicted as a tree.}
 \label{fig:exampletree}
 \end{figure}
 
@@ -107,7 +107,7 @@ In many instances, researchers may want to detect treatment-subgroup interaction
 
 The GLMM tree algorithm builds on model-based recursive partitioning (MOB, \citeNP{ZeilyHoth08}), which offers a flexible framework for subgroup detection. For example, GLM-based MOB has been applied to detect treatment-subgroup interactions for the treatment of depression \cite{DrieySmit16} and amyotrophic lateral sclerosis \cite{SeibyZeil15}. In contrast to other purely tree-based methods \cite<e.g., >{ZeilyHoth08, SuyTsai09, DussyDoov16}, GLMM trees allow for taking into account the clustered structure of datasets. In contrast to previously suggested regression trees with random effects \cite<e.g., >{HajjyBell11,SelaySimo12}, GLMM trees allow for treatment effect estimation, with continuous as well as non-continuous response variables.
 
-The remainder of this paper is structured into four sections: In the first section, we introduce the GLMM tree algorithm using an artificial motivating dataset with treatment-subgroup interactions. In the second section, we compare the performance of GLMM trees with that of three other methods: MOB trees without random effects, mixed-effects regression trees (MERTs) and linear mixed-effects models with pre-specified interactions. In the third section, we apply the GLMM tree algorithm to an existing dataset of a patient-level meta-analysis on the effects of psycho- and pharmacotherapy for depression. In the fourth and last section we summarize the results and discuss limitations and directions for future research. A tutorial on how to fit GLMM trees using the R package \verb|glmertree| is included as supplementary material. In the tutorial, the artificial motivating dataset is used, allowing users to recreate the trees and models to be fitted in the next section.
+The remainder of this paper is structured into four sections: In the first section, we introduce the GLMM tree algorithm using an artificial motivating dataset with treatment-subgroup interactions. In the second section, we compare the performance of GLMM trees with that of three other methods: MOB trees without random effects, mixed-effects regression trees (MERTs) and linear mixed-effects models with pre-specified interactions. In the third section, we apply the GLMM tree algorithm to an existing dataset of a patient-level meta-analysis on the effects of psycho- and pharmacotherapy for depression. In the fourth and last section we summarize the results and discuss limitations and directions for future research. In the Appendix, we provide a glossary explaining abbreviations and mathematical notation used in the current paper. Finally, a tutorial on how to fit GLMM trees using the R package \verb|glmertree| is included as supplementary material. In the tutorial, the artificial motivating dataset is used, allowing users to recreate the trees and models to be fitted in the next section.
 
 
 \section{GLMM tree algorithm}
@@ -121,10 +121,10 @@ We will use an artificial motivating dataset with treatment-subgroup interaction
 \caption{\small Summary statistics for partitioning and outcome variables in the artificial motivating dataset}
 \begin{tabular}{lcccc}
 \thickline
- & min & max & mean & sd\\
+ & min & max & $M$ & $SD$\\
 \hline
 depression & 3 & 16 & 9.12 & 2.66 \\
-age & 18 & 69 & 45 & 9.56 \\
+age & 18 & 69 & 45.00 & 9.56 \\
 anxeity & 3 & 18 &  10.26 & 3.05 \\
 duration & 1 & 17 & 6.97 & 2.90 \\
 \hline
@@ -190,7 +190,7 @@ where $x_{i}^{\top}\beta$ is the linear predictor for observation $i$ and $g$ is
 <<exampleglm, fig=TRUE, height=5, width=5>>=
 plot(exampleglm, tp_args = list(mainlab = "Full sample (N = 150)"))
 @
-\caption{\small Example of a global GLM for treatment outcomes, based on the artificial motivating dataset ($N=150$). The y-axis represent treatment outcome (post-treatment depression). The dot for Treatment~1 represents the first and the slope of the regression line represents the second element of $\beta$.}
+\caption{\small Example of a globally estimated GLM based on the artificial motivating dataset ($N=150$). The $x$-axis represents treatment group, the $y$-axis represents treatment outcome (post-treatment depression). The dot for Treatment~1 represents the first element of the fixed-effects coefficient vector $\beta$, the slope of the regression line represents the second element of $\beta$.}
 \label{fig:fixedeffects}
 \end{figure}
 
@@ -209,11 +209,11 @@ If at least one of the partitioning variables yields a $p$-value below the pre-s
 <<exampleglmtree, fig=TRUE, width=12, height=9>>=
 plot(exampleglmtree)
 @
-\caption{\small GLM tree grown on the artificial motivating dataset. Three additional covariates (pre-treatment anxiety, duration and age) were used as potential splitting variables. The y-axes in the terminal nodes represent the treatment outcome (post-treatment depression severity).}
+\caption{\small GLM tree grown on the artificial motivating dataset. The $x$-axes in the terminal nodes represent the treatment group, the $y$-axes represent the treatment outcome (post-treatment depression). Three additional covariates (pre-treatment anxiety, duration and age) were used as potential splitting variables, of which two (duration and age) were selected.}
 \label{fig:example_mobtree}
 \end{figure}
 
-The partition resulting from application of MOB can be depicted as a decision tree. If the partitioning is based on a GLM, the result is a GLM tree, with a local fixed-effects regression model in every $j$-th ($j = 1,\dots,J$) terminal node or subgroup:
+The partition resulting from application of MOB can be depicted as a decision tree. If the partitioning is based on a GLM, the result is a GLM tree, with a local fixed-effects regression model in every $j$-th ($j = 1,\dots,J$) terminal node:
 %
 \begin{equation}
 	\label{eq:fixedeffects_MOB}
@@ -242,7 +242,7 @@ Although the random-effects part of the GLMM in Equation~\ref{eq:mixedeffects} a
 	g(\mu_{i}) = x_{i}^{\top}\beta_{j} + z_{i}^{\top}b
 \end{equation}
 %
-In the GLMM tree model, the fixed effects $\beta_j$ are local parameters, their value depending on subgroup $j$, but the random effects $b$ are global. To estimate the parameters of this model, we take an approach similar to that of the mixed-effects regression tree (MERT) approach of \citeA{HajjyBell11} and \citeA{SelaySimo12}. In the MERT approach, the fixed-effects part of a GLMM is replaced by a CART tree with constant fits in the nodes, and the random-effects parameters are estimated as usual. To estimate a MERT, an iterative approach is taken, alternating between (1) assuming random effects known, allowing for estimation of the CART tree, and (2) assuming the CART tree known, allowing for estimation of the random-effects parameters. 
+In the GLMM tree model, the fixed effects $\beta_j$ are local parameters, their value depending on terminal node $j$, but the random effects $b$ are global. To estimate the parameters of this model, we take an approach similar to that of the mixed-effects regression tree (MERT) approach of \citeA{HajjyBell11} and \citeA{SelaySimo12}. In the MERT approach, the fixed-effects part of a GLMM is replaced by a CART tree with constant fits in the nodes, and the random-effects parameters are estimated as usual. To estimate a MERT, an iterative approach is taken, alternating between (1) assuming random effects known, allowing for estimation of the CART tree, and (2) assuming the CART tree known, allowing for estimation of the random-effects parameters. 
 
 
 \begin{figure}[tb!]
@@ -250,7 +250,7 @@ In the GLMM tree model, the fixed effects $\beta_j$ are local parameters, their 
 <<exampleglmmtree, fig=TRUE, width=9, height=7>>=
 plot(exampleglmmtree)
 @
-\caption{\small GLMM tree of the motivating example dataset. Three covariates (anxiety questionnaire score, duration of depressive symptoms at baseline in months) and age were used as potential splitting variables, and the clustering structure was taken into account by estimating random intercepts.}
+\caption{\small GLMM tree of the motivating example dataset. The $x$-axes represent the treatment group, the $y$-axes represent the treatment outcome (post-treatment depression). Three covariates (anxiety questionnaire score, duration of depressive symptoms at baseline in months) and age were used as potential splitting variables, and the clustering structure was taken into account by estimating random intercepts.}
 \label{fig:example_glimmertree}
 \end{figure}
 
@@ -263,7 +263,7 @@ For estimating GLMM trees, we take this approach two steps further: (1)~Instead 
 
   \item[Step 1:] Set $r = r+1$. Estimate a GLM tree using $z_{i}^{\top}\hat{b}_{(r-1)}$ as an offset.
 
-  \item[Step 2:] Fit the mixed-effects model $g(\mu_{i}) = x_{i}^{\top}\beta_{j} + z_{i}^{\top}b$ with subgroups $j(r)$ from the GLM tree estimated in Step~1. Extract posterior predictions $\hat{b}_{(r)}$ from the estimated model.
+  \item[Step 2:] Fit the mixed-effects model $g(\mu_{i}) = x_{i}^{\top}\beta_{j} + z_{i}^{\top}b$ with terminal node $j(r)$ from the GLM tree estimated in Step~1. Extract posterior predictions $\hat{b}_{(r)}$ from the estimated model.
 
   \item[Step 3:] Repeat Steps~1 and~2 until convergence.
 
@@ -296,11 +296,11 @@ In all simulation studies, the following data-generating parameters were varied:
 \item Number of potential partitioning covariates $U_1$ through $U_K$: $K=5$ and $K=15$.
 \item Intercorrelation between the potential partitioning covariates $U_1$ through $U_K$: $\rho_{U_k,U_{k'}}=0.0$, $\rho_{U_k,U_{k'}}=0.3$.
 \item Number of clusters: $M=5$, $M=10$, $M=25$.
-\item Population standard deviation (SD) of the normal distribution from which the cluster specific intercepts were drawn: $\sigma_{b}=0$, $\sigma_{b}=5$, $\sigma_{b}=10$.
+\item Population standard deviation (SD) of the normal distribution from which the cluster-specific intercepts were drawn: $\sigma_{b}=0$, $\sigma_{b}=5$, $\sigma_{b}=10$.
 \item Intercorrelation between $b$ and one of the $U_k$ variables: $b$ and all $U_k$ covariates uncorrelated, $b$ correlated with one of the $U_k$ covariates ($r = .42$).  
 \end{enumerate}
 
-Following the approach of \citeA{DussyMech14}, all partitioning covariates $U_1$ through $U_{K}$ were drawn from a multivariate normal distribution with means ${\mu_U}_1 = 10$, ${\mu_U}_2 = 30$, ${\mu_U}_4 = -40$, and ${\mu_U}_5 = 70$. Means for other potential partitioning covariates were drawn from a discrete uniform distribution on the interval $[-70,70]$. All covariates $U_1$ through $U_{15}$ had the same standard deviation: ${\sigma_U}_k = 10$.
+Following the approach of \citeA{DussyMech14}, all partitioning covariates $U_1$ through $U_{K}$ were drawn from a multivariate normal distribution with means ${\mu_U}_1 = 10$, ${\mu_U}_2 = 30$, ${\mu_U}_4 = -40$, and ${\mu_U}_5 = 70$. The means of the other potential partitioning covariates ($U_3$ and, depending on the value of $K$, also $U_6$ through $U_{15}$) were drawn from a discrete uniform distribution on the interval $[-70,70]$. All covariates $U_1$ through $U_{15}$ had the same standard deviation: ${\sigma_U}_k = 10$.
 
 To generate the cluster-specific intercepts, we partitioned the sample into $M$ equally-sized clusters, conditional on one of the variables $U_1$ through $U_5$, producing the correlations in the sixth facet of the simulation design. For each cluster, a single value $b_m$ was drawn from a normal distribution with mean 0 and the value of $\sigma_{b}$ given by the fifth facet of the simulation design. If $b$ was correlated with one of the potential partitioning variables, the correlated variable was randomly selected.
 
@@ -311,7 +311,7 @@ Due to the large number of cells in the simulation design, the most important pr
 
 \subsubsection{Software}
 
-R \cite{R} was used for data generation and analyses. The \verb|partykit| package (version 1.0-2; \citeNP{HothyZeil15, pkg:partykit}) was employed for estimating LM trees, using the \verb|lmtree| function. For estimation of LMM trees the \verb|lmertree| function of the \verb|glmertree| package (version 0.1-0; \citeNP{FokkyZeil15}; available from R-Forge) was used. The significance level $\alpha$ for the parameter instability tests was set to .05 for all trees, with a Bonferroni correction applied for multiple testing. The minimum number of observations per node in trees was set to 20 and maximum tree depth was set to three, thus limiting the number of terminal nodes to eight in every tree.
+R \cite{R} was used for data generation and analyses. The \verb|partykit| package (version 1.0-2; \citeNP{HothyZeil15, pkg:partykit}) was employed for estimating LM trees, using the \verb|lmtree| function. For estimation of LMM trees the \verb|lmertree| function of the \verb|glmertree| package (version 0.1-0; \citeNP{FokkyZeil15}; available from R-Forge) was used. The significance level $\alpha$ for the parameter instability tests was set to .05 for all trees, with a Bonferroni correction applied for multiple testing. The latter adjusts the $p$-values of the parameter stability tests, by multiplying these by the number of potential partitioning variables. The minimum number of observations per node in trees was set to 20 and maximum tree depth was set to three, thus limiting the number of terminal nodes to eight in every tree.
 
 The \verb|REEMtree| package (version 0.9.3; \citeNP{SelaySimo11}) was employed for estimating MERTs, using default settings. For estimating LMMs the \verb|lmer| function function from the \verb|lme4| package (version 1.1-7; \citeNP{BateyMeac15, pkg:lme4}) was employed, using restricted maximum likelihood (REML) estimation. The \verb|lmerTest| package (version 2.0-32; \citeNP{KuznyBroc16}) was used to assess statistical significance of fixed-effects predictors in LMMs in Study~III. The \verb|lmerTest| package calculates effective degrees of freedom and $p$-values based on Satterthwaite approximations.
 
@@ -370,14 +370,14 @@ data.frame(U1 = numeric(0), U2 = numeric(0), U5 = numeric(0))
 )
 plot(fig4, tp_args = list(FUN = identity, width = 9), tnex = 1.5)
 @
-\caption{\small Data-generating model for treatment-subgroup interactions. Parameter $d_j$ denotes the node-specific standardized mean difference between the outcomes of Treatment~1 and~2 (i.e., $\beta_{j1} / \sigma_{\epsilon}$).}
+\caption{\small Data-generating model for treatment-subgroup interactions. $U_1$, $U_2$ and $U_5$ represent the (true) partitioning variables; $\beta$ represents the (true) fixed effects, with $\beta_{j0}$ representing the intercept and $\beta_{j1}$ representing the slope; parameter $d_j$ denotes the node-specific standardized mean difference between the outcomes of Treatment~1 and~2 (i.e., $\beta_{j1} / \sigma_{\epsilon}$).}
 \label{fig:modelC}
 \end{figure}
 
 
 \paragraph{Treatment-subgroup interaction design} 
 
-For generating datasets with treatment-subgroup interactions, we used a design from \citeA{DussyMech14} which is depicted in Figure~\ref{fig:modelC}. Figure~\ref{fig:modelC} shows four subgroups, characterized by values of the partitioning variables $U_2$, and $U_1$ or $U_5$. Two of the subgroups have mean differences in treatment outcome, indicated by a non-zero value of $\beta_{j1}$, and two subgroups do not have mean differences in treatment outcome, indicated by a $\beta_{j1}$ value of 0. 
+For generating datasets with treatment-subgroup interactions, we used a design from \citeA{DussyMech14} which is depicted in Figure~\ref{fig:modelC}. Figure~\ref{fig:modelC} shows four terminal subgroups, characterized by values of the partitioning variables $U_2$, and $U_1$ or $U_5$. Two of the subgroups have mean differences in treatment outcome, indicated by a non-zero value of $\beta_{j1}$, and two subgroups do not have mean differences in treatment outcome, indicated by a $\beta_{j1}$ value of 0. 
 
 In this simulation design, some of the potential partitioning covariates are true partitioning covariates, the others are noise variable. Therefore, in addition to the \textit{General simulation design}, the following facet was added in the this study:
 
@@ -438,9 +438,10 @@ xyplot(treesize.values ~ sigmab | N + corUb, data = aggdata.size, groups = trees
        ylab = "tree size", xlab = expression(sigma[b]), par.settings = standard.theme("pdf", color = FALSE), abline = c(7,0),
        auto.key = list(space = "top", columns = 2, title = " ", cex.title = 1, lines = TRUE, points = TRUE))
 @
-\caption{\small Average tree size of LM and LMM trees. Tree size is defined as the total number of nodes in a tree. Rows represent the correlation between the random intercepts and one of the partitioning variables, columns represent sample size. The horizontal line in each graph indicates the 'true' tree size (the total number of nodes in the tree used for generating the interactions).}
+\caption{\small Average tree size of LM and LMM trees. The $y$-axes represent the average number of nodes in trees; $x$-axes represent the population standard deviation of the normal distribution from which the cluster-specific intercepts were drawn; rows represent the correlation between the random intercepts and one of the partitioning variables; columns represent sample size. The horizontal line in each graph indicates the 'true' tree size (total number of nodes in the tree used for generating the interactions).}
 \label{fig:xyplot_treesize}
 \end{figure}
+
 
 The average size of LMM trees was 7.15 nodes ($\mathrm{SD}=0.61$), whereas the average size of LM trees was 8.15 nodes ($\mathrm{SD}=2.05$), indicating that LM trees tend to involve more spurious splits than LMM trees. The effects of the most important predictors of tree size are depicted in Figure~\ref{fig:xyplot_treesize}. The average size of LMM trees was close to the true tree size in all conditions. In the absence of random effects, this was also the case for LM trees. In the presence of random effects that are correlated to a (potential) partitioning variable, LM trees start to create spurious splits, especially with larger $\sigma_b$ values. In the presence of random effects that are uncorrelated to the other variables in the model, LM trees lack power to detect treatment-subgroup interactions if sample size is small (i.e., $N=200$). With larger sample sizes, LM trees showed about the true tree size, on average. Tree size of MERTs was not assessed, as a single true tree size for MERTs could not be derived from the design in Figure~\ref{fig:modelC}.
 
@@ -457,7 +458,7 @@ print(xyplot(truetree.values ~ sigmab | N + corUb, data = aggdata.acc, groups = 
 ylab = "tree accuracy", xlab = expression(sigma[b]), par.settings = standard.theme("pdf", color = FALSE), 
 auto.key = list(space = "top", columns = 2, title = " ", cex.title = 1, lines = TRUE, points = TRUE)))
 @
-\caption{\small Tree accuracy of LM and LMM tree. Tree accuracy is defined as the proportion of datasets in which the true tree was accurately recovered. Rows represent dependence between random effects ($b$) and one of the partitioning variables $U_k$, columns represent sample size.}
+\caption{\small Tree accuracy of LM and LMM trees in simulated datasets. The $y$-axes represent the proportion of datasets in which the true tree was accurately recovered; $x$-axes represent the population standard deviation of the normal distribution from which the cluster-specific intercepts were drawn; rows represent dependence between the random intercepts ($b$) and one of the partitioning variables $U_k$; columns represent sample size.}
 \label{fig:xyplot_treeaccuracy}
 \end{figure}
 
@@ -480,9 +481,11 @@ print(xyplot(correlation.values ~ sigmab | N + treatdiff, data = aggdata.cor, gr
 type = "b", ylab = "correlation", xlab = expression(sigma[b]), par.settings = standard.theme("pdf", color = FALSE), 
 auto.key = list(space = "top", columns = 3, title = " ", cex.title = 1, lines = TRUE, points = TRUE), ylim = c(0.3, 1.1)))
 @
-\caption{\small Average predictive accuracy of LM and LMM trees. Predictive accuracy is defined as the correlation between the true and predicted treatment-effect differences. Rows represent absolute treatment-effect differences in subgroups with treatment-effect differences, columns represent sample size.}
+\caption{\small Average predictive accuracy of LM and LMM trees in simulated datasets. The $y$-axes represent the average correlation between the true and predicted treatment-effect differences; $x$-axes represent the population standard deviation of the normal distribution from which the cluster-specific intercepts were drawn; rows represent absolute treatment-effect differences in subgroups with treatment-effect differences; columns represent sample size.}
 \label{fig:xyplot_correlations}
 \end{figure}
+
+
 
 The predicted treatment-effect differences of LMM trees show an average correlation of .93 ($\mathrm{SD = .13}$) with the true differences. LM trees and MERTs show lower accuracy, with an average correlations of .88 ($\mathrm{SD}=.19$) and .75 ($\mathrm{SD}=.21$), respectively. The most important predictors of predictive accuracy are depicted in Figure~\ref{fig:xyplot_correlations}. Performance of all three algorithms improves with increasing sample size and treatment-effect differences. Furthermore, LMM trees and MERTs are not much affected by the presence and magnitude of random effects in the data. LMM trees perform most accurately in most conditions and are never outperformed by the other methods. MERTs perform the least accurate in most conditions and never outperforms the other methods, but the differences in accuracy become less pronounced with larger sample and effect sizes.
 
@@ -530,9 +533,11 @@ xyplot(treesize.valuesD ~ sigmabm | N + corUbm, data = aggdata.size, groups=tree
 type="b", ylab="Type-I error", xlab=expression(sigma[b]), par.settings=standard.theme("pdf",color=F), 
 auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T))
 @
-\caption{\small Type-I error rate of LM and LMM trees. Rows represent dependence between random effects ($b$) and one of the partitioning variables $U_k$; columns represent sample size.}
+\caption{\small Type-I error rate of LM and LMM trees in simulated datasets. The $y$-axes represent the average Type-I error (or false positive) rate, $x$-axes represent the population standard deviation of the normal distribution from which the cluster-specific intercepts were drawn represent; rows represent dependence between random intercepts ($b$) and one of the partitioning variables $U_k$; columns represent sample size.}
 \label{fig:xyplot_treesize_nointeract}
 \end{figure}
+
+
 
 In datasets without treatment-subgroup interactions, average tree size was 1.09 ($\mathrm{SD}=0.44$) for LMM trees, and 2.02 ($\mathrm{SD}=1.68$) for LM trees. The average Type-I error rate was only .04 for LMM trees, and .33 for LM trees. Main predictors of type-I error are depicted in Figure~\ref{fig:xyplot_treesize_nointeract}, which shows that LMM trees have a Type-I error rate somewhat below the pre-specified $\alpha$ level in all conditions. The same goes for LM trees, when random effects are absent, or uncorrelated to one of the partitioning covariates. When the random intercept is correlated with one of the potential partitioning covariates, the type-I error rapidly increases for LM trees. With increasing sample size or random-effects variance, LM trees will yield a larger number of spurious splits.
 
@@ -560,22 +565,29 @@ In datasets with purely continuous interactions, $\beta$ has a global value and 
 \begin{table}[tb!]
 \small
 \caption{\small Fixed-effects terms in simulations with continuous and combined continuous and piecewise interaction designs.}
-\begin{tabular}{lcccccc}
+\begin{tabular}{lccccccc}
 \thickline
-Term					&	$\beta_3$&	$\beta_4$		&	$\beta_6$&	$\beta_7$		&&	$\beta$		\\ \hline
-intercept				&	27		&	27		&	27		&	27		&&	27		\\
-$U_2$					&	.1		&	.1		&	.1		&	.1		&&	.1		\\
-$U_2 \cdot U_1$ 			&	$-$.357		&	0		&	0		&	0		&&	$-$.357		\\
-$U_2 \cdot U_5$	 			&	0		&	0		&	0		&	.357		&&	.357		\\
-$U_2 \cdot U_1 \cdot \mbox{treatment}$	&	$-$.151		&	0		&	0		&	0		&&	$-$.151		\\
-$U_2 \cdot U_5 \cdot \mbox{treatment}$	&	0		&	0		&	0		&	.151		&&	.151		\\ \hline
-\multicolumn{7}{l}{\footnotesize{\emph{Note:} Subscripted $\beta$ values refer to the terminal nodes}}\\	
-\multicolumn{7}{l}{\footnotesize in Figure~\ref{fig:modelC} for the combined piecewise and continuous}\\
-\multicolumn{7}{l}{\footnotesize interaction design; $\beta$ without subscript refers to the global}\\
-\multicolumn{7}{l}{\footnotesize coefficients in the continuous interaction design.}\\
+Term					                          &&$\beta$  &&$\beta_3$ &$\beta_4$&$\beta_6$&$\beta_7$	\\ 
+\hline
+intercept				                        && 27  && 27		& 27	&	27  & 27   	\\
+$U_2$					                          &&	 0.100  &&  0.100		&  0.100	&	 0.100	&	 0.100  	\\
+$U_2 \cdot U_1$ 			                  &&$-0.357$  &&$-0.357$	&  0	&	 0	&	 0  	\\
+$U_2 \cdot U_5$	 			                  &&	 0.357  &&  0		&  0	&	 0	&	 0.357   	\\
+$U_2 \cdot U_1 \cdot \mbox{treatment}$	&&$-0.151$  &&$-0.151$  &  0 	&	 0	&	 0	 	\\
+$U_2 \cdot U_5 \cdot \mbox{treatment}$	&&	 0.151  &&  0		&  0	&	 0	&	 0.151	 	\\ 
+\hline
+\multicolumn{8}{l}{\footnotesize{\emph{Note:} All values in the table represent fixed-effects linear regression}}\\
+\multicolumn{8}{l}{\footnotesize{coefficients. The intercept represent the first value of $\beta$ or $\beta_j$, values in}}\\
+\multicolumn{8}{l}{\footnotesize{the rows below represent the slopes for each of the main or interaction}}\\
+\multicolumn{8}{l}{\footnotesize{effect described in the 'Term' column. Subscripted $\beta$ values refer to}}\\
+\multicolumn{8}{l}{\footnotesize{the terminal nodes in Figure~\ref{fig:modelC} for the combined piecewise and}}\\
+\multicolumn{8}{l}{\footnotesize{continuous interaction design; $\beta$ without subscript refer to the global}}\\
+\multicolumn{8}{l}{\footnotesize{coefficients in the continuous interaction design.}}\\
 \end{tabular}
 \label{tab:continuous_terms}
 \end{table}
+
+
 
 Furthermore, in this simulation study, the number of cells in the design was reduced by limiting the fourth facet of the data-generating design to a single level ($M=25$ clusters), as Study~I and II indicated no effects of the number of clusters. The fifth facet of the data-generating design was limited to two levels ($\sigma_b = 2.5$ and $\sigma_b = 7.5$). For every cell of the design, 50 datasets were generated.
 
@@ -606,7 +618,7 @@ ylab="correlation", xlab="interaction type", par.settings=standard.theme("pdf",c
 auto.key=list(space="top", columns=2, title=" ", cex.title=1,lines=T, points=T),
 scales=list(y=list(limits = c(-.1,1.1))))
 @
-\caption{\small Average predictive accuracy of LMMs and LMM trees. Predictive accuracy of trees is defined as the correlation between the true and predicted differences between Treatment~1 and~2. Columns represent sample size, rows represent the number of covariates.}
+\caption{\small Average predictive accuracy of LMMs and LMM trees in simulated datasets. $y$-axes represent the correlation between the true and predicted differences between Treatment~1 and~2; $x$-axes represent the type of interaction; rows represent the number of covariates; columns represent sample size.}
 \label{fig:xyplot_correlation_pw}
 \end{figure}
 
@@ -770,11 +782,32 @@ plot(lmtree_app, tnex = 3.5, terminal_panel = combine_panels(
   party2 = GLMtree_app_eff
 ))
 @
-\caption{\small LM tree for prediction of treatment outcomes. Upper terminal nodes: y-axes represent post-treatment HAM-D scores, x-axes represent treatment levels (cognitive behavior therapy, CBT vs.\ pharmacotherapy, PHA). Lower terminal nodes: Subgroup-specific descriptive statistics.}
+\caption{\small LM tree for prediction of treatment outcomes in the IPDMA dataset. The selected partitioning variables are level of education and the presence of a comorbid anxiety disorder. Upper terminal nodes: $y$-axes represent post-treatment HAM-D scores, $x$-axes represent treatment levels (cognitive behavior therapy, CBT vs.\ pharmacotherapy, PHA). Lower terminal nodes represent subgroup-specific descriptive statistics.}
 \label{fig:lmtree_C&W}
 \end{figure}
 
-Figure~\ref{fig:lmtree_C&W} and Figure~\ref{fig:lmertree_C&W} present the LM and LMM trees fitted on the IPDMA data. The LM tree (Figure~\ref{fig:lmtree_C&W}) selected level of education as the first partitioning variable, and presence of a comorbid anxiety disorder as a second partitioning variable, for observations with a higher level of education. By taking into account study-specific intercepts, the LMM tree (Figure~\ref{fig:lmertree_C&W}) indicates that the first split in the LM tree may be spurious. The LMM tree selected presence of a comorbid anxiety disorder as the only partitioning variable. The terminal nodes of Figure~\ref{fig:lmertree_C&W} show only a single treatment-subgroup interaction: for patients without a comorbid anxiety disorder, CBT and PHA provide more or less the same reduction in HAM-D scores (Cohen's $d = 0.05$). For patients with a comorbid anxiety disorder, PHA provides a greater reduction in HAM-D scores (Cohen's $d = 0.39$). The estimated intraclass correlation coefficient for the LMM tree was .05. 
+Figures~\ref{fig:lmtree_C&W} and \ref{fig:lmertree_C&W} present the LM and LMM trees fitted on the IPDMA data. The LM tree (Figure~\ref{fig:lmtree_C&W}) selected level of education as the first partitioning variable, and presence of a comorbid anxiety disorder as a second partitioning variable. By taking into account study-specific intercepts, the LMM tree (Figure~\ref{fig:lmertree_C&W}) indicates that the first split in the LM tree may be spurious and selected presence of a comorbid anxiety disorder as the only partitioning variable. The terminal nodes of Figure~\ref{fig:lmertree_C&W} show a single treatment-subgroup interaction: for patients without a comorbid anxiety disorder, CBT and PHA provide more or less the same reduction in HAM-D scores (Cohen's $d = 0.05$). For patients with a comorbid anxiety disorder, PHA provides a greater reduction in HAM-D scores (Cohen's $d = 0.39$). The estimated intraclass correlation coefficient for the LMM tree was .05. 
+
+The study-specific distributions of educational level and treatment outcome may explain why the LMM tree did not select level of education as a partitioning variable. Most (55) of the 74 observations with level of education $\leq 1$ were part of a single study, which showed a markedly lower mean level of education ($M = 2.57$, $SD = 1.02$; 128 observations) compared to the other studies ($M = 3.78$, $SD = 0.53$; 566 observations), as well as a markedly higher mean level of post-treatment HAM-D scores ($M = 11.20$, $SD = 6.87$) compared to the other studies ($M = 7.78$, $SD = 5.95$).
+
+
+%\begin{table}
+%\caption{Means (SDs) of educational level and post-treatment HAM-D scores by study}
+%\begin{tabular}{lcc}
+%\hline
+%&& post-treatment \\
+%study # & education & HAM-D \\
+%\hline
+%1 & 2.76 (0.54) & 8.05 (6.64) \\
+%2 & 2.66 (0.62) & 8.29 (6.30) \\
+%3 & 2.74 (0.52) & 8.01 (6.81) \\
+%4 & 1.57 (1.02) &11.20 (6.87) \\
+%5 & 2.98 (0.13) & 9.03 (5.41) \\
+%6 & 2.79 (0.55) & 6.68 (4.90) \\
+%7 & 2.86 (0.39) & 7.41 (5.81) \\
+%\hline
+%\end{tabular}
+%\end{table}
 
 \begin{figure}[tb!]
 \centering
@@ -786,7 +819,7 @@ plot(lmertree_app$tree, tnex = 3.5, terminal_panel = combine_panels(
   party2 = GLMMtree_app_eff
 ))
 @
-\caption{\small LMM tree for prediction of treatment outcomes. Upper terminal nodes: y-axes represent post-treatment HAM-D scores, x-axes represent treatment levels (cognitive behavior therapy, CBT vs.\ pharmacotherapy, PHA). Lower terminal nodes: Subgroup-specific descriptive statistics.}
+\caption{\small LMM tree for prediction of treatment outcomes in the IPDMA dataset. The selected partitioning variable is the presence of a comorbid anxiety disorder. Upper terminal nodes: $y$-axes represent post-treatment HAM-D scores, $x$-axes represent treatment levels (cognitive behavior therapy, CBT vs.\ pharmacotherapy, PHA). Lower terminal nodes represent subgroup-specific descriptive statistics.}
 \label{fig:lmertree_C&W}
 \end{figure}
 
@@ -799,7 +832,7 @@ Table~\ref{tab:stability} presents statistics on the variables selected for part
 
 \begin{table}[tb!]
 	\small
-	\caption{\small Variable selection statistics}
+	\caption{\small Variable selection statistics for the LM and LMM trees in the IPDMA dataset}
 	\begin{tabular}{lcc}
 		\thickline
 		&	\multicolumn{2}{c}{Selection frequency} \\
@@ -833,7 +866,7 @@ Better performance of LMM trees was mostly observed when random effects were siz
 
 In the absence of random effects, LM and LMM trees yielded very similar predictive accuracy. This finding is of practical importance, indicating that application of the GLMM tree algorithm will not reduce accuracy when in fact, random effects are absent from the data.
 
-Compared to LMMs with pre-specified interactions, LMM trees provided somewhat better accuracy, on average. LMM trees performed much better than LMMs when interactions were at least partly piecewise. However, the performance ofLMM trees deteriorated when the interactions were purely continuous functions of the predictor variables, in which case LMMs with pre-specified interactions performed very well. The performance of LMMs deteriorated with a larger number of predictor variables, whereas the performance of LMM trees was not affected by this, confirming our expectation that LMM trees are better suited for exploration than LMMs. 
+Compared to LMMs with pre-specified interactions, LMM trees provided somewhat better accuracy, on average. LMM trees performed much better than LMMs when interactions were at least partly piecewise. However, the performance of LMM trees deteriorated when the interactions were purely continuous functions of the predictor variables, in which case LMMs with pre-specified interactions performed very well. The performance of LMMs deteriorated with a larger number of predictor variables, whereas the performance of LMM trees was not affected by this, confirming our expectation that LMM trees are better suited for exploration than LMMs. 
 
 In the Application, we found the LMM tree yielded somewhat higher predictive accuracy, while using a smaller number of variables than the LM tree and the LMM with pre-specified interactions. The LMM trees obtained over repeated subsamples of the training data proved to be relatively stable. 
 
@@ -848,7 +881,7 @@ As with MOB trees, GLMM trees will perform best when the true data structure is 
 
 GLMM trees rely more on user specification of predictor variables than methods like CART and MERT. On the one hand, this increases the danger of model misspecification. On the other hand, it increases power and accuracy if the fixed-effects predictor variable(s) are correctly specified. For example, the best approach for assessing treatment-effect differences with MERTs is not completely obvious. We tried two approaches in our simulations: firstly, fitting a single MERT with the treatment indicator as one of the potential partitioning variables and secondly, fitting separate MERTs for each level of the treatment indicator. With the first approach, MERTs often did not detect the treatment indicator as a predictor variable in datasets with treatment-subgroup interactions. The second approach yielded better accuracy, indicating that MERTs profit from user specification of the relevant predictor variable(s). The GLMM tree algorithm provides a straightforward approach for including relevant fixed-effects predictor variables in the model. Our results suggest this yields higher predictive accuracy if the model is correctly specified. However, our simulations have not assessed the effect of misspecification of the fixed-effects predictor variable(s) and such misspecification may reduce predictive accuracy.  
 
-For recursive partitioning methods fitting local parametric models only, the danger of model misspecification may be limited \cite<e.g., >{Ciam91, SiciyMass08, SuyWang04}. GLMM trees, however, fit a global random-effect model in addition to local fixed-effects regression models and may therefore be less robust against model misspecification. Further research on the effects of model misspecifications on the performance of GLMM trees is therefore needed.
+For recursive partitioning methods fitting local parametric models only, the danger of model misspecification may be limited \cite<e.g., >{Ciam91, SiciyMass08, SuyWang04}. GLMM trees, however, fit a global random-effects model in addition to local fixed-effects regression models and may therefore be less robust against model misspecification. For example, the global random-effects model assumes a single random-effects variance across terminal nodes. If the random-effects variance, however, does vary across terminal nodes, this may negatively affect the performance of the parameter stability tests. Further research on the effects of model misspecifications on the performance of GLMM trees is therefore needed.
 
 In the Introduction, we mentioned several existing tree-based methods for treatment-subgroup interaction detection. These methods have different objectives and there is not yet an agreed-upon single best method. In a simulation study, \citeA{SiesyVanM16} found the method of \citeA{ZhanyTsia12Stat} to perform best, followed by MOB. However, the method of Zhang et al. performed worst under some conditions of the simulation study in terms of the Type I error rate. Further research comparing tree-based methods for treatment-subgroup interaction detection is needed, especially  for clustered datasets, as our simulations and comparisons mostly focused on LMM trees and LM trees.
 
@@ -861,5 +894,49 @@ Our results indicate that GLMM trees provide accurate recovery of treatment-subg
 \nolinenumbers
 \bibliographystyle{apacite}
 \bibliography{bib}
+
+\begin{appendix}
+
+\section{Glossary}
+
+\subsection{Abbreviations}
+
+\noindent CART: Classification and regression trees.\\
+GLM: Generalized linear model.\\
+GLMM: Generalized linear mixed model.\\
+IPDMA: Individual patient data meta analysis.\\
+LM: Linear model.\\
+LMM: Linear mixed model.\\ 
+MERT: Mixed-effects regression tree.\\
+ML: Maximum likelihood.\\
+MOB: Model-based recursive partitioning.\\
+RECPAM: Recursive partition and amalgamation.\\
+REML: Restricted maximum likelihood.\\
+
+
+
+
+\subsection{Notation}
+
+\NumTabs{12}
+\noindent $\beta_{j}$		\tab\tab\tab{column vector of fixed-effects coefficients in terminal node $j$}\\
+$b_{m}$ 		\tab\tab\tab{column vector of random-effects coefficients in cluster $m$}\\
+$d_{j}$			\tab\tab\tab{standardized mean difference of treatment outcome in terminal node $j$}\\
+$\epsilon$		\tab\tab\tab{deviation of observed treatment outcome $y$ from its expected value}\\
+$1,\dots,i,\dots,N$ \tab\tab{index for observation}\\
+$1,\dots,j,\dots,J$	\tab\tab{index for terminal node}\\
+$1,\dots,k,\dots,K$	\tab{index for partitioning variable}\\
+$1,\dots,m,\dots,M$	\tab{index for cluster}\\
+$r$			\tab\tab\tab{index for iteration}\\
+$U_k$			\tab\tab\tab{(potential) partitioning variable $k$}\\
+$x_i$ 			\tab\tab\tab{column vector of fixed-effects predictor variable values for}\\
+			\tab\tab\tab\tab{observation $i$}\\
+$y_i$ 			\tab\tab\tab{treatment outcome for observation $i$}\\
+$z_i$ 			\tab\tab\tab{column vector of random-effects predictor variable values for}\\
+			\tab\tab\tab\tab{observation $i$}\\
+
+
+
+\end{appendix}
 
 \end{document}

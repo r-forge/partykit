@@ -34,6 +34,20 @@ plot(lm_f); print(lm_f)
 plot(lm_o); print(lm_o)
 plot(lmer_f); print(lmer_f)
 
+
+## Evaluate distribution of education and outcome in each study:
+plot(factor(metadata$studyid), as.numeric(metadata$education))
+plot(factor(metadata$studyid), metadata$HRSDt1)
+
+table(metadata[metadata$education <= 1, "studyid"])
+## out of 74, 55 (74.32%) is from Miranda study 
+table(metadata[, "studyid"])
+aggregate(as.numeric(metadata$education), list(metadata$studyid == "Miranda"), mean)
+aggregate(as.numeric(metadata$education), list(metadata$studyid == "Miranda"), sd)
+aggregate(metadata$HRSDt1, list(metadata$studyid == "Miranda"), mean)
+aggregate(metadata$HRSDt1, list(metadata$studyid == "Miranda"), sd)
+
+
 ## Fit GLMM with pre-specified interactions:
 metadata2 <- metadata
 metadata2$education <- as.numeric(metadata2$education)
