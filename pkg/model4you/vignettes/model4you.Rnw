@@ -85,7 +85,7 @@ MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
 <<math_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for Mathematics Exam data.">>=  
 ## compute base model
 bmod_math <- lm(pcorrect ~ group, data = MathExam)
-lmplot(bmod_math, densest = TRUE)
+lm_plot(bmod_math, densest = TRUE)
 
 ## extract coefficients and confidence intervals
 coefs <- coef(bmod_math)
@@ -109,7 +109,7 @@ gridExtra::grid.table(
 ## compute tree
 (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
 plot(tr_math, terminal_panel = node_pmterminal(tr_math, 
-                                               plotfun = lmplot, 
+                                               plotfun = lm_plot, 
                                                confint = TRUE))
 @
 
@@ -171,7 +171,7 @@ data("GBSG2", package = "TH.data")
 
 <<GBSG2_bmod, fig.height = 5, out.width = '0.7\\textwidth', fig.cap = "Base model for GBSG2 data.">>=
 bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
-survplot(bmod)
+survreg_plot(bmod)
 
 ## extract coefficients and confidence intervals
 coefs <- coef(bmod)
@@ -193,7 +193,7 @@ gridExtra::grid.table(
 
 <<GBSG2_tree, fig.width = 9, fig.cap = "Personalised model tree for GBSG2 data.">>=
 tr <- pmtree(bmod)
-plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot,
+plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
                                           confint = TRUE))
 @
 

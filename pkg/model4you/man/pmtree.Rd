@@ -32,11 +32,11 @@ Input a parametric model and get a forest.
 if(require("TH.data") & require("survival")) {
   ## base model
   bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
-  survplot(bmod)
+  survreg_plot(bmod)
   
   ## partitioned model
   tr <- pmtree(bmod)
-  plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survplot, 
+  plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot, 
                                             confint = TRUE))
   summary(tr)
   summary(tr, node = 1:2)
@@ -59,13 +59,13 @@ if(require("psychotools")) {
   
   ## compute base model
   bmod_math <- lm(pcorrect ~ group, data = MathExam)
-  lmplot(bmod_math, densest = TRUE)
+  lm_plot(bmod_math, densest = TRUE)
   
   ## compute tree
   (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
+  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lm_plot, 
                                                  confint = FALSE))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
+  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lm_plot, 
                                                  densest = TRUE,
                                                  confint = TRUE))
   

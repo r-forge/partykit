@@ -198,16 +198,40 @@ bmod_math <- lm(pcorrect ~ group, data = MathExam)
 @
 
 The model can be visualised by plotting the estimated densities
-(see Figure~\ref{fig:math_bmod_vis}):
-<<math_bmod_vis, fig.height = 3, out.width = '0.7\\textwidth', fig.cap = "Base model for Mathematics Exam data.">>=  
-lmplot(bmod_math)
+(see Figure~\ref{fig:math_bmod_vis} (a)):
+<<eval=FALSE>>=  
+lm_plot(bmod_math)
 @
+
+As the plot is a \emph{ggplot2} graphic it can be maniulated with the usual
+\emph{ggplot2} layers, e.g.\ with
+<<eval=FALSE>>=
+lm_plot(bmod_math) + labs(y = "Estimated Density", x = "% Correct")
+@
+or equivalently with 
+<<eval=FALSE>>=
+myplot <- function(model, ...) {
+  lm_plot(model, ...) + 
+    labs(y = "Estimated Density", x = "% Correct")
+}
+myplot(bmod_math)
+@
+The result is shown in Figure~\ref{fig:math_bmod_vis} (b).
+<<math_bmod_vis, echo=FALSE, fig.cap = "Base model for Mathematics Exam data.", fig.subcap=c("Figure made with \\texttt{lm\\_plot()}.", "Figure made with manipulated \\texttt{lm\\_plot()}."), out.width="0.45\\textwidth", fig.height=3, fig.width=5>>=
+lm_plot(bmod_math)
+myplot <- function(model, ...) {
+  lm_plot(model, ...) + 
+    labs(y = "Estimated Density", x = "% Correct")
+}
+myplot(bmod_math)
+@
+
 
 A tree based on this model can be computed and visualised in only two lines of
 code:
 <<math_tree, fig.width = 13, fig.cap = "Personalised model tree for math exam.">>=  
 tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2))
-plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot))
+plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = myplot))
 @
 
 The tree (see Figure~\ref{fig:math_tree}) divides students based on the

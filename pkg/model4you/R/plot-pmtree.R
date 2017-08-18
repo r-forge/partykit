@@ -1,3 +1,109 @@
+#' Density plot for a given lm model
+#'
+#' Can be used on its own but is also useable as plotfun in 
+#' \code{\link{node_pmterminal}}.
+#'
+#' @param mod A model of class lm.
+#' @param data optional data frame. If NULL the data stored in mod is used.
+#' @param densest should additional to the model density kernel density estimates
+#'  (see \code{\link[ggplot2]{geom_density}}) be computed?
+#' @param theme A ggplot2 theme.
+#' @param yrange Range of the y variable to be used for plotting. 
+#'  If NULL the range in the data will be used.
+#'
+#' @examples 
+#' set.seed(2017)
+#' 
+#' # number of observations
+#' n <- 1000          
+#' 
+#' # balanced binary treatment
+#' # trt <- factor(rep(c("C", "A"), each = n/2),
+#' #               levels = c("C", "A")) 
+#' 
+#' # unbalanced binary treatment
+#' trt <- factor(c(rep("C", n/4), rep("A", 3*n/4)),
+#'               levels = c("C", "A"))
+#' 
+#' # some continuous variables 
+#' x1 <- rnorm(n)           
+#' x2 <- rnorm(n)
+#' 
+#' # linear predictor 
+#' lp <- -0.5 + 0.5*I(trt == "A") + 1*I(trt == "A")*I(x1 > 0)      
+#' 
+#' # compute probability with inverse logit function
+#' invlogit <- function(x) 1/(1 + exp(-x))
+#' pr <- invlogit(lp)   
+#' 
+#' # bernoulli response variable
+#' y <- rbinom(n, 1, pr)    
+#' dat <- data.frame(y, trt, x1, x2)
+#' 
+#' # logistic regression model
+#' mod <- glm(y ~ trt, data = dat, family = "binomial")
+#' binomial_glm_plot(mod, plot_data = TRUE)
+#' 
+#' # logistic regression model tree
+#' ltr <- pmtree(mod)
+#' plot(ltr, terminal_panel = node_pmterminal(ltr, 
+#'                                            plotfun = binomial_glm_plot, 
+#'                                            confint = TRUE,
+#'                                            plot_data = TRUE))
+#' 
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
+#' @export
+binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic(),
+                              yrange = NULL) {
+  
+  ## get formula and data
+  modcall <- getCall(mod)
+  modformula <- as.Formula(eval(modcall$formula))
+  xformula <- formula(modformula, lhs = 0, rhs = 1)
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
+  if(is.null(data)) data <- eval(modcall$data)
+  xdat <- get_all_vars(xformula, data = data)
+  uxdat <- unique(xdat)
+  ydat <- get_all_vars(yformula, data = data)
+  ynam <- names(ydat) 
+  
+  ## get plotting data
+  prd <- predict(mod, type = "link", se.fit = TRUE, newdata = uxdat)
+  q <- qnorm(0.975)
+  
+  probs <- predict(mod, type = "response", newdata = uxdat)
+  linv <- mod$family$linkinv
+  pdat <- data.frame(py = linv(prd$fit), 
+                     lwr = linv(prd$fit - q * prd$se.fit), 
+                     upr = linv(prd$fit + q * prd$se.fit), 
+                     uxdat)
+  
+  ## points plot info
+  pts <- geom_point(data = pdat, aes_string(x = colnames(xdat), y = "py")) 
+  ci <- geom_errorbar(data = pdat, width = 0.1,
+                      aes_string(x = colnames(xdat), 
+                                 ymin = "lwr", ymax = "upr"))
+  
+  if(plot_data) {
+    ## get mosaic plot data
+    x <- xdat[[1]]
+    y <- ydat[[1]]
+    jointTable <- prop.table(table(x, y))
+    plotData <- as.data.frame(jointTable)
+    plotData$marginVar1 <- prop.table(table(x)) 
+    plotData$var2Height <- plotData$Freq / plotData$marginVar1
+    
+    ## add mosaic plot info
+    p <- ggplot() + geom_bar(data = plotData, 
+                             aes(x, var2Height, fill = x, 
+                                 alpha = y, width = marginVar1), 
+                             stat = "identity") + pts + ci
+  } else {
+    p <- ggplot() + ci + pts
+  }
+  p + ylim(0, 1) + ylab(paste("P(", ynam, ")")) + theme(legend.position = "none") 
+}
+
 
 #' Density plot for a given lm model
 #'
@@ -20,13 +126,13 @@
 #' weight <- c(ctl, trt)
 #' data <- data.frame(weight, group)
 #' lm.D9 <- lm(weight ~ group, data = data)
-#' lmplot(lm.D9)
+#' lm_plot(lm.D9)
 #' 
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export
-lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
-                   yrange = NULL) {
+lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
+                    yrange = NULL) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -81,7 +187,7 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 #'
 #' @examples
 #' if(require("survival")) {
-#'   survplot(survreg(Surv(futime, fustat) ~ factor(rx), ovarian))
+#'   survreg_plot(survreg(Surv(futime, fustat) ~ factor(rx), ovarian))
 #' }
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string coord_cartesian
@@ -89,8 +195,8 @@ lmplot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 #' @importFrom survival Surv survreg
 #' @importFrom Formula as.Formula 
 #' @export
-survplot <- function(mod, data = NULL, theme = theme_classic(),
-                     yrange = NULL) {
+survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
+                         yrange = NULL) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -144,11 +250,11 @@ survplot <- function(mod, data = NULL, theme = theme_classic(),
 #' if(require("survival")) {
 #' ## compute survreg model
 #' mod_surv <- survreg(Surv(futime, fustat) ~ factor(rx), ovarian, dist='weibull')
-#' survplot(mod_surv)
+#' survreg_plot(mod_surv)
 #' 
 #' ## partition model and plot
 #' tr_surv <- pmtree(mod_surv)
-#' plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survplot, 
+#' plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survreg_plot, 
 #'                                                confint = TRUE))
 #' }
 #' 

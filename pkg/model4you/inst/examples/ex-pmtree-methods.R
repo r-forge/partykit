@@ -13,13 +13,13 @@ if(require("psychotools")) {
   
   ## compute base model
   bmod_math <- lm(pcorrect ~ group, data = MathExam)
-  lmplot(bmod_math, densest = TRUE)
+  lm_plot(bmod_math, densest = TRUE)
   
   ## compute tree
   (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
+  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lm_plot, 
                                                  confint = FALSE))
-  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lmplot, 
+  plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lm_plot, 
                                                  densest = TRUE,
                                                  confint = TRUE))
   
