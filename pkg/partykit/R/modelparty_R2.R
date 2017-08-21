@@ -365,7 +365,7 @@ mob <- function
                               cluster = NULL, control)
 {  
   
-  if(length(unique(z)) < 2L) next
+  if(length(unique(z)) < 2L) return(list(statistic = NA, p.value = NA))
   if(length(weights) == 0) weights <- rep(1, NROW(estfun))
   
   ## set up return values
