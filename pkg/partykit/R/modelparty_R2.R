@@ -379,28 +379,30 @@ mob <- function
   ww0 <- (weights > 0)
   ww0[!(seq_along(ww0) %in% subset)] <- FALSE
   process <- process[ww0, , drop = FALSE]
-  cluster <- cluster[ww0]
+  if(!is.null(cluster)) cluster <- droplevels(cluster[ww0]) 
+  weights <- weights[ww0]
   z <- z[ww0]
   k <- NCOL(process)
   n <- NROW(process)
+  nobs <- if(control$caseweights && any(weights != 1L)) sum(weights) else n
+
   
   ## stop if all collumn values in process are the same
   if(all(apply(process, 2, function(x) length(unique(x))) == 1)) 
     return(list(statistic = NA, p.value = NA))
   
   ## scale process
-  process <- process/sqrt(n)
+  process <- process/sqrt(nobs)
   vcov <- control$vcov
   if(is.null(obj)) vcov <- "opg"
   if(vcov != "opg") {
-    bread <- vcov(obj) * n
+    bread <- vcov(obj) * nobs
   }
   if(vcov != "info") {
     meat <- if(is.null(cluster)) {
-      crossprod(process)
+      crossprod(process/sqrt(weights))
     } else {
-      crossprod(as.matrix(aggregate(process, 
-        by = list(cluster), FUN = sum)[, -1L, drop = FALSE]))
+      crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum)))
     }
   }
   ## from strucchange
@@ -422,10 +424,10 @@ mob <- function
   
   
   ## get critical values for supLM statistic
-  from <- if(control$trim > 1) control$trim else ceiling(n * control$trim)
+  from <- if(control$trim > 1) control$trim else ceiling(nobs * control$trim)
   from <- max(from, control$minbucket)
-  to <- n - from
-  lambda <- ((n - from) * to)/(from * (n - to))
+  to <- nobs - from
+  lambda <- ((nobs - from) * to)/(from * (nobs - to))
   
   beta <- mob_beta_suplm
   logp.supLM <- function(x, k, lambda)
@@ -470,16 +472,19 @@ mob <- function
   
   ## compute statistic and p-value
   if(is.factor(z)) {
-    proci <- process[order(z), , drop = FALSE]
+    oi <- order(z)
+    proci <- process[oi, , drop = FALSE]
+       
     ifac <- TRUE
     iord <- is.ordered(z) & (control$ordinal != "chisq")
     
     ## order partitioning variable
-    z <- z[order(z)]
+    z <- z[oi]
     # re-apply factor() added to drop unused levels
     z <- factor(z, levels = unique(z))
     # compute segment weights
-    segweights <- as.vector(table(z))/n
+    segweights <- if(control$caseweights) tapply(weights[oi], z, sum) else table(z)
+    segweights <- as.vector(segweights)/nobs
     
     # compute statistic only if at least two levels are left
     if(length(segweights) < 2L) {
@@ -487,9 +492,10 @@ mob <- function
       pval <- NA_real_
     } else if(iord) {
       proci <- apply(proci, 2L, cumsum)
+      tt0 <- head(cumsum(table(z)), -1L)
       tt <- head(cumsum(segweights), -1L)
       if(control$ordinal == "max") {
-        stat <- max(abs(proci[round(tt * n), ] / sqrt(tt * (1-tt))))
+        stat <- max(abs(proci[tt0, ] / sqrt(tt * (1-tt))))
         pval <- log(as.numeric(1 - mvtnorm::pmvnorm(
           lower = -stat, upper = stat,
           mean = rep(0, length(tt)),
@@ -499,7 +505,7 @@ mob <- function
         )^k))
       } else {
         proci <- rowSums(proci^2)
-        stat <- max(proci[round(tt * n)] / (tt * (1-tt)))
+        stat <- max(proci[tt0] / (tt * (1-tt)))
         pval <- log(strucchange::ordL2BB(segweights, nproc = k, nrep = control$nrep)$computePval(stat, nproc = k))
       }
     } else {      
@@ -516,10 +522,11 @@ mob <- function
     }
     proci <- process[oi, , drop = FALSE]
     proci <- apply(proci, 2L, cumsum)
+    tt0 <- if(control$caseweights && any(weights != 1L)) cumsum(weights[oi]) else 1:n
     stat <- if(from < to) {
       xx <- rowSums(proci^2)
-      xx <- xx[from:to]
-      tt <- (from:to)/n
+      xx <- xx[tt0 >= from & tt0 <= to]
+      tt <- tt0[tt0 >= from & tt0 <= to]/nobs
       max(xx/(tt * (1 - tt)))	  
     } else {
       0
