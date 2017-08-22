@@ -106,7 +106,7 @@ cforest <- function
 
     nvar <- length(tree$partyvars)
     control$mtry <- mtry
-    control$applyfun <- NULL
+    control$applyfun <- lapply
  
     ### <FIXME> we need tree$partyvars here, avoid calling .urp_tree twice
     tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
