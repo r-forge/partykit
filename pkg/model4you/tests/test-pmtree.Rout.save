@@ -1,13 +1,11 @@
 
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+R version 3.4.1 (2017-06-30) -- "Single Candle"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -189,33 +187,15 @@ Fitted party:
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Objective function (log-likelihood): -621.198
-> (mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
-Generalized linear model tree (family: binomial)
-
-Model formula:
-cbind(nsuccess, nfailure) ~ trt | age
-
-Fitted party:
-[1] root
-|   [2] age <= 50: n = 22
-|       (Intercept)        trt2 
-|        -0.7161367   0.6703272 
-|   [3] age > 50: n = 20
-|       (Intercept)        trt2 
-|        -0.7958013   1.9056497 
-
-Number of inner nodes:    1
-Number of terminal nodes: 2
-Number of parameters per node: 2
-Objective function (log-likelihood): -98.51297
+Objective function (negative log-likelihood): 621.198
+> # (mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
 > 
 > library("strucchange")
 Loading required package: zoo
 
-Attaching package: ‘zoo’
+Attaching package: 'zoo'
 
-The following objects are masked from ‘package:base’:
+The following objects are masked from 'package:base':
 
     as.Date, as.Date.numeric
 
@@ -271,4 +251,4 @@ p.value   0.5712655
 > 
 > proc.time()
    user  system elapsed 
-  5.232   0.032   5.268 
+  6.864   0.044   6.915 

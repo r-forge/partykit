@@ -6,7 +6,7 @@
 with one binary covariate.}
 \usage{
 binomial_glm_plot(mod, data = NULL, plot_data = FALSE,
-  theme = theme_classic())
+  theme = theme_classic(), ...)
 }
 \arguments{
 \item{mod}{A model of class glm with binomial family.}
@@ -16,6 +16,8 @@ binomial_glm_plot(mod, data = NULL, plot_data = FALSE,
 \item{plot_data}{should the data in form of a mosaic type plot be plotted?}
 
 \item{theme}{A ggplot2 theme.}
+
+\item{...}{ignored.}
 }
 \description{
 Can be used on its own but is also useable as plotfun in 

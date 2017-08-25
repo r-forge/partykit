@@ -8,6 +8,7 @@
 #' @param data optional data frame. If NULL the data stored in mod is used.
 #' @param plot_data should the data in form of a mosaic type plot be plotted?
 #' @param theme A ggplot2 theme.
+#' @param ... ignored.
 #'
 #' @examples 
 #' set.seed(2017)
@@ -49,9 +50,9 @@
 #'                                            confint = TRUE,
 #'                                            plot_data = TRUE))
 #' 
-#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar theme_classic aes_string ylim ylab theme
+#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar theme_classic aes_string aes ylim ylab theme
 #' @export
-binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic()) {
+binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic(), ...) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -92,8 +93,8 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
     
     ## add mosaic plot info
     p <- ggplot() + geom_bar(data = plotData, 
-                             aes(x, var2Height, fill = x, 
-                                 alpha = y, width = marginVar1), 
+                             aes_string("x", "var2Height", fill = "x", 
+                                        alpha = "y", width = "marginVar1"), 
                              stat = "identity") + pts + ci
   } else {
     p <- ggplot() + ci + pts
