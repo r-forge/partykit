@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot-pmtree.R
 \name{survreg_plot}
 \alias{survreg_plot}
-\title{Survival plot for a given survreg model}
+\title{Survival plot for a given survreg model
+with one binary covariate.}
 \usage{
 survreg_plot(mod, data = NULL, theme = theme_classic(), yrange = NULL)
 }

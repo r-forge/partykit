@@ -47,7 +47,7 @@ bmod4 <- glm(cbind(nsuccess, nfailure) ~ trt, data = dattab, family = binomial)
 (tr4 <- pmtree(bmod4))
 
 (mtr1 <- glmtree(success ~ trt | age, data = dat, family = binomial))
-(mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
+# (mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
 
 library("strucchange")
 sctest(tr3)

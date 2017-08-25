@@ -2,23 +2,20 @@
 % Please edit documentation in R/plot-pmtree.R
 \name{binomial_glm_plot}
 \alias{binomial_glm_plot}
-\title{Density plot for a given lm model}
+\title{Plot for a given logistic regression model (glm with binomial family)
+with one binary covariate.}
 \usage{
 binomial_glm_plot(mod, data = NULL, plot_data = FALSE,
-  theme = theme_classic(), yrange = NULL)
+  theme = theme_classic())
 }
 \arguments{
-\item{mod}{A model of class lm.}
+\item{mod}{A model of class glm with binomial family.}
 
 \item{data}{optional data frame. If NULL the data stored in mod is used.}
 
+\item{plot_data}{should the data in form of a mosaic type plot be plotted?}
+
 \item{theme}{A ggplot2 theme.}
-
-\item{yrange}{Range of the y variable to be used for plotting. 
-If NULL the range in the data will be used.}
-
-\item{densest}{should additional to the model density kernel density estimates
-(see \code{\link[ggplot2]{geom_density}}) be computed?}
 }
 \description{
 Can be used on its own but is also useable as plotfun in 

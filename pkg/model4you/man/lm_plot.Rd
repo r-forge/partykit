@@ -2,7 +2,8 @@
 % Please edit documentation in R/plot-pmtree.R
 \name{lm_plot}
 \alias{lm_plot}
-\title{Density plot for a given lm model}
+\title{Density plot for a given lm model
+with one binary covariate.}
 \usage{
 lm_plot(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   yrange = NULL)

@@ -1,15 +1,13 @@
-#' Density plot for a given lm model
+#' Plot for a given logistic regression model (glm with binomial family)
+#' with one binary covariate.
 #'
 #' Can be used on its own but is also useable as plotfun in 
 #' \code{\link{node_pmterminal}}.
 #'
-#' @param mod A model of class lm.
+#' @param mod A model of class glm with binomial family.
 #' @param data optional data frame. If NULL the data stored in mod is used.
-#' @param densest should additional to the model density kernel density estimates
-#'  (see \code{\link[ggplot2]{geom_density}}) be computed?
+#' @param plot_data should the data in form of a mosaic type plot be plotted?
 #' @param theme A ggplot2 theme.
-#' @param yrange Range of the y variable to be used for plotting. 
-#'  If NULL the range in the data will be used.
 #'
 #' @examples 
 #' set.seed(2017)
@@ -51,10 +49,9 @@
 #'                                            confint = TRUE,
 #'                                            plot_data = TRUE))
 #' 
-#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
+#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar theme_classic aes_string ylim ylab theme
 #' @export
-binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic(),
-                              yrange = NULL) {
+binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic()) {
   
   ## get formula and data
   modcall <- getCall(mod)
@@ -69,7 +66,7 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
   
   ## get plotting data
   prd <- predict(mod, type = "link", se.fit = TRUE, newdata = uxdat)
-  q <- qnorm(0.975)
+  q <- stats::qnorm(0.975)
   
   probs <- predict(mod, type = "response", newdata = uxdat)
   linv <- mod$family$linkinv
@@ -106,6 +103,7 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 
 
 #' Density plot for a given lm model
+#' with one binary covariate.
 #'
 #' Can be used on its own but is also useable as plotfun in 
 #' \code{\link{node_pmterminal}}.
@@ -175,6 +173,7 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 
 
 #' Survival plot for a given survreg model
+#' with one binary covariate.
 #'
 #' Can be used on its own but is also useable as plotfun in 
 #' \code{\link{node_pmterminal}}.
