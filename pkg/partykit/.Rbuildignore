@@ -19,4 +19,4 @@ vignettes/urp.*
 WISHLIST
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^.*R1.*$
+^.*R2.*$
