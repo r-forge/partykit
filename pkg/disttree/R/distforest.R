@@ -1,4 +1,4 @@
-distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(), 
+distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL,
                        type.tree = "ctree", decorrelate = "none", offset,
                        cens = "none", censpoint = NULL, weights = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
@@ -11,10 +11,43 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   ## keep call
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
-  ## for gamlss.family function: turn into gamlss. family object
-  if(is.function(family)) family <- family()
   
-  np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
+  
+  ## prepare family:
+  # check format of the family input and if necessary transform it to the required familiy list
+  # family input can be of one of the following formats:
+  # - gamlss.family object
+  # - gamlss.family function
+  # - character string with the name of a gamlss.family object
+  # - function generating a list with the required information about the distribution
+  # - character string with the name of a function generating a list with the required information about the distribution
+  # - list with the required information about the distribution
+  # - character string with the name of a distribution for which a list generating function is provided in disttree
+  {
+    if(is.character(family)) {
+      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
+      if(length(getfamily$objs) == 0L) {
+        stop("unknown 'family' specification")
+      } else {
+        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
+        family <- getfamily[[2]][[1]]() #first found is chosen 
+        family$gamlssobj <- gamlssobj
+      }
+      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
+      # FIX ME: better selection of dist function
+    }
+    
+    # if family is a gamlss family object or gamlss family function
+    if(is.function(family)) family <- family()
+    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    
+    if(!is.list(family)) stop ("unknown family specification")
+    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+    # linkinvdr only used in the method vcov for type = "parameter"
+  }
+  
+  np <- length(family$link)
   nvar <- (length(formula[[3]]) + 1)/2    # number of variables (RHS minus nr of arithmetic symbols)
   
   # check input arguments

@@ -120,7 +120,8 @@ dist_gaussian <- function() {
        linkinv = linkinv, 
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle
+       mle = mle,
+       gamlssobj = FALSE
   )
 
 }
@@ -294,7 +295,8 @@ dist_weibull <- function() {
        linkinv = linkinv, 
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle
+       mle = mle,
+       gamlssobj = FALSE
   )
 }
 
@@ -403,7 +405,8 @@ dist_poisson <- function() {
        linkinv = linkinv, 
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle
+       mle = mle,
+       gamlssobj = FALSE
   )
 }
 
@@ -509,7 +512,8 @@ dist_exponential <- function() {
        linkinv = linkinv, 
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle
+       mle = mle,
+       gamlssobj = FALSE
   )
 }
 
@@ -626,7 +630,8 @@ dist_gamma <- function() {
        linkinv = linkinv, 
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle
+       mle = mle,
+       gamlssobj = FALSE
   )
 }
 

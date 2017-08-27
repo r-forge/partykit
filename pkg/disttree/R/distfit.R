@@ -24,43 +24,65 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.table(weights)) weights <- as.vector(weights)
     
   
-  ## check whether the input is a character string, a gamlss.family object (or function), a function or a list of the required type
-  if(is.character(family)) {
-    family <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-    if(inherits(family, "try-error")) family <- try(getAnywhere(family), silent = TRUE)
-    if(inherits(family, "try-error")) stop("unknown 'family' specification")
+  ## prepare family:
+  # check format of the family input and if necessary transform it to the required familiy list
+  # family input can be of one of the following formats:
+  # - gamlss.family object
+  # - gamlss.family function
+  # - character string with the name of a gamlss.family object
+  # - function generating a list with the required information about the distribution
+  # - character string with the name of a function generating a list with the required information about the distribution
+  # - list with the required information about the distribution
+  # - character string with the name of a distribution for which a list generating function is provided in disttree
+  {
+    if(is.character(family)) {
+      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
+      if(length(getfamily$objs) == 0L) {
+        stop("unknown 'family' specification")
+      } else {
+        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
+        family <- getfamily[[2]][[1]]() #first found is chosen 
+        family$gamlssobj <- gamlssobj
+      }
+      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
+      # FIX ME: better selection of dist function
+    }
+    
+    # if family is a gamlss family object or gamlss family function
+    if(is.function(family)) family <- family()
+    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    
+    if(!is.list(family)) stop ("unknown family specification")
+    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+    # linkinvdr only used in the method vcov for type = "parameter"
   }
-  if(is.function(family)) family <- family()
+
   
-  # if family is a gamlss.dist family object and the distribution is censored:
+  if(type.hessian == "numeric") family$hdist <- NULL
+  if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
+  
+  
+  # if family was handed over as a gamlss.dist family object and the distribution is censored:
   # data has to be converted to a Survival object (necessary input arguments: cens and censpoint)
-  if(inherits(family, "gamlss.family")) {
-    if(("censored" %in% strsplit(family$family[2], " ")[[1]]) && (!survival::is.Surv(y))) {
+  if(family$gamlssobj) {
+    if(("censored" %in% strsplit(family$family.name, " ")[[1]]) && (!survival::is.Surv(y))) {
       if(cens == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments cens and censpoint)")
       if(cens == "left") y <- survival::Surv(y, y > censpoint, type = "left")
       if(cens == "right") y <- survival::Surv(y, y < censpoint, type = "right")
       ## FIX ME: interval censored
-      #if(cen == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+      #if(cens == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
     }
   } else {
     if(survival::is.Surv(y)) {
       yc <- y
       y <- y[,1]
-      # if(!("censored" %in% (strsplit(family$family.name, " ")[[1]]))) {
+      # if(!("censored" %in% strsplit(family$family.name, " ")[[1]])) {
       # warning("response is Surv object but given distribution is not censored")
       # }
     }
   }
-
-  if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
-  # if(is.character(family)) family <- ...     # for biniomial distributions: bd should be handed over once, but not appear in the list from here on
-  if(!is.list(family)) stop ("unknown family specification")
-  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
-  # linkinvdr only used in the method vcov for type = "parameter"
   
-  if(type.hessian == "numeric") family$hdist <- NULL
-  if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
-
   
   # FIXME:
   # the input argument fixed can be a character string or a list of character strings with the name(s) of the parameter(s) which are fixed
@@ -172,8 +194,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   } else {
     if(!(is.null(start))){
       # check that those parameters with a log-function in the linkfun are not negative
-      if(start[(family$link == "log" | family$link == "logit")]<0) 
-        start[(family$link == "log" | family$link == "logit")] <- 1e-10
+      # (if they are, replace them by 1e-10)
+      start[start[family$link == "log" | family$link == "logit"]<=0] <- 1e-10 
       starteta <- family$linkfun(start)
     }
     if(!(is.null(start.eta))){
@@ -816,8 +838,7 @@ if(FALSE){
 
 
 if(FALSE){
-  family <- dist_list_weibull
-  family$family.name
+  family <- "weibull"
   y <- survival::rsurvreg(1000, mean = 5, scale = 2) 
   # y <- rweibull(1000, shape = 1/2, scale = exp(5))
   weights <- rbinom(length(y), 4, 0.8)

@@ -6,7 +6,6 @@
 make_dist_list <- function(family, bd = NULL) 
   {
   
-  
   ## list of families which require an additional parameter bd (binomial denominator)
   # by default bd is set to to 10 for BB() and to 1 for all the others
   .distfit.bi.list <- c("BI", "Binomial", "BB", "Beta Binomial", "ZIBI", "ZIBB", "ZABI", "ZABB") # binomial denominators
@@ -16,7 +15,7 @@ make_dist_list <- function(family, bd = NULL)
   
   ## families which have fixed parameters: LNO (log normal (Box-Cox)), NET
   # define fixed parameters locally within make_dist_list, such that the fixed parameters don't appear in the output list anymore
-  # for LNO a value. nu.start is needed for the evaluation of mu.initial
+  # for LNO a value nu.start is needed for the evaluation of mu.initial
   if(family$family[1] == "LNO") nu.start <- NULL
   
   if(FALSE) {
@@ -38,39 +37,22 @@ make_dist_list <- function(family, bd = NULL)
   
   ## notation:
   # par ... distribution parameters (mu, sigma, nu, tau)
-  # eta ... coefficients of the linear predictor, here: intercept (g1(mu)=eta[1], g2(sigma)=eta[2], g3(nu)=eta[3], g4(tau)=eta[4])
+  # eta ... coefficients of the linear predictor, 
+  #         here: intercept (g1(mu)=eta[1], g2(sigma)=eta[2], g3(nu)=eta[3], g4(tau)=eta[4])
   
-  # if(np > 0L) m <- family$mu.linkinv(eta[1L])          # m ... mu           eta[1] ... g1(mu)        g1 ... link function
-  # if(np > 1L) s <- family$sigma.linkinv(eta[2L])       # s ... sigma        eta[2] ... g2(sigma)     g2 ... link function
-  # if(np > 2L) v <- family$nu.linkinv(eta[3L])          # v ... nu           eta[3] ... g3(nu)        g3 ... link function
-  # if(np > 3L) t <- family$tau.linkinv(eta[4L])         # t ... tau          eta[4] ... g4(tau)       g4 ... link function
+  # m ... mu           eta[1] ... g1(mu)        g1 ... link function
+  # d ... sigma        eta[2] ... g2(sigma)     g2 ... link function
+  # v ... nu           eta[3] ... g3(nu)        g3 ... link function
+  # t ... tau          eta[4] ... g4(tau)       g4 ... link function
   
   
   
   ## Define all necessary functions depending on the number of parameters
   
-  # get parameters of a function f, return vector with the indices of the necessary input parameters 
-  getpar <- function(f){
-    arguments <- names(formals(f))
-    par.id <- c()
-    if("mu" %in% arguments) par.id <- c(par.id, 1)
-    if("sigma" %in% arguments) par.id <- c(par.id, 2)
-    if("nu" %in% arguments) par.id <- c(par.id, 3)
-    if("tau" %in% arguments) par.id <- c(par.id, 4)
-    
-    #if(family$nopar != np){
-    #  if((family$family[1] == "LNO") par.id <- par.id[par.id != 3]
-    #  if(family$family[1] == "NET") par.id <- par.id[par.id != c(3,4)]
-    #}
-    
-    return(par.id)
-  }
-  
-  
   # get derivative function as required in the list (input: gamlss.dist derivative function)
   getderivfun <- function(fun){
     arg <- names(formals(fun))
-    par.id <- getpar(fun)
+    par.id <- as.numeric(na.omit(match(arg, c("mu", "sigma", "nu", "tau"))))
     if("y" %in% arg) {
       if("bd" %in% arg) {
         derivfun <- function(y, par) {
@@ -79,8 +61,7 @@ make_dist_list <- function(family, bd = NULL)
           input <- c(input, par[par.id])
           input$bd <- bd
           val <- do.call(fun, input)
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-          if(length(val) == 1L) val <- rep(val, ny)
+          if(length(val) == 1L) val <- rep(val, NROW(y))
           return(val)
         }
       } else {
@@ -89,26 +70,21 @@ make_dist_list <- function(family, bd = NULL)
           input$y <- y
           input <- c(input, par[par.id])
           val <- do.call(fun, input)
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-          if(length(val) == 1L) val <- rep(val, ny)
+          if(length(val) == 1L) val <- rep(val, NROW(y))
           return(val)
         }    
       } 
     } else {
       if("bd" %in% arg) {
         derivfun <- function(y, par) {
-          input <- list()
-          input <- c(input, par[par.id])
+          input <- as.list(par[par.id])
           input$bd <- bd
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-          return(rep(do.call(fun, input), ny))
+          return(rep(do.call(fun, input), NROW(y)))
         }
       } else {
         derivfun <- function(y, par) {
-          input <- list()
-          input <- c(input, par[par.id])
-          ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
-          return(rep(do.call(fun, input), ny))
+          input <- as.list(par[par.id])
+          return(rep(do.call(fun, input), NROW(y)))
         }    
       }
     }
@@ -736,7 +712,6 @@ make_dist_list <- function(family, bd = NULL)
 
   mle <- FALSE
 
-  
   dist_list <- list(family.name = paste(family$family[2], "Distribution", sep = " "),
                     ddist = ddist, 
                     sdist = sdist, 
@@ -749,6 +724,7 @@ make_dist_list <- function(family, bd = NULL)
                     linkinv = linkinv, 
                     linkinvdr = linkinvdr,
                     startfun = startfun,
-                    mle = mle
+                    mle = mle,
+                    gamlssobj = TRUE
                     )
 }

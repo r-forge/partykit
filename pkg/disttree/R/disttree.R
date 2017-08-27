@@ -1,7 +1,7 @@
 ## high-level convenience interface to mob() and ctree()
 # FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
 # FIX ME: 'starting weights' in trees?
-disttree <- function(formula, data, na.action, cluster, family = NO(),
+disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
                      type.tree = "mob", decorrelate = "none", offset,
                      cens = "none", censpoint = NULL, weights = NULL,
                      control = mob_control(), ocontrol = list(), ...)
@@ -9,11 +9,43 @@ disttree <- function(formula, data, na.action, cluster, family = NO(),
   ## keep call
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
-  ## for gamlss.family function: turn into gamlss. family object
-  if(is.function(family)) family <- family()
   
+
+  ## prepare family:
+  # check format of the family input and if necessary transform it to the required familiy list
+  # family input can be of one of the following formats:
+  # - gamlss.family object
+  # - gamlss.family function
+  # - character string with the name of a gamlss.family object
+  # - function generating a list with the required information about the distribution
+  # - character string with the name of a function generating a list with the required information about the distribution
+  # - list with the required information about the distribution
+  # - character string with the name of a distribution for which a list generating function is provided in disttree
+  {
+    if(is.character(family)) {
+      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
+      if(length(getfamily$objs) == 0L) {
+        stop("unknown 'family' specification")
+      } else {
+        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
+        family <- getfamily[[2]][[1]]() #first found is chosen 
+        family$gamlssobj <- gamlssobj
+      }
+      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
+      # FIX ME: better selection of dist function
+    }
+    
+    # if family is a gamlss family object or gamlss family function
+    if(is.function(family)) family <- family()
+    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    
+    if(!is.list(family)) stop ("unknown family specification")
+    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+    # linkinvdr only used in the method vcov for type = "parameter"
+  }
   
-  np <- if(inherits(family, "gamlss.family")) family$nopar else length(family$link)
+  np <- length(family$link)
   
   # check input arguments
   type.tree <- match.arg(type.tree, c("mob", "ctree"))
