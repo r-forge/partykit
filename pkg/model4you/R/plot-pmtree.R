@@ -8,7 +8,7 @@
 #' @param data optional data frame. If NULL the data stored in mod is used.
 #' @param plot_data should the data in form of a mosaic type plot be plotted?
 #' @param theme A ggplot2 theme.
-#' @param ... ignored.
+#' @param ... ignored at the moment.
 #'
 #' @examples 
 #' set.seed(2017)
