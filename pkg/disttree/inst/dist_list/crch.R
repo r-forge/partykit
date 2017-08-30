@@ -292,7 +292,9 @@ dist_crch <- function(dist = c("normal","logistic"),
                     linkinv = linkinv, 
                     linkinvdr = linkinvdr,
                     startfun = startfun,
-                    mle = mle
+                    mle = mle,
+                    gamlssobj = FALSE,
+                    censored = TRUE
   )
   
   return(dist_list)
