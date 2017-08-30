@@ -1,0 +1,1847 @@
+\documentclass[nojss]{jss}
+
+%\VignetteIndexEntry{ctree: Conditional Inference Trees}
+%\VignetteDepends{coin, TH.data, survival, strucchange}
+%\VignetteKeywords{conditional inference, non-parametric models, recursive partitioning}
+%\VignettePackage{partykit}
+
+%% packages
+\usepackage{amstext}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{thumbpdf}
+\usepackage{rotating}
+\usepackage{caption}
+\captionsetup{format=hang}
+\usepackage{subcaption}
+\usepackage{Sweave}
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
+%\usepackage[pagebackref=true]{hyperref}
+%\usepackage{doi}
+
+%% commands
+\newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
+\renewcommand{\Prob}{\mathbb{P} }
+\renewcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\R}{\mathbb{R} }
+\newcommand{\N}{\mathbb{N} }
+\newcommand{\C}{\mathbb{C} }
+\newcommand{\argmin}{\operatorname{argmin}\displaylimits}
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+\newcommand{\LS}{\mathcal{L}_n}
+\newcommand{\TS}{\mathcal{T}_n}
+\newcommand{\LSc}{\mathcal{L}_{\text{comb},n}}
+\newcommand{\LSbc}{\mathcal{L}^*_{\text{comb},n}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\yn}{y_{\text{new}}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\sX}{\mathcal{X}}
+\newcommand{\sY}{\mathcal{Y}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\a}{\mathbf{a}}
+\newcommand{\xn}{\mathbf{x}_{\text{new}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\ws}{\mathbf{w}_\cdot}
+\renewcommand{\t}{\mathbf{t}}
+\newcommand{\M}{\mathbf{M}}
+\renewcommand{\vec}{\text{vec}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\K}{\mathbf{K}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\bS}{\mathbf{S}}
+\newcommand{\cellx}{\pi_n[\x]}
+\newcommand{\partn}{\pi_n(\mathcal{L}_n)}
+\newcommand{\err}{\text{Err}}
+\newcommand{\ea}{\widehat{\text{Err}}^{(a)}}
+\newcommand{\ecv}{\widehat{\text{Err}}^{(cv1)}}
+\newcommand{\ecvten}{\widehat{\text{Err}}^{(cv10)}}
+\newcommand{\eone}{\widehat{\text{Err}}^{(1)}}
+\newcommand{\eplus}{\widehat{\text{Err}}^{(.632+)}}
+\newcommand{\eoob}{\widehat{\text{Err}}^{(oob)}}
+\newcommand{\bft}{\mathbf{t}}
+
+\hyphenation{Qua-dra-tic}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+
+
+
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+library("ggplot2")
+theme_set(theme_bw(base_size = 18))
+library("disttree")
+library("Formula")  # FIX ME: should be imported in disttree
+library("gamlss")
+library("randomForest")
+library("lattice")
+library("crch")
+library("latex2exp")
+library("parallel")
+library("gamlss.cens")
+gen.cens(NO, type = "left")
+library("mgcv")
+library("MASS")
+
+## HCL palette
+pal <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50)
+names(pal) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+
+pallight <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+
+transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
+
+## define distribution list:
+# dist_list_normal
+{
+  
+  dist_list_normal <- list()
+  
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
+  
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+    
+    val <- -1/2 * (log(2*pi) + 2*eta[2] + exp(log((y-eta[1])^2) - 2*eta[2]))
+    if(!log) val <- exp(val)
+    
+    # par <- c(eta[1], exp(eta[2]))
+    # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
+    
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+    
+    score <- cbind(exp(-2*eta[2]) * (y-eta[1]), 
+                   -1 + exp(-2*eta[2] + log((y-eta[1])^2)))
+    
+    # par <- c(eta[1], exp(eta[2])) 
+    # score <- cbind(1/par[2]^2 * (y-par[1]), 
+    #                (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
+    
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    d2ld.etamu2 <- sum(weights * rep.int(-exp(-2*eta[2]), ny))
+    d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-eta[1]) * exp(-2*eta[2]), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    d2ld.etasigma2 <- sum(weights * (-2)*exp(log((y-eta[1])^2) - 2*eta[2]), na.rm = TRUE)    
+    
+    # par <- c(eta[1], exp(eta[2]))                           
+    # d2ld.etamu2 <- sum(weights * rep.int(-1/par[2]^2, ny))
+    # d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-par[1])/par[2]^2), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
+    # d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2, na.rm = TRUE)         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- pnorm
+  qdist <- qnorm
+  rdist <- rnorm  
+  
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    if(is.null(weights)) {
+      mu <- mean(y)
+      sigma <- sqrt(1/length(y) * sum((y - mu)^2))
+    } else {
+      mu <- weighted.mean(y, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (y - mu)^2))
+    }
+    starteta <- c(mu, log(sigma))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- TRUE
+  
+  dist_list_normal <- list(family.name = "Normal Distribution",
+                           ddist = ddist, 
+                           sdist = sdist, 
+                           hdist = hdist,
+                           pdist = pdist,
+                           qdist = qdist,
+                           rdist = rdist,
+                           link = link, 
+                           linkfun = linkfun, 
+                           linkinv = linkinv, 
+                           linkinvdr = linkinvdr,
+                           startfun = startfun,
+                           mle = mle,
+                           gamlssobj = FALSE,
+                           censored = FALSE
+  )
+}
+
+
+# dist_list_cens_normal
+{
+  
+  dist_list_cens_normal <- list()
+  
+  parnames <- c("mu", "sigma")
+  etanames <- c("mu", "log(sigma)")
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
+    par <- c(eta[1], exp(eta[2]))
+    val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
+    if(sum) {
+      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
+    par <- c(eta[1], exp(eta[2]))
+    # y[y==0] <- 1e-323
+    
+    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+    score <- cbind(score_m, score_s)
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+      #if(any(is.nan(score))) print(c(eta, "y", y))
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(eta[1], exp(eta[2]))                           
+    # y[y==0] <- 1e-323
+    
+    d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+    dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+    dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    
+    d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+    d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+    d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+    d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+                                                                            lower.tail = lower.tail, log.p = log.p, 
+                                                                            left = left, right = right)
+  rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+
+  
+  link <- c("identity", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]))
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]))
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    yc <- pmax(0,y)  # optional ?
+    if(is.null(weights)) {
+      mu <- mean(yc)
+      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    } else {
+      mu <- weighted.mean(yc, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+    }
+    starteta <- c(mu, log(sigma))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_cens_normal <- list(family.name = "censored Normal Distribution",
+                                ddist = ddist, 
+                                sdist = sdist, 
+                                hdist = hdist,
+                                pdist = pdist,
+                                qdist = qdist,
+                                rdist = rdist,
+                                link = link, 
+                                linkfun = linkfun, 
+                                linkinv = linkinv, 
+                                linkinvdr = linkinvdr,
+                                startfun = startfun,
+                                mle = mle,
+                                gamlssobj = FALSE,
+                                censored = TRUE
+  )
+}
+
+
+
+######## data generating process based on a predefined tree or a parameter function
+# if tree: 2 splits => 3 terminal nodes
+# 10 split variables (x1, ..., x10) are availabe (5 numeric, 2 binary, 3 categorical)
+#
+# input: n            ..... nr of observations
+#        family       ..... distribution of the generated observations
+#        split.matrix ..... indices of the variables used for the splits together with the corresponding split points
+#        parm.matrix  ..... set of distribution parameters for each subgroup
+#        fun          ..... parameter function
+#
+# output: data.frame with generated observations y (generated seperatly in each subgroups with given distributions parameters),
+#                         the given split variables x1, ..., x10 for each observation and
+#                         the index of the subgroup for each observation or
+#                         the distribution parameter for each observation
+
+# FIX: until now only complete lists can be handed over (dist_list...)
+dgp <- function(n, family = dist_list_normal, 
+                fun = NULL,
+                split.matrix = matrix(nrow = 2, ncol = 2), 
+                par.matrix = matrix(nrow = 3, ncol = 2), 
+                round.sp = 3)
+{
+  
+  # generating the possible split variables
+  x1 <- runif(n,-0.4,1)
+  x2 <- runif(n,-10,10)
+  x3 <- runif(n,0,100)
+  x4 <- x1 + rnorm(n, sd = 0.1)
+  x5 <- x1 + rnorm(n, sd = 0.3)
+  x6 <- rbinom(n,1,0.5)
+  x7 <- rbinom(n,1,0.5)
+  x8 <- sample(1:4, n, replace = TRUE) 
+  x9 <- sample(1:5, n, replace = TRUE) 
+  x10 <- sample(1:7, n, replace = TRUE)
+  #x11 <- runif(n,-0.5,1)
+  x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+  # reduce nr of possible split points by rounding values of split variables
+  x <- round(x, digits = round.sp)
+  
+  y <- vector(mode = "numeric", length = n)
+  
+  # getting the random function
+  if(is.function(family)) family <- family()
+  if(inherits(family, "gamlss.family")) {
+    rfun <- get(paste0("r",family$family[[1]]))
+  } else {
+    if(family$family.name == "Normal Distribution") rfun <- rNO
+    if(family$family.name == "censored Normal Distribution") rfun <- rNO
+    if(family$family.name == "Poisson Distribution") rfun <- rPO
+    if(family$family.name == "Weibull Distribution") rfun <- survival:::rsurvreg 
+  }
+  
+  
+  if(is.null(fun)) {
+    index <- vector(mode = "numeric", length = n)
+    sv = split.matrix[,1]    # index of split variables
+    sp = split.matrix[,2]    # split points
+    par = par.matrix
+    
+    # splitting based on the given split variables and split points and
+    # generating the observations seperatly for each subgroup (with the corresponding given distribution parameters)
+    for(k in 1:n){
+      if(x[k, sv[1]] <= sp[1]){
+        y[k] <- do.call(rfun, as.list(c(1,par[1,])))
+        index[k] <- 2L
+      } else {
+        if(x[k, sv[2]] <= sp[2]){
+          y[k] <- do.call(rfun, as.list(c(1,par[2,]))) 
+          index[k] <- 4L
+        } else {
+          y[k] <- do.call(rfun, as.list(c(1,par[3,])))
+          index[k] <- 5L
+        }
+      }
+    }
+    d <- as.data.frame(cbind(y, x, index))
+    colnames(d) <- c("y", paste0("x", c(1:10)), "index")
+    
+  } else {
+    
+    dpar <- fun(x)
+    
+    if(!(family$family.name == "Poisson Distribution")){
+      y <- rfun(n, dpar[,1], dpar[,2])
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
+    } else {
+      y <- rfun(n, dpar)
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
+    }
+  }
+  
+  
+  if(family$family.name == "censored Normal Distribution") {
+    #d$ystar <- d$y
+    d$y <- pmax(d$y, 0)
+  }
+  
+  return(d)
+}
+
+
+
+
+
+### plotting function for one data set
+plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par = FALSE, g.par = FALSE, dt.par = FALSE, all.var = FALSE) 
+{
+  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
+                    df$fitted.par,
+                    dt$fitted.par,
+                    #coef(dt)[paste(dt$fitted[,1]),],
+                    g$mu.fv, g$sigma.fv)
+  
+  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
+                          "fitted.mu.df","fitted.sigma.df",
+                          "fitted.mu.dt","fitted.sigma.dt",
+                          "fitted.mu.g","fitted.sigma.g")
+  sp <- plotdata[order(plotdata["x1"]),]
+  
+
+  if(!(any(dt.par, df.par, g.par, all.par, all.var))){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+  col = transpgrey, border = "transparent")
+    #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
+    #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
+    #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # disttree
+  if(dt.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", col.main = pal["tree"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey', pal["tree"], pallight["tree"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # distforest
+  if(df.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", col.main = pal["forest"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+
+  
+  # gamlss
+  if(g.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
+    #       col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # disttree vs. distforest vs. gamlss
+  if(all.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
+    #                    TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 13.95, expression(mu), bty = "n")
+  }
+  
+  # variance: disttree vs. distforest vs. gamlss
+  if(all.var){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
+    #                    TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+  legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+}
+
+
+
+## function to estimate standard deviation of randomForest for a new observation
+# (in randomForest the argument 'keep.inbag' must be set to TRUE)
+rf_getsd <- function(object, newobs, rfdata){
+  
+  # get predictions for the new observations from all trees
+  pred.newobs <- predict(object, predict.all = TRUE, newdata = newobs)
+  
+  # vector where the standard deviations from all trees are stored
+  sd_trees <- numeric(length = object$ntree)
+  
+  # loop over all trees of the forest
+  for(i in 1:object$ntree){
+    
+    # get data used to build this tree
+    obsid <- rep.int(c(1:NROW(rfdata)), as.vector(object$inbag[,i]))
+    obs_tree <- rfdata[obsid,]
+    rownames(obs_tree) <- c(1:NROW(obs_tree))
+    # get predictions for this data from this tree
+    pred.obs_tree <- predict(object, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+    
+    # get prediction for the new observation from this tree
+    pred.newobs_tree <- pred.newobs$individual[,i]
+    
+    # get part of the data that ends up in the same terminal node (has the same prediction)
+    obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
+    
+    sd_trees[i] <- sd(obs_node$accel)
+  }
+  
+  # average of sd over all trees
+  sd_newobs <- mean(sd_trees, na.rm = TRUE)
+ 
+  return(sd_newobs)   
+}
+
+
+
+## function to estimate standard deviation of cforest for a new observation
+cf_getsd <- function(cf, newdata = NULL){
+  
+  # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
+  pred.node.learn <- predict(cf, type = "node")
+  
+  # get IDs of predicted nodes for the new observations
+  if(is.null(newdata)) {
+    pred.node.new <- pred.node.learn
+    newdata <- cf$data
+  } else {
+    pred.node.new <- predict(cf, newdata = newdata, type = "node")
+  }
+  
+  sdnew <- numeric(length = NROW(newdata))
+  
+  for(i in 1:NROW(newdata)){
+    for(t in 1:cf$info$call$ntree){
+      nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
+      sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
+    }
+  }
+ 
+  return(sdnew)   
+}
+
+
+
+## simulation plot functions
+# plot RMSE
+plot_rmse <- function(simres, type = c("exp", "par")){
+  
+  if(type == "exp"){
+    rmse <- NULL
+    colnames <- NULL
+    col <- NULL
+    legendnames <- NULL
+    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.dt"], simres$resmat[,"av.rmse.exp.obs.dt"])
+      colnames <- c(colnames, "dt.true", "dt.obs")
+      col <- c(col, pal["tree"])
+      legendnames <- c(legendnames, "disttree")
+    }
+    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.df"], simres$resmat[,"av.rmse.exp.obs.df"])
+      colnames <- c(colnames, "df.true", "df.obs")
+      col <- c(col, pal["forest"])
+      legendnames <- c(legendnames, "distforest")
+    }
+    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.g"], simres$resmat[,"av.rmse.exp.obs.g"])
+      colnames <- c(colnames, "g.true", "g.obs")
+      col <- c(col, pal["gamlss"])
+      legendnames <- c(legendnames, "gamlss")
+    }
+    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.b"], simres$resmat[,"av.rmse.exp.obs.b"])
+      colnames <- c(colnames, "b.true", "b.obs")
+      col <- c(col, pal["bamlss"])
+      legendnames <- c(legendnames, "bamlss")
+    }
+    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.gb"], simres$resmat[,"av.rmse.exp.obs.gb"])
+      colnames <- c(colnames, "gb.true", "gb.obs")
+      col <- c(col, pal["gamboostLSS"])
+      legendnames <- c(legendnames, "gamboostLSS")
+    }
+    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.rf"], simres$resmat[,"av.rmse.exp.obs.rf"])
+      colnames <- c(colnames, "rf.true", "rf.obs")
+      col <- c(col, pal["randomForest"])
+      legendnames <- c(legendnames, "randomForest")
+    }
+    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.cf"], simres$resmat[,"av.rmse.exp.obs.cf"])
+      colnames <- c(colnames, "cf.true","cf.obs")
+      col <- c(col, pal["cforest"])
+      legendnames <- c(legendnames, "cforest")
+    }
+
+    colnames(rmse) <- colnames
+    ylim <- c(min(rmse), max(rmse))
+    
+    plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
+         xlab = "kappa", ylab = "RMSE")
+    lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
+    
+    for(i in 1:(length(col)-1)){
+      lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
+      lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
+    }
+    legend('topleft', legendnames, 
+           col = col, lty = 1, cex = 0.7)
+  } 
+  
+  if(type == "par"){
+    
+    rmse <- NULL
+    colnames <- NULL
+    col <- NULL
+    legendnames <- NULL
+    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.dt"], simres$resmat[,"av.rmse.sigma.dt"])
+      colnames <- c(colnames, "dt.true", "dt.obs")
+      col <- c(col, pal["tree"])
+      legendnames <- c(legendnames, "disttree")
+    }
+    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.df"], simres$resmat[,"av.rmse.sigma.df"])
+      colnames <- c(colnames, "df.true", "df.obs")
+      col <- c(col, pal["forest"])
+      legendnames <- c(legendnames, "distforest")
+    }
+    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.g"], simres$resmat[,"av.rmse.sigma.g"])
+      colnames <- c(colnames, "g.true", "g.obs")
+      col <- c(col, pal["gamlss"])
+      legendnames <- c(legendnames, "gamlss")
+    }
+    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.b"], simres$resmat[,"av.rmse.sigma.b"])
+      colnames <- c(colnames, "b.true", "b.obs")
+      col <- c(col, pal["bamlss"])
+      legendnames <- c(legendnames, "bamlss")
+    }
+    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.gb"], simres$resmat[,"av.rmse.sigma.gb"])
+      colnames <- c(colnames, "gb.true", "gb.obs")
+      col <- c(col, pal["gamboostLSS"])
+      legendnames <- c(legendnames, "gamboostLSS")
+    }
+    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.rf"], simres$resmat[,"av.rmse.sigma.rf"])
+      colnames <- c(colnames, "rf.true", "rf.obs")
+      col <- c(col, pal["randomForest"])
+      legendnames <- c(legendnames, "randomForest")
+    }
+    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.cf"], simres$resmat[,"av.rmse.sigma.cf"])
+      colnames <- c(colnames, "cf.true","cf.obs")
+      col <- c(col, pal["cforest"])
+      legendnames <- c(legendnames, "cforest")
+    }
+
+    colnames(rmse) <- colnames
+    ylim <- c(min(rmse), max(rmse))
+    
+    plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
+         xlab = "kappa", ylab = "RMSE")
+    lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
+    
+    for(i in 1:(length(col)-1)){
+      lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
+      lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
+    }
+    legend('topleft', legendnames, 
+           col = col, lty = 1, cex = 0.7)
+  }
+}
+
+
+
+# plot loglikelihood
+plot_ll <- function(simres){
+  
+    ll <- NULL
+    colnames <- NULL
+    col <- NULL
+    legendnames <- NULL
+    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.dt"])
+      colnames <- c(colnames, "dt.ll")
+      col <- c(col, pal["tree"])
+      legendnames <- c(legendnames, "disttree")
+    }
+    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.df"])
+      colnames <- c(colnames, "df.ll")
+      col <- c(col, pal["forest"])
+      legendnames <- c(legendnames, "distforest")
+    }
+    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.g"])
+      colnames <- c(colnames, "g.true")
+      col <- c(col, pal["gamlss"])
+      legendnames <- c(legendnames, "gamlss")
+    }
+    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.b"])
+      colnames <- c(colnames, "b.true")
+      col <- c(col, pal["bamlss"])
+      legendnames <- c(legendnames, "bamlss")
+    }
+    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.gb"])
+      colnames <- c(colnames, "gb.true")
+      col <- c(col, pal["gamboostLSS"])
+      legendnames <- c(legendnames, "gamboostLSS")
+    }
+    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.rf"])
+      colnames <- c(colnames, "rf.true")
+      col <- c(col, pal["randomForest"])
+      legendnames <- c(legendnames, "randomForest")
+    }
+    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.cf"])
+      colnames <- c(colnames, "cf.true")
+      col <- c(col, pal["cforest"])
+      legendnames <- c(legendnames, "cforest")
+    }
+
+    colnames(ll) <- colnames
+    ylim <- c(min(ll), max(ll))
+    
+    plot(x = simres$x.axis, y = ll[,1], type = "l", col = col[1], ylim = ylim,
+         xlab = "kappa", ylab = "log-likelihood")
+    
+    for(i in 2:length(col)){
+      lines(x = simres$x.axis, y = ll[,i], type = "l", col = col[i])
+    }
+    legend('topleft', legendnames, 
+           col = col, lty = 1, cex = 0.7)
+}
+@
+
+
+
+\title{\texttt{disttree}: Distributional Trees and Forests}
+\Plaintitle{disttree: Distributional Trees and Forests} 
+
+\author{Lisa Schlosser\\Universit\"at Innsbruck
+   \And Torsten Hothorn\\Universit\"at Z\"urich
+   \And Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+
+\Abstract{
+In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
+If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
+Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model.
+}
+\Keywords{parametric models, trees and forests, recursive partitioning, maximum likelihood}
+
+\Address{
+  Lisa Schlosser \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Lisa.Schlosser@uibk.ac.at} \\
+  URL: \url{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/lisa-schlosser.html}\\
+  
+  Torsten Hothorn\\
+  Institut f\"ur Sozial- und Pr\"aventivmedizin, Abteilung Biostatistik \\
+  Universit\"at Z\"urich \\
+  Hirschengraben 84\\
+  CH-8001 Z\"urich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+
+  Achim Zeileis \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+
+\SweaveOpts{eps=FALSE, keep.source=TRUE, eval = TRUE}
+
+
+\section{Introduction}
+
+In the field of regression analysis many statistical models have already been developed to model the relationship between a response variable and one or more explanatory variables.\\
+Among the first were linear models (LM) which predict the (conditional) expected value of the response variable as a linear combination of the explanatory variables. This idea was extended to generalized linear models (GLM) which broadened the range of possible distributions of the response variable to the exponential family. (In R these models can be built using the functions \code{lm()} and \code{glm()} provided by the package \pkg{stats}).\\
+Then, in order to also allow for non-linear effects, generalized additive models (GAM) were introduced where smooth functions of the explanatory variables are summed up instead of the linear combination. (In the fitting function \code{gam} types of smoothing terms can be selected.)\\
+However, with these methods only the mean of the distribution of the response variable can be modeled. Generalized additive models for location, scale and shape
+(GAMLSS) (\cite{stasinopoulos2005}) made it possible to model each of the parameters of a distribution separately by its own GAM. In that way a whole distribution can be specified. The R-packages \pkg{gamlss} and \pkg{gamlss.dist} offer the corresponding software with a wide variety of distributions.\\
+This development in the field of parametric modeling is illustrated in figure \ref{Devel_parmod}.\\
+
+
+\begin{figure}[t!]
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GLM, echo=FALSE, results=hide>>=
+nobs <- 200
+## GLM
+set.seed(7)
+x <- c(1:nobs)/nobs
+ytrue <- 1+x*1.5
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+
+<<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+@
+\end{center}
+\endminipage
+{\LARGE$\rightarrow$}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GAM, echo=FALSE, results=hide>>=
+## GAM
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3 
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+
+<<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+@
+\end{center}
+\endminipage
+{{\LARGE$\rightarrow$}}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_GAMLSS, echo=FALSE, results=hide>>=
+## GAMLSS
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3
+var <- exp(-(2*x)^2)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+@
+
+<<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = pallight["forest"], border = "transparent")
+lines(x, ytrue, col = pal["forest"], lwd=7)
+points(x, y, col = "slategray", pch = 19)
+box(lwd = 5)
+@
+\end{center}
+\endminipage
+\vspace{0.0cm}
+\minipage{0.25\textwidth}
+\begin{center}
+\hspace{0.4cm}
+LM, GLM 
+\end{center}
+\endminipage
+\hspace{1.4cm}
+\minipage{0.25\textwidth}
+\begin{center}
+GAM
+\end{center}
+\endminipage
+\hspace{1.4cm}
+\minipage{0.25\textwidth}
+\begin{center}
+GAMLSS
+\end{center}
+\endminipage
+\caption{\label{Devel_parmod}Development in the field of parametric modeling}
+\end{figure}
+
+
+
+
+\begin{figure}[t!]
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_regtree, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(7)
+kappa <- 12
+x <- c(1:nobs)/nobs
+ytrue <- ytree <- yforest <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
+y <- ytrue + rnorm(nobs,0,0.3)
+for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
+@
+
+<<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+@
+\end{center}
+\endminipage
+{\LARGE$\rightarrow$}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_randforest, echo=FALSE, results=hide>>=
+## Random Forest
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+@
+
+<<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
+@
+\end{center}
+\endminipage
+{\LARGE$\rightarrow$}
+\minipage{0.29\textwidth}
+\begin{center}
+<<motivation_distforest, echo=FALSE, results=hide>>=
+## distforest
+set.seed(4723)
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+xt <- 2*(x-0.5)
+var <- exp(-(2*xt)^4)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+x <- c(1:nobs)/nobs
+@
+
+<<plot_motivation_distforest, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = pallight["forest"], border = "transparent")
+lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
+points(x, y, col = "slategray", pch = 19)
+box(lwd=5)
+@
+\end{center}
+\endminipage
+
+
+\minipage{0.29\textwidth}
+\begin{center}
+\vspace{0.0cm}
+Regression Tree 
+\end{center}
+\endminipage
+\hspace{0.65cm}
+\minipage{0.29\textwidth}
+\begin{center}
+\vspace{0.0cm}
+Random Forest 
+\end{center}
+\endminipage
+\hspace{0.65cm}
+\minipage{0.28\textwidth}
+\begin{center}
+\vspace{0.0cm}
+Distributional Forest 
+\end{center}
+\endminipage\\
+\minipage{0.29\textwidth}
+\vspace{0.2cm}
+\center {\LARGE$\downarrow$}\\
+\vspace{-0.4cm}
+%\hspace{0.0cm}
+\begin{center}
+<<motivation_disttree, echo=FALSE, results=hide>>=
+## disttree
+set.seed(74)
+x <- c(1:nobs)/nobs
+var <- ytree/3
+y <- ytrue + rnorm(nobs,0,var)
+@
+
+<<plot_motivation_disttree, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7, main = "")
+polygon(c(x, rev(x)), c(ytree + var, rev(ytree - var)),
+  col = pallight["forest"], border = "transparent")
+box(lwd=5)
+@
+\vspace{-0.2cm}\\
+Distributional Tree
+\vspace{0.2cm}
+\end{center}
+\endminipage
+\caption{\label{Devel_treeforest}Development in the field of algorithmic trees and forests}
+\end{figure}
+
+
+All these parametric models work very well as long as only additive effects appear in the considered data. A different type of model that can capture non-additive effects as well are regression trees. Here the basic idea is to split the data set into more homogeneous subgroups based on information provided by the explanatory variables and to fit a model/response to each terminal node. One problem that might appear when applying tree algorithms is that they impose steps and abrupt changes on the model, even in situations where effects are rather smooth, as it can be seen in the top left plot of figure \ref{Devel_treeforest}. One way how to tackle this problem is to not just consider one tree but an ensemble of trees. This is the idea of random forests. A set of trees is built, each on a slightly different data set which can either be a bootstrap or a subsample of the original data set. Then the results of all trees are combined to get a final model which unlike a tree model can also deal with smooth effects in a reasonable way.\\ 
+In distributional trees and forests we now want to combine all these ideas from different fields of statistical modeling in order to benefit from all their advantages.\\
+\\
+In the past the combination of parametric data models and algorithmic tree models has gained more and more interest since it allows for a more flexible and clear structure. \\
+Algorithms that only fit constants to each final node and therefore only model the mean of the response variable (such as CART, Breiman 1984) might lead to very large trees which complicates analyzing and interpreting. Algorithms such as GUIDE (Loh 2002), CRUISE (Kim and Loh 2001) and LOTUS (Chan and Loh 2004) were among the first to provide trees with parametric models in each terminal node. The MOB algorithm (Zeileis, Hothorn and Hornik 2008), an algorithm for model-based recursive partitioning, extended this idea by fitting parametric models to each node and using the gained information of the fitted model to create further splits in inner nodes. Using this algorithm as a framework to build trees LMs and GLMs can be fitted in the nodes of the trees. However, up to now trees which only model the mean of the response variable in its nodes are still more common and widely used.\\
+Random forests (\cite{breiman2001random}) applying the CART algorithm to build the trees and cforest applying the ctree algorithm (\cite{hothorn2015partykit}, \cite{hothorn2006unbiased}) have used this idea of combining an ensemble of trees to get smoother effects of the covariates after combining or averaging over the parameters of the trees.\\
+\\
+But as mentioned before, until now the above listed development in the field of probabilistic modeling has not yet been fully integrated in the idea of algorithmic tree and forest models. Probabilistic models are rarely used in combination with tree algorithms and more flexible models such as GAMLSSs have not yet been applied as models in the nodes of a tree.\\
+\\
+Therefore, our main goal is to embed the progress made in the field of probabilistic modeling in the idea of regression trees and forests. In particular, more flexible models such as GAMLSSs should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects or interactions of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In that way, no variable selection or predefining of variable interactions is necessary and a whole distribution is specified in each node which leads to a wide range of inference methods that can be applied.\\
+These (future) steps are illustrated in figure \ref{Devel_treeforest}, embedded in the development made in the field of tree and forest algorithms.\\
+\\
+\\
+Now we take a look at a classical text book example, the mcycle data set from the package \pkg{MASS}. It consists of a series of measurements of head acceleration in a simulated motorcycle accident. The response variable \code{accel} represents the recorded head acceleration meassured in g and the explanatory variable \code{times} is meassured in milliseconds after the impact.\\
+We compare the performance of the following four functions on this data set: \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest}\\
+This situation is particularly well suited for a GAMLSS because there is only one regressor and physically one would expect a smooth function. However, this example shows, that the distributional forest can also capture the changes quite well albeit not as smoothly as the GAMLSS. Moreover, it illustrates that the distributional tree detects the changes as well but models them with rough steps.\\
+\\
+To make it possible to compare the models also on the estimated scale parameter, here the standard deviation of the random forest is estimated in each terminal node of each tree and then averaged, in the same way as the mean parameter is estimated. This makes it possible to specify a distribution, however, the splits of a random forest are only made in the location parameter while a distributional tree/forest considers splits in all distribution parameters.\\
+\\
+In figure \ref{plot_mcycle} the results of a distributional forest are plotted on the top left and then compared to the results of a distributional tree, a GAMLSS and a random forest, regarding the location parameter on the top right and the scale parameter below.\\
+While the smooth function of \code{gamlss} seems to model especially the middle part (for \code{times} between 17 and 40) better than the wiggly functions resulting from the trees it can also be observed that at \code{times} $=14$ there is a rapid drop which is captuerd more precisely by the tree-based models while \code{gamlss} starts descending earlier. Also for the highest values of \code{times} the smooth function increases again while the forests stay almost at the same level and the tree stays at a fixed value which seems more appropriate in this situation.\\
+Comparing the two forest models, the distributional forest seems to be a bit more stable while the random forest includes more rapid changes of a wider range.\\
+Looking at the plot of the scale parameter, in general the distributional forest estimates higher parameters than the random forest.\\
+
+
+
+<<echo=FALSE, results=hide>>=
+
+## FIX ME: distforest uses subsets, randomForest uses bootstraps
+
+## randomForest: https://stackoverflow.com/questions/28417826/nodesize-parameter-ignored-in-randomforest-package
+## nodesize = the minimum number of observations that must exist in a node in order for a split to be attempted.
+## -> nodesize = minsplit
+
+if(file.exists("mcycle_plotdata.rda")){
+  load("mcycle_plotdata.rda")
+} else {
+  set.seed(7)
+  dt <- disttree(accel ~ times, data = mcycle, family = NO(), type.tree = "mob", control = mob_control(minsize = 7L))
+  df <- distforest(accel ~ times, data = mcycle, family = NO(), ntree = 300L, 
+                   control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 5L, minsplit = 10L, intersplit = TRUE))
+  rf <- randomForest(accel ~ times, data = mcycle, ntree = 300L, nodesize = 10L, 
+                     keep.inbag = TRUE, replace = FALSE)
+  #ga <- gam(list(accel ~ s(times), ~ s(times)), data = mcycle, family=gaulss())
+  ga <- gam(list(accel ~ s(times,k=20,bs="ad"), ~ s(times)), data = mcycle, family=gaulss())
+  #b <- bamlss(list(accel ~ s(times), accel ~ s(times)), data = mcycle)save(df, file = "mcycle_plotdata.rda")
+  
+  
+  ## get 'fitted.sigma.rf'
+  rf_sd <- numeric(length(NROW(mcycle)))
+  
+  for(i in 1:NROW(mcycle)){
+    rf_sd[i] <- rf_getsd(rf, newobs = mcycle[i,], rfdata = mcycle)
+  }
+  
+  plotdata <- cbind(mcycle,
+                    df$fitted.par,
+                    dt$fitted.par,
+                    #g$mu.fv, g$sigma.fv,
+                    ga$fitted.values[,1], 1/ga$fitted.values[,2],
+                    rf$predicted, rf_sd)
+  
+  colnames(plotdata) <- c("times", "accel",
+                          "fitted.mu.df","fitted.sigma.df",
+                          "fitted.mu.dt","fitted.sigma.dt",
+                          "fitted.mu.g","fitted.sigma.g",
+                          "fitted.mu.rf","fitted.sigma.rf")
+  
+  sp <- plotdata[order(plotdata["times"]),]
+  
+  save(sp, file = "mcycle_plotdata.rda")
+}
+@
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.65\textwidth}
+<<plot_df, fig=TRUE, echo=FALSE>>=
+# distforest
+plot(mcycle)
+lines(x = sp$times, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
+polygon(c(sp$times, rev(sp$times)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+        col = pallight["forest"], border = "transparent")
+@
+%\caption{\label{plot_mcycle_df}Distributional Forest, \code{distforest}}
+\end{subfigure}
+\hspace{-2cm}
+\begin{subfigure}{0.65\textwidth}
+<<plot_mu_vs, fig=TRUE, echo=FALSE>>=
+# disttree vs. distforest vs. gamlss vs. randomForest
+plot(x = sp$times, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 1.5,
+     ylim = c(-134,75), ylab = "accel", xlab = "times")
+lines(x = sp$times, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 1.5)
+lines(x = sp$times, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 1.5)
+lines(x = sp$times, y = sp$fitted.mu.rf, type = "l", col = pal["randomForest"], lwd = 1.5)
+legend('topleft', c("disttree", "distforest", "gamlss", "randomForest"), 
+       col = c(pal["tree"], pal["forest"], pal["gamlss"], pal["randomForest"]), lty = 1, cex = 1)
+@
+%\caption{\label{plot_mcycle_mu_vs} Location parameter: \code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
+\end{subfigure}
+\vspace{-1cm}
+
+\hspace{4cm}
+\begin{subfigure}{0.65\textwidth}
+<<plot_sigma_vs_lines, fig=TRUE, echo=FALSE>>=
+# variance: disttree vs. distforest vs. gamlss (lines)
+plot(x = sp$times, y = sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2,
+     ylim = c(0,50), ylab = "variance of accel", xlab = "times")
+#lines(x = sp$times, y = -sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+lines(x = sp$times, y = sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+#lines(x = sp$times, y = -sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+lines(x = sp$times, y = sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+#lines(x = sp$times, y = -sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+lines(x = sp$times, y = sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
+#lines(x = sp$times, y = -sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
+legend('topleft', c("disttree", "distforest", "gamlss", "randomForest"), 
+       col = c(pal["tree"], pal["forest"], pal["gamlss"], pal["randomForest"]), lty = 1, cex = 1)
+@
+\end{subfigure}
+\caption{\label{plot_mcycle}top left: location and scale parameter of \code{distforest}\\
+top right: location parameter of all four models\\
+bottom: scale parameter of all four models}
+\end{figure}
+
+
+
+
+
+
+
+\newpage
+\section{Methodology}
+\label{Methodology}
+\subsection{Distributional Fit}
+Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section.\\
+The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Therefore, the task of fitting a distributional model turns into the task of determining the distribution parameter $\theta$. This is done by the following maximization.
+$$
+\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+$$
+where $\{y_i\}_{i=1,\ldots,n}$ are the observations of the response variable $Y$.\\
+In that way, a whole distribution is specified with all its features, including location, scale and shape. However, fitting one global model to the whole data set might be too much of a generalization and therefore not represent the data and its features in a reasonable way. Moreover, if covariates are available it is desirable to include them into the model as they might provide important information. In particular, they can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
+
+\subsection{Distributional Tree}
+After having fit a global distributional model $D(Y, \bold{\hat{\theta}})$ the idea is now to use the information provided by this model together with a set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ to decide if the data set should be split into subgroups. In particular, the information provided by the fitted model are the scores 
+$$
+s(\hat{\theta}, y_i) = \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i).
+$$ 
+These values express how well the model fits the data regarding each parameter. Ideally they should fluctuate randomly around zero, similar to residuals in ordinary least squares estimations, but in this case there is a score value for each estimated parameter $\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ and each observation.\\
+Statistical tests are applied to find out whether any significant connection/dependency between the scores and each of the partitioning variables $Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$ is given. If so, the data set is split into subgroups based on the values of the partitioning variable that shows the highest connection/dependency.\\
+In a next step a local distributional model is fit in each of the subgroups. Repeating this procedure of fitting a model, applying statistical tests to evaluate the goodness of fit and splitting the data set depending on the test results leads to a tree structure. In that way the learning data set is separated into \textit{B} disjoint segments such that
+$$
+\mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b
+$$
+where each segment is represented by a terminal node of the tree.\\
+
+The exact way of determining how and where to split varies over different tree algorithms. For distributional trees, one of two algorithms can be chosen as a framework to build the tree: either the MOB algorithm or the ctree algorithm. Summed up, the steps of building a distributional tree using one of these algorithms are
+\begin{enumerate}
+\item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
+\item Estimate $\bold{\hat{\theta}}$ via maximum likelihood.
+\item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ and each partitioning variable $Z_l$.
+%\item Assess whether the \emph{model scores} are associated with
+%    (or change along) any of the available covariates -- e.g.,
+%    using parameter instability tests (\emph{strucchange}) or
+%    conditional inference (\emph{coin}).
+\item Split the sample along the partitioning variable with the strongest association or instability.
+    Choose the breakpoint with the highest improvement in log-likelihood.
+\item Repeat steps 2--4 recursively in the subgroups
+    until some stopping criterion is met.
+    %-- e.g., for significance or sample size.
+%\item Choose the variable with the strongest association
+%\item Choose the split point which leads to the highest improvement of the model
+%\item Split and repeat 2-6 in each node until a stopping criterion is met
+\end{enumerate}
+The stopping criterion in step 5 can for example be a minimum number of observations in a node or a p-value for the statistical tests applied in step 3.\\
+Executing these steps results in a stepwise parametric model where a complete distribution is fit in each node of the tree.\\
+\\
+For distributional trees the strategy of how to make a prediction for a new observation $\bold{z}^{\ast} = (z_1^{\ast}, \ldots, z_m^{\ast})$ is very simple and straight forward. All observations of the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ which end up in the same terminal node of the tree as the new observation are selected and a distributional model is fit on the subset. To select this subset a weight vector $\bold{\omega^{tree}} = (\omega^{tree}_1, \ldots, \omega^{tree}_n)$ is included in the fitting process.
+$$
+\omega^{tree}_i(\bold{z}^{\ast}) = \sum_{b=1}^B I((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z}^{\ast} \in \mathcal{B}_b))
+$$
+The predicted distribution of the new observation is then fully specified by the estimated parameter $\hat{\theta}(\bold{z}^{\ast})$ where
+$$
+\hat{\theta}(\bold{z}^{\ast}) = \max_{\theta \in \Theta} \sum_{i=1}^n \omega^{tree}_i(\bold{z}^{\ast}) \cdot \ell(\theta; y_i).
+$$
+
+While the clear structure of such a model is advantageous in analyzing it, the abrupt changes are often too rough and impose steps on the model even in case of smooth effects. In these situations bagging can solve the problem by combining an ensemble of trees such that wrongly detected abrupt changes of the model are turned into almost smooth transitions. In that way, all kinds of effects can be modeled, which is is also one the of the main advantages of forest models (taking bagging one step further as the variance is reduced by sampling the covariates considered for the splitting process in each node).
+
+\subsection{Distributional Forest}
+A distributional forest consists of an ensemble of distributional trees $\{t_s\}_{s=1,\ldots,T}$. Each of these trees is built on a different data set which can either be a bootstrap or a subset of the original data set. Moreover, in each node a subset of the partitioning variables is chosen randomly as candidates for splitting variables. In that way the correlation among the resulting trees is reduced and therefores also the variance of the model.\\
+\\
+Forest models differ mainly in the way how the trees are combined to make predictions. In this case the forest itself is only used to evaluate neighborhood relationships among the observations which can then be included in the fitting process.\\
+Contrary to distributional trees, in distributional forests the whole learning data set can be used to fit the distributional model and specify the predicted distribution for a new observation. This difference is represented in the weight vector, as the tree weights $\bold{\omega}^{tree}$ containing only zeros and ones are now replaced by integer valued forest weights \\
+$\bold{\omega}^{forest} = (\omega^{forest}_1, \ldots, \omega^{forest}_n)$.\\
+For a new observation $\bold{z}^{\ast} = (z^{\ast}_1, \ldots, z^{\ast}_m) $ this set of weights is obtained by the following procedure: For each observation $(y_j,\bold{z}_j)$ in the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated by counting the number of trees in which it ends up in the same terminal node as the new observation $\bold{z}^{\ast}$. 
+$$
+\omega^{forest}_i(\bold{z}^{\ast}) = \sum_{s=1}^T \sum_{b=1}^{B^s} I((\bold{z}_i \in \mathcal{B}^s_b) \land (\bold{z}^{\ast} \in \mathcal{B}^s_b))
+$$
+where $T$ is the number of trees of the forest, $B^s$ is the number of terminal nodes of the \textit{s}-th tree and $\mathcal{B}^s_b$ represents the \textit{b}-th terminal node of the \textit{s}-th tree.\\
+This individual set of weights $\bold{\omega}^{forest}(\bold{z}^{\ast}) = (\omega^{forest}_1(\bold{z}^{\ast}), \ldots, \omega^{forest}_n(\bold{z}^{\ast}))$ for the new observation $\bold{z}^{\ast}$ can now be included in the estimation process of the distribution parameters and in that way, leads to its individual parameter vector $\hat{\theta}(\bold{z}^{\ast})$.
+$$
+\hat{\theta}(\bold{z}^{\ast}) =  \max_{\theta \in \Theta} \sum_{i=1}^n \omega^{forest}_i(\bold{z}^{\ast}) \cdot \ell(\theta; y_i)
+$$
+While in a distributional tree the same distribution is specified for all observations being in the same node a distributional forest predicts and fits a different distribution for each different observation which is due to the individual weights calculated separately for each observation.
+
+
+
+
+
+
+
+
+
+
+\newpage
+\section{Application}
+\subsection{Continuation of the mcycle example: Cross Validation}
+In the introduction the four functions \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest} have been applied on the mcycle data set and their results haven been visualized and discussed. To get a more profound impression of their performances we now want to compare them in a cross validation framework on this text book example data set. The 133 observations are randomly split into 10 subsets roughly of the same size. After learning the model on 9 of these subgroups the RMSE of the estimated location parameter and the log-likelihood function are evaluated on the 10th part. Each subset is chosen once as a test data set and the mean of the resulting values is stored. This procedure is repeated 9 times. This comparison is illustrated in figure \ref{plot_cross_mean}, based on the RMSE on the left and based on the log-likelihood on the right. (Extrapolation of the GAMLSS would lead to very small values of the log-likelihood. To avoid this, the first and the last observation are always included in the learn data set.) \\
+As we have already seen in the introduction the distributional tree obviously struggles with the smooth effects while the two forest models can capture the changes quite well. As far as the RMSE of the estimated location parameter is concerned the GAMLSS plays to its strength as a smooth parametric model and leads to the best results followed by the distributional forest and the random forest which might both be a bit to wiggly.\\
+However, regarding the log-likelihood the forests perform better than the GAMLSS. This is mainly due to the fact that the GAMLSS models the scale parameter close to zero for observations with \code{times} $<10$. This leads to very low values of the log-likelihood function if one or more of these observations are included in the test data set. As the estimated scale parameter of the tree based models are higher for these specific observations this problem does not occure here.\\
+Overall it can be seen that the distributional forest which fits the whole distribution and considers splits in both parameters performs better than the random forest which only models the mean and therefore also only inlcudes splits in the location parameter.
+
+
+<<echo=FALSE, results=hide>>=
+#### cross validation
+if((file.exists("mcycle_cross_mean.rda")) & (file.exists("mcycle_cross_all.rda"))){
+  load("mcycle_cross_mean.rda")
+  load("mcycle_cross_all.rda")
+  nrep_cross <- NROW(cross_all)
+} else {
+  
+  set.seed(704)
+  #set.seed(7054)
+  nrep_cross <- 10
+  
+  rmse <- matrix(nrow = nrep_cross * 10, ncol = 4)
+  ll <- matrix(nrow = nrep_cross * 10, ncol = 4)
+  mean_rmse <- matrix(nrow = nrep_cross, ncol = 4)
+  mean_ll <- matrix(nrow = nrep_cross, ncol = 4)
+  errors <- numeric(length = nrep_cross * 10)
+  colnames(rmse) <- colnames(mean_rmse) <- c("rmse_disttree", "rmse_distforest", "rmse_gamlss", "rmse_randomForest")
+  colnames(ll) <- colnames(mean_ll) <- c("ll_disttree", "ll_distforest", "ll_gamlss", "ll_randomForest")
+  
+  tdata <- list()
+  ldata <- list()
+  
+  for(k in 1:nrep_cross) {
+    
+    # separate data set (without the first and the last observation) into 10 parts (9 of size 13 and 1 of size 14):
+    # (first and last observation are not in testid -> always stay in learndata)
+    id <- c(2:(NROW(mcycle)-1))
+    testid <- list()
+    for(i in 1:9){
+      testid[[i]] <- sample(id, 13, replace = FALSE)
+      id <- id[!(id %in% testid[[i]])]
+    }
+    testid[[10]] <- id
+    
+    rmse_dt_mu <- rmse_df_mu <- rmse_g_mu <- rmse_rf_mu <- 
+      ll_dt <- ll_df <- ll_g <- ll_rf <- numeric(length = 10)
+    
+    for(i in 1:10){
+      tdata[[(k-1)*10+i]] <- testdata <- mcycle[testid[[i]], ]
+      ldata[[(k-1)*10+i]] <- learndata <- mcycle[-testid[[i]], ]
+      
+      #testdata <- mcycle[testid[[i]], ]
+      #learndata <- mcycle[-testid[[i]], ]
+      
+      dt <- disttree(accel ~ times, data = learndata, family = NO(), type.tree = "mob", control = mob_control(minsize = 7L))
+      df <- distforest(accel ~ times, data = learndata, family = NO(), ntree = 300L, 
+                       control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 5L, minsplit = 10L, intersplit = TRUE))
+      rf <- randomForest(accel ~ times, data = learndata, ntree = 300L, nodesize = 10L, keep.inbag = TRUE, replace = FALSE)
+      ga <- gam(list(accel ~ s(times,k=20,bs="ad"), ~ s(times)), data = learndata, family=gaulss())
+      #ga <- gam(list(accel ~ s(times), ~ s(times)), data = learndata, family=gaulss())
+      errors[(k-1)*10+i] <- (ga$outer.info$conv != "full convergence")
+      
+      # get predicted values
+      dt.pred.par <- predict(dt, newdata = testdata, type = "parameter")
+      df.pred.par <- predict(df, newdata = testdata, type = "parameter")
+      rf.pred.resp <- predict(rf, newdata = testdata)
+      rf.sd <- numeric(length(NROW(testdata)))
+      for(l in 1:NROW(testdata)){
+        rf.sd[l] <- rf_getsd(rf, newobs = testdata[l,], rfdata = learndata)
+      }
+      g.pred.par <- predict(ga, newdata = testdata, type = "response")
+      g.pred.mu <- g.pred.par[,1]
+      g.pred.sigma <- 1/g.pred.par[,2]
+      
+      # RMSE location parameter
+      rmse_dt_mu[i] <- sqrt(mean((dt.pred.par$mu - testdata$accel)^2))
+      rmse_df_mu[i] <- sqrt(mean((df.pred.par$mu - testdata$accel)^2))
+      rmse_g_mu[i] <- sqrt(mean((g.pred.mu - testdata$accel)^2))
+      rmse_rf_mu[i] <- sqrt(mean((rf.pred.resp - testdata$accel)^2))
+      
+      # loglikelihood
+      dtll <- dfll <- gll <- rfll <- 0
+      for(j in 1:(nrow(testdata))){
+        
+        dtll_j <- dnorm(testdata[j,"accel"], mean = dt.pred.par$mu[j], sd = dt.pred.par$sigma[j], log=TRUE)
+        dfll_j <- dnorm(testdata[j,"accel"], mean = df.pred.par$mu[j], sd = df.pred.par$sigma[j], log=TRUE)
+        gll_j <- dnorm(testdata[j,"accel"], mean = g.pred.mu[j], sd = g.pred.sigma[j], log=TRUE)
+        rfll_j <- dnorm(testdata[j,"accel"], mean = rf.pred.resp[j], sd = rf.sd[j], log=TRUE)
+        
+        dtll <- if(is.na(dtll_j)) {
+          print(dt.pred.par[j,], testdata[j,"accel"]) 
+          dtll + (-5)
+        } else {dtll + dtll_j}
+        dfll <- if(is.na(dfll_j)) {
+          print(df.pred.par[j,], testdata[j,"accel"]) 
+          dfll + (-5)
+        } else {dfll + dfll_j}
+        gll <- if(is.na(gll_j)) {
+          print(g.pred.mu[j], g.pred.sigma[j], testdata[j,"accel"]) 
+          gll + (-5)
+        } else {gll + gll_j}
+        rfll <- if(is.na(rfll_j)) {
+          print(c(rf.pred.resp[j], rf.sd[j]), testdata[j,"accel"]) 
+          rfll + (-5)
+        } else {rfll + rfll_j}
+      }
+      
+      ll_dt[i] <- dtll
+      ll_df[i] <- dfll
+      ll_g[i] <- gll
+      ll_rf[i] <- rfll
+      
+      rmse[i+(k-1)*10,] <- c(rmse_dt_mu[i], rmse_df_mu[i], rmse_g_mu[i], rmse_rf_mu[i])
+      ll[i+(k-1)*10,] <- c(ll_dt[i], ll_df[i], ll_g[i], ll_rf[i])
+    }
+    
+    # store data
+    mean_rmse[k,] <- c(mean(rmse_dt_mu), mean(rmse_df_mu), mean(rmse_g_mu), mean(rmse_rf_mu))
+    mean_ll[k,] <- c(mean(ll_dt), mean(ll_df), mean(ll_g), mean(ll_rf))
+    
+    
+  }
+  
+  cross_all <- cbind(rmse, ll)
+  cross_mean <- cbind(mean_rmse, mean_ll)
+  save(cross_all, file = "mcycle_cross_all.rda")
+  save(cross_mean, file = "mcycle_cross_mean.rda")
+
+}
+@
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<mcycle_cross_rmse_mean, fig=TRUE, echo=FALSE>>=
+# parallel boxplots RMSE
+box_rmse <- cross_mean[, c("rmse_disttree", "rmse_randomForest", "rmse_distforest", "rmse_gamlss")]
+colnames(box_rmse) <- c("disttree", "randomForest", "distforest", "gamlss")
+boxplot.matrix(box_rmse, ylab = "RMSE")
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<mcycle_cross_ll_mean, fig=TRUE, echo=FALSE>>=
+# parallel boxplots log-likelihood
+box_ll <- cross_mean[, c("ll_disttree", "ll_randomForest", "ll_distforest", "ll_gamlss")]
+#box_ll <- box_ll[box_ll[,1]>-400,]
+#box_ll <- box_ll[box_ll[,2]>-400,]
+box_ll <- box_ll[box_ll[,"ll_gamlss"]>-70,]
+#box_ll <- box_ll[box_ll[,4]>-400,]
+colnames(box_ll) <- c("disttree", "randomForest", "distforest", "gamlss")
+boxplot.matrix(box_ll, ylab = "log-likelihood")
+@
+\end{subfigure}
+%\center
+\caption{\label{plot_cross_mean}10-times-10 cross validation on the mcycle data, averages (>-70):\\ \code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
+\end{figure}
+
+%\begin{figure}[t!]
+%\begin{subfigure}{0.6\textwidth}
+%<<mcycle_cross_rmse_all, fig=TRUE, echo=FALSE>>=
+%# parallel boxplots RMSE
+%box_rmse <- cross_all[, c("rmse_disttree", "rmse_randomForest", "rmse_distforest", %"rmse_gamlss")]
+%colnames(box_rmse) <- c("disttree", "randomForest", "distforest", "gamlss")
+%boxplot.matrix(box_rmse, ylab = "RMSE")
+%@
+%%\caption{\label{plot_boot_rmse}Bootstraps: RMSE of the location parameter, \code{dist%tree%} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
+%\end{subfigure}
+%\hspace{-1cm}
+%\begin{subfigure}{0.6\textwidth}
+%<<mcycle_cross_ll_all, fig=TRUE, echo=FALSE>>=
+%# parallel boxplots log-likelihood
+%box_ll <- cross_all[, c("ll_disttree", "ll_randomForest", "ll_distforest", "ll_gamlss"%)]
+%#box_ll <- box_ll[box_ll[,1]>-400,]
+%#box_ll <- box_ll[box_ll[,2]>-400,]
+%box_ll <- box_ll[box_ll[,"ll_gamlss"]>-100,]
+%#box_ll <- box_ll[box_ll[,4]>-400,]
+%colnames(box_ll) <- c("disttree", "randomForest", "distforest", "gamlss")
+%boxplot.matrix(box_ll, ylab = "log-likelihood")
+%@
+%\end{subfigure}
+%%\center
+%\caption{\label{plot_cross_ll_all}mcycle 10-times-10 Cross validation (>-100): %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
+%\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\newpage
+\section{Simulation Study}
+Within this simulation study the performances of distributional trees and forests are tested and compared to other models, showing situations where one or the other method is more advantageous than others. By doing so the following hypotheses are investigated:
+\begin{itemize}%[leftmargin=0.5cm]
+\item When applying a tree algorithm the use of a fitting function which returns scores is advantageous to find correct splits. In particular it is crucial to find splits in parameters other than the location parameter. Hence a forest consisting of trees which were built using scores for all distribution parameters leads to better results than a simple forest considering only the mean.
+\item In the case of smooth parameter functions without any abrupt changes a distributional forest performs quite well, even though other models such as GAMLSS might be more successful in these situations. However, once the smooth parameter functions include very steep sections the distributional forest outperforms other models (and in extreme cases a distributional tree does as well).
+\item Once non-additive effects or interactions appear within the parameter functions distributional trees and forests clearly show their advantages over other models.
+\end{itemize}
+
+
+The following methods are compared to distributional trees and forests:
+\begin{itemize}
+\item gamlss \cite{stasinopoulos2005} fits a separate generalized additive model to each of the distribution models. In that way it specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.
+\item bamlss \cite{bamlss2017} also provides an infrastructure for estimating probabilistic distributional regression but within a Bayesian Framework. Again each parameter is modelled by (possibly) complex additive terms.
+\item gamboostLSS \cite{gamboostLSS2017} offers boosting models for fitting  generalized additive models for location, shape and scale
+\item randomForest \cite{randomForest2002} combines an ensemble of classification and regression trees applying bagging and reducing the correlation among trees through a randomized selection of possible split variables within each node.
+\item cforest \cite{hothorn2015partykit} builds a forest in a similar way but consisting of ctrees applying the ctree algorithm mentioned in section \ref{Methodology}. In this simulation study no transformation function is included.
+\end{itemize}
+
+
+The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and two covariates $X_1$ and $X_2$.\\
+The covariates are generated based on the following distribution assumptions:
+\begin{center}
+\begin{tabular}{ l  c  l }
+$X_1$ & $\sim$ & \textit{Unif}([-0.4,1]) \\ 
+$X_2$ & $\sim$ & \textit{Unif}([-10,10])
+\end{tabular}
+\end{center}
+The distribution of the response variable is a normal distribution where the corresponding distribution parameters are defined by parameter functions depending on the covariates. 
+\vspace{-1cm}
+\begin{center}
+$$ Y \sim \mathcal{N} (f(x_1, x_2, \kappa))$$
+with
+$$f(x_1, x_2, \kappa) = \left(\mu(x_1,x_2,\kappa) , \sigma(x_1,x_2,\kappa)\right)$$ 
+\end{center}
+
+An additional factor $\kappa$ defines the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\
+Including non-additive effects creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
+\vspace{-1cm}
+\begin{center}
+$$\mu(x_1,x_2,\kappa)  = 10 \cdot \Big(1-s(x_1,x_2,\kappa)+ \big(2\cdot s(x_1,x_2,\kappa) - 1\big) \cdot \text{\code{rbinom}}\left(n,1,P_1\right)\Big)
+$$
+with the distribution function of the logistic distribution as a smooth function
+$$
+s(x_2,\kappa) = \text{\code{plogis}}\left(\kappa^2 \cdot \frac{x_2 - 3}{10}\right)
+$$
+and the probability of being in subgroup 1
+$$
+P_1(x_1,\kappa) = e^{-(10\cdot x_1 - 5)^{2 \cdot \kappa}}.
+$$
+\end{center}
+In this scenerio the scale parameter $\sigma$ depends on the location parameter $\mu$ in the following way:
+\vspace{-1cm}
+\begin{center}
+$$\sigma(x_1,x_2,\kappa)  = 2 + \frac{2 \cdot \mu(x_1,x_2,\kappa)}{5}$$
+\end{center}
+The  methods are compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models.\\
+\\
+Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of GAMLSS or of trees and forests covers a broader range of functions where it is superior to the other one.\\
+\\
+Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
+However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
+\\
+Looking at the resulting values of the RMSE it can be observed that trees and forests cleary outperform gamlss in this situation. For $\kappa=1$ the performance of all three methods is similar. However, as $\kappa$ increases the RMSE of gamlss increases while the RMSE of trees and forests stays at almost the same level or even decreases sligthly as soon as $\kappa$ is greater or equal 2. The same conclusion can be drawn from looking at the log-likelihood where the resulting values of gamlss decrease rapidly while the values of trees and forests only decrease a little at the beginning but then increase.\\
+This is the result that was expected as trees and forests can deal with rapid changes of the distribution functions more easily.\\
+For low values of $\kappa$ the forests are a little bit more efficient than the trees, but the higher $\kappa$ and therefore also the steeper the parameter function is the better the trees become. Especially regarding the scale parameter the trees are clearly advantageous over the forests.   
+
+
+(As it has already been demonstrated in the first examples on single data sets the performances of \code{distforest} and \code{disttree} are not as successful as the one of \code{gamlss} for low values of $\kappa$ but remarkably improve as this values increases and are superior to \code{gamlss} for high values of $\kappa$. This is illustrated by an almost constant RMSE of \code{distforest} and \code{disttree} while the RMSE of \code{gamlss} increases. Comparing the tree and the forest model it can be observed that the forest seems to perform better for lower $\kappa$ while very steep sections lead to a better performance of trees.
+
+In this section the results of the three methods are compared over an increasing value of $\kappa$. For each step they are applied on various data sets and the resulting values of the RMSE and the log-likelihood are averaged within each step. In that way it can be investigated how the results change for a changing value of $\kappa$.\\
+Again, a normally distributed response variable and the same smooth parameter function are considered.\\
+
+
+<<echo=FALSE, results=hide>>=
+#### cross validation
+if(file.exists("simres.rda")){
+  load("simres.rda")
+} else {
+  #source("~/svn/partykit/pkg/disttree/paper/gensim.R")
+  source("gensim.R")
+  simres <- gensim(seedconst = 7, nrep = 20, ntree = 100L,
+                   cov.sep = FALSE,
+                   fix.mu = FALSE,
+                   fix.sigma = FALSE,
+                   mu.sigma.interaction = FALSE,
+                   gamboost_cvr = FALSE,
+                   eval_disttree = TRUE,
+                   eval_distforest = TRUE,
+                   eval_gamlss = TRUE,
+                   eval_bamlss = TRUE,
+                   eval_gamboostLSS = TRUE,
+                   eval_randomForest = TRUE,
+                   eval_cforest = TRUE)
+  save(simres, file = "simres.rda")
+}
+@
+
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<sim_rmse_exp, fig=TRUE, echo=FALSE>>=
+plot_rmse(simres, type = "exp")
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<sim_rmse_par, fig=TRUE, echo=FALSE>>=
+plot_rmse(simres, type = "par")
+@
+\end{subfigure}
+\caption{\label{plot_sim_rmse}Results of the simulation study (RMSE)\\
+left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
+right: continuous lines represent the location parameter, dotted lines the scale parameter}
+\end{figure}
+
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<sim_ll, fig=TRUE, echo=FALSE>>=
+plot_ll(simres)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<sim_levelplot, fig=TRUE, echo=FALSE>>=
+levelfun <- function(x) simres$fun(x,5)
+
+ncuts <- 100
+colR <- colorRampPalette(c("blue","green"))                                       
+cols <- colR(ncuts+1)
+griddata <- expand.grid(list(x1 = seq(-0.4, 1, 0.01), x2 = seq(-10, 10, 0.2)))
+griddata$mu <- levelfun(griddata)
+levelplot(mu ~ x1 * x2, data = griddata, xlab = "x1", ylab = "x2", 
+          region = TRUE, cuts = ncuts, col.regions = cols)
+
+@
+\end{subfigure}
+\caption{\label{plot_sim_ll}left: results of the simulation study: log-likelihood\\ %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
+right: levelplot of the parameter function for $\kappa=5$}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+%\newpage
+%\section{References}
+
+%Hothorn T, Hornik K, Zeileis A (2006). 
+%``Unbiased Recursive Partitioning: A Conditional Inference Framework.''
+%\textit{Journal of Computational and Graphical Statistics}, 
+%\textbf{15}(3), 651--674. 
+%\doi{10.1198/106186006X133933}\\
+%\\
+%Zeileis A, Hothorn T, Hornik K (2008). 
+%``Model-Based Recursive Partitioning.''
+%\textit{Journal of Computational and Graphical Statistics}, 
+%\textbf{17}(2), 492--514. 
+%\doi{10.1198/106186008X319331}\\
+%\\
+%Hothorn T, Zeileis A (2015). 
+%``partykit: A Modular Toolkit for Recursive Partytioning in R.''
+%\textit{Journal of Machine Learning Research}, 
+%\textbf{16}, 3905--3909. 
+%\url{http://www.jmlr.org/papers/v16/hothorn15a.html}\\
+%\\
+%Stasinopoulos DM, Rigby RA (2007).
+%``Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.''
+%\textit{Journal of Statistical Software}, 
+%\textbf{23}(7), 1--46.
+%\doi{10.18637/jss.v023.i07}\\
+%\\
+%Stasinopoulos DM, Rigby RA (2005).
+%``Generalized Additive Models for Location Scale and Shape (with discussion)''
+%\textit{Applied Statistics},
+%\textbf{54}(3), 507--554.
+%\doi{10.1111/j.1467-9876.2005.00510.x}\\
+%\\
+%Seibold H, Zeileis A, Hothorn T (2017).
+%``Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.''
+%\textit{Statistical Methods in Medical Research}, 
+%\textbf{12}(1), 45--63.
+%\doi{10.1177/0962280217693034}\\
+%\\
+%Hothorn T, Zeileis A (2017).
+%``Transformation Forests.''
+%\emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+%\url{http://arxiv.org/abs/1701.02110}\\
+%\\
+%Messner JW, Mayr GJ, Zeileis A (2016).
+%``Heteroscedastic Censored and Truncated Regression with {crch}''
+%\textit{The R Journal},
+%\textbf{8}(1), 173--181.
+%\url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}\\
+%\\
+%Zeileis A, Wiel MA, Hornik K, Hothorn T (2008).
+%``Implementing a {Class} of {Permutation} {Tests}: {The} {Coin} {Package}''
+%\textit{Journal of Statistical Software},
+%\textbf{28}(8), 1--23.
+%\doi{10.18637/jss.v028.i08}\\
+%%publisher={American Statistical Association}
+%\\
+%Zeileis A, Hothorn T, Hornik K (2010).
+%``Party with the {MOB}: {Model-Based} {Recursive} {Partitioning} in {R}''
+%\textit{R package version 0.9-9999}.
+%\url{https://cran.r-project.org/web/packages/party/vignettes/MOB.pdf}\\
+%\\
+%Breiman L (2001).
+%``Random {Forests}''
+%\textit{Machine Learning},
+%\textbf{45}(1), 5--32
+%%\doi{10.1023/A:1010933404324}
+%%publisher={Springer}\\
+%\\
+%Loh WY (2011).
+%``Classification and {Regression} {Trees}''
+%\textit{Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery},
+%\textbf{1}(1), 14--23.
+%\doi{10.1002/widm.8}
+%%publisher={Wiley Online Library}\\
+%\\
+%Hothorn T (Maintainer), Hornik K, Strobl C, Zeileis A (2015).
+%``Package 'party' ''
+%\textit{Package Reference Manual for Party Version 0.9--0.998},
+%\textbf{16}, 37.\\
+%%  \doi{}
+%\\
+%Yee TW (2010).
+%``The {VGAM} {Package} for {Categorical} {Data} {Analysis}''
+%\textit{Journal of Statistical Software},
+%\textbf{32}(10), 1--34.
+%\url{http://www.jstatsoft.org/v32/i10/}\\
+%\\
+%Umlauf N, Klein N, Zeileis A (2017).
+%``{BAMLSS}: {B}ayesian Additive Models for Location, Scale
+%  and Shape (and Beyond)''
+%\textit{Working Papers in Economics and Statistics, Research
+%  Platform Empirical and Experimental Economics, Universit\"at
+%  Innsbruck},
+%\textbf{2017-05},
+%\url{http://EconPapers.RePEc.org/RePEc:inn:wpaper:2017-05}\\
+%%type = {Working Paper},
+%%number = {2017-05},
+%%month = {February},
+%\\
+%Benjamin Hofner and Andreas Mayr and Nora Fenske and
+%  Matthias Schmid (2017). 
+%``{gamboostLSS}: Boosting Methods for {GAMLSS} Models''
+%\textit{{R} package version 2.0-0}.
+%\url{https://CRAN.R-project.org/package=gamboostLSS}\\
+%\\
+%Liaw A, Wiener M (2002).
+%``Classification and Regression by randomForest''
+%\textit{R News},
+%\textbf{2}(3), 18--22.
+%\url{http://CRAN.R-project.org/doc/Rnews/}
+
+
+
+
+
+
+
+%\newpage
+\nocite{hothorn2006unbiased, zeileis2008model, hothorn2015partykit, Messner2016, loh2011classification, stasinopoulos2007generalized, Seibold2016, Seibold2017, breiman2001random, stasinopoulos2005, yee2010vgam}
+% zeileis2008implementing, 
+% zeileis2010party, 
+% hothorn2015package,
+
+\newpage
+\bibliography{ref.bib}
+
+\end{document}
