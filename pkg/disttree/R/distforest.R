@@ -1,6 +1,6 @@
 distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL,
                        type.tree = "ctree", decorrelate = "none", offset,
-                       cens = "none", censpoint = NULL, weights = NULL,
+                       censtype = "none", censpoint = NULL, weights = NULL,
                        control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...), 
                        ocontrol = list(),
                        ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
@@ -120,7 +120,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
         
         model <- distfit(ys, family = family, weights = subweights, start = start,
                          vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, cens = cens, censpoint = censpoint,
+                         estfun = estfun, censtype = censtype, censpoint = censpoint,
                          ocontrol = ocontrol, ...)
         
         if(estfun) {
@@ -205,7 +205,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       
       model <- distfit(y, family = family, weights = weights, start = start,
                      vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                     cens = cens, censpoint = censpoint,
+                     censtype = censtype, censpoint = censpoint,
                      ocontrol = ocontrol, ...)
       
       ef <- NULL
@@ -344,11 +344,11 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     for(i in 1:nrow(data)){
       wi <- w[,i]
       # personalized model for observation data[i,]
-      pm <-  distfit(Y, family = family, weights = wi, vcov = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+      pm <-  distfit(Y, family = family, weights = wi, vcov = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
       loglik[i,] <- pm$ddist(Y[i], log = TRUE)
-      # logscore[i,] <- pm$familylist$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
+      # logscore[i,] <- pm$family$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
     }
     
     if(is.null(weights) || (length(weights)==0L || is.function(weights))) weights <- numeric(nrow(data)) + 1
@@ -366,12 +366,10 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   
   rval$info$call <- cl
   rval$info$family <-  family
-  #rval$info$family <-  family$family.name
-  #rval$info$familylist <- family
   rval$info$npar <- np
   rval$info$formula <- formula
-  rval$info$cens <- cens
-  rval$info$censpoint
+  rval$info$censtype <- censtype
+  rval$info$censpoint <- censpoint
   #rval$data <- mf
   
   class(rval) <- c("distforest", class(rval))
@@ -503,16 +501,16 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
   distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
   ## FIXME: get family for all types of input for 'family'
   
-  if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
-    cens <- object$info$cens
+  if(object$info$family$gamlssobj && object$info$family$censored) {
+    censtype <- object$info$censtype
     censpoint <- object$info$censpoint
     for(i in 1:(nrow(newdata))){
       par <- pred.par[i,]
       eta <-  as.numeric(distlist$linkfun(par))
       ydata <- Y
       if(!survival::is.Surv(ydata)) {
-        if(cens == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
-        if(cens == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
+        if(censtype == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
+        if(censtype == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
         ## FIX ME: interval censored
       } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
     }

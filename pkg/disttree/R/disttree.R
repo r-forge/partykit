@@ -3,7 +3,7 @@
 # FIX ME: 'starting weights' in trees?
 disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
                      type.tree = "mob", decorrelate = "none", offset,
-                     cens = "none", censpoint = NULL, weights = NULL,
+                     censtype = "none", censpoint = NULL, weights = NULL,
                      control = mob_control(), ocontrol = list(), ...)
 {
   ## keep call
@@ -84,7 +84,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       
       model <- distfit(y, family = family, weights = weights, start = start,
                       vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                      cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+                      censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       
       ef <- NULL
       if(estfun) {
@@ -125,7 +125,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     
     ## call mob
     m$fit <- dist_family_fit
-    # m$family <- m$censpoint <- m$cens <- NULL
+    # m$family <- m$censpoint <- m$censtype <- NULL
     # m$family <- m$ocontrol <- NULL
     # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
@@ -193,7 +193,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
         
         model <- distfit(ys, family = family, weights = subweights, start = start,
                          vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+                         estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
 
         if(estfun) {
           ef <- as.matrix(model$estfun)
@@ -263,7 +263,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     # first iteration out of loop:
     model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                      vcov = FALSE, type.hessian = "analytic", 
-                     estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+                     estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -280,7 +280,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       for(i in (2:n_tn)){
         model <- distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                          vcov = FALSE, type.hessian = "analytic", 
-                         estfun = FALSE, cens = cens, censpoint = censpoint, ocontrol = ocontrol, ...)
+                         estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
         loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
@@ -297,12 +297,10 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   ## extend class and keep original call/family/control
   rval$info$call <- cl
   rval$info$family <- family   # FIX ME: family list is only generated within distfit -> not always returned
-  #rval$info$family <-  family$family.name
-  #rval$info$familylist <- family
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- m$formula
   rval$info$censpoint <- censpoint
-  rval$info$cens <- cens
+  rval$info$censtype <- censtype
   
   groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
@@ -387,8 +385,8 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
     ddist <- distlist$ddist
     
     
-    if(inherits(object$info$family, "gamlss.family") && ("censored" %in% strsplit(object$info$family[[1]], " ")[[2]])) {
-      cens <- object$info$cens
+    if(object$info$family$gamlssobj && object$info$family$censored) {
+      censtype <- object$info$censtype
       censpoint <- object$info$censpoint
       for(i in 1:n_tn){
         par <- coef_tn[i,]
@@ -396,8 +394,8 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
         # response variable of the observations that end up in this terminal node
         nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
         if(!survival::is.Surv(nobs_tn)) {
-          if(cens == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
-          if(cens == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
+          if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
+          if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
           ## FIX ME: interval censored
         } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
       }

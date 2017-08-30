@@ -6,12 +6,15 @@
 make_dist_list <- function(family, bd = NULL) 
   {
   
+  np <- sum(family$parameter == TRUE)
+  
+  censored <- ("censored" %in% strsplit(family$family[2], split = " ")[[1]])
+  
   ## list of families which require an additional parameter bd (binomial denominator)
   # by default bd is set to to 10 for BB() and to 1 for all the others
   .distfit.bi.list <- c("BI", "Binomial", "BB", "Beta Binomial", "ZIBI", "ZIBB", "ZABI", "ZABB") # binomial denominators
   if(any(family$family%in%.distfit.bi.list) && is.null(bd)) ifelse(family$family[1] == "BB", bd <- 10, bd <- 1)
-
-  np <- sum(family$parameter == TRUE)
+  
   
   ## families which have fixed parameters: LNO (log normal (Box-Cox)), NET
   # define fixed parameters locally within make_dist_list, such that the fixed parameters don't appear in the output list anymore
@@ -199,7 +202,7 @@ make_dist_list <- function(family, bd = NULL)
   ## define startfunction, complete derivative functions dpardeta, d2pardeta2, dldpar, d2ldpar2 according to the number of parameters
   
   ## TO DO: change starting expressions: eg. mean -> weighted.mean (use gsub to substitute function names)
-  weight_mean_expression <- if("censored" %in% strsplit(family$family[2], split = " ")[[1]]) {
+  weight_mean_expression <- if(censored) {
     function(e) {
       e <- gsub("mean(y[, 1])", "weighted.mean(y[, 1], weights)", e, fixed = TRUE)
       e <- parse(text = e)
@@ -269,7 +272,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (1x1) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i),]
@@ -363,7 +366,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (2x2) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i),]
@@ -461,7 +464,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (3x3) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i),]
@@ -562,7 +565,7 @@ make_dist_list <- function(family, bd = NULL)
       # for each observation a matrix of size (4x4) is stored in d2list
       
       d2list <- list()
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       length(d2list) <- ny
       for(i in 1:ny){
         d2list[[i]] <- d2matrix[c(i, ny+i, 2*ny+i, 3*ny+i),]
@@ -630,7 +633,7 @@ make_dist_list <- function(family, bd = NULL)
     eval <- do.call(get(paste0("d", family$family[[1]])), input)
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) {
-        ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+        ny <- NROW(y)
         weights <- rep.int(1, ny)
       }
       eval <- sum(weights * eval)
@@ -658,7 +661,7 @@ make_dist_list <- function(family, bd = NULL)
     score <- as.matrix(score)
     colnames(score) <- etanames
     if(sum) {
-      ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+      ny <- NROW(y)
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
       score <- colSums(weights * score)
     }
@@ -668,7 +671,7 @@ make_dist_list <- function(family, bd = NULL)
   
   ## hessian (second-order partial derivatives of the (positive) log-likelihood function)
   hdist <- function(y, eta, weights = NULL) {    
-    ny <- if(survival::is.Surv(y)) dim(y)[1] else length(y)
+    ny <- NROW(y)
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- linkinv(eta)
@@ -725,6 +728,7 @@ make_dist_list <- function(family, bd = NULL)
                     linkinvdr = linkinvdr,
                     startfun = startfun,
                     mle = mle,
-                    gamlssobj = TRUE
+                    gamlssobj = TRUE,
+                    censored = censored
                     )
 }

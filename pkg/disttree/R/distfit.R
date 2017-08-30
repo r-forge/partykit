@@ -1,7 +1,7 @@
 distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
                     vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
                     bd = NULL, fixed = NULL, fixed.values = NULL, 
-                    cens = "none", censpoint = NULL, ocontrol = list(), ...)
+                    censtype = "none", censpoint = NULL, ocontrol = list(), ...)
 {
   ## start on par scale
   ## start.eta on link scale
@@ -64,22 +64,21 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   
   # if family was handed over as a gamlss.dist family object and the distribution is censored:
-  # data has to be converted to a Survival object (necessary input arguments: cens and censpoint)
-  if(family$gamlssobj) {
-    if(("censored" %in% strsplit(family$family.name, " ")[[1]]) && (!survival::is.Surv(y))) {
-      if(cens == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments cens and censpoint)")
-      if(cens == "left") y <- survival::Surv(y, y > censpoint, type = "left")
-      if(cens == "right") y <- survival::Surv(y, y < censpoint, type = "right")
-      ## FIX ME: interval censored
-      #if(cens == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
-    }
-  } else {
-    if(survival::is.Surv(y)) {
-      yc <- y
-      y <- y[,1]
-      # if(!("censored" %in% strsplit(family$family.name, " ")[[1]])) {
-      # warning("response is Surv object but given distribution is not censored")
-      # }
+  # data has to be converted to a Survival object (necessary input arguments: censtype and censpoint)
+  if(family$censored) {
+    if(family$gamlssobj) {
+      if(censtype == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments censtype and censpoint)")
+      if(!survival::is.Surv(y)){
+        if(censtype == "left") y <- survival::Surv(y, y > censpoint, type = "left")
+        if(censtype == "right") y <- survival::Surv(y, y < censpoint, type = "right")
+        ## FIX ME: interval censored
+        #if(censtype == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+      }
+    } else {
+      if(survival::is.Surv(y)) {
+        yc <- y
+        y <- y[,1]
+      }
     }
   }
   
@@ -336,11 +335,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ##### additional functions with set parameters
   
   ## density function
-  if(inherits(cl$family, "gamlss.family") && ("censored" %in% strsplit(family$family.name, " ")[[1]])){
+  if(inherits(cl$family, "gamlss.family") && (family$censored)){
     ddist <- function(x, log = FALSE) {
       if(!survival::is.Surv(x)){
-        if(cens == "left") family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
-        if(cens == "right") family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
+        if(censtype == "left") family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
+        if(censtype == "right") family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
         ## FIX ME: interval censored
       } else family$ddist(x, eta = eta,  log=log)
     }
@@ -363,8 +362,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     y = y,
     ny = ny,
     weights = weights,
-    family = family$family.name,
-    familylist = family,
+    family = family,
     start = start,
     starteta = starteta,
     opt = opt,
@@ -405,7 +403,7 @@ predict.distfit <- function(object, type = c("response", "parameter"), ...){
   # of the given distribution with the calculated parameters
   if(type == "response") {
     
-    if("censored" %in% strsplit(object$family, " ")[[1]])
+    if(object$family$censored)
     {
       par <- coef(object, type = "parameter")
       expv <- par[1]
@@ -436,7 +434,7 @@ vcov.distfit <- function(object, type = "link", ...) {
   if(type == "link") return(object$vcov)
   if(type == "parameter"){
     ## delta method
-    delta.m <- diag(object$familylist$linkinvdr(object$eta))
+    delta.m <- diag(object$family$linkinvdr(object$eta))
     colnames(delta.m) <- rownames(delta.m) <- names(object$par)
     return(delta.m %*% object$vcov %*% delta.m)
   }
@@ -471,12 +469,12 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
     use.parm <- rep(TRUE,length = np)
   } else {
     use.parm <- logical(length = np)
-    if(("mu" %in% parm) || (paste0(object$familylist$link[1],"(mu)") %in% parm) || 1 %in% parm) use.parm[1] <- TRUE
+    if(("mu" %in% parm) || (paste0(object$family$link[1],"(mu)") %in% parm) || 1 %in% parm) use.parm[1] <- TRUE
     if(np > 1L) {
-      if(("sigma" %in% parm) || (paste0(object$familylist$link[2],"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
+      if(("sigma" %in% parm) || (paste0(object$family$link[2],"(sigma)") %in% parm) || 2 %in% parm) use.parm[2] <- TRUE
       if(np > 2L) {
-        if(("nu" %in% parm) || (paste0(object$familylist$link[3],"(nu)") %in% parm) || 3 %in% parm) use.parm[3] <- TRUE
-        if(np > 3L) if(("tau" %in% parm) || (paste0(object$familylist$link[4],"(tau)") %in% parm) || 4 %in% parm) use.parm[4] <- TRUE
+        if(("nu" %in% parm) || (paste0(object$family$link[3],"(nu)") %in% parm) || 3 %in% parm) use.parm[3] <- TRUE
+        if(np > 3L) if(("tau" %in% parm) || (paste0(object$family$link[4],"(tau)") %in% parm) || 4 %in% parm) use.parm[4] <- TRUE
       }
     }
   }
@@ -516,7 +514,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
 print.distfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
   cat("Fitted distributional model (", x$family, ")\n\n")
-  if(!(x$familylist$mle) && !x$converged) {
+  if(!(x$family$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {
     if(length(x$par)) {
@@ -562,7 +560,7 @@ print.summary.distfit <- function(x, digits = max(3, getOption("digits") - 3), .
 {
   cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
   
-  if(!(x$familylist$mle) && !x$converged) {
+  if(!(x$family$mle) && !x$converged) {
     cat("model did not converge\n")
   } else {
     cat(paste("Distribution Family:\n", x$family, "\n\n", sep = ""))
@@ -577,7 +575,7 @@ print.summary.distfit <- function(x, digits = max(3, getOption("digits") - 3), .
     } else cat("\nNo parameters\n")
 
     cat("\nLog-likelihood:", formatC(x$loglik, digits = digits), "on", x$npar, "Df\n")
-    if(!x$familylist$mle)
+    if(!x$family$mle)
       cat(paste("Number of iterations in", x$method, "optimization:\n", 
                 "function:", x$opt$counts[1L], "\n",
                 "gradient:", x$opt$counts[2L]))
@@ -789,7 +787,7 @@ if(FALSE){
     library("gamlss.cens")
     gen.cens(LO, type = "left")
     #RainIbk$rains <- Surv(RainIbk$rain, RainIbk$rain > 0, type = "left")
-    system.time(m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0))
+    system.time(m2 <- distfit(RainIbk$rain, family = LOlc, censtype = "left", censpoint = 0))
     # FIX ME: calculation of starting values for censored distributions
     # m2 <- distfit(RainIbk$rains, family = LOlc, start = c(1,1))
     
@@ -817,7 +815,7 @@ if(FALSE){
   y <- rnorm(500,-1,2)
   y <- pmax(y,0)
   system.time(m1 <- crch(y ~ 1, left = 0, dist = "gaussian"))
-  system.time(m2 <- distfit(y, censpoint = 0, cens="left", family = NOlc))
+  system.time(m2 <- distfit(y, censpoint = 0, censtype="left", family = NOlc))
   system.time(m3 <- distfit(y, family = dist_list_cens_normal))
   
   coef(m1)
