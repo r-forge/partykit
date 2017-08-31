@@ -15,9 +15,9 @@
 }
 
 \usage{
-disttree(formula, data, na.action, cluster, family = NO(),
+disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
          type.tree = "mob", decorrelate = "none", offset,
-         cens = "none", censpoint = NULL, weights = NULL,
+         censtype = "none", censpoint = NULL, weights = NULL,
          control = mob_control(), ocontrol = list(), ...)
 }
 
@@ -34,6 +34,7 @@ disttree(formula, data, na.action, cluster, family = NO(),
     stability tests.}
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
+  \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
   \item{type.tree}{Specification of the type of tree learner, either
     \code{"mob"} or \code{"ctree"}.}
   \item{decorrelate}{Specification of the type of decorrelation for the
@@ -42,7 +43,7 @@ disttree(formula, data, na.action, cluster, family = NO(),
     (for the variance-covariance matrix, assuming this is an estimate
     of the Fisher information).}
   \item{offset}{FIX ME.}
-  \item{cens}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
+  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
   \item{weights}{optional numeric vector of case weights.}
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
