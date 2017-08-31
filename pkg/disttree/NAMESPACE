@@ -1,6 +1,7 @@
 import("partykit")
 import("gamlss.dist")
 import("stats")
+import("Formula")
 importFrom("graphics",
   "plot",
   "hist",
@@ -12,11 +13,7 @@ importFrom("sandwich",
 )
 importFrom("utils", 
   "data", 
-  "getAnywhere")
-importFrom("Formula",
-  "as.Formula",
-  "Formula",
-  "model.part"
+  "getAnywhere"
 )
 importFrom("survival",
   "Surv",
