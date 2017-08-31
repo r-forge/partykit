@@ -335,7 +335,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ##### additional functions with set parameters
   
   ## density function
-  if(inherits(cl$family, "gamlss.family") && (family$censored)){
+  if(family$gamlssobj && family$censored){
     ddist <- function(x, log = FALSE) {
       if(!survival::is.Surv(x)){
         if(censtype == "left") family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
