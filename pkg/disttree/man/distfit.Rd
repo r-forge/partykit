@@ -30,7 +30,7 @@
 distfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
         vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
         bd = NULL, fixed = NULL, fixed.values = NULL, 
-        cens = "none", censpoint = NULL, ocontrol = list(), ...)
+        censtype = "none", censpoint = NULL, ocontrol = list(), ...)
 }
 
 \arguments{
@@ -45,10 +45,10 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{estfun}{logical. Should the matrix of observation-wise
     score contributions (or empirical estimating functions) be
     returned?}
-  \item{bd}{binomial denominator}
+  \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
   \item{fixed}{FIXME}
   \item{fixed.values}{FIXME}
-  \item{cens}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
+  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}}.}
