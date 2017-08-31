@@ -1,5 +1,5 @@
 gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
-                   nsteps = 9, stepsize = 1,
+                   nsteps = 9, stepsize = 2,
                    cov.sep = TRUE,
                    fix.mu = FALSE,
                    fix.sigma = FALSE,
@@ -618,7 +618,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   
   ### simulation wrapper function
   # (optionally with plot)
-  sim_fun <- function(fun, formula, nsteps = 10, ntree = 10, nobs = 200, nrep = 10, testnobs = 200L,
+  sim_fun <- function(fun, formula, nsteps = 10, ntree = 10, nobs = 400, nrep = 10, testnobs = 200L,
                       family = dist_list_normal, kappa.start = 0, stepsize = 1,
                       tree_minsplit = 14, tree_mincrit = 0.95, seedconst = seedconst,
                       forest_minsplit = 7, forest_mincrit = 0, type.tree = "ctree",
@@ -1138,11 +1138,11 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             
                             ## get 'fitted.sigma.rf'
                             rf_sigma <- numeric(length(NROW(newdata)))
-                            for(i in 1:NROW(newdata)){
-                              rf_sigma[i] <- rf_getsd(rf, newobs = newdata[i,], rfdata = learndata)
+                            for(l in 1:NROW(newdata)){
+                              rf_sigma[l] <- rf_getsd(rf, newobs = newdata[l,], rfdata = learndata)
                             }
                             
-                            if(family$censored){
+                            if("censored" %in% strsplit(family$family.name, " ")[[1]]){
                               
                               #calculate expected value for censored data
                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1312,7 +1312,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       } else {
         fun <- function(x, kappa){
           mu <- 0
-          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.7)) * (x[,2]-3)/10))
+          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10))
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -1328,7 +1328,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       } else {
         fun <- function(x, kappa){
           mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.7)) * (x[,2]-3)/10))
+          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10))
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -1355,8 +1355,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     } else {
       if(fix.sigma) {
         fun <- function(x, kappa){
-          mu <- 10 * (1-plogis((kappa^(1.7)) * (x[,2]-3)/10) 
-                      + (2*plogis((kappa^(1.7)) * (x[,2]-3)/10) -1) 
+          mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
+                      + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
                       * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
           sigma <- 3
           par <- cbind(mu, sigma)
@@ -1365,8 +1365,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       } else {
         if(mu.sigma.interaction){
           fun <- function(x, kappa){
-            mu <- 10 * (1-plogis((kappa^(1.7)) * (x[,2]-3)/10) 
-                        + (2*plogis((kappa^(1.7)) * (x[,2]-3)/10) -1) 
+            mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
+                        + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
                         * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
             sigma <- 2 + mu/2.5
             par <- cbind(mu, sigma)
@@ -1374,8 +1374,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
           }
         } else {
           fun <- function(x, kappa){
-            mu <- 10 * (1-plogis((kappa^(1.7)) * (x[,2]-3)/10) 
-                        + (2*plogis((kappa^(1.7)) * (x[,2]-3)/10) -1) 
+            mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
+                        + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
                         * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
             sigma <- 1 + abs(x[,2])
             par <- cbind(mu, sigma)
