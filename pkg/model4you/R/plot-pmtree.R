@@ -55,7 +55,7 @@
 binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic(), ...) {
   
   if(!("glm" %in% class(mod))) stop("model should be of class glm, is of class ", class(mod))
-  fam <- family(mod)$family
+  fam <- stats::family(mod)$family
   if(fam != "binomial") stop("model should have family binomail, but has family ", fam)
   
   ## get formula and data
