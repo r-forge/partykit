@@ -58,11 +58,13 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
   \item{ytrafo}{an optional named list of functions to be applied to the response
                 variable(s) before testing their association with the explanatory
                 variables. Note that this transformation is only
-                performed once for the root node and does not take weights into account.
+                performed once for the root node and does not take weights into account
+                (which means, the forest bootstrap or subsetting is ignored,
+                which is almost certainly not a good idea).
                 Alternatively, \code{ytrafo} can be a function of \code{data} and
                 \code{weights}. In this case, the transformation is computed for
-                every node. This feature is experimental and the user interface
-                likely to change.}
+                every node and the corresponding weights. This feature is experimental 
+                and the user interface likely to change.}
   \item{scores}{an optional named list of scores to be attached to ordered
                 factors.}
   \item{ntree}{

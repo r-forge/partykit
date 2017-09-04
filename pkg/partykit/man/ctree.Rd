@@ -36,8 +36,8 @@ ctree(formula, data, weights, subset, offset, cluster,
                 performed once for the root node and does not take weights into account.
                 Alternatively, \code{ytrafo} can be a function of \code{data} and
                 \code{weights}. In this case, the transformation is computed for
-                every node. This feature is experimental and the user interface 
-                likely to change.}
+                every node with corresponding weights. This feature is experimental
+                and the user interface likely to change.}
   \item{converged}{an optional function for checking user-defined criteria
                    before splits are implemented. This is not to be used and
                    very likely to change.}
