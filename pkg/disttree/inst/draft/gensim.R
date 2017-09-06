@@ -1,9 +1,20 @@
+# FIX ME:
+# error in bamlss (seedconst7): "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
+# error in gamboostLSS (seedconst723, fix.mu): "Error in names(pr) <- nm : \n  'names' attribute [300] must be the same length as the vector [10]\n"
+# error in gamlss (seedconst723, covsep, 3 out of 10): ""Error in while (RATIO > tol & nit < maxit) { : \n  missing value where TRUE/FALSE needed\n" 
 gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
-                   nsteps = 9, stepsize = 2,
-                   cov.sep = TRUE,
+                   nsteps = 9, stepsize = 1, kappa.start = 1,
+                   formula = y~x1+x2, 
+                   nobs = 400, testnobs = 200L,
+                   tree_minsplit = 14, tree_mincrit = 0.95,
+                   forest_minsplit = 7, forest_mincrit = 0, 
+                   type.tree = "ctree",
+                   onecov = TRUE,
+                   censNO = TRUE,
+                   cov.sep = FALSE,
                    fix.mu = FALSE,
                    fix.sigma = FALSE,
-                   mu.sigma.interaction = TRUE,
+                   mu.sigma.interaction = FALSE,
                    gamboost_cvr = FALSE,
                    eval_disttree = TRUE,
                    eval_distforest = TRUE,
@@ -13,6 +24,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    eval_randomForest = FALSE,
                    eval_cforest = FALSE)
 {
+  
+  cl <- match.call()
   
   ### preliminaries
   library("disttree")
@@ -28,6 +41,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   library("randomForest")
   library("gamboostLSS")
   library("Formula")  # FIX ME: should be imported in disttree
+  library("survival")
   
   ## define distribution list:
   # dist_list_normal
@@ -291,6 +305,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   }
   
   
+  
+  #if(censNO != family$censored) stop("if censNO = TRUE the family has to be censored and vice versa")
+  family <- if(censNO) dist_list_cens_normal else dist_list_normal
   
   ######## data generating process based on a predefined tree or a parameter function
   # if tree: 2 splits => 3 terminal nodes
@@ -616,24 +633,160 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   
   
   
-  ### simulation wrapper function
-  # (optionally with plot)
-  sim_fun <- function(fun, formula, nsteps = 10, ntree = 10, nobs = 400, nrep = 10, testnobs = 200L,
-                      family = dist_list_normal, kappa.start = 0, stepsize = 1,
-                      tree_minsplit = 14, tree_mincrit = 0.95, seedconst = seedconst,
-                      forest_minsplit = 7, forest_mincrit = 0, type.tree = "ctree",
-                      cov.sep = cov.sep,
-                      fix.mu = fix.mu,
-                      fix.sigma = fix.sigma,
-                      mu.sigma.interaction = mu.sigma.interaction,
-                      gamboost_cvr = FALSE,
-                      eval_disttree = TRUE,
-                      eval_distforest = TRUE,
-                      eval_gamlss = TRUE,
-                      eval_bamlss = FALSE,
-                      eval_gamboostLSS = FALSE,
-                      eval_randomForest = FALSE,
-                      eval_cforest = FALSE)
+  ######################################
+  # smooth parameter function
+  
+  # parameter functions
+  #fun <- function(x, kappa){
+  #  mu <- 10 * (1-plogis(round(1.6^kappa,0) * x[,2]/10) + (2*plogis(round(1.6^kappa,0) * x[,2]/10) -1) * rbinom(nrow(x),1,exp(-(3*x[,1]-1.5)^(2*round(1.49^kappa,0)))))
+  #  sigma <- 0.01 + mu/3
+  #  par <- cbind(mu, sigma)
+  #  return(par)
+  #}
+  
+  
+  if(onecov){
+    if(fix.mu){
+      if(fix.sigma){
+        fun <- function(x, kappa){
+          mu <- 0
+          sigma <- 3
+          par <- cbind(mu, sigma)
+          return(par)
+        }
+      } else {
+        fun <- function(x, kappa){
+          mu <- 0
+          sigma <- 1+3*abs(x[,1])
+          par <- cbind(mu, sigma)
+          return(par)
+        }
+      }
+    } else {
+      if(fix.sigma){
+        fun <- function(x, kappa){
+          mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+          #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
+          if(censNO) mu[x[,1]<0] <- 0
+          sigma <- 3
+          par <- cbind(mu, sigma)
+          return(par)
+        }
+      } else {
+        if(mu.sigma.interaction){
+          fun <- function(x, kappa){
+            mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+            #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
+            if(censNO) mu[x[,1]<0] <- 0
+            sigma <- 2 + mu/4
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        } else {
+          fun <- function(x, kappa){
+            mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+            #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
+            if(censNO) mu[x[,1]<0] <- 0
+            sigma <- 1+3*abs(x[,1])
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        }
+      }
+    }
+    
+  } else {
+    # should the covariates have separated effects, e.g. mu depends on x1 only and sigma on x2 only (for fix.mu = fix.sigma = FALSE)
+    if(cov.sep){
+      if(mu.sigma.interaction) stop("if cov.sep is TRUE no interaction between mu and sigma can be included (mu.sigma.interaction has to be FALSE)")
+      if(fix.mu) {
+        if(fix.sigma) {
+          fun <- function(x, kappa){
+            mu <- 0
+            sigma <- 3
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        } else {
+          fun <- function(x, kappa){
+            mu <- 0
+            sigma <- 0.1 + 5 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10))
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        }
+      } else {
+        if(fix.sigma) {
+          fun <- function(x, kappa){
+            mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
+            sigma <- 3
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        } else {
+          fun <- function(x, kappa){
+            mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
+            sigma <- 0.1 + 5 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10))
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        }
+      }
+      # or should mu depend on x1 and x2 and sigma on x2 (for fix.mu = fix.sigma = mu.sigma.interaction = FALSE)
+    } else {
+      if(fix.mu) {
+        if(fix.sigma) {
+          fun <- function(x, kappa){
+            mu <- 0
+            sigma <- 3
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        } else {
+          fun <- function(x, kappa){
+            mu <- 0
+            sigma <- 0.1 + abs(x[,2])
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        }
+      } else {
+        if(fix.sigma) {
+          fun <- function(x, kappa){
+            mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
+                        + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
+                        * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
+            sigma <- 3
+            par <- cbind(mu, sigma)
+            return(par)
+          }
+        } else {
+          if(mu.sigma.interaction){
+            fun <- function(x, kappa){
+              mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
+                          + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
+                          * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
+              sigma <- 2 + mu/2.5
+              par <- cbind(mu, sigma)
+              return(par)
+            }
+          } else {
+            fun <- function(x, kappa){
+              mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
+                          + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
+                          * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
+              sigma <- 1 + abs(x[,2])
+              par <- cbind(mu, sigma)
+              return(par)
+            }
+          }
+        }
+      }
+    }
+  }
+  
+
+  ### simulation
   {
     
     # matrix of results
@@ -681,7 +834,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              dt_mu <- as.vector(dt_coef[,"mu"]) 
                              dt_sigma <- as.vector(dt_coef[,"sigma"]) 
                              
-                             if("censored" %in% strsplit(family$family.name, " ")[[1]]){
+                             if(family$censored){
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                                dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
@@ -725,6 +878,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
+    
     if(eval_distforest){
       res_df <- mclapply(1:(nsteps+1),
                          function(i){
@@ -763,7 +917,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              df_mu <- df_coef$mu
                              df_sigma <- df_coef$sigma
                              
-                             if("censored" %in% strsplit(family$family.name, " ")[[1]]){
+                             if(family$censored){
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                                df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
@@ -807,6 +961,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
+    
     if(eval_gamlss){
       res_g <- mclapply(1:(nsteps+1),
                         function(i){
@@ -831,15 +986,17 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             }
                           } 
                           
+                          
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
-                            if(family$family.name == "censored Normal Distribution") {
+                            if(censNO){
                               learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
-                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = cens(NO))
+                              #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
+                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NOlc())
                             } else {
                               g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NO())
                             }
@@ -851,14 +1008,11 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             g_mu <- predict(g, newdata = nd, what = "mu", type = "response", data = learndata)
                             g_sigma <- predict(g, newdata = nd, what = "sigma", type = "response", data = learndata)
                             
-                            if("censored" %in% strsplit(family$family.name, " ")[[1]]){
-                              
+                            if(family$censored){
                               #calculate expected value for censored data
                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                               g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
-                              
-                            } else {
-                              
+                            } else {  
                               # for non censored normal data the expected value is the location paramter
                               true_exp <- true_mu
                               g_exp <- g_mu
@@ -897,7 +1051,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       
       resmat <- cbind(resmat, resmat_g)
     }
-                             
+    
     
     ## FIX ME: set up bamlss for censored data (as.surv(y))
     if(eval_bamlss){
@@ -930,9 +1084,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
-                            if(family$family.name == "censored Normal Distribution") {
-                              ## FIX ME: set up for bamlss and randomForest
-                              learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
+                            if(family$censore) {
+                              ## FIX ME: set up for bamlss
+                              #learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
                               b <- bamlss(bamlss.formula(list(mu.formula, sigma.formula), family = cnorm_bamlss), data = learndata)
                             } else {
                               b <- bamlss(bamlss.formula(list(mu.formula, sigma.formula), family = "gaussian"), data = learndata)
@@ -946,7 +1100,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             b_mu <- b_coef$mu
                             b_sigma <- b_coef$sigma
                             
-                            if("censored" %in% strsplit(family$family.name, " ")[[1]]){
+                            if(family$censored){
                               
                               #calculate expected value for censored data
                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1007,95 +1161,103 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       grid <- make.grid(max = 300, min = 10, length.out = 10)
       
       res_gb <- mclapply(1:(nsteps+1),
-                        function(i){
-                          
-                          # for each step the parameter function is defined
-                          f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
-                          
-                          rmse.exp.true.gb <- numeric(length = nrep)
-                          rmse.exp.obs.gb <- numeric(length = nrep)
-                          rmse.mu.gb <- numeric(length = nrep)
-                          rmse.sigma.gb <- numeric(length = nrep)
-                          loglik.gb <- numeric(length = nrep)
-                          
-                          # FIX ME: notation only works with x1 and x2 as regressors
-                          formula_rh <- formula[[3]]
-                          if("x1" %in% as.character(formula_rh)){
-                            mu.formula <- y~bbs(x1)
-                            sigma.formula <- y~bbs(x1)
-                            if("x2" %in% as.character(formula_rh)){
-                              mu.formula <- y~bbs(x1)+bbs(x2)
-                              sigma.formula <- y~bbs(x1)+bbs(x2)
-                            }
-                          } 
-                          
-                          for(j in 1:nrep){
-                            set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
-                            nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
-                            
-                            # FIX ME: censored data
-                            if(family$family.name == "censored Normal Distribution") {
-                              gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, families = GaussianLSS())
-                            } else {
-                              #gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, families = GaussianLSS())
-                              #gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
-                              #                  families = GaussianLSS(), control = boost_control(mstop = list(mu = 400, sigma = 200)))
-                              gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
-                                                families = GaussianLSS(), method = "noncyclic",
-                                                control = boost_control(mstop = 400L))
-                              if(gamboost_cvr){
-                                cvr <- cvrisk(gb, grid = grid)
-                                mstop(gb) <- mstop(cvr)
-                              }
-                            }                            
-                            
-                            # get true and predicted parameters for newdata
-                            true_mu <- newdata[,"mu"]
-                            true_sigma <- newdata[,"sigma"]
-                            
-                            gb.pred.par <- predict(gb, newdata = nd, parameter = list("mu","sigma"), type = "response")
-                            gb_mu <- gb.pred.par[[1]]
-                            gb_sigma <- gb.pred.par[[2]]
-                            
-                            if("censored" %in% strsplit(family$family.name, " ")[[1]]){
-                              
-                              #calculate expected value for censored data
-                              true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
-                              gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
-                            } else {
-                              
-                              # for non censored normal data the expected value is the location paramter
-                              true_exp <- true_mu
-                              gb_exp <- gb_mu
-                            }
-                            
-                            
-                            # calculate RMSEs
-                            rmse.exp.true.gb[j] <- sqrt(mean((gb_exp - true_exp)^2))
-                            rmse.exp.obs.gb[j] <- sqrt(mean((gb_exp - newdata[,"y"])^2))
-                            rmse.mu.gb[j] <- sqrt(mean((gb_mu - true_mu)^2))
-                            rmse.sigma.gb[j] <- sqrt(mean((gb_sigma - true_sigma)^2))
-  
-                            # calculate loglikelihood for newdata
-                            loglik.gb[j] <- gbll.newdata(gb, newdata = newdata)
-                          }
-                          
-                          
-                          return(as.data.frame(c(mean(rmse.exp.true.gb),
-                                                 mean(rmse.exp.obs.gb),
-                                                 mean(rmse.mu.gb),
-                                                 mean(rmse.sigma.gb),
-                                                 mean(loglik.gb)),
-                                               row.names = c( "av.rmse.exp.true.gb",
-                                                              "av.rmse.exp.obs.gb",
-                                                              "av.rmse.mu.gb",
-                                                              "av.rmse.sigma.gb",
-                                                              "av.loglik.gb")))
-                          
-                        },
-                        mc.cores = detectCores() - 1
+                         function(i){
+                           
+                           # for each step the parameter function is defined
+                           f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
+                           
+                           rmse.exp.true.gb <- numeric(length = nrep)
+                           rmse.exp.obs.gb <- numeric(length = nrep)
+                           rmse.mu.gb <- numeric(length = nrep)
+                           rmse.sigma.gb <- numeric(length = nrep)
+                           loglik.gb <- numeric(length = nrep)
+                           
+                           # FIX ME: notation only works with x1 and x2 as regressors
+                           formula_rh <- formula[[3]]
+                           if("x1" %in% as.character(formula_rh)){
+                             mu.formula <- y~bbs(x1)
+                             sigma.formula <- y~bbs(x1)
+                             if("x2" %in% as.character(formula_rh)){
+                               mu.formula <- y~bbs(x1)+bbs(x2)
+                               sigma.formula <- y~bbs(x1)+bbs(x2)
+                             }
+                           } 
+                           
+                           for(j in 1:nrep){
+                             set.seed(seedconst+((i-1)*nrep)+j)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
+                             
+                             # FIX ME: censored data
+                             if(family$censored) {
+                               learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
+                               #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
+                               gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
+                                                 families = as.families(fname = "NOlc"), method = "noncyclic",
+                                                 control = boost_control(mstop = 400L))
+                               if(gamboost_cvr){
+                                 cvr <- cvrisk(gb, grid = grid)
+                                 mstop(gb) <- mstop(cvr)
+                               }
+                             } else {
+                               #gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, families = GaussianLSS())
+                               #gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
+                               #                  families = GaussianLSS(), control = boost_control(mstop = list(mu = 400, sigma = 200)))
+                               gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
+                                                 families = GaussianLSS(), method = "noncyclic",
+                                                 control = boost_control(mstop = 400L))
+                               if(gamboost_cvr){
+                                 cvr <- cvrisk(gb, grid = grid)
+                                 mstop(gb) <- mstop(cvr)
+                               }
+                             }                            
+                             
+                             # get true and predicted parameters for newdata
+                             true_mu <- newdata[,"mu"]
+                             true_sigma <- newdata[,"sigma"]
+                             
+                             gb.pred.par <- predict(gb, newdata = nd, parameter = list("mu","sigma"), type = "response")
+                             gb_mu <- gb.pred.par[[1]]
+                             gb_sigma <- gb.pred.par[[2]]
+                             
+                             if(family$censored){
+                               
+                               #calculate expected value for censored data
+                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
+                               gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+                             } else {
+                               
+                               # for non censored normal data the expected value is the location paramter
+                               true_exp <- true_mu
+                               gb_exp <- gb_mu
+                             }
+                             
+                             
+                             # calculate RMSEs
+                             rmse.exp.true.gb[j] <- sqrt(mean((gb_exp - true_exp)^2))
+                             rmse.exp.obs.gb[j] <- sqrt(mean((gb_exp - newdata[,"y"])^2))
+                             rmse.mu.gb[j] <- sqrt(mean((gb_mu - true_mu)^2))
+                             rmse.sigma.gb[j] <- sqrt(mean((gb_sigma - true_sigma)^2))
+                             
+                             # calculate loglikelihood for newdata
+                             loglik.gb[j] <- gbll.newdata(gb, newdata = newdata)
+                           }
+                           
+                           
+                           return(as.data.frame(c(mean(rmse.exp.true.gb),
+                                                  mean(rmse.exp.obs.gb),
+                                                  mean(rmse.mu.gb),
+                                                  mean(rmse.sigma.gb),
+                                                  mean(loglik.gb)),
+                                                row.names = c( "av.rmse.exp.true.gb",
+                                                               "av.rmse.exp.obs.gb",
+                                                               "av.rmse.mu.gb",
+                                                               "av.rmse.sigma.gb",
+                                                               "av.loglik.gb")))
+                           
+                         },
+                         mc.cores = detectCores() - 1
       )
       
       resmat_gb <- matrix(ncol = 5, nrow = (nsteps+1))
@@ -1106,79 +1268,79 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
-    ## FIX ME: censored?
+    
     if(eval_randomForest){
       res_rf <- mclapply(1:(nsteps+1),
                          function(i){
-                          
-                          # for each step the parameter function is defined
-                          f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
-                          
-                          rmse.exp.true.rf <- numeric(length = nrep)
-                          rmse.exp.obs.rf <- numeric(length = nrep)
-                          rmse.mu.rf <- numeric(length = nrep)
-                          rmse.sigma.rf <- numeric(length = nrep)
-                          loglik.rf <- numeric(length = nrep)
-                          
-                          for(j in 1:nrep){  
-                            set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
-                            nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
-                            
-                            rf <- randomForest(formula, data = learndata, ntree = ntree, 
-                                               nodesize = forest_minsplit, 
-                                               keep.inbag = TRUE, replace = FALSE)
-                            
-                            # get true and predicted parameters for newdata
-                            true_mu <- newdata[,"mu"]
-                            true_sigma <- newdata[,"sigma"]
-                            
-                            rf_mu <- predict(rf, newdata = newdata)
-                            
-                            ## get 'fitted.sigma.rf'
-                            rf_sigma <- numeric(length(NROW(newdata)))
-                            for(l in 1:NROW(newdata)){
-                              rf_sigma[l] <- rf_getsd(rf, newobs = newdata[l,], rfdata = learndata)
-                            }
-                            
-                            if("censored" %in% strsplit(family$family.name, " ")[[1]]){
-                              
-                              #calculate expected value for censored data
-                              true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
-                              rf_exp <- pnorm(rf_mu/rf_sigma) * (rf_mu + rf_sigma * (dnorm(rf_mu/rf_sigma) / pnorm(rf_mu/rf_sigma)))
-                              
-                            } else {
-                              
-                              # for non censored normal data the expected value is the location paramter
-                              true_exp <- true_mu
-                              rf_exp <- rf_mu
-                            }                            
-                            
-                            
-                            # calculate RMSEs
-                            rmse.exp.true.rf[j] <- sqrt(mean((rf_exp - true_exp)^2))
-                            rmse.exp.obs.rf[j] <- sqrt(mean((rf_exp - newdata[,"y"])^2))
-                            rmse.mu.rf[j] <- sqrt(mean((rf_mu - true_mu)^2))
-                            rmse.sigma.rf[j] <- sqrt(mean((rf_sigma - true_sigma)^2))
-                            
-                            # calculate loglikelihood for newdata
-                            loglik.rf[j] <- rfll.newdata(rf, newdata = newdata, learndata = learndata)
-                          }
-                          
-                          
-                          return(as.data.frame(c(mean(rmse.exp.true.rf),
-                                                 mean(rmse.exp.obs.rf),
-                                                 mean(rmse.mu.rf),
-                                                 mean(rmse.sigma.rf),
-                                                 mean(loglik.rf)),
-                                               row.names = c( "av.rmse.exp.true.rf",
-                                                              "av.rmse.exp.obs.rf",
-                                                              "av.rmse.mu.rf",
-                                                              "av.rmse.sigma.rf",
-                                                              "av.loglik.rf")))
-                        },
-                        mc.cores = detectCores() - 1
+                           
+                           # for each step the parameter function is defined
+                           f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
+                           
+                           rmse.exp.true.rf <- numeric(length = nrep)
+                           rmse.exp.obs.rf <- numeric(length = nrep)
+                           rmse.mu.rf <- numeric(length = nrep)
+                           rmse.sigma.rf <- numeric(length = nrep)
+                           loglik.rf <- numeric(length = nrep)
+                           
+                           for(j in 1:nrep){  
+                             set.seed(seedconst+((i-1)*nrep)+j)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
+                             
+                             rf <- randomForest(formula, data = learndata, ntree = ntree, 
+                                                nodesize = forest_minsplit, 
+                                                keep.inbag = TRUE, replace = FALSE)
+                             
+                             # get true and predicted parameters for newdata
+                             true_mu <- newdata[,"mu"]
+                             true_sigma <- newdata[,"sigma"]
+                             
+                             rf_mu <- predict(rf, newdata = newdata)
+                             
+                             ## get 'fitted.sigma.rf'
+                             rf_sigma <- numeric(length(NROW(newdata)))
+                             for(l in 1:NROW(newdata)){
+                               rf_sigma[l] <- rf_getsd(rf, newobs = newdata[l,], rfdata = learndata)
+                             }
+                             
+                             if(family$censored){
+                               
+                               #calculate expected value for censored data
+                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
+                               rf_exp <- pnorm(rf_mu/rf_sigma) * (rf_mu + rf_sigma * (dnorm(rf_mu/rf_sigma) / pnorm(rf_mu/rf_sigma)))
+                               
+                             } else {
+                               
+                               # for non censored normal data the expected value is the location paramter
+                               true_exp <- true_mu
+                               rf_exp <- rf_mu
+                             }                            
+                             
+                             
+                             # calculate RMSEs
+                             rmse.exp.true.rf[j] <- sqrt(mean((rf_exp - true_exp)^2))
+                             rmse.exp.obs.rf[j] <- sqrt(mean((rf_exp - newdata[,"y"])^2))
+                             rmse.mu.rf[j] <- sqrt(mean((rf_mu - true_mu)^2))
+                             rmse.sigma.rf[j] <- sqrt(mean((rf_sigma - true_sigma)^2))
+                             
+                             # calculate loglikelihood for newdata
+                             loglik.rf[j] <- rfll.newdata(rf, newdata = newdata, learndata = learndata)
+                           }
+                           
+                           
+                           return(as.data.frame(c(mean(rmse.exp.true.rf),
+                                                  mean(rmse.exp.obs.rf),
+                                                  mean(rmse.mu.rf),
+                                                  mean(rmse.sigma.rf),
+                                                  mean(loglik.rf)),
+                                                row.names = c( "av.rmse.exp.true.rf",
+                                                               "av.rmse.exp.obs.rf",
+                                                               "av.rmse.mu.rf",
+                                                               "av.rmse.sigma.rf",
+                                                               "av.loglik.rf")))
+                         },
+                         mc.cores = detectCores() - 1
       )
       
       resmat_rf <- matrix(ncol = 5, nrow = (nsteps+1))
@@ -1187,9 +1349,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       
       resmat <- cbind(resmat, resmat_rf)
     }
-
     
-    ## FIX ME: censored?
+    
+    
     if(eval_cforest){
       res_cf <- mclapply(1:(nsteps+1),
                          function(i){
@@ -1210,9 +1372,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              cf <- cforest(formula, data = learndata, ntree = ntree,
-                                          control = ctree_control(teststat = "quad", testtype = "Univ", 
-                                                         mincriterion = forest_mincrit, minsplit = forest_minsplit, 
-                                                         intersplit = TRUE))
+                                           control = ctree_control(teststat = "quad", testtype = "Univ", 
+                                                                   mincriterion = forest_mincrit, minsplit = forest_minsplit, 
+                                                                   intersplit = TRUE))
                              
                              
                              # get true and predicted parameters for newdata
@@ -1225,7 +1387,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              cf_sigma <- cf_getsd(cf, newdata = newdata)
                              
                              
-                             if("censored" %in% strsplit(family$family.name, " ")[[1]]){
+                             if(family$censored){
                                
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1277,135 +1439,15 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     
     
     x.axis <- seq(kappa.start, (kappa.start + (nsteps)*stepsize), stepsize)
-  
+    
     simres <- list(resmat = resmat, x.axis = x.axis)
     
-    return(simres)
   }
   
   
-  
-  
-  
-  ######################################
-  # smooth parameter function
-  
-  # parameter functions
-  #fun <- function(x, kappa){
-  #  mu <- 10 * (1-plogis(round(1.6^kappa,0) * x[,2]/10) + (2*plogis(round(1.6^kappa,0) * x[,2]/10) -1) * rbinom(nrow(x),1,exp(-(3*x[,1]-1.5)^(2*round(1.49^kappa,0)))))
-  #  sigma <- 0.01 + mu/3
-  #  par <- cbind(mu, sigma)
-  #  return(par)
-  #}
-  
-  # should the covariates have separated effects, e.g. mu depends on x1 only and sigma on x2 only (for fix.mu = fix.sigma = FALSE)
-  if(cov.sep){
-    if(mu.sigma.interaction) stop("if cov.sep is TRUE no interaction between mu and sigma can be included (mu.sigma.interaction has to be FALSE)")
-    if(fix.mu) {
-      if(fix.sigma) {
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 3
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10))
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      }
-    } else {
-      if(fix.sigma) {
-        fun <- function(x, kappa){
-          mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-          sigma <- 3
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        fun <- function(x, kappa){
-          mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-          sigma <- 0.1 + 5 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10))
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      }
-    }
-  # or should mu depend on x1 and x2 and sigma on x2 (for fix.mu = fix.sigma = mu.sigma.interaction = FALSE)
-  } else {
-    if(fix.mu) {
-      if(fix.sigma) {
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 3
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 0.1 + abs(x[,2])
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      }
-    } else {
-      if(fix.sigma) {
-        fun <- function(x, kappa){
-          mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
-                      + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
-                      * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-          sigma <- 3
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        if(mu.sigma.interaction){
-          fun <- function(x, kappa){
-            mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
-                        + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
-                        * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-            sigma <- 2 + mu/2.5
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          fun <- function(x, kappa){
-            mu <- 10 * (1-plogis((kappa^(1.5)) * (x[,2]-3)/10) 
-                        + (2*plogis((kappa^(1.5)) * (x[,2]-3)/10) -1) 
-                        * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-            sigma <- 1 + abs(x[,2])
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        }
-      }
-    }
-  }
-  
-  
-
-  simres <- sim_fun(fun = fun, formula = y~x1+x2,
-                    kappa.start = 1, nsteps = nsteps, stepsize = stepsize, 
-                    family = dist_list_normal,
-                    ntree = ntree, nobs = 500L, testnobs = 300L,
-                    nrep = nrep, seedconst = seedconst,
-                    type.tree = "ctree",
-                    tree_minsplit = 14L, tree_mincrit = 0.9,
-                    forest_minsplit = 7L, forest_mincrit = 0,
-                    gamboost_cvr = gamboost_cvr,
-                    eval_disttree = eval_disttree,
-                    eval_distforest = eval_distforest,
-                    eval_gamlss = eval_gamlss,
-                    eval_bamlss = eval_bamlss,
-                    eval_gamboostLSS = eval_gamboostLSS,
-                    eval_randomForest = eval_randomForest,
-                    eval_cforest = eval_cforest)
   
   simres$fun <- fun
+  simres$call <- cl
   return(simres)
 }
 
