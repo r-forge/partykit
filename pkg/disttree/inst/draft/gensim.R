@@ -2,6 +2,10 @@
 # error in bamlss (seedconst7): "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
 # error in gamboostLSS (seedconst723, fix.mu): "Error in names(pr) <- nm : \n  'names' attribute [300] must be the same length as the vector [10]\n"
 # error in gamlss (seedconst723, covsep, 3 out of 10): ""Error in while (RATIO > tol & nit < maxit) { : \n  missing value where TRUE/FALSE needed\n" 
+# error in gamboostLSS: "Error in as.families(fname = \"NOlc\") : \n  ‘fname’ specifies no valid gamlss family\n"
+# error in gamlss: "Error in eval(parse(text = object$family[[1]])) : object 'NOlc' not found\n"
+# error in bamlss: "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
+
 gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    nsteps = 9, stepsize = 1, kappa.start = 1,
                    formula = y~x1+x2, 
@@ -35,7 +39,6 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   library("latex2exp")
   library("parallel")
   library("gamlss.cens")
-  gen.cens(NO, type = "left")
   library("gamboostLSS")
   library("bamlss")
   library("randomForest")
@@ -483,24 +486,24 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   
   
   ### set up function to get logLik from disttree object for new data 
-  dtll.newdata <- function(object, newdata){
-    ll <- 0
-    nd <- newdata[,-c(1,ncol(newdata)-1, ncol(newdata))]
-    if(is.null(coef(object))){
-      readline(prompt="Press [enter] to continue")
-      print(object$info$call)
-      print(object$data)
-      return(NULL)
-    } else {
-      pred.par <- predict(object, newdata = nd, type = "parameter")
-      for(i in 1:(nrow(newdata))){
-        eta <- as.numeric(object$info$family$linkfun(pred.par[i,]))
-        ll <- ll + object$info$family$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta, log=TRUE)
-      }
-      if(is.na(ll)) print("dt.ll = NA")
-      return(ll)
-    }
-  }
+  #dtll.newdata <- function(object, newdata){
+  #  ll <- 0
+  #  nd <- newdata[,-c(1,ncol(newdata)-1, ncol(newdata))]
+  #  if(is.null(coef(object))){
+  #    readline(prompt="Press [enter] to continue")
+  #    print(object$info$call)
+  #    print(object$data)
+  #    return(NULL)
+  #  } else {
+  #    pred.par <- predict(object, newdata = nd, type = "parameter")
+  #    for(i in 1:(nrow(newdata))){
+  #      eta <- as.numeric(object$info$family$linkfun(pred.par[i,]))
+  #      ll <- ll + object$info$family$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta, log=TRUE)
+  #    }
+  #    if(is.na(ll)) print("dt.ll = NA")
+  #    return(ll)
+  #  }
+  #}
   
   
   
@@ -515,7 +518,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     pred.par <- cbind(predict(object, newdata = nd, what = "mu", type = "response", data = data),
                       predict(object, newdata = nd, what = "sigma", type = "response", data = data))
     #np <- ncol(pred.par)
-    distfun <- if(object$family[1] == "NOlc") {
+    distfun <- if(censNO) {
       function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
     } else {
       function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
@@ -542,7 +545,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     pred.par <- predict(object, newdata = nd, what = "parameters", type = "parameter")
     pred.par <- cbind(pred.par$mu, pred.par$sigma)
     #np <- ncol(pred.par)
-    distfun <- if(object$family[1] == "NOlc") {
+    distfun <- if(censNO) {
       function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
     } else {
       function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
@@ -569,15 +572,13 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     pred.par <- predict(object, newdata = nd, parameter = list("mu", "sigma"), type = "response")
     pred_mu <- pred.par[[1]]
     pred_sigma <- pred.par[[2]]
-    #distfun <- if(object$family[1] == "NOlc") {
-    #  function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
-    #} else {
-    #  function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
-    #}
+    distfun <- if(censNO) {
+      function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
+    } else {
+      function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
+    }
     for(i in 1:(nrow(newdata))){
-      #par <- pred.par[i,]
-      #ll <- ll + distfun(newdata[i,1], mean = par[1], sd = par[2])
-      ll <- ll + dnorm(newdata[i,1], mean = pred_mu[i], sd = pred_sigma[i], log = TRUE)
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sigma[i], log = TRUE)
     }
     if(is.na(ll)) print("gb.ll = NA")
     if(is.null(ll)) print("gb.ll = NULL")
@@ -600,9 +601,15 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       pred_sd[i] <- rf_getsd(object, newobs = newdata[i,], rfdata = learndata)
     }
     
-    for(i in 1:(nrow(newdata))){
-      ll <- ll + dnorm(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+    distfun <- if(censNO) {
+      function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
+    } else {
+      function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
     }
+    for(i in 1:(nrow(newdata))){
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+    }
+    
     if(is.na(ll)) print("rf.ll = NA")
     if(is.null(ll)) print("rf.ll = NULL")
     return(ll)
@@ -621,9 +628,15 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     pred_mu <- predict(object, newdata = nd, type = "response")
     pred_sd <- cf_getsd(object, newdata = newdata)
     
-    for(i in 1:(nrow(newdata))){
-      ll <- ll + dnorm(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+    distfun <- if(censNO) {
+      function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
+    } else {
+      function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
     }
+    for(i in 1:(nrow(newdata))){
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+    }
+
     if(is.na(ll)) print("cf.ll = NA")
     if(is.null(ll)) print("cf.ll = NULL")
     return(ll)
@@ -851,7 +864,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              rmse.sigma.dt[j] <- sqrt(mean((dt_sigma - true_sigma)^2))
                              
                              # calculate loglikelihood for newdata
-                             loglik.dt[j] <- dtll.newdata(dt, newdata = newdata)
+                             loglik.dt[j] <- logLik(dt, newdata = newdata)
                            }
                            
                            
@@ -965,6 +978,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(eval_gamlss){
       res_g <- mclapply(1:(nsteps+1),
                         function(i){
+                          
+                          if(censNO) gen.cens(NO, type = "left")
                           
                           # for each step the parameter function is defined
                           f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
@@ -1163,6 +1178,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       res_gb <- mclapply(1:(nsteps+1),
                          function(i){
                            
+                           if(censNO) gen.cens(NO, type = "left")
+                           
                            # for each step the parameter function is defined
                            f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
                            
@@ -1194,7 +1211,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
                                #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
                                gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
-                                                 families = as.families(fname = "NOlc"), method = "noncyclic",
+                                                 families = as.families(fname = NOlc()), method = "noncyclic",
                                                  control = boost_control(mstop = 400L))
                                if(gamboost_cvr){
                                  cvr <- cvrisk(gb, grid = grid)
