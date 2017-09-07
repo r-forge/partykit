@@ -578,7 +578,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
     }
     for(i in 1:(nrow(newdata))){
-      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sigma[i], log = TRUE)
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sigma[i])
     }
     if(is.na(ll)) print("gb.ll = NA")
     if(is.null(ll)) print("gb.ll = NULL")
@@ -607,7 +607,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
     }
     for(i in 1:(nrow(newdata))){
-      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i])
     }
     
     if(is.na(ll)) print("rf.ll = NA")
@@ -634,7 +634,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       function(y, mean, sd) dnorm(x = y, mean = mean, sd = sd, log = TRUE)
     }
     for(i in 1:(nrow(newdata))){
-      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i], log = TRUE)
+      ll <- ll + distfun(newdata[i,1], mean = pred_mu[i], sd = pred_sd[i])
     }
 
     if(is.na(ll)) print("cf.ll = NA")
