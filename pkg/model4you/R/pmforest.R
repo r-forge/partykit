@@ -2,7 +2,7 @@
 #'
 #' Input a parametric model and get a forest.
 #'
-#' @param object a model object.
+#' @param model a model object.
 #' @param data data. If NULL (default) the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
 #' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).
@@ -14,18 +14,21 @@
 #' 
 #' @export
 #' @importFrom partykit ctree_control
-pmforest <- function(object, data = NULL, zformula = ~., ntree = 100,
-                     control = ctree_control(lookahead = TRUE, mincriterion = 0, saveinfo = FALSE, ...), 
+pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
+                     control = ctree_control(teststat = "quad", testtype = "Univ", 
+                                             mincriterion = 0, saveinfo = FALSE, 
+                                             lookahead = TRUE, ...), 
                      ...) {
-  
-  args <- .prepare_args(object = object, data = data, zformula = zformula, 
+  cl <- match.call()
+  args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control, ntree = ntree)
   
   ## call cforest
-  args$ytrafo <- function(...) .modelfit(model = object, ...)
+  args$ytrafo <- function(...) .modelfit(model = model, ...)
   ret <- do.call("cforest", args)
-  ret$info$object <- object
+  ret$info$model <- model
   ret$info$zformula <- zformula
+  ret$call <- cl
   
   return(ret)
 }

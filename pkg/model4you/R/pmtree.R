@@ -2,7 +2,7 @@
 #'
 #' Input a parametric model and get a forest.
 #'
-#' @param object a model object.
+#' @param model a model object.
 #' @param data data. If NULL (default) the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
 #' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).
@@ -20,15 +20,15 @@
 #' @import partykit 
 #' @importFrom partykit ctree_control nodeids nodeapply 
 #' @importFrom stats predict
-pmtree <- function(object, data = NULL, zformula = ~., 
+pmtree <- function(model, data = NULL, zformula = ~., 
                    control = ctree_control(), coeffun = coef,
                    ...) {
   
-  args <- .prepare_args(object = object, data = data, zformula = zformula, 
+  args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control)
   
   ## call ctree
-  args$ytrafo <- function(...) .modelfit(model = object, coeffun = coeffun, ...)
+  args$ytrafo <- function(...) .modelfit(model = model, coeffun = coeffun, ...)
   ret <- do.call("ctree", args)
   
   ### add modelinfo to teminal nodes if not there yet, but wanted
@@ -50,9 +50,9 @@ pmtree <- function(object, data = NULL, zformula = ~.,
       subsi <- subset_term == i
       
       if (is.null(iinfo)) {
-        umod <- update(object, subset = subsi)
+        umod <- update(model, subset = subsi)
         iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
-                      objfun = logLik(umod), object = NULL)
+                      objfun = logLik(umod), model = NULL)
         tree_ret[[idn]]$info <- iinfo
       } 
       tree_ret[[idn]]$info$nobs <- sum(subsi)
@@ -62,7 +62,7 @@ pmtree <- function(object, data = NULL, zformula = ~.,
   
   ## prepare return object
   class(tree_ret) <- c("pmtree", class(ret))
-  tree_ret$info$object <- object
+  tree_ret$info$model <- model
   tree_ret$info$zformula <- if(is.null(zformula)) as.formula("~ .") else 
     as.formula(zformula)
   # tree_ret$data <- data

@@ -4,11 +4,11 @@
 \alias{pmtree}
 \title{Compute model-based tree from model.}
 \usage{
-pmtree(object, data = NULL, zformula = ~., control = ctree_control(),
+pmtree(model, data = NULL, zformula = ~., control = ctree_control(),
   coeffun = coef, ...)
 }
 \arguments{
-\item{object}{a model object.}
+\item{model}{a model object.}
 
 \item{data}{data. If NULL (default) the data from the model object are used.}
 

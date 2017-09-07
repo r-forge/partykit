@@ -17,7 +17,7 @@ binomial_glm_plot(mod, data = NULL, plot_data = FALSE,
 
 \item{theme}{A ggplot2 theme.}
 
-\item{...}{ignored.}
+\item{...}{ignored at the moment.}
 }
 \description{
 Can be used on its own but is also useable as plotfun in 

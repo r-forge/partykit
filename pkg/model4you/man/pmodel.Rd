@@ -4,13 +4,13 @@
 \alias{pmodel}
 \title{Personalised model}
 \usage{
-pmodel(x = NULL, object = NULL, newdata = NULL, OOB = TRUE,
-  fun = coef, return_attr = c("modelcall", "data", "similarity"))
+pmodel(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coef,
+  return_attr = c("modelcall", "data", "similarity"))
 }
 \arguments{
 \item{x}{cforest object or matrix of weights.}
 
-\item{object}{model object. If NULL the model in \code{x$info$object} is used.}
+\item{model}{model object. If NULL the model in \code{x$info$model} is used.}
 
 \item{newdata}{new data. If NULL cforest learning data is used. Ignored if \code{x} is a matrix.}
 

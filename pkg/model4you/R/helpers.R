@@ -67,10 +67,10 @@
   return(fitfun)
 }
 
-.prepare_args <- function(object, data, zformula, control, ...) {
+.prepare_args <- function(model, data, zformula, control, ...) {
   
-  if (is.null(modcall <- getCall(object))) 
-    stop("Need an object with call component, see getCall")
+  if (is.null(modcall <- getCall(model))) 
+    stop("Need a model with call component, see getCall")
   
   ## get arguments for cforest call
   args <- list(...)
@@ -82,10 +82,15 @@
   
   ## formula and data
   if(is.null(data)) {
-    if(is.null(data <- eval(modcall$data))) 
-      stop("Need an object with data component, if data is NULL. 
+    if(is.null(try(data <- eval(modcall$data), silent = TRUE))) 
+      stop("Need a model with data component, if data is NULL. 
            Solutions: specify data in function call of this function 
            or of the model.")
+    if(class(data) == "try-error" && is.null(data <- model$data))
+      stop("Need a model with data component, if data is NULL. 
+           Solutions: specify data in function call of this function 
+           or of the model.")
+      
   }
   args$data <- data
   modformula <- eval(modcall$formula)

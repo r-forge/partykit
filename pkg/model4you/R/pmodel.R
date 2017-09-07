@@ -4,7 +4,7 @@
 #' Compute personalised models from cforest object.
 #'
 #' @param x cforest object or matrix of weights.
-#' @param object model object. If NULL the model in \code{x$info$object} is used.
+#' @param model model object. If NULL the model in \code{x$info$model} is used.
 #' @param newdata new data. If NULL cforest learning data is used. Ignored if \code{x} is a matrix.
 #' @param OOB In case of using the learning data, should patient similarities be
 #' computed out of bag?
@@ -21,15 +21,15 @@
 #' @example inst/examples/ex-pmodel.R
 #' 
 #' @export
-pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = coef,
+pmodel <- function(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coef,
                    return_attr = c("modelcall", "data", "similarity")) {
   
   ## compute similarity weights
   if(is.matrix(x)) {
-    if(is.null(object)) stop("When x is a matrix, object must not be NULL. Please enter a model object.")
+    if(is.null(model)) stop("When x is a matrix, model must not be NULL. Please enter a model object.")
     pweights <- x
   } else {
-    if(is.null(object)) object <- x$info$object
+    if(is.null(model)) model <- x$info$model
     pweights <- predict(x, type = "weights", newdata = newdata, OOB = OOB)
   }
   
@@ -37,9 +37,11 @@ pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = co
   get_pmod <- function(w) {
     
     if(sum(w) == 0) stop("The weights for one observation are all 0. A solution may be increasing ntree.")
+    dat <- x$data
+    dat$w <- w
     
     ## compute the model
-    pmod <- update(object, weights = w, subset = w > 0)
+    pmod <- update(model, weights = w, subset = w > 0, data = dat)
     
     ## return model or coefficients
     fun(pmod)
@@ -50,7 +52,7 @@ pmodel <- function(x = NULL, object = NULL, newdata = NULL, OOB = TRUE, fun = co
   if(all.equal(fun, identity) == TRUE) class(ret) <- c("pmodel.identity", class(ret))
   class(ret) <- c("pmodel", class(ret))
   
-  if("modelcall" %in% return_attr) attr(ret, "modelcall") <- getCall(object)
+  if("modelcall" %in% return_attr) attr(ret, "modelcall") <- getCall(model)
   if("data" %in% return_attr) attr(ret, "data") <- newdata
   if("similarity" %in% return_attr) attr(ret, "similarity") <- pweights
   
