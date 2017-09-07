@@ -120,18 +120,18 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     rval <- suppressWarnings(try(family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE), silent = TRUE))
     if(inherits(rval, "try-error")) {
       print("try-error in ddist")
-      return(1.7e+308)
+      return(1.7e+300)
     } else {
       if(any(is.na(rval))) {
         print("NAs in ddist")
-        return(1.7e+308)
+        return(1.7e+300)
       } else {
         if(any(abs(rval) == Inf)) {
           print(c("Infinity in ddist"))
-          return(1.7e+308)
+          return(1.7e+300)
         } else {
           nloglik <- - rval
-          if(abs(nloglik) == Inf) return(1.7e+308)
+          if(abs(nloglik) == Inf) return(1.7e+300)
           return(nloglik)
         }
       }
@@ -174,9 +174,9 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       } else warning("no observation in distfit")
     }
     #all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
-    if(any((starteta[(family$link == "log" | family$link == "logit")] == -Inf) & allequ)){
-      starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.0001)
-      print("one node with all equal observations")
+    if(any(starteta[(family$link == "log" | family$link == "logit")] == -Inf)){
+      starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.000001)
+      if(allequ) print("one node with all equal observations: sigma set to 0.000001") else print("log(sigma)=-Inf: sigma set to 0.000001")
     }
     if(any(is.na(starteta))) {
       if(all(weights == 0)) {
