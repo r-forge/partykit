@@ -296,7 +296,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   
   ## extend class and keep original call/family/control
   rval$info$call <- cl
-  rval$info$family <- family   # FIX ME: family list is only generated within distfit -> not always returned
+  rval$info$family <- family   
   rval$info$ocontrol <- ocontrol
   rval$info$formula <- m$formula
   rval$info$censpoint <- censpoint
@@ -380,9 +380,8 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
     # id of terminal nodes
     id_tn <- rownames(coef_tn)
     # get link fun and ddist from distribution list
-    distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
-    linkfun <- distlist$linkfun
-    ddist <- distlist$ddist
+    linkfun <- object$info$family$linkfun
+    ddist <- object$info$family$ddist
     
     
     if(object$info$family$gamlssobj && object$info$family$censored) {
