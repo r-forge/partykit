@@ -1,4 +1,11 @@
 # FIX ME:
+
+# for censored data: random forest only returns predicted, which now used as prediction for mu
+# latent expected value
+
+# for censored data with varying sigma:
+# if(censNO) sigma[x[,1]<0] <- 0.00001
+
 # error in bamlss (seedconst7): "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
 # error in gamboostLSS (seedconst723, fix.mu): "Error in names(pr) <- nm : \n  'names' attribute [300] must be the same length as the vector [10]\n"
 # error in gamlss (seedconst723, covsep, 3 out of 10): ""Error in while (RATIO > tol & nit < maxit) { : \n  missing value where TRUE/FALSE needed\n" 
@@ -664,6 +671,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
         fun <- function(x, kappa){
           mu <- 0
           sigma <- 3
+          if(censNO) sigma[x[,1]<0] <- 0.00001
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -671,6 +679,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
         fun <- function(x, kappa){
           mu <- 0
           sigma <- 1+3*abs(x[,1])
+          if(censNO) sigma[x[,1]<0] <- 0.00001
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -682,6 +691,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
           #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
           if(censNO) mu[x[,1]<0] <- 0
           sigma <- 3
+          if(censNO) sigma[x[,1]<0] <- 0.00001
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -692,6 +702,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
             #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
             if(censNO) mu[x[,1]<0] <- 0
             sigma <- 2 + mu/4
+            if(censNO) sigma[x[,1]<0] <- 0.00001
             par <- cbind(mu, sigma)
             return(par)
           }
@@ -701,6 +712,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
             #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
             if(censNO) mu[x[,1]<0] <- 0
             sigma <- 1+3*abs(x[,1])
+            if(censNO) sigma[x[,1]<0] <- 0.00001
             par <- cbind(mu, sigma)
             return(par)
           }
