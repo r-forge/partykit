@@ -20,6 +20,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    tree_minsplit = 14, tree_mincrit = 0.95,
                    forest_minsplit = 7, forest_mincrit = 0, 
                    type.tree = "ctree",
+                   noise_sd = 0,
                    onecov = TRUE,
                    censNO = TRUE,
                    cov.sep = FALSE,
@@ -328,6 +329,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   #        split.matrix ..... indices of the variables used for the splits together with the corresponding split points
   #        parm.matrix  ..... set of distribution parameters for each subgroup
   #        fun          ..... parameter function
+  #        noise_sd     ..... optional parameter to set the standard deviation of the noise variable
   #
   # output: data.frame with generated observations y (generated seperatly in each subgroups with given distributions parameters),
   #                         the given split variables x1, ..., x10 for each observation and
@@ -339,7 +341,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                   fun = NULL,
                   split.matrix = matrix(nrow = 2, ncol = 2), 
                   par.matrix = matrix(nrow = 3, ncol = 2), 
-                  round.sp = 3)
+                  round.sp = 3,
+                  noise_sd = 0)
   {
     
     # generating the possible split variables
@@ -413,10 +416,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
+    if(noise_sd > 0) d$y <- d$y + rnorm(n, mean = 0, sd = noise_sd)
+    
+    
     if(family$family.name == "censored Normal Distribution") {
       #d$ystar <- d$y
       d$y <- pmax(d$y, 0)
     }
+    
     
     return(d)
   }
@@ -832,8 +839,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              if(type.tree == "mob"){
@@ -919,8 +926,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              if(type.tree == "mob"){
@@ -1016,8 +1023,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
                             if(censNO){
@@ -1107,8 +1114,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
                             if(family$censore) {
@@ -1214,8 +1221,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              # FIX ME: censored data
@@ -1313,8 +1320,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){  
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              rf <- randomForest(formula, data = learndata, ntree = ntree, 
@@ -1396,8 +1403,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              cf <- cforest(formula, data = learndata, ntree = ntree,
