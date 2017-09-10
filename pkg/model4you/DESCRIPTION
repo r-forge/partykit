@@ -1,7 +1,7 @@
 Package: model4you
 Title: Personalised Models
-Date: 2017-09-01
-Version: 0.0-1
+Date: 2017-09-10
+Version: 1.0-0
 Authors@R: c(person(given = "Heidi", family = "Seibold", 
                     role = c("aut", "cre"), email = "Heidi.Seibold@uzh.ch"),
 	           person(given = "Achim", family = "Zeileis", 
