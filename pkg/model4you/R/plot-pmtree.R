@@ -279,10 +279,9 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
 {
   
   nam <- names(obj)
-  mod <- obj$info$object
+  mod <- obj$info$model
   wterminals <- predict(obj, type = "node")
   dat <- obj$data
-  mod <- obj$info$object
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
   yformula <- formula(modformula, lhs = 1, rhs = 0)

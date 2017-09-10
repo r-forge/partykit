@@ -39,7 +39,7 @@ predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args =
     pr <- lapply(unode, function(nd) {
       
       # model
-      mod <- update(object$info$object, 
+      mod <- update(object$info$model, 
                     subset = (trdatnodes == nd))
       
       # prediction
@@ -107,7 +107,7 @@ print.pmtree <- function(x, node = NULL,
                          footer = TRUE, ...)
 {
   digits <- max(c(0, digits))
-  title <- paste("Partitioned model:\n", paste(deparse(getCall(x$info$object)), 
+  title <- paste("Partitioned model:\n", paste(deparse(getCall(x$info$model)), 
                                                sep = "\n", collapse = "\n"),
                  "\nPartitioning variables:", deparse(x$info$zformula))
   
@@ -184,7 +184,7 @@ summary.pmtree <- function(object, node = NULL, ...) {
   }
   
   ## call
-  cl <- getCall(object$info$object)
+  cl <- getCall(object$info$model)
   
   ## nobs
   nobs <- sapply(info, function(x) x$nobs)
