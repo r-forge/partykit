@@ -392,11 +392,13 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
         eta <-  as.numeric(linkfun(par))
         # response variable of the observations that end up in this terminal node
         nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-        if(!survival::is.Surv(nobs_tn)) {
-          if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
-          if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
-          ## FIX ME: interval censored
-        } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+        if(length(nobs_tn) > 0L){
+          if(!survival::is.Surv(nobs_tn)) {
+            if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
+            if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
+            ## FIX ME: interval censored
+          } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+        }
       }
     } else {
       for(i in 1:n_tn){
@@ -404,7 +406,7 @@ logLik.disttree <- function(object, newdata = NULL, ...) {
         eta <-  as.numeric(linkfun(par))
         # response variable of the observations that end up in this terminal node
         nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-        ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+        if(length(nobs_tn) > 0L) ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
       }
     }
     return(structure(ll, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
