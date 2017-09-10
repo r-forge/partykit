@@ -866,7 +866,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              dt_mu <- as.vector(dt_coef[,"mu"]) 
                              dt_sigma <- as.vector(dt_coef[,"sigma"]) 
                              
-                             if(family$censored){
+                             if(censNO){
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                                dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
@@ -949,7 +949,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              df_mu <- df_coef$mu
                              df_sigma <- df_coef$sigma
                              
-                             if(family$censored){
+                             if(censNO){
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                                df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
@@ -1042,7 +1042,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             g_mu <- predict(g, newdata = nd, what = "mu", type = "response", data = learndata)
                             g_sigma <- predict(g, newdata = nd, what = "sigma", type = "response", data = learndata)
                             
-                            if(family$censored){
+                            if(censNO){
                               #calculate expected value for censored data
                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                               g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
@@ -1118,7 +1118,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
-                            if(family$censore) {
+                            if(censNO) {
                               ## FIX ME: set up for bamlss
                               #learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
                               b <- bamlss(bamlss.formula(list(mu.formula, sigma.formula), family = cnorm_bamlss), data = learndata)
@@ -1134,7 +1134,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             b_mu <- b_coef$mu
                             b_sigma <- b_coef$sigma
                             
-                            if(family$censored){
+                            if(censNO){
                               
                               #calculate expected value for censored data
                               true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1226,7 +1226,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              # FIX ME: censored data
-                             if(family$censored) {
+                             if(censNO) {
                                learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
                                #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
                                gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
@@ -1257,7 +1257,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              gb_mu <- gb.pred.par[[1]]
                              gb_sigma <- gb.pred.par[[2]]
                              
-                             if(family$censored){
+                             if(censNO){
                                
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1340,7 +1340,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                rf_sigma[l] <- rf_getsd(rf, newobs = newdata[l,], rfdata = learndata)
                              }
                              
-                             if(family$censored){
+                             if(censNO){
                                
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
@@ -1423,7 +1423,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              cf_sigma <- cf_getsd(cf, newdata = newdata)
                              
                              
-                             if(family$censored){
+                             if(censNO){
                                
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
