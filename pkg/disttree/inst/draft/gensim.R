@@ -23,6 +23,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    noise_sd = 0,
                    onecov = TRUE,
                    censNO = TRUE,
+                   censpar = 0.7,
                    cov.sep = FALSE,
                    fix.mu = FALSE,
                    fix.sigma = FALSE,
@@ -694,7 +695,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     } else {
       if(fix.sigma){
         fun <- function(x, kappa){
-          mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+          mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
           #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
           if(censNO) mu[x[,1]<0] <- 0
           sigma <- 3
@@ -705,7 +706,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       } else {
         if(mu.sigma.interaction){
           fun <- function(x, kappa){
-            mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+            mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
             #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
             if(censNO) mu[x[,1]<0] <- 0
             sigma <- 2 + mu/4
@@ -715,7 +716,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
           }
         } else {
           fun <- function(x, kappa){
-            mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+            mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
             #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
             if(censNO) mu[x[,1]<0] <- 0
             sigma <- 1+3*abs(x[,1])

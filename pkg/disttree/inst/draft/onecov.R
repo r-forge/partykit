@@ -11,6 +11,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
                        type.tree = "ctree",
                        noise_sd = 0,
                        censNO = TRUE,
+                       censpar = 0.7,
                        fix.mu = FALSE,
                        fix.sigma = FALSE,
                        mu.sigma.interaction = FALSE,
@@ -418,70 +419,6 @@ sim_onecov <- function(kappa = 1, nobs = 400,
   
   
   
-  ## function to estimate standard deviation of cforest for a new observation
-  cf_getsd <- function(cf, newdata = NULL){
-    
-    # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
-    pred.node.learn <- predict(cf, type = "node")
-    
-    # get IDs of predicted nodes for the new observations
-    if(is.null(newdata)) {
-      pred.node.new <- pred.node.learn
-      newdata <- cf$data
-    } else {
-      pred.node.new <- predict(cf, newdata = newdata, type = "node")
-    }
-    
-    sdnew <- numeric(length = NROW(newdata))
-    
-    for(i in 1:NROW(newdata)){
-      for(t in 1:ntree){
-        nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
-        sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
-      }
-    }
-    
-    return(sdnew)   
-  }
-  
-  
-  
-  ## function to estimate standard deviation of randomForest for a new observation
-  # (in randomForest the argument 'keep.inbag' must be set to TRUE)
-  rf_getsd <- function(rf, newobs, rfdata){
-    
-    # get predictions for the new observations from all trees
-    pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
-    
-    # vector where the standard deviations from all trees are stored
-    sd_trees <- numeric(length = rf$ntree)
-    
-    # loop over all trees of the forest
-    for(i in 1:rf$ntree){
-      
-      # get data used to build this tree
-      obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
-      obs_tree <- rfdata[obsid,]
-      rownames(obs_tree) <- c(1:NROW(obs_tree))
-      # get predictions for this data from this tree
-      pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
-      
-      # get prediction for the new observation from this tree
-      pred.newobs_tree <- pred.newobs$individual[,i]
-      
-      # get part of the data that ends up in the same terminal node (has the same prediction)
-      obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
-      
-      sd_trees[i] <- sd(obs_node$y)
-    }
-    
-    # average of sd over all trees
-    sd_newobs <- mean(sd_trees, na.rm = TRUE)
-    
-    return(sd_newobs)   
-  }
-  
-  
   
   ######################################
   # smooth parameter function
@@ -516,7 +453,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
   } else {
     if(fix.sigma){
       fun <- function(x){
-        mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+        mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
         #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
         if(censNO) mu[x[,1]<0] <- 0
         sigma <- 3
@@ -527,7 +464,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
     } else {
       if(mu.sigma.interaction){
         fun <- function(x){
-          mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+          mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
           #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
           if(censNO) mu[x[,1]<0] <- 0
           sigma <- 2 + mu/4
@@ -537,7 +474,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
         }
       } else {
         fun <- function(x){
-          mu <- 4 + 8 * (exp(-(4*x[,1]-0.7)^(2*kappa)))
+          mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
           #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
           if(censNO) mu[x[,1]<0] <- 0
           sigma <- 1+3*abs(x[,1])
@@ -725,6 +662,7 @@ if(FALSE){
                          type.tree = "ctree",
                          noise_sd = 1,
                          censNO = TRUE,
+                         censpar = 2, # = 0.7
                          fix.mu = FALSE,
                          fix.sigma = FALSE,
                          mu.sigma.interaction = FALSE,
@@ -771,6 +709,74 @@ plot_onecov <- function(learndata,
   transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
   
   
+  
+  ## function to estimate standard deviation of cforest for a new observation
+  cf_getsd <- function(cf, newdata = NULL){
+    
+    ntree <- cf$info$call$ntree
+    
+    # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
+    pred.node.learn <- predict(cf, type = "node")
+    
+    # get IDs of predicted nodes for the new observations
+    if(is.null(newdata)) {
+      pred.node.new <- pred.node.learn
+      newdata <- cf$data
+    } else {
+      pred.node.new <- predict(cf, newdata = newdata, type = "node")
+    }
+    
+    sdnew <- numeric(length = NROW(newdata))
+    
+    for(i in 1:NROW(newdata)){
+      for(t in 1:ntree){
+        nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
+        sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
+      }
+    }
+    
+    return(sdnew)   
+  }
+  
+  
+  
+  ## function to estimate standard deviation of randomForest for a new observation
+  # (in randomForest the argument 'keep.inbag' must be set to TRUE)
+  rf_getsd <- function(rf, newobs, rfdata){
+    
+    # get predictions for the new observations from all trees
+    pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
+    
+    # vector where the standard deviations from all trees are stored
+    sd_trees <- numeric(length = rf$ntree)
+    
+    # loop over all trees of the forest
+    for(i in 1:rf$ntree){
+      
+      # get data used to build this tree
+      obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
+      obs_tree <- rfdata[obsid,]
+      rownames(obs_tree) <- c(1:NROW(obs_tree))
+      # get predictions for this data from this tree
+      pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+      
+      # get prediction for the new observation from this tree
+      pred.newobs_tree <- pred.newobs$individual[,i]
+      
+      # get part of the data that ends up in the same terminal node (has the same prediction)
+      obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
+      
+      sd_trees[i] <- sd(obs_node$y)
+    }
+    
+    # average of sd over all trees
+    sd_newobs <- mean(sd_trees, na.rm = TRUE)
+    
+    return(sd_newobs)   
+  }
+  
+  
+  # if(only_rf | (add_rf & (compare_sigma_area | compare_sigma_line)))
   if(only_rf | add_rf) {
     rf_sd <- numeric(length(NROW(learndata)))
     for(l in 1:NROW(learndata)){
@@ -778,6 +784,7 @@ plot_onecov <- function(learndata,
     }
   }
   
+  # if(only_cf | (add_cf & (compare_sigma_area | compare_sigma_line)))
   if(only_cf | add_cf) {
     cf_mu <- predict(cf, type = "response")
     cf_sd <- cf_getsd(cf)
@@ -1156,12 +1163,23 @@ plot_onecov <- function(learndata,
 }
 
 
+
+###############################################
+# test
+if(FALSE){
 l <- sim_onecov_test
 
-plot_onecov(learndata = l$learndata, dt = l$dt, g = l$g, 
-            compare_mu = TRUE, add_dt = TRUE, add_g = TRUE)
+plot_onecov(learndata = l$learndata, dt = l$dt, df = l$df, g = l$g, b = l$b, rf = l$rf, cf = l$cf, 
+            compare_mu = TRUE, 
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_rf = FALSE, add_cf = FALSE)
 
+plot_onecov(learndata = l$learndata, dt = l$dt, df = l$df, g = l$g, b = l$b, rf = l$rf, cf = l$cf, 
+            compare_sigma_area = TRUE, 
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_rf = TRUE, add_cf = TRUE)
 
+plot_onecov(learndata = l$learndata, dt = l$dt, g = l$g, b = l$b, 
+            only_b = TRUE)
+}
 
 
 

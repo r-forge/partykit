@@ -478,151 +478,6 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 
 
-### plotting function for one data set
-plot1 <- function(learndata, 
-                  dt=NULL, df=NULL, g=NULL, gb=NULL, b=NULL, rf=NULL, cf=NULL, 
-                  mu=TRUE, sigma=TRUE) 
-{
-  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
-                    df$fitted.par,
-                    dt$fitted.par,
-                    #coef(dt)[paste(dt$fitted[,1]),],
-                    g$mu.fv, g$sigma.fv)
-  
-  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
-                          "fitted.mu.df","fitted.sigma.df",
-                          "fitted.mu.dt","fitted.sigma.dt",
-                          "fitted.mu.g","fitted.sigma.g")
-  sp <- plotdata[order(plotdata["x1"]),]
-  
-
-  if(!(any(dt.par, df.par, g.par, all.par, all.var))){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
-  col = transpgrey, border = "transparent")
-    #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
-    #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
-  }
-  
-  # disttree
-  if(dt.par){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", col.main = pal["tree"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
-    #col = transpgrey, border = "transparent")
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
-  col = pallight["tree"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
-    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-    #       col = c('black','grey', pal["tree"], pallight["tree"]), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
-  }
-  
-  # distforest
-  if(df.par){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", col.main = pal["forest"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
-    #col = transpgrey, border = "transparent")
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
-  col = pallight["forest"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
-    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
-    #       col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
-  }
-
-  
-  # gamlss
-  if(g.par){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
-    #col = transpgrey, border = "transparent")
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
-  col = pallight["gamlss"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
-    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
-    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
-    #       col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
-  }
-  
-  # disttree vs. distforest vs. gamlss
-  if(all.par){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
-    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
-    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
-    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
-    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
-    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
-    
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
-    #                    TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
-    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.5, y = 13.95, expression(mu), bty = "n")
-  }
-  
-  # variance: disttree vs. distforest vs. gamlss
-  if(all.var){
-    par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
-    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
-    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
-    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
-    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
-    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
-    
-    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
-    #col = transpgrey, border = "transparent")
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
-  col = pallight["tree"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
-    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
-  col = pallight["forest"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
-    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
-  col = pallight["gamlss"], border = "transparent")
-    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-    #legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
-    #                    TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
-    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
-  legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
-  }
-  
-}
 
 
 
@@ -1591,7 +1446,7 @@ The following methods are compared to distributional trees and forests:
 \end{itemize}
 
 
-The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and two covariates $X_1$ and $X_2$.\\
+The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and one or both of the two covariates $X_1$ and $X_2$.\\
 The covariates are generated based on the following distribution assumptions:
 \begin{center}
 \begin{tabular}{ l  c  l }
@@ -1599,16 +1454,57 @@ $X_1$ & $\sim$ & \textit{Unif}([-0.4,1]) \\
 $X_2$ & $\sim$ & \textit{Unif}([-10,10])
 \end{tabular}
 \end{center}
-The distribution of the response variable is a normal distribution where the corresponding distribution parameters are defined by parameter functions depending on the covariates. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1 covariate
+In a first example the distribution of the response variable is a left censored normal distribution with censoring point 0 where the corresponding distribution parameters are defined by a parameter function $f$ depending on one covariate only. 
+
+\begin{center}
+$$ Y \sim \text{c}\mathcal{N} (f(x_1, \kappa))$$
+with
+$$f(x_1, \kappa) = \left(\mu(x_1,\kappa) , \sigma(x_2,\kappa)\right)$$ 
+\end{center}
+
+An additional factor $\kappa$ defines the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\
+
 \vspace{-1cm}
+\begin{center}
+$$
+\mu(x_1,\kappa) = 
+\begin{cases}
+    4 + 8 \cdot \exp{(-(4 \cdot x_1-0.7)^{(2\cdot \kappa)})},& \text{if } x_1 \geq 0\\
+    0,              & \text{if } x_1 < 0
+\end{cases}
+$$
+
+$$
+\sigma(x_1,\kappa) = 
+\begin{cases}
+    1+3 \cdot \|x_1\|,& \text{if } x_1 \geq 0\\
+    0.00001,              & \text{if } x_1 < 0
+\end{cases}
+$$
+\end{center}
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 2 covariates
+In a second example we consider a normaly distributed response variable with the following parameter function depending on two covariates.
+%\vspace{-1cm}
 \begin{center}
 $$ Y \sim \mathcal{N} (f(x_1, x_2, \kappa))$$
 with
 $$f(x_1, x_2, \kappa) = \left(\mu(x_1,x_2,\kappa) , \sigma(x_1,x_2,\kappa)\right)$$ 
 \end{center}
 
-An additional factor $\kappa$ defines the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\
-Including non-additive effects creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
+Including non-additive effects and interactions creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
 \vspace{-1cm}
 \begin{center}
 $$\mu(x_1,x_2,\kappa)  = 10 \cdot \Big(1-s(x_1,x_2,\kappa)+ \big(2\cdot s(x_1,x_2,\kappa) - 1\big) \cdot \text{\code{rbinom}}\left(n,1,P_1\right)\Big)
