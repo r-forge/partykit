@@ -3,10 +3,20 @@
 #' Input a parametric model and get a forest.
 #'
 #' @param model a model object.
-#' @param data data. If NULL (default) the data from the model object are used.
+#' @param data data. If \code{NULL} the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
 #' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).
 #' @param ntree number of trees.
+#' @param perturb a list with arguments replace and fraction determining which type of 
+#' resampling with \code{replace = TRUE} referring to the n-out-of-n bootstrap and 
+#' \code{replace = FALSE} to sample splitting. fraction is the number of observations 
+#' to draw without replacement.
+#' @param mtry number of input variables randomly sampled as candidates at each 
+#' node for random forest like algorithms. Bagging, as special case of a random 
+#' forest without random input variable sampling, can be performed by setting 
+#' mtry either equal to Inf or manually equal to the number of input variables.
+#' @param applyfun see \code{\link[partykit]{cforest}}.
+#' @param cores see \code{\link[partykit]{cforest}}.
 #' @param control control parameters, see \code{\link[partykit]{ctree_control}}.
 #' @param ... additional parameters passed on to model fit such as weights.
 #'
@@ -15,6 +25,8 @@
 #' @export
 #' @importFrom partykit ctree_control
 pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
+                     perturb = list(replace = FALSE, fraction = 0.632),
+                     mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL,
                      control = ctree_control(teststat = "quad", testtype = "Univ", 
                                              mincriterion = 0, saveinfo = FALSE, 
                                              lookahead = TRUE, ...), 

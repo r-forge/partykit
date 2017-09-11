@@ -50,7 +50,8 @@ pmtree <- function(model, data = NULL, zformula = ~.,
       subsi <- subset_term == i
       
       if (is.null(iinfo)) {
-        umod <- update(model, subset = subsi)
+        di <- args$data[subsi, ]
+        umod <- update(model, data = di)
         iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
                       objfun = logLik(umod), model = NULL)
         tree_ret[[idn]]$info <- iinfo

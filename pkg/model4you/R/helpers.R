@@ -28,7 +28,8 @@
     
     ## compute model on data
     if(length(weights) == 0) weights <- rep(1, NROW(data))
-    mod <- tryCatch(update(object = model, data = data, subset = subset),
+    di <- data[subset, ]
+    mod <- tryCatch(update(object = model, data = di),
                     warning = function(w) list(converged = FALSE),
                     error = function(e) {
                       list(converged = FALSE)
@@ -38,8 +39,6 @@
     if(!(is.null(mod$converged)) && !(mod$converged)) 
       return(list(converged = FALSE))
     
-    # mod <- try(update(object = model, data = dat),
-    #            silent = TRUE)
     
     ## get convergence info
     if (is.null(ctrl$converged)) {
@@ -67,6 +66,33 @@
   return(fitfun)
 }
 
+
+.get_model_data <- function(model) {
+  modcall <- getCall(model)
+  
+  if(is.null(data <- try(eval(modcall$data), silent = TRUE))) {
+    stop("Need a model with data component, if data is NULL. 
+           Solutions: specify data in function call of this function 
+           or of the model.")
+  } else {
+    msg <- paste0("No data given. I'm using data set ", modcall$data, 
+                  " from the current environment parent.frame(). 
+                   Please check if that is what you want.")
+  }
+  if(class(data) == "try-error") {
+    if(is.null(data <- model$data)){
+      stop("Need a model with data component, if data is NULL. 
+           Solutions: specify data in function call of this function 
+           or of the model.")
+    } else {
+      msg <- paste("No data given. I'm using data set given in model$data. 
+                   Please check if that is what you want.")
+    }
+  }
+  message(msg)
+  return(data)
+}
+
 .prepare_args <- function(model, data, zformula, control, ...) {
   
   if (is.null(modcall <- getCall(model))) 
@@ -82,15 +108,7 @@
   
   ## formula and data
   if(is.null(data)) {
-    if(is.null(try(data <- eval(modcall$data), silent = TRUE))) 
-      stop("Need a model with data component, if data is NULL. 
-           Solutions: specify data in function call of this function 
-           or of the model.")
-    if(class(data) == "try-error" && is.null(data <- model$data))
-      stop("Need a model with data component, if data is NULL. 
-           Solutions: specify data in function call of this function 
-           or of the model.")
-      
+    data <- .get_model_data(model)
   }
   args$data <- data
   modformula <- eval(modcall$formula)
