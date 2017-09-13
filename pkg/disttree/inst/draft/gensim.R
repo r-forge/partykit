@@ -15,16 +15,12 @@
 
 gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    nsteps = 9, stepsize = 1, kappa.start = 1,
-                   formula = y~x1+x2, 
+                   formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
                    nobs = 400, testnobs = 200L,
                    tree_minsplit = 14, tree_mincrit = 0.95,
                    forest_minsplit = 7, forest_mincrit = 0, 
                    type.tree = "ctree",
-                   noise_sd = 0,
-                   onecov = TRUE,
                    censNO = TRUE,
-                   censpar = 0.7,
-                   cov.sep = FALSE,
                    fix.mu = FALSE,
                    fix.sigma = FALSE,
                    mu.sigma.interaction = FALSE,
@@ -51,9 +47,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   library("gamboostLSS")
   library("bamlss")
   library("randomForest")
-  library("gamboostLSS")
   library("Formula")  # FIX ME: should be imported in disttree
   library("survival")
+  gen.cens("NO", type = "left")
   
   ## define distribution list:
   # dist_list_normal
@@ -342,22 +338,20 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                   fun = NULL,
                   split.matrix = matrix(nrow = 2, ncol = 2), 
                   par.matrix = matrix(nrow = 3, ncol = 2), 
-                  round.sp = 3,
-                  noise_sd = 0)
+                  round.sp = 3)
   {
     
     # generating the possible split variables
-    x1 <- runif(n,-0.4,1)
-    x2 <- runif(n,-10,10)
-    x3 <- runif(n,0,100)
-    x4 <- x1 + rnorm(n, sd = 0.1)
-    x5 <- x1 + rnorm(n, sd = 0.3)
-    x6 <- rbinom(n,1,0.5)
-    x7 <- rbinom(n,1,0.5)
-    x8 <- sample(1:4, n, replace = TRUE) 
-    x9 <- sample(1:5, n, replace = TRUE) 
-    x10 <- sample(1:7, n, replace = TRUE)
-    #x11 <- runif(n,-0.5,1)
+    x1 <- runif(n,-1,1)
+    x2 <- runif(n,-1,1)
+    x3 <- runif(n,-1,1)
+    x4 <- runif(n,-1,1)
+    x5 <- runif(n,-1,1)
+    x6 <- runif(n,-1,1)
+    x7 <- runif(n,-1,1)
+    x8 <- runif(n,-1,1)
+    x9 <- runif(n,-1,1)
+    x10 <- runif(n,-1,1)
     x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
     # reduce nr of possible split points by rounding values of split variables
     x <- round(x, digits = round.sp)
@@ -417,14 +411,10 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
-    if(noise_sd > 0) d$y <- d$y + rnorm(n, mean = 0, sd = noise_sd)
-    
-    
     if(family$family.name == "censored Normal Distribution") {
       #d$ystar <- d$y
       d$y <- pmax(d$y, 0)
     }
-    
     
     return(d)
   }
@@ -463,62 +453,44 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   
   ## function to estimate standard deviation of randomForest for a new observation
   # (in randomForest the argument 'keep.inbag' must be set to TRUE)
-  rf_getsd <- function(rf, newobs, rfdata){
+  rf_getsd <- function(rf, newdata, rfdata){
     
-    # get predictions for the new observations from all trees
-    pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
+    rf_sd <- numeric(length = NROW(newdata))
     
-    # vector where the standard deviations from all trees are stored
-    sd_trees <- numeric(length = rf$ntree)
+    for(k in 1:NROW(newdata)){
+      newobs <- newdata[k,]
+      # get predictions for the new observations from all trees
+      pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
+      
+      # vector where the standard deviations from all trees are stored
+      sd_trees <- numeric(length = rf$ntree)
     
-    # loop over all trees of the forest
-    for(i in 1:rf$ntree){
-      
-      # get data used to build this tree
-      obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
-      obs_tree <- rfdata[obsid,]
-      rownames(obs_tree) <- c(1:NROW(obs_tree))
-      # get predictions for this data from this tree
-      pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
-      
-      # get prediction for the new observation from this tree
-      pred.newobs_tree <- pred.newobs$individual[,i]
-      
-      # get part of the data that ends up in the same terminal node (has the same prediction)
-      obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
-      
-      sd_trees[i] <- sd(obs_node$y)
+      # loop over all trees of the forest
+      for(i in 1:rf$ntree){
+        
+        # get data used to build this tree
+        obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
+        obs_tree <- rfdata[obsid,]
+        rownames(obs_tree) <- c(1:NROW(obs_tree))
+        # get predictions for this data from this tree
+        pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+        
+        # get prediction for the new observation from this tree
+        pred.newobs_tree <- pred.newobs$individual[,i]
+        
+        # get part of the data that ends up in the same terminal node (has the same prediction)
+        obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
+        
+        sd_trees[i] <- sd(obs_node$y)
+      }
+    
+      # average of sd over all trees
+      sd_newobs <- mean(sd_trees, na.rm = TRUE)
+      rf_sd[k] <- sd_newobs
     }
-    
-    # average of sd over all trees
-    sd_newobs <- mean(sd_trees, na.rm = TRUE)
-    
-    return(sd_newobs)   
+    return(rf_sd)   
   }
   
-  
-  
-  
-  
-  ### set up function to get logLik from disttree object for new data 
-  #dtll.newdata <- function(object, newdata){
-  #  ll <- 0
-  #  nd <- newdata[,-c(1,ncol(newdata)-1, ncol(newdata))]
-  #  if(is.null(coef(object))){
-  #    readline(prompt="Press [enter] to continue")
-  #    print(object$info$call)
-  #    print(object$data)
-  #    return(NULL)
-  #  } else {
-  #    pred.par <- predict(object, newdata = nd, type = "parameter")
-  #    for(i in 1:(nrow(newdata))){
-  #      eta <- as.numeric(object$info$family$linkfun(pred.par[i,]))
-  #      ll <- ll + object$info$family$ddist(newdata[i,paste(object$info$formula[[2]])], eta = eta, log=TRUE)
-  #    }
-  #    if(is.na(ll)) print("dt.ll = NA")
-  #    return(ll)
-  #  }
-  #}
   
   
   
@@ -611,10 +583,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(!("y" %in% colnames(newdata))) stop("to get the loglikelihood for testdata argument 'newdata' has to include the response")
     ll <- 0
     pred_mu <- predict(object, newdata = newdata, type = "response")
-    pred_sd <- numeric(length(NROW(newdata)))
-    for(i in 1:NROW(newdata)){
-      pred_sd[i] <- rf_getsd(object, newobs = newdata[i,], rfdata = learndata)
-    }
+    pred_sd <- rf_getsd(object, newdata = newdata, rfdata = learndata)
     
     distfun <- if(censNO) {
       function(y, mean, sd) crch::dcnorm(x = y, mean = mean, sd = sd, left = 0, right = Inf, log = TRUE)
@@ -664,159 +633,50 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   ######################################
   # smooth parameter function
   
-  # parameter functions
-  #fun <- function(x, kappa){
-  #  mu <- 10 * (1-plogis(round(1.6^kappa,0) * x[,2]/10) + (2*plogis(round(1.6^kappa,0) * x[,2]/10) -1) * rbinom(nrow(x),1,exp(-(3*x[,1]-1.5)^(2*round(1.49^kappa,0)))))
-  #  sigma <- 0.01 + mu/3
-  #  par <- cbind(mu, sigma)
-  #  return(par)
-  #}
-  
-  
-  if(onecov){
-    if(fix.mu){
-      if(fix.sigma){
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 3
-          if(censNO) sigma[x[,1]<0] <- 0.00001
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        fun <- function(x, kappa){
-          mu <- 0
-          sigma <- 1+3*abs(x[,1])
-          if(censNO) sigma[x[,1]<0] <- 0.00001
-          par <- cbind(mu, sigma)
-          return(par)
-        }
+  if(fix.mu){
+    if(fix.sigma){
+      fun <- function(x, kappa){
+        mu <- 2
+        sigma <- 3
+        par <- cbind(mu, sigma)
+        return(par)
       }
     } else {
-      if(fix.sigma){
-        fun <- function(x, kappa){
-          mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
-          #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-          if(censNO) mu[x[,1]<0] <- 0
-          sigma <- 3
-          if(censNO) sigma[x[,1]<0] <- 0.00001
-          par <- cbind(mu, sigma)
-          return(par)
-        }
-      } else {
-        if(mu.sigma.interaction){
-          fun <- function(x, kappa){
-            mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
-            #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-            if(censNO) mu[x[,1]<0] <- 0
-            sigma <- 2 + mu/4
-            if(censNO) sigma[x[,1]<0] <- 0.00001
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          fun <- function(x, kappa){
-            mu <- 4 + 8 * (exp(-(4*x[,1]-censpar)^(2*kappa)))
-            #mu <- 2 + 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-            if(censNO) mu[x[,1]<0] <- 0
-            sigma <- 1+3*abs(x[,1])
-            if(censNO) sigma[x[,1]<0] <- 0.00001
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        }
+      fun <- function(x, kappa){
+        mu <- 2
+        sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+        par <- cbind(mu, sigma)
+        return(par)
       }
     }
-    
   } else {
-    # should the covariates have separated effects, e.g. mu depends on x1 only and sigma on x2 only (for fix.mu = fix.sigma = FALSE)
-    if(cov.sep){
-      if(mu.sigma.interaction) stop("if cov.sep is TRUE no interaction between mu and sigma can be included (mu.sigma.interaction has to be FALSE)")
-      if(fix.mu) {
-        if(fix.sigma) {
-          fun <- function(x, kappa){
-            mu <- 0
-            sigma <- 3
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          fun <- function(x, kappa){
-            mu <- 0
-            sigma <- 0.1 + 5 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10))
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        }
-      } else {
-        if(fix.sigma) {
-          fun <- function(x, kappa){
-            mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-            sigma <- 3
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          fun <- function(x, kappa){
-            mu <- 10 * (exp(-(4*x[,1]-2)^(2*kappa)))
-            sigma <- 0.1 + 5 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10))
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        }
+    if(fix.sigma){
+      fun <- function(x, kappa){
+        mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+        sigma <- 3
+        par <- cbind(mu, sigma)
+        return(par)
       }
-      # or should mu depend on x1 and x2 and sigma on x2 (for fix.mu = fix.sigma = mu.sigma.interaction = FALSE)
     } else {
-      if(fix.mu) {
-        if(fix.sigma) {
-          fun <- function(x, kappa){
-            mu <- 0
-            sigma <- 3
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          fun <- function(x, kappa){
-            mu <- 0
-            sigma <- 0.1 + abs(x[,2])
-            par <- cbind(mu, sigma)
-            return(par)
-          }
+      if(mu.sigma.interaction){
+        fun <- function(x, kappa){
+          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          sigma <- 2 + mu/4
+          par <- cbind(mu, sigma)
+          return(par)
         }
       } else {
-        if(fix.sigma) {
-          fun <- function(x, kappa){
-            mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
-                        + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
-                        * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-            sigma <- 3
-            par <- cbind(mu, sigma)
-            return(par)
-          }
-        } else {
-          if(mu.sigma.interaction){
-            fun <- function(x, kappa){
-              mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
-                          + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
-                          * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-              sigma <- 2 + mu/2.5
-              par <- cbind(mu, sigma)
-              return(par)
-            }
-          } else {
-            fun <- function(x, kappa){
-              mu <- 10 * (1-plogis((kappa^(1.8)) * (x[,2]-3)/10) 
-                          + (2*plogis((kappa^(1.8)) * (x[,2]-3)/10) -1) 
-                          * rbinom(NROW(x),1,exp(-(4*x[,1]-2)^(2*kappa))))
-              sigma <- 1 + abs(x[,2])
-              par <- cbind(mu, sigma)
-              return(par)
-            }
-          }
+        fun <- function(x, kappa){
+          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+          par <- cbind(mu, sigma)
+          return(par)
         }
       }
     }
   }
+  
+  
   
 
   ### simulation
@@ -840,8 +700,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              if(type.tree == "mob"){
@@ -927,8 +787,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              if(type.tree == "mob"){
@@ -998,9 +858,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(eval_gamlss){
       res_g <- mclapply(1:(nsteps+1),
                         function(i){
-                          
-                          if(censNO) gen.cens(NO, type = "left")
-                          
+                            
                           # for each step the parameter function is defined
                           f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
                           
@@ -1010,28 +868,31 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           rmse.sigma.g <- numeric(length = nrep)
                           loglik.g <- numeric(length = nrep)
                           
+              
+                          mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
+                          sigma.formula <- ~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
+                          
                           # FIX ME: notation only works with x1 and x2 as regressors
-                          formula_rh <- formula[[3]]
-                          if("x1" %in% as.character(formula_rh)){
-                            mu.formula <- y~pb(x1)
-                            sigma.formula <- ~pb(x1)
-                            if("x2" %in% as.character(formula_rh)){
-                              mu.formula <- y~pb(x1)+pb(x2)
-                              sigma.formula <- ~pb(x1)+pb(x2)
-                            }
-                          } 
+                          #formula_rh <- formula[[3]]
+                          #if("x1" %in% as.character(formula_rh)){
+                          #  mu.formula <- y~pb(x1)
+                          #  sigma.formula <- ~pb(x1)
+                          #  if("x2" %in% as.character(formula_rh)){
+                          #    mu.formula <- y~pb(x1)+pb(x2)
+                          #    sigma.formula <- ~pb(x1)+pb(x2)
+                          #  }
+                          #} 
                           
                           
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
                             if(censNO){
                               learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
-                              #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
-                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NOlc())
+                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = cens("NO", type = "left"))
                             } else {
                               g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NO())
                             }
@@ -1077,7 +938,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                               "av.loglik.g")))
                           
                         },
-                        mc.cores = detectCores() - 1
+                        mc.cores = detectCores() - 1,
+                        mc.preschedule = FALSE
       )
       
       resmat_g <- matrix(ncol = 5, nrow = (nsteps+1))
@@ -1088,7 +950,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
-    ## FIX ME: set up bamlss for censored data (as.surv(y))
+    
     if(eval_bamlss){
       res_b <- mclapply(1:(nsteps+1),
                         function(i){
@@ -1102,36 +964,38 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           rmse.sigma.b <- numeric(length = nrep)
                           loglik.b <- numeric(length = nrep)
                           
+                          mu.formula <- y~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)+s(x7)+s(x8)+s(x9)+s(x10)
+                          sigma.formula <- ~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)+s(x7)+s(x8)+s(x9)+s(x10)
+                          
                           # FIX ME: notation only works with x1 and x2 as regressors
-                          formula_rh <- formula[[3]]
-                          if("x1" %in% as.character(formula_rh)){
-                            mu.formula <- y~s(x1)
-                            sigma.formula <- ~s(x1)
-                            if("x2" %in% as.character(formula_rh)){
-                              mu.formula <- y~s(x1)+s(x2)
-                              sigma.formula <- ~s(x1)+s(x2)
-                            }
-                          }
+                          #formula_rh <- formula[[3]]
+                          #if("x1" %in% as.character(formula_rh)){
+                          #  mu.formula <- y~s(x1)
+                          #  sigma.formula <- ~s(x1)
+                          #  if("x2" %in% as.character(formula_rh)){
+                          #    mu.formula <- y~s(x1)+s(x2)
+                          #    sigma.formula <- ~s(x1)+s(x2)
+                          #  }
+                          #}
                           
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
-                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                            learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                            newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                             nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                             
+                          
                             if(censNO) {
-                              ## FIX ME: set up for bamlss
-                              #learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
-                              b <- bamlss(bamlss.formula(list(mu.formula, sigma.formula), family = cnorm_bamlss), data = learndata)
+                              b <- bamlss(list(mu.formula, sigma.formula), family = "cnorm", data = learndata, sampler = FALSE, optimizer = boost, stop.criterion = "BIC", plot = FALSE)
                             } else {
-                              b <- bamlss(bamlss.formula(list(mu.formula, sigma.formula), family = "gaussian"), data = learndata)
+                              b <- bamlss(list(mu.formula, sigma.formula), family = "gaussian", data = learndata, sampler = FALSE, optimizer = boost, stop.criterion = "BIC", plot = FALSE)
                             }
                             
                             # get true and predicted parameters for newdata
                             true_mu <- newdata[,"mu"]
                             true_sigma <- newdata[,"sigma"]
                             
-                            b_coef <- predict(b, newdata = nd, what = "parameters", type = "parameter", data = learndata)
+                            b_coef <- predict(b, newdata = nd, type = "parameter", data = learndata)
                             b_mu <- b_coef$mu
                             b_sigma <- b_coef$sigma
                             
@@ -1183,7 +1047,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     }
     
     
-    ## FIX ME: censored?
+    
     if(eval_gamboostLSS){
       
       ##grid for cvrisk to find optimal mstop:
@@ -1198,8 +1062,6 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       res_gb <- mclapply(1:(nsteps+1),
                          function(i){
                            
-                           if(censNO) gen.cens(NO, type = "left")
-                           
                            # for each step the parameter function is defined
                            f <- function(x) {fun(x, kappa.start + (i-1)*stepsize)} 
                            
@@ -1209,29 +1071,32 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.sigma.gb <- numeric(length = nrep)
                            loglik.gb <- numeric(length = nrep)
                            
+                           
+                           mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
+                           sigma.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
+                           
                            # FIX ME: notation only works with x1 and x2 as regressors
-                           formula_rh <- formula[[3]]
-                           if("x1" %in% as.character(formula_rh)){
-                             mu.formula <- y~bbs(x1)
-                             sigma.formula <- y~bbs(x1)
-                             if("x2" %in% as.character(formula_rh)){
-                               mu.formula <- y~bbs(x1)+bbs(x2)
-                               sigma.formula <- y~bbs(x1)+bbs(x2)
-                             }
-                           } 
+                           #formula_rh <- formula[[3]]
+                           #if("x1" %in% as.character(formula_rh)){
+                           # mu.formula <- y~bbs(x1)
+                           #  sigma.formula <- y~bbs(x1)
+                           #  if("x2" %in% as.character(formula_rh)){
+                           #    mu.formula <- y~bbs(x1)+bbs(x2)
+                           #    sigma.formula <- y~bbs(x1)+bbs(x2)
+                           #  }
+                           #} 
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              # FIX ME: censored data
                              if(censNO) {
                                learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
-                               #newdata$y <- Surv(newdata$y, newdata$y>0, type="left")
                                gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
-                                                 families = as.families(fname = NOlc()), method = "noncyclic",
+                                                 families = as.families(fname = cens("NO", type = "left")()), method = "noncyclic",
                                                  control = boost_control(mstop = 400L))
                                if(gamboost_cvr){
                                  cvr <- cvrisk(gb, grid = grid)
@@ -1259,7 +1124,6 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              gb_sigma <- gb.pred.par[[2]]
                              
                              if(censNO){
-                               
                                #calculate expected value for censored data
                                true_exp <- pnorm(true_mu/true_sigma) * (true_mu + true_sigma * (dnorm(true_mu/true_sigma) / pnorm(true_mu/true_sigma)))
                                gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
@@ -1321,8 +1185,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){  
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              rf <- randomForest(formula, data = learndata, ntree = ntree, 
@@ -1333,13 +1197,10 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              true_mu <- newdata[,"mu"]
                              true_sigma <- newdata[,"sigma"]
                              
-                             rf_mu <- predict(rf, newdata = newdata)
+                             rf_mu <- predict(rf, newdata = newdata, type = "response")
                              
                              ## get 'fitted.sigma.rf'
-                             rf_sigma <- numeric(length(NROW(newdata)))
-                             for(l in 1:NROW(newdata)){
-                               rf_sigma[l] <- rf_getsd(rf, newobs = newdata[l,], rfdata = learndata)
-                             }
+                             rf_sigma <- rf_getsd(rf, newdata = newdata, rfdata = learndata)
                              
                              if(censNO){
                                
@@ -1404,8 +1265,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
-                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
-                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f, noise_sd = noise_sd)
+                             learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
+                             newdata <- dgp(testnobs, family = family, round.sp = 4, fun = f)
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              cf <- cforest(formula, data = learndata, ntree = ntree,
