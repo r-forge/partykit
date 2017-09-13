@@ -481,77 +481,82 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 
 
-
-
-
-## function to estimate standard deviation of randomForest for a new observation
-# (in randomForest the argument 'keep.inbag' must be set to TRUE)
-rf_getsd <- function(object, newobs, rfdata){
   
-  # get predictions for the new observations from all trees
-  pred.newobs <- predict(object, predict.all = TRUE, newdata = newobs)
   
-  # vector where the standard deviations from all trees are stored
-  sd_trees <- numeric(length = object$ntree)
   
-  # loop over all trees of the forest
-  for(i in 1:object$ntree){
+  ## function to estimate standard deviation of randomForest for a new observation
+  # (in randomForest the argument 'keep.inbag' must be set to TRUE)
+  rf_getsd <- function(rf, newdata, rfdata){
     
-    # get data used to build this tree
-    obsid <- rep.int(c(1:NROW(rfdata)), as.vector(object$inbag[,i]))
-    obs_tree <- rfdata[obsid,]
-    rownames(obs_tree) <- c(1:NROW(obs_tree))
-    # get predictions for this data from this tree
-    pred.obs_tree <- predict(object, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+    rf_sd <- numeric(length = NROW(newdata))
     
-    # get prediction for the new observation from this tree
-    pred.newobs_tree <- pred.newobs$individual[,i]
-    
-    # get part of the data that ends up in the same terminal node (has the same prediction)
-    obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
-    
-    sd_trees[i] <- sd(obs_node$accel)
-  }
-  
-  # average of sd over all trees
-  sd_newobs <- mean(sd_trees, na.rm = TRUE)
- 
-  return(sd_newobs)   
-}
-
-
-
-## function to estimate standard deviation of cforest for a new observation
-cf_getsd <- function(cf, newdata = NULL){
-  
-  # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
-  pred.node.learn <- predict(cf, type = "node")
-  
-  # get IDs of predicted nodes for the new observations
-  if(is.null(newdata)) {
-    pred.node.new <- pred.node.learn
-    newdata <- cf$data
-  } else {
-    pred.node.new <- predict(cf, newdata = newdata, type = "node")
-  }
-  
-  sdnew <- numeric(length = NROW(newdata))
-  
-  for(i in 1:NROW(newdata)){
-    for(t in 1:cf$info$call$ntree){
-      nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
-      sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
+    for(k in 1:NROW(newdata)){
+      newobs <- newdata[k,]
+      # get predictions for the new observations from all trees
+      pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
+      
+      # vector where the standard deviations from all trees are stored
+      sd_trees <- numeric(length = rf$ntree)
+      
+      # loop over all trees of the forest
+      for(i in 1:rf$ntree){
+        
+        # get data used to build this tree
+        obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
+        obs_tree <- rfdata[obsid,]
+        rownames(obs_tree) <- c(1:NROW(obs_tree))
+        # get predictions for this data from this tree
+        pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+        
+        # get prediction for the new observation from this tree
+        pred.newobs_tree <- pred.newobs$individual[,i]
+        
+        # get part of the data that ends up in the same terminal node (has the same prediction)
+        obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
+        
+        sd_trees[i] <- sd(obs_node$y)
+      }
+      
+      # average of sd over all trees
+      sd_newobs <- mean(sd_trees, na.rm = TRUE)
+      rf_sd[k] <- sd_newobs
     }
+    return(rf_sd)   
   }
- 
-  return(sdnew)   
-}
-
+  
+  
+  
+  ## function to estimate standard deviation of cforest for a new observation
+  cf_getsd <- function(cf, newdata = NULL){
+    
+    # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
+    pred.node.learn <- predict(cf, type = "node")
+    
+    # get IDs of predicted nodes for the new observations
+    if(is.null(newdata)) {
+      pred.node.new <- pred.node.learn
+      newdata <- cf$data
+    } else {
+      pred.node.new <- predict(cf, newdata = newdata, type = "node")
+    }
+    
+    sdnew <- numeric(length = NROW(newdata))
+    
+    for(i in 1:NROW(newdata)){
+      for(t in 1:cf$info$call$ntree){
+        nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
+        sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
+      }
+    }
+    
+    return(sdnew)   
+  }
+  
 
 
 ## simulation plot functions
 # plot RMSE
-plot_rmse <- function(simres, type = c("exp", "par")){
+plot_rmse <- function(simres, type = c("exp", "par"), ylim = NULL, legend = TRUE){
   
   if(type == "exp"){
     rmse <- NULL
@@ -602,7 +607,7 @@ plot_rmse <- function(simres, type = c("exp", "par")){
     }
 
     colnames(rmse) <- colnames
-    ylim <- c(min(rmse), max(rmse))
+    if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
     
     plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
          xlab = "kappa", ylab = "RMSE")
@@ -612,7 +617,7 @@ plot_rmse <- function(simres, type = c("exp", "par")){
       lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
       lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
     }
-    legend('topleft', legendnames, 
+    if(legend) legend('topleft', legendnames, 
            col = col, lty = 1, cex = 0.7)
   } 
   
@@ -666,7 +671,7 @@ plot_rmse <- function(simres, type = c("exp", "par")){
     }
 
     colnames(rmse) <- colnames
-    ylim <- c(min(rmse), max(rmse))
+    if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
     
     plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
          xlab = "kappa", ylab = "RMSE")
@@ -676,7 +681,7 @@ plot_rmse <- function(simres, type = c("exp", "par")){
       lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
       lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
     }
-    legend('topleft', legendnames, 
+    if(legend) legend('topleft', legendnames, 
            col = col, lty = 1, cex = 0.7)
   }
 }
@@ -684,7 +689,7 @@ plot_rmse <- function(simres, type = c("exp", "par")){
 
 
 # plot loglikelihood
-plot_ll <- function(simres){
+plot_ll <- function(simres, ylim = NULL, legend = TRUE){
   
     ll <- NULL
     colnames <- NULL
@@ -734,7 +739,7 @@ plot_ll <- function(simres){
     }
 
     colnames(ll) <- colnames
-    ylim <- c(min(ll), max(ll))
+    if(is.null(ylim)) ylim <- c(min(na.omit(ll)), max(na.omit(ll)))
     
     plot(x = simres$x.axis, y = ll[,1], type = "l", col = col[1], ylim = ylim,
          xlab = "kappa", ylab = "log-likelihood")
@@ -742,7 +747,7 @@ plot_ll <- function(simres){
     for(i in 2:length(col)){
       lines(x = simres$x.axis, y = ll[,i], type = "l", col = col[i])
     }
-    legend('topleft', legendnames, 
+    if(legend) legend('topleft', legendnames, 
            col = col, lty = 1, cex = 0.7)
 }
 @
@@ -1064,11 +1069,7 @@ if(file.exists("mcycle_plotdata.rda")){
   
   
   ## get 'fitted.sigma.rf'
-  rf_sd <- numeric(length(NROW(mcycle)))
-  
-  for(i in 1:NROW(mcycle)){
-    rf_sd[i] <- rf_getsd(rf, newobs = mcycle[i,], rfdata = mcycle)
-  }
+  rf_sd <- rf_getsd(rf, newdata = mcycle, rfdata = mcycle)
   
   plotdata <- cbind(mcycle,
                     df$fitted.par,
@@ -1294,10 +1295,9 @@ if((file.exists("mcycle_cross_mean.rda")) & (file.exists("mcycle_cross_all.rda")
       dt.pred.par <- predict(dt, newdata = testdata, type = "parameter")
       df.pred.par <- predict(df, newdata = testdata, type = "parameter")
       rf.pred.resp <- predict(rf, newdata = testdata)
-      rf.sd <- numeric(length(NROW(testdata)))
-      for(l in 1:NROW(testdata)){
-        rf.sd[l] <- rf_getsd(rf, newobs = testdata[l,], rfdata = learndata)
-      }
+      
+      rf.sd <- rf_getsd(rf, newdata = testdata, rfdata = learndata)
+      
       g.pred.par <- predict(ga, newdata = testdata, type = "response")
       g.pred.mu <- g.pred.par[,1]
       g.pred.sigma <- 1/g.pred.par[,2]
