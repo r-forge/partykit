@@ -20,7 +20,8 @@ sim_onecov <- function(kappa = 1, nobs = 400,
                        eval_bamlss = FALSE,
                        eval_gamboostLSS = FALSE,
                        eval_randomForest = FALSE,
-                       eval_cforest = FALSE)
+                       eval_cforest = FALSE,
+                       mubase = 0)
 {
   ### preliminaries
   library("disttree")
@@ -419,14 +420,14 @@ sim_onecov <- function(kappa = 1, nobs = 400,
   if(fix.mu){
     if(fix.sigma){
       fun <- function(x){
-        mu <- 2
+        mu <- mubase
         sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
       }
     } else {
       fun <- function(x){
-        mu <- 2
+        mu <- mubase
         sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
         par <- cbind(mu, sigma)
         return(par)
@@ -435,7 +436,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
   } else {
     if(fix.sigma){
       fun <- function(x){
-        mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+        mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
         sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
@@ -443,14 +444,14 @@ sim_onecov <- function(kappa = 1, nobs = 400,
     } else {
       if(mu.sigma.interaction){
         fun <- function(x){
-          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
           sigma <- 2 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x){
-          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
           sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
           par <- cbind(mu, sigma)
           return(par)
@@ -628,12 +629,15 @@ sim_onecov <- function(kappa = 1, nobs = 400,
 ##########################3
 # test
 if(FALSE){
-  sim_onecov_test <- sim_onecov(kappa = 10, nobs = 1000,
-                         seedconst = 7, ntree = 200,
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  sim_onecov_test <- sim_onecov(kappa = 1, nobs = 1000,
+                         seedconst = 7, ntree = 100,
                          formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
                          tree_minsplit = 40, tree_mincrit = 0.95,
                          forest_minsplit = 20, forest_mincrit = 0, 
                          type.tree = "ctree",
+                         mubase = 0,
                          censNO = TRUE,
                          fix.mu = FALSE,
                          fix.sigma = FALSE,
@@ -670,6 +674,8 @@ plot_onecov <- function(learndata, parfun,
                   add_rf = FALSE,
                   add_cf = FALSE,
                   nomodel = FALSE,
+                  fix_x1 = -0.5,
+                  fix_x2 = 0,
                   ylim = NULL,
                   plot_legend = FALSE) 
 {
@@ -686,8 +692,10 @@ plot_onecov <- function(learndata, parfun,
   
   # data sets with fixed covariates except for one of them (x1 or x2)
   datafix_x1 <- datafix_x2 <- learndata[,-c(1,12,13)]
-  datafix_x1[,c("x2","x3","x4","x5","x6","x7","x8","x9","x10")] <- rep.int(0, NROW(learndata))
-  datafix_x2[,c("x1","x3","x4","x5","x6","x7","x8","x9","x10")] <- rep.int(0, NROW(learndata))
+  datafix_x1[,c("x3","x4","x5","x6","x7","x8","x9","x10")] <- 
+    datafix_x2[,c("x3","x4","x5","x6","x7","x8","x9","x10")] <- rep.int(0, NROW(learndata))
+  datafix_x1[,c("x1")] <- rep.int(fix_x1, NROW(learndata))
+  datafix_x2[,c("x2")] <- rep.int(fix_x2, NROW(learndata))
   
   
   if(!(is.null(g)) & !(is.null(gb))) {
@@ -767,11 +775,11 @@ plot_onecov <- function(learndata, parfun,
   }
   
   
-  plotdata <- learndata[,c("y","x1","mu","sigma")]
-  colnames(plotdata) <- c("y","x1","true.mu","true.sigma")
-  sp <- plotdata[order(plotdata["x1"]),]
-
   if(nomodel){
+    plotdata <- learndata[,c("y","x1","mu","sigma")]
+    colnames(plotdata) <- c("y","x1","true.mu","true.sigma")
+    sp <- plotdata[order(plotdata["x1"]),]
+    
     if(is.null(ylim)) ylim <- c(min(sp$true_mu - sp$true_sigma), max(sp$true_mu + sp$tru_sigma))
     par(mar=c(5.1,4.1,4.1,3.1))
     plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", cex.main = 1.2, #xaxt="n", yaxt="n", 
@@ -783,123 +791,124 @@ plot_onecov <- function(learndata, parfun,
     #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
     #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
     #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # disttree
   if(only_dt){
     
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(dt, newdata = datafix_x1, type = "parameter"))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(dt, newdata = datafix_x2, type = "parameter"))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
                             "fitted.mu.dt","fitted.sigma.dt")
     sp <- plotdata[order(plotdata["x1"]),]
     
     par(mar=c(5.1,4.1,4.1,3.1))
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", col.main = pal["disttree"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey", main = "disttree", col.main = pal["disttree"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["disttree"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.dt, type = "l", col = pal["disttree"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
             col = pallight["disttree"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # distforest
   if(only_df){
     
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(df, newdata = datafix_x1, type = "parameter"))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(df, newdata = datafix_x2, type = "parameter"))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
                             "fitted.mu.df","fitted.sigma.df")
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", col.main = pal["distforest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey", main = "distforest", col.main = pal["distforest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["distforest"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.df, type = "l", col = pal["distforest"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
             col = pallight["distforest"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # gamlss
   if(only_g){
 
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(g, newdata = datafix_x1, what = "mu", type = "response", data = g_learndata),
-                      predict(g, newdata = datafix_x1, what = "sigma", type = "response", data = g_learndata))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(g, newdata = datafix_x2, what = "mu", type = "response", data = g_learndata),
+                      predict(g, newdata = datafix_x2, what = "sigma", type = "response", data = g_learndata))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
                             "fitted.mu.g","fitted.sigma.g")
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
             col = pallight["gamlss"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
+    
   }
   
   # gamboostLSS
   if(only_gb){
     
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(gb, newdata = datafix_x1, parameter = list("mu","sigma"), type = "response"))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(gb, newdata = datafix_x2, parameter = list("mu","sigma"), type = "response"))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma",
                             "fitted.mu.gb","fitted.sigma.gb")
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamboostLSS", col.main = pal["gamboostLSS"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey",  main = "gamboostLSS", col.main = pal["gamboostLSS"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.gb, type = "l", col = pal["gamboostLSS"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.gb + sp$fitted.sigma.gb, rev(sp$fitted.mu.gb - sp$fitted.sigma.gb)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.gb, type = "l", col = pal["gamboostLSS"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.gb + sp$fitted.sigma.gb, rev(sp$fitted.mu.gb - sp$fitted.sigma.gb)),
             col = pallight["gamboostLSS"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # bamlss
   if(only_b){
     
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(b, newdata = datafix_x1, type = "parameter"))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(b, newdata = datafix_x2, type = "parameter"))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma",
                             "fitted.mu.b","fitted.sigma.b")
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "bamlss", col.main = pal["bamlss"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey",  main = "bamlss", col.main = pal["bamlss"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.b, type = "l", col = pal["bamlss"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.b + sp$fitted.sigma.b, rev(sp$fitted.mu.b - sp$fitted.sigma.b)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.b, type = "l", col = pal["bamlss"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.b + sp$fitted.sigma.b, rev(sp$fitted.mu.b - sp$fitted.sigma.b)),
             col = pallight["bamlss"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # randomForest 
   if(only_rf){
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(rf, newdata = datafix_x1, type = "response"), 
-                      rf_getsd(rf, newdata = datafix_x1, rfdata = learndata))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(rf, newdata = datafix_x2, type = "response"), 
+                      rf_getsd(rf, newdata = datafix_x2, rfdata = learndata))
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma",
                             "fitted.mu.rf","fitted.sigma.rf")
     
@@ -907,22 +916,22 @@ plot_onecov <- function(learndata, parfun,
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "randomForest", col.main = pal["randomForest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey",  main = "randomForest", col.main = pal["randomForest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
-    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.rf, type = "l", col = pal["randomForest"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.rf + sp$fitted.sigma.rf, rev(sp$fitted.mu.rf - sp$fitted.sigma.rf)),
+    lines(x = sp$x1, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.rf, type = "l", col = pal["randomForest"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.rf + sp$fitted.sigma.rf, rev(sp$fitted.mu.rf - sp$fitted.sigma.rf)),
             col = pallight["randomForest"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # cforest
   if(only_cf){
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1),
-                      predict(cf, newdata = datafix_x1, type = "response"),
-                      cf_getsd(cf, newdata = datafix_x1))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2),
+                      predict(cf, newdata = datafix_x2, type = "response"),
+                      cf_getsd(cf, newdata = datafix_x2))
     
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma",
                             "fitted.mu.cf","fitted.sigma.cf")
@@ -930,17 +939,17 @@ plot_onecov <- function(learndata, parfun,
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "cforest", col.main = pal["cforest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x1, type = "p", col="grey",  main = "cforest", col.main = pal["cforest"], cex.main = 1.2, #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
     #col = transpgrey, border = "transparent")
-    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
-    lines(x = sp$x, y = sp$fitted.mu.cf, type = "l", col = pal["cforest"], lwd = 2.5)
-    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.cf + sp$fitted.sigma.cf, rev(sp$fitted.mu.cf - sp$fitted.sigma.cf)),
+    lines(x = sp$x1, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x1, y = sp$fitted.mu.cf, type = "l", col = pal["cforest"], lwd = 2.5)
+    polygon(c(sp$x1, rev(sp$x1)), c(sp$fitted.mu.cf + sp$fitted.sigma.cf, rev(sp$fitted.mu.cf - sp$fitted.sigma.cf)),
             col = pallight["cforest"], border = "transparent")
-    legend(x = -0.45, y = 14, expression(mu %+-% sigma), bty = "n")
+    legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   
@@ -948,52 +957,52 @@ plot_onecov <- function(learndata, parfun,
   # compare location parameter mu
   if(compare_mu){
     
-    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x1))
+    plotdata <- cbind(learndata[,c("y","x1")], parfun(datafix_x2))
     coln <- c("y","x1","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
-      plotdata <- cbind(plotdata, predict(dt, newdata = datafix_x1, type = "parameter"))
+      plotdata <- cbind(plotdata, predict(dt, newdata = datafix_x2, type = "parameter"))
       coln <- c(coln, "fitted.mu.dt","fitted.sigma.dt")
       methodnames <- c(methodnames, "disttree")
     }
     if(add_df) {
-      plotdata <- cbind(plotdata, predict(df, newdata = datafix_x1, type = "parameter"))
+      plotdata <- cbind(plotdata, predict(df, newdata = datafix_x2, type = "parameter"))
       coln <- c(coln, "fitted.mu.df","fitted.sigma.df")
       methodnames <- c(methodnames, "distforest")
     }
     if(add_g) {
       plotdata <- cbind(plotdata,
-                        predict(g, newdata = datafix_x1, what = "mu", type = "response", data = g_learndata),
-                        predict(g, newdata = datafix_x1, what = "sigma", type = "response", data = g_learndata))
+                        predict(g, newdata = datafix_x2, what = "mu", type = "response", data = g_learndata),
+                        predict(g, newdata = datafix_x2, what = "sigma", type = "response", data = g_learndata))
       coln <- c(coln, "fitted.mu.g","fitted.sigma.g")
       methodnames <- c(methodnames, "gamlss")
     }
     if(add_gb) {
       plotdata <- cbind(plotdata,
-                        predict(gb, newdata = datafix_x1, parameter = list("mu","sigma"), type = "response"))
+                        predict(gb, newdata = datafix_x2, parameter = list("mu","sigma"), type = "response"))
       coln <- c(coln, "fitted.mu.gb","fitted.sigma.gb")
       methodnames <- c(methodnames, "gamboostLSS")
     }
     if(add_b) {
       plotdata <- cbind(plotdata,
-                        predict(b, newdata = datafix_x1, type = "parameter"))
+                        predict(b, newdata = datafix_x2, type = "parameter"))
       coln <- c(coln, "fitted.mu.b","fitted.sigma.b")
       methodnames <- c(methodnames, "bamlss")
     }
     if(add_rf) {
       plotdata <- cbind(plotdata,
-                        predict(rf, newdata = datafix_x1, type = "response"), 
+                        predict(rf, newdata = datafix_x2, type = "response"), 
                         rep.int(1,NROW(plotdata)))     # sd replaced by this vector because variance is not ploted but computation takes a long time
-                        #rf_getsd(rf, newdata = datafix_x1, rfdata = learndata))
+                        #rf_getsd(rf, newdata = datafix_x2, rfdata = learndata))
       coln <- c(coln, "fitted.mu.rf","fitted.sigma.rf")
       methodnames <- c(methodnames, "randomForest")
     }
     if(add_cf) {
       plotdata <- cbind(plotdata,
-                        predict(cf, newdata = datafix_x1, type = "response"),
+                        predict(cf, newdata = datafix_x2, type = "response"),
                         rep.int(1,NROW(plotdata))) # sd replaced by this vector because variance is not ploted but computation takes a long time
-                        #cf_getsd(cf, newdata = datafix_x1))
+                        #cf_getsd(cf, newdata = datafix_x2))
       coln <- c(coln, "fitted.mu.cf","fitted.sigma.cf")
       methodnames <- c(methodnames, "cforest")
     }
@@ -1023,52 +1032,52 @@ plot_onecov <- function(learndata, parfun,
   # variance
   if(compare_sigma_area){
     
-    plotdata <- cbind(learndata[,c("y","x2")], parfun(datafix_x2))
+    plotdata <- cbind(learndata[,c("y","x2")], parfun(datafix_x1))
     coln <- c("y","x2","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
       plotdata <- cbind(plotdata,
-                        predict(dt, newdata = datafix_x2, type = "parameter"))
+                        predict(dt, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.dt","fitted.sigma.dt")
       methodnames <- c(methodnames, "disttree")
     }
     if(add_df) {
       plotdata <- cbind(plotdata,
-                        predict(df, newdata = datafix_x2, type = "parameter"))
+                        predict(df, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.df","fitted.sigma.df")
       methodnames <- c(methodnames, "distforest")
     }
     if(add_g) {
       plotdata <- cbind(plotdata,
-                        predict(g, newdata = datafix_x2, what = "mu", type = "response", data = g_learndata),
-                        predict(g, newdata = datafix_x2, what = "sigma", type = "response", data = g_learndata))
+                        predict(g, newdata = datafix_x1, what = "mu", type = "response", data = g_learndata),
+                        predict(g, newdata = datafix_x1, what = "sigma", type = "response", data = g_learndata))
       coln <- c(coln, "fitted.mu.g","fitted.sigma.g")
       methodnames <- c(methodnames, "gamlss")
     }
     if(add_gb) {
       plotdata <- cbind(plotdata,
-                        predict(gb, newdata = datafix_x2, parameter = list("mu","sigma"), type = "response"))
+                        predict(gb, newdata = datafix_x1, parameter = list("mu","sigma"), type = "response"))
       coln <- c(coln, "fitted.mu.gb","fitted.sigma.gb")
       methodnames <- c(methodnames, "gamboostLSS")
     }
     if(add_b) {
       plotdata <- cbind(plotdata,
-                        predict(b, newdata = datafix_x2, type = "parameter"))
+                        predict(b, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.b","fitted.sigma.b")
       methodnames <- c(methodnames, "bamlss")
     }
     if(add_rf) {
       plotdata <- cbind(plotdata,
-                        predict(rf, newdata = datafix_x2, type = "response"), 
-                        rf_getsd(rf, newdata = datafix_x2, rfdata = learndata))
+                        predict(rf, newdata = datafix_x1, type = "response"), 
+                        rf_getsd(rf, newdata = datafix_x1, rfdata = learndata))
       coln <- c(coln, "fitted.mu.rf","fitted.sigma.rf")
       methodnames <- c(methodnames, "randomForest")
     }
     if(add_cf) {
       plotdata <- cbind(plotdata,
-                        predict(cf, newdata = datafix_x2, type = "response"),
-                        cf_getsd(cf, newdata = datafix_x2))
+                        predict(cf, newdata = datafix_x1, type = "response"),
+                        cf_getsd(cf, newdata = datafix_x1))
       coln <- c(coln, "fitted.mu.cf","fitted.sigma.cf")
       methodnames <- c(methodnames, "cforest")
     }
@@ -1108,52 +1117,52 @@ plot_onecov <- function(learndata, parfun,
   # variance
   if(compare_sigma_line){
     
-    plotdata <- cbind(learndata[,c("y","x2")], parfun(datafix_x2))
+    plotdata <- cbind(learndata[,c("y","x2")], parfun(datafix_x1))
     coln <- c("y","x2","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
       plotdata <- cbind(plotdata,
-                        predict(dt, newdata = datafix_x2, type = "parameter"))
+                        predict(dt, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.dt","fitted.sigma.dt")
       methodnames <- c(methodnames, "disttree")
     }
     if(add_df) {
       plotdata <- cbind(plotdata,
-                        predict(df, newdata = datafix_x2, type = "parameter"))
+                        predict(df, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.df","fitted.sigma.df")
       methodnames <- c(methodnames, "distforest")
     }
     if(add_g) {
       plotdata <- cbind(plotdata,
-                        predict(g, newdata = datafix_x2, what = "mu", type = "response", data = g_learndata),
-                        predict(g, newdata = datafix_x2, what = "sigma", type = "response", data = g_learndata))
+                        predict(g, newdata = datafix_x1, what = "mu", type = "response", data = g_learndata),
+                        predict(g, newdata = datafix_x1, what = "sigma", type = "response", data = g_learndata))
       coln <- c(coln, "fitted.mu.g","fitted.sigma.g")
       methodnames <- c(methodnames, "gamlss")
     }
     if(add_gb) {
       plotdata <- cbind(plotdata,
-                        predict(gb, newdata = datafix_x2, parameter = list("mu","sigma"), type = "response"))
+                        predict(gb, newdata = datafix_x1, parameter = list("mu","sigma"), type = "response"))
       coln <- c(coln, "fitted.mu.gb","fitted.sigma.gb")
       methodnames <- c(methodnames, "gamboostLSS")
     }
     if(add_b) {
       plotdata <- cbind(plotdata,
-                        predict(b, newdata = datafix_x2, type = "parameter"))
+                        predict(b, newdata = datafix_x1, type = "parameter"))
       coln <- c(coln, "fitted.mu.b","fitted.sigma.b")
       methodnames <- c(methodnames, "bamlss")
     }
     if(add_rf) {
       plotdata <- cbind(plotdata,
-                        predict(rf, newdata = datafix_x2, type = "response"), 
-                        rf_getsd(rf, newdata = datafix_x2, rfdata = learndata))
+                        predict(rf, newdata = datafix_x1, type = "response"), 
+                        rf_getsd(rf, newdata = datafix_x1, rfdata = learndata))
       coln <- c(coln, "fitted.mu.rf","fitted.sigma.rf")
       methodnames <- c(methodnames, "randomForest")
     }
     if(add_cf) {
       plotdata <- cbind(plotdata,
-                        predict(cf, newdata = datafix_x2, type = "response"),
-                        cf_getsd(cf, newdata = datafix_x2))
+                        predict(cf, newdata = datafix_x1, type = "response"),
+                        cf_getsd(cf, newdata = datafix_x1))
       coln <- c(coln, "fitted.mu.cf","fitted.sigma.cf")
       methodnames <- c(methodnames, "cforest")
     }
@@ -1188,20 +1197,21 @@ plot_onecov <- function(learndata, parfun,
 ###############################################
 # test
 if(FALSE){
+
 l <- sim_onecov_test
 # l <- l1
 # l <- l10
 
 plot_onecov(learndata = l$learndata, parfun = l$fun, dt = l$dt, df = l$df, g = l$g, b = l$b, gb = l$gb, rf = l$rf, cf = l$cf, 
-            compare_mu = TRUE, 
+            compare_mu = TRUE, fix_x2 = 0,
             add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
 
 plot_onecov(learndata = l$learndata, parfun = l$fun, dt = l$dt, df = l$df, g = l$g, b = l$b, gb = l$gb, rf = l$rf, cf = l$cf, 
-            compare_sigma_line = TRUE, 
+            compare_sigma_line = TRUE, fix_x1 = 0.4, 
             add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = FALSE, add_cf = FALSE)
 
 plot_onecov(learndata = l$learndata, parfun = l$fun, dt = l$dt, df = l$df, g = l$g, b = l$b, gb = l$gb, rf = l$rf, cf = l$cf, 
-            only_b = TRUE)
+            only_rf= TRUE)
 }
 
 

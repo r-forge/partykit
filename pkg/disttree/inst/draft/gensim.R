@@ -31,7 +31,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    eval_bamlss = FALSE,
                    eval_gamboostLSS = FALSE,
                    eval_randomForest = FALSE,
-                   eval_cforest = FALSE)
+                   eval_cforest = FALSE,
+                   mubase = 0)
 {
   
   cl <- match.call()
@@ -636,14 +637,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   if(fix.mu){
     if(fix.sigma){
       fun <- function(x, kappa){
-        mu <- 2
+        mu <- mubase
         sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
       }
     } else {
       fun <- function(x, kappa){
-        mu <- 2
+        mu <- mubase
         sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
         par <- cbind(mu, sigma)
         return(par)
@@ -652,7 +653,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   } else {
     if(fix.sigma){
       fun <- function(x, kappa){
-        mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+        mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
         sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
@@ -660,14 +661,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     } else {
       if(mu.sigma.interaction){
         fun <- function(x, kappa){
-          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
           sigma <- 2 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x, kappa){
-          mu <- 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
           sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
           par <- cbind(mu, sigma)
           return(par)
