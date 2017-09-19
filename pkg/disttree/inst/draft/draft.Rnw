@@ -368,190 +368,79 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 
 
-######## data generating process based on a predefined tree or a parameter function
-  # if tree: 2 splits => 3 terminal nodes
-  # 10 split variables (x1, ..., x10) are availabe (5 numeric, 2 binary, 3 categorical)
-  #
-  # input: n            ..... nr of observations
-  #        family       ..... distribution of the generated observations
-  #        split.matrix ..... indices of the variables used for the splits together with the corresponding split points
-  #        parm.matrix  ..... set of distribution parameters for each subgroup
-  #        fun          ..... parameter function
-  #        noise_sd     ..... optional parameter to set the standard deviation of the noise variable
-  #
-  # output: data.frame with generated observations y (generated seperatly in each subgroups with given distributions parameters),
-  #                         the given split variables x1, ..., x10 for each observation and
-  #                         the index of the subgroup for each observation or
-  #                         the distribution parameter for each observation
+
+
   
-  # FIX: until now only complete lists can be handed over (dist_list...)
-  dgp <- function(n, family = dist_list_normal, 
-                  fun = NULL,
-                  split.matrix = matrix(nrow = 2, ncol = 2), 
-                  par.matrix = matrix(nrow = 3, ncol = 2), 
-                  round.sp = 3,
-                  noise_sd = 0)
-  {
+  
+  
+## function to estimate standard deviation of randomForest for a new observation
+# (in randomForest the argument 'keep.inbag' must be set to TRUE)
+rf_getsd <- function(rf, newdata, rfdata){
+  
+  rf_sd <- numeric(length = NROW(newdata))
+  
+  for(k in 1:NROW(newdata)){
+    newobs <- newdata[k,]
+    # get predictions for the new observations from all trees
+    pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
     
-    # generating the possible split variables
-    x1 <- runif(n,-0.4,1)
-    x2 <- runif(n,-10,10)
-    x3 <- runif(n,0,100)
-    x4 <- x1 + rnorm(n, sd = 0.1)
-    x5 <- x1 + rnorm(n, sd = 0.3)
-    x6 <- rbinom(n,1,0.5)
-    x7 <- rbinom(n,1,0.5)
-    x8 <- sample(1:4, n, replace = TRUE) 
-    x9 <- sample(1:5, n, replace = TRUE) 
-    x10 <- sample(1:7, n, replace = TRUE)
-    #x11 <- runif(n,-0.5,1)
-    x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
-    # reduce nr of possible split points by rounding values of split variables
-    x <- round(x, digits = round.sp)
+    # vector where the standard deviations from all trees are stored
+    sd_trees <- numeric(length = rf$ntree)
     
-    y <- vector(mode = "numeric", length = n)
-    
-    # getting the random function
-    if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) {
-      rfun <- get(paste0("r",family$family[[1]]))
-    } else {
-      if(family$family.name == "Normal Distribution") rfun <- rNO
-      if(family$family.name == "censored Normal Distribution") rfun <- rNO
-      if(family$family.name == "Poisson Distribution") rfun <- rPO
-      if(family$family.name == "Weibull Distribution") rfun <- survival:::rsurvreg 
+    # loop over all trees of the forest
+    for(i in 1:rf$ntree){
+      
+      # get data used to build this tree
+      obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
+      obs_tree <- rfdata[obsid,]
+      rownames(obs_tree) <- c(1:NROW(obs_tree))
+      # get predictions for this data from this tree
+      pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
+      
+      # get prediction for the new observation from this tree
+      pred.newobs_tree <- pred.newobs$individual[,i]
+      
+      # get part of the data that ends up in the same terminal node (has the same prediction)
+      obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
+      
+      sd_trees[i] <- sd(obs_node$y)
     }
     
-    
-    if(is.null(fun)) {
-      index <- vector(mode = "numeric", length = n)
-      sv = split.matrix[,1]    # index of split variables
-      sp = split.matrix[,2]    # split points
-      par = par.matrix
-      
-      # splitting based on the given split variables and split points and
-      # generating the observations seperatly for each subgroup (with the corresponding given distribution parameters)
-      for(k in 1:n){
-        if(x[k, sv[1]] <= sp[1]){
-          y[k] <- do.call(rfun, as.list(c(1,par[1,])))
-          index[k] <- 2L
-        } else {
-          if(x[k, sv[2]] <= sp[2]){
-            y[k] <- do.call(rfun, as.list(c(1,par[2,]))) 
-            index[k] <- 4L
-          } else {
-            y[k] <- do.call(rfun, as.list(c(1,par[3,])))
-            index[k] <- 5L
-          }
-        }
-      }
-      d <- as.data.frame(cbind(y, x, index))
-      colnames(d) <- c("y", paste0("x", c(1:10)), "index")
-      
-    } else {
-      
-      dpar <- fun(x)
-      
-      if(!(family$family.name == "Poisson Distribution")){
-        y <- rfun(n, dpar[,1], dpar[,2])
-        d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
-      } else {
-        y <- rfun(n, dpar)
-        d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
-      }
-    }
-    
-    
-    if(family$family.name == "censored Normal Distribution") {
-      #d$ystar <- d$y
-      d$y <- pmax(d$y, 0)
-    }
-    
-    if(noise_sd > 0) d$y <- d$y + rnorm(n, mean = 0, sd = noise_sd)
-    
-    return(d)
+    # average of sd over all trees
+    sd_newobs <- mean(sd_trees, na.rm = TRUE)
+    rf_sd[k] <- sd_newobs
+  }
+  return(rf_sd)   
+}
+
+
+
+## function to estimate standard deviation of cforest for a new observation
+cf_getsd <- function(cf, newdata = NULL){
+  
+  # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
+  pred.node.learn <- predict(cf, type = "node")
+  
+  # get IDs of predicted nodes for the new observations
+  if(is.null(newdata)) {
+    pred.node.new <- pred.node.learn
+    newdata <- cf$data
+  } else {
+    pred.node.new <- predict(cf, newdata = newdata, type = "node")
   }
   
-
-
-
-
-
-
-
+  sdnew <- numeric(length = NROW(newdata))
   
-  
-  
-  ## function to estimate standard deviation of randomForest for a new observation
-  # (in randomForest the argument 'keep.inbag' must be set to TRUE)
-  rf_getsd <- function(rf, newdata, rfdata){
-    
-    rf_sd <- numeric(length = NROW(newdata))
-    
-    for(k in 1:NROW(newdata)){
-      newobs <- newdata[k,]
-      # get predictions for the new observations from all trees
-      pred.newobs <- predict(rf, predict.all = TRUE, newdata = newobs)
-      
-      # vector where the standard deviations from all trees are stored
-      sd_trees <- numeric(length = rf$ntree)
-      
-      # loop over all trees of the forest
-      for(i in 1:rf$ntree){
-        
-        # get data used to build this tree
-        obsid <- rep.int(c(1:NROW(rfdata)), as.vector(rf$inbag[,i]))
-        obs_tree <- rfdata[obsid,]
-        rownames(obs_tree) <- c(1:NROW(obs_tree))
-        # get predictions for this data from this tree
-        pred.obs_tree <- predict(rf, newdata = obs_tree, predict.all = TRUE)$individual[,i]
-        
-        # get prediction for the new observation from this tree
-        pred.newobs_tree <- pred.newobs$individual[,i]
-        
-        # get part of the data that ends up in the same terminal node (has the same prediction)
-        obs_node <- obs_tree[pred.obs_tree == pred.newobs_tree,]
-        
-        sd_trees[i] <- sd(obs_node$y)
-      }
-      
-      # average of sd over all trees
-      sd_newobs <- mean(sd_trees, na.rm = TRUE)
-      rf_sd[k] <- sd_newobs
+  for(i in 1:NROW(newdata)){
+    for(t in 1:cf$info$call$ntree){
+      nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
+      sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
     }
-    return(rf_sd)   
   }
   
-  
-  
-  ## function to estimate standard deviation of cforest for a new observation
-  cf_getsd <- function(cf, newdata = NULL){
-    
-    # get IDs of predicted nodes for the learning data cfdata (does not have to be handed over as cf was learned on cfdata)
-    pred.node.learn <- predict(cf, type = "node")
-    
-    # get IDs of predicted nodes for the new observations
-    if(is.null(newdata)) {
-      pred.node.new <- pred.node.learn
-      newdata <- cf$data
-    } else {
-      pred.node.new <- predict(cf, newdata = newdata, type = "node")
-    }
-    
-    sdnew <- numeric(length = NROW(newdata))
-    
-    for(i in 1:NROW(newdata)){
-      for(t in 1:cf$info$call$ntree){
-        nodedata <- cf$data[(pred.node.learn[[t]] == pred.node.new[[t]][i]),]
-        sdnew[i] <- sd(nodedata[,paste(cf$terms[[2]])])
-      }
-    }
-    
-    return(sdnew)   
-  }
-  
+  return(sdnew)   
+}
+
 
 
 ## simulation plot functions
@@ -754,7 +643,7 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 
 
 
-\title{\texttt{disttree}: Distributional Trees and Forests}
+\title{Distributional Trees and Forests}
 \Plaintitle{disttree: Distributional Trees and Forests} 
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
@@ -1430,9 +1319,9 @@ boxplot.matrix(box_ll, ylab = "log-likelihood")
 \section{Simulation Study}
 Within this simulation study the performances of distributional trees and forests are tested and compared to other models, showing situations where one or the other method is more advantageous than others. By doing so the following hypotheses are investigated:
 \begin{itemize}%[leftmargin=0.5cm]
-\item When applying a tree algorithm the use of a fitting function which returns scores is advantageous to find correct splits. In particular it is crucial to find splits in parameters other than the location parameter. Hence a forest consisting of trees which were built using scores for all distribution parameters leads to better results than a simple forest considering only the mean.
-\item In the case of smooth parameter functions without any abrupt changes a distributional forest performs quite well, even though other models such as GAMLSS might be more successful in these situations. However, once the smooth parameter functions include very steep sections the distributional forest outperforms other models (and in extreme cases a distributional tree does as well).
-\item Once non-additive effects or interactions appear within the parameter functions distributional trees and forests clearly show their advantages over other models.
+\item When applying a tree algorithm the use of a fitting function which returns scores for each distribution parameter is advantageous to find correct splits. In particular it is crucial to find splits in parameters other than the location parameter. Hence a distributional forest consisting of distributional trees leads to better results than a simple forest considering only the mean.
+\item In the case of smooth parameter functions without any abrupt changes / non-additive effects or interactions a smooth parameteric model such as GAMLSS is clearly the first choice while a stepfunction can be modelled best by applying a tree-structured model. Even though for both of these extreme situations a specificly advandageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.
+\item While specifying interactions and selecting covariates is necessary to achieve reasonable results in parameteric models such as GAMLSS, this is done automatically within trees and forests. For that reason, especially in case of a high number of covariates and no information about their effects on the response distributional, trees and forests provide a framework where no additional effort is required for the model specification.
 \end{itemize}
 
 
@@ -1446,42 +1335,39 @@ The following methods are compared to distributional trees and forests:
 \end{itemize}
 
 
-The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and one or both of the two covariates $X_1$ and $X_2$.\\
-The covariates are generated based on the following distribution assumptions:
-\begin{center}
-\begin{tabular}{ l  c  l }
-$X_1$ & $\sim$ & \textit{Unif}([-0.4,1]) \\ 
-$X_2$ & $\sim$ & \textit{Unif}([-10,10])
-\end{tabular}
-\end{center}
+The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and ten covariates $X_1, \ldots, X_{10}$ which are all independent und identically distributed following a uniform distribution.
+$$
+X_i \sim \textit{Unif}([-1,1]) \qquad \forall i \in \{1,\ldots,10\}
+$$
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 1 covariate
-In a first example the distribution of the response variable is a left censored normal distribution with censoring point 0 where the corresponding distribution parameters are defined by a parameter function $f$ depending on one covariate only. 
-
+The distribution of the response variable is a left censored normal distribution with censoring point 0 where the corresponding distribution parameters are defined by a parameter function $f$ depending each on one covariate. The location parameter $\mu$ depends on $X_1$ and the scale parameter $\sigma$ depends on $X_2$. The other covariates $X_3, \ldots, X_{10}$ are noise variables.\\
+The latent variable $Y^{\ast}$ is generated based on the following setting
 \begin{center}
-$$ Y \sim \text{c}\mathcal{N} (f(x_1, \kappa))$$
+$$ Y^{\ast} \sim \mathcal{N} (f(X_1, X_2, \kappa))$$
 with
-$$f(x_1, \kappa) = \left(\mu(x_1,\kappa) , \sigma(x_2,\kappa)\right)$$ 
+$$f(X_1, X_2, \kappa) = \left(\mu(X_1,\kappa) , \sigma(X_2,\kappa)\right)$$ 
 \end{center}
 
 An additional factor $\kappa$ defines the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\
-
+    
 \vspace{-1cm}
 \begin{center}
 $$
-\mu(x_1,\kappa) = 
-\begin{cases}
-    4 + 8 \cdot \exp{(-(4 \cdot x_1-0.7)^{(2\cdot \kappa)})},& \text{if } x_1 \geq 0\\
-    0,              & \text{if } x_1 < 0
-\end{cases}
+\mu(X_1,\kappa) = \mu_{\text{base}} + 8 \cdot \exp{(-(3 \cdot X_1-1)^{(2\cdot \kappa)})}
 $$
 
 $$
-\sigma(x_1,\kappa) = 
-\begin{cases}
-    1+3 \cdot \|x_1\|,& \text{if } x_1 \geq 0\\
-    0.00001,              & \text{if } x_1 < 0
+\sigma(X_2,\kappa) = 2 + 2 \cdot (1-\Lambda(\kappa^{1.8} \cdot 5 \cdot (X_2+0.5)))
+$$
+where $\Lambda$ is the cumulative distribution function of the logistic distribution
+$$
+\Lambda(\omega) = \frac{1}{1 + \exp(-\omega)}
+$$
+The response variable $Y$ is defined as 
+$$
+Y = \begin{cases}
+    Y^{\ast},& \text{if } Y^{\ast} \geq 0\\
+    0,       & \text{if } else
 \end{cases}
 $$
 \end{center}
@@ -1491,51 +1377,40 @@ $$
 
 
 
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 2 covariates
-In a second example we consider a normaly distributed response variable with the following parameter function depending on two covariates.
+%Including non-additive effects and interactions creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
 %\vspace{-1cm}
-\begin{center}
-$$ Y \sim \mathcal{N} (f(x_1, x_2, \kappa))$$
-with
-$$f(x_1, x_2, \kappa) = \left(\mu(x_1,x_2,\kappa) , \sigma(x_1,x_2,\kappa)\right)$$ 
-\end{center}
+%\begin{center}
+%$$\mu(x_1,x_2,\kappa)  = 10 \cdot \Big(1-s(x_1,x_2,\kappa)+ \big(2\cdot s(x_1,x_2,\kappa) - 1\big) \cdot \text{\code{rbinom}}\left(n,1%,P_1\right)\Big)
+%$$
+%with the distribution function of the logistic distribution as a smooth function
+%$$
+%s(x_2,\kappa) = \text{\code{plogis}}\left(\kappa^2 \cdot \frac{x_2 - 3}{10}\right)
+%$$
+%and the probability of being in subgroup 1
+%$$
+%P_1(x_1,\kappa) = e^{-(10\cdot x_1 - 5)^{2 \cdot \kappa}}.
+%$$
+%\end{center}
+%In this scenerio the scale parameter $\sigma$ depends on the location parameter $\mu$ in the following way:
+%\vspace{-1cm}
+%\begin{center}
+%$$\sigma(x_1,x_2,\kappa)  = 2 + \frac{2 \cdot \mu(x_1,x_2,\kappa)}{5}$$
+%\end{center}
 
-Including non-additive effects and interactions creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
-\vspace{-1cm}
-\begin{center}
-$$\mu(x_1,x_2,\kappa)  = 10 \cdot \Big(1-s(x_1,x_2,\kappa)+ \big(2\cdot s(x_1,x_2,\kappa) - 1\big) \cdot \text{\code{rbinom}}\left(n,1,P_1\right)\Big)
-$$
-with the distribution function of the logistic distribution as a smooth function
-$$
-s(x_2,\kappa) = \text{\code{plogis}}\left(\kappa^2 \cdot \frac{x_2 - 3}{10}\right)
-$$
-and the probability of being in subgroup 1
-$$
-P_1(x_1,\kappa) = e^{-(10\cdot x_1 - 5)^{2 \cdot \kappa}}.
-$$
-\end{center}
-In this scenerio the scale parameter $\sigma$ depends on the location parameter $\mu$ in the following way:
-\vspace{-1cm}
-\begin{center}
-$$\sigma(x_1,x_2,\kappa)  = 2 + \frac{2 \cdot \mu(x_1,x_2,\kappa)}{5}$$
-\end{center}
+
 The  methods are compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models.\\
 \\
 Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of GAMLSS or of trees and forests covers a broader range of functions where it is superior to the other one.\\
 \\
-Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
-However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
-\\
-Looking at the resulting values of the RMSE it can be observed that trees and forests cleary outperform gamlss in this situation. For $\kappa=1$ the performance of all three methods is similar. However, as $\kappa$ increases the RMSE of gamlss increases while the RMSE of trees and forests stays at almost the same level or even decreases sligthly as soon as $\kappa$ is greater or equal 2. The same conclusion can be drawn from looking at the log-likelihood where the resulting values of gamlss decrease rapidly while the values of trees and forests only decrease a little at the beginning but then increase.\\
-This is the result that was expected as trees and forests can deal with rapid changes of the distribution functions more easily.\\
-For low values of $\kappa$ the forests are a little bit more efficient than the trees, but the higher $\kappa$ and therefore also the steeper the parameter function is the better the trees become. Especially regarding the scale parameter the trees are clearly advantageous over the forests.   
+%Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
+%However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
+%\\
+%Looking at the resulting values of the RMSE it can be observed that trees and forests cleary outperform gamlss in this situation. For $\kappa=1$ the performance of all three methods is similar. However, as $\kappa$ increases the RMSE of gamlss increases while the RMSE of trees and forests stays at almost the same level or even decreases sligthly as soon as $\kappa$ is greater or equal 2. The same conclusion can be drawn from looking at the log-likelihood where the resulting values of gamlss decrease rapidly while the values of trees and forests only decrease a little at the beginning but then increase.\\
+%This is the result that was expected as trees and forests can deal with rapid changes of the distribution functions more easily.\\
+%For low values of $\kappa$ the forests are a little bit more efficient than the trees, but the higher $\kappa$ and therefore also the steeper the parameter function is the better the trees become. Especially regarding the scale parameter the trees are clearly advantageous over the forests.   
 
 
-(As it has already been demonstrated in the first examples on single data sets the performances of \code{distforest} and \code{disttree} are not as successful as the one of \code{gamlss} for low values of $\kappa$ but remarkably improve as this values increases and are superior to \code{gamlss} for high values of $\kappa$. This is illustrated by an almost constant RMSE of \code{distforest} and \code{disttree} while the RMSE of \code{gamlss} increases. Comparing the tree and the forest model it can be observed that the forest seems to perform better for lower $\kappa$ while very steep sections lead to a better performance of trees.
+%(As it has already been demonstrated in the first examples on single data sets the performances of \code{distforest} and \code{disttree} are not as successful as the one of \code{gamlss} for low values of $\kappa$ but remarkably improve as this values increases and are superior to \code{gamlss} for high values of $\kappa$. This is illustrated by an almost constant RMSE of \code{distforest} and \code{disttree} while the RMSE of \code{gamlss} increases. Comparing the tree and the forest model it can be observed that the forest seems to perform better for lower $\kappa$ while very steep sections lead to a better performance of trees.
 
 In this section the results of the three methods are compared over an increasing value of $\kappa$. For each step they are applied on various data sets and the resulting values of the RMSE and the log-likelihood are averaged within each step. In that way it can be investigated how the results change for a changing value of $\kappa$.\\
 Again, a normally distributed response variable and the same smooth parameter function are considered.\\
