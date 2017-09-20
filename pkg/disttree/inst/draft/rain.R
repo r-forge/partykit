@@ -183,14 +183,14 @@ rain_all <- rain
 
 # load predictions
 #load("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9102905.rda")
-load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9102905.rda")
+load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9101121.rda")
 prediction <- prepared
 Sys.setenv("TZ" = "UTC")
 prediction$day <-as.POSIXlt(prediction$init)$yday
 prediction$year <- as.POSIXlt(prediction$init)$year
 #head(prediction)
 
-rain <- rain[rain$station == "Koessen (EHYD)",]
+rain <- rain[rain$station == "Lech (EHYD)",]
 #head(rain)
 
 ## choose one month:
@@ -811,9 +811,9 @@ rainres <- mclapply(1:nrep_cross,
                                           families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
                                           control = boost_control(mstop = 500L))
                         #grid to find optimal mstop for method="noncyclic"
-                        grid <- make.grid(max = 500, min = 10, length.out = 10)
-                        cvr <- cvrisk(gb, grid = grid)
-                        mstop(gb) <- mstop(cvr)
+                        #grid <- make.grid(max = 500, min = 10, length.out = 10)
+                        #cvr <- cvrisk(gb, grid = grid)
+                        #mstop(gb) <- mstop(cvr)
                         
                         #b <- b
                         b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
@@ -997,8 +997,8 @@ rainres <- mclapply(1:nrep_cross,
 )
 
 
-#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_koessen7")
-save(rainres, file = "~/disttree/inst/draft/rain_koessen7")
+#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_lech7.rda")
+save(rainres, file = "~/disttree/inst/draft/rain_lech7.rda")
   
 
 if(FALSE){
