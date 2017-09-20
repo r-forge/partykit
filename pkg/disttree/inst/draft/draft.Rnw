@@ -1,3 +1,4 @@
+
 \documentclass[nojss]{jss}
 
 %\VignetteIndexEntry{ctree: Conditional Inference Trees}
@@ -654,7 +655,8 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 \Abstract{
 In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
 If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
-Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information about the expected effects advance and therefore offers a good compromise particularly in complex settings. 
+Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information a!
+ bout the expected effects advance and therefore offers a good compromise particularly in complex settings. 
 }
 \Keywords{parametric models, trees and forests, recursive partitioning, maximum likelihood}
 
@@ -909,7 +911,8 @@ Distributional Tree
 \end{figure}
 
 
-All these parametric models work very well as long as only additive effects appear in the considered data. A different type of model that can capture non-additive effects as well are regression trees. Here the basic idea is to split the data set into more homogeneous subgroups based on information provided by the explanatory variables and to fit a model/response to each terminal node. One problem that might appear when applying tree algorithms is that they impose steps and abrupt changes on the model, even in situations where effects are rather smooth, as it can be seen in the top left plot of Figure \ref{Devel_treeforest}. One way how to tackle this problem is to not just consider one tree but an ensemble of trees. This is the idea of random forests. A set of trees is built, each on a slightly different data set which can either be a bootstrap or a subsample of the original data set. Then the results of all trees are combined to get a final model which unlike a tree model can also deal with smooth effects in a reasonable way.\\ 
+All these parametric models work very well as long as only additive effects appear in the considered data. A different type of model that can capture non-additive effects as well are regression trees. Here the basic idea is to split the data set into more homogeneous subgroups based on information provided by the explanatory variables and to fit a model/response to each terminal node. One problem that might appear when applying tree algorithms is that they impose steps and abrupt changes on the model, even in situations where effects are rather smooth, as it can be seen in the top left plot of Figure \ref{Devel_treeforest}. One way how to tackle this problem is to not just consider one tree but an ensemble of trees. This is the idea of random forests. A set of trees is built, each on a slightly different data set which can either be a bootstrap or a subsample of the original data set. Then the results of all trees are combined to get a final model which unlike a tree model c!
+ an also deal with smooth effects in a reasonable way.\\ 
 In distributional trees and forests we now want to combine all these ideas from different fields of statistical modeling in order to benefit from all their advantages.\\
 \\
 In the past the combination of parametric data models and algorithmic tree models has gained more and more interest since it allows for a more flexible and clear structure. \\
@@ -954,7 +957,8 @@ if(file.exists("mcycle_plotdata.rda")){
                      keep.inbag = TRUE, replace = FALSE)
   #ga <- gam(list(accel ~ s(times), ~ s(times)), data = mcycle, family=gaulss())
   ga <- gam(list(accel ~ s(times,k=20,bs="ad"), ~ s(times)), data = mcycle, family=gaulss())
-  #b <- bamlss(list(accel ~ s(times), accel ~ s(times)), data = mcycle)save(df, file = "mcycle_plotdata.rda")
+  #b <- bamlss(list(accel ~ s(times), accel ~ s(times)), data = mcycle)
+  #save(df, file = "mcycle_plotdata.rda")
   
   
   ## get 'fitted.sigma.rf'
@@ -1121,7 +1125,8 @@ While in a distributional tree the same distribution is specified for all observ
 \newpage
 \section{Application}
 \subsection{Continuation of the mcycle example: cross validation}
-In the introduction the four functions \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest} have been applied on the mcycle data set and their results haven been visualized and discussed. To get a more profound impression of their performances we now want to compare them in a cross validation framework on this text book example data set. The 133 observations are randomly split into 10 subsets roughly of the same size. After learning the model on 9 of these subgroups the RMSE of the estimated location parameter and the log-likelihood function are evaluated on the 10th part. Each subset is chosen once as a test data set and the mean of the resulting values is stored. This procedure is repeated 9 times. This comparison is illustrated in Figure \ref{plot_cross_mean}, based on the RMSE on the left and based on the log-likelihood on the right. (Extrapolation of the GAMLSS would lead to very small values of the log-likelihood. To avoid this, the first and the last observation are always included in the learn data set.) \\
+In the introduction the four functions \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest} have been applied on the mcycle data set and their results haven been visualized and discussed. To get a more profound impression of their performances we now want to compare them in a cross validation framework on this text book example data set. The 133 observations are randomly split into 10 subsets roughly of the same size. After learning the model on 9 of these subgroups the RMSE of the estimated location parameter and the log-likelihood function are evaluated on the 10th part. Each subset is chosen once as a test data set and the mean of the resulting values is stored. This procedure is repeated 9 times. This comparison is illustrated in Figure \ref{plot_cross_mean}, based on the RMSE on the left and based on the log-likelihood on the right. (Extrapolation of the GAMLSS would lead to very small values of the log-likelihood. To avoid this, the first and the l!
+ ast observation are always included in the learn data set.) \\
 As we have already seen in the introduction the distributional tree obviously struggles with the smooth effects while the two forest models can capture the changes quite well. As far as the RMSE of the estimated location parameter is concerned the GAMLSS plays to its strength as a smooth parametric model and leads to the best results followed by the distributional forest and the random forest which might both be a bit to wiggly.\\
 However, regarding the log-likelihood the forests perform better than the GAMLSS. This is mainly due to the fact that the GAMLSS models the scale parameter close to zero for observations with \code{times} $<10$. This leads to very low values of the log-likelihood function if one or more of these observations are included in the test data set. As the estimated scale parameter of the tree based models are higher for these specific observations this problem does not occure here.\\
 Overall it can be seen that the distributional forest which fits the whole distribution and considers splits in both parameters performs better than the random forest which only models the mean and therefore also only inlcudes splits in the location parameter.
@@ -1317,15 +1322,17 @@ boxplot.matrix(box_ll, ylab = "log-likelihood")
 
 \newpage
 \section{Simulation Study}
-Within this simulation study the performances of distributional trees and forests are tested and compared to other models, showing situations where one or the other method is more advantageous than others. By doing so the following hypotheses are investigated:
+Within this simulation study the performance of distributional trees and forests is tested and compared to other models, showing situations where one or the other method is more advantageous than others. By doing so the following hypotheses are investigated:
 \begin{itemize}%[leftmargin=0.5cm]
 \item When applying a tree algorithm the use of a fitting function which returns scores for each distribution parameter is advantageous to find correct splits. In particular it is crucial to find splits in parameters other than the location parameter. Hence a distributional forest consisting of distributional trees leads to better results than a simple forest considering only the mean.
-\item In the case of smooth parameter functions without any abrupt changes / non-additive effects or interactions a smooth parameteric model such as GAMLSS is clearly the first choice while a stepfunction can be modelled best by applying a tree-structured model. Even though for both of these extreme situations a specificly advandageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.
-\item While specifying interactions and selecting covariates is necessary to achieve reasonable results in parameteric models such as GAMLSS, this is done automatically within trees and forests. For that reason, especially in case of a high number of covariates and no information about their effects on the response distributional, trees and forests provide a framework where no additional effort is required for the model specification.
+\item In the case of smooth parameter functions without any abrupt changes / non-additive effects a smooth parameteric model such as GAMLSS is clearly the first choice while a stepfunction can be modelled best by applying a tree-structured model. Even though for both of these extreme situations a specificly advandageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. (Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.)
+\item While specifying interactions and selecting covariates is necessary to achieve reasonable results in parameteric models such as GAMLSS, this is done automatically within trees and forests. For that reason, distributional trees and forests provide a framework where no additional effort is required for the model specification. This feature plays to its strength especially in case of a high number of covariates and no information about their effects on the response.
 \end{itemize}
 
+%Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of smooth parametric models or of trees and forests covers a broader range of functions where it is superior to the other.\\
 
-The following methods are compared to distributional trees and forests:
+
+The following methods are applied and compared to distributional trees and forests:
 \begin{itemize}
 \item gamlss \cite{stasinopoulos2005} fits a separate generalized additive model to each of the distribution models. In that way it specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.
 \item bamlss \cite{bamlss2017} also provides an infrastructure for estimating probabilistic distributional regression but within a Bayesian Framework. Again each parameter is modelled by (possibly) complex additive terms.
@@ -1334,24 +1341,23 @@ The following methods are compared to distributional trees and forests:
 \item cforest \cite{hothorn2015partykit} builds a forest in a similar way but consisting of ctrees applying the ctree algorithm mentioned in section \ref{Methodology}. In this simulation study no transformation function is included.
 \end{itemize}
 
-
 The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and ten covariates $X_1, \ldots, X_{10}$ which are all independent und identically distributed following a uniform distribution.
 $$
 X_i \sim \textit{Unif}([-1,1]) \qquad \forall i \in \{1,\ldots,10\}
 $$
 
-The distribution of the response variable is a left censored normal distribution with censoring point 0 where the corresponding distribution parameters are defined by a parameter function $f$ depending each on one covariate. The location parameter $\mu$ depends on $X_1$ and the scale parameter $\sigma$ depends on $X_2$. The other covariates $X_3, \ldots, X_{10}$ are noise variables.\\
-The latent variable $Y^{\ast}$ is generated based on the following setting
+The distribution of the response variable is a left censored normal distribution with censoring point 0. The corresponding distribution parameters are defined by a parameter function $f$ depending on the covariates and an additional factor $\kappa$ which regulates the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\ 
+The location parameter $\mu$ depends on $X_1$ and $\kappa$ and the scale parameter $\sigma$ depends on $X_2$ and $\kappa$. The other covariates $X_3, \ldots, X_{10}$ are used as noise variables.\\
+The latent variable $Y^{\ast}$ is generated based on the following setting.
 \begin{center}
-$$ Y^{\ast} \sim \mathcal{N} (f(X_1, X_2, \kappa))$$
+$$ 
+Y^{\ast} \sim \mathcal{N} (f(X_1, X_2, \kappa))
+$$
 with
-$$f(X_1, X_2, \kappa) = \left(\mu(X_1,\kappa) , \sigma(X_2,\kappa)\right)$$ 
-\end{center}
-
-An additional factor $\kappa$ defines the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\
-    
-\vspace{-1cm}
-\begin{center}
+$$
+f(X_1, X_2, \kappa) = \left(\mu(X_1,\kappa) , \sigma(X_2,\kappa)\right)
+$$ 
+and
 $$
 \mu(X_1,\kappa) = \mu_{\text{base}} + 8 \cdot \exp{(-(3 \cdot X_1-1)^{(2\cdot \kappa)})}
 $$
@@ -1365,7 +1371,8 @@ $$
 $$
 The response variable $Y$ is defined as 
 $$
-Y = \begin{cases}
+Y = 
+\begin{cases}
     Y^{\ast},& \text{if } Y^{\ast} \geq 0\\
     0,       & \text{if } else
 \end{cases}
@@ -1373,58 +1380,144 @@ $$
 \end{center}
 
 
-
-
-
-
-%Including non-additive effects and interactions creates a situation in which the main advantages of distributional trees and in particular distributional forests can be investigated. Here a non-additive effects is created by separating the generated data into two subgroups depending on the value of $X_2$. In particular, within the function $\mu$ each observation is assigned with a probability of being in subgroup 1. This probability is specified by a smooth function and used to generate a binary variable indicating in which subgroup the observation is. Depending on the subgroup the actual smooth parameter function is defined.
-%\vspace{-1cm}
-%\begin{center}
-%$$\mu(x_1,x_2,\kappa)  = 10 \cdot \Big(1-s(x_1,x_2,\kappa)+ \big(2\cdot s(x_1,x_2,\kappa) - 1\big) \cdot \text{\code{rbinom}}\left(n,1%,P_1\right)\Big)
-%$$
-%with the distribution function of the logistic distribution as a smooth function
-%$$
-%s(x_2,\kappa) = \text{\code{plogis}}\left(\kappa^2 \cdot \frac{x_2 - 3}{10}\right)
-%$$
-%and the probability of being in subgroup 1
-%$$
-%P_1(x_1,\kappa) = e^{-(10\cdot x_1 - 5)^{2 \cdot \kappa}}.
-%$$
-%\end{center}
-%In this scenerio the scale parameter $\sigma$ depends on the location parameter $\mu$ in the following way:
-%\vspace{-1cm}
-%\begin{center}
-%$$\sigma(x_1,x_2,\kappa)  = 2 + \frac{2 \cdot \mu(x_1,x_2,\kappa)}{5}$$
-%\end{center}
-
-
-The  methods are compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models.\\
-\\
-Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of GAMLSS or of trees and forests covers a broader range of functions where it is superior to the other one.\\
-\\
-%Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
-%However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
-%\\
-%Looking at the resulting values of the RMSE it can be observed that trees and forests cleary outperform gamlss in this situation. For $\kappa=1$ the performance of all three methods is similar. However, as $\kappa$ increases the RMSE of gamlss increases while the RMSE of trees and forests stays at almost the same level or even decreases sligthly as soon as $\kappa$ is greater or equal 2. The same conclusion can be drawn from looking at the log-likelihood where the resulting values of gamlss decrease rapidly while the values of trees and forests only decrease a little at the beginning but then increase.\\
-%This is the result that was expected as trees and forests can deal with rapid changes of the distribution functions more easily.\\
-%For low values of $\kappa$ the forests are a little bit more efficient than the trees, but the higher $\kappa$ and therefore also the steeper the parameter function is the better the trees become. Especially regarding the scale parameter the trees are clearly advantageous over the forests.   
-
-
-%(As it has already been demonstrated in the first examples on single data sets the performances of \code{distforest} and \code{disttree} are not as successful as the one of \code{gamlss} for low values of $\kappa$ but remarkably improve as this values increases and are superior to \code{gamlss} for high values of $\kappa$. This is illustrated by an almost constant RMSE of \code{distforest} and \code{disttree} while the RMSE of \code{gamlss} increases. Comparing the tree and the forest model it can be observed that the forest seems to perform better for lower $\kappa$ while very steep sections lead to a better performance of trees.
-
-In this section the results of the three methods are compared over an increasing value of $\kappa$. For each step they are applied on various data sets and the resulting values of the RMSE and the log-likelihood are averaged within each step. In that way it can be investigated how the results change for a changing value of $\kappa$.\\
-Again, a normally distributed response variable and the same smooth parameter function are considered.\\
+To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied to one generated data set only where $\kappa$ is set to 1 (top plots) and then to a second data set where $\kappa$ is set to 10 (bottom plots).\\
+In the left plots the location parameter function $\mu(X_1, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $(x_2, x_3, \ldots, x_{10}) = (0,0, \ldots, 0)$. \\
+In the right plots the scale parameter function $\sigma(X_2, \kappa)$ is plotted along the covariate $X_2$ together with the estimated values of the different models for fixed covariates $(x_1, x_3, \ldots, x_{10}) = (0.4, 0, \ldots, 0)$. \\
 
 
 <<echo=FALSE, results=hide>>=
-#### cross validation
+source("onecov.R")
+if(file.exists("onecov1.rda")){
+  load("onecov1.rda")
+} else {
+  onecov1 <- sim_onecov(kappa = 1, nobs = 700,
+                         seedconst = 7, ntree = 100,
+                         formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                         tree_minsplit = 40, tree_mincrit = 0.95,
+                         forest_minsplit = 20, forest_mincrit = 0, 
+                         type.tree = "ctree",
+                         mubase = 0,
+                         censNO = TRUE,
+                         fix.mu = FALSE,
+                         fix.sigma = FALSE,
+                         mu.sigma.interaction = FALSE,
+                         gamboost_cvr = FALSE,
+                         eval_disttree = TRUE,
+                         eval_distforest = TRUE,
+                         eval_gamlss = TRUE,
+                         eval_bamlss = TRUE,
+                         eval_gamboostLSS = TRUE,
+                         eval_randomForest = TRUE,
+                         eval_cforest = TRUE)
+  save(onecov1, file = "onecov1.rda")
+}
+
+if(file.exists("onecov10.rda")){
+  load("onecov10.rda")
+} else {
+  onecov10 <- sim_onecov(kappa = 10, nobs = 700,
+                         seedconst = 7, ntree = 100,
+                         formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                         tree_minsplit = 40, tree_mincrit = 0.95,
+                         forest_minsplit = 20, forest_mincrit = 0, 
+                         type.tree = "ctree",
+                         mubase = 0,
+                         censNO = TRUE,
+                         fix.mu = FALSE,
+                         fix.sigma = FALSE,
+                         mu.sigma.interaction = FALSE,
+                         gamboost_cvr = FALSE,
+                         eval_disttree = TRUE,
+                         eval_distforest = TRUE,
+                         eval_gamlss = TRUE,
+                         eval_bamlss = TRUE,
+                         eval_gamboostLSS = TRUE,
+                         eval_randomForest = TRUE,
+                         eval_cforest = TRUE)
+  save(onecov10, file = "onecov10.rda")
+}
+@
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<sim_onecov1_mu, fig=TRUE, echo=FALSE>>=
+plot_onecov(learndata = onecov1$learndata, parfun = onecov1$fun, 
+            dt = onecov1$dt, df = onecov1$df, g = onecov1$g, b = onecov1$b, 
+            gb = onecov1$gb, rf = onecov1$rf, cf = onecov1$cf, 
+            compare_mu = TRUE, fix_x2 = 0,
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<sim_onecov1_sigma, fig=TRUE, echo=FALSE>>=
+plot_onecov(learndata = onecov1$learndata, parfun = onecov1$fun, 
+            dt = onecov1$dt, df = onecov1$df, g = onecov1$g, b = onecov1$b, 
+            gb = onecov1$gb, rf = onecov1$rf, cf = onecov1$cf, 
+            compare_sigma = TRUE, fix_x1 = 0.4,
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+@
+\end{subfigure}
+\caption{\label{plot_sim_onecov1} ... }
+\end{figure}
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<sim_onecov10_mu, fig=TRUE, echo=FALSE>>=
+plot_onecov(learndata = onecov10$learndata, parfun = onecov10$fun, 
+            dt = onecov10$dt, df = onecov10$df, g = onecov10$g, b = onecov10$b, 
+            gb = onecov10$gb, rf = onecov10$rf, cf = onecov10$cf, 
+            compare_mu = TRUE, fix_x2 = 0,
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<sim_onecov10_sigma, fig=TRUE, echo=FALSE>>=
+plot_onecov(learndata = onecov10$learndata, parfun = onecov10$fun, 
+            dt = onecov10$dt, df = onecov10$df, g = onecov10$g, b = onecov10$b, 
+            gb = onecov10$gb, rf = onecov10$rf, cf = onecov10$cf, 
+            compare_sigma = TRUE, fix_x1 = 0.4,
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+@
+\end{subfigure}
+\caption{\label{plot_sim_onecov10} ... }
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Now, to get a more profound impression the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step ... data sets are generated. The methods are then compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models, averaged within each step.
+(In that way it can be investigated how the results change for a changing value of $\kappa$.)
+
+<<echo=FALSE, results=hide>>=
 if(file.exists("simres.rda")){
   load("simres.rda")
 } else {
-  #source("~/svn/partykit/pkg/disttree/paper/gensim.R")
+  #source("~/svn/partykit/pkg/disttree/inst/draft/.R")
   source("gensim.R")
-  simres <- gensim(seedconst = 7423, nrep = 20, ntree = 100L,
-                   cov.sep = TRUE,
+  simres <- gensim(seedconst = 7, nrep = 40, ntree = 100,
+                   nsteps = 9, stepsize = 1, kappa.start = 1,
+                   formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                   nobs = 400, testnobs = 200L,
+                   tree_minsplit = 14, tree_mincrit = 0.95,
+                   forest_minsplit = 7, forest_mincrit = 0, 
+                   type.tree = "ctree",
+                   censNO = TRUE,
                    fix.mu = FALSE,
                    fix.sigma = FALSE,
                    mu.sigma.interaction = FALSE,
@@ -1435,7 +1528,8 @@ if(file.exists("simres.rda")){
                    eval_bamlss = TRUE,
                    eval_gamboostLSS = TRUE,
                    eval_randomForest = TRUE,
-                   eval_cforest = TRUE)
+                   eval_cforest = TRUE,
+                   mubase = 0)
   save(simres, file = "simres.rda")
 }
 @
@@ -1488,6 +1582,127 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 
 
+
+\\
+%Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
+%However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
+%\\
+%Looking at the resulting values of the RMSE it can be observed that trees and forests cleary outperform gamlss in this situation. For $\kappa=1$ the performance of all three methods is similar. However, as $\kappa$ increases the RMSE of gamlss increases while the RMSE of trees and forests stays at almost the same level or even decreases sligthly as soon as $\kappa$ is greater or equal 2. The same conclusion can be drawn from looking at the log-likelihood where the resulting values of gamlss decrease rapidly while the values of trees and forests only decrease a little at the beginning but then increase.\\
+%This is the result that was expected as trees and forests can deal with rapid changes of the distribution functions more easily.\\
+%For low values of $\kappa$ the forests are a little bit more efficient than the trees, but the higher $\kappa$ and therefore also the steeper the parameter function is the better the trees become. Especially regarding the scale parameter the trees are clearly advantageous over the forests.   
+
+
+%(As it has already been demonstrated in the first examples on single data sets the performances of \code{distforest} and \code{disttree} are not as successful as the one of \code{gamlss} for low values of $\kappa$ but remarkably improve as this values increases and are superior to \code{gamlss} for high values of $\kappa$. This is illustrated by an almost constant RMSE of \code{distforest} and \code{disttree} while the RMSE of \code{gamlss} increases. Comparing the tree and the forest model it can be observed that the forest seems to perform better for lower $\kappa$ while very steep sections lead to a better performance of trees.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Rain}
+In this section precipation data of .. years is analyzed. The response variable is the meassured total precipiation within 24 hours of each day in July at the station ... .\\
+The following methods are applied on this data set:
+\begin{itemize}
+\item distributional tree
+\item distributional forest
+\item gamlss
+\item gamboostLSS
+\item bamlss
+\item EMOS
+\end{itemize}
+
+These methods are compared in a 10x10 cross validation framework based on the resulting RMSE, log-likelihood and CRPS.\\
+These values are illustrated in the following boxplots.
+
+
+
+<<echo=FALSE, results=hide>>=
+#### cross validation rain
+if(file.exists("rainres.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rainres.rda")
+  load("rainres.rda")
+} else {
+  source("~/svn/partykit/pkg/disttree/inst/draft/rain.R")
+  #source("gensim.R")
+  rainres <- rain(seedconst = 7423)
+  save(rainres, file = "rainres.rda")
+}
+
+rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres))
+rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres))
+rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
+
+for(i in 1:length(rainres)){
+  rain_rmse[i,] <- colMeans(rainres[[i]]$rmse)
+  rain_ll[i,] <- colMeans(rainres[[i]]$ll)
+  rain_crps[i,] <- colMeans(rainres[[i]]$crps)
+}
+
+colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
+  colnames(rainres[[1]]$rmse)
+@
+
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.3\textwidth}
+<<rain_rmse_box, fig=TRUE, echo=FALSE>>=
+boxplot(rain_rmse)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_ll_box, fig=TRUE, echo=FALSE>>=
+boxplot(rain_ll)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_crps_box, fig=TRUE, echo=FALSE>>=
+boxplot(rain_crps)
+@
+\end{subfigure}
+\caption{\label{boxplots_rain}Results 10x10 cross validation on the rain data set (RMSE, log-likelihood and CRPS)\\
+left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
+right: continuous lines represent the location parameter, dotted lines the scale parameter}
+\end{figure}
+
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.6\textwidth}
+<<sim_ll, fig=TRUE, echo=FALSE>>=
+plot_ll(simres)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.6\textwidth}
+<<sim_levelplot, fig=TRUE, echo=FALSE>>=
+levelfun <- function(x) simres$fun(x,5)
+
+ncuts <- 100
+colR <- colorRampPalette(c("blue","green"))                                       
+cols <- colR(ncuts+1)
+griddata <- expand.grid(list(x1 = seq(-0.4, 1, 0.01), x2 = seq(-10, 10, 0.2)))
+griddata$mu <- levelfun(griddata)
+levelplot(mu ~ x1 * x2, data = griddata, xlab = "x1", ylab = "x2", 
+          region = TRUE, cuts = ncuts, col.regions = cols)
+
+@
+\end{subfigure}
+\caption{\label{plot_sim_ll}left: results of the simulation study: log-likelihood\\ %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
+right: levelplot of the parameter function for $\kappa=5$}
+\end{figure}
 
 
 
