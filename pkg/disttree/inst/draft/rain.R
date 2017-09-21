@@ -175,22 +175,22 @@ rain_all <- rain
 
 # 9102913 Walchsee (EHYD)
 # 9102905 Koessen (EHYD)
-
+# 9103309 Axams (EHYD)
 # 9103176 Niederndorferberg (EHYD)
 # 9119479 Ammerwald (EHYD)
 
 
 
 # load predictions
-#load("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9102905.rda")
-load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9101121.rda")
+#load("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103309.rda")
+load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103309.rda")
 prediction <- prepared
 Sys.setenv("TZ" = "UTC")
 prediction$day <-as.POSIXlt(prediction$init)$yday
 prediction$year <- as.POSIXlt(prediction$init)$year
 #head(prediction)
 
-rain <- rain[rain$station == "Lech (EHYD)",]
+rain <- rain[rain$station == "Axams (EHYD)",]
 #head(rain)
 
 ## choose one month:
@@ -432,8 +432,8 @@ dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_m
   capepow_mean + capepow_sprd + capepow_min + capepow_max + #cape_frac +
   capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
   capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
-  dswrf_mean_mean + dswrf_mean_min + dswrf_mean_max + 
-  dswrf_sprd_mean + dswrf_sprd_min + dswrf_sprd_max+
+  dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
+  dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
   msl_mean_mean + msl_mean_min + msl_mean_max + 
   msl_sprd_mean + msl_sprd_min + msl_sprd_max +
   pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
@@ -719,7 +719,7 @@ if(FALSE){
 
 
 ###################
-# too many missing value in the following variables
+# too many missing values in the following variables
 if(FALSE){
   # meridional windspeed on 700 hPA
   which(is.na(raindata$v700_mean_mean))
@@ -761,15 +761,25 @@ if(FALSE){
 
 seedconst <- 7
 nrep_cross <- 10
+#grid to find optimal mstop for method="noncyclic" in gamboostLSS
+grid <- make.grid(max = 500, min = 10, length.out = 10)
 
 rainres <- mclapply(1:nrep_cross,
                     function(k){
                       
                       set.seed(seedconst * k)
-                      
-                      crps_dt <- crps_df <- crps_g <- crps_gb <- crps_b <- crps_mi <- crps_ml <- crps_mq <- numeric(length = 10)
-                      rmse_dt <- rmse_df <- rmse_g <- rmse_gb <- rmse_b <- rmse_mi <- rmse_ml <- rmse_mq <- numeric(length = 10)
-                      ll_dt <- ll_df <- ll_g <- ll_gb <- ll_b <- ll_mi <- ll_ml <- ll_mq <- numeric(length = 10)
+                    
+                      crps_dt <- crps_df <- crps_g <- crps_gb <- crps_mi <- crps_ml <- crps_mq <- numeric(length = 10L)
+                      # crps_b <- numeric(length = 10L)
+                      rmse_dt <- rmse_df <- rmse_g <- rmse_gb <- rmse_mi <- rmse_ml <- rmse_mq <- numeric(length = 10L)
+                      # rmse_b <- numeric(length = 10L)
+                      ll_dt <- ll_df <- ll_g <- ll_gb <- ll_mi <- ll_ml <- ll_mq <- numeric(length = 10L)
+                      # ll_b <- numeric(length = 10L)
+                      cvr_opt <- numeric(length = 10L)
+                      g_error_seed <- numeric(length = 10L)
+                      evaltime_user <- matrix(0, ncol = 8, nrow = 10L)
+                      evaltime_system <- matrix(0, ncol = 8, nrow = 10L)
+                      evaltime_elapsed <- matrix(0, ncol = 8, nrow = 10L)
                       
                       # randomly split data in 10 roughly equal parts
                       # (here: 765 observations -> 7 groups of 76 and 3 groups of 77 obs)
@@ -792,45 +802,49 @@ rainres <- mclapply(1:nrep_cross,
                         learndata <- raindata[-testid[[i]], ]
                         
                         
-                        dt <- disttree(dt.formula, 
-                                       data = learndata, family = dist_list_cens_normal, 
-                                       censtype = "left", censpoint = 0, type.tree = "ctree")
+                        dt_time <- system.time(dt <- disttree(dt.formula, 
+                                                              data = learndata, family = dist_list_cens_normal, 
+                                                              censtype = "left", censpoint = 0, type.tree = "ctree"))
                         
                         ## FIX ME: error if type.tree = "mob"
                         
                         #df <- df
-                        df <- distforest(df.formula, 
-                                         data = learndata, family = dist_list_cens_normal, ntree = 200, #mtry = 40, fitted.OOB = FALSE,
-                                         censtype = "left", censpoint = 0, type.tree = "ctree")
+                        df_time <- system.time(df <- distforest(df.formula, 
+                                                                data = learndata, family = dist_list_cens_normal, ntree = 200, #mtry = 40, fitted.OOB = FALSE,
+                                                                censtype = "left", censpoint = 0, type.tree = "ctree"))
                         
                         g_learndata <- learndata
                         g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
                         
                         #gb <- gb
-                        gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                          families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
-                                          control = boost_control(mstop = 500L))
-                        #grid to find optimal mstop for method="noncyclic"
-                        #grid <- make.grid(max = 500, min = 10, length.out = 10)
-                        #cvr <- cvrisk(gb, grid = grid)
-                        #mstop(gb) <- mstop(cvr)
+                        gb_time <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
+                                                                 families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
+                                                                 control = boost_control(mstop = 500L)))
+                        gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
+                        mstop(gb) <- mstop(cvr)
+                        cvr_opt[i] <- mstop(cvr) 
                         
                         #b <- b
-                        b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
-                                    data = learndata, sampler = FALSE, optimizer = boost, 
-                                    stop.criterion = "BIC", plot = FALSE)
+                        #b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
+                        #            data = learndata, sampler = FALSE, optimizer = boost, 
+                        #            stop.criterion = "BIC", plot = FALSE)
                         
-                        g <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                    family = cens("NO", type = "left"))
+                        g_time <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
+                                                          family = cens("NO", type = "left"))))
+                        if(inherits(g, "try-error")) {
+                          g_time <- NA
+                          g <- NA
+                          g_error_seed[i] <- seedconst * k
+                        }
                         
-                        mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                   data = raindata, dist = "gaussian", left = 0, link.scale = "identity")
+                        mi_time <- system.time(mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
+                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "identity"))
                         
-                        ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                                   data = raindata, dist = "gaussian", left = 0, link.scale = "log")
+                        ml_time <- system.time(ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
+                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "log"))
                         
-                        mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-                                   data = raindata, dist = "gaussian", left = 0, link.scale = "quadratic")
+                        mq_time <- system.time(mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
+                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "quadratic"))
                         
                         
                         
@@ -863,16 +877,21 @@ rainres <- mclapply(1:nrep_cross,
                         
                         
                         # bamlss
-                        pb <- predict(b, newdata = testdata, type = "parameter")
-                        b_mu <- pb$mu
-                        b_sigma <- pb$sigma
-                        b_exp <- pnorm(b_mu/b_sigma) * (b_mu + b_sigma * (dnorm(b_mu/b_sigma) / pnorm(b_mu/b_sigma)))
+                        #pb <- predict(b, newdata = testdata, type = "parameter")
+                        #b_mu <- pb$mu
+                        #b_sigma <- pb$sigma
+                        #b_exp <- pnorm(b_mu/b_sigma) * (b_mu + b_sigma * (dnorm(b_mu/b_sigma) / pnorm(b_mu/b_sigma)))
                         
                         
                         # gamlss
-                        g_mu <- predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata)
-                        g_sigma <- predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata)
-                        g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+                        if(!(all(is.na(g)))){
+                          g_mu <- try(predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata))
+                          g_sigma <- try(predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata))
+                          if(inherits(g_mu, "try-error") | inherits(g_sigma, "try-error")) {
+                            g_mu <- g_sigma <- g_exp <- NA
+                            g_error_seed[i] <- seedconst * k
+                          } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+                        }
                         
                         
                         # EMOS
@@ -888,13 +907,13 @@ rainres <- mclapply(1:nrep_cross,
                         mq_sigma <- predict(mq, type = "scale", newdata = testdata)
                         mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
                         
-                        
+                        g_error <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
                         
                         # CPRS
                         crps_dt[i] <- sum(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
                         crps_df[i] <- sum(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
-                        crps_g[i] <- sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf))
-                        crps_b[i] <- sum(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
+                        crps_g[i] <- if(!g_error) sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
+                        #crps_b[i] <- sum(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
                         crps_gb[i] <- sum(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
                         crps_mi[i] <- sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf))
                         crps_ml[i] <- sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf))
@@ -903,31 +922,32 @@ rainres <- mclapply(1:nrep_cross,
                         # RMSE
                         rmse_dt[i] <- sqrt(mean((dt_exp - testdata[,"robs"])^2))
                         rmse_df[i] <- sqrt(mean((df_exp - testdata[,"robs"])^2))
-                        rmse_g[i] <- sqrt(mean((g_exp - testdata[,"robs"])^2))
+                        rmse_g[i] <- if(!g_error) sqrt(mean((g_exp - testdata[,"robs"])^2)) else NA
                         rmse_gb[i] <- sqrt(mean((gb_exp - testdata[,"robs"])^2))
-                        rmse_b[i] <- sqrt(mean((b_exp - testdata[,"robs"])^2))
+                        #rmse_b[i] <- sqrt(mean((b_exp - testdata[,"robs"])^2))
                         rmse_mi[i] <- sqrt(mean((mi_exp - testdata[,"robs"])^2))
                         rmse_ml[i] <- sqrt(mean((ml_exp - testdata[,"robs"])^2))
                         rmse_mq[i] <- sqrt(mean((mq_exp - testdata[,"robs"])^2))
                         
                         # loglikelihood
-                        dtll <- dfll <- gll <-  gbll <- bll <- mill <- mlll <- mqll <- 0
+                        dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- 0
+                        # bll <- 0
                         for(j in 1:(nrow(testdata))){
                           
                           eta_dt <- as.numeric(dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
                           eta_df <- as.numeric(dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
-                          eta_g <- as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,]))
+                          eta_g <- if(!g_error) as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
                           eta_gb <- as.numeric(dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
-                          eta_b <- as.numeric(dist_list_cens_normal$linkfun(cbind(b_mu, b_sigma)[j,]))
+                          #eta_b <- as.numeric(dist_list_cens_normal$linkfun(cbind(b_mu, b_sigma)[j,]))
                           eta_mi <- as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,]))
                           eta_ml <- as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,]))
                           eta_mq <- as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,]))
                           
                           dtll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
                           dfll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-                          gll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE)
+                          gll_j <- if(!g_error) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
                           gbll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
-                          bll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_b, log=TRUE)
+                          #bll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_b, log=TRUE)
                           mill_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE)
                           mlll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE)
                           mqll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE)
@@ -942,20 +962,22 @@ rainres <- mclapply(1:nrep_cross,
                             dfll + (-5)
                           } else {dfll + dfll_j}    ## FIX ME: NAs from distforest
                           
-                          gll <- if(is.na(gll_j)) {
-                            print(eta_g, testdata[j,"robs"]) 
-                            gll + (-5)
-                          } else {gll + gll_j}
+                          gll <- if(!g_error) {
+                            if(is.na(gll_j)) {
+                              print(eta_g, testdata[j,"robs"]) 
+                              gll + (-5)
+                            } else {gll + gll_j}
+                          } else NA
                           
                           gbll <- if(is.na(gbll_j)) {
                             print(eta_gb, testdata[j,"robs"]) 
                             gbll + (-5)
                           } else {gbll + gbll_j}
                           
-                          bll <- if(is.na(bll_j)) {
-                            print(eta_b, testdata[j,"robs"]) 
-                            bll + (-5)
-                          } else {bll + bll_j}   
+                          #bll <- if(is.na(bll_j)) {
+                          #  print(eta_b, testdata[j,"robs"]) 
+                          #  bll + (-5)
+                          #} else {bll + bll_j}   
                           
                           mill <- if(is.na(mill_j)) {
                             print(eta_mi, testdata[j,"robs"]) 
@@ -975,21 +997,36 @@ rainres <- mclapply(1:nrep_cross,
                         
                         ll_dt[i] <- dtll
                         ll_df[i] <- dfll
-                        ll_g[i] <- gll
+                        ll_g[i] <- if(!g_error) gll else NA
                         ll_gb[i] <- gbll
-                        ll_b[i] <- bll
+                        #ll_b[i] <- bll
                         ll_mi[i] <- mill
                         ll_ml[i] <- mlll
                         ll_mq[i] <- mqll
                         
+                        evaltime_user[i,] <- c(dt_time[1], df_time[1], g_time[1], gb_time[1], gb_cvr_time[1], mi_time[1], ml_time[1], mq_time[1])
+                        evaltime_system[i,] <- c(dt_time[2], df_time[2], g_time[2], gb_time[2], gb_cvr_time[2], mi_time[2], ml_time[2], mq_time[2])
+                        evaltime_elapsed[i,] <- c(dt_time[3], df_time[3], g_time[3], gb_time[3], gb_cvr_time[3], mi_time[3], ml_time[3], mq_time[3])
+                        
                       }
                       
                       res <- list()
-                      res$ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_b, ll_mi, ll_ml, ll_mq)
-                      res$rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_b, rmse_mi, rmse_ml, rmse_mq)
-                      res$crps <- cbind(crps_dt, crps_df, crps_g, crps_gb, crps_b, crps_mi, crps_ml, crps_mq)
+                      res$ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_mi, ll_ml, ll_mq)
+                      res$rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_mi, rmse_ml, rmse_mq)
+                      res$crps <- cbind(crps_dt, crps_df, crps_g, crps_gb, crps_mi, crps_ml, crps_mq)
+                      #res$ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_b, ll_mi, ll_ml, ll_mq)
+                      #res$rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_b, rmse_mi, rmse_ml, rmse_mq)
+                      #res$crps <- cbind(crps_dt, crps_df, crps_g, crps_gb, crps_b, crps_mi, crps_ml, crps_mq)
                       colnames(res$rmse) <- colnames(res$ll) <- colnames(res$crps) <- 
-                        c("disttree", "distforest", "gamlss", "gamboostLSS", "bamlss", "EMOS id", "EMOS log", "EMOS quad")
+                        c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS id", "EMOS log", "EMOS quad")
+                       #c("disttree", "distforest", "gamlss", "gamboostLSS", "bamlss", "EMOS id", "EMOS log", "EMOS quad")
+                      res$cvr_opt <- cvr_opt
+                      res$evaltime_user <- evaltime_user
+                      res$evaltime_system <- evaltime_system
+                      res$evaltime_elapsed <- evaltime_elapsed
+                      colnames(res$evaltime_user) <- colnames(res$evaltime_system) <- colnames(res$evaltime_elapsed) <- 
+                        c("disttree", "distforest", "gamlss", "gamboostLSS", "gamboostLSS_cvrisk", "EMOS id", "EMOS log", "EMOS quad")
+                      res$g_error_seed <- g_error_seed
                       
                       return(res)
                     },
@@ -997,68 +1034,40 @@ rainres <- mclapply(1:nrep_cross,
 )
 
 
-#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_lech7.rda")
-save(rainres, file = "~/disttree/inst/draft/rain_lech7.rda")
+#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_axams7.rda")
+save(rainres, file = "~/disttree/inst/draft/rain_axams7.rda")
   
 
+
+
 if(FALSE){
-  # calculate means over each repetition
-  rmse_mean <- ll_mean <- crps_mean <- matrix(0, ncol = ncol(rainres[[1]]$rmse), nrow = nrep_cross)
-  for(i in 1:nrep_cross){
-    rmse_mean[i,] <- colMeans(rainres[[i]]$rmse)
-    ll_mean[i,] <- colMeans(rainres[[i]]$ll)
-    crps_mean[i,] <- colMeans(rainres[[i]]$crps)
+  rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres))
+  rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres))
+  rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
+  
+  for(i in 1:length(rainres)){
+    rain_rmse[i,] <- colMeans(rainres[[i]]$rmse)
+    rain_ll[i,] <- colMeans(rainres[[i]]$ll)
+    rain_crps[i,] <- colMeans(rainres[[i]]$crps)
   }
+  
+  colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
+    colnames(rainres[[1]]$rmse)
+  
+  boxplot(rain_rmse)
+  boxplot(rain_ll)
+  boxplot(rain_crps)
+  
+  # scoring rules
+  
+  # skills score mit Referenz-Modell:
+  # rain_crps / rain_crps[,8]
+  # boxplot(rain_crps / rain_crps[,8])
+  # boxplot(rain_crps[,-5] / rain_crps[,8])
+  # boxplot(1 - rain_crps[,-5] / rain_crps[,8])
+  # abline(h = 0, col = 2, lwd = 2)
 }
 
 
-if(FALSE){
-  ## HCL palette
-  pal <- hcl(c(10, 128, 260, 290, 30, 90, 180, 220), 100, 50)
-  names(pal) <- c("distforest", "disttree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest", "emos")
-  
-  pallight <- hcl(c(10, 128, 260, 290, 30, 90, 180, 220), 100, 50, alpha = 0.25)
-  names(pallight) <- c("distforest", "disttree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest", "emos")
-  
-  transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
-  
-  
-  #################
-  # plots
-  plot(x= c(1:10), y = rmse_dt, type = 'l', col = pal["disttree"], 
-       ylim = c(min(na.omit(c(rmse_dt, rmse_df, rmse_gb, rmse_b, rmse_g))), 
-                max(na.omit(c(rmse_dt, rmse_df, rmse_gb, rmse_b, rmse_g)))))
-  lines(x= c(1:10), y = rmse_df, type = 'l', col = pal["distforest"])
-  lines(x= c(1:10), y = rmse_gb, type = 'l', col = pal["gamboostLSS"])
-  lines(x= c(1:10), y = rmse_b, type = 'l', col = pal["bamlss"])
-  lines(x= c(1:10), y = rmse_g, type = 'l', col = pal["gamlss"])
-  lines(x= c(1:10), y = rmse_mi, type = 'l', col = pal["emos"])
-  lines(x= c(1:10), y = rmse_ml, type = 'l', col = pal["emos"])
-  lines(x= c(1:10), y = rmse_mq, type = 'l', col = pal["emos"])
-  
-  
-  
-  plot(x= c(1:10), y = ll_dt, type = 'l', col = pal["disttree"], 
-       #ylim = c(min(na.omit(c(ll_dt, ll_df, ll_gb, ll_b, ll_g))), 
-       #          max(na.omit(c(ll_dt, ll_df, ll_gb, ll_b, ll_g)))))
-       ylim = c(-150, -80))
-  lines(x= c(1:10), y = ll_df, type = 'l', col = pal["distforest"])
-  lines(x= c(1:10), y = ll_gb, type = 'l', col = pal["gamboostLSS"])
-  lines(x= c(1:10), y = ll_b, type = 'l', col = pal["bamlss"])
-  lines(x= c(1:10), y = ll_g, type = 'l', col = pal["gamlss"])
-  lines(x= c(1:10), y = ll_mi, type = 'l', col = pal["emos"])
-  lines(x= c(1:10), y = ll_ml, type = 'l', col = pal["emos"])
-  lines(x= c(1:10), y = ll_mq, type = 'l', col = pal["emos"])
 
 
-  rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_b, rmse_mi, rmse_ml, rmse_mq)
-  mean_rmse <- cbind(mean(rmse_dt), mean(rmse_df), mean(rmse_g), mean(rmse_gb), mean(rmse_b), mean(rmse_mi), mean(rmse_ml), mean(rmse_mq))
-  ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_b, ll_mi, ll_ml, ll_mq)
-  mean_ll <- cbind(mean(ll_dt), mean(ll_df), mean(ll_g), mean(ll_gb), mean(ll_b), mean(ll_mi), mean(ll_ml), mean(ll_mq))
-  colnames(rmse) <- colnames(mean_rmse) <- colnames(ll) <- colnames(mean_ll) <- 
-    c("disttree", "distforest", "gamlss", "gamboostLSS", "bamlss", "EMOS id", "EMOS log", "EMOS quad")
-
-  boxplot(rainres[[1]]$rmse)
-  boxplot(rainres[[1]]$ll)
-  boxplot(rainres[[1]]$crps)
-}
