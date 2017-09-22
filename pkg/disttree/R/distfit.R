@@ -175,8 +175,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     }
     #all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
     if(any(starteta[(family$link == "log" | family$link == "logit")] == -Inf)){
-      starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.000001)
-      if(allequ) print("one node with all equal observations: sigma set to 0.000001") else print("log(sigma)=-Inf: sigma set to 0.000001")
+      starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.0001)
+      if(allequ) print("one node with all equal observations: sigma set to 0.0001") else print("log(sigma)=-Inf: sigma set to 0.0001")
     }
     if(any(is.na(starteta))) {
       if(all(weights == 0)) {
