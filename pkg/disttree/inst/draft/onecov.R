@@ -1,7 +1,3 @@
-##########
-# compare to formula=y~x1+x2: due to large scale of x2 all models get very wiggly on 1-dim plot
-# no structure recognizeable
-
 
 sim_onecov <- function(kappa = 1, nobs = 400,
                        seedconst = 7, ntree = 100,
@@ -428,7 +424,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
     } else {
       fun <- function(x){
         mu <- mubase
-        sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+        sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -452,7 +448,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
       } else {
         fun <- function(x){
           mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
-          sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+          sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -631,7 +627,7 @@ sim_onecov <- function(kappa = 1, nobs = 400,
 if(FALSE){
   library("gamlss.cens")
   gen.cens("NO", type = "left")
-  sim_onecov_test <- sim_onecov(kappa = 1, nobs = 1000,
+  sim_onecov_test <- sim_onecov(kappa = 10, nobs = 700,
                          seedconst = 7, ntree = 100,
                          formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
                          tree_minsplit = 40, tree_mincrit = 0.95,
