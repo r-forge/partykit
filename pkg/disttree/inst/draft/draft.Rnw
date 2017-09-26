@@ -1510,26 +1510,27 @@ if(file.exists("simres.rda")){
 } else {
   #source("~/svn/partykit/pkg/disttree/inst/draft/.R")
   source("gensim.R")
-  simres <- gensim(seedconst = 7, nrep = 40, ntree = 100,
-                   nsteps = 9, stepsize = 1, kappa.start = 1,
-                   formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                   nobs = 400, testnobs = 200L,
-                   tree_minsplit = 14, tree_mincrit = 0.95,
-                   forest_minsplit = 7, forest_mincrit = 0, 
-                   type.tree = "ctree",
-                   censNO = TRUE,
-                   fix.mu = FALSE,
-                   fix.sigma = FALSE,
-                   mu.sigma.interaction = FALSE,
-                   gamboost_cvr = FALSE,
-                   eval_disttree = TRUE,
-                   eval_distforest = TRUE,
-                   eval_gamlss = TRUE,
-                   eval_bamlss = TRUE,
-                   eval_gamboostLSS = TRUE,
-                   eval_randomForest = TRUE,
-                   eval_cforest = TRUE,
-                   mubase = 0)
+simres <- gensim(seedconst = 7423, nrep = 10, ntree = 100,
+                 nsteps = 4, stepsize = 3, kappa.start = 1,
+                 formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                 nobs = 700, testnobs = 200L,
+                 tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
+                 forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                 type.tree = "ctree",
+                 censNO = TRUE,
+                 fix.mu = FALSE,
+                 fix.sigma = FALSE,
+                 mu.sigma.interaction = FALSE,
+                 gamboost_cvr = FALSE,
+                 eval_disttree = TRUE,
+                 eval_distforest = TRUE,
+                 eval_gamlss = TRUE,
+                 eval_bamlss = FALSE,
+                 eval_gamboostLSS = TRUE,
+                 eval_randomForest = TRUE,
+                 eval_cforest = TRUE,
+                 mubase = 0)
+
   save(simres, file = "simres.rda")
 }
 @
@@ -1643,9 +1644,9 @@ rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres))
 rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
 
 for(i in 1:length(rainres)){
-  rain_rmse[i,] <- colMeans(rainres[[i]]$rmse)
-  rain_ll[i,] <- colMeans(rainres[[i]]$ll)
-  rain_crps[i,] <- colMeans(rainres[[i]]$crps)
+  rain_rmse[i,] <- colMeans(rainres[[i]]$rmse, na.rm = TRUE)
+  rain_ll[i,] <- colMeans(rainres[[i]]$ll, na.rm = TRUE)
+  rain_crps[i,] <- colMeans(rainres[[i]]$crps, na.rm = TRUE)
 }
 
 colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
