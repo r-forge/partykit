@@ -17,8 +17,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    nsteps = 9, stepsize = 1, kappa.start = 1,
                    formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
                    nobs = 400, testnobs = 200L,
-                   tree_minsplit = 14, tree_mincrit = 0.95,
-                   forest_minsplit = 7, forest_mincrit = 0, 
+                   tree_minsplit = 20, tree_minbucket = 10, tree_mincrit = 0.95,
+                   forest_minsplit = 20, forest_minbucket = 10, forest_mincrit = 0,
                    type.tree = "ctree",
                    censNO = TRUE,
                    fix.mu = FALSE,
@@ -645,7 +645,11 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     } else {
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+        sigma <- 1 + 2 * 
+          (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
+             (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
+          (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
+        #sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -653,7 +657,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   } else {
     if(fix.sigma){
       fun <- function(x, kappa){
-        mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+        mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
         sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
@@ -661,15 +665,19 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     } else {
       if(mu.sigma.interaction){
         fun <- function(x, kappa){
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           sigma <- 2 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x, kappa){
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa)))
-          sigma <- 2 + 2*(1-plogis((kappa^(1.8)) * 5 * (x[,2]+0.5)))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          sigma <- 1 + 2 * 
+            (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
+               (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
+            (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
+          #sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -708,12 +716,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              if(type.tree == "mob"){
                                dt <- disttree(formula, data=learndata, family=family, type.tree = "mob", 
                                               control = mob_control(restart = FALSE, numsplit = "center", 
-                                                                    alpha = 1-tree_mincrit, minsplit = tree_minsplit))
+                                                                    alpha = 1-tree_mincrit, minsplit = tree_minsplit,
+                                                                    minbucket = tree_minbucket))
                              }
                              if(type.tree == "ctree"){
                                dt <- disttree(formula, data=learndata, family=family, type.tree = "ctree", 
                                               control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                                      mincriterion = tree_mincrit, minsplit = tree_minsplit))
+                                                                      mincriterion = tree_mincrit, minsplit = tree_minsplit,
+                                                                      minbucket = tree_minbucket))
                              }
                              
                              # get true and predicted parameters for newdata
@@ -795,12 +805,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              if(type.tree == "mob"){
                                df <- distforest(formula, data=learndata, family=family, type.tree = "mob", ntree = ntree,
                                                 control = mob_control(restart = FALSE, numsplit = "center", 
-                                                                      alpha = 1-forest_mincrit, minsplit = forest_minsplit))
+                                                                      alpha = 1-forest_mincrit, minsplit = forest_minsplit,
+                                                                      minbucket = forest_minbucket))
                              }
                              if(type.tree == "ctree"){
                                df <- distforest(formula, data=learndata, family=family, type.tree = "ctree", ntree = ntree,
                                                 control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                                        mincriterion = forest_mincrit, minsplit = forest_minsplit))
+                                                                        mincriterion = forest_mincrit, minsplit = forest_minsplit,
+                                                                        minbucket = forest_minbucket))
                              }
                              
                              # get true and predicted parameters for newdata
@@ -1059,6 +1071,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       
       #for method="noncyclic"
       grid <- make.grid(max = 300, min = 10, length.out = 10)
+      cvr_op <- numeric(length = (nsteps+1)*nrep)
       
       res_gb <- mclapply(1:(nsteps+1),
                          function(i){
@@ -1102,6 +1115,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                if(gamboost_cvr){
                                  cvr <- cvrisk(gb, grid = grid)
                                  mstop(gb) <- mstop(cvr)
+                                 cvr_op[(i-1)*nrep + j] <- mstop(cvr) 
                                }
                              } else {
                                #gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, families = GaussianLSS())
@@ -1113,6 +1127,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                if(gamboost_cvr){
                                  cvr <- cvrisk(gb, grid = grid)
                                  mstop(gb) <- mstop(cvr)
+                                 cvr_op[(i-1)*nrep + j] <- mstop(cvr) 
                                }
                              }                            
                              
@@ -1273,6 +1288,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              cf <- cforest(formula, data = learndata, ntree = ntree,
                                            control = ctree_control(teststat = "quad", testtype = "Univ", 
                                                                    mincriterion = forest_mincrit, minsplit = forest_minsplit, 
+                                                                   minbucket = forest_minbucket,
                                                                    intersplit = TRUE))
                              
                              
