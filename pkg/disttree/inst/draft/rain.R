@@ -182,15 +182,15 @@ rain_all <- rain
 
 
 # load predictions
-#load("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103309.rda")
-load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103309.rda")
+#load("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103135.rda")
+load("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_9103135.rda")
 prediction <- prepared
 Sys.setenv("TZ" = "UTC")
 prediction$day <-as.POSIXlt(prediction$init)$yday
 prediction$year <- as.POSIXlt(prediction$init)$year
 #head(prediction)
 
-rain <- rain[rain$station == "Axams (EHYD)",]
+rain <- rain[rain$station == "Fieberbrunn (EHYD)",]
 #head(rain)
 
 ## choose one month:
@@ -762,7 +762,9 @@ if(FALSE){
 seedconst <- 7
 nrep_cross <- 10
 #grid to find optimal mstop for method="noncyclic" in gamboostLSS
-grid <- make.grid(max = 500, min = 10, length.out = 10)
+grid <- c(seq(50,300, by = 25), seq(310, 1000, by = 10))
+#grid <- c(seq(100,400, by = 100), seq(420, 1000, by = 20))
+#grid <- make.grid(max = 500, min = 10, length.out = 10)
 
 rainres <- mclapply(1:nrep_cross,
                     function(k){
@@ -804,22 +806,36 @@ rainres <- mclapply(1:nrep_cross,
                         
                         dt_time <- system.time(dt <- disttree(dt.formula, 
                                                               data = learndata, family = dist_list_cens_normal, 
-                                                              censtype = "left", censpoint = 0, type.tree = "ctree"))
+                                                              censtype = "left", censpoint = 0, type.tree = "ctree",
+                                                              ctree_control(minsplit = 50, minbucket = 20, mincriterion = 0.95,
+                                                                            teststat = "quad", testtype = "Bonferroni", intersplit = TRUE)))
                         
                         ## FIX ME: error if type.tree = "mob"
                         
                         #df <- df
                         df_time <- system.time(df <- distforest(df.formula, 
                                                                 data = learndata, family = dist_list_cens_normal, ntree = 200, #mtry = 40, fitted.OOB = FALSE,
-                                                                censtype = "left", censpoint = 0, type.tree = "ctree"))
+                                                                censtype = "left", censpoint = 0, type.tree = "ctree",
+                                                                mtry = 27,
+                                                                ctree_control(minsplit = 50, minbucket = 20, mincriterion = 0,
+                                                                              teststat = "quad", testtype = "Univ", intersplit = TRUE)))
                         
                         g_learndata <- learndata
                         g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
                         
+                        g_time <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
+                                                              family = cens("NO", type = "left"))))
+                        if(inherits(g, "try-error")) {
+                          g_time <- NA
+                          g <- NA
+                          g_error_seed[i] <- seedconst * k
+                        }
+                        
+                        
                         #gb <- gb
                         gb_time <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
                                                                  families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
-                                                                 control = boost_control(mstop = 500L)))
+                                                                 control = boost_control(mstop = 1000L)))
                         gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
                         mstop(gb) <- mstop(cvr)
                         cvr_opt[i] <- mstop(cvr) 
@@ -829,22 +845,15 @@ rainres <- mclapply(1:nrep_cross,
                         #            data = learndata, sampler = FALSE, optimizer = boost, 
                         #            stop.criterion = "BIC", plot = FALSE)
                         
-                        g_time <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                                          family = cens("NO", type = "left"))))
-                        if(inherits(g, "try-error")) {
-                          g_time <- NA
-                          g <- NA
-                          g_error_seed[i] <- seedconst * k
-                        }
                         
                         mi_time <- system.time(mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "identity"))
+                                                          data = learndata, dist = "gaussian", left = 0, link.scale = "identity"))
                         
                         ml_time <- system.time(ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "log"))
+                                                          data = learndata, dist = "gaussian", left = 0, link.scale = "log"))
                         
                         mq_time <- system.time(mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-                                                          data = raindata, dist = "gaussian", left = 0, link.scale = "quadratic"))
+                                                          data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic"))
                         
                         
                         
@@ -860,14 +869,22 @@ rainres <- mclapply(1:nrep_cross,
                         dt_mu <- as.vector(pdt[,"mu"]) 
                         dt_sigma <- as.vector(pdt[,"sigma"]) 
                         dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
-                        
+                        ## FIX ME: calculation of dt_exp for sigma set to 0.0001
+                        # idea: 
+                        if(any(is.na(dt_exp))){
+                          dt_exp[dt_sigma <= 0.0002] <- pmax(0, dt_mu[dt_sigma <= 0.0002])    
+                        }
                         
                         # distforest
                         pdf <- predict(df, newdata = testdata, type = "parameter")
                         df_mu <- pdf$mu
                         df_sigma <- pdf$sigma
                         df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
-                        
+                        ## FIX ME: calculation of df_exp for sigma set to 0.0001
+                        # idea: 
+                        if(any(is.na(df_exp))){
+                          df_exp[df_sigma <= 0.0002] <- pmax(0, df_mu[df_sigma <= 0.0002])    
+                        }
                         
                         # gamboostLSS
                         pgb <- predict(gb, newdata = testdata, parameter = list("mu","sigma"), type = "response")
@@ -1034,11 +1051,16 @@ rainres <- mclapply(1:nrep_cross,
 )
 
 
-#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_axams7.rda")
-save(rainres, file = "~/disttree/inst/draft/rain_axams7.rda")
+#save(rainres, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_koessen7.rda")
+save(rainres, file = "~/disttree/inst/draft/rain_koessen7.rda")
   
+### FIX ME:
+# in disttree (and distforest): for nodes with all equal observations (all 0), sigma is set to 0.0001
+# this leads to extremely low values in the loglikelihood if the observed value is not 0
+# replace? warning?
 
-
+### TO DO:
+# variable importance
 
 if(FALSE){
   rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres))
@@ -1046,9 +1068,9 @@ if(FALSE){
   rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
   
   for(i in 1:length(rainres)){
-    rain_rmse[i,] <- colMeans(rainres[[i]]$rmse)
-    rain_ll[i,] <- colMeans(rainres[[i]]$ll)
-    rain_crps[i,] <- colMeans(rainres[[i]]$crps)
+    rain_rmse[i,] <- colMeans(rainres[[i]]$rmse, na.rm = TRUE)
+    rain_ll[i,] <- colMeans(rainres[[i]]$ll, na.rm = TRUE)
+    rain_crps[i,] <- colMeans(rainres[[i]]$crps, na.rm = TRUE)
   }
   
   colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
