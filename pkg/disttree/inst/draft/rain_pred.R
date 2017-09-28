@@ -3,7 +3,6 @@
 # and repeat this procedure over all stations (with a sufficient number of years of observations)
 
 
-
 library("disttree")
 library("gamlss")
 library("gamlss.dist")
@@ -449,6 +448,7 @@ for(i in 1:NROW(stations)){
   ## FIX ME: check years (85-112)
   # table(raindata$year)
   
+  # learning the models on 29 years and evaluating predictions on the 30th year
   learndata <- raindata[raindata$year < 112,]
   testdata <- raindata[raindata$year == 112,]
   
