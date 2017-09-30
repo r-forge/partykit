@@ -19,6 +19,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    nobs = 400, testnobs = 200L,
                    tree_minsplit = 20, tree_minbucket = 10, tree_mincrit = 0.95,
                    forest_minsplit = 20, forest_minbucket = 10, forest_mincrit = 0,
+                   forest_mtry = 4,
                    type.tree = "ctree",
                    censNO = TRUE,
                    fix.mu = FALSE,
@@ -46,7 +47,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   library("parallel")
   library("gamlss.cens")
   library("gamboostLSS")
-  library("bamlss")
+  #library("bamlss")
   library("randomForest")
   library("Formula")  # FIX ME: should be imported in disttree
   library("survival")
@@ -638,7 +639,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(fix.sigma){
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 3
+        sigma <- 2
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -657,27 +658,39 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   } else {
     if(fix.sigma){
       fun <- function(x, kappa){
-        mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-        sigma <- 3
+        mu <- mubase + 
+          (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
+          4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+        #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+        sigma <- 2
         par <- cbind(mu, sigma)
         return(par)
       }
     } else {
       if(mu.sigma.interaction){
         fun <- function(x, kappa){
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          mu <- mubase + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
+            4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           sigma <- 2 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x, kappa){
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          sigma <- 1 + 2 * 
-            (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
-               (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
-            (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
-          #sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
+          #mu <- mubase + 
+          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+          #  #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) #+ 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          #sigma <- 1 + 2 * 
+          #  (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
+          #     (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
+          #  (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
+          sigma <- 1 + 2*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -747,6 +760,11 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                true_exp <- true_mu
                                dt_exp <- dt_mu
                              }
+                             ## FIX ME: calculation of dt_exp for sigma set to 0.0001
+                             # idea: 
+                             if(any(is.na(dt_exp))){
+                               dt_exp[dt_sigma <= 0.0002] <- pmax(0, dt_mu[dt_sigma <= 0.0002])    
+                             }
                              
                              # calculate RMSEs
                              rmse.exp.true.dt[j] <- sqrt(mean((dt_exp - true_exp)^2))
@@ -806,13 +824,13 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                df <- distforest(formula, data=learndata, family=family, type.tree = "mob", ntree = ntree,
                                                 control = mob_control(restart = FALSE, numsplit = "center", 
                                                                       alpha = 1-forest_mincrit, minsplit = forest_minsplit,
-                                                                      minbucket = forest_minbucket))
+                                                                      minbucket = forest_minbucket), mtry = forest_mtry)
                              }
                              if(type.tree == "ctree"){
                                df <- distforest(formula, data=learndata, family=family, type.tree = "ctree", ntree = ntree,
                                                 control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                                         mincriterion = forest_mincrit, minsplit = forest_minsplit,
-                                                                        minbucket = forest_minbucket))
+                                                                        minbucket = forest_minbucket), mtry = forest_mtry)
                              }
                              
                              # get true and predicted parameters for newdata
@@ -832,6 +850,12 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                true_exp <- true_mu
                                df_exp <- df_mu
                              }
+                             ## FIX ME: calculation of df_exp for sigma set to 0.0001
+                             # idea: 
+                             if(any(is.na(df_exp))){
+                               df_exp[df_sigma <= 0.0002] <- pmax(0, df_mu[df_sigma <= 0.0002])    
+                             }
+                             
                              
                              # calculate RMSEs
                              rmse.exp.true.df[j] <- sqrt(mean((df_exp - true_exp)^2))
@@ -1070,7 +1094,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       #                       length.out = 10, dense_mu_grid = TRUE)
       
       #for method="noncyclic"
-      grid <- make.grid(max = 300, min = 10, length.out = 10)
+      grid <- c(seq(25,300,by=25), seq(310,500,by=10))
+      #grid <- make.grid(max = 300, min = 10, length.out = 10)
       cvr_op <- numeric(length = (nsteps+1)*nrep)
       
       res_gb <- mclapply(1:(nsteps+1),
@@ -1111,7 +1136,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
                                gb <- gamboostLSS(formula = list(mu = mu.formula, sigma =sigma.formula), data = learndata, 
                                                  families = as.families(fname = cens("NO", type = "left")()), method = "noncyclic",
-                                                 control = boost_control(mstop = 400L))
+                                                 control = boost_control(mstop = 500L))
                                if(gamboost_cvr){
                                  cvr <- cvrisk(gb, grid = grid)
                                  mstop(gb) <- mstop(cvr)
@@ -1206,7 +1231,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              nd <- newdata[,-c(1,ncol(newdata)-1,ncol(newdata))]
                              
                              rf <- randomForest(formula, data = learndata, ntree = ntree, 
-                                                nodesize = forest_minsplit, 
+                                                nodesize = forest_minsplit, mtry = forest_mtry,
                                                 keep.inbag = TRUE, replace = FALSE)
                              
                              # get true and predicted parameters for newdata
@@ -1288,7 +1313,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              cf <- cforest(formula, data = learndata, ntree = ntree,
                                            control = ctree_control(teststat = "quad", testtype = "Univ", 
                                                                    mincriterion = forest_mincrit, minsplit = forest_minsplit, 
-                                                                   minbucket = forest_minbucket,
+                                                                   minbucket = forest_minbucket, mtry = forest_mtry,
                                                                    intersplit = TRUE))
                              
                              
