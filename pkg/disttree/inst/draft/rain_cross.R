@@ -12,7 +12,13 @@
 # 9119479 Ammerwald (EHYD)
 
 
-rain_cross <- function(stationname, seedconst = 7){
+rain_cross <- function(stationname, seedconst = 7, ntree = 100,
+   tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
+   forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
+   forest_mtry = 27,
+   type.tree = "ctree",
+   gamboost_cvr = FALSE)
+{
   
   if(!is.character(stationname)) stop("argument 'stationname' has to be a character")
   if(!("(EHYD)" %in% strsplit(stationname, split = " ")[[1]])) stationname <- paste(stationname, "(EHYD)", sep = " ")
@@ -215,7 +221,7 @@ rain_cross <- function(stationname, seedconst = 7){
   
   # observations end in 2012
   prediction <- prediction[prediction$year<=112,]
-
+  
   
   # combine data frames
   
@@ -236,27 +242,25 @@ rain_cross <- function(stationname, seedconst = 7){
   
   
   ########################################
-  # select variables with sufficient data
+  # remove rows with missing values or NAs
+  # (as a result the years 93 and 94 are dropped, for year 92 only one observation is left,
+  #  in 9 other years 1-3 observations are dropped)
   
-  ######################################################
   #remove row 825
   raindata <- raindata[-825,]
-  ######################################################
   #remove rows 223-310
   raindata <- raindata[-c(223:310),]
-  ######################################################
   #remove rows 111 176 178 220 221 241 320 364 367
   raindata <- raindata[-c(111, 176, 178, 220, 221, 241, 320, 364, 367),]
-  ######################################################
   #remove rows 5 215 217 301 314
   raindata <- raindata[-c(5, 215, 217, 301, 314),]
-  ######################################################
   #remove rows 251 264 
   raindata <- raindata[-c(251, 264),]
   
+  # table(raindata[, "year"])
   
   ######################################################
-  #only keep variables with sufficient values
+  # only keep variables with sufficient values
   raindata <- raindata[, c("robs",
                            "tppow_mean", "tppow_sprd", "tppow_min", "tppow_max", "tp_frac", 
                            "tppow_mean0612", "tppow_mean1218", "tppow_mean1824", "tppow_mean2430", 
@@ -447,145 +451,6 @@ rain_cross <- function(stationname, seedconst = 7){
   
   
   
-  # evaluate models on the whole data set
-  if(FALSE){
-    
-    dt <- disttree(dt.formula, 
-                   data = raindata, family = dist_list_cens_normal, 
-                   censtype = "left", censpoint = 0, type.tree = "ctree")
-    ## FIX ME: error if type.tree = "mob"
-    
-    df <- distforest(df.formula, 
-                     data = raindata, family = dist_list_cens_normal, ntree = 200, #mtry = 40,
-                     censtype = "left", censpoint = 0, type.tree = "ctree")
-    
-    g_raindata <- raindata
-    g_raindata$robs <- Surv(g_raindata$robs, g_raindata$robs>0, type="left")
-    g <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_raindata, family = cens("NO", type = "left"))
-    
-    gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_raindata, 
-                      families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
-                      control = boost_control(mstop = 400L))
-    
-    b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
-                data = raindata, sampler = FALSE, optimizer = boost, 
-                stop.criterion = "BIC", plot = FALSE) #, nu = 0.1)
-    
-    mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
-               data = raindata, dist = "gaussian", left = 0, link.scale = "identity")
-    
-    ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-               data = raindata, dist = "gaussian", left = 0, link.scale = "log")
-    
-    mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-               data = raindata, dist = "gaussian", left = 0, link.scale = "quadratic")
-    
-    
-    
-    ## get predicted parameter
-    
-    # disttree
-    if(is.vector(coef(dt))){
-      pdt <- t(as.data.frame(coef(dt)))[as.vector(predict(dt, type = "node")),]
-      rownames(pdt) <- paste(c(1 : NROW(pdt)))
-    } else {
-      pdt <- coef(dt)[paste(as.vector(predict(dt, type = "node"))),]
-    }
-    dt_mu <- as.vector(pdt[,"mu"]) 
-    dt_sigma <- as.vector(pdt[,"sigma"]) 
-    
-    
-    #distforest
-    pdf <- predict(df, type = "parameter")
-    df_mu <- pdf$mu
-    df_sigma <- pdf$sigma
-    
-    #gamlss
-    g_mu <- predict(g, what = "mu", type = "response", data = g_raindata)
-    g_sigma <- predict(g, what = "sigma", type = "response", data = g_raindata)
-    
-    #bamlss
-    pb <- predict(b, type = "parameter")
-    b_mu <- pb$mu
-    b_sigma <- pb$sigma
-    
-    #gamboostLSS
-    pgb <- predict(gb, parameter = list("mu","sigma"), type = "response")
-    gb_mu <- pgb[[1]]
-    gb_sigma <- pgb[[2]]
-    
-    #EMOS
-    mi_mu <- predict(mi, type = "location")     # returns parameter on response scale
-    mi_sigma <- predict(mi, type = "scale")
-    
-    ml_mu <- predict(ml, type = "location")     # returns parameter on response scale
-    ml_sigma <- predict(ml, type = "scale")
-    
-    mq_mu <- predict(mq, type = "location")     # returns parameter on response scale
-    mq_sigma <- predict(mq, type = "scale")
-    
-    
-    
-    ### CRPS
-    dt_crps <- sum(crps_cnorm(raindata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
-    df_crps <- sum(crps_cnorm(raindata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
-    g_crps <- sum(crps_cnorm(raindata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf))
-    b_crps <- sum(crps_cnorm(raindata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
-    gb_crps <- sum(crps_cnorm(raindata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
-    mi_crps <- sum(crps_cnorm(raindata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf))
-    ml_crps <- sum(crps_cnorm(raindata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf))
-    mq_crps <- sum(crps_cnorm(raindata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf))
-    
-    #c(dt_crps, df_crps, g_crps, b_crps, gb_crps, mi_crps, ml_crps, mq_crps)
-    c(dt_crps, df_crps, g_crps, gb_crps, mi_crps, ml_crps, mq_crps)
-    
-    
-    # pit histogram for one station
-    if(FALSE){
-      # disttree
-      #hist(pnorm(raindata[,"robs"], dt_mu, dt_sigma))
-      pit_dt <- pnorm(raindata[,"robs"], dt_mu, dt_sigma)
-      pit_dt[which(raindata[,"robs"]==0)] <- pit_dt[which(raindata[,"robs"]==0)]*runif(length(pit_dt[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_dt)
-      
-      # distforest
-      #hist(pnorm(testdata[,"robs"], df_mu, df_sigma))
-      pit_df <- pnorm(raindata[,"robs"], df_mu, df_sigma)
-      pit_df[which(raindata[,"robs"]==0)] <- pit_df[which(raindata[,"robs"]==0)]*runif(length(pit_df[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_df)
-      
-      # gamlss
-      #hist(pnorm(raindata[,"robs"], g_mu, g_sigma))
-      pit_g <- pnorm(raindata[,"robs"], g_mu, g_sigma)
-      pit_g[which(raindata[,"robs"]==0)] <- pit_g[which(raindata[,"robs"]==0)]*runif(length(pit_g[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_g)
-      
-      # bamlss
-      #hist(pnorm(raindata[,"robs"], b_mu, b_sigma))
-      pit_b <- pnorm(raindata[,"robs"], b_mu, b_sigma)
-      pit_b[which(raindata[,"robs"]==0)] <- pit_b[which(raindata[,"robs"]==0)]*runif(length(pit_b[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_b)
-      
-      # gamboostLSS
-      #hist(pnorm(raindata[,"robs"], gb_mu, gb_sigma))
-      pit_gb <- pnorm(raindata[,"robs"], gb_mu, gb_sigma)
-      pit_gb[which(raindata[,"robs"]==0)] <- pit_gb[which(raindata[,"robs"]==0)]*runif(length(pit_gb[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_gb)
-      
-      # EMOS
-      #hist(pnorm(raindata[,"robs"], mi_mu, mi_sigma))
-      pit_mi <- pnorm(raindata[,"robs"], mi_mu, mi_sigma)
-      pit_mi[which(raindata[,"robs"]==0)] <- pit_mi[which(raindata[,"robs"]==0)]*runif(length(pit_mi[which(raindata[,"robs"]==0)]),0,1)
-      hist(pit_mi)
-    }
-    
-  }
-  
-  
-  
-  
-  
-  
   
   ############################################################
   # cross validation (10x10)
@@ -593,7 +458,7 @@ rain_cross <- function(stationname, seedconst = 7){
   
   nrep_cross <- 10
   #grid to find optimal mstop for method="noncyclic" in gamboostLSS
-  grid <- c(seq(50,300, by = 25), seq(310, 1000, by = 10))
+  grid <- c(seq(50,500, by = 25), seq(510, 1000, by = 10))
   #grid <- c(seq(100,400, by = 100), seq(420, 1000, by = 20))
   #grid <- make.grid(max = 500, min = 10, length.out = 10)
   
@@ -634,22 +499,43 @@ rain_cross <- function(stationname, seedconst = 7){
                           testdata <- raindata[testid[[i]], ]
                           learndata <- raindata[-testid[[i]], ]
                           
+                          if(type.tree == "mob"){
+                            dt_time <- system.time(dt <- disttree(dt.formula, 
+                                                                  data = learndata, family = dist_list_cens_normal, 
+                                                                  censtype = "left", censpoint = 0, type.tree = "mob", 
+                                                                  control = mob_control(restart = FALSE, numsplit = "center", 
+                                                                                        alpha = 1-tree_mincrit, minsplit = tree_minsplit,
+                                                                                        minbucket = tree_minbucket)))
+                          }
+                          if(type.tree == "ctree"){
+                            dt_time <- system.time(dt <- disttree(dt.formula, 
+                                                                  data = learndata, family = dist_list_cens_normal, 
+                                                                  censtype = "left", censpoint = 0, type.tree = "ctree", 
+                                                                  control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                                                          mincriterion = tree_mincrit, minsplit = tree_minsplit,
+                                                                                          minbucket = tree_minbucket)))
+                          }
                           
-                          dt_time <- system.time(dt <- disttree(dt.formula, 
-                                                                data = learndata, family = dist_list_cens_normal, 
-                                                                censtype = "left", censpoint = 0, type.tree = "ctree",
-                                                                ctree_control(minsplit = 50, minbucket = 20, mincriterion = 0.95,
-                                                                              teststat = "quad", testtype = "Bonferroni", intersplit = TRUE)))
                           
-                          ## FIX ME: error if type.tree = "mob"
+                          if(type.tree == "mob"){
+                            df_time <- system.time(df <- distforest(df.formula, 
+                                                                    data = learndata, family = dist_list_cens_normal, type.tree = "mob", 
+                                                                    ntree = ntree, censtype = "left", censpoint = 0,
+                                                                    control = mob_control(restart = FALSE, numsplit = "center", 
+                                                                                          alpha = 1-forest_mincrit, minsplit = forest_minsplit,
+                                                                                          minbucket = forest_minbucket), mtry = forest_mtry))
+                          }
+                          if(type.tree == "ctree"){
+                            df_time <- system.time(df <- distforest(df.formula, 
+                                                                    data = learndata, family = dist_list_cens_normal, type.tree = "ctree", 
+                                                                    ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
+                                                                    control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                                                            mincriterion = forest_mincrit, minsplit = forest_minsplit,
+                                                                                            minbucket = forest_minbucket), mtry = forest_mtry))
+                          }
                           
-                          #df <- df
-                          df_time <- system.time(df <- distforest(df.formula, 
-                                                                  data = learndata, family = dist_list_cens_normal, ntree = 200, #mtry = 40, fitted.OOB = FALSE,
-                                                                  censtype = "left", censpoint = 0, type.tree = "ctree",
-                                                                  mtry = 27,
-                                                                  ctree_control(minsplit = 50, minbucket = 20, mincriterion = 0,
-                                                                                teststat = "quad", testtype = "Univ", intersplit = TRUE)))
+                          
+                          
                           
                           g_learndata <- learndata
                           g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
@@ -667,9 +553,11 @@ rain_cross <- function(stationname, seedconst = 7){
                           gb_time <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
                                                                    families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
                                                                    control = boost_control(mstop = 1000L)))
-                          gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
-                          mstop(gb) <- mstop(cvr)
-                          cvr_opt[i] <- mstop(cvr) 
+                          if(gamboost_cvr){
+                            gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
+                            mstop(gb) <- mstop(cvr)
+                            cvr_opt[i] <- mstop(cvr) 
+                          } else cvr_opt[i] <- gb_cvr_time <- NA
                           
                           #b <- b
                           #b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
@@ -691,14 +579,9 @@ rain_cross <- function(stationname, seedconst = 7){
                           ## get predicted parameter
                           
                           # disttree
-                          if(is.vector(coef(dt))){
-                            pdt <- t(as.data.frame(coef(dt)))[as.vector(predict(dt, newdata = testdata, type = "node")),]
-                            rownames(pdt) <- paste(c(1 : NROW(pdt)))
-                          } else {
-                            pdt <- coef(dt)[paste(as.vector(predict(dt, newdata = testdata, type = "node"))),]
-                          }
-                          dt_mu <- as.vector(pdt[,"mu"]) 
-                          dt_sigma <- as.vector(pdt[,"sigma"]) 
+                          pdt <- predict(dt, newdata = testdata, type = "parameter")
+                          dt_mu <- pdt$mu
+                          dt_sigma <- pdt$sigma
                           dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
                           ## FIX ME: calculation of dt_exp for sigma set to 0.0001
                           # idea: 
@@ -890,7 +773,13 @@ rain_cross <- function(stationname, seedconst = 7){
 
 
 if(FALSE){
-  rainres <- rain_cross("Koessen", 7)
+  setwd("~/svn/partykit/pkg/disttree/inst/draft/")
+  rainres <- rain_cross("Axams", seedconst = 7, ntree = 100,
+    tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
+    forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
+    forest_mtry = 27,
+    type.tree = "ctree",
+    gamboost_cvr = FALSE)
   #save(rainres, file = paste0("~/svn/partykit/pkg/disttree/inst/draft/rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
   #save(rainres, file = paste0("~/disttree/inst/draft/rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
   save(rainres, file = paste0("rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
@@ -910,11 +799,11 @@ if(FALSE){
 # variable importance
 
 if(FALSE){
-  rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres))
-  rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres))
-  rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
+  rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres)-1)
+  rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres)-1)
+  rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres)-1)
   
-  for(i in 1:length(rainres)){
+  for(i in 1:(length(rainres)-1)){
     rain_rmse[i,] <- colMeans(rainres[[i]]$rmse, na.rm = TRUE)
     rain_ll[i,] <- colMeans(rainres[[i]]$ll, na.rm = TRUE)
     rain_crps[i,] <- colMeans(rainres[[i]]$crps, na.rm = TRUE)
@@ -930,10 +819,10 @@ if(FALSE){
   # scoring rules
   
   # skills score mit Referenz-Modell:
-  # rain_crps / rain_crps[,8]
-  # boxplot(rain_crps / rain_crps[,8])
-  # boxplot(rain_crps[,-5] / rain_crps[,8])
-  # boxplot(1 - rain_crps[,-5] / rain_crps[,8])
+  # rain_crps / rain_crps[,7]
+  # boxplot(rain_crps / rain_crps[,7])
+  # boxplot(rain_crps[,-1] / rain_crps[,7])
+  # boxplot(1 - rain_crps / rain_crps[,7])
   # abline(h = 0, col = 2, lwd = 2)
 }
 
