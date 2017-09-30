@@ -396,6 +396,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
   ll_dt <- ll_df <- ll_g <- ll_gb <- ll_mi <- ll_ml <- ll_mq <- numeric(length = length(complete_stations))
   cvr_opt <- numeric(length = length(complete_stations))
   g_error <- numeric(length = length(complete_stations))
+  mi_error <- numeric(length = length(complete_stations))
+  ml_error <- numeric(length = length(complete_stations))
+  mq_error <- numeric(length = length(complete_stations))
   
   ## prepare rain data of all stations but only July and from 1985
   rain <- rain_all
@@ -567,14 +570,27 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     #            data = learndata, sampler = FALSE, optimizer = boost, 
     #            stop.criterion = "BIC", plot = FALSE) #, nu = 0.1)
     
-    mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
-               data = learndata, dist = "gaussian", left = 0, link.scale = "identity")
+    mi <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
+               data = learndata, dist = "gaussian", left = 0, link.scale = "identity"))
+    if(inherits(mi, "try-error")) {
+      mi <- NA
+      mi_error[i] <- paste0(stationname,"_model")
+    }
     
-    ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-               data = learndata, dist = "gaussian", left = 0, link.scale = "log")
+    ml <- try(crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
+               data = learndata, dist = "gaussian", left = 0, link.scale = "log"))
+    if(inherits(ml, "try-error")) {
+      ml <- NA
+      ml_error[i] <- paste0(stationname,"_model")
+    }
     
-    mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-               data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic")
+    mq <- try(crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
+               data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic"))
+    if(inherits(mq, "try-error")) {
+      mq <- NA
+      mq_error[i] <- paste0(stationname,"_model")
+    }
+    
     
     
     
@@ -625,22 +641,39 @@ rain_pred <- function(seedconst = 7, ntree = 100,
         g_error[i] <- paste0(stationname,"_pred")
       } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
     }
-    
+    g_na <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
     
     # EMOS
-    mi_mu <- predict(mi, type = "location", newdata = testdata)     # returns parameter on response scale
-    mi_sigma <- predict(mi, type = "scale", newdata = testdata)
-    mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+    if(!(all(is.na(mi)))){
+      mi_mu <- try(predict(mi, type = "location", newdata = testdata))     # returns parameter on response scale
+      mi_sigma <- try(predict(mi, type = "scale", newdata = testdata))
+      if(inherits(mi_mu, "try-error") | inherits(mi_sigma, "try-error")) {
+        mi_mu <- mi_sigma <- mi_exp <- NA
+        mi_error[i] <- paste0(stationname,"_pred")
+      } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+    }
+    mi_na <- any(c(all(is.na(mi)), is.na(mi_mu), is.na(mi_sigma)))
     
-    ml_mu <- predict(ml, type = "location", newdata = testdata)     # returns parameter on response scale
-    ml_sigma <- predict(ml, type = "scale", newdata = testdata)
-    ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+    if(!(all(is.na(ml)))){
+      ml_mu <- try(predict(ml, type = "location", newdata = testdata))     # returns parameter on response scale
+      ml_sigma <- try(predict(ml, type = "scale", newdata = testdata))
+      if(inherits(ml_mu, "try-error") | inherits(ml_sigma, "try-error")) {
+        ml_mu <- ml_sigma <- ml_exp <- NA
+        ml_error[i] <- paste0(stationname,"_pred")
+      } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+    }
+    ml_na <- any(c(all(is.na(ml)), is.na(ml_mu), is.na(ml_sigma)))
     
-    mq_mu <- predict(mq, type = "location", newdata = testdata)     # returns parameter on response scale
-    mq_sigma <- predict(mq, type = "scale", newdata = testdata)
-    mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+    if(!(all(is.na(mq)))){
+      mq_mu <- try(predict(mq, type = "location", newdata = testdata))     # returns parameter on response scale
+      mq_sigma <- try(predict(mq, type = "scale", newdata = testdata))
+      if(inherits(mq_mu, "try-error") | inherits(mq_sigma, "try-error")) {
+        mq_mu <- mq_sigma <- mq_exp <- NA
+        mq_error[i] <- paste0(stationname,"_pred")
+      } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+    }
+    mq_na <- any(c(all(is.na(mq)), is.na(mq_mu), is.na(mq_sigma)))
     
-    g_na <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
     
     # CPRS
     crps_dt[i] <- sum(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
@@ -648,9 +681,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     crps_g[i] <- if(!g_na) sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
     #crps_b[i] <- sum(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
     crps_gb[i] <- sum(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
-    crps_mi[i] <- sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf))
-    crps_ml[i] <- sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf))
-    crps_mq[i] <- sum(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf))
+    crps_mi[i] <- if(!mi_na) sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf)) else NA
+    crps_ml[i] <- if(!ml_na) sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf)) else NA
+    crps_mq[i] <- if(!mq_na) sum(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf)) else NA
     
     # RMSE
     rmse_dt[i] <- sqrt(mean((dt_exp - testdata[,"robs"])^2))
@@ -658,9 +691,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     rmse_g[i] <- if(!g_na) sqrt(mean((g_exp - testdata[,"robs"])^2)) else NA
     rmse_gb[i] <- sqrt(mean((gb_exp - testdata[,"robs"])^2))
     #rmse_b[i] <- sqrt(mean((b_exp - testdata[,"robs"])^2))
-    rmse_mi[i] <- sqrt(mean((mi_exp - testdata[,"robs"])^2))
-    rmse_ml[i] <- sqrt(mean((ml_exp - testdata[,"robs"])^2))
-    rmse_mq[i] <- sqrt(mean((mq_exp - testdata[,"robs"])^2))
+    rmse_mi[i] <- if(!mi_na) sqrt(mean((mi_exp - testdata[,"robs"])^2)) else NA
+    rmse_ml[i] <- if(!ml_na) sqrt(mean((ml_exp - testdata[,"robs"])^2)) else NA
+    rmse_mq[i] <- if(!mq_na) sqrt(mean((mq_exp - testdata[,"robs"])^2)) else NA
     
     # loglikelihood
     dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- 0
@@ -672,18 +705,18 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       eta_g <- if(!g_na) as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
       eta_gb <- as.numeric(dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
       #eta_b <- as.numeric(dist_list_cens_normal$linkfun(cbind(b_mu, b_sigma)[j,]))
-      eta_mi <- as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,]))
-      eta_ml <- as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,]))
-      eta_mq <- as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,]))
+      eta_mi <- if(!mi_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+      eta_ml <- if(!ml_na) as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+      eta_mq <- if(!mq_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
       
       dtll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
       dfll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
       gll_j <- if(!g_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
       gbll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
       #bll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_b, log=TRUE)
-      mill_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE)
-      mlll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE)
-      mqll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE)
+      mill_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+      mlll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+      mqll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
       
       dtll <- if(is.na(dtll_j)) {
         print(eta_dt, testdata[j,"robs"]) 
@@ -712,20 +745,26 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       #  bll + (-5)
       #} else {bll + bll_j}   
       
-      mill <- if(is.na(mill_j)) {
-        print(eta_mi, testdata[j,"robs"]) 
-        mill + (-5)
-      } else {mill + mill_j} 
+      mill <- if(!mi_na) {
+        if(is.na(mill_j)) {
+          print(eta_mi, testdata[j,"robs"]) 
+          mill + (-5)
+        } else {mill + mill_j} 
+      } else NA      
       
-      mlll <- if(is.na(mlll_j)) {
-        print(eta_ml, testdata[j,"robs"]) 
-        mlll + (-5)
-      } else {mlll + mlll_j} 
+      mlll <- if(!ml_na) {
+        if(is.na(mlll_j)) {
+          print(eta_ml, testdata[j,"robs"]) 
+          mlll + (-5)
+        } else {mlll + mlll_j} 
+      } else NA
       
-      mqll <- if(is.na(mqll_j)) {
-        print(eta_mq, testdata[j,"robs"]) 
-        mqll + (-5)
-      } else {mqll + mqll_j} 
+      mqll <- if(!mq_na) {
+        if(is.na(mqll_j)) {
+          print(eta_mq, testdata[j,"robs"]) 
+          mqll + (-5)
+        } else {mqll + mqll_j} 
+      } else NA
     }
     
     ll_dt[i] <- dtll
@@ -733,9 +772,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     ll_g[i] <- if(!g_na) gll else NA
     ll_gb[i] <- gbll
     #ll_b[i] <- bll
-    ll_mi[i] <- mill
-    ll_ml[i] <- mlll
-    ll_mq[i] <- mqll
+    ll_mi[i] <- if(!mi_na) mill else NA
+    ll_ml[i] <- if(!ml_na) mlll else NA
+    ll_mq[i] <- if(!mq_na) mqll else NA
     
   }
   
