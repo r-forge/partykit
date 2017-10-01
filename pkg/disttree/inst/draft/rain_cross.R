@@ -867,6 +867,10 @@ if(FALSE){
   boxplot(rain_crps)
   
   unlist(lapply(1:10, function(i)rainres[[i]]$g_error_seed))
+  unlist(lapply(1:10, function(i)rainres[[i]]$mi_error_seed))
+  unlist(lapply(1:10, function(i)rainres[[i]]$ml_error_seed))
+  unlist(lapply(1:10, function(i)rainres[[i]]$mq_error_seed))
+  unlist(lapply(1:10, function(i)rainres[[i]]$cvr_opt))
   
   # scoring rules
   
