@@ -541,11 +541,11 @@ sim_oneset <- function(kappa = 1, nobs = 400,
         }
       } else {
         fun <- function(x){
-          #mu <- mubase + 
-          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
+          mu <- mubase + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
           #  4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) # + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) # + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           #sigma <- 1 + 2 * 
           #  (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
           #     (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
@@ -632,7 +632,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                     "fitted.mu.dt","fitted.sigma.dt")
       
       pred_fix_x2 <- c(pred_fix_x2, list(dt_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(dt_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(dt_pred_fix_x1))
     }
     
     models <- c(models, "dt")
@@ -686,7 +686,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                     "fitted.mu.df","fitted.sigma.df")
       
       pred_fix_x2 <- c(pred_fix_x2, list(df_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(df_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(df_pred_fix_x1))
     }
   
     models <- c(models, "df")
@@ -739,7 +739,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                     "fitted.mu.g","fitted.sigma.g")
       
       pred_fix_x2 <- c(pred_fix_x2, list(g_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(g_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(g_pred_fix_x1))
     }
     
     models <- c(models, "g")
@@ -819,7 +819,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                    "fitted.mu.gb","fitted.sigma.gb")
       
       pred_fix_x2 <- c(pred_fix_x2, list(gb_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(gb_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(gb_pred_fix_x1))
     }
     
     models <- c(models, "gb")
@@ -874,7 +874,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                     "fitted.mu.rf","fitted.sigma.rf")
       
       pred_fix_x2 <- c(pred_fix_x2, list(rf_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(rf_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(rf_pred_fix_x1))
     }
     
     models <- c(models, "rf")
@@ -931,7 +931,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
                                     "fitted.mu.cf","fitted.sigma.cf")
       
       pred_fix_x2 <- c(pred_fix_x2, list(cf_pred_fix_x2))
-      pred_fix_x1 <- c(pred_fix_x2, list(cf_pred_fix_x1))
+      pred_fix_x1 <- c(pred_fix_x1, list(cf_pred_fix_x1))
     }
     
     models <- c(models, "cf")
@@ -967,20 +967,20 @@ sim_oneset <- function(kappa = 1, nobs = 400,
 if(FALSE){
   library("gamlss.cens")
   gen.cens("NO", type = "left")
-  oneset <- sim_oneset(kappa = 1, nobs = 400,
-                       seedconst = 7, ntree = 100,
+  oneset <- sim_oneset(kappa = 7, nobs = 700,
+                       seedconst = 7, ntree = 200,
                        formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
-                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                       forest_mtry = 6,
+                       tree_minsplit = 14, tree_minbucket = 7, tree_mincrit = 0.95, 
+                       forest_minsplit = 14, forest_minbucket = 7, forest_mincrit = 0, 
+                       forest_mtry = 7,
                        type.tree = "ctree",
                        censNO = TRUE,
                        fix.mu = FALSE,
                        fix.sigma = FALSE,
                        mu.sigma.interaction = FALSE,
                        pred_fix = TRUE,
-                       pred_fix_x1 = 0,
-                       pred_fix_x2 = 0.7,
+                       pred_fix_x1 = 0.3,
+                       pred_fix_x2 = 0,
                        gamboost_cvr = FALSE,
                        eval_disttree = TRUE,
                        eval_distforest = TRUE,
@@ -1165,7 +1165,7 @@ plot_oneset <- function(oneset,
   # compare location parameter mu
   if(compare_mu){
     
-    plotdata <- cbind(learndata[,c("y","x1")], oneset$fun(oneset$datafix_x2))
+    plotdata <- cbind(oneset$learndata[,c("y","x1")], oneset$fun(oneset$datafix_x2))
     coln <- c("y","x1","true.mu","true.sigma")
     methodnames <- NULL
     
@@ -1224,7 +1224,7 @@ plot_oneset <- function(oneset,
   # variance
   if(compare_sigma_area){
     
-    plotdata <- cbind(learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
+    plotdata <- cbind(oneset$learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
     coln <- c("y","x2","true.mu","true.sigma")
     methodnames <- NULL
     
@@ -1281,8 +1281,6 @@ plot_oneset <- function(oneset,
             col = pallight["gamlss"], border = "transparent")
     if(add_gb) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.gb + sp$fitted.sigma.gb, rev(sp$fitted.mu.gb - sp$fitted.sigma.gb)),
                       col = pallight["gamboostLSS"], border = "transparent")
-    if(add_b) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.b + sp$fitted.sigma.b, rev(sp$fitted.mu.b - sp$fitted.sigma.b)),
-                      col = pallight["bamlss"], border = "transparent")
     if(add_rf) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.rf + sp$fitted.sigma.rf, rev(sp$fitted.mu.rf - sp$fitted.sigma.rf)),
                       col = pallight["randomForest"], border = "transparent")
     if(add_cf) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.cf + sp$fitted.sigma.cf, rev(sp$fitted.mu.cf - sp$fitted.sigma.cf)),
@@ -1293,7 +1291,7 @@ plot_oneset <- function(oneset,
   # variance
   if(compare_sigma_line){
     
-    plotdata <- cbind(learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
+    plotdata <- cbind(oneset$learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
     coln <- c("y","x2","true.mu","true.sigma")
     methodnames <- NULL
     
@@ -1343,7 +1341,6 @@ plot_oneset <- function(oneset,
     if(add_df) lines(x = sp$x2, y = sp$fitted.sigma.df, type = "l", col = pal["distforest"], lwd = 2)
     if(add_g) lines(x = sp$x2, y = sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
     if(add_gb) lines(x = sp$x2, y = sp$fitted.sigma.gb, type = "l", col = pal["gamboostLSS"], lwd = 2)
-    if(add_b) lines(x = sp$x2, y = sp$fitted.sigma.b, type = "l", col = pal["bamlss"], lwd = 2)
     if(add_rf) lines(x = sp$x2, y = sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
     if(add_cf) lines(x = sp$x2, y = sp$fitted.sigma.cf, type = "l", col = pal["cforest"], lwd = 2)
     
@@ -1381,7 +1378,7 @@ if(FALSE){
               compare_sigma_line = FALSE,
               add_dt = TRUE,
               add_df = TRUE,
-              add_g = FALSE,
+              add_g = TRUE,
               add_gb = FALSE,
               add_rf = FALSE,
               add_cf = FALSE,
