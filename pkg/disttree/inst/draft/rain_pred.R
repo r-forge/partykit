@@ -544,7 +544,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         if(inherits(g, "try-error")) {
                           g <- NA
                           g_error <- paste0(stationname,"_model")
-                        }
+                        } else g_error <- NA
                         
                         gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata, 
                                           families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
@@ -565,21 +565,21 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         if(inherits(mi, "try-error")) {
                           mi <- NA
                           mi_error <- paste0(stationname,"_model")
-                        }
+                        } else mi_error <- NA
                         
                         ml <- try(crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
                                        data = learndata, dist = "gaussian", left = 0, link.scale = "log"))
                         if(inherits(ml, "try-error")) {
                           ml <- NA
                           ml_error <- paste0(stationname,"_model")
-                        }
+                        } else ml_error <- NA
                         
                         mq <- try(crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
                                        data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic"))
                         if(inherits(mq, "try-error")) {
                           mq <- NA
                           mq_error <- paste0(stationname,"_model")
-                        }
+                        } else mq_error <- NA
                         
                         
                         
@@ -761,6 +761,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         rmse <- c(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_mi, rmse_ml, rmse_mq)
                         crps <- c(crps_dt, crps_df, crps_g, crps_gb, crps_mi, crps_ml, crps_mq)
                         
+                        res <- list()
                         res$results <- rbind(ll, rmse, crps)
                         colnames(res$results) <-
                           c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS id", "EMOS log", "EMOS quad")
@@ -793,9 +794,9 @@ gen.cens("NO", type = "left")
 
 #save(res, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
 #save(res, file = "~/disttree/inst/draft/rain_pred.rda")
-res <- rain_pred(seedconst = 7, ntree = 100,
-                 tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
-                 forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
+res <- rain_pred(seedconst = 7, ntree = 200,
+                 tree_minsplit = 50, tree_minbucket = 25, tree_mincrit = 0.95,
+                 forest_minsplit = 50, forest_minbucket = 25, forest_mincrit = 0,
                  forest_mtry = 27,
                  type.tree = "ctree",
                  gamboost_cvr = FALSE)
