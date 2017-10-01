@@ -805,13 +805,13 @@ if(FALSE){
   save(res, file = "rain_pred.rda")
   
   ll <- res[[1]]$results["ll",]
-  for(i in 2:length(res)) ll <- rbind(ll, res[[i]]$results["ll",])
+  for(i in 2:(length(res)-1)) ll <- rbind(ll, res[[i]]$results["ll",])
   
   rmse <- res[[1]]$results["rmse",]
-  for(i in 2:length(res)) rmse <- rbind(rmse, res[[i]]$results["rmse",])
+  for(i in 2:(length(res)-1)) rmse <- rbind(rmse, res[[i]]$results["rmse",])
   
   crps <- res[[1]]$results["crps",]
-  for(i in 2:length(res))  crps <- rbind(crps, res[[i]]$results["crps",])
+  for(i in 2:(length(res)-1))  crps <- rbind(crps, res[[i]]$results["crps",])
   
   colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
   
