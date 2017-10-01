@@ -296,158 +296,162 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
   #dim(raindata)
   #any(is.na(raindata))
   
-  # tree and forest formula
-  dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + #tp_frac + 
-    tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
-    tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
-    capepow_mean + capepow_sprd + capepow_min + capepow_max + #cape_frac +
-    capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
-    capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
-    dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
-    dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
-    msl_mean_mean + msl_mean_min + msl_mean_max + 
-    msl_sprd_mean + msl_sprd_min + msl_sprd_max +
-    pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
-    pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
-    tmax_mean_mean + tmax_mean_min + tmax_mean_max +
-    tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
-    tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
-    tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
-    t500_mean_mean + t500_mean_min + t500_mean_max +
-    t700_mean_mean + t700_mean_min + t700_mean_max +
-    t850_mean_mean + t850_mean_min + t850_mean_max +
-    t500_sprd_mean + t500_sprd_min + t500_sprd_max +
-    t700_sprd_mean + t700_sprd_min + t700_sprd_max +
-    t850_sprd_mean + t850_sprd_min + t850_sprd_max +
-    tdiff500850_mean + tdiff500850_min + tdiff500850_max +
-    tdiff700850_mean + tdiff700850_min + tdiff700850_max +
-    tdiff500700_mean + tdiff500700_min + tdiff500700_max
-  
-  # gamlss formula
-  g.mu.formula <- robs ~ pb(tppow_mean) + 
-    pb(tppow_mean1218 * capepow_mean1218) + 
-    pb(tppow_max) + 
-    pb(dswrf_mean_mean) +
-    pb(tcolc_mean_mean) + 
-    pb(msl_diff) + 
-    pb(pwat_mean_mean) + 
-    pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
-  
-  g.sigma.formula <- ~ pb(tppow_sprd) + 
-    pb(tppow_sprd1218 * capepow_mean1218) + 
-    pb(dswrf_sprd_mean) +
-    pb(tcolc_sprd_mean) + 
-    pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
-  
-  
-  
-  # gamboostLSS formula
-  gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
-    bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-    bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-    bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
-    bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-    bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-    bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-    bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-    bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-    bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-    bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-    bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-    bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-    bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-    bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-    bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-    bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-    bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-    bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-    bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-    bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-    bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-    bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-    bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-    bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
-  
-  gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
-    bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-    bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-    bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
-    bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-    bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-    bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-    bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-    bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-    bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-    bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-    bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-    bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-    bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-    bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-    bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-    bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-    bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-    bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-    bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-    bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-    bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-    bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-    bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-    bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
-  
-  
-  # bamlss formula
-  b.mu.formula <- robs ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
-    s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
-    s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
-    s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
-    s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
-    s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
-    s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
-    s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
-    s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
-    s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
-    s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
-    s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
-    s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
-    s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
-    s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
-    s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
-    s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
-    s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
-    s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
-    s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
-    s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
-    s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
-    s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
-    s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
-    s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
-  
-  b.sigma.formula <- ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
-    s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
-    s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
-    s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
-    s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
-    s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
-    s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
-    s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
-    s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
-    s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
-    s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
-    s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
-    s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
-    s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
-    s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
-    s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
-    s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
-    s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
-    s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
-    s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
-    s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
-    s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
-    s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
-    s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
-    s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
-  
+  ############
+  # formula
+  {
+    
+    # tree and forest formula
+    dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + #tp_frac + 
+      tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
+      tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
+      capepow_mean + capepow_sprd + capepow_min + capepow_max + #cape_frac +
+      capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
+      capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
+      dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
+      dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
+      msl_mean_mean + msl_mean_min + msl_mean_max + 
+      msl_sprd_mean + msl_sprd_min + msl_sprd_max +
+      pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
+      pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
+      tmax_mean_mean + tmax_mean_min + tmax_mean_max +
+      tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
+      tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
+      tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
+      t500_mean_mean + t500_mean_min + t500_mean_max +
+      t700_mean_mean + t700_mean_min + t700_mean_max +
+      t850_mean_mean + t850_mean_min + t850_mean_max +
+      t500_sprd_mean + t500_sprd_min + t500_sprd_max +
+      t700_sprd_mean + t700_sprd_min + t700_sprd_max +
+      t850_sprd_mean + t850_sprd_min + t850_sprd_max +
+      tdiff500850_mean + tdiff500850_min + tdiff500850_max +
+      tdiff700850_mean + tdiff700850_min + tdiff700850_max +
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max
+    
+    # gamlss formula
+    g.mu.formula <- robs ~ pb(tppow_mean) + 
+      pb(tppow_mean1218 * capepow_mean1218) + 
+      pb(tppow_max) + 
+      pb(dswrf_mean_mean) +
+      pb(tcolc_mean_mean) + 
+      pb(msl_diff) + 
+      pb(pwat_mean_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    g.sigma.formula <- ~ pb(tppow_sprd) + 
+      pb(tppow_sprd1218 * capepow_mean1218) + 
+      pb(dswrf_sprd_mean) +
+      pb(tcolc_sprd_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    
+    
+    # gamboostLSS formula
+    gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+    
+    gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+    
+    
+    # bamlss formula
+    b.mu.formula <- robs ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
+      s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
+      s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
+      s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
+      s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
+      s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
+      s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
+      s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
+      s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
+      s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
+      s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
+      s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
+      s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
+      s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
+      s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
+      s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
+      s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
+      s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
+      s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
+      s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
+      s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
+      s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
+      s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
+      s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
+      s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
+    
+    b.sigma.formula <- ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
+      s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
+      s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
+      s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
+      s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
+      s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
+      s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
+      s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
+      s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
+      s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
+      s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
+      s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
+      s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
+      s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
+      s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
+      s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
+      s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
+      s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
+      s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
+      s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
+      s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
+      s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
+      s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
+      s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
+      s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
+  }
   
   
   
@@ -475,6 +479,9 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                         # ll_b <- numeric(length = 10L)
                         cvr_opt <- numeric(length = 10L)
                         g_error_seed <- numeric(length = 10L)
+                        mi_error_seed <- numeric(length = 10L)
+                        ml_error_seed <- numeric(length = 10L)
+                        mq_error_seed <- numeric(length = 10L)
                         evaltime_user <- matrix(0, ncol = 8, nrow = 10L)
                         evaltime_system <- matrix(0, ncol = 8, nrow = 10L)
                         evaltime_elapsed <- matrix(0, ncol = 8, nrow = 10L)
@@ -564,16 +571,30 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                           #            data = learndata, sampler = FALSE, optimizer = boost, 
                           #            stop.criterion = "BIC", plot = FALSE)
                           
+
+                          mi_time <- system.time(mi <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
+                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                          if(inherits(mi, "try-error")) {
+                            mi_time <- NA
+                            mi <- NA
+                            mi_error_seed[i] <- seedconst * k
+                          }
                           
-                          mi_time <- system.time(mi <- crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                                            data = learndata, dist = "gaussian", left = 0, link.scale = "identity"))
+                          ml_time <- system.time(ml <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
+                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                          if(inherits(ml, "try-error")) {
+                            ml_time <- NA
+                            ml <- NA
+                            ml_error_seed[i] <- seedconst * k
+                          }
                           
-                          ml_time <- system.time(ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                                                            data = learndata, dist = "gaussian", left = 0, link.scale = "log"))
-                          
-                          mq_time <- system.time(mq <- crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-                                                            data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic"))
-                          
+                          mq_time <- system.time(mq <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
+                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                          if(inherits(mq, "try-error")) {
+                            mq_time <- NA
+                            mq <- NA
+                            mq_error_seed[i] <- seedconst * k
+                          }
                           
                           
                           ## get predicted parameter
@@ -623,42 +644,59 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               g_error_seed[i] <- seedconst * k
                             } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
                           }
-                          
+                          g_na <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
                           
                           # EMOS
-                          mi_mu <- predict(mi, type = "location", newdata = testdata)     # returns parameter on response scale
-                          mi_sigma <- predict(mi, type = "scale", newdata = testdata)
-                          mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+                          if(!(all(is.na(mi)))){
+                            mi_mu <- try(predict(mi, type = "location", newdata = testdata))     # returns parameter on response scale
+                            mi_sigma <- try(predict(mi, type = "scale", newdata = testdata))
+                            if(inherits(mi_mu, "try-error") | inherits(mi_sigma, "try-error")) {
+                              mi_mu <- mi_sigma <- mi_exp <- NA
+                              mi_error_seed[i] <- seedconst * k
+                            } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+                          }
+                          mi_na <- any(c(all(is.na(mi)), is.na(mi_mu), is.na(mi_sigma)))
                           
-                          ml_mu <- predict(ml, type = "location", newdata = testdata)     # returns parameter on response scale
-                          ml_sigma <- predict(ml, type = "scale", newdata = testdata)
-                          ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+                          if(!(all(is.na(ml)))){
+                            ml_mu <- try(predict(ml, type = "location", newdata = testdata))     # returns parameter on response scale
+                            ml_sigma <- try(predict(ml, type = "scale", newdata = testdata))
+                            if(inherits(ml_mu, "try-error") | inherits(ml_sigma, "try-error")) {
+                              ml_mu <- ml_sigma <- ml_exp <- NA
+                              ml_error_seed[i] <- seedconst * k
+                            } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+                          }
+                          ml_na <- any(c(all(is.na(ml)), is.na(ml_mu), is.na(ml_sigma)))
                           
-                          mq_mu <- predict(mq, type = "location", newdata = testdata)     # returns parameter on response scale
-                          mq_sigma <- predict(mq, type = "scale", newdata = testdata)
-                          mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+                          if(!(all(is.na(mq)))){
+                            mq_mu <- try(predict(mq, type = "location", newdata = testdata))     # returns parameter on response scale
+                            mq_sigma <- try(predict(mq, type = "scale", newdata = testdata))
+                            if(inherits(mq_mu, "try-error") | inherits(mq_sigma, "try-error")) {
+                              mq_mu <- mq_sigma <- mq_exp <- NA
+                              mq_error_seed[i] <- seedconst * k
+                            } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+                          }
+                          mq_na <- any(c(all(is.na(mq)), is.na(mq_mu), is.na(mq_sigma)))
                           
-                          g_error <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
                           
                           # CPRS
                           crps_dt[i] <- sum(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
                           crps_df[i] <- sum(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
-                          crps_g[i] <- if(!g_error) sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
+                          crps_g[i] <- if(!g_na) sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
                           #crps_b[i] <- sum(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
                           crps_gb[i] <- sum(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
-                          crps_mi[i] <- sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf))
-                          crps_ml[i] <- sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf))
-                          crps_mq[i] <- sum(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf))
+                          crps_mi[i] <- if(!mi_na) sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf)) else NA
+                          crps_ml[i] <- if(!ml_na) sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf)) else NA
+                          crps_mq[i] <- if(!mq_na) sum(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf)) else NA
                           
                           # RMSE
                           rmse_dt[i] <- sqrt(mean((dt_exp - testdata[,"robs"])^2))
                           rmse_df[i] <- sqrt(mean((df_exp - testdata[,"robs"])^2))
-                          rmse_g[i] <- if(!g_error) sqrt(mean((g_exp - testdata[,"robs"])^2)) else NA
+                          rmse_g[i] <- if(!g_na) sqrt(mean((g_exp - testdata[,"robs"])^2)) else NA
                           rmse_gb[i] <- sqrt(mean((gb_exp - testdata[,"robs"])^2))
                           #rmse_b[i] <- sqrt(mean((b_exp - testdata[,"robs"])^2))
-                          rmse_mi[i] <- sqrt(mean((mi_exp - testdata[,"robs"])^2))
-                          rmse_ml[i] <- sqrt(mean((ml_exp - testdata[,"robs"])^2))
-                          rmse_mq[i] <- sqrt(mean((mq_exp - testdata[,"robs"])^2))
+                          rmse_mi[i] <- if(!mi_na) sqrt(mean((mi_exp - testdata[,"robs"])^2)) else NA
+                          rmse_ml[i] <- if(!ml_na) sqrt(mean((ml_exp - testdata[,"robs"])^2)) else NA
+                          rmse_mq[i] <- if(!mq_na) sqrt(mean((mq_exp - testdata[,"robs"])^2)) else NA
                           
                           # loglikelihood
                           dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- 0
@@ -667,22 +705,23 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             
                             eta_dt <- as.numeric(dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
                             eta_df <- as.numeric(dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
-                            eta_g <- if(!g_error) as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
+                            eta_g <- if(!g_na) as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
                             eta_gb <- as.numeric(dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
                             #eta_b <- as.numeric(dist_list_cens_normal$linkfun(cbind(b_mu, b_sigma)[j,]))
-                            eta_mi <- as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,]))
-                            eta_ml <- as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,]))
-                            eta_mq <- as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,]))
+                            eta_mi <- if(!mi_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+                            eta_ml <- if(!ml_na) as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+                            eta_mq <- if(!mq_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
                             
                             dtll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
                             dfll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-                            gll_j <- if(!g_error) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+                            gll_j <- if(!g_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
                             gbll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
                             #bll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_b, log=TRUE)
-                            mill_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE)
-                            mlll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE)
-                            mqll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE)
+                            mill_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+                            mlll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+                            mqll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
                             
+                          
                             dtll <- if(is.na(dtll_j)) {
                               print(eta_dt, testdata[j,"robs"]) 
                               dtll + (-5)
@@ -693,7 +732,7 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               dfll + (-5)
                             } else {dfll + dfll_j}    ## FIX ME: NAs from distforest
                             
-                            gll <- if(!g_error) {
+                            gll <- if(!g_na) {
                               if(is.na(gll_j)) {
                                 print(eta_g, testdata[j,"robs"]) 
                                 gll + (-5)
@@ -710,30 +749,37 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             #  bll + (-5)
                             #} else {bll + bll_j}   
                             
-                            mill <- if(is.na(mill_j)) {
-                              print(eta_mi, testdata[j,"robs"]) 
-                              mill + (-5)
-                            } else {mill + mill_j} 
+                            mill <- if(!mi_na) {
+                              if(is.na(mill_j)) {
+                                print(eta_mi, testdata[j,"robs"]) 
+                                mill + (-5)
+                              } else {mill + mill_j} 
+                            } else NA      
                             
-                            mlll <- if(is.na(mlll_j)) {
-                              print(eta_ml, testdata[j,"robs"]) 
-                              mlll + (-5)
-                            } else {mlll + mlll_j} 
+                            mlll <- if(!ml_na) {
+                              if(is.na(mlll_j)) {
+                                print(eta_ml, testdata[j,"robs"]) 
+                                mlll + (-5)
+                              } else {mlll + mlll_j} 
+                            } else NA
                             
-                            mqll <- if(is.na(mqll_j)) {
-                              print(eta_mq, testdata[j,"robs"]) 
-                              mqll + (-5)
-                            } else {mqll + mqll_j} 
+                            mqll <- if(!mq_na) {
+                              if(is.na(mqll_j)) {
+                                print(eta_mq, testdata[j,"robs"]) 
+                                mqll + (-5)
+                              } else {mqll + mqll_j} 
+                            } else NA
+                             
                           }
                           
                           ll_dt[i] <- dtll
                           ll_df[i] <- dfll
-                          ll_g[i] <- if(!g_error) gll else NA
+                          ll_g[i] <- if(!g_na) gll else NA
                           ll_gb[i] <- gbll
                           #ll_b[i] <- bll
-                          ll_mi[i] <- mill
-                          ll_ml[i] <- mlll
-                          ll_mq[i] <- mqll
+                          ll_mi[i] <- if(!mi_na) mill else NA
+                          ll_ml[i] <- if(!ml_na) mlll else NA
+                          ll_mq[i] <- if(!mq_na) mqll else NA
                           
                           evaltime_user[i,] <- c(dt_time[1], df_time[1], g_time[1], gb_time[1], gb_cvr_time[1], mi_time[1], ml_time[1], mq_time[1])
                           evaltime_system[i,] <- c(dt_time[2], df_time[2], g_time[2], gb_time[2], gb_cvr_time[2], mi_time[2], ml_time[2], mq_time[2])
@@ -758,6 +804,9 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                         colnames(res$evaltime_user) <- colnames(res$evaltime_system) <- colnames(res$evaltime_elapsed) <- 
                           c("disttree", "distforest", "gamlss", "gamboostLSS", "gamboostLSS_cvrisk", "EMOS id", "EMOS log", "EMOS quad")
                         res$g_error_seed <- g_error_seed
+                        res$mi_error_seed <- mi_error_seed
+                        res$ml_error_seed <- ml_error_seed
+                        res$mq_error_seed <- mq_error_seed
                         
                         return(res)
                       },
@@ -774,12 +823,13 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
 
 if(FALSE){
   setwd("~/svn/partykit/pkg/disttree/inst/draft/")
-  rainres <- rain_cross("Axams", seedconst = 7, ntree = 100,
-    tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
-    forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
-    forest_mtry = 27,
-    type.tree = "ctree",
-    gamboost_cvr = FALSE)
+  rainres <- rain_cross(stationname = "Steinberg am Rofan", 
+                        seedconst = 7, ntree = 100,
+                        tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
+                        forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
+                        forest_mtry = 27,
+                        type.tree = "ctree",
+                        gamboost_cvr = FALSE)
   #save(rainres, file = paste0("~/svn/partykit/pkg/disttree/inst/draft/rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
   #save(rainres, file = paste0("~/disttree/inst/draft/rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
   save(rainres, file = paste0("rain_", rainres$call$stationname, rainres$call$seedconst, ".rda"))
@@ -815,6 +865,8 @@ if(FALSE){
   boxplot(rain_rmse)
   boxplot(rain_ll)
   boxplot(rain_crps)
+  
+  unlist(lapply(1:10, function(i)rainres[[i]]$g_error_seed))
   
   # scoring rules
   
