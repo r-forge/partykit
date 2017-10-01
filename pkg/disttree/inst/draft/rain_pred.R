@@ -630,7 +630,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                             g_mu <- g_sigma <- g_exp <- NA
                             g_error <- paste0(stationname,"_pred")
                           } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
-                        }
+                        } else g_mu <- g_sigma <- NA
                         g_na <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
                         
                         # EMOS
@@ -641,7 +641,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                             mi_mu <- mi_sigma <- mi_exp <- NA
                             mi_error <- paste0(stationname,"_pred")
                           } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
-                        }
+                        } else mi_mu <- mi_sigma <- NA
                         mi_na <- any(c(all(is.na(mi)), is.na(mi_mu), is.na(mi_sigma)))
                         
                         if(!(all(is.na(ml)))){
@@ -651,7 +651,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                             ml_mu <- ml_sigma <- ml_exp <- NA
                             ml_error <- paste0(stationname,"_pred")
                           } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
-                        }
+                        } else ml_mu <- ml_sigma <- NA
                         ml_na <- any(c(all(is.na(ml)), is.na(ml_mu), is.na(ml_sigma)))
                         
                         if(!(all(is.na(mq)))){
@@ -661,7 +661,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                             mq_mu <- mq_sigma <- mq_exp <- NA
                             mq_error <- paste0(stationname,"_pred")
                           } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
-                        }
+                        } else mq_mu <- mq_sigma <- NA
                         mq_na <- any(c(all(is.na(mq)), is.na(mq_mu), is.na(mq_sigma)))
                         
                         
