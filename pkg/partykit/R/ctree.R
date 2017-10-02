@@ -41,11 +41,11 @@
                 X <- unclass(x)
                 attr(X, "levels") <- levels(x)
             } else {
-                x[-subset] <- NA
-                ux <- sort(unique(x))
+                ux <- sort(unique(x[subset]))
                 X <- cut.default(x, breaks = c(-Inf, ux, Inf),
                                  labels = FALSE, right = TRUE)
-                # X[is.na(X)] <- 0L (NAs are handled by LinStatExpCov)
+                ### <NOTE> only breaks in this node are considered
+                ###        because of subset </NOTE>
                 attr(X, "levels") <- ux 
                 storage.mode(X) <- "integer"
             }
