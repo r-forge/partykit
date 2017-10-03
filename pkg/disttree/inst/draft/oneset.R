@@ -1,18 +1,18 @@
 
 sim_oneset <- function(kappa = 1, nobs = 400,
                        seedconst = 7, ntree = 100,
-                       formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                       formula = y~x1+x2+x3+x4+x5+x6, 
                        tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
                        forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                       forest_mtry = 4,
+                       forest_mtry = 3,
                        type.tree = "ctree",
                        censNO = TRUE,
                        fix.mu = FALSE,
                        fix.sigma = FALSE,
                        mu.sigma.interaction = FALSE,
                        pred_fix = FALSE,
-                       pred_fix_x1 = 0.3,
-                       pred_fix_x2 = 0.7,
+                       pred_fix_x1 = -0.5,
+                       pred_fix_x4 = 0,
                        gamboost_cvr = FALSE,
                        eval_disttree = TRUE,
                        eval_distforest = TRUE,
@@ -338,14 +338,10 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     x1 <- runif(n,-1,1)
     x2 <- runif(n,-1,1)
     x3 <- runif(n,-1,1)
-    x4 <- runif(n,-1,1)
-    x5 <- runif(n,-1,1)
-    x6 <- runif(n,-1,1)
-    x7 <- runif(n,-1,1)
-    x8 <- runif(n,-1,1)
-    x9 <- runif(n,-1,1)
-    x10 <- runif(n,-1,1)
-    x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+    x4 <- rbinom(n,1,0.5)
+    x5 <- rbinom(n,1,0.5)
+    x6 <- rbinom(n,1,0.5)
+    x <- cbind(x1,x2,x3,x4,x5,x6)
     # reduce nr of possible split points by rounding values of split variables
     x <- round(x, digits = round.sp)
     
@@ -366,7 +362,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     if(is.null(fun)) {
       index <- vector(mode = "numeric", length = n)
       sv = split.matrix[,1]    # index of split variables
-      sp = split.matrix[,2]    # split points
+      sp = split.matrix[,4]    # split points
       par = par.matrix
       
       # splitting based on the given split variables and split points and
@@ -395,11 +391,11 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       if(!(family$family.name == "Poisson Distribution")){
         y <- rfun(n, dpar[,1], dpar[,2])
         d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
+        colnames(d) <- c("y", paste0("x", c(1:NCOL(x))), "mu", "sigma")
       } else {
         y <- rfun(n, dpar)
         d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
+        colnames(d) <- c("y", paste0("x", c(1:NCOL(x))), "lambda")
       }
     }
     
@@ -411,6 +407,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     return(d)
   }
+  
   
   
   
@@ -506,11 +503,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     } else {
       fun <- function(x){
         mu <- mubase
-        sigma <- 1 + 2 * 
-          (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
-             (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
-          (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
-        #sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
+        sigma <- 3 + 3 * x[,4]
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -520,9 +513,9 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       fun <- function(x){
         mu <- mubase + 
           (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
-          4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-        #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+        #4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
+        #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
         sigma <- 2
         par <- cbind(mu, sigma)
         return(par)
@@ -532,10 +525,10 @@ sim_oneset <- function(kappa = 1, nobs = 400,
         fun <- function(x){
           mu <- mubase + 
             (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
-            4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          sigma <- 2 + mu/4
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+          #4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
+          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
+          sigma <- 1 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -544,13 +537,9 @@ sim_oneset <- function(kappa = 1, nobs = 400,
           mu <- mubase + 
             (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
             (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
-          #  4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) # + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          #sigma <- 1 + 2 * 
-          #  (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
-          #     (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
-          #  (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
-          sigma <- 1 + 2*(plogis((kappa^(1.8)) * 5 * (x[,2]))) # * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
+          #  #4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
+          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,4]))
+          sigma <- 3 + 3 * x[,4]
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -568,20 +557,21 @@ sim_oneset <- function(kappa = 1, nobs = 400,
   # generate data
   set.seed(seedconst)
   
-  learndata <- dgp(nobs, family = family, round.sp = 4, fun = fun)
+  data <- dgp(nobs, family = family, round.sp = 4, fun = fun)
+  learndata <- data[,-c(NCOL(data)-1, NCOL(data))]
   
   if(pred_fix){
-    # data sets with fixed covariates except for one of them (x1 or x2)
-    datafix_x1 <- datafix_x2 <- learndata[,-c(1,12,13)]
-    datafix_x1[,c("x3","x4","x5","x6","x7","x8","x9","x10")] <- 
-      datafix_x2[,c("x3","x4","x5","x6","x7","x8","x9","x10")] <- rep.int(0, NROW(learndata))
-    datafix_x1[,c("x1")] <- rep.int(pred_fix_x1, NROW(learndata))
-    datafix_x2[,c("x2")] <- rep.int(pred_fix_x2, NROW(learndata))
+    # data sets with fixed covariates except for one of them (x1 or x4)
+    datafix_x1 <- datafix_x4 <- learndata[,-1]
+    datafix_x1[,c("x2","x3","x5","x6")] <- 
+      datafix_x4[,c("x2","x3","x5","x6")] <- 0
+    datafix_x1[,c("x1")] <- pred_fix_x1
+    datafix_x4[,c("x4")] <- pred_fix_x4
   }  
   
   
   pred <- list()
-  pred_fix_x2 <- list()
+  pred_fix_x4 <- list()
   pred_fix_x1 <- list()
   models <- list()
   
@@ -612,7 +602,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       }
     } else dt_exp <- dt_mu
     
-    dt_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    dt_pred <- cbind(data[,c("y","mu","sigma")], 
                      dt_exp, dt_mu, dt_sigma)
     colnames(dt_pred) <- c("y","true.mu","true.sigma", 
                            "fitted.exp.dt", "fitted.mu.dt","fitted.sigma.dt")
@@ -621,17 +611,17 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     
     if(pred_fix){
-      dt_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
-                        predict(dt, newdata = datafix_x2, type = "parameter"))
-      colnames(dt_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      dt_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
+                        predict(dt, newdata = datafix_x4, type = "parameter"))
+      colnames(dt_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                               "fitted.mu.dt","fitted.sigma.dt")
       
-      dt_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
+      dt_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
                               predict(dt, newdata = datafix_x1, type = "parameter"))
-      colnames(dt_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      colnames(dt_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                     "fitted.mu.dt","fitted.sigma.dt")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(dt_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(dt_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(dt_pred_fix_x1))
     }
     
@@ -666,7 +656,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       }
     } else df_exp <- df_mu
     
-    df_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    df_pred <- cbind(data[,c("y","mu","sigma")], 
                      df_exp, df_mu, df_sigma)
     colnames(df_pred) <- c("y","true.mu","true.sigma", 
                            "fitted.exp.df", "fitted.mu.df","fitted.sigma.df")
@@ -675,17 +665,17 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     
     if(pred_fix){
-      df_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
-                              predict(df, newdata = datafix_x2, type = "parameter"))
-      colnames(df_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      df_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
+                              predict(df, newdata = datafix_x4, type = "parameter"))
+      colnames(df_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                                     "fitted.mu.df","fitted.sigma.df")
       
-      df_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
+      df_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
                               predict(df, newdata = datafix_x1, type = "parameter"))
-      colnames(df_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      colnames(df_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                     "fitted.mu.df","fitted.sigma.df")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(df_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(df_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(df_pred_fix_x1))
     }
   
@@ -695,8 +685,8 @@ sim_oneset <- function(kappa = 1, nobs = 400,
   
   if(eval_gamlss){
     
-    mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
-    sigma.formula <- ~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
+    mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)
+    sigma.formula <- ~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)
     
     if(censNO){
       g_learndata <- learndata
@@ -706,8 +696,8 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NO())
     }
     
-    g_mu <- predict(g, what = "mu", type = "response", data = learndata)
-    g_sigma <- predict(g, what = "sigma", type = "response", data = learndata)
+    g_mu <- predict(g, what = "mu", type = "response", data = g_learndata)
+    g_sigma <- predict(g, what = "sigma", type = "response", data = g_learndata)
     
     if(censNO){
       #calculate expected value for censored data
@@ -717,7 +707,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       g_exp <- g_mu
     }
     
-    g_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    g_pred <- cbind(data[,c("y","mu","sigma")], 
                      g_exp, g_mu, g_sigma)
     colnames(g_pred) <- c("y","true.mu","true.sigma", 
                            "fitted.exp.g", "fitted.mu.g","fitted.sigma.g")
@@ -726,19 +716,19 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     
     if(pred_fix){
-      g_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
-                             predict(g, what = "mu", type = "response", newdata = datafix_x2),
-                             predict(g, what = "sigma", type = "response", newdata = datafix_x2))
-      colnames(g_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      g_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
+                             predict(g, what = "mu", type = "response", newdata = datafix_x4, data = g_learndata),
+                             predict(g, what = "sigma", type = "response", newdata = datafix_x4, data = g_learndata))
+      colnames(g_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                                     "fitted.mu.g","fitted.sigma.g")
       
-      g_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
-                             predict(g, what = "mu", type = "response", newdata = datafix_x1),
-                             predict(g, what = "sigma", type = "response", newdata = datafix_x1))
-      colnames(g_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      g_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
+                             predict(g, what = "mu", type = "response", newdata = datafix_x1, data = g_learndata),
+                             predict(g, what = "sigma", type = "response", newdata = datafix_x1, data = g_learndata))
+      colnames(g_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                     "fitted.mu.g","fitted.sigma.g")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(g_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(g_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(g_pred_fix_x1))
     }
     
@@ -752,8 +742,8 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     #grid <- make.grid(max = 300, min = 10, length.out = 10)
     
     
-    mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
-    sigma.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
+    mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)
+    sigma.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)
     
     
     if(censNO) {
@@ -789,7 +779,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       gb_exp <- gb_mu
     }
     
-    gb_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    gb_pred <- cbind(data[,c("y","mu","sigma")], 
                     gb_exp, gb_mu, gb_sigma)
     colnames(gb_pred) <- c("y","true.mu","true.sigma", 
                           "fitted.exp.gb", "fitted.mu.gb","fitted.sigma.gb")
@@ -799,13 +789,13 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     if(pred_fix){
       gb.pred.par <- predict(gb, parameter = list("mu","sigma"), type = "response", 
-                             newdata = datafix_x2)
+                             newdata = datafix_x4)
       gb_mu <- gb.pred.par[[1]]
       gb_sigma <- gb.pred.par[[2]]
       
-      gb_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
+      gb_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
                              gb_mu, gb_sigma)
-      colnames(gb_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      colnames(gb_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                                    "fitted.mu.gb","fitted.sigma.gb")
       
       gb.pred.par <- predict(gb, parameter = list("mu","sigma"), type = "response", 
@@ -813,12 +803,12 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       gb_mu <- gb.pred.par[[1]]
       gb_sigma <- gb.pred.par[[2]]
       
-      gb_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
+      gb_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
                               gb_mu, gb_sigma)
-      colnames(gb_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      colnames(gb_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                    "fitted.mu.gb","fitted.sigma.gb")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(gb_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(gb_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(gb_pred_fix_x1))
     }
     
@@ -844,7 +834,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       rf_exp <- rf_mu
     }
     
-    rf_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    rf_pred <- cbind(data[,c("y","mu","sigma")], 
                      rf_exp, rf_mu, rf_sigma)
     colnames(rf_pred) <- c("y","true.mu","true.sigma", 
                            "fitted.exp.rf", "fitted.mu.rf","fitted.sigma.rf")
@@ -854,13 +844,13 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     if(pred_fix){
       
-      rf_mu <- predict(rf, type = "response", newdata = datafix_x2)
+      rf_mu <- predict(rf, type = "response", newdata = datafix_x4)
       ## get 'fitted.sigma.rf'
-      rf_sigma <- rf_getsd(rf, newdata = datafix_x2, rfdata = learndata)
+      rf_sigma <- rf_getsd(rf, newdata = datafix_x4, rfdata = learndata)
       
-      rf_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
+      rf_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
                               rf_mu, rf_sigma)
-      colnames(rf_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      colnames(rf_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                                     "fitted.mu.rf","fitted.sigma.rf")
       
       
@@ -868,12 +858,12 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       ## get 'fitted.sigma.rf'
       rf_sigma <- rf_getsd(rf, newdata = datafix_x1, rfdata = learndata)
       
-      rf_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
+      rf_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
                               rf_mu, rf_sigma)
-      colnames(rf_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      colnames(rf_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                     "fitted.mu.rf","fitted.sigma.rf")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(rf_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(rf_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(rf_pred_fix_x1))
     }
     
@@ -901,7 +891,7 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       cf_exp <- cf_mu
     }
     
-    cf_pred <- cbind(learndata[,c("y","mu","sigma")], 
+    cf_pred <- cbind(data[,c("y","mu","sigma")], 
                      cf_exp, cf_mu, cf_sigma)
     colnames(cf_pred) <- c("y","true.mu","true.sigma", 
                            "fitted.exp.cf", "fitted.mu.cf","fitted.sigma.cf")
@@ -911,13 +901,13 @@ sim_oneset <- function(kappa = 1, nobs = 400,
     
     if(pred_fix){
       
-      cf_mu <- predict(cf, type = "response", newdata = datafix_x2)
+      cf_mu <- predict(cf, type = "response", newdata = datafix_x4)
       ## get 'fitted.sigma.cf'
-      cf_sigma <- cf_getsd(cf, newdata = datafix_x2)
+      cf_sigma <- cf_getsd(cf, newdata = datafix_x4)
       
-      cf_pred_fix_x2 <- cbind(learndata[,c("y","x1")], fun(datafix_x2),
+      cf_pred_fix_x4 <- cbind(data[,c("y","x1")], fun(datafix_x4),
                               cf_mu, cf_sigma)
-      colnames(cf_pred_fix_x2) <- c("y","x1","true.mu","true.sigma", 
+      colnames(cf_pred_fix_x4) <- c("y","x1","true.mu","true.sigma", 
                                     "fitted.mu.cf","fitted.sigma.cf")
       
       
@@ -925,12 +915,12 @@ sim_oneset <- function(kappa = 1, nobs = 400,
       ## get 'fitted.sigma.cf'
       cf_sigma <- cf_getsd(cf, newdata = datafix_x1)
       
-      cf_pred_fix_x1 <- cbind(learndata[,c("y","x2")], fun(datafix_x1),
+      cf_pred_fix_x1 <- cbind(data[,c("y","x4")], fun(datafix_x1),
                               cf_mu, cf_sigma)
-      colnames(cf_pred_fix_x1) <- c("y","x2","true.mu","true.sigma", 
+      colnames(cf_pred_fix_x1) <- c("y","x4","true.mu","true.sigma", 
                                     "fitted.mu.cf","fitted.sigma.cf")
       
-      pred_fix_x2 <- c(pred_fix_x2, list(cf_pred_fix_x2))
+      pred_fix_x4 <- c(pred_fix_x4, list(cf_pred_fix_x4))
       pred_fix_x1 <- c(pred_fix_x1, list(cf_pred_fix_x1))
     }
     
@@ -941,17 +931,18 @@ sim_oneset <- function(kappa = 1, nobs = 400,
   
   res <- list()
   res$call <- cl
-  res$learndata <- learndata
+  res$data <- data
   res$fun <- fun
   res$pred <- pred
-  res$pred_fix_x2 <- pred_fix_x2
+  res$pred_fix_x4 <- pred_fix_x4
   res$pred_fix_x1 <- pred_fix_x1
-  names(res$pred) <- names(res$pred_fix_x2) <- names(res$pred_fix_x1) <- unlist(models)  
+  names(res$pred) <- names(res$pred_fix_x4) <- names(res$pred_fix_x1) <- unlist(models)  
   res$models <- models
   res$datafix_x1 <- datafix_x1
-  res$datafix_x2 <- datafix_x2
+  res$datafix_x4 <- datafix_x4
+  res$family <- family
   
-  #names(res) <- c("call", "learndata", "fun", "pred", "pred_fix_x2", "pred_fix_x1")
+  #names(res) <- c("call", "data", "fun", "pred", "pred_fix_x4", "pred_fix_x1")
   
   return(res)
 }
@@ -962,25 +953,25 @@ sim_oneset <- function(kappa = 1, nobs = 400,
 
 
 
-##########################3
+##########################
 # test sim_oneset
 if(FALSE){
   library("gamlss.cens")
   gen.cens("NO", type = "left")
-  oneset <- sim_oneset(kappa = 7, nobs = 700,
-                       seedconst = 7, ntree = 200,
-                       formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                       tree_minsplit = 14, tree_minbucket = 7, tree_mincrit = 0.95, 
-                       forest_minsplit = 14, forest_minbucket = 7, forest_mincrit = 0, 
-                       forest_mtry = 7,
+  oneset <- sim_oneset(kappa = 7, nobs = 400,
+                       seedconst = 7, ntree = 100,
+                       formula = y~x1+x2+x3+x4+x5+x6, 
+                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
+                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                       forest_mtry = 3,
                        type.tree = "ctree",
                        censNO = TRUE,
                        fix.mu = FALSE,
                        fix.sigma = FALSE,
                        mu.sigma.interaction = FALSE,
                        pred_fix = TRUE,
-                       pred_fix_x1 = 0.3,
-                       pred_fix_x2 = 0,
+                       pred_fix_x1 = -0.5,
+                       pred_fix_x4 = 0,
                        gamboost_cvr = FALSE,
                        eval_disttree = TRUE,
                        eval_distforest = TRUE,
@@ -988,7 +979,7 @@ if(FALSE){
                        eval_gamboostLSS = FALSE,
                        eval_randomForest = FALSE,
                        eval_cforest = FALSE,
-                       mubase = 0)
+                       mubase = 1)
 }
 
 
@@ -1025,9 +1016,10 @@ plot_oneset <- function(oneset,
   
   transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
   
+  #learndata <- oneset$data[,-c(NCOL(oneset$data)-1, NCOL(oneset$data))]
   
   if(nomodel){
-    plotdata <- oneset$learndata[,c("y","x1","mu","sigma")]
+    plotdata <- oneset$data[,c("y","x1","mu","sigma")]
     colnames(plotdata) <- c("y","x1","true.mu","true.sigma")
     sp <- plotdata[order(plotdata["x1"]),]
     
@@ -1038,17 +1030,13 @@ plot_oneset <- function(oneset,
     lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
     polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
             col = transpgrey, border = "transparent")
-    #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
-    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
-    #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
     legend("topleft", legend = expression(mu %+-% sigma), bty = "n")
   }
   
   # disttree
   if(only_dt){
     
-    plotdata <- oneset$pred_fix_x2$dt
+    plotdata <- oneset$pred_fix_x4$dt
     sp <- plotdata[order(plotdata["x1"]),]
     
     par(mar=c(5.1,4.1,4.1,3.1))
@@ -1067,7 +1055,7 @@ plot_oneset <- function(oneset,
   # distforest
   if(only_df){
     
-    plotdata <- oneset$pred_fix_x2$df
+    plotdata <- oneset$pred_fix_x4$df
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     par(mar=c(5.1,4.1,4.1,3.1))
@@ -1085,7 +1073,7 @@ plot_oneset <- function(oneset,
   # gamlss
   if(only_g){
 
-    plotdata <- oneset$pred_fix_x2$g
+    plotdata <- oneset$pred_fix_x4$g
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     par(mar=c(5.1,4.1,4.1,3.1))
@@ -1104,7 +1092,7 @@ plot_oneset <- function(oneset,
   # gamboostLSS
   if(only_gb){
     
-    plotdata <- oneset$pred_fix_x2$gb
+    plotdata <- oneset$pred_fix_x4$gb
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
@@ -1123,7 +1111,7 @@ plot_oneset <- function(oneset,
   
   # randomForest 
   if(only_rf){
-    plotdata <- oneset$pred_fix_x2$rf
+    plotdata <- oneset$pred_fix_x4$rf
     
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
@@ -1142,7 +1130,7 @@ plot_oneset <- function(oneset,
   
   # cforest
   if(only_cf){
-    plotdata <- oneset$pred_fix_x2$cf
+    plotdata <- oneset$pred_fix_x4$cf
     sp <- plotdata[order(plotdata["x1"]),]
     if(is.null(ylim)) ylim <- c(min(plotdata[,c(1,3,5)] - sp$true.sigma), max(plotdata[,c(1,3,5)] + sp$true.sigma))
     
@@ -1165,37 +1153,37 @@ plot_oneset <- function(oneset,
   # compare location parameter mu
   if(compare_mu){
     
-    plotdata <- cbind(oneset$learndata[,c("y","x1")], oneset$fun(oneset$datafix_x2))
+    plotdata <- cbind(oneset$data[,c("y","x1")], oneset$fun(oneset$datafix_x4))
     coln <- c("y","x1","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$dt[,c("fitted.mu.dt","fitted.sigma.dt")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$dt[,c("fitted.mu.dt","fitted.sigma.dt")])
       coln <- c(coln, "fitted.mu.dt","fitted.sigma.dt")
       methodnames <- c(methodnames, "disttree")
     }
     if(add_df) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$df[,c("fitted.mu.df","fitted.sigma.df")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$df[,c("fitted.mu.df","fitted.sigma.df")])
       coln <- c(coln, "fitted.mu.df","fitted.sigma.df")
       methodnames <- c(methodnames, "distforest")
     }
     if(add_g) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$g[,c("fitted.mu.g","fitted.sigma.g")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$g[,c("fitted.mu.g","fitted.sigma.g")])
       coln <- c(coln, "fitted.mu.g","fitted.sigma.g")
       methodnames <- c(methodnames, "gamlss")
     }
     if(add_gb) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$gb[,c("fitted.mu.gb","fitted.sigma.gb")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$gb[,c("fitted.mu.gb","fitted.sigma.gb")])
       coln <- c(coln, "fitted.mu.gb","fitted.sigma.gb")
       methodnames <- c(methodnames, "gamboostLSS")
     }
     if(add_rf) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$rf[,c("fitted.mu.rf","fitted.sigma.rf")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$rf[,c("fitted.mu.rf","fitted.sigma.rf")])
       coln <- c(coln, "fitted.mu.rf","fitted.sigma.rf")
       methodnames <- c(methodnames, "randomForest")
     }
     if(add_cf) {
-      plotdata <- cbind(plotdata, oneset$pred_fix_x2$cf[,c("fitted.mu.cf","fitted.sigma.cf")])
+      plotdata <- cbind(plotdata, oneset$pred_fix_x4$cf[,c("fitted.mu.cf","fitted.sigma.cf")])
       coln <- c(coln, "fitted.mu.cf","fitted.sigma.cf")
       methodnames <- c(methodnames, "cforest")
     }
@@ -1224,8 +1212,8 @@ plot_oneset <- function(oneset,
   # variance
   if(compare_sigma_area){
     
-    plotdata <- cbind(oneset$learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
-    coln <- c("y","x2","true.mu","true.sigma")
+    plotdata <- cbind(oneset$data[,c("y","x4")], oneset$fun(oneset$datafix_x1))
+    coln <- c("y","x4","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
@@ -1260,30 +1248,30 @@ plot_oneset <- function(oneset,
     }
     
     colnames(plotdata) <- coln  
-    sp <- plotdata[order(plotdata["x2"]),]
+    sp <- plotdata[order(plotdata["x4"]),]
     
     ymin <- min(sp[,(c(2:(length(coln)/2))*2)-1]) - max(sp$true.sigma) - 1
     ymax <- max(sp[,(c(2:(length(coln)/2))*2)-1]) + max(sp$true.sigma) + 1
     if(is.null(ylim)) ylim <- c(ymin, ymax)
     
     par(mar=c(5.1,4.1,4.1,3.1))
-    plot(y = sp$y, x = sp$x2, type = "p", col="grey", #xaxt="n", yaxt="n", 
+    plot(y = sp$y, x = sp$x4, type = "p", col="grey", #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = ylim)
     
-    lines(x = sp$x2, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
-    lines(x = sp$x2, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
+    lines(x = sp$x4, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
+    lines(x = sp$x4, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
     
-    if(add_dt) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+    if(add_dt) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
             col = pallight["disttree"], border = "transparent")
-    if(add_df) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+    if(add_df) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
             col = pallight["distforest"], border = "transparent")
-    if(add_g) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+    if(add_g) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
             col = pallight["gamlss"], border = "transparent")
-    if(add_gb) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.gb + sp$fitted.sigma.gb, rev(sp$fitted.mu.gb - sp$fitted.sigma.gb)),
+    if(add_gb) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.gb + sp$fitted.sigma.gb, rev(sp$fitted.mu.gb - sp$fitted.sigma.gb)),
                       col = pallight["gamboostLSS"], border = "transparent")
-    if(add_rf) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.rf + sp$fitted.sigma.rf, rev(sp$fitted.mu.rf - sp$fitted.sigma.rf)),
+    if(add_rf) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.rf + sp$fitted.sigma.rf, rev(sp$fitted.mu.rf - sp$fitted.sigma.rf)),
                       col = pallight["randomForest"], border = "transparent")
-    if(add_cf) polygon(c(sp$x2, rev(sp$x2)), c(sp$fitted.mu.cf + sp$fitted.sigma.cf, rev(sp$fitted.mu.cf - sp$fitted.sigma.cf)),
+    if(add_cf) polygon(c(sp$x4, rev(sp$x4)), c(sp$fitted.mu.cf + sp$fitted.sigma.cf, rev(sp$fitted.mu.cf - sp$fitted.sigma.cf)),
                       col = pallight["cforest"], border = "transparent")
     if(plot_legend) legend("topleft", legend =  methodnames, col = pal[methodnames], lty = 1, lwd = 2, bty = "n")
   }
@@ -1291,8 +1279,8 @@ plot_oneset <- function(oneset,
   # variance
   if(compare_sigma_line){
     
-    plotdata <- cbind(oneset$learndata[,c("y","x2")], oneset$fun(oneset$datafix_x1))
-    coln <- c("y","x2","true.mu","true.sigma")
+    plotdata <- cbind(oneset$data[,c("y","x4")], oneset$fun(oneset$datafix_x1))
+    coln <- c("y","x4","true.mu","true.sigma")
     methodnames <- NULL
     
     if(add_dt) {
@@ -1327,22 +1315,22 @@ plot_oneset <- function(oneset,
     }
     
     colnames(plotdata) <- coln  
-    sp <- plotdata[order(plotdata["x2"]),]
+    sp <- plotdata[order(plotdata["x4"]),]
     
     par(mar=c(5.1,4.1,4.1,3.1))
     ymin <- min(sp[,c(2:(length(coln)/2))*2])
     ymax <- max(sp[,c(2:(length(coln)/2))*2])
     if(is.null(ylim)) ylim <- c(ymin, ymax)
     
-    plot(x = sp$x2, y = sp$true.sigma, type = "l", col = 'black', #xaxt="n", yaxt="n", 
+    plot(x = sp$x4, y = sp$true.sigma, type = "l", col = 'black', #xaxt="n", yaxt="n", 
          xlab = "", ylab = "", ylim = c(ymin, ymax))
     
-    if(add_dt) lines(x = sp$x2, y = sp$fitted.sigma.dt, type = "l", col = pal["disttree"], lwd = 2)
-    if(add_df) lines(x = sp$x2, y = sp$fitted.sigma.df, type = "l", col = pal["distforest"], lwd = 2)
-    if(add_g) lines(x = sp$x2, y = sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-    if(add_gb) lines(x = sp$x2, y = sp$fitted.sigma.gb, type = "l", col = pal["gamboostLSS"], lwd = 2)
-    if(add_rf) lines(x = sp$x2, y = sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
-    if(add_cf) lines(x = sp$x2, y = sp$fitted.sigma.cf, type = "l", col = pal["cforest"], lwd = 2)
+    if(add_dt) lines(x = sp$x4, y = sp$fitted.sigma.dt, type = "l", col = pal["disttree"], lwd = 2)
+    if(add_df) lines(x = sp$x4, y = sp$fitted.sigma.df, type = "l", col = pal["distforest"], lwd = 2)
+    if(add_g) lines(x = sp$x4, y = sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    if(add_gb) lines(x = sp$x4, y = sp$fitted.sigma.gb, type = "l", col = pal["gamboostLSS"], lwd = 2)
+    if(add_rf) lines(x = sp$x4, y = sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
+    if(add_cf) lines(x = sp$x4, y = sp$fitted.sigma.cf, type = "l", col = pal["cforest"], lwd = 2)
     
     if(plot_legend) legend("topleft", legend =  methodnames, col = pal[methodnames], lty = 1, lwd = 2, bty = "n")
   }
