@@ -1,4 +1,12 @@
 
+.partysplit <- function(varid, breaks = NULL, index = NULL, right = TRUE, 
+                        prob = NULL, info = NULL) {
+    ret <- list(varid = varid, breaks = breaks, index = index, right = right, 
+                prob = prob, info = info)
+    class(ret) <- "partysplit"
+    ret
+}
+
 .ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
                               weights, cluster, splitonly = TRUE, minbucket) {
 
@@ -42,8 +50,8 @@
                 attr(X, "levels") <- levels(x)
             } else {
                 ux <- sort(unique(x[subset]))
-                X <- cut.default(x, breaks = c(-Inf, ux, Inf),
-                                 labels = FALSE, right = TRUE)
+                X <- .bincode(x, breaks = c(-Inf, ux, Inf),
+                              right = TRUE)
                 ### <NOTE> only breaks in this node are considered
                 ###        because of subset </NOTE>
                 attr(X, "levels") <- ux 
@@ -149,7 +157,7 @@
         if (ORDERED) {
             if (tstleft$TestStatistic >= tstright$TestStatistic) {
                 if (all(tst$index == 1)) { ### case C
-                    ret <- partysplit(as.integer(j), breaks = Inf, 
+                    ret <- .partysplit(as.integer(j), breaks = Inf, 
                                       index = 1L:2L, prob = as.double(0:1))
                 } else {
                     sp <- tstleft$index - 1L ### case A
@@ -161,7 +169,7 @@
                             sp <- ux[sp]  ### X <= sp vs. X > sp
                         }
                     }
-                    ret <- partysplit(as.integer(j), breaks = sp,
+                    ret <- .partysplit(as.integer(j), breaks = sp,
                                       index = 1L:2L, prob = as.double(rev(0:1)))
                 }
             } else {
@@ -175,15 +183,15 @@
                         sp <- ux[sp]  ### X <= sp vs. X > sp
                     }
                 }
-                ret <- partysplit(as.integer(j), breaks = sp,
+                ret <- .partysplit(as.integer(j), breaks = sp,
                                   index = 1L:2L, prob = as.double(0:1))
             }
         } else {
             sp <- tstleft$index[-1L] ### tstleft = tstright for unordered factors
             if (length(unique(sp)) == 1L) { ### case C
-                ret <- partysplit(as.integer(j), index = as.integer(tst$index) + 1L)
+                ret <- .partysplit(as.integer(j), index = as.integer(tst$index) + 1L)
             } else { ### always case A
-                ret <- partysplit(as.integer(j),
+                ret <- .partysplit(as.integer(j),
                                   index = as.integer(sp) + 1L, 
                                   prob = as.double(rev(0:1)))
             }
@@ -199,10 +207,10 @@
                 } else {
                     sp <- ux[sp]  ### X <= sp vs. X > sp
                 }
-                ret <- partysplit(as.integer(j), breaks = sp,
+                ret <- .partysplit(as.integer(j), breaks = sp,
                                   index = 1L:2L)
         } else {
-            ret <- partysplit(as.integer(j),
+            ret <- .partysplit(as.integer(j),
                               index = as.integer(sp) + 1L)
         }
     }
