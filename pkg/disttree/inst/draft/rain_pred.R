@@ -5,9 +5,10 @@
 rain_pred <- function(seedconst = 7, ntree = 100,
                       tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
                       forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
-                      forest_mtry = 27,
+                      forest_mtry = 30,   # if frac == FALSE: nvar/3 = 27
                       type.tree = "ctree",
-                      gamboost_cvr = FALSE)
+                      gamboost_cvr = FALSE,
+                      frac = FALSE)
 {
   
   cl <- match.call()
@@ -231,160 +232,232 @@ rain_pred <- function(seedconst = 7, ntree = 100,
   
   ############
   # formula
-  {
+  if(frac){
+    
+    # tree and forest formula
+    dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
+      tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
+      tp_frac0612 + tp_frac1218 + tp_frac1824 + tp_frac2430 + 
+      tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
+      tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
+      capepow_mean + capepow_sprd + capepow_min + capepow_max + 
+      cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
+      cape_frac0612 + cape_frac1218 + cape_frac1824 + cape_frac2430 + 
+      capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
+      capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
+      dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
+      dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
+      msl_mean_mean + msl_mean_min + msl_mean_max + 
+      msl_sprd_mean + msl_sprd_min + msl_sprd_max +
+      pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
+      pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
+      tmax_mean_mean + tmax_mean_min + tmax_mean_max +
+      tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
+      tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
+      tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
+      t500_mean_mean + t500_mean_min + t500_mean_max +
+      t700_mean_mean + t700_mean_min + t700_mean_max +
+      t850_mean_mean + t850_mean_min + t850_mean_max +
+      t500_sprd_mean + t500_sprd_min + t500_sprd_max +
+      t700_sprd_mean + t700_sprd_min + t700_sprd_max +
+      t850_sprd_mean + t850_sprd_min + t850_sprd_max +
+      tdiff500850_mean + tdiff500850_min + tdiff500850_max +
+      tdiff700850_mean + tdiff700850_min + tdiff700850_max +
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max
+    
+    # gamlss formula
+    g.mu.formula <- robs ~ pb(tppow_mean) + 
+      pb(tppow_mean1218 * capepow_mean1218) + 
+      pb(tppow_max) + 
+      pb(dswrf_mean_mean) +
+      pb(tcolc_mean_mean) + 
+      pb(msl_diff) + 
+      pb(pwat_mean_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    g.sigma.formula <- ~ pb(tppow_sprd) + 
+      pb(tppow_sprd1218 * capepow_mean1218) + 
+      pb(dswrf_sprd_mean) +
+      pb(tcolc_sprd_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    
+    
+    # gamboostLSS formula
+    gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+      bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
+      bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
+      bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
+      bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+    
+    gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+      bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
+      bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
+      bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
+      bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
   
-  # tree and forest formula
-  dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + #tp_frac + 
-    tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
-    tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
-    capepow_mean + capepow_sprd + capepow_min + capepow_max + #cape_frac +
-    capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
-    capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
-    dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
-    dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
-    msl_mean_mean + msl_mean_min + msl_mean_max + 
-    msl_sprd_mean + msl_sprd_min + msl_sprd_max +
-    pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
-    pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
-    tmax_mean_mean + tmax_mean_min + tmax_mean_max +
-    tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
-    tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
-    tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
-    t500_mean_mean + t500_mean_min + t500_mean_max +
-    t700_mean_mean + t700_mean_min + t700_mean_max +
-    t850_mean_mean + t850_mean_min + t850_mean_max +
-    t500_sprd_mean + t500_sprd_min + t500_sprd_max +
-    t700_sprd_mean + t700_sprd_min + t700_sprd_max +
-    t850_sprd_mean + t850_sprd_min + t850_sprd_max +
-    tdiff500850_mean + tdiff500850_min + tdiff500850_max +
-    tdiff700850_mean + tdiff700850_min + tdiff700850_max +
-    tdiff500700_mean + tdiff500700_min + tdiff500700_max
-  
-  # gamlss formula
-  g.mu.formula <- robs ~ pb(tppow_mean) + 
-    pb(tppow_mean1218 * capepow_mean1218) + 
-    pb(tppow_max) + 
-    pb(dswrf_mean_mean) +
-    pb(tcolc_mean_mean) + 
-    pb(msl_diff) + 
-    pb(pwat_mean_mean) + 
-    pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
-  
-  g.sigma.formula <- ~ pb(tppow_sprd) + 
-    pb(tppow_sprd1218 * capepow_mean1218) + 
-    pb(dswrf_sprd_mean) +
-    pb(tcolc_sprd_mean) + 
-    pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
-  
-  
-  
-  # gamboostLSS formula
-  gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
-    bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-    bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-    bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
-    bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-    bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-    bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-    bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-    bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-    bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-    bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-    bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-    bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-    bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-    bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-    bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-    bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-    bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-    bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-    bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-    bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-    bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-    bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-    bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-    bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
-  
-  gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + #bbs(tp_frac) +  
-    bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-    bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-    bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + #bbs(cape_frac) +
-    bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-    bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-    bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-    bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-    bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-    bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-    bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-    bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-    bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-    bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-    bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-    bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-    bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-    bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-    bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-    bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-    bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-    bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-    bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-    bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-    bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
-  
-  
-  # bamlss formula
-  b.mu.formula <- robs ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
-    s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
-    s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
-    s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
-    s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
-    s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
-    s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
-    s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
-    s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
-    s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
-    s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
-    s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
-    s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
-    s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
-    s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
-    s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
-    s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
-    s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
-    s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
-    s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
-    s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
-    s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
-    s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
-    s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
-    s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
-  
-  b.sigma.formula <- ~ s(tppow_mean) + s(tppow_sprd) + s(tppow_min) + s(tppow_max) + #s(tp_frac) +  
-    s(tppow_mean0612) + s(tppow_mean1218) + s(tppow_mean1824) + s(tppow_mean2430) + 
-    s(tppow_sprd0612) + s(tppow_sprd1218) + s(tppow_sprd1824) + s(tppow_sprd2430) +
-    s(capepow_mean) + s(capepow_sprd) + s(capepow_min) + s(capepow_max) + #s(cape_frac) +
-    s(capepow_mean0612) + s(capepow_mean1218) + s(capepow_mean1224) + s(capepow_mean1230) +
-    s(capepow_sprd0612) + s(capepow_sprd1218) + s(capepow_sprd1224) + s(capepow_sprd1230) +
-    s(dswrf_mean_mean) + s(dswrf_mean_max) +  #s(dswrf_mean_min) +
-    s(dswrf_sprd_mean) + s(dswrf_sprd_max) + #s(dswrf_sprd_min) +
-    s(msl_mean_mean) + s(msl_mean_min) + s(msl_mean_max) + 
-    s(msl_sprd_mean) + s(msl_sprd_min) + s(msl_sprd_max) +
-    s(pwat_mean_mean) + s(pwat_mean_min) + s(pwat_mean_max) + 
-    s(pwat_sprd_mean) + s(pwat_sprd_min) + s(pwat_sprd_max) +
-    s(tmax_mean_mean) + s(tmax_mean_min) + s(tmax_mean_max) +
-    s(tmax_sprd_mean) + s(tmax_sprd_min) + s(tmax_sprd_max) +
-    s(tcolc_mean_mean) + s(tcolc_mean_min) + s(tcolc_mean_max) +
-    s(tcolc_sprd_mean) + s(tcolc_sprd_min) + s(tcolc_sprd_max) +
-    s(t500_mean_mean) + s(t500_mean_min) + s(t500_mean_max) +
-    s(t700_mean_mean) + s(t700_mean_min) + s(t700_mean_max) +
-    s(t850_mean_mean) + s(t850_mean_min) + s(t850_mean_max) +
-    s(t500_sprd_mean) + s(t500_sprd_min) + s(t500_sprd_max) +
-    s(t700_sprd_mean) + s(t700_sprd_min) + s(t700_sprd_max) +
-    s(t850_sprd_mean) + s(t850_sprd_min) + s(t850_sprd_max) +
-    s(tdiff500850_mean) + s(tdiff500850_min) + s(tdiff500850_max) +
-    s(tdiff700850_mean) + s(tdiff700850_min) + s(tdiff700850_max) +
-    s(tdiff500700_mean) + s(tdiff500700_min) + s(tdiff500700_max)
+  } else {
+    
+    # tree and forest formula
+    dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
+      #tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
+      #tp_frac0612 + tp_frac1218 + tp_frac1824 + tp_frac2430 + 
+      tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
+      tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
+      capepow_mean + capepow_sprd + capepow_min + capepow_max + 
+      #cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
+      #cape_frac0612 + cape_frac1218 + cape_frac1824 + cape_frac2430 + 
+      capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
+      capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
+      dswrf_mean_mean + dswrf_mean_max + #dswrf_mean_min + 
+      dswrf_sprd_mean + dswrf_sprd_max + #dswrf_sprd_min +
+      msl_mean_mean + msl_mean_min + msl_mean_max + 
+      msl_sprd_mean + msl_sprd_min + msl_sprd_max +
+      pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
+      pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
+      tmax_mean_mean + tmax_mean_min + tmax_mean_max +
+      tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
+      tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
+      tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
+      t500_mean_mean + t500_mean_min + t500_mean_max +
+      t700_mean_mean + t700_mean_min + t700_mean_max +
+      t850_mean_mean + t850_mean_min + t850_mean_max +
+      t500_sprd_mean + t500_sprd_min + t500_sprd_max +
+      t700_sprd_mean + t700_sprd_min + t700_sprd_max +
+      t850_sprd_mean + t850_sprd_min + t850_sprd_max +
+      tdiff500850_mean + tdiff500850_min + tdiff500850_max +
+      tdiff700850_mean + tdiff700850_min + tdiff700850_max +
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max
+    
+    # gamlss formula
+    g.mu.formula <- robs ~ pb(tppow_mean) + 
+      pb(tppow_mean1218 * capepow_mean1218) + 
+      pb(tppow_max) + 
+      pb(dswrf_mean_mean) +
+      pb(tcolc_mean_mean) + 
+      pb(msl_diff) + 
+      pb(pwat_mean_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    g.sigma.formula <- ~ pb(tppow_sprd) + 
+      pb(tppow_sprd1218 * capepow_mean1218) + 
+      pb(dswrf_sprd_mean) +
+      pb(tcolc_sprd_mean) + 
+      pb(tdiff500850_mean) #+  pb(tdiff700850_mean) 
+    
+    
+    
+    # gamboostLSS formula
+    gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+      #bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
+      #bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
+      #bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
+      #bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+    
+    gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+      #bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
+      #bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
+      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
+      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
+      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
+      #bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
+      #bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
+      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
+      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
+      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
+      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
+      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
+      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
+      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
+      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
+      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
+      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
+      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
+      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
+      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
+      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
+      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
+      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
+      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
+      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
+      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
+      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
   }
+  
+  
   
   
   
@@ -442,43 +515,180 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         colnames(raindata)[c(1:3)] <- c("date", "obs", "robs")
                         
                         
+                        
                         ########################################
-                        # remove rows with missing values or NAs
-                        # (as a result the years 93 and 94 are dropped, for year 92 only one observation is left,
-                        #  in 9 other years 1-3 observations are dropped)
+                        # select variables with sufficient data
+                        
+                        #dim(raindata)
+                        #colnames(raindata)
+                        
+                        if(FALSE)
+                        {
+                          #total precipitation mean
+                          which(is.na(raindata$tp_mean))
+                          which(is.na(raindata$tp_mean0612))
+                          which(is.na(raindata$tp_mean1218))
+                          which(is.na(raindata$tp_mean1824))
+                          which(is.na(raindata$tp_mean2430))
+                          
+                          # total precipitation spread
+                          which(is.na(raindata$tp_sprd))
+                          which(is.na(raindata$tp_sprd0612))
+                          which(is.na(raindata$tp_sprd1218))
+                          which(is.na(raindata$tp_sprd1824))
+                          which(is.na(raindata$tp_sprd2430))
+                          
+                          #total precipitation min and max
+                          which(is.na(raindata$tp_min))
+                          which(is.na(raindata$tp_max))
+                          
+                          #total precipitation frac
+                          which(is.na(raindata$tp_frac))
+                          which(is.na(raindata$tp_frac0612))
+                          which(is.na(raindata$tp_frac1218))
+                          which(is.na(raindata$tp_frac1824))
+                          which(is.na(raindata$tp_frac2430))
+                          
+                          #total cape mean
+                          which(is.na(raindata$cape_mean))
+                          which(is.na(raindata$cape_mean0612))
+                          which(is.na(raindata$cape_mean1218))
+                          which(is.na(raindata$cape_mean1224))
+                          which(is.na(raindata$cape_mean1230))
+                          
+                          # total cape spread
+                          which(is.na(raindata$cape_sprd))
+                          which(is.na(raindata$cape_sprd0612))
+                          which(is.na(raindata$cape_sprd1218))
+                          which(is.na(raindata$cape_sprd1224))
+                          which(is.na(raindata$cape_sprd1230))
+                          
+                          #total cape min and max
+                          which(is.na(raindata$cape_min))
+                          which(is.na(raindata$cape_max))
+                          
+                          #total cape frac
+                          which(is.na(raindata$cape_frac))
+                          which(is.na(raindata$cape_frac0612))
+                          which(is.na(raindata$cape_frac1218))
+                          which(is.na(raindata$cape_frac1824))
+                          which(is.na(raindata$cape_frac2430))
+                          
+                          # sunshine
+                          which(is.na(raindata$dswrf_mean_mean))
+                          which(is.na(raindata$dswrf_mean_min))
+                          which(is.na(raindata$dswrf_mean_max))
+                          which(is.na(raindata$dswrf_sprd_mean))
+                          which(is.na(raindata$dswrf_sprd_min))
+                          which(is.na(raindata$dswrf_sprd_max))
+                          
+                          #mean sealevel pressure
+                          which(is.na(raindata$msl_mean_mean))
+                          which(is.na(raindata$msl_mean_min))
+                          which(is.na(raindata$msl_mean_max))
+                          which(is.na(raindata$msl_sprd_mean))
+                          which(is.na(raindata$msl_sprd_min))
+                          which(is.na(raindata$msl_sprd_max))
+                          
+                          # preciptal water
+                          which(is.na(raindata$pwat_mean_mean))
+                          which(is.na(raindata$pwat_mean_min))
+                          which(is.na(raindata$pwat_mean_max))
+                          which(is.na(raindata$pwat_sprd_mean))
+                          which(is.na(raindata$pwat_sprd_min))
+                          which(is.na(raindata$pwat_sprd_max))
+                          
+                          # total column-integrated condensate
+                          which(is.na(raindata$tcolc_mean_mean))
+                          which(is.na(raindata$tcolc_mean_min))
+                          which(is.na(raindata$tcolc_mean_max))
+                          which(is.na(raindata$tcolc_sprd_mean))
+                          which(is.na(raindata$tcolc_sprd_min))
+                          which(is.na(raindata$tcolc_sprd_max))
+                          
+                          # 2m maximum temperature
+                          which(is.na(raindata$tmax_mean_mean))
+                          which(is.na(raindata$tmax_mean_min))
+                          which(is.na(raindata$tmax_mean_max))
+                          which(is.na(raindata$tmax_sprd_mean))
+                          which(is.na(raindata$tmax_sprd_min))
+                          which(is.na(raindata$tmax_sprd_max))
+                          
+                          # temperature on 850 hPA
+                          which(is.na(raindata$t850_mean_mean))
+                          which(is.na(raindata$t850_mean_min))
+                          which(is.na(raindata$t850_mean_max))
+                          which(is.na(raindata$t850_sprd_mean))
+                          which(is.na(raindata$t850_sprd_min))
+                          which(is.na(raindata$t850_sprd_max))
+                          
+                          # temperature on 700 hPA
+                          which(is.na(raindata$t700_mean_mean))
+                          which(is.na(raindata$t700_mean_min))
+                          which(is.na(raindata$t700_mean_max))
+                          which(is.na(raindata$t700_sprd_mean))
+                          which(is.na(raindata$t700_sprd_min))
+                          which(is.na(raindata$t700_sprd_max))
+                          
+                          # temperature on 500 hPA
+                          which(is.na(raindata$t500_mean_mean))
+                          which(is.na(raindata$t500_mean_min))
+                          which(is.na(raindata$t500_mean_max))
+                          which(is.na(raindata$t500_sprd_mean))
+                          which(is.na(raindata$t500_sprd_min))
+                          which(is.na(raindata$t500_sprd_max))
+                          
+                          # temperature differences
+                          which(is.na(raindata$tdiff700850_mean))
+                          which(is.na(raindata$tdiff700850_min))
+                          which(is.na(raindata$tdiff700850_max))
+                          which(is.na(raindata$tdiff500850_mean))
+                          which(is.na(raindata$tdiff500850_min))
+                          which(is.na(raindata$tdiff500850_max))
+                          which(is.na(raindata$tdiff500700_mean))
+                          which(is.na(raindata$tdiff500700_min))
+                          which(is.na(raindata$tdiff500700_max))
+                        }
+                        
+                        
                         
                         #remove row 825
                         raindata <- raindata[-825,]
+                        
                         #remove rows 223-310
-                        raindata <- raindata[-c(223:310),]
+                        #raindata <- raindata[-c(223:310),]
                         #remove rows 111 176 178 220 221 241 320 364 367
-                        raindata <- raindata[-c(111, 176, 178, 220, 221, 241, 320, 364, 367),]
+                        #raindata <- raindata[-c(111, 176, 178, 220, 221, 241, 320, 364, 367),]
                         #remove rows 5 215 217 301 314
-                        raindata <- raindata[-c(5, 215, 217, 301, 314),]
+                        #raindata <- raindata[-c(5, 215, 217, 301, 314),]
                         #remove rows 251 264 
-                        raindata <- raindata[-c(251, 264),]
+                        #raindata <- raindata[-c(251, 264),]
                         
                         # table(raindata[, "year"])
                         
                         ######################################################
                         # only keep variables with sufficient values
                         raindata <- raindata[, c("robs", "year",
-                                                 "tppow_mean", "tppow_sprd", "tppow_min", "tppow_max", "tp_frac", 
+                                                 "tppow_mean", "tppow_sprd", "tppow_min", "tppow_max", 
                                                  "tppow_mean0612", "tppow_mean1218", "tppow_mean1824", "tppow_mean2430", 
                                                  "tppow_sprd0612", "tppow_sprd1218", "tppow_sprd1824", "tppow_sprd2430",
-                                                 "capepow_mean", "capepow_sprd", "capepow_min", "capepow_max", "cape_frac",
+                                                 "tp_frac", 
+                                                 "tp_frac0612", "tp_frac1218", "tp_frac1824", "tp_frac2430", 
+                                                 "capepow_mean", "capepow_sprd", "capepow_min", "capepow_max", 
                                                  "capepow_mean0612", "capepow_mean1218", "capepow_mean1224", "capepow_mean1230",
                                                  "capepow_sprd0612", "capepow_sprd1218", "capepow_sprd1224", "capepow_sprd1230",
+                                                 "cape_frac",
+                                                 "cape_frac0612", "cape_frac1218", "cape_frac1824", "cape_frac2430", 
                                                  "dswrf_mean_mean", "dswrf_mean_min", "dswrf_mean_max",
                                                  "dswrf_sprd_mean", "dswrf_sprd_min", "dswrf_sprd_max",
                                                  "msl_mean_mean", "msl_mean_min", "msl_mean_max",
                                                  "msl_sprd_mean", "msl_sprd_min", "msl_sprd_max",
                                                  "pwat_mean_mean", "pwat_mean_min", "pwat_mean_max",
                                                  "pwat_sprd_mean", "pwat_sprd_min", "pwat_sprd_max",
-                                                 "tmax_mean_mean", "tmax_mean_min", "tmax_mean_max",
-                                                 "tmax_sprd_mean", "tmax_sprd_min", "tmax_sprd_max",
                                                  "tcolc_mean_mean", "tcolc_mean_min", "tcolc_mean_max",
                                                  "tcolc_sprd_mean", "tcolc_sprd_min", "tcolc_sprd_max",
+                                                 "tmax_mean_mean", "tmax_mean_min", "tmax_mean_max",
+                                                 "tmax_sprd_mean", "tmax_sprd_min", "tmax_sprd_max",
                                                  "t500_mean_mean", "t500_mean_min", "t500_mean_max",
                                                  "t700_mean_mean", "t700_mean_min", "t700_mean_max",
                                                  "t850_mean_mean", "t850_mean_min", "t850_mean_max",
@@ -497,8 +707,8 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         # table(raindata$year)
                         
                         # learning the models on 29 years and evaluating predictions on the 30th year
-                        learndata <- raindata[raindata$year < 112,]
-                        testdata <- raindata[raindata$year == 112,]
+                        learndata <- raindata[raindata$year < 110,]
+                        testdata <- raindata[raindata$year %in% c(110, 111, 112),]
                         
                         if(type.tree == "mob"){
                           dt <- disttree(dt.formula, 
@@ -550,7 +760,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                                           families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
                                           control = boost_control(mstop = 1000L))
                         if(gamboost_cvr){
-                          grid <- c(seq(50,500, by = 25), seq(510, 1000, by = 10))
+                          grid <- c(seq(50,700, by = 25), seq(510, 1000, by = 10))
                           cvr <- cvrisk(gb, grid = grid)
                           mstop(gb) <- mstop(cvr)
                           cvr_opt <- mstop(cvr) 
@@ -666,14 +876,14 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         
                         
                         # CPRS
-                        crps_dt <- sum(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
-                        crps_df <- sum(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
-                        crps_g <- if(!g_na) sum(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
-                        #crps_b <- sum(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
-                        crps_gb <- sum(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
-                        crps_mi <- if(!mi_na) sum(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf)) else NA
-                        crps_ml <- if(!ml_na) sum(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf)) else NA
-                        crps_mq <- if(!mq_na) sum(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf)) else NA
+                        crps_dt <- mean(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
+                        crps_df <- mean(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
+                        crps_g <- if(!g_na) mean(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
+                        #crps_b <- mean(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
+                        crps_gb <- mean(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
+                        crps_mi <- if(!mi_na) mean(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf)) else NA
+                        crps_ml <- if(!ml_na) mean(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf)) else NA
+                        crps_mq <- if(!mq_na) mean(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf)) else NA
                         
                         # RMSE
                         rmse_dt <- sqrt(mean((dt_exp - testdata[,"robs"])^2))
@@ -794,12 +1004,10 @@ gen.cens("NO", type = "left")
 
 #save(res, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
 #save(res, file = "~/disttree/inst/draft/rain_pred.rda")
-res <- rain_pred(seedconst = 7, ntree = 200,
-                 tree_minsplit = 50, tree_minbucket = 25, tree_mincrit = 0.95,
-                 forest_minsplit = 50, forest_minbucket = 25, forest_mincrit = 0,
-                 forest_mtry = 27,
+res <- rain_pred(seedconst = 7,
                  type.tree = "ctree",
-                 gamboost_cvr = FALSE)
+                 gamboost_cvr = FALSE,
+                 frac = FALSE)
 
 if(FALSE){
   save(res, file = "rain_pred.rda")
