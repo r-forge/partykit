@@ -3,23 +3,14 @@
 # for censored data: random forest only returns predicted, which now used as prediction for mu
 # latent expected value
 
-# for censored data with varying sigma:
-# if(censNO) sigma[x[,1]<0] <- 0.00001
-
-# error in bamlss (seedconst7): "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
-# error in gamboostLSS (seedconst723, fix.mu): "Error in names(pr) <- nm : \n  'names' attribute [300] must be the same length as the vector [10]\n"
-# error in gamlss (seedconst723, covsep, 3 out of 10): ""Error in while (RATIO > tol & nit < maxit) { : \n  missing value where TRUE/FALSE needed\n" 
-# error in gamboostLSS: "Error in as.families(fname = \"NOlc\") : \n  ‘fname’ specifies no valid gamlss family\n"
-# error in gamlss: "Error in eval(parse(text = object$family[[1]])) : object 'NOlc' not found\n"
-# error in bamlss: "Error in smooth.construct.tp.smooth.spec(object, dk$data, dk$knots) : \n  object 'C_construct_tprs' not found\n"
 
 gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    nsteps = 9, stepsize = 1, kappa.start = 1,
-                   formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
+                   formula = y~x1+x2+x3+x4+x5+x6, 
                    nobs = 400, testnobs = 200L,
-                   tree_minsplit = 20, tree_minbucket = 10, tree_mincrit = 0.95,
-                   forest_minsplit = 20, forest_minbucket = 10, forest_mincrit = 0,
-                   forest_mtry = 4,
+                   tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
+                   forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0,
+                   forest_mtry = 3,
                    type.tree = "ctree",
                    censNO = TRUE,
                    fix.mu = FALSE,
@@ -347,14 +338,10 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     x1 <- runif(n,-1,1)
     x2 <- runif(n,-1,1)
     x3 <- runif(n,-1,1)
-    x4 <- runif(n,-1,1)
-    x5 <- runif(n,-1,1)
-    x6 <- runif(n,-1,1)
-    x7 <- runif(n,-1,1)
-    x8 <- runif(n,-1,1)
-    x9 <- runif(n,-1,1)
-    x10 <- runif(n,-1,1)
-    x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+    x4 <- rbinom(n,1,0.5)
+    x5 <- rbinom(n,1,0.5)
+    x6 <- rbinom(n,1,0.5)
+    x <- cbind(x1,x2,x3,x4,x5,x6)
     # reduce nr of possible split points by rounding values of split variables
     x <- round(x, digits = round.sp)
     
@@ -404,11 +391,11 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       if(!(family$family.name == "Poisson Distribution")){
         y <- rfun(n, dpar[,1], dpar[,2])
         d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
+        colnames(d) <- c("y", paste0("x", c(1:NCOL(x))), "mu", "sigma")
       } else {
         y <- rfun(n, dpar)
         d <- as.data.frame(cbind(y, x, dpar))
-        colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
+        colnames(d) <- c("y", paste0("x", c(1:NCOL(x))), "lambda")
       }
     }
     
@@ -639,18 +626,14 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(fix.sigma){
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 2
+        sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
       }
     } else {
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 1 + 2 * 
-          (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
-             (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
-          (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
-        #sigma <- 1 + 3*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
+        sigma <- 3 + 3 * x[,4]
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -660,10 +643,10 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       fun <- function(x, kappa){
         mu <- mubase + 
           (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
-          4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+          #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
         #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-        sigma <- 2
+        sigma <- 3
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -672,25 +655,21 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
         fun <- function(x, kappa){
           mu <- mubase + 
             (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) +
-            4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+            #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          sigma <- 2 + mu/4
+          sigma <- 3 + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x, kappa){
-          #mu <- mubase + 
-          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-          #  (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+          mu <- mubase + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
           #  #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) #+ 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          #sigma <- 1 + 2 * 
-          #  (plogis((kappa^(1.8)) * 5 * (x[,2])) * as.numeric(x[,1]<=0) +
-          #     (1 - plogis((kappa^(1.8)) * 5 * (x[,2]))) * as.numeric(x[,1]>0)) *
-          #  (plogis((kappa^(1.8)) * 5 * ((x[,1])^2-0.3))) + 1*(pmax(x[,2],0) * pmin(x[,1],0))^2
-          sigma <- 1 + 2*(plogis((kappa^(1.8)) * 5 * (x[,2]))) * (1-plogis((kappa^(1.8)) * 5 * (x[,1]+0.3)))
+          #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+          sigma <- 3 + 3 * x[,4]
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -906,19 +885,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           loglik.g <- numeric(length = nrep)
                           
               
-                          mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
-                          sigma.formula <- ~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)+pb(x7)+pb(x8)+pb(x9)+pb(x10)
-                          
-                          # FIX ME: notation only works with x1 and x2 as regressors
-                          #formula_rh <- formula[[3]]
-                          #if("x1" %in% as.character(formula_rh)){
-                          #  mu.formula <- y~pb(x1)
-                          #  sigma.formula <- ~pb(x1)
-                          #  if("x2" %in% as.character(formula_rh)){
-                          #    mu.formula <- y~pb(x1)+pb(x2)
-                          #    sigma.formula <- ~pb(x1)+pb(x2)
-                          #  }
-                          #} 
+                          mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)
+                          sigma.formula <- ~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)
                           
                           
                           for(j in 1:nrep){
@@ -1001,19 +969,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           rmse.sigma.b <- numeric(length = nrep)
                           loglik.b <- numeric(length = nrep)
                           
-                          mu.formula <- y~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)+s(x7)+s(x8)+s(x9)+s(x10)
-                          sigma.formula <- ~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)+s(x7)+s(x8)+s(x9)+s(x10)
-                          
-                          # FIX ME: notation only works with x1 and x2 as regressors
-                          #formula_rh <- formula[[3]]
-                          #if("x1" %in% as.character(formula_rh)){
-                          #  mu.formula <- y~s(x1)
-                          #  sigma.formula <- ~s(x1)
-                          #  if("x2" %in% as.character(formula_rh)){
-                          #    mu.formula <- y~s(x1)+s(x2)
-                          #    sigma.formula <- ~s(x1)+s(x2)
-                          #  }
-                          #}
+                          mu.formula <- y~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)
+                          sigma.formula <- ~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)
+
                           
                           for(j in 1:nrep){
                             set.seed(seedconst+((i-1)*nrep)+j)
@@ -1111,20 +1069,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            loglik.gb <- numeric(length = nrep)
                            
                            
-                           mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
-                           sigma.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)+bbs(x7)+bbs(x8)+bbs(x9)+bbs(x10)
-                           
-                           # FIX ME: notation only works with x1 and x2 as regressors
-                           #formula_rh <- formula[[3]]
-                           #if("x1" %in% as.character(formula_rh)){
-                           # mu.formula <- y~bbs(x1)
-                           #  sigma.formula <- y~bbs(x1)
-                           #  if("x2" %in% as.character(formula_rh)){
-                           #    mu.formula <- y~bbs(x1)+bbs(x2)
-                           #    sigma.formula <- y~bbs(x1)+bbs(x2)
-                           #  }
-                           #} 
-                           
+                           mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)
+                           sigma.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)
+
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
                              learndata <- dgp(nobs, family = family, round.sp = 4, fun = f)
