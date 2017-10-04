@@ -313,12 +313,12 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
     
     # tree and forest formula
     dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
-      tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
+      #tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
       tp_frac0612 + tp_frac1218 + tp_frac1824 + tp_frac2430 + 
       tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
       tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
       capepow_mean + capepow_sprd + capepow_min + capepow_max + 
-      cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
+      #cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
       cape_frac0612 + cape_frac1218 + cape_frac1824 + cape_frac2430 + 
       capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
       capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
@@ -362,12 +362,12 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
     
     # gamboostLSS formula
     gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
-      bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
+      #bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
       bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
       bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
       bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
       bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
-      bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
+      #bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
       bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
       bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
       bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
@@ -392,12 +392,12 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
       bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
     
     gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
-      bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
+      #bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
       bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
       bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
       bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
       bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
-      bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
+      #bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
       bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
       bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
       bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
@@ -544,7 +544,7 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
   
   nrep_cross <- 10
   #grid to find optimal mstop for method="noncyclic" in gamboostLSS
-  grid <- c(seq(50,700, by = 25), seq(710, 1000, by = 10))
+  grid <- seq(50, 1000, by = 25)
   #grid <- c(seq(100,400, by = 100), seq(420, 1000, by = 20))
   #grid <- make.grid(max = 500, min = 10, length.out = 10)
   
@@ -554,11 +554,8 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                         set.seed(seedconst * k)
                         
                         crps_dt <- crps_df <- crps_g <- crps_gb <- crps_mi <- crps_ml <- crps_mq <- numeric(length = 10L)
-                        # crps_b <- numeric(length = 10L)
                         rmse_dt <- rmse_df <- rmse_g <- rmse_gb <- rmse_mi <- rmse_ml <- rmse_mq <- numeric(length = 10L)
-                        # rmse_b <- numeric(length = 10L)
                         ll_dt <- ll_df <- ll_g <- ll_gb <- ll_mi <- ll_ml <- ll_mq <- numeric(length = 10L)
-                        # ll_b <- numeric(length = 10L)
                         cvr_opt <- numeric(length = 10L)
                         g_error_seed <- numeric(length = 10L)
                         mi_error_seed <- numeric(length = 10L)
@@ -648,11 +645,6 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             cvr_opt[i] <- mstop(cvr) 
                           } else cvr_opt[i] <- gb_cvr_time <- NA
                           
-                          #b <- b
-                          #b <- bamlss(list(b.mu.formula, b.sigma.formula), family = "cnorm", 
-                          #            data = learndata, sampler = FALSE, optimizer = boost, 
-                          #            stop.criterion = "BIC", plot = FALSE)
-                          
 
                           mi_time <- system.time(mi <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
                                                                 data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
@@ -703,20 +695,6 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             df_exp[df_sigma <= 0.0002] <- pmax(0, df_mu[df_sigma <= 0.0002])    
                           }
                           
-                          # gamboostLSS
-                          pgb <- predict(gb, newdata = testdata, parameter = list("mu","sigma"), type = "response")
-                          gb_mu <- pgb[[1]]
-                          gb_sigma <- pgb[[2]]
-                          gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
-                          
-                          
-                          # bamlss
-                          #pb <- predict(b, newdata = testdata, type = "parameter")
-                          #b_mu <- pb$mu
-                          #b_sigma <- pb$sigma
-                          #b_exp <- pnorm(b_mu/b_sigma) * (b_mu + b_sigma * (dnorm(b_mu/b_sigma) / pnorm(b_mu/b_sigma)))
-                          
-                          
                           # gamlss
                           if(!(all(is.na(g)))){
                             g_mu <- try(predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata))
@@ -725,8 +703,14 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               g_mu <- g_sigma <- g_exp <- NA
                               g_error_seed[i] <- seedconst * k
                             } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
-                          }
-                          g_na <- any(c(all(is.na(g)), is.na(g_mu), is.na(g_sigma)))
+                          } else g_mu <- g_sigma <- g_exp <- NA
+                          g_na <- any(c(all(is.na(g)), all(is.na(g_mu)), all(is.na(g_sigma))))
+                          
+                          # gamboostLSS
+                          pgb <- predict(gb, newdata = testdata, parameter = list("mu","sigma"), type = "response")
+                          gb_mu <- pgb[[1]]
+                          gb_sigma <- pgb[[2]]
+                          gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
                           
                           # EMOS
                           if(!(all(is.na(mi)))){
@@ -736,8 +720,8 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               mi_mu <- mi_sigma <- mi_exp <- NA
                               mi_error_seed[i] <- seedconst * k
                             } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
-                          }
-                          mi_na <- any(c(all(is.na(mi)), is.na(mi_mu), is.na(mi_sigma)))
+                          } else mi_mu <- mi_sigma <- mi_exp <- NA
+                          mi_na <- any(c(all(is.na(mi)), all(is.na(mi_mu)), all(is.na(mi_sigma))))
                           
                           if(!(all(is.na(ml)))){
                             ml_mu <- try(predict(ml, type = "location", newdata = testdata))     # returns parameter on response scale
@@ -746,8 +730,8 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               ml_mu <- ml_sigma <- ml_exp <- NA
                               ml_error_seed[i] <- seedconst * k
                             } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
-                          }
-                          ml_na <- any(c(all(is.na(ml)), is.na(ml_mu), is.na(ml_sigma)))
+                          } else ml_mu <- ml_sigma <- ml_exp <- NA
+                          ml_na <- any(c(all(is.na(ml)), all(is.na(ml_mu)), all(is.na(ml_sigma))))
                           
                           if(!(all(is.na(mq)))){
                             mq_mu <- try(predict(mq, type = "location", newdata = testdata))     # returns parameter on response scale
@@ -756,34 +740,31 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                               mq_mu <- mq_sigma <- mq_exp <- NA
                               mq_error_seed[i] <- seedconst * k
                             } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
-                          }
-                          mq_na <- any(c(all(is.na(mq)), is.na(mq_mu), is.na(mq_sigma)))
+                          } else mq_mu <- mq_sigma <- mq_exp <- NA
+                          mq_na <- any(c(all(is.na(mq)), all(is.na(mq_mu)), all(is.na(mq_sigma))))
                           
                           
                           # CPRS
-                          crps_dt[i] <- mean(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf))
-                          crps_df[i] <- mean(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf))
-                          crps_g[i] <- if(!g_na) mean(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf)) else NA
-                          #crps_b[i] <- mean(crps_cnorm(testdata$robs, location = b_mu, scale = b_sigma, lower = 0, upper = Inf))
-                          crps_gb[i] <- mean(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf))
-                          crps_mi[i] <- if(!mi_na) mean(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf)) else NA
-                          crps_ml[i] <- if(!ml_na) mean(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf)) else NA
-                          crps_mq[i] <- if(!mq_na) mean(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf)) else NA
+                          crps_dt[i] <- mean(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+                          crps_df[i] <- mean(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+                          crps_g[i] <- if(!g_na) mean(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+                          crps_gb[i] <- mean(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+                          crps_mi[i] <- if(!mi_na) mean(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+                          crps_ml[i] <- if(!ml_na) mean(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+                          crps_mq[i] <- if(!mq_na) mean(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
                           
                           # RMSE
-                          rmse_dt[i] <- sqrt(mean((dt_exp - testdata[,"robs"])^2))
-                          rmse_df[i] <- sqrt(mean((df_exp - testdata[,"robs"])^2))
-                          rmse_g[i] <- if(!g_na) sqrt(mean((g_exp - testdata[,"robs"])^2)) else NA
-                          rmse_gb[i] <- sqrt(mean((gb_exp - testdata[,"robs"])^2))
-                          #rmse_b[i] <- sqrt(mean((b_exp - testdata[,"robs"])^2))
-                          rmse_mi[i] <- if(!mi_na) sqrt(mean((mi_exp - testdata[,"robs"])^2)) else NA
-                          rmse_ml[i] <- if(!ml_na) sqrt(mean((ml_exp - testdata[,"robs"])^2)) else NA
-                          rmse_mq[i] <- if(!mq_na) sqrt(mean((mq_exp - testdata[,"robs"])^2)) else NA
+                          rmse_dt[i] <- sqrt(mean((dt_exp - testdata[,"robs"])^2, na.rm = TRUE))
+                          rmse_df[i] <- sqrt(mean((df_exp - testdata[,"robs"])^2, na.rm = TRUE))
+                          rmse_g[i] <- if(!g_na) sqrt(mean((g_exp - testdata[,"robs"])^2, na.rm = TRUE)) else NA
+                          rmse_gb[i] <- sqrt(mean((gb_exp - testdata[,"robs"])^2, na.rm = TRUE))
+                          rmse_mi[i] <- if(!mi_na) sqrt(mean((mi_exp - testdata[,"robs"])^2, na.rm = TRUE)) else NA
+                          rmse_ml[i] <- if(!ml_na) sqrt(mean((ml_exp - testdata[,"robs"])^2, na.rm = TRUE)) else NA
+                          rmse_mq[i] <- if(!mq_na) sqrt(mean((mq_exp - testdata[,"robs"])^2, na.rm = TRUE)) else NA
                           
                           # loglikelihood
-                          dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- 0
-                          # bll <- 0
-                          for(j in 1:(nrow(testdata))){
+                          dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- numeric(length = NROW(testdata))
+                          for(j in 1:(NROW(testdata))){
                             
                             eta_dt <- as.numeric(dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
                             eta_df <- as.numeric(dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
@@ -794,74 +775,23 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             eta_ml <- if(!ml_na) as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
                             eta_mq <- if(!mq_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
                             
-                            dtll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
-                            dfll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-                            gll_j <- if(!g_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
-                            gbll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
-                            #bll_j <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_b, log=TRUE)
-                            mill_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
-                            mlll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
-                            mqll_j <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
+                            dtll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
+                            dfll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
+                            gll[j] <- if(!g_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+                            gbll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
+                            mill[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+                            mlll[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+                            mqll[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
                             
-                          
-                            dtll <- if(is.na(dtll_j)) {
-                              print(eta_dt, testdata[j,"robs"]) 
-                              dtll + (-5)
-                            } else {dtll + dtll_j}
-                            
-                            dfll <- if(is.na(dfll_j)) {
-                              print(eta_df, testdata[j,"robs"]) 
-                              dfll + (-5)
-                            } else {dfll + dfll_j}    ## FIX ME: NAs from distforest
-                            
-                            gll <- if(!g_na) {
-                              if(is.na(gll_j)) {
-                                print(eta_g, testdata[j,"robs"]) 
-                                gll + (-5)
-                              } else {gll + gll_j}
-                            } else NA
-                            
-                            gbll <- if(is.na(gbll_j)) {
-                              print(eta_gb, testdata[j,"robs"]) 
-                              gbll + (-5)
-                            } else {gbll + gbll_j}
-                            
-                            #bll <- if(is.na(bll_j)) {
-                            #  print(eta_b, testdata[j,"robs"]) 
-                            #  bll + (-5)
-                            #} else {bll + bll_j}   
-                            
-                            mill <- if(!mi_na) {
-                              if(is.na(mill_j)) {
-                                print(eta_mi, testdata[j,"robs"]) 
-                                mill + (-5)
-                              } else {mill + mill_j} 
-                            } else NA      
-                            
-                            mlll <- if(!ml_na) {
-                              if(is.na(mlll_j)) {
-                                print(eta_ml, testdata[j,"robs"]) 
-                                mlll + (-5)
-                              } else {mlll + mlll_j} 
-                            } else NA
-                            
-                            mqll <- if(!mq_na) {
-                              if(is.na(mqll_j)) {
-                                print(eta_mq, testdata[j,"robs"]) 
-                                mqll + (-5)
-                              } else {mqll + mqll_j} 
-                            } else NA
-                             
                           }
                           
-                          ll_dt[i] <- dtll
-                          ll_df[i] <- dfll
-                          ll_g[i] <- if(!g_na) gll else NA
-                          ll_gb[i] <- gbll
-                          #ll_b[i] <- bll
-                          ll_mi[i] <- if(!mi_na) mill else NA
-                          ll_ml[i] <- if(!ml_na) mlll else NA
-                          ll_mq[i] <- if(!mq_na) mqll else NA
+                          ll_dt[i] <- mean(dtll, na.rm = TRUE)
+                          ll_df[i] <- mean(dfll, na.rm = TRUE)
+                          ll_g[i] <- if(!g_na) mean(gll, na.rm = TRUE) else NA
+                          ll_gb[i] <- mean(gbll, na.rm = TRUE)
+                          ll_mi[i] <- if(!mi_na) mean(mill, na.rm = TRUE) else NA      
+                          ll_ml[i] <- if(!ml_na) mean(mlll, na.rm = TRUE) else NA 
+                          ll_mq[i] <- if(!mq_na) mean(mqll, na.rm = TRUE) else NA 
                           
                           evaltime_user[i,] <- c(dt_time[1], df_time[1], g_time[1], gb_time[1], gb_cvr_time[1], mi_time[1], ml_time[1], mq_time[1])
                           evaltime_system[i,] <- c(dt_time[2], df_time[2], g_time[2], gb_time[2], gb_cvr_time[2], mi_time[2], ml_time[2], mq_time[2])
@@ -870,15 +800,13 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                         }
                         
                         res <- list()
+                        
                         res$ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_mi, ll_ml, ll_mq)
                         res$rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_mi, rmse_ml, rmse_mq)
                         res$crps <- cbind(crps_dt, crps_df, crps_g, crps_gb, crps_mi, crps_ml, crps_mq)
-                        #res$ll <- cbind(ll_dt, ll_df, ll_g, ll_gb, ll_b, ll_mi, ll_ml, ll_mq)
-                        #res$rmse <- cbind(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_b, rmse_mi, rmse_ml, rmse_mq)
-                        #res$crps <- cbind(crps_dt, crps_df, crps_g, crps_gb, crps_b, crps_mi, crps_ml, crps_mq)
                         colnames(res$rmse) <- colnames(res$ll) <- colnames(res$crps) <- 
                           c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS id", "EMOS log", "EMOS quad")
-                        #c("disttree", "distforest", "gamlss", "gamboostLSS", "bamlss", "EMOS id", "EMOS log", "EMOS quad")
+                        
                         res$cvr_opt <- cvr_opt
                         res$evaltime_user <- evaltime_user
                         res$evaltime_system <- evaltime_system
