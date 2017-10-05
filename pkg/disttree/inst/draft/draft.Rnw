@@ -376,7 +376,9 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
   
 ## function to estimate standard deviation of randomForest for a new observation
 # (in randomForest the argument 'keep.inbag' must be set to TRUE)
-rf_getsd <- function(rf, newdata, rfdata){
+rf_getsd <- function(rf, newdata = NULL, rfdata){
+  
+  if(is.null(newdata)) newdata <- rfdata
   
   rf_sd <- numeric(length = NROW(newdata))
   
@@ -649,8 +651,9 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
    \And Torsten Hothorn\\Universit\"at Z\"urich
-   \And Achim Zeileis\\Universit\"at Innsbruck}
-\Plainauthor{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+   \And Achim Zeileis\\Universit\"at Innsbruck
+   \And Reto Stauffer\\Universit\"at Innsbruck}
+\Plainauthor{Lisa Schlosser, Torsten Hothorn, Achim Zeileis, Reto Stauffer}
 
 \Abstract{
 In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
@@ -686,6 +689,15 @@ Both of these two concepts, parametric modeling and algorithmic trees, have been
   6020 Innsbruck, Austria \\
   E-mail: \email{Achim.Zeileis@R-project.org} \\
   URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+  
+  Reto Stauffer \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Reto.Stauffer@uibk.ac.at} \\
+  URL: \url{https://www.uibk.ac.at/statistics/personal/stauffer/reto-stauffer.html}\\
 }
 
 \begin{document}
@@ -1385,105 +1397,115 @@ In the left plots the location parameter function $\mu(X_1, \kappa)$ is plotted 
 In the right plots the scale parameter function $\sigma(X_2, \kappa)$ is plotted along the covariate $X_2$ together with the estimated values of the different models for fixed covariates $(x_1, x_3, \ldots, x_{10}) = (0.4, 0, \ldots, 0)$. \\
 
 
+\SweaveOpts{eval = FALSE}
+
 <<echo=FALSE, results=hide>>=
-source("onecov.R")
-if(file.exists("onecov1.rda")){
-  load("onecov1.rda")
+source("oneset.R")
+if(file.exists("oneset1.rda")){
+  load("oneset1.rda")
 } else {
-  onecov1 <- sim_onecov(kappa = 1, nobs = 700,
-                         seedconst = 7, ntree = 100,
-                         formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                         tree_minsplit = 40, tree_mincrit = 0.95,
-                         forest_minsplit = 20, forest_mincrit = 0, 
-                         type.tree = "ctree",
-                         mubase = 0,
-                         censNO = TRUE,
-                         fix.mu = FALSE,
-                         fix.sigma = FALSE,
-                         mu.sigma.interaction = FALSE,
-                         gamboost_cvr = FALSE,
-                         eval_disttree = TRUE,
-                         eval_distforest = TRUE,
-                         eval_gamlss = TRUE,
-                         eval_bamlss = TRUE,
-                         eval_gamboostLSS = TRUE,
-                         eval_randomForest = TRUE,
-                         eval_cforest = TRUE)
-  save(onecov1, file = "onecov1.rda")
+  oneset1 <- sim_oneset(kappa = 7, nobs = 400,
+                       seedconst = 7, ntree = 100,
+                       formula = y~x1+x2+x3+x4+x5+x6, 
+                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
+                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                       forest_mtry = 3,
+                       type.tree = "ctree",
+                       censNO = TRUE,
+                       fix.mu = FALSE,
+                       fix.sigma = FALSE,
+                       mu.sigma.interaction = FALSE,
+                       pred_fix = TRUE,
+                       pred_fix_x1 = -0.5,
+                       pred_fix_x4 = 0,
+                       gamboost_cvr = FALSE,
+                       eval_disttree = TRUE,
+                       eval_distforest = TRUE,
+                       eval_gamlss = TRUE,
+                       eval_gamboostLSS = FALSE,
+                       eval_randomForest = FALSE,
+                       eval_cforest = FALSE,
+                       mubase = 3,
+                       sigmabase = 3)
+  save(oneset1, file = "oneset1.rda")
 }
 
-if(file.exists("onecov10.rda")){
-  load("onecov10.rda")
+if(file.exists("oneset10.rda")){
+  load("oneset10.rda")
 } else {
-  onecov10 <- sim_onecov(kappa = 10, nobs = 700,
-                         seedconst = 7, ntree = 100,
-                         formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                         tree_minsplit = 40, tree_mincrit = 0.95,
-                         forest_minsplit = 20, forest_mincrit = 0, 
-                         type.tree = "ctree",
-                         mubase = 0,
-                         censNO = TRUE,
-                         fix.mu = FALSE,
-                         fix.sigma = FALSE,
-                         mu.sigma.interaction = FALSE,
-                         gamboost_cvr = FALSE,
-                         eval_disttree = TRUE,
-                         eval_distforest = TRUE,
-                         eval_gamlss = TRUE,
-                         eval_bamlss = TRUE,
-                         eval_gamboostLSS = TRUE,
-                         eval_randomForest = TRUE,
-                         eval_cforest = TRUE)
-  save(onecov10, file = "onecov10.rda")
+  oneset10 <- sim_oneset(kappa = 10, nobs = 400,
+                       seedconst = 7, ntree = 100,
+                       formula = y~x1+x2+x3+x4+x5+x6, 
+                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
+                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                       forest_mtry = 3,
+                       type.tree = "ctree",
+                       censNO = TRUE,
+                       fix.mu = FALSE,
+                       fix.sigma = FALSE,
+                       mu.sigma.interaction = FALSE,
+                       pred_fix = TRUE,
+                       pred_fix_x1 = -0.5,
+                       pred_fix_x4 = 0,
+                       gamboost_cvr = FALSE,
+                       eval_disttree = TRUE,
+                       eval_distforest = TRUE,
+                       eval_gamlss = TRUE,
+                       eval_gamboostLSS = FALSE,
+                       eval_randomForest = FALSE,
+                       eval_cforest = FALSE,
+                       mubase = 3,
+                       sigmabase = 3)
+  save(oneset10, file = "oneset10.rda")
 }
 @
 
 
 \begin{figure}[t!]
 \begin{subfigure}{0.6\textwidth}
-<<sim_onecov1_mu, fig=TRUE, echo=FALSE>>=
-plot_onecov(learndata = onecov1$learndata, parfun = onecov1$fun, 
-            dt = onecov1$dt, df = onecov1$df, g = onecov1$g, b = onecov1$b, 
-            gb = onecov1$gb, rf = onecov1$rf, cf = onecov1$cf, 
-            compare_mu = TRUE, fix_x2 = 0,
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+<<sim_oneset1_mu, fig=TRUE, echo=FALSE>>=
+plot_oneset(oneset1, 
+            compare_mu = TRUE, 
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
+            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
+            )
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.6\textwidth}
-<<sim_onecov1_sigma, fig=TRUE, echo=FALSE>>=
-plot_onecov(learndata = onecov1$learndata, parfun = onecov1$fun, 
-            dt = onecov1$dt, df = onecov1$df, g = onecov1$g, b = onecov1$b, 
-            gb = onecov1$gb, rf = onecov1$rf, cf = onecov1$cf, 
-            compare_sigma = TRUE, fix_x1 = 0.4,
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+<<sim_oneset1_sigma, fig=TRUE, echo=FALSE>>=
+plot_oneset(oneset1, 
+            compare_sigma_line = TRUE, 
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
+            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
+            )
 @
 \end{subfigure}
-\caption{\label{plot_sim_onecov1} ... }
+\caption{\label{plot_sim_oneset1} ... }
 \end{figure}
 
 
 \begin{figure}[t!]
 \begin{subfigure}{0.6\textwidth}
-<<sim_onecov10_mu, fig=TRUE, echo=FALSE>>=
-plot_onecov(learndata = onecov10$learndata, parfun = onecov10$fun, 
-            dt = onecov10$dt, df = onecov10$df, g = onecov10$g, b = onecov10$b, 
-            gb = onecov10$gb, rf = onecov10$rf, cf = onecov10$cf, 
-            compare_mu = TRUE, fix_x2 = 0,
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+<<sim_oneset10_mu, fig=TRUE, echo=FALSE>>=
+plot_oneset(oneset10,
+            compare_mu = TRUE,
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
+            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
+            )
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.6\textwidth}
-<<sim_onecov10_sigma, fig=TRUE, echo=FALSE>>=
-plot_onecov(learndata = onecov10$learndata, parfun = onecov10$fun, 
-            dt = onecov10$dt, df = onecov10$df, g = onecov10$g, b = onecov10$b, 
-            gb = onecov10$gb, rf = onecov10$rf, cf = onecov10$cf, 
-            compare_sigma = TRUE, fix_x1 = 0.4,
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE, add_b = TRUE, add_gb = TRUE, add_rf = TRUE, add_cf = TRUE)
+<<sim_oneset10_sigma, fig=TRUE, echo=FALSE>>=
+plot_oneset(oneset10, 
+            compare_sigma_line = TRUE, 
+            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
+            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
+            )
 @
 \end{subfigure}
-\caption{\label{plot_sim_onecov10} ... }
+\caption{\label{plot_sim_oneset10} ... }
 \end{figure}
 
 
@@ -1510,27 +1532,28 @@ if(file.exists("simres.rda")){
 } else {
   #source("~/svn/partykit/pkg/disttree/inst/draft/.R")
   source("gensim.R")
-simres <- gensim(seedconst = 7423, nrep = 10, ntree = 100,
-                 nsteps = 4, stepsize = 3, kappa.start = 1,
-                 formula = y~x1+x2+x3+x4+x5+x6+x7+x8+x9+x10, 
-                 nobs = 700, testnobs = 200L,
-                 tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
-                 forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                 type.tree = "ctree",
-                 censNO = TRUE,
-                 fix.mu = FALSE,
-                 fix.sigma = FALSE,
-                 mu.sigma.interaction = FALSE,
-                 gamboost_cvr = FALSE,
-                 eval_disttree = TRUE,
-                 eval_distforest = TRUE,
-                 eval_gamlss = TRUE,
-                 eval_bamlss = FALSE,
-                 eval_gamboostLSS = TRUE,
-                 eval_randomForest = TRUE,
-                 eval_cforest = TRUE,
-                 mubase = 0)
-
+  simres <- gensim(seedconst = 7, nrep = 20, ntree = 100,
+                   nsteps = 5, stepsize = 2,
+                   formula = y~x1+x2+x3+x4+x5+x6,
+                   nobs = 400, testnobs = 200L,
+                   tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
+                   forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                   forest_mtry = 3,
+                   fix.mu = FALSE,
+                   fix.sigma = FALSE,
+                   mu.sigma.interaction = FALSE,
+                   mubase = 1,
+                   sigmabase = 3,
+                   censNO = TRUE,
+                   gamboost_cvr = FALSE,
+                   eval_disttree = TRUE,
+                   eval_distforest = TRUE,
+                   eval_gamlss = TRUE,
+                   eval_bamlss = FALSE,
+                   eval_gamboostLSS = FALSE,
+                   eval_randomForest = FALSE,
+                   eval_cforest = FALSE)
+  
   save(simres, file = "simres.rda")
 }
 @
@@ -1570,9 +1593,9 @@ levelfun <- function(x) simres$fun(x,5)
 ncuts <- 100
 colR <- colorRampPalette(c("blue","green"))                                       
 cols <- colR(ncuts+1)
-griddata <- expand.grid(list(x1 = seq(-0.4, 1, 0.01), x2 = seq(-10, 10, 0.2)))
+griddata <- expand.grid(list(x1 = seq(-1, 1, 0.01), x4 = seq(0, 1, 0.2)))
 griddata$mu <- levelfun(griddata)
-levelplot(mu ~ x1 * x2, data = griddata, xlab = "x1", ylab = "x2", 
+levelplot(mu ~ x1 * x4, data = griddata, xlab = "x1", ylab = "x4", 
           region = TRUE, cuts = ncuts, col.regions = cols)
 
 @
@@ -1584,7 +1607,7 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 
 
-\\
+
 %Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
 %However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
 %\\
@@ -1607,18 +1630,17 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 
 
+\SweaveOpts{eval = TRUE}
 
-
-
+\newpage
 \section{Rain}
-In this section precipation data of .. years is analyzed. The response variable is the meassured total precipiation within 24 hours of each day in July at the station ... .\\
+In this section precipation data of 30 years is analyzed. The response variable is the meassured total precipiation within 24 hours of each day in July at the station ... .\\
 The following methods are applied on this data set:
 \begin{itemize}
 \item distributional tree
 \item distributional forest
 \item gamlss
 \item gamboostLSS
-\item bamlss
 \item EMOS
 \end{itemize}
 
@@ -1629,21 +1651,27 @@ These values are illustrated in the following boxplots.
 
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
-if(file.exists("rainres.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rainres.rda")
-  load("rainres.rda")
+if(file.exists("rain_Axams.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams.rda")
+  load("rain_Axams.rda")
 } else {
-  source("~/svn/partykit/pkg/disttree/inst/draft/rain.R")
-  #source("gensim.R")
-  rainres <- rain(seedconst = 7423)
-  save(rainres, file = "rainres.rda")
+  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_cross.R")
+  source("rain_cross.R")
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  setwd("~/svn/partykit/pkg/disttree/inst/draft/")
+  rainres <- rain_cross(stationname = "Axams", 
+                        seedconst = 7, ntree = 100,
+                        forest_mtry = 27,
+                        gamboost_cvr = TRUE,
+                        frac = FALSE)
 }
 
-rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres))
-rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres))
-rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres))
+rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres)-1)
+rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres)-1)
+rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres)-1)
 
-for(i in 1:length(rainres)){
+for(i in 1:(length(rainres)-1)){
   rain_rmse[i,] <- colMeans(rainres[[i]]$rmse, na.rm = TRUE)
   rain_ll[i,] <- colMeans(rainres[[i]]$ll, na.rm = TRUE)
   rain_crps[i,] <- colMeans(rainres[[i]]$crps, na.rm = TRUE)
@@ -1651,6 +1679,7 @@ for(i in 1:length(rainres)){
 
 colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
   colnames(rainres[[1]]$rmse)
+
 @
 
 
@@ -1673,39 +1702,17 @@ boxplot(rain_ll)
 boxplot(rain_crps)
 @
 \end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_crps_box, fig=TRUE, echo=FALSE>>=
+boxplot(1 - rain_crps / rain_crps[,7]) 
+abline(h = 0, col = 2, lwd = 2)
+@
+\end{subfigure}
 \caption{\label{boxplots_rain}Results 10x10 cross validation on the rain data set (RMSE, log-likelihood and CRPS)\\
 left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
 right: continuous lines represent the location parameter, dotted lines the scale parameter}
 \end{figure}
-
-
-
-\begin{figure}[t!]
-\begin{subfigure}{0.6\textwidth}
-<<sim_ll, fig=TRUE, echo=FALSE>>=
-plot_ll(simres)
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.6\textwidth}
-<<sim_levelplot, fig=TRUE, echo=FALSE>>=
-levelfun <- function(x) simres$fun(x,5)
-
-ncuts <- 100
-colR <- colorRampPalette(c("blue","green"))                                       
-cols <- colR(ncuts+1)
-griddata <- expand.grid(list(x1 = seq(-0.4, 1, 0.01), x2 = seq(-10, 10, 0.2)))
-griddata$mu <- levelfun(griddata)
-levelplot(mu ~ x1 * x2, data = griddata, xlab = "x1", ylab = "x2", 
-          region = TRUE, cuts = ncuts, col.regions = cols)
-
-@
-\end{subfigure}
-\caption{\label{plot_sim_ll}left: results of the simulation study: log-likelihood\\ %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
-right: levelplot of the parameter function for $\kappa=5$}
-\end{figure}
-
-
 
 
 
