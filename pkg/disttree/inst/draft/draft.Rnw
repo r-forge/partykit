@@ -1635,14 +1635,42 @@ right: levelplot of the parameter function for $\kappa=5$}
 \newpage
 \section{Rain}
 In this section precipation data of 30 years is analyzed. The response variable is the meassured total precipiation within 24 hours of each day in July at the station ... .\\
+
+\begin{tabular}{| l | c |}
+\hline
+basic covariates & variations
+\hline
+tppow: total precipitation power transformed & tppow_mean, tppow_spread, tppow_min, tppow_max \\
+& tppow_0612, tppow_1218, tppow_1824, tppow_2430 \\
+\hline
+capepow:    & capepow_mean, capepow_spread, capepow_min, capepow_max \\
+& capepow_0612, capepow_1218, capepow_1824, capepow_2430 \\
+\hline
+tcloc: total cloud coverage & \\
+\hline
+\hline
+\end{table}
+
+
 The following methods are applied on this data set:
-\begin{itemize}
-\item distributional tree
-\item distributional forest
-\item gamlss
-\item gamboostLSS
-\item EMOS
-\end{itemize}
+
+\begin{tabular}{| l | c  c  c  c |}
+\hline
+model & mu link & sigma link & mu covariates & sigma covariates \\
+\hline
+disttree & identity & log & all covariates & all covariates \\ 
+\hline
+distforest & identity & log & all covariates & all covariates \\
+\hline
+gamlss & identity & log & manually selected covariates: & manually selected covariates \\
+\hline
+gamboostLSS & identity & log & all covariates & all covariates \\
+\hline
+EMOS & identity & log & tppow_mean & tppow_spread \\
+\hline
+\end{table}
+
+
 
 These methods are compared in a 10x10 cross validation framework based on the resulting RMSE, log-likelihood and CRPS.\\
 These values are illustrated in the following boxplots.
