@@ -1,5 +1,5 @@
 
-R version 3.4.1 (2017-06-30) -- "Single Candle"
+R version 3.4.2 (2017-09-28) -- "Short Summer"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -32,6 +32,8 @@ Loading required package: mvtnorm
 > 
 > ## partitioned model
 > tr <- pmtree(bmod)
+No data given. I'm using data set GBSG2 from the current environment parent.frame(). 
+                   Please check if that is what you want.
 > plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot, 
 +                                           confint = TRUE))
 > summary(tr)
@@ -131,6 +133,8 @@ Number of terminal nodes: 3
 Number of parameters per node: 2
 Log-likelihood: -621.198
 > (tr3 <- pmtree(bmod3))
+No data given. I'm using data set dat from the current environment parent.frame(). 
+                   Please check if that is what you want.
 [1] root
 |   [2] age <= 50
 |   |   [3] age <= 42: n = 153
@@ -148,6 +152,8 @@ Number of terminal nodes: 3
 Number of parameters per node: 2
 Log-likelihood: -621.198
 > (tr4 <- pmtree(bmod4))
+No data given. I'm using data set dattab from the current environment parent.frame(). 
+                   Please check if that is what you want.
 [1] root
 |   [2] age <= 50
 |   |   [3] age <= 43: n = 8
@@ -187,7 +193,7 @@ Fitted party:
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Objective function (negative log-likelihood): 621.198
+Objective function (log-likelihood): -621.198
 > # (mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
 > 
 > library("strucchange")
@@ -249,6 +255,125 @@ statistic 1.1198024
 p.value   0.5712655
 
 > 
+> 
+> ### linear model and missings
+> data("MathExam14W", package = "psychotools")
+> 
+> ## scale points achieved to [0, 100] percent
+> MathExam14W$tests <- 100 * MathExam14W$tests/26
+> MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
+> 
+> ## select variables to be used
+> MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
++                              "attempt", "semester", "gender")]
+> 
+> ## compute base model
+> bmod_math <- lm(pcorrect ~ group, data = MathExam)
+> 
+> ## compute tree
+> (tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
+No data given. I'm using data set MathExam from the current environment parent.frame(). 
+                   Please check if that is what you want.
+[1] root
+|   [2] tests <= 84.61538
+|   |   [3] tests <= 57.69231: n = 121
+|   |       (Intercept)      group2 
+|   |         40.694789   -4.580056 
+|   |   [4] tests > 57.69231: n = 425
+|   |       (Intercept)      group2 
+|   |         55.251855   -2.012988 
+|   [5] tests > 84.61538
+|   |   [6] tests <= 92.30769: n = 97
+|   |       (Intercept)      group2 
+|   |         66.730769   -3.033063 
+|   |   [7] tests > 92.30769: n = 86
+|   |       (Intercept)      group2 
+|   |          90.32967   -13.25576 
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+Number of parameters per node: 2
+Log-likelihood: -3195.249
+> 
+> ## create data with NAs
+> Math_mx <- Math_mz <- MathExam
+> Math_mx$group[1:2] <- NA
+> Math_mz$tests[1:20] <- NA
+> 
+> bmod_math_mx <- lm(pcorrect ~ group, data = Math_mx)
+> 
+> (tr_math_mx1 <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mx))
+[1] root
+|   [2] tests <= 84.61538
+|   |   [3] tests <= 57.69231: n = 120
+|   |       (Intercept)      group2 
+|   |          40.10088    -3.98615 
+|   |   [4] tests > 57.69231: n = 424
+|   |       (Intercept)      group2 
+|   |         55.180534   -1.941667 
+|   [5] tests > 84.61538
+|   |   [6] tests <= 92.30769: n = 97
+|   |       (Intercept)      group2 
+|   |         66.730769   -3.033063 
+|   |   [7] tests > 92.30769: n = 86
+|   |       (Intercept)      group2 
+|   |          90.32967   -13.25576 
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+Number of parameters per node: 2
+Log-likelihood: -3185.587
+Warning message:
+In .prepare_args(model = model, data = data, zformula = zformula,  :
+  NAs in model variables (pcorrect, group). Omitting rows with NAs.
+> (tr_math_mx2 <- pmtree(bmod_math_mx, control = ctree_control(maxdepth = 2)))
+No data given. I'm using data set Math_mx from the current environment parent.frame(). 
+                   Please check if that is what you want.
+[1] root
+|   [2] tests <= 84.61538
+|   |   [3] tests <= 57.69231: n = 120
+|   |       (Intercept)      group2 
+|   |          40.10088    -3.98615 
+|   |   [4] tests > 57.69231: n = 424
+|   |       (Intercept)      group2 
+|   |         55.180534   -1.941667 
+|   [5] tests > 84.61538
+|   |   [6] tests <= 92.30769: n = 97
+|   |       (Intercept)      group2 
+|   |         66.730769   -3.033063 
+|   |   [7] tests > 92.30769: n = 86
+|   |       (Intercept)      group2 
+|   |          90.32967   -13.25576 
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+Number of parameters per node: 2
+Log-likelihood: -3185.587
+Warning message:
+In .prepare_args(model = model, data = data, zformula = zformula,  :
+  NAs in model variables (pcorrect, group). Omitting rows with NAs.
+> (tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
+[1] root
+|   [2] tests <= 84.61538
+|   |   [3] tests <= 57.69231: n = 121
+|   |       (Intercept)      group2 
+|   |         41.811414   -5.696682 
+|   |   [4] tests > 57.69231: n = 419
+|   |       (Intercept)      group2 
+|   |         54.571083   -1.332217 
+|   [5] tests > 84.61538
+|   |   [6] tests <= 92.30769: n = 99
+|   |       (Intercept)      group2 
+|   |         67.765568   -4.067862 
+|   |   [7] tests > 92.30769: n = 90
+|   |       (Intercept)      group2 
+|   |         86.587771   -9.513865 
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+Number of parameters per node: 2
+Log-likelihood: -3203.227
+> 
 > proc.time()
    user  system elapsed 
-  6.864   0.044   6.915 
+  6.068   0.032   6.098 

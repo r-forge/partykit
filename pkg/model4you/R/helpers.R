@@ -125,5 +125,11 @@
     paste(paste(modvars, collapse = " + "), zformula)
   )
   
+  nas <- is.na(args$data[, modvars])
+  if(any(nas)) {
+    warning("NAs in model variables (", paste(modvars, collapse = ", "), "). Omitting rows with NAs.")
+    args$data <- stats::na.omit(args$data)
+  }
+  
   return(args)
 }

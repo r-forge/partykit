@@ -52,3 +52,32 @@ bmod4 <- glm(cbind(nsuccess, nfailure) ~ trt, data = dattab, family = binomial)
 library("strucchange")
 sctest(tr3)
 sctest(tr4)
+
+
+### linear model and missings
+data("MathExam14W", package = "psychotools")
+
+## scale points achieved to [0, 100] percent
+MathExam14W$tests <- 100 * MathExam14W$tests/26
+MathExam14W$pcorrect <- 100 * MathExam14W$nsolved/13
+
+## select variables to be used
+MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
+                             "attempt", "semester", "gender")]
+
+## compute base model
+bmod_math <- lm(pcorrect ~ group, data = MathExam)
+
+## compute tree
+(tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2)))
+
+## create data with NAs
+Math_mx <- Math_mz <- MathExam
+Math_mx$group[1:2] <- NA
+Math_mz$tests[1:20] <- NA
+
+bmod_math_mx <- lm(pcorrect ~ group, data = Math_mx)
+
+(tr_math_mx1 <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mx))
+(tr_math_mx2 <- pmtree(bmod_math_mx, control = ctree_control(maxdepth = 2)))
+(tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
