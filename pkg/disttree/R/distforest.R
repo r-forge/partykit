@@ -487,7 +487,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
 logLik.distforest <- function(object, newdata = NULL, ...) {
   if(is.null(newdata)) {
     if(!is.null(object$loglik)) return(structure(object$loglik, df = NA, class = "logLik"))
-    newdata <- data
+    newdata <- object$data
   } 
   
   #store modelframe for newdata
