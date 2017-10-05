@@ -5,7 +5,7 @@
 rain_pred <- function(seedconst = 7, ntree = 100,
                       tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
                       forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
-                      forest_mtry = 30,   # if frac == FALSE: nvar/3 = 27
+                      forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
                       type.tree = "ctree",
                       gamboost_cvr = FALSE,
                       frac = FALSE)
@@ -235,12 +235,12 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     
     # tree and forest formula
     dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
-      tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
+      #tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
       tp_frac0612 + tp_frac1218 + tp_frac1824 + tp_frac2430 + 
       tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
       tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
       capepow_mean + capepow_sprd + capepow_min + capepow_max + 
-      cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
+      #cape_frac +                                                    # include? (mainly zeros), or just the 6h values?
       cape_frac0612 + cape_frac1218 + cape_frac1824 + cape_frac2430 + 
       capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
       capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
@@ -262,7 +262,8 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       t850_sprd_mean + t850_sprd_min + t850_sprd_max +
       tdiff500850_mean + tdiff500850_min + tdiff500850_max +
       tdiff700850_mean + tdiff700850_min + tdiff700850_max +
-      tdiff500700_mean + tdiff500700_min + tdiff500700_max
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max + 
+      msl_diff
     
     # gamlss formula
     g.mu.formula <- robs ~ pb(tppow_mean) + 
@@ -283,13 +284,14 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     
     
     # gamboostLSS formula
-    gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
-      bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
+    gb.mu.formula <- gb.sigma.formula <- 
+      robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+      #bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
       bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
       bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
       bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
       bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
-      bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
+      #bbs(cape_frac) +                                                 # include? (mainly zeros), or just the 6h values?
       bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
       bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
       bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
@@ -311,42 +313,15 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
       bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
       bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max) + 
+      bbs(msl_diff)
     
-    gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
-      bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
-      bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
-      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
-      bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
-      bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
-      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
-  
+    
   } else {
     
     # tree and forest formula
-    dt.formula <- df.formula <- robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
+    dt.formula <- df.formula <- 
+      robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
       #tp_frac +                                                       # include? (mainly zeros), or just the 6h values?
       #tp_frac0612 + tp_frac1218 + tp_frac1824 + tp_frac2430 + 
       tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
@@ -374,7 +349,8 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       t850_sprd_mean + t850_sprd_min + t850_sprd_max +
       tdiff500850_mean + tdiff500850_min + tdiff500850_max +
       tdiff700850_mean + tdiff700850_min + tdiff700850_max +
-      tdiff500700_mean + tdiff500700_min + tdiff500700_max
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max +
+      msl_diff
     
     # gamlss formula
     g.mu.formula <- robs ~ pb(tppow_mean) + 
@@ -395,7 +371,8 @@ rain_pred <- function(seedconst = 7, ntree = 100,
     
     
     # gamboostLSS formula
-    gb.mu.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
+    gb.mu.formula <- gb.sigma.formula <- 
+      robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
       #bbs(tp_frac) +                                                   # include? (mainly zeros), or just the 6h values?
       #bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
       bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
@@ -423,37 +400,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
       bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
       bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
       bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
+      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max) +
+      bbs(msl_diff)
     
-    gb.sigma.formula <- robs ~ bbs(tppow_mean) + bbs(tppow_sprd) + bbs(tppow_min) + bbs(tppow_max) + 
-      #bbs(tp_frac) +                                                         # include? (mainly zeros), or just the 6h values?
-      #bbs(tp_frac0612) + bbs(tp_frac1218) + bbs(tp_frac1824) + bbs(tp_frac2430) +
-      bbs(tppow_mean0612) + bbs(tppow_mean1218) + bbs(tppow_mean1824) + bbs(tppow_mean2430) + 
-      bbs(tppow_sprd0612) + bbs(tppow_sprd1218) + bbs(tppow_sprd1824) + bbs(tppow_sprd2430) +
-      bbs(capepow_mean) + bbs(capepow_sprd) + bbs(capepow_min) + bbs(capepow_max) + 
-      #bbs(cape_frac) +                                                      # include? (mainly zeros), or just the 6h values?                                                 # include? (mainly zeros), or just the 6h values?
-      #bbs(cape_frac0612) + bbs(cape_frac1218) + bbs(cape_frac1824) + bbs(cape_frac2430) +
-      bbs(capepow_mean0612) + bbs(capepow_mean1218) + bbs(capepow_mean1224) + bbs(capepow_mean1230) +
-      bbs(capepow_sprd0612) + bbs(capepow_sprd1218) + bbs(capepow_sprd1224) + bbs(capepow_sprd1230) +
-      bbs(dswrf_mean_mean) + bbs(dswrf_mean_max) +  #bbs(dswrf_mean_min) +
-      bbs(dswrf_sprd_mean) + bbs(dswrf_sprd_max) + #bbs(dswrf_sprd_min) +
-      bbs(msl_mean_mean) + bbs(msl_mean_min) + bbs(msl_mean_max) + 
-      bbs(msl_sprd_mean) + bbs(msl_sprd_min) + bbs(msl_sprd_max) +
-      bbs(pwat_mean_mean) + bbs(pwat_mean_min) + bbs(pwat_mean_max) + 
-      bbs(pwat_sprd_mean) + bbs(pwat_sprd_min) + bbs(pwat_sprd_max) +
-      bbs(tmax_mean_mean) + bbs(tmax_mean_min) + bbs(tmax_mean_max) +
-      bbs(tmax_sprd_mean) + bbs(tmax_sprd_min) + bbs(tmax_sprd_max) +
-      bbs(tcolc_mean_mean) + bbs(tcolc_mean_min) + bbs(tcolc_mean_max) +
-      bbs(tcolc_sprd_mean) + bbs(tcolc_sprd_min) + bbs(tcolc_sprd_max) +
-      bbs(t500_mean_mean) + bbs(t500_mean_min) + bbs(t500_mean_max) +
-      bbs(t700_mean_mean) + bbs(t700_mean_min) + bbs(t700_mean_max) +
-      bbs(t850_mean_mean) + bbs(t850_mean_min) + bbs(t850_mean_max) +
-      bbs(t500_sprd_mean) + bbs(t500_sprd_min) + bbs(t500_sprd_max) +
-      bbs(t700_sprd_mean) + bbs(t700_sprd_min) + bbs(t700_sprd_max) +
-      bbs(t850_sprd_mean) + bbs(t850_sprd_min) + bbs(t850_sprd_max) +
-      bbs(tdiff500850_mean) + bbs(tdiff500850_min) + bbs(tdiff500850_max) +
-      bbs(tdiff700850_mean) + bbs(tdiff700850_min) + bbs(tdiff700850_max) +
-      bbs(tdiff500700_mean) + bbs(tdiff500700_min) + bbs(tdiff500700_max)
   }
   
   
@@ -749,7 +698,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
                         
                         g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                        family = cens("NO", type = "left")))
+                                        family = cens("NO", type = "left"),
+                                        control = gamlss.control(n.cyc = 100),
+                                        i.control = glim.control(cyc = 100, bf.cyc = 100)))
                         if(inherits(g, "try-error")) {
                           g <- NA
                           g_error <- paste0(stationname,"_model")
@@ -930,7 +881,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                       },
                       mc.cores = detectCores() - 1
   )
-                      
+  
   rainres$call <- cl
   rainres$complete_stations <- complete_stations
   
@@ -940,19 +891,22 @@ rain_pred <- function(seedconst = 7, ntree = 100,
 
 
 
-setwd("~/svn/partykit/pkg/disttree/inst/draft")
-#source("rain_pred.R")
-library("gamlss.cens")
-gen.cens("NO", type = "left")
 
-#save(res, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
-#save(res, file = "~/disttree/inst/draft/rain_pred.rda")
-res <- rain_pred(seedconst = 4,
-                 type.tree = "ctree",
-                 gamboost_cvr = FALSE,
-                 frac = TRUE)
 
 if(FALSE){
+  
+  setwd("~/svn/partykit/pkg/disttree/inst/draft")
+  #source("rain_pred.R")
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  
+  #save(res, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
+  #save(res, file = "~/disttree/inst/draft/rain_pred.rda")
+  res <- rain_pred(seedconst = 7,
+                   gamboost_cvr = TRUE,
+                   frac = FALSE)
+  
+  
   save(res, file = paste0("rain_pred_frac_", res$call$frac, "_", res$call$seedconst, ".rda"))
   
   ll <- res[[1]]$results["ll",]
