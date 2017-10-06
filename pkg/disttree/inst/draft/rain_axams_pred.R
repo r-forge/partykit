@@ -702,8 +702,6 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
 
 
 if(FALSE){
-  
-
   setwd("~/svn/partykit/pkg/disttree/inst/draft")
   #source("rain_pred.R")
   library("gamlss.cens")
@@ -723,41 +721,45 @@ if(FALSE){
   
   
   ###########
-  # predictions for one day (in each of the three years)
-  pday <- 23
-  pdays <- c(pday, pday + 31, pday + 61)
-  pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
-  df_mu <- pdf$mu
-  df_sigma <- pdf$sigma
-  df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
-  cbind(df_exp, res$testdata[pdays,"robs"])
-  
-  
-  # plot predicted distributions together with observations
-  set.seed(res$call$seedconst)
-  x <- sort(runif(500,-2,12))
-  y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
-  y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
-  y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
+  # predictions for one day (in each of the three years) 
+  # (19th of July 2011 is missing)
+  pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+  {
+    pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
+    pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
+    df_mu <- pdf$mu
+    df_sigma <- pdf$sigma
+    df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+    cbind(df_exp, res$testdata[pdays,"robs"])
     
-  plot(x = x, y = y1, type = "l", col = "red", 
-       main = "July 23rd", ylab = "density", ylim = c(0,max(y1, y2, y3) + 0.01))
-  lines(x = x, y = y2, type = "l", col = "blue")
-  lines(x = x, y = y3, type = "l", col = "darkgreen")
-  legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
-  
-  p1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-  p2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-  p3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-  
-  points(x = p1[1], y = p1[2], col = "red")
-  points(x = p2[1], y = p2[2], col = "blue")
-  points(x = p3[1], y = p3[2], col = "darkgreen")
-  
-  lines(x = c(p1[1], p1[1]), y = c(p1[2], 0), col = "darkgrey", type = "l", lty = 2)
-  lines(x = c(p2[1], p2[1]), y = c(p2[2], 0), col = "darkgrey", type = "l", lty = 2)
-  lines(x = c(p3[1], p3[1]), y = c(p3[2], 0), col = "darkgrey", type = "l", lty = 2)
-  
+    
+    # plot predicted distributions together with observations
+    #set.seed(res$call$seedconst)
+    set.seed(7)
+    x <- sort(runif(500,-2,12))
+    y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
+    y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
+    y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
+    dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
+    
+    plot(x = x, y = y1, type = "l", col = "red", 
+         main = paste0("July ", pday, dayending), ylab = "density", ylim = c(0,max(y1, y2, y3) + 0.01))
+    lines(x = x, y = y2, type = "l", col = "blue")
+    lines(x = x, y = y3, type = "l", col = "darkgreen")
+    legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
+    
+    p1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+    p2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+    p3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+    
+    points(x = p1[1], y = p1[2], col = "red")
+    points(x = p2[1], y = p2[2], col = "blue")
+    points(x = p3[1], y = p3[2], col = "darkgreen")
+    
+    lines(x = c(p1[1], p1[1]), y = c(p1[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(p2[1], p2[1]), y = c(p2[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(p3[1], p3[1]), y = c(p3[2], 0), col = "darkgrey", type = "l", lty = 2)
+  }
   
   
   
