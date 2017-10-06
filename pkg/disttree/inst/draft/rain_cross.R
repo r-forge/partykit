@@ -605,16 +605,16 @@ rain_cross <- function(stationname, seedconst = 7, ntree = 100,
                             mi_error_seed[i] <- seedconst * k
                           }
                           
-                          ml_time <- system.time(ml <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                          ml_time <- system.time(ml <- try(crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
+                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "log")))
                           if(inherits(ml, "try-error")) {
                             ml_time <- NA
                             ml <- NA
                             ml_error_seed[i] <- seedconst * k
                           }
                           
-                          mq_time <- system.time(mq <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                          mq_time <- system.time(mq <- try(crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
+                                                                data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic")))
                           if(inherits(mq, "try-error")) {
                             mq_time <- NA
                             mq <- NA
