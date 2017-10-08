@@ -1,4 +1,3 @@
-
 \documentclass[nojss]{jss}
 
 %\VignetteIndexEntry{ctree: Conditional Inference Trees}
@@ -16,6 +15,7 @@
 \captionsetup{format=hang}
 \usepackage{subcaption}
 \usepackage{Sweave}
+\usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 %\usepackage[pagebackref=true]{hyperref}
@@ -706,7 +706,7 @@ Both of these two concepts, parametric modeling and algorithmic trees, have been
 
 \SweaveOpts{eps=FALSE, keep.source=TRUE, eval = TRUE}
 
-
+\SweaveOpts{eval = TRUE}
 \section{Introduction}
 
 In the field of regression analysis many statistical models have already been developed to model the relationship between a response variable and one or more explanatory variables.\\
@@ -935,115 +935,6 @@ But as mentioned before, until now the above listed development in the field of 
 \\
 Therefore, our main goal is to embed the progress made in the field of probabilistic modeling in the idea of regression trees and forests. In particular, more flexible models such as GAMLSSs should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects or interactions of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In that way, no variable selection or predefining of variable interactions is necessary and a whole distribution is specified in each node which leads to a wide range of inference methods that can be applied.\\
 These (future) steps are illustrated in Figure \ref{Devel_treeforest}, embedded in the development made in the field of tree and forest algorithms.\\
-\\
-\\
-Now we take a look at a classical text book example, the mcycle data set from the package \pkg{MASS}. It consists of a series of measurements of head acceleration in a simulated motorcycle accident. The response variable \code{accel} represents the recorded head acceleration meassured in g and the explanatory variable \code{times} is meassured in milliseconds after the impact.\\
-We compare the performance of the following four functions on this data set: \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest}\\
-This situation is particularly well suited for a GAMLSS because there is only one regressor and physically one would expect a smooth function. However, this example shows, that the distributional forest can also capture the changes quite well albeit not as smoothly as the GAMLSS. Moreover, it illustrates that the distributional tree detects the changes as well but models them with rough steps.\\
-\\
-To make it possible to compare the models also on the estimated scale parameter, here the standard deviation of the random forest is estimated in each terminal node of each tree and then averaged, in the same way as the mean parameter is estimated. This makes it possible to specify a distribution, however, the splits of a random forest are only made in the location parameter while a distributional tree/forest considers splits in all distribution parameters.\\
-\\
-In Figure \ref{plot_mcycle} the results of a distributional forest are plotted on the top left and then compared to the results of a distributional tree, a GAMLSS and a random forest, regarding the location parameter on the top right and the scale parameter below.\\
-While the smooth function of \code{gamlss} seems to model especially the middle part (for \code{times} between 17 and 40) better than the wiggly functions resulting from the trees it can also be observed that at \code{times} $=14$ there is a rapid drop which is captuerd more precisely by the tree-based models while \code{gamlss} starts descending earlier. Also for the highest values of \code{times} the smooth function increases again while the forests stay almost at the same level and the tree stays at a fixed value which seems more appropriate in this situation.\\
-Comparing the two forest models, the distributional forest seems to be a bit more stable while the random forest includes more rapid changes of a wider range.\\
-Looking at the plot of the scale parameter, in general the distributional forest estimates higher parameters than the random forest.\\
-
-
-
-<<echo=FALSE, results=hide>>=
-
-## FIX ME: distforest uses subsets, randomForest uses bootstraps
-
-## randomForest: https://stackoverflow.com/questions/28417826/nodesize-parameter-ignored-in-randomforest-package
-## nodesize = the minimum number of observations that must exist in a node in order for a split to be attempted.
-## -> nodesize = minsplit
-
-if(file.exists("mcycle_plotdata.rda")){
-  load("mcycle_plotdata.rda")
-} else {
-  set.seed(7)
-  dt <- disttree(accel ~ times, data = mcycle, family = NO(), type.tree = "mob", control = mob_control(minsize = 7L))
-  df <- distforest(accel ~ times, data = mcycle, family = NO(), ntree = 300L, 
-                   control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 5L, minsplit = 10L, intersplit = TRUE))
-  rf <- randomForest(accel ~ times, data = mcycle, ntree = 300L, nodesize = 10L, 
-                     keep.inbag = TRUE, replace = FALSE)
-  #ga <- gam(list(accel ~ s(times), ~ s(times)), data = mcycle, family=gaulss())
-  ga <- gam(list(accel ~ s(times,k=20,bs="ad"), ~ s(times)), data = mcycle, family=gaulss())
-  #b <- bamlss(list(accel ~ s(times), accel ~ s(times)), data = mcycle)
-  #save(df, file = "mcycle_plotdata.rda")
-  
-  
-  ## get 'fitted.sigma.rf'
-  rf_sd <- rf_getsd(rf, newdata = mcycle, rfdata = mcycle)
-  
-  plotdata <- cbind(mcycle,
-                    df$fitted.par,
-                    dt$fitted.par,
-                    #g$mu.fv, g$sigma.fv,
-                    ga$fitted.values[,1], 1/ga$fitted.values[,2],
-                    rf$predicted, rf_sd)
-  
-  colnames(plotdata) <- c("times", "accel",
-                          "fitted.mu.df","fitted.sigma.df",
-                          "fitted.mu.dt","fitted.sigma.dt",
-                          "fitted.mu.g","fitted.sigma.g",
-                          "fitted.mu.rf","fitted.sigma.rf")
-  
-  sp <- plotdata[order(plotdata["times"]),]
-  
-  save(sp, file = "mcycle_plotdata.rda")
-}
-@
-
-
-\begin{figure}[t!]
-\begin{subfigure}{0.65\textwidth}
-<<plot_df, fig=TRUE, echo=FALSE>>=
-# distforest
-plot(mcycle)
-lines(x = sp$times, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
-polygon(c(sp$times, rev(sp$times)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
-        col = pallight["forest"], border = "transparent")
-@
-%\caption{\label{plot_mcycle_df}Distributional Forest, \code{distforest}}
-\end{subfigure}
-\hspace{-2cm}
-\begin{subfigure}{0.65\textwidth}
-<<plot_mu_vs, fig=TRUE, echo=FALSE>>=
-# disttree vs. distforest vs. gamlss vs. randomForest
-plot(x = sp$times, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 1.5,
-     ylim = c(-134,75), ylab = "accel", xlab = "times")
-lines(x = sp$times, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 1.5)
-lines(x = sp$times, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 1.5)
-lines(x = sp$times, y = sp$fitted.mu.rf, type = "l", col = pal["randomForest"], lwd = 1.5)
-legend('topleft', c("disttree", "distforest", "gamlss", "randomForest"), 
-       col = c(pal["tree"], pal["forest"], pal["gamlss"], pal["randomForest"]), lty = 1, cex = 1)
-@
-%\caption{\label{plot_mcycle_mu_vs} Location parameter: \code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
-\end{subfigure}
-\vspace{-1cm}
-
-\hspace{4cm}
-\begin{subfigure}{0.65\textwidth}
-<<plot_sigma_vs_lines, fig=TRUE, echo=FALSE>>=
-# variance: disttree vs. distforest vs. gamlss (lines)
-plot(x = sp$times, y = sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2,
-     ylim = c(0,50), ylab = "variance of accel", xlab = "times")
-#lines(x = sp$times, y = -sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
-lines(x = sp$times, y = sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
-#lines(x = sp$times, y = -sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
-lines(x = sp$times, y = sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-#lines(x = sp$times, y = -sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
-lines(x = sp$times, y = sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
-#lines(x = sp$times, y = -sp$fitted.sigma.rf, type = "l", col = pal["randomForest"], lwd = 2)
-legend('topleft', c("disttree", "distforest", "gamlss", "randomForest"), 
-       col = c(pal["tree"], pal["forest"], pal["gamlss"], pal["randomForest"]), lty = 1, cex = 1)
-@
-\end{subfigure}
-\caption{\label{plot_mcycle}top left: location and scale parameter of \code{distforest}\\
-top right: location parameter of all four models\\
-bottom: scale parameter of all four models}
-\end{figure}
 
 
 
@@ -1124,203 +1015,6 @@ $$
 \hat{\theta}(\bold{z}^{\ast}) =  \max_{\theta \in \Theta} \sum_{i=1}^n \omega^{forest}_i(\bold{z}^{\ast}) \cdot \ell(\theta; y_i)
 $$
 While in a distributional tree the same distribution is specified for all observations being in the same node a distributional forest predicts and fits a different distribution for each different observation which is due to the individual weights calculated separately for each observation.
-
-
-
-
-
-
-
-
-
-
-\newpage
-\section{Application}
-\subsection{Continuation of the mcycle example: cross validation}
-In the introduction the four functions \code{disttree}, \code{distforest}, \code{gamlss} and \code{randomForest} have been applied on the mcycle data set and their results haven been visualized and discussed. To get a more profound impression of their performances we now want to compare them in a cross validation framework on this text book example data set. The 133 observations are randomly split into 10 subsets roughly of the same size. After learning the model on 9 of these subgroups the RMSE of the estimated location parameter and the log-likelihood function are evaluated on the 10th part. Each subset is chosen once as a test data set and the mean of the resulting values is stored. This procedure is repeated 9 times. This comparison is illustrated in Figure \ref{plot_cross_mean}, based on the RMSE on the left and based on the log-likelihood on the right. (Extrapolation of the GAMLSS would lead to very small values of the log-likelihood. To avoid this, the first and the l!
- ast observation are always included in the learn data set.) \\
-As we have already seen in the introduction the distributional tree obviously struggles with the smooth effects while the two forest models can capture the changes quite well. As far as the RMSE of the estimated location parameter is concerned the GAMLSS plays to its strength as a smooth parametric model and leads to the best results followed by the distributional forest and the random forest which might both be a bit to wiggly.\\
-However, regarding the log-likelihood the forests perform better than the GAMLSS. This is mainly due to the fact that the GAMLSS models the scale parameter close to zero for observations with \code{times} $<10$. This leads to very low values of the log-likelihood function if one or more of these observations are included in the test data set. As the estimated scale parameter of the tree based models are higher for these specific observations this problem does not occure here.\\
-Overall it can be seen that the distributional forest which fits the whole distribution and considers splits in both parameters performs better than the random forest which only models the mean and therefore also only inlcudes splits in the location parameter.
-
-
-<<echo=FALSE, results=hide>>=
-#### cross validation
-if((file.exists("mcycle_cross_mean.rda")) & (file.exists("mcycle_cross_all.rda"))){
-  load("mcycle_cross_mean.rda")
-  load("mcycle_cross_all.rda")
-  nrep_cross <- NROW(cross_all)
-} else {
-  
-  set.seed(704)
-  #set.seed(7054)
-  nrep_cross <- 10
-  
-  rmse <- matrix(nrow = nrep_cross * 10, ncol = 4)
-  ll <- matrix(nrow = nrep_cross * 10, ncol = 4)
-  mean_rmse <- matrix(nrow = nrep_cross, ncol = 4)
-  mean_ll <- matrix(nrow = nrep_cross, ncol = 4)
-  errors <- numeric(length = nrep_cross * 10)
-  colnames(rmse) <- colnames(mean_rmse) <- c("rmse_disttree", "rmse_distforest", "rmse_gamlss", "rmse_randomForest")
-  colnames(ll) <- colnames(mean_ll) <- c("ll_disttree", "ll_distforest", "ll_gamlss", "ll_randomForest")
-  
-  tdata <- list()
-  ldata <- list()
-  
-  for(k in 1:nrep_cross) {
-    
-    # separate data set (without the first and the last observation) into 10 parts (9 of size 13 and 1 of size 14):
-    # (first and last observation are not in testid -> always stay in learndata)
-    id <- c(2:(NROW(mcycle)-1))
-    testid <- list()
-    for(i in 1:9){
-      testid[[i]] <- sample(id, 13, replace = FALSE)
-      id <- id[!(id %in% testid[[i]])]
-    }
-    testid[[10]] <- id
-    
-    rmse_dt_mu <- rmse_df_mu <- rmse_g_mu <- rmse_rf_mu <- 
-      ll_dt <- ll_df <- ll_g <- ll_rf <- numeric(length = 10)
-    
-    for(i in 1:10){
-      tdata[[(k-1)*10+i]] <- testdata <- mcycle[testid[[i]], ]
-      ldata[[(k-1)*10+i]] <- learndata <- mcycle[-testid[[i]], ]
-      
-      #testdata <- mcycle[testid[[i]], ]
-      #learndata <- mcycle[-testid[[i]], ]
-      
-      dt <- disttree(accel ~ times, data = learndata, family = NO(), type.tree = "mob", control = mob_control(minsize = 7L))
-      df <- distforest(accel ~ times, data = learndata, family = NO(), ntree = 300L, 
-                       control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 5L, minsplit = 10L, intersplit = TRUE))
-      rf <- randomForest(accel ~ times, data = learndata, ntree = 300L, nodesize = 10L, keep.inbag = TRUE, replace = FALSE)
-      ga <- gam(list(accel ~ s(times,k=20,bs="ad"), ~ s(times)), data = learndata, family=gaulss())
-      #ga <- gam(list(accel ~ s(times), ~ s(times)), data = learndata, family=gaulss())
-      errors[(k-1)*10+i] <- (ga$outer.info$conv != "full convergence")
-      
-      # get predicted values
-      dt.pred.par <- predict(dt, newdata = testdata, type = "parameter")
-      df.pred.par <- predict(df, newdata = testdata, type = "parameter")
-      rf.pred.resp <- predict(rf, newdata = testdata)
-      
-      rf.sd <- rf_getsd(rf, newdata = testdata, rfdata = learndata)
-      
-      g.pred.par <- predict(ga, newdata = testdata, type = "response")
-      g.pred.mu <- g.pred.par[,1]
-      g.pred.sigma <- 1/g.pred.par[,2]
-      
-      # RMSE location parameter
-      rmse_dt_mu[i] <- sqrt(mean((dt.pred.par$mu - testdata$accel)^2))
-      rmse_df_mu[i] <- sqrt(mean((df.pred.par$mu - testdata$accel)^2))
-      rmse_g_mu[i] <- sqrt(mean((g.pred.mu - testdata$accel)^2))
-      rmse_rf_mu[i] <- sqrt(mean((rf.pred.resp - testdata$accel)^2))
-      
-      # loglikelihood
-      dtll <- dfll <- gll <- rfll <- 0
-      for(j in 1:(nrow(testdata))){
-        
-        dtll_j <- dnorm(testdata[j,"accel"], mean = dt.pred.par$mu[j], sd = dt.pred.par$sigma[j], log=TRUE)
-        dfll_j <- dnorm(testdata[j,"accel"], mean = df.pred.par$mu[j], sd = df.pred.par$sigma[j], log=TRUE)
-        gll_j <- dnorm(testdata[j,"accel"], mean = g.pred.mu[j], sd = g.pred.sigma[j], log=TRUE)
-        rfll_j <- dnorm(testdata[j,"accel"], mean = rf.pred.resp[j], sd = rf.sd[j], log=TRUE)
-        
-        dtll <- if(is.na(dtll_j)) {
-          print(dt.pred.par[j,], testdata[j,"accel"]) 
-          dtll + (-5)
-        } else {dtll + dtll_j}
-        dfll <- if(is.na(dfll_j)) {
-          print(df.pred.par[j,], testdata[j,"accel"]) 
-          dfll + (-5)
-        } else {dfll + dfll_j}
-        gll <- if(is.na(gll_j)) {
-          print(g.pred.mu[j], g.pred.sigma[j], testdata[j,"accel"]) 
-          gll + (-5)
-        } else {gll + gll_j}
-        rfll <- if(is.na(rfll_j)) {
-          print(c(rf.pred.resp[j], rf.sd[j]), testdata[j,"accel"]) 
-          rfll + (-5)
-        } else {rfll + rfll_j}
-      }
-      
-      ll_dt[i] <- dtll
-      ll_df[i] <- dfll
-      ll_g[i] <- gll
-      ll_rf[i] <- rfll
-      
-      rmse[i+(k-1)*10,] <- c(rmse_dt_mu[i], rmse_df_mu[i], rmse_g_mu[i], rmse_rf_mu[i])
-      ll[i+(k-1)*10,] <- c(ll_dt[i], ll_df[i], ll_g[i], ll_rf[i])
-    }
-    
-    # store data
-    mean_rmse[k,] <- c(mean(rmse_dt_mu), mean(rmse_df_mu), mean(rmse_g_mu), mean(rmse_rf_mu))
-    mean_ll[k,] <- c(mean(ll_dt), mean(ll_df), mean(ll_g), mean(ll_rf))
-    
-    
-  }
-  
-  cross_all <- cbind(rmse, ll)
-  cross_mean <- cbind(mean_rmse, mean_ll)
-  save(cross_all, file = "mcycle_cross_all.rda")
-  save(cross_mean, file = "mcycle_cross_mean.rda")
-
-}
-@
-
-
-\begin{figure}[t!]
-\begin{subfigure}{0.6\textwidth}
-<<mcycle_cross_rmse_mean, fig=TRUE, echo=FALSE>>=
-# parallel boxplots RMSE
-box_rmse <- cross_mean[, c("rmse_disttree", "rmse_randomForest", "rmse_distforest", "rmse_gamlss")]
-colnames(box_rmse) <- c("disttree", "randomForest", "distforest", "gamlss")
-boxplot.matrix(box_rmse, ylab = "RMSE")
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.6\textwidth}
-<<mcycle_cross_ll_mean, fig=TRUE, echo=FALSE>>=
-# parallel boxplots log-likelihood
-box_ll <- cross_mean[, c("ll_disttree", "ll_randomForest", "ll_distforest", "ll_gamlss")]
-#box_ll <- box_ll[box_ll[,1]>-400,]
-#box_ll <- box_ll[box_ll[,2]>-400,]
-box_ll <- box_ll[box_ll[,"ll_gamlss"]>-70,]
-#box_ll <- box_ll[box_ll[,4]>-400,]
-colnames(box_ll) <- c("disttree", "randomForest", "distforest", "gamlss")
-boxplot.matrix(box_ll, ylab = "log-likelihood")
-@
-\end{subfigure}
-%\center
-\caption{\label{plot_cross_mean}10-times-10 cross validation on the mcycle data, averages (>-70):\\ \code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
-\end{figure}
-
-%\begin{figure}[t!]
-%\begin{subfigure}{0.6\textwidth}
-%<<mcycle_cross_rmse_all, fig=TRUE, echo=FALSE>>=
-%# parallel boxplots RMSE
-%box_rmse <- cross_all[, c("rmse_disttree", "rmse_randomForest", "rmse_distforest", %"rmse_gamlss")]
-%colnames(box_rmse) <- c("disttree", "randomForest", "distforest", "gamlss")
-%boxplot.matrix(box_rmse, ylab = "RMSE")
-%@
-%%\caption{\label{plot_boot_rmse}Bootstraps: RMSE of the location parameter, \code{dist%tree%} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
-%\end{subfigure}
-%\hspace{-1cm}
-%\begin{subfigure}{0.6\textwidth}
-%<<mcycle_cross_ll_all, fig=TRUE, echo=FALSE>>=
-%# parallel boxplots log-likelihood
-%box_ll <- cross_all[, c("ll_disttree", "ll_randomForest", "ll_distforest", "ll_gamlss"%)]
-%#box_ll <- box_ll[box_ll[,1]>-400,]
-%#box_ll <- box_ll[box_ll[,2]>-400,]
-%box_ll <- box_ll[box_ll[,"ll_gamlss"]>-100,]
-%#box_ll <- box_ll[box_ll[,4]>-400,]
-%colnames(box_ll) <- c("disttree", "randomForest", "distforest", "gamlss")
-%boxplot.matrix(box_ll, ylab = "log-likelihood")
-%@
-%\end{subfigure}
-%%\center
-%\caption{\label{plot_cross_ll_all}mcycle 10-times-10 Cross validation (>-100): %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest}}
-%\end{figure}
-
-
-
 
 
 
@@ -1516,13 +1210,6 @@ plot_oneset(oneset10,
 
 
 
-
-
-
-
-
-
-
 Now, to get a more profound impression the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step ... data sets are generated. The methods are then compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models, averaged within each step.
 (In that way it can be investigated how the results change for a changing value of $\kappa$.)
 
@@ -1631,93 +1318,134 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 
 \SweaveOpts{eval = TRUE}
-
+\newpage
 \newpage
 \section{Rain}
-In this section precipation data of 30 years is analyzed. The response variable is the meassured total precipiation within 24 hours of each day in July at the station ... .\\
+In this application we analyze precipitation data meassured over 28 years at 95 (?) stations all over Tyrol and Vorarlberg. The considered data is provided by ..... and consists of the meassured total precipiation within 24 hours of each day in July from 1985 until 2012, both included. Additionally, numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initiall conditions.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standarad deviation, the minimum and the maximum over all these individual predictions. Another variation refers to the time periods which can be over 24 hours or over time windows of 6 hours. Another possible option is to consider the mean over 24 hours for each individual prediction and then take the mean over the whole ensemble. In the following table listing all covariates this last option is referred to as the ensemble mean of mean.\\
+The response variable total precicipitation is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation meassurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0.
 
 
+\newpage
+The ensemble forecast for the total precipitation is represented by 12 covariates: 
+\begin{itemize}[noitemsep]
+\item ensemble mean of the sum of the total precipitation from 6--30 UTC
+\item ensemble standard deviation of the sum of the total precipitation from 6--30 UTC
+\item ensemble minimum of the sum of the total precipitation from 6--30 UTC
+\item ensemble maximum of the sum of the total precipitation from 6--30 UTC
+\item ensemble mean of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC and from 24--30 UTC
+\item ensemble standard deviation of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC and from 24--30 UTC
+\end{itemize}
+
+The preciptable water is represented by 6 covariates:
+\begin{itemize}[noitemsep]
+\item the ensemble mean of the mean of preciptable water over the time period 6--30 UTC 
+\item the ensemble mean of the minimum of preciptable water over the time period 6--30 UTC 
+\item the ensemble mean of the maximum of preciptable water over the time period 6--30 UTC 
+\item the ensemble standard deviation of the mean of preciptable water over the time period 6--30 UTC 
+\item the ensemble standard deviation of the minimum of preciptable water over the time period 6--30 UTC 
+\item the ensemble standard deviation of the maximum of preciptable water over the time period 6--30 UTC 
+\end{itemize}
+
+
+
+
+
+
+\newpage
 \begin{tabular}{| l | c | l |}
 \hline
 basic covariates & nr & variations\\
 \hline
-\textbf{tp{\_}pow}: total precipitation & 12 & mean, std dev, min, max (all for 6--30 UTC)\\
-\hspace*{\fill} (power transformed by 1.6) & & mean: 6--12, 12--18, 12--24, 24--30 UTC\\
-& & std dev: 6--12, 12--18, 12--24, 24--30 UTC\\
+\textbf{tp{\_}pow}: total precipitation    & 12 & ensemble mean, ensemble std dev, \\
+\hspace*{\fill} power transformed (by 1.6) &    & ensemble min, ensemble max\\
+\textbf{cape{\_}pow}: convective           &    & (all for 6--30 UTC)\\
+\hspace*{0.4cm} available potential energy &    & ensemble mean: 6--12, 12--18,\\
+\hspace*{\fill}  power transformed (by 1.6)&    & \hspace{2.5cm} 18--24, 24--30 UTC\\
+\hspace*{\fill}                            &    & ensemble std dev: 6--12, 12--18,\\
+\hspace*{\fill}                            &    & \hspace{2.85cm}  18--24, 24--30 UTC\\
 \hline
-\textbf{cape{\_}pow}: convective available & 12 & mean, std dev, min, max (all for 6--30 UTC)\\
-\hspace*{\fill} potential energy & & mean: 6--12, 12--18, 12--24, 24--30 UTC\\
-& & std dev: 6--12, 12--18, 12--24, 24--30 UTC\\
+\textbf{dswrf}: downwards short ware & 6 & ensemble mean of mean, \\
+\hspace*{\fill} radiation flux (sunshine) &     & ensemble mean of min,\\
+\textbf{msl}: mean sea level pressure  &     &  ensemble mean of max,\\
+\textbf{pwat}: preciptable water &   & ensemble std dev of mean,\\
+\textbf{tmax}: 2m maximum        &   & ensemble std dev of min,\\
+\hspace*{1.15cm} temperature  &   & ensemble std dev of max,\\
+\textbf{tcolc}: total column-integrated &   & (all for 6--30 UTC)\\
+\hspace*{1.05cm} condensate     &   & \\
+\textbf{t500}: temperature     &  & \\
+\hspace*{1cm} on 500 hPA     &   & \\
+\textbf{t700}: temperature     &  & \\
+\hspace*{1cm} on 700 hPA     &   & \\
+\textbf{t850}: temperature     &   & \\
+\hspace{1cm} on 850 hPA     &   & \\
 \hline
-dswrf: downwards short & 4-6 & mean, std dev, min, max (all for 0--30 UTC)\\
-\hspace*{\fill}ware radiation flux (sunshine) & & mean of the spread, max of the spread, (min of the spread)\\
+\textbf{tdiff500850}: temperature         & 3 & ensemble mean,\\
+\hspace*{\fill} difference 500 to 850 hPA &   & ensemble min,\\
+\textbf{tdiff500700}: temperature         &  & ensemble max\\
+\hspace*{\fill} difference 500 to 700 hPA &   & (all for 6--30 UTC)\\
+\textbf{tdiff700850}: temperature          &  & \\
+\hspace*{\fill} difference 700 to 850 hPA  &   & \\
 \hline
-msl: mean sea level pressure & 6 &
-mean of the mean, max of the mean, min of the mean,
-mean of the spread, max of the spread, min of the spread \\
-\hline
-pwat: preciptable water & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-tmax: 2m maximum temperature & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-tcolc: Total column-integrated condensate & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-t500: temperature on 500 hPa & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-t700: temperature on 700 hPa & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-t850: temperature on 850 hPa & 6 &
-mean of the mean, max of the mean, min of the mean, 
-mean of the spread, max of the spread, min of the spread \\
-\hline
-tdiff500850: temperature difference & 3 &
-mean, min, max \\
-\hline
-tdiff500700: temperature difference & 3 &
-mean, min, max \\
-\hline
-tdiff700850: temperature difference & 3 &
-mean, min, max \\
-\hline
-msl{\_}diff: temperature difference & 1 & 
-- \\
+\textbf{msl{\_}diff}: mean sea level  & 1 & msl{\_}mean{\_}max - msl{\_}mean{\_}min\\
+\hspace{1.65cm} difference            &   & (for 6--30 UTC)\\
 \hline
 \end{tabular}
+
+
+
+
+
+\newpage
 
 
 The following methods are applied on this data set:
 
-\begin{tabular}{| l | c  c  c  c |}
+\begin{tabular}{| l | c  | c  | c  | c |}
 \hline
-model & mu link & sigma link & mu covariates & sigma covariates \\
+ & \textbf{mu link} & \textbf{sigma link} & \textbf{mu covariates} & \textbf{sigma covariates} \\
 \hline
-disttree & identity & log & all covariates & all covariates \\ 
+\textbf{disttree} & identity & log & all covariates & all covariates \\ 
 \hline
-distforest & identity & log & all covariates & all covariates \\
+\textbf{distforest} & identity & log & all covariates & all covariates \\
 \hline
-gamlss & identity & log & manually selected covariates: & manually selected covariates \\
+\textbf{gamlss} & identity & log & tppow{\_}mean, & tppow{\_}sprd,\\
+& & & tppow{\_}max, & dswrf{\_}sprd{\_}mean, \\
+& & & tppow{\_}mean1218, & tppow{\_}sprd1218,\\ 
+& & & capepow{\_}mean1218, & capepow{\_}mean1218,\\
+& & & dswrf{\_}mean{\_}mean, & tcolc{\_}sprd{\_}mean,\\
+& & & tcolc{\_}mean{\_}mean, & tdiff500850{\_}mean\\
+& & & pwat{\_}mean{\_}mean, & \\
+& & & tdiff500850{\_}mean, & \\
+& & & msl{\_}diff & \\
 \hline
-gamboostLSS & identity & log & all covariates & all covariates \\
+\textbf{gamboostLSS} & identity & log & all covariates & all covariates \\
 \hline
-EMOS & identity & log & tppowmean & tppowspread \\
+\textbf{EMOS} & identity & log & tppow{\_}mean & tppow{\_}spread \\
 \hline
 \end{tabular}
+\\
+manuall selected covariates in gamlss\\
+mention interactions:\\
+tppow{\_}mean1218 $\cdot$ capepow{\_}mean1218,\\
+tppow{\_}sprd1218 $\cdot$ capepow{\_}mean1218\\
+\\
+(advantage: no sepcification needed in disttree/distforest)
 
 
-
+\SweaveOpts{eval = TRUE}
+\newpage
 \subsection{Station Axams}
+one station \\
+Axams, closest to Ibk\\
+ca 800 observations\\
+
+\subsubsection{Predictions}
+Fit one model on the first 25 years.\\
+predictions for the 26th, 27th and 28th year\\
+plot predicted distributions together with obersvations for one day in July of 26th, 27th and 28th year  
 <<echo=FALSE, results=hide>>=
-#### Axams prediction 27 - 3
+#### Axams prediction 25 - 3
 if(file.exists("rain_Axams_pred.rda")){
   #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_pred.rda")
   load("rain_Axams_pred.rda")
@@ -1735,7 +1463,7 @@ if(file.exists("rain_Axams_pred.rda")){
 }
 
 # prepare data for plot of estimated density functions
-pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
 
 pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
 pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
@@ -1748,12 +1476,26 @@ cbind(df_exp, res$testdata[pdays,"robs"])
 # plot predicted distributions together with observations
 #set.seed(res$call$seedconst)
 set.seed(7)
-x <- sort(runif(500,-2,12))
+x <- c(0.01, sort(runif(500,0.01,8)))
 y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
 y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
 y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
 dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
 
+# point mass (slightly shifted)
+pm1 <- c(0.04, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
+pm2 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
+pm3 <- c(-0.1, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
+
+# predictions
+pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+
+#legendheight
+lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
+lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
+lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
 @
 
 
@@ -1761,34 +1503,179 @@ dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" 
 \begin{figure}[t!]
 <<rain_Axams_pred, fig=TRUE, echo=FALSE>>=
 plot(x = x, y = y1, type = "l", col = "red", 
-         main = paste0("July ", pday, dayending), ylab = "density", ylim = c(0,max(y1, y2, y3) + 0.01))
-    lines(x = x, y = y2, type = "l", col = "blue")
+     main = paste0("July ", pday, dayending), ylab = "density", 
+     ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
+     xlim = c(-1.5,8))
+    
+lines(x = x, y = y2, type = "l", col = "blue")
     lines(x = x, y = y3, type = "l", col = "darkgreen")
-    legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
+    #legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
     
-    p1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-    p2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-    p3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+    # plot point mass
+    lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
+    lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
+    lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
+    points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
+    points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
+    points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
     
-    points(x = p1[1], y = p1[2], col = "red")
-    points(x = p2[1], y = p2[2], col = "blue")
-    points(x = p3[1], y = p3[2], col = "darkgreen")
     
-    lines(x = c(p1[1], p1[1]), y = c(p1[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(p2[1], p2[1]), y = c(p2[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(p3[1], p3[1]), y = c(p3[2], 0), col = "darkgrey", type = "l", lty = 2)
+    # plot predictions
+    points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
+    points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
+    points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
+    
+    lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
+    
+    # add labels
+    text(x = -0.8, y = lh1, labels = "2010", col = "red", cex = 0.8)
+    text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
+    text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
 @
-
 \caption{\label{}}
 \end{figure}
 
 
+Variable importance\\
+<<variabble_importance, echo=FALSE, eval=TRUE>>=
+if(file.exists("vimp100_crps.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
+  load("vimp100_crps.rda")
+} else {
+  
+  # locally redefine logLik.distforest to use crps in varimp()
+  logLik.distforest <- function(object, newdata = NULL, ...) {
+    if(is.null(newdata)) {
+      newdata <- object$data
+    } 
+    
+    # predict parameter
+    pdf <- predict(object, newdata = newdata, type = "parameter")
+    df_mu <- pdf$mu
+    df_sigma <- pdf$sigma
+    
+    # calculate CRPS
+    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  
+    return(structure(crps, df = NA, class = "logLik"))
+  }
+  
+  #vimp_crps <- varimp(res$df, nperm = 1L)
+  #vimp10_crps <- varimp(res$df, nperm = 10L)
+  vimp100_crps <- varimp(res$df, nperm = 100L)
+  #vimp1000_crps <- varimp(res$df, nperm = 1000L)
+  
+  #save(vimp_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
+  #save(vimp10_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_crps.rda")
+  save(vimp100_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
+  #save(vimp1000_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_crps.rda")
+  
+  rm(logLik.distforest) 
+}
+
+most_impvar <- sort(vimp100_crps, decreasing = TRUE)[c(1:20)]
+most_impvar <- most_impvar[most_impvar>2.7]
+names_mi <- names(most_impvar)
+covnames <- colnames(res$learndata)
+id_mi <- match(names_mi, covnames)
+
+datafix <- res$learndata
+datafix1 <- datafix2 <- datafix3 <- datafix4 <- 
+  datafix5 <- datafix5 <- datafix6 <- datafix7 <- datafix8 <- datafix
+
+# fix all variables except for the most important ones to their mean
+for(i in 3:NCOL(datafix))  if(i!=id_mi[1]) datafix1[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[2]) datafix2[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[3]) datafix3[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[4]) datafix4[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[5]) datafix5[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[6]) datafix6[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[7]) datafix7[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+for(i in 3:NCOL(datafix))  if(i!=id_mi[8]) datafix8[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  
+pred1 <- predict(res$df, newdata  = datafix1, type = "parameter")
+plotdata1 <- cbind(datafix1, pred1)
+sp1 <- plotdata1[order(datafix1[,id_mi[1]]),]
+  
+  
+# plot effect of most important variables on parameter
+if(FALSE){
+  
+  pred1 <- predict(res$df, newdata  = datafix1, type = "parameter")
+  plotdata1 <- cbind(datafix1, pred1)
+  sp1 <- plotdata1[order(datafix1[,id_mi[1]]),]
+  plot(x = sp1[,id_mi[1]], y = sp1[, "mu"], type = "l", xlab = names_mi[1], ylab = "mu")
+  plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = "sigma")
+  
+  pred2 <- predict(res$df, newdata  = datafix2, type = "parameter")
+  plotdata2 <- cbind(datafix2, pred2)
+  sp2 <- plotdata2[order(datafix2[,id_mi[2]]),]
+  plot(x = sp2[,id_mi[2]], y = sp2[, "mu"], type = "l", xlab = names_mi[2], ylab = "mu")
+  plot(x = sp2[,id_mi[2]], y = sp2[, "sigma"], type = "l", xlab = names_mi[2], ylab = "sigma")
+  
+  pred3 <- predict(res$df, newdata  = datafix3, type = "parameter")
+  plotdata3 <- cbind(datafix3, pred3)
+  sp3 <- plotdata3[order(datafix3[,id_mi[3]]),]
+  plot(x = sp3[,id_mi[3]], y = sp3[, "mu"], type = "l", xlab = names_mi[3], ylab = "mu")
+  plot(x = sp3[,id_mi[3]], y = sp3[, "sigma"], type = "l", xlab = names_mi[3], ylab = "sigma")
+  
+  pred4 <- predict(res$df, newdata  = datafix4, type = "parameter")
+  plotdata4 <- cbind(datafix4, pred4)
+  sp4 <- plotdata4[order(datafix4[,id_mi[4]]),]
+  plot(x = sp4[,id_mi[4]], y = sp4[, "mu"], type = "l", xlab = names_mi[4], ylab = "mu")
+  plot(x = sp4[,id_mi[4]], y = sp4[, "sigma"], type = "l", xlab = names_mi[4], ylab = "sigma")
+
+  pred5 <- predict(res$df, newdata  = datafix5, type = "parameter")
+  plotdata5 <- cbind(datafix5, pred5)
+  sp5 <- plotdata5[order(datafix5[,id_mi[5]]),]
+  plot(x = sp5[,id_mi[5]], y = sp5[, "mu"], type = "l", xlab = names_mi[5], ylab = "mu")
+  plot(x = sp5[,id_mi[5]], y = sp5[, "sigma"], type = "l", xlab = names_mi[5], ylab = "sigma")
+  
+  pred6 <- predict(res$df, newdata  = datafix6, type = "parameter")
+  plotdata6 <- cbind(datafix6, pred6)
+  sp6 <- plotdata6[order(datafix6[,id_mi[6]]),]
+  plot(x = sp6[,id_mi[6]], y = sp6[, "mu"], type = "l", xlab = names_mi[6], ylab = "mu")
+  plot(x = sp6[,id_mi[6]], y = sp6[, "sigma"], type = "l", xlab = names_mi[6], ylab = "sigma")
+  
+  pred7 <- predict(res$df, newdata  = datafix7, type = "parameter")
+  plotdata7 <- cbind(datafix7, pred7)
+  sp7 <- plotdata7[order(datafix7[,id_mi[7]]),]
+  plot(x = sp7[,id_mi[7]], y = sp7[, "mu"], type = "l", xlab = names_mi[7], ylab = "mu")
+  plot(x = sp7[,id_mi[7]], y = sp7[, "sigma"], type = "l", xlab = names_mi[7], ylab = "sigma")
+
+  pred8 <- predict(res$df, newdata  = datafix8, type = "parameter")
+  plotdata8 <- cbind(datafix8, pred8)
+  sp8 <- plotdata8[order(datafix8[,id_mi[8]]),]
+  plot(x = sp8[,id_mi[8]], y = sp8[, "mu"], type = "l", xlab = names_mi[8], ylab = "mu")
+  plot(x = sp8[,id_mi[8]], y = sp8[, "sigma"], type = "l", xlab = names_mi[8], ylab = "sigma")
 
 
-The methods are compared in a 10x10 cross validation framework based on the resulting RMSE, log-likelihood and CRPS.\\
-These values are illustrated in the following boxplots.
+}
+
+@
+  
+\begin{figure}[t!]
+<<fig = TRUE, echo = FALSE>>=
+par(mfrow = c(1,2))
+plot(x = sp1[,id_mi[1]], y = sp1[, "mu"], type = "l", xlab = names_mi[1], ylab = "mu")
+plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = "sigma")
+@
+\end{figure}
+marginal effect of covariate with highest variable importance in distforest\\
+(other covariates? no effects for 4th variable, probably because only splits after several other splits)
 
 
+
+
+\SweaveOpts{eval = TRUE}
+
+\subsubsection{Cross-Validation}
+randomly split into 10 (roughly) equally sized data sets, learn on 9, evaluate on the 10th\\
+average over 10 variations\\
+repeat 10 times\\
+compare rmse, ll, crps score skills with reference model EMOS log\\
 
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
@@ -1828,33 +1715,107 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
 
 \begin{figure}[t!]
 \begin{subfigure}{0.3\textwidth}
-<<rain_rmse_box, fig=TRUE, echo=FALSE>>=
+<<rain_cross_axams_rmse, fig=TRUE, echo=FALSE>>=
 boxplot(rain_rmse)
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.3\textwidth}
-<<rain_ll_box, fig=TRUE, echo=FALSE>>=
-boxplot(rain_ll)
+<<rain_cross_axams_ll, fig=TRUE, echo=FALSE>>=
+boxplot(rain_ll, ylim = c(-2.8,-1.3))
+#boxplot(rain_ll)
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.3\textwidth}
-<<rain_crps_box, fig=TRUE, echo=FALSE>>=
+<<rain_cross_axams_crps, fig=TRUE, echo=FALSE>>=
 boxplot(rain_crps)
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.3\textwidth}
-<<rain_crps_box, fig=TRUE, echo=FALSE>>=
-boxplot(1 - rain_crps / rain_crps[,7]) 
+<<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE>>=
+boxplot(1 - rain_crps / rain_crps[,6]) 
 abline(h = 0, col = 2, lwd = 2)
 @
 \end{subfigure}
-\caption{\label{boxplots_rain}Results 10x10 cross validation on the rain data set (RMSE, log-likelihood and CRPS)\\
+\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams (RMSE, log-likelihood and CRPS)\\
 left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
 right: continuous lines represent the location parameter, dotted lines the scale parameter}
 \end{figure}
+
+
+
+\subsection{Predictions over all stations}
+
+NAs in gamlss in 13 stations!!!\\
+% sum(is.na(crps[,3]))
+<<eval = TRUE, echo = FALSE>>=
+#### prediction over all stations 25 - 3
+if(file.exists("rain_pred.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
+  load("rain_pred.rda")
+} else {
+  
+  source("rain_pred.R")
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  
+  res <- rain_pred(seedconst = 7,
+                   gamboost_cvr = TRUE,
+                   frac = FALSE)
+  
+  save(res, file = "rain_pred.rda")
+}
+ 
+ll <- res[[1]]$results["ll",]
+for(i in 2:(length(res)-1)) ll <- rbind(ll, res[[i]]$results["ll",])
+
+rmse <- res[[1]]$results["rmse",]
+for(i in 2:(length(res)-1)) rmse <- rbind(rmse, res[[i]]$results["rmse",])
+
+crps <- res[[1]]$results["crps",]
+for(i in 2:(length(res)-1))  crps <- rbind(crps, res[[i]]$results["crps",])
+
+colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
+
+@
+
+
+
+\begin{figure}[t!]
+\begin{subfigure}{0.3\textwidth}
+<<rain_pred_rmse, fig=TRUE, echo=FALSE>>=
+boxplot(rmse)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_pred_ll, fig=TRUE, echo=FALSE>>=
+boxplot(ll, ylim = c(-2.8,-1.3))
+#boxplot(ll)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_pred_crps, fig=TRUE, echo=FALSE>>=
+boxplot(crps)
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.3\textwidth}
+<<rain_pred_skills_score, fig=TRUE, echo=FALSE>>=
+# skills score
+  boxplot(1 - crps/crps[,6])
+  abline(h = 0, col = "red")
+@
+\end{subfigure}
+\caption{\label{boxplots_rain}Results of predictions over all stations (RMSE, log-likelihood and CRPS)\\
+left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
+right: continuous lines represent the location parameter, dotted lines the scale parameter}
+\end{figure}
+
+
 
 
 
