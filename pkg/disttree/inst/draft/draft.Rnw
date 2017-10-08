@@ -1534,7 +1534,7 @@ lines(x = x, y = y2, type = "l", col = "blue")
     text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
     text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
 @
-\caption{\label{}}
+\caption{\label{}Predictions at station Axams for one day in July of 2010, 2011 and 2012}
 \end{figure}
 
 
@@ -1656,14 +1656,21 @@ if(FALSE){
 
 @
   
+
 \begin{figure}[t!]
-<<fig = TRUE, echo = FALSE>>=
-par(mfrow = c(1,2))
+\begin{subfigure}{0.5\textwidth}
+<<rain_axams_varim_margeffects1_mu, fig=TRUE, echo=FALSE>>=
 plot(x = sp1[,id_mi[1]], y = sp1[, "mu"], type = "l", xlab = names_mi[1], ylab = "mu")
+@
+\end{subfigure}
+\hspace{-1cm}
+\begin{subfigure}{0.5\textwidth}
+<<rain_axams_varim_margeffects1_sigma, fig=TRUE, echo=FALSE>>=
 plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = "sigma")
 @
+\end{subfigure}
+\caption{\label{varimp}marginal effect of covariate with highest variable importance in distforest}
 \end{figure}
-marginal effect of covariate with highest variable importance in distforest\\
 (other covariates? no effects for 4th variable, probably because only splits after several other splits)
 
 
@@ -1671,6 +1678,7 @@ marginal effect of covariate with highest variable importance in distforest\\
 
 \SweaveOpts{eval = TRUE}
 
+\newpage
 \subsubsection{Cross-Validation}
 randomly split into 10 (roughly) equally sized data sets, learn on 9, evaluate on the 10th\\
 average over 10 variations\\
@@ -1714,41 +1722,42 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
 
 
 \begin{figure}[t!]
-\begin{subfigure}{0.3\textwidth}
+\begin{subfigure}{0.5\textwidth}
 <<rain_cross_axams_rmse, fig=TRUE, echo=FALSE>>=
 boxplot(rain_rmse)
 @
 \end{subfigure}
 \hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
+\begin{subfigure}{0.5\textwidth}
 <<rain_cross_axams_ll, fig=TRUE, echo=FALSE>>=
 boxplot(rain_ll, ylim = c(-2.8,-1.3))
 #boxplot(rain_ll)
 @
 \end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
-<<rain_cross_axams_crps, fig=TRUE, echo=FALSE>>=
-boxplot(rain_crps)
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
+\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams\\
+left: RMSE, right: log-likelihood}
+\end{figure}
+
+\begin{figure}[t!]
 <<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE>>=
 boxplot(1 - rain_crps / rain_crps[,6]) 
 abline(h = 0, col = 2, lwd = 2)
 @
-\end{subfigure}
-\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams (RMSE, log-likelihood and CRPS)\\
-left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
-right: continuous lines represent the location parameter, dotted lines the scale parameter}
+\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams \\
+CRPS skills score with reference model EMOS log}
 \end{figure}
 
 
 
+
+\newpage
 \subsection{Predictions over all stations}
 
 NAs in gamlss in 13 stations!!!\\
+for example in 13th station in complete{\_}stations\\
+\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  : 
+  NA's in the working vector or weights for parameter mu}
+\\
 % sum(is.na(crps[,3]))
 <<eval = TRUE, echo = FALSE>>=
 #### prediction over all stations 25 - 3
@@ -1784,35 +1793,12 @@ colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
 
 
 \begin{figure}[t!]
-\begin{subfigure}{0.3\textwidth}
-<<rain_pred_rmse, fig=TRUE, echo=FALSE>>=
-boxplot(rmse)
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
-<<rain_pred_ll, fig=TRUE, echo=FALSE>>=
-boxplot(ll, ylim = c(-2.8,-1.3))
-#boxplot(ll)
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
-<<rain_pred_crps, fig=TRUE, echo=FALSE>>=
-boxplot(crps)
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.3\textwidth}
 <<rain_pred_skills_score, fig=TRUE, echo=FALSE>>=
 # skills score
   boxplot(1 - crps/crps[,6])
   abline(h = 0, col = "red")
 @
-\end{subfigure}
-\caption{\label{boxplots_rain}Results of predictions over all stations (RMSE, log-likelihood and CRPS)\\
-left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
-right: continuous lines represent the location parameter, dotted lines the scale parameter}
+\caption{\label{boxplots_rain}Results of predictions over all stations: CRPS skills score with reference model EMOS log}
 \end{figure}
 
 
