@@ -3,7 +3,8 @@ Title: Evolutionary Learning of Globally Optimal Trees
 Version: 1.0-5
 Date: 2017-04-05
 Authors@R: c(person(given = "Thomas", family = "Grubinger", role = c("aut", "cre"), email = "Thomas.Grubinger@scch.at"),
-             person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org"),
+             person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org",
+                    comment = c(ORCID = "0000-0003-0918-3766")),
              person(given = "Karl-Peter", family = "Pfeiffer", role = "aut", email = "Karl-Peter.Pfeiffer@i-med.ac.at"))	 
 Description: Commonly used classification and regression tree methods like the CART algorithm
              are recursive partitioning methods that build the model in a forward stepwise search.
