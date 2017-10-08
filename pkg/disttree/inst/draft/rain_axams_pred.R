@@ -712,7 +712,7 @@ if(FALSE){
 
   res <- rain_axams_pred(seedconst = 7, ntree = 100,
                          forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = FALSE,
+                         gamboost_cvr = TRUE,
                          frac = FALSE)
   
   save(res, file = paste0("rain_Axams_pred_", res$call$frac, "_", res$call$seedconst, ".rda"))
@@ -723,7 +723,7 @@ if(FALSE){
   ###########
   # predictions for one day (in each of the three years) 
   # (19th of July 2011 is missing)
-  pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+  pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
   {
     pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
     pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
@@ -736,38 +736,75 @@ if(FALSE){
     # plot predicted distributions together with observations
     #set.seed(res$call$seedconst)
     set.seed(7)
-    x <- sort(runif(500,-2,12))
+    x <- c(0.01, sort(runif(500,0.01,8)))
     y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
     y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
     y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
     dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
     
+    # point mass (slightly shifted)
+    pm1 <- c(0.04, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
+    pm2 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
+    pm3 <- c(-0.1, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
+    
+    # predictions
+    pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+    pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+    pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+    
+    #legendheight
+    lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
+    lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
+    lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
+    
     plot(x = x, y = y1, type = "l", col = "red", 
-         main = paste0("July ", pday, dayending), ylab = "density", ylim = c(0,max(y1, y2, y3) + 0.01))
+         main = paste0("July ", pday, dayending), ylab = "density", 
+         ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
+         xlim = c(-1.5,8))
+    
     lines(x = x, y = y2, type = "l", col = "blue")
     lines(x = x, y = y3, type = "l", col = "darkgreen")
-    legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
+    #legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
     
-    p1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-    p2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-    p3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+    # plot point mass
+    lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
+    lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
+    lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
+    points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
+    points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
+    points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
     
-    points(x = p1[1], y = p1[2], col = "red")
-    points(x = p2[1], y = p2[2], col = "blue")
-    points(x = p3[1], y = p3[2], col = "darkgreen")
     
-    lines(x = c(p1[1], p1[1]), y = c(p1[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(p2[1], p2[1]), y = c(p2[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(p3[1], p3[1]), y = c(p3[2], 0), col = "darkgrey", type = "l", lty = 2)
+    # plot predictions
+    points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
+    points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
+    points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
+    
+    lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
+    
+    # add labels
+    text(x = -0.8, y = lh1, labels = "2010", col = "red", cex = 0.8)
+    text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
+    text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
+    
   }
   
   
   
-  #############
+  ##############################
   # variable importance
-  vimp_ll <- varimp(rainres$df, nperm = 1L)
-  vimp10_ll <- varimp(rainres$df, nperm = 10L)
-  vimp100_ll <- varimp(rainres$df, nperm = 100L)
+  vimp_ll <- varimp(res$df, nperm = 1L)
+  vimp10_ll <- varimp(res$df, nperm = 10L)
+  vimp100_ll <- varimp(res$df, nperm = 100L)
+  vimp1000_ll <- varimp(res$df, nperm = 1000L)
+  
+  save(vimp_ll, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_ll.rda")
+  save(vimp10_ll, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_ll.rda")
+  save(vimp100_ll, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_ll.rda")
+  save(vimp1000_ll, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_ll.rda")
+  
   
   # locally redefine logLik.distforest to use crps in varimp()
   logLik.distforest <- function(object, newdata = NULL, ...) {
@@ -786,10 +823,89 @@ if(FALSE){
     return(structure(crps, df = NA, class = "logLik"))
   }
   
-  vimp_crps <- varimp(rainres$df, nperm = 1L)
-  vimp10_crps <- varimp(rainres$df, nperm = 10L)
-  vimp100_crps <- varimp(rainres$df, nperm = 100L)
+  vimp_crps <- varimp(res$df, nperm = 1L)
+  vimp10_crps <- varimp(res$df, nperm = 10L)
+  vimp100_crps <- varimp(res$df, nperm = 100L)
+  vimp1000_crps <- varimp(res$df, nperm = 1000L)
   
+  save(vimp_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
+  save(vimp10_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_crps.rda")
+  save(vimp100_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
+  save(vimp1000_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_crps.rda")
+  
+  rm(logLik.distforest)  
+  
+  
+  load("vimp100_crps.rda")
+  
+  most_impvar <- sort(vimp100_crps, decreasing = TRUE)[c(1:20)]
+  most_impvar <- most_impvar[most_impvar>2.7]
+  names_mi <- names(most_impvar)
+  covnames <- colnames(res$learndata)
+  id_mi <- match(names_mi, covnames)
+  
+  datafix <- res$learndata
+  datafix1 <- datafix2 <- datafix3 <- datafix4 <- 
+    datafix5 <- datafix5 <- datafix6 <- datafix7 <- datafix8 <- datafix
+  
+  # fix all variables except for the most important ones to their mean
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[1]) datafix1[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[2]) datafix2[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[3]) datafix3[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[4]) datafix4[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[5]) datafix5[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[6]) datafix6[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[7]) datafix7[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[8]) datafix8[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  
+  
+  pred1 <- predict(res$df, newdata  = datafix1, type = "parameter")
+  plotdata1 <- cbind(datafix1, pred1)
+  sp1 <- plotdata1[order(datafix1[,id_mi[1]]),]
+  plot(x = sp1[,id_mi[1]], y = sp1[, "mu"], type = "l", xlab = names_mi[1], ylab = "mu")
+  plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = "sigma")
+  
+  pred2 <- predict(res$df, newdata  = datafix2, type = "parameter")
+  plotdata2 <- cbind(datafix2, pred2)
+  sp2 <- plotdata2[order(datafix2[,id_mi[2]]),]
+  plot(x = sp2[,id_mi[2]], y = sp2[, "mu"], type = "l", xlab = names_mi[2], ylab = "mu")
+  plot(x = sp2[,id_mi[2]], y = sp2[, "sigma"], type = "l", xlab = names_mi[2], ylab = "sigma")
+  
+  pred3 <- predict(res$df, newdata  = datafix3, type = "parameter")
+  plotdata3 <- cbind(datafix3, pred3)
+  sp3 <- plotdata3[order(datafix3[,id_mi[3]]),]
+  plot(x = sp3[,id_mi[3]], y = sp3[, "mu"], type = "l", xlab = names_mi[3], ylab = "mu")
+  plot(x = sp3[,id_mi[3]], y = sp3[, "sigma"], type = "l", xlab = names_mi[3], ylab = "sigma")
+  
+  pred4 <- predict(res$df, newdata  = datafix4, type = "parameter")
+  plotdata4 <- cbind(datafix4, pred4)
+  sp4 <- plotdata4[order(datafix4[,id_mi[4]]),]
+  plot(x = sp4[,id_mi[4]], y = sp4[, "mu"], type = "l", xlab = names_mi[4], ylab = "mu")
+  plot(x = sp4[,id_mi[4]], y = sp4[, "sigma"], type = "l", xlab = names_mi[4], ylab = "sigma")
+  
+  pred5 <- predict(res$df, newdata  = datafix5, type = "parameter")
+  plotdata5 <- cbind(datafix5, pred5)
+  sp5 <- plotdata5[order(datafix5[,id_mi[5]]),]
+  plot(x = sp5[,id_mi[5]], y = sp5[, "mu"], type = "l", xlab = names_mi[5], ylab = "mu")
+  plot(x = sp5[,id_mi[5]], y = sp5[, "sigma"], type = "l", xlab = names_mi[5], ylab = "sigma")
+  
+  pred6 <- predict(res$df, newdata  = datafix6, type = "parameter")
+  plotdata6 <- cbind(datafix6, pred6)
+  sp6 <- plotdata6[order(datafix6[,id_mi[6]]),]
+  plot(x = sp6[,id_mi[6]], y = sp6[, "mu"], type = "l", xlab = names_mi[6], ylab = "mu")
+  plot(x = sp6[,id_mi[6]], y = sp6[, "sigma"], type = "l", xlab = names_mi[6], ylab = "sigma")
+  
+  pred7 <- predict(res$df, newdata  = datafix7, type = "parameter")
+  plotdata7 <- cbind(datafix7, pred7)
+  sp7 <- plotdata7[order(datafix7[,id_mi[7]]),]
+  plot(x = sp7[,id_mi[7]], y = sp7[, "mu"], type = "l", xlab = names_mi[7], ylab = "mu")
+  plot(x = sp7[,id_mi[7]], y = sp7[, "sigma"], type = "l", xlab = names_mi[7], ylab = "sigma")
+  
+  pred8 <- predict(res$df, newdata  = datafix8, type = "parameter")
+  plotdata8 <- cbind(datafix8, pred8)
+  sp8 <- plotdata8[order(datafix8[,id_mi[8]]),]
+  plot(x = sp8[,id_mi[8]], y = sp8[, "mu"], type = "l", xlab = names_mi[8], ylab = "mu")
+  plot(x = sp8[,id_mi[8]], y = sp8[, "sigma"], type = "l", xlab = names_mi[8], ylab = "sigma")
   
 }
 
