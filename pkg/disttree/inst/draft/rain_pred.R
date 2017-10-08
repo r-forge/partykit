@@ -933,6 +933,65 @@ if(FALSE){
   boxplot(rmse)
   boxplot(crps)
   boxplot(ll)
+ 
+  
+  ## plot map which shows where distforest performed better than gamlss or gamboostLSS
+  # based on the crps skills score (reference modell EMOS log)
+  
+  library("raster") # dem (digital elevation model)
+  library("sp")     # gadm www.gadm.org/country
+  
+  load("plot_map_rain/demo/tirol.gadm.rda")
+  load("plot_map_rain/demo/tirol.dem.rda")
+  load("plot_map_rain/demo/ehyd.statlist.rda")
+  
+  # Create SpatialPointsDataFrame from station list
+  sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
+                                      select=c(lon,lat)),
+                               data = subset(ehyd.statlist[res$complete_stations,],
+                                             select = -c(lon,lat)),
+                               proj4string = crs(tirol.dem))
+  
+  library("colorspace")
+  crps_ssc_df <- 1 - crps[,2]/crps[,6]
+  crps_ssc_gb <- 1 - crps[,4]/crps[,6]
+  crps_ssc_g <- 1 - crps[,3]/crps[,6]
+  
+  # set the colour according to whether distforest performed better than gamlss
+  col_crps_ssc_df_g <- rep("red", length(crps_ssc_df))
+  for(i in 1: length(crps_ssc_df)){
+    if(is.na(crps_ssc_g[i])) {
+      col_crps_ssc_df_g[i] <- "white"
+    } else {
+      if(crps_ssc_df[i] < crps_ssc_g[i]) col_crps_ssc_df_g[i] <- "blue"
+    } 
+  }
+  
+  # set the colour according to whether distforest performed better than gamboostLSS
+  col_crps_ssc_df_gb <- rep("red", length(crps_ssc_df))
+  for(i in 1: length(crps_ssc_df)){
+    if(is.na(crps_ssc_gb[i])) {
+      col_crps_ssc_df_gb[i] <- "white"
+    } else {
+      if(crps_ssc_df[i] < crps_ssc_gb[i]) col_crps_ssc_df_gb[i] <- "blue"
+    } 
+  } 
+  
+  
+  # df vs g
+  raster::image(tirol.dem, col = rev(gray.colors(100)),
+                main="Stations in Tyrol")
+  plot(tirol.gadm, add = TRUE)
+  points(sp, pch = 21, bg = col_crps_ssc_df_g, col = 1)
+  legend("left", fill=c("red", "blue", "white"), legend = c("df", "g", "NA"), cex = 0.8)
+  
+  
+  # df vs gb
+  raster::image(tirol.dem, col = rev(gray.colors(100)),
+                main="Stations in Tyrol")
+  plot(tirol.gadm, add = TRUE)
+  points(sp, pch = 21, bg = col_crps_ssc_df_gb, col = 1)
+  legend("left", fill=c("red", "blue", "white"), legend = c("df", "gb", "NA"), cex = 0.8)
   
 }
 
