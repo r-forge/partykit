@@ -1,5 +1,5 @@
-## IDEA: learn models on the first 29 years and evaluate it on the 30th year
-# average the resulting CRPS and loglikelihood over the 30 days within one station
+## IDEA: learn models on the first 25 years and evaluate it on the 26th, 27th and 28th year
+# average the resulting CRPS and loglikelihood over the 92 days (2011-07-19 missing) within one station
 # and repeat this procedure over all stations (with a sufficient number of years of observations)
 
 rain_pred <- function(seedconst = 7, ntree = 100,
@@ -654,7 +654,7 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         ## FIX ME: check years (85-112)
                         # table(raindata$year)
                         
-                        # learning the models on 29 years and evaluating predictions on the 30th year
+                        # learning the models on 25 years and evaluating predictions on the 26th, 27th and 28th year year
                         learndata <- raindata[raindata$year < 110,]
                         testdata <- raindata[raindata$year %in% c(110, 111, 112),]
                         
@@ -921,8 +921,14 @@ if(FALSE){
   colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
   
   # skills score
-  boxplot(1 - crps/crps[,7])
+  boxplot(1 - crps/crps[,6])
   abline(h = 0, col = "red")
+  
+  unlist(lapply(1:(length(res)-2), function(i) res[[i]]$cvr_opt))
+  unlist(lapply(1:(length(res)-2), function(i) res[[i]]$g_error))
+  unlist(lapply(1:(length(res)-2), function(i) res[[i]]$mi_error))
+  unlist(lapply(1:(length(res)-2), function(i) res[[i]]$ml_error))
+  unlist(lapply(1:(length(res)-2), function(i) res[[i]]$mq_error))
   
   boxplot(rmse)
   boxplot(crps)
