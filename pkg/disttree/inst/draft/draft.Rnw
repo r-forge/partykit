@@ -16,6 +16,7 @@
 \usepackage{subcaption}
 \usepackage{Sweave}
 \usepackage{enumitem}
+\usepackage{array, makecell}
 \usepackage{tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 %\usepackage[pagebackref=true]{hyperref}
@@ -1322,7 +1323,10 @@ right: levelplot of the parameter function for $\kappa=5$}
 \newpage
 \section{Rain}
 In this application we analyze precipitation data meassured over 28 years at 95 (?) stations all over Tyrol and Vorarlberg. The considered data is provided by ..... and consists of the meassured total precipiation within 24 hours of each day in July from 1985 until 2012, both included. Additionally, numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initiall conditions.\\
-In particular, 14 basic forecast variables are considered with up to 12 variations of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standarad deviation, the minimum and the maximum over all these individual predictions. Another variation refers to the time periods which can be over 24 hours or over time windows of 6 hours. Another possible option is to consider the mean over 24 hours for each individual prediction and then take the mean over the whole ensemble. In the following table listing all covariates this last option is referred to as the ensemble mean of mean.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standarad deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble min and ensemble max. All of these values can be calculated on the whole day (6--30 UTC) or a 6h time window of the day.\\
+Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standarad deviation, noted as ensemble mean of mean/min/max or ensemble std dev of mean/min/max respectively.\\
+The following table shows all variables together with the number of variations and the provided variations listed in the last column.\\
+\\
 The response variable total precicipitation is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation meassurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0.
 
 
@@ -1353,42 +1357,44 @@ The preciptable water is represented by 6 covariates:
 
 
 \newpage
-\begin{tabular}{| l | c | l |}
+\begin{tabular}{| l  c  l |}
 \hline
-basic covariates & nr & variations\\
+\thead{basic covariates} & \thead{nr} & \thead{variations}\\
 \hline
-\textbf{tp{\_}pow}: total precipitation    & 12 & ensemble mean, ensemble std dev, \\
-\hspace*{\fill} power transformed (by 1.6) &    & ensemble min, ensemble max\\
-\textbf{cape{\_}pow}: convective           &    & (all for 6--30 UTC)\\
-\hspace*{0.4cm} available potential energy &    & ensemble mean: 6--12, 12--18,\\
-\hspace*{\fill}  power transformed (by 1.6)&    & \hspace{2.5cm} 18--24, 24--30 UTC\\
-\hspace*{\fill}                            &    & ensemble std dev: 6--12, 12--18,\\
-\hspace*{\fill}                            &    & \hspace{2.85cm}  18--24, 24--30 UTC\\
+\textbf{tp{\_}pow}: total precipitation    & 12 variations:  & ensemble mean of sum, \\
+\hspace*{\fill} power transformed (by 1.6) &    & ensemble std dev of sum, \\ 
+\textbf{cape{\_}pow}: convective           &    & ensemble min of sum, \\
+\hspace*{0.4cm} available potential energy &    & ensemble max of sum\\
+\hspace*{\fill}  power transformed (by 1.6)&    & \qquad all over 6--30 UTC\\
+\hspace*{\fill}                            &    & ensemble mean of sum over\\
+\hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
+\hspace*{\fill}                            &    & ensemble std dev of sum over\\
+\hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
-\textbf{dswrf}: downwards short ware & 6 & ensemble mean of mean, \\
-\hspace*{\fill} radiation flux (sunshine) &     & ensemble mean of min,\\
-\textbf{msl}: mean sea level pressure  &     &  ensemble mean of max,\\
-\textbf{pwat}: preciptable water &   & ensemble std dev of mean,\\
-\textbf{tmax}: 2m maximum        &   & ensemble std dev of min,\\
-\hspace*{1.15cm} temperature  &   & ensemble std dev of max,\\
-\textbf{tcolc}: total column-integrated &   & (all for 6--30 UTC)\\
-\hspace*{1.05cm} condensate     &   & \\
-\textbf{t500}: temperature     &  & \\
+\textbf{dswrf}: downwards short ware      & 6 variations: & ensemble mean of mean, \\
+\hspace*{\fill} radiation flux (sunshine) &   & ensemble mean of min,\\
+\textbf{msl}: mean sea level pressure     &   &  ensemble mean of max,\\
+\textbf{pwat}: preciptable water          &   & ensemble std dev of mean,\\
+\textbf{tmax}: 2m maximum                 &   & ensemble std dev of min,\\
+\hspace*{1.15cm} temperature              &   & ensemble std dev of max,\\
+\textbf{tcolc}: total column-integrated   &   & \qquad all over 6--30 UTC \\
+\hspace*{1.05cm} condensate  &   & \\
+\textbf{t500}: temperature   &   & \\
 \hspace*{1cm} on 500 hPA     &   & \\
-\textbf{t700}: temperature     &  & \\
+\textbf{t700}: temperature   &   & \\
 \hspace*{1cm} on 700 hPA     &   & \\
-\textbf{t850}: temperature     &   & \\
-\hspace{1cm} on 850 hPA     &   & \\
+\textbf{t850}: temperature   &   & \\
+\hspace{1cm} on 850 hPA      &   & \\
 \hline
-\textbf{tdiff500850}: temperature         & 3 & ensemble mean,\\
-\hspace*{\fill} difference 500 to 850 hPA &   & ensemble min,\\
-\textbf{tdiff500700}: temperature         &  & ensemble max\\
-\hspace*{\fill} difference 500 to 700 hPA &   & (all for 6--30 UTC)\\
-\textbf{tdiff700850}: temperature          &  & \\
-\hspace*{\fill} difference 700 to 850 hPA  &   & \\
+\textbf{tdiff500850}: temperature         & 3 variations: & ensemble mean of diff in mean,\\
+\hspace*{\fill} difference 500 to 850 hPA &   & ensemble min of diff in mean,\\
+\textbf{tdiff500700}: temperature         &   & ensemble max of diff in mean\\
+\hspace*{\fill} difference 500 to 700 hPA &   & \qquad all over 6--30 UTC\\
+\textbf{tdiff700850}: temperature         &   & \\
+\hspace*{\fill} difference 700 to 850 hPA &   & \\
 \hline
-\textbf{msl{\_}diff}: mean sea level  & 1 & msl{\_}mean{\_}max - msl{\_}mean{\_}min\\
-\hspace{1.65cm} difference            &   & (for 6--30 UTC)\\
+\textbf{msl{\_}diff}: mean sea level  & 1 variation: & msl{\_}mean{\_}max - msl{\_}mean{\_}min\\
+\hspace{1.65cm} difference            &   & \qquad over 6--30 UTC\\
 \hline
 \end{tabular}
 
@@ -1401,7 +1407,7 @@ basic covariates & nr & variations\\
 
 The following methods are applied on this data set:
 
-\begin{tabular}{| l | c  | c  | c  | c |}
+\begin{tabular}{| l | c   c   c   c |}
 \hline
  & \textbf{mu link} & \textbf{sigma link} & \textbf{mu covariates} & \textbf{sigma covariates} \\
 \hline
@@ -1425,6 +1431,8 @@ The following methods are applied on this data set:
 \hline
 \end{tabular}
 \\
+
+
 manuall selected covariates in gamlss\\
 mention interactions:\\
 tppow{\_}mean1218 $\cdot$ capepow{\_}mean1218,\\
@@ -1438,10 +1446,10 @@ tppow{\_}sprd1218 $\cdot$ capepow{\_}mean1218\\
 \subsection{Station Axams}
 one station \\
 Axams, closest to Ibk\\
-ca 800 observations\\
+865 observations\\
 
 \subsubsection{Predictions}
-Fit one model on the first 25 years.\\
+Fit one model on the first 25 years (1985--2009, both included)\\
 predictions for the 26th, 27th and 28th year\\
 plot predicted distributions together with obersvations for one day in July of 26th, 27th and 28th year  
 <<echo=FALSE, results=hide>>=
@@ -1456,7 +1464,7 @@ if(file.exists("rain_Axams_pred.rda")){
   gen.cens("NO", type = "left")
   res <- rain_axams_pred(seedconst = 7, ntree = 100,
                          forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = FALSE,
+                         gamboost_cvr = TRUE,
                          frac = FALSE)
   
   save(res, file = "rain_Axams_pred.rda")
@@ -1755,8 +1763,8 @@ CRPS skills score with reference model EMOS log}
 
 NAs in gamlss in 13 stations!!!\\
 for example in 13th station in complete{\_}stations\\
-\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  : 
-  NA's in the working vector or weights for parameter mu}
+\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
+\text{NA's in the working vector or weights for parameter mu}
 \\
 % sum(is.na(crps[,3]))
 <<eval = TRUE, echo = FALSE>>=
