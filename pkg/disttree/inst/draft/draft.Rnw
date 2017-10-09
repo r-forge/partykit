@@ -1431,27 +1431,19 @@ The following methods are applied on this data set:
 \hline
 \end{tabular}
 \\
-
-
-manuall selected covariates in gamlss\\
-mention interactions:\\
-tppow{\_}mean1218 $\cdot$ capepow{\_}mean1218,\\
-tppow{\_}sprd1218 $\cdot$ capepow{\_}mean1218\\
-\\
-(advantage: no sepcification needed in disttree/distforest)
+For the gamlss model the covariates were selected manually based on expert knowledge. Additionally, interactions are specified in advance, once between tppow{\_}mean1218 and capepow{\_}mean1218 for the location parameter and once between tppow{\_}sprd1218 and capepow{\_}mean1218 for the l ocatioin parameter. By putting extra effort in the specification of the formulas the gamlss model is provided with additional information and is therefore expected to profit from this advantage.\\
 
 
 \SweaveOpts{eval = TRUE}
 \newpage
 \subsection{Station Axams}
-one station \\
-Axams, closest to Ibk\\
-865 observations\\
+First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol.\\
+As for all other stations, daily observations of the month of July of 28 years are available, starting in 1985 and ending in 2012.\\
+
 
 \subsubsection{Predictions}
-Fit one model on the first 25 years (1985--2009, both included)\\
-predictions for the 26th, 27th and 28th year\\
-plot predicted distributions together with obersvations for one day in July of 26th, 27th and 28th year  
+In a first step one model is fit on the first 25 years (1985--2009, both included) and then predictions for the 26th, 27th and 28th year (2010, 2011 and 2012) are made.\\
+To illustrate the results, one day of July is chosen and the estimated distributions for this day of all three prediction years are plotted together with the corresponding obersvations.  
 <<echo=FALSE, results=hide>>=
 #### Axams prediction 25 - 3
 if(file.exists("rain_Axams_pred.rda")){
@@ -1545,8 +1537,8 @@ lines(x = x, y = y2, type = "l", col = "blue")
 \caption{\label{}Predictions at station Axams for one day in July of 2010, 2011 and 2012}
 \end{figure}
 
-
-Variable importance\\
+Analyzing variable importance of the distforest model leads to the following list of the covariates which show the highest values in variable importance.\\
+In the following plot the marginal effect of these variables on the distribution parameters are plotted. (All other covariates are kept at their mean.)
 <<variabble_importance, echo=FALSE, eval=TRUE>>=
 if(file.exists("vimp100_crps.rda")){
   #load("~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
