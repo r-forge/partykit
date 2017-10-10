@@ -841,40 +841,67 @@ if(FALSE){
     ml_sigma_t <- predict(res$ml, type = "scale", newdata = res$testdata)
     
     
-    
+  
     # disttree
+    set.seed(7)
     #hist(pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l))
     pit_dt_l <- pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l)
     pit_dt_l[which(res$learndata[,"robs"]==0)] <- pit_dt_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_dt_l[which(res$learndata[,"robs"]==0)]),0,1)
     hist(pit_dt_l)
     #hist(pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t))
+    set.seed(7)
     pit_dt_t <- pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t)
     pit_dt_t[which(res$testdata[,"robs"]==0)] <- pit_dt_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_dt_t[which(res$testdata[,"robs"]==0)]),0,1)
     hist(pit_dt_t)
     
     # distforest
-    #hist(pnorm(testdata[,"robs"], df_mu, df_sigma))
-    pit_df <- pnorm(raindata[,"robs"], df_mu, df_sigma)
-    pit_df[which(raindata[,"robs"]==0)] <- pit_df[which(raindata[,"robs"]==0)]*runif(length(pit_df[which(raindata[,"robs"]==0)]),0,1)
-    hist(pit_df)
+    set.seed(7)
+    #hist(pnorm(res$learndata[,"robs"], df_mu_l, df_sigma_l))
+    pit_df_l <- pnorm(res$learndata[,"robs"], df_mu_l, df_sigma_l)
+    pit_df_l[which(res$learndata[,"robs"]==0)] <- pit_df_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_df_l[which(res$learndata[,"robs"]==0)]),0,1)
+    hist(pit_df_l)
+    set.seed(7)
+    #hist(pnorm(res$testdata[,"robs"], df_mu_t, df_sigma_t))
+    pit_df_t <- pnorm(res$testdata[,"robs"], df_mu_t, df_sigma_t)
+    pit_df_t[which(res$testdata[,"robs"]==0)] <- pit_df_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_df_t[which(res$testdata[,"robs"]==0)]),0,1)
+    hist(pit_df_t)
     
     # gamlss
-    #hist(pnorm(raindata[,"robs"], g_mu, g_sigma))
-    pit_g <- pnorm(raindata[,"robs"], g_mu, g_sigma)
-    pit_g[which(raindata[,"robs"]==0)] <- pit_g[which(raindata[,"robs"]==0)]*runif(length(pit_g[which(raindata[,"robs"]==0)]),0,1)
-    hist(pit_g)
+    set.seed(7)
+    #hist(pnorm(res$learndata[,"robs"], g_mu_l, g_sigma_l))
+    pit_g_l <- pnorm(res$learndata[,"robs"], g_mu_l, g_sigma_l)
+    pit_g_l[which(res$learndata[,"robs"]==0)] <- pit_g_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_g_l[which(res$learndata[,"robs"]==0)]),0,1)
+    hist(pit_g_l)
+    set.seed(7)
+    #hist(pnorm(raindata[,"robs"], g_mu_t, g_sigma_t))
+    pit_g_t <- pnorm(raindata[,"robs"], g_mu_t, g_sigma_t)
+    pit_g_t[which(raindata[,"robs"]==0)] <- pit_g_t[which(raindata[,"robs"]==0)]*runif(length(pit_g_t[which(raindata[,"robs"]==0)]),0,1)
+    hist(pit_g_t)
   
     # gamboostLSS
-    #hist(pnorm(raindata[,"robs"], gb_mu, gb_sigma))
-    pit_gb <- pnorm(raindata[,"robs"], gb_mu, gb_sigma)
-    pit_gb[which(raindata[,"robs"]==0)] <- pit_gb[which(raindata[,"robs"]==0)]*runif(length(pit_gb[which(raindata[,"robs"]==0)]),0,1)
-    hist(pit_gb)
+    set.seed(7)
+    #hist(pnorm(res$learndata[,"robs"], gb_mu_l, gb_sigma_l))
+    pit_gb_l <- pnorm(res$learndata[,"robs"], gb_mu_l, gb_sigma_l)
+    pit_gb_l[which(res$learndata[,"robs"]==0)] <- pit_gb_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_gb_l[which(res$learndata[,"robs"]==0)]),0,1)
+    hist(pit_gb_l)
+    set.seed(7)
+    #hist(pnorm(res$testdata[,"robs"], gb_mu_t, gb_sigma_t))
+    pit_gb_t <- pnorm(res$testdata[,"robs"], gb_mu_t, gb_sigma_t)
+    pit_gb_t[which(res$testdata[,"robs"]==0)] <- pit_gb_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_gb_t[which(res$testdata[,"robs"]==0)]),0,1)
+    hist(pit_gb_t)
     
     # EMOS
-    #hist(pnorm(raindata[,"robs"], mi_mu, mi_sigma))
-    pit_mi <- pnorm(raindata[,"robs"], mi_mu, mi_sigma)
-    pit_mi[which(raindata[,"robs"]==0)] <- pit_mi[which(raindata[,"robs"]==0)]*runif(length(pit_mi[which(raindata[,"robs"]==0)]),0,1)
-    hist(pit_mi)
+    set.seed(7)
+    #hist(pnorm(res$learndata[,"robs"], ml_mu_l, ml_sigma_l))
+    pit_ml_l <- pnorm(res$learndata[,"robs"], ml_mu_l, ml_sigma_l)
+    pit_ml_l[which(res$learndata[,"robs"]==0)] <- pit_ml_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_ml_l[which(res$learndata[,"robs"]==0)]),0,1)
+    hist(pit_ml_l)
+    set.seed(7)
+    #hist(pnorm(res$testdata[,"robs"], ml_mu_t, ml_sigma_t))
+    pit_ml_t <- pnorm(res$testdata[,"robs"], ml_mu_t, ml_sigma_t)
+    pit_ml_t[which(res$testdata[,"robs"]==0)] <- pit_ml_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_ml_t[which(res$testdata[,"robs"]==0)]),0,1)
+    hist(pit_ml_t)
+    
   }
   
   
