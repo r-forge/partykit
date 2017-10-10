@@ -24,7 +24,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                    eval_gamboostLSS = FALSE,
                    eval_randomForest = FALSE,
                    eval_cforest = FALSE,
-                   mubase = 0)
+                   mubase = 0,
+                   sigmabase = 3)
 {
   
   cl <- match.call()
@@ -626,14 +627,16 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(fix.sigma){
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 3
+        sigma <- sigmabase
         par <- cbind(mu, sigma)
         return(par)
       }
     } else {
       fun <- function(x, kappa){
         mu <- mubase
-        sigma <- 3 + 3 * x[,4]
+        sigma <- sigmabase +
+        #3 * x[,4]
+        3 * (1-plogis((kappa^(1.8)) * 5 * (x[,2] - 0.3))) * x[,4]
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -642,11 +645,12 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
     if(fix.sigma){
       fun <- function(x, kappa){
         mu <- mubase + 
-          (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-          (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+          8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3))
+          #(8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+          #(8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
           #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
         #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-        sigma <- 3
+        sigma <- sigmabase
         par <- cbind(mu, sigma)
         return(par)
       }
@@ -654,22 +658,26 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       if(mu.sigma.interaction){
         fun <- function(x, kappa){
           mu <- mubase + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+            8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3))
+            #(8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+            #(8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
             #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          sigma <- 3 + mu/4
+          sigma <- sigmabase + mu/4
           par <- cbind(mu, sigma)
           return(par)
         }
       } else {
         fun <- function(x, kappa){
           mu <- mubase + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-            (8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
-          #  #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+            8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3)) + 
+            #(8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
+            #(8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
+            4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-          sigma <- 3 + 3 * x[,4]
+          sigma <- sigmabase + 
+            #3 * x[,4]
+            3 * (1-plogis((kappa^(1.8)) * 5 * (x[,2] - 0.3))) * x[,4]
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -897,7 +905,8 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             
                             if(censNO){
                               learndata$y <- Surv(learndata$y, learndata$y>0, type="left")
-                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = cens("NO", type = "left"))
+                              g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, 
+                                          family = cens("NO", type = "left"))
                             } else {
                               g <- gamlss(formula = mu.formula, sigma.formula = sigma.formula, data = learndata, family = NO())
                             }
@@ -1342,95 +1351,258 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
 
 
 
-#simres <- gensim(seedconst = 74, nrep = 10, ntree = 300L,
-#                 eval_disttree = TRUE,
-#                 eval_distforest = FALSE,
-#                 eval_gamlss = FALSE,
-#                 eval_bamlss = FALSE,
-#                 eval_gamboostLSS = FALSE,
-#                 eval_randomForest = TRUE,
-#                 eval_cforest = TRUE)
+##########################
+# test gensim()
 
+if(FALSE){
+  
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  
+  simres <- gensim(seedconst = 7, nrep = 40, ntree = 100,
+                    nsteps = 15, stepsize = 1,
+                    formula = y~x1+x2+x3+x4+x5+x6,
+                    nobs = 400, testnobs = 200L,
+                    tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
+                    forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
+                    forest_mtry = 3,
+                    fix.mu = FALSE,
+                    fix.sigma = FALSE,
+                    mu.sigma.interaction = FALSE,
+                    mubase = 3,
+                    sigmabase = 3,
+                    censNO = TRUE,
+                    gamboost_cvr = FALSE,
+                    eval_disttree = TRUE,
+                    eval_distforest = TRUE,
+                    eval_gamlss = TRUE,
+                    eval_bamlss = FALSE,
+                    eval_gamboostLSS = FALSE,
+                    eval_randomForest = FALSE,
+                    eval_cforest = FALSE)
 
-## plot functions
-# plot RMSE
-#plot_rmse <- function(simres, type = c("exp", "par")){
-#  
-#  if(type == "exp"){
-#    rmse <- cbind(simres$resmat[,"av.rmse.exp.true.dt"], simres$resmat[,"av.rmse.exp.true.df"], 
-#                  simres$resmat[,"av.rmse.exp.true.g"], simres$resmat[,"av.rmse.exp.true.b"],
-#                  #simres$resmat[,"av.rmse.exp.true.rf"],
-#                  simres$resmat[,"av.rmse.exp.obs.dt"], simres$resmat[,"av.rmse.exp.obs.df"], 
-#                  simres$resmat[,"av.rmse.exp.obs.g"], simres$resmat[,"av.rmse.exp.obs.b"]#,
-#                  #simres$resmat[,"av.rmse.exp.obs.rf"]
-#                  )
-#    colnames(rmse) <- c("dt.true", "df.true", "g.true", "b.true", #"rf.true", 
-#                        "dt.obs", "df.obs", "g.obs", "b.obs" #, "rf.obs"
-#                        )
-#    ylim <- c(min(rmse), max(rmse))
-#    
-#    plot(x = simres$x.axis, y = rmse[,"dt.true"], type = "l", col = "forestgreen", ylim = ylim,
-#         xlab = "kappa", ylab = "RMSE", main = "disttree vs distforest vs gamlss vs randomForest")
-#    lines(x = simres$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = 'forestgreen')
-#    lines(x = simres$x.axis, y = rmse[,"df.true"], type = "l", col = 'red')
-#    lines(x = simres$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = 'red')
-#    lines(x = simres$x.axis, y = rmse[,"g.true"], type = "l", col = 'blue')
-#    lines(x = simres$x.axis, y = rmse[,"g.obs"], type = "l", lty = 2, col = 'blue')
-#    lines(x = simres$x.axis, y = rmse[,"b.true"], type = "l", col = 'purple')
-#    lines(x = simres$x.axis, y = rmse[,"b.obs"], type = "l", lty = 2, col = 'purple')
-#    #lines(x = simres$x.axis, y = rmse[,"rf.true"], type = "l", col = 'yellow')
-#    #lines(x = simres$x.axis, y = rmse[,"rf.obs"], type = "l", lty = 2, col = 'yellow')
-#    
-#    legend('topleft', c("disttree", "distforest", "gamlss", "bamlss"), 
-#           col = c('forestgreen', 'red', 'blue', 'purple'), lty = 1, cex = 0.7)
-#  } 
-#  
-#  if(type == "par"){
-#    rmse <- cbind(simres$resmat[,"av.rmse.mu.dt"], simres$resmat[,"av.rmse.mu.df"], 
-#                  simres$resmat[,"av.rmse.mu.g"], simres$resmat[,"av.rmse.mu.b"], 
-#                  simres$resmat[,"av.rmse.sigma.dt"], simres$resmat[,"av.rmse.sigma.df"], 
-#                  simres$resmat[,"av.rmse.sigma.g"], simres$resmat[,"av.rmse.sigma.b"])
-#    colnames(rmse) <- c("mu.dt", "mu.df", "mu.g", "mu.b", "sigma.dt", "sigma.df", "sigma.g", "sigma.b")
-#    ylim <- c(min(rmse), max(rmse))
-#    plot(x = simres$x.axis, y = rmse[,"mu.dt"], type = "l", col = "forestgreen", ylim = ylim,
-#         xlab = "kappa", ylab = "RMSE", main = "disttree vs distforest vs gamlss")
-#    lines(x = simres$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = 'forestgreen')
-#    lines(x = simres$x.axis, y = rmse[,"mu.df"], type = "l", col = 'red')
-#    lines(x = simres$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = 'red')
-#    lines(x = simres$x.axis, y = rmse[,"mu.g"], type = "l", col = 'blue')
-#    lines(x = simres$x.axis, y = rmse[,"sigma.g"], type = "l", lty = 2, col = 'blue')
-#    lines(x = simres$x.axis, y = rmse[,"mu.b"], type = "l", col = 'purple')
-#    lines(x = simres$x.axis, y = rmse[,"sigma.b"], type = "l", lty = 2, col = 'purple')
-#    
-#    legend('topleft', c("disttree", "distforest", "gamlss", "bamlss"), 
-#           col = c('forestgreen', 'red', 'blue', 'purple'), lty = 1, cex = 0.7)
-#  }
-#}
-
-# plot loglikelihood
-#plot_ll <- function(simlist){
-#  ll <- cbind(simres$resmat[,"av.loglik.dt"], simres$resmat[,"av.loglik.df"], 
-#              simres$resmat[,"av.loglik.g"], simres$resmat[,"av.loglik.b"])
-#  colnames(ll) <- c("dt", "df","g","b")
-#  ylim <- c(min(ll), max(ll))
-#  plot(x = simres$x.axis, y = ll[,"dt"], type = "l", col = "forestgreen", ylim = ylim,
-#       xlab = "kappa", ylab = "log-likelihood", main = "disttree vs distforest vs gamlss")
-#  lines(x = simres$x.axis, y = ll[,"df"], type = "l", col = 'red')
-#  lines(x = simres$x.axis, y = ll[,"g"], type = "l", col = 'blue')
-#  lines(x = simres$x.axis, y = ll[,"b"], type = "l", col = 'purple')
-#  legend('topleft', c("disttree", "distforest", "gamlss", "bamlss"), 
-#         col = c('forestgreen', 'red', 'blue', 'purple'), lty = 1, cex = 0.7)
-#}
+  save(simres, file = paste0("~/svn/partykit/pkg/disttree/inst/draft/simres_mubase", simres$call$mubase, "_", simres$call$seedconst, ".rda"))
+}
 
 
 
-#plot_rmse(simres, type = "exp")
-#plot_rmse(simres, type = "par")
-#plot_ll(simres)
+########################
+# plot results
 
-
-
-
-
-
+if(FALSE){
+  
+  ## simulation plot functions
+  # plot RMSE
+  plot_rmse <- function(simres, type = c("exp", "par"), ylim = NULL, legend = TRUE){
+    
+    if(type == "exp"){
+      rmse <- NULL
+      colnames <- NULL
+      col <- NULL
+      legendnames <- NULL
+      if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.dt"], simres$resmat[,"av.rmse.exp.obs.dt"])
+        colnames <- c(colnames, "dt.true", "dt.obs")
+        col <- c(col, pal["tree"])
+        legendnames <- c(legendnames, "disttree")
+      }
+      if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.df"], simres$resmat[,"av.rmse.exp.obs.df"])
+        colnames <- c(colnames, "df.true", "df.obs")
+        col <- c(col, pal["forest"])
+        legendnames <- c(legendnames, "distforest")
+      }
+      if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.g"], simres$resmat[,"av.rmse.exp.obs.g"])
+        colnames <- c(colnames, "g.true", "g.obs")
+        col <- c(col, pal["gamlss"])
+        legendnames <- c(legendnames, "gamlss")
+      }
+      if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.b"], simres$resmat[,"av.rmse.exp.obs.b"])
+        colnames <- c(colnames, "b.true", "b.obs")
+        col <- c(col, pal["bamlss"])
+        legendnames <- c(legendnames, "bamlss")
+      }
+      if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.gb"], simres$resmat[,"av.rmse.exp.obs.gb"])
+        colnames <- c(colnames, "gb.true", "gb.obs")
+        col <- c(col, pal["gamboostLSS"])
+        legendnames <- c(legendnames, "gamboostLSS")
+      }
+      if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.rf"], simres$resmat[,"av.rmse.exp.obs.rf"])
+        colnames <- c(colnames, "rf.true", "rf.obs")
+        col <- c(col, pal["randomForest"])
+        legendnames <- c(legendnames, "randomForest")
+      }
+      if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.cf"], simres$resmat[,"av.rmse.exp.obs.cf"])
+        colnames <- c(colnames, "cf.true","cf.obs")
+        col <- c(col, pal["cforest"])
+        legendnames <- c(legendnames, "cforest")
+      }
+      
+      colnames(rmse) <- colnames
+      if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
+      
+      plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
+           xlab = "kappa", ylab = "RMSE")
+      lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
+      
+      for(i in 1:(length(col)-1)){
+        lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
+        lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
+      }
+      if(legend) legend('topleft', legendnames, 
+                        col = col, lty = 1, cex = 0.7)
+    } 
+    
+    if(type == "par"){
+      
+      rmse <- NULL
+      colnames <- NULL
+      col <- NULL
+      legendnames <- NULL
+      if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.dt"], simres$resmat[,"av.rmse.sigma.dt"])
+        colnames <- c(colnames, "dt.true", "dt.obs")
+        col <- c(col, pal["tree"])
+        legendnames <- c(legendnames, "disttree")
+      }
+      if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.df"], simres$resmat[,"av.rmse.sigma.df"])
+        colnames <- c(colnames, "df.true", "df.obs")
+        col <- c(col, pal["forest"])
+        legendnames <- c(legendnames, "distforest")
+      }
+      if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.g"], simres$resmat[,"av.rmse.sigma.g"])
+        colnames <- c(colnames, "g.true", "g.obs")
+        col <- c(col, pal["gamlss"])
+        legendnames <- c(legendnames, "gamlss")
+      }
+      if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.b"], simres$resmat[,"av.rmse.sigma.b"])
+        colnames <- c(colnames, "b.true", "b.obs")
+        col <- c(col, pal["bamlss"])
+        legendnames <- c(legendnames, "bamlss")
+      }
+      if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.gb"], simres$resmat[,"av.rmse.sigma.gb"])
+        colnames <- c(colnames, "gb.true", "gb.obs")
+        col <- c(col, pal["gamboostLSS"])
+        legendnames <- c(legendnames, "gamboostLSS")
+      }
+      if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.rf"], simres$resmat[,"av.rmse.sigma.rf"])
+        colnames <- c(colnames, "rf.true", "rf.obs")
+        col <- c(col, pal["randomForest"])
+        legendnames <- c(legendnames, "randomForest")
+      }
+      if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+        rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.cf"], simres$resmat[,"av.rmse.sigma.cf"])
+        colnames <- c(colnames, "cf.true","cf.obs")
+        col <- c(col, pal["cforest"])
+        legendnames <- c(legendnames, "cforest")
+      }
+      
+      colnames(rmse) <- colnames
+      if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
+      
+      plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
+           xlab = "kappa", ylab = "RMSE")
+      lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
+      
+      for(i in 1:(length(col)-1)){
+        lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
+        lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
+      }
+      if(legend) legend('topleft', legendnames, 
+                        col = col, lty = 1, cex = 0.7)
+    }
+  }
+  
+  # plot loglikelihood
+  plot_ll <- function(simres, ylim = NULL, legend = TRUE){
+    
+    ll <- NULL
+    colnames <- NULL
+    col <- NULL
+    legendnames <- NULL
+    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.dt"])
+      colnames <- c(colnames, "dt.ll")
+      col <- c(col, pal["tree"])
+      legendnames <- c(legendnames, "disttree")
+    }
+    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.df"])
+      colnames <- c(colnames, "df.ll")
+      col <- c(col, pal["forest"])
+      legendnames <- c(legendnames, "distforest")
+    }
+    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.g"])
+      colnames <- c(colnames, "g.true")
+      col <- c(col, pal["gamlss"])
+      legendnames <- c(legendnames, "gamlss")
+    }
+    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.b"])
+      colnames <- c(colnames, "b.true")
+      col <- c(col, pal["bamlss"])
+      legendnames <- c(legendnames, "bamlss")
+    }
+    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.gb"])
+      colnames <- c(colnames, "gb.true")
+      col <- c(col, pal["gamboostLSS"])
+      legendnames <- c(legendnames, "gamboostLSS")
+    }
+    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.rf"])
+      colnames <- c(colnames, "rf.true")
+      col <- c(col, pal["randomForest"])
+      legendnames <- c(legendnames, "randomForest")
+    }
+    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+      ll <- cbind(ll, simres$resmat[,"av.loglik.cf"])
+      colnames <- c(colnames, "cf.true")
+      col <- c(col, pal["cforest"])
+      legendnames <- c(legendnames, "cforest")
+    }
+    
+    colnames(ll) <- colnames
+    if(is.null(ylim)) ylim <- c(min(na.omit(ll)), max(na.omit(ll)))
+    
+    plot(x = simres$x.axis, y = ll[,1], type = "l", col = col[1], ylim = ylim,
+         xlab = "kappa", ylab = "log-likelihood")
+    
+    for(i in 2:length(col)){
+      lines(x = simres$x.axis, y = ll[,i], type = "l", col = col[i])
+    }
+    if(legend) legend('topleft', legendnames, 
+                      col = col, lty = 1, cex = 0.7)
+  }
+  
+  ## HCL palette
+  pal <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50)
+  names(pal) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+  
+  pallight <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50, alpha = 0.25)
+  names(pallight) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+  
+  transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
+  
+  
+  
+  simres$call
+  simres$fun
+  plot_rmse(simres, type = "par", legend = FALSE)
+  plot_rmse(simres, type = "exp", legend = FALSE)
+  plot_ll(simres, legend = FALSE)
+  plot_ll(simres, legend = FALSE, ylim = c(-370, -310))
+  
+}
 
