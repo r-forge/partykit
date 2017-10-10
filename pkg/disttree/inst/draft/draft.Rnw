@@ -652,9 +652,9 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
    \And Torsten Hothorn\\Universit\"at Z\"urich
-   \And Achim Zeileis\\Universit\"at Innsbruck
-   \And Reto Stauffer\\Universit\"at Innsbruck}
-\Plainauthor{Lisa Schlosser, Torsten Hothorn, Achim Zeileis, Reto Stauffer}
+   \And Reto Stauffer\\Universit\"at Innsbruck
+   \And Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
 In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
@@ -1357,26 +1357,29 @@ The preciptable water is represented by 6 covariates:
 
 
 \newpage
+\begin{table}[h]
+%\resizebox{1.4\textwidth}{!}{
+\begin{minipage}{\textwidth}
 \begin{tabular}{| l  c  l |}
 \hline
-\thead{basic covariates} & \thead{nr} & \thead{variations}\\
+Basic covariates & {\#} & Variations\\
 \hline
-\textbf{tp{\_}pow}: total precipitation    & 12 variations:  & ensemble mean of sum, \\
+\textbf{tp}: total precipitation            & 12 variations:  & ensemble mean of sum, \\
 \hspace*{\fill} power transformed (by 1.6) &    & ensemble std dev of sum, \\ 
-\textbf{cape{\_}pow}: convective           &    & ensemble min of sum, \\
-\hspace*{0.4cm} available potential energy &    & ensemble max of sum\\
+\textbf{cape}: convective                  &    & ensemble minimum of sum, \\
+\hspace*{0.4cm} available potential energy &    & ensemble maximum of sum\\
 \hspace*{\fill}  power transformed (by 1.6)&    & \qquad all over 6--30 UTC\\
 \hspace*{\fill}                            &    & ensemble mean of sum over\\
 \hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
 \hspace*{\fill}                            &    & ensemble std dev of sum over\\
 \hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
-\textbf{dswrf}: downwards short ware      & 6 variations: & ensemble mean of mean, \\
-\hspace*{\fill} radiation flux (sunshine) &   & ensemble mean of min,\\
-\textbf{msl}: mean sea level pressure     &   &  ensemble mean of max,\\
-\textbf{pwat}: preciptable water          &   & ensemble std dev of mean,\\
-\textbf{tmax}: 2m maximum                 &   & ensemble std dev of min,\\
-\hspace*{1.15cm} temperature              &   & ensemble std dev of max,\\
+\textbf{dswrf}: downwards short ware      & 6 variations: & ensemble mean of mean values, \\
+\hspace*{\fill} radiation flux (sunshine) &   & ensemble mean of minimal values,\\
+\textbf{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
+\textbf{pwat}: preciptable water          &   & ensemble std dev of mean values,\\
+\textbf{tmax}: 2m maximum                 &   & ensemble std dev of minimal values,\\
+\hspace*{1.15cm} temperature              &   & ensemble std dev of maximal values,\\
 \textbf{tcolc}: total column-integrated   &   & \qquad all over 6--30 UTC \\
 \hspace*{1.05cm} condensate  &   & \\
 \textbf{t500}: temperature   &   & \\
@@ -1386,9 +1389,9 @@ The preciptable water is represented by 6 covariates:
 \textbf{t850}: temperature   &   & \\
 \hspace{1cm} on 850 hPA      &   & \\
 \hline
-\textbf{tdiff500850}: temperature         & 3 variations: & ensemble mean of diff in mean,\\
-\hspace*{\fill} difference 500 to 850 hPA &   & ensemble min of diff in mean,\\
-\textbf{tdiff500700}: temperature         &   & ensemble max of diff in mean\\
+\textbf{tdiff500850}: temperature         & 3 variations: & ensemble mean of difference in mean,\\
+\hspace*{\fill} difference 500 to 850 hPA &   & ensemble minimum of difference in mean,\\
+\textbf{tdiff500700}: temperature         &   & ensemble maximum of difference in mean\\
 \hspace*{\fill} difference 500 to 700 hPA &   & \qquad all over 6--30 UTC\\
 \textbf{tdiff700850}: temperature         &   & \\
 \hspace*{\fill} difference 700 to 850 hPA &   & \\
@@ -1397,7 +1400,11 @@ The preciptable water is represented by 6 covariates:
 \hspace{1.65cm} difference            &   & \qquad over 6--30 UTC\\
 \hline
 \end{tabular}
-
+\caption[Table caption text]{Basic covariates together with the number and the type of variations}
+\label{covariates}
+\end{minipage} 
+%}
+\end{table}
 
 
 
@@ -1407,30 +1414,38 @@ The preciptable water is represented by 6 covariates:
 
 The following methods are applied on this data set:
 
-\begin{tabular}{| l | c   c   c   c |}
+\begin{table}[h]
+%\resizebox{1.4\textwidth}{!}{
+\begin{minipage}{\textwidth}
+\begin{tabular}{| l | l   l   l |}
 \hline
- & \textbf{mu link} & \textbf{sigma link} & \textbf{mu covariates} & \textbf{sigma covariates} \\
+ & \textbf{Type} & \textbf{Location ($\mu$)} & \textbf{Scale ($\sigma$)} \\
 \hline
-\textbf{disttree} & identity & log & all covariates & all covariates \\ 
+\textbf{Forest} & recursive    & all & all \\ 
+                & partitioning &     &     \\ 
 \hline
-\textbf{distforest} & identity & log & all covariates & all covariates \\
+\textbf{GAM (prespecified)} & spline  & tp{\_}mean, & tppow{\_}sprd,\\
+                            & in each & tp{\_}max,  & dswrf{\_}sprd{\_}mean,\\
+ & & tp{\_}mean1218 $\cdot$ & tp{\_}sprd1218 $\cdot$\\ 
+ & & \quad cape{\_}mean1218, & \quad  cape{\_}mean1218,\\
+ & & dswrf{\_}mean{\_}mean, & tcolc{\_}sprd{\_}mean,\\
+ & & tcolc{\_}mean{\_}mean, & tdiff500850{\_}mean\\
+ & & pwat{\_}mean{\_}mean, & \\
+ & & tdiff500850{\_}mean, & \\
+ & & msl{\_}diff & \\
 \hline
-\textbf{gamlss} & identity & log & tppow{\_}mean, & tppow{\_}sprd,\\
-& & & tppow{\_}max, & dswrf{\_}sprd{\_}mean, \\
-& & & tppow{\_}mean1218, & tppow{\_}sprd1218,\\ 
-& & & capepow{\_}mean1218, & capepow{\_}mean1218,\\
-& & & dswrf{\_}mean{\_}mean, & tcolc{\_}sprd{\_}mean,\\
-& & & tcolc{\_}mean{\_}mean, & tdiff500850{\_}mean\\
-& & & pwat{\_}mean{\_}mean, & \\
-& & & tdiff500850{\_}mean, & \\
-& & & msl{\_}diff & \\
+\textbf{GAM (boosted)} & spline  & all & all \\
+                       & in each &     &     \\
 \hline
-\textbf{gamboostLSS} & identity & log & all covariates & all covariates \\
-\hline
-\textbf{EMOS} & identity & log & tppow{\_}mean & tppow{\_}spread \\
+\textbf{EMOS} & linear & tp{\_}mean & tp{\_}spread \\
 \hline
 \end{tabular}
-\\
+\caption[Table caption text]{Table of applied methods together with their type (way of including the covariates) and the included covariates for each distribution parameter}
+\label{model_specification}
+\end{minipage} 
+%}
+\end{table}
+
 For the gamlss model the covariates were selected manually based on expert knowledge. Additionally, interactions are specified in advance, once between tppow{\_}mean1218 and capepow{\_}mean1218 for the location parameter and once between tppow{\_}sprd1218 and capepow{\_}mean1218 for the l ocatioin parameter. By putting extra effort in the specification of the formulas the gamlss model is provided with additional information and is therefore expected to profit from this advantage.\\
 
 
@@ -1788,15 +1803,17 @@ for(i in 2:(length(res)-1))  crps <- rbind(crps, res[[i]]$results["crps",])
 
 colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
 
+# skills score
+s <- 1 - crps[, 2:4]/crps[,6]
 @
 
 
 
 \begin{figure}[t!]
 <<rain_pred_skills_score, fig=TRUE, echo=FALSE>>=
-# skills score
-  boxplot(1 - crps/crps[,6])
-  abline(h = 0, col = "red")
+  matplot(t(s), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, xlab = "", ylab = "", xlim = c(0.5, 3.5))
+  boxplot(s, add = TRUE)
+  abline(h = 0, col = "gold", lwd = 2)
 @
 \caption{\label{boxplots_rain}Results of predictions over all stations: CRPS skills score with reference model EMOS log}
 \end{figure}
