@@ -582,13 +582,13 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
   g_na <- any(c(all(is.na(g)), all(is.na(g_mu)), all(is.na(g_sigma))))
   
   # gamboostLSS
-  pgb <- predict(gb, newdata = testdata, parameter = list("mu","sigma"), type = "response")
-  gb_mu <- pgb[[1]]
-  gb_sigma <- pgb[[2]]
+  pgb <- predict(gb, newdata = testdata, parameter = c("mu","sigma"), type = "response")
+  gb_mu <- pgb$mu
+  gb_sigma <- pgb$sigma
   gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
-  # pgbOOB <- predict(gbOOB, newdata = testdata, parameter = list("mu","sigma"), type = "response")
-  # gbOOB_mu <- pgbOOB[[1]]
-  # gbOOB_sigma <- pgbOOB[[2]]
+  # pgbOOB <- predict(gbOOB, newdata = testdata, parameter = c("mu","sigma"), type = "response")
+  # gbOOB_mu <- pgbOOB$mu
+  # gbOOB_sigma <- pgbOOB$sigma
   # gbOOB_exp <- pnorm(gbOOB_mu/gbOOB_sigma) * (gbOOB_mu + gbOOB_sigma * (dnorm(gbOOB_mu/gbOOB_sigma) / pnorm(gbOOB_mu/gbOOB_sigma)))
   
   
@@ -689,7 +689,11 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
   rainres$ml_error <- ml_error
   rainres$mq_error <- mq_error
   rainres$call <- cl
+  rainres$dt <- dt
   rainres$df <- df
+  rainres$g <- g
+  rainres$gb <- gb
+  rainres$ml <- ml
   rainres$learndata <- learndata
   rainres$testdata <- testdata
   
@@ -718,7 +722,7 @@ if(FALSE){
   save(res, file = paste0("rain_Axams_pred_", res$call$frac, "_", res$call$seedconst, ".rda"))
   
   
-  
+  load("rain_Axams_pred_FALSE_7.rda")
   
   ###########
   # predictions for one day (in each of the three years) 
@@ -793,6 +797,88 @@ if(FALSE){
   
   
   
+  ###################
+  ## pit histograms
+  if(FALSE){
+    
+    ## get predicted parameter
+    # for learndata and testdata
+    
+    # disttree
+    pdt <- predict(res$dt, type = "parameter")
+    dt_mu_l <- pdt$mu 
+    dt_sigma_l <- pdt$sigma 
+    pdt <- predict(res$dt, type = "parameter", newdata = res$testdata)
+    dt_mu_t <- pdt$mu 
+    dt_sigma_t <- pdt$sigma 
+    
+    #distforest
+    pdf <- predict(res$df, type = "parameter")
+    df_mu_l <- pdf$mu
+    df_sigma_l <- pdf$sigma
+    pdf <- predict(res$df, type = "parameter", newdata = res$testdata)
+    df_mu_t <- pdf$mu
+    df_sigma_t <- pdf$sigma
+    
+    #gamlss
+    g_mu_l <- predict(res$g, what = "mu", type = "response", data = g_raindata)
+    g_sigma_l <- predict(res$g, what = "sigma", type = "response", data = g_raindata)
+    g_mu_t <- predict(res$g, what = "mu", type = "response", data = g_raindata, newdata = res$testdata)
+    g_sigma_t <- predict(res$g, what = "sigma", type = "response", data = g_raindata, newdata = res$testdata)
+    
+    #gamboostLSS
+    pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response")
+    gb_mu_l <- pgb$mu
+    gb_sigma_l <- pgb$sigma
+    pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response", newdata = res$testdata)
+    gb_mu_t <- pgb$mu
+    gb_sigma_t <- pgb$sigma
+    
+    #EMOS
+    ml_mu_l <- predict(res$ml, type = "location")     # returns parameter on response scale
+    ml_sigma_l <- predict(res$ml, type = "scale")
+    ml_mu_t <- predict(res$ml, type = "location", newdata = res$testdata)     # returns parameter on response scale
+    ml_sigma_t <- predict(res$ml, type = "scale", newdata = res$testdata)
+    
+    
+    
+    # disttree
+    #hist(pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l))
+    pit_dt_l <- pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l)
+    pit_dt_l[which(res$learndata[,"robs"]==0)] <- pit_dt_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_dt_l[which(res$learndata[,"robs"]==0)]),0,1)
+    hist(pit_dt_l)
+    #hist(pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t))
+    pit_dt_t <- pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t)
+    pit_dt_t[which(res$testdata[,"robs"]==0)] <- pit_dt_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_dt_t[which(res$testdata[,"robs"]==0)]),0,1)
+    hist(pit_dt_t)
+    
+    # distforest
+    #hist(pnorm(testdata[,"robs"], df_mu, df_sigma))
+    pit_df <- pnorm(raindata[,"robs"], df_mu, df_sigma)
+    pit_df[which(raindata[,"robs"]==0)] <- pit_df[which(raindata[,"robs"]==0)]*runif(length(pit_df[which(raindata[,"robs"]==0)]),0,1)
+    hist(pit_df)
+    
+    # gamlss
+    #hist(pnorm(raindata[,"robs"], g_mu, g_sigma))
+    pit_g <- pnorm(raindata[,"robs"], g_mu, g_sigma)
+    pit_g[which(raindata[,"robs"]==0)] <- pit_g[which(raindata[,"robs"]==0)]*runif(length(pit_g[which(raindata[,"robs"]==0)]),0,1)
+    hist(pit_g)
+  
+    # gamboostLSS
+    #hist(pnorm(raindata[,"robs"], gb_mu, gb_sigma))
+    pit_gb <- pnorm(raindata[,"robs"], gb_mu, gb_sigma)
+    pit_gb[which(raindata[,"robs"]==0)] <- pit_gb[which(raindata[,"robs"]==0)]*runif(length(pit_gb[which(raindata[,"robs"]==0)]),0,1)
+    hist(pit_gb)
+    
+    # EMOS
+    #hist(pnorm(raindata[,"robs"], mi_mu, mi_sigma))
+    pit_mi <- pnorm(raindata[,"robs"], mi_mu, mi_sigma)
+    pit_mi[which(raindata[,"robs"]==0)] <- pit_mi[which(raindata[,"robs"]==0)]*runif(length(pit_mi[which(raindata[,"robs"]==0)]),0,1)
+    hist(pit_mi)
+  }
+  
+  
+  
   ##############################
   # variable importance
   vimp_ll <- varimp(res$df, nperm = 1L)
@@ -836,17 +922,17 @@ if(FALSE){
   rm(logLik.distforest)  
   
   
-  load("vimp100_crps.rda")
+  load("vimp1000_crps.rda")
   
-  most_impvar <- sort(vimp100_crps, decreasing = TRUE)[c(1:20)]
-  most_impvar <- most_impvar[most_impvar>2.7]
+  most_impvar <- sort(vimp1000_crps, decreasing = TRUE)[c(1:10)]
+  #most_impvar <- most_impvar[most_impvar>2.7]
   names_mi <- names(most_impvar)
   covnames <- colnames(res$learndata)
   id_mi <- match(names_mi, covnames)
   
   datafix <- res$learndata
   datafix1 <- datafix2 <- datafix3 <- datafix4 <- 
-    datafix5 <- datafix5 <- datafix6 <- datafix7 <- datafix8 <- datafix
+    datafix5 <- datafix5 <- datafix6 <- datafix7 <- datafix8 <- datafix9 <- datafix10 <- datafix
   
   # fix all variables except for the most important ones to their mean
   for(i in 3:NCOL(datafix))  if(i!=id_mi[1]) datafix1[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
@@ -857,6 +943,8 @@ if(FALSE){
   for(i in 3:NCOL(datafix))  if(i!=id_mi[6]) datafix6[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
   for(i in 3:NCOL(datafix))  if(i!=id_mi[7]) datafix7[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
   for(i in 3:NCOL(datafix))  if(i!=id_mi[8]) datafix8[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[9]) datafix9[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
+  for(i in 3:NCOL(datafix))  if(i!=id_mi[10]) datafix10[,i] <- rep(mean(datafix[,i], na.rm = TRUE), NROW(datafix))
   
   
   pred1 <- predict(res$df, newdata  = datafix1, type = "parameter")
@@ -906,6 +994,18 @@ if(FALSE){
   sp8 <- plotdata8[order(datafix8[,id_mi[8]]),]
   plot(x = sp8[,id_mi[8]], y = sp8[, "mu"], type = "l", xlab = names_mi[8], ylab = "mu")
   plot(x = sp8[,id_mi[8]], y = sp8[, "sigma"], type = "l", xlab = names_mi[8], ylab = "sigma")
+  
+  pred9 <- predict(res$df, newdata  = datafix9, type = "parameter")
+  plotdata9 <- cbind(datafix9, pred9)
+  sp9 <- plotdata9[order(datafix9[,id_mi[9]]),]
+  plot(x = sp9[,id_mi[9]], y = sp9[, "mu"], type = "l", xlab = names_mi[9], ylab = "mu")
+  plot(x = sp9[,id_mi[9]], y = sp9[, "sigma"], type = "l", xlab = names_mi[9], ylab = "sigma")
+  
+  pred10 <- predict(res$df, newdata  = datafix10, type = "parameter")
+  plotdata10 <- cbind(datafix10, pred10)
+  sp10 <- plotdata10[order(datafix10[,id_mi[10]]),]
+  plot(x = sp10[,id_mi[10]], y = sp10[, "mu"], type = "l", xlab = names_mi[10], ylab = "mu")
+  plot(x = sp10[,id_mi[10]], y = sp10[, "sigma"], type = "l", xlab = names_mi[10], ylab = "sigma")
   
 }
 
