@@ -709,6 +709,9 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata, 
                                           families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
                                           control = boost_control(mstop = 1000L))
+                        #gbOOB <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata, 
+                        #                  families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
+                        #                  control = boost_control(mstop = 1000L, risk = "oobag"))
                         if(gamboost_cvr){
                           grid <- seq(50,1000, by = 25)
                           cvr <- cvrisk(gb, grid = grid)
@@ -781,6 +784,12 @@ rain_pred <- function(seedconst = 7, ntree = 100,
                         gb_mu <- pgb[[1]]
                         gb_sigma <- pgb[[2]]
                         gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+                        
+                        #pgbOOB <- predict(gbOOB, newdata = testdata, parameter = list("mu","sigma"), type = "response")
+                        #gbOOB_mu <- pgbOOB[[1]]
+                        #gbOOB_sigma <- pgbOOB[[2]]
+                        #gbOOB_exp <- pnorm(gbOOB_mu/gbOOB_sigma) * (gbOOB_mu + gbOOB_sigma * (dnorm(gbOOB_mu/gbOOB_sigma) / pnorm(gbOOB_mu/gbOOB_sigma)))
+                        
                         
                         # EMOS
                         if(!(all(is.na(mi)))){
@@ -909,6 +918,8 @@ if(FALSE){
   
   save(res, file = paste0("rain_pred_frac_", res$call$frac, "_", res$call$seedconst, ".rda"))
   
+  #load("rain_pred_frac_FALSE_7.rda")
+  
   ll <- res[[1]]$results["ll",]
   for(i in 2:(length(res)-1)) ll <- rbind(ll, res[[i]]$results["ll",])
   
@@ -920,15 +931,28 @@ if(FALSE){
   
   colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
   
+   
+
+  
   # skills score
-  boxplot(1 - crps/crps[,6])
-  abline(h = 0, col = "red")
+  s <- 1 - crps[, 2:4]/crps[,6]
+  matplot(t(s), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, xlab = "", ylab = "", xlim = c(0.5, 3.5))
+  #abline(v = 1:3, lty = 2)
+  boxplot(s, add = TRUE)
+  abline(h = 0, col = "gold", lwd = 2)
+  
+  
+  
   
   unlist(lapply(1:(length(res)-2), function(i) res[[i]]$cvr_opt))
   unlist(lapply(1:(length(res)-2), function(i) res[[i]]$g_error))
   unlist(lapply(1:(length(res)-2), function(i) res[[i]]$mi_error))
   unlist(lapply(1:(length(res)-2), function(i) res[[i]]$ml_error))
   unlist(lapply(1:(length(res)-2), function(i) res[[i]]$mq_error))
+  
+  err_gamlss <- res$complete_stations[!is.na(unlist(lapply(1:(length(res)-2), function(i) res[[i]]$g_error)))]
+  load("rainData/ehyd.statlist.rda")
+  ehyd.statlist[err_gamlss,]
   
   boxplot(rmse)
   boxplot(crps)
@@ -966,6 +990,7 @@ if(FALSE){
       if(crps_ssc_df[i] < crps_ssc_g[i]) col_crps_ssc_df_g[i] <- "blue"
     } 
   }
+  ehyd.statlist[res$complete_stations,][col_crps_ssc_df_g == "blue",]
   
   # set the colour according to whether distforest performed better than gamboostLSS
   col_crps_ssc_df_gb <- rep("red", length(crps_ssc_df))
@@ -976,6 +1001,7 @@ if(FALSE){
       if(crps_ssc_df[i] < crps_ssc_gb[i]) col_crps_ssc_df_gb[i] <- "blue"
     } 
   } 
+  ehyd.statlist[res$complete_stations,][col_crps_ssc_df_gb == "blue",]
   
   
   # df vs g
