@@ -42,6 +42,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
   #library("bamlss")
   library("randomForest")
   library("Formula")  # FIX ME: should be imported in disttree
+  library("scoringRules")
   library("survival")
   gen.cens("NO", type = "left")
   
@@ -670,14 +671,15 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
       } else {
         fun <- function(x, kappa){
           mu <- mubase + 
-            8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3)) + 
-            #(8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
-            #(8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
-            4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
+            4 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3)) + 3 * plogis((kappa^(1.8)) * 5 * (x[,1] -0.7)) + 
+            #8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3)) + 
+            #(8 * (exp(-(3*x[,1]+1)^(2*kappa)))) * as.numeric(x[,1] < -1/3) + 
+            #(8 * (exp(-(3*x[,1]+1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>= -1/3) +
+            2 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
           sigma <- sigmabase + 
             #3 * x[,4]
-            3 * (1-plogis((kappa^(1.8)) * 5 * (x[,2] - 0.3))) * x[,4]
+            3 * (1-plogis((kappa^(1.8)) * 5 * (x[,2] - 0.3)))# * x[,4]
           par <- cbind(mu, sigma)
           return(par)
         }
@@ -706,6 +708,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.mu.dt <- numeric(length = nrep)
                            rmse.sigma.dt <- numeric(length = nrep)
                            loglik.dt <- numeric(length = nrep)
+                           crps.dt <- numeric(length = nrep)
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
@@ -761,6 +764,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              
                              # calculate loglikelihood for newdata
                              loglik.dt[j] <- logLik(dt, newdata = newdata)
+                             
+                             # crps
+                             crps.dt[j] <- mean(crps_cnorm(newdata[,"y"], location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                            }
                            
                            
@@ -768,18 +774,21 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                   mean(rmse.exp.obs.dt),
                                                   mean(rmse.mu.dt),
                                                   mean(rmse.sigma.dt),
-                                                  mean(loglik.dt)),
+                                                  mean(loglik.dt),
+                                                  mean(crps.dt))
+                                                ,
                                                 row.names = c( "av.rmse.exp.true.dt",
                                                                "av.rmse.exp.obs.dt",
                                                                "av.rmse.mu.dt",
                                                                "av.rmse.sigma.dt",
-                                                               "av.loglik.dt")))
+                                                               "av.loglik.dt",
+                                                               "av.crps.dt")))
                            
                          },
                          mc.cores = detectCores() - 1
       )
       
-      resmat_dt <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_dt <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_dt) <- rownames(res_dt[[1]])
       for(k in 1:(nsteps+1)) resmat_dt[k,] <- t(as.vector(res_dt[[k]]))
       
@@ -800,6 +809,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.mu.df <- numeric(length = nrep)
                            rmse.sigma.df <- numeric(length = nrep)
                            loglik.df <- numeric(length = nrep)
+                           crps.df <- numeric(length = nrep)
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
@@ -852,6 +862,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              
                              # calculate loglikelihood for newdata
                              loglik.df[j] <- as.numeric(logLik(df, newdata = newdata))
+                             
+                             # crps
+                             crps.df[j] <- mean(crps_cnorm(newdata[,"y"], location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                            }
                            
                            
@@ -859,18 +872,20 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                   mean(rmse.exp.obs.df),
                                                   mean(rmse.mu.df),
                                                   mean(rmse.sigma.df),
-                                                  mean(loglik.df)),
+                                                  mean(loglik.df),
+                                                  mean(crps.df)),
                                                 row.names = c( "av.rmse.exp.true.df",
                                                                "av.rmse.exp.obs.df",
                                                                "av.rmse.mu.df",
                                                                "av.rmse.sigma.df",
-                                                               "av.loglik.df")))
+                                                               "av.loglik.df",
+                                                               "av.crps.df")))
                            
                          },
                          mc.cores = detectCores() - 1
       )
       
-      resmat_df <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_df <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_df) <- rownames(res_df[[1]])
       for(k in 1:(nsteps+1)) resmat_df[k,] <- t(as.vector(res_df[[k]]))
       
@@ -891,6 +906,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           rmse.mu.g <- numeric(length = nrep)
                           rmse.sigma.g <- numeric(length = nrep)
                           loglik.g <- numeric(length = nrep)
+                          crps.g <- numeric(length = nrep)
                           
               
                           mu.formula <- y~pb(x1)+pb(x2)+pb(x3)+pb(x4)+pb(x5)+pb(x6)
@@ -937,6 +953,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             
                             # calculate loglikelihood for newdata
                             loglik.g[j] <- gll.newdata(g, newdata = newdata, data = learndata)
+                            
+                            # crps
+                            crps.g[j] <- mean(crps_cnorm(newdata[,"y"], location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                           }
                           
                           
@@ -944,19 +963,21 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                  mean(rmse.exp.obs.g, na.rm = TRUE),
                                                  mean(rmse.mu.g, na.rm = TRUE),
                                                  mean(rmse.sigma.g, na.rm = TRUE),
-                                                 mean(loglik.g, na.rm = TRUE)),
+                                                 mean(loglik.g, na.rm = TRUE),
+                                                 mean(crps.g, na.rm = TRUE)),
                                                row.names = c( "av.rmse.exp.true.g",
                                                               "av.rmse.exp.obs.g",
                                                               "av.rmse.mu.g",
                                                               "av.rmse.sigma.g",
-                                                              "av.loglik.g")))
+                                                              "av.loglik.g",
+                                                              "av.crps.g")))
                           
                         },
                         mc.cores = detectCores() - 1,
                         mc.preschedule = FALSE
       )
       
-      resmat_g <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_g <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_g) <- rownames(res_g[[1]])
       for(k in 1:(nsteps+1)) resmat_g[k,] <- t(as.vector(res_g[[k]]))
       
@@ -977,6 +998,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                           rmse.mu.b <- numeric(length = nrep)
                           rmse.sigma.b <- numeric(length = nrep)
                           loglik.b <- numeric(length = nrep)
+                          crps.b <- numeric(length = nrep)
                           
                           mu.formula <- y~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)
                           sigma.formula <- ~s(x1)+s(x2)+s(x3)+s(x4)+s(x5)+s(x6)
@@ -1025,6 +1047,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                             
                             # calculate loglikelihood for newdata
                             loglik.b[j] <- bll.newdata(b, newdata = newdata)
+                            
+                            # crps
+                            crps.b[j] <- mean(crps_cnorm(newdata[,"y"], location = b_mu, scale = b_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                           }
                           
                           
@@ -1032,18 +1057,20 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                  mean(rmse.exp.obs.b),
                                                  mean(rmse.mu.b),
                                                  mean(rmse.sigma.b),
-                                                 mean(loglik.b)),
+                                                 mean(loglik.b),
+                                                 mean(crps.b)),
                                                row.names = c( "av.rmse.exp.true.b",
                                                               "av.rmse.exp.obs.b",
                                                               "av.rmse.mu.b",
                                                               "av.rmse.sigma.b",
-                                                              "av.loglik.b")))
+                                                              "av.loglik.b",
+                                                              "av.crps.b")))
                           
                         },
                         mc.cores = detectCores() - 1
       )
       
-      resmat_b <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_b <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_b) <- rownames(res_b[[1]])
       for(k in 1:(nsteps+1)) resmat_b[k,] <- t(as.vector(res_b[[k]]))
       
@@ -1076,6 +1103,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.mu.gb <- numeric(length = nrep)
                            rmse.sigma.gb <- numeric(length = nrep)
                            loglik.gb <- numeric(length = nrep)
+                           crps.gb <- numeric(length = nrep)
                            
                            
                            mu.formula <- y~bbs(x1)+bbs(x2)+bbs(x3)+bbs(x4)+bbs(x5)+bbs(x6)
@@ -1140,6 +1168,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              
                              # calculate loglikelihood for newdata
                              loglik.gb[j] <- gbll.newdata(gb, newdata = newdata)
+                             
+                             # crps
+                             crps.gb[j] <- mean(crps_cnorm(newdata[,"y"], location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                            }
                            
                            
@@ -1147,18 +1178,20 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                   mean(rmse.exp.obs.gb),
                                                   mean(rmse.mu.gb),
                                                   mean(rmse.sigma.gb),
-                                                  mean(loglik.gb)),
+                                                  mean(loglik.gb),
+                                                  mean(crps.gb)),
                                                 row.names = c( "av.rmse.exp.true.gb",
                                                                "av.rmse.exp.obs.gb",
                                                                "av.rmse.mu.gb",
                                                                "av.rmse.sigma.gb",
-                                                               "av.loglik.gb")))
+                                                               "av.loglik.gb",
+                                                               "av.crps.gb")))
                            
                          },
                          mc.cores = detectCores() - 1
       )
       
-      resmat_gb <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_gb <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_gb) <- rownames(res_gb[[1]])
       for(k in 1:(nsteps+1)) resmat_gb[k,] <- t(as.vector(res_gb[[k]]))
       
@@ -1179,6 +1212,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.mu.rf <- numeric(length = nrep)
                            rmse.sigma.rf <- numeric(length = nrep)
                            loglik.rf <- numeric(length = nrep)
+                           crps.rf <- numeric(length = nrep)
                            
                            for(j in 1:nrep){  
                              set.seed(seedconst+((i-1)*nrep)+j)
@@ -1221,6 +1255,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              
                              # calculate loglikelihood for newdata
                              loglik.rf[j] <- rfll.newdata(rf, newdata = newdata, learndata = learndata)
+                             
+                             # crps
+                             crps.rf[j] <- mean(crps_cnorm(newdata[,"y"], location = rf_mu, scale = rf_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                            }
                            
                            
@@ -1228,17 +1265,19 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                   mean(rmse.exp.obs.rf),
                                                   mean(rmse.mu.rf),
                                                   mean(rmse.sigma.rf),
-                                                  mean(loglik.rf)),
+                                                  mean(loglik.rf),
+                                                  mean(crps.rf)),
                                                 row.names = c( "av.rmse.exp.true.rf",
                                                                "av.rmse.exp.obs.rf",
                                                                "av.rmse.mu.rf",
                                                                "av.rmse.sigma.rf",
-                                                               "av.loglik.rf")))
+                                                               "av.loglik.rf",
+                                                               "av.crps.rf")))
                          },
                          mc.cores = detectCores() - 1
       )
       
-      resmat_rf <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_rf <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_rf) <- rownames(res_rf[[1]])
       for(k in 1:(nsteps+1)) resmat_rf[k,] <- t(as.vector(res_rf[[k]]))
       
@@ -1259,6 +1298,7 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                            rmse.mu.cf <- numeric(length = nrep)
                            rmse.sigma.cf <- numeric(length = nrep)
                            loglik.cf <- numeric(length = nrep)
+                           crps.cf <- numeric(length = nrep)
                            
                            for(j in 1:nrep){
                              set.seed(seedconst+((i-1)*nrep)+j)
@@ -1305,6 +1345,9 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                              
                              # calculate loglikelihood for newdata
                              loglik.cf[j] <- cfll.newdata(cf, newdata = newdata)
+                             
+                             # crps
+                             crps.cf[j] <- mean(crps_cnorm(newdata[,"y"], location = cf_mu, scale = cf_sigma, lower = 0, upper = Inf), na.rm = TRUE)
                            }
                            
                            
@@ -1312,17 +1355,19 @@ gensim <- function(seedconst = 7, nrep = 100, ntree = 100,
                                                   mean(rmse.exp.obs.cf),
                                                   mean(rmse.mu.cf),
                                                   mean(rmse.sigma.cf),
-                                                  mean(loglik.cf)),
+                                                  mean(loglik.cf),
+                                                  mean(crps.cf)),
                                                 row.names = c( "av.rmse.exp.true.cf",
                                                                "av.rmse.exp.obs.cf",
                                                                "av.rmse.mu.cf",
                                                                "av.rmse.sigma.cf",
-                                                               "av.loglik.cf")))
+                                                               "av.loglik.cf",
+                                                               "av.crps.cf")))
                          },
                          mc.cores = detectCores() - 1
       )
       
-      resmat_cf <- matrix(ncol = 5, nrow = (nsteps+1))
+      resmat_cf <- matrix(ncol = 6, nrow = (nsteps+1))
       colnames(resmat_cf) <- rownames(res_cf[[1]])
       for(k in 1:(nsteps+1)) resmat_cf[k,] <- t(as.vector(res_cf[[k]]))
       
@@ -1359,18 +1404,18 @@ if(FALSE){
   library("gamlss.cens")
   gen.cens("NO", type = "left")
   
-  simres <- gensim(seedconst = 7, nrep = 40, ntree = 100,
-                    nsteps = 15, stepsize = 1,
+  simres <- gensim(seedconst = 7, nrep = 4, ntree = 100,
+                    nsteps = 1, stepsize = 9,
                     formula = y~x1+x2+x3+x4+x5+x6,
                     nobs = 400, testnobs = 200L,
                     tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95,
                     forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                    forest_mtry = 3,
+                    forest_mtry = 2,
                     fix.mu = FALSE,
                     fix.sigma = FALSE,
                     mu.sigma.interaction = FALSE,
-                    mubase = 3,
-                    sigmabase = 3,
+                    mubase = 2,
+                    sigmabase = 2,
                     censNO = TRUE,
                     gamboost_cvr = FALSE,
                     eval_disttree = TRUE,
@@ -1586,6 +1631,71 @@ if(FALSE){
                       col = col, lty = 1, cex = 0.7)
   }
   
+  # plot crpse
+  plot_crps <- function(simres, ylim = NULL, legend = TRUE){
+    
+    crps <- NULL
+    colnames <- NULL
+    col <- NULL
+    legendnames <- NULL
+    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.dt"])
+      colnames <- c(colnames, "dt.crps")
+      col <- c(col, pal["tree"])
+      legendnames <- c(legendnames, "disttree")
+    }
+    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.df"])
+      colnames <- c(colnames, "df.crps")
+      col <- c(col, pal["forest"])
+      legendnames <- c(legendnames, "distforest")
+    }
+    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.g"])
+      colnames <- c(colnames, "g.true")
+      col <- c(col, pal["gamlss"])
+      legendnames <- c(legendnames, "gamlss")
+    }
+    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.b"])
+      colnames <- c(colnames, "b.true")
+      col <- c(col, pal["bamlss"])
+      legendnames <- c(legendnames, "bamlss")
+    }
+    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.gb"])
+      colnames <- c(colnames, "gb.true")
+      col <- c(col, pal["gamboostLSS"])
+      legendnames <- c(legendnames, "gamboostLSS")
+    }
+    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.rf"])
+      colnames <- c(colnames, "rf.true")
+      col <- c(col, pal["randomForest"])
+      legendnames <- c(legendnames, "randomForest")
+    }
+    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+      crps <- cbind(crps, simres$resmat[,"av.crps.cf"])
+      colnames <- c(colnames, "cf.true")
+      col <- c(col, pal["cforest"])
+      legendnames <- c(legendnames, "cforest")
+    }
+    
+    colnames(crps) <- colnames
+    if(is.null(ylim)) ylim <- c(min(na.omit(crps)), max(na.omit(crps)))
+    
+    plot(x = simres$x.axis, y = crps[,1], type = "l", col = col[1], ylim = ylim,
+         xlab = "kappa", ylab = "CRPS")
+    
+    for(i in 2:length(col)){
+      lines(x = simres$x.axis, y = crps[,i], type = "l", col = col[i])
+    }
+    if(legend) legend('topleft', legendnames, 
+                      col = col, lty = 1, cex = 0.7)
+  }
+  
+  
+  
   ## HCL palette
   pal <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50)
   names(pal) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
@@ -1602,7 +1712,7 @@ if(FALSE){
   plot_rmse(simres, type = "par", legend = FALSE)
   plot_rmse(simres, type = "exp", legend = FALSE)
   plot_ll(simres, legend = FALSE)
-  plot_ll(simres, legend = FALSE, ylim = c(-370, -310))
+  plot_crps(simres, legend = FALSE)
   
 }
 
