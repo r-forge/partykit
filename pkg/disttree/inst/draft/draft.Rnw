@@ -658,6 +658,16 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
+In the field of probabilistic forecasting classical linear models such as ensemle model output statistics (EMOS) are still commonly and widely used. This is due to their simplicity and their interpretability. However, the restriction to modelling only linear effects required further extensions. Generalized additive models (GAM) which can also capture non-linear effects allow for more flexibilty.\\
+only location\\
+GAMLSS\\
+trees and forests not yet applied\\
+less effort\\
+variable specification\\
+complex terrain\\
+
+
+
 In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
 If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
 Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information a!
