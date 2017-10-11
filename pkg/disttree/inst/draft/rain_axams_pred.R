@@ -716,7 +716,7 @@ if(FALSE){
 
   res <- rain_axams_pred(seedconst = 7, ntree = 100,
                          forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = TRUE,
+                         gamboost_cvr = FALSE,
                          frac = FALSE)
   
   save(res, file = paste0("rain_Axams_pred_", res$call$frac, "_", res$call$seedconst, ".rda"))
@@ -798,7 +798,7 @@ if(FALSE){
   
   
   ###################
-  ## pit histograms
+  ## pit histograms and qqr-plots
   if(FALSE){
     
     ## get predicted parameter
@@ -821,10 +821,12 @@ if(FALSE){
     df_sigma_t <- pdf$sigma
     
     #gamlss
-    g_mu_l <- predict(res$g, what = "mu", type = "response", data = g_raindata)
-    g_sigma_l <- predict(res$g, what = "sigma", type = "response", data = g_raindata)
-    g_mu_t <- predict(res$g, what = "mu", type = "response", data = g_raindata, newdata = res$testdata)
-    g_sigma_t <- predict(res$g, what = "sigma", type = "response", data = g_raindata, newdata = res$testdata)
+    g_learndata <- res$learndata
+    g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
+    g_mu_l <- predict(res$g, what = "mu", type = "response")
+    g_sigma_l <- predict(res$g, what = "sigma", type = "response")
+    g_mu_t <- predict(res$g, what = "mu", type = "response", newdata = res$testdata)
+    g_sigma_t <- predict(res$g, what = "sigma", type = "response", newdata = res$testdata)
     
     #gamboostLSS
     pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response")
@@ -841,69 +843,120 @@ if(FALSE){
     ml_sigma_t <- predict(res$ml, type = "scale", newdata = res$testdata)
     
     
-  
-    # disttree
-    set.seed(7)
-    #hist(pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l))
-    pit_dt_l <- pnorm(res$learndata[,"robs"], dt_mu_l, dt_sigma_l)
-    pit_dt_l[which(res$learndata[,"robs"]==0)] <- pit_dt_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_dt_l[which(res$learndata[,"robs"]==0)]),0,1)
-    hist(pit_dt_l)
-    #hist(pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t))
-    set.seed(7)
-    pit_dt_t <- pnorm(res$testdata[,"robs"], dt_mu_t, dt_sigma_t)
-    pit_dt_t[which(res$testdata[,"robs"]==0)] <- pit_dt_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_dt_t[which(res$testdata[,"robs"]==0)]),0,1)
-    hist(pit_dt_t)
+    library("countreg")
     
-    # distforest
-    set.seed(7)
-    #hist(pnorm(res$learndata[,"robs"], df_mu_l, df_sigma_l))
-    pit_df_l <- pnorm(res$learndata[,"robs"], df_mu_l, df_sigma_l)
-    pit_df_l[which(res$learndata[,"robs"]==0)] <- pit_df_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_df_l[which(res$learndata[,"robs"]==0)]),0,1)
-    hist(pit_df_l)
-    set.seed(7)
-    #hist(pnorm(res$testdata[,"robs"], df_mu_t, df_sigma_t))
-    pit_df_t <- pnorm(res$testdata[,"robs"], df_mu_t, df_sigma_t)
-    pit_df_t[which(res$testdata[,"robs"]==0)] <- pit_df_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_df_t[which(res$testdata[,"robs"]==0)]),0,1)
-    hist(pit_df_t)
+    #### PIT histograms and QQR-Plots
     
-    # gamlss
+    ## disttree
+    # in sample
     set.seed(7)
-    #hist(pnorm(res$learndata[,"robs"], g_mu_l, g_sigma_l))
-    pit_g_l <- pnorm(res$learndata[,"robs"], g_mu_l, g_sigma_l)
-    pit_g_l[which(res$learndata[,"robs"]==0)] <- pit_g_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_g_l[which(res$learndata[,"robs"]==0)]),0,1)
-    hist(pit_g_l)
-    set.seed(7)
-    #hist(pnorm(raindata[,"robs"], g_mu_t, g_sigma_t))
-    pit_g_t <- pnorm(raindata[,"robs"], g_mu_t, g_sigma_t)
-    pit_g_t[which(raindata[,"robs"]==0)] <- pit_g_t[which(raindata[,"robs"]==0)]*runif(length(pit_g_t[which(raindata[,"robs"]==0)]),0,1)
-    hist(pit_g_t)
-  
-    # gamboostLSS
-    set.seed(7)
-    #hist(pnorm(res$learndata[,"robs"], gb_mu_l, gb_sigma_l))
-    pit_gb_l <- pnorm(res$learndata[,"robs"], gb_mu_l, gb_sigma_l)
-    pit_gb_l[which(res$learndata[,"robs"]==0)] <- pit_gb_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_gb_l[which(res$learndata[,"robs"]==0)]),0,1)
-    hist(pit_gb_l)
-    set.seed(7)
-    #hist(pnorm(res$testdata[,"robs"], gb_mu_t, gb_sigma_t))
-    pit_gb_t <- pnorm(res$testdata[,"robs"], gb_mu_t, gb_sigma_t)
-    pit_gb_t[which(res$testdata[,"robs"]==0)] <- pit_gb_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_gb_t[which(res$testdata[,"robs"]==0)]),0,1)
-    hist(pit_gb_t)
+    pit_dt_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = dt_mu_l, sd = dt_sigma_l))
+    pit_dt_l[res$learndata[,"robs"]>0, 1] <- pit_dt_l[res$learndata[,"robs"]>0, 2]
+    pithist(pit_dt_l, nsim = 100)
+    qqrplot(pit_dt_l, nsim = 100)
     
-    # EMOS
+    # out of sample
     set.seed(7)
-    #hist(pnorm(res$learndata[,"robs"], ml_mu_l, ml_sigma_l))
-    pit_ml_l <- pnorm(res$learndata[,"robs"], ml_mu_l, ml_sigma_l)
-    pit_ml_l[which(res$learndata[,"robs"]==0)] <- pit_ml_l[which(res$learndata[,"robs"]==0)]*runif(length(pit_ml_l[which(res$learndata[,"robs"]==0)]),0,1)
-    hist(pit_ml_l)
+    pit_dt_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = dt_mu_t, sd = dt_sigma_t))
+    pit_dt_t[res$testdata[,"robs"]>0, 1] <- pit_dt_t[res$testdata[,"robs"]>0, 2]
+    pithist(pit_dt_l, nsim = 100)
+    qqrplot(pit_dt_l, nsim = 100)
+    
+    
+    ## distforest
+    # in sample
     set.seed(7)
-    #hist(pnorm(res$testdata[,"robs"], ml_mu_t, ml_sigma_t))
-    pit_ml_t <- pnorm(res$testdata[,"robs"], ml_mu_t, ml_sigma_t)
-    pit_ml_t[which(res$testdata[,"robs"]==0)] <- pit_ml_t[which(res$testdata[,"robs"]==0)]*runif(length(pit_ml_t[which(res$testdata[,"robs"]==0)]),0,1)
-    hist(pit_ml_t)
+    pit_df_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = df_mu_l, sd = df_sigma_l))
+    pit_df_l[res$learndata[,"robs"]>0, 1] <- pit_df_l[res$learndata[,"robs"]>0, 2]
+    pithist(pit_df_l, nsim = 100)
+    qqrplot(pit_df_l, nsim = 100)
+    
+    # out of sample
+    set.seed(7)
+    pit_df_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = df_mu_t, sd = df_sigma_t))
+    pit_df_t[res$testdata[,"robs"]>0, 1] <- pit_df_t[res$testdata[,"robs"]>0, 2]
+    pithist(pit_df_l, nsim = 100)
+    qqrplot(pit_df_l, nsim = 100)
+    
+    
+    ## gamlss
+    # in sample
+    set.seed(7)
+    pit_g_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = g_mu_l, sd = g_sigma_l))
+    pit_g_l[res$learndata[,"robs"]>0, 1] <- pit_g_l[res$learndata[,"robs"]>0, 2]
+    pithist(pit_g_l, nsim = 100)
+    qqrplot(pit_g_l, nsim = 100)
+    
+    # out of sample
+    set.seed(7)
+    pit_g_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = g_mu_t, sd = g_sigma_t))
+    pit_g_t[res$testdata[,"robs"]>0, 1] <- pit_g_t[res$testdata[,"robs"]>0, 2]
+    pithist(pit_g_l, nsim = 100)
+    qqrplot(pit_g_l, nsim = 100)
+    
+    
+    ## gamboostLSS
+    # in sample
+    set.seed(7)
+    pit_gb_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = gb_mu_l, sd = gb_sigma_l))
+    pit_gb_l[res$learndata[,"robs"]>0, 1] <- pit_gb_l[res$learndata[,"robs"]>0, 2]
+    pithist(pit_gb_l, nsim = 100)
+    qqrplot(pit_gb_l, nsim = 100)
+    
+    # out of sample
+    set.seed(7)
+    pit_gb_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = gb_mu_t, sd = gb_sigma_t))
+    pit_gb_t[res$testdata[,"robs"]>0, 1] <- pit_gb_t[res$testdata[,"robs"]>0, 2]
+    pithist(pit_gb_l, nsim = 100)
+    qqrplot(pit_gb_l, nsim = 100)
+    
+    
+    ## EMOS log
+    # in sample
+    set.seed(7)
+    pit_ml_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = ml_mu_l, sd = ml_sigma_l))
+    pit_ml_l[res$learndata[,"robs"]>0, 1] <- pit_ml_l[res$learndata[,"robs"]>0, 2]
+    pithist(pit_ml_l, nsim = 100)
+    qqrplot(pit_ml_l, nsim = 100)
+    
+    # out of sample
+    set.seed(7)
+    pit_ml_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = ml_mu_t, sd = ml_sigma_t))
+    pit_ml_t[res$testdata[,"robs"]>0, 1] <- pit_ml_t[res$testdata[,"robs"]>0, 2]
+    pithist(pit_ml_l, nsim = 100)
+    qqrplot(pit_ml_l, nsim = 100)
+    
+    
+    # plot all together
+    if(FALSE){
+      par(mfrow = c(2,2))
+      pithist(pit_df_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_g_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_gb_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_ml_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      
+      par(mfrow = c(2,2))
+      pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      
+      par(mfrow = c(2,2))
+      set.seed(1)
+      qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
+      qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
+      qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
+      qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
+      
+      par(mfrow = c(2,2))
+      set.seed(1)
+      qqrplot(pit_df_t, nsim = 1, main = "distforest (out of bag)")
+      qqrplot(pit_g_t, nsim = 1, main = "gamlss (out of bag)")
+      qqrplot(pit_gb_t, nsim = 1, main = "gamboostLSS (out of bag)")
+      qqrplot(pit_ml_t, nsim = 1, main = "EMOS (out of bag)")
+    }
     
   }
-  
   
   
   ##############################
