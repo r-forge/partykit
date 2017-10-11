@@ -97,6 +97,7 @@ library("gamlss.cens")
 gen.cens(NO, type = "left")
 library("mgcv")
 library("MASS")
+library("countreg")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50)
@@ -1598,7 +1599,7 @@ if(file.exists("vimp_crps.rda")){
 %\begin{subfigure}{0.5\textwidth}
 <<rain_axams_varim_margeffects1_mu, fig=TRUE, echo=FALSE>>=
 par(mar = c(2,10,2,2))
-barplot(sort(vimp_crps, decreasing = TRUE)[1:10], horiz = TRUE, las = 1, axes = FALSE)
+barplot(sort(vimp_crps, decreasing = TRUE)[1:10], horiz = TRUE, las = 1, cex.names = 0.8, axes = FALSE)
 @
 %\end{subfigure}
 %\hspace{-1cm}
@@ -1609,6 +1610,170 @@ barplot(sort(vimp_crps, decreasing = TRUE)[1:10], horiz = TRUE, las = 1, axes = 
 %\end{subfigure}
 \caption{\label{varimp} Variable imortance: top 10 list for the forest model}
 \end{figure}
+
+
+
+
+
+<<pit_qqr, echo=FALSE, eval=TRUE>>=
+
+## pit histograms and qqr-plots
+
+## get predicted parameter
+# for learndata and testdata
+{
+  
+  
+  ## disttree
+  # in sample
+  pdt <- predict(res$dt, type = "parameter")
+  dt_mu_l <- pdt$mu 
+  dt_sigma_l <- pdt$sigma 
+  pit_dt_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = dt_mu_l, sd = dt_sigma_l))
+  pit_dt_l[res$learndata[,"robs"]>0, 1] <- pit_dt_l[res$learndata[,"robs"]>0, 2]
+  
+  # out of sample
+  pdt <- predict(res$dt, type = "parameter", newdata = res$testdata)
+  dt_mu_t <- pdt$mu 
+  dt_sigma_t <- pdt$sigma 
+  pit_dt_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = dt_mu_t, sd = dt_sigma_t))
+  pit_dt_t[res$testdata[,"robs"]>0, 1] <- pit_dt_t[res$testdata[,"robs"]>0, 2]
+  
+  
+  ## distforest
+  # in sample
+  pdf <- predict(res$df, type = "parameter")
+  df_mu_l <- pdf$mu
+  df_sigma_l <- pdf$sigma
+  pit_df_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = df_mu_l, sd = df_sigma_l))
+  pit_df_l[res$learndata[,"robs"]>0, 1] <- pit_df_l[res$learndata[,"robs"]>0, 2]
+  
+  # out of sample
+  pdf <- predict(res$df, type = "parameter", newdata = res$testdata)
+  df_mu_t <- pdf$mu
+  df_sigma_t <- pdf$sigma
+  pit_df_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = df_mu_t, sd = df_sigma_t))
+  pit_df_t[res$testdata[,"robs"]>0, 1] <- pit_df_t[res$testdata[,"robs"]>0, 2]
+  
+  
+  ## gamlss
+  # in sample
+  g_learndata <- res$learndata
+  g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
+  g_mu_l <- predict(res$g, what = "mu", type = "response")
+  g_sigma_l <- predict(res$g, what = "sigma", type = "response")
+  pit_g_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = g_mu_l, sd = g_sigma_l))
+  pit_g_l[res$learndata[,"robs"]>0, 1] <- pit_g_l[res$learndata[,"robs"]>0, 2]
+  
+  # out of sample
+  g_mu_t <- predict(res$g, what = "mu", type = "response", newdata = res$testdata)
+  g_sigma_t <- predict(res$g, what = "sigma", type = "response", newdata = res$testdata)
+  pit_g_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = g_mu_t, sd = g_sigma_t))
+  pit_g_t[res$testdata[,"robs"]>0, 1] <- pit_g_t[res$testdata[,"robs"]>0, 2]
+  
+  
+  #gamboostLSS
+  pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response")
+  gb_mu_l <- pgb$mu
+  gb_sigma_l <- pgb$sigma
+  pit_gb_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = gb_mu_l, sd = gb_sigma_l))
+  pit_gb_l[res$learndata[,"robs"]>0, 1] <- pit_gb_l[res$learndata[,"robs"]>0, 2]
+  
+  # out of sample
+  pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response", newdata = res$testdata)
+  gb_mu_t <- pgb$mu
+  gb_sigma_t <- pgb$sigma
+  pit_gb_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = gb_mu_t, sd = gb_sigma_t))
+  pit_gb_t[res$testdata[,"robs"]>0, 1] <- pit_gb_t[res$testdata[,"robs"]>0, 2]
+  
+  
+  #EMOS
+  ml_mu_l <- predict(res$ml, type = "location")     # returns parameter on response scale
+  ml_sigma_l <- predict(res$ml, type = "scale")
+  pit_ml_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = ml_mu_l, sd = ml_sigma_l))
+  pit_ml_l[res$learndata[,"robs"]>0, 1] <- pit_ml_l[res$learndata[,"robs"]>0, 2]
+  
+  # out of sample
+  ml_mu_t <- predict(res$ml, type = "location", newdata = res$testdata)     # returns parameter on response scale
+  ml_sigma_t <- predict(res$ml, type = "scale", newdata = res$testdata)
+  pit_ml_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = ml_mu_t, sd = ml_sigma_t))
+  pit_ml_t[res$testdata[,"robs"]>0, 1] <- pit_ml_t[res$testdata[,"robs"]>0, 2]
+  
+}
+    
+@
+  
+
+\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+<<rain_axams_pit_insample, fig=TRUE, echo=FALSE>>=
+
+# in sample
+set.seed(7)
+par(mfrow = c(2,2))
+pithist(pit_df_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_g_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_gb_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_ml_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+
+@
+\caption{\label{pit_insample} PIT-Histograms for station Axams (in sample)}
+\end{figure}
+
+\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE>>=
+    
+# out of sample
+set.seed(7)
+
+par(mfrow = c(2,2))
+pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+      
+@
+\caption{\label{pit_oosample} PIT-Histograms for station Axams (out of sample)}
+\end{figure}
+
+\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+<<rain_axams_qqr_insample, fig=TRUE, echo=FALSE>>=
+# in sample
+set.seed(7)
+par(mfrow = c(2,2))
+set.seed(1)
+qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
+qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
+qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
+qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
+
+@
+\caption{\label{qqr_insample} QQR-Plot for station Axams (in sample)}
+\end{figure}
+
+\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE>>=
+    
+# out of sample
+set.seed(7)
+par(mfrow = c(2,2))
+set.seed(1)
+qqrplot(pit_df_t, nsim = 1, main = "distforest (out of bag)")
+qqrplot(pit_g_t, nsim = 1, main = "gamlss (out of bag)")
+qqrplot(pit_gb_t, nsim = 1, main = "gamboostLSS (out of bag)")
+qqrplot(pit_ml_t, nsim = 1, main = "EMOS (out of bag)")
+
+@
+\caption{\label{qqr_oosample} QQR-Plot for station Axams (out of sample)}
+\end{figure}
+
+
+  
+
+
 
 
 
