@@ -1019,7 +1019,17 @@ Distributional Tree
 \label{Methodology}
 \subsection{Distributional Fit}
 Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section.\\
-The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Therefore, the task of fitting a distributional model turns into the task of determining the distribution parameter $\theta$. This is done by the following maximization.
+The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. In our application of precipitation forecasting the response variable, which is the power transformed total precipitation amount within 24 hours, is expected to be normally distribution with mean/location parameter $\mu$ and standard deviation/scale parameter $\sigma$ and left censored with censoring point 0. Therefore, the corresponding log-likelihood function $\ell_{tp}$ with parameter vector $\theta = c(\mu, \sigma)$ is
+$$
+\ell_{tp}(\mu, \sigma; Y) = 
+\begin{cases}
+    \log\left(\frac{1}{\sigma} \cdot \phi(\frac{Y - \mu}{\sigma}) \right), & \text{if } Y > 0\\
+    \vspace{0.1cm}
+    \log\left(\Phi(\frac{-\mu}{\sigma})\right), & \text{if } Y = 0
+\end{cases}
+$$
+where $\phi$ and $\Phi$ are the probability density function and the distribution function of the standard normal distribution $\mathcal{N}(0,1)$.\\
+With this specification the task of fitting a distributional model turns into the task of determining the distribution parameter $\theta$. This is done by the following maximization.
 $$
 \hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
@@ -1391,7 +1401,6 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 \SweaveOpts{eval = TRUE}
 \newpage
-\newpage
 \section{Rain}
 In this application we analyze precipitation data meassured over 28 years at 95 (?) stations all over Tyrol and Vorarlberg. The considered data is provided by ..... and consists of the meassured total precipiation within 24 hours of each day in July from 1985 until 2012, both included. Additionally, numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initiall conditions.\\
 In particular, 14 basic forecast variables are considered with up to 12 variations of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standarad deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble min and ensemble max. All of these values can be calculated on the whole day (6--30 UTC) or a 6h time window of the day.\\
@@ -1401,26 +1410,26 @@ The following table shows all variables together with the number of variations a
 The response variable total precicipitation is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation meassurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0.
 
 
-\newpage
-The ensemble forecast for the total precipitation is represented by 12 covariates: 
-\begin{itemize}[noitemsep]
-\item ensemble mean of the sum of the total precipitation from 6--30 UTC
-\item ensemble standard deviation of the sum of the total precipitation from 6--30 UTC
-\item ensemble minimum of the sum of the total precipitation from 6--30 UTC
-\item ensemble maximum of the sum of the total precipitation from 6--30 UTC
-\item ensemble mean of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC and from 24--30 UTC
-\item ensemble standard deviation of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC and from 24--30 UTC
-\end{itemize}
+%\newpage
+%The ensemble forecast for the total precipitation is represented by 12 covariates: 
+%\begin{itemize}[noitemsep]
+%\item ensemble mean of the sum of the total precipitation from 6--30 UTC
+%\item ensemble standard deviation of the sum of the total precipitation from 6--30 UTC
+%\item ensemble minimum of the sum of the total precipitation from 6--30 UTC
+%\item ensemble maximum of the sum of the total precipitation from 6--30 UTC
+%\item ensemble mean of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC %and from 24--30 UTC
+%\item ensemble standard deviation of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, %from 18--24 UTC and from 24--30 UTC
+%\end{itemize}
 
-The preciptable water is represented by 6 covariates:
-\begin{itemize}[noitemsep]
-\item the ensemble mean of the mean of preciptable water over the time period 6--30 UTC 
-\item the ensemble mean of the minimum of preciptable water over the time period 6--30 UTC 
-\item the ensemble mean of the maximum of preciptable water over the time period 6--30 UTC 
-\item the ensemble standard deviation of the mean of preciptable water over the time period 6--30 UTC 
-\item the ensemble standard deviation of the minimum of preciptable water over the time period 6--30 UTC 
-\item the ensemble standard deviation of the maximum of preciptable water over the time period 6--30 UTC 
-\end{itemize}
+%The preciptable water is represented by 6 covariates:
+%\begin{itemize}[noitemsep]
+%\item the ensemble mean of the mean of preciptable water over the time period 6--30 UTC 
+%\item the ensemble mean of the minimum of preciptable water over the time period 6--30 UTC 
+%\item the ensemble mean of the maximum of preciptable water over the time period 6--30 UTC 
+%\item the ensemble standard deviation of the mean of preciptable water over the time period 6--30 UTC 
+%\item the ensemble standard deviation of the minimum of preciptable water over the time period 6--30 UTC 
+%\item the ensemble standard deviation of the maximum of preciptable water over the time period 6--30 UTC 
+%\end{itemize}
 
 
 
