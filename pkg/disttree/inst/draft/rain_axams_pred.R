@@ -707,7 +707,7 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
 
 if(FALSE){
   setwd("~/svn/partykit/pkg/disttree/inst/draft")
-  #source("rain_pred.R")
+  #source("rain_axams_pred.R")
   library("gamlss.cens")
   gen.cens("NO", type = "left")
   
