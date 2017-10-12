@@ -101,10 +101,10 @@ library("countreg")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50)
-names(pal) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 
 pallight <- hcl(c(10, 128, 260, 290, 30, 90, 180), 100, 50, alpha = 0.25)
-names(pallight) <- c("forest", "tree", "gamlss", "randomForest", "bamlss", "gamboostLSS", "cforest")
+names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 
 transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
@@ -581,7 +581,6 @@ plot_rmse <- function(simres, type = c("exp", "par"), ylim = NULL, legend = TRUE
 }
 
 
-
 # plot loglikelihood
 plot_ll <- function(simres, ylim = NULL, legend = TRUE){
   
@@ -644,6 +643,70 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
     if(legend) legend('topleft', legendnames, 
            col = col, lty = 1, cex = 0.7)
 }
+
+
+# plot crpse
+plot_crps <- function(simres, ylim = NULL, legend = TRUE){
+  
+  crps <- NULL
+  colnames <- NULL
+  col <- NULL
+  legendnames <- NULL
+  if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.dt"])
+    colnames <- c(colnames, "dt.crps")
+    col <- c(col, pal["tree"])
+    legendnames <- c(legendnames, "disttree")
+  }
+  if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.df"])
+    colnames <- c(colnames, "df.crps")
+    col <- c(col, pal["forest"])
+    legendnames <- c(legendnames, "distforest")
+  }
+  if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.g"])
+    colnames <- c(colnames, "g.true")
+    col <- c(col, pal["gamlss"])
+    legendnames <- c(legendnames, "gamlss")
+  }
+  if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.b"])
+    colnames <- c(colnames, "b.true")
+    col <- c(col, pal["bamlss"])
+    legendnames <- c(legendnames, "bamlss")
+  }
+  if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.gb"])
+    colnames <- c(colnames, "gb.true")
+    col <- c(col, pal["gamboostLSS"])
+    legendnames <- c(legendnames, "gamboostLSS")
+  }
+  if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.rf"])
+    colnames <- c(colnames, "rf.true")
+    col <- c(col, pal["randomForest"])
+    legendnames <- c(legendnames, "randomForest")
+  }
+  if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
+    crps <- cbind(crps, simres$resmat[,"av.crps.cf"])
+    colnames <- c(colnames, "cf.true")
+    col <- c(col, pal["cforest"])
+    legendnames <- c(legendnames, "cforest")
+  }
+  
+  colnames(crps) <- colnames
+  if(is.null(ylim)) ylim <- c(min(na.omit(crps)), max(na.omit(crps)))
+  
+  plot(x = simres$x.axis, y = crps[,1], type = "l", col = col[1], ylim = ylim,
+       xlab = "kappa", ylab = "CRPS")
+  
+  for(i in 2:length(col)){
+    lines(x = simres$x.axis, y = crps[,i], type = "l", col = col[i])
+  }
+  if(legend) legend('topleft', legendnames, 
+                    col = col, lty = 1, cex = 0.7)
+}
 @
 
 
@@ -658,22 +721,13 @@ plot_ll <- function(simres, ylim = NULL, legend = TRUE){
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
-In the field of probabilistic forecasting classical linear models such as ensemle model output statistics (EMOS) are still commonly and widely used. This is due to their simplicity and their interpretability. However, the restriction to modelling only linear effects required further extensions. Generalized additive models (GAM) which can also capture non-linear effects allow for more flexibilty.\\
-only location\\
-GAMLSS\\
-trees and forests not yet applied\\
-less effort\\
-variable specification\\
-complex terrain\\
+In the field of probabilistic forecasting classical linear models such as ensemle model output statistics (EMOS) are still common and widely used. This is due to their simplicity and their interpretability. However, the restriction to modelling only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale, and shape (GAMLSS) can also capture non-linear effects as each distribution parameter can be modelled separately by its own GAM. A different approach that would make it possible to also model non-additive effects and interactions is to apply tree structured models. However, up to now, this class of models has not yet been integrated in probabilistic forecasting as no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches on precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge/experience from the meteorology or based on a computationally more demanding boosting approach.
 
-
-
-In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
-If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
-Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information a!
- bout the expected effects advance and therefore offers a good compromise particularly in complex settings. 
+%In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
+%If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
+%Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\cite{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information about the expected effects advance and therefore offers a good compromise particularly in complex settings. 
 }
-\Keywords{parametric models, trees and forests, recursive partitioning, maximum likelihood}
+\Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, distributional regression}
 
 \Address{
   Lisa Schlosser \\
@@ -721,13 +775,19 @@ Both of these two concepts, parametric modeling and algorithmic trees, have been
 
 \SweaveOpts{eval = TRUE}
 \section{Introduction}
+A typical application in probabilistic forecasting in meteorology is the analysis of precipitation data. The main two main interests lie in estimating the probability of rain as well as predicting the expected amount of precipitation. In this research area various methods have been developed and tested in the last decades. Basic linear models such as ensemle model output statistics (EMOS) were introduced in ... and are still common and widely used. Despite their simplicity and interpretability, the limitation to modelling only linear effects has risen the interest in applying more flexible models. This feature is provided by generalized additive models (GAM) which can also model non-linear effects. To obtain probabilistic predictions, generalized additive models for location, scale, and shape (GAMLSS) offer a framework in which each distribution parameter can be modelled separately by its own GAM. In Figure \ref{Devel_parmod} the development of parametric models starting from simple limear models (LM) and ranging to GAMLSS is illustrated.\\
+These flexible parameteric methods provide well fitting models when applied on precipitation data in a rather smooth/homogeneous setting, e.g. areas where no abrupt changes in meteorological/climatological events appear. However, for example in complex terrain/mountaineous regions various factors can change rapidly and their effects are difficult to be modelled/represented by a smooth parameteric model. In this situation a different approach which can deal with these abrupt changes would be to apply tree structured models. Moreover, these models are particularly advantageous in case of many covariates with unknown effects or interactions as the variable selection is done automatically within the model fitting process. Therefore, no additional effort or knowledge for the specification of the model in advance is required. However, even though their main advantage of being able to model non-additive effects and interactions without any necessary prespecification can play to their strength, regression trees are not an adequate choice if (additional) smooth effects appear as well. In this situation a random forest provides a good compromise as it combines a set of trees such that the steps imposed by the trees are smoothened in case of smooth effects while abrupt changes are stil captured by the tree structure of the model.\\
+For these reasons, regression trees and particularly random forests provide valueable features which can contribute to improving models for probabilistic forecasting. But, up to now, no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests.
+(The developments in the field of tree-structured models together with the novel approaches of distributional trees and forests are illustrated in Figure \ref{Devel_treeforest}.)\\
 
-In the field of regression analysis many statistical models have already been developed to model the relationship between a response variable and one or more explanatory variables.\\
-Among the first were linear models (LM) which predict the (conditional) expected value of the response variable as a linear combination of the explanatory variables. This idea was extended to generalized linear models (GLM) which broadened the range of possible distributions of the response variable to the exponential family. (In R these models can be built using the functions \code{lm()} and \code{glm()} provided by the package \pkg{stats}).\\
-Then, in order to also allow for non-linear effects, generalized additive models (GAM) were introduced where smooth functions of the explanatory variables are summed up instead of the linear combination. (In the fitting function \code{gam} types of smoothing terms can be selected.)\\
-However, with these methods only the mean of the distribution of the response variable can be modeled. Generalized additive models for location, scale and shape
-(GAMLSS) (\cite{stasinopoulos2005}) made it possible to model each of the parameters of a distribution separately by its own GAM. In that way a whole distribution can be specified. The R-packages \pkg{gamlss} and \pkg{gamlss.dist} offer the corresponding software with a wide variety of distributions.\\
-This development in the field of parametric modeling is illustrated in Figure \ref{Devel_parmod}.\\
+
+
+%In the field of regression analysis many statistical models have already been developed to model the relationship between a response variable and one or more explanatory variables.\\
+%Among the first were linear models (LM) which predict the (conditional) expected value of the response variable as a linear combination of the explanatory variables. This idea was extended to generalized linear models (GLM) which broadened the range of possible distributions of the response variable to the exponential family. (In R these models can be built using the functions \code{lm()} and \code{glm()} provided by the package \pkg{stats}).\\
+%Then, in order to also allow for non-linear effects, generalized additive models (GAM) were introduced where smooth functions of the explanatory variables are summed up instead of the linear combination. (In the fitting function \code{gam} types of smoothing terms can be selected.)\\
+%However, with these methods only the mean of the distribution of the response variable can be modeled. Generalized additive models for location, scale and shape
+%(GAMLSS) (\cite{stasinopoulos2005}) made it possible to model each of the parameters of a distribution separately by its own GAM. In that way a whole distribution can be specified. The R-packages \pkg{gamlss} and \pkg{gamlss.dist} offer the corresponding software with a wide variety of distributions.\\
+%This development in the field of parametric modeling is illustrated in Figure \ref{Devel_parmod}.\\
 
 
 \begin{figure}[t!]
