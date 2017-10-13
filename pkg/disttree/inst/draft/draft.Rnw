@@ -721,7 +721,7 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
-In the field of probabilistic forecasting classical linear models such as ensemle model output statistics (EMOS) are still common and widely used. This is due to their simplicity and their interpretability. However, the restriction to modelling only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale, and shape (GAMLSS) can also capture non-linear effects as each distribution parameter can be modelled separately by its own GAM. A different approach that would make it possible to also model non-additive effects and interactions is to apply tree structured models. However, up to now, this class of models has not yet been integrated in probabilistic forecasting as no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches on precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge/experience from the meteorology or based on a computationally more demanding boosting approach.
+In the field of probabilistic forecasting classical linear models such as ensemle model output statistics (EMOS) are still common and widely used. This is due to their simplicity and their interpretability. However, the restriction to modelling only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale, and shape (GAMLSS, \cite{stasinopoulos2005}) can also capture non-linear effects as each distribution parameter can be modelled separately by its own GAM. A different approach that would make it possible to also model non-additive effects and interactions is to apply tree structured models. However, up to now, this class of models has not yet been integrated in probabilistic forecasting as no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches on precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge/experience from the meteorology or based on a computationally more demanding boosting approach.
 
 %In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
 %If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
@@ -861,13 +861,13 @@ box(lwd = 5)
 LM, GLM 
 \end{center}
 \endminipage
-\hspace{1.4cm}
+\hspace{1.7cm}
 \minipage{0.25\textwidth}
 \begin{center}
 GAM
 \end{center}
 \endminipage
-\hspace{1.4cm}
+\hspace{1.7cm}
 \minipage{0.25\textwidth}
 \begin{center}
 GAMLSS
@@ -1049,7 +1049,7 @@ $$
 $$
 where each segment is represented by a terminal node of the tree.\\
 
-The exact way of determining how and where to split varies over different tree algorithms. For distributional trees, one of two algorithms can be chosen as a framework to build the tree: either the MOB algorithm or the ctree algorithm. Summed up, the steps of building a distributional tree using one of these algorithms are
+The exact way of determining how and where to split varies over different tree algorithms. (For distributional trees, one of two algorithms can be chosen as a framework to build the tree: either the MOB algorithm or the ctree algorithm.) Summed up, the steps of building a distributional tree using one of these algorithms are
 \begin{enumerate}
 \item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
 \item Estimate $\bold{\hat{\theta}}$ via maximum likelihood.
@@ -1401,12 +1401,12 @@ right: levelplot of the parameter function for $\kappa=5$}
 
 \SweaveOpts{eval = TRUE}
 \newpage
-\section{Rain}
-In this application we analyze precipitation data meassured over 28 years at 95 (?) stations all over Tyrol and Vorarlberg. The considered data is provided by ..... and consists of the meassured total precipiation within 24 hours of each day in July from 1985 until 2012, both included. Additionally, numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initiall conditions.\\
+\section{Probabilistic Forecasting of Precipitation}
+As explained in the introduction distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valueable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. In particular, the data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both included. The observations were meassured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by ..... 
+Next to the variable of interest, the meassured total precipiation within 24 hours of each day, numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initiall conditions.\\
 In particular, 14 basic forecast variables are considered with up to 12 variations of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standarad deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble min and ensemble max. All of these values can be calculated on the whole day (6--30 UTC) or a 6h time window of the day.\\
 Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standarad deviation, noted as ensemble mean of mean/min/max or ensemble std dev of mean/min/max respectively.\\
-The following table shows all variables together with the number of variations and the provided variations listed in the last column.\\
-\\
+Table \ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column.\\
 The response variable total precicipitation is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation meassurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0.
 
 
@@ -1436,8 +1436,8 @@ The response variable total precicipitation is power transformed by a factor of 
 
 
 
-\newpage
-\begin{table}[h]
+%\newpage
+\begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
 \begin{tabular}{| l  c  l |}
@@ -1487,14 +1487,8 @@ Basic covariates & {\#} & Variations\\
 \end{table}
 
 
-
-
-\newpage
-
-
-The following methods are applied on this data set:
-
-\begin{table}[h]
+Next to distributional forests other methods / the same methods as in the simulation section are applied to this data set and their results are compared based on RMSE, log-likelihood values and CRPS values. The chosen methods and their specifications are listed in Table \ref{model_specification}.
+\begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
 \begin{tabular}{| l | l   l   l |}
@@ -1526,7 +1520,7 @@ The following methods are applied on this data set:
 %}
 \end{table}
 
-For the gamlss model the covariates were selected manually based on expert knowledge. Additionally, interactions are specified in advance, once between tppow{\_}mean1218 and capepow{\_}mean1218 for the location parameter and once between tppow{\_}sprd1218 and capepow{\_}mean1218 for the l ocatioin parameter. By putting extra effort in the specification of the formulas the gamlss model is provided with additional information and is therefore expected to profit from this advantage.\\
+For the gamlss model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between tp{\_}mean1218 and cape{\_}mean1218 for the location parameter and once between tp{\_}sprd1218 and cape{\_}mean1218 for the locatioin parameter. By putting extra effort in the specification of the formulas the gamlss model is provided with additional information and is therefore expected to profit from this advantage.\\
 
 
 \SweaveOpts{eval = TRUE}
