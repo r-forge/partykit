@@ -314,12 +314,13 @@ functionalities is provided by the \emph{partykit} package which is a widely
 used R package for trees and forests. The \emph{model4you} package provides
 wrappers for the well implemented and tested functions
 \Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::cforest()'} and extends the
-functionalities where needed to improve usability and interpretability.
+functionalities to allow for the computation of personalised models and to 
+improve usability and interpretability. 
 
 The \emph{partykit} package provides the basis for functionalities in other
 packages namely \emph{glmertree}, \emph{psychotree}, \emph{betareg} (all on
 CRAN), \emph{trtf}, \emph{disttree}, \emph{lagsarlmtree} and \emph{palmtree}
-(all available on R-Forge with a plan to move them to CRAN).
+(all available on R-Forge, publishing on CRAN planned).
 
 %\textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
 
