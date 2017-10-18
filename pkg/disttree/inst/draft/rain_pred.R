@@ -976,48 +976,66 @@ if(FALSE){
                                              select = -c(lon,lat)),
                                proj4string = crs(tirol.dem))
   
-  library("colorspace")
   crps_ssc_df <- 1 - crps[,2]/crps[,6]
   crps_ssc_gb <- 1 - crps[,4]/crps[,6]
   crps_ssc_g <- 1 - crps[,3]/crps[,6]
+  crps_ssc_ml <- 1 - crps[,6]/crps[,6]    # <- rep(0, length(crps_ssc_g))
+  # 1- crps/crps[,6]
+  # abs(crps_ssc_df - crps_ssc_g)
+  # boxplot(abs(crps_ssc_df - crps_ssc_g))
+  # hist(abs(crps_ssc_df - crps_ssc_g))
   
-  # set the colour according to whether distforest performed better than gamlss
-  col_crps_ssc_df_g <- rep("red", length(crps_ssc_df))
+  
+  # set the colour according to whether distforest performed better than gamlss and
+  # set the size of the points on the map according to the difference to the forest model
+  
+  ## HCL palette
+  pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+  
+  pal0 <- hcl(c(10, 128, 260, 290, 50), 100, 90)
+  pal2 <- hcl(c(10, 128, 260, 290, 50), 100, 70)
+  pal5 <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  #pie(rep(1, 3), col = c(pal0[1], pal2[1], pal5[1]))
+  
+  col_crps_ssc <- numeric(length = length(crps_ssc_df))
+  crps_ssc_best <- numeric(length = length(crps_ssc_df))
+  size_crps_ssc <- numeric(length = length(crps_ssc_df))
   for(i in 1: length(crps_ssc_df)){
-    if(is.na(crps_ssc_g[i])) {
-      col_crps_ssc_df_g[i] <- "white"
-    } else {
-      if(crps_ssc_df[i] < crps_ssc_g[i]) col_crps_ssc_df_g[i] <- "blue"
-    } 
+    col_crps_ssc[i] <- c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"])[which.max(c(crps_ssc_df[i], crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]))]
+    crps_ssc_best[i] <- which.max(crps_ssc[i,])
+    size_crps_ssc[i] <- crps_ssc[i,crps_ssc_best[i]] - crps_ssc[i,2]
   }
-  ehyd.statlist[res$complete_stations,][col_crps_ssc_df_g == "blue",]
+  # ehyd.statlist[res$complete_stations,][col_crps_ssc == pal["gamlss"],]
+  # table(crps_ssc_best)
+  # Axams (Station 77) is the 70th complete station
+  # boxplot(size_crps_ssc[size_crps_ssc>0])
+  # abline(h = size_crps_ssc[70], col = "red")
   
-  # set the colour according to whether distforest performed better than gamboostLSS
-  col_crps_ssc_df_gb <- rep("red", length(crps_ssc_df))
-  for(i in 1: length(crps_ssc_df)){
-    if(is.na(crps_ssc_gb[i])) {
-      col_crps_ssc_df_gb[i] <- "white"
-    } else {
-      if(crps_ssc_df[i] < crps_ssc_gb[i]) col_crps_ssc_df_gb[i] <- "blue"
-    } 
-  } 
-  ehyd.statlist[res$complete_stations,][col_crps_ssc_df_gb == "blue",]
+  # define transperancy of points according to the difference to the forest model (for those points where the forest is not the best one) 
+  # alpha parameter between 0 and 1
+  alpha_crps_ssc <- (size_crps_ssc*10) + 0.15
+  #alpha_crps_ssc <- (size_crps_ssc*10/0.85) * 0.5 + 0.5
+  alpha_crps_ssc[size_crps_ssc == 0] <- 1
+  add.alpha <- function(col, alpha=1){
+    if(missing(col))
+      stop("Please provide a vector of colours.")
+    apply(sapply(col, col2rgb)/255, 2, 
+          function(x) 
+            rgb(x[1], x[2], x[3], alpha=alpha))  
+  }
+  for(i in 1:length(col_crps_ssc)) transp_col_crps_ssc[i] <- add.alpha(col_crps_ssc[i], alpha = alpha_crps_ssc[i])
+
   
   
-  # df vs g
   raster::image(tirol.dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol")
   plot(tirol.gadm, add = TRUE)
-  points(sp, pch = 21, bg = col_crps_ssc_df_g, col = 1)
-  legend("left", fill=c("red", "blue", "white"), legend = c("df", "g", "NA"), cex = 0.8)
+  points(sp, pch = 21, bg = transp_col_crps_ssc, col = 1)
+  legend("left", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("df", "g", "gb", "ml"), cex = 0.8)
   
-  
-  # df vs gb
-  raster::image(tirol.dem, col = rev(gray.colors(100)),
-                main="Stations in Tyrol")
-  plot(tirol.gadm, add = TRUE)
-  points(sp, pch = 21, bg = col_crps_ssc_df_gb, col = 1)
-  legend("left", fill=c("red", "blue", "white"), legend = c("df", "gb", "NA"), cex = 0.8)
+  #ehyd.statlist[res$complete_stations,][col_crps_ssc == pal["gamlss"],]
+  #table(crps_ssc)
   
 }
 
