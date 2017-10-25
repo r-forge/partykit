@@ -127,7 +127,7 @@ For cases where the assumption that all individuals have the same intercept and
 treatment effect is too strict the R package \emph{model4you} offers two
 options: 
 
-\paragraph{(1) Model-based trees} identify subgroups where within the subgroups
+\paragraph{1. Model-based trees} identify subgroups where within the subgroups
 the model parameters are similar and between groups the model parameters are
 different. This is achieved by finding instabilities in the model parameters
 with respect to a variable (characteristicum) and recursively partitioning the
@@ -145,7 +145,7 @@ model. It automatically uses variables not used in the model formula
 (in the example above \Sexpr{'response ~ treatment'}) as potential subgroup 
 defining variables. This can be edited using the \Sexpr{'zformula'} argument.
 
-\paragraph{(2) Personalised models} use model-based random forests to estimate
+\paragraph{2. Personalised models} use model-based random forests to estimate
 similarity of individuals in terms of model parameters. For each individual a
 personalised model can be estimated based on a weighted set of the original
 data, where the similarity measure corresponds to the weight. Details on the
@@ -160,12 +160,6 @@ Again here the potential effect-modifying variables are taken by default
 as all variable not given in the model formula and can be defined using 
 the \Sexpr{'zformula'} argument in \Sexpr{'pmforest()'}.
 
-% \begin{figure}
-% \centering
-% \include{pmworkflow}
-% \caption{Personalised models workflow: from real world to interpretable
-% visualisation.}
-% \end{figure}
 
 
 In the following we will present an example application for model-based trees
@@ -361,8 +355,8 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 
 \begin{description}[noitemsep,topsep=0pt]
 \item[Name:] CRAN
-\item[Persistent identifier:] \url{https://cran.r-project.org/web/packages/model4you/index.html} %TODO upload to CRAN
-\item[Licence:] GPL-2
+\item[Persistent identifier:] \url{https://cran.r-project.org/package=model4you} %TODO upload to CRAN
+\item[Licence:] GPL-2 | GPL-3
 \item[Publisher:] Heidi Seibold 
 \item[Version published:] \textcolor{blue}{The version number of the software archived.}
 \item[Date published:] \textcolor{blue}{dd/mm/yy}
@@ -375,7 +369,7 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 \begin{description}[noitemsep,topsep=0pt]
 \item[Name:] R-forge
 \item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
-\item[Licence:] GPL-2
+\item[Licence:] GPL-2 | GPL-3
 \item[Date published:] \textcolor{blue}{dd/mm/yy} %TODO
 \end{description}
 
@@ -423,7 +417,6 @@ National Science Foundation (grant 205321\_163456).
 
 
 \section*{Competing interests}
-
 The authors declare that they have no competing interests.
 
 
