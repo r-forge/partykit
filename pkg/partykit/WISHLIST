@@ -1,4 +1,8 @@
 
+- Fluctuation tests in libfluct like libcoin
+- Tests should allow both taking one split variable at a time or all split
+  variables at once
+
  o cforest: importance = list(nPerm = 1)
    proximity via predict only?
 
