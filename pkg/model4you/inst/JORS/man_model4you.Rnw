@@ -247,7 +247,7 @@ two exam groups is in the students who did very well in the online tests (more
 than \Sexpr{round(tr_math[[5]]$node$split$breaks, 1)} percent correct). The
 tree thus gives us much more information on the fairness of the exam than the
 simple linear model, which is that it does not seem to be fair for students who
-did very well thrughout the semester (at this point we should state that the
+did very well throughout the semester (at this point we should state that the
 students self selected into the two exam groups which might also be the reason
 for differences in exam performance).
 
@@ -260,7 +260,7 @@ pmods_math <- pmodel(forest_math)
 head(pmods_math)
 @
 
-Dependence plots with the group effect (treatment effect) on the y-achsis and
+Dependence plots with the group effect (treatment effect) on the y-axsis and
 the student characteristics on the x-axis are a good way of visualising the
 personalised models and for getting knowledge about the interactions between
 student characteristics and the treatment. Since the percentage of successfull
@@ -300,7 +300,7 @@ compelling visualisations that can be used to communicate theses models.
 
 
 \section*{Implementation and architecture}
-The R package \emph{model4you} is focussed on ease of use and interpretability.
+The R package \emph{model4you} is focused on ease of use and interpretability.
 Users can take a simple model that they know and understand as basis and simply
 plug it into \Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether
 they want subgroup wise or personalised models. The basis for these
