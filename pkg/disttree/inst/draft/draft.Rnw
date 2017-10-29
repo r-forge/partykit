@@ -2267,14 +2267,14 @@ boxplot(rain_rmse[,c(2,3,4)], ylab = "RMSE",
 \begin{center}
 %\begin{subfigure}{0.5\textwidth}
 <<rain_cross_axams_ll, fig=TRUE, echo=FALSE>>=
-boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "log-likelihood",
+boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
         names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
 #boxplot(rain_ll)
 @
 %\end{subfigure}
 %\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams\\
 %left: RMSE, right: log-likelihood}
-\caption{\label{boxplot_cross_ll}Log-likelihood values of the 10x10 cross validation at the station Axams}
+\caption{\label{boxplot_cross_ll}Log-likelihood values of the 10x10 cross validation at the station Axams (extracted interval [-2.8,-1.3])}
 \end{center}
 \end{figure}
 
@@ -2285,7 +2285,8 @@ boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "log-likelihood",
   matplot(t(rmse[,2:4]), type = "l", lwd = 1, 
           col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, 
           xlab = "", ylab = "RMSE", xlim = c(0.5, 3.5))
-  boxplot(rmse[,2:4], add = TRUE)
+  boxplot(rmse[,2:4], add = TRUE,
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
 @
 \caption{\label{boxplot_rmse_all}RMSE for predictions over all stations}
 \end{center}
@@ -2298,9 +2299,10 @@ boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "log-likelihood",
   matplot(t(ll[,2:4]), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), 
           lty = 1, axes = FALSE, 
           xlab = "", ylab = "Log-likelihood", xlim = c(0.5, 3.5), ylim = c(-4,-1))
-  boxplot(ll[,2:4], add = TRUE)
+  boxplot(ll[,2:4], add = TRUE,
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
 @
-\caption{\label{boxplot_ll_all}Log-likelihood vallues for predictions over all stations (extracted interval $\[-4,1\]$)}
+\caption{\label{boxplot_ll_all}Log-likelihood vallues for predictions over all stations (extracted interval [-4,-1])}
 \end{center}
 \end{figure}
 
