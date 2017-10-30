@@ -1033,7 +1033,7 @@ $$
 \hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
 where $\{y_i\}_{i=1,\ldots,n}$ are the observations of the response variable $Y$.\\
-In that way, a whole distribution is specified with all its features, including location, scale and shape. However, fitting one global model to the whole data set might be too much of a generalization and therefore not represent the data and its features in a reasonable way. Moreover, if covariates are available it is desirable to include them into the model as they might provide important information. In our application on precipitation data a wide range of covariates are available from numerical esemble predictions considering precipitation, temperature, sea level pressure and other meteorological quantities which might be of interest/have an influence on the predictions. In particular, these covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
+In that way, a whole distribution is specified with all its features, including location, scale and shape. However, fitting one global model to the whole data set might be too much of a generalization and therefore not represent the data and its features in a reasonable way. Moreover, if covariates are available it is desirable to include them into the model as they might provide important information. In our application on precipitation data a wide range of covariates are available from numerical ensemble predictions considering precipitation, temperature, sea level pressure and other meteorological quantities which might be of interest/have an influence on the predictions. In particular, these covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
 
 \subsection{Distributional Tree}
 After having fit a global distributional model $D(Y, \bold{\hat{\theta}})$ the idea is now to use the information provided by this model together with a set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ to decide if the data set should be split into subgroups. In particular, the information provided by the fitted model are the scores 
@@ -1617,8 +1617,8 @@ lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
 \begin{center}
 <<rain_Axams_pred, fig=TRUE, echo=FALSE>>=
 plot(x = x, y = y1, type = "l", col = "red", 
-     main = paste0("July ", pday, dayending), ylab = "density", 
-     xlab = "total precipitation (power transformed)",
+     main = paste0("July ", pday, dayending), ylab = "Density", 
+     xlab = "Total precipitation (power transformed)",
      ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
      xlim = c(-1.5,8))
     
@@ -1711,7 +1711,7 @@ barplot(sort(vimp_crps, decreasing = TRUE)[1:10], horiz = TRUE, las = 1, cex.nam
 \end{center}
 \end{figure}
 
-To get another impression of the quality of the predictions made by the tested methods a probability integral transform (PIT) histograms is plotted in Figure \ref{pit_oosample} for out-of-sample predictions of each of the models. A perfectly fitting model would lead to a histogram with all bars being of height 1. Overall, it can be stated that all four model provide well fitting models while the forest seems to be the one being closest to the ideal case.
+To get another impression of the quality of the predictions made by the tested methods a probability integral transform (PIT) histograms is plotted in Figure \ref{pit_oosample} for out-of-sample predictions of each of the models. A perfectly fitting model would lead to a histogram with all bars being of height 1 as indicated by the red horizontal line. Overall, it can be stated that all four model provide well fitting models while the forest seems to be the one being closest to the ideal case.
 
 <<pit_qqr, echo=FALSE, eval=TRUE, results=hide>>=
 
@@ -2092,7 +2092,7 @@ On the map in Figure \ref{map} each observation station is represented by a poin
 <<map, fig=TRUE, echo=FALSE>>=
 
   raster::image(tirol.dem, col = rev(gray.colors(100)),
-                main="Stations in Tyrol", ylab = "latitude", xlab = "longitude")
+                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude")
   plot(tirol.gadm, add = TRUE)
   points(sp, pch = 21, bg = level_col_crps_ssc, col = 1)
   #points(sp, pch = 21, bg = col_crps_ssc, col = 1)
@@ -2100,7 +2100,7 @@ On the map in Figure \ref{map} each observation station is represented by a poin
   legend("topleft", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS"), cex = 1)
   
 @
-\caption{\label{map}Map of all observations with corresponding CRPS skills score for predictions (Forest vs. GAM (prespecified) vs. GAM (boosted))}
+\caption{\label{map}Map of all observations with corresponding CRPS skills score for predictions}
 \end{center}
 \end{figure}
 
@@ -2254,9 +2254,9 @@ On the map in Figure \ref{map} each observation station is represented by a poin
 \begin{figure}[h!]
 \begin{center}
 %\begin{subfigure}{0.5\textwidth}
-<<rain_cross_axams_rmse, fig=TRUE, echo=FALSE>>=
-boxplot(rain_rmse[,c(2,3,4)], ylab = "RMSE",
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
+<<rain_cross_axams_rmse, fig=TRUE, echo=FALSE, width=10, height=7>>=
+boxplot(rain_rmse[,c(2,3,4,6)], ylab = "RMSE",
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
 @
 %\end{subfigure}
 \caption{\label{boxplot_rmse_cross}RMSE values of the 10x10 cross validation at the station Axams}
@@ -2266,9 +2266,9 @@ boxplot(rain_rmse[,c(2,3,4)], ylab = "RMSE",
 \begin{figure}[h!]
 \begin{center}
 %\begin{subfigure}{0.5\textwidth}
-<<rain_cross_axams_ll, fig=TRUE, echo=FALSE>>=
-boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
+<<rain_cross_axams_ll, fig=TRUE, echo=FALSE, width=10, height=7>>=
+boxplot(rain_ll[,c(2,3,4,6)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
 #boxplot(rain_ll)
 @
 %\end{subfigure}
@@ -2281,12 +2281,12 @@ boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
 
 \begin{figure}[h!]
 \begin{center}
-<<rain_all_rmse, fig=TRUE, echo=FALSE>>=
-  matplot(t(rmse[,2:4]), type = "l", lwd = 1, 
+<<rain_all_rmse, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
+  matplot(t(rmse[,c(2,3,4,6)]), type = "l", lwd = 1, 
           col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, 
-          xlab = "", ylab = "RMSE", xlim = c(0.5, 3.5))
-  boxplot(rmse[,2:4], add = TRUE,
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
+          xlab = "", ylab = "RMSE", xlim = c(0.5, 4.5))
+  boxplot(rmse[,c(2,3,4,6)], add = TRUE,
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
 @
 \caption{\label{boxplot_rmse_all}RMSE for predictions over all stations}
 \end{center}
@@ -2295,14 +2295,14 @@ boxplot(rain_ll[,c(2,3,4)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
 
 \begin{figure}[h!]
 \begin{center}
-<<rain_all_ll, fig=TRUE, echo=FALSE>>=
-  matplot(t(ll[,2:4]), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), 
+<<rain_all_ll, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
+  matplot(t(ll[,c(2,3,4,6)]), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), 
           lty = 1, axes = FALSE, 
-          xlab = "", ylab = "Log-likelihood", xlim = c(0.5, 3.5), ylim = c(-4,-1))
-  boxplot(ll[,2:4], add = TRUE,
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)")) 
+          xlab = "", ylab = "Log-likelihood", xlim = c(0.5, 4.5), ylim = c(-4,-1))
+  boxplot(ll[,c(2,3,4,6)], add = TRUE,
+        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
 @
-\caption{\label{boxplot_ll_all}Log-likelihood vallues for predictions over all stations (extracted interval [-4,-1])}
+\caption{\label{boxplot_ll_all}Log-likelihood values for predictions over all stations (extracted interval [-4,-1])}
 \end{center}
 \end{figure}
 
