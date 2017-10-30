@@ -1,10 +1,11 @@
 ## extensible tree (model) function
 extree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-  ytype = "none", xtype = "none", ...)
+  yx = "none", ...)
 {
   ## call
   cl <- match.call()
 
+  ## 'formula' may either be a (multi-part) formula or a list
   noformula <- !inherits(formula, "formula")
   if(noformula) {
 
@@ -46,32 +47,26 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
     if(!missing(subset)) warning("'subset' argument ignored in list specification of 'formula'")
     if(!missing(na.action)) warning("'na.action' argument ignored in list specification of 'formula'")    
 
+    ## no terms (by default)
+    mt <- NULL
+
   } else {
 
+    ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
     if(missing(data)) data <- environment(formula)
     m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
+    mf$dot <- "sequential"
 
-    ## formula FIXME: y ~ . or y ~ x | .
-    ## default: dot = "sequential"
-    ## idea: check (x and) z vs. deparse(cl$weights), deparse(cl$offset), deparse(cl$cluster)
+    ## formula processing
     oformula <- as.formula(formula)
     formula <- Formula::as.Formula(formula)
-    if(length(formula)[2L] < 2L) {
-      formula <- Formula::Formula(formula(Formula::as.Formula(formula(formula), ~ 0), rhs = 2L:1L))
-      xreg <- FALSE
-    } else {
-      if(length(formula)[2L] > 2L) {
-        formula <- Formula::Formula(formula(formula, rhs = 1L:2L))
-        warning("Formula must not have more than two RHS parts")
-      }
-      xreg <- TRUE
-    }
     mf$formula <- formula
-    ## FIXME: allow m-part formulas with m > 3, e.g., for beta regression or heteroscedastic tobit etc.
-    ## the m-th part is "z" and then there is a list of "x" matrices
+    npart <- length(formula)
+    if(any(npart < 1L)) stop("'formula' must specify at least one left-hand and one right-hand side")
+    npart <- npart[2L]
 
     ## evaluate model.frame
     mf[[1L]] <- quote(stats::model.frame)
@@ -79,26 +74,31 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
 
     ## extract terms in various combinations
     mt <- list(
-      "all" = terms(formula, data = data),
-      "y"   = terms(formula, data = data, rhs = 0L),
-      "x"   = if(xreg) terms(formula, data = data, lhs = 0L, rhs = 1L) else NULL,
-      "yx"  = if(xreg) terms(formula, data = data, rhs = 1L) else NULL,
-      "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L)
+      "all" = terms(formula, data = data,                        dot = "sequential"),
+      "y"   = terms(formula, data = data, rhs = 0L,              dot = "sequential"),
+      "z"   = terms(formula, data = data, lhs = 0L, rhs = npart, dot = "sequential")
     )
+    if(npart > 1L) {
+      mt$yx <-terms(formula, data = data, rhs = 1L,              dot = "sequential")
+      for(i in 1L:(npart-1L)) {
+        mt[[paste("x", if(i == 1L) "" else i, sep = "")]] <- terms(
+	            formula, data = data, lhs = 0L, rhs = i,     dot = "sequential")
+      }
+    }
 
     ## extract variable lists
     vars <- list(
       y = attr(mt$y, "term.labels"),
-      x = attr(mt$x, "term.labels"),
+      x = unique(unlist(lapply(grep("^x", names(mt)), function(i) attr(mt[[i]], "term.labels")))),
       z = attr(mt$z, "term.labels"),
       weights = if("(weights)" %in% names(mf)) "(weights)" else NULL,
       offset  = if("(offset)"  %in% names(mf)) "(offset)"  else NULL,
       cluster = if("(cluster)" %in% names(mf)) "(cluster)" else NULL
     )
-    ## FIXME check handling of univariate vs. multivariate responses
     ymult <- length(vars$y) >= 1L
     if(!ymult) vars$y <- names(mf)[1L]
     ## FIXME: store information which variable(s) went into (weights), (offset), (cluster)
+    ## idea: check (x and) z vs. deparse(cl$weights), deparse(cl$offset), deparse(cl$cluster)
 
     ## check wether offset was inside the formula
     if(!is.null(off <- attr(mt$x, "offset"))) {
@@ -115,6 +115,8 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   if(is.integer(vars$z)) vars$z <- vanam[vars$z]
   if(is.character(vars$z)) vars$z <- vanam %in% vars$z
   if(is.logical(vars$z)) vars$z <- as.numeric(vars$z)
+  if(is.null(names(vars$z))) names(vars$z) <- vanam
+  vars$z <- vars$z[vanam]
   if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
   vars$z <- as.numeric(vars$z)
   ## all others to integer
@@ -127,33 +129,46 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
         warning(sprintf("only found the '%s' variables: %s", v, paste(vanam[vars[[v]]], collapse = ", ")))
       }
     }
-    vars[[v]] <- as.integer(vars[[v]])
+    vars[[v]] <- unique(as.integer(vars[[v]]))
   }
   if(is.null(vars$y)) stop("at least one 'y' variable must be specified")
 
-  
 
   ## FIXME: separate object with options for: discretization, condensation, some NA handling
-
-  if((ytype != "none") | (xtype != "none")) {
-
-    ## pre-process y and x if desired
-    if(ytype == "matrix") {
-      mf[["(y)"]] <- model.matrix(~ 0 + ., Formula::model.part(formula, mf, lhs = TRUE))
-      vars$y <- "(y)"
+  ## below is just "proof-of-concept" implementation using plain model.matrix() which could
+  ## be included as one option...
+  if(yx == "matrix") {
+  
+    ## fake formula/terms if necessary
+    if(noformula) {
+      formula <- Formula::as.Formula(sprintf("%s ~ %s | %s",
+        paste(vanam[vars$y], collapse = " + "),
+        if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
+        paste(vanam[vars$z > 0], collapse = " + ")
+      ))
+      mt <- list(
+        "all" = terms(formula),
+        "y"   = terms(formula, data = data, rhs = 0L),
+        "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
+        "yx"  = terms(formula, data = data, rhs = 1L),
+        "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L)
+      )
+      ymult <- length(vars$y) > 1L
+      npart <- 2L
     }
-    if(xreg && xtype == "matrix") {
-      mf[["(x)"]] <- model.matrix(if(ymult) mt$x else mt$yx, mf)
-      if(ncol(mf[["(x)"]]) < 1L) {
-        mf[["(x)"]] <- NULL
-        xreg <- FALSE
-        vars$x <- NULL
+
+    yx <- list("y" = model.matrix(~ 0 + ., Formula::model.part(formula, if(noformula) data else mf, lhs = TRUE)))         
+    for(i in (1L:npart)[-npart]) {
+      ni <- paste("x", if(i == 1L) "" else i, sep = "")
+      ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
+      yx[[ni]] <- model.matrix(ti, if(noformula) data else mf)
+      if(ncol(yx[[ni]]) < 1L) {
+        yx[[ni]] <- NULL
       } else {
-        attr(mf[["(x)"]], "formula") <- formula(formula, rhs = 1L)
-        attr(mf[["(x)"]], "terms") <- if(ymult) mt$x else mt$yx
-        attr(mf[["(x)"]], "offset") <- cl$offset
-        vars$x <- "(x)"
-      }
+        attr(yx[[ni]], "formula") <- formula(formula, rhs = i)
+        attr(yx[[ni]], "terms") <- ti
+        attr(yx[[ni]], "offset") <- cl$offset
+      }    
     }
 
   }
@@ -164,5 +179,10 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   ## - split: additionally needs test output
   ## - tbd: control of all details
 
-  return(list(data = if(noformula) data else mf, variables = vars)) ## add terms = mt
+  return(list(
+    data = if(noformula) data else mf,
+    variables = vars,
+    terms = mt,
+    yx = yx
+  ))
 }
