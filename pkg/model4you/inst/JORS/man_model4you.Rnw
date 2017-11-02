@@ -142,7 +142,9 @@ strat_models <- pmtree(base_model)
 @
 Note that \Sexpr{'pmtree()'} uses the data given in the call of the base 
 model. It automatically uses variables not used in the model formula 
-(in the example above \Sexpr{'response ~ treatment'}) as potential subgroup 
+(in the example above 
+%% <TH> bei mir fehlt hier die tilde </TH>
+\Sexpr{'response ~ treatment'}) as potential subgroup 
 defining variables. This can be edited using the \Sexpr{'zformula'} argument.
 
 \paragraph{2. Personalised models} use model-based random forests to estimate
@@ -202,7 +204,11 @@ correct anwers on the exam group.
 <<math_bmod>>=
 bmod_math <- lm(pcorrect ~ group, data = MathExam)
 @
+%% <TH> hier koennte man ggf. die Parameter einmal herzeigen und
+%% interpretieren </TH>
 
+%% <TH> warum brauchen wir die Abb 2x? Bitte nur einmal richtig ohne die
+%% gg-Freuerei. /TH>
 The model can be visualised by plotting the estimated densities
 (see Figure~\ref{fig:math_bmod_vis} (a)):
 <<eval=FALSE>>=  
@@ -266,6 +272,8 @@ personalised models and for getting knowledge about the interactions between
 student characteristics and the treatment. Since the percentage of successfull
 online tests is measured on a grid, a bee plot possibly shows the relationships
 even better than the scatter plot (both shown in Figure~\ref{fig:math_dp1}).
+%% <TH> ich wuerde die Achsenbeschriftung ein bisschen besser machen, also
+%% keine Variablennamen sondern lesbare Beschreibungen </TH>
 <<math_dp1, fig.width=4, fig.height=3, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot.", "Bee plot.")>>=
 dpdat_math <- cbind(pmods_math, MathExam)
 
@@ -304,7 +312,9 @@ The R package \emph{model4you} is focused on ease of use and interpretability.
 Users can take a simple model that they know and understand as basis and simply
 plug it into \Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether
 they want subgroup wise or personalised models. The basis for these
-functionalities is provided by the \emph{partykit} package which is a widely
+functionalities is provided by the \emph{partykit} 
+%% <TH> hier fehlt das Zitat (CRAN + MLOSS) </TH>
+package which is a widely
 used R package for trees and forests. The \emph{model4you} package provides
 wrappers for the well implemented and tested functions
 \Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::cforest()'} and extends the
@@ -410,7 +420,7 @@ problems.
 
 \section*{Funding statement}
 Heidi Seibold and Torsten Hothorn were financially supported by the Swiss
-National Science Foundation (grant 205321\_163456).
+National Science Foundation (grants 205321\_163456 and IZSEZ0\_177091).
 
 %\textcolor{blue}{If the software resulted from funded research please give the funder and grant number.}
 
@@ -419,6 +429,8 @@ National Science Foundation (grant 205321\_163456).
 \section*{Competing interests}
 The authors declare that they have no competing interests.
 
+%% <TH> Gib noch einen Link zum SMMR paper rein, das findet man sonst nicht
+%% </TH>
 
 % \section*{References}
 \bibliographystyle{plain}
