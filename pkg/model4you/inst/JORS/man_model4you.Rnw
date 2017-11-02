@@ -356,7 +356,7 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 \begin{description}[noitemsep,topsep=0pt]
 \item[Name:] CRAN
 \item[Persistent identifier:] \url{https://cran.r-project.org/package=model4you} %TODO upload to CRAN
-\item[Licence:] GPL-2 | GPL-3
+\item[Licence:] GPL-2 $\vert$ GPL-3
 \item[Publisher:] Heidi Seibold 
 \item[Version published:] \textcolor{blue}{The version number of the software archived.}
 \item[Date published:] \textcolor{blue}{dd/mm/yy}
@@ -369,7 +369,7 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 \begin{description}[noitemsep,topsep=0pt]
 \item[Name:] R-forge
 \item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
-\item[Licence:] GPL-2 | GPL-3
+\item[Licence:] GPL-2 $\vert$ GPL-3
 \item[Date published:] \textcolor{blue}{dd/mm/yy} %TODO
 \end{description}
 
