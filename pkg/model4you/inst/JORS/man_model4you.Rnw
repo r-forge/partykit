@@ -10,7 +10,28 @@
 \usepackage{tikz}
 \usetikzlibrary{shapes,arrows,positioning}
 
+\usepackage{booktabs}
 
+%% Nice inline code
+\makeatletter
+\newcommand*{\textalltt}{}
+\DeclareRobustCommand*{\textalltt}{%
+  \begingroup
+    \let\do\@makeother
+    \dospecials
+    \catcode`\\=\z@
+    \catcode`\{=\@ne
+    \catcode`\}=\tw@
+    \verbatim@font\@noligs
+    \@vobeyspaces
+    \frenchspacing
+    \@textalltt
+}
+\newcommand*{\@textalltt}[1]{%
+    #1%
+  \endgroup
+}
+\makeatother
 
 
 %% Set the header information
@@ -23,15 +44,24 @@
 \begin{document}
 
 
-<<setup, echo=FALSE>>=
+<<setup, echo=FALSE, message=FALSE>>=
 library("knitr")
 knitr::opts_chunk$set(cache = TRUE, message = FALSE, fig.align = "center")
 
+# knit_hooks$set(inline = function(x) {
+#   if (is.numeric(x)) return(knitr:::format_sci(x, 'latex'))
+#   highr:::hi_latex(x)
+# })
+
+library("dplyr")
+library("stringr")
+
 knit_hooks$set(inline = function(x) { 
   if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
-  highr:::hi_latex(x) 
-}) 
+  highr:::hi_latex(x) %>%  str_replace("hlopt", "textalltt")
+  }) 
 @
+
 
 
 {\bf Software paper for submission to the Journal of Open Research Software} \\
@@ -142,9 +172,7 @@ strat_models <- pmtree(base_model)
 @
 Note that \Sexpr{'pmtree()'} uses the data given in the call of the base 
 model. It automatically uses variables not used in the model formula 
-(in the example above 
-%% <TH> bei mir fehlt hier die tilde </TH>
-\Sexpr{'response ~ treatment'}) as potential subgroup 
+(in the example above \Sexpr{'response ~ treatment'}) as potential subgroup 
 defining variables. This can be edited using the \Sexpr{'zformula'} argument.
 
 \paragraph{2. Personalised models} use model-based random forests to estimate
@@ -204,46 +232,65 @@ correct anwers on the exam group.
 <<math_bmod>>=
 bmod_math <- lm(pcorrect ~ group, data = MathExam)
 @
-%% <TH> hier koennte man ggf. die Parameter einmal herzeigen und
-%% interpretieren </TH>
-
+The estimtates and confidence intervals of this model can be computed via
+<<>>=
+cbind(estimate = coef(bmod_math), confint(bmod_math))
+@
+% The estimtates and confidence intervals of this model are shown in 
+% Table~\ref{tab:bmod}.
+% <<math_bmod_coef, results="asis", echo=FALSE>>=
+% library("Hmisc")
+% cf <- round(cbind(estimate = coef(bmod_math), confint(bmod_math)), 2)
+% colnams <- dimnames(cf)[[2]]
+% colnams <- gsub("\\%", "\\\\%", colnams)
+% colnams[1] <- "$\\theta$"
+% 
+% latex(cf,
+%       booktabs = TRUE,
+%       rowlabel = "", file = "", 
+%       colheads = colnams,
+%       label = "tab:bmod", caption = "Estimate and confidence intervals for the base model."
+%       )
+% @
 %% <TH> warum brauchen wir die Abb 2x? Bitte nur einmal richtig ohne die
 %% gg-Freuerei. /TH>
 The model can be visualised by plotting the estimated densities
-(see Figure~\ref{fig:math_bmod_vis} (a)):
-<<eval=FALSE>>=  
+(see Figure~\ref{fig:math_bmod_vis}):
+<<math_bmod_vis, fig.height=2.5, fig.width=5, out.width="0.7\\textwidth", fig.cap = "Density estimates of base model for the Mathematics Exam data.">>=  
 lm_plot(bmod_math)
 @
-
-As the plot is a \emph{ggplot2} graphic it can be maniulated with the usual
-\emph{ggplot2} layers, e.g.\ with
-<<eval=FALSE>>=
-lm_plot(bmod_math) + labs(y = "Estimated Density", x = "% Correct")
-@
-or equivalently with 
-<<eval=FALSE>>=
-myplot <- function(model, ...) {
-  lm_plot(model, ...) + 
-    labs(y = "Estimated Density", x = "% Correct")
-}
-myplot(bmod_math)
-@
-The result is shown in Figure~\ref{fig:math_bmod_vis} (b).
-<<math_bmod_vis, echo=FALSE, fig.cap = "Base model for Mathematics Exam data.", fig.subcap=c("Figure made with \\texttt{lm\\_plot()}.", "Figure made with manipulated \\texttt{lm\\_plot()}."), out.width="0.45\\textwidth", fig.height=3, fig.width=5>>=
-lm_plot(bmod_math)
-myplot <- function(model, ...) {
-  lm_plot(model, ...) + 
-    labs(y = "Estimated Density", x = "% Correct")
-}
-myplot(bmod_math)
-@
+Both the estimates and confidence intervals and the density curves suggest
+that there is almost no difference between the two groups. But does this
+really hold for all types of students?
+% As the plot is a \emph{ggplot2} graphic it can be maniulated with the usual
+% \emph{ggplot2} layers, e.g.\ with
+% <<eval=FALSE>>=
+% lm_plot(bmod_math) + labs(y = "Estimated Density", x = "% Correct")
+% @
+% or equivalently with 
+% <<eval=FALSE>>=
+% myplot <- function(model, ...) {
+%   lm_plot(model, ...) + 
+%     labs(y = "Estimated Density", x = "% Correct")
+% }
+% myplot(bmod_math)
+% @
+% The result is shown in Figure~\ref{fig:math_bmod_vis} (b).
+% <<math_bmod_vis, echo=FALSE, fig.cap = "Base model for Mathematics Exam data.", fig.subcap=c("Figure made with \\texttt{lm\\_plot()}.", "Figure made with manipulated \\texttt{lm\\_plot()}."), out.width="0.45\\textwidth", fig.height=3, fig.width=5>>=
+% lm_plot(bmod_math)
+% myplot <- function(model, ...) {
+%   lm_plot(model, ...) + 
+%     labs(y = "Estimated Density", x = "% Correct")
+% }
+% myplot(bmod_math)
+% @
 
 
 A tree based on this model can be computed and visualised in only two lines of
 code:
-<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for math exam.">>=  
+<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for the Mathematics Exam datam.">>=  
 tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2))
-plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = myplot))
+plot(tr_math, terminal_panel = node_pmterminal(tr_math, plotfun = lm_plot))
 @
 
 The tree (see Figure~\ref{fig:math_tree}) divides students based on the
@@ -272,19 +319,19 @@ personalised models and for getting knowledge about the interactions between
 student characteristics and the treatment. Since the percentage of successfull
 online tests is measured on a grid, a bee plot possibly shows the relationships
 even better than the scatter plot (both shown in Figure~\ref{fig:math_dp1}).
-%% <TH> ich wuerde die Achsenbeschriftung ein bisschen besser machen, also
-%% keine Variablennamen sondern lesbare Beschreibungen </TH>
 <<math_dp1, fig.width=4, fig.height=3, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot.", "Bee plot.")>>=
 dpdat_math <- cbind(pmods_math, MathExam)
 
 ggplot(dpdat_math, aes(x = tests, y = group2)) +
   geom_point(alpha = 0.2, size = 1) + 
   geom_smooth(fill = NA, method = "loess") +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  ylab("individual estmated group effect")
 
 ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
   geom_quasirandom(alpha = 0.5, size = 1) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  ylab("individual estmated group effect")
 @
 
 For the number of previous attempts to pass the exam and the gender box plots, 
@@ -293,12 +340,14 @@ bee plots or a combination thereof can be used (Figure~\ref{fig:math_dp2}).
 
 ggplot(dpdat_math, aes(x = attempt, y = group2, color = attempt)) +
   geom_quasirandom(alpha = 0.5) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  ylab("individual estmated group effect")
 
 ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
   geom_boxplot() +
   geom_quasirandom(alpha = 0.5) +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  ylab("individual estmated group effect")
 @
 
 With the tools provided by the \emph{model4you} package it is
@@ -313,9 +362,9 @@ Users can take a simple model that they know and understand as basis and simply
 plug it into \Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether
 they want subgroup wise or personalised models. The basis for these
 functionalities is provided by the \emph{partykit} 
-%% <TH> hier fehlt das Zitat (CRAN + MLOSS) </TH>
 package which is a widely
-used R package for trees and forests. The \emph{model4you} package provides
+used R package for trees and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}. 
+The \emph{model4you} package provides
 wrappers for the well implemented and tested functions
 \Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::cforest()'} and extends the
 functionalities to allow for the computation of personalised models and to 
@@ -429,11 +478,9 @@ National Science Foundation (grants 205321\_163456 and IZSEZ0\_177091).
 \section*{Competing interests}
 The authors declare that they have no competing interests.
 
-%% <TH> Gib noch einen Link zum SMMR paper rein, das findet man sonst nicht
-%% </TH>
 
 % \section*{References}
-\bibliographystyle{plain}
+\bibliographystyle{plainnat}
 \bibliography{ref_model4you}
 
 % \textcolor{blue}{Please enter references in the Harvard style and include a DOI where available, citing them in the text with a number in square brackets, e.g. \\ }
