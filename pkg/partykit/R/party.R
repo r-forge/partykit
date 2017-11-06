@@ -552,6 +552,10 @@ getCall.party <- function(x, ...) {
   x$info$call
 }
 
+getCall.constparties <- function(x, ...) {
+  x$info$call
+}
+
 formula.party <- function(x, ...) {
   x <- terms(x)
   NextMethod()
