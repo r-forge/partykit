@@ -172,6 +172,7 @@
     if (is.ordered(x) && !ctrl$splittest) 
         lev <- matrix(scores, nrow = 1) %*% lev
 
+    ### check if either X or Y were unique
     if (varonly) {
         vars <- lev$Variance
     } else {
@@ -309,10 +310,39 @@ missings <- function(object, varid) {
     which(is.na(model.frame(object)[[varid]]))
 }
 
-d <- iris[,c(5, 1:4)]
-class(d) <- c("partydata", "data.frame")
-Y <- model.matrix(~ Species - 1, data = iris)
-subset <- integer(0)
+source("extree.R")
+
+d <- extree(Species ~ ., data = iris, yx = "matrix")
+class(d) <- c("extree_data")
+
+model.frame.extree_data <- function(object)
+    object$data
+
+scores <- function(object, varid) {
+    x <- model.frame(object)[[varid]]
+    if (is.ordered(x)) return(1:nlevels(x))
+    return(NULL)
+}
+
+index <- function(object, varid) {
+    x <- model.frame(object)[[varid]]
+    if (is.factor(x) || is.ordered(x))
+        return(x)
+    ux <- sort(unique(x))
+    X <- .bincode(x, breaks = c(-Inf, ux, Inf),
+                  right = TRUE)
+    attr(X, "levels") <- ux 
+    storage.mode(X) <- "integer"
+    X
+}
+
+missings <- function(object, varid) {
+    if (is.character(varid)) varid <- 1L
+    which(is.na(model.frame(object)[[varid]]))
+}
+
+Y <- d$yx$y
+subset <- 1:nrow(Y)
 weights <- integer(0)
 control <- ctree_control()
 
@@ -323,13 +353,12 @@ control <- ctree_control()
 (ct <- ctree(Species ~ Sepal.Length, data = iris, stump = TRUE))
 info_node(node_party(ct))
 
-source("extree.R")
 
 control$update <- FALSE
 
 estfun <- function(object) object$estfun
 
 .extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = 2:5,
-subset = 1:nrow(d), integer(0), ctrl = control)
+subset = subset, integer(0), ctrl = control)
 
-ctree(Species ~ ., data = d)
+ctree(Species ~ ., data = iris)
