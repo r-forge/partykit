@@ -358,7 +358,7 @@ control$update <- FALSE
 
 estfun <- function(object) object$estfun
 
-.extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = 2:5,
-subset = subset, integer(0), ctrl = control)
+.extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = which(d$variables$z > 0), 
+            subset = subset, integer(0), ctrl = control)
 
 ctree(Species ~ ., data = iris)
