@@ -45,9 +45,9 @@
 
 .ctree_test_1d <- function(data, j, Y, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- model.frame(data)[[j]]
+    x <- variable(data, j)
     MIA <- FALSE
-    if (ctrl$MIA) MIA <- any(is.na(x[subset]))
+    if (ctrl$MIA) MIA <- (length(NAs <- missings(data, j)) > 0)
 
     ### X for (ordered) factors is always dummy matrix
     if (is.factor(x) || is.ordered(x))
@@ -67,19 +67,24 @@
         if (MIA) {
             Xlev <- attr(X, "levels")
             Xleft <- X + 1L
-            Xleft[is.na(Xleft)] <- 1L
+            Xleft[NAs] <- 1L
             Xright <- X
-            Xright[is.na(Xright)] <- as.integer(length(Xlev) + 1L)
+            Xright[NAs] <- as.integer(length(Xlev) + 1L)
             attr(Xleft, "levels") <- c(NA, Xlev)
             attr(Xright, "levels") <- c(Xlev, NA)
         } 
     } else {
         MAXSELECT <- FALSE
-        if (is.numeric(x))
-            X <- matrix(as.double(x), ncol = 1)
+        if (is.numeric(x)) {
+            if (storage.mode(x) == "double") {
+                X <- x
+            } else {
+                X <- as.double(x) ### copy when necessary
+            }
+        }
         MIA <- FALSE
     }
-    cluster <- model.frame(data)[["(cluster)"]]
+    cluster <- variable(data, "(cluster)")
 
     .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
                          ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
@@ -91,7 +96,7 @@
 
 .ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- model.frame(data)[[j]]
+    x <- variable(data, j)
     ix <- index(data, j)
     X <- ux <- attr(ix, "levels")
     MIA <- FALSE
@@ -125,7 +130,7 @@
         MAXSELECT <- FALSE
         MIA <- FALSE
     }
-    cluster <- model.frame(data)[["(cluster)"]]
+    cluster <- variable(data, "(cluster)")
 
     .ctree_test_internal(x = x, X = X, ix = ix, Xleft = Xleft, Xright = Xright, 
                          ixleft = ixleft, ixright = ixright, ux = ux, scores = scores, 
@@ -166,19 +171,15 @@
 
     ### if (MIA) use tst as fallback
     ### compute linear statistic + expecation and covariance
-    lev <- LinStatExpCov(X = X, Y = Y, subset = subset,
+    lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                          weights = weights, block = cluster,
-                         nperm = nperm, varonly = varonly)
+                         nperm = nperm, varonly = varonly, checkNAs = FALSE)
     if (is.ordered(x) && !ctrl$splittest) 
         lev <- matrix(scores, nrow = 1) %*% lev
 
     ### check if either X or Y were unique
-    if (varonly) {
-        vars <- lev$Variance
-    } else {
-        vars <- diag(vcov(lev))
-    }
-    if (all(vars < ctrl$tol)) return(list(statistic = NA, p.value = NA))
+    if (all(lev$Variance < ctrl$tol)) 
+        return(list(statistic = NA, p.value = NA))
 
     ### compute test statistic and log(1 - p-value)
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
@@ -188,17 +189,17 @@
 
     if (MIA) {
         ### compute linear statistic + expecation and covariance
-        lev <- LinStatExpCov(X = Xleft, Y = Y, subset = subset,
+        lev <- LinStatExpCov(X = Xleft, Y = Y, ix = ixleft, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             nperm = nperm, varonly = varonly)
+                             nperm = nperm, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
                           lower = TRUE, log = TRUE, ordered = ORDERED, 
                           minbucket = minbucket, pargs = ctrl$pargs)
         ### compute linear statistic + expecation and covariance
-        lev <- LinStatExpCov(X = Xright, Y = Y, subset = subset,
+        lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             nperm = nperm, varonly = varonly)
+                             nperm = nperm, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
                            lower = TRUE, log = TRUE, ordered = ORDERED, 
@@ -284,50 +285,34 @@
 
 library("partykit")
 
-model.frame.partydata <- function(object)
-    object
-
-scores <- function(object, varid) {
-    x <- model.frame(object)[[varid]]
-    if (is.ordered(x)) return(1:nlevels(x))
-    return(NULL)
-}
-
-index <- function(object, varid) {
-    x <- model.frame(object)[[varid]]
-    if (is.factor(x) || is.ordered(x))
-        return(x)
-    ux <- sort(unique(x))
-    X <- .bincode(x, breaks = c(-Inf, ux, Inf),
-                  right = TRUE)
-    attr(X, "levels") <- ux 
-    storage.mode(X) <- "integer"
-    X
-}
-
-missings <- function(object, varid) {
-    if (is.character(varid)) varid <- 1L
-    which(is.na(model.frame(object)[[varid]]))
-}
-
 source("extree.R")
 
 d <- extree(Species ~ ., data = iris, yx = "matrix")
 class(d) <- c("extree_data")
 
+
 model.frame.extree_data <- function(object)
     object$data
 
+variable <- function(object, varid) {
+    mf <- model.frame(object)
+    ### [[.data.frame needs lots of memory
+    class(mf) <- "list"
+    mf[[varid]]
+}
+
 scores <- function(object, varid) {
-    x <- model.frame(object)[[varid]]
+    x <- variable(object, varid)
     if (is.ordered(x)) return(1:nlevels(x))
     return(NULL)
 }
 
 index <- function(object, varid) {
-    x <- model.frame(object)[[varid]]
+    x <- variable(object, varid)
     if (is.factor(x) || is.ordered(x))
         return(x)
+    if (!is.null(object$index))
+        return(object$index[[varid]])
     ux <- sort(unique(x))
     X <- .bincode(x, breaks = c(-Inf, ux, Inf),
                   right = TRUE)
@@ -336,15 +321,22 @@ index <- function(object, varid) {
     X
 }
 
+d$index <- lapply(1:ncol(model.frame(d)), index, object = d)
+
 missings <- function(object, varid) {
-    if (is.character(varid)) varid <- 1L
-    which(is.na(model.frame(object)[[varid]]))
+    if (is.character(varid)) varid <- object$variables$y
+    if (!is.null(object$missings))
+        return(object$missings[[varid]])
+    x <- variable(object, varid)
+    which(is.na(x))
 }
+
+d$missings <- lapply(1:ncol(model.frame(d)), missings, object = d)
 
 Y <- d$yx$y
 subset <- 1:nrow(Y)
 weights <- integer(0)
-control <- ctree_control()
+control <- ctree_control(saveinfo = FALSE)
 
 .ctree_test_1d(data = d, j = 1, Y = Y, subset = subset, weights = weights, SPLITONLY = FALSE, ctrl = control)
 
@@ -358,7 +350,18 @@ control$update <- FALSE
 
 estfun <- function(object) object$estfun
 
-.extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = which(d$variables$z > 0), 
-            subset = subset, integer(0), ctrl = control)
+library("proftools")
 
-ctree(Species ~ ., data = iris)
+a <- profileExpr(
+replicate(100, s <- .extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = which(d$variables$z > 0), 
+            subset = subset, integer(0), ctrl = control)))
+
+plotProfileCallGraph(a)
+
+library("profmem")
+
+control$stump <- TRUE
+b <- profmem(s <- .extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), partyvars = which(d$variables$z > 0), 
+            subset = subset, integer(0), ctrl = control))
+
+b
