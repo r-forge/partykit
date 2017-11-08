@@ -347,7 +347,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       pm <-  distfit(Y, family = family, weights = wi, vcov = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
-      loglik[i,] <- pm$ddist(Y[i], log = TRUE)
+      loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
       # logscore[i,] <- pm$family$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
     }
     
