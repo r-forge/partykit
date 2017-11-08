@@ -22,7 +22,34 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, ny))
   if(length(weights) != ny) stop("number of observations and length of weights are not equal")
   if(is.table(weights)) weights <- as.vector(weights)
+  if(!any(weights != 0)) {
+    rval <- list(
+      npar = NA,
+      y = y,
+      ny = ny,
+      weights = weights,
+      family = family,
+      start = NA,
+      starteta = NA,
+      opt = NA,
+      converged = NA,
+      par = NA,
+      eta = NA,
+      hess = NA,
+      vcov = NA,
+      loglik = NA,
+      call = cl,
+      estfun = NA,
+      method = NA,
+      ddist = NA,
+      pdist = NA,
+      qdist = NA,
+      rdist = NA
+    )
     
+    class(rval) <- "distfit"
+    return(rval)
+  }    
   
   ## prepare family:
   # check format of the family input and if necessary transform it to the required familiy list
