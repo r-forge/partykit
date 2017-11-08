@@ -778,103 +778,6 @@ In the field of probabilistic forecasting linear models such as ensemble model o
 A typical application in probabilistic forecasting in meteorology is the analysis of precipitation data. The two main interests lie in estimating the probability of rain as well as predicting the expected amount of precipitation. In this research area various methods have been developed and tested in the last decades. (Multiple) Linear models such as ensemble model output statistics (EMOS) were introduced more than a decade ago (\cite{gneiting2005calibrated}) and are still common and widely used. Despite their simplicity and interpretability, the limitation to modeling only linear effects has risen the interest in applying more flexible models. This feature is provided by generalized additive models (GAM) which can also model non-linear effects. However, often only the expectation of the underlying distribution is estimated. To obtain probabilistic predictions, generalized additive models for location, scale, and shape (GAMLSS, \cite{stasinopoulos2005}) offer a framework in which each distribution parameter can be modeled separately by its own GAM. In Figure \ref{Devel_parmod} the development of parametric models starting from simple linear models (LM) and ranging to GAMLSS is illustrated.\\
 These flexible parametric methods provide well fitting models when applied on precipitation data in a rather smooth/homogeneous setting, e.g. areas where no abrupt changes in meteorological/climatological events appear. However, for example in complex terrain/mountainous regions various factors can change rapidly and their effects are difficult to be modeled/represented by a smooth parametric model. In this situation a different approach which can deal with these abrupt changes would be to apply tree structured models such as regression trees (\cite{loh2011classification}) or random forests (\cite{breiman2001random}). Moreover, these models are particularly advantageous in case of many covariates with unknown effects or interactions as the variable selection is done automatically within the model fitting process. Therefore, no additional effort or knowledge for the specification of the model in advance is required. However, even though their main advantage of being able to model non-additive effects and interactions without any necessary prespecification can play to their strength, regression trees are not an adequate choice if (additional) smooth effects appear as well. In this situation a random forest provides a good compromise as it combines a set of trees such that the steps imposed by the trees are smoothed out in case of smooth effects while abrupt changes are still captured by the tree structure of the model.\\
 For these reasons, regression trees and particularly random forests provide valuable features which can contribute to improving models for probabilistic forecasting. But, up to now, no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. The developments in the field of tree-structured models together with the novel approaches of distributional trees and forests are illustrated in Figure \ref{Devel_treeforest}.\\
-After explaining the novel methodology in section \ref{Methodology} of this paper and presenting results from a simulation study in section \ref{Simulation} the focus will then be put on an application in the field of probabilistic forecasting in section \ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration and based on the data/information from 25 years probabilistic predictions are made for the 3 successive years. A brief outlook on the results of this setting is given by Figure \ref{axams_onestation}. For the 24th of July of 2010, 2011 and 2012 the density functions of the estimated distributions for this day of all three prediction years are plotted together with the corresponding observations. The estimated distribution parameters for the 24th of July of 2010 are comparably high with location $3.146$ and scale $1.902$ which leads to a well fitting predicted expectation of $3.185$ close to the observed value of $3.001$. Also for 2011 and 2012 the estimated expected values of 1.085 and 0.483 provide reasonable predictions as the observed values are 1.121 and 0 respectively.\\
-Next to the expected values the predictions provided by these distributional models offer a wide range of information as they specify the whole distribution and therefore enable further methods of inference and analysis. 
-
-<<echo=FALSE, results=hide>>=
-#### Axams prediction 25 - 3
-if(file.exists("rain_Axams_pred.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_pred.rda")
-  load("rain_Axams_pred.rda")
-} else {
-  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_axams_pred.R")
-  source("rain_axams_pred.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  res <- rain_axams_pred(seedconst = 7, ntree = 100,
-                         forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = TRUE,
-                         frac = FALSE)
-  
-  save(res, file = "rain_Axams_pred.rda")
-}
-
-# prepare data for plot of estimated density functions
-pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
-
-pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
-pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
-df_mu <- pdf$mu
-df_sigma <- pdf$sigma
-df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
-cbind(df_exp, res$testdata[pdays,"robs"])
-
-
-# plot predicted distributions together with observations
-#set.seed(res$call$seedconst)
-set.seed(7)
-x <- c(0.01, sort(runif(500,0.01,8)))
-y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
-y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
-y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
-dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
-
-# point mass (slightly shifted)
-pm1 <- c(0.04, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
-pm2 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
-pm3 <- c(-0.1, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
-
-# predictions
-pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-
-#legendheight
-lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
-lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
-lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
-@
-
-
-\begin{figure}[t!]
-\begin{center}
-<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
-plot(x = x, y = y1, type = "l", col = "red", 
-     main = paste0("July ", pday, dayending), ylab = "Density", 
-     xlab = "Total precipitation (power transformed)",
-     ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
-     xlim = c(-1.5,8))
-    
-lines(x = x, y = y2, type = "l", col = "blue")
-    lines(x = x, y = y3, type = "l", col = "darkgreen")
-    #legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
-    
-    # plot point mass
-    lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
-    lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
-    lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
-    points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
-    points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
-    points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
-    
-    
-    # plot predictions
-    points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
-    points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
-    points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
-    
-    lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
-    
-    # add labels
-    text(x = -0.8, y = lh1, labels = "2010", col = "red", cex = 0.8)
-    text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
-    text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
-@
-\caption{\label{axams_onestation}Predictions at station Axams for one day in July of 2010, 2011 and 2012.}
-\end{center}
-\end{figure}
 
 
 
@@ -1109,6 +1012,106 @@ Distributional Tree
 %These (future) steps are illustrated in Figure \ref{Devel_treeforest}, embedded in the development made in the field of tree and forest algorithms.\\
 
 
+After explaining the novel methodology in Section \ref{Methodology} of this paper and presenting results from a simulation study in Section \ref{Simulation} the focus will then be put on an application in the field of probabilistic forecasting in Section \ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration and based on the data/information from 25 years probabilistic predictions are made for the 3 successive years. A brief outlook on the results of this setting is given by Figure \ref{axams_onestation}. For the 24th of July of 2010, 2011 and 2012 the density functions of the estimated distributions for this day of all three prediction years are plotted together with the corresponding observations. The estimated distribution parameters for the 24th of July of 2010 are comparably high with location $3.146$ and scale $1.902$ which leads to a well fitting predicted expectation of $3.185$ close to the observed value of $3.001$. Also for 2011 and 2012 the estimated expected values of 1.085 and 0.483 provide reasonable predictions as the observed values are 1.121 and 0 respectively.\\
+Next to the expected values the predictions provided by these distributional models offer a wide range of information as they specify the whole distribution and therefore enable further methods of inference and analysis. 
+
+
+
+<<echo=FALSE, results=hide>>=
+#### Axams prediction 25 - 3
+if(file.exists("rain_Axams_pred.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_pred.rda")
+  load("rain_Axams_pred.rda")
+} else {
+  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_axams_pred.R")
+  source("rain_axams_pred.R")
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  res <- rain_axams_pred(seedconst = 7, ntree = 100,
+                         forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
+                         gamboost_cvr = TRUE,
+                         frac = FALSE)
+  
+  save(res, file = "rain_Axams_pred.rda")
+}
+
+# prepare data for plot of estimated density functions
+pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+
+pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
+pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
+df_mu <- pdf$mu
+df_sigma <- pdf$sigma
+df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+cbind(df_exp, res$testdata[pdays,"robs"])
+
+
+# plot predicted distributions together with observations
+#set.seed(res$call$seedconst)
+set.seed(7)
+x <- c(0.01, sort(runif(500,0.01,8)))
+y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
+y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
+y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
+dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
+
+# point mass (slightly shifted)
+pm1 <- c(0.04, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
+pm2 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
+pm3 <- c(-0.1, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
+
+# predictions
+pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+
+#legendheight
+lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
+lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
+lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
+@
+
+
+\begin{figure}[t!]
+\begin{center}
+<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
+plot(x = x, y = y1, type = "l", col = "red", 
+     main = paste0("July ", pday, dayending), ylab = "Density", 
+     xlab = "Total precipitation (power transformed)",
+     ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
+     xlim = c(-1.5,8))
+    
+lines(x = x, y = y2, type = "l", col = "blue")
+    lines(x = x, y = y3, type = "l", col = "darkgreen")
+    #legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
+    
+    # plot point mass
+    lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
+    lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
+    lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
+    points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
+    points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
+    points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
+    
+    
+    # plot predictions
+    points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
+    points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
+    points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
+    
+    lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
+    lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
+    
+    # add labels
+    text(x = -0.8, y = lh1, labels = "2010", col = "red", cex = 0.8)
+    text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
+    text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
+@
+\caption{\label{axams_onestation}Predictions at station Axams for one day in July of 2010, 2011 and 2012.}
+\end{center}
+\end{figure}
+
 
 
 
@@ -1119,13 +1122,13 @@ Distributional Tree
 \label{Methodology}
 
 \subsection{Motivation (Review/Problems)}
-As illustrated in Figure \ref{Devel_parmod} a lot of developement has been made in the field of parametric modeling and a wide range of tools can be applied in research areas such as probabilistic forecasting. But as mentioned before, further features such as the ability to capture non-additive effects or interactions are desirable in many applications which demands for more flexible models. Since tree structured models provide these required features a combination of them with parametric models can offer a framework that is able to deal with a wide range of different modeling situations. In this section we are going to introduce the novel methodology which embeds parametric modeling into the idea of tree structered models step by step starting with a simple distributional fit in subsection \ref{distfit}, then building a distributional tree in subsection \ref{disttree} and finally a distributional forest in subsection \ref{distforest}.
+As illustrated in Figure \ref{Devel_parmod} a lot of development has been made in the field of parametric modeling and a wide range of tools can be applied in research areas such as probabilistic forecasting. But as mentioned before, further features such as the ability to capture non-additive effects or interactions are desirable in many applications which demands for more flexible models. Since tree structured models provide these required features a combination of them with parametric models can offer a framework that is able to deal with a wide range of different modeling situations. In this section we are going to introduce the novel methodology which embeds parametric modeling into the idea of tree structured models step by step starting with a simple distributional fit in Subsection \ref{distfit}, then building a distributional tree in Subsection \ref{disttree} and finally a distributional forest in Subsection \ref{distforest}.
 
 
 \subsection{Distributional Fit}
 \label{distfit}
 Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section.\\
-The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Using the GAMLSS framework (\cite{stasinopoulos2005}) a wide range of distributions can be selected where each distribution parameter can be specified separatly. This enables the model to deal with various features that can usually be very challenging in model fitting such as censoring, truncation or heavy tails.\\
+The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Using the GAMLSS framework (\cite{stasinopoulos2005}) a wide range of distributions can be selected where each distribution parameter can be specified separately. This enables the model to deal with various features that can usually be very challenging in model fitting such as censoring, truncation or heavy tails.\\
 In our application of precipitation forecasting the response variable, which is the power transformed total precipitation amount within 24 hours, is expected to be normally distributed with mean/location parameter $\mu$ and standard deviation/scale parameter $\sigma$ and left censored with censoring point 0. Therefore, the corresponding log-likelihood function with parameter vector $\theta = (\mu, \sigma)$ is
 $$
 \ell(\mu, \sigma; Y) = 
@@ -1233,26 +1236,21 @@ Within this simulation study the performance of distributional trees and forests
 %Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of smooth parametric models or of trees and forests covers a broader range of functions where it is superior to the other.\\
 
 
-The following methods are applied and compared to distributional trees and forests:
-\begin{itemize}
-\item gamlss \cite{stasinopoulos2005} fits a separate generalized additive model to each of the distribution models. In that way it specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.
-\item bamlss \cite{bamlss2017} also provides an infrastructure for estimating probabilistic distributional regression but within a Bayesian Framework. Again each parameter is modeled by (possibly) complex additive terms.
-\item gamboostLSS \cite{gamboostLSS2017} offers boosting models for fitting  generalized additive models for location, shape and scale
-\item randomForest \cite{randomForest2002} combines an ensemble of classification and regression trees applying bagging and reducing the correlation among trees through a randomized selection of possible split variables within each node.
-\item cforest \cite{hothorn2015partykit} builds a forest in a similar way but consisting of ctrees applying the ctree algorithm mentioned in section \ref{Methodology}. In this simulation study no transformation function is included.
-\end{itemize}
-
-The different methods are tested on generated data sets consisting of the values of a response variable $Y$ and ten covariates $X_1, \ldots, X_{10}$ which are all independent und identically distributed following a uniform distribution.
+To prove these statements distributional trees and forests are evaluated on generated data sets. Their results are then compared to those of a GAMLSS (\cite{stasinopoulos2005}) which fits a separate generalized additive model to each of the distribution models and in that way specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.\\
+The generated data sets consist of the values of a response variable $Y$ and six covariates $X_1, \ldots, X_6$ which are all independent and distributed as follows:
 $$
-X_i \sim \textit{Unif}([-1,1]) \qquad \forall i \in \{1,\ldots,10\}
+X_1, X_2, X_3 \sim \textit{Unif}([-1,1])
+$$
+$$
+X_4, X_5, X_6 \sim \textit{Binom}(1, 0.5)
 $$
 
 The distribution of the response variable is a left censored normal distribution with censoring point 0. The corresponding distribution parameters are defined by a parameter function $f$ depending on the covariates and an additional factor $\kappa$ which regulates the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\ 
-The location parameter $\mu$ depends on $X_1$ and $\kappa$ and the scale parameter $\sigma$ depends on $X_2$ and $\kappa$. The other covariates $X_3, \ldots, X_{10}$ are used as noise variables.\\
+The location parameter $\mu$ depends on $X_1, X_4$ and $\kappa$ and the scale parameter $\sigma$ depends on $X_1, X_4$ and $\kappa$. The other covariates $X_2, X_3, X_5$ and $X_6$ are used as noise variables.\\
 The latent variable $Y^{\ast}$ is generated based on the following setting.
 \begin{center}
 $$ 
-Y^{\ast} \sim \mathcal{N} (f(X_1, X_2, \kappa))
+Y^{\ast} \sim \mathcal{N} (f(X_1, X_4, \kappa))
 $$
 with
 $$
@@ -1260,28 +1258,30 @@ f(X_1, X_2, \kappa) = \left(\mu(X_1,\kappa) , \sigma(X_2,\kappa)\right)
 $$ 
 and
 $$
-\mu(X_1,\kappa) = \mu_{\text{base}} + 8 \cdot \exp{(-(3 \cdot X_1-1)^{(2\cdot \kappa)})}
+\mu(X_1, X_4, \kappa) = 0.2 + 7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \mathbf{1}(X_1 < 0.4) + 
+                              7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2} \cdot \mathbf{1}(X_1 \geq 0.4) + 
+                              3 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot X_4
 $$
 
 $$
-\sigma(X_2,\kappa) = 2 + 2 \cdot (1-\Lambda(\kappa^{1.8} \cdot 5 \cdot (X_2+0.5)))
+\sigma(X_2,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.7)
 $$
-where $\Lambda$ is the cumulative distribution function of the logistic distribution
-$$
-\Lambda(\omega) = \frac{1}{1 + \exp(-\omega)}
-$$
+%where $\Lambda$ is the cumulative distribution function of the logistic distribution
+%$$
+%\Lambda(\omega) = \frac{1}{1 + \exp(-\omega)}
+%$$
 The response variable $Y$ is defined as 
 $$
 Y = 
 \begin{cases}
     Y^{\ast},& \text{if } Y^{\ast} \geq 0\\
-    0,       & \text{if } else
+    0,       & else
 \end{cases}
 $$
 \end{center}
 
 
-To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied to one generated data set only where $\kappa$ is set to 1 (top plots) and then to a second data set where $\kappa$ is set to 10 (bottom plots).\\
+To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to 1 (top plots in Figure \ref{}) and then to a second data set where $\kappa$ is set to 10 (bottom plots in Figure \ref{}).\\
 In the left plots the location parameter function $\mu(X_1, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $(x_2, x_3, \ldots, x_{10}) = (0,0, \ldots, 0)$. \\
 In the right plots the scale parameter function $\sigma(X_2, \kappa)$ is plotted along the covariate $X_2$ together with the estimated values of the different models for fixed covariates $(x_1, x_3, \ldots, x_{10}) = (0.4, 0, \ldots, 0)$. \\
 
@@ -1293,58 +1293,96 @@ source("oneset.R")
 if(file.exists("oneset1.rda")){
   load("oneset1.rda")
 } else {
-  oneset1 <- sim_oneset(kappa = 7, nobs = 400,
-                       seedconst = 7, ntree = 100,
-                       formula = y~x1+x2+x3+x4+x5+x6, 
-                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
-                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                       forest_mtry = 3,
-                       type.tree = "ctree",
-                       censNO = TRUE,
-                       fix.mu = FALSE,
-                       fix.sigma = FALSE,
-                       mu.sigma.interaction = FALSE,
-                       pred_fix = TRUE,
-                       pred_fix_x1 = -0.5,
-                       pred_fix_x4 = 0,
-                       gamboost_cvr = FALSE,
-                       eval_disttree = TRUE,
-                       eval_distforest = TRUE,
-                       eval_gamlss = TRUE,
-                       eval_gamboostLSS = FALSE,
-                       eval_randomForest = FALSE,
-                       eval_cforest = FALSE,
-                       mubase = 3,
-                       sigmabase = 3)
+
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  
+  kappa <- 1
+  fun <- function(x){
+    mu <- 0.2 + 
+      (10 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * as.numeric(x[,1] < 0.4) + 
+      (10 * (exp(-(3*x[,1]-1.2)^(2*kappa))) * (1/2) + 10/2) * as.numeric(x[,1]>= 0.4) #+
+    #(3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) +
+    #(3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * x[,4]
+    sigma <- 0.5 + 
+      #mu/5 + 
+      2 * (x[,1] < -0.4) + 
+      3 * x[,4] #+
+    #1*(x[,1] < -0.7) 
+    #plogis((kappa^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
+    #4*(1-plogis((kappa^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
+    #5 * abs(x[,1]) * x[,4]
+    par <- cbind(mu, sigma)
+    return(par)
+  }
+  
+  oneset1 <- sim_oneset(parfun = fun, nobs = 500, seedconst = 74, ntree = 100,
+                        formula = y~x1+x2+x3+x4+x5+x6, 
+                        #formula = y~x1+x2+x4+x5,
+                        #formula = y~x1+x2+x3,
+                        tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95, 
+                        forest_minsplit = 20, forest_minbucket = 7, forest_mincrit = 0, 
+                        forest_mtry = 3, type.tree = "ctree", 
+                        censNO = TRUE, 
+                        pred_fix = TRUE,
+                        pred_fix_x1 = 0.9,
+                        pred_fix_x2 = 0.9,
+                        pred_fix_x4 = 1,
+                        gamboost_cvr = FALSE,
+                        eval_disttree = TRUE,
+                        eval_distforest = TRUE,
+                        eval_gamlss = TRUE,
+                        nrunif = 3,
+                        nrcovform = 6)
+
   save(oneset1, file = "oneset1.rda")
 }
 
-if(file.exists("oneset10.rda")){
+if(file.exists("oneset10.rda")){Hans-Brenner-Platz
   load("oneset10.rda")
 } else {
-  oneset10 <- sim_oneset(kappa = 10, nobs = 400,
-                       seedconst = 7, ntree = 100,
-                       formula = y~x1+x2+x3+x4+x5+x6, 
-                       tree_minsplit = 25, tree_minbucket = 10, tree_mincrit = 0.95, 
-                       forest_minsplit = 25, forest_minbucket = 10, forest_mincrit = 0, 
-                       forest_mtry = 3,
-                       type.tree = "ctree",
-                       censNO = TRUE,
-                       fix.mu = FALSE,
-                       fix.sigma = FALSE,
-                       mu.sigma.interaction = FALSE,
-                       pred_fix = TRUE,
-                       pred_fix_x1 = -0.5,
-                       pred_fix_x4 = 0,
-                       gamboost_cvr = FALSE,
-                       eval_disttree = TRUE,
-                       eval_distforest = TRUE,
-                       eval_gamlss = TRUE,
-                       eval_gamboostLSS = FALSE,
-                       eval_randomForest = FALSE,
-                       eval_cforest = FALSE,
-                       mubase = 3,
-                       sigmabase = 3)
+  
+  library("gamlss.cens")
+  gen.cens("NO", type = "left")
+  
+  kappa <- 10
+  fun <- function(x){
+    mu <- 0.2 + 
+      (10 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * as.numeric(x[,1] < 0.4) + 
+      (10 * (exp(-(3*x[,1]-1.2)^(2*kappa))) * (1/2) + 10/2) * as.numeric(x[,1]>= 0.4) #+
+    #(3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) +
+    #(3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * x[,4]
+    sigma <- 0.5 + 
+      #mu/5 + 
+      2 * (x[,1] < -0.4) + 
+      3 * x[,4] #+
+    #1*(x[,1] < -0.7) 
+    #plogis((kappa^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
+    #4*(1-plogis((kappa^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
+    #5 * abs(x[,1]) * x[,4]
+    par <- cbind(mu, sigma)
+    return(par)
+  }
+  
+  oneset10 <- sim_oneset(parfun = fun, nobs = 500, seedconst = 74, ntree = 100,
+                        formula = y~x1+x2+x3+x4+x5+x6, 
+                        #formula = y~x1+x2+x4+x5,
+                        #formula = y~x1+x2+x3,
+                        tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95, 
+                        forest_minsplit = 20, forest_minbucket = 7, forest_mincrit = 0, 
+                        forest_mtry = 3, type.tree = "ctree", 
+                        censNO = TRUE, 
+                        pred_fix = TRUE,
+                        pred_fix_x1 = 0.9,
+                        pred_fix_x2 = 0.9,
+                        pred_fix_x4 = 1,
+                        gamboost_cvr = FALSE,
+                        eval_disttree = TRUE,
+                        eval_distforest = TRUE,
+                        eval_gamlss = TRUE,
+                        nrunif = 3,
+                        nrcovform = 6)
+  
   save(oneset10, file = "oneset10.rda")
 }
 @
@@ -1353,21 +1391,24 @@ if(file.exists("oneset10.rda")){
 \begin{figure}[t!]
 \begin{subfigure}{0.6\textwidth}
 <<sim_oneset1_mu, fig=TRUE, echo=FALSE>>=
-plot_oneset(oneset1, 
-            compare_mu = TRUE, 
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
-            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
-            )
+plot_oneset(oneset1, only_dt = FALSE, only_df = FALSE, only_g = FALSE,
+              compare_mu = TRUE, 
+              add_dt = TRUE,
+              add_df = TRUE,
+              add_g = TRUE,
+              nomodel = FALSE)
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.6\textwidth}
 <<sim_oneset1_sigma, fig=TRUE, echo=FALSE>>=
-plot_oneset(oneset1, 
-            compare_sigma_line = TRUE, 
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
-            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
-            )
+  plot_oneset(oneset1, only_dt = FALSE, only_df = FALSE, only_g = FALSE,
+              compare_mu = FALSE,
+              compare_sigma_line = TRUE, 
+              add_dt = TRUE,
+              add_df = TRUE,
+              add_g = TRUE,
+              nomodel = TRUE)
 @
 \end{subfigure}
 \caption{\label{plot_sim_oneset1} ... }
@@ -1377,36 +1418,67 @@ plot_oneset(oneset1,
 \begin{figure}[t!]
 \begin{subfigure}{0.6\textwidth}
 <<sim_oneset10_mu, fig=TRUE, echo=FALSE>>=
-plot_oneset(oneset10,
-            compare_mu = TRUE,
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
-            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
-            )
+plot_oneset(oneset10, only_dt = FALSE, only_df = FALSE, only_g = FALSE,
+              compare_mu = TRUE, 
+              add_dt = TRUE,
+              add_df = TRUE,
+              add_g = TRUE,
+              nomodel = FALSE)
 @
 \end{subfigure}
 \hspace{-1cm}
 \begin{subfigure}{0.6\textwidth}
 <<sim_oneset10_sigma, fig=TRUE, echo=FALSE>>=
-plot_oneset(oneset10, 
-            compare_sigma_line = TRUE, 
-            add_dt = TRUE, add_df = TRUE, add_g = TRUE #, 
-            #add_gb = TRUE, add_rf = TRUE, add_cf = TRUE
-            )
+  plot_oneset(oneset10, only_dt = FALSE, only_df = FALSE, only_g = FALSE,
+              compare_mu = FALSE,
+              compare_sigma_line = TRUE, 
+              add_dt = TRUE,
+              add_df = TRUE,
+              add_g = TRUE,
+              nomodel = TRUE)
 @
 \end{subfigure}
 \caption{\label{plot_sim_oneset10} ... }
 \end{figure}
 
+In the case of smooth effects of the coefficients on the parameter function the GAMLSS is closest to the true parameter while the steps of the tree are cleary too rough. By combining various trees the forest can smooth out these steps, however, not as well as the GAMLSS.\\
+Looking at the other extreme situation in which the parameter functions include abrupt changes the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter function.\\
+\\
 
 
+Now, to get a more profound impression, the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step ... data sets are generated.\\
+\\
+%\subsubsection{Means of Comparison}
+In order to compare the performance of the chosen methods over various data sets, the continuous ranked probability score (CRPS) is calculated for each model on each data set. 
+
+%three different values are calculated for the resulting models: the root of the mean squared error (RMSE), the log-likelihood value and the continuous ranked probability score (CRPS). All of them are evaluated out of sample, e.g. on a part of the data set that has not been used to build the model.\\
+%Therefore, overfitting would lead to worse results.\\
+%\\
+%The RMSE represents how close the estimated expected values are to the true observations. For a response variable $Y$ and a set of observations $\textbf{y} = \{y_i\}_{i = 1,\ldots,n}$ with the corresponding estimated parameters $\hat{\boldsymbol{\theta}} = \{\hat{\theta}_i\}_{i = 1,\ldots,n}$ the RMSE is defined as follows.
+
+%$$
+%\text{RMSE}(Y, \boldsymbol{y}, \boldsymbol{\hat{\theta}}) = \sqrt{\frac{1}{n} \sum_{i=1}^n (\mathbb{E}_{\hat{\theta}_i}(Y) - y_i)^2}
+%$$
+
+%In most cases this value does not measure the distributional fit as only the expected value is considered. However, in the case of a censored normal distribution the expected value of the observed variable is a transformation of the expected value of the latent variable which includes the location and the scale parameter.\\
+%\\
+%A typical way to evaluate the distributional fit is provided by the log-likelihood value. For each observation $y$ and the corresponding predicted parameter $\hat{\theta}$ the value of the log-likelihood function $\ell(\hat{\theta}; y)$ is calculated and then averaged over all observations in the testing data set. The higher the value the better the predictions of the model are.\\
+%\\
+%The CRPS is another value that measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
+The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
+$$
+\text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
+$$
+where \(\mathbf{1}\) is the indicator function. \\
+In this simulation study the CRPS is evaluated out of sample, e.g. on a data set that has not been used to build the model but has been generated by the same process and with the same settings as the original data set. In the following this second data set on which the CRPS is evaluated is called testing data set while the original data set on which the models are built on is called learning data set.
+The CRPS value is first calculated for each observation in the testing data set and then the average of these values is taken. As the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation. \\
 
 
+%The methods are then compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by %the out-of-sample log-likelihood of the fitted models, averaged within each step.
+%(In that way it can be investigated how the results change for a changing value of $\kappa$.)
 
 
-
-
-Now, to get a more profound impression the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step ... data sets are generated. The methods are then compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by the out-of-sample log-likelihood of the fitted models, averaged within each step.
-(In that way it can be investigated how the results change for a changing value of $\kappa$.)
+\SweaveOpts{eval = TRUE}
 
 <<echo=FALSE, results=hide>>=
 if(file.exists("simres.rda")){
@@ -1442,53 +1514,59 @@ if(file.exists("simres.rda")){
 
 
 
-\begin{figure}[t!]
-\begin{subfigure}{0.6\textwidth}
-<<sim_rmse_exp, fig=TRUE, echo=FALSE>>=
-plot_rmse(simres, type = "exp")
-@
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.6\textwidth}
-<<sim_rmse_par, fig=TRUE, echo=FALSE>>=
-plot_rmse(simres, type = "par")
-@
-\end{subfigure}
-\caption{\label{plot_sim_rmse}Results of the simulation study (RMSE).\\
-left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference between the observations and the estimated expected value\\
-right: continuous lines represent the location parameter, dotted lines the scale parameter}
-\end{figure}
-
-
+%\begin{figure}[t!]
+%\begin{subfigure}{0.6\textwidth}
+%<<sim_rmse_exp, fig=TRUE, echo=FALSE>>=
+%plot_rmse(simres, type = "exp")
+%@
+%\end{subfigure}
+%\hspace{-1cm}
+%\begin{subfigure}{0.6\textwidth}
+%<<sim_rmse_par, fig=TRUE, echo=FALSE>>=
+%plot_rmse(simres, type = "par")
+%@
+%\end{subfigure}
+%\caption{\label{plot_sim_rmse}Results of the simulation study (RMSE).\\
+%left: continuous lines represent the difference between the true and the estimated expected value, dotted lines represent the difference %between the observations and the estimated expected value\\
+%right: continuous lines represent the location parameter, dotted lines the scale parameter}
+%\end{figure}
 
 \begin{figure}[t!]
-\begin{subfigure}{0.6\textwidth}
-<<sim_ll, fig=TRUE, echo=FALSE>>=
-plot_ll(simres)
+\begin{center}
+%\begin{subfigure}{0.6\textwidth}
+<<sim_crps, fig=TRUE, echo=FALSE>>=
+plot_crps(simres)
 @
-\end{subfigure}
-\hspace{-1cm}
-\begin{subfigure}{0.6\textwidth}
-<<sim_levelplot, fig=TRUE, echo=FALSE>>=
-levelfun <- function(x) simres$fun(x,5)
-
-ncuts <- 100
-colR <- colorRampPalette(c("blue","green"))                                       
-cols <- colR(ncuts+1)
-griddata <- expand.grid(list(x1 = seq(-1, 1, 0.01), x4 = seq(0, 1, 0.2)))
-griddata$mu <- levelfun(griddata)
-levelplot(mu ~ x1 * x4, data = griddata, xlab = "x1", ylab = "x4", 
-          region = TRUE, cuts = ncuts, col.regions = cols)
-
-@
-\end{subfigure}
-\caption{\label{plot_sim_ll}left: results of the simulation study: log-likelihood\\ %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
-right: levelplot of the parameter function for $\kappa=5$}
+\caption{\label{plot_sim_crps}Results of the simulation study: CRPS} %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
+%right: levelplot of the parameter function for $\kappa=5$}
+\end{center}
 \end{figure}
 
+%\end{subfigure}
+%\hspace{-1cm}
+%\begin{subfigure}{0.6\textwidth}
+%<<sim_levelplot, fig=TRUE, echo=FALSE>>=
+%levelfun <- function(x) simres$fun(x,5)
+%
+%ncuts <- 100
+%colR <- colorRampPalette(c("blue","green"))                                       
+%cols <- colR(ncuts+1)
+%griddata <- expand.grid(list(x1 = seq(-1, 1, 0.01), x4 = seq(0, 1, 0.2)))
+%griddata$mu <- levelfun(griddata)
+%levelplot(mu ~ x1 * x4, data = griddata, xlab = "x1", ylab = "x4", 
+%          region = TRUE, cuts = ncuts, col.regions = cols)
+
+%@
+%\end{subfigure}
+%\caption{\label{plot_sim_ll}left: results of the simulation study: log-likelihood\\ %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
+%right: levelplot of the parameter function for $\kappa=5$}
+%\end{figure}
 
 
 
+Figure \ref{plot_sim_crps} clearly illustrates the strengths of the different methods applied in this simulation study. The parametric GAMLSS can easily deal with the smooth effects that appear for low values of $\kappa$ and outperforms the tree and forest models in this situation. However, it clearly starts to struggle as $\kappa$ increases and the effects turn into abrupt changes. This behaviour has already been detected and discussed above when looking at only single data sets and is now proven by an almost monotone increase of the CRPS.\\
+On the contrary, the imposed/enforced steps of the tree model lead to a high CRPS value in the situation of smooth effects while this value decreases quickly as the slopes in the parameter functions get steeper. For high values of $\kappa$ resulting almost in step functions the tree model perfomes the best as stated by the low CRPS value.\\
+Therefore, both extreme situations show to have a preferable method to choose which clearly outperforms the others. But overall the forest model stays more or less on the same level of goodness of fit regardless of the type of effects in the parameter functions. As this level lies inbetween the ones of the other two methods the forest model provides a good compromise. Of course, if the type of effects is known in advance one should choose the corresponding adequate method, but as this is usually not the case applying a distributional forest offers a solution which can deal with a wide variety of situations and in that way secures a good fit of the resulting model. 
 
 %Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
 %However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
@@ -1517,36 +1595,17 @@ right: levelplot of the parameter function for $\kappa=5$}
 \newpage
 \section{Probabilistic Forecasting of Precipitation}
 \label{ProbabilisticForecasting}
-As explained in the introduction distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. In particular, the data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by ..... 
-Next to the variable of interest, the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts from the ECMWF are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on perturbed initial conditions.\\
-In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions the possible variations include the mean, the standard deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the whole day (6--30 UTC) or a 6h time window of the day.\\
+
+
+As explained in the introduction distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
+
+\subsection{Setting}
+The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
+Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over a whole day (6--30 UTC) or a 6h time window of the day.\\
 Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std dev of mean/minimal/maximal values respectively.\\
 Table \ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.\\
-The response variable, total precipitation (tp), is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation measurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0.
-
-
-%\newpage
-%The ensemble forecast for the total precipitation is represented by 12 covariates: 
-%\begin{itemize}[noitemsep]
-%\item ensemble mean of the sum of the total precipitation from 6--30 UTC
-%\item ensemble standard deviation of the sum of the total precipitation from 6--30 UTC
-%\item ensemble minimum of the sum of the total precipitation from 6--30 UTC
-%\item ensemble maximum of the sum of the total precipitation from 6--30 UTC
-%\item ensemble mean of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, from 18--24 UTC %and from 24--30 UTC
-%\item ensemble standard deviation of the sum of the total precipitation from 6--12 UTC, from 12--18 UTC, %from 18--24 UTC and from 24--30 UTC
-%\end{itemize}
-
-%The preciptable water is represented by 6 covariates:
-%\begin{itemize}[noitemsep]
-%\item the ensemble mean of the mean of preciptable water over the time period 6--30 UTC 
-%\item the ensemble mean of the minimum of preciptable water over the time period 6--30 UTC 
-%\item the ensemble mean of the maximum of preciptable water over the time period 6--30 UTC 
-%\item the ensemble standard deviation of the mean of preciptable water over the time period 6--30 UTC 
-%\item the ensemble standard deviation of the minimum of preciptable water over the time period 6--30 UTC 
-%\item the ensemble standard deviation of the maximum of preciptable water over the time period 6--30 UTC 
-%\end{itemize}
-
-
+The response variable \texttt{tp} (total precipitation) is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation measurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. The same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
 
 
 
@@ -1559,15 +1618,15 @@ The response variable, total precipitation (tp), is power transformed by a facto
 \hline
 Basic covariates & {\#} & Variations\\
 \hline
-\textbf{tp}: total precipitation            & 12 variations:  & ensemble mean of sum, \\
-\hspace*{\fill} power transformed (by 1.6) &    & ensemble std dev of sum, \\ 
-\textbf{cape}: convective                  &    & ensemble minimum of sum, \\
-\hspace*{0.4cm} available potential energy &    & ensemble maximum of sum\\
-\hspace*{\fill}  power transformed (by 1.6)&    & \qquad all over 6--30 UTC\\
-\hspace*{\fill}                            &    & ensemble mean of sum over\\
-\hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
-\hspace*{\fill}                            &    & ensemble std dev of sum over\\
-\hspace*{\fill}                            &    & \qquad 6--12, 12--18, 18--24, 24--30 UTC\\
+\textbf{tp}: total precipitation            & 12 variations:  & ensemble mean of sums over 24h, \\
+\hspace*{\fill} power transformed (by 1.6) &    & ensemble std dev of sums over 24h, \\ 
+\textbf{cape}: convective                  &    & ensemble minimum of sums over 24h, \\
+\hspace*{0.4cm} available potential energy &    & ensemble maximum of sums over 24h\\
+\hspace*{\fill}  power transformed (by 1.6)&    & \qquad all for 6--30 UTC\\
+\hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
+\hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
+\hspace*{\fill}                            &    & ensemble std dev of sums over 6h\\
+\hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
 \textbf{dswrf}: downwards short ware      & 6 variations: & ensemble mean of mean values, \\
 \hspace*{\fill} radiation flux (sunshine) &   & ensemble mean of minimal values,\\
@@ -1602,7 +1661,9 @@ Basic covariates & {\#} & Variations\\
 \end{table}
 
 
-Next to distributional forests other methods / the same methods as in the simulation section are applied to this data set and their results are compared based on RMSE, log-likelihood values and CRPS values. The chosen methods and their specifications are listed in Table \ref{model_specification}.
+
+\subsection{Models}
+Next to distributional forests other methods are applied to this data set and their results are compared based on RMSE, log-likelihood values and CRPS values. The chosen methods and their specifications are listed in Table \ref{model_specification}.
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 %\begin{minipage}{\textwidth}
@@ -1636,143 +1697,16 @@ Next to distributional forests other methods / the same methods as in the simula
 \end{center}
 \end{table}
 
-For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between tp{\_}mean1218 and cape{\_}mean1218 for the location parameter and once between tp{\_}sprd1218 and cape{\_}mean1218 for the scale parameter. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
-In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made after testing and comparing three link functions (identity, quadratic and logarithmic function) by selecting the one leading to the best performance of the EMOS model in this application.
-
-\subsubsection{Means of Comparison}
-In order to compare the performance of the chosen methods three different values are calculated for the resulting models: the root of the mean squared error (RMSE), the log-likelihood value and the continuous ranked probability score (CRPS). All of them are evaluated out of sample, e.g. on a part of the data set that has not been used to build the model.\\
-%Therefore, overfitting would lead to worse results.\\
-\\
-The RMSE represents how close the estimated expected values are to the true observations. For a response variable $Y$ and a set of observations $\textbf{y} = \{y_i\}_{i = 1,\ldots,n}$ with the corresponding estimated parameters $\hat{\boldsymbol{\theta}} = \{\hat{\theta}_i\}_{i = 1,\ldots,n}$ the RMSE is defined as follows.
-
-$$
-\text{RMSE}(Y, \boldsymbol{y}, \boldsymbol{\hat{\theta}}) = \sqrt{\frac{1}{n} \sum_{i=1}^n (\mathbb{E}_{\hat{\theta}_i}(Y) - y_i)^2}
-$$
-
-In most cases this value does not measure the distributional fit as only the expected value is considered. However, in the case of a censored normal distribution the expected value of the observed variable is a transformation of the expected value of the latent variable which includes the location and the scale parameter.\\
-\\
-A typical way to evaluate the distributional fit is provided by the log-likelihood value. For each observation $y$ and the corresponding predicted parameter $\hat{\theta}$ the value of the log-likelihood function $\ell(\hat{\theta}; y)$ is calculated and then averaged over all observations in the testing data set. The higher the value the better the predictions of the model are.\\
-\\
-The CRPS is another value that measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
-$$
-\text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \le z))^2 dz
-$$
-where \(\mathbf{1}\) is the indicator function. Again, the value is averaged over all observations in the testing data set. As the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. One big advantage in terms of interpretability is that the resulting value is on the scale of the observation. \\
-\\
-As we are interested in comparing the performance of the distributional forest to those of other models, we choose one model as a reference and calculated the skills score with respect to the CRPS. In that way we obtain a measure of how much a method improves the model fit in terms of CRPS values compared to the reference method.
-$$
-\text{SkillsScore(method)} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
-$$
+For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \texttt{tp{\_}mean1218} and \texttt{cape{\_}mean1218} for the location parameter and once between \texttt{tp{\_}sprd1218} and \texttt{cape{\_}mean1218} for the scale parameter. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
+In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made based on the results of \cite{Gebetsberger2017} where different link functions (identity, quadratic and logarithmic function) have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function lead to the best performance of the EMOS model in this application.
 
 
 
 \SweaveOpts{eval = TRUE}
-\subsection{Station Axams}
+\subsection{Application on one station}
 First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available, starting in 1985 and ending in 2012, both years included.\\ 
-
-%%\subsubsection{Predictions}
-%In a first step one model is learned on the first 25 years (1985--2009, both included) and then predictions for the 26th, 27th and 28th year (2010, 2011 and 2012) are made. To illustrate the results, one day of July is chosen and the density functions of the estimated distributions for this day of all three prediction years are plotted together with the corresponding observations in Figure \ref{axams_onestation}.\\
-%The estimated distribution parameters for the 24th of July of 2010 are comparably high with location $3.146$ and scale $1.902$ which leads to a well fitting predicted expectation of $3.185$ close to the observed value of $3.001$. Also for 2011 and 2012 the estimated expected values of 1.085 and 0.483 provide reasonable predictions as the observed values are 1.121 and 0 respectively.\\
-
-\SweaveOpts{eval = FALSE}
-<<echo=FALSE, results=hide>>=
-#### Axams prediction 25 - 3
-if(file.exists("rain_Axams_pred.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_pred.rda")
-  load("rain_Axams_pred.rda")
-} else {
-  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_axams_pred.R")
-  source("rain_axams_pred.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  res <- rain_axams_pred(seedconst = 7, ntree = 100,
-                         forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = TRUE,
-                         frac = FALSE)
-  
-  save(res, file = "rain_Axams_pred.rda")
-}
-
-# prepare data for plot of estimated density functions
-pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
-
-pdays <- if(pday<19) c(pday, pday + 31, pday + 61) else c(pday, pday + 30, pday + 61)
-pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
-df_mu <- pdf$mu
-df_sigma <- pdf$sigma
-df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
-cbind(df_exp, res$testdata[pdays,"robs"])
-
-
-# plot predicted distributions together with observations
-#set.seed(res$call$seedconst)
-set.seed(7)
-x <- c(0.01, sort(runif(500,0.01,8)))
-y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
-y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
-y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
-dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
-
-# point mass (slightly shifted)
-pm1 <- c(0.04, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
-pm2 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
-pm3 <- c(-0.1, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
-
-# predictions
-pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-
-#legendheight
-lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
-lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
-lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
-@
-
-
-\begin{figure}[t!]
-\begin{center}
-<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
-plot(x = x, y = y1, type = "l", col = "red", 
-     main = paste0("July ", pday, dayending), ylab = "Density", 
-     xlab = "Total precipitation (power transformed)",
-     ylim = c(0,max(y1, y2, y3, pm1, pm2, pm3) + 0.01),
-     xlim = c(-1.5,8))
-    
-lines(x = x, y = y2, type = "l", col = "blue")
-    lines(x = x, y = y3, type = "l", col = "darkgreen")
-    #legend('topright', c("2010", "2011", "2012"), col = c("red", "blue", "darkgreen"), lty = 1, cex = 1)
-    
-    # plot point mass
-    lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
-    lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
-    lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
-    points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
-    points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
-    points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
-    
-    
-    # plot predictions
-    points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
-    points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
-    points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
-    
-    lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
-    lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
-    
-    # add labels
-    text(x = -0.8, y = lh1, labels = "2010", col = "red", cex = 0.8)
-    text(x = -0.8, y = lh2, labels = "2011", col = "blue", cex = 0.8)
-    text(x = -0.8, y = lh3, labels = "2012", col = "darkgreen", cex = 0.8)
-@
-\caption{\label{axams_onestation}Predictions at station Axams for one day in July of 2010, 2011 and 2012.}
-\end{center}
-\end{figure}
-
-
-\SweaveOpts{eval = TRUE}
-
+The results of fitting one distributional forest to the first 25 years of the data set and predicting the total amount of precipitation for one day of each of the three successive years have been shown in the introduction in Figure \ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of this forest model and compare its results to those of the GAM models and the EMOS model based on PIT-histograms.\\
+\\
 As seen in Table \ref{model_specification} the forest model includes all 82 covariates. In a single tree model it can easily be observed which covariates are used as split variables and hence have an impact on the response variable. In a forest model though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been chosen. The 10 leading covariates of the above described forest model for the station Axams learned on the first 25 year are listed in Figure \ref{varimp}. As expected, the numerical forecast for total precipitation is the most frequently selected. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
 <<variabble_importance, echo=FALSE, eval=TRUE>>=
 if(file.exists("vimp_crps.rda")){
@@ -2009,10 +1943,14 @@ pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS"
 
 
 \SweaveOpts{eval = TRUE}
-\subsubsection{Cross-Validation}
-After analyzing the results of the models on one data set only where visualization is easier we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split randomly into 10 roughly equally sized data sets. While 9 of them are used as learning data the 10th is the testing data for which predictions are made and evaluated. This is done by calculating the RMSE, the log-likelihood value and the CRPS value for each of the observations in the testing data and then averaging them. Each of the 10 parts is selected as testing data once which leads to 10 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. 
+%\subsubsection{Cross-Validation}
+After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split randomly into 10 roughly equally sized data sets. While 9 of them are used as learning data the 10th is the testing data for which predictions are made and evaluated. This is done by calculating (the RMSE, the log-likelihood value and) the CRPS value for each of the observations in the testing data and then averaging them. Each of the 10 parts is selected as testing data once which leads to 10 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. \\
+As we are interested in comparing the performance of the distributional forest to those of other models, we choose one model as a reference and calculated the skills score with respect to the CRPS. In that way we obtain a measure of how much a method improves the model fit in terms of CRPS values compared to the reference method.
+$$
+\text{SkillsScore(method)} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
+$$
 The results regarding the CRPS values are illustrated by the boxplots in Figure \ref{boxplots_crps_axams} where the skills score of the CRPS is the chosen measurement scale with the EMOS model as the reference model represented by the horizontal line at height 0.\\
-The boxplots of the RMSE and the log-likelihood values can be found in the appendix.
+(The boxplots of the RMSE and the log-likelihood values can be found in the appendix.)
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
 if(file.exists("rain_Axams.rda")){
@@ -2071,7 +2009,7 @@ In this particular setting, a very high number of covariates is available which 
 Therefore, in comparing these methods one advantage of distributional forests is clearly outlined as they offer a very flexible framework which enables an easy use of the method and at the same time lead to an improvement in performance.
 
 %\newpage
-\subsection{Predictions over all stations}
+\subsection{Application on all stations}
 Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this station we are now going to apply the methods on all stations. At each of them, the first 25 years are used as learning data set and predictions are made for the last 3 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure \ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations.\\
 Again, the corresponding boxplots of the RMSE and the log-likelihood values can be found in the appendix.
 %NAs in gamlss in 13 stations!!!\\
@@ -2217,15 +2155,17 @@ On the map in Figure \ref{map} each observation station is represented by a poin
 
 \begin{figure}[h!]
 \begin{center}
-<<map, fig=TRUE, echo=FALSE>>=
+<<map, fig=TRUE, echo=FALSE, height=6, width=9>>=
 
   raster::image(tirol.dem, col = rev(gray.colors(100)),
-                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude")
+                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
+                xlim = c(9.8,13.2), 
+                ylim = c(46.6, 47.8))
   plot(tirol.gadm, add = TRUE)
-  points(sp, pch = 21, bg = level_col_crps_ssc, col = 1)
+  points(sp, pch = 21, bg = level_col_crps_ssc, col = 1, cex = 1.5)
   #points(sp, pch = 21, bg = col_crps_ssc, col = 1)
   #points(sp, pch = 21, bg = transp_col_crps_ssc, col = 1)
-  legend("topleft", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS"), cex = 1)
+  legend("topleft", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS"), cex = 1, bty = "n")
   
 @
 \caption{\label{map}Map of all observations with corresponding CRPS skills score for predictions.}
