@@ -50,10 +50,10 @@
     if (sw < ctrl$minsplit) 
         return(partynode(as.integer(id)))
 
-    svars <- partyvars
+    svars <- which(partyvars > 0)
     if (ctrl$mtry < Inf) {
-        mtry <- min(length(partyvars), ctrl$mtry)
-        svars <- .resample(partyvars, mtry)
+        mtry <- min(sum(partyvars > 0), ctrl$mtry)
+        svars <- .resample(partyvars, mtry, prob = partyvars)
     } 
 
     thismodel <- trafo(subset = subset, weights = weights, info = info)
@@ -108,7 +108,7 @@
         p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
                drop = FALSE]
         info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
-                              sf[!(names(sf) %in% c("criterion"))],
+                              sf[!(names(sf) %in% c("criteria"))],
                               thismodel[!(names(thismodel) %in% c("estfun"))])
         if (!ctrl$saveinfo) info <- NULL
 
@@ -135,7 +135,7 @@
     ret$info <- info
 
     ### determine observations for splitting (only non-missings)
-    snotNA <- subset[!subset %in% missings(data, varid_split(thissplit))]
+    snotNA <- subset[!subset %in% .get_NAs(data, varid_split(thissplit))]
     ### and split observations
     kidids <- kidids_node(ret, model.frame(data), obs = snotNA)
 
@@ -149,7 +149,8 @@
 
     ### compute surrogate splits
     if (ctrl$maxsurrogate > 0L) {
-        pv <- svars[svars != varid_split(thissplit)]
+        pv <- partyvars
+        pv[varid_split(thissplit)] <- 0
         if (ctrl$numsurrogate)
             pv <- pv[sapply(model.frame(data)[, pv], function(x) is.numeric(x) || is.ordered(x))]
         ret$surrogates <- .extree_surrogates(kidids, data = data, 
@@ -198,7 +199,7 @@
     dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = max(split))
     dm[cbind(subset, split)] <- 1
     thismodel <- list(estfun = dm)
-    sf <- selectfun(thismodel, subset = subset, weights = weights, whichvar = partyvars,
+    sf <- selectfun(thismodel, subset = subset, weights = weights, whichvar = which(partyvars > 0),
     ctrl = ctrl)
     p <- sf$criteria
     ### partykit always used p-values, so expect some differences
@@ -212,7 +213,7 @@
             order(p["statistic", ties]) / (sum(ties) * 1000)
     }
 
-    ret <- vector(mode = "list", length = min(c(length(partyvars), 
+    ret <- vector(mode = "list", length = min(c(sum(partyvars > 0), 
                                                 ctrl$maxsurrogate)))
 
     for (i in 1L:length(ret)) {
@@ -331,7 +332,7 @@
 
 ## extensible tree (model) function
 extree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-  yx = "none", ...)
+  yx = "none", nmax = c("yx" = Inf, "z" = Inf), ...)
 {
   ## call
   cl <- match.call()
@@ -487,21 +488,6 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
       ymult <- length(vars$y) > 1L
       npart <- 2L
     }
-
-    yx <- list("y" = model.matrix(~ 0 + ., Formula::model.part(formula, if(noformula) data else mf, lhs = TRUE)))         
-    for(i in (1L:npart)[-npart]) {
-      ni <- paste("x", if(i == 1L) "" else i, sep = "")
-      ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
-      yx[[ni]] <- model.matrix(ti, if(noformula) data else mf)
-      if(ncol(yx[[ni]]) < 1L) {
-        yx[[ni]] <- NULL
-      } else {
-        attr(yx[[ni]], "formula") <- formula(formula, rhs = i)
-        attr(yx[[ni]], "terms") <- ti
-        attr(yx[[ni]], "offset") <- cl$offset
-      }    
-    }
-
   }
 
   ## FIXME: subsequently fitting, testing, splitting
@@ -510,10 +496,51 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   ## - split: additionally needs test output
   ## - tbd: control of all details
 
-  return(list(
+  ret <- list(
     data = if(noformula) data else mf,
     variables = vars,
-    terms = mt,
-    yx = yx
-  ))
+    terms = mt
+  )
+
+  mf <- ret$data
+  yxvars <- c(vars$y, vars$x, vars$offset)
+  zerozvars <- which(vars$z == 0)
+
+  if (length(nmax) == 1) nmax <- c("yx" = nmax, "z" = nmax)
+  ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
+                           nmax = nmax["z"])
+  ret$yxindex <- NULL
+  yxmf <- mf
+  if (is.finite(nmax["yx"])) {
+      ret$yxindex <- inum::inum(mf[, yxvars, drop = FALSE], total = TRUE, 
+                                as.interval = names(mf)[vars$y], complete.cases.only = TRUE, 
+                                nmax = nmax["yx"])
+      yxmf <- attr(ret$yxindex, "levels")
+      yxmf[["(weights)"]] <- NULL
+      attr(ret$yxindex, "levels") <- yxmf
+  }
+
+  ret$missings <- lapply(ret$data, function(x) which(is.na(x)))
+  ret$yxmissings <- sort(unique(do.call("c", ret$missings[yxvars])))
+
+  if (yx == "matrix") {
+    yx <- list("y" = model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE)))         
+    for(i in (1L:npart)[-npart]) {
+      ni <- paste("x", if(i == 1L) "" else i, sep = "")
+      ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
+      yx[[ni]] <- model.matrix(ti, yxmf)
+      if(ncol(yx[[ni]]) < 1L) {
+        yx[[ni]] <- NULL
+      } else {
+        attr(yx[[ni]], "formula") <- formula(formula, rhs = i)
+        attr(yx[[ni]], "terms") <- ti
+        attr(yx[[ni]], "offset") <- yxmf[["(offset)"]]
+      }    
+    }
+    ret$yx <- yx
+  }
+
+  class(ret) <- "extree_data"
+  ret
 }
+
