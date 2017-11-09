@@ -243,13 +243,58 @@
 
 .extree_fit <- function(data, trafo, partyvars, subset, weights, ctrl) {
     ret <- list()
+
+    nf <- names(formals(trafo))
+    if (all(c("subset", "weights", "info") %in% nf)) {
+        mytrafo <- trafo
+    } else {
+        stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
+        stopifnot(!is.null(yx <- data$yx))
+        mytrafo <- function(subset, weights, info, ...) {
+            iy <- .get_index(data, "yx")
+            if (is.null(iy)) {
+                NAyx <- .get_missings(data, "yx")
+                if (length(NAyx) > 0) {
+                    y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$y))
+                    y[-NAyx, ,drop = FALSE] <- yx$y
+                    x <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$x))
+                    x[-NAyx, ,drop = FALSE] <- yx$x
+                    offset <- numeric(nrow(model.frame(data)))
+                    offset[-NAyx] <- attr(yx$x, "offset")
+                } else {
+                    y <- yx$y
+                    x <- yx$x
+                    offset <- attr(yx$x, "offset")
+                }
+                subset <- subset[!(subset %in% NAyx)]
+                y <- y[-subset,,drop = FALSE]
+		x <- x[-subset,,drop = FALSE]
+                weights <- weights[-subset]
+                offset <- offset[-subset]
+                m <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, ...)
+                if (!is.null(ef <- m$estfun)) {
+                    Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
+                    Y[subset,] <- ef
+                    m$estfun <- Y
+                }
+            } else {
+                w <- inum::ctabs(ix = iy, subset = subset, weights = weights)[-1]
+                offset <- attr(yx$x, "offset")
+                m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, ...)
+                if (!is.null(ef <- m$estfun))
+                    m$estfun <- rbind(0, ef)
+            }
+            return(m)
+        }
+    }
+                 
     if (!ctrl$update) {
-        rootestfun <- trafo(subset = subset, weights = weights)
-        updatetrafo <- function(subset, weights, info)
+        rootestfun <- mytrafo(subset = subset, weights = weights)
+        updatetrafo <- function(subset, weights, info, ...)
             return(rootestfun)
     } else {
-        updatetrafo <- function(subset, weights, info) {
-            ret <- trafo(subset = subset, weights = weights, info = info)
+        updatetrafo <- function(subset, weights, info, ...) {
+            ret <- trafo(subset = subset, weights = weights, info = info, ...)
             if (!ret$converged) return(NULL)
             ret
         }

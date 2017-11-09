@@ -88,7 +88,8 @@
 
     x <- .get_var(data, j)
     ix <- .get_index(data, j)
-    X <- ux <- attr(ix, "levels")
+    ux <- attr(ix, "levels")
+
     MIA <- FALSE
     if (ctrl$MIA) MIA <- any(ix[subset] == 0)
 
@@ -103,10 +104,6 @@
         MAXSELECT <- TRUE
         X <- integer(0)
 
-        if (is.numeric(ux)) {
-            X <- .get_index(data, j)
-            ux <- levels(X)
-        }
         if (MIA) {
             Xlev <- attr(ix, "levels")
             ixleft <- ix + 1L
@@ -119,6 +116,8 @@
     } else {
         MAXSELECT <- FALSE
         MIA <- FALSE
+        if (is.numeric(x))
+            X <- matrix(c(0, as.double(attr(ix, "levels"))), ncol = 1)
     }
     cluster <- .get_var(data, "(cluster)")
 
@@ -299,6 +298,7 @@ model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
 }
 
 .get_index <- function(object, varid) {
+    if (varid == "yx") return(object$yxindex)
     if (varid %in% c(object$variables$y, object$variables$x))
         return(object$yxindex) ### may be NULL
 
@@ -328,10 +328,12 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     d <- eval(mf, parent.frame())
 
     Y <- d$yx$y
+    if (!is.null(.get_index(d, "yx")))
+        Y <- rbind(0, Y)
     subset <- 1:nrow(model.frame(d))
     control$update <- FALSE
 
-    .extree_fit(data = d, trafo = function(subset, weights, ...) list(estfun = Y), 
+    .extree_fit(data = d, trafo = function(subset, weights, info, ...) list(estfun = Y), 
                 partyvars = d$variables$z, 
                 subset = subset, .get_var(d, "(weights)"), ctrl = control)
 
@@ -404,4 +406,7 @@ info_node(node_party(ct))
 
 system.time(ct2 <- Ctree(Species ~ ., data = iris, control = ctree_control()))
 info_node(ct2)
+
+# system.time(ct2 <- Ctree(Species ~ ., data = iris, control = ctree_control(nmax = 5)))
+# info_node(ct2)
 
