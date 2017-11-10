@@ -320,7 +320,8 @@ model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
 .y2infl <- partykit:::.y2infl
 
 Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-                  control = ctree_control(), ytrafo = NULL, converged = NULL, scores = NULL, ...) {
+                  control = ctree_control(), ytrafo = NULL, converged = NULL, scores = NULL, 
+                  doFit = TRUE, ...) {
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
@@ -375,8 +376,11 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
         converged <- TRUE
     }            
 
-    tree <- .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                        subset = subset, weights, ctrl = control)
+    update <- function(subset, weights, control)
+        .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                        subset = subset, weights = weights, ctrl = control)
+    if (!doFit) return(list(d = d, update = update))
+    tree <- update(subset = subset, weights = weights, control = control)
     
     mf <- model.frame(d)
     if (is.null(weights)) weights <- rep(1, nrow(mf))
@@ -478,6 +482,14 @@ system.time(ct3 <- Ctree(Species ~ ., data = iris, control = ctrl))
 info_node(node_party(ct3))
 
 ct3
+
+ct4 <- Ctree(Species ~ ., data = iris, control = ctrl, doFit = FALSE)
+i <- 1:nrow(iris)
+ctrl$update <- FALSE
+system.time(replicate(100, ct4$update(sort(sample(i, floor(length(i)/2))), NULL, ctrl)))
+
+library("randomForest")
+system.time(randomForest(Species ~ ., data = iris, ntree = 100))
 
 ### diabetes
 
