@@ -314,7 +314,13 @@ model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
     object$missings[[varid]]
 }
 
-Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster, trafo, control, ...) {
+.get_weights <- function(object)
+    .get_var(object, "(weights)")
+
+.y2infl <- partykit:::.y2infl
+
+Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
+                  control = ctree_control(), ytrafo = NULL, converged = NULL, scores = NULL, ...) {
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
@@ -327,9 +333,45 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
 
     d <- eval(mf, parent.frame())
     subset <- 1:nrow(model.frame(d))
+    d$scores <- vector(mode = "list", length = length(d$variables$z))
+    names(d$scores) <- names(model.frame(d))
+    if (!is.null(scores)) {
+        d$scores[names(scores)] <- scores
+        yvars <- names(model.frame(d))[d$variables$y]
+        yvars <- yvars[names(scores)]
+        if (length(yvars) > 0) {
+            for (yvar in yvars) attr(d$data[[yvar]], "scores") <- scores[[yvar]]
+        }
+    }
 
-    .extree_fit(data = d, trafo = trafo(d), partyvars = d$variables$z, 
-                subset = subset, .get_var(d, "(weights)"), ctrl = control)
+    if (is.function(ytrafo)) {
+        control$update <- TRUE
+        nf <- names(formals(ytrafo))
+        if (all(c("data", "weights", "control") %in% nf))
+            ytrafo <- ytrafo(data = d, weights = .get_weights(d), control = control)
+        stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
+                  all(c("y", "x", "weights", "offset", "start") %in% nf))
+    } else {
+        control$update <- FALSE
+        stopifnot(length(d$variables$x) == 0)
+        if (!is.null(iy <- .get_index(d, "yx"))) {
+            Y <- .y2infl(model.frame(d, yxonly = TRUE), response = d$variables$y, ytrafo = ytrafo)
+            Y <- rbind(0, Y)
+        } else {
+            ### check missings
+            Y <- .y2infl(model.frame(d, yxonly = FALSE), response = d$variables$y, ytrafo = ytrafo)
+        }
+        ytrafo <- function(subset, weights, info, estfun, object, ...) list(estfun = Y)
+    }
+    if (is.function(converged)) {
+        stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
+        converged <- converged(d, .get_weights(d), control = control)
+    } else {
+        converged <- TRUE
+    }            
+
+    .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                subset = subset, .get_weights(d), ctrl = control)
 
 }
 
@@ -400,53 +442,39 @@ info_node(node_party(ct))
 
 ct
 
-tfun <- function(data) {
-    Y <- data$yx$y
-    if (!is.null(.get_index(data, "yx")))
-        Y <- rbind(0, Y)
-    function(subset, weights, info, estfun, object, ...) list(estfun = Y)
-}
-
-ctrl <- ctree_control()
-ctrl$update <- FALSE
-
-
-system.time(ct2 <- Ctree(Species ~ ., data = iris, trafo = tfun, control = ctrl))
+system.time(ct2 <- Ctree(Species ~ ., data = iris))
 info_node(ct2)
 
 ct2
 
 ctrl <- ctree_control(nmax = 50)
-ctrl$update <- FALSE
-
-
-system.time(ct3 <- Ctree(Species ~ ., data = iris, trafo = tfun, control = ctrl))
+system.time(ct3 <- Ctree(Species ~ ., data = iris, control = ctrl))
 info_node(ct3)
 
 ct3
 
 ### diabetes
 
-tfun <- function(...)
-    function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
-        glm(y ~ 0 + x, family = binomial, start = start, ...)
+logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
+    glm(y ~ 0 + x, family = binomial, start = start, ...)
 
 data("PimaIndiansDiabetes", package = "mlbench")
 
-ctrl <- ctree_control()
-ctrl$update <- TRUE
+PID <- PimaIndiansDiabetes
+# PID <- PID[sample(1:nrow(PID), 10000, replace = TRUE),]
+
 library("sandwich")
 
 system.time(d1 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
-      data = PimaIndiansDiabetes, trafo = tfun, control = ctrl))
+      data = PID, ytrafo = logit))
 
 d1
 
 ctrl <- ctree_control(nmax = 25)
-ctrl$update <- TRUE
 
 system.time(d2 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
-      data = PimaIndiansDiabetes, trafo = tfun, control = ctrl))
+      data = PID, ytrafo = logit, control = ctrl))
 
 d2
 
+warnings()

@@ -242,7 +242,7 @@
     return(ret)
 }
 
-.extree_fit <- function(data, trafo, partyvars, subset, weights, ctrl) {
+.extree_fit <- function(data, trafo, converged, partyvars, subset, weights, ctrl) {
     ret <- list()
 
     nf <- names(formals(trafo))
@@ -316,9 +316,11 @@
     } else {
         updatetrafo <- function(subset, weights, info, ...) {
             ret <- mytrafo(subset = subset, weights = weights, info = info, ...)
-            if (!is.null(ret$converged)) {
-                if (!ret$converged) return(NULL)
-            }
+            if (is.null(ret$converged)) ret$converged <- TRUE
+            conv <- TRUE
+            if (is.function(converged)) conv <- converged(subset, weights)
+            ret$converged <- ret$converged && conv
+            if (!ret$converged) return(NULL)
             ret
         }
     }
