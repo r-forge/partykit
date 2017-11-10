@@ -326,7 +326,11 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     mf <- match.call(expand.dots = FALSE)
     m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
     mf <- mf[c(1L, m)]
-    mf$yx <- "matrix"
+    mf$yx <- "none"
+    if (is.function(ytrafo)) {
+        if (all(c("y", "x") %in% names(formals(ytrafo))))
+            mf$yx <- "matrix"
+    }
     mf$nmax <- control$nmax
     ## evaluate model.frame
     mf[[1L]] <- quote(extree)
@@ -343,12 +347,13 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
             for (yvar in yvars) attr(d$data[[yvar]], "scores") <- scores[[yvar]]
         }
     }
+    weights <- .get_weights(d)
 
     if (is.function(ytrafo)) {
         control$update <- TRUE
         nf <- names(formals(ytrafo))
         if (all(c("data", "weights", "control") %in% nf))
-            ytrafo <- ytrafo(data = d, weights = .get_weights(d), control = control)
+            ytrafo <- ytrafo(data = d, weights = weights, control = control)
         stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
                   all(c("y", "x", "weights", "offset", "start") %in% nf))
     } else {
@@ -365,14 +370,35 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     }
     if (is.function(converged)) {
         stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
-        converged <- converged(d, .get_weights(d), control = control)
+        converged <- converged(d, weights, control = control)
     } else {
         converged <- TRUE
     }            
 
-    .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                subset = subset, .get_weights(d), ctrl = control)
+    tree <- .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                        subset = subset, weights, ctrl = control)
+    
+    mf <- model.frame(d)
+    if (is.null(weights)) weights <- rep(1, nrow(mf))
 
+    fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
+                         "(weights)" = weights,
+                         check.names = FALSE)
+    fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
+    names(fitted)[3] <- "(response)"
+    ret <- party(tree, data = mf, fitted = fitted, 
+                 info = list(call = match.call(), control = control))
+#    ret$update <- tree$treefun
+    ret$trafo <- tree$ytrafo
+    class(ret) <- c("constparty", class(ret))
+
+    ### doesn't work for Surv objects
+    # ret$terms <- terms(formula, data = mf)
+    ret$terms <- d$terms$all
+    ### need to adjust print and plot methods
+    ### for multivariate responses
+    ### if (length(response) > 1) class(ret) <- "party"
+    return(ret)
 }
 
 library("partykit")
@@ -443,13 +469,13 @@ info_node(node_party(ct))
 ct
 
 system.time(ct2 <- Ctree(Species ~ ., data = iris))
-info_node(ct2)
+info_node(node_party(ct2))
 
 ct2
 
 ctrl <- ctree_control(nmax = 50)
 system.time(ct3 <- Ctree(Species ~ ., data = iris, control = ctrl))
-info_node(ct3)
+info_node(node_party(ct3))
 
 ct3
 
