@@ -56,7 +56,8 @@
         svars <- .resample(partyvars, mtry, prob = partyvars)
     } 
 
-    thismodel <- trafo(subset = subset, weights = weights, info = info)
+    thismodel <- trafo(subset = subset, weights = weights, info = info, 
+                       estfun = TRUE, object = FALSE)
     if (is.null(thismodel))
         return(partynode(as.integer(id)))
 
@@ -245,15 +246,15 @@
     ret <- list()
 
     nf <- names(formals(trafo))
-    if (all(c("subset", "weights", "info") %in% nf)) {
+    if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
         mytrafo <- trafo
     } else {
         stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
         stopifnot(!is.null(yx <- data$yx))
-        mytrafo <- function(subset, weights, info, ...) {
+        mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
             iy <- .get_index(data, "yx")
             if (is.null(iy)) {
-                NAyx <- .get_missings(data, "yx")
+                NAyx <- .get_NAs(data, "yx")
                 if (length(NAyx) > 0) {
                     y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$y))
                     y[-NAyx, ,drop = FALSE] <- yx$y
@@ -267,20 +268,40 @@
                     offset <- attr(yx$x, "offset")
                 }
                 subset <- subset[!(subset %in% NAyx)]
-                y <- y[-subset,,drop = FALSE]
-		x <- x[-subset,,drop = FALSE]
-                weights <- weights[-subset]
-                offset <- offset[-subset]
-                m <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, ...)
+                y <- y[subset,,drop = FALSE]
+		x <- x[subset,,drop = FALSE]
+                weights <- weights[subset]
+                offset <- offset[subset]
+                if (all(c("estfun", "object") %in% nf)) { 
+                    m <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, 
+                               estfun = estfun, object = object, ...)
+                } else {
+                    obj <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, ...)
+                    m <- list(coefficients = coef(obj),
+                              objfun = logLik(obj),
+                              estfun = NULL, object = NULL)
+                    if (estfun) m$estfun <- estfun(obj)
+                    if (object) m$object <- obj
+                }
                 if (!is.null(ef <- m$estfun)) {
                     Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
-                    Y[subset,] <- ef
+                    Y[subset,] <- m$estfun
                     m$estfun <- Y
-                }
+                } 
             } else {
-                w <- inum::ctabs(ix = iy, subset = subset, weights = weights)[-1]
+                w <- libcoin::ctabs(ix = iy, subset = subset, weights = weights)[-1]
                 offset <- attr(yx$x, "offset")
-                m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, ...)
+                if (all(c("estfun", "object") %in% nf)) { 
+                    m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
+                               estfun = estfun, object = object, ...)
+                } else {
+                    obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, ...)
+                    m <- list(coefficients = coef(obj),
+                              objfun = logLik(obj),
+                              estfun = NULL, object = NULL)
+                    if (estfun) m$estfun <- estfun(obj)
+                    if (object) m$object <- obj
+                }
                 if (!is.null(ef <- m$estfun))
                     m$estfun <- rbind(0, ef)
             }
@@ -294,8 +315,10 @@
             return(rootestfun)
     } else {
         updatetrafo <- function(subset, weights, info, ...) {
-            ret <- trafo(subset = subset, weights = weights, info = info, ...)
-            if (!ret$converged) return(NULL)
+            ret <- mytrafo(subset = subset, weights = weights, info = info, ...)
+            if (!is.null(ret$converged)) {
+                if (!ret$converged) return(NULL)
+            }
             ret
         }
     }

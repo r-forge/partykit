@@ -314,7 +314,7 @@ model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
     object$missings[[varid]]
 }
 
-Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster, control, ...) {
+Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster, trafo, control, ...) {
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
@@ -326,15 +326,9 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     mf[[1L]] <- quote(extree)
 
     d <- eval(mf, parent.frame())
-
-    Y <- d$yx$y
-    if (!is.null(.get_index(d, "yx")))
-        Y <- rbind(0, Y)
     subset <- 1:nrow(model.frame(d))
-    control$update <- FALSE
 
-    .extree_fit(data = d, trafo = function(subset, weights, info, ...) list(estfun = Y), 
-                partyvars = d$variables$z, 
+    .extree_fit(data = d, trafo = trafo(d), partyvars = d$variables$z, 
                 subset = subset, .get_var(d, "(weights)"), ctrl = control)
 
 }
@@ -406,13 +400,53 @@ info_node(node_party(ct))
 
 ct
 
-system.time(ct2 <- Ctree(Species ~ ., data = iris, control = ctree_control()))
+tfun <- function(data) {
+    Y <- data$yx$y
+    if (!is.null(.get_index(data, "yx")))
+        Y <- rbind(0, Y)
+    function(subset, weights, info, estfun, object, ...) list(estfun = Y)
+}
+
+ctrl <- ctree_control()
+ctrl$update <- FALSE
+
+
+system.time(ct2 <- Ctree(Species ~ ., data = iris, trafo = tfun, control = ctrl))
 info_node(ct2)
 
 ct2
 
-system.time(ct3 <- Ctree(Species ~ ., data = iris, control =
-ctree_control(nmax = 50, stump = FALSE))) 
+ctrl <- ctree_control(nmax = 50)
+ctrl$update <- FALSE
+
+
+system.time(ct3 <- Ctree(Species ~ ., data = iris, trafo = tfun, control = ctrl))
 info_node(ct3)
 
 ct3
+
+### diabetes
+
+tfun <- function(...)
+    function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
+        glm(y ~ 0 + x, family = binomial, start = start, ...)
+
+data("PimaIndiansDiabetes", package = "mlbench")
+
+ctrl <- ctree_control()
+ctrl$update <- TRUE
+library("sandwich")
+
+system.time(d1 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
+      data = PimaIndiansDiabetes, trafo = tfun, control = ctrl))
+
+d1
+
+ctrl <- ctree_control(nmax = 25)
+ctrl$update <- TRUE
+
+system.time(d2 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
+      data = PimaIndiansDiabetes, trafo = tfun, control = ctrl))
+
+d2
+
