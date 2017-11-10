@@ -404,9 +404,15 @@ dim(iris)
 system.time(ct <- ctree(Species ~ ., data = iris))
 info_node(node_party(ct))
 
+ct
+
 system.time(ct2 <- Ctree(Species ~ ., data = iris, control = ctree_control()))
 info_node(ct2)
 
-# system.time(ct2 <- Ctree(Species ~ ., data = iris, control = ctree_control(nmax = 5)))
-# info_node(ct2)
+ct2
 
+system.time(ct3 <- Ctree(Species ~ ., data = iris, control =
+ctree_control(nmax = 50, stump = FALSE))) 
+info_node(ct3)
+
+ct3
