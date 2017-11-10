@@ -511,30 +511,6 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   if(is.null(vars$y)) stop("at least one 'y' variable must be specified")
 
 
-  ## FIXME: separate object with options for: discretization, condensation, some NA handling
-  ## below is just "proof-of-concept" implementation using plain model.matrix() which could
-  ## be included as one option...
-  if(yx == "matrix") {
-  
-    ## fake formula/terms if necessary
-    if(noformula) {
-      formula <- Formula::as.Formula(sprintf("%s ~ %s | %s",
-        paste(vanam[vars$y], collapse = " + "),
-        if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
-        paste(vanam[vars$z > 0], collapse = " + ")
-      ))
-      mt <- list(
-        "all" = terms(formula),
-        "y"   = terms(formula, data = data, rhs = 0L),
-        "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
-        "yx"  = terms(formula, data = data, rhs = 1L),
-        "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L)
-      )
-      ymult <- length(vars$y) > 1L
-      npart <- 2L
-    }
-  }
-
   ## FIXME: subsequently fitting, testing, splitting
   ## - fit: either pre-processed _and_ subsetted data --or-- full data object plus subset vector
   ## - test: additionally needs fit output --and-- fit function
@@ -553,13 +529,13 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
 
   if (length(nmax) == 1) nmax <- c("yx" = nmax, "z" = nmax)
   ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
-                           nmax = nmax["z"])
+                           nmax = nmax["z"], meanlevels = FALSE)
   ret$yxindex <- NULL
   yxmf <- mf
   if (is.finite(nmax["yx"])) {
       ret$yxindex <- inum::inum(mf[, yxvars, drop = FALSE], total = TRUE, 
                                 as.interval = names(mf)[vars$y], complete.cases.only = TRUE, 
-                                nmax = nmax["yx"])
+                                nmax = nmax["yx"], meanlevels = FALSE)
       yxmf <- attr(ret$yxindex, "levels")
       yxmf[["(weights)"]] <- NULL
       attr(ret$yxindex, "levels") <- yxmf
@@ -568,7 +544,27 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   ret$missings <- lapply(ret$data, function(x) which(is.na(x)))
   ret$yxmissings <- sort(unique(do.call("c", ret$missings[yxvars])))
 
+  ## FIXME: separate object with options for: discretization, condensation, some NA handling
+  ## below is just "proof-of-concept" implementation using plain model.matrix() which could
+  ## be included as one option...
   if (yx == "matrix") {
+
+    ## fake formula/terms if necessary
+    formula <- Formula::as.Formula(sprintf("%s ~ %s | %s",
+      paste(vanam[vars$y], collapse = " + "),
+      if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
+      paste(vanam[vars$z > 0], collapse = " + ")
+    ))
+    mt <- list(
+      "all" = terms(formula),
+      "y"   = terms(formula, data = data, rhs = 0L),
+      "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
+      "yx"  = terms(formula, data = data, rhs = 1L),
+      "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L)
+    )
+    ymult <- length(vars$y) > 1L
+    npart <- 2L
+
     yx <- list("y" = model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE)))         
     for(i in (1L:npart)[-npart]) {
       ni <- paste("x", if(i == 1L) "" else i, sep = "")
