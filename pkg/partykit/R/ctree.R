@@ -306,6 +306,7 @@ ctree_control <- function
     stump = FALSE, 
     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
     nresample = 9999L, 
+    tol = sqrt(.Machine$double.eps),
     MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     maxsurrogate = 0L, 
     numsurrogate = FALSE,
@@ -349,7 +350,7 @@ ctree_control <- function
                    bonferroni = "Bonferroni" %in% testtype, 
                    splitflavour = "ctree"),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-           testtype = ttesttype, nresample = nresample,
+           testtype = ttesttype, nresample = nresample, tol = tol,
            intersplit = intersplit))
 }
 
@@ -441,6 +442,7 @@ ctree <- function
         } else {
             rtype <- class(data[[response]])[1]
             if (rtype == "integer") rtype <- "numeric"
+            if (rtype == "AsIs") rtype <- "numeric"
         }
         response <- data[[response]]
 
