@@ -447,6 +447,7 @@ predict_party.constparty <- function(party, id, newdata = NULL,
         rtype <- class(response)[1]
         if (rtype == "ordered") rtype <- "factor"    
         if (rtype == "integer") rtype <- "numeric"
+        if (rtype == "AsIs") rtype <- "numeric"
 
         if (type %in% c("quantile", "density") && rtype != "numeric")
             stop("quantile and density estimation currently only implemented for numeric responses")

@@ -835,3 +835,6 @@ tree <- partykit::ctree(y ~ Age, weights=n, data=d, control=ctrl)
 tree
 
 (w1 <- predict(tree, type = "node"))
+
+(ct <- ctree(dist + I(dist^2) ~ speed, data = cars))
+predict(ct)
