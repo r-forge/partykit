@@ -494,7 +494,7 @@ system.time(randomForest(Species ~ ., data = iris, ntree = 100))
 ### diabetes
 
 logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
-    glm(y ~ 0 + x, family = binomial, start = start, ...)
+    glm(y ~ 0 + x, family = binomial, start = start, weights = weights, ...)
 
 data("PimaIndiansDiabetes", package = "mlbench")
 
@@ -508,11 +508,61 @@ system.time(d1 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + ins
 
 d1
 
-ctrl <- ctree_control(nmax = 25)
+ctrl <- ctree_control()
+ctrl$splitflavour <- "exhaustive"
+ctrl$restart <- FALSE
+ctrl$breakties <- TRUE
 
 system.time(d2 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
       data = PID, ytrafo = logit, control = ctrl))
 
 d2
 
+glmtree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
+      data = PID, family = binomial())
+
+ctrl <- ctree_control()
+ctrl$splitflavour <- "exhaustive"
+ctrl$testflavour <- "mfluc"
+ctrl$restart <- FALSE
+
+source("mob.R")
+
+system.time(d2 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
+      data = PID, ytrafo = logit, control = ctrl))
+
+d2
+
+ctrl <- ctree_control(nmax = 25)
+
+system.time(d3 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
+      data = PID, ytrafo = logit, control = ctrl))
+
+d3
+
+
 warnings()
+
+     ### regression
+     airq <- subset(airquality, !is.na(Ozone))
+
+ctrl <- ctree_control()#maxsurr = 3)
+
+     ct1 <- ctree(Ozone ~ ., data = airq, control = ctrl)
+     ct2 <- Ctree(Ozone ~ ., data = airq, control = ctrl)
+
+max(abs(predict(ct1) - predict(ct2)))
+
+data("GBSG2", package = "TH.data")
+library("survival")
+GBSG2ct1 <- ctree(Surv(time, cens) ~ ., data = GBSG2)
+GBSG2ct2 <- Ctree(Surv(time, cens) ~ ., data = GBSG2)
+
+### multivariate responses
+airct1 <- ctree(Ozone + Temp ~ ., data = airq)
+airct2 <- Ctree(Ozone + Temp ~ ., data = airq)
+all.equal(predict(airct1), predict(airct2))
+
+
+ct <- Ctree(dist + I(dist^2) ~ speed, data = cars)
+

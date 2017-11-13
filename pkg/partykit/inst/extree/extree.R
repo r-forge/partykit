@@ -109,7 +109,7 @@
         p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
                drop = FALSE]
         info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
-                              sf[!(names(sf) %in% c("criteria"))],
+                              sf[!(names(sf) %in% c("criteria", "converged"))],
                               thismodel[!(names(thismodel) %in% c("estfun"))])
         if (!ctrl$saveinfo) info <- NULL
 
@@ -333,13 +333,13 @@
         ### </FIXME>
         for (j in whichvar) {
             tst <- switch(ctrl$testflavour,
-                "ctree" = .ctree_test(model = model, trafo = trafo, data = data, 
+                "ctree" = .ctree_test(model = model, trafo = mytrafo, data = data, 
                                       subset = subset, weights = weights, j = j, 
                                       SPLITONLY = FALSE, ctrl = ctrl),
-                "exhaustive" = .objfun_test(model = model, trafo = trafo, data = data, 
+                "exhaustive" = .objfun_test(model = model, trafo = mytrafo, data = data, 
                                             subset = subset, weights = weights, j = j, 
                                             SPLITONLY = FALSE, ctrl = ctrl),
-                "mfluc" = .mfluc_test(model = model, trafo = trafo, data = data, 
+                "mfluc" = .mfluc_test(model = model, trafo = mytrafo, data = data, 
                                       subset = subset, weights = weights, j = j, 
                                       SPLITONLY = FALSE, ctrl = ctrl),
                 stop("not implemented")
@@ -365,7 +365,7 @@
                 index[xt == 0] <- NA
                 ### maybe multiway is not so smart here as
                 ### nodes with nobs < minbucket could result
-                index[xt > 0 & xt < minbucket] <- nlevels(x) + 1L
+                index[xt > 0 & xt < ctrl$minbucket] <- nlevels(x) + 1L
                 if (length(unique(index)) == 1) {
                     ret <- NULL
                 } else {
@@ -374,10 +374,10 @@
                 }
             } else {
                 ret <- switch(ctrl$splitflavour, 
-                "ctree" = .ctree_test(model = model, trafo = trafo, data = data, 
+                "ctree" = .ctree_test(model = model, trafo = mytrafo, data = data, 
                                       subset = subset, weights = weights, j = j, 
                                       SPLITONLY = TRUE, ctrl = ctrl),
-                "exhaustive" = .objfun_test(model = model, trafo = trafo, data = data, 
+                "exhaustive" = .objfun_test(model = model, trafo = mytrafo, data = data, 
                                             subset = subset, weights = weights, j = j, 
                                             SPLITONLY = TRUE, ctrl = ctrl),
                 stop("not implemented"))
@@ -456,6 +456,7 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
+    mf$na.action <- na.action ### evaluate na.action
     if(missing(data)) data <- environment(formula)
     m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
     mf <- mf[c(1L, m)]
@@ -610,3 +611,113 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   ret
 }
 
+.objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
+{
+
+  x <- .get_var(data, j)
+  NAs <- .get_NAs(data, j)
+  if (all(subset %in% NAs)) { 
+    if (SPLITONLY) return(NULL)
+    return(list(statistic = NA, p.value = NA))
+  }
+
+  ix <- .get_index(data, j)
+  ux <- attr(ix, "levels")
+  ixtab <- libcoin::ctabs(ix = ix, weights = weights, subset = subset)[-1]
+  ORDERED <- is.ordered(x) || is.numeric(x)
+  
+  linfo <- rinfo <- model
+  maxlogLik <- nosplitll <- trafo(subset = subset, weights = weights, info = model, estfun = FALSE)$objfun
+  sp <- NULL
+  
+  if (ORDERED) {
+    ll <- ctrl$applyfun(which(ixtab > 0), function(u) {
+      sleft <- subset[LEFT <- (ix[subset] <= u)]
+      sright <- subset[!LEFT]
+      if (length(weights) > 0) {
+        if (sum(weights[sleft]) < ctrl$minbucket ||
+            sum(weights[sright]) < ctrl$minbucket)
+          return(-Inf);
+      } else {
+        if (length(sleft) < ctrl$minbucket || 
+            length(sright) < ctrl$minbucket)
+          return(-Inf);
+      }
+      if (ctrl$restart) {
+        linfo <- NULL
+        rinfo <- NULL
+      }
+      linfo <- trafo(subset = sleft, weights = weights, info = linfo, estfun = FALSE)
+      rinfo <- trafo(subset = sright, weights = weights, info = rinfo, estfun = FALSE)
+      ll <- linfo$objfun + rinfo$objfun
+      return(ll)
+    })
+    maxlogLik <- max(unlist(ll))
+    if(maxlogLik > nosplitll)
+      sp <- which(ixtab > 0)[which.max(unlist(ll))]
+    
+  } else {
+    xsubs <- factor(x[subset])
+    ## stop if only one level left
+    if(nlevels(xsubs) < 2) {
+      if (SPLITONLY) {
+        return(NULL)
+      } else {
+        return(list(statistic = NA, p.value = NA))
+      } 
+    }
+    splits <- .mob_grow_getlevels(xsubs)
+    ll <- ctrl$applyfun(1:nrow(splits), function(u) {
+      sleft <- subset[LEFT <- xsubs %in% levels(xsubs)[splits[u,]]]
+      sright <- subset[!LEFT]
+      if (length(weights) > 0) {
+        if (sum(weights[sleft]) < ctrl$minbucket ||
+            sum(weights[sright]) < ctrl$minbucket)
+          return(-Inf);
+      } else {
+        if (length(sleft) < ctrl$minbucket || 
+            length(sright) < ctrl$minbucket)
+          return(-Inf);
+      }
+      if (ctrl$restart) {
+        linfo <- NULL
+        rinfo <- NULL
+      }
+      linfo <- trafo(subset = sleft, weights = weights, info = linfo, estfun = FALSE)
+      rinfo <- trafo(subset = sright, weights = weights, info = rinfo, estfun = FALSE)
+      ll <- linfo$objfun + rinfo$objfun
+      return(ll)
+    })
+    maxlogLik <- max(unlist(ll))
+    if(maxlogLik > nosplitll) {
+      sp <- splits[which.max(unlist(ll)),] + 1L
+      levs <- levels(x)
+      if(length(sp) != length(levs)) {
+        sp <- sp[levs]
+        names(sp) <- levs
+      }
+    }
+  }
+  
+  if (!SPLITONLY){
+    ## split only if logLik improves due to splitting
+    maxlogLik <- ifelse(maxlogLik == nosplitll, NA, maxlogLik)
+    return(list(statistic = maxlogLik, p.value = NA))
+  }
+  if (is.null(sp) || all(is.na(sp))) return(NULL)
+  if (ORDERED) {
+    ### interpolate split-points, see https://arxiv.org/abs/1611.04561
+    if (!is.factor(x) & ctrl$intersplit & sp < length(ux)) {
+      sp <- (ux[sp] + ux[sp + 1]) / 2 
+    } else {
+      sp <- ux[sp]  ### x <= sp vs. x > sp
+    }
+    if (is.factor(sp)) sp <- as.integer(sp)
+    ret <- partysplit(as.integer(j), breaks = sp,
+                      index = 1L:2L)
+  } else {
+    ret <- partysplit(as.integer(j),
+                      index = as.integer(sp))
+  }
+  return(ret)
+}
