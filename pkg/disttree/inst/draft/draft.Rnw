@@ -1073,7 +1073,7 @@ lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
 
 
 
-## pit histograms and qqr-plots
+## PIT histograms and qqr-plots
 
 ## get predicted parameter
 # for learndata and testdata
@@ -1318,18 +1318,15 @@ While in a distributional tree the same distribution is specified for all observ
 \newpage
 \section{Simulation Study}
 \label{Simulation}
-Within this simulation study the performance of distributional trees and forests is tested and compared to other models, showing situations where one or the other method is more advantageous than others. By doing so the following hypotheses are investigated:
-\begin{itemize}%[leftmargin=0.5cm]
-\item When applying a tree algorithm the use of a fitting function which returns scores for each distribution parameter is advantageous to find correct splits. In particular it is crucial to find splits in parameters other than the location parameter. Hence a distributional forest consisting of distributional trees leads to better results than a simple forest considering only the mean.
-\item In the case of smooth parameter functions without any abrupt changes / non-additive effects a smooth parametric model such as GAMLSS is clearly the first choice while a stepfunction can be modeled best by applying a tree-structured model. Even though for both of these extreme situations a specifically advantageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. (Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.)
-\item While specifying interactions and selecting covariates is necessary to achieve reasonable results in parametric models such as GAMLSS, this is done automatically within trees and forests. For that reason, distributional trees and forests provide a framework where no additional effort is required for the model specification. This feature plays to its strength especially in case of a high number of covariates and no information about their effects on the response.
-\end{itemize}
+Within this simulation study the performance of distributional trees and forests is tested and compared to other models, showing situations where one or the other method is more advantageous than others. 
+
+%In the case of smooth parameter functions without any abrupt changes / non-additive effects a smooth parametric model such as GAMLSS is clearly the first choice while a stepfunction can be modeled best by applying a tree-structured model. Even though for both of these extreme situations a specifically advantageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. (Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.)
 
 %Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of smooth parametric models or of trees and forests covers a broader range of functions where it is superior to the other.\\
 
 
-To prove these statements distributional trees and forests are evaluated on generated data sets. Their results are then compared to those of a GAMLSS (\cite{stasinopoulos2005}) which fits a separate generalized additive model to each of the distribution models and in that way specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.\\
-The generated data sets consist of the values of a response variable $Y$ and six covariates $X_1, \ldots, X_6$ which are all independent and distributed as follows:
+The new methods are evaluated on generated data sets and their results are then compared to those of a GAMLSS (\cite{stasinopoulos2005}) which fits a separate generalized additive model to each of the distribution parameter and in that way specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.\\
+The generated data sets include 500 observations which each includes the value of a response variable $Y$ and six covariates $X_1, \ldots, X_6$ which are all independent and distributed as follows:
 $$
 X_1, X_2, X_3 \sim \textit{Unif}([-1,1])
 $$
@@ -1338,7 +1335,7 @@ X_4, X_5, X_6 \sim \textit{Binom}(1, 0.5)
 $$
 
 The distribution of the response variable is a left censored normal distribution with censoring point 0. The corresponding distribution parameters are defined by a parameter function $f$ depending on the covariates and an additional factor $\kappa$ which regulates the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\ 
-The location parameter $\mu$ depends on $X_1, X_4$ and $\kappa$ and the scale parameter $\sigma$ depends on $X_1, X_4$ and $\kappa$. The other covariates $X_2, X_3, X_5$ and $X_6$ are used as noise variables.\\
+The location parameter $\mu$ depends on $X_1, X_4$ and $\kappa$ and the scale parameter $\sigma$ depends on $\mu, X_1$ and $\kappa$. The other covariates $X_2, X_3, X_5$ and $X_6$ are used as noise variables.\\
 The latent variable $Y^{\ast}$ is generated based on the following setting.
 \begin{center}
 $$ 
@@ -1346,17 +1343,25 @@ Y^{\ast} \sim \mathcal{N} (f(X_1, X_4, \kappa))
 $$
 with
 $$
-f(X_1, X_2, \kappa) = \left(\mu(X_1,\kappa) , \sigma(X_2,\kappa)\right)
+f(X_1, X_4, \kappa) = \left(\mu(X_1, X_4, \kappa) , \sigma(\mu,X_1,\kappa)\right)
 $$ 
 and
-$$
-\mu(X_1, X_4, \kappa) = 0.2 + 7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \mathbf{1}(X_1 < 0.4) + 
-                              7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2} \cdot \mathbf{1}(X_1 \geq 0.4) + 
-                              3 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot X_4
-$$
+\begin{align*}
+\mu(X_1, X_4, \kappa) = 0.2 
++ \begin{cases}
+    7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})},
+    & \text{if } X_1 < 0.4 \text{ and } X_4 = 0\\
+    7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2},       
+    & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 0\\
+    10 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})},
+    & \text{if } X_1 < 0.4 \text{ and } X_4 = 1\\
+    10 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{10}{2},       
+    & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 1
+\end{cases}
+\end{align*}
 
 $$
-\sigma(X_2,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.7)
+\sigma(\mu, X_1,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.7)
 $$
 %where $\Lambda$ is the cumulative distribution function of the logistic distribution
 %$$
@@ -1367,19 +1372,16 @@ $$
 Y = 
 \begin{cases}
     Y^{\ast},& \text{if } Y^{\ast} \geq 0\\
-    0,       & else
+    0,       & \text{else}
 \end{cases}
 $$
 \end{center}
 
 
-To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to 1 (top plots in Figure \ref{}) and then to a second data set where $\kappa$ is set to 10 (bottom plots in Figure \ref{}).\\
-In the left plots the location parameter function $\mu(X_1, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $(x_2, x_3, \ldots, x_{10}) = (0,0, \ldots, 0)$. \\
-In the right plots the scale parameter function $\sigma(X_2, \kappa)$ is plotted along the covariate $X_2$ together with the estimated values of the different models for fixed covariates $(x_1, x_3, \ldots, x_{10}) = (0.4, 0, \ldots, 0)$. \\
-
+To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to 1 (Figure \ref{plot_sim_oneset1}) and then to a second data set where $\kappa$ is set to 10 (bottom plots in Figure \ref{plot_sim_oneset10}).\\
+In these plot the location parameter function $\mu(X_1, X_4, \kappa)$ (left window) and the the scale parameter function $\sigma(\mu, X_1, \kappa)$ (right window) are plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $x_4 = 0$ and $(x_2, x_3, x_5, x_6) = (0,0, \ldots, 0)$. \\
 
 \SweaveOpts{eval = TRUE}
-
 <<echo=FALSE, results=hide>>=
 
 if(!(file.exists("plot_oneset1_mu.jpeg") & file.exists("plot_oneset1_sigma.jpeg") &
@@ -1402,7 +1404,7 @@ if(!(file.exists("plot_oneset1_mu.jpeg") & file.exists("plot_oneset1_sigma.jpeg"
 \begin{subfigure}{0.6\textwidth}
 \includegraphics{plot_oneset1_sigma.jpeg}
 \end{subfigure}
-\caption{\label{plot_sim_oneset1} ... }
+\caption{\label{plot_sim_oneset1} Smooth parameter functions ($\kappa = 1$) together with the predicted parameter of the tree model, the forest model and the GAMLSS.}
 \end{figure}
 
 
@@ -1414,16 +1416,13 @@ if(!(file.exists("plot_oneset1_mu.jpeg") & file.exists("plot_oneset1_sigma.jpeg"
 \begin{subfigure}{0.6\textwidth}
 \includegraphics{plot_oneset10_sigma.jpeg}
 \end{subfigure}
-\caption{\label{plot_sim_oneset10} ... }
+\caption{\label{plot_sim_oneset10} Parameter functions with abrupt changes ($\kappa = 10$) together with the predicted parameter of the tree model, the forest model and the GAMLSS.}
 \end{figure}
 
-In the case of smooth effects of the coefficients on the parameter function the GAMLSS is closest to the true parameter while the steps of the tree are cleary too rough. By combining various trees the forest can smooth out these steps, however, not as well as the GAMLSS.\\
-Looking at the other extreme situation in which the parameter functions include abrupt changes the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter function.\\
-\\
+In the case of smooth effects of the coefficients on the parameter function ($\kappa = 1$, Figure \ref{plot_sim_oneset1}) the fitted parameters of the GAMLSS are closest to the true parameters while the steps of the tree are cleary too rough. By combining various trees the forest can smooth out these steps, however, not as well as the GAMLSS.\\
+Looking at the other extreme situation in which the parameter functions include abrupt changes ($\kappa = 10$, Figure \ref{plot_sim_oneset10}) the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter functions.\\
 
-
-Now, to get a more profound impression, the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step ... data sets are generated.\\
-\\
+Now, to get a more profound impression, the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step 100 data sets are generated.\\
 %\subsubsection{Means of Comparison}
 In order to compare the performance of the chosen methods over various data sets, the continuous ranked probability score (CRPS) is calculated for each model on each data set. 
 
@@ -1540,9 +1539,10 @@ plot_crps(simres)
 
 
 
-Figure \ref{plot_sim_crps} clearly illustrates the strengths of the different methods applied in this simulation study. The parametric GAMLSS can easily deal with the smooth effects that appear for low values of $\kappa$ and outperforms the tree and forest models in this situation. However, it clearly starts to struggle as $\kappa$ increases and the effects turn into abrupt changes. This behaviour has already been detected and discussed above when looking at only single data sets and is now proven by an almost monotone increase of the CRPS.\\
+Figure \ref{plot_sim_crps} clearly illustrates the strengths of the different methods applied in this simulation study and supports the assumptions made above based on the results for the two specific situations in Figures \ref{plot_sim_oneset10} and \ref{plot_sim_oneset10}. Moreover, it can be observed how the stepwise transition from the one extreme situation to the other influences the performance of the applied methods.\\
+The parametric GAMLSS can easily deal with the smooth effects that appear for low values of $\kappa$ and outperforms the tree and forest models in this situation. However, it clearly starts to struggle as $\kappa$ increases and the effects turn into abrupt changes. %This behaviour has already been detected and discussed above when looking at only single data sets and is now proven by an almost monotone increase of the CRPS.\\
 On the contrary, the imposed/enforced steps of the tree model lead to a high CRPS value in the situation of smooth effects while this value decreases quickly as the slopes in the parameter functions get steeper. For high values of $\kappa$ resulting almost in step functions the tree model perfomes the best as stated by the low CRPS value.\\
-Therefore, both extreme situations show to have a preferable method to choose which clearly outperforms the others. But overall the forest model stays more or less on the same level of goodness of fit regardless of the type of effects in the parameter functions. As this level lies inbetween the ones of the other two methods the forest model provides a good compromise. Of course, if the type of effects is known in advance one should choose the corresponding adequate method, but as this is usually not the case applying a distributional forest offers a solution which can deal with a wide variety of situations and in that way secures a good fit of the resulting model. 
+Therefore, both extreme situations show to have a preferable method to choose which clearly outperforms the others. But overall the forest model stays more or less on the same level of goodness of fit regardless of the type of effects in the parameter functions. As this level lies inbetween the ones of the other two methods the forest model provides a good compromise. Of course, if the type of effects is known in advance one should choose the corresponding adequate method, but as this is usually not the case, applying a distributional forest offers a solution which can deal with a wide variety of situations and in that way secures a good fit of the resulting model. 
 
 %Even though \code{gamlss} can easily deal with each of the smooth functions it struggles with the separation in subgroups. This is the point where the tree structure provides a better solution. However, a single tree can not keep up with the performance of \code{gamlss} when it comes to modeling the smooth functions within the subgroups. Offering a good compromise the forest takes advantages of the tree structure to find subgroups but can also model smooth effects if enough trees are included.\\
 %However, once the increasing value of $\kappa$ leads to very steep sections within the parameter functions of each of the subgroups the tree turns out to be the most successful method in this specific situation.\\
@@ -1573,15 +1573,36 @@ Therefore, both extreme situations show to have a preferable method to choose wh
 \label{ProbabilisticForecasting}
 
 
-As explained in the introduction distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
+As explained in the introduction, distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
 
 \subsection{Setting}
-The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
-Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
+The data set used for training and validation consists of observed daily
+precipitation sums provided by the national hydrographical service
+(\citealt{ehyd}) and numerical weather forecasts from the {U.S.} national
+oceanic and atmospheric administration (NOAA).
+Both, observations and weather forecasts are available from 1985 trough the
+year 2012, focussing on July only in this article.\\
+Observations are available on a daily basis, each observation representing the
+total precipitation sum fallen within 24~hours observed at 6~UTC at \textbf{95}
+stations all over Tyrol and it's close surrounding. The observations are
+undergoing a rigorous quality check before made available to the public.  As
+covariates the second generation reforecast data set of the global ensemble
+forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists
+of an 11-member ensemble based on a fixed version of the numerical model and a
+horizontal grid-spacing of about $50~\times~50 km^2$ initialized at 0~UTC from
+Dezember 1984 to precent. Each of the 11 ensemble members uses slightly
+different perturbed initial conditions trying to predict the situation specific
+uncertenty of the atmospheric state. 
+
+
+%The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
+%Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
+
 In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over a whole day (6--30 UTC) or a 6h time window of the day.\\
 Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std dev of mean/minimal/maximal values respectively.\\
 Table \ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.\\
-The response variable \texttt{tp} (total precipitation) is power transformed by a factor of 1.6. This is done due to experience and knowledge about possible distributions of precipitation measurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. The same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
+To remove the skewness of ... (the distribution of variables representing precipitation amounts), a power transformation has been used frequently (Box and Cox 1964). In literature, cubic (\citealt{stidd1973}) or square root (\citealt{hutchinson1998b}) transformations have often been suggested but may vary for different climatic zones or temporal aggregation periods.
+The response variable \texttt{tp} (total precipitation) is power transformed by a factor of 1.6. This factor is chosen due to experience and knowledge about possible distributions of precipitation measurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. The same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
 
 
 
@@ -1639,7 +1660,8 @@ Basic covariates & {\#} & Variations\\
 
 
 \subsection{Models}
-Next to distributional forests other methods are applied to this data set and their results are compared based on RMSE, log-likelihood values and CRPS values. The chosen methods and their specifications are listed in Table \ref{model_specification}.
+Next to distributional forests three other methods are applied to this data set and their results are compared based on (RMSE, log-likelihood values and) CRPS values. One of the other models is an EMOS models as this is a common choice in this type of setting / research field and therefore provides a valueable reference. The other two models are both GAMs, once in a prespecified form in terms of variable selection for each distribution parameters (denoted as GAM (prespecified)) and once applying a boosting algorithm (GAM (boosted)). 
+The chosen methods and their specifications are listed in Table \ref{model_specification}.
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 %\begin{minipage}{\textwidth}
@@ -1681,7 +1703,7 @@ In the EMOS model the logarithmic function is chosen as the link function for th
 \SweaveOpts{eval = TRUE}
 \subsection{Application on one station}
 First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available, starting in 1985 and ending in 2012, both years included.\\ 
-The results of fitting one distributional forest to the first 25 years of the data set and predicting the total amount of precipitation for one day of each of the three successive years have been shown in the introduction in Figure \ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of this forest model and compare its results to those of the GAM models and the EMOS model based on PIT-histograms.\\
+The results of fitting one distributional forest to the first 25 years of the data set and predicting the total amount of precipitation for one day of each of the three successive years have been shown in the introduction in Figure \ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of this forest model and compare its results to those of the GAM models and the EMOS model based on PIT histograms.\\
 \\
 As seen in Table \ref{model_specification} the forest model includes all 82 covariates. In a single tree model it can easily be observed which covariates are used as split variables and hence have an impact on the response variable. In a forest model though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been chosen. The 10 leading covariates of the above described forest model for the station Axams learned on the first 25 year are listed in Figure \ref{varimp}. As expected, the numerical forecast for total precipitation is the most frequently selected. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
 <<variabble_importance, echo=FALSE, eval=TRUE>>=
@@ -1739,7 +1761,7 @@ barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_cr
 %plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = %"sigma")
 %@
 %\end{subfigure}
-\caption{\label{varimp} Variable importance: top 10 list for the forest model.}
+\caption{\label{varimp} Variable importance: Top 10 list for the forest model.}
 \end{center}
 \end{figure}
 
@@ -1760,7 +1782,7 @@ To get another impression of the quality of the predictions made by the tested m
 %pithist(pit_ml_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
 %
 %@
-%\caption{\label{pit_insample} PIT-Histograms for station Axams (in sample)}
+%\caption{\label{pit_insample} PIT histograms for station Axams (in sample)}
 %\end{figure}
 
 \begin{figure}[t!]
@@ -1779,7 +1801,7 @@ pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS"
       
 @
 \end{subfigure}
-\caption{\label{pit_oosample} PIT-Histograms for station Axams (out of sample).}
+\caption{\label{pit_oosample} PIT histograms for station Axams (out of sample).}
 \end{center}
 \end{figure}
 
@@ -1892,8 +1914,8 @@ Therefore, in comparing these methods one advantage of distributional forests is
 
 %\newpage
 \subsection{Application on all stations}
-Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this station we are now going to apply the methods on all stations. At each of them, the first 25 years are used as learning data set and predictions are made for the last 3 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure \ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations.\\
-Again, the corresponding boxplots of the RMSE and the log-likelihood values can be found in the appendix.
+Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this station we are now going to apply the methods on all stations. At each of them, the first 25 years are used as learning data set and predictions are made for the last 3 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure \ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The red line represents the results for the station Axams.\\
+(Again, the corresponding boxplots of the RMSE and the log-likelihood values can be found in the appendix.)
 %NAs in gamlss in 13 stations!!!\\
 %for example in 13th station in complete{\_}stations\\
 %\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
@@ -2058,6 +2080,7 @@ On the map in Figure \ref{map} each observation station is represented by a poin
 
 
 
+\section{Discussion}
 
 
 
