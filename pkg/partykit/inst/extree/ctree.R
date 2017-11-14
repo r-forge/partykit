@@ -378,9 +378,11 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
 
     update <- function(subset, weights, control)
         .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                        subset = subset, weights = weights, ctrl = control)
+                    subset = subset, weights = weights, ctrl = control)
     if (!doFit) return(list(d = d, update = update))
     tree <- update(subset = subset, weights = weights, control = control)
+    trafo <- tree$trafo
+    tree <- tree$node
     
     mf <- model.frame(d)
     if (is.null(weights)) weights <- rep(1, nrow(mf))
@@ -392,8 +394,8 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     names(fitted)[3] <- "(response)"
     ret <- party(tree, data = mf, fitted = fitted, 
                  info = list(call = match.call(), control = control))
-#    ret$update <- tree$treefun
-    ret$trafo <- tree$ytrafo
+    ret$update <- update
+    ret$trafo <- trafo
     class(ret) <- c("constparty", class(ret))
 
     ### doesn't work for Surv objects
@@ -521,10 +523,11 @@ d2
 glmtree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
       data = PID, family = binomial())
 
-ctrl <- ctree_control()
+ctrl <- ctree_control(stump = TRUE)
 ctrl$splitflavour <- "exhaustive"
 ctrl$testflavour <- "mfluc"
 ctrl$restart <- FALSE
+ctrl$breakties <- TRUE
 
 source("mob.R")
 

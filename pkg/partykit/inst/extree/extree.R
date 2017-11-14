@@ -197,7 +197,9 @@
     ctrl			### ctree_control()
 ) {
 
-    dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = max(split))
+    ms <- max(split)
+    if (ms == 2) return(NULL) ### ie no multiway splits!
+    dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = ms)
     dm[cbind(subset, split)] <- 1
     thismodel <- list(estfun = dm)
     sf <- selectfun(thismodel, subset = subset, weights = weights, whichvar = which(partyvars > 0),
@@ -242,7 +244,9 @@
     return(ret)
 }
 
-.extree_fit <- function(data, trafo, converged, partyvars, subset, weights, ctrl) {
+.extree_fit <- function(data, trafo, converged, selectfun = NULL, 
+                        splitfun = NULL, svselectfun = NULL, 
+                        svsplitfun = NULL, partyvars, subset, weights, ctrl) {
     ret <- list()
 
     nf <- names(formals(trafo))
@@ -325,7 +329,7 @@
         }
     }
 
-    selectfun <- function(model, subset, weights, whichvar, ctrl) {
+    .selectfun <- function(model, subset, weights, whichvar, ctrl) {
         ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
         rownames(ret$criteria) <- c("statistic", "p.value")
         colnames(ret$criteria) <- names(model.frame(data))
@@ -354,7 +358,7 @@
         ret
     }
     
-    splitfun <- function(model, subset, weights, whichvar, ctrl) {
+    .splitfun <- function(model, subset, weights, whichvar, ctrl) {
         for (j in whichvar) {
             x <- model.frame(data)[[j]]
             if (ctrl$multiway && is.factor(x) && !is.ordered(x) &&
@@ -395,9 +399,46 @@
         return(ret)
     }
 
-    .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
-                 splitfun = splitfun, partyvars = partyvars, weights = weights, 
-                 subset = subset, ctrl = ctrl)
+    .svselectfun <- function(..., ctrl) {
+        ctrl$testflavour <- "ctree"
+        ctrl$splitflavour <- "ctree"
+        .selectfun(..., ctrl = ctrl)
+    }
+
+    .svsplitfun <- function(..., ctrl) {
+        ctrl$testflavour <- "ctree"
+        ctrl$splitflavour <- "ctree"
+        .splitfun(..., ctrl = ctrl)
+    }
+
+    if (is.null(selectfun)) {
+        selectfun <- .selectfun
+    } else {
+        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(selectfun))))
+    }
+
+    if (is.null(splitfun)) {
+        splitfun <- .splitfun
+    } else {
+        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(splitfun))))
+    }
+
+    if (is.null(svselectfun)) {
+        svselectfun <- .svselectfun
+    } else {
+        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(svselectfun))))
+    }
+
+    if (is.null(svsplitfun)) {
+        svsplitfun <- .svsplitfun
+    } else {
+        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(svsplitfun))))
+    }
+
+    list(node = .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
+                 splitfun = splitfun, svselectfun = svselectfun, svsplitfun = svsplitfun, 
+                 partyvars = partyvars, weights = weights, subset = subset, ctrl = ctrl),
+         trafo = mytrafo)
 }
 
 ## extensible tree (model) function
