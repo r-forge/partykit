@@ -959,7 +959,7 @@ if(file.exists("rain_Axams_pred_24to4.rda")){
                          gamboost_cvr = TRUE,
                          frac = FALSE)
   
-  save(res, file = "rain_Axams_pred.rda")
+  save(res, file = "rain_Axams_pred_24to4.rda")
 }
 
 #### prepare data for plot of estimated density functions
