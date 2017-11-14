@@ -5,10 +5,14 @@
     iy <- .get_index(data, "yx")
     Y <- model$estfun
 
-    if (!is.null(iy))
+    if (!is.null(iy)) {
+        stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
         return(.ctree_test_2d(data = data, j = j, Y = Y, iy = iy, 
                               subset = subset, weights = weights, 
                               SPLITONLY = SPLITONLY, ctrl = ctrl))
+    }
+
+    stopifnot(NROW(Y) == length(ix))
 
     NAyx <- .get_NAs(data, "yx")
     NAz <- .get_NAs(data, j)
@@ -529,7 +533,7 @@ ctrl$testflavour <- "mfluc"
 ctrl$restart <- FALSE
 ctrl$breakties <- TRUE
 
-source("mob.R")
+source("modelparty.R")
 
 system.time(d2 <- Ctree(diabetes ~ glucose | pregnant + pressure + triceps + insulin + mass + pedigree + age,
       data = PID, ytrafo = logit, control = ctrl))

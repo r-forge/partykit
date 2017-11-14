@@ -4,6 +4,7 @@
 {
 
   stopifnot(!SPLITONLY)
+  stopifnot(is.null(.get_index(data, "yx")))
   z <- .get_var(data, j)[subset]
   estfun <- model$estfun[subset]
   cluster <- .get_var(data, "(cluster)")[subset]

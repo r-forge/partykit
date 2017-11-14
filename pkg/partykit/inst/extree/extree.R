@@ -274,13 +274,13 @@
                 subset <- subset[!(subset %in% NAyx)]
                 y <- y[subset,,drop = FALSE]
 		x <- x[subset,,drop = FALSE]
-                weights <- weights[subset]
+                w <- weights[subset]
                 offset <- offset[subset]
                 if (all(c("estfun", "object") %in% nf)) { 
-                    m <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, 
+                    m <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
                                estfun = estfun, object = object, ...)
                 } else {
-                    obj <- trafo(y = y, x = x, offset = offset, weights = weights, start = info$coef, ...)
+                    obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, ...)
                     m <- list(coefficients = coef(obj),
                               objfun = logLik(obj),
                               estfun = NULL, object = NULL)
@@ -288,10 +288,13 @@
                     if (object) m$object <- obj
                 }
                 if (!is.null(ef <- m$estfun)) {
+                    ### ctree expects unweighted scores
+                    if (is.null(selectfun) && ctrl$testflavour == "ctree")
+                        m$estfun <- m$estfun / w
                     Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
                     Y[subset,] <- m$estfun
                     m$estfun <- Y
-                } 
+                }
             } else {
                 w <- libcoin::ctabs(ix = iy, subset = subset, weights = weights)[-1]
                 offset <- attr(yx$x, "offset")
@@ -305,6 +308,10 @@
                               estfun = NULL, object = NULL)
                     if (estfun) m$estfun <- estfun(obj)
                     if (object) m$object <- obj
+                }
+                ### ctree expects unweighted scores
+                if (is.null(selectfun) && ctrl$testflavour == "ctree") {
+                    if (!is.null(m$estfun)) m$estfun <- m$estfun / w
                 }
                 if (!is.null(ef <- m$estfun))
                     m$estfun <- rbind(0, ef)
