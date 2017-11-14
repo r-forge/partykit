@@ -665,6 +665,54 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
   ret
 }
 
+model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
+    if (!yxonly) 
+        return(object$data)
+    if (!is.null(object$yxindex))
+        return(attr(object$yxindex, "levels"))
+    vars <- object$variables
+    return(object$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
+}    
+
+"[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
+    type <- match.arg(type)
+    switch(type, 
+        "original" = {
+            mf <- model.frame(x)
+            ### [[.data.frame needs lots of memory
+            class(mf) <- "list"
+            return(mf[[i]])
+        },
+        "index" = {
+            if (i == "yx") return(x$yxindex)
+            if (i %in% c(x$variables$y, x$variables$x))
+                return(x$yxindex) ### may be NULL
+            return(x$zindex[[i]])
+        },
+        "scores" = {
+            f <- x[[i]]
+            if (is.ordered(f)) {
+                sc <- x$scores[[i]]
+                if (is.null(sc)) sc <- 1:nlevels(f)
+                return(sc)
+            }
+            return(NULL)
+        },
+        "missings" = {
+            if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
+                return(x$yxmissings)
+            x$missings[[i]]
+        }
+    )
+}
+
+model.weights.extree_data <- function(x)
+    x[["(weights)"]]
+
+model.offset.extree_data <- function(x)
+    model.offset(model.frame(x, yxonly = TRUE))
+
+
 .objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
 
