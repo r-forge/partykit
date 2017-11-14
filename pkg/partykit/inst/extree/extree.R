@@ -7,14 +7,14 @@
     trafo,
     selectfun, 			### variable selection
     splitfun,                   ### split selection
-    svselectfun = selectfun,    ### same for surrogate splits
-    svsplitfun = splitfun,      ### same for surrogate splits
+    svselectfun,                ### same for surrogate splits
+    svsplitfun,                 ### same for surrogate splits
     partyvars, 			### partytioning variables
                                 ### a subset of 1:ncol(model.frame(data))
     weights = integer(0L),	### optional case weights
     subset, 			### subset of 1:nrow(data)
                                 ### for identifying obs for this node
-    ctrl, 			### .urp_control()
+    ctrl, 			### extree_control()
     info = NULL,
     cenv = NULL			### environment for depth and maxid
 ) {
@@ -136,7 +136,7 @@
     ret$info <- info
 
     ### determine observations for splitting (only non-missings)
-    snotNA <- subset[!subset %in% .get_NAs(data, varid_split(thissplit))]
+    snotNA <- subset[!subset %in% data[[varid_split(thissplit), type = "missings"]]]
     ### and split observations
     kidids <- kidids_node(ret, model.frame(data), obs = snotNA)
 
@@ -244,9 +244,9 @@
     return(ret)
 }
 
-.extree_fit <- function(data, trafo, converged, selectfun = NULL, 
-                        splitfun = NULL, svselectfun = NULL, 
-                        svsplitfun = NULL, partyvars, subset, weights, ctrl) {
+extree_fit <- function(data, trafo, converged, selectfun = NULL, 
+                       splitfun = NULL, svselectfun = NULL, 
+                       svsplitfun = NULL, partyvars, subset, weights, ctrl) {
     ret <- list()
 
     nf <- names(formals(trafo))
@@ -256,9 +256,9 @@
         stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
         stopifnot(!is.null(yx <- data$yx))
         mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
-            iy <- .get_index(data, "yx")
+            iy <- data[["yx", type = "index"]]
             if (is.null(iy)) {
-                NAyx <- .get_NAs(data, "yx")
+                NAyx <- data[["yx", type = "missing"]]
                 if (length(NAyx) > 0) {
                     y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$y))
                     y[-NAyx, ,drop = FALSE] <- yx$y
@@ -450,8 +450,8 @@
 }
 
 ## extensible tree (model) function
-extree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-  yx = "none", nmax = c("yx" = Inf, "z" = Inf), ...)
+extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
+  scores = NULL, yx = "none", nmax = c("yx" = Inf, "z" = Inf), ...)
 {
   ## call
   cl <- match.call()
@@ -602,6 +602,11 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
   yxvars <- c(vars$y, vars$x, vars$offset)
   zerozvars <- which(vars$z == 0)
 
+  ret$scores <- vector(mode = "list", length = length(ret$variables$z))
+  names(ret$scores) <- names(mf)
+  if (!is.null(scores))
+      ret$scores[names(scores)] <- scores
+
   if (length(nmax) == 1) nmax <- c("yx" = nmax, "z" = nmax)
   ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
                            nmax = nmax["z"], meanlevels = FALSE)
@@ -663,14 +668,14 @@ extree <- function(formula, data, subset, na.action = na.pass, weights, offset, 
 .objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
 
-  x <- .get_var(data, j)
-  NAs <- .get_NAs(data, j)
+  x <- data[[j]]
+  NAs <- data[[j, type = "missing"]]
   if (all(subset %in% NAs)) { 
     if (SPLITONLY) return(NULL)
     return(list(statistic = NA, p.value = NA))
   }
 
-  ix <- .get_index(data, j)
+  ix <- data[[j, type = "index"]]
   ux <- attr(ix, "levels")
   ixtab <- libcoin::ctabs(ix = ix, weights = weights, subset = subset)[-1]
   ORDERED <- is.ordered(x) || is.numeric(x)

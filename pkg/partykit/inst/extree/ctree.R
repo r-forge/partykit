@@ -1,8 +1,8 @@
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
 
-    ix <- .get_index(data, j)
-    iy <- .get_index(data, "yx")
+    ix <- data[[j, type = "index"]]
+    iy <- data[["yx", type = "index"]]
     Y <- model$estfun
 
     if (!is.null(iy)) {
@@ -14,8 +14,8 @@
 
     stopifnot(NROW(Y) == length(ix))
 
-    NAyx <- .get_NAs(data, "yx")
-    NAz <- .get_NAs(data, j)
+    NAyx <- data[["yx", type = "missing"]]
+    NAz <- data[[j, type = "missing"]]
     if (ctrl$MIA) {
         subsetNArm <- subset[!(subset %in% NAyx)]
     } else {
@@ -39,15 +39,15 @@
 
 .ctree_test_1d <- function(data, j, Y, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- .get_var(data, j)
+    x <- data[[j]]
     MIA <- FALSE
-    if (ctrl$MIA) MIA <- (length(NAs <- .get_NAs(data, j)) > 0)
+    if (ctrl$MIA) MIA <- (length(NAs <- data[[j, type = "missing"]]) > 0)
 
     ### X for (ordered) factors is always dummy matrix
     if (is.factor(x) || is.ordered(x))
-        X <- .get_index(data, j)
+        X <- data[[j, type = "index"]]
 
-    scores <- .get_scores(data, j)
+    scores <- data[[j, type = "scores"]]
     ORDERED <- is.ordered(x) || is.numeric(x)
 
     ux <- Xleft <- Xright <- NULL
@@ -55,7 +55,7 @@
     if (ctrl$splittest || SPLITONLY) {
         MAXSELECT <- TRUE
         if (is.numeric(x)) {
-            X <- .get_index(data, j)
+            X <- data[[j, type = "index"]]
             ux <- levels(X)
         }
         if (MIA) {
@@ -78,7 +78,7 @@
         }
         MIA <- FALSE
     }
-    cluster <- .get_var(data, "(cluster)")
+    cluster <- data[["(cluster)"]]
 
     .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
                          ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
@@ -90,8 +90,8 @@
 
 .ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- .get_var(data, j)
-    ix <- .get_index(data, j)
+    x <- data[[j]]
+    ix <- data[[j, type = "index"]]
     ux <- attr(ix, "levels")
 
     MIA <- FALSE
@@ -101,7 +101,7 @@
     if (is.factor(x) || is.ordered(x))
         X <- integer(0)
 
-    scores <- .get_scores(data, j)
+    scores <- data[[j, type = "scores"]]
     ORDERED <- is.ordered(x) || is.numeric(x)
 
     if (ctrl$splittest || SPLITONLY) {
@@ -123,7 +123,7 @@
         if (is.numeric(x))
             X <- matrix(c(0, as.double(attr(ix, "levels"))), ncol = 1)
     }
-    cluster <- .get_var(data, "(cluster)")
+    cluster <- data[["(cluster)"]]
 
     .ctree_test_internal(x = x, X = X, ix = ix, Xleft = Xleft, Xright = Xright, 
                          ixleft = ixleft, ixright = ixright, ux = ux, scores = scores, 
@@ -284,42 +284,43 @@ model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
     return(object$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
 }    
 
-.get_var <- function(object, varid) {
-    mf <- model.frame(object)
-    ### [[.data.frame needs lots of memory
-    class(mf) <- "list"
-    mf[[varid]]
+"[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
+    type <- match.arg(type)
+    switch(type, 
+        "original" = {
+            mf <- model.frame(x)
+            ### [[.data.frame needs lots of memory
+            class(mf) <- "list"
+            return(mf[[i]])
+        },
+        "index" = {
+            if (i == "yx") return(x$yxindex)
+            if (i %in% c(x$variables$y, x$variables$x))
+                return(x$yxindex) ### may be NULL
+            return(x$zindex[[i]])
+        },
+        "scores" = {
+            f <- x[[i]]
+            if (is.ordered(f)) {
+                sc <- x$scores[[i]]
+                if (is.null(sc)) sc <- 1:nlevels(f)
+                return(sc)
+            }
+            return(NULL)
+        },
+        "missings" = {
+            if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
+                return(x$yxmissings)
+            x$missings[[i]]
+        }
+    )
 }
 
-.get_scores <- function(object, varid) {
-    x <- .get_var(object, varid)
-    if (is.ordered(x)) {
-        sc <- object$scores[[varid]]
-        if (is.null(sc)) sc <- 1:nlevels(x)
-        return(sc)
-    }
-    return(NULL)
-}
+model.weights.extree_data <- function(x)
+    x[["(weights)"]]
 
-.get_index <- function(object, varid) {
-    if (varid == "yx") return(object$yxindex)
-    if (varid %in% c(object$variables$y, object$variables$x))
-        return(object$yxindex) ### may be NULL
-
-    return(object$zindex[[varid]])
-}
-
-.get_NAs <- function(object, varid) {
-    if (is.character(varid)) {
-        if (varid == "yx")
-            return(object$yxmissings)
-        stop("varid not found")
-    }
-    object$missings[[varid]]
-}
-
-.get_weights <- function(object)
-    .get_var(object, "(weights)")
+model.offset.extree_data <- function(x)
+    model.offset(model.frame(x, yxonly = TRUE))
 
 .y2infl <- partykit:::.y2infl
 
@@ -329,7 +330,7 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$yx <- "none"
     if (is.function(ytrafo)) {
@@ -338,21 +339,12 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     }
     mf$nmax <- control$nmax
     ## evaluate model.frame
-    mf[[1L]] <- quote(extree)
+    mf[[1L]] <- quote(extree_data)
 
     d <- eval(mf, parent.frame())
     subset <- 1:nrow(model.frame(d))
-    d$scores <- vector(mode = "list", length = length(d$variables$z))
-    names(d$scores) <- names(model.frame(d))
-    if (!is.null(scores)) {
-        d$scores[names(scores)] <- scores
-        yvars <- names(model.frame(d))[d$variables$y]
-        yvars <- yvars[names(scores)]
-        if (length(yvars) > 0) {
-            for (yvar in yvars) attr(d$data[[yvar]], "scores") <- scores[[yvar]]
-        }
-    }
-    weights <- .get_weights(d)
+
+    weights <- model.weights(d)
 
     if (is.function(ytrafo)) {
         control$update <- TRUE
@@ -364,13 +356,18 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     } else {
         control$update <- FALSE
         stopifnot(length(d$variables$x) == 0)
-        if (!is.null(iy <- .get_index(d, "yx"))) {
-            Y <- .y2infl(model.frame(d, yxonly = TRUE), response = d$variables$y, ytrafo = ytrafo)
-            Y <- rbind(0, Y)
-        } else {
-            ### check missings
-            Y <- .y2infl(model.frame(d, yxonly = FALSE), response = d$variables$y, ytrafo = ytrafo)
+        mfyx <- model.frame(d, yxonly = TRUE)
+        mfyx[["(weights)"]] <- mfyx[["(offset)"]] <- NULL
+        yvars <- names(mfyx)
+        for (yvar in yvars) {
+            sc <- d[[yvar, "scores"]]
+            if (!is.null(sc))
+                attr(mfyx[[yvar]], "scores") <- sc
         }
+        Y <- .y2infl(mfyx, response = d$variables$y, ytrafo = ytrafo)
+        if (!is.null(iy <- d[["yx", type = "index"]])) {
+            Y <- rbind(0, Y)
+        } 
         ytrafo <- function(subset, weights, info, estfun, object, ...) list(estfun = Y)
     }
     if (is.function(converged)) {
@@ -381,8 +378,8 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     }            
 
     update <- function(subset, weights, control)
-        .extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                    subset = subset, weights = weights, ctrl = control)
+        extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                   subset = subset, weights = weights, ctrl = control)
     if (!doFit) return(list(d = d, update = update))
     tree <- update(subset = subset, weights = weights, control = control)
     trafo <- tree$trafo
@@ -420,7 +417,7 @@ iris$x <- sample(gl(3, 1, ordered = TRUE), nrow(iris), replace = TRUE)
 iris$Species[1] <- NA
 iris$Petal.Length[2] <- NA
 
-a1 <- extree(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
+a1 <- extree_data(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
        offset = Petal.Width, cluster = block, nmax = Inf, yx = "none")
 
 object.size(iris)
@@ -428,46 +425,45 @@ object.size(a1)
 
 head(model.frame(a1))
 head(model.frame(a1, yxonly = TRUE))
-.get_var(a1, varid = 1)
-.get_scores(a1, varid = 5)
-.get_index(a1, varid = 2)
-.get_NAs(a1, varid = 2)
-.get_NAs(a1, varid = "yx")
+a1[[1]]
+a1[[5, "scores"]]
+a1[[2, "index"]]
+a1[[2, "missing"]]
+a1[["yx", "missing"]]
 
-a2 <- extree(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
+a2 <- extree_data(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
        offset = Petal.Width, cluster = block, nmax = Inf, yx = "matrix")
 
 head(model.frame(a2))
 head(model.frame(a2, yxonly = TRUE))
-.get_var(a2, varid = 1)
-.get_scores(a2, varid = 5)
-.get_index(a2, varid = 2)
-.get_NAs(a2, varid = 2)
-.get_NAs(a2, varid = "yx")
+a2[[1]]
+a2[[5, "scores"]]
+a2[[2, "index"]]
+a2[[2, "missing"]]
+a2[["yx", "missing"]]
 
-
-a3 <- extree(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
+a3 <- extree_data(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
        offset = Petal.Width, cluster = block, nmax = 5, yx = "none")
 
 head(model.frame(a3))
 head(model.frame(a3, yxonly = TRUE))
-.get_var(a3, varid = 1)
-.get_scores(a3, varid = 5)
-.get_index(a3, varid = 2)
-.get_NAs(a3, varid = 2)
-.get_NAs(a3, varid = "yx")
+a3[[1]]
+a3[[5, "scores"]]
+a3[[2, "index"]]
+a3[[2, "missing"]]
+a3[["yx", "missing"]]
 
 
-a4 <- extree(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
+a4 <- extree_data(Species ~ Petal.Length | Sepal.Length + Sepal.Width + x, data = iris, na.action = na.pass, 
        offset = Petal.Width, cluster = block, nmax = 5, yx = "matrix")
 
 head(model.frame(a1))
 head(model.frame(a4, yxonly = TRUE))
-.get_var(a4, varid = 1)
-.get_scores(a4, varid = 5)
-.get_index(a4, varid = 2)
-.get_NAs(a4, varid = 2)
-.get_NAs(a4, varid = "yx")
+a4[[1]]
+a4[[5, "scores"]]
+a4[[2, "index"]]
+a4[[2, "missing"]]
+a4[["yx", "missing"]]
 
 data(iris)
 iris <- iris[sample(1:nrow(iris), 10000, replace = TRUE),,drop = FALSE]

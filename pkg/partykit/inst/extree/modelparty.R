@@ -4,10 +4,10 @@
 {
 
   stopifnot(!SPLITONLY)
-  stopifnot(is.null(.get_index(data, "yx")))
-  z <- .get_var(data, j)[subset]
+  stopifnot(is.null(data[["yx", type = "index"]]))
+  z <- data[[j]][subset]
   estfun <- model$estfun[subset]
-  cluster <- .get_var(data, "(cluster)")[subset]
+  cluster <- data[["(cluster)"]][subset]
   if(length(weights) == 0) {
       weights <- rep(1, NROW(estfun))
   } else {
@@ -183,7 +183,7 @@
     pval <- if(from < to) logp.supLM(stat, k, lambda) else NA
   }
   
-  ## return version of pvalue that urp deals with
+  ## return version of pvalue that .extree_node deals with
   rval <- list(statistic = log(stat), p.value = log1p(-exp(pval)))
   return(rval)
 }
