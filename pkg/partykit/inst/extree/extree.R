@@ -57,7 +57,7 @@
     } 
 
     thismodel <- trafo(subset = subset, weights = weights, info = info, 
-                       estfun = TRUE, object = FALSE)
+                       estfun = TRUE, object = TRUE)
     if (is.null(thismodel))
         return(partynode(as.integer(id)))
 
@@ -309,6 +309,7 @@
                     if (estfun) m$estfun <- estfun(obj)
                     if (object) m$object <- obj
                 }
+                m$converged <- obj$converged ### may or may not exist
                 ### ctree expects unweighted scores
                 if (is.null(selectfun) && ctrl$testflavour == "ctree") {
                     if (!is.null(m$estfun)) m$estfun <- m$estfun / w
