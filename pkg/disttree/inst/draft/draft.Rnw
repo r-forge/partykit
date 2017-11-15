@@ -939,7 +939,7 @@ Distributional Tree
 %These (future) steps are illustrated in Figure~\ref{Devel_treeforest}, embedded in the development made in the field of tree and forest algorithms.\\
 
 
-After explaining the novel methodology in Section~\ref{Methodology} of this paper and presenting results from a simulation study in Section~\ref{Simulation} the focus will then be put on an application in the field of probabilistic forecasting in Section~\ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration. The models are trained on 25 years and prbabilistic predictions of the consecutive 3 years are validated. A brief outlook on the results of this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2010, 2011 and 2012 the density functions of the distributions estimated by a forest model are plotted together with the corresponding observations. This illustrates that well fitting predicted expected values are provided by this model as they are close to the observed values.
+After explaining the novel methodology in Section~\ref{Methodology} of this paper and presenting results from a simulation study in Section~\ref{Simulation} the focus will then be put on an application in the field of probabilistic forecasting in Section~\ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration. The models are trained on 24 years and prbabilistic predictions of the consecutive 4 years are validated. A brief outlook on the results of this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2009, 2010, 2011 and 2012 the density functions of the distributions estimated by a forest model are plotted together with the corresponding observations. This illustrates that well fitting predicted expected values are provided by this model as they are close to the observed values.
 Beside the expected values the predictions provided by distributional models offer a wide range of information as they specify the whole distribution and therefore enable further methods of inference and analysis. 
 
 
@@ -1093,6 +1093,44 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
   pit_ml_t[res$testdata[,"robs"]>0, 1] <- pit_ml_t[res$testdata[,"robs"]>0, 2]
   
 }
+
+
+## Variable importance
+if(file.exists("vimp_crps.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
+  load("vimp_crps.rda")
+} else {
+  
+  # locally redefine logLik.distforest to use crps in varimp()
+  logLik.distforest <- function(object, newdata = NULL, ...) {
+    if(is.null(newdata)) {
+      newdata <- object$data
+    } 
+    
+    # predict parameter
+    pdf <- predict(object, newdata = newdata, type = "parameter")
+    df_mu <- pdf$mu
+    df_sigma <- pdf$sigma
+    
+    # calculate CRPS
+    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  
+    return(structure(crps, df = NA, class = "logLik"))
+  }
+  
+  vimp_crps <- varimp(res$df, nperm = 1L)
+  #vimp10_crps <- varimp(res$df, nperm = 10L)
+  #vimp100_crps <- varimp(res$df, nperm = 100L)
+  #vimp1000_crps <- varimp(res$df, nperm = 1000L)
+  
+  save(vimp_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
+  #save(vimp10_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_crps.rda")
+  #save(vimp100_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
+  #save(vimp1000_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_crps.rda")
+  
+  rm(logLik.distforest) 
+}
+    
 @
 
 
@@ -1101,8 +1139,8 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 <<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
 plot(x = x, y = y1, type = "l", col = "red", 
      main = paste0("July ", pday, dayending), ylab = "Density", 
-     #xlab = expression(Total~precipitation~group("[", list(mm^(1/1.6), plain(per 24h)),"]")),
-     xlab = expression(Total~precipitation~group("[", mm^(1/1.6)~per~day,"]")),
+     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     #xlab = expression(Total~precipitation~group("[", mm^(1/1.6)~per~day,"]")),
      #{\frac{1}{1.6}}$,
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
      xlim = c(-1.5,8))
@@ -1111,7 +1149,7 @@ lines(x = x, y = y2, type = "l", col = "blue")
 lines(x = x, y = y3, type = "l", col = "darkgreen")
 lines(x = x, y = y4, type = "l", col = "purple")
 legend('topright', c("predicted distribution", "point mass at censoring point", "observation"),
-       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 1)
+       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8)
 
 # plot point mass
 lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
@@ -1142,7 +1180,7 @@ text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)
 text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)
 text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 @
-\caption{\label{axams_onestation}Predictions at station Axams for one day in July of 2010, 2011 and 2012. Observations and predictions are left censored at 0. The corresponding point mass is shown at the censoring point (0).}
+\caption{\label{axams_onestation}Predictions at station Axams for one day in July of 2009, 2010, 2011 and 2012. Observations and predictions are left censored at 0. The corresponding point mass is shown at the censoring point (0).}
 \end{center}
 \end{figure}
 
@@ -1155,7 +1193,7 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \section{Methodology}
 \label{Methodology}
 
-\subsection{Motivation (Review/Problems)}
+\subsection{Motivation}
 As illustrated in Figure~\ref{Devel_parmod} a lot of development has been made in the field of parametric modeling and a wide range of tools can be applied in research areas such as probabilistic forecasting. But as mentioned before, further features such as the ability to capture non-additive effects or interactions are desirable in many applications which demands for more flexible models. Since tree structured models provide these required features a combination of them with parametric models can offer a framework that is able to deal with a wide range of different modeling situations. In this section we are going to introduce the novel methodology which embeds parametric modeling into the idea of tree structured models step by step. We start with a simple distributional fit in Subsection~\ref{distfit}, then build a distributional tree in Subsection~\ref{disttree} and finally a distributional forest in Subsection~\ref{distforest}.
 
 
@@ -1297,13 +1335,13 @@ and
     & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 0\\
     10 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})},
     & \text{if } X_1 < 0.4 \text{ and } X_4 = 1\\
-    10 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{10}{2},       
+    13 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2},       
     & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 1
 \end{cases}
 \end{align*}
 
 $$
-\sigma(\mu, X_1,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.7)
+\sigma(\mu, X_1,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.4)
 $$
 %where $\Lambda$ is the cumulative distribution function of the logistic distribution
 %$$
@@ -1320,7 +1358,7 @@ $$
 \end{center}
 
 
-To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to 1 and then to a second data set where $\kappa$ is set to 10. In Figure~\ref{plot_sim_oneset_mu} the location parameter function $\mu(X_1, X_4, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $x_4 = 1$ and $(x_2, x_3, x_5, x_6) = (0,0,0,0)$. \\
+To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to~1 and then to a second data set where $\kappa$ is set to 10. In Figure~\ref{plot_sim_oneset_mu} the location parameter function $\mu(X_1, X_4, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $x_4 = 0$ and $(x_2, x_3, x_5, x_6) = (0,0,0,0)$. \\
 
 \SweaveOpts{eval = TRUE}
 <<echo=FALSE, results=hide>>=
@@ -1332,18 +1370,18 @@ source("oneset.R")
 #} else {
   
   #define parameter function
-  kappa <- 1
+  #kappa <- 1
   fun1 <- function(x){
     mu <- 0.2 + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * as.numeric(x[,1] < 0.4) + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
-      (3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * x[,4]
+      (7 * (exp(-(3*x[,1]-1.2)^(2*1)))) * as.numeric(x[,1] < 0.4) + 
+      (7 * (exp(-(3*x[,1]-1.2)^(2*1))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
+      (3 * (exp(-(3*x[,1]-1.2)^(2*1)))) * x[,4]
     sigma <- 0.5 + 
       mu/5 + 
       #(x[,1]>0.4)  #*x[,4]#+
       2*(x[,1] < -0.4) 
-      #plogis((kappa^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
-      #4*(1-plogis((kappa^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
+      #plogis((1^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
+      #4*(1-plogis((1^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
       #5 * abs(x[,1]) * x[,4]
     par <- cbind(mu, sigma)
     return(par)
@@ -1359,7 +1397,7 @@ source("oneset.R")
                                  forest_mtry = 3, type.tree = "ctree", 
                                  censNO = TRUE, 
                                  pred_fix_x2 = 0.9,
-                                 pred_fix_x4 = 1,
+                                 pred_fix_x4 = 0,
                                  nrunif = 3,
                                  nrcovform = 6)
 
@@ -1373,18 +1411,18 @@ source("oneset.R")
 #} else {
   
   #define parameter function
-  kappa <- 10
+  #kappa <- 10
   fun10 <- function(x){
     mu <- 0.2 + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * as.numeric(x[,1] < 0.4) + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
-      (3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * x[,4]
+      (7 * (exp(-(3*x[,1]-1.2)^(2*10)))) * as.numeric(x[,1] < 0.4) + 
+      (7 * (exp(-(3*x[,1]-1.2)^(2*10))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
+      (3 * (exp(-(3*x[,1]-1.2)^(2*10)))) * x[,4]
     sigma <- 0.5 + 
       mu/5 + 
       #(x[,1]>0.4)  #*x[,4]#+
       2*(x[,1] < -0.4) 
-      #plogis((kappa^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
-      #4*(1-plogis((kappa^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
+      #plogis((10^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
+      #4*(1-plogis((10^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
       #5 * abs(x[,1]) * x[,4]
     par <- cbind(mu, sigma)
     return(par)
@@ -1400,7 +1438,7 @@ source("oneset.R")
                                  forest_mtry = 3, type.tree = "ctree", 
                                  censNO = TRUE, 
                                  pred_fix_x2 = 0.9,
-                                 pred_fix_x4 = 1,
+                                 pred_fix_x4 = 0,
                                  nrunif = 3,
                                  nrcovform = 6)
 
@@ -1489,7 +1527,7 @@ if(file.exists("simres.rda")){
     
     
   simres <- gensim(parfun = simfun,
-                   seedconst = 7, nrep = 100, ntree = 100,
+                   seedconst = 74, nrep = 100, ntree = 100,
                    nsteps = 10, stepsize = 1,
                    formula = y~x1+x2+x3+x4+x5+x6,
                    nobs = 500, testnobs = 500L,
@@ -1537,7 +1575,7 @@ if(file.exists("simres.rda")){
 <<sim_crps, fig=TRUE, echo=FALSE>>=
 plot_crps(simres)
 @
-\caption{\label{plot_sim_crps}Results of the simulation study: CRPS} %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
+\caption{\label{plot_sim_crps}CRPS of the three models evaluated on various data sets over increasing $\kappa$} %\code{disttree} vs. \code{distforest} vs. \code{gamlss} vs. \code{randomForest} vs. %\code{bamlss} vs. \code{gamboostLSS}\\
 %right: levelplot of the parameter function for $\kappa=5$}
 \end{center}
 \end{figure}
@@ -1601,36 +1639,18 @@ Therefore, both extreme situations show to have a preferable method to choose wh
 As explained in the introduction, distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
 
 \subsection{Setting}
-The data set used for training and validation consists of observed daily
-precipitation sums provided by the national hydrographical service
-(\citealt{ehyd}) and numerical weather forecasts from the {U.S.} national
-oceanic and atmospheric administration (NOAA).
-Both, observations and weather forecasts are available from 1985 trough the
-year 2012, focussing on July only in this article.\\
-Observations are available on a daily basis, each observation representing the
-total precipitation sum fallen within 24~hours observed at 6~UTC at \textbf{95}
-stations all over Tyrol and it's close surrounding. The observations are
-undergoing a rigorous quality check before made available to the public.  As
-covariates the second generation reforecast data set of the global ensemble
-forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists
-of an 11-member ensemble based on a fixed version of the numerical model and a
-horizontal grid-spacing of about $50~\times~50 km^2$ initialized at 0~UTC from
-Dezember 1984 to precent. Each of the 11 ensemble members uses slightly
-different perturbed initial conditions trying to predict the situation specific
-uncertenty of the atmospheric state. 
+The data set used for training and validation consists of observed daily precipitation sums provided by the National Hydrographical Service (\citealt{ehyd}) and numerical weather forecasts from the {U.S.} National Oceanic and Atmospheric Administration (NOAA).
+Both, observations and weather forecasts are available from 1985 trough the year 2012, focussing on July only in this article.\\ 
+Observations are available on a daily basis, each observation representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and it's close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized at 0~UTC from Dezember 1984 to precent. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertenty of the atmospheric state. 
 
 
 %The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
 %Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
 
-In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all these individual predictions, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over a whole day (6--30 UTC) or a 6h time window of the day.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--30 UTC) or a 6 hour time window.\\
 Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std dev of mean/minimal/maximal values respectively.\\
 Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.\\
-To remove the skewness of ... (the distribution of variables representing precipitation amounts), a power transformation has been used frequently (Box and Cox 1964). In literature, cubic (\citealt{stidd1973}) or square root (\citealt{hutchinson1998b}) transformations have often been suggested but may vary for different climatic zones or temporal aggregation periods.
-The response variable \texttt{tp} (total precipitation) is power transformed by a factor of 1.6. This factor is chosen due to experience and knowledge about possible distributions of precipitation measurements. The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. The same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
-
-
-
+To remove large parts of the skewness of precipitation data, a power transformation has been used frequently (Box and Cox 1964). In literature, cubic (\citealt{stidd1973}) or square root (\citealt{hutchinson1998b}) transformations have often been suggested but may vary for different climatic zones or temporal aggregation periods. In \citealt{stauffer2017a} optimization methods have been applied to find the best transformation factor which resulted in a value of $\frac{1}{1.6}$. Since the data used for this optimization covers almost the same geographical region as considered in this article the same factor is chosen here for the power transformation of the response variable \texttt{tp} (total precipitation). The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. For simplicity the same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
 
 %\newpage
 \begin{table}[t!]
@@ -1641,17 +1661,17 @@ The response variable \texttt{tp} (total precipitation) is power transformed by 
 Basic covariates & {\#} & Variations\\
 \hline
 \textbf{tp}: total precipitation            & 12 variations:  & ensemble mean of sums over 24h, \\
-\hspace*{\fill} power transformed (by 1.6) &    & ensemble std dev of sums over 24h, \\ 
+\hspace*{\fill} power transformed (by $\frac{1}{1.6}$) &    & ensemble std dev of sums over 24h, \\ 
 \textbf{cape}: convective                  &    & ensemble minimum of sums over 24h, \\
 \hspace*{0.4cm} available potential energy &    & ensemble maximum of sums over 24h\\
-\hspace*{\fill}  power transformed (by 1.6)&    & \qquad all for 6--30 UTC\\
+\hspace*{\fill}  power transformed (by $\frac{1}{1.6}$)&    & \qquad all for 6--30 UTC\\
 \hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
 \hspace*{\fill}                            &    & ensemble std dev of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
 \textbf{dswrf}: downwards short ware      & 6 variations: & ensemble mean of mean values, \\
-\hspace*{\fill} radiation flux (sunshine) &   & ensemble mean of minimal values,\\
+\hspace*{\fill} radiation flux (``sunshine'') &   & ensemble mean of minimal values,\\
 \textbf{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
 \textbf{pwat}: preciptable water          &   & ensemble std dev of mean values,\\
 \textbf{tmax}: 2m maximum                 &   & ensemble std dev of minimal values,\\
@@ -1685,7 +1705,7 @@ Basic covariates & {\#} & Variations\\
 
 
 \subsection{Models}
-Next to distributional forests three other methods are applied to this data set and their results are compared based on (RMSE, log-likelihood values and) CRPS values. One of the other models is an EMOS models as this is a common choice in this type of setting / research field and therefore provides a valueable reference. The other two models are both GAMs, once in a prespecified form in terms of variable selection for each distribution parameters (denoted as GAM (prespecified)) and once applying a boosting algorithm (GAM (boosted)). 
+Next to distributional forests three other methods are applied to this data set and their results are compared based on CRPS values. One of the reference models is an EMOS models as this is a common choice in this type of setting / research field. The other two models are both GAMs, once in a prespecified form in terms of variable selection for each distribution parameters and once applying a boosting algorithm). 
 The chosen methods and their specifications are listed in Table~\ref{model_specification}.
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
@@ -1698,9 +1718,9 @@ The chosen methods and their specifications are listed in Table~\ref{model_speci
 \textbf{Forest} & recursive    & all & all \\ 
                 & partitioning &     &     \\ 
 \hline
-\textbf{GAM (prespecified)} & spline  & tp{\_}mean, & tppow{\_}sprd,\\
+\textbf{prespecified GAM} & spline  & tp{\_}mean, & tppow{\_}sprd,\\
                             & in each & tp{\_}max,  & dswrf{\_}sprd{\_}mean,\\
- & & tp{\_}mean1218 $\cdot$ & tp{\_}sprd1218 $\cdot$\\ 
+ & & tp{\_}mean1218 $\ast$ & tp{\_}sprd1218 $\ast$\\ 
  & & \quad cape{\_}mean1218, & \quad  cape{\_}mean1218,\\
  & & dswrf{\_}mean{\_}mean, & tcolc{\_}sprd{\_}mean,\\
  & & tcolc{\_}mean{\_}mean, & tdiff500850{\_}mean\\
@@ -1708,7 +1728,7 @@ The chosen methods and their specifications are listed in Table~\ref{model_speci
  & & tdiff500850{\_}mean, & \\
  & & msl{\_}diff & \\
 \hline
-\textbf{GAM (boosted)} & spline  & all & all \\
+\textbf{boosted GAM} & spline  & all & all \\
                        & in each &     &     \\
 \hline
 \textbf{EMOS} & linear & tp{\_}mean & tp{\_}spread \\
@@ -1720,54 +1740,17 @@ The chosen methods and their specifications are listed in Table~\ref{model_speci
 \end{center}
 \end{table}
 
-For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \texttt{tp{\_}mean1218} and \texttt{cape{\_}mean1218} for the location parameter and once between \texttt{tp{\_}sprd1218} and \texttt{cape{\_}mean1218} for the scale parameter. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
+For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \texttt{tp{\_}mean1218} and \texttt{cape{\_}mean1218} for the location parameter and once between \texttt{tp{\_}sprd1218} and \texttt{cape{\_}mean1218} for the scale parameter. These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
 In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made based on the results of \citealt{Gebetsberger2017} where different link functions (identity, quadratic and logarithmic function) have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function lead to the best performance of the EMOS model in this application.
 
 
 
 \SweaveOpts{eval = TRUE}
 \subsection{Application on one station}
-First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available, starting in 1985 and ending in 2012, both years included.\\ 
-The results of fitting one distributional forest to the first 25 years of the data set and predicting the total amount of precipitation for one day of each of the three successive years have been shown in the introduction in Figure~\ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of this forest model and compare its results to those of the GAM models and the EMOS model based on PIT histograms.\\
+First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available from 1985 through the year 2012.\\ 
+The results of fitting one distributional forest to the first 24 years of the data set and predicting the total amount of precipitation for one specific day of each of the four successive years have been shown in Figure~\ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of this forest model and compare its results to those of the GAM models and the EMOS model based on probability integral transform (PIT) histograms.\\
 \\
-As seen in Table~\ref{model_specification} the forest model includes all 82 covariates. In a single tree model it can easily be observed which covariates are used as split variables and hence have an impact on the response variable. In a forest model though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been chosen. The 10 leading covariates of the above described forest model for the station Axams learned on the first 25 year are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most frequently selected. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
-<<variabble_importance, echo=FALSE, eval=TRUE>>=
-if(file.exists("vimp_crps.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
-  load("vimp_crps.rda")
-} else {
-  
-  # locally redefine logLik.distforest to use crps in varimp()
-  logLik.distforest <- function(object, newdata = NULL, ...) {
-    if(is.null(newdata)) {
-      newdata <- object$data
-    } 
-    
-    # predict parameter
-    pdf <- predict(object, newdata = newdata, type = "parameter")
-    df_mu <- pdf$mu
-    df_sigma <- pdf$sigma
-    
-    # calculate CRPS
-    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  
-    return(structure(crps, df = NA, class = "logLik"))
-  }
-  
-  vimp_crps <- varimp(res$df, nperm = 1L)
-  #vimp10_crps <- varimp(res$df, nperm = 10L)
-  #vimp100_crps <- varimp(res$df, nperm = 100L)
-  #vimp1000_crps <- varimp(res$df, nperm = 1000L)
-  
-  save(vimp_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
-  #save(vimp10_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_crps.rda")
-  #save(vimp100_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
-  #save(vimp1000_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_crps.rda")
-  
-  rm(logLik.distforest) 
-}
-    
-@
+As shown in Table~\ref{model_specification} the forest model includes all 82 covariates. A single tree model allows to easily analize which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a forest model though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. The 10 leading covariates of the above described forest model for station Axams learned on the first 24 year are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most frequently selected. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
   
 
 \begin{figure}[t!]
@@ -1790,7 +1773,8 @@ barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_cr
 \end{center}
 \end{figure}
 
-To get another impression of the quality of the predictions made by the tested methods a probability integral transform (PIT) histograms is plotted in Figure~\ref{pit_oosample} for out-of-sample predictions of each of the models. A perfectly fitting model would lead to a histogram with all bars being of height 1 as indicated by the red horizontal line. Overall, it can be stated that all four model provide well fitting models while the forest seems to be the one being closest to the ideal case.
+To get another impression of the quality of the predictions made by the tested methods a PIT histogram is plotted in Figure~\ref{pit_oosample} for out-of-sample predictions of each of the models. 
+A perfectly calibrated model would lead to a PIT histogram with a uniform distribution (a density of 1 for each bin as indicated by the red horizontal line). Overall, it can be stated that all four model provide well calibrated forecasts.
 
   
 
@@ -1820,8 +1804,8 @@ set.seed(7)
 
 par(mfrow = c(2,2))
 pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Forest")
-pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "GAM (prespecified)")
-pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "GAM (boosted)")
+pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespecified GAM")
+pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAM")
 pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS")
       
 @
@@ -1873,21 +1857,20 @@ pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS"
 
 \SweaveOpts{eval = TRUE}
 %\subsubsection{Cross-Validation}
-After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data for which predictions are made and evaluated. This is done by calculating (the RMSE, the log-likelihood value and) the CRPS value for each of the observations in the testing data and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. \\
-As we are interested in comparing the performance of the distributional forest to those of other models, we choose one model as a reference and calculated the skills score with respect to the CRPS. In that way we obtain a measure of how much a method improves the model fit in terms of CRPS values compared to the reference method.
+After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data set for which predictions are made and evaluated. This is done by calculating the CRPS value for each of the observations in the testing data set and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. \\
+As we are interested in comparing the performance of the distributional forest to those of other models, we choose one model as a reference and calculated the skills score with respect to the CRPS. In that way we obtain a measure of how much a method improves the model performance in terms of CRPS values compared to the reference method.
 $$
 \text{SkillsScore(method)} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
 $$
-The results regarding the CRPS values are illustrated by the boxplots in Figure~\ref{boxplots_crps_axams} where the skills score of the CRPS is the chosen measurement scale with the EMOS model as the reference model represented by the horizontal line at height 0.\\
-(The boxplots of the RMSE and the log-likelihood values can be found in the appendix.)
+The resulting skills scores are illustrated in Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model represented by the horizontal line at height 0.
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
-if(file.exists("rain_Axams.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams.rda")
-  load("rain_Axams.rda")
+if(file.exists("rain_Axams_7x10.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_7x10.rda")
+  load("rain_Axams_7x10.rda")
 } else {
-  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_cross.R")
-  source("rain_cross.R")
+  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_cross_7x10.R")
+  source("rain_cross_7x10.R")
   library("gamlss.cens")
   gen.cens("NO", type = "left")
   rainres <- rain_cross(stationname = "Axams", 
@@ -1896,7 +1879,7 @@ if(file.exists("rain_Axams.rda")){
                         gamboost_cvr = TRUE,
                         frac = FALSE)
   
-  save(rainres, file = "rain_Axams.rda")
+  save(rainres, file = "rain_Axams_7x10.rda")
 }
 
 rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres)-1)
@@ -1920,17 +1903,17 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
 \center
 <<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE, height=4.5>>=
 boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)"),
+        names = c("Forest", "prespecified GAM", "boosted GAM"),
         ylab = "CRPS skills score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
 \center
-\caption{\label{boxplots_crps_axams}CRPS skills score with reference model EMOS from the 7x10 cross validation at the station Axams.}
+\caption{\label{boxplots_crps_axams}CRPS skills score with reference model EMOS from the 7x10 cross validation at station Axams.}
 \end{center}
 \end{figure}
 
-The CRPS skills score boxplot shows that in this setting both GAM models and the forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the distforest even reaches an improvement rate of close to 6 percent.\\
-From this result we can conclude that the distributional forest provides a framework where only little or almost no effort is required to build a model which performs even better than other methods that are commonly used in this kind of application.\\
+The CRPS skills score boxplot shows that, in this setting, both GAM models and the forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the forest even reaches an improvement rate of close to 6 percent.\\
+From this result we can conclude that the distributional forest provides an alternative framework where only little or almost no effort is required to set up the model and which is competitive to existing methods that are commonly used for this kind of application or even outperforms them.\\
 For the specified GAM model the covariates needed to be selected and interactions needed to be defined in advance. To do so, meteorological experience and knowledge is required and a lot of thought has to be put in these decisions. Moreover, making such decisions is always equivalent to influencing the resulting model and comes along with the risk of having missed important facts or even imposing certain effects on the model which might not match / correspond to the truth.\\
 This risk is avoided in the boosted GAM as all covariates are included and the selection of the influential covariates is done within a boosting framework. However, the trade off here is a remarkably higher computational effort.\\
 To build a distributional forest the user does not have to put any additional effort in it and therefore is not required to provide any expert knowledge or additional information about the setting. Variable selection is done automatically and interactions are detected by the tree structure of the model.\\
@@ -1939,8 +1922,7 @@ Therefore, in comparing these methods one advantage of distributional forests is
 
 %\newpage
 \subsection{Application on all stations}
-Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this station we are now going to apply the methods on all stations. At each of them, the first 25 years are used as learning data set and predictions are made for the last 3 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The red line represents the results for the station Axams.\\
-(Again, the corresponding boxplots of the RMSE and the log-likelihood values can be found in the appendix.)
+Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this particular station we are now going to apply the methods on all 95 stations. At each of them, the first 24 years are used as learning data set and predictions are made for the last 4 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The blue line represents the results for the station Axams.
 %NAs in gamlss in 13 stations!!!\\
 %for example in 13th station in complete{\_}stations\\
 %\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
@@ -1948,13 +1930,13 @@ Until now the focus has been on one observation station only. To show that the p
 %\\
 % sum(is.na(crps[,3]))
 <<eval = TRUE, echo = FALSE>>=
-#### prediction over all stations 25 - 3
-if(file.exists("rain_pred.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_pred.rda")
-  load("rain_pred.rda")
+#### prediction over all stations 24 - 4
+if(file.exists("rain_pred_24to4.rda")){
+  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_pred_24to4.rda")
+  load("rain_pred_24to4.rda")
 } else {
   
-  source("rain_pred.R")
+  source("rain_pred_24to4.R")
   library("gamlss.cens")
   gen.cens("NO", type = "left")
   
@@ -1962,7 +1944,7 @@ if(file.exists("rain_pred.rda")){
                    gamboost_cvr = TRUE,
                    frac = FALSE)
   
-  save(res, file = "rain_pred.rda")
+  save(res, file = "rain_pred_24to4.rda")
 }
  
 ll <- res[[1]]$results["ll",]
@@ -1978,7 +1960,7 @@ colnames(ll) <- colnames(rmse) <- colnames(crps) <- colnames(res[[1]]$results)
 
 # skills score
 s <- 1 - crps[, 2:4]/crps[,6]
-colnames(s) <- c("Forest", "GAM (prespecified)", "GAM (boosted)")
+colnames(s) <- c("Forest", "prespecified GAM", "boosted GAM")
 
 ## prepare date for map which shows where distforest performed better than gamlss or gamboostLSS
 # based on the crps skills score (reference model EMOS)
@@ -2013,23 +1995,46 @@ pal0 <- hcl(c(10, 260, 290, 50), 100, 80)
 pal2 <- hcl(c(10, 260, 290, 50), 100, 65)
 pal5 <- hcl(c(10, 260, 290, 50), 100, 50)
 #pie(rep(1, 3), col = c(pal0[1], pal2[1], pal5[1]))
+palone <- hcl(250, 100, c(90, 60, 30))
+#pie(rep(1, 3), col = palone)
 
 col_crps_ssc <- numeric(length = length(crps_ssc_df))
 crps_ssc_best <- numeric(length = length(crps_ssc_df))
 diff_crps_ssc <- numeric(length = length(crps_ssc_df))
+diff_crps_df <- numeric(length = length(crps_ssc_df))
 transp_col_crps_ssc <- numeric(length = length(crps_ssc_df))
 level_col_crps_ssc <- numeric(length = length(crps_ssc_df))
+pch_crps_ssc <- numeric(length = length(crps_ssc_df))
+pch_intensity_crps_ssc <- numeric(length = length(crps_ssc_df))
+reference_crps_ssc <- numeric(length = length(crps_ssc_df))
 
+# get best model (loop over all stations)
 for(i in 1: length(crps_ssc_df)){
   col_crps_ssc[i] <- c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"])[which.max(c(crps_ssc_df[i], crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]))]
+  pch_crps_ssc[i] <- c(21, 24, 25, 22)[which.max(c(crps_ssc_df[i], crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]))]
+  
   crps_ssc_best[i] <- which.max(crps_ssc[i,])
   diff_crps_ssc[i] <- crps_ssc[i,crps_ssc_best[i]] - crps_ssc[i,2]
+  
+  pch_intensity_crps_ssc[i] <- 1
+  if(diff_crps_ssc[i] > 0.02) pch_intensity_crps_ssc[i] <- 2
+  if(diff_crps_ssc[i] > 0.05) pch_intensity_crps_ssc[i] <- 3
+    
+  
+  # falls forest am besten
   if(crps_ssc_best[i] == 2){
-    reference_crps_ssc <- max(c(crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]), na.rm = TRUE)
-    diff_crps_df <- crps_ssc_df[i] - reference_crps_ssc
+    reference_crps_ssc[i] <- max(c(crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]), na.rm = TRUE)
+    diff_crps_df[i] <- crps_ssc_df[i] - reference_crps_ssc[i]
     level_col_crps_ssc[i] <- pal0[1]
-    if(diff_crps_df > 0.02) level_col_crps_ssc[i] <- pal2[1]
-    if(diff_crps_df > 0.05) level_col_crps_ssc[i] <- pal5[1]
+    pch_intensity_crps_ssc[i] <- 1
+    if(diff_crps_df[i] > 0.02) {
+      level_col_crps_ssc[i] <- pal2[1]
+      pch_intensity_crps_ssc[i] <- 2
+    }
+    if(diff_crps_df[i] > 0.05) {
+      level_col_crps_ssc[i] <- pal5[1]
+      pch_intensity_crps_ssc[i] <- 3
+    }
   } else {
     level_col_crps_ssc[i] <- pal0[which.max(c(crps_ssc_df[i], crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]))]
     if(diff_crps_ssc[i] > 0.02) level_col_crps_ssc[i] <- pal2[which.max(c(crps_ssc_df[i], crps_ssc_g[i], crps_ssc_gb[i], crps_ssc_ml[i]))]
@@ -2067,35 +2072,53 @@ for(i in 1:length(col_crps_ssc)) transp_col_crps_ssc[i] <- add.alpha(col_crps_ss
   matplot(t(s[,]), type = "l", lwd = 2, 
           col = c(rep(gray(0.5, alpha = 0.3),69),
                   #gray(0.1, alpha = 0.8), 
-                  "brown",
+                  "blue",
                   rep(gray(0.5, alpha = 0.3),15)), 
           lty = 1, axes = FALSE, 
           xlab = "", ylab = "CRPS skills score", xlim = c(0.5, 3.5))
   # Station Axams is the 77th station which is the 70th in the list of complete stations
   boxplot(s, add = TRUE, col = "transparent")
   abline(h = 0, col = pal["EMOS"], lwd = 2)
-  
+    
 @
 \caption{\label{boxplot_crps_all}CRPS skills score with reference model EMOS for predictions over all stations.}
 \end{center}
 \end{figure}
 
-On the map in Figure~\ref{map} each observation station is represented by a point colored according to the method that performed best in terms of CRPS at this station. For those points where the distributional forest is not the best performing method the intensity of the color represents how much better (in terms of CRPS) the method is compared to the distributional forest. The more intense the color is the bigger the difference. In case of the forest being the best model, the second best method is chosen as reference.
+Figure~\ref{map} shows the location of all stations in the data set. Each observation station is represented by a point colored according to the method that performed best in terms of CRPS at this station. For those points where the distributional forest is not the best performing method the intensity of the color represents how much better (in terms of CRPS) the method is compared to the distributional forest. The more intense the color, the bigger the difference. In case of the forest being the best model, the second best method is chosen as reference.
 
 \begin{figure}[h!]
 \begin{center}
 <<map, fig=TRUE, echo=FALSE, height=6, width=9>>=
 
-  raster::image(tirol.dem, col = rev(gray.colors(100)),
-                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
-                xlim = c(9.8,13.2), 
-                ylim = c(46.6, 47.8))
-  plot(tirol.gadm, add = TRUE)
-  points(sp, pch = 21, bg = level_col_crps_ssc, col = 1, cex = 1.5)
-  #points(sp, pch = 21, bg = col_crps_ssc, col = 1)
-  #points(sp, pch = 21, bg = transp_col_crps_ssc, col = 1)
-  legend("topleft", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS"), cex = 1, bty = "n")
+  if(FALSE){
+    raster::image(tirol.dem, col = rev(gray.colors(100)),
+                  main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
+                  xlim = c(9.8,13.2), 
+                  ylim = c(46.6, 47.8))
+    plot(tirol.gadm, add = TRUE)
+    points(sp, pch = 21, bg = level_col_crps_ssc, col = 1, cex = 1.5)
+    #points(sp, pch = 21, bg = col_crps_ssc, col = 1)
+    #points(sp, pch = 21, bg = transp_col_crps_ssc, col = 1)
+    legend("topleft", fill=c(pal["forest"], pal["gamlss"], pal["gamboostLSS"], pal["EMOS"]), legend = c("Forest", "prespecified GAM", "boosted GAM", "EMOS"), cex = 1, bty = "n")
+    
+  }  
   
+    
+  
+  
+
+    
+    raster::image(tirol.dem, col = rev(gray.colors(100)),
+                  main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
+                  xlim = c(9.8,13.2), 
+                  ylim = c(46.6, 47.8))
+    plot(tirol.gadm, add = TRUE)
+    points(sp, pch = pch_crps_ssc, bg = palone[pch_intensity_crps_ssc], col = 1, cex = 1.5)
+    #points(sp, pch = 21, bg = col_crps_ssc, col = 1)
+    #points(sp, pch = 21, bg = transp_col_crps_ssc, col = 1)
+    legend("topleft", pch=c(21,24,25,22), legend = c("Forest", "prespecified GAM", "boosted GAM", "EMOS"), cex = 1, bty = "n")
+
 @
 \caption{\label{map}Map of all observations with corresponding CRPS skills score for predictions.}
 \end{center}
@@ -2246,62 +2269,62 @@ On the map in Figure~\ref{map} each observation station is represented by a poin
 \newpage
 \bibliography{ref.bib}
 
-\newpage
-\section*{Appendix}
+%\newpage
+%\section*{Appendix}
 
-\begin{figure}[h!]
-\begin{center}
-%\begin{subfigure}{0.5\textwidth}
-<<rain_cross_axams_rmse, fig=TRUE, echo=FALSE, width=10, height=7>>=
-boxplot(rain_rmse[,c(2,3,4,6)], ylab = "RMSE",
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
-@
-%\end{subfigure}
-\caption{\label{boxplot_rmse_cross}RMSE values of the 10x10 cross validation at the station Axams.}
-\end{center}
-\end{figure}
-%\hspace{-1cm}
-\begin{figure}[h!]
-\begin{center}
-%\begin{subfigure}{0.5\textwidth}
-<<rain_cross_axams_ll, fig=TRUE, echo=FALSE, width=10, height=7>>=
-boxplot(rain_ll[,c(2,3,4,6)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
-#boxplot(rain_ll)
-@
-%\end{subfigure}
-%\caption{\label{boxplots_rain}Results 10x10 cross validation at the station Axams\\
-%left: RMSE, right: log-likelihood}
-\caption{\label{boxplot_cross_ll}Log-likelihood values of the 10x10 cross validation at the station Axams (extracted interval [-2.8,-1.3]).}
-\end{center}
-\end{figure}
-
-
-\begin{figure}[h!]
-\begin{center}
-<<rain_all_rmse, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
-  matplot(t(rmse[,c(2,3,4,6)]), type = "l", lwd = 1, 
-          col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, 
-          xlab = "", ylab = "RMSE", xlim = c(0.5, 4.5))
-  boxplot(rmse[,c(2,3,4,6)], add = TRUE,
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
-@
-\caption{\label{boxplot_rmse_all}RMSE for predictions over all stations.}
-\end{center}
-\end{figure}
+%\begin{figure}[h!]
+%\begin{center}
+%%\begin{subfigure}{0.5\textwidth}
+%<<rain_cross_axams_rmse, fig=TRUE, echo=FALSE, width=10, height=7>>=
+%boxplot(rain_rmse[,c(2,3,4,6)], ylab = "RMSE",
+%        names = c("Forest", "prespecified GAM", "boosted GAM", "EMOS")) 
+%@
+%%\end{subfigure}
+%\caption{\label{boxplot_rmse_cross}RMSE values of the 10x10 cross validation at station Axams.}
+%\end{center}
+%\end{figure}
+%%\hspace{-1cm}
+%\begin{figure}[h!]
+%\begin{center}
+%%\begin{subfigure}{0.5\textwidth}
+%<<rain_cross_axams_ll, fig=TRUE, echo=FALSE, width=10, height=7>>=
+%boxplot(rain_ll[,c(2,3,4,6)], ylim = c(-2.8,-1.3), ylab = "Log-likelihood",
+%        names = c("Forest", "prespecified GAM", "boosted GAM", "EMOS")) 
+%#boxplot(rain_ll)
+%@
+%%\end{subfigure}
+%%\caption{\label{boxplots_rain}Results 10x10 cross validation at station Axams\\
+%%left: RMSE, right: log-likelihood}
+%\caption{\label{boxplot_cross_ll}Log-likelihood values of the 10x10 cross validation at station Axams (extracted interval [-2.8,-1.3]).}
+%\end{center}
+%\end{figure}
 
 
-\begin{figure}[h!]
-\begin{center}
-<<rain_all_ll, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
-  matplot(t(ll[,c(2,3,4,6)]), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), 
-          lty = 1, axes = FALSE, 
-          xlab = "", ylab = "Log-likelihood", xlim = c(0.5, 4.5), ylim = c(-4,-1))
-  boxplot(ll[,c(2,3,4,6)], add = TRUE,
-        names = c("Forest", "GAM (prespecified)", "GAM (boosted)", "EMOS")) 
-@
-\caption{\label{boxplot_ll_all}Log-likelihood values for predictions over all stations (extracted interval [-4,-1]).}
-\end{center}
-\end{figure}
+%\begin{figure}[h!]
+%\begin{center}
+%<<rain_all_rmse, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
+%  matplot(t(rmse[,c(2,3,4,6)]), type = "l", lwd = 1, 
+%          col = gray(0.5, alpha = 0.5), lty = 1, axes = FALSE, 
+%          xlab = "", ylab = "RMSE", xlim = c(0.5, 4.5))
+%  boxplot(rmse[,c(2,3,4,6)], add = TRUE,
+%        names = c("Forest", "prespecified GAM", "boosted GAM", "EMOS")) 
+%@
+%\caption{\label{boxplot_rmse_all}RMSE for predictions over all stations.}
+%\end{center}
+%\end{figure}
+
+
+%\begin{figure}[h!]
+%\begin{center}
+%<<rain_all_ll, fig=TRUE, echo=FALSE, width=10, height=7.4>>=
+%  matplot(t(ll[,c(2,3,4,6)]), type = "l", lwd = 1, col = gray(0.5, alpha = 0.5), 
+%          lty = 1, axes = FALSE, 
+%          xlab = "", ylab = "Log-likelihood", xlim = c(0.5, 4.5), ylim = c(-4,-1))
+%  boxplot(ll[,c(2,3,4,6)], add = TRUE,
+%        names = c("Forest", "prespecified GAM", "boosted GAM", "EMOS")) 
+%@
+%\caption{\label{boxplot_ll_all}Log-likelihood values for predictions over all stations (extracted interval [-4,-1]).}
+%\end{center}
+%\end{figure}
 
 \end{document}
