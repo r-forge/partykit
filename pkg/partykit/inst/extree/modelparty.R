@@ -6,7 +6,7 @@
   stopifnot(!SPLITONLY)
   stopifnot(is.null(data[["yx", type = "index"]]))
   z <- data[[j]][subset]
-  estfun <- model$estfun[subset]
+  estfun <- model$estfun[subset,,drop = FALSE]
   cluster <- data[["(cluster)"]][subset]
   if(length(weights) == 0) {
       weights <- rep(1, NROW(estfun))
@@ -26,7 +26,6 @@
   ## estimating functions (dropping zero weight observations)
   process <- as.matrix(estfun)
   ww0 <- (weights > 0)
-  ww0[!(seq_along(ww0) %in% subset)] <- FALSE
   process <- process[ww0, , drop = FALSE]
   if(!is.null(cluster)) cluster <- droplevels(cluster[ww0]) 
   weights <- weights[ww0]
@@ -206,7 +205,7 @@ Mob <- function
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$yx <- "matrix"
     mf$nmax <- control$nmax
@@ -238,7 +237,7 @@ Mob <- function
         } else {
             n_coef <- length(cf)
         }
-        minsize <- as.integer(ceiling(10L * n_coef/N))
+        minsize <- as.integer(ceiling(10L * n_coef/ncol(d$yx$y)))
         if (is.null(control$minbucket)) control$minbucket <- minsize
         if (is.null(control$minsplit)) control$minsplit <- minsize
     }
@@ -321,7 +320,7 @@ source("extree.R")
 library("sandwich")
 library("Formula")
 
-ctrl <- mob_control(stump = TRUE)
+ctrl <- mob_control(stump = FALSE, maxdepth = 3)
 ctrl$update <- TRUE
 
 ## Pima Indians diabetes data
@@ -332,11 +331,22 @@ logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
   glm(y ~ 0 + x, family = binomial, start = start, ...)
 }
 
+(pid_tree2 <- mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
+  mass + pedigree + age, data = subset(PimaIndiansDiabetes, mass > -Inf), fit = logit))
+
+
 ## set up a logistic regression tree
 pid_tree <- Mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
-  mass + pedigree + age, data = PimaIndiansDiabetes, fit = logit, control =
+  mass + pedigree + age, data = subset(PimaIndiansDiabetes, mass > -Inf), fit = logit, control =
 ctrl)
 ## see lmtree() and glmtree() for interfaces with more efficient fitting functions
 
 ## print tree
 print(pid_tree)
+
+info_node(node_party(pid_tree))
+
+
+
+info_node(node_party(pid_tree2))
+
