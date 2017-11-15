@@ -336,7 +336,7 @@ Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     if (!doFit) return(list(d = d, update = update))
     tree <- update(subset = subset, weights = weights, control = control)
     trafo <- tree$trafo
-    tree <- tree$node
+    tree <- tree$nodes
     
     mf <- model.frame(d)
     if (is.null(weights)) weights <- rep(1, nrow(mf))

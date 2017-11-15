@@ -188,3 +188,155 @@
   return(rval)
 }
 
+Mob <- function
+(
+  formula, 
+  data, 
+  subset,
+  na.action = na.pass, 
+  weights = NULL, 
+  offset,
+  cluster, 
+  fit,
+  control = mob_control(...), 
+  converged = NULL,
+  doFit = TRUE,
+  ...
+) {
+
+    ## set up model.frame() call
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
+    mf <- mf[c(1L, m)]
+    mf$yx <- "matrix"
+    mf$nmax <- control$nmax
+    ## evaluate model.frame
+    mf[[1L]] <- quote(extree_data)
+
+    d <- eval(mf, parent.frame())
+    subset <- 1:nrow(model.frame(d))
+
+    weights <- model.weights(d)
+
+    update <- function(subset, weights, control)
+        extree_fit(data = d, trafo = fit, converged = converged, partyvars = d$variables$z, 
+                   subset = subset, weights = weights, ctrl = control)
+    if (!doFit) return(list(d = d, update = update))
+
+    ### if minsize is NULL, set to 10 * number of parameters
+    if (is.null(control$minbucket) | is.null(control$minsplit)) {
+        ctrl <- control
+        N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
+        ctrl$minbucket <- ctrl$minsplit <- N 
+        ctrl$logmincriterion <- Inf
+        ctrl$stump <- TRUE
+    
+        tree <- update(subset = subset, weights = weights, control = ctrl)
+        cf <- tree$trafo(subset = subset, weights = weights, info = NULL)$coefficient
+        if (is.null(cf)) {
+            n_coef <- 1
+        } else {
+            n_coef <- length(cf)
+        }
+        minsize <- as.integer(ceiling(10L * n_coef/N))
+        if (is.null(control$minbucket)) control$minbucket <- minsize
+        if (is.null(control$minsplit)) control$minsplit <- minsize
+    }
+
+    tree <- update(subset = subset, weights = weights, control = control)
+    trafo <- tree$trafo
+
+    ### prepare as modelparty
+    mf <- model.frame(d)
+    if (length(weights) == 0) weights <- rep(1, nrow(mf))
+
+    fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
+                         "(weights)" = weights,
+                         check.names = FALSE)
+
+    fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE]
+    names(fitted)[3] <- "(response)"
+
+    control$ytype <- ifelse(is.vector(y), "vector", class(y))
+    # x <- model.matrix(modelf, data = mmf)
+    control$xtype <- "matrix" # TODO: find out when to use data.frame
+
+    ## return party object
+    rval <- party(tree$nodes, 
+                  data = if(control$model) mf else mf[0,],
+                  fitted = fitted,
+                  terms = d$terms$all,
+                  info = list(
+                    call = match.call(),
+                    formula = formula,
+                    Formula = as.Formula(formula),
+                    terms = list(response = d$terms$yx, partitioning = d$terms$z),
+                    fit = fit,
+                    control = control,
+                    dots = list(...),
+                    nreg = NCOL(d$yx$x)
+                )
+    )
+    class(rval) <- c("modelparty", class(rval))
+
+  ### add modelinfo (object) and estfun if not there yet, but wanted
+  # TODO: check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+
+  idx <- lapply(which_all, partykit:::.get_path, obj = tree$nodes)
+  names(idx) <- which_all
+  tree_ret <- unclass(rval)
+  subset_term <- predict(rval, type = "node")
+
+  for (i in which_all) {
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+
+    if (i %in% which_terminals) winfo <- control$terminal else 
+      winfo <- control$inner
+
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) | 
+          any(! winfo %in% names(iinfo))) {
+        iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
+                       estfun = ("estfun" %in% winfo),
+                       object = ("object" %in% winfo))
+      }
+    }
+
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
+  }
+
+  class(tree_ret) <- class(rval)
+
+  return(tree_ret)
+}
+
+library("partykit")
+source("extree.R")
+library("sandwich")
+library("Formula")
+
+ctrl <- mob_control(stump = TRUE)
+ctrl$update <- TRUE
+
+## Pima Indians diabetes data
+data("PimaIndiansDiabetes", package = "mlbench")
+
+## a simple basic fitting function (of type 1) for a logistic regression
+logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+  glm(y ~ 0 + x, family = binomial, start = start, ...)
+}
+
+## set up a logistic regression tree
+pid_tree <- Mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
+  mass + pedigree + age, data = PimaIndiansDiabetes, fit = logit, control =
+ctrl)
+## see lmtree() and glmtree() for interfaces with more efficient fitting functions
+
+## print tree
+print(pid_tree)
