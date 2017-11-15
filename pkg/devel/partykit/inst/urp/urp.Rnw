@@ -1,0 +1,243 @@
+\documentclass[nojss]{jss}
+
+%\VignetteIndexEntry{urp: Internals of Unbiased Recursive Partitioning}
+%\VignetteKeywords{conditional inference, model-based recursive partitioning}
+%\VignettePackage{partykit}
+
+%% packages
+\usepackage{amstext}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{thumbpdf}
+\usepackage{rotating}
+%% need no \usepackage{Sweave}
+
+%% commands
+\newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
+\renewcommand{\Prob}{\mathbb{P} }
+\renewcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\R}{\mathbb{R} }
+\newcommand{\N}{\mathbb{N} }
+\newcommand{\C}{\mathbb{C} }
+\newcommand{\argmin}{\operatorname{argmin}\displaylimits}
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+\newcommand{\LS}{\mathcal{L}_n}
+\newcommand{\TS}{\mathcal{T}_n}
+\newcommand{\LSc}{\mathcal{L}_{\text{comb},n}}
+\newcommand{\LSbc}{\mathcal{L}^*_{\text{comb},n}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\yn}{y_{\text{new}}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\sX}{\mathcal{X}}
+\newcommand{\sY}{\mathcal{Y}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\a}{\mathbf{a}}
+\newcommand{\xn}{\mathbf{x}_{\text{new}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\ws}{\mathbf{w}_\cdot}
+\renewcommand{\t}{\mathbf{t}}
+\newcommand{\M}{\mathbf{M}}
+\renewcommand{\vec}{\text{vec}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\K}{\mathbf{K}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\D}{\mathbf{D}}
+\newcommand{\I}{\mathbf{I}}
+\newcommand{\bS}{\mathbf{S}}
+\newcommand{\cellx}{\pi_n[\x]}
+\newcommand{\partn}{\pi_n(\mathcal{L}_n)}
+\newcommand{\err}{\text{Err}}
+\newcommand{\ea}{\widehat{\text{Err}}^{(a)}}
+\newcommand{\ecv}{\widehat{\text{Err}}^{(cv1)}}
+\newcommand{\ecvten}{\widehat{\text{Err}}^{(cv10)}}
+\newcommand{\eone}{\widehat{\text{Err}}^{(1)}}
+\newcommand{\eplus}{\widehat{\text{Err}}^{(.632+)}}
+\newcommand{\eoob}{\widehat{\text{Err}}^{(oob)}}
+\newcommand{\bft}{\mathbf{t}}
+
+\hyphenation{Qua-dra-tic}
+
+\title{URP: Internals of Unbiased Recursive Partitioning}
+\Plaintitle{URP: urp: Internals of Unbiased Recursive Partitioning}
+
+\author{Torsten Hothorn\\Universit\"at Z\"urich
+   \And Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Torsten Hothorn, Achim Zeileis}
+
+\Abstract{
+tbd
+}
+\Keywords{conditional inference, model-based recursive partitioning}
+
+\Address{
+  Torsten Hothorn\\
+  Institut f\"ur Sozial- und Pr\"aventivmedizin, Abteilung Biostatistik \\
+  Universit\"at Z\"urich \\
+  Hirschengraben 84\\
+  CH-8001 Z\"urich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+
+  Achim Zeileis \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"at Innsbruck \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+}
+
+
+\begin{document}
+
+<<setup, echo = FALSE, results = hide>>=
+options(width = 70, SweaveHooks = list(leftpar = 
+    function() par(mai = par("mai") * c(1, 1.1, 1, 1))))
+require("partykit")
+set.seed(290875)
+@
+
+\setkeys{Gin}{width=\textwidth}
+
+\section{Overview}
+
+\section{Exported: URP tree}
+
+Main workhorse
+
+<<.urptree, eval = FALSE>>=
+.urp_tree <- function
+(
+    call,               ### match.call of user-visible function
+    frame,              ### parent.frame of user-visible function
+    data = NULL, 
+    data_asis = FALSE, 
+    control,            ### .urp_control() or more
+    trafofun,           ### function for transformations
+    doFit = TRUE        ### grow tree or set-up only
+) {}
+@
+
+\begin{description}
+\item[\code{call}] a call with \code{formula}, 
+                   \code{data}, \code{subset}, 
+                   \code{weights}, \code{offset}, 
+                   \code{cluster}, \code{strata} arguments.
+\code{formula} is of the form \code{y ~ x | z} where \code{y} is the
+response, \code{x} are covariates in the model to be partitioned and
+\code{z} are partitioning variables. \code{y ~ z} is interpreted as
+\code{y ~ 1 | z}.
+\item[\code{frame}] a frame to evaluate the call in.
+\item[\code{data}] optional \code{data.frame}.
+\item[\code{data\_asis}] a logical indicating to use \code{data} and
+  not reevaluating the call.
+\item[\code{control}] control arguments
+\item[\code{trafofun}] a function for the computation of scores / data
+transformations, see below.
+\item[\code{doFit}] a logical indicating to actually fit the tree or to
+evaluate the call only.
+\end{description}
+
+The control arguments allow to change the behaviour of the tree growing
+algorithm, for example to use permutation or $M$-fluctuation tests for
+variable selection. The most important choice is are the scores to be used,
+these are defined by \code{trafofun}.
+
+\subsection{Argument trafofun}
+
+This is a function with arguments
+
+<<trafofun, eval = FALSE>>=
+trafofun(formula, data, ctrl)
+@
+
+Here, \code{formula} is the model part \code{y ~ x} of the full formula
+\code{y ~ x | z}. This function returns a function with arguments
+<<trafo, eval = FALSE>>=
+function(subset, estfun, object, info = NULL) {}
+@
+
+\begin{description}
+\item[\code{subset}] an integer vector specifying the subset of
+  observations in the current node (\proglang{R} indexing).
+\item[\code{estfun}] a logical indicating to return the scores.
+\item[\code{object}] a logical indicating to return a fitted model.
+\item[\code{info}] additional information, typically a list with a
+\code{coefficients} slot to be used as starting values for model fitting.
+\end{description}
+
+This function returns a list with slots
+\begin{description}
+\item[\code{estfun}] the matrix of score functions
+\item[\code{coefficients}] optional model coefficients
+\item[\code{objfun}] optional objective function to be maximised
+\item[\code{object}] optional model object
+\item[\code{converged}] a logical indicating model convergance
+\end{description}
+
+\section{Not Exported: URP fit}
+
+<<urp_fit, eval = FALSE>>=
+.urp_fit <- function
+(
+    data, 
+    partyvars, 
+    cluster, 
+    ctrl
+) {}
+@
+
+returns a function
+
+<<urp_fit-ret, eval = FALSE>>=
+function(trafo, subset, weights) {}
+@
+
+with returns a function 
+
+<<selectfun, eval = FALSE>>=
+function(y = NULL, trafo, subset = integer(0), 
+         weights = integer(0), whichvar, info = NULL)  {}
+@
+
+which returns a list with arguments
+
+\begin{description}
+\item[\code{criteria}] a $2 \times J$ matrix with rows \code{statistic} and
+                       \code{p.value} on the LOG scale. 
+\item[\code{splitfun}] a function \code{function(whichvar, minbucket)}
+returning a \code{partysplit} object or \code{NULL}.
+\end{description}
+
+\section{No Exported: URP node}
+
+<<urp-node, eval = FALSE>>=
+.urp_node <- function
+(
+    id = 1L,                    ### id of this node
+    data,                       ### full data, readonly
+    selectfun,                  ### variable selection
+                                ### and split function
+    svselectfun = selectfun,    ### same for surrogate splits
+    partyvars,                  ### partytioning variables
+                                ### a subset of 1:ncol(data)
+    weights = integer(0L),      ### optional case weights
+    subset,                     ### subset of 1:nrow(data)
+                                ### for identifying obs for this node
+    ctrl,                       ### .urp_control()
+    info = NULL,
+    cenv = NULL                 ### environment for depth and maxid
+) {}
+@
+
+%% \bibliography{party}
+
+\end{document}
