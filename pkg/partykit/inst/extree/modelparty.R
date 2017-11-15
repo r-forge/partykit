@@ -187,6 +187,84 @@
   return(rval)
 }
 
+mob_control <- function(
+  alpha = 0.05,
+  mincriterion = 1 - alpha,
+  parm = NULL,
+  bonferroni = TRUE,
+  breakties = FALSE,
+  nrep = 10000L,
+  ordinal = c("chisq", "max", "L2"), 
+  trim = 0.1,
+  splittry = 2,
+  vcov = c("opg", "info", "sandwich"), 
+  catsplit = "binary",
+  numsplit = "left",
+  majority = FALSE,
+  maxsurrogate = 0,
+  numsurrogate = FALSE,
+  lookahead = FALSE,
+  maxdepth = Inf,
+  minbucket = minsize,
+  minprob = 0.01,
+  minsplit = minsize,
+  minsize = NULL,
+  stump = FALSE,
+  caseweights = TRUE,
+  dfsplit = TRUE,
+  applyfun = NULL,
+  cores = NULL,
+  restart = TRUE, ### TODO: change default to FALSE
+  inner = "object",
+  model = TRUE,
+  terminal = "object",
+  mtry = Inf, 
+  nmax = Inf,
+  # deprecated
+  verbose, xtype, ytype, prune
+) {
+  
+  if (!missing("verbose"))
+    warning("argument verbose deprecated")
+  if (!missing("xtype"))
+    warning("argument xtype deprecated")
+  if (!missing("ytype"))
+    warning("argument ytype deprecated")
+  if (!missing("prune"))
+    warning("argument prune deprecated")
+    
+  
+  ## FIXME: Involve caseweights in stopping (minbucket, minsize, etc)
+  ##        For now only used to compute correct n (e.g. for printing)
+  
+  if("estfun" %in% inner) {
+    inner <- inner[inner != "estfun"]
+    warning("estfun can no longer be stored in inner nodes")
+    if(length(inner) == 0) inner <- NULL
+  }
+  
+  intersplit <- numsplit == "center"
+  multiway <- catsplit == "multiway"
+  
+  c(extree_control(criterion = "p.value",
+                  logmincriterion = log(mincriterion), minsplit = minsplit, 
+                  minbucket = minbucket, minprob = minprob, nmax = nmax, 
+                  stump = stump, lookahead = lookahead, mtry = mtry, 
+                  maxdepth = maxdepth, multiway = multiway, splittry = splittry, 
+                  MIA = FALSE, maxsurrogate = maxsurrogate, 
+                  numsurrogate = numsurrogate, majority = majority, 
+                  caseweights = caseweights, applyfun = applyfun, cores = cores, 
+                  saveinfo = TRUE, ### always
+                  testflavour = "mfluc", splitflavour = "exhaustive", 
+                  bonferroni = bonferroni),
+    list(breakties = breakties, 
+         intersplit = intersplit, parm = parm, dfsplit = dfsplit, 
+         restart = restart, model = model, vcov = match.arg(vcov), 
+         ordinal = match.arg(ordinal), 
+         nrep = nrep, terminal = terminal, inner = inner, trim = trim))
+}
+
+
 Mob <- function
 (
   formula, 
@@ -320,9 +398,6 @@ source("extree.R")
 library("sandwich")
 library("Formula")
 
-ctrl <- mob_control(stump = FALSE, maxdepth = 3)
-ctrl$update <- TRUE
-
 ## Pima Indians diabetes data
 data("PimaIndiansDiabetes", package = "mlbench")
 
@@ -331,22 +406,18 @@ logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
   glm(y ~ 0 + x, family = binomial, start = start, ...)
 }
 
-(pid_tree2 <- mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
+system.time(pid_tree2 <- mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
   mass + pedigree + age, data = subset(PimaIndiansDiabetes, mass > -Inf), fit = logit))
 
-
 ## set up a logistic regression tree
-pid_tree <- Mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
-  mass + pedigree + age, data = subset(PimaIndiansDiabetes, mass > -Inf), fit = logit, control =
-ctrl)
+system.time(pid_tree <- Mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
+  mass + pedigree + age, data = subset(PimaIndiansDiabetes, mass > -Inf), fit =
+logit))
 ## see lmtree() and glmtree() for interfaces with more efficient fitting functions
 
 ## print tree
 print(pid_tree)
 
-info_node(node_party(pid_tree))
+print(pid_tree2)
 
-
-
-info_node(node_party(pid_tree2))
 

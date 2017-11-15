@@ -713,6 +713,69 @@ model.offset.extree_data <- function(x)
     model.offset(model.frame(x, yxonly = TRUE))
 
 
+### control arguments needed in this file
+extree_control <- function
+(
+    criterion, 
+    logmincriterion, 
+    minsplit = 20L,
+    minbucket = 7L, 
+    minprob = 0.01, 
+    nmax = Inf,
+    stump = FALSE,
+    lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
+    MIA = FALSE,
+    maxsurrogate = 0L, 
+    numsurrogate = FALSE,
+    mtry = Inf,
+    maxdepth = Inf, 
+    multiway = FALSE, 
+    splittry = 2L,
+    majority = FALSE, 
+    caseweights = TRUE, 
+    applyfun = NULL, 
+    cores = NULL,
+    saveinfo = TRUE,
+    testflavour = c("ctree", "exhaustive", "mfluc"),
+    bonferroni = FALSE,
+    splitflavour = c("ctree", "exhaustive"),
+    update = TRUE
+) {
+
+    ## apply infrastructure for determining split points
+    if (is.null(applyfun)) {
+        applyfun <- if(is.null(cores)) {
+            lapply
+        } else {
+            function(X, FUN, ...)
+                parallel::mclapply(X, FUN, ..., mc.cores = cores)
+        }
+    }
+
+    ### well, it is implemented but not correctly so
+    if (multiway & maxsurrogate > 0L)
+        stop("surrogate splits currently not implemented for multiway splits")
+
+    if (MIA && maxsurrogate > 0)
+        warning("Mixing MIA splits with surrogate splits does not make sense")
+
+    if (MIA && majority)
+        warning("Mixing MIA splits with majority does not make sense")
+
+    list(criterion = criterion, logmincriterion = logmincriterion,
+         minsplit = minsplit, minbucket = minbucket, 
+         minprob = minprob, stump = stump, nmax = nmax,
+         lookahead = lookahead, mtry = mtry,
+         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
+         MIA = MIA, maxsurrogate = maxsurrogate, 
+         numsurrogate = numsurrogate, majority = majority,
+         caseweights = caseweights, applyfun = applyfun,
+         saveinfo = saveinfo, testflavour = match.arg(testflavour), 
+         bonferroni = bonferroni,
+         splitflavour = match.arg(splitflavour), update = update)
+}
+
+
 .objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
 

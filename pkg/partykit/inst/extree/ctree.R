@@ -277,6 +277,74 @@
 
 .y2infl <- partykit:::.y2infl
 
+ctree_control <- function
+(
+    teststat = c("quadratic", "maximum"), 
+    splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
+    splittest = FALSE,
+    testtype = c("Bonferroni", "MonteCarlo", 
+                 "Univariate", "Teststatistic"),
+    pargs = GenzBretz(),
+    nmax = Inf, 
+    alpha = 0.05, 
+    mincriterion = 1 - alpha, 
+    logmincriterion = log(mincriterion), 
+    minsplit = 20L, 
+    minbucket = 7L, 
+    minprob = 0.01, 
+    stump = FALSE, 
+    lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
+    MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
+    nresample = 9999L, 
+    tol = sqrt(.Machine$double.eps),
+    maxsurrogate = 0L, 
+    numsurrogate = FALSE,
+    mtry = Inf, 
+    maxdepth = Inf, 
+    multiway = FALSE, 
+    splittry = 2L, 
+    intersplit = FALSE,
+    majority = FALSE, 
+    caseweights = TRUE, 
+    applyfun = NULL, 
+    cores = NULL,
+    saveinfo = TRUE,
+    update = FALSE
+) {
+
+    testtype <- match.arg(testtype, several.ok = TRUE)
+    if (length(testtype) == 4) testtype <- testtype[1]
+    ttesttype <- testtype
+    if (length(testtype) > 1) {
+        stopifnot(all(testtype %in% c("Bonferroni", "MonteCarlo")))
+        ttesttype <- "MonteCarlo"
+    }
+
+    splitstat <- match.arg(splitstat)
+    teststat <- match.arg(teststat)
+
+    if (!caseweights)
+        stop("only caseweights currently implemented in ctree")
+
+    c(extree_control(criterion = ifelse("Teststatistic" %in% testtype, 
+                                      "statistic", "p.value"),
+                     logmincriterion = logmincriterion, minsplit = minsplit, 
+                     minbucket = minbucket, minprob = minprob, 
+                     nmax = nmax, stump = stump, lookahead = lookahead,
+                     mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
+                     splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+                     numsurrogate = numsurrogate,
+                     majority = majority, caseweights = caseweights, 
+                     applyfun = applyfun, saveinfo = saveinfo,  ### always
+                     testflavour = "ctree", 
+                     bonferroni = "Bonferroni" %in% testtype, 
+                     splitflavour = "ctree", update = update),
+      list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
+           testtype = ttesttype, nresample = nresample, tol = tol,
+           intersplit = intersplit))
+}
+
+
 Ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
                   control = ctree_control(), ytrafo = NULL, converged = NULL, scores = NULL, 
                   doFit = TRUE, ...) {
@@ -481,6 +549,7 @@ ctrl$splitflavour <- "exhaustive"
 ctrl$testflavour <- "mfluc"
 ctrl$restart <- FALSE
 ctrl$breakties <- TRUE
+ctrl$trim <- .1
 
 source("modelparty.R")
 
