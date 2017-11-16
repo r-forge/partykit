@@ -374,9 +374,9 @@ prune.modelparty <- function(object, type = "AIC")
     if("lmtree" %in% class(object)) {
       type <- switch(type,
                      "aic" = {
-                       function(objfun, df, nobs) (nobs[1L] * log(- objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(- objfun[2L]) + 2 * df[2L])
+                       function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + 2 * df[1L]) < (nobs[1L] * log(objfun[2L]) + 2 * df[2L])
                      }, "bic" = {
-                       function(objfun, df, nobs) (nobs[1L] * log(- objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(- objfun[2L]) + log(nobs[2L]) * df[2L])
+                       function(objfun, df, nobs) (nobs[1L] * log(objfun[1L]) + log(nobs[2L]) * df[1L]) < (nobs[1L] * log(objfun[2L]) + log(nobs[2L]) * df[2L])
                      }, "none" = {
                        NULL
                      })
