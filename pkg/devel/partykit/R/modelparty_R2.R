@@ -220,16 +220,15 @@ mob_control <- function(
   terminal = "object",
   mtry = Inf, 
   nmax = Inf,
+  ytype = c("vector", "data.frame", "matrix"),
   # deprecated
-  verbose, xtype, ytype, prune
+  verbose, xtype, prune
 ) {
   
   if (!missing("verbose"))
     warning("argument verbose deprecated")
   if (!missing("xtype"))
     warning("argument xtype deprecated")
-  if (!missing("ytype"))
-    warning("argument ytype deprecated")
   if (!missing("prune"))
     warning("argument prune deprecated")
     
@@ -260,7 +259,7 @@ mob_control <- function(
     list(breakties = breakties, 
          intersplit = intersplit, parm = parm, dfsplit = dfsplit, 
          restart = restart, model = model, vcov = match.arg(vcov), 
-         ordinal = match.arg(ordinal), 
+         ordinal = match.arg(ordinal), ytype = match.arg(ytype),
          nrep = nrep, terminal = terminal, inner = inner, trim = trim))
 }
 
@@ -299,7 +298,7 @@ mob <- function
       }
       list(
         coefficients = coef(obj),
-        objfun = as.numeric(logLik(obj)),
+        objfun = -as.numeric(logLik(obj)),
         estfun = if(estfun) sandwich::estfun(obj) else NULL,
         object = if(object) obj else NULL
       )
@@ -321,6 +320,7 @@ mob <- function
     mf <- mf[c(1L, m)]
     mf$yx <- "matrix"
     mf$nmax <- control$nmax
+    mf$ytype <- control$ytype
     ## evaluate model.frame
     mf[[1L]] <- quote(partykit:::extree_data)
 
@@ -349,7 +349,7 @@ mob <- function
         } else {
             n_coef <- length(cf)
         }
-        minsize <- as.integer(ceiling(10L * n_coef/ncol(d$yx$y)))
+        minsize <- as.integer(ceiling(10L * n_coef))
         if (is.null(control$minbucket)) control$minbucket <- minsize
         if (is.null(control$minsplit)) control$minsplit <- minsize
     }

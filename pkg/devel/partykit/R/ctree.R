@@ -377,6 +377,7 @@ ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
         nf <- names(formals(ytrafo))
         if (all(c("data", "weights", "control") %in% nf))
             ytrafo <- ytrafo(data = d, weights = weights, control = control)
+        nf <- names(formals(ytrafo))
         stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
                   all(c("y", "x", "weights", "offset", "start") %in% nf))
     } else {

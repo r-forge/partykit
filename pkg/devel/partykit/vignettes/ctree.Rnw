@@ -1223,19 +1223,12 @@ survival tree with updated logrank scores:
 <<nf-ytrafo-1, echo = TRUE>>=
 ### with weight-dependent log-rank scores
 ### log-rank trafo for observations in this node only (= weights > 0)
-h <- function(formula, data, ...) {
-    f <- Formula(formula)
-    mf <- model.frame(formula = f, data = data)
-    s <- model.part(f, data = mf, lhs = 1, rhs = 0)[[1]]
-    weights <- 1:nrow(mf)
-    return(function(subset, ...) {
-        w <- as.integer(weights)
-        w[-subset] <- 0L
-        s <- logrank_trafo(s[w > 0,,drop = FALSE])
-        r <- rep(0, nrow(mf))
-        r[w > 0] <- s
-        list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
-    })
+h <- function(y, x, start = NULL, weights, offset, estfun = TRUE, object = FALSE, ...) {
+    if (is.null(weights)) weights <- rep(1, NROW(y))
+    s <- logrank_trafo(y[weights > 0,,drop = FALSE])
+    r <- rep(0, length(weights))
+    r[weights > 0] <- s
+    list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
 }
 partykit::ctree(Surv(time, cens) ~ ., data = GBSG2, ytrafo = h)
 @
@@ -1250,21 +1243,8 @@ account, can be set-up using
 
 <<nf-ytrafo-2, echo = TRUE>>=
 ### normal varying intercept / varying coefficient model (aka "mob")
-h <- function(formula, data, ...) {
-    f <- Formula(formula)
-    mf <- model.frame(formula = f, data = data)
-    s <- model.part(f, data = mf, lhs = 1, rhs = 0)[[1]]
-    weights <- 1:nrow(mf)
-    return(function(subset, ...) {
-        w <- as.integer(weights)
-        w[-subset] <- 0L
-        mf$w <- w
-        m <- glm(f, data = mf, family = gaussian(), weights = w)
-        ef <- matrix(0, ncol = length(coef(m)), nrow = nrow(mf))
-        ef[w > 0,] <- estfun(m)[w > 0,,drop = FALSE]
-        list(estfun = ef, converged = m$converged, coef = coef(m))
-    })
-}
+h <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
+  glm(y ~ 0 + x, family = gaussian(), start = start, weights = weights, ...)
 (airct_partykit_4 <- partykit::ctree(Ozone ~ Temp | Solar.R + Wind, 
     data = airq, cluster = month, ytrafo = h, 
     control = partykit::ctree_control(maxsurrogate = 3)))

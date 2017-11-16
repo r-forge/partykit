@@ -156,19 +156,12 @@ if (require("TH.data") && require("survival") &&
 
   ### with weight-dependent log-rank scores
   ### log-rank trafo for observations in this node only (= weights > 0)
-  h <- function(formula, data, ...) {
-      f <- Formula(formula)
-      mf <- model.frame(formula = f, data = data)
-      s <- model.part(f, data = mf, lhs = 1, rhs = 0)[[1]]
-      weights <- 1:nrow(mf)
-      return(function(subset, ...) {
-          w <- as.integer(weights)
-          w[-subset] <- 0L
-          s <- logrank_trafo(s[w > 0,,drop = FALSE])
-          r <- rep(0, nrow(mf))
-          r[w > 0] <- s
-          list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
-      })
+  h <- function(y, x, start = NULL, weights, offset, estfun = TRUE, object = FALSE, ...) {
+      if (is.null(weights)) weights <- rep(1, NROW(y))
+      s <- logrank_trafo(y[weights > 0,,drop = FALSE])
+      r <- rep(0, length(weights))
+      r[weights > 0] <- s
+      list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
   }
 
   ### very much the same tree

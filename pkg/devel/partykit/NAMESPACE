@@ -26,6 +26,10 @@ export(
   "partynode",
   "partysplit",
 
+  ## 
+  "extree_data",
+  "extree_fit",
+
   ## new ctree implementation
   "ctree",
   "ctree_control",
@@ -146,6 +150,9 @@ S3method("print", "party")
 S3method("plot", "party")
 S3method("data_party", "default")
 S3method("predict_party", "default")
+
+S3method("[[", "extree_data")
+S3method("model.frame", "extree_data")
 
 ## methods for class partynode
 S3method("[", "partynode")

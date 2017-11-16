@@ -53,7 +53,7 @@
     svars <- which(partyvars > 0)
     if (ctrl$mtry < Inf) {
         mtry <- min(sum(partyvars > 0), ctrl$mtry)
-        svars <- .resample(partyvars, mtry, prob = partyvars)
+        svars <- .resample(svars, mtry, prob = partyvars[partyvars > 0])
     } 
 
     thismodel <- trafo(subset = subset, weights = weights, info = info, 
@@ -259,22 +259,17 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
             iy <- data[["yx", type = "index"]]
             if (is.null(iy)) {
                 NAyx <- data[["yx", type = "missing"]]
-                if (length(NAyx) > 0) {
-                    y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$y))
-                    y[-NAyx, ,drop = FALSE] <- yx$y
-                    x <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(yx$x))
-                    x[-NAyx, ,drop = FALSE] <- yx$x
-                    offset <- numeric(nrow(model.frame(data)))
-                    offset[-NAyx] <- attr(yx$x, "offset")
-                } else {
-                    y <- yx$y
-                    x <- yx$x
-                    offset <- attr(yx$x, "offset")
-                }
+                y <- yx$y
+                x <- yx$x
+                offset <- attr(yx$x, "offset")
                 subset <- subset[!(subset %in% NAyx)]
-                y <- y[subset,,drop = FALSE]
-                if (!is.null(yx$x)) {
-                    ax <- attributes(yx$x)
+                if (NCOL(y) > 1) {
+                    y <- y[subset,,drop = FALSE]
+                } else {
+                    y <- y[subset]
+                }
+                if (!is.null(x)) {
+                    ax <- attributes(x)
                     ax$dim <- NULL
                     ax$dimnames <- NULL
                     x <- x[subset,,drop = FALSE]
@@ -288,7 +283,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 } else {
                     obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, ...)
                     m <- list(coefficients = coef(obj),
-                              objfun = logLik(obj),
+                              objfun = -as.numeric(logLik(obj)),
                               estfun = NULL, object = NULL)
                     if (estfun) m$estfun <- sandwich::estfun(obj)
                     if (object) m$object <- obj
@@ -310,7 +305,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 } else {
                     obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, ...)
                     m <- list(coefficients = coef(obj),
-                              objfun = logLik(obj),
+                              objfun = -as.numeric(logLik(obj)),
                               estfun = NULL, object = NULL)
                     if (estfun) m$estfun <- sandwich::estfun(obj)
                     if (object) m$object <- obj
@@ -457,7 +452,8 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
 
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-  scores = NULL, yx = "none", nmax = c("yx" = Inf, "z" = Inf), ...)
+  strata, scores = NULL, yx = "none", ytype = c("vector", "data.frame", "matrix"), 
+  nmax = c("yx" = Inf, "z" = Inf), ...)
 {
   ## call
   cl <- match.call()
@@ -472,13 +468,13 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     ## specified formula elements and overall call elements
     fonam <- names(formula)
     clnam <- names(cl)[-1L]
-    vanam <- c("y", "x", "z", "weights", "offset", "cluster")
+    vanam <- c("y", "x", "z", "weights", "offset", "cluster", "strata")
     
     ## y and z (and optionally x) need to be in formula
     if(!all(c("y", "z") %in% fonam)) stop("'formula' needs to specify at least a response 'y' and partitioning variables 'z'")
     if(!("x" %in% fonam)) formula$x <- NULL
     
-    ## furthermore weights/offset/cluster may be in formula or call
+    ## furthermore weights/offset/cluster/strata may be in formula or call
     vars <- formula[vanam]
     names(vars) <- vanam
     if("weights" %in% clnam) {
@@ -492,6 +488,10 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     if("cluster" %in% clnam) {
       clvar <- try(cluster, silent = TRUE)
       vars[["cluster"]] <- c(vars[["cluster"]], if(!inherits(clvar, "try-error")) clvar else deparse(cl$cluster))
+    }
+    if("strata" %in% clnam) {
+      clvar <- try(strata, silent = TRUE)
+      vars[["strata"]] <- c(vars[["strata"]], if(!inherits(clvar, "try-error")) clvar else deparse(cl$strata))
     }
     
     ## sanity checking
@@ -513,7 +513,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     mf <- match.call(expand.dots = FALSE)
     mf$na.action <- na.action ### evaluate na.action
     if(missing(data)) data <- environment(formula)
-    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "strata"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$drop.unused.levels <- TRUE
     mf$dot <- "sequential"
@@ -551,11 +551,13 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
       z = attr(mt$z, "term.labels"),
       weights = if("(weights)" %in% names(mf)) "(weights)" else NULL,
       offset  = if("(offset)"  %in% names(mf)) "(offset)"  else NULL,
-      cluster = if("(cluster)" %in% names(mf)) "(cluster)" else NULL
+      cluster = if("(cluster)" %in% names(mf)) "(cluster)" else NULL,
+      strata = if("(strata)" %in% names(mf)) "(strata)" else NULL
     )
     ymult <- length(vars$y) >= 1L
     if(!ymult) vars$y <- names(mf)[1L]
     ## FIXME: store information which variable(s) went into (weights), (offset), (cluster)
+    ## (strata)
     ## idea: check (x and) z vs. deparse(cl$weights), deparse(cl$offset), deparse(cl$cluster)
 
     ## check wether offset was inside the formula
@@ -578,7 +580,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
   if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
   vars$z <- as.numeric(vars$z)
   ## all others to integer
-  for(v in c("y", "x", "weights", "offset", "cluster")) {
+  for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
     if(!is.null(vars[[v]])) {
       if(is.character(vars[[v]])) vars[[v]] <- match(vars[[v]], vanam)
       if(is.logical(vars[[v]])) vars[[v]] <- which(vars[[v]])
@@ -651,11 +653,31 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     ymult <- length(vars$y) > 1L
     npart <- 2L
 
-    yx <- list("y" = model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE)))         
+    if (ytype == "vector" && !ymult) {
+        yx <- list("y" = mf[, vanam[vars$y], drop = TRUE])
+    } else if (ytype == "data.frame") {
+        yx <- list("y" = mf[vanam[vars$y]])
+    } else { ### ytype = "matrix"
+        Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
+        if (length(ret$yxmissings) == 0) {
+            Ymat <- Ytmp
+        } else {
+            Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
+            Ymat[-ret$yxmissings,] <- Ytmp
+        }
+        yx <- list("y" = Ymat)
+    }
     for(i in (1L:npart)[-npart]) {
       ni <- paste("x", if(i == 1L) "" else i, sep = "")
       ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
-      yx[[ni]] <- model.matrix(ti, yxmf)
+      Xtmp <- model.matrix(ti, yxmf)
+      if (length(ret$yxmissings) == 0) {
+          Xmat <- Xtmp
+      } else {
+          Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
+          Xmat[-ret$yxmissings,] <- Xtmp
+      }
+      yx[[ni]] <- Xmat
       if(ncol(yx[[ni]]) < 1L) {
         yx[[ni]] <- NULL
       } else {
@@ -798,7 +820,7 @@ extree_control <- function
   ORDERED <- is.ordered(x) || is.numeric(x)
   
   linfo <- rinfo <- model
-  maxlogLik <- nosplitll <- trafo(subset = subset, weights = weights, info = model, estfun = FALSE)$objfun
+  minlogLik <- nosplitll <- trafo(subset = subset, weights = weights, info = model, estfun = FALSE)$objfun
   sp <- NULL
   
   if (ORDERED) {
@@ -808,11 +830,11 @@ extree_control <- function
       if (length(weights) > 0) {
         if (sum(weights[sleft]) < ctrl$minbucket ||
             sum(weights[sright]) < ctrl$minbucket)
-          return(-Inf);
+          return(Inf);
       } else {
         if (length(sleft) < ctrl$minbucket || 
             length(sright) < ctrl$minbucket)
-          return(-Inf);
+          return(Inf);
       }
       if (ctrl$restart) {
         linfo <- NULL
@@ -823,9 +845,9 @@ extree_control <- function
       ll <- linfo$objfun + rinfo$objfun
       return(ll)
     })
-    maxlogLik <- max(unlist(ll))
-    if(maxlogLik > nosplitll)
-      sp <- which(ixtab > 0)[which.max(unlist(ll))]
+    minlogLik <- min(unlist(ll))
+    if(minlogLik < nosplitll)
+      sp <- which(ixtab > 0)[which.min(unlist(ll))]
     
   } else {
     xsubs <- factor(x[subset])
@@ -844,11 +866,11 @@ extree_control <- function
       if (length(weights) > 0) {
         if (sum(weights[sleft]) < ctrl$minbucket ||
             sum(weights[sright]) < ctrl$minbucket)
-          return(-Inf);
+          return(Inf);
       } else {
         if (length(sleft) < ctrl$minbucket || 
             length(sright) < ctrl$minbucket)
-          return(-Inf);
+          return(Inf);
       }
       if (ctrl$restart) {
         linfo <- NULL
@@ -859,9 +881,9 @@ extree_control <- function
       ll <- linfo$objfun + rinfo$objfun
       return(ll)
     })
-    maxlogLik <- max(unlist(ll))
-    if(maxlogLik > nosplitll) {
-      sp <- splits[which.max(unlist(ll)),] + 1L
+    minlogLik <- min(unlist(ll))
+    if(minlogLik > nosplitll) {
+      sp <- splits[which.min(unlist(ll)),] + 1L
       levs <- levels(x)
       if(length(sp) != length(levs)) {
         sp <- sp[levs]
@@ -872,8 +894,8 @@ extree_control <- function
   
   if (!SPLITONLY){
     ## split only if logLik improves due to splitting
-    maxlogLik <- ifelse(maxlogLik == nosplitll, NA, maxlogLik)
-    return(list(statistic = maxlogLik, p.value = NA))
+    minlogLik <- ifelse(minlogLik == nosplitll, NA, minlogLik)
+    return(list(statistic = -minlogLik, p.value = NA)) ### .extree_node maximises
   }
   if (is.null(sp) || all(is.na(sp))) return(NULL)
   if (ORDERED) {
