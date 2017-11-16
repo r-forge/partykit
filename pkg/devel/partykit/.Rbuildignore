@@ -14,9 +14,7 @@ R/meanvartree.R
 R/mtree.R
 src
 tests/ctree-ctree.R
-vignettes/mob.Rout.save
 vignettes/urp.*
 WISHLIST
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^.*R1.*$
