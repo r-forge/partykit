@@ -51,8 +51,8 @@ fmla <- as.formula("y ~ x | z + z_noise")
 
 
 ## glm versus lm / logLik versus sum of squared residuals
-lm_big <- lmtree(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 2)
-glm_big <- glmtree(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 2)
+lm_big <- lmtree(formula = fmla, data = d, maxdepth = 2)
+glm_big <- glmtree(formula = fmla, data = d, maxdepth = 2)
 
 AIC(lm_big)
 AIC(glm_big)

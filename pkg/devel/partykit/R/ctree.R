@@ -290,7 +290,7 @@ ctree_control <- function
     testtype = c("Bonferroni", "MonteCarlo", 
                  "Univariate", "Teststatistic"),
     pargs = GenzBretz(),
-    nmax = Inf, 
+    nmax = c("yx" = Inf, "z" = Inf),
     alpha = 0.05, 
     mincriterion = 1 - alpha, 
     logmincriterion = log(mincriterion), 

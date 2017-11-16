@@ -26,4 +26,4 @@ sum(log(p2[cbind(1:nrow(d), unclass(d$y2))]))
 sum(log(p3[cbind(1:nrow(d), unclass(d$y2))]))
 sum(log(p4[cbind(1:nrow(d), unclass(d$y2))]))
 
-c1 <- ctree(y ~ z, data = d, control = ctree_control(nmax = 25, alpha = .5))
+c1 <- ctree(y ~ z, data = d, control = ctree_control(nmax = c("yx" = Inf, "z" = 25), alpha = .5))
