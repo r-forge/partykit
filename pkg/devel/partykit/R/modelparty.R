@@ -325,7 +325,7 @@ mob <- function
     mf[[1L]] <- quote(partykit:::extree_data)
 
     d <- eval(mf, parent.frame())
-    subset <- 1:nrow(model.frame(d))
+    subset <- .start_subset(d)
 
     weights <- model.weights(d)
 

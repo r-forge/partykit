@@ -882,7 +882,7 @@ extree_control <- function
       return(ll)
     })
     minlogLik <- min(unlist(ll))
-    if(minlogLik > nosplitll) {
+    if(minlogLik < nosplitll) {
       sp <- splits[which.min(unlist(ll)),] + 1L
       levs <- levels(x)
       if(length(sp) != length(levs)) {
@@ -913,4 +913,11 @@ extree_control <- function
                       index = as.integer(sp))
   }
   return(ret)
+}
+
+.start_subset <- function(data) {
+    ret <- 1:NROW(model.frame(data))
+    if (length(data$yxmissings) > 0)
+        ret <- ret[!(ret %in% data$yxmissings)]
+    ret
 }

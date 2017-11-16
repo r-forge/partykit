@@ -101,7 +101,7 @@ cforest <- function
     }
 
     N <- nrow(model.frame(d))
-    idx <- 1L:N
+    idx <- .start_subset(d)
     if (is.null(strata)) {
         size <- N
         if (!perturb$replace) size <- floor(size * perturb$fraction)
@@ -134,7 +134,7 @@ cforest <- function
     })
     if (trace) close(pb)
 
-    fitted <- data.frame(idx = idx)  
+    fitted <- data.frame(idx = 1:N)  
     mf <- model.frame(d)
     fitted[[2]] <- mf[, d$variables$y, drop = TRUE]
     names(fitted)[2] <- "(response)"
