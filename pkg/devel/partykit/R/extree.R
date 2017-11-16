@@ -78,6 +78,7 @@
     if (inherits(sf, "partysplit")) {
         thissplit <- sf
         info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))]
+        info$nobs <- sw
         if (!ctrl$saveinfo) info <- NULL
     } else {
         ### selectfun might return other things later to be used for info
@@ -111,6 +112,7 @@
         info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
                               sf[!(names(sf) %in% c("criteria", "converged"))],
                               thismodel[!(names(thismodel) %in% c("estfun"))])
+        info$nobs <- sw
         if (!ctrl$saveinfo) info <- NULL
 
         ### nothing "significant"
