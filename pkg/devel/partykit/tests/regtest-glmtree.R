@@ -98,25 +98,6 @@ dim(m_mt$data)
 dim(m_mf$data)
 
 
-## Check restart (restart = TRUE should take longer, but results should be the same)
-t_rt <- system.time(m_rt <- glmtree(formula = fmla, data = d, restart = TRUE, testflavour = "exhaustive"))
-t_rf <- system.time(m_rf <- glmtree(formula = fmla, data = d, restart = FALSE, testflavour = "exhaustive"))
-t_rt["elapsed"] > t_rf["elapsed"] # good if TRUE
-
-## Check if Bonferroni correction leads to a smaller tree
-(m_mc <- glmtree(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
-                  testtype = "MonteCarlo", bonferroni = FALSE))
-
-(m_bmc <- glmtree(formula = fmla2, data = d2, family = fmly, testflavour = "ctree",
-                   testtype = c("Bonferroni", "MonteCarlo"), bonferroni = TRUE))
-
-width(m_mc)
-width(m_bmc)
-
-logLik(m_mc)
-logLik(m_bmc)
-
-
 ## check multiway
 (m_mult <- glmtree(formula = fmla2, data = d3, catsplit = "multiway", minsize = 80))
 
@@ -143,40 +124,6 @@ all.equal(m_bt, m_df)
 
 unclass(m_bt)$node$info$criterion
 unclass(m_df)$node$info$criterion
-
-
-## check testtype
-tts <- list("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic",
-            c("Bonferroni", "MonteCarlo"))
-
-ms <- list()
-for(tt in tts) {
-  nam <- paste(tt, collapse = "")
-  ms[[nam]] <- glmtree(formula = fmla, data = d, family = fmly, testflavour = "ctree",
-                        testtype = tt, bonferroni = "Bonferroni" %in% tt)
-}
-
-ms
-
-
-
-
-
-## check splittry
-(m_s2 <- glmtree(formula = fmla2, data = d2, splittry = 1, bonferroni = FALSE,
-                  testflavour = "ctree", testtype = "Univariate"))
-(m_s5 <- glmtree(formula = fmla2, data = d2, splittry = 5, bonferroni = FALSE,
-                  testflavour = "ctree", testtype = "Univariate"))
-
-
-
-## check lookahead
-smpl <- sample(1:NROW(d), size = 15)
-(m_l <- glmtree(formula = fmla, data = d[smpl, ], family = fmly,
-                 lookahead = TRUE,
-                 testflavour = "exhaustive",
-                 minbucket = 2, minsplit = 2))
-
 
 
 ### example from mob vignette
