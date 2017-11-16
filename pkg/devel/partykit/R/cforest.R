@@ -243,3 +243,8 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     }
     ret
 }
+
+model.frame.cforest <- function(formula, ...) {
+    class(formula) <- "party"
+    model.frame(formula, ...)
+}
