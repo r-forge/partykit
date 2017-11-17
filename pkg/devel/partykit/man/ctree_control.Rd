@@ -12,12 +12,14 @@ ctree_control(teststat = c("quadratic", "maximum"),
     splittest = FALSE,
     testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
     pargs = GenzBretz(),
-    nmax = Inf, alpha = 0.05, mincriterion = 1 - alpha,
+    nmax = c(yx = Inf, z = Inf), alpha = 0.05, mincriterion = 1 - alpha,
     logmincriterion = log(mincriterion), minsplit = 20L, minbucket = 7L, 
-    minprob = 0.01, stump = FALSE, lookahead = FALSE, nresample = 9999L, 
-    MIA = FALSE, maxsurrogate = 0L, numsurrogate = FALSE, mtry = Inf, maxdepth = Inf, 
+    minprob = 0.01, stump = FALSE, lookahead = FALSE, MIA = FALSE, nresample = 9999L, 
+    tol = sqrt(.Machine$double.eps),maxsurrogate = 0L, numsurrogate = FALSE, 
+    mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
-    caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE)
+    caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE,
+    update = FALSE)
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
@@ -39,8 +41,9 @@ ctree_control(teststat = c("quadratic", "maximum"),
                    given.}
   \item{pargs}{ control parameters for the computation of multivariate
                 normal probabilities, see \code{\link[mvtnorm]{GenzBretz}}.}
-  \item{nmax}{ an integer defining the number of bins each variable
-               is divided into prior to tree building. The default \code{Inf}
+  \item{nmax}{ an integer of length two defining the number of bins each variable
+               (in the response \code{yx} and the partitioning variables
+               \code{z})) and is divided into prior to tree building. The default \code{Inf}
                does not apply any binning. Highly experimental, use at your own
                risk.}
   \item{alpha}{ a double, the significance level for variable selection.}
@@ -57,9 +60,10 @@ ctree_control(teststat = c("quadratic", "maximum"),
                 nodes only) is to be computed. }
   \item{lookahead}{ a logical determining whether a split is implemented only
                     after checking if tests in both daughter nodes can be performed.}
-  \item{nresample}{ number of permutations for \code{testtype = "MonteCarlo"}.}
   \item{MIA}{ a logical determining the treatment of \code{NA} as a category in split,
               see Twala et al. (2008).}
+  \item{nresample}{ number of permutations for \code{testtype = "MonteCarlo"}.}
+  \item{tol}{tolerance for zero variances.}
   \item{maxsurrogate}{ number of surrogate splits to evaluate.}
   \item{numsurrogate}{ a logical for backward-compatibility with party. If
                        \code{TRUE}, only at least ordered variables are considered for surrogate splits.}
@@ -89,6 +93,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
                \code{\link[parallel]{mclapply}} with the desired number of \code{cores}.}
   \item{saveinfo}{logical. Store information about variable selection
                   procedure in \code{info} slot of each \code{partynode}.}
+  \item{update}{logical. If \code{TRUE}, the data transformation is updated
+                in every node. The default always was and still is \code{FALSE}.}
 
 }
 \details{

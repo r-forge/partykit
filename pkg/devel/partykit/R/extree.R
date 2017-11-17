@@ -249,7 +249,7 @@
 
 extree_fit <- function(data, trafo, converged, selectfun = NULL, 
                        splitfun = NULL, svselectfun = NULL, 
-                       svsplitfun = NULL, partyvars, subset, weights, ctrl) {
+                       svsplitfun = NULL, partyvars, subset, weights, ctrl, doFit = TRUE) {
     ret <- list()
 
     nf <- names(formals(trafo))
@@ -449,6 +449,8 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
     } else {
         stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(svsplitfun))))
     }
+
+    if (!doFit) return(mytrafo)
 
     list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
                               splitfun = splitfun, svselectfun = svselectfun, svsplitfun = svsplitfun, 

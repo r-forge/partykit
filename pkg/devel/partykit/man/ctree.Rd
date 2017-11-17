@@ -10,9 +10,9 @@
 }
 
 \usage{
-ctree(formula, data, weights, subset, offset, cluster, 
-    na.action = na.pass, control = ctree_control(\dots), ytrafo = NULL, 
-    converged = NULL, scores = NULL, \dots)
+ctree(formula, data, subset, weights, na.action = na.pass, offset, cluster, 
+    control = ctree_control(\dots), ytrafo = NULL, 
+    converged = NULL, scores = NULL, doFit = TRUE, \dots)
 }
 
 \arguments{
@@ -43,6 +43,7 @@ ctree(formula, data, weights, subset, offset, cluster,
                    very likely to change.}
   \item{scores}{an optional named list of scores to be attached to ordered
                 factors.}
+  \item{doFit}{a logical, if \code{FALSE}, the tree is not fitted.}
   \item{\dots}{arguments passed to \code{\link{ctree_control}}.}
 }
 

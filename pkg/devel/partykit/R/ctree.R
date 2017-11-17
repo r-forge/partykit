@@ -353,8 +353,8 @@ ctree_control <- function
 }
 
 
-ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-                  control = ctree_control(), ytrafo = NULL, converged = NULL, scores = NULL, 
+ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, cluster,
+                  control = ctree_control(...), ytrafo = NULL, converged = NULL, scores = NULL, 
                   doFit = TRUE, ...) {
 
     ## set up model.frame() call
@@ -407,9 +407,9 @@ ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
         converged <- TRUE
     }            
 
-    update <- function(subset, weights, control)
+    update <- function(subset, weights, control, doFit = TRUE)
         extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                   subset = subset, weights = weights, ctrl = control)
+                   subset = subset, weights = weights, ctrl = control, doFit = doFit)
     if (!doFit) return(list(d = d, update = update))
     tree <- update(subset = subset, weights = weights, control = control)
     trafo <- tree$trafo

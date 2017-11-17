@@ -77,6 +77,7 @@ cforest <- function
                  "scores", "ytrafo", "control"), names(call), 0L)
     ctreecall <- call[c(1L, m)]
     ctreecall$doFit <- FALSE
+    ctreecall$control <- control ### put ... into ctree_control()
     ctreecall[[1L]] <- quote(partykit::ctree)
     tree <- eval(ctreecall, parent.frame())
 
@@ -124,7 +125,7 @@ cforest <- function
         }
     }
 
-    trafo <- NULL
+    trafo <- updatefun(sort(rw[[1]]), integer(0), control, doFit = FALSE)
     if (trace) pb <- txtProgressBar(style = 3) 
     forest <- applyfun(1:ntree, function(b) {
         if (trace) setTxtProgressBar(pb, b/ntree)
