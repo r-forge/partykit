@@ -322,7 +322,7 @@ mob <- function
     mf$nmax <- control$nmax
     mf$ytype <- control$ytype
     ## evaluate model.frame
-    mf[[1L]] <- quote(partykit:::extree_data)
+    mf[[1L]] <- quote(partykit::extree_data)
 
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)
