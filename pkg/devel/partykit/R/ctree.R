@@ -1,8 +1,8 @@
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
 
-    ix <- data[[j, type = "index"]]
-    iy <- data[["yx", type = "index"]]
+    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+    iy <- data$yxindex ### data[["yx", type = "index"]]
     Y <- model$estfun
 
     if (!is.null(iy)) {
@@ -14,8 +14,8 @@
 
     stopifnot(NROW(Y) == length(ix))
 
-    NAyx <- data[["yx", type = "missing"]]
-    NAz <- data[[j, type = "missing"]]
+    NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
+    NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
     if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
         subsetNArm <- subset[!(subset %in% NAyx)]
     } else {
@@ -41,11 +41,14 @@
 
     x <- data[[j]]
     MIA <- FALSE
-    if (ctrl$MIA) MIA <- (length(NAs <- data[[j, type = "missing"]]) > 0)
+    if (ctrl$MIA) {
+        NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
+        MIA <- (length(NAs) > 0)
+    }
 
     ### X for (ordered) factors is always dummy matrix
     if (is.factor(x) || is.ordered(x))
-        X <- data[[j, type = "index"]]
+        X <- data$zindex[[j]] ### data[[j, type = "index"]]
 
     scores <- data[[j, type = "scores"]]
     ORDERED <- is.ordered(x) || is.numeric(x)
@@ -55,7 +58,7 @@
     if (ctrl$splittest || SPLITONLY) {
         MAXSELECT <- TRUE
         if (is.numeric(x)) {
-            X <- data[[j, type = "index"]]
+            X <- data$zindex[[j]] ###data[[j, type = "index"]]
             ux <- levels(X)
         }
         if (MIA) {
@@ -91,7 +94,7 @@
 .ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
 
     x <- data[[j]]
-    ix <- data[[j, type = "index"]]
+    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
     ux <- attr(ix, "levels")
 
     MIA <- FALSE
@@ -365,7 +368,7 @@ ctree <- function(formula, data, subset, na.action = na.pass, weights, offset, c
     }
     mf$nmax <- control$nmax
     ## evaluate model.frame
-    mf[[1L]] <- quote(partykit:::extree_data)
+    mf[[1L]] <- quote(partykit::extree_data)
 
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)

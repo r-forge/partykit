@@ -77,7 +77,7 @@ cforest <- function
                  "scores", "ytrafo", "control"), names(call), 0L)
     ctreecall <- call[c(1L, m)]
     ctreecall$doFit <- FALSE
-    ctreecall[[1L]] <- quote(partykit:::ctree)
+    ctreecall[[1L]] <- quote(partykit::ctree)
     tree <- eval(ctreecall, parent.frame())
 
     d <- tree$d
@@ -142,7 +142,7 @@ cforest <- function
         fitted[["(weights)"]] <- weights
 
     ### turn subsets in weights (maybe we can avoid this?)
-    rw <- lapply(rw, function(x) tabulate(x, nbins = length(idx)))
+    rw <- lapply(rw, function(x) as.double(tabulate(x, nbins = length(idx))))
 
     control$applyfun <- applyfun
 
@@ -163,11 +163,13 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     forest <- object$nodes
     nd <- object$data
     vmatch <- 1:ncol(nd)
+    NOnewdata <- TRUE
     if (!is.null(newdata)) {
         nd <- model.frame(object$predictf, ### all variables W/O response
                           data = newdata, na.action = na.pass)
         OOB <- FALSE
         vmatch <- match(names(object$data), names(nd))
+        NOnewdata <- FALSE
     }
     nam <- rownames(nd)
 
@@ -186,20 +188,29 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     if (!is.null(object$info))
         applyfun <- object$info$control$applyfun
 
-    for (b in 1:length(forest)) {
-        ids <- nodeids(forest[[b]], terminal = TRUE)
-        fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
-        fdata <- fitted_node(forest[[b]], object$data, ...)
-        tw <- rw[[b]]
-        pw <- sapply(ids, function(i) tw * (fdata == i))
-        ret <- pw[, match(fnewdata, ids), drop = FALSE]
-        ### obs which are in-bag for this tree don't contribute
-        if (OOB) ret[,tw > 0] <- 0
-        w <- w + ret
+    fdata <- lapply(forest, fitted_node, data = object$data, ...)
+    if (NOnewdata && OOB) {
+        fnewdata <- list()
+    } else {
+        fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    #w <- Reduce("+", bw)
-    if (!is.matrix(w)) w <- matrix(w, ncol = 1)
+    w <- .Call(R_rfweights, fdata, fnewdata, rw)
+
+#    for (b in 1:length(forest)) {
+#        ids <- nodeids(forest[[b]], terminal = TRUE)
+#        fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
+#        fdata <- fitted_node(forest[[b]], object$data, ...)
+#        tw <- rw[[b]]
+#        pw <- sapply(ids, function(i) tw * (fdata == i))
+#        ret <- pw[, match(fnewdata, ids), drop = FALSE]
+#        ### obs which are in-bag for this tree don't contribute
+#        if (OOB) ret[,tw > 0] <- 0
+#        w <- w + ret
+#    }
+#
+#    #w <- Reduce("+", bw)
+#    if (!is.matrix(w)) w <- matrix(w, ncol = 1)
 
     if (type == "weights") {
         ret <- w
