@@ -1228,7 +1228,7 @@ h <- function(y, x, start = NULL, weights, offset, estfun = TRUE, object = FALSE
     s <- logrank_trafo(y[weights > 0,,drop = FALSE])
     r <- rep(0, length(weights))
     r[weights > 0] <- s
-    list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE)
+    list(estfun = matrix(as.double(r), ncol = 1), converged = TRUE, unweighted = TRUE)
 }
 partykit::ctree(Surv(time, cens) ~ ., data = GBSG2, ytrafo = h)
 @

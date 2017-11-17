@@ -293,7 +293,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 }
                 if (!is.null(ef <- m$estfun)) {
                     ### ctree expects unweighted scores
-                    if (is.null(selectfun) && ctrl$testflavour == "ctree")
+                    if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
                         m$estfun <- m$estfun / w
                     Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
                     Y[subset,] <- m$estfun
@@ -315,8 +315,9 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 }
                 m$converged <- obj$converged ### may or may not exist
                 ### ctree expects unweighted scores
-                if (is.null(selectfun) && ctrl$testflavour == "ctree") {
-                    if (!is.null(m$estfun)) m$estfun <- m$estfun / w
+                if (!is.null(m$estfun))  {
+                    if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
+                        m$estfun <- m$estfun / w
                 }
                 if (!is.null(ef <- m$estfun))
                     m$estfun <- rbind(0, ef)

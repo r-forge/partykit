@@ -398,7 +398,9 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
         if (!is.null(iy <- d[["yx", type = "index"]])) {
             Y <- rbind(0, Y)
         } 
-        ytrafo <- function(subset, weights, info, estfun, object, ...) list(estfun = Y)
+        ytrafo <- function(subset, weights, info, estfun, object, ...) 
+            list(estfun = Y, unweighted = TRUE) 
+            ### unweighted = TRUE prevents estfun / w in extree_fit
     }
     if (is.function(converged)) {
         stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
