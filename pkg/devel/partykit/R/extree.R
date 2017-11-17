@@ -699,17 +699,19 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
   ret
 }
 
-model.frame.extree_data <- function(object, yxonly = FALSE, ...) {
+model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
     if (!yxonly) 
-        return(object$data)
-    if (!is.null(object$yxindex))
-        return(attr(object$yxindex, "levels"))
-    vars <- object$variables
-    return(object$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
+        return(formula$data)
+    if (!is.null(formula$yxindex))
+        return(attr(formula$yxindex, "levels"))
+    vars <- formula$variables
+    return(formula$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
 }    
 
 "[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
-    type <- match.arg(type)
+    ### this is way too slow
+    ### type <- match.arg(type)
+    type <- type[1]
     switch(type, 
         "original" = {
             mf <- model.frame(x)
