@@ -1,4 +1,6 @@
-# useDynLib("partykit")
+
+useDynLib(partykit, .registration = TRUE)
+
 import("stats")
 import("graphics")
 import("grid")

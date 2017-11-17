@@ -12,7 +12,6 @@ inst/urp.Rnw
 R/asymptote.R
 R/meanvartree.R
 R/mtree.R
-src
 tests/ctree-ctree.R
 vignettes/urp.*
 WISHLIST
