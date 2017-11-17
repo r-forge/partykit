@@ -269,7 +269,7 @@ mob <- function
   formula, 
   data, 
   subset,
-  na.action = na.pass, 
+  na.action = na.omit, 
   weights = NULL, 
   offset,
   cluster, 
