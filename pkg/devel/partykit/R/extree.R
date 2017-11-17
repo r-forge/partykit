@@ -154,11 +154,12 @@
     if (ctrl$maxsurrogate > 0L) {
         pv <- partyvars
         pv[varid_split(thissplit)] <- 0
+        pv <- which(pv > 0)
         if (ctrl$numsurrogate)
             pv <- pv[sapply(model.frame(data)[, pv], function(x) is.numeric(x) || is.ordered(x))]
         ret$surrogates <- .extree_surrogates(kidids, data = data, 
             weights = weights, subset = snotNA, 
-            partyvars = pv,
+            whichvar = pv,
             selectfun = svselectfun, splitfun = svsplitfun, ctrl = ctrl)
     }
     kidids <- kidids_node(ret, model.frame(data), obs = subset)
@@ -192,20 +193,20 @@
     weights,
     subset, 			### subset of 1:nrow(data) with
 				### non-missings in primary split
-    partyvars, 			### partytioning variables
+    whichvar, 			### partytioning variables
     selectfun, 			### variable selection and split
 				### function
     splitfun,
     ctrl			### ctree_control()
 ) {
 
+    if (length(whichvar) == 0) return(NULL)
     ms <- max(split)
-    if (ms == 2) return(NULL) ### ie no multiway splits!
+    if (ms != 2) return(NULL) ### ie no multiway splits!
     dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = ms)
     dm[cbind(subset, split)] <- 1
     thismodel <- list(estfun = dm)
-    sf <- selectfun(thismodel, subset = subset, weights = weights, whichvar = which(partyvars > 0),
-    ctrl = ctrl)
+    sf <- selectfun(model = thismodel, subset = subset, weights = weights, whichvar = whichvar, ctrl = ctrl)
     p <- sf$criteria
     ### partykit always used p-values, so expect some differences
     crit <- p[ctrl$criterion,,drop = TRUE]
@@ -218,7 +219,7 @@
             order(p["statistic", ties]) / (sum(ties) * 1000)
     }
 
-    ret <- vector(mode = "list", length = min(c(sum(partyvars > 0), 
+    ret <- vector(mode = "list", length = min(c(length(whichvar), 
                                                 ctrl$maxsurrogate)))
 
     for (i in 1L:length(ret)) {
@@ -344,6 +345,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
         ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
         rownames(ret$criteria) <- c("statistic", "p.value")
         colnames(ret$criteria) <- names(model.frame(data))
+        if (length(whichvar) == 0) return(ret)
         ### <FIXME> allow joint MC in the absense of missings; fix seeds
         ### </FIXME>
         for (j in whichvar) {
@@ -370,6 +372,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
     }
     
     .splitfun <- function(model, subset, weights, whichvar, ctrl) {
+        if (length(whichvar) == 0) return(NULL)
         for (j in whichvar) {
             x <- model.frame(data)[[j]]
             if (ctrl$multiway && is.factor(x) && !is.ordered(x) &&
@@ -419,6 +422,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
     .svsplitfun <- function(..., ctrl) {
         ctrl$testflavour <- "ctree"
         ctrl$splitflavour <- "ctree"
+        ctrl$minbucket <- 0L
         .splitfun(..., ctrl = ctrl)
     }
 
