@@ -329,6 +329,8 @@ mob <- function
 
     weights <- model.weights(d)
 
+    if (is.null(control$update)) control$update <- TRUE
+
     update <- function(subset, weights, control)
         extree_fit(data = d, trafo = afit, converged = converged, partyvars = d$variables$z, 
                    subset = subset, weights = weights, ctrl = control)
@@ -353,6 +355,7 @@ mob <- function
         if (is.null(control$minbucket)) control$minbucket <- minsize
         if (is.null(control$minsplit)) control$minsplit <- minsize
     }
+
 
     tree <- update(subset = subset, weights = weights, control = control)
     trafo <- tree$trafo

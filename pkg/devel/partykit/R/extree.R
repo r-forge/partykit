@@ -778,7 +778,7 @@ extree_control <- function
     testflavour = c("ctree", "exhaustive", "mfluc"),
     bonferroni = FALSE,
     splitflavour = c("ctree", "exhaustive"),
-    update = TRUE
+    update = NULL
 ) {
 
     ## apply infrastructure for determining split points

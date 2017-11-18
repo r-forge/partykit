@@ -317,7 +317,7 @@ ctree_control <- function
     applyfun = NULL, 
     cores = NULL,
     saveinfo = TRUE,
-    update = FALSE
+    update = NULL
 ) {
 
     testtype <- match.arg(testtype, several.ok = TRUE)
@@ -376,7 +376,8 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
     weights <- model.weights(d)
 
     if (is.function(ytrafo)) {
-        control$update <- TRUE
+        if (is.null(control$update))
+            control$update <- TRUE
         nf <- names(formals(ytrafo))
         if (all(c("data", "weights", "control") %in% nf))
             ytrafo <- ytrafo(data = d, weights = weights, control = control)
@@ -384,7 +385,8 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
         stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
                   all(c("y", "x", "weights", "offset", "start") %in% nf))
     } else {
-        control$update <- FALSE
+        if (is.null(control$update))
+            control$update <- FALSE
         stopifnot(length(d$variables$x) == 0)
         mfyx <- model.frame(d, yxonly = TRUE)
         mfyx[["(weights)"]] <- mfyx[["(offset)"]] <- NULL
