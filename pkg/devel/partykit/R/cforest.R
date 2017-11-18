@@ -81,6 +81,9 @@ cforest <- function
     ctreecall[[1L]] <- quote(partykit::ctree)
     tree <- eval(ctreecall, parent.frame())
 
+    if (is.null(control$update))
+        control$update <- is.function(ytrafo)
+
     d <- tree$d
     updatefun <- tree$update
 
@@ -143,7 +146,7 @@ cforest <- function
         fitted[["(weights)"]] <- weights
 
     ### turn subsets in weights (maybe we can avoid this?)
-    rw <- lapply(rw, function(x) as.double(tabulate(x, nbins = length(idx))))
+    rw <- lapply(rw, function(x) as.integer(tabulate(x, nbins = length(idx))))
 
     control$applyfun <- applyfun
 
