@@ -3,7 +3,7 @@
 
 SEXP R_rfweights (SEXP fdata, SEXP fnewdata, SEXP weights) {
 
-    SEXP ans, tmp;
+    SEXP ans;
     int *id, *ind, *iweights, *ians;
     int Ntree = LENGTH(fdata), Ndata, Nnewdata;
     int OOB = LENGTH(fnewdata) == 0;
