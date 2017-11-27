@@ -1,0 +1,6 @@
+Distributional Trees and Forests
+
+Authors: Lisa Schlosser, Torsten Hothorn, Achim Zeileis
+
+To obtain probabilistic predictions about a dependent variable based on some set of explanatory variables, a distributional approach is often adopted where the parameter(s) of the distribution are linked to regressors. In many classical models this often only captures the location/expectation of the distribution but over the last decade there has been increasing interest in distributional regression approaches modeling all parameters including location, scale, and shape. Notably, the GAMLSS framework allows to establish generalized additive models using this approach. However, in situations where variable selection is required and/or there are non-smooth dependencies or interactions (especially unknown or of high-order), it is challenging to establish a good GAMLSS. A more natural alternative would be the application of regression trees or random forests but, so far, no general distributional framework is available for these methods. Therefore, the two frameworks are combined here to distributional trees and forests. Applications to real and artificial data illustrate how it can be employed in practice using the R package "disttree".
+
