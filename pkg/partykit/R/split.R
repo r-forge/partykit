@@ -129,9 +129,10 @@ info_split <- function(split) {
     split$info
 }
 
-kidids_split <- function(split, data, vmatch = 1:ncol(data), obs = NULL) {
+kidids_split <- function(split, data, vmatch = 1:length(data), obs = NULL) {
 
     id <- varid_split(split)
+    class(data) <- "list" ### speed up
     x <- data[[vmatch[id]]]
     if (!is.null(obs)) x <- x[obs]
 
