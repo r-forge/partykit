@@ -745,13 +745,6 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
     )
 }
 
-model.weights.extree_data <- function(x)
-    x[["(weights)"]]
-
-model.offset.extree_data <- function(x)
-    model.offset(model.frame(x, yxonly = TRUE))
-
-
 ### control arguments needed in this file
 extree_control <- function
 (
@@ -838,7 +831,7 @@ extree_control <- function
     ll <- ctrl$applyfun(which(ixtab > 0), function(u) {
       sleft <- subset[LEFT <- (ix[subset] <= u)]
       sright <- subset[!LEFT]
-      if (length(weights) > 0) {
+      if (length(weights) > 0 && ctrl$caseweights) {
         if (sum(weights[sleft]) < ctrl$minbucket ||
             sum(weights[sright]) < ctrl$minbucket)
           return(Inf);
@@ -874,7 +867,7 @@ extree_control <- function
     ll <- ctrl$applyfun(1:nrow(splits), function(u) {
       sleft <- subset[LEFT <- xsubs %in% levels(xsubs)[splits[u,]]]
       sright <- subset[!LEFT]
-      if (length(weights) > 0) {
+      if (length(weights) > 0 && ctrl$caseweights) {
         if (sum(weights[sleft]) < ctrl$minbucket ||
             sum(weights[sright]) < ctrl$minbucket)
           return(Inf);

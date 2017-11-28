@@ -373,7 +373,7 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)
 
-    weights <- model.weights(d)
+    weights <- model.weights(model.frame(d))
 
     if (is.function(ytrafo)) {
         if (is.null(control$update))

@@ -97,7 +97,7 @@ cforest <- function
     }
     
     probw <- NULL
-    weights <- model.weights(d)
+    weights <- model.weights(model.frame(d))
     if (!is.null(weights)) {
         probw <- weights / sum(weights)
     } else {

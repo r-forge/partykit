@@ -196,7 +196,7 @@ mob_control <- function(
   nrep = 10000L,
   ordinal = c("chisq", "max", "L2"), 
   trim = 0.1,
-  splittry = 2,
+  splittry = 1L,
   vcov = c("opg", "info", "sandwich"), 
   catsplit = "binary",
   numsplit = "left",
@@ -327,7 +327,7 @@ mob <- function
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)
 
-    weights <- model.weights(d)
+    weights <- model.weights(model.frame(d))
 
     if (is.null(control$update)) control$update <- TRUE
 
@@ -351,7 +351,7 @@ mob <- function
         } else {
             n_coef <- length(cf)
         }
-        minsize <- as.integer(ceiling(10L * n_coef))
+        minsize <- as.integer(ceiling(10L * n_coef / NCOL(d$yx$y)))
         if (is.null(control$minbucket)) control$minbucket <- minsize
         if (is.null(control$minsplit)) control$minsplit <- minsize
     }
