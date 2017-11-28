@@ -19,7 +19,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
     mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
     caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE,
-    update = FALSE)
+    update = NULL)
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
@@ -94,7 +94,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
   \item{saveinfo}{logical. Store information about variable selection
                   procedure in \code{info} slot of each \code{partynode}.}
   \item{update}{logical. If \code{TRUE}, the data transformation is updated
-                in every node. The default always was and still is \code{FALSE}.}
+                in every node. The default always was and still is not to
+                update unless \code{ytrafo} is a function.}
 
 }
 \details{
