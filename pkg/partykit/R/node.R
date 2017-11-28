@@ -199,13 +199,15 @@ kidids_node <- function(node, data, vmatch = 1:ncol(data), obs = NULL,
     if (!is.null(perm)) {
         if (is.integer(perm)) {
             if (varid_split(primary) %in% perm)
-                return(.resample(x))
+                x <- .resample(x)
         } else {
             if (is.null(obs)) obs <- 1:nrow(data)
             strata <- perm[[varid_split(primary)]]
-            if (!is.null(strata))
-                return(do.call("c", tapply(x, strata[obs, drop = TRUE], 
-                                           .resample, simplify = FALSE)))
+            if (!is.null(strata)) {
+                strata <- strata[obs, drop = TRUE]
+                for (s in levels(strata))
+                    x[strata == s] <- .resample(x[strata == s])
+            }
         }
     }
     return(x)
