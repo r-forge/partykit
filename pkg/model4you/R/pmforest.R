@@ -36,7 +36,9 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
                         control = control, ntree = ntree)
   
   ## call cforest
-  args$ytrafo <- function(...) .modelfit(model = model, ...)
+  ## <TH> coeffun??? </TH>
+  args$ytrafo <- function(data, weights, control, ...) 
+      .modelfit(data = data, weights = weights, control = control, model = model, ...)
   ret <- do.call("cforest", args)
   ret$info$model <- model
   ret$info$zformula <- zformula

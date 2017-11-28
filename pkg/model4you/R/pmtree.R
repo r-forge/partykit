@@ -28,7 +28,9 @@ pmtree <- function(model, data = NULL, zformula = ~.,
                         control = control)
   
   ## call ctree
-  args$ytrafo <- function(...) .modelfit(model = model, coeffun = coeffun, ...)
+  args$ytrafo <- function(data, weights, control, ...) 
+      .modelfit(data = data, weights = weights, control = control, 
+                model = model, coeffun = coeffun, ...)
   ret <- do.call("ctree", args)
   
   ### add modelinfo to teminal nodes if not there yet, but wanted

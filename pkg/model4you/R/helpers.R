@@ -21,15 +21,16 @@
 #' 
 #' @importFrom sandwich estfun
 #' @importFrom stats update coef logLik getCall as.formula
-.modelfit <- function(formula, # ignored but needed for .ctreetrafo predict
-                      model, data, coeffun = coef, weights, cluster, ctrl, parm = NULL) {
+.modelfit <- function(model, data, coeffun = coef, weights, control, parm = NULL) {
   
-  fitfun <- function(subset, estfun = TRUE, object = FALSE, info = NULL) { 
-    
+  fitfun <- function(subset, weights, info = NULL, estfun = TRUE, object = FALSE) { 
+
+    data <- model.frame(data)    
     ## compute model on data
     if(length(weights) == 0) weights <- rep(1, NROW(data))
     di <- data[subset, ]
-    mod <- tryCatch(update(object = model, data = di),
+    wi <- weights[subset]
+    mod <- tryCatch(update(object = model, data = di, weights = wi),
                     warning = function(w) list(converged = FALSE),
                     error = function(e) {
                       list(converged = FALSE)
@@ -39,12 +40,12 @@
     if(!(is.null(mod$converged)) && !(mod$converged)) 
       return(list(converged = FALSE))
     
-    
+    ## <TH> supply converged function to ctree </TH>
     ## get convergence info
-    if (is.null(ctrl$converged)) {
+    if (is.null(control$converged)) {
       conv <- if (is.null(mod$converged)) TRUE else mod$converged
     } else {
-      conv <- ctrl$converged(mod, data, subset)
+      conv <- control$converged(mod, data, subset)
     }
     
     ## prepare return list
