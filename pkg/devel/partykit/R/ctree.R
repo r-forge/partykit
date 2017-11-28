@@ -141,18 +141,18 @@
                                  subset, weights, cluster, MIA, SPLITONLY, MAXSELECT, ORDERED, ctrl) {
 
     if (SPLITONLY) {
-        nperm <- 0L
+        nresample <- 0L
         varonly <- TRUE
         pvalue <- FALSE
         teststat <- ctrl$splitstat
     } else {
-        nperm <- ifelse("MonteCarlo" %in% ctrl$testtype,
+        nresample <- ifelse("MonteCarlo" %in% ctrl$testtype,
                         ctrl$nresample, 0L)
         if (ctrl$splittest) {
             if (ctrl$teststat != ctrl$splitstat)
                 warning("Using different test statistics for testing and splitting")
             teststat <- ctrl$splitstat
-            if (nperm == 0) 
+            if (nresample == 0) 
                stop("MonteCarlo approximation mandatory for splittest = TRUE")
         } else {
            teststat <- ctrl$teststat
@@ -174,7 +174,7 @@
     ### compute linear statistic + expecation and covariance
     lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                          weights = weights, block = cluster,
-                         nperm = nperm, varonly = varonly, checkNAs = FALSE)
+                         nresample = nresample, varonly = varonly, checkNAs = FALSE)
     if (!MAXSELECT) {
         if (is.ordered(x) && !ctrl$splittest) 
             lev <- libcoin::lmult(matrix(scores, nrow = 1), lev)
@@ -194,7 +194,7 @@
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xleft, Y = Y, ix = ixleft, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             nperm = nperm, varonly = varonly, checkNAs = FALSE)
+                             nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
                           lower = TRUE, log = TRUE, ordered = ORDERED, 
@@ -202,7 +202,7 @@
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             nperm = nperm, varonly = varonly, checkNAs = FALSE)
+                             nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
                            lower = TRUE, log = TRUE, ordered = ORDERED, 
