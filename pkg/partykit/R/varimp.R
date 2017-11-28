@@ -1,9 +1,35 @@
 
-logLik.constparty <- function(object, newdata, weights, ...) {
+logLik.constparty <- function(object, newdata, weights, perm = NULL, ...) {
 
     y <- object$fitted[["(response)"]]
-    pr <- predict(object, newdata = newdata, 
-                  type = ifelse(inherits(y, "factor"), "prob", "response"), ...)
+    if (missing(newdata)) {
+        fitted <- if (is.null(perm)) {
+            object$fitted[["(fitted)"]]
+        } else {
+            ### no need to watch vmatch because newdata is always mf
+            if (!is.null(perm)) {
+                vnames <- names(object$data)
+                if (is.character(perm)) {
+                    stopifnot(all(perm %in% vnames))
+                    perm <- match(perm, vnames)
+                } else {
+                    ### perm is a named list of factors coding strata
+                    ### (for varimp(..., conditional = TRUE)
+                    stopifnot(all(names(perm) %in% vnames))
+                    stopifnot(all(sapply(perm, is.factor)))
+                    tmp <- vector(mode = "list", length = length(vnames))
+                    tmp[match(names(perm), vnames)] <- perm
+                    perm <- tmp
+                }
+            }
+            fitted_node(node_party(object), data = object$data, perm = perm)
+        }
+        pr <- predict_party(object, id = fitted, newdata = object$data,
+                            type = ifelse(inherits(y, "factor"), "prob", "response"), ...)
+    } else {
+        pr <- predict(object, newdata = newdata, 
+                      type = ifelse(inherits(y, "factor"), "prob", "response"), ...)
+    }
     ll <- switch(class(y)[1], 
            "integer" = {
                -(y - pr)^2
@@ -26,11 +52,37 @@ logLik.constparty <- function(object, newdata, weights, ...) {
     return(sum(weights * ll) / sum(weights))
 }
 
-miscls <- function(object, newdata, weights, ...) {
+miscls <- function(object, newdata, weights, perm = NULL, ...) {
 
     y <- object$fitted[["(response)"]]
     stopifnot(is.factor(y))
-    pr <- predict(object, newdata = newdata, type = "response", ...)
+    if (missing(newdata)) {
+        fitted <- if (is.null(perm)) {
+            object$fitted[["(fitted)"]]
+        } else {
+            ### no need to watch vmatch because newdata is always mf
+            if (!is.null(perm)) {
+                vnames <- names(object$data)
+                if (is.character(perm)) {
+                    stopifnot(all(perm %in% vnames))
+                    perm <- match(perm, vnames)
+                } else {
+                    ### perm is a named list of factors coding strata
+                    ### (for varimp(..., conditional = TRUE)
+                    stopifnot(all(names(perm) %in% vnames))
+                    stopifnot(all(sapply(perm, is.factor)))
+                    tmp <- vector(mode = "list", length = length(vnames))
+                    tmp[match(names(perm), vnames)] <- perm
+                    perm <- tmp
+                }
+            }
+            fitted_node(node_party(object), data = object$data, perm = perm)
+        }
+        pr <- predict_party(object, id = fitted, newdata = object$data,
+                            type = "response", ...)
+    } else {
+        pr <- predict(object, newdata = newdata, type = "response", ...)
+    }
     ll <- unclass(y) != unclass(pr)
 
     if (missing(weights)) return(sum(ll) / length(y))
@@ -74,9 +126,9 @@ varimp.constparty <- function(object, nperm = 1L, risk = c("loglik", "misclassif
             perm[[vn]] <- blocks
            }
         for (p in 1:nperm)
-            ret[vn] <- ret[vn] + risk(object, newdata = object$data, perm = perm, ...)
+            ret[vn] <- ret[vn] + risk(object, perm = perm, ...)
     }
-    ret <- (ret - risk(object, newdata = object$data, ...)) / nperm
+    ret <- (ret - risk(object, ...)) / nperm
 
     ret
 }
