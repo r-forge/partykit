@@ -177,7 +177,7 @@
                          nperm = nperm, varonly = varonly, checkNAs = FALSE)
     if (!MAXSELECT) {
         if (is.ordered(x) && !ctrl$splittest) 
-            lev <- matrix(scores, nrow = 1) %*% lev
+            lev <- libcoin::lmult(matrix(scores, nrow = 1), lev)
     }
 
     ### check if either X or Y were unique
