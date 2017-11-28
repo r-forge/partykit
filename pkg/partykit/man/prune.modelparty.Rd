@@ -3,7 +3,9 @@
 
 \title{Post prune \code{modelparty} objects.}
 
-\usage{prune.modelparty(object, type = "AIC")}
+\usage{
+\method{prune}{modelparty}(tree, type = "AIC", ...)
+}
 
 \description{
 This function allows for post pruning of modelparty objects. 
@@ -11,9 +13,10 @@ Not thate this is usually not neccessary if p-values are used for stopping.
 }
 
 \arguments{
-  \item{object}{object of class \code{modelparty}.}
+  \item{tree}{object of class \code{modelparty}.}
   \item{type}{pruning type. Can be \code{"AIC"}, \code{"BIC"} or a user 
     defined function (details below).}
+  \item{\dots}{additional arguments.}
 }
 
 \details{
@@ -51,26 +54,25 @@ fmla <- as.formula("y ~ x | z + z_noise")
 
 
 ## glm versus lm / logLik versus sum of squared residuals
-lm_big <- lmtree(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 2)
-glm_big <- glmtree(formula = fmla, data = d, testflavour = "exhaustive", maxdepth = 2)
+lm_big <- lmtree(formula = fmla, data = d, maxdepth = 2, alpha = 1)
+glm_big <- glmtree(formula = fmla, data = d, maxdepth = 2, alpha = 1)
 
 AIC(lm_big)
 AIC(glm_big)
 
 
 ## pruning
-lm_aic <- prune.modelparty(lm_big, type = "AIC")
-lm_bic <- prune.modelparty(lm_big, type = "BIC")
+lm_aic <- prune(lm_big, type = "AIC")
+lm_bic <- prune(lm_big, type = "BIC")
 
 width(lm_big)
 width(lm_aic)
 width(lm_bic)
 
-glm_aic <- prune.modelparty(glm_big, type = "AIC")
-glm_bic <- prune.modelparty(glm_big, type = "BIC")
+glm_aic <- prune(glm_big, type = "AIC")
+glm_bic <- prune(glm_big, type = "BIC")
 
 width(glm_big)
 width(glm_aic)
 width(glm_bic)
 }
-

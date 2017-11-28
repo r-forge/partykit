@@ -1,12 +1,18 @@
-# useDynLib("partykit")
+
+useDynLib(partykit, .registration = TRUE)
+
 import("stats")
 import("graphics")
 import("grid")
 import("Formula")
 import("libcoin")
+import("inum")
 import("mvtnorm")
 importFrom("survival",
   "survfit"
+)
+importFrom("rpart",
+  "prune"
 )
 importFrom("grDevices",
   "gray.colors"
@@ -25,6 +31,10 @@ export(
   "partynode",
   "partysplit",
 
+  ## internal tree growing infrastructure
+#  "extree_data",
+#  "extree_fit",
+
   ## new ctree implementation
   "ctree",
   "ctree_control",
@@ -40,9 +50,6 @@ export(
   ## mobsters
   "lmtree",
   "glmtree",
-
-  ## mobsters (urp-based)
-  "prune.modelparty",
 
   ## new cforest implementation
   "cforest",
@@ -146,6 +153,9 @@ S3method("plot", "party")
 S3method("data_party", "default")
 S3method("predict_party", "default")
 
+S3method("[[", "extree_data")
+S3method("model.frame", "extree_data")
+
 ## methods for class partynode
 S3method("[", "partynode")
 S3method("[[", "partynode")
@@ -187,6 +197,7 @@ S3method("weights", "modelparty")
 S3method("predict", "modelparty")
 S3method("print", "modelparty")
 S3method("plot", "modelparty")
+S3method("prune", "modelparty")
 
 ## methods for class lmtree
 S3method("plot", "lmtree")
@@ -202,6 +213,7 @@ S3method("print", "glmtree")
 S3method("predict", "cforest")
 S3method("varimp", "cforest")
 S3method("gettree", "cforest")
+S3method("model.frame", "cforest")
 
 ## misc methods
 S3method("as.partynode", "list")

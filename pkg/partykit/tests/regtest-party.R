@@ -98,7 +98,7 @@ nt <- node_party(ctree(Species ~ ., data = iris))
 (ntp <- nodeprune(nt, 4)) ### partynode method
 
 ### check if both methods do the same
-p1 <- predict(party(ntp, data = iris), type = "node")
+p1 <- predict(party(ntp, data = model.frame(ct)), type = "node")
 p2 <- predict(ctp, type = "node")
 stopifnot(max(abs(p1 - p2)) == 0)
 

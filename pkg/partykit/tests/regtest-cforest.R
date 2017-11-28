@@ -24,7 +24,7 @@ p_party <- predict(cf_party)
 stopifnot(max(abs(p_partykit - p_party)) < .Machine$double.eps)
 
 prettytree(cf_party@ensemble[[1]], inames = names(airq)[-1])
-party(cf_partykit$nodes[[1]], data = airq)
+party(cf_partykit$nodes[[1]], data = model.frame(cf_partykit))
 
 v_party <- do.call("rbind", lapply(1:5, function(i) party::varimp(cf_party)))
 
@@ -56,7 +56,7 @@ p_party <- do.call("rbind", treeresponse(cf_party))
 stopifnot(max(abs(unclass(p_partykit) - unclass(p_party))) < .Machine$double.eps)
 
 prettytree(cf_party@ensemble[[1]], inames = names(iris)[-5])
-party(cf_partykit$nodes[[1]], data = iris)
+party(cf_partykit$nodes[[1]], data = model.frame(cf_partykit))
 
 v_party <- do.call("rbind", lapply(1:5, function(i) party::varimp(cf_party)))
 
