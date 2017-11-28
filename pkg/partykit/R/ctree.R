@@ -1,4 +1,34 @@
 
+.ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
+
+    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+    iy <- data$yxindex ### data[["yx", type = "index"]]
+    Y <- model$estfun
+
+    if (!is.null(iy)) {
+        stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
+        return(.ctree_test_2d(data = data, j = j, Y = Y, iy = iy, 
+                              subset = subset, weights = weights, 
+                              SPLITONLY = SPLITONLY, ctrl = ctrl))
+    }
+
+    stopifnot(NROW(Y) == length(ix))
+
+    NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
+    NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
+    if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
+        subsetNArm <- subset[!(subset %in% NAyx)]
+    } else {
+        subsetNArm <- subset[!(subset %in% c(NAyx, NAz))]
+    }
+
+    return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm, 
+                          weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
+}
+
+.ctree_split <- function(model, trafo, data, subset, weights, j, SPLITONLY = TRUE, ctrl)
+    .ctree_test(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
+
 .partysplit <- function(varid, breaks = NULL, index = NULL, right = TRUE, 
                         prob = NULL, info = NULL) {
     ret <- list(varid = varid, breaks = breaks, index = index, right = right, 
@@ -7,147 +37,184 @@
     ret
 }
 
-.ctree_test_split <- function(x, bdr = NULL, j, ctrl, X, Y, iy = NULL, subset, 
-                              weights, cluster, splitonly = TRUE, minbucket) {
+.ctree_test_1d <- function(data, j, Y, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    ### check if x and/or Y have only unique values or are missing 
-    ### completely; return immediately in these cases
-    if (splitonly) {
-        ret <- NULL
-    } else {
-        ret <- list(statistic = NA, p.value = NA)
+    x <- data[[j]]
+    MIA <- FALSE
+    if (ctrl$MIA) {
+        NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
+        MIA <- (length(NAs) > 0)
     }
 
-    if (is.null(bdr)) {
-        xs <- x[subset]
-        if (all(is.na(xs)) || length(unique(xs)) == 1) return(ret)
-        Ys <- Y[subset,,drop = FALSE]
-        if (all(!complete.cases(Ys)) || 
-            all(apply(Ys, 2, function(y) length(unique(y)) == 1)))
-            return(ret)
-    } else {
-        if (!is.null(iy))
-            if (length(unique(iy)) == 1) return(ret)
-        if (length(unique(bdr[[j]])) == 1) return(ret)
-    }
+    ### X for (ordered) factors is always dummy matrix
+    if (is.factor(x) || is.ordered(x))
+        X <- data$zindex[[j]] ### data[[j, type = "index"]]
 
-    ### <FIXME> MIA splits are only estimated in the presence of missings
-    ###         new missings in predict(<>, newdata) will cause trouble
-    ### </FIXME>
-    MIA <- ctrl$MIA && any(is.na(x[subset]))
-
-    if (is.null(cluster)) cluster <- integer(0)
-
-    X <- X[[j]]
-    ux <- NULL
+    scores <- data[[j, type = "scores"]]
     ORDERED <- is.ordered(x) || is.numeric(x)
-    if (is.null(bdr)) {
-        ix <- NULL
-        if (ctrl$splittest || splitonly) {
-            ### integer X trigger maximally selected stats
-            if (is.factor(x)) {
-                X <- unclass(x)
-                attr(X, "levels") <- levels(x)
-            } else {
-                ux <- sort(unique(x[subset]))
-                X <- .bincode(x, breaks = c(-Inf, ux, Inf),
-                              right = TRUE)
-                ### <NOTE> only breaks in this node are considered
-                ###        because of subset </NOTE>
-                attr(X, "levels") <- ux 
-                storage.mode(X) <- "integer"
-            }
-            if (MIA) {
-                Xlev <- attr(X, "levels")
-                Xleft <- X + 1L
-                Xleft[is.na(Xleft)] <- 1L
-                Xright <- X
-                Xright[is.na(Xright)] <- as.integer(length(Xlev) + 1L)
-                attr(Xleft, "levels") <- c(NA, Xlev)
-                attr(Xright, "levels") <- c(Xlev, NA)
-                ixleft <- ixright <- ix
-            }
-        } else {
-            MIA <- FALSE
+
+    ux <- Xleft <- Xright <- NULL
+    
+    if (ctrl$splittest || SPLITONLY) {
+        MAXSELECT <- TRUE
+        if (is.numeric(x)) {
+            X <- data$zindex[[j]] ###data[[j, type = "index"]]
+            ux <- levels(X)
+        }
+        if (MIA) {
+            Xlev <- attr(X, "levels")
+            Xleft <- X + 1L
+            Xleft[NAs] <- 1L
+            Xright <- X
+            Xright[NAs] <- as.integer(length(Xlev) + 1L)
+            attr(Xleft, "levels") <- c(NA, Xlev)
+            attr(Xright, "levels") <- c(Xlev, NA)
         } 
     } else {
-        ix <- bdr[[j]]
-        if (ctrl$splittest || splitonly) {
-            X <- numeric(0) 
-            ux <- attr(ix, "levels")
-            if (MIA) {
-                Xlev <- attr(ix, "levels")
-                ixleft <- ix + 1L
-                ixright <- ix
-                ixright[ixright == 0L] <- as.integer(length(Xlev) + 1L)
-                attr(ixleft, "levels") <- c(NA, Xlev)
-                attr(ixright, "levels") <- c(Xlev, NA)
-                Xleft <- Xright <- X
-           }
-        } else {
-            MIA <- FALSE
+        MAXSELECT <- FALSE
+        if (is.numeric(x)) {
+            if (storage.mode(x) == "double") {
+                X <- x
+            } else {
+                X <- as.double(x) ### copy when necessary
+            }
         }
+        MIA <- FALSE
     }
+    cluster <- data[["(cluster)"]]
 
-    if (splitonly) {
-        B <- 0L
+    .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
+                         ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
+                         j = j, Y = Y, iy = NULL, subset = subset, weights = weights, 
+                         cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
+                         MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
+}
+
+
+.ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
+
+    x <- data[[j]]
+    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+    ux <- attr(ix, "levels")
+
+    MIA <- FALSE
+    if (ctrl$MIA) MIA <- any(ix[subset] == 0)
+
+    ### X for (ordered) factors is always dummy matrix
+    if (is.factor(x) || is.ordered(x))
+        X <- integer(0)
+
+    scores <- data[[j, type = "scores"]]
+    ORDERED <- is.ordered(x) || is.numeric(x)
+
+    if (ctrl$splittest || SPLITONLY) {
+        MAXSELECT <- TRUE
+        X <- integer(0)
+
+        if (MIA) {
+            Xlev <- attr(ix, "levels")
+            ixleft <- ix + 1L
+            ixright <- ix
+            ixright[ixright == 0L] <- as.integer(length(Xlev) + 1L)
+            attr(ixleft, "levels") <- c(NA, Xlev)
+            attr(ixright, "levels") <- c(Xlev, NA)
+            Xleft <- Xright <- X
+        } 
+    } else {
+        MAXSELECT <- FALSE
+        MIA <- FALSE
+        if (is.numeric(x))
+            X <- matrix(c(0, as.double(attr(ix, "levels"))), ncol = 1)
+    }
+    cluster <- data[["(cluster)"]]
+
+    .ctree_test_internal(x = x, X = X, ix = ix, Xleft = Xleft, Xright = Xright, 
+                         ixleft = ixleft, ixright = ixright, ux = ux, scores = scores, 
+                         j = j, Y = Y, iy = iy, subset = subset, weights = weights, 
+                         cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
+                         MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
+}
+
+
+
+.ctree_test_internal <- function(x, X, ix, Xleft, Xright, ixleft, ixright, ux, scores, j, Y , iy, 
+                                 subset, weights, cluster, MIA, SPLITONLY, MAXSELECT, ORDERED, ctrl) {
+
+    if (SPLITONLY) {
+        nresample <- 0L
         varonly <- TRUE
         pvalue <- FALSE
         teststat <- ctrl$splitstat
     } else {
-        B <- ifelse("MonteCarlo" %in% ctrl$testtype,
-                    ctrl$nresample, 0L)
+        nresample <- ifelse("MonteCarlo" %in% ctrl$testtype,
+                        ctrl$nresample, 0L)
         if (ctrl$splittest) {
             if (ctrl$teststat != ctrl$splitstat)
                 warning("Using different test statistics for testing and splitting")
             teststat <- ctrl$splitstat
-            if (B == 0) 
-                stop("MonteCarlo approximation mandatory for splittest = TRUE")
+            if (nresample == 0) 
+               stop("MonteCarlo approximation mandatory for splittest = TRUE")
         } else {
-            teststat <- ctrl$teststat
+           teststat <- ctrl$teststat
         }
         varonly <- "MonteCarlo" %in% ctrl$testtype && 
                    teststat == "maxtype"
         pvalue <- !("Teststatistic" %in% ctrl$testtype) 
     }
-    ### see libcoin/src/C_ordered_Xfactor_block
-    if (length(cluster) > 0) varonly <- FALSE 
+
+    ### see libcoin
+    if (MAXSELECT) {
+        if (!is.null(cluster)) varonly <- FALSE
+    } else {
+        if (is.ordered(x) && !ctrl$splittest) 
+            varonly <- FALSE 
+    }
 
     ### if (MIA) use tst as fallback
     ### compute linear statistic + expecation and covariance
     lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                          weights = weights, block = cluster,
-                         B = B, varonly = varonly)
+                         nresample = nresample, varonly = varonly, checkNAs = FALSE)
+    if (!MAXSELECT) {
+        if (is.ordered(x) && !ctrl$splittest) 
+            lev <- libcoin::lmult(matrix(scores, nrow = 1), lev)
+    }
+
+    ### check if either X or Y were unique
+    if (all(lev$Variance < ctrl$tol)) 
+        return(list(statistic = NA, p.value = NA))
+
     ### compute test statistic and log(1 - p-value)
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
                   lower = TRUE, log = TRUE, ordered = ORDERED, 
-                  minbucket = minbucket, pargs = ctrl$pargs)
+                  maxselect = MAXSELECT,
+                  minbucket = ctrl$minbucket, pargs = ctrl$pargs)
 
     if (MIA) {
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xleft, Y = Y, ix = ixleft, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             B = B, varonly = varonly)
+                             nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
                           lower = TRUE, log = TRUE, ordered = ORDERED, 
-                          minbucket = minbucket, pargs = ctrl$pargs)
+                          minbucket = ctrl$minbucket, pargs = ctrl$pargs)
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
                              weights = weights, block = cluster,
-                             B = B, varonly = varonly)
+                             nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
                            lower = TRUE, log = TRUE, ordered = ORDERED, 
-                           minbucket = minbucket, pargs = ctrl$pargs)
+                           minbucket = ctrl$minbucket, pargs = ctrl$pargs)
     }
 
-    if (!splitonly) {
+    if (!SPLITONLY) {
         if (MIA) {
             tst <- tstleft
             if (tst$TestStatistic < tstright$TestStatistic)
                 tst <- tstright
-        }
+        }        
         return(list(statistic = log(pmax(tst$TestStatistic, .Machine$double.eps)), 
                     p.value = tst$p.value))
     }
@@ -163,7 +230,7 @@
                     sp <- tstleft$index - 1L ### case A
                     if (!is.ordered(x)) {
                         ### interpolate split-points, see https://arxiv.org/abs/1611.04561
-                        if (ctrl$intersplit & sp < length(ux)) {     
+                        if (ctrl$intersplit & sp < length(ux)) {
                             sp <- (ux[sp] + ux[sp + 1]) / 2
                         } else {
                             sp <- ux[sp]  ### X <= sp vs. X > sp
@@ -177,7 +244,7 @@
                 sp <- tstright$index ### case B
                 if (!is.ordered(x)) {
                     ### interpolate split-points, see https://arxiv.org/abs/1611.04561
-                    if (ctrl$intersplit & sp < length(ux)) {     
+                    if (ctrl$intersplit & sp < length(ux)) {
                         sp <- (ux[sp] + ux[sp + 1]) / 2
                     } else {
                         sp <- ux[sp]  ### X <= sp vs. X > sp
@@ -215,77 +282,7 @@
         }
     }
     return(ret)
-}
 
-.ctreetrafo <- function
-(
-    formula, 
-    data,
-    ctrl, 
-    ytrafo,
-    converged = NULL
-) {
-
-    weights <- model.weights(data)
-    if (is.null(weights)) weights <- integer(0)
-    cluster <- data[["cluster"]]
-    offset <- model.offset(data)
-    if (!is.null(offset)) warning("offset ignored by trafo")
-
-    if (ctrl$nmax < Inf) {
-        if (is.function(ytrafo)) 
-            return(ytrafo(formula, data = data, weights = weights, 
-                          cluster = cluster, ctrl = ctrl))
-        f <- Formula(formula)
-        mf <- model.frame(formula = f, data = data, na.action = na.pass)
-        for (nm in names(mf)[names(mf) %in% names(data)]) {
-            sc <- attr(data[[nm]], "scores")
-            if (!is.null(sc)) attr(mf[[nm]], "scores") <- sc
-        }
-        y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-        if ((ncol(y) > 1L) || !is.factor(y[[1]]))
-            warning("nmax < Inf for non-categorical response not recommended")
-        bdr <- inum::inum(y, nmax = ctrl$nmax, total = TRUE, 
-                          complete.cases.only = TRUE)
-        y <- attr(bdr, "levels")
-        index <- c(bdr)
-        attr(index, "levels") <- 1:NROW(y)
-        cn <- colnames(y)
-        ### <FIXME> y lost its scores attribute, readd! </FIXME>
-        Y <- .y2infl(y, cn[cn != "(weights)"], ytrafo = ytrafo)
-        ### first row corresponds to missings
-        Y <- rbind(0, Y)  
-        return(function(subset, ...)
-            list(estfun = Y, index = index, 
-                 converged =  if (is.null(converged)) 
-                                  TRUE 
-                              else 
-                                  converged(Y, mf, subset)))
-    } else {
-        if (is.function(ytrafo))
-            return(ytrafo(formula, data = data, weights = weights, 
-                          cluster = cluster, ctrl = ctrl))
-        f <- Formula(formula)
-        mf <- model.frame(formula = f, data = data, na.action = na.pass)
-        for (nm in names(mf)[names(mf) %in% names(data)]) {
-            sc <- attr(data[[nm]], "scores")
-            if (!is.null(sc)) attr(mf[[nm]], "scores") <- sc
-        }
-        y <- model.part(f, data = mf, lhs = 1, rhs = 0)
-        cc <- complete.cases(y)
-        ### do not subset y before calling .y2infl as the scores attribute
-        ### would get lost...
-        Yi <- .y2infl(y, colnames(y), ytrafo = ytrafo)[cc,,drop = FALSE]
-        Y <- matrix(NA, nrow = nrow(mf), ncol = NCOL(Yi))
-        Y[cc,] <- Yi
-        #    colnames(Y) <- colnames(Yi)
-        storage.mode(Y) <- "double"
-        return(function(subset, ...)
-            list(estfun = Y, converged = if (is.null(converged)) 
-                                             TRUE 
-                                         else 
-                                             converged(Y, mf, subset)))
-    }
 }
 
 ctree_control <- function
@@ -296,7 +293,7 @@ ctree_control <- function
     testtype = c("Bonferroni", "MonteCarlo", 
                  "Univariate", "Teststatistic"),
     pargs = GenzBretz(),
-    nmax = Inf, 
+    nmax = c("yx" = Inf, "z" = Inf),
     alpha = 0.05, 
     mincriterion = 1 - alpha, 
     logmincriterion = log(mincriterion), 
@@ -305,9 +302,9 @@ ctree_control <- function
     minprob = 0.01, 
     stump = FALSE, 
     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
+    MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     nresample = 9999L, 
     tol = sqrt(.Machine$double.eps),
-    MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     maxsurrogate = 0L, 
     numsurrogate = FALSE,
     mtry = Inf, 
@@ -319,7 +316,8 @@ ctree_control <- function
     caseweights = TRUE, 
     applyfun = NULL, 
     cores = NULL,
-    saveinfo = TRUE
+    saveinfo = TRUE,
+    update = NULL
 ) {
 
     testtype <- match.arg(testtype, several.ok = TRUE)
@@ -336,98 +334,114 @@ ctree_control <- function
     if (!caseweights)
         stop("only caseweights currently implemented in ctree")
 
-    c(.urp_control(criterion = ifelse("Teststatistic" %in% testtype, 
+    c(extree_control(criterion = ifelse("Teststatistic" %in% testtype, 
                                       "statistic", "p.value"),
-                   logmincriterion = logmincriterion, minsplit = minsplit, 
-                   minbucket = minbucket, minprob = minprob, 
-                   nmax = nmax, stump = stump, lookahead = lookahead,
-                   mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-                   splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
-                   numsurrogate = numsurrogate,
-                   majority = majority, caseweights = caseweights, 
-                   applyfun = applyfun, saveinfo = saveinfo,  ### always
-                   testflavour = "ctree", 
-                   bonferroni = "Bonferroni" %in% testtype, 
-                   splitflavour = "ctree"),
+                     logmincriterion = logmincriterion, minsplit = minsplit, 
+                     minbucket = minbucket, minprob = minprob, 
+                     nmax = nmax, stump = stump, lookahead = lookahead,
+                     mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
+                     splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+                     numsurrogate = numsurrogate,
+                     majority = majority, caseweights = caseweights, 
+                     applyfun = applyfun, saveinfo = saveinfo,  ### always
+                     testflavour = "ctree", 
+                     bonferroni = "Bonferroni" %in% testtype, 
+                     splitflavour = "ctree", update = update),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
            testtype = ttesttype, nresample = nresample, tol = tol,
            intersplit = intersplit))
 }
 
-ctree <- function
-(
-    formula, 
-    data, 
-    weights, 
-    subset,
-    offset,
-    cluster, 
-    na.action = na.pass, 
-    control = ctree_control(...), 
-    ytrafo = NULL, 
-    converged = NULL,
-    scores = NULL,
-    ...
-) {
 
-    ### get the call and the calling environment for .urp_tree
-    call <- match.call(expand.dots = FALSE)
-    call$na.action <- na.action
-    frame <- parent.frame()
-    if (missing(data)) {
-        data <- NULL
-        data_asis <- FALSE
+ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, cluster,
+                  control = ctree_control(...), ytrafo = NULL, converged = NULL, scores = NULL, 
+                  doFit = TRUE, ...) {
+
+    ## set up model.frame() call
+    mf <- match.call(expand.dots = FALSE)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
+    mf <- mf[c(1L, m)]
+    mf$yx <- "none"
+    if (is.function(ytrafo)) {
+        if (all(c("y", "x") %in% names(formals(ytrafo))))
+            mf$yx <- "matrix"
+    }
+    mf$nmax <- control$nmax
+    ## evaluate model.frame
+    mf[[1L]] <- quote(partykit:::extree_data)
+
+    d <- eval(mf, parent.frame())
+    subset <- .start_subset(d)
+
+    weights <- model.weights(model.frame(d))
+
+    if (is.function(ytrafo)) {
+        if (is.null(control$update))
+            control$update <- TRUE
+        nf <- names(formals(ytrafo))
+        if (all(c("data", "weights", "control") %in% nf))
+            ytrafo <- ytrafo(data = d, weights = weights, control = control)
+        nf <- names(formals(ytrafo))
+        stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
+                  all(c("y", "x", "weights", "offset", "start") %in% nf))
     } else {
-        data_asis <- missing(weights) && missing(subset) && 
-                     missing(cluster) && missing(offset)
-    }
-
-    ### <FIXME> should be xtrafo
-    if (!is.null(scores)) {
-        if (missing(data))
-            stop("can deal with scores with data being missing")
-        for (n in names(scores)) {
-            sc <- scores[[n]]
-            if (is.ordered(data[[n]]) &&
-                nlevels(data[[n]]) == length(sc)) {
-                attr(data[[n]], "scores") <- as.numeric(sc)
-            } else {
-                warning("scores for variable ", sQuote(n), " ignored")
-            }
+        if (is.null(control$update))
+            control$update <- FALSE
+        stopifnot(length(d$variables$x) == 0)
+        mfyx <- model.frame(d, yxonly = TRUE)
+        mfyx[["(weights)"]] <- mfyx[["(offset)"]] <- NULL
+        yvars <- names(mfyx)
+        for (yvar in yvars) {
+            sc <- d[[yvar, "scores"]]
+            if (!is.null(sc))
+                attr(mfyx[[yvar]], "scores") <- sc
         }
+        Y <- .y2infl(mfyx, response = d$variables$y, ytrafo = ytrafo)
+        if (!is.null(iy <- d[["yx", type = "index"]])) {
+            Y <- rbind(0, Y)
+        } 
+        ytrafo <- function(subset, weights, info, estfun, object, ...) 
+            list(estfun = Y, unweighted = TRUE) 
+            ### unweighted = TRUE prevents estfun / w in extree_fit
     }
-    #### </FIXME>
+    if (is.function(converged)) {
+        stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
+        converged <- converged(d, weights, control = control)
+    } else {
+        converged <- TRUE
+    }            
 
-    trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo, converged = converged)
-    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      trafofun = trafofun, doFit = TRUE)
-    mf <- tree$mf
-    weights <- model.weights(mf)
+    update <- function(subset, weights, control, doFit = TRUE)
+        extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                   subset = subset, weights = weights, ctrl = control, doFit = doFit)
+    if (!doFit) return(list(d = d, update = update))
+    tree <- update(subset = subset, weights = weights, control = control)
+    trafo <- tree$trafo
+    tree <- tree$nodes
+    
+    mf <- model.frame(d)
     if (is.null(weights)) weights <- rep(1, nrow(mf))
 
-    fitted <- data.frame("(fitted)" = fitted_node(tree$node, mf), 
+    fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
                          "(weights)" = weights,
                          check.names = FALSE)
-    mf2 <- model.frame(Formula(formula), data = mf, na.action = na.pass)
-    y <- model.part(Formula(formula), data = mf2, 
-                    lhs = 1, rhs = 0)
-    if (length(y) == 1) y <- y[[1]]
-    fitted[[3]] <- y
+    fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
     names(fitted)[3] <- "(response)"
-    ret <- party(tree$node, data = mf, fitted = fitted, 
+    ret <- party(tree, data = mf, fitted = fitted, 
                  info = list(call = match.call(), control = control))
-    ret$update <- tree$treefun
-    ret$trafo <- tree$trafo
+    ret$update <- update
+    ret$trafo <- trafo
     class(ret) <- c("constparty", class(ret))
 
     ### doesn't work for Surv objects
     # ret$terms <- terms(formula, data = mf)
-    ret$terms <- tree$terms
+    ret$terms <- d$terms$all
     ### need to adjust print and plot methods
     ### for multivariate responses
     ### if (length(response) > 1) class(ret) <- "party"
     return(ret)
 }
+
 
 .logrank_trafo <- function(...)
     return(coin::logrank_trafo(...))

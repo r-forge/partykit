@@ -73,62 +73,41 @@ cforest <- function
    
     ### get the call and the calling environment for .urp_tree
     call <- match.call(expand.dots = FALSE)
-    call$na.action <- na.action
-    frame <- parent.frame()
-    if (missing(data)) {   
-        data <- NULL
-        data_asis <- FALSE
-    } else {
-        data_asis <- missing(weights) && missing(subset) &&
-                     missing(cluster) && missing(offset)   
-    }
+    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", 
+                 "scores", "ytrafo", "control"), names(call), 0L)
+    ctreecall <- call[c(1L, m)]
+    ctreecall$doFit <- FALSE
+    ctreecall$control <- control ### put ... into ctree_control()
+    ctreecall[[1L]] <- quote(partykit::ctree)
+    tree <- eval(ctreecall, parent.frame())
 
-    ### <FIXME> should be xtrafo
-    if (!is.null(scores)) {
-        if (missing(data)) 
-            stop("can deal with scores with data being missing")
-        for (n in names(scores)) {
-            sc <- scores[[n]]
-            if (is.ordered(data[[n]]) &&
-                nlevels(data[[n]]) == length(sc)) {
-                attr(data[[n]], "scores") <- as.numeric(sc)
-            } else {
-                warning("scores for variable ", sQuote(n), " ignored")
-            }
-        }
-    }
-    #### </FIXME>
+    if (is.null(control$update))
+        control$update <- is.function(ytrafo)
 
-    call$weights <- NULL ### NOTE: trees are unweighted, weights enter sampling!
-    trafofun <- function(...) .ctreetrafo(..., ytrafo = ytrafo)
-    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      trafofun = trafofun, doFit = FALSE)
+    d <- tree$d
+    updatefun <- tree$update
 
-    nvar <- length(tree$partyvars)
+    nvar <- sum(d$variables$z > 0)
     control$mtry <- mtry
     control$applyfun <- lapply
  
-    ### <FIXME> we need tree$partyvars here, avoid calling .urp_tree twice
-    tree <- .urp_tree(call, frame, data = data, data_asis = data_asis, control = control,
-                      trafofun = trafofun, doFit = FALSE)
-    ### </FIXME>
-
-    strata <- tree$mf[["(strata)"]]
+    strata <- d[["(strata)"]]
     if (!is.null(strata)) {
         if (!is.factor(strata)) stop("strata is not a single factor")
     }
     
     probw <- NULL
-    weights <- model.weights(tree$mf)
+    weights <- model.weights(model.frame(d))
     if (!is.null(weights)) {
         probw <- weights / sum(weights)
     } else {
         weights <- integer(0)
     }
 
-    idx <- 1L:nrow(tree$mf)
+    N <- nrow(model.frame(d))
+    idx <- .start_subset(d)
     if (is.null(strata)) {
-        size <- nrow(tree$mf)
+        size <- N
         if (!perturb$replace) size <- floor(size * perturb$fraction)
         rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
                         simplify = FALSE)
@@ -149,34 +128,33 @@ cforest <- function
         }
     }
 
+    trafo <- updatefun(sort(rw[[1]]), integer(0), control, doFit = FALSE)
     if (trace) pb <- txtProgressBar(style = 3) 
     forest <- applyfun(1:ntree, function(b) {
         if (trace) setTxtProgressBar(pb, b/ntree)
-        tree$treefun(tree$trafo, rw[[b]], integer(0))
+        ret <- updatefun(sort(rw[[b]]), integer(0), control)
+        trafo <<- ret$trafo
+        ret$nodes
     })
     if (trace) close(pb)
 
-    fitted <- data.frame(idx = idx)  
-    mf <- model.frame(Formula(formula), data = tree$mf, na.action = na.pass)
-    y <- model.part(Formula(formula), data = mf, lhs = 1, rhs = 0)
-    if (length(y) == 1) y <- y[[1]]
-    fitted[[2]] <- y
+    fitted <- data.frame(idx = 1:N)  
+    mf <- model.frame(d)
+    fitted[[2]] <- mf[, d$variables$y, drop = TRUE]
     names(fitted)[2] <- "(response)"
-    fitted <- fitted[2]
     if (length(weights) > 0)
         fitted[["(weights)"]] <- weights
 
     ### turn subsets in weights (maybe we can avoid this?)
-    rw <- lapply(rw, function(x) tabulate(x, nbins = length(idx)))
+    rw <- lapply(rw, function(x) as.integer(tabulate(x, nbins = length(idx))))
 
     control$applyfun <- applyfun
 
-    ret <- constparties(nodes = forest, data = tree$mf, weights = rw,
-                        fitted = fitted, terms = terms(mf), 
+    ret <- constparties(nodes = forest, data = mf, weights = rw,
+                        fitted = fitted, terms = d$terms$all,
                         info = list(call = match.call(), control = control))
-    ### ret$update <- tree$treefun # not useful
-    ret$trafo <- tree$trafo
-    ret$predictf <- tree$predictf
+    ret$trafo <- trafo
+    ret$predictf <- d$terms$z
     class(ret) <- c("cforest", class(ret))
 
     return(ret)
@@ -189,11 +167,13 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     forest <- object$nodes
     nd <- object$data
     vmatch <- 1:ncol(nd)
+    NOnewdata <- TRUE
     if (!is.null(newdata)) {
         nd <- model.frame(object$predictf, ### all variables W/O response
                           data = newdata, na.action = na.pass)
         OOB <- FALSE
         vmatch <- match(names(object$data), names(nd))
+        NOnewdata <- FALSE
     }
     nam <- rownames(nd)
 
@@ -212,20 +192,29 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     if (!is.null(object$info))
         applyfun <- object$info$control$applyfun
 
-    for (b in 1:length(forest)) {
-        ids <- nodeids(forest[[b]], terminal = TRUE)
-        fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
-        fdata <- fitted_node(forest[[b]], object$data, ...)
-        tw <- rw[[b]]
-        pw <- sapply(ids, function(i) tw * (fdata == i))
-        ret <- pw[, match(fnewdata, ids), drop = FALSE]
-        ### obs which are in-bag for this tree don't contribute
-        if (OOB) ret[,tw > 0] <- 0
-        w <- w + ret
+    fdata <- lapply(forest, fitted_node, data = object$data, ...)
+    if (NOnewdata && OOB) {
+        fnewdata <- list()
+    } else {
+        fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    #w <- Reduce("+", bw)
-    if (!is.matrix(w)) w <- matrix(w, ncol = 1)
+    w <- .Call(R_rfweights, fdata, fnewdata, rw)
+
+#    for (b in 1:length(forest)) {
+#        ids <- nodeids(forest[[b]], terminal = TRUE)
+#        fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, ...)
+#        fdata <- fitted_node(forest[[b]], object$data, ...)
+#        tw <- rw[[b]]
+#        pw <- sapply(ids, function(i) tw * (fdata == i))
+#        ret <- pw[, match(fnewdata, ids), drop = FALSE]
+#        ### obs which are in-bag for this tree don't contribute
+#        if (OOB) ret[,tw > 0] <- 0
+#        w <- w + ret
+#    }
+#
+#    #w <- Reduce("+", bw)
+#    if (!is.matrix(w)) w <- matrix(w, ncol = 1)
 
     if (type == "weights") {
         ret <- w
@@ -268,4 +257,9 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         names(ret) <- colnames(responses)
     }
     ret
+}
+
+model.frame.cforest <- function(formula, ...) {
+    class(formula) <- "party"
+    model.frame(formula, ...)
 }
