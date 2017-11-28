@@ -254,8 +254,8 @@ tr_lm <- lm(eval ~ beauty + gender + minority + native + tenure + division,
 ###################################################
 ### code chunk number 37: TeachingRatings-tree
 ###################################################
-tr_tree <- lmtree(eval ~ beauty | minority + age + gender + division +
-  native + tenure, data = tr, weights = students, caseweights = FALSE)
+(tr_tree <- lmtree(eval ~ beauty | minority + age + gender + division +
+  native + tenure, data = tr, weights = students, caseweights = FALSE))
 
 
 ###################################################
