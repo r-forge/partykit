@@ -48,7 +48,9 @@ logLik.constparty <- function(object, newdata, weights, perm = NULL, ...) {
           "Surv" = stop("not yet implemented"),
           stop("not yet implemented")   
     )
-    if (missing(weights)) return(sum(ll) / length(y))
+
+    if (missing(weights)) weights <- data_party(object)[["(weights)"]]
+    if (is.null(weights)) return(sum(ll) / length(y))
     return(sum(weights * ll) / sum(weights))
 }
 
@@ -85,7 +87,8 @@ miscls <- function(object, newdata, weights, perm = NULL, ...) {
     }
     ll <- unclass(y) != unclass(pr)
 
-    if (missing(weights)) return(sum(ll) / length(y))
+    if (missing(weights)) weights <- data_party(object)[["(weights)"]]
+    if (is.null(weights)) return(sum(ll) / length(y))
     return(sum(weights * ll) / sum(weights))
 }
 
