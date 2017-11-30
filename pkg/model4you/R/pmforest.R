@@ -31,6 +31,10 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
                                              mincriterion = 0, saveinfo = FALSE, 
                                              lookahead = TRUE, ...), 
                      ...) {
+
+  ### nmax not possible because data come from model
+  stopifnot(all(!is.finite(control$nmax)))
+
   cl <- match.call()
   args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control, ntree = ntree)

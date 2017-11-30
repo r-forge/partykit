@@ -24,6 +24,9 @@ pmtree <- function(model, data = NULL, zformula = ~.,
                    control = ctree_control(), coeffun = coef,
                    ...) {
   
+  ### nmax not possible because data come from model
+  stopifnot(all(!is.finite(control$nmax)))
+
   args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control)
   
