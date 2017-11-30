@@ -1295,7 +1295,7 @@ $$
 While in a distributional tree the same distribution is specified for all sets of covariates being in the same node, a distributional forest predicts and fits a different distribution for each different set of covariates due to the individual weights calculated separately for each set of covariates.\\
 \\
 As this novel methodology combines the advantages of smooth and flexible parametric modeling with those of tree structured modeling it provides a model that can deal with a wide range of situations. Abrupt changes and non-additive effects can be captured by its tree structure while smooth effects can be modeled reasonably well by combining various tree and smoothing the steps imposed by a single tree. As scores are considered for each distribution parameter (separate) effects in different parameters can be captured. At the same time, also interactions are detected automatically by splitting the data in a way that is sensitive to changes in either each of the parameters or combined in various parameters.\\
-Even though many situations demand for the use of specificaly taylored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
+Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
 
 
 
@@ -1763,7 +1763,7 @@ $$
 \text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
 $$
 where \(\mathbf{1}\) is the indicator function. \\
-In this application the CRPS is evaluated out of sample on a data set that has not been used to build the model. The mean CRPS over thi data set is used for validation. Since the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation. \\
+In this application the CRPS is evaluated out of sample on a data set that has not been used to build the model. The mean CRPS over this data set is used for validation. Since the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation. \\
 For the purpose of comparing the performance of a distributional forest to those of other models the so-called skills score can be calculated with respect to the CRPS and one model being chosen as a reference. In that way we obtain a measure of how much a method improves the model performance in terms of CRPS compared to the reference method.
 $$
 \text{SkillsScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
@@ -2044,7 +2044,7 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
 \end{center}
 \end{figure}
 
-Figure~\ref{map} shows the location of all stations in the data set. Each observation station is illustrated by a symbol with the type of symbol representing the method that performed best in terms of CRPS at this station. The color of the symbol indicates the difference of the CRPS of the forest model and the CRPS of the best perfoming among the other three models (prespecified GAM, boosted GAM and EMOS).
+Figure~\ref{map} shows the location of all stations in the data set. Each observation station is illustrated by a symbol with the type of symbol representing the method that performed best in terms of CRPS at this station. The color of the symbol indicates the difference of the CRPS of the forest model and the CRPS of the best performing among the other three models (prespecified GAM, boosted GAM and EMOS).
 
 \begin{figure}[h!]
 \begin{center}
