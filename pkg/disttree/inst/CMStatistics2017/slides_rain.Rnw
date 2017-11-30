@@ -2,7 +2,7 @@
 \usetheme[nototalframenumber, noslidenumber]{uibk}
 
 \title{Distributional Trees and Forests}
-\author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Achim Zeileis}
+\author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 \URL{https://R-Forge.R-project.org/projects/partykit/}
 \headerimage{3}
@@ -25,6 +25,7 @@ options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
 library("ggplot2")
 theme_set(theme_bw(base_size = 18))
 library("disttree")
+library("Formula")
 #library("partykitR1")
 library("gamlss")
 library("lattice")
@@ -1528,6 +1529,17 @@ plot_ll(simlist)
 
 
 
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace*{0.2cm}
+Task:
+\begin{itemize}
+\item Goal: Predict total precipitation amount.
+\item Input: Numerical Weather Prediction (NWP) with gridsize ... .
+\item 
+\vspace{0.1cm}
+\end{itemize}
+\end{frame}
 
 
 \begin{frame}[fragile]
@@ -1776,7 +1788,7 @@ colnames(rain_crps) <- colnames(rainres[[1]]$rmse)
 \vspace*{-0.2cm}
 <<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE, height=5.2>>=
 boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
-        main = "Cross Validation (with reference model EMOS)",
+        main = "Cross validation (with reference model EMOS)",
         names = c("Forest", "prespecified GAM", "boosted GAM"),
         ylab = "CRPS skills score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
@@ -1791,7 +1803,7 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-Application for all stations:
+Application for all 95 stations:
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
