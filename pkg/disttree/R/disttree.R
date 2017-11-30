@@ -10,7 +10,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
   
-
+  
   ## prepare family:
   # check format of the family input and if necessary transform it to the required familiy list
   # family input can be of one of the following formats:
@@ -66,7 +66,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   
   m$formula <- formula
   
-
+  
   
   if(type.tree == "mob") {
     
@@ -83,8 +83,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       if(!is.null(offset)) warning("offset not used")
       
       model <- distfit(y, family = family, weights = weights, start = start,
-                      vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                      censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+                       vcov = vcov, estfun = estfun, type.hessian = type.hessian,
+                       censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       
       ef <- NULL
       if(estfun) {
@@ -149,43 +149,14 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     m <- m[c(1L, mnames)]
     
     ## wrapper function to apply distfit in ctree
-    ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
+    ytrafo <- function(data, weights = NULL, control) {
       
-      if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
+      Y <- model.frame(data, yxonly = TRUE)
+      if(dim(Y)[2] > 1) stop("response variable has to be univariate") 
+      Y <- Y[,1]
       
-      cl <- match.call()
-      if(missing(data)) data <- environment(formula)
-      mf <- match.call(expand.dots = FALSE)
-      mfnames <- match(c("formula", "data"), names(mf), 0L)
-      mf <- mf[c(1L, mfnames)]
-      mf$drop.unused.levels <- TRUE
-      
-      ## formula
-      oformula <- as.formula(formula)
-      formula <- as.Formula(formula)
-      if(length(formula)[2L] > 2L) {
-        formula <- Formula(formula(formula, rhs = 2L))  
-        ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
-        warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
-      }
-      
-      mf$formula <- formula
-      
-      ## evaluate model.frame
-      mf[[1L]] <- as.name("model.frame")
-      mf <- eval(mf, parent.frame())
-      
-      ## extract terms, model matrix, response
-      #mt <- terms(formula, data = data)
-      #mtZ <- terms(formula, data = data, rhs = 1L)
-      #attributes(mtZ)$intercept <- 0
-      Y <- model.response(mf, "numeric")
-      #Z <- model.matrix(mtZ, mf)
-      
-      # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
-      
-      modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
-
+      modelscores_decor <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
+        
         ys <- Y[subset]
         subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
@@ -194,7 +165,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
         model <- distfit(ys, family = family, weights = subweights, start = start,
                          vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
                          estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-
+        
         if(estfun) {
           ef <- as.matrix(model$estfun)
           
@@ -220,13 +191,13 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
             ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
           }
           
-          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
+          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data$data)) 
           estfun[subset,] <- ef
-          if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
+          ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
         } else estfun <- NULL
         
         
-       
+        
         object <-  if(object) model else NULL
         
         ret <- list(estfun = estfun,
@@ -248,7 +219,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
     m[[1L]] <- as.name("ctree")
     rval <- eval(m, parent.frame())
-
+    
     # number of terminal nodes
     n_tn <- width(rval)
     # predicted terminal nodes for the given data
@@ -262,8 +233,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     Y <- rval$fitted$`(response)`
     # first iteration out of loop:
     model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                     vcov = FALSE, type.hessian = "analytic", 
-                     estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+                      vcov = FALSE, type.hessian = "analytic", 
+                      estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -358,7 +329,7 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   }
 }
 
-  
+
 
 
 coef.disttree <- function(object, ...){
