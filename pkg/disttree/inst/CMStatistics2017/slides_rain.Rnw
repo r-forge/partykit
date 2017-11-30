@@ -569,6 +569,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \section{Distributional Trees and Forests}
 
@@ -1532,12 +1533,18 @@ plot_ll(simlist)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-Task:
+%Task:
 \begin{itemize}
 \item Goal: Predict total precipitation amount.
-\item Input: Numerical Weather Prediction (NWP) with gridsize ... .
-\item 
-\vspace{0.1cm}
+\item Input: Numerical Weather Prediction (NWP).
+\item Idea: Statistical Model with numerical predictions as covariates.
+\item Data:
+\begin{itemize}
+\item 95 observation stations in Tyrol.
+\item Daily 24h precipitation sums from July of 28 years (1985--2012).
+\item Numerical ensemble predictions of meteorological quantities.
+\end{itemize}
+\item Distribution Assumption: $(\text{Total precipitation})^\frac{1}{1/6} \sim \textit{c}\matchcal{N}$
 \end{itemize}
 \end{frame}
 
@@ -1545,13 +1552,10 @@ Task:
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-Data:
+Variable Selection:
 \begin{itemize}
-\item Daily observations from 95 stations: \\
-24h precipitation sums from July of 28 years.
-\item Numerical ensemble predictions of meteorological quantities\\
-\vspace{0.1cm}
-$\rightarrow$ Covariates:\\
+\item Complex terrain \rightarrow unknown influences.
+\item 85 Covariates:\\
 \begin{itemize}
 \item Total precipitation
 \item Convective available potential energy
@@ -1738,11 +1742,11 @@ Application for one station:
 \item Learn forest model on data from 24 years.
 \item Evaluate on 4 years.
 \item 10 times 7-fold cross validation.
-\item Compare to commonly used methods:\\
+\item Compare to commonly used heteroscedastic censored Gaussian models:\\
 \begin{itemize}
-\item Prespecified GAM
-\item Boosted GAM
-\item Ensemble Model Output Statistics (EMOS) 
+\item Prespecified GAM: variable selection based on meteorological expert knowledge.
+\item Boosted GAM: automatic variable selection.
+\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 \end{itemize}
 \end{itemize}
 \end{frame}
