@@ -79,39 +79,13 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     
     ## wrapper function to apply distfit in cforest
-    ytrafo <- function(formula, data, weights = NULL, cluster = cluster, ctrl = control) {
+    ytrafo <- function(data, weights = NULL, control) {
       
-      if(!(is.null(cluster))) stop("FIX: cluster ignored by trafo-function")
+      Y <- model.frame(data, yxonly = TRUE)
+      if(dim(Y)[2] > 1) stop("response variable has to be univariate") 
+      Y <- Y[,1]
       
-      cl <- match.call()
-      if(missing(data)) data <- environment(formula)
-      
-      mf <- match.call(expand.dots = FALSE)
-      mfnames <- match(c("formula", "data"), names(mf), 0L)
-      mf <- mf[c(1L, mfnames)]
-      mf$drop.unused.levels <- TRUE
-      
-      ## formula
-      oformula <- as.formula(formula)
-      formula <- as.Formula(formula)
-      if(length(formula)[2L] > 2L) {
-        formula <- Formula(formula(formula, rhs = 2L))  
-        ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
-        warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
-      }
-      
-      mf$formula <- formula
-      
-      ## evaluate model.frame
-      mf[[1L]] <- as.name("model.frame")
-      mf <- eval(mf, parent.frame())
-      
-      ## extract response
-      Y <- model.response(mf, "numeric")
-      
-      # decorrelate <- if(is.null(ctrl$decorrelate)) "none" else ctrl$decorrelate  # FIX ME: include in ctrl?
-      
-      modelscores_decor <- function(subset, estfun = TRUE, object = TRUE, info = NULL) {
+      modelscores_decor <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
         
         ys <- Y[subset]
         subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
@@ -148,9 +122,9 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
             ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
           }
           
-          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data)) 
+          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data$data)) 
           estfun[subset,] <- ef
-          if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
+          ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
         } else estfun <- NULL
         
 
