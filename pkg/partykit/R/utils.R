@@ -111,3 +111,6 @@ get_paths <- function(obj, i) {
   storage.mode(indx) <- "logical"
   indx
 }
+
+.rfweights <- function(fdata, fnewdata, rw)
+    w <- .Call(R_rfweights, fdata, fnewdata, rw)

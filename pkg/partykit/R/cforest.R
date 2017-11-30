@@ -199,7 +199,7 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    w <- .Call(R_rfweights, fdata, fnewdata, rw)
+    w <- .rfweights(fdata, fnewdata, rw)
 
 #    for (b in 1:length(forest)) {
 #        ids <- nodeids(forest[[b]], terminal = TRUE)
