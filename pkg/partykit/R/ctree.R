@@ -181,8 +181,10 @@
     }
 
     ### check if either X or Y were unique
-    if (all(lev$Variance < ctrl$tol)) 
+    if (all(lev$Variance < ctrl$tol)) {
+        if (SPLITONLY) return(NULL)
         return(list(statistic = NA, p.value = NA))
+    }
 
     ### compute test statistic and log(1 - p-value)
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
