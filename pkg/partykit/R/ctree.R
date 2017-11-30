@@ -231,7 +231,7 @@
                     if (!is.ordered(x)) {
                         ### interpolate split-points, see https://arxiv.org/abs/1611.04561
                         if (ctrl$intersplit & sp < length(ux)) {
-                            sp <- (ux[sp] + ux[sp + 1]) / 2
+                            sp <- (ux[sp] + ux[sp + 1]) / 2 ### <FIXME> use weighted mean here? </FIXME>
                         } else {
                             sp <- ux[sp]  ### X <= sp vs. X > sp
                         }

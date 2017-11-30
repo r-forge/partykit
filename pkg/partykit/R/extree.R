@@ -252,10 +252,13 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                        svsplitfun = NULL, partyvars, subset, weights, ctrl, doFit = TRUE) {
     ret <- list()
 
+    ### <FIXME> use data$vars$z as default for partyvars </FIXME>
+
     nf <- names(formals(trafo))
     if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
         mytrafo <- trafo
     } else {
+        ### <FIXME> add cluster </FIXME>
         stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
         stopifnot(!is.null(yx <- data$yx))
         mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
@@ -265,6 +268,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 y <- yx$y
                 x <- yx$x
                 offset <- attr(yx$x, "offset")
+                ### <FIXME> other ways of handling NAs necessary? </FIXME>
                 subset <- subset[!(subset %in% NAyx)]
                 if (NCOL(y) > 1) {
                     y <- y[subset,,drop = FALSE]
@@ -616,6 +620,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
   )
 
   mf <- ret$data
+  ### <FIXME> add cluster? </FIXME>
   yxvars <- c(vars$y, vars$x, vars$offset)
   zerozvars <- which(vars$z == 0)
 
@@ -625,10 +630,9 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
       ret$scores[names(scores)] <- scores
 
   if (length(nmax) == 1) nmax <- c("yx" = nmax, "z" = nmax)
+  ### <FIXME> make meanlevels an argument and make sure intersplit is TRUE </FIXME>
   ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
                            nmax = nmax["z"], meanlevels = FALSE)
-  ret$yxindex <- NULL
-  yxmf <- mf
   if (is.finite(nmax["yx"])) {
       ret$yxindex <- inum::inum(mf[, yxvars, drop = FALSE], total = TRUE, 
                                 as.interval = names(mf)[vars$y], complete.cases.only = TRUE, 
@@ -636,6 +640,9 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
       yxmf <- attr(ret$yxindex, "levels")
       yxmf[["(weights)"]] <- NULL
       attr(ret$yxindex, "levels") <- yxmf
+  } else {
+      ret$yxindex <- NULL
+      yxmf <- mf
   }
 
   ret$missings <- lapply(ret$data, function(x) which(is.na(x)))
@@ -663,11 +670,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     npart <- 2L
 
     if (ytype == "vector" && !ymult) {
-        yx <- list("y" = mf[, vanam[vars$y], drop = TRUE])
+        yx <- list("y" = yxmf[, vanam[vars$y], drop = TRUE])
     } else if (ytype == "data.frame") {
-        yx <- list("y" = mf[vanam[vars$y]])
+        yx <- list("y" = yxmf[vanam[vars$y]])
     } else { ### ytype = "matrix"
         Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
+        ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
         if (length(ret$yxmissings) == 0) {
             Ymat <- Ytmp
         } else {
@@ -708,23 +716,25 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
     if (!is.null(formula$yxindex))
         return(attr(formula$yxindex, "levels"))
     vars <- formula$variables
+    ### <FIXME> add cluster ? </FIXME>
     return(formula$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
 }    
 
 "[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
     ### this is way too slow
     ### type <- match.arg(type)
+    ### <FIXME> try match.arg(type, choices = c("original", ...)) </FIXME>
     type <- type[1]
     switch(type, 
         "original" = {
+            if (i == "yx") return(model.frame(x, yxonly = TRUE))
             mf <- model.frame(x)
             ### [[.data.frame needs lots of memory
             class(mf) <- "list"
             return(mf[[i]])
         },
         "index" = {
-            if (i == "yx") return(x$yxindex)
-            if (i %in% c(x$variables$y, x$variables$x))
+            if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
                 return(x$yxindex) ### may be NULL
             return(x$zindex[[i]])
         },
