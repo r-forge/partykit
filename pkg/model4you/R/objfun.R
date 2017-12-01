@@ -110,9 +110,12 @@ objfun.glm <- function(x, newdata = NULL, weights = NULL, log = TRUE, ...)
   ## likelihood
   # FIXME check what to do in binomial if tabular data is given
   # FIXME add options for all glm families
-  if(!fam %in% c("gaussian", "poisson", "binomial")) stop("Haven't implemented objfun for family", fam, "yet. Let me know if you want me to do that!")
+  if(!fam %in% c("gaussian", "poisson", "binomial")) 
+    stop("Haven't implemented objfun for family", fam, 
+         "yet. Let me know if you want me to do that!")
   val <- switch(fam,
-                 gaussian = weights * dnorm(y, mean = yhat, sd = sigma(x), log = log),
+                 gaussian = weights * dnorm(y, mean = yhat, sd = sigma(x), 
+                                            log = log),
                  poisson = weights * dpois(y, lambda = yhat, log = log),
                  binomial = {
                    n <- 1L

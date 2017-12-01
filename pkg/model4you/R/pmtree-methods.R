@@ -68,20 +68,38 @@ predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args =
 #'
 #' @param object pmtree object.
 #' @param dfsplit degrees of freedom per selected split.
+#' @param newdata an optional new data frame for which to compute the sum of 
+#' objective functions.
+#' @param weights weights.
+#' @param perm the number of permutations performed (see \code{\link[partykit]{varimp}}).
 #' @param ... ignored.
 #'
 #' @return Returns an object of class \code{\link[stats]{logLik}}.
 #' 
 #' @export
-logLik.pmtree <- function(object, dfsplit = 0, ...) {
-  ids <- nodeids(object, terminal = TRUE) 
-  info <- nodeapply(object, ids = ids, function(x) x$info)
-  dfs <- (length(object) - width(object)) * dfsplit
+logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = NULL, ...) {
   
-  ll <- lapply(info, function(x) x$objfun)
+  ## compute degrees of freedom
+  dfs <- (length(object) - width(object)) * dfsplit
+  df <- NULL
+  
+  if (missing(newdata) && is.null(perm) && is.null(weights)) {
+    ## get info of all terminal nodes
+    ids <- nodeids(object, terminal = TRUE) 
+    info <- nodeapply(object, ids = ids, function(x) x$info)
+    
+    ## get objective functions in all terminal nodes
+    # FIXME: this is incorrect for lm since objfun != logLik
+    ll <- lapply(info, function(x) x$objfun)
+    ndf <- sapply(ll, function(x) attr(x, "df"))
+    if(!any(sapply(ndf, is.null)))  df <- sum(ndf) + dfs
+  } else {
+    stop("not yet implemented")
+  }
+  
   structure(
     sum(as.numeric(ll)),
-    df = sum(sapply(ll, function(x) attr(x, "df"))) + dfs,
+    df = df,
     nobs = object$nobs,
     class = "logLik"
   )
@@ -125,7 +143,7 @@ print.pmtree <- function(x, node = NULL,
       c("", paste("Number of inner nodes:   ", n[1L]),
         paste("Number of terminal nodes:", n[2L]),
         paste("Number of parameters per node:", format(k, digits = getOption("digits"))),
-        paste("Log-likelihood: ", of, sep = ""), "")
+        paste("Objective function: ", of, sep = ""), "")
     } else function (party) ""
     
     if(is.null(FUN)) {

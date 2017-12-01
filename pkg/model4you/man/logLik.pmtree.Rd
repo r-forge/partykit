@@ -4,12 +4,20 @@
 \alias{logLik.pmtree}
 \title{Extract sum of objective functions}
 \usage{
-\method{logLik}{pmtree}(object, dfsplit = 0, ...)
+\method{logLik}{pmtree}(object, dfsplit = 0, newdata, weights = NULL,
+  perm = NULL, ...)
 }
 \arguments{
 \item{object}{pmtree object.}
 
 \item{dfsplit}{degrees of freedom per selected split.}
+
+\item{newdata}{an optional new data frame for which to compute the sum of 
+objective functions.}
+
+\item{weights}{weights.}
+
+\item{perm}{the number of permutations performed (see \code{\link[partykit]{varimp}}).}
 
 \item{...}{ignored.}
 }

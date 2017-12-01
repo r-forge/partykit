@@ -58,7 +58,10 @@ pmtree <- function(model, data = NULL, zformula = ~.,
         di <- args$data[subsi, ]
         umod <- update(model, data = di)
         iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
-                      objfun = logLik(umod), model = NULL)
+                      objfun = ifelse(class(umod)[[1]] == "lm", 
+                                      sum(objfun(umod)), 
+                                      logLik(umod)), 
+                      model = NULL)
         tree_ret[[idn]]$info <- iinfo
       } 
       tree_ret[[idn]]$info$nobs <- sum(subsi)

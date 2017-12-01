@@ -1,13 +1,11 @@
 
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+R version 3.4.2 (2017-09-28) -- "Short Summer"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
 Type 'license()' or 'licence()' for distribution details.
-
-  Natural language support but running in an English locale
 
 R is a collaborative project with many contributors.
 Type 'contributors()' for more information and
@@ -16,8 +14,6 @@ Type 'contributors()' for more information and
 Type 'demo()' for some demos, 'help()' for on-line help, or
 'help.start()' for an HTML browser interface to help.
 Type 'q()' to quit R.
-
-[Previously saved workspace restored]
 
 > library("model4you")
 Loading required package: partykit
@@ -66,9 +62,13 @@ Loading required package: mvtnorm
 > frst_lm <- pmforest(basemodel_lm, ntree = 40, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
 +                     control = ctree_control(mincriterion = 0))
+No data given. I'm using data set simdata from the current environment parent.frame(). 
+                   Please check if that is what you want.
 > frst_wb <- pmforest(basemodel_wb, ntree = 40, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
 +                     control = ctree_control(mincriterion = 0))
+No data given. I'm using data set simdata_s from the current environment parent.frame(). 
+                   Please check if that is what you want.
 > 
 > ## personalised models
 > coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
@@ -128,4 +128,4 @@ Loading required package: mvtnorm
 > 
 > proc.time()
    user  system elapsed 
- 14.160   0.064  14.222 
+ 12.116   0.080  12.192 
