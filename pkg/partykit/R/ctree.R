@@ -175,6 +175,14 @@
     lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                          weights = weights, block = cluster,
                          nresample = nresample, varonly = varonly, checkNAs = FALSE)
+
+    ### in some cases, estfun() might return NAs which we don't check
+    if (any(is.na(lev$LinearStatistic))) {
+        lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
+                             weights = weights, block = cluster,
+                             nresample = nresample, varonly = varonly, checkNAs = TRUE)
+    }
+
     if (!MAXSELECT) {
         if (is.ordered(x) && !ctrl$splittest) 
             lev <- libcoin::lmult(matrix(scores, nrow = 1), lev)
