@@ -29,6 +29,7 @@ export(
 
   ## distributional tree
   "disttree",
+  "distextree",
 
   ## distributional forest
   "distforest",
