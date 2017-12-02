@@ -4,6 +4,8 @@
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+\setbeamerfont{footnote}{size=\tiny}
+\renewcommand\footnoterule{}
 \URL{https://R-Forge.R-project.org/projects/partykit/}
 \headerimage{3}
 
@@ -569,7 +571,6 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 \section{Distributional Trees and Forests}
 
@@ -1532,19 +1533,23 @@ plot_ll(simlist)
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
-\vspace*{0.2cm}
+\vspace*{-0.1cm}
 %Task:
 \begin{itemize}
 \item Goal: Predict total precipitation amount.
 \item Input: Numerical Weather Prediction (NWP).
-\item Idea: Statistical Model with numerical predictions as covariates.
+\item Idea: Statistical model with numerical predictions as \\
+\hspace{1cm}covariates.
 \item Data:
 \begin{itemize}
 \item 95 observation stations in Tyrol.
-\item Daily 24h precipitation sums from July of 28 years (1985--2012).
-\item Numerical ensemble predictions of meteorological quantities.
+\item Daily 24h precipitation sums from July of 28 years (1985--2012)\footnote{provided by the National Hydrographical Service (EHYD)}.
+\item Numerical ensemble predictions of meteorological quantities\footnote{provided by the {U.S.} National Oceanic and Atmospheric Administration (NOAA)\\
+\hspace{0.32cm}using the Global Ensemble Forecast System (GEFS)}: 11 members each using slightly different perturbed initial conditions.
 \end{itemize}
-\item Distribution Assumption: $(\text{Total precipitation})^\frac{1}{1/6} \sim \textit{c}\matchcal{N}$
+\item Distribution Assumption:\\
+\vspace{0.1cm}
+\hspace{1cm}$(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{cens}\mathcal{N}(\mu,\sigma^2)$
 \end{itemize}
 \end{frame}
 
@@ -1554,8 +1559,9 @@ plot_ll(simlist)
 \vspace*{0.2cm}
 Variable Selection:
 \begin{itemize}
-\item Complex terrain \rightarrow unknown influences.
-\item 85 Covariates:\\
+\item Complex terrain $\rightarrow$ unknown influences.
+\item 82 Covariates deduced from 14 base variables \\
+(variations such as ensemble minimum/maximum/mean/standard deviation):\\
 \begin{itemize}
 \item Total precipitation
 \item Convective available potential energy
@@ -1811,11 +1817,11 @@ Application for all 95 stations:
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
-\item Compare to commonly used methods:\\
+\item Compare to commonly used heteroscedastic censored Gaussian models:\\
 \begin{itemize}
-\item Prespecified GAM
-\item Boosted GAM
-\item Ensemble Model Output Statistics (EMOS) 
+\item Prespecified GAM: variable selection based on meteorological expert knowledge.
+\item Boosted GAM: automatic variable selection.
+\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 \end{itemize}
 \end{itemize}
 \end{frame}
@@ -1984,7 +1990,7 @@ axis(4, at = brk, las = 1, mgp=c(0,0,-1.2), cex = 1.4)
 \subsection{References}
 
 \begin{frame}
-\frametitle{References}
+\frametitle{References (1)}
 
 \footnotesize
 
@@ -2032,6 +2038,92 @@ Hothorn T, Zeileis A (2017).
   \dquote{Transformation Forests.}
   \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
   \url{http://arxiv.org/abs/1701.02110}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{References (2)}
+
+\footnotesize
+
+% Reference for the observation data set
+BMLFUW (2016).
+  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} - {W}asserhaushalt}
+  \text{Available at \url{http://ehyd.gv.at}}, 
+  \text{Accessed: {F}ebruary 29 2016}.
+
+
+\medskip
+
+% Reference for the GFS reforecast version 2 data set 
+Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
+  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
+  \textit{Bulletin of the American Meteorological Society}, 
+  \textbf{94}(10), 1553--1565.
+  \doi = {10.1175/BAMS-D-12-00014.1}
+
+
+\medskip
+
+Messner J W,  Mayr G J, Zeileis A (2016).
+  \dquote{Heteroscedastic Censored and Truncated Regression with {crch}}
+  \textit{The R Journal}, 
+  \textbf{8}(1), 173--181.
+  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
+
+\medskip
+
+Breiman L (2001).
+  \dquote{Random {Forests}}
+  \textit{Machine Learning}, 
+  \textbf{45}(1), 5--32.
+  \doi{10.1023/A:1010933404324}
+
+\medskip
+
+Hofner B, Mayr A, Fenske N, Schmid M (2017).
+  \dquote{{gamboostLSS}: Boosting Methods for {GAMLSS} Models}
+  \textit{{R} package version 2.0-0},
+  \url{https://CRAN.R-project.org/package=gamboostLSS}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{References (3)}
+
+\footnotesize
+Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
+  \dquote{Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation}
+  \textit{Monthly Weather Review}, 
+  \textbf{133}(5), 1098--1118.
+  \doi{https://doi.org/10.1175/MWR2904.1}
+
+\medskip
+
+Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
+  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
+  \textit{Monthly Weather Review}, 
+  \textbf{Forthcoming}.
+  \doi{10.1175/MWR-D-16-0388.1}
+
+\medskip
+
+{CGIAR-CSI} (2016).
+  \dquote{{SRTM} 90m Digital Elevation Database {v4.1}}
+  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
+  \text{Accessed: {J}uly 10 2016}.
+
+
+\medskip
+
+Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
+  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored Additive Regression Model}
+  \textit{International Journal of Climatology}, 
+  \textbf{37}(7), 3264--3275.
+  \doi{10.1002/joc.4913}
+
 
 \end{frame}
 
