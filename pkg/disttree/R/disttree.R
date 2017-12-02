@@ -269,7 +269,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   rval$info$call <- cl
   rval$info$family <- family   
   rval$info$ocontrol <- ocontrol
-  rval$info$formula <- m$formula
+  rval$info$formula <- formula
   rval$info$censpoint <- censpoint
   rval$info$censtype <- censtype
   
