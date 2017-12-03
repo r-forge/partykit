@@ -790,6 +790,8 @@ if(FALSE){
   
   save(rainres, file = "rain_Axams_7x10.rda")
   
+  # remove list entries with errors in mclapply
+  #rainres[[2]] <- rainres[[5]] <- rainres[[8]] <- NULL
   
   rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres)-1)
   rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres)-1)
@@ -804,6 +806,14 @@ if(FALSE){
   colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
     colnames(rainres[[1]]$rmse)
   
+  ## HCL palette
+  pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+  
+  pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
+  names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+  
+  transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
   
   boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
           names = c("Forest", "GAM (prespecified)", "GAM (boosted)"),
