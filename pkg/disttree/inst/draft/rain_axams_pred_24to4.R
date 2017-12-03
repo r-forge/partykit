@@ -766,7 +766,7 @@ if(FALSE){
     lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
     
     plot(x = x, y = y1, type = "l", col = "red", 
-         main = paste0("July ", pday, dayending), ylab = "density", 
+         main = paste0("July ", pday, dayending), ylab = "Density", 
          ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
          xlim = c(-1.5,8))
     
