@@ -1831,10 +1831,10 @@ A perfectly calibrated model would lead to a PIT histogram with a uniform distri
 set.seed(7)
 
 par(mfrow = c(2,2))
-pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Forest", ylim = c(0,1.4))
-pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespecified GAM", ylim = c(0,1.4))
-pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAM", ylim = c(0,1.4))
-pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.4))
+pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Forest", ylim = c(0,1.5))
+pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespecified GAM", ylim = c(0,1.5))
+pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAM", ylim = c(0,1.5))
+pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
       
 @
 %\end{subfigure}
