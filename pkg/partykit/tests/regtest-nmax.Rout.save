@@ -1,5 +1,5 @@
 
-R version 3.3.3 (2017-03-06) -- "Another Canoe"
+R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,6 +20,7 @@ Type 'q()' to quit R.
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > 
 > set.seed(29)
 > n <- 1000
@@ -51,11 +52,8 @@ Loading required package: mvtnorm
 > sum(log(p4[cbind(1:nrow(d), unclass(d$y2))]))
 [1] -676.0943
 > 
-> c1 <- ctree(y ~ z, data = d, control = ctree_control(nmax = 25, alpha = .5))
-Warning message:
-In .ctreetrafo(..., ytrafo = ytrafo, converged = converged) :
-  nmax < Inf for non-categorical response not recommended
+> c1 <- ctree(y ~ z, data = d, control = ctree_control(nmax = c("yx" = Inf, "z" = 25), alpha = .5))
 > 
 > proc.time()
    user  system elapsed 
-  0.808   0.032   0.838 
+  1.568   0.028   1.593 

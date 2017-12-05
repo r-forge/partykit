@@ -1,5 +1,5 @@
 
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,6 +20,7 @@ Type 'q()' to quit R.
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > set.seed(1)
 > 
 > ## rpart: kyphosis data
@@ -1477,13 +1478,13 @@ Number of inner nodes:    2
 Number of terminal nodes: 3
 > (ntp <- nodeprune(nt, 4)) ### partynode method
 [1] root
-|   [2] V3 <= 1.9 *
-|   [3] V3 > 1.9
-|   |   [4] V4 <= 1.7 *
-|   |   [5] V4 > 1.7 *
+|   [2] V4 <= 1.9 *
+|   [3] V4 > 1.9
+|   |   [4] V5 <= 1.7 *
+|   |   [5] V5 > 1.7 *
 > 
 > ### check if both methods do the same
-> p1 <- predict(party(ntp, data = iris), type = "node")
+> p1 <- predict(party(ntp, data = model.frame(ct)), type = "node")
 > p2 <- predict(ctp, type = "node")
 > stopifnot(max(abs(p1 - p2)) == 0)
 > 
@@ -1638,102 +1639,102 @@ Call: ecdf(y)
 $`1`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f8178>
+<environment: 0x71921a8>
 
 $`2`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f8178>
+<environment: 0x71921a8>
 
 $`3`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f8178>
+<environment: 0x71921a8>
 
 $`4`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f8178>
+<environment: 0x71921a8>
 
 $`5`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f8178>
+<environment: 0x71921a8>
 
 $`6`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f77c0>
+<environment: 0x7191978>
 
 $`7`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f77c0>
+<environment: 0x7191978>
 
 $`8`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f77c0>
+<environment: 0x7191978>
 
 $`9`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x82f6e08>
+<environment: 0x7190800>
 
 > predict(ct, newdata = nd, type = "density")
 $`1`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x81e1108>
+<bytecode: 0x7478b30>
+<environment: 0x6fc07d0>
 
 $`2`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x81e1108>
+<bytecode: 0x7478b30>
+<environment: 0x6fc07d0>
 
 $`3`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x81e1108>
+<bytecode: 0x7478b30>
+<environment: 0x6fc07d0>
 
 $`4`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x81e1108>
+<bytecode: 0x7478b30>
+<environment: 0x6fc07d0>
 
 $`5`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x81e1108>
+<bytecode: 0x7478b30>
+<environment: 0x6fc07d0>
 
 $`6`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x817d1b0>
+<bytecode: 0x7478b30>
+<environment: 0x6f72038>
 
 $`7`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x817d1b0>
+<bytecode: 0x7478b30>
+<environment: 0x6f72038>
 
 $`8`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x817d1b0>
+<bytecode: 0x7478b30>
+<environment: 0x6f72038>
 
 $`9`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x855a218>
-<environment: 0x814e5e0>
+<bytecode: 0x7478b30>
+<environment: 0x6f32878>
 
 > predict(ct, newdata = nd, type = "density", at = (1:9) / 10)
         [,1]       [,2]       [,3]       [,4]       [,5]       [,6]      [,7]
@@ -1759,4 +1760,4 @@ function (v)
 > 
 > proc.time()
    user  system elapsed 
-  4.700   0.120   3.642 
+  4.112   0.168   3.321 

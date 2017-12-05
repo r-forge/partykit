@@ -1,5 +1,5 @@
 
-R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,6 +20,7 @@ Type 'q()' to quit R.
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > stopifnot(require("party"))
 Loading required package: party
 Loading required package: modeltools
@@ -85,7 +86,7 @@ The following objects are masked from 'package:partykit':
         12)*  weights = 0 
   3) Temp > 84
     13)*  weights = 0 
-> party(cf_partykit$nodes[[1]], data = airq)
+> party(cf_partykit$nodes[[1]], data = model.frame(cf_partykit))
 [1] root
 |   [2] Wind <= 5.7: *
 |   [3] Wind > 5.7
@@ -140,7 +141,7 @@ The following objects are masked from 'package:partykit':
  16.7190604 100.7812597 534.9587763  -0.2538655   4.4848324 
 > partykit::varimp(cf_partykit, conditional = TRUE)
    Solar.R       Wind       Temp      Month        Day 
- 45.434278 189.920166 810.238464   2.632983   6.594069 
+ 27.520179 144.897612 476.407961   0.308407  -0.655686 
 > 
 > ### classification
 > set.seed(29)
@@ -175,7 +176,7 @@ The following objects are masked from 'package:partykit':
       8)*  weights = 0 
     7) Petal.Length > 5.1
       9)*  weights = 0 
-> party(cf_partykit$nodes[[1]], data = iris)
+> party(cf_partykit$nodes[[1]], data = model.frame(cf_partykit))
 [1] root
 |   [2] Petal.Length <= 1.9: *
 |   [3] Petal.Length > 1.9
@@ -213,8 +214,8 @@ Sepal.Length  Sepal.Width Petal.Length  Petal.Width
    0.0000000    0.0000000    0.2778571    0.1014286 
 > partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE)
  Sepal.Width Petal.Length  Petal.Width 
-   0.0000000    0.2946429    0.1078571 
+   0.0000000    0.2782738    0.1171429 
 > 
 > proc.time()
    user  system elapsed 
-  7.176   0.036   7.211 
+  5.640   0.044   5.682 

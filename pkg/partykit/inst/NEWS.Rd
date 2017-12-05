@@ -14,12 +14,18 @@
             \code{ctree_control(MIA = TRUE)}.}
      \item{New \code{offset} argument in \code{ctree}.}
      \item{New \code{get_paths} for computing paths to nodes.}
-    }
-  }
-  \itemize{
     \item{Use \pkg{libcoin} for computing linear test statistics 
           and p-values for \code{ctree}.}
-    \item{Use \pkg{inum} for binning.}
+    \item{Use \pkg{inum} for binning (the new \code{nmax} argument).}
+    \item{\code{node_barplot} gained a \code{text} argument
+          that can be used to draw text labels for the
+	  percentages displayed.}
+    \item{The \code{margins} used in \code{plot.party} can now
+          also be set by the user.}
+    }
+  }
+  \subsection{Bugfixes}{
+  \itemize{
     \item{Bug fix in code{mob()} if \code{weights} are used and \code{caseweights = TRUE} (the default).
           The statistics for the parameter instability tests were computed incorrectly and
 	  consequently the selection of splitting variables and also the stopping criterion
@@ -27,15 +33,11 @@
     \item{Avoid log(p) values of \code{-Inf} inside \code{mob()} by replacing weighted averaging
           with naive averaging in the response surface regression output in case
 	  the p values are below machine precision.}
-    \item{\code{node_barplot} gained a \code{text} argument
-          that can be used to draw text labels for the
-	  percentages displayed.}
-    \item{The \code{margins} used in \code{plot.party} can now
-          also be set by the user.}
     \item{The \code{as.party} method for \code{rpart} objects
           without any splits only returned a naked \code{partynode}
 	  rather than a full \code{party}. This has been corrected
 	  now.}
+  }
   }
 }
 
