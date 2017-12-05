@@ -1445,8 +1445,8 @@ now specifying the response and the partitioning variable (and no regressors bec
 there are no regressors in this model).
 %
 <<bt1>>=
-system.time(bt1 <- mob(preference ~ 1 | gender + age + q1 + q2 + q3,
-  data = Topmodel2007, fit = btfit1))
+bt1 <- mob(preference ~ 1 | gender + age + q1 + q2 + q3,
+  data = Topmodel2007, fit = btfit1)
 @
 %
 An alternative way to fit the exact same tree somewhat more quickly would be to
@@ -1471,8 +1471,8 @@ may save some computation time -- about 20\% on the authors' machine at the time
 writing -- when computing the tree:
 %
 <<bt2>>=
-system.time(bt2 <- mob(preference ~ 1 | gender + age + q1 + q2 + q3,
-  data = Topmodel2007, fit = btfit2))
+bt2 <- mob(preference ~ 1 | gender + age + q1 + q2 + q3,
+  data = Topmodel2007, fit = btfit2)
 @
 %
 The speed-up is not huge but comes almost for free: just a few additional lines

@@ -2,14 +2,8 @@
 > library("partykit")
 Loading required package: grid
 Loading required package: libcoin
-
-Attaching package: ‘libcoin’
-
-The following object is masked from ‘package:base’:
-
-    %*%
-
 Loading required package: mvtnorm
+Loading required package: rpart
 
 > options(prompt = "R> ", continue = "+  ", digits = 4, 
 +     useFancyQuotes = FALSE)
@@ -599,19 +593,15 @@ Objective function: 809.9
 > btfit1 <- function(y, x = NULL, start = NULL, weights = NULL, 
 +     offset = NULL, ...) btReg.fit(y, ...)
 
-> system.time(bt1 <- mob(preference ~ 1 | gender + age + 
-+     q1 + q2 + q3, data = Topmodel2007, fit = btfit1))
-   user  system elapsed 
-  1.072   0.000   1.071 
+> bt1 <- mob(preference ~ 1 | gender + age + q1 + q2 + 
++     q3, data = Topmodel2007, fit = btfit1)
 
 > btfit2 <- function(y, x = NULL, start = NULL, weights = NULL, 
 +     offset = NULL, ..., estfun = FALSE, object = FALSE) {
 +     rval <- btReg.fit(y .... [TRUNCATED] 
 
-> system.time(bt2 <- mob(preference ~ 1 | gender + age + 
-+     q1 + q2 + q3, data = Topmodel2007, fit = btfit2))
-   user  system elapsed 
-  0.888   0.000   0.890 
+> bt2 <- mob(preference ~ 1 | gender + age + q1 + q2 + 
++     q3, data = Topmodel2007, fit = btfit2)
 
 > bt2
 Model-based recursive partitioning (btfit2)
@@ -716,4 +706,4 @@ $`7`
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  8.940   0.060   8.998 
+  8.600   0.044   8.645 
