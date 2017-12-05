@@ -26,7 +26,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
                        to be applied for variable selection. }
   \item{splitstat}{ a character specifying the type of the test statistic
                        to be applied for splitpoint selection. Prior to
-                       version 2.0-0, \code{maximum} was implemented only.}
+                       version 1.2-0, \code{maximum} was implemented only.}
   \item{splittest}{ a logical changing linear (the default \code{FALSE}) to 
                     maximally selected statistics for
                     variable selection. Currently needs \code{testtype = "MonteCarlo"}.}
