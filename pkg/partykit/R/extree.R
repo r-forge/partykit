@@ -465,11 +465,13 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
 
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-  strata, scores = NULL, yx = "none", ytype = c("vector", "data.frame", "matrix"), 
+  strata, scores = NULL, yx = c("none", "matrix"), ytype = c("vector", "data.frame", "matrix"), 
   nmax = c("yx" = Inf, "z" = Inf), ...)
 {
   ## call
   cl <- match.call()
+  yx <- match.arg(yx, choices = c("none", "matrix"))
+  ytype <- match.arg(ytype, choices = c("vector", "data.frame", "matrix"))
 
   ## 'formula' may either be a (multi-part) formula or a list
   noformula <- !inherits(formula, "formula")
