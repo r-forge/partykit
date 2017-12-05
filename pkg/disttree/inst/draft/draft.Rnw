@@ -1656,7 +1656,7 @@ As explained in the introduction, distributional trees and forests provide a new
 \label{data}
 The data set used for training and validation consists of observed daily precipitation sums provided by the National Hydrographical Service (\citealt{ehyd}) and numerical weather forecasts from the {U.S.} National Oceanic and Atmospheric Administration (NOAA).
 Both, observations and weather forecasts are available from 1985 trough the year 2012, focusing on July only in this article.\\ 
-Observations are available on a daily basis, each observation representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and it's close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized daily at 0~UTC from December 1984 to present providing forecasts on 26 hourly temporal resolution. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertainty of the atmospheric state. 
+Observations are available on a daily basis, each observation representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and its close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized daily at 0~UTC from December 1984 to present providing forecasts on 26 hourly temporal resolution. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertainty of the atmospheric state. 
 
 
 %The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
@@ -1726,14 +1726,14 @@ The chosen methods and their specifications are listed in Table~\ref{model_speci
 %\resizebox{1.4\textwidth}{!}{
 %\begin{minipage}{\textwidth}
 \begin{center}
-\begin{tabular}{ l  l   l   l }
+\begin{tabular}{ l l l l }
 \hline
 Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 \hline
 \textbf{Forest} & recursive    & all & all \\ 
                 & partitioning &     &     \\ 
 \hline
-\textbf{prespecified GAM} & spline  & tp{\_}mean, & tppow{\_}sprd,\\
+\textbf{prespecified GAM} & spline  & tp{\_}mean, & tp{\_}sprd,\\
                             & in each & tp{\_}max,  & dswrf{\_}sprd{\_}mean,\\
  & & tp{\_}mean1218 $\ast$ & tp{\_}sprd1218 $\ast$\\ 
  & & \quad cape{\_}mean1218, & \quad  cape{\_}mean1218,\\
@@ -1746,7 +1746,7 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 \textbf{boosted GAM} & spline  & all & all \\
                        & in each &     &     \\
 \hline
-\textbf{EMOS} & linear & tp{\_}mean & tp{\_}spread \\
+\textbf{EMOS} & linear & tp{\_}mean & tp{\_}sprd \\
 \hline
 \end{tabular}
 \caption[Table caption text]{Table of applied methods together with their type (way of including the covariates) and the included covariates for each distribution parameter.}
