@@ -190,8 +190,14 @@ gettree.cforest <- function(object, tree = 1L, ...) {
         return(NULL)
     })
     ret <- ret[!sapply(ret, is.null)]
-    if (length(ret) > 0)
-        return(factor(do.call("interaction", ret)[, drop = TRUE], exclude = NULL))
+    if (length(ret) > 0) {
+        if (length(ret) == 1) return(factor(ret[[1]], exclude = NULL))
+        ### get rid of empty levels quickly; do.call("interaction", ret)
+        ### explodes
+        for (i in 2:length(ret))
+            ret[[1]] <- factor(interaction(ret[[1]], ret[[i]])[, drop = TRUE], exclude = NULL)
+        return(ret[[1]])
+    }
     return(NULL)
 }
 
