@@ -4,8 +4,7 @@
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
-\setbeamerfont{footnote}{size=\tiny}
-\renewcommand\footnoterule{}
+%\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
 \URL{https://R-Forge.R-project.org/projects/partykit/}
 \headerimage{3}
 
@@ -1184,18 +1183,38 @@ plot_ll(simlist)
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
-\vspace*{0.5cm}
-%Task:
+\vspace{0.4cm}
+\textbf{Goal:} Predict total precipitation amount in alpine regions.\\
+\medskip
+\textbf{Input:} Numerical Weather Prediction (NWP):\\ 
+Global physical model numerically simulating atmospheric processes on $50\times 50 \text{km}^2$ grid.\\
+\medskip
+\textbf{Problem:} Uncertain initial conditions, unresolved processes.\\ %$\rightarrow$ requires post-processing.\\
+\vspace{1.3cm}
+%\bigskip
+\textbf{Distribution Assumption:}
+%\vspace{0.1cm}
+%\hspace{1cm}
+$(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2)$\\
+\bigskip
+\textbf{Idea:} Statistical model with numerical predictions as covariates.
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{0.4cm}
+\textbf{Observation data} (National Hydrographical Service):\\
 \begin{itemize}
-\item Goal: Predict total precipitation amount.
-\item Input: Numerical Weather Prediction (NWP).
-\item Problem: Uncertain initial conditions and \\
-\hspace{1.7cm}unknown processes.
-\item Idea: Statistical model with numerical predictions as \\
-\hspace{1cm}covariates.
-\item Distribution Assumption:\\
-\vspace{0.2cm}
-\hspace{1cm}$(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{cens}\mathcal{N}(\mu,\sigma^2)$
+\item 95 observation stations in Tyrol, Austria.\\
+\item Daily 24h precipitation sums from July of 28 years (1985--2012).
+\end{itemize}
+\vspace{1cm}
+%\bigskip
+\textbf{NWP model output} (Global Ensemble Forecast System):\\
+\begin{itemize}
+\item Numerical ensemble predictions of various meteorological quantities.\\
+\item 11 members each using slightly different perturbed initial conditions.
 \end{itemize}
 \end{frame}
 
@@ -1203,40 +1222,23 @@ plot_ll(simlist)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-Data:
-\begin{itemize}
-\item 95 observation stations in Tyrol.
-\item Daily 24h precipitation sums from July of 28 years (1985--2012)\footnote{provided by the National Hydrographical Service (EHYD)}.
-\item Numerical ensemble predictions of meteorological quantities\footnote{provided by the {U.S.} National Oceanic and Atmospheric Administration (NOAA)\\
-\hspace{0.32cm}using the Global Ensemble Forecast System (GEFS)}: \\
-\hspace{0.5cm}11 members each using slightly different \\
-\hspace{0.5cm}perturbed initial conditions.
-\end{itemize}
-
-\end{frame}
-
-
-\begin{frame}[fragile]
-\frametitle{Probabilistic Forecasting of Precipitation}
-\vspace*{0.2cm}
-Variable Selection:
-\begin{itemize}
-\item Complex terrain $\rightarrow$ unknown influences.
-\item 82 Covariates deduced from 14 base variables:
+\textbf{Base Variables:}
 \begin{itemize}
 \item Total precipitation
 \item Convective available potential energy
 \item Downwards short wave radiation flux (``sunshine'')
-\item Mean sea level pressure 
-\item Mean sea level pressure difference
+\item Mean sea level pressure
 \item Preciptable water
 \item 2m maximum temperature
 \item Total column-integrated condensate
 \item Temperature 
 \item Temperature differences in altitude
 \end{itemize}
-\item Variations such as ensemble minimum/maximum/mean/standard deviation.
-\end{itemize}
+\medskip
+\textbf{Variations:} Ensemble min/max/mean/standard deviation\\
+\vspace{0.1cm}
+$\rightarrow$ 82 covariates.
+
 \end{frame}
 
 
@@ -1404,19 +1406,46 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
-\vspace*{0.2cm}
+\vspace{0.2cm}
 Application for one station:
 \begin{itemize}
 \item Learn forest model on data from 24 years.
 \item Evaluate on 4 years.
 \item 10 times 7-fold cross validation.
-\item Compare to commonly used heteroscedastic censored Gaussian models:\\
-\begin{itemize}
-\item Prespecified GAM: variable selection based on meteorological expert knowledge.
-\item Boosted GAM: automatic variable selection.
-\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
+\item Compare to commonly used heteroscedastic censored Gaussian models:
 \end{itemize}
-\end{itemize}
+%\begin{itemize}
+%\item Prespecified GAM: variable selection based on meteorological expert knowledge.
+%\item Boosted GAM: automatic variable selection.
+%\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
+%\end{itemize}
+\vspace{0.1cm}
+\begin{table}[t!]
+\footnotesize
+\nodindent
+\hskip-0.4cm\begin{tabular}{ l l l }
+\hline
+Model & Type & Variable Selection \\
+\hline
+\vspace{-0.15cm}
+\textbf{Forest} & recursive    & automatic \\ 
+                & partitioning &           \\ 
+\hline
+\vspace{-0.15cm}
+\textbf{prespecified GAM} & spline  & based on expert \\
+                          & in each & knowledge      \\
+\hline
+\vspace{-0.15cm}
+\textbf{boosted GAM} & spline  & automatic  \\
+                     & in each &            \\
+\hline
+\vspace{-0.15cm}
+\textbf{EMOS} & linear & total precipitation mean \\
+              &        & and standard deviation   \\
+\hline
+\end{tabular}
+\end{table}
+
 \end{frame}
 
 
@@ -1474,18 +1503,44 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
-\vspace*{0.2cm}
+\vspace{0.2cm}
 Application for all 95 stations:
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
 \item Compare to commonly used heteroscedastic censored Gaussian models:\\
-\begin{itemize}
-\item Prespecified GAM: variable selection based on meteorological expert knowledge.
-\item Boosted GAM: automatic variable selection.
-\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 \end{itemize}
-\end{itemize}
+%\begin{itemize}
+%\item Prespecified GAM: variable selection based on meteorological expert knowledge.
+%\item Boosted GAM: automatic variable selection.
+%\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
+%\end{itemize}
+\vspace{0.1cm}
+\begin{table}[t!]
+\footnotesize
+\nodindent
+\hskip-0.4cm\begin{tabular}{ l l l }
+\hline
+Model & Type & Variable Selection \\
+\hline
+\vspace{-0.15cm}
+\textbf{Forest} & recursive    & automatic \\ 
+                & partitioning &           \\ 
+\hline
+\vspace{-0.15cm}
+\textbf{prespecified GAM} & spline  & based on expert \\
+                          & in each & knowledge      \\
+\hline
+\vspace{-0.15cm}
+\textbf{boosted GAM} & spline  & automatic  \\
+                     & in each &            \\
+\hline
+\vspace{-0.15cm}
+\textbf{EMOS} & linear & total precipitation mean \\
+              &        & and standard deviation   \\
+\hline
+\end{tabular}
+\end{table}
 \end{frame}
 
 
@@ -1652,10 +1707,11 @@ axis(4, at = brk, las = 1, mgp=c(0,0,-1.2), cex = 1.4)
 \subsection{References}
 
 \begin{frame}
-\frametitle{References (1)}
+\frametitle{References}
+
+\vspace{-0.2cm}
 
 \footnotesize
-
 Hothorn T, Hornik K, Zeileis A (2006).
  \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
  \textit{Journal of Computational and Graphical Statistics},
@@ -1686,62 +1742,29 @@ Stasinopoulos DM, Rigby RA (2007).
   \textbf{23}(7), 1--46.
   \doi{10.18637/jss.v023.i07}
   
-\medskip
+%\medskip
 
-Seibold H, Zeileis A, Hothorn T (2017).
-  \dquote{Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.}
-  \textit{Statistical Methods in Medical Research}, 
-  \textbf{12}(1), 45--63.
-  \doi{10.1177/0962280217693034}
+%Seibold H, Zeileis A, Hothorn T (2017).
+%  \dquote{Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.}
+%  \textit{Statistical Methods in Medical Research}, 
+%  \textbf{12}(1), 45--63.
+%  \doi{10.1177/0962280217693034}
 
-\medskip
+%\medskip
 
-Hothorn T, Zeileis A (2017).
-  \dquote{Transformation Forests.}
-  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
-  \url{http://arxiv.org/abs/1701.02110}
-
-\end{frame}
-
-
-\begin{frame}
-\frametitle{References (2)}
-
-\footnotesize
-
-% Reference for the observation data set
-BMLFUW (2016).
-  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} - {W}asserhaushalt}
-  \text{Available at \url{http://ehyd.gv.at}}, 
-  \text{Accessed: {F}ebruary 29 2016}.
-
+%Hothorn T, Zeileis A (2017).
+%  \dquote{Transformation Forests.}
+%  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+%  \url{http://arxiv.org/abs/1701.02110}
 
 \medskip
 
-% Reference for the GFS reforecast version 2 data set 
-Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
-  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
-  \textit{Bulletin of the American Meteorological Society}, 
-  \textbf{94}(10), 1553--1565.
-  \doi = {10.1175/BAMS-D-12-00014.1}
-
-
-\medskip
-
-Messner J W,  Mayr G J, Zeileis A (2016).
-  \dquote{Heteroscedastic Censored and Truncated Regression with {crch}}
-  \textit{The R Journal}, 
-  \textbf{8}(1), 173--181.
-  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
-
-\medskip
-
-Breiman L (2001).
-  \dquote{Random {Forests}}
-  \textit{Machine Learning}, 
-  \textbf{45}(1), 5--32.
-  \doi{10.1023/A:1010933404324}
-
+Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
+  \dquote{Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation}
+  \textit{Monthly Weather Review}, 
+  \textbf{133}(5), 1098--1118.
+  \doi{10.1175/MWR2904.1}
+  
 \medskip
 
 Hofner B, Mayr A, Fenske N, Schmid M (2017).
@@ -1753,30 +1776,42 @@ Hofner B, Mayr A, Fenske N, Schmid M (2017).
 
 
 \begin{frame}
-\frametitle{References (3)}
+\frametitle{References (2)}
+
+\vspace{-0.2cm}
 
 \footnotesize
-Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
-  \dquote{Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation}
-  \textit{Monthly Weather Review}, 
-  \textbf{133}(5), 1098--1118.
-  \doi{https://doi.org/10.1175/MWR2904.1}
+
+% Reference for the observation data set
+BMLFUW (2016).
+  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} - {W}asserhaushalt}
+  \text{Available at \url{http://ehyd.gv.at}}, 
+  \text{Accessed: {F}ebruary 29 2016}.
 
 \medskip
 
-Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
-  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
-  \textit{Monthly Weather Review}, 
-  \textbf{Forthcoming}.
-  \doi{10.1175/MWR-D-16-0388.1}
+% Reference for the GFS reforecast version 2 data set 
+Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
+  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
+  \textit{Bulletin of the American Meteorological Society}, 
+  \textbf{94}(10), 1553--1565.
+  \doi{10.1175/BAMS-D-12-00014.1}
 
 \medskip
 
-{CGIAR-CSI} (2016).
-  \dquote{{SRTM} 90m Digital Elevation Database {v4.1}}
-  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
-  \text{Accessed: {J}uly 10 2016}.
+%Breiman L (2001).
+%  \dquote{Random {Forests}}
+%  \textit{Machine Learning}, 
+%  \textbf{45}(1), 5--32.
+%  \doi{10.1023/A:1010933404324}
 
+Messner J W,  Mayr G J, Zeileis A (2016).
+  \dquote{Heteroscedastic Censored and Truncated Regression with {crch}}
+  \textit{The R Journal}, 
+  \textbf{8}(1), 173--181.\\
+  \scriptsize
+  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
+  \footnotesize
 
 \medskip
 
@@ -1785,10 +1820,23 @@ Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
   \textit{International Journal of Climatology}, 
   \textbf{37}(7), 3264--3275.
   \doi{10.1002/joc.4913}
+  
+\medskip
 
+Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
+  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
+  \textit{Monthly Weather Review}, 
+  \textbf{Forthcoming}.
+  \doi{10.1175/MWR-D-16-0388.1}
+
+%\medskip
+
+%{CGIAR-CSI} (2016).
+%  \dquote{{SRTM} 90m Digital Elevation Database {v4.1}}
+%  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
+%  \text{Accessed: {J}uly 10 2016}.
 
 \end{frame}
-
 
 \end{document}
 
