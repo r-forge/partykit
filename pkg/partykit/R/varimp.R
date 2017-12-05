@@ -161,8 +161,9 @@ gettree.cforest <- function(object, tree = 1L, ...) {
                                                        stump = TRUE))
         pval <- info_node(node_party(tmp))$criterion["p.value",]
         pval[is.na(pval)] <- 1
-        ret <- names(pval)[pval < threshold]
-        if (length(ret) == 0) return(NULL)
+        ### make the meaning of threshold equal to partykit
+        ret <- names(pval)[(1 - pval) > threshold] 
+        if (length(ret) == 0) return(NULL) 
         return(ret)
     })
     names(ret) <- xnames
