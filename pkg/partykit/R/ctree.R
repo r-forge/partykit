@@ -178,6 +178,16 @@
 
     ### in some cases, estfun() might return NAs which we don't check
     if (any(is.na(lev$LinearStatistic))) {
+        if (!is.null(iy)) {
+            Ytmp <- Y[iy[subset] + 1L,]
+        } else {
+            Ytmp <- Y[subset,]
+        }
+        cc <- complete.cases(Ytmp)
+        if (!all(cc)) { ### only NAs left
+            if (SPLITONLY) return(NULL)
+            return(list(statistic = NA, p.value = NA))
+        }
         lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                              weights = weights, block = cluster,
                              nresample = nresample, varonly = varonly, checkNAs = TRUE)
