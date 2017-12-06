@@ -1,4 +1,4 @@
-#setwd("~/svn/partykit/pkg/disttree/demo")
+setwd("~/svn/partykit/pkg/disttree/inst/draft")
 #setwd("~/disttree/demo")
 
 ########################################
@@ -198,11 +198,10 @@
 # save data
 {
   stations <- stations_comp
-  save(stations, file = "~/svn/partykit/pkg/disttree/inst/draft/demo_stations.rda")
-  datalist <- rainlist
-  save(datalist, file = "~/svn/partykit/pkg/disttree/inst/draft/demo_obs+cov.rda")
-  data_axams <- datalist$Axams
-  save(data_axams, file = "~/svn/partykit/pkg/disttree/inst/draft/data_Axams.rda")
+  save(stations, file = "~/svn/partykit/pkg/disttree/data/stations.rda")
+  save(rainlist, file = "~/svn/partykit/pkg/disttree/data/rainlist.rda")
+  rain_axams <- rainlist$Axams
+  save(rain_axams, file = "~/svn/partykit/pkg/disttree/inst/draft/rain_Axams.rda")
 }
 
 
