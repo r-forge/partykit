@@ -8,12 +8,13 @@ set.seed(7)
 
 #####
 # load station list
-data("demo_stations")
+data("stations")
 # load observations and covariates (list over 95 stations)
-data("demo_obs+cov")
+data("rainlist")
 
 
 ## load prepared distribution list dist_list_cens_normal
+# alternatively a gamlss.cens family object can be used
 
 # dist_list_cens_normal
 {
@@ -233,14 +234,16 @@ data("demo_obs+cov")
 
 
 #####
-# packages
+# further packages
 library("gamlss")
 library("gamlss.dist")
-library("gamlss.cens")
-gen.cens(NO, type = "left")
 library("gamboostLSS")
 library("crch")
 library("scoringRules")
+
+# if gamlss.cens family object should be used as family
+library("gamlss.cens")
+gen.cens(NO, type = "left")
 
 
 
@@ -250,7 +253,7 @@ library("scoringRules")
 ## Application for one station
 
 # select data for one station (here: Axams)
-raindata <- datalist$Axams
+raindata <- rainlist$Axams
 
 # learning the models on 24 years and evaluating predictions on the 25th, 26th, 27th and 28th year
 learndata <- raindata[raindata$year < 109,]
@@ -280,8 +283,6 @@ df <- distforest(df.formula,
                                          mincriterion = 0, minsplit = 50,
                                          minbucket = 20))
 
-# FIX ME: "Error in x[[jj]][iseq] <- vjj : replacement has length zero"
-# error for family = NOlc()
 
 
 ############
