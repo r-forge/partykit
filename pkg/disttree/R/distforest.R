@@ -45,6 +45,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
     # linkinvdr only used in the method vcov for type = "parameter"
+
   }
   
   np <- length(family$link)
@@ -408,7 +409,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       nw <- w
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
+      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
+                     censtype = object$info$censtype, censpoint = object$info$censpoint)
       pred.val1 <- predict(pm, type = "response")
         
       pred.val <- data.frame(idx = 1:nrow(nd))
@@ -418,7 +420,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
+          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
+                         censtype = object$info$censtype, censpoint = object$info$censpoint)
           pred.val[i,] <- predict(pm, type = "response")
         }
       }
@@ -435,7 +438,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol)
+      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
+                     censtype = object$info$censtype, censpoint = object$info$censpoint)
       pred.par1 <- coef(pm, type = "parameter")
 
       pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = length(pred.par1)))
@@ -445,7 +449,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol)
+          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
+                         censtype = object$info$censtype, censpoint = object$info$censpoint)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
       }
