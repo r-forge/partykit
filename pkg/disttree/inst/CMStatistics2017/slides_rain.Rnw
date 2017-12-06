@@ -1,5 +1,5 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber]{uibk}
+\usetheme[nototalframenumber, noslidenumber, url]{uibk}
 
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
@@ -1184,20 +1184,22 @@ plot_ll(simlist)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{0.4cm}
-\textbf{Goal:} Predict total precipitation amount in alpine regions.\\
+\textbf{Goal:} Predict daily precipitation amount in alpine regions.\\
 \medskip
-\textbf{Input:} Numerical Weather Prediction (NWP):\\ 
-Global physical model numerically simulating atmospheric processes on $50\times 50 \text{km}^2$ grid.\\
+\textbf{Input:} Numerical Weather Prediction (NWP) based on a global physical model numerically simulating atmospheric processes on a $50\times 50 \text{km}^2$ grid.\\
 \medskip
 \textbf{Problem:} Uncertain initial conditions, unresolved processes.\\ %$\rightarrow$ requires post-processing.\\
 \vspace{1.3cm}
 %\bigskip
-\textbf{Distribution Assumption:}
-%\vspace{0.1cm}
-%\hspace{1cm}
-$(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2)$\\
+
+\textbf{Idea:} Statistical model with numerical predictions as covariates.\\
 \bigskip
-\textbf{Idea:} Statistical model with numerical predictions as covariates.
+\textbf{Distribution assumption:}\\
+\vspace{-0.3cm}
+%\hspace{1.5cm}
+%\center
+$$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) \quad \text{censored at 0.}$$
+
 \end{frame}
 
 
@@ -1207,13 +1209,14 @@ $(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigm
 \textbf{Observation data} (National Hydrographical Service):\\
 \begin{itemize}
 \item 95 observation stations in Tyrol, Austria.\\
-\item Daily 24h precipitation sums from July of 28 years (1985--2012).
+\item Daily 24h precipitation sums from July over 28 years (1985--2012).
 \end{itemize}
 \vspace{1cm}
 %\bigskip
 \textbf{NWP model output} (Global Ensemble Forecast System):\\
 \begin{itemize}
-\item Numerical ensemble predictions of various meteorological quantities.\\
+\item Ensemble predictions of various meteorological quantities related to precipitation, temperature,
+air pressure, \dots.\\
 \item 11 members each using slightly different perturbed initial conditions.
 \end{itemize}
 \end{frame}
@@ -1222,7 +1225,7 @@ $(\text{Total precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigm
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-\textbf{Base Variables:}
+\textbf{Base variables:}
 \begin{itemize}
 \item Total precipitation
 \item Convective available potential energy
@@ -1246,7 +1249,7 @@ $\rightarrow$ 82 covariates.
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-Application for one station:
+\textbf{Application for one station:}
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
@@ -1407,7 +1410,7 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{0.2cm}
-Application for one station:
+\textbf{Application for one station:}
 \begin{itemize}
 \item Learn forest model on data from 24 years.
 \item Evaluate on 4 years.
@@ -1504,43 +1507,44 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{0.2cm}
-Application for all 95 stations:
+\textbf{Application for all 95 stations:}
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
-\item Compare to commonly used heteroscedastic censored Gaussian models:\\
+\item Compare to commonly used heteroscedastic censored Gaussian models. %:\\
 \end{itemize}
 %\begin{itemize}
 %\item Prespecified GAM: variable selection based on meteorological expert knowledge.
 %\item Boosted GAM: automatic variable selection.
 %\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 %\end{itemize}
-\vspace{0.1cm}
-\begin{table}[t!]
-\footnotesize
-\nodindent
-\hskip-0.4cm\begin{tabular}{ l l l }
-\hline
-Model & Type & Variable Selection \\
-\hline
-\vspace{-0.15cm}
-\textbf{Forest} & recursive    & automatic \\ 
-                & partitioning &           \\ 
-\hline
-\vspace{-0.15cm}
-\textbf{prespecified GAM} & spline  & based on expert \\
-                          & in each & knowledge      \\
-\hline
-\vspace{-0.15cm}
-\textbf{boosted GAM} & spline  & automatic  \\
-                     & in each &            \\
-\hline
-\vspace{-0.15cm}
-\textbf{EMOS} & linear & total precipitation mean \\
-              &        & and standard deviation   \\
-\hline
-\end{tabular}
-\end{table}
+
+%\vspace{0.1cm}
+%\begin{table}[t!]
+%\footnotesize
+%\nodindent
+%\hskip-0.4cm\begin{tabular}{ l l l }
+%\hline
+%Model & Type & Variable Selection \\
+%\hline
+%\vspace{-0.15cm}
+%\textbf{Forest} & recursive    & automatic \\ 
+%                & partitioning &           \\ 
+%\hline
+%\vspace{-0.15cm}
+%\textbf{prespecified GAM} & spline  & based on expert \\
+%                          & in each & knowledge      \\
+%\hline
+%\vspace{-0.15cm}
+%\textbf{boosted GAM} & spline  & automatic  \\
+%                     & in each &            \\
+%\hline
+%\vspace{-0.15cm}
+%\textbf{EMOS} & linear & total precipitation mean \\
+%              &        & and standard deviation   \\
+%\hline
+%\end{tabular}
+%\end{table}
 \end{frame}
 
 
@@ -1620,7 +1624,7 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 layout(cbind(1, 2), width = c(9, 1))
 par(mar = c(5,4,4,0.1))
 raster::image(tirol.dem, col = rev(gray.colors(100)),
-              main="Observation Stations", ylab = "Latitude", xlab = "Longitude", 
+              main="Observation stations", ylab = "Latitude", xlab = "Longitude", 
               xlim = c(9.8,13.2), 
               ylim = c(46.6, 47.8), 
               cex.lab=1.5, cex.axis=1.2, cex.main=2)
@@ -1760,17 +1764,18 @@ Stasinopoulos DM, Rigby RA (2007).
 \medskip
 
 Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
-  \dquote{Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation}
+  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and Minimum CRPS Estimation}
   \textit{Monthly Weather Review}, 
   \textbf{133}(5), 1098--1118.
   \doi{10.1175/MWR2904.1}
   
 \medskip
 
-Hofner B, Mayr A, Fenske N, Schmid M (2017).
-  \dquote{{gamboostLSS}: Boosting Methods for {GAMLSS} Models}
-  \textit{{R} package version 2.0-0},
-  \url{https://CRAN.R-project.org/package=gamboostLSS}
+Hofner B, Mayr A, Schmid M (2016).
+  \dquote{{gamboostLSS}: An R Package for Model Building and Variable Selection in the {GAMLSS} Framework}
+  \textit{Journal of Statistical Software},
+  \textbf{74}(1), 1--31.
+  \doi{10.18637/jss.v074.i01}
 
 \end{frame}
 
@@ -1826,7 +1831,7 @@ Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
 Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
   \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
   \textit{Monthly Weather Review}, 
-  \textbf{Forthcoming}.
+  \text{Forthcoming}.
   \doi{10.1175/MWR-D-16-0388.1}
 
 %\medskip
