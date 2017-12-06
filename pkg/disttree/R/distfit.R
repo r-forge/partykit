@@ -83,6 +83,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
     # linkinvdr only used in the method vcov for type = "parameter"
+
   }
 
   
@@ -365,10 +366,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(family$gamlssobj && family$censored){
     ddist <- function(x, log = FALSE) {
       if(!survival::is.Surv(x)){
-        if(censtype == "left") family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
-        if(censtype == "right") family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
+        if(censtype == "left") eval <- family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
+        if(censtype == "right") eval <- family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
         ## FIX ME: interval censored
-      } else family$ddist(x, eta = eta,  log=log)
+      } else eval <- family$ddist(x, eta = eta,  log=log)
+      return(eval)
     }
   } else ddist <- function(x, log = FALSE) family$ddist(x, eta = eta, log = log)
   
