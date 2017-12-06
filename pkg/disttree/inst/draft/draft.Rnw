@@ -2216,7 +2216,7 @@ The corresponding implementation to the novel methods presented in this article 
 
 
 %\newpage
-\nocite{hothorn2006unbiased, zeileis2008model, hothorn2015partykit, Messner2016, loh2011classification, stasinopoulos2007generalized, Seibold2016, Seibold2017, breiman2001random, stasinopoulos2005, yee2010vgam}
+\nocite{hothorn2006unbiased, zeileis2008model, hothorn2015partykit, Messner2016, loh2011classification, stasinopoulos2007generalized, Seibold2016, Seibold2017, breiman2001random, stasinopoulos2005, yee2010vgam, gamboostLSS2016}
 % zeileis2008implementing, 
 % zeileis2010party, 
 % hothorn2015package,
