@@ -1,11 +1,11 @@
-\name{demo_stations}
-\alias{demo_stations}
+\name{stations}
+\alias{stations}
 
 \title{Observation stations}
 
 \description{All 95 observations stations including all necessary information about each station.}
 
-\usage{data("demo_stations")}
+\usage{data("stations")}
 
 \format{
 A data frame containing 95 observations stations and 5 variables.
@@ -26,7 +26,7 @@ A data frame containing 95 observations stations and 5 variables.
 
 
 \examples{
-data("demo_stations")
+data("stations")
 head(stations)
 }
 
