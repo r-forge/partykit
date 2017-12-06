@@ -2,7 +2,7 @@
 # new version of disttree using extree directly without applying ctree
 
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
-                       control = ctree_control(...), ytrafo = NULL, converged = NULL, scores = NULL, 
+                       control = ctree_control(...), converged = NULL, scores = NULL, 
                        doFit = TRUE, bd = NULL,
                        type.tree = "ctree", decorrelate = "none",
                        censtype = "none", censpoint = NULL,
@@ -40,10 +40,13 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   mf$nmax <- control$nmax
   ## evaluate model.frame
-  mf[[1L]] <- quote(partykit:::extree_data)
+  mf[[1L]] <- quote(extree_data)
   
   d <- eval(mf, parent.frame())
-  subset <- partykit:::.start_subset(d)  ## FIX ME: export function?
+  #subset <- partykit:::.start_subset(d)  ## FIX ME: export function?
+  # for now: function .start_subset copied directly into this code
+  subset <- 1:NROW(model.frame(d))
+  if (length(d$yxmissings) > 0) subset <- subset[!(subset %in% d$yxmissings)]
   
   weights <- model.weights(model.frame(d))
   
@@ -175,7 +178,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   }            
   
   update <- function(subset, weights, control, doFit = TRUE)
-    partykit:::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+    extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
                           subset = subset, weights = weights, ctrl = control, doFit = doFit)
   if (!doFit) return(list(d = d, update = update))
   tree <- update(subset = subset, weights = weights, control = control)
