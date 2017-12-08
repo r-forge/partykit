@@ -1,5 +1,5 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber, url]{uibk}
+\usetheme[nototalframenumber, noslidenumber]{uibk}
 
 \title{Distributional Trees and Forests}
 \author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
@@ -1195,7 +1195,7 @@ plot_ll(simlist)
 \textbf{Idea:} Statistical model with numerical predictions as covariates.\\
 \bigskip
 \textbf{Distribution assumption:}\\
-\vspace{-0.3cm}
+\vspace{-0.25cm}
 %\hspace{1.5cm}
 %\center
 $$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) \quad \text{censored at 0.}$$
@@ -1425,7 +1425,7 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \vspace{0.1cm}
 \begin{table}[t!]
 \footnotesize
-\nodindent
+
 \hskip-0.4cm\begin{tabular}{ l l l }
 \hline
 Model & Type & Variable Selection \\
@@ -1614,30 +1614,32 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 
 
 
+
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \begin{center}
-\vspace*{0cm}
+%\vspace*{-2cm}
 
-<<map, fig=TRUE, echo=FALSE, width=10, height = 6.5>>=
+\setkeys{Gin}{width=0.95\textwidth}
+<<map, fig=TRUE, echo=FALSE, width=10, height=6.5>>=
   
 layout(cbind(1, 2), width = c(9, 1))
-par(mar = c(5,4,4,0.1))
+par(mar = c(5,4,4,0.01))
 raster::image(tirol.dem, col = rev(gray.colors(100)),
               main="Observation stations", ylab = "Latitude", xlab = "Longitude", 
               xlim = c(9.8,13.2), 
-              ylim = c(46.6, 47.8), 
-              cex.lab=1.5, cex.axis=1.2, cex.main=2)
+              ylim = c(46.6, 47.85), 
+              cex.lab=1.3, cex.axis=1.2, cex.main=1.7)
 plot(tirol.gadm, add = TRUE)
-points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.9)
+points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.7)
 legend("topleft", pch=c(21,24,25,22), legend = c("Forest", "prespecified GAM", "boosted GAM", "EMOS"), cex = 1.2, bty = "n")
 
-par(mar = c(0.5,0.2,0.5,2.3))
+par(mar = c(0.4,0.2,0.4,2.33))
 ## legend
 plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
      xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
 rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
-axis(4, at = brk, las = 1, mgp=c(0,0,-1.2), cex = 1.4)
+axis(4, at = brk, las = 1, mgp=c(0,0,-1.2), cex = 1.5)
 
 @
 \end{center}
