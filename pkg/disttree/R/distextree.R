@@ -287,8 +287,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
 
 
 distextree_control <- function(type.tree = NULL,
-                               criterion, 
-                               logmincriterion, 
+                               criterion = "p.value",    ## FIX ME: set default? c("statistic", "p.value"), 
+                               logmincriterion = log(0.95), 
                                minsplit = 20L,
                                minbucket = 7L, 
                                minprob = 0.01, 
@@ -308,10 +308,24 @@ distextree_control <- function(type.tree = NULL,
                                cores = NULL,
                                saveinfo = TRUE,
                                testflavour = c("ctree", "exhaustive", "mfluc"),
-                               bonferroni = FALSE,
+                               bonferroni = TRUE,       # FIX ME: different then extree_control default
                                splitflavour = c("ctree", "exhaustive"),
-                               update = NULL) 
+                               update = NULL,
+                               ## FIX ME: additional arguments for ctree
+                               teststat = c("quadratic", "maximum"), 
+                               splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
+                               splittest = FALSE,
+                               testtype = c("Bonferroni", "MonteCarlo", 
+                                            "Univariate", "Teststatistic"),
+                               pargs = GenzBretz(),
+                               ## FIX ME: additional arguments for exhaustive
+                               restart = TRUE) 
 {
+  
+  add_control <- NULL
+  
+  if (length(testflavour) == 3) testflavour <- testflavour[1]
+  if (length(splitflavour) == 2) splitflavour <- splitflavour[1]
   
   if(!is.null(type.tree)) {
     
@@ -326,7 +340,8 @@ distextree_control <- function(type.tree = NULL,
           
           testflavour <- "ctree"
           splitflavour <- "ctree"
-          
+            
+         
           if(FALSE){
             control <- ctree_control(teststat = c("quadratic", "maximum"), 
                                      splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
@@ -411,33 +426,77 @@ distextree_control <- function(type.tree = NULL,
   
   
   
+  if(testflavour == "ctree" | splitflavour == "ctree") {
+    
+    testtype <- match.arg(testtype, several.ok = TRUE)
+    if (length(testtype) == 4) testtype <- testtype[1]
+    ttesttype <- testtype
+    if (length(testtype) > 1) {
+      stopifnot(all(testtype %in% c("Bonferroni", "MonteCarlo")))
+      ttesttype <- "MonteCarlo"
+    }
+    
+    splitstat <- match.arg(splitstat)
+    teststat <- match.arg(teststat)
+    
+    if (!caseweights)
+      stop("only caseweights currently implemented in ctree")
+    
+    add_control <- list(teststat = teststat, 
+                        splitstat = splitstat, 
+                        splittest = splittest, 
+                        pargs = pargs,
+                        testtype = testtype, 
+                        nresample = 9999L,     # FIX ME
+                        tol = sqrt(.Machine$double.eps),    # FIX ME
+                        intersplit = TRUE)                  # FIX ME
+    
+    criterion2 = ifelse("Teststatistic" %in% testtype, "statistic", "p.value")
+    if(criterion != criterion2) stop("'criterion' does not match 'testtype'")
+    
+    bonferroni2 = "Bonferroni" %in% testtype
+    if(bonferroni != bonferroni2) stop("'bonferroni' does not match 'testtype'")
+    
+  }
+  
+  if(testflavour == "exhaustive" | splitflavour == "exhaustive") {
+    add_control <- c(add_control,
+                     list(restart = restart))
+  }
   
   
-  control <- extree_control(criterion = criterion, 
-                            logmincriterion = logmincriterion, 
-                            minsplit = minsplit,
-                            minbucket = minbucket, 
-                            minprob = minprob, 
-                            nmax = nmax,
-                            stump = stump,
-                            lookahead = lookahead, ### try trafo() for daugther nodes before implementing the split
-                            MIA = MIA,
-                            maxsurrogate = maxsurrogate, 
-                            numsurrogate = numsurrogate,
-                            mtry = mtry,
-                            maxdepth = maxdepth, 
-                            multiway = multiway, 
-                            splittry = splittry,
-                            majority = majority, 
-                            caseweights = caseweights, 
-                            applyfun = applyfun, 
-                            cores = cores,
-                            saveinfo = saveinfo,
-                            testflavour = testflavour,
-                            bonferroni = bonferroni,
-                            splitflavour = splitflavour,
-                            update = update)
+  
+  
+  
+  control <- c(partykit:::extree_control(criterion = criterion, 
+                                         logmincriterion = logmincriterion, 
+                                         minsplit = minsplit,
+                                         minbucket = minbucket, 
+                                         minprob = minprob, 
+                                         nmax = nmax,
+                                         stump = stump,
+                                         lookahead = lookahead, ### try trafo() for daugther nodes before implementing the split
+                                         MIA = MIA,
+                                         maxsurrogate = maxsurrogate, 
+                                         numsurrogate = numsurrogate,
+                                         mtry = mtry,
+                                         maxdepth = maxdepth, 
+                                         multiway = multiway, 
+                                         splittry = splittry,
+                                         majority = majority, 
+                                         caseweights = caseweights, 
+                                         applyfun = applyfun, 
+                                         cores = cores,
+                                         saveinfo = saveinfo,
+                                         testflavour = testflavour,
+                                         bonferroni = bonferroni,  
+                                         splitflavour = splitflavour,
+                                         update = update),   
+               add_control)
+  
+  return(control)
 }
+
 
 
 
