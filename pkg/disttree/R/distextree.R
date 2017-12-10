@@ -2,9 +2,10 @@
 # new version of disttree using extree directly without applying ctree
 
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
-                       control = ctree_control(...), converged = NULL, scores = NULL, 
+                       control = distextree_control(...), converged = NULL, scores = NULL, 
                        doFit = TRUE, bd = NULL,
-                       type.tree = "ctree", decorrelate = "none",
+                       #type.tree = "ctree",   ## should be in distextree_control 
+                       decorrelate = "none",
                        censtype = "none", censpoint = NULL,
                        ocontrol = list(), ...) {
   
@@ -284,10 +285,170 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
 
 ## FIX ME: distextree_control()
 
+
+distextree_control <- function(type.tree = NULL,
+                               criterion, 
+                               logmincriterion, 
+                               minsplit = 20L,
+                               minbucket = 7L, 
+                               minprob = 0.01, 
+                               nmax = Inf,
+                               stump = FALSE,
+                               lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
+                               MIA = FALSE,
+                               maxsurrogate = 0L, 
+                               numsurrogate = FALSE,
+                               mtry = Inf,
+                               maxdepth = Inf, 
+                               multiway = FALSE, 
+                               splittry = 2L,
+                               majority = FALSE, 
+                               caseweights = TRUE, 
+                               applyfun = NULL, 
+                               cores = NULL,
+                               saveinfo = TRUE,
+                               testflavour = c("ctree", "exhaustive", "mfluc"),
+                               bonferroni = FALSE,
+                               splitflavour = c("ctree", "exhaustive"),
+                               update = NULL) 
+{
+  
+  if(!is.null(type.tree)) {
+    
+    if(!type.tree %in% c("ctree", "mob")) {
+      stop("type.tree can only be set to 'ctree' or 'mob'")
+    } else {
+      
+      if(type.tree == "ctree"){
+        if(!("ctree" %in% splitflavour & "ctree" %in% testflavour)){
+          stop("for type.tree = 'ctree' testflavour and splitflavour can not be set to other than 'ctree'")
+        } else {
+          
+          testflavour <- "ctree"
+          splitflavour <- "ctree"
+          
+          if(FALSE){
+            control <- ctree_control(teststat = c("quadratic", "maximum"), 
+                                     splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
+                                     splittest = FALSE,
+                                     testtype = c("Bonferroni", "MonteCarlo", 
+                                                  "Univariate", "Teststatistic"),
+                                     pargs = GenzBretz(),
+                                     nmax = c("yx" = Inf, "z" = Inf),
+                                     alpha = 0.05, 
+                                     mincriterion = 1 - alpha, 
+                                     logmincriterion = log(mincriterion), 
+                                     minsplit = minsplit, 
+                                     minbucket = minbucket, 
+                                     minprob = minprob, 
+                                     stump = FALSE, 
+                                     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
+                                     MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
+                                     nresample = 9999L, 
+                                     tol = sqrt(.Machine$double.eps),
+                                     maxsurrogate = 0L, 
+                                     numsurrogate = FALSE,
+                                     mtry = Inf, 
+                                     maxdepth = Inf, 
+                                     multiway = FALSE, 
+                                     splittry = 2L, 
+                                     intersplit = FALSE,
+                                     majority = FALSE, 
+                                     caseweights = TRUE, 
+                                     applyfun = NULL, 
+                                     cores = NULL,
+                                     saveinfo = TRUE,
+                                     update = NULL)
+          }
+          
+        }
+      }
+      
+      if(type.tree == "mob"){        
+        if(!("exhaustive" %in% splitflavour & "mfluc" %in% testflavour)){
+          stop("for type.tree = 'ctree' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
+        } else {
+          
+          testflavour <- "mfluc"
+          splitflavour <- "exhaustive"
+          
+          if(FALSE){
+            control <- mob_control(alpha = 0.05, 
+                                   bonferroni = TRUE, 
+                                   minsize = minbucket,   ## FIX ME: minsize minimal number of obs in node after splitting? 
+                                   maxdepth = Inf,
+                                   mtry = Inf, 
+                                   trim = 0.1, 
+                                   breakties = FALSE, 
+                                   parm = NULL, 
+                                   dfsplit = TRUE, 
+                                   prune = NULL, 
+                                   restart = TRUE,
+                                   verbose = FALSE, 
+                                   caseweights = TRUE, 
+                                   ytype = "vector", 
+                                   xtype = "matrix",
+                                   terminal = "object", 
+                                   inner = terminal, 
+                                   model = TRUE,
+                                   numsplit = "left", 
+                                   catsplit = "binary", 
+                                   vcov = "opg", 
+                                   ordinal = "chisq", 
+                                   nrep = 10000,
+                                   minsplit = minsize,   ## FIX ME: per default minsplit and minbucket are set to the same value? both minsize?
+                                   minbucket = minsize,
+                                   applyfun = NULL, 
+                                   cores = NULL)
+          }
+          
+        }
+      }
+    }
+  }
+  
+  
+  
+  
+  
+  
+  
+  control <- extree_control(criterion = criterion, 
+                            logmincriterion = logmincriterion, 
+                            minsplit = minsplit,
+                            minbucket = minbucket, 
+                            minprob = minprob, 
+                            nmax = nmax,
+                            stump = stump,
+                            lookahead = lookahead, ### try trafo() for daugther nodes before implementing the split
+                            MIA = MIA,
+                            maxsurrogate = maxsurrogate, 
+                            numsurrogate = numsurrogate,
+                            mtry = mtry,
+                            maxdepth = maxdepth, 
+                            multiway = multiway, 
+                            splittry = splittry,
+                            majority = majority, 
+                            caseweights = caseweights, 
+                            applyfun = applyfun, 
+                            cores = cores,
+                            saveinfo = saveinfo,
+                            testflavour = testflavour,
+                            bonferroni = bonferroni,
+                            splitflavour = splitflavour,
+                            update = update)
+}
+
+
+
+
+
+
 if(FALSE){
   
-  distextree_control <- function
+ctree_control <- function
   (
+    
     teststat = c("quadratic", "maximum"), 
     splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
     splittest = FALSE,
@@ -354,9 +515,10 @@ if(FALSE){
   }
   
   
-  ## or
+
+
   
-  distextree_control <- function
+extree_control <- function
   (
     criterion, 
     logmincriterion, 
