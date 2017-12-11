@@ -75,6 +75,8 @@
     sf <- selectfun(thismodel, subset = subset, weights = weights, 
                     whichvar = svars, ctrl = thisctrl)
 
+    ### <FIXME> allow return of a list of partysplit objects; use these for
+    ### splitting; make sure lookahead is implemented </FIXME>
     if (inherits(sf, "partysplit")) {
         thissplit <- sf
         info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))]
@@ -316,8 +318,12 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                               estfun = NULL, object = NULL)
                     if (estfun) m$estfun <- sandwich::estfun(obj)
                     if (object) m$object <- obj
+                    if (!is.null(obj$unweighted)) 
+                        m$unweighted <- obj$unweighted
+                    m$converged <- obj$converged ### may or may not exist
                 }
-                m$converged <- obj$converged ### may or may not exist
+                ### <FIXME> unweight scores in ctree or weight scores in
+                ### mfluc (means: for each variable again) </FIXME>
                 ### ctree expects unweighted scores
                 if (!is.null(m$estfun))  {
                     if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
@@ -352,6 +358,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
         colnames(ret$criteria) <- names(model.frame(data))
         if (length(whichvar) == 0) return(ret)
         ### <FIXME> allow joint MC in the absense of missings; fix seeds
+        ### write ctree_test / ... with whichvar and loop over variables there
         ### </FIXME>
         for (j in whichvar) {
             tst <- switch(ctrl$testflavour,
