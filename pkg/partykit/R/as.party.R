@@ -106,26 +106,6 @@ as.party.rpart <- function(obj, data = TRUE, ...) {
     return(rval)
 }
 
-model.frame.rpart <- function(formula, ...) {
-  ## if model.frame is stored, simply extract
-  if(!is.null(formula$model)) return(formula$model)
-  
-  ## otherwise reevaluate model.frame using original call
-  mf <- formula$call
-  mf <- mf[c(1L, match(c("formula", "data", "subset", "na.action", "weights"), names(mf), 0L))]
-  if (is.null(mf$na.action)) mf$na.action <- rpart::na.rpart
-  # mf$drop.unused.levels <- TRUE
-  mf[[1L]] <- quote(stats::model.frame)
-  
-  ## use terms instead of formula in call
-  mf$formula <- formula$terms
-  
-  ## evaluate in the right environment and return
-  env <- if(!is.null(environment(formula$terms))) environment(formula$terms) else parent.frame()
-  mf <- eval(mf, env)
-  return(mf)
-}
-
 as.party.Weka_tree <- function(obj, data = TRUE, ...) {
 
   ## needs RWeka and rJava

@@ -80,7 +80,7 @@ predict_party(party, id, newdata = NULL, \dots)
   ## fit tree using rpart
   library("rpart")
   rp <- rpart(skips ~ Opening + Solder + Mask + PadType + Panel,
-              data = solder, method = 'anova')
+              data = solder, method = 'anova', model = TRUE)
 
   ## coerce to `constparty'
   pr <- as.party(rp)

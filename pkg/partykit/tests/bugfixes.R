@@ -328,7 +328,7 @@ for(j in 1:length(fac)) datLB[,fac[j]] <- as.factor(datLB[,fac[j]])
 dat <- subset(datLB,Week==16)
 dat <- na.omit(dat)
 fit <- rpart(Total ~ Site + Treat + Age + W0, 
-             method = "anova", data = dat)
+             method = "anova", data = dat, model = TRUE)
 f <- as.party(fit)
 plot(f,tp_args = list(id = FALSE))
 f[10]$node$split

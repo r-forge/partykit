@@ -349,7 +349,7 @@ Loading required package: rpart
 > dat <- subset(datLB,Week==16)
 > dat <- na.omit(dat)
 > fit <- rpart(Total ~ Site + Treat + Age + W0, 
-+              method = "anova", data = dat)
++              method = "anova", data = dat, model = TRUE)
 > f <- as.party(fit)
 > plot(f,tp_args = list(id = FALSE))
 > f[10]$node$split
@@ -1025,4 +1025,4 @@ Number of terminal nodes: 3
 > 
 > proc.time()
    user  system elapsed 
-  3.856   0.044   3.896 
+  5.840   0.084   5.921 

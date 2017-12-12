@@ -162,10 +162,12 @@ The response variable describes whether or not the passenger survived the sinkin
 \subsection{Coercing rpart objects}
 
 We first fit a classification tree by means of the the \fct{rpart} function 
-from package \pkg{rpart} \citep{rpart} to this data set:
+from package \pkg{rpart} \citep{rpart} to this data set (make sure to set
+\code{model = TRUE}; otherwise \code{model.frame.rpart} will return the
+\code{rpart} object and not the data):
 <<rpart>>=
 library("rpart")
-(rp <- rpart(Survived ~ ., data = ttnc))
+(rp <- rpart(Survived ~ ., data = ttnc, model = TRUE))
 @
 The \class{rpart} object \code{rp} can be coerced to
 a \class{constparty} by \fct{as.party}. Internally, this transforms

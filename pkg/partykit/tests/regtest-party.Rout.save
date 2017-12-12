@@ -26,7 +26,7 @@ Loading required package: rpart
 > ## rpart: kyphosis data
 > library("rpart")
 > data("kyphosis", package = "rpart")
-> fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+> fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
 > pfit <- as.party(fit)
 > all(predict(pfit, newdata = kyphosis, type = "node") == fit$where)
 [1] TRUE
@@ -46,7 +46,7 @@ Loading required package: rpart
 +     ## rpart/J48: GlaucomaM data
 +     data("GlaucomaM", package = "TH.data")
 +     w <- runif(nrow(GlaucomaM))
-+     fit <- rpart(Class ~ ., data = GlaucomaM, weights = w)
++     fit <- rpart(Class ~ ., data = GlaucomaM, weights = w, model = TRUE)
 +     pfit <- as.party(fit)
 +     print(all(predict(pfit, type = "node") == fit$where))
 +     tmp <- GlaucomaM[sample(1:nrow(GlaucomaM), 100),]
@@ -68,7 +68,7 @@ Loading required package: RWeka
 > data("airquality")
 > aq <- subset(airquality, !is.na(Ozone))
 > w <- runif(nrow(aq), max = 3)
-> aqr <- rpart(Ozone ~ ., data = aq, weights = w)
+> aqr <- rpart(Ozone ~ ., data = aq, weights = w, model = TRUE)
 > aqp <- as.party(aqr)
 > tmp <- subset(airquality, is.na(Ozone))
 > all.equal(predict(aqr, newdata = tmp), predict(aqp, newdata = tmp))
@@ -77,7 +77,7 @@ Loading required package: RWeka
 > ## rpart: GBSG2 data
 > data("GBSG2", package = "TH.data")
 > library("survival")
-> fit <- rpart(Surv(time, cens) ~ ., data = GBSG2)
+> fit <- rpart(Surv(time, cens) ~ ., data = GBSG2, model = TRUE)
 > pfit <- as.party(fit)
 > pfit$fitted
     (fitted) (response)
@@ -1639,102 +1639,102 @@ Call: ecdf(y)
 $`1`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x71921a8>
+<environment: 0x809e838>
 
 $`2`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x71921a8>
+<environment: 0x809e838>
 
 $`3`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x71921a8>
+<environment: 0x809e838>
 
 $`4`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x71921a8>
+<environment: 0x809e838>
 
 $`5`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x71921a8>
+<environment: 0x809e838>
 
 $`6`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x7191978>
+<environment: 0x809d6c0>
 
 $`7`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x7191978>
+<environment: 0x809d6c0>
 
 $`8`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x7191978>
+<environment: 0x809d6c0>
 
 $`9`
 function (p, ...) 
 quantile(y, probs = p, ...)
-<environment: 0x7190800>
+<environment: 0x809cd08>
 
 > predict(ct, newdata = nd, type = "density")
 $`1`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6fc07d0>
+<bytecode: 0xa6713c0>
+<environment: 0x7f81190>
 
 $`2`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6fc07d0>
+<bytecode: 0xa6713c0>
+<environment: 0x7f81190>
 
 $`3`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6fc07d0>
+<bytecode: 0xa6713c0>
+<environment: 0x7f81190>
 
 $`4`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6fc07d0>
+<bytecode: 0xa6713c0>
+<environment: 0x7f81190>
 
 $`5`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6fc07d0>
+<bytecode: 0xa6713c0>
+<environment: 0x7f81190>
 
 $`6`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6f72038>
+<bytecode: 0xa6713c0>
+<environment: 0x7f33e00>
 
 $`7`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6f72038>
+<bytecode: 0xa6713c0>
+<environment: 0x7f33e00>
 
 $`8`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6f72038>
+<bytecode: 0xa6713c0>
+<environment: 0x7f33e00>
 
 $`9`
 function (v) 
 .approxfun(x, y, v, method, yleft, yright, f)
-<bytecode: 0x7478b30>
-<environment: 0x6f32878>
+<bytecode: 0xa6713c0>
+<environment: 0x7efa168>
 
 > predict(ct, newdata = nd, type = "density", at = (1:9) / 10)
         [,1]       [,2]       [,3]       [,4]       [,5]       [,6]      [,7]
@@ -1760,4 +1760,4 @@ function (v)
 > 
 > proc.time()
    user  system elapsed 
-  4.112   0.168   3.321 
+  5.060   0.168   3.930 

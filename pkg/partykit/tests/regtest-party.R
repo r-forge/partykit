@@ -5,7 +5,7 @@ set.seed(1)
 ## rpart: kyphosis data
 library("rpart")
 data("kyphosis", package = "rpart")
-fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
+fit <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
 pfit <- as.party(fit)
 all(predict(pfit, newdata = kyphosis, type = "node") == fit$where)
 
@@ -24,7 +24,7 @@ if (require("RWeka")) {
     ## rpart/J48: GlaucomaM data
     data("GlaucomaM", package = "TH.data")
     w <- runif(nrow(GlaucomaM))
-    fit <- rpart(Class ~ ., data = GlaucomaM, weights = w)
+    fit <- rpart(Class ~ ., data = GlaucomaM, weights = w, model = TRUE)
     pfit <- as.party(fit)
     print(all(predict(pfit, type = "node") == fit$where))
     tmp <- GlaucomaM[sample(1:nrow(GlaucomaM), 100),]
@@ -39,7 +39,7 @@ if (require("RWeka")) {
 data("airquality")
 aq <- subset(airquality, !is.na(Ozone))
 w <- runif(nrow(aq), max = 3)
-aqr <- rpart(Ozone ~ ., data = aq, weights = w)
+aqr <- rpart(Ozone ~ ., data = aq, weights = w, model = TRUE)
 aqp <- as.party(aqr)
 tmp <- subset(airquality, is.na(Ozone))
 all.equal(predict(aqr, newdata = tmp), predict(aqp, newdata = tmp))
@@ -47,7 +47,7 @@ all.equal(predict(aqr, newdata = tmp), predict(aqp, newdata = tmp))
 ## rpart: GBSG2 data
 data("GBSG2", package = "TH.data")
 library("survival")
-fit <- rpart(Surv(time, cens) ~ ., data = GBSG2)
+fit <- rpart(Surv(time, cens) ~ ., data = GBSG2, model = TRUE)
 pfit <- as.party(fit)
 pfit$fitted
 predict(pfit, newdata = GBSG2[1:100,], type = "prob")

@@ -125,7 +125,6 @@ export(
   "as.simpleparty.XMLNode",
 
   ## misc infrastructure
-  "model.frame.rpart",
   "pmmlTreeModel",
   "get_paths"
 )
@@ -221,4 +220,3 @@ S3method("as.party", "Weka_tree")
 S3method("as.party", "XMLNode")
 S3method("as.simpleparty", "XMLNode")
 S3method("as.party", "rpart")
-S3method("model.frame", "rpart")
