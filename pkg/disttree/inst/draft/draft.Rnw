@@ -649,7 +649,10 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
-In the field of probabilistic forecasting linear models such as ensemble model output statistics (EMOS, \citealt{gneiting2005calibrated}) provide common and widely used tools. This is due to their simplicity and interpretability. However, the restriction to model only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale, and shape (GAMLSS, \citealt{stasinopoulos2005}) can also capture non-linear effects as each distribution parameter can be modeled separately by its own generalized additive model (GAM). A different approach that would make it possible to also model non-additive effects and interactions is to apply tree structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). However, up to now, this class of models has not yet been integrated in probabilistic forecasting as no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches on precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge and experience from meteorology or based on a computationally more demanding boosting approach.
+While many regression models consider only the mean of the response variable recent advances in parametric modeling have made it possible to also model all other distribution parameters. In that way the underlying distribution can be fully specified allowing for a wide range of analysis and prediction methods. For example in the field of probabilistic weather forecasting linear models such as ensemble model output statistics (EMOS, \citealt{gneiting2005calibrated}) provide common and widely used tools allowing for clear interpretations. Usually acting on the assumption of a normally distributed response variable both parameters, the mean and the variance, depend linearly on covariates in this type of model. However, the restriction to model only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale and shape (GAMLSS, \citealt{stasinopoulos2005}) can also capture non-linear effects as each distribution parameter can be modeled separately by its own generalized additive model (GAM). A different approach that would make it possible to also model non-additive effects and interactions is to apply tree-structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). This class of models will now be integrated in probabilistic forecasting providing a novel general distributional framework for these methods. We are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches to precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge and experience from meteorology or based on a computationally more demanding boosting approach.
+
+
+
 
 %In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
 %If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
@@ -685,10 +688,13 @@ In the field of probabilistic forecasting linear models such as ensemble model o
 
 \SweaveOpts{eval = TRUE}
 \section{Introduction}
-A typical application in meteorology is to improve probabilistic precipitation forecasts. The main interest lies in estimating the probability of precipitation as well as predicting the expected amount of precipitation. In this research area various methods have been developed and tested in the last decades. (Multiple) Linear models such as ensemble model output statistics (EMOS) were introduced more than a decade ago (\citealt{gneiting2005calibrated}) and are still common and widely used. Despite their simplicity and interpretability, the limitation to modeling only linear effects has risen the interest in applying more flexible models. This feature is provided by generalized additive models (GAM) which can also model non-linear effects. However, often only the expectation of the underlying distribution is estimated. To obtain probabilistic predictions, generalized additive models for location, scale, and shape (GAMLSS, \citealt{stasinopoulos2005}) offer a framework in which each distribution parameter can be modeled separately by its own GAM. In Figure~\ref{Devel_parmod} the development of parametric models starting from simple linear models (LM) and ranging to GAMLSS is illustrated.\\
-These flexible parametric methods provide well fitting models when applied on precipitation data in a rather smooth and homogeneous setting, e.g. areas where no abrupt changes in meteorological/climatological events appear. However, for example in complex terrain in mountainous regions various factors can change rapidly and their effects are difficult to be represented by a smooth parametric model. In this situation a different approach which can deal with these abrupt changes would be to apply tree structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). Moreover, these models are particularly advantageous in case of many covariates with unknown effects or interactions as the variable selection is done automatically within the model fitting process. Therefore, no additional effort or knowledge for the specification of the model is required in advance. However, even though their main advantage of being able to model non-additive effects and interactions without any necessary prespecification can play to their strength, regression trees are not an adequate choice if (additional) smooth effects appear as well. In this situation a random forest provides a good compromise as it combines a set of trees such that the steps imposed by the trees are smoothed out in case of smooth effects while abrupt changes are still captured by the tree structure of the model.\\
-For these reasons, regression trees and particularly random forests provide valuable features which can contribute to improving models for probabilistic forecasting. But, up to now, no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. The developments in the field of tree-structured models together with the novel approaches of distributional trees and forests are illustrated in Figure~\ref{Devel_treeforest}.\\
+In recent years there has been a paradigm shift from prediction/regression models for the mean to distributional regression approaches for probabilistic forecasting.
 
+A typical application in meteorology is to improve probabilistic precipitation forecasts. The main interest lies in estimating the probability of precipitation as well as predicting the expected amount of precipitation. In this research area various methods have been developed and tested in the last decades. (Multiple) Linear models such as ensemble model output statistics (EMOS) were introduced more than a decade ago (\citealt{gneiting2005calibrated}) and are still common and widely used. Despite their simplicity and interpretability, the limitation to modeling only linear effects has risen the interest in applying more flexible models. This feature is provided by generalized additive models (GAM) which can also model non-linear effects. However, often only the expectation of the underlying distribution is estimated. To obtain probabilistic predictions, generalized additive models for location, scale, and shape (GAMLSS, \citealt{stasinopoulos2005}) offer a framework in which each distribution parameter can be modeled separately by its own GAM. In Figure~\ref{Devel_parmod} the development of parametric models starting from simple linear models (LM) and ranging to GAMLSS is illustrated.
+
+These flexible parametric methods provide well fitting models when applied on precipitation data in a rather smooth and homogeneous setting, e.g. areas where no abrupt changes in meteorological/climatological events appear. However, for example in complex terrain in mountainous regions various factors can change rapidly and their effects are difficult to be represented by a smooth parametric model. In this situation a different approach which can deal with these abrupt changes would be to apply tree-structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). Moreover, these models are particularly advantageous in case of many covariates with unknown effects or interactions as the variable selection is done automatically within the model fitting process. Therefore, no additional effort or knowledge for the specification of the model is required in advance. However, even though their main advantage of being able to model non-additive effects and interactions without any necessary prespecification can play to their strength, regression trees are not an adequate choice if (additional) smooth effects appear as well. In this situation a random forest provides a good compromise as it combines a set of trees such that the steps imposed by the trees are smoothed out in case of smooth effects while abrupt changes are still captured by the tree structure of the model.
+
+For these reasons, regression trees and particularly random forests provide valuable features which can contribute to improving models for probabilistic forecasting. But, up to now, no general distributional framework is available for these methods. Therefore, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. The developments in the field of tree-structured models together with the novel approaches of distributional trees and forests are illustrated in Figure~\ref{Devel_treeforest}.
 
 
 
@@ -798,7 +804,7 @@ GAMLSS
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
 \end{tikzpicture}
-\caption{\label{Devel_parmod}Development in the field of parametric modeling.}
+\caption{\label{Devel_parmod}Development in the field of parametric modeling: (Generalized) linear models (LM, GLM; left), generalized additive models (GAM; middle), generalized additive models for location, scale, and shape (GAMLSS; right).}
 \end{figure}
 
 
@@ -868,7 +874,7 @@ polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
   col = pallight["forest"], border = "transparent")
 lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 points(x, y, col = "slategray", pch = 19)
-box(lwd=5)
+box(lwd=10)
 @
 \end{center}
 \endminipage};
@@ -916,7 +922,7 @@ plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7, main = "")
 polygon(c(x, rev(x)), c(ytree + var, rev(ytree - var)),
   col = pallight["forest"], border = "transparent")
-box(lwd=5)
+box(lwd=10)
 @
 \vspace{-0.2cm}%\\
 Distributional Tree
@@ -1201,13 +1207,15 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \label{Methodology}
 
 \subsection{Motivation}
-As illustrated in Figure~\ref{Devel_parmod} a lot of development has been made in the field of parametric modeling and a wide range of tools can be applied in research areas such as probabilistic forecasting. But as mentioned before, further features such as the ability to capture non-additive effects or interactions are desirable in many applications which demands for more flexible models. Since tree structured models provide these required features a combination of them with parametric models can offer a framework that is able to deal with a wide range of different modeling situations. In this section we are going to introduce the novel methodology which embeds parametric modeling into the idea of tree structured models step by step. We start with a simple distributional fit in Subsection~\ref{distfit}, then build a distributional tree in Subsection~\ref{disttree} and finally a distributional forest in Subsection~\ref{distforest}.
+As illustrated in Figure~\ref{Devel_parmod} a lot of development has been made in the field of parametric modeling and a wide range of tools can be applied in research areas such as probabilistic forecasting. But as mentioned before, further features such as the ability to capture non-additive effects or interactions are desirable in many applications which demands for more flexible models. Since tree-structured models provide these required features a combination of them with parametric models can offer a framework that is able to deal with a wide range of different modeling situations. In this section we are going to introduce the novel methodology which embeds parametric modeling into the idea of tree-structured models step by step. We start with a simple distributional fit in Subsection~\ref{distfit}, then build a distributional tree in Subsection~\ref{disttree} and finally a distributional forest in Subsection~\ref{distforest}.
 
 \newpage
-\subsection{Distributional Fit}
+\subsection{Distributional fit}
 \label{distfit}
-Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section.\\
-The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Using the GAMLSS framework (\citealt{stasinopoulos2005}) a wide range of distributions can be selected where each distribution parameter can be specified separately. This enables the model to deal with various features that can usually be very challenging in model fitting such as censoring, truncation or heavy tails.\\
+Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section.
+
+The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Using the GAMLSS framework (\citealt{stasinopoulos2005}) a wide range of distributions can be selected where each distribution parameter can be specified separately. This enables the model to deal with various features that can usually be very challenging in model fitting such as censoring, truncation or heavy tails.
+
 In our application of precipitation forecasting the response variable, which is the power transformed total precipitation amount within 24 hours, is expected to be normally distributed with mean/location parameter $\mu$ and standard deviation/scale parameter $\sigma$ and left censored with censoring point 0. (The power transformation is used to remove large parts of the skewness of the data as further explained in \ref{data}.) Therefore, the corresponding log-likelihood function with parameter vector $\theta = (\mu, \sigma)$ is
 $$
 \ell(\mu, \sigma; Y) = 
@@ -1217,30 +1225,36 @@ $$
     \log\left(\Phi(\frac{-\mu}{\sigma})\right), & \text{if } Y = 0
 \end{cases}
 $$
-where $\phi$ and $\Phi$ are the probability density function and the distribution function of the standard normal distribution $\mathcal{N}(0,1)$. Next to the censored normal distribution the censored logistic distribution is also often chosen for the modeling of precipitation amounts. In \citealt{Gebetsberger2017} this choice has been made in order to be able to deal with heavy tails which often appear in precipitation data. Another frequent application of probabilistic forecasting in meteorology is the modeling of near surface air temperature. In this case a normal distribution is often selected.\\
+where $\phi$ and $\Phi$ are the probability density function and the distribution function of the standard normal distribution $\mathcal{N}(0,1)$. Next to the censored normal distribution the censored logistic distribution is also often chosen for the modeling of precipitation amounts. In \citealt{Gebetsberger2017} this choice has been made in order to be able to deal with heavy tails which often appear in precipitation data. Another frequent application of probabilistic forecasting in meteorology is the modeling of near surface air temperature. In this case a normal distribution is often selected.
+
 With the specification of the distribution family and the log-likelihood function the task of fitting a distributional model turns into the task of determining the distribution parameter $\theta$. This is done by the following maximization.
 $$
 \hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
-where $\{y_i\}_{i=1,\ldots,n}$ are the observations of the response variable $Y$.\\
-In that way, a whole distribution is specified with all its features, including location, scale and shape. However, fitting one global model to the whole data set might be too much of a generalization and therefore not represent the data and its features in a reasonable way. Moreover, if covariates are available it is desirable to include them into the model as they might provide important additional information. In our application on precipitation data a wide range of covariates are available from a numerical ensemble prediction system considering precipitation, temperature, sea level pressure and other meteorological quantities which might be of interest and have an influence on the predictions. \\
-A common way of including these covariates is to consider them as regressors in a distributional model such that each parameter $\theta$ depends on covariates $\bold{X} = (X_1,\ldots,X_m)$. This could for example be done by a linear function $g$. In that way the fitted model would be specified as $D(Y, \theta = g(\bold{X}))$. In order to avoid the restriction to linear effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ to specify a more flexible model $D(Y, \theta = f_1(\bold{X}) + \ldots + f_p(\bold{X}))$ applying a GAM structure. Another approach to distributional regression is proposed by \citealt{Klein2015} where each parameter of a possibly complex distribution can be modeled by an additive term consisting of a variety of different functional effect types. These include non-linear effects, spatial effects, random coefficients and interaction surfaces which extends the flexibility compared to parametric models such as GAMLSS modeling only smooth effects.\\
-However, the restriction to additive models remains. Therefore, a different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the next subsection of this article. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.\\
+where $\{y_i\}_{i=1,\ldots,n}$ are the observations of the response variable $Y$.
+
+In that way, a whole distribution is specified with all its features, including location, scale and shape. However, fitting one global model to the whole data set might be too much of a generalization and therefore not represent the data and its features in a reasonable way. Moreover, if covariates are available it is desirable to include them into the model as they might provide important additional information. In our application on precipitation data a wide range of covariates are available from a numerical ensemble prediction system considering precipitation, temperature, sea level pressure and other meteorological quantities which might be of interest and have an influence on the predictions.
+
+A common way of including these covariates is to consider them as regressors in a distributional model such that each parameter $\theta$ depends on covariates $\bold{X} = (X_1,\ldots,X_m)$. This could for example be done by a linear function $g$. In that way the fitted model would be specified as $D(Y, \theta = g(\bold{X}))$. In order to avoid the restriction to linear effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ to specify a more flexible model $D(Y, \theta = f_1(\bold{X}) + \ldots + f_p(\bold{X}))$ applying a GAM structure. Another approach to distributional regression is proposed by \citealt{Klein2015} where each parameter of a possibly complex distribution can be modeled by an additive term consisting of a variety of different functional effect types. These include non-linear effects, spatial effects, random coefficients and interaction surfaces which extends the flexibility compared to parametric models such as GAMLSS modeling only smooth effects.
+
+However, the restriction to additive models remains. Therefore, a different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the next subsection of this article. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
 
 
-\subsection{Distributional Tree}
+\subsection{Distributional tree}
 \label{disttree}
 Given the fit of a global distributional model $D(Y, \bold{\hat{\theta}})$ the idea is to use the information provided by this model together with a set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ (from now on denoted by $\bold{Z}$ instead of $\bold{X}$ to indicate that they are considered as split variables only and not as regressors) to decide whether the data set should be split into subgroups or not. In particular, the information provided by the fitted model are the scores 
 $$
 s(\hat{\theta}, y_i) = \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i).
 $$ 
-These values express how well the model fits the data regarding each parameter. Ideally they should fluctuate randomly around zero, similar to residuals in ordinary least squares estimations, but in this case there is a score value for each pair of estimated parameter $\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ and observation $y_j \in \{y_i\}_{i = 1,\ldots, n}$. This enables the model to be sensitive to changes in each of the parameters which is one of the main advantages of distributional trees over other tree models considering only the mean of the distribution.\\
-Statistical tests are applied to check whether there is a significant dependency between the scores and each of the partitioning variables $Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$. If so, the data set is split into subgroups based on the values of the partitioning variable that shows the highest dependency.\\
+These values express how well the model fits the data regarding each parameter. Ideally they should fluctuate randomly around zero, similar to residuals in ordinary least squares estimations, but in this case there is a score value for each pair of estimated parameter $\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ and observation $y_j \in \{y_i\}_{i = 1,\ldots, n}$. This enables the model to be sensitive to changes in each of the parameters which is one of the main advantages of distributional trees over other tree models considering only the mean of the distribution.
+
+Statistical tests are applied to check whether there is a significant dependency between the scores and each of the partitioning variables $Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$. If so, the data set is split into subgroups based on the values of the partitioning variable that shows the highest dependency.
+
 In a next step a local distributional model is fit in each of the subgroups. Repeating this procedure of fitting a model, applying statistical tests to evaluate the goodness of fit and splitting the data set depending on the test results leads to a tree structure. In that way the learning data set is separated into \textit{B} disjoint segments such that
 $$
 \mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b
 $$
-where each segment is represented by a terminal node of the tree.\\
+where each segment is represented by a terminal node of the tree.
 
 The exact way of determining how and where to split varies across different tree algorithms. For distributional trees, one of two algorithms can be chosen as a framework to build the tree: either the MOB algorithm (\citealt{zeileis2008model}) or the ctree algorithm (\citealt{hothorn2006unbiased}). Summed up, the steps of building a distributional tree using one of these algorithms are
 \begin{enumerate}
@@ -1260,9 +1274,10 @@ The exact way of determining how and where to split varies across different tree
 %\item Choose the split point which leads to the highest improvement of the model
 %\item Split and repeat 2-6 in each node until a stopping criterion is met
 \end{enumerate}
-The stopping criterion in step 5 can for example be a minimum number of observations in a node or a p-value for the statistical tests applied in step 3.\\
-Executing these steps results in a stepwise parametric model where a complete distribution is fit in each node of the tree.\\
-\\
+The stopping criterion in step 5 can for example be a minimum number of observations in a node or a p-value for the statistical tests applied in step 3.
+
+Executing these steps results in a stepwise parametric model where a complete distribution is fit in each node of the tree.
+
 For distributional trees the strategy of how to make a prediction for a new set of covariates $\bold{z}^{\ast} = (z_1^{\ast}, \ldots, z_m^{\ast})$ is very simple and straight forward. All observations of the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ which end up in the same terminal node of the tree as the new set of covariates are selected and a distributional model is fit on the subset. To select this subset a weight vector $\bold{\omega}^{tree} = (\omega^{tree}_1, \ldots, \omega^{tree}_n)$ is included in the fitting process.
 $$
 \omega^{tree}_i(\bold{z}^{\ast}) = \sum_{b=1}^B I((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z}^{\ast} \in \mathcal{B}_b))
@@ -1272,17 +1287,20 @@ $$
 \hat{\theta}(\bold{z}^{\ast}) = \max_{\theta \in \Theta} \sum_{i=1}^n \omega^{tree}_i(\bold{z}^{\ast}) \cdot \ell(\theta; y_i).
 $$
 
-While the clear structure of such a tree model is advantageous in interpreting and analyzing it, the abrupt changes are often too rough and impose steps on the model even if the true underlying effect is smooth. In these situations bagging can solve the problem by combining an ensemble of trees such that wrongly detected abrupt changes of the model are turned into almost smooth transitions. In that way, all kinds of effects can be modeled, which is is also one the of the main advantages of forest models (taking bagging one step further as the variance is reduced by sampling the covariates considered for the splitting process in each node). \\
-\\
-Common forest models such as random forests consist of trees only considering the mean of the distribution of the response variable. For that reason, changes in other parameters can only be detected if they are connected to changes in the location parameter, e.g. if they depend on the location parameter. Therefore, building a forest of distributional trees which can also capture separate effects in each of the distribution parameters leads to an improvement of the model. This valuable feature of detecting separate effects is also provided by GAMLSS as each parameter is modeled separately. However, in this case this separation can also be a disadvantage as it hinders the capturing of interactions unless they are specified explicitly by the user. These two cases provide once again a good reason to combine the two frameworks of flexible parametric modeling and tree structured models in order to profit from their advantages and compensate possible disadvantages. This is the pursued goal in introducing distributional forests.
+While the clear structure of such a tree model is advantageous in interpreting and analyzing it, the abrupt changes are often too rough and impose steps on the model even if the true underlying effect is smooth. In these situations bagging can solve the problem by combining an ensemble of trees such that wrongly detected abrupt changes of the model are turned into almost smooth transitions. In that way, all kinds of effects can be modeled, which is is also one the of the main advantages of forest models (taking bagging one step further as the variance is reduced by sampling the covariates considered for the splitting process in each node).
 
-\subsection{Distributional Forest}
+Common forest models such as random forests consist of trees only considering the mean of the distribution of the response variable. For that reason, changes in other parameters can only be detected if they are connected to changes in the location parameter, e.g. if they depend on the location parameter. Therefore, building a forest of distributional trees which can also capture separate effects in each of the distribution parameters leads to an improvement of the model. This valuable feature of detecting separate effects is also provided by GAMLSS as each parameter is modeled separately. However, in this case this separation can also be a disadvantage as it hinders the capturing of interactions unless they are specified explicitly by the user. These two cases provide once again a good reason to combine the two frameworks of flexible parametric modeling and tree-structured models in order to profit from their advantages and compensate possible disadvantages. This is the pursued goal in introducing distributional forests.
+
+\subsection{Distributional forest}
 \label{distforest}
-A distributional forest consists of an ensemble of distributional trees $\{t_s\}_{s=1,\ldots,T}$. Each of these trees is built on a different data set which can either be a bootstrap or a subset of the original data set. Moreover, in each node a subset of the partitioning variables is chosen randomly as candidates for splitting variables. In that way the correlation among the resulting trees is reduced and therefore also the variance of the model (\citealt{breiman2001random}).\\
-\\
-Forest models differ mainly in the way how the trees are combined to make predictions. In this case the forest itself is only used to evaluate neighborhood relationships among the observations which can then be included in the fitting process.\\
-Contrary to distributional trees, in distributional forests the whole learning data set can be used to fit the distributional model and specify the predicted distribution for a new set of covariates. This difference is represented in the weight vector as the tree weights $\bold{\omega}^{tree}$ containing only zeros and ones are now replaced by integer valued forest weights \\
-$\bold{\omega}^{forest} = (\omega^{forest}_1, \ldots, \omega^{forest}_n)$.\\
+A distributional forest consists of an ensemble of distributional trees $\{t_s\}_{s=1,\ldots,T}$. Each of these trees is built on a different data set which can either be a bootstrap or a subset of the original data set. Moreover, in each node a subset of the partitioning variables is chosen randomly as candidates for splitting variables. In that way the correlation among the resulting trees is reduced and therefore also the variance of the model (\citealt{breiman2001random}).
+
+Forest models differ mainly in the way how the trees are combined to make predictions. In this case the forest itself is only used to evaluate neighborhood relationships among the observations which can then be included in the fitting process.
+
+Contrary to distributional trees, in distributional forests the whole learning data set can be used to fit the distributional model and specify the predicted distribution for a new set of covariates. This difference is represented in the weight vector as the tree weights $\bold{\omega}^{tree}$ containing only zeros and ones are now replaced by integer valued forest weights 
+
+$\bold{\omega}^{forest}~=~(\omega^{forest}_1, \ldots, \omega^{forest}_n)$.
+
 For a new set of covariates $\bold{z}^{\ast} = (z^{\ast}_1, \ldots, z^{\ast}_m) $ the set of weights is obtained by the following procedure: For each tuple $(y_j,\bold{z}_j)$ in the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated by counting the number of trees in which $(y_j,\bold{z}_j)$ ends up in the same terminal node as the new set of covariates $\bold{z}^{\ast}$. 
 $$
 \omega^{forest}_i(\bold{z}^{\ast}) = \sum_{s=1}^T \sum_{b=1}^{B^s} I((\bold{z}_i \in \mathcal{B}^s_b) \land (\bold{z}^{\ast} \in \mathcal{B}^s_b))
@@ -1292,9 +1310,10 @@ This individual set of weights $\bold{\omega}^{forest}(\bold{z}^{\ast}) = (\omeg
 $$
 \hat{\theta}(\bold{z}^{\ast}) =  \max_{\theta \in \Theta} \sum_{i=1}^n \omega^{forest}_i(\bold{z}^{\ast}) \cdot \ell(\theta; y_i)
 $$
-While in a distributional tree the same distribution is specified for all sets of covariates being in the same node, a distributional forest predicts and fits a different distribution for each different set of covariates due to the individual weights calculated separately for each set of covariates.\\
-\\
-As this novel methodology combines the advantages of smooth and flexible parametric modeling with those of tree structured modeling it provides a model that can deal with a wide range of situations. Abrupt changes and non-additive effects can be captured by its tree structure while smooth effects can be modeled reasonably well by combining various tree and smoothing the steps imposed by a single tree. As scores are considered for each distribution parameter (separate) effects in different parameters can be captured. At the same time, also interactions are detected automatically by splitting the data in a way that is sensitive to changes in either each of the parameters or combined in various parameters.\\
+While in a distributional tree the same distribution is specified for all sets of covariates being in the same node, a distributional forest predicts and fits a different distribution for each different set of covariates due to the individual weights calculated separately for each set of covariates.
+
+As this novel methodology combines the advantages of smooth and flexible parametric modeling with those of tree-structured modeling it provides a model that can deal with a wide range of situations. Abrupt changes and non-additive effects can be captured by its tree structure while smooth effects can be modeled reasonably well by combining various tree and smoothing the steps imposed by a single tree. As scores are considered for each distribution parameter (separate) effects in different parameters can be captured. At the same time, also interactions are detected automatically by splitting the data in a way that is sensitive to changes in either each of the parameters or combined in various parameters.
+
 Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
 
 
@@ -1477,7 +1496,7 @@ source("oneset.R")
 %\end{figure}
 
 %In the case of smooth effects of the coefficients on the parameter function ($\kappa = 1$, left window in Figure~\ref{plot_sim_oneset_mu}) the fitted parameters of the GAMLSS are closest to the true parameters while the steps of the tree are cleary too rough. By combining various trees the forest can smooth out these steps, however, not as well as the GAMLSS.\\
-%Looking at the other extreme situation in which the parameter functions include abrupt changes ($\kappa = 10$, right window in Figure~\ref{plot_sim_oneset_mu}) the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter functions.\\
+%Looking at the other extreme situation in which the parameter functions include abrupt changes ($\kappa = 10$, right window in Figure~\ref{plot_sim_oneset_mu}) the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree-structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter functions.\\
 
 %To get a more profound impression, the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step 100 data sets are generated.\\
 %%\subsubsection{Means of Comparison}
@@ -1644,28 +1663,28 @@ if(file.exists("simres.rda")){
 
 
 \SweaveOpts{eval = TRUE}
-%\newpage
-%\newpage
-\section{Probabilistic Forecasting of Precipitation in Complex Terrain}
+
+\section{Probabilistic precipitation forecasting in complex terrain}
 \label{ProbabilisticForecasting}
 
 
-As explained in the introduction, distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
+As explained in the introduction, distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree-structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
 
 \subsection{Data}
 \label{data}
 The data set used for training and validation consists of observed daily precipitation sums provided by the National Hydrographical Service (\citealt{ehyd}) and numerical weather forecasts from the {U.S.} National Oceanic and Atmospheric Administration (NOAA).
-Both, observations and weather forecasts are available from 1985 trough the year 2012, focusing on July only in this article.\\ 
+Both, observations and weather forecasts are available from 1985 trough the year 2012, focusing on July only in this article.
+
 Observations are available on a daily basis, each observation representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and its close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized daily at 0~UTC from December 1984 to present providing forecasts on 26 hourly temporal resolution. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertainty of the atmospheric state. 
 
 
 %The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
 %Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
 
-In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std dev, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
-Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std dev of mean/minimal/maximal values respectively.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. dev., ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
+Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. dev. of mean/minimal/maximal values respectively.\\
 Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.\\
-To remove large parts of the skewness of precipitation data, a power transformation has been used frequently (Box and Cox 1964). In literature, cubic (\citealt{stidd1973}) or square root (\citealt{hutchinson1998b}) transformations have often been suggested but may vary for different climatic zones or temporal aggregation periods. In \citealt{stauffer2017a} optimization methods have been applied to find the best transformation factor which resulted in a value of $\frac{1}{1.6}$. Since the observation data set used for this optimization contains the observations considered in this article the same factor is chosen here for the power transformation of the response variable \texttt{tp} (total precipitation). The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. For simplicity the same transformation has been chosen for the variable \texttt{cape} (convective available potential energy).
+To remove large parts of the skewness of precipitation data, a power transformation has been used frequently (Box and Cox 1964). In literature, cubic (\citealt{stidd1973}) or square root (\citealt{hutchinson1998b}) transformations have often been suggested but may vary for different climatic zones or temporal aggregation periods. In \citealt{stauffer2017a} optimization methods have been applied to find the best transformation factor which resulted in a value of $\frac{1}{1.6}$. Since the observation data set used for this optimization contains the observations considered in this article the same factor is chosen here for the power transformation of the response variable \emph{tp} (total precipitation). The resulting transformed variable is expected to be normally distributed and left censored at censoring point 0. For simplicity the same transformation has been chosen for the variable \emph{cape} (convective available potential energy).
 
 %\newpage
 \begin{table}[t!]
@@ -1675,40 +1694,40 @@ To remove large parts of the skewness of precipitation data, a power transformat
 \hline
 Basic covariates & {\#} & Variations\\
 \hline
-\textbf{tp}: total precipitation            & 12  & ensemble mean of sums over 24h, \\
-\hspace*{\fill} power transformed (by $\frac{1}{1.6}$) &    & ensemble std dev of sums over 24h, \\ 
-\textbf{cape}: convective                  &    & ensemble minimum of sums over 24h, \\
-\hspace*{0.4cm} available potential energy &    & ensemble maximum of sums over 24h\\
-\hspace*{\fill}  power transformed (by $\frac{1}{1.6}$)&    & \qquad all for 6--30 UTC\\
+\emph{tp}: total precipitation            & 12  & ensemble mean of sums over 24h, \\
+\hspace*{0.5cm} power transformed (by $\frac{1}{1.6}$) &    & ensemble std. dev. of sums over 24h, \\ 
+\emph{cape}: convective available     &    & ensemble minimum of sums over 24h, \\
+\hspace*{0.9cm} potential energy &    & ensemble maximum of sums over 24h\\
+\hspace*{0.9cm} power transformed (by $\frac{1}{1.6}$)&    & \qquad all for 6--30 UTC\\
 \hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
-\hspace*{\fill}                            &    & ensemble std dev of sums over 6h\\
+\hspace*{\fill}                            &    & ensemble std. dev. of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
-\textbf{dswrf}: downwards short wave      & 6 & ensemble mean of mean values, \\
-\hspace*{\fill} radiation flux (``sunshine'') &   & ensemble mean of minimal values,\\
-\textbf{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
-\textbf{pwat}: preciptable water          &   & ensemble std dev of mean values,\\
-\textbf{tmax}: 2m maximum temperature     &   & ensemble std dev of minimal values,\\
-\hspace*{1.15cm}                          &   & ensemble std dev of maximal values,\\
-\textbf{tcolc}: total column-integrated   &   & \qquad all over 6--30 UTC \\
-\hspace*{1.05cm} condensate               &   & \\
-\textbf{t500}: temperature on 500 hPa     &   & \\
+\emph{dswrf}: downwards short wave      & 6 & ensemble mean of mean values, \\
+\hspace*{1.13cm} radiation flux (``sunshine'') &   & ensemble mean of minimal values,\\
+\emph{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
+\emph{pwat}: preciptable water          &   & ensemble std. dev. of mean values,\\
+\emph{tmax}: 2m maximum temperature     &   & ensemble std. dev. of minimal values,\\
+\hspace*{1.15cm}                          &   & ensemble std. dev. of maximal values,\\
+\emph{tcolc}: total column-integrated   &   & \qquad all over 6--30 UTC \\
+\hspace*{0.95cm} condensate               &   & \\
+\emph{t500}: temperature on 500 hPa     &   & \\
 \hspace*{1cm}                             &   & \\
-\textbf{t700}: temperature on 700 hPa     &   & \\
+\emph{t700}: temperature on 700 hPa     &   & \\
 \hspace*{1cm}                             &   & \\
-\textbf{t850}: temperature on 850 hPa     &   & \\
+\emph{t850}: temperature on 850 hPa     &   & \\
 \hspace{1cm}                              &   & \\
 \hline
-\textbf{tdiff500850}: temperature         & 3 & ensemble mean of difference in mean,\\
+\emph{tdiff500850}: temperature         & 3 & ensemble mean of difference in mean,\\
 \hspace*{\fill} difference 500 to 850 hPa &   & ensemble minimum of difference in mean,\\
-\textbf{tdiff500700}: temperature         &   & ensemble maximum of difference in mean\\
+\emph{tdiff500700}: temperature         &   & ensemble maximum of difference in mean\\
 \hspace*{\fill} difference 500 to 700 hPa &   & \qquad all over 6--30 UTC\\
-\textbf{tdiff700850}: temperature         &   & \\
+\emph{tdiff700850}: temperature         &   & \\
 \hspace*{\fill} difference 700 to 850 hPa &   & \\
 \hline
-\textbf{msl{\_}diff}: mean sea level pressure & 1 & msl{\_}mean{\_}max - msl{\_}mean{\_}min\\
-\hspace{1.45cm} difference            &   & \qquad over 6--30 UTC\\
+\emph{msl{\_}diff}: mean sea level pressure & 1 & msl{\_}mean{\_}max $-$ msl{\_}mean{\_}min\\
+\hspace{1.6cm} difference            &   & \qquad over 6--30 UTC\\
 \hline
 \end{tabular}
 \caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.}
@@ -1719,7 +1738,7 @@ Basic covariates & {\#} & Variations\\
 
 
 
-\subsection{Models and Evaluation}
+\subsection{Models and evaluation}
 Next to distributional forests three other methods are applied to this data set and their results are compared based on the continuous ranked probability score (CRPS). One of the reference models is an EMOS model as this is a common choice in this type of setting and research field. The other two models are both GAMs, once in a prespecified form in terms of variable selection for each distribution parameter and once applying a boosting algorithm. 
 The chosen methods and their specifications are listed in Table~\ref{model_specification}.
 \begin{table}[t!]
@@ -1755,7 +1774,7 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 \end{center}
 \end{table}
 
-For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \texttt{tp{\_}mean1218} and \texttt{cape{\_}mean1218} for the location parameter and once between \texttt{tp{\_}sprd1218} and \texttt{cape{\_}mean1218} for the scale parameter. These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
+For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \emph{tp{\_}mean1218} and \emph{cape{\_}mean1218} for the location parameter and once between \emph{tp{\_}sprd1218} and \emph{cape{\_}mean1218} for the scale parameter. These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.\\
 In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made based on the results of \citealt{Gebetsberger2017} where different link functions (identity, quadratic and logarithmic function) have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function lead to the best performance of the EMOS model in this application.\\
 \\
 In order to compare the performance of the chosen methods, the continuous ranked probability score (CRPS) is calculated for each model. The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
@@ -2081,7 +2100,7 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
 
 
 
-\section*{Computational Details}
+\section*{Computational details}
 The corresponding implementation to the novel methods presented in this article is available on R-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{hothorn2015partykit}).
 
 
