@@ -344,9 +344,9 @@ gensim <- function(parfun,
       x6 <- runif(n,-1,1)
     }
     if(nrunif == 3){
-      x4 <- rbinom(n,1,0.5)
-      x5 <- rbinom(n,1,0.5)
-      x6 <- rbinom(n,1,0.5)
+      x4 <- factor(rbinom(n,1,0.5))
+      x5 <- factor(rbinom(n,1,0.5))
+      x6 <- factor(rbinom(n,1,0.5))
     }
     x <- cbind(x1,x2,x3,x4,x5,x6)
     # reduce nr of possible split points by rounding values of split variables
@@ -1386,13 +1386,13 @@ if(FALSE){
   
   # fix sigma
   fun <- function(x, kappa){
-    mu <- mubase + 
-      8 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3))
+    mu <- 0.5 + 
+      1.5 * plogis((kappa^(1.8)) * 5 * (x[,1] + 0.3))
     #(8 * (exp(-(3*x[,1]-1)^(2*kappa)))) * as.numeric(x[,1]<1/3) + 
     #(8 * (exp(-(3*x[,1]-1)^(2*kappa))) * (1/2) + 8/2) * as.numeric(x[,1]>=1/3) #+
     #4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
     #mu <- mubase + 8 * (exp(-(3*x[,1]-1)^(2*kappa))) + 4 * plogis((kappa^(1.8)) * 5 * (x[,2]))
-    sigma <- sigmabase
+    sigma <- 0.4
     par <- cbind(mu, sigma)
     return(par)
   }
@@ -1545,8 +1545,8 @@ if(FALSE){
   gen.cens("NO", type = "left")
   
   simres <- gensim(parfun = simfun,
-                   seedconst = 7, nrep = 100, ntree = 100,
-                   nsteps = 10, stepsize = 1,
+                   seedconst = 7, nrep = 20, ntree = 100,
+                   nsteps = 4, stepsize = 3,
                    formula = y~x1+x2+x3+x4+x5+x6,
                    nobs = 500, testnobs = 500L,
                    tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95,
