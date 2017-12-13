@@ -8,8 +8,8 @@
   Basic infrastructure for fitting extensible trees.
 }
 \usage{
-extree_fit(data, trafo, converged, selectfun = NULL, splitfun = NULL, 
-           svselectfun = NULL, svsplitfun = NULL, partyvars, subset, weights, 
+extree_fit(data, trafo, converged, selectfun = ctrl$selectfun, splitfun = ctrl$splitfun, 
+           svselectfun = ctrl$svselectfun, svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, 
            ctrl, doFit = TRUE)
 }
 \arguments{

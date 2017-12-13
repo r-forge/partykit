@@ -19,7 +19,7 @@ ctree_control(teststat = c("quadratic", "maximum"),
     mtry = Inf, maxdepth = Inf, 
     multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE, 
     caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE,
-    update = NULL)
+    update = NULL, splitflavour = c("ctree", "exhaustive"))
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic
@@ -96,6 +96,8 @@ ctree_control(teststat = c("quadratic", "maximum"),
   \item{update}{logical. If \code{TRUE}, the data transformation is updated
                 in every node. The default always was and still is not to
                 update unless \code{ytrafo} is a function.}
+  \item{splitflavour}{use exhaustive search over splits instead of maximally
+                      selected statistics (\code{ctree}). This feature may change.}
 
 }
 \details{
