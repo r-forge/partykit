@@ -838,3 +838,11 @@ tree
 
 (ct <- ctree(dist + I(dist^2) ~ speed, data = cars))
 predict(ct)
+
+### nodeapply was not the same for permutations of ids
+### spotted by Heidi Seibold
+airq <- subset(airquality, !is.na(Ozone))
+airct <- ctree(Ozone ~ ., data = airq)
+n1 <- nodeapply(airct, ids = c(3, 5, 6), function(x) x$info$nobs)
+n2 <- nodeapply(airct, ids = c(6, 3, 5), function(x) x$info$nobs)
+stopifnot(all.equal(n1[names(n2)], n2))
