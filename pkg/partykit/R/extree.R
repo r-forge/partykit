@@ -352,6 +352,7 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
         }
     }
 
+    ### <FIXME> make data an argument </FIXME>
     .selectfun <- function(model, subset, weights, whichvar, ctrl) {
         ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
         rownames(ret$criteria) <- c("statistic", "p.value")
@@ -729,6 +730,7 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
     return(formula$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
 }    
 
+### <FIXME> document how to extract slots fast </FIXME>
 "[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
     ### this is way too slow
     ### type <- match.arg(type)

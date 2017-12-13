@@ -367,6 +367,7 @@ ctree_control <- function
                      testflavour = "ctree", 
                      bonferroni = "Bonferroni" %in% testtype, 
                      splitflavour = "ctree", update = update),
+      ### <FIXME> MIA / testflavour are ctree specific </FIXME>
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
            testtype = ttesttype, nresample = nresample, tol = tol,
            intersplit = intersplit))
