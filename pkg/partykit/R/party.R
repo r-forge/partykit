@@ -235,7 +235,7 @@ nodeapply.partynode <- function(obj, ids = 1, FUN = NULL, ...) {
         invisible(TRUE)
     }
     foo <- recFUN(obj)
-    rval <- rval[match(rval_id, ids)]
+    rval <- rval[match(ids, rval_id)]
     return(rval)
 }
 
