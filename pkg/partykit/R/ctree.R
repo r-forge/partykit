@@ -1,4 +1,18 @@
 
+.ctree_select <- function(...)
+    function(model, trafo, data, subset, weights, whichvar, ctrl) {
+        args <- list(...)
+        ctrl[names(args)] <- args
+        .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+    }
+
+.ctree_split <- function(...)
+    function(model, trafo, data, subset, weights, whichvar, ctrl) {
+        args <- list(...)
+        ctrl[names(args)] <- args
+        .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+    }
+
 .ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
 
     ix <- data$zindex[[j]] ### data[[j, type = "index"]]
@@ -25,9 +39,6 @@
     return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm, 
                           weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
 }
-
-.ctree_split <- function(model, trafo, data, subset, weights, j, SPLITONLY = TRUE, ctrl)
-    .ctree_test(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 
 .partysplit <- function(varid, breaks = NULL, index = NULL, right = TRUE, 
                         prob = NULL, info = NULL) {
@@ -337,7 +348,8 @@ ctree_control <- function
     applyfun = NULL, 
     cores = NULL,
     saveinfo = TRUE,
-    update = NULL
+    update = NULL,
+    splitflavour = c("ctree", "exhaustive")
 ) {
 
     testtype <- match.arg(testtype, several.ok = TRUE)
@@ -348,11 +360,19 @@ ctree_control <- function
         ttesttype <- "MonteCarlo"
     }
 
+    if (MIA && maxsurrogate > 0)
+        warning("Mixing MIA splits with surrogate splits does not make sense")
+
+    if (MIA && majority)
+        warning("Mixing MIA splits with majority does not make sense")
+
     splitstat <- match.arg(splitstat)
     teststat <- match.arg(teststat)
 
     if (!caseweights)
         stop("only caseweights currently implemented in ctree")
+
+    splitflavour <- match.arg(splitflavour)
 
     c(extree_control(criterion = ifelse("Teststatistic" %in% testtype, 
                                       "statistic", "p.value"),
@@ -360,19 +380,20 @@ ctree_control <- function
                      minbucket = minbucket, minprob = minprob, 
                      nmax = nmax, stump = stump, lookahead = lookahead,
                      mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-                     splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
+                     splittry = splittry, maxsurrogate = maxsurrogate, 
                      numsurrogate = numsurrogate,
                      majority = majority, caseweights = caseweights, 
                      applyfun = applyfun, saveinfo = saveinfo,  ### always
-                     testflavour = "ctree", 
+                     selectfun = .ctree_select(),
+                     splitfun = if (splitflavour == "ctree") .ctree_split() else .objfun_test(),
+                     svselectfun = .ctree_select(),
+                     svsplitfun =.ctree_split(minbucket = 0),
                      bonferroni = "Bonferroni" %in% testtype, 
-                     splitflavour = "ctree", update = update),
-      ### <FIXME> MIA / testflavour are ctree specific </FIXME>
+                     update = update),
       list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
            testtype = ttesttype, nresample = nresample, tol = tol,
-           intersplit = intersplit))
+           intersplit = intersplit, MIA = MIA))
 }
-
 
 ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, cluster,
                   control = ctree_control(...), ytrafo = NULL, converged = NULL, scores = NULL, 

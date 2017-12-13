@@ -1,4 +1,73 @@
 
+.select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
+    ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+    rownames(ret$criteria) <- c("statistic", "p.value")
+    colnames(ret$criteria) <- names(model.frame(data))
+    if (length(whichvar) == 0) return(ret)
+    ### <FIXME> allow joint MC in the absense of missings; fix seeds
+    ### write ctree_test / ... with whichvar and loop over variables there
+    ### </FIXME>
+    for (j in whichvar) {
+        tst <- FUN(model = model, trafo = trafo, data = data, 
+                   subset = subset, weights = weights, j = j, 
+                   SPLITONLY = FALSE, ctrl = ctrl)
+        ret$criteria["statistic",j] <- tst$statistic
+        ret$criteria["p.value",j] <- tst$p.value
+    }
+    ret
+}
+
+.split <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
+    if (length(whichvar) == 0) return(NULL)
+    for (j in whichvar) {
+        x <- model.frame(data)[[j]]
+        if (ctrl$multiway && is.factor(x) && !is.ordered(x) &&
+            (ctrl$maxsurrogate == 0) && nlevels(x[subset, drop = TRUE]) > 1) 
+        {
+            index <- 1L:nlevels(x)
+            xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
+            index[xt == 0] <- NA
+            ### maybe multiway is not so smart here as
+            ### nodes with nobs < minbucket could result
+            index[xt > 0 & xt < ctrl$minbucket] <- nlevels(x) + 1L
+            if (length(unique(index)) == 1) {
+                ret <- NULL
+            } else {
+                index <- unclass(factor(index))
+                ret <- partysplit(as.integer(j), index = as.integer(index))
+            }
+        } else {
+            ret <- FUN(model = model, trafo = trafo, data = data, 
+                       subset = subset, weights = weights, j = j, 
+                       SPLITONLY = TRUE, ctrl = ctrl)
+        }
+        ### check if trafo can be successfully applied to all daugther nodes 
+        ### (converged = TRUE)
+        if (ctrl$lookahead & !is.null(ret)) {
+            sp <- kidids_split(ret, model.frame(data), obs = subset)
+            conv <- sapply(unique(sp), function(i)
+                    trafo(subset[sp == i], weights = weights)$converged)
+            if (!all(conv)) ret <- NULL
+        }
+        if (!is.null(ret)) break()
+    }
+    return(ret)
+}
+
+.objfun_select <- function(...)
+    function(model, trafo, data, subset, weights, whichvar, ctrl) {
+        args <- list(...)
+        ctrl[names(args)] <- args
+        .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .objfun_test)
+    }
+
+.objfun_split <- function(...)
+    function(model, trafo, data, subset, weights, whichvar, ctrl) {
+        args <- list(...)
+        ctrl[names(args)] <- args
+        .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .objfun_test) 
+    }
+
 ### unbiased recursive partitioning: set up new node
 .extree_node <- function
 (
@@ -72,19 +141,22 @@
 
     ### compute test statistics and p-values
     ### for _unbiased_ variable selection
-    sf <- selectfun(thismodel, subset = subset, weights = weights, 
+    sf <- selectfun(model = thismodel, trafo = trafo, data = data, subset = subset, weights = weights, 
                     whichvar = svars, ctrl = thisctrl)
 
-    ### <FIXME> allow return of a list of partysplit objects; use these for
-    ### splitting; make sure lookahead is implemented </FIXME>
     if (inherits(sf, "partysplit")) {
         thissplit <- sf
         info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))]
         info$nobs <- sw
         if (!ctrl$saveinfo) info <- NULL
     } else {
+        if (ctrl$bonferroni) 
+            ### make sure to correct for _non-constant_ variables only
+            sf$criteria["p.value",] <- sf$criteria["p.value",] * 
+                                       sum(!is.na(sf$criteria["p.value",]))
         ### selectfun might return other things later to be used for info
         p <- sf$criteria
+
         crit <- p[ctrl$criterion,,drop = TRUE]
         if (all(is.na(crit))) 
             return(partynode(as.integer(id)))
@@ -125,9 +197,15 @@
         st <- pmin(sum(is.finite(crit)), ctrl$splittry)
         jsel <- rev(order(crit))[1:st]
         jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
-        ### try to find an admissible split in data[, jsel]
-        thissplit <- splitfun(thismodel, subset = subset, weights = weights, 
-                              whichvar = jsel, ctrl = thisctrl)
+        if (!is.null(sf$splits)) {
+            ### selectfun may return of a list of partysplit objects; use these for
+            ### splitting; selectfun is responsible for making sure lookahead is implemented
+            thissplit <- sf$splits[[jsel[1]]]
+        } else {
+            ### try to find an admissible split in data[, jsel]
+            thissplit <- splitfun(model = thismodel, trafo = trafo, data = data, subset = subset, 
+                                  weights = weights, whichvar = jsel, ctrl = thisctrl)
+        }
     }
 
     ### failed split search:
@@ -208,7 +286,8 @@
     dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = ms)
     dm[cbind(subset, split)] <- 1
     thismodel <- list(estfun = dm)
-    sf <- selectfun(model = thismodel, subset = subset, weights = weights, whichvar = whichvar, ctrl = ctrl)
+    sf <- selectfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
+                    weights = weights, whichvar = whichvar, ctrl = ctrl)
     p <- sf$criteria
     ### partykit always used p-values, so expect some differences
     crit <- p[ctrl$criterion,,drop = TRUE]
@@ -228,8 +307,8 @@
         jsel <- which.max(crit)
         thisctrl <- ctrl
         thisctrl$minbucket <- 0L
-        sp <- splitfun(thismodel, subset = subset, weights = weights, whichvar = jsel,
-        ctrl = ctrl)
+        sp <- splitfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
+                       weights = weights, whichvar = jsel, ctrl = ctrl)
         if (is.null(sp)) next
         ret[[i]] <- sp
         tmp <- kidids_split(ret[[i]], model.frame(data), obs = subset)
@@ -249,18 +328,18 @@
     return(ret)
 }
 
-extree_fit <- function(data, trafo, converged, selectfun = NULL, 
-                       splitfun = NULL, svselectfun = NULL, 
-                       svsplitfun = NULL, partyvars, subset, weights, ctrl, doFit = TRUE) {
+extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun, 
+                       splitfun = ctrl$splitfun, svselectfun = ctrl$svselectfun, 
+                       svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, ctrl, doFit = TRUE) {
     ret <- list()
 
     ### <FIXME> use data$vars$z as default for partyvars </FIXME>
+    ### <FIXME> try to avoid doFit </FIXME>
 
     nf <- names(formals(trafo))
     if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
         mytrafo <- trafo
     } else {
-        ### <FIXME> add cluster </FIXME>
         stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
         stopifnot(!is.null(yx <- data$yx))
         mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
@@ -286,11 +365,13 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
                 }
                 w <- weights[subset]
                 offset <- offset[subset]
+                cluster <- data[["(cluster)"]][subset]
                 if (all(c("estfun", "object") %in% nf)) { 
                     m <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
-                               estfun = estfun, object = object, ...)
+                               cluster = cluster, estfun = estfun, object = object, ...)
                 } else {
-                    obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, ...)
+                    obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
+                                 cluster = cluster, ...)
                     m <- list(coefficients = coef(obj),
                               objfun = -as.numeric(logLik(obj)),
                               estfun = NULL, object = NULL)
@@ -308,11 +389,14 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
             } else {
                 w <- libcoin::ctabs(ix = iy, subset = subset, weights = weights)[-1]
                 offset <- attr(yx$x, "offset")
+                cluster <- model.frame(data, yxonly = TRUE)[["(cluster)"]]
                 if (all(c("estfun", "object") %in% nf)) { 
                     m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
+                               cluster = cluster,
                                estfun = estfun, object = object, ...)
                 } else {
-                    obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, ...)
+                    obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
+                                 cluster = cluster, ...)
                     m <- list(coefficients = coef(obj),
                               objfun = -as.numeric(logLik(obj)),
                               estfun = NULL, object = NULL)
@@ -352,116 +436,11 @@ extree_fit <- function(data, trafo, converged, selectfun = NULL,
         }
     }
 
-    ### <FIXME> make data an argument </FIXME>
-    .selectfun <- function(model, subset, weights, whichvar, ctrl) {
-        ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
-        rownames(ret$criteria) <- c("statistic", "p.value")
-        colnames(ret$criteria) <- names(model.frame(data))
-        if (length(whichvar) == 0) return(ret)
-        ### <FIXME> allow joint MC in the absense of missings; fix seeds
-        ### write ctree_test / ... with whichvar and loop over variables there
-        ### </FIXME>
-        for (j in whichvar) {
-            tst <- switch(ctrl$testflavour,
-                "ctree" = .ctree_test(model = model, trafo = mytrafo, data = data, 
-                                      subset = subset, weights = weights, j = j, 
-                                      SPLITONLY = FALSE, ctrl = ctrl),
-                "exhaustive" = .objfun_test(model = model, trafo = mytrafo, data = data, 
-                                            subset = subset, weights = weights, j = j, 
-                                            SPLITONLY = FALSE, ctrl = ctrl),
-                "mfluc" = .mfluc_test(model = model, trafo = mytrafo, data = data, 
-                                      subset = subset, weights = weights, j = j, 
-                                      SPLITONLY = FALSE, ctrl = ctrl),
-                stop("not implemented")
-            )
-            ret$criteria["statistic",j] <- tst$statistic
-            ret$criteria["p.value",j] <- tst$p.value
-        }
-        if (ctrl$bonferroni) 
-            ### make sure to correct for _non-constant_ variables only
-            ret$criteria["p.value",] <- ret$criteria["p.value",] * 
-                                        sum(!is.na(ret$criteria["p.value",]))
-        ret
-    }
-    
-    .splitfun <- function(model, subset, weights, whichvar, ctrl) {
-        if (length(whichvar) == 0) return(NULL)
-        for (j in whichvar) {
-            x <- model.frame(data)[[j]]
-            if (ctrl$multiway && is.factor(x) && !is.ordered(x) &&
-                (ctrl$maxsurrogate == 0) && nlevels(x[subset, drop = TRUE]) > 1) 
-            {
-                index <- 1L:nlevels(x)
-                xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
-                index[xt == 0] <- NA
-                ### maybe multiway is not so smart here as
-                ### nodes with nobs < minbucket could result
-                index[xt > 0 & xt < ctrl$minbucket] <- nlevels(x) + 1L
-                if (length(unique(index)) == 1) {
-                    ret <- NULL
-                } else {
-                    index <- unclass(factor(index))
-                    ret <- partysplit(as.integer(j), index = as.integer(index))
-                }
-            } else {
-                ret <- switch(ctrl$splitflavour, 
-                "ctree" = .ctree_test(model = model, trafo = mytrafo, data = data, 
-                                      subset = subset, weights = weights, j = j, 
-                                      SPLITONLY = TRUE, ctrl = ctrl),
-                "exhaustive" = .objfun_test(model = model, trafo = mytrafo, data = data, 
-                                            subset = subset, weights = weights, j = j, 
-                                            SPLITONLY = TRUE, ctrl = ctrl),
-                stop("not implemented"))
-            }
-            ### check if trafo can be successfully applied to all daugther nodes 
-            ### (converged = TRUE)
-            if (ctrl$lookahead & !is.null(ret)) {
-                sp <- kidids_split(ret, model.frame(data), obs = subset)
-                conv <- sapply(unique(sp), function(i)
-                        trafo(subset[sp == i], weights = weights)$converged)
-                if (!all(conv)) ret <- NULL
-            }
-            if (!is.null(ret)) break()
-        }
-        return(ret)
-    }
-
-    .svselectfun <- function(..., ctrl) {
-        ctrl$testflavour <- "ctree"
-        ctrl$splitflavour <- "ctree"
-        .selectfun(..., ctrl = ctrl)
-    }
-
-    .svsplitfun <- function(..., ctrl) {
-        ctrl$testflavour <- "ctree"
-        ctrl$splitflavour <- "ctree"
-        ctrl$minbucket <- 0L
-        .splitfun(..., ctrl = ctrl)
-    }
-
-    if (is.null(selectfun)) {
-        selectfun <- .selectfun
-    } else {
-        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(selectfun))))
-    }
-
-    if (is.null(splitfun)) {
-        splitfun <- .splitfun
-    } else {
-        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(splitfun))))
-    }
-
-    if (is.null(svselectfun)) {
-        svselectfun <- .svselectfun
-    } else {
-        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(svselectfun))))
-    }
-
-    if (is.null(svsplitfun)) {
-        svsplitfun <- .svsplitfun
-    } else {
-        stopifnot(all(c("model", "subset", "weights", "whichvar", "ctrl") %in% names(formals(svsplitfun))))
-    }
+    nm <- c("model", "trafo", "data", "subset", "weights", "whichvar", "ctrl")
+    stopifnot(all(nm == names(formals(selectfun))))
+    stopifnot(all(nm == names(formals(splitfun))))
+    stopifnot(all(nm == names(formals(svselectfun))))
+    stopifnot(all(nm == names(formals(svsplitfun))))
 
     if (!doFit) return(mytrafo)
 
@@ -630,8 +609,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
   )
 
   mf <- ret$data
-  ### <FIXME> add cluster? </FIXME>
-  yxvars <- c(vars$y, vars$x, vars$offset)
+  yxvars <- c(vars$y, vars$x, vars$offset, vars$cluster)
   zerozvars <- which(vars$z == 0)
 
   ret$scores <- vector(mode = "list", length = length(ret$variables$z))
@@ -726,16 +704,12 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
     if (!is.null(formula$yxindex))
         return(attr(formula$yxindex, "levels"))
     vars <- formula$variables
-    ### <FIXME> add cluster ? </FIXME>
-    return(formula$data[, c(vars$y, vars$x, vars$offset),drop = FALSE])
+    return(formula$data[, c(vars$y, vars$x, vars$offset, vars$cluster),drop = FALSE])
 }    
 
 ### <FIXME> document how to extract slots fast </FIXME>
 "[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
-    ### this is way too slow
-    ### type <- match.arg(type)
-    ### <FIXME> try match.arg(type, choices = c("original", ...)) </FIXME>
-    type <- type[1]
+    type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
     switch(type, 
         "original" = {
             if (i == "yx") return(model.frame(x, yxonly = TRUE))
@@ -777,7 +751,6 @@ extree_control <- function
     nmax = Inf,
     stump = FALSE,
     lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
-    MIA = FALSE,
     maxsurrogate = 0L, 
     numsurrogate = FALSE,
     mtry = Inf,
@@ -789,10 +762,12 @@ extree_control <- function
     applyfun = NULL, 
     cores = NULL,
     saveinfo = TRUE,
-    testflavour = c("ctree", "exhaustive", "mfluc"),
     bonferroni = FALSE,
-    splitflavour = c("ctree", "exhaustive"),
-    update = NULL
+    update = NULL,
+    selectfun, 
+    splitfun, 
+    svselectfun, 
+    svsplitfun
 ) {
 
     ## apply infrastructure for determining split points
@@ -809,23 +784,17 @@ extree_control <- function
     if (multiway & maxsurrogate > 0L)
         stop("surrogate splits currently not implemented for multiway splits")
 
-    if (MIA && maxsurrogate > 0)
-        warning("Mixing MIA splits with surrogate splits does not make sense")
-
-    if (MIA && majority)
-        warning("Mixing MIA splits with majority does not make sense")
-
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
          minprob = minprob, stump = stump, nmax = nmax,
          lookahead = lookahead, mtry = mtry,
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         MIA = MIA, maxsurrogate = maxsurrogate, 
+         maxsurrogate = maxsurrogate, 
          numsurrogate = numsurrogate, majority = majority,
          caseweights = caseweights, applyfun = applyfun,
-         saveinfo = saveinfo, testflavour = match.arg(testflavour), 
-         bonferroni = bonferroni,
-         splitflavour = match.arg(splitflavour), update = update)
+         saveinfo = saveinfo, bonferroni = bonferroni, update = update,
+         selectfun = selectfun, splitfun = splitfun, svselectfun =
+         svselectfun, svsplitfun = svsplitfun)
 }
 
 

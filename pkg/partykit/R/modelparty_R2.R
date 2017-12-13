@@ -1,4 +1,12 @@
-		## variable selection: given model scores, conduct
+
+.mfluc_select <- function(...)
+    function(model, trafo, data, subset, weights, whichvar, ctrl) {
+        args <- list(...)
+        ctrl[names(args)] <- args
+        .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .mfluc_test)
+    }
+
+## variable selection: given model scores, conduct
 ## all M-fluctuation tests for orderins in z
 .mfluc_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
@@ -250,11 +258,14 @@ mob_control <- function(
                   minbucket = minbucket, minprob = minprob, nmax = nmax, 
                   stump = stump, lookahead = lookahead, mtry = mtry, 
                   maxdepth = maxdepth, multiway = multiway, splittry = splittry, 
-                  MIA = FALSE, maxsurrogate = maxsurrogate, 
+                  maxsurrogate = maxsurrogate, 
                   numsurrogate = numsurrogate, majority = majority, 
                   caseweights = caseweights, applyfun = applyfun, cores = cores, 
                   saveinfo = TRUE, ### always
-                  testflavour = "mfluc", splitflavour = "exhaustive", 
+                  selectfun = .mfluc_select(),
+                  splitfun = .objfun_split(),
+                  svselectfun = .ctree_select(),
+                  svsplitfun = .ctree_split(minbucket = 0),
                   bonferroni = bonferroni),
     list(breakties = breakties, 
          intersplit = intersplit, parm = parm, dfsplit = dfsplit, 
@@ -262,12 +273,6 @@ mob_control <- function(
          ordinal = match.arg(ordinal), ytype = match.arg(ytype),
          nrep = nrep, terminal = terminal, inner = inner, trim = trim))
 }
-
-mob_control <- function(minbucket = NULL, ordinal = "chisq")
-  extree_control(minbucket = minbucket, select = mfluc_select(ordinal = ordinal))
-
-mfluc_select <- function(ordinal = "chisq", ...)
-  function(model, data, subset, ..., ctrl)
 
 mob <- function
 (
@@ -291,7 +296,7 @@ mob <- function
     stop("no suitable fitting function specified")
   }
 
-  ### <FIXME> this is already in extree_fit (except cluster...) </FIXME>
+  ### <FIXME> this is already in extree_fit </FIXME>
   ## augment fitting function (if necessary)
   if(!all(c("estfun", "object") %in% fitargs)) {
     afit <- function(y,
