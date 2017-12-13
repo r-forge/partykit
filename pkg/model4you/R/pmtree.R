@@ -61,7 +61,7 @@ pmtree <- function(model, data = NULL, zformula = ~.,
                       objfun = ifelse(class(umod)[[1]] == "lm", 
                                       sum(objfun(umod)), 
                                       - logLik(umod)), 
-                      model = NULL)
+                      object = umod)
         tree_ret[[idn]]$info <- iinfo
       } 
       tree_ret[[idn]]$info$nobs <- sum(subsi)

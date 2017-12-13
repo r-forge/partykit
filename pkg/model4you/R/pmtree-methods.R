@@ -55,7 +55,7 @@ predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args =
     pred <- pr[order(pr$.id), ]
     pred$.id <- NULL
     return(pred)
-
+    
   }
 }
 
@@ -89,16 +89,16 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = N
     info <- nodeapply(object, ids = ids, function(x) x$info)
     
     ## get objective functions in all terminal nodes
-    # FIXME: this is incorrect for lm since objfun != logLik
-    ll <- lapply(info, function(x) x$objfun)
+    ll <- lapply(info, function(x) tryCatch(logLik(x$object), error = function(err) NA))
     ndf <- sapply(ll, function(x) attr(x, "df"))
     if(!any(sapply(ndf, is.null)))  df <- sum(ndf) + dfs
+    
   } else {
     stop("not yet implemented")
   }
   
   structure(
-    - sum(as.numeric(ll)),
+    sum(as.numeric(ll)),
     df = df,
     nobs = object$nobs,
     class = "logLik"
