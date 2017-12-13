@@ -57,6 +57,10 @@ sctest(tr4)
 logLik(mtr1)
 logLik(tr1)
 
+sum(objfun(tr1, newdata = dat))
+objfun(tr1, newdata = dat, sum = TRUE)
+sum(objfun(tr1))
+objfun(tr1, sum = TRUE)
 
 
 ### linear model and missings

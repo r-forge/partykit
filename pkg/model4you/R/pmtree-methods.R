@@ -59,12 +59,59 @@ predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args =
   }
 }
 
+objfun.pmtree <- function(x, 
+                          newdata = NULL, 
+                          weights = NULL, ## TODO: check if this works
+                          perm = NULL, ## TODO: implement
+                          sum = FALSE, ...) {
+  
+  ## get models from terminal nodes
+  which_node <- predict(x, type = "node", newdata = newdata,
+                        perm = perm)
+  tnodes <- unique(which_node)
+  mods <- nodeapply(x, ids = tnodes, FUN = function(n) n$info$object)
+  
+  ## if the order does not matter, this is faster
+  if(sum) {
+    
+    ## get contributions of objfun in each node
+    get_objfun_node_unordered <- function(nd) {
+      if(is.null(newdata)) {
+        sum(objfun(mods[[as.character(nd)]], weights = weights))
+      } else {
+        sum(objfun(mods[[as.character(nd)]],
+                      newdata = newdata[which_node == nd, ], 
+                   weights = weights))
+      }
+    }
 
-#' Extract sum of objective functions
+    ## return the unordered contributions
+    return(sum(sapply(tnodes, get_objfun_node_unordered)))
+    
+  } else {
+    
+    ## FIXME: is there a better option than to get the data?
+    if(is.null(newdata)) newdata <- x$data
+    
+    w_n_char <- as.character(which_node)
+    
+    ## get objective function for each observation
+    get_objfun_node <- function(i) {
+      objfun(mods[[w_n_char[i]]], newdata[i, ], weights = weights)
+    }
+    return(sapply(seq_len(NROW(newdata)), get_objfun_node))
+  }
+  
+}
+
+
+
+
+#' Extract log-Likelihood
 #'
-#' Extract sum of objective functions of all terminal nodes. By default the degrees
+#' Extract sum of log-Likelihood contributions of all terminal nodes. By default the degrees
 #' of freedom from the models are used but optionally degrees of freedom for splits
-#' can be incorporated.
+#' can be incorporated. 
 #'
 #' @param object pmtree object.
 #' @param dfsplit degrees of freedom per selected split.
@@ -73,6 +120,9 @@ predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args =
 #' @param weights weights.
 #' @param perm the number of permutations performed (see \code{\link[partykit]{varimp}}).
 #' @param ... ignored.
+#' 
+#' @seealso \code{\link{objfun.pmtree}} for the sum of contributions to the
+#' objective function (not the same when partitioning linear models \code{\link[stats]{lm}})
 #'
 #' @return Returns an object of class \code{\link[stats]{logLik}}.
 #' 
@@ -88,7 +138,7 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = N
     ids <- nodeids(object, terminal = TRUE) 
     info <- nodeapply(object, ids = ids, function(x) x$info)
     
-    ## get objective functions in all terminal nodes
+    ## get logLik in all terminal nodes
     ll <- lapply(info, function(x) tryCatch(logLik(x$object), error = function(err) NA))
     ndf <- sapply(ll, function(x) attr(x, "df"))
     if(!any(sapply(ndf, is.null)))  df <- sum(ndf) + dfs
