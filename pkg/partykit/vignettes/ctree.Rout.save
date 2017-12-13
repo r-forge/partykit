@@ -74,9 +74,6 @@ $multiway
 $splittry
 [1] 2
 
-$MIA
-[1] FALSE
-
 $maxsurrogate
 [1] 0
 
@@ -97,23 +94,57 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x24c91b8>
+<bytecode: 0xc601b8>
 <environment: namespace:base>
 
 $saveinfo
 [1] TRUE
 
-$testflavour
-[1] "ctree"
-
 $bonferroni
 [1] TRUE
 
-$splitflavour
-[1] "ctree"
-
 $update
 NULL
+
+$selectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x61f2940>
+
+$splitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x61f00a8>
+
+$svselectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x61f01c0>
+
+$svsplitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x61f0380>
 
 $teststat
 [1] "maximum"
@@ -147,6 +178,9 @@ $tol
 [1] 1.490116e-08
 
 $intersplit
+[1] FALSE
+
+$MIA
 [1] FALSE
 
 
@@ -188,9 +222,6 @@ $multiway
 $splittry
 [1] 2
 
-$MIA
-[1] FALSE
-
 $maxsurrogate
 [1] 0
 
@@ -211,23 +242,57 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x24c91b8>
+<bytecode: 0xc601b8>
 <environment: namespace:base>
 
 $saveinfo
 [1] TRUE
 
-$testflavour
-[1] "ctree"
-
 $bonferroni
 [1] TRUE
 
-$splitflavour
-[1] "ctree"
-
 $update
 NULL
+
+$selectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x554aab0>
+
+$splitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x554ab90>
+
+$svselectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x554ac70>
+
+$svsplitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x554adc0>
 
 $teststat
 [1] "quadratic"
@@ -261,6 +326,9 @@ $tol
 [1] 1.490116e-08
 
 $intersplit
+[1] FALSE
+
+$MIA
 [1] FALSE
 
 
@@ -302,9 +370,6 @@ $multiway
 $splittry
 [1] 2
 
-$MIA
-[1] FALSE
-
 $maxsurrogate
 [1] 0
 
@@ -325,23 +390,57 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x24c91b8>
+<bytecode: 0xc601b8>
 <environment: namespace:base>
 
 $saveinfo
 [1] TRUE
 
-$testflavour
-[1] "ctree"
-
 $bonferroni
 [1] TRUE
 
-$splitflavour
-[1] "ctree"
-
 $update
 NULL
+
+$selectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54cf268>
+
+$splitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54cf348>
+
+$svselectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54cf428>
+
+$svsplitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54cf578>
 
 $teststat
 [1] "quadratic"
@@ -375,6 +474,9 @@ $tol
 [1] 1.490116e-08
 
 $intersplit
+[1] FALSE
+
+$MIA
 [1] FALSE
 
 
@@ -416,9 +518,6 @@ $multiway
 $splittry
 [1] 2
 
-$MIA
-[1] FALSE
-
 $maxsurrogate
 [1] 0
 
@@ -439,23 +538,57 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x24c91b8>
+<bytecode: 0xc601b8>
 <environment: namespace:base>
 
 $saveinfo
 [1] TRUE
 
-$testflavour
-[1] "ctree"
-
 $bonferroni
 [1] TRUE
 
-$splitflavour
-[1] "ctree"
-
 $update
 NULL
+
+$selectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54baa48>
+
+$splitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54bab28>
+
+$svselectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54bac08>
+
+$svsplitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54bad58>
 
 $teststat
 [1] "quadratic"
@@ -489,6 +622,9 @@ $tol
 [1] 1.490116e-08
 
 $intersplit
+[1] FALSE
+
+$MIA
 [1] FALSE
 
 
@@ -530,9 +666,6 @@ $multiway
 $splittry
 [1] 2
 
-$MIA
-[1] FALSE
-
 $maxsurrogate
 [1] 3
 
@@ -553,23 +686,57 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0x24c91b8>
+<bytecode: 0xc601b8>
 <environment: namespace:base>
 
 $saveinfo
 [1] TRUE
 
-$testflavour
-[1] "ctree"
-
 $bonferroni
 [1] TRUE
 
-$splitflavour
-[1] "ctree"
-
 $update
 NULL
+
+$selectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54a5ae8>
+
+$splitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54a5c70>
+
+$svselectfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54a5d50>
+
+$svsplitfun
+function (model, trafo, data, subset, weights, whichvar, ctrl) 
+{
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .split(model, trafo, data, subset, weights, whichvar, ctrl, 
+        FUN = .ctree_test)
+}
+<environment: 0x54a4f38>
 
 $teststat
 [1] "quadratic"
@@ -603,6 +770,9 @@ $tol
 [1] 1.490116e-08
 
 $intersplit
+[1] FALSE
+
+$MIA
 [1] FALSE
 
 
@@ -1149,7 +1319,7 @@ Number of observations:  116
 58272 bytes
 
 > object.size(airct_partykit_1)
-86296 bytes
+101704 bytes
 
 > object.size(node_party(airct_partykit_1))
 12136 bytes
@@ -1175,7 +1345,7 @@ Number of inner nodes:    4
 Number of terminal nodes: 5
 
 > object.size(airct_partykit_2)
-97680 bytes
+113088 bytes
 
 > object.size(node_party(airct_partykit_2))
 23680 bytes
@@ -1294,8 +1464,8 @@ Number of inner nodes:    3
 Number of terminal nodes: 4
 
 > h <- function(y, x, start = NULL, weights = NULL, 
-+     offset = NULL, ...) glm(y ~ 0 + x, family = gaussian(), start = start, 
-+     weights = wei .... [TRUNCATED] 
++     offset = NULL, cluster = NULL, ...) glm(y ~ 0 + x, family = gaussian(), 
++     start = star .... [TRUNCATED] 
 
 > (airct_partykit_4 <- partykit::ctree(Ozone ~ Temp | 
 +     Solar.R + Wind, data = airq, cluster = month, ytrafo = h, 
@@ -1393,4 +1563,4 @@ p.value   0.2771841  0.003498545
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  7.808   0.060   7.865 
+  8.288   0.068   8.355 

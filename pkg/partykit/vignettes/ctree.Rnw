@@ -1243,7 +1243,7 @@ account, can be set-up using
 
 <<nf-ytrafo-2, echo = TRUE>>=
 ### normal varying intercept / varying coefficient model (aka "mob")
-h <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...)
+h <- function(y, x, start = NULL, weights = NULL, offset = NULL, cluster = NULL, ...)
   glm(y ~ 0 + x, family = gaussian(), start = start, weights = weights, ...)
 (airct_partykit_4 <- partykit::ctree(Ozone ~ Temp | Solar.R + Wind, 
     data = airq, cluster = month, ytrafo = h, 
