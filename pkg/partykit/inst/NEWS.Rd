@@ -37,6 +37,8 @@
           without any splits only returned a naked \code{partynode}
 	  rather than a full \code{party}. This has been corrected
 	  now.}
+    \item{\code{nodeapply} did not produce the same results for permutations of \code{ids}.
+          Spotted by Heidi Seibold.}
   }
   }
 }
