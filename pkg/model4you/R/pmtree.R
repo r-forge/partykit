@@ -60,7 +60,7 @@ pmtree <- function(model, data = NULL, zformula = ~.,
         iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
                       objfun = ifelse(class(umod)[[1]] == "lm", 
                                       sum(objfun(umod)), 
-                                      logLik(umod)), 
+                                      - logLik(umod)), 
                       model = NULL)
         tree_ret[[idn]]$info <- iinfo
       } 

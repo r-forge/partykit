@@ -98,7 +98,7 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = N
   }
   
   structure(
-    sum(as.numeric(ll)),
+    - sum(as.numeric(ll)),
     df = df,
     nobs = object$nobs,
     class = "logLik"

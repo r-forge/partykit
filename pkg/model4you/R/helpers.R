@@ -49,7 +49,7 @@
     }
     
     ## prepare return list
-    ret <- list(coefficients = coeffun(mod), objfun = logLik(mod),
+    ret <- list(coefficients = coeffun(mod), objfun = - logLik(mod),
                 object = if(object) mod else NULL,
                 converged = conv)
     
