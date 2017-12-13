@@ -1735,7 +1735,7 @@ Zeileis A, Hothorn T, Hornik K (2008).
 \medskip
 
 Hothorn T, Zeileis A (2015).
- \dquote{partykit: A Modular Toolkit for Recursive Partytioning in R.}
+ \dquote{\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
  \textit{Journal of Machine Learning Research},
  \textbf{16}, 3905--3909.
  \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
@@ -1743,7 +1743,7 @@ Hothorn T, Zeileis A (2015).
 \medskip
 
 Stasinopoulos DM, Rigby RA (2007).
-  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.}
+  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in \textsf{R}.}
   \textit{Journal of Statistical Software}, 
   \textbf{23}(7), 1--46.
   \doi{10.18637/jss.v023.i07}
@@ -1774,7 +1774,7 @@ Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
 \medskip
 
 Hofner B, Mayr A, Schmid M (2016).
-  \dquote{{gamboostLSS}: An R Package for Model Building and Variable Selection in the {GAMLSS} Framework}
+  \dquote{\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and Variable Selection in the {GAMLSS} Framework}
   \textit{Journal of Statistical Software},
   \textbf{74}(1), 1--31.
   \doi{10.18637/jss.v074.i01}
@@ -1791,9 +1791,9 @@ Hofner B, Mayr A, Schmid M (2016).
 
 % Reference for the observation data set
 BMLFUW (2016).
-  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} - {W}asserhaushalt}
+  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
   \text{Available at \url{http://ehyd.gv.at}}, 
-  \text{Accessed: {F}ebruary 29 2016}.
+  \text{Accessed: 2016--02--29}.
 
 \medskip
 
@@ -1813,8 +1813,8 @@ Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Z
 %  \doi{10.1023/A:1010933404324}
 
 Messner J W,  Mayr G J, Zeileis A (2016).
-  \dquote{Heteroscedastic Censored and Truncated Regression with {crch}}
-  \textit{The R Journal}, 
+  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
+  \textit{The \textsf{R} Journal}, 
   \textbf{8}(1), 173--181.\\
   \scriptsize
   \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
@@ -1841,7 +1841,7 @@ Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
 %{CGIAR-CSI} (2016).
 %  \dquote{{SRTM} 90m Digital Elevation Database {v4.1}}
 %  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
-%  \text{Accessed: {J}uly 10 2016}.
+%  \text{Accessed: 2016--07--10}.
 
 \end{frame}
 
