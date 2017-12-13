@@ -1,6 +1,6 @@
 \documentclass[nojss]{jss}
 
-%\VignetteIndexEntry{disttree: Distributional Trees and Forests}
+%\VignetteIndexEntry{disttree: Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
 %\VignetteDepends{partykit, gamlss.dist}
 %\VignetteKeywords{regression trees, random forests, distributional regression, recursive partitioning}
 %\VignettePackage{disttree}
@@ -639,8 +639,7 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 
 
 
-\title{Distributional Trees and Forests}
-\Plaintitle{disttree: Distributional Trees and Forests} 
+\title{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
    \And Torsten Hothorn\\Universit\"at Z\"urich
@@ -866,13 +865,15 @@ x <- c(1:nobs)/nobs
 @
 
 <<plot_motivation_distforest, fig=TRUE, echo=FALSE>>=
-par(mar=c(2,0,2,0))
+par(mar = c(2, 0, 2, 0))
 plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+usr <- par("usr")
+rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
 polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
   col = pallight["forest"], border = "transparent")
 lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 points(x, y, col = "slategray", pch = 19)
-box(lwd=12)
+box(lwd=8)
 @
 \end{center}
 \endminipage};
@@ -915,12 +916,15 @@ y <- ytrue + rnorm(nobs,0,var)
 @
 
 <<plot_motivation_disttree, fig=TRUE, echo=FALSE>>=
-par(mar=c(2,0,2,0))
-plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+par(mar = c(2, 0, 2, 0))
+plot(x, y, xaxt="n", yaxt="n", ann=FALSE, type = "n")
+usr <- par("usr")
+rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
 lines(x = x, y = ytree, col = pal["forest"], lwd=7, main = "")
 polygon(c(x, rev(x)), c(ytree + var, rev(ytree - var)),
   col = pallight["forest"], border = "transparent")
-box(lwd=12)
+points(x, y, col = "slategray", pch = 19)
+box(lwd=8)
 @
 \vspace{-0.2cm}%\\
 Distributional Tree
@@ -928,9 +932,9 @@ Distributional Tree
 \end{center}
 \endminipage};
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
-\draw[-{>[scale=4, length=2, width=3]},line width=1.4pt](7.1,0)--(7.9,0);
-\draw[-{>[scale=4, length=2, width=3]},line width=1.4pt](0,-2.4)--(0,-3.2);
-\draw[-{>[scale=4, length=2, width=3]},line width=1.4pt](2.2,-5.4)--(7.9,-2.5);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](7.1,0)--(7.9,0);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](0,-2.4)--(0,-3.2);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](2.2,-5.4)--(7.9,-2.5);
 \end{tikzpicture}
 \caption{\label{Devel_treeforest}Development in the field of algorithmic trees and forests: regression tree (top left), distributional tree (bottom), random forest (top middle), distributional forest (top right).}
 \end{figure}
