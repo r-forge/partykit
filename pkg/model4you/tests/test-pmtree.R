@@ -53,6 +53,11 @@ library("strucchange")
 sctest(tr3)
 sctest(tr4)
 
+## check logLik
+logLik(mtr1)
+logLik(tr1)
+
+
 
 ### linear model and missings
 data("MathExam14W", package = "psychotools")
@@ -81,3 +86,13 @@ bmod_math_mx <- lm(pcorrect ~ group, data = Math_mx)
 (tr_math_mx1 <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mx))
 (tr_math_mx2 <- pmtree(bmod_math_mx, control = ctree_control(maxdepth = 2)))
 (tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
+
+
+## check logLik
+(tr_math_mob <- lmtree(pcorrect ~  group | ., data = MathExam, maxdepth = 2))
+
+logLik(bmod_math)
+logLik(tr_math)
+logLik(tr_math_mob)
+
+sum(bmod_math$residuals^2)

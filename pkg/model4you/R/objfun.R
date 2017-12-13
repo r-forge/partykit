@@ -1,4 +1,32 @@
 
+#' Residual sum of squares
+#'
+#' Returns the sum of the squared residuals for a given object.
+#'
+#' @param object model object.
+#' @param ... passed on to specific methods.
+#'
+#' @return sum of the squared residuals.
+#' @examples
+#' ## example from ?lm
+#' ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
+#' trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
+#' group <- gl(2, 10, 20, labels = c("Ctl","Trt"))
+#' weight <- c(ctl, trt)
+#' lm.D9 <- lm(weight ~ group)
+#' rss(lm.D9)
+rss <- function (object, ...) 
+{
+  UseMethod("rss")
+}
+
+#' @rdname rss
+rss.default <- function(object, ...) {
+  sum(residuals(object)^2)
+}
+
+
+
 #' Objective function
 #'
 #' Get the contributions of an objective function. For \code{\link[stats]{glm}}
