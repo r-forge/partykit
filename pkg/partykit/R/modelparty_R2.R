@@ -263,6 +263,11 @@ mob_control <- function(
          nrep = nrep, terminal = terminal, inner = inner, trim = trim))
 }
 
+mob_control <- function(minbucket = NULL, ordinal = "chisq")
+  extree_control(minbucket = minbucket, select = mfluc_select(ordinal = ordinal))
+
+mfluc_select <- function(ordinal = "chisq", ...)
+  function(model, data, subset, ..., ctrl)
 
 mob <- function
 (
@@ -274,7 +279,7 @@ mob <- function
   offset,
   cluster, 
   fit,
-  control = mob_control(...), 
+  control = mob_control(...),
   converged = NULL,
   doFit = TRUE,
   ...
@@ -286,6 +291,7 @@ mob <- function
     stop("no suitable fitting function specified")
   }
 
+  ### <FIXME> this is already in extree_fit (except cluster...) </FIXME>
   ## augment fitting function (if necessary)
   if(!all(c("estfun", "object") %in% fitargs)) {
     afit <- function(y,
