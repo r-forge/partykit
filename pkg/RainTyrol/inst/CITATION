@@ -15,21 +15,35 @@ citEntry(entry = "Manual",
 )
 
 citEntry(entry = "Article",
-         title = "The Next Generation of the Penn World Table",
-         author = personList(as.person("Robert C. Feenstra"),
-	                     as.person("Robert Inklaar"), 
-	                     as.person("Marcel P. Timmer")),
-         year         = "2015",
-	 journal      = "American Economic Review",
-	 volume       = "105",
+         title = "{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset",
+         author = personList(as.person("Thomas M. Hamill"),
+                             as.person("Gary T. Bates"),
+                             as.person("Jeffrey S. Whitaker"),
+                             as.person("Donald R. Murray"),
+	                     as.person("Michael Fiorino"), 
+	                     as.person("Thomas J. Galarneau Jr."),
+	                     as.person("Yuejian Zhu"), 
+	                     as.person("William Lapenta")), 
+         year         = "2013",
+	 journal      = "Bulletin of the American Meteorological Society",
+	 volume       = "94",
 	 number       = "10",
-	 pages        = "3150--3182",
-         url          = "http://www.ggdc.net/pwt/",
+	 pages        = "1553--1565",
+         doi          = "10.1175/BAMS-D-12-00014.1",
          
-         textVersion = 
-         paste("Robert C. Feenstra, Robert Inklaar, Marcel P. Timmer (2015).", 
-               "The Next Generation of the Penn World Table.",
-               "American Economic Review, 105(10), 3150-3182.",
-               "URL http://www.ggdc.net/pwt/."),
-	 header = "To cite the Penn World Table (version 8.x), please use:"
+	 header = "To cite the data (covariates), please use:"
 )
+
+
+citEntry(entry = "other",
+         title = "{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt",
+         author = personList("{BMLFUW}"), 
+         year         = "2016",
+         note         = "Available at \url{http://ehyd.gv.at}",
+         note         = "Accessed: 2016--02--29",
+         
+	 header = "To cite the data (observations), please use:"
+)
+
+
+
