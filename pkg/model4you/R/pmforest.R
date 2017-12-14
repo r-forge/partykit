@@ -12,12 +12,15 @@
 #' \code{replace = FALSE} to sample splitting. fraction is the number of observations 
 #' to draw without replacement.
 #' @param mtry number of input variables randomly sampled as candidates at each 
-#' node for random forest like algorithms. Bagging, as special case of a random 
-#' forest without random input variable sampling, can be performed by setting 
-#' mtry either equal to Inf or manually equal to the number of input variables.
+#' node (Default \code{NULL} corresponds to \code{ceiling(sqrt(nvar))}). 
+#' Bagging, as special case of a random forest without random input variable 
+#' sampling, can be performed by setting mtry either equal to Inf or 
+#' equal to the number of input variables.
 #' @param applyfun see \code{\link[partykit]{cforest}}.
 #' @param cores see \code{\link[partykit]{cforest}}.
 #' @param control control parameters, see \code{\link[partykit]{ctree_control}}.
+#' @param trace a logical indicating if a progress bar shall be printed while 
+#' the forest grows.
 #' @param ... additional parameters passed on to model fit such as weights.
 #'
 #' @return cforest object
@@ -26,23 +29,25 @@
 #' @importFrom partykit ctree_control
 pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
                      perturb = list(replace = FALSE, fraction = 0.632),
-                     mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL,
+                     mtry = NULL, applyfun = NULL, cores = NULL,
                      control = ctree_control(teststat = "quad", testtype = "Univ", 
                                              mincriterion = 0, saveinfo = FALSE, 
                                              lookahead = TRUE, ...), 
-                     ...) {
+                     trace = FALSE, ...) {
 
   ### nmax not possible because data come from model
   stopifnot(all(!is.finite(control$nmax)))
 
   cl <- match.call()
   args <- .prepare_args(model = model, data = data, zformula = zformula, 
-                        control = control, ntree = ntree)
+                        control = control, ntree = ntree, perturb = perturb, 
+                        applyfun = applyfun, cores = cores,
+                        trace = trace)
   
   ## call cforest
-  ## <TH> coeffun??? </TH>
   args$ytrafo <- function(data, weights, control, ...) 
       .modelfit(data = data, weights = weights, control = control, model = model, ...)
+  args$mtry <- mtry
   ret <- do.call("cforest", args)
   ret$info$model <- model
   ret$info$zformula <- zformula
