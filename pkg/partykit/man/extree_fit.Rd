@@ -9,8 +9,8 @@
 }
 \usage{
 extree_fit(data, trafo, converged, selectfun = ctrl$selectfun, splitfun = ctrl$splitfun, 
-           svselectfun = ctrl$svselectfun, svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, 
-           ctrl, doFit = TRUE)
+           svselectfun = ctrl$svselectfun, svsplitfun = ctrl$svsplitfun, partyvars, 
+           subset, weights, ctrl, doFit = TRUE)
 }
 \arguments{
   \item{data}{an object of class \code{extree_data}, see
