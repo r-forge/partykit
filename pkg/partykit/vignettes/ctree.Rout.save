@@ -94,7 +94,7 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0xc601b8>
+<bytecode: 0x18b51b8>
 <environment: namespace:base>
 
 $saveinfo
@@ -114,7 +114,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x61f2940>
+<environment: 0x6e85830>
 
 $splitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -124,7 +124,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x61f00a8>
+<environment: 0x6e66490>
 
 $svselectfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -134,7 +134,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x61f01c0>
+<environment: 0x6e665a8>
 
 $svsplitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -144,7 +144,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x61f0380>
+<environment: 0x6e65bb0>
 
 $teststat
 [1] "maximum"
@@ -242,7 +242,7 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0xc601b8>
+<bytecode: 0x18b51b8>
 <environment: namespace:base>
 
 $saveinfo
@@ -262,7 +262,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x554aab0>
+<environment: 0x61a4890>
 
 $splitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -272,7 +272,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x554ab90>
+<environment: 0x61a3a08>
 
 $svselectfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -282,7 +282,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x554ac70>
+<environment: 0x61a3ae8>
 
 $svsplitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -292,7 +292,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x554adc0>
+<environment: 0x61a3c38>
 
 $teststat
 [1] "quadratic"
@@ -390,7 +390,7 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0xc601b8>
+<bytecode: 0x18b51b8>
 <environment: namespace:base>
 
 $saveinfo
@@ -410,7 +410,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54cf268>
+<environment: 0x6134ad0>
 
 $splitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -420,7 +420,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54cf348>
+<environment: 0x6134bb0>
 
 $svselectfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -430,7 +430,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54cf428>
+<environment: 0x6134c90>
 
 $svsplitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -440,7 +440,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54cf578>
+<environment: 0x61328a8>
 
 $teststat
 [1] "quadratic"
@@ -538,7 +538,7 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0xc601b8>
+<bytecode: 0x18b51b8>
 <environment: namespace:base>
 
 $saveinfo
@@ -558,7 +558,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54baa48>
+<environment: 0x6115738>
 
 $splitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -568,7 +568,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54bab28>
+<environment: 0x6114c68>
 
 $svselectfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -578,7 +578,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54bac08>
+<environment: 0x6114d48>
 
 $svsplitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -588,7 +588,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54bad58>
+<environment: 0x6114e98>
 
 $teststat
 [1] "quadratic"
@@ -686,7 +686,7 @@ function (X, FUN, ...)
         X <- as.list(X)
     .Internal(lapply(X, FUN))
 }
-<bytecode: 0xc601b8>
+<bytecode: 0x18b51b8>
 <environment: namespace:base>
 
 $saveinfo
@@ -706,7 +706,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54a5ae8>
+<environment: 0x60ffb48>
 
 $splitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -716,7 +716,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54a5c70>
+<environment: 0x60ffc28>
 
 $svselectfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -726,7 +726,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .select(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54a5d50>
+<environment: 0x60ffd08>
 
 $svsplitfun
 function (model, trafo, data, subset, weights, whichvar, ctrl) 
@@ -736,7 +736,7 @@ function (model, trafo, data, subset, weights, whichvar, ctrl)
     .split(model, trafo, data, subset, weights, whichvar, ctrl, 
         FUN = .ctree_test)
 }
-<environment: 0x54a4f38>
+<environment: 0x60feef0>
 
 $teststat
 [1] "quadratic"
@@ -1289,67 +1289,6 @@ Fitted party:
 Number of inner nodes:    7
 Number of terminal nodes: 8
 
-> (airct_party_1 <- party::ctree(Ozone ~ ., data = airq, 
-+     controls = party::ctree_control(maxsurrogate = 3, savesplitstats = FALSE)))
-
-	 Conditional inference tree with 5 terminal nodes
-
-Response:  Ozone 
-Inputs:  Solar.R, Wind, Temp, Month, Day 
-Number of observations:  116 
-
-1) Temp <= 82; criterion = 1, statistic = 56.086
-  2) Wind <= 6.9; criterion = 0.998, statistic = 12.969
-    3)*  weights = 10 
-  2) Wind > 6.9
-    4) Temp <= 77; criterion = 0.997, statistic = 11.599
-      5)*  weights = 48 
-    4) Temp > 77
-      6)*  weights = 21 
-1) Temp > 82
-  7) Wind <= 10.3; criterion = 0.997, statistic = 11.712
-    8)*  weights = 30 
-  7) Wind > 10.3
-    9)*  weights = 7 
-
-> object.size(airct_party_1)
-411888 bytes
-
-> object.size(airct_party_1@tree)
-58272 bytes
-
-> object.size(airct_partykit_1)
-101704 bytes
-
-> object.size(node_party(airct_partykit_1))
-12136 bytes
-
-> (airct_partykit_2 <- partykit::ctree(Ozone ~ ., data = airq, 
-+     control = partykit::ctree_control(maxsurrogate = 3, saveinfo = FALSE)))
-
-Model formula:
-Ozone ~ Solar.R + Wind + Temp + Month + Day
-
-Fitted party:
-[1] root
-|   [2] Temp <= 82
-|   |   [3] Wind <= 6.9: 55.600 (n = 10, err = 21946.4)
-|   |   [4] Wind > 6.9
-|   |   |   [5] Temp <= 77: 18.479 (n = 48, err = 3956.0)
-|   |   |   [6] Temp > 77: 31.143 (n = 21, err = 4620.6)
-|   [7] Temp > 82
-|   |   [8] Wind <= 10.3: 81.633 (n = 30, err = 15119.0)
-|   |   [9] Wind > 10.3: 48.714 (n = 7, err = 1183.4)
-
-Number of inner nodes:    4
-Number of terminal nodes: 5
-
-> object.size(airct_partykit_2)
-113088 bytes
-
-> object.size(node_party(airct_partykit_2))
-23680 bytes
-
 > (irisct_partykit_1 <- partykit::ctree(Species ~ ., 
 +     data = iris, control = partykit::ctree_control(splitstat = "maximum", 
 +         nmax = 25 .... [TRUNCATED] 
@@ -1563,4 +1502,4 @@ p.value   0.2771841  0.003498545
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  8.288   0.068   8.355 
+  8.180   0.096   8.276 

@@ -1155,19 +1155,7 @@ one has to rely on resampling for $p$-value estimation
 
 \item[\code{saveinfo}]: Reduces the memory footprint by not storing test
 results as part of the tree. The core information about trees is then
-roughly half the size needed by \code{party}:
-<<nf-save, echo = TRUE>>=
-(airct_party_1 <- party::ctree(Ozone ~ ., data = airq, 
-     controls = party::ctree_control(maxsurrogate = 3, savesplitstats = FALSE)))
-object.size(airct_party_1)
-object.size(airct_party_1@tree)
-object.size(airct_partykit_1)
-object.size(node_party(airct_partykit_1))
-(airct_partykit_2 <- partykit::ctree(Ozone ~ ., data = airq, 
-     control = partykit::ctree_control(maxsurrogate = 3, saveinfo = FALSE)))
-object.size(airct_partykit_2)
-object.size(node_party(airct_partykit_2))
-@
+roughly half the size needed by \code{party}.
 
 \item[\code{nmax}]: Restricts the number of possible cutpoints to
 \code{nmax}, basically by treating all explanatory variables as ordered
