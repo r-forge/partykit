@@ -2,9 +2,17 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-0 (2017-mm-dd)}{
+\section{Changes in Version 1.2-0 (2017-12-18)}{
   \subsection{New Features}{
     \itemize{
+      \item{Internal re-organisation for \code{ctree} by means of new extensible
+            tree infrastructure (available in  \code{extree_data} and 
+            \code{extree_fit}). Certain parts of the new infrastructure
+            are still experimental. \code{ctree} is fully backward
+            compatible.}
+      \item{Use \pkg{libcoin} for computing linear test statistics 
+            and p-values for \code{ctree}.}
+      \item{Use \pkg{inum} for binning (the new \code{nmax} argument).}
       \item{Quadratic test statistics for splitpoint selection are now available for \code{ctree} via 
             \code{ctree_control(splitstat = "quadratic")}.}
       \item{Maximally selected test statistics for variable selection are now available for \code{ctree} via 
@@ -12,16 +20,15 @@
       \item{Missing values can be treated as a separate category, also
             for splits in numeric variables in \code{ctree} via
             \code{ctree_control(MIA = TRUE)}.}
-     \item{New \code{offset} argument in \code{ctree}.}
-     \item{New \code{get_paths} for computing paths to nodes.}
-    \item{Use \pkg{libcoin} for computing linear test statistics 
-          and p-values for \code{ctree}.}
-    \item{Use \pkg{inum} for binning (the new \code{nmax} argument).}
-    \item{\code{node_barplot} gained a \code{text} argument
-          that can be used to draw text labels for the
-	  percentages displayed.}
-    \item{The \code{margins} used in \code{plot.party} can now
-          also be set by the user.}
+      \item{Permutation variable importance, including conditional variable
+            importance, was added to \pkg{partykit}.}
+      \item{New \code{offset} argument in \code{ctree}.}
+      \item{New \code{get_paths} for computing paths to nodes.}
+      \item{\code{node_barplot} gained a \code{text} argument
+            that can be used to draw text labels for the
+            percentages displayed.}
+      \item{The \code{margins} used in \code{plot.party} can now
+            also be set by the user.}
     }
   }
   \subsection{Bugfixes}{
@@ -37,8 +44,11 @@
           without any splits only returned a naked \code{partynode}
 	  rather than a full \code{party}. This has been corrected
 	  now.}
+    \item{Overwriting \code{model.frame.rpart} is not allowed anymore, fit
+          \code{rpart} objects with \code{model = TRUE} to make \code{as.party} work.}
     \item{\code{nodeapply} did not produce the same results for permutations of \code{ids}.
           Spotted by Heidi Seibold.}
+    \item{Out-of-bag predictions in \code{predict.cforest} were incorrect.}
   }
   }
 }
