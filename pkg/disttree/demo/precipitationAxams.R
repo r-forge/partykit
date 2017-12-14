@@ -7,10 +7,8 @@ set.seed(7)
 
 
 #####
-# load station list
-data("stations")
-# load observations and covariates (list over 95 stations)
-data("rainlist")
+# load observations and covariates 
+data("rainAxams")
 
 
 ## load prepared distribution list dist_list_cens_normal
@@ -246,18 +244,15 @@ library("gamlss.cens")
 gen.cens(NO, type = "left")
 
 
+# learning data: 24 years (1985 - 2008, both inlcuded)
+# testing data: 4 successive years (2009, 2010, 2011, 2012)
+learndata <- rainAxams[rainAxams$year < 109,]
+testdata <- rainAxams[rainAxams$year %in% c(109, 110, 111, 112),]
 
 
 
-###############################
-## Application for one station
-
-# select data for one station (here: Axams)
-raindata <- rainlist$Axams
-
-# learning the models on 24 years and evaluating predictions on the 25th, 26th, 27th and 28th year
-learndata <- raindata[raindata$year < 109,]
-testdata <- raindata[raindata$year %in% c(109, 110, 111, 112),]
+############
+# fitting the models
 
 # fit distributional tree
 dt <- disttree(dt.formula, 
@@ -378,7 +373,7 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 
 
 
-############################
+############
 # Comparison to other heteroscedastic censored gaussian models
 
 # fit prespecified GAM (covariates selected based on meteorological expert knowledge)
