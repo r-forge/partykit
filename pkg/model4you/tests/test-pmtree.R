@@ -62,6 +62,12 @@ objfun(tr1, newdata = dat, sum = TRUE)
 sum(objfun(tr1))
 objfun(tr1, sum = TRUE)
 
+library("ggplot2")
+ofs <- data.frame(objfun_bmod1 = objfun(bmod1), 
+                  objfun_tr1 = objfun(tr1))
+ggplot(ofs, aes(objfun_bmod1, objfun_tr1)) + geom_jitter(alpha = 0.3)
+
+
 
 ### linear model and missings
 data("MathExam14W", package = "psychotools")

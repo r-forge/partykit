@@ -8,7 +8,7 @@ pmforest(model, data = NULL, zformula = ~., ntree = 500L,
   perturb = list(replace = FALSE, fraction = 0.632),
   mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL,
   control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion =
-  0, saveinfo = FALSE, lookahead = TRUE, ...), ...)
+  0, saveinfo = FALSE, lookahead = TRUE, ...), trace = FALSE, ...)
 }
 \arguments{
 \item{model}{a model object.}
@@ -35,6 +35,9 @@ mtry either equal to Inf or manually equal to the number of input variables.}
 \item{cores}{see \code{\link[partykit]{cforest}}.}
 
 \item{control}{control parameters, see \code{\link[partykit]{ctree_control}}.}
+
+\item{trace}{a logical indicating if a progress bar shall be printed while 
+the forest grows.}
 
 \item{...}{additional parameters passed on to model fit such as weights.}
 }

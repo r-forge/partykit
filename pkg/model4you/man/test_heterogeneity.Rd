@@ -8,7 +8,7 @@ base model.}
 \usage{
 test_heterogeneity(forest, pmodels = NULL, data = NULL, B = 100)
 
-plot.heterogeneity_test(x, ...)
+\method{plot}{heterogeneity_test}(x, ...)
 }
 \arguments{
 \item{forest}{pmforest object.}

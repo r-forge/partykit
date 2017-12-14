@@ -2,7 +2,7 @@
 % Please edit documentation in R/pmtree-methods.R
 \name{logLik.pmtree}
 \alias{logLik.pmtree}
-\title{Extract sum of objective functions}
+\title{Extract log-Likelihood}
 \usage{
 \method{logLik}{pmtree}(object, dfsplit = 0, newdata, weights = NULL,
   perm = NULL, ...)
@@ -25,7 +25,11 @@ objective functions.}
 Returns an object of class \code{\link[stats]{logLik}}.
 }
 \description{
-Extract sum of objective functions of all terminal nodes. By default the degrees
+Extract sum of log-Likelihood contributions of all terminal nodes. By default the degrees
 of freedom from the models are used but optionally degrees of freedom for splits
 can be incorporated.
+}
+\seealso{
+\code{\link{objfun.pmtree}} for the sum of contributions to the
+objective function (not the same when partitioning linear models \code{\link[stats]{lm}})
 }
