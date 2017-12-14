@@ -5,10 +5,10 @@
 \title{Compute model-based forest from model.}
 \usage{
 pmforest(model, data = NULL, zformula = ~., ntree = 500L,
-  perturb = list(replace = FALSE, fraction = 0.632),
-  mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL,
-  control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion =
-  0, saveinfo = FALSE, lookahead = TRUE, ...), trace = FALSE, ...)
+  perturb = list(replace = FALSE, fraction = 0.632), mtry = NULL,
+  applyfun = NULL, cores = NULL, control = ctree_control(teststat =
+  "quad", testtype = "Univ", mincriterion = 0, saveinfo = FALSE, lookahead =
+  TRUE, ...), trace = FALSE, ...)
 }
 \arguments{
 \item{model}{a model object.}
@@ -26,9 +26,10 @@ resampling with \code{replace = TRUE} referring to the n-out-of-n bootstrap and
 to draw without replacement.}
 
 \item{mtry}{number of input variables randomly sampled as candidates at each 
-node for random forest like algorithms. Bagging, as special case of a random 
-forest without random input variable sampling, can be performed by setting 
-mtry either equal to Inf or manually equal to the number of input variables.}
+node (Default \code{NULL} corresponds to \code{ceiling(sqrt(nvar))}). 
+Bagging, as special case of a random forest without random input variable 
+sampling, can be performed by setting mtry either equal to Inf or 
+equal to the number of input variables.}
 
 \item{applyfun}{see \code{\link[partykit]{cforest}}.}
 
