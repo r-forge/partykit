@@ -1,14 +1,14 @@
-\name{rainlist}
+\name{rainAxams}
 \alias{rainlist}
 
-\title{Observations and covariates for all 95 stations}
+\title{Observations and covariates for station Axams}
 
 \description{Observations of precipitation sums and numerical ensemble predictions of meteorological quantities.}
 
-\usage{data("rainlist")}
+\usage{data("rainAxams")}
 
 \format{
-A list of data frames, one data frame for each of the 95 observation stations. Each data frame consists of power transformed observations and numerical ensemble predictions of meteorological quantities. The base variables of the numerical ensemble predictions are listed below. For each of them variations such as ensemble mean/standard deviation/minimum/maximum are provided.
+A data frames consisting of power transformed observations of precipitation sums and numerical ensemble predictions of meteorological quantities for the station Axams. The base variables of the numerical ensemble predictions are listed below. For each of them variations such as ensemble mean/standard deviation/minimum/maximum are provided.
 \describe{
   \item{robs}{numeric. Observed total precipitation (power transformed).}
   \item{year}{integer. Year in which the observation was taken.}
@@ -33,11 +33,19 @@ A list of data frames, one data frame for each of the 95 observation stations. E
    {NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset.
    \emph{Bulletin of the American Meteorological Society}, \bold{94}(10), 1553--1565.
     \doi{10.1175/BAMS-D-12-00014.1}
+      
+
+  
+{BMLFUW} (2016).
+{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt.
+Available at \url{http://ehyd.gv.at}.
+Accessed: 2016--02--29.
 }
 
 \examples{
-data("rainlist")
-head(rainlist$Axams)
+data("rainAxams")
+head(rainAxams)
+colnames(rainAxams)
 }
 
 \keyword{datasets}
