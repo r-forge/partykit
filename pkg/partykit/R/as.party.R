@@ -6,7 +6,10 @@ as.party.rpart <- function(obj, data = TRUE, ...) {
     ff <- obj$frame
     n  <- nrow(ff)
 
-    mf <- model.frame(obj)
+    ### it is no longer allowed to overwrite rpart::model.frame.rpart
+    ### make sure to use our own implementation
+    ### which works without `model = TRUE' in the rpart call
+    mf <- partykit:::model.frame.rpart(obj)
     
     ## check if any of the variables in the model frame is a "character"
     ## and convert to "factor" if necessary
@@ -104,6 +107,26 @@ as.party.rpart <- function(obj, data = TRUE, ...) {
       fitted = fitted, terms = obj$terms, info = list(method = "rpart"))
     class(rval) <- c("constparty", class(rval))
     return(rval)
+}
+
+model.frame.rpart <- function(formula, ...) {
+  ## if model.frame is stored, simply extract
+  if(!is.null(formula$model)) return(formula$model)
+  
+  ## otherwise reevaluate model.frame using original call
+  mf <- formula$call
+  mf <- mf[c(1L, match(c("formula", "data", "subset", "na.action", "weights"), names(mf), 0L))]
+  if (is.null(mf$na.action)) mf$na.action <- rpart::na.rpart
+  # mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  
+  ## use terms instead of formula in call
+  mf$formula <- formula$terms
+  
+  ## evaluate in the right environment and return
+  env <- if(!is.null(environment(formula$terms))) environment(formula$terms) else parent.frame()
+  mf <- eval(mf, env)
+  return(mf)
 }
 
 as.party.Weka_tree <- function(obj, data = TRUE, ...) {
