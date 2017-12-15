@@ -44,8 +44,6 @@
           without any splits only returned a naked \code{partynode}
 	  rather than a full \code{party}. This has been corrected
 	  now.}
-    \item{Overwriting \code{model.frame.rpart} is not allowed anymore, fit
-          \code{rpart} objects with \code{model = TRUE} to make \code{as.party} work.}
     \item{\code{nodeapply} did not produce the same results for permutations of \code{ids}.
           Spotted by Heidi Seibold.}
     \item{Out-of-bag predictions in \code{predict.cforest} were incorrect.}

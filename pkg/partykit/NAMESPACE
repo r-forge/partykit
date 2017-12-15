@@ -126,7 +126,8 @@ export(
 
   ## misc infrastructure
   "pmmlTreeModel",
-  "get_paths"
+  "get_paths",
+  "model_frame_rpart"
 )
 
 ## methods for class party

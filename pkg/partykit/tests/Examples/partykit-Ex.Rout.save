@@ -803,7 +803,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0x85942f0>
+<environment: 0x8d00de0>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -822,7 +822,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0x85942f0>
+<environment: 0x8d00de0>
 > 
 > 
 > 
@@ -1403,7 +1403,7 @@ detaching ‘package:mlbench’
 > 
 >     ## fit tree using rpart
 >     library("rpart")
->     rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
+>     rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 > 
 >     ## coerce to `constparty'
 >     rpk <- as.party(rp)
@@ -1755,7 +1755,7 @@ attr(,"class")
 > 
 > ## fit tree using rpart
 > library("rpart")
-> rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
+> rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 > 
 > ## coerce to `constparty'
 > as.party(rp)
@@ -1871,7 +1871,7 @@ Number of terminal nodes: 5
 >   ## fit tree using rpart
 >   library("rpart")
 >   rp <- rpart(skips ~ Opening + Solder + Mask + PadType + Panel,
-+               data = solder, method = 'anova', model = TRUE)
++               data = solder, method = 'anova')
 > 
 >   ## coerce to `constparty'
 >   pr <- as.party(rp)
@@ -2520,7 +2520,7 @@ nativeSpeaker           age      shoeSize
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  18.092 0.144 18.301 0 0 
+Time elapsed:  18.164 0.092 18.258 0 0 
 > grDevices::dev.off()
 null device 
           1 

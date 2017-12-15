@@ -72,7 +72,7 @@ nodeapply(obj, ids = 1, FUN = NULL, \dots)
 
     ## fit tree using rpart
     library("rpart")
-    rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
+    rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 
     ## coerce to `constparty'
     rpk <- as.party(rp)

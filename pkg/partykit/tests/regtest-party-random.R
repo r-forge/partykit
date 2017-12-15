@@ -8,7 +8,7 @@ dgp <- function(n)
 
 ## rpart check
 learn <- dgp(100)
-fit <- as.party(rpart(y ~ ., data = learn, model = TRUE))
+fit <- as.party(rpart(y ~ ., data = learn))
 test <- dgp(100000)
 system.time(id <- fitted_node(node_party(fit), test))
 system.time(yhat <- predict_party(fit, id = id, newdata = test))

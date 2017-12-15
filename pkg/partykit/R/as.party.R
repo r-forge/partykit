@@ -9,7 +9,7 @@ as.party.rpart <- function(obj, data = TRUE, ...) {
     ### it is no longer allowed to overwrite rpart::model.frame.rpart
     ### make sure to use our own implementation
     ### which works without `model = TRUE' in the rpart call
-    mf <- .model.frame.rpart(obj)
+    mf <- model_frame_rpart(obj)
     
     ## check if any of the variables in the model frame is a "character"
     ## and convert to "factor" if necessary
@@ -109,7 +109,7 @@ as.party.rpart <- function(obj, data = TRUE, ...) {
     return(rval)
 }
 
-.model.frame.rpart <- function(formula, ...) {
+model_frame_rpart <- function(formula, ...) {
   ## if model.frame is stored, simply extract
   if(!is.null(formula$model)) return(formula$model)
   

@@ -62,7 +62,7 @@ class \code{constparty} or \code{simpleparty}
 \examples{
 ## fit tree using rpart
 library("rpart")
-rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis, model = TRUE)
+rp <- rpart(Kyphosis ~ Age + Number + Start, data = kyphosis)
 
 ## coerce to `constparty'
 as.party(rp)
