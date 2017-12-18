@@ -44,7 +44,8 @@ rotate(m, to = "left", ...)
     fm <- V4 ~ V1 + V2 + V3 + V5 + V6 + V7 + V8 + V9 + V10 + V11 + V12 + V13
     mtry <- ceiling(length(all.vars(fm[[3]])) / 3)
     var_m <- numeric_var("V4", support = quantile(Ozone[[response]], prob = c(.1, .9)), 
-                     add = range(Ozone[[response]]) - quantile(Ozone[[response]], prob = c(.1, .9)), 
+                     add = range(Ozone[[response]]) - 
+                                 quantile(Ozone[[response]], prob = c(.1, .9)), 
                      bounds = c(0, Inf))
 
     B_m <- Bernstein_basis(var_m, order = 4, ui = "increasing")
