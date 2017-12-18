@@ -1,5 +1,5 @@
 
-R version 3.4.2 (2017-09-28) -- "Short Summer"
+R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,6 +20,7 @@ Loading required package: partykit
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > library("survival")
 > 
 > ### survreg
@@ -52,7 +53,7 @@ node 2 node 4 node 5
    376    223     87 
 
 Objective function:
-(-1093.18) + (-1037.81) + (-457.96) = -2588.95> summary(tr, node = 1:2)
+(1093.18) + (1037.81) + (457.96) = 2588.95> summary(tr, node = 1:2)
 Stratified model for node(s) 1, 2
 
 Model call:
@@ -68,8 +69,8 @@ node 1 node 2
    686    376 
 
 Objective function:
-   node 1    node 2 
--2632.096 -1093.182 
+  node 1   node 2 
+2632.096 1093.182 
 > 
 > logLik(bmod)
 'log Lik.' -2632.096 (df=3)
@@ -114,7 +115,7 @@ Objective function:
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Log-likelihood: -621.198
+Objective function: 621.198
 > (tr2 <- pmtree(bmod2, data = dat))
 [1] root
 |   [2] age <= 50
@@ -131,7 +132,7 @@ Log-likelihood: -621.198
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Log-likelihood: -621.198
+Objective function: 621.198
 > (tr3 <- pmtree(bmod3))
 No data given. I'm using data set dat from the current environment parent.frame(). 
                    Please check if that is what you want.
@@ -150,7 +151,7 @@ No data given. I'm using data set dat from the current environment parent.frame(
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Log-likelihood: -621.198
+Objective function: 621.198
 > (tr4 <- pmtree(bmod4))
 No data given. I'm using data set dattab from the current environment parent.frame(). 
                    Please check if that is what you want.
@@ -169,7 +170,7 @@ No data given. I'm using data set dattab from the current environment parent.fra
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Log-likelihood: -94.40128
+Objective function: 94.40128
 > 
 > (mtr1 <- glmtree(success ~ trt | age, data = dat, family = binomial))
 Generalized linear model tree (family: binomial)
@@ -193,7 +194,7 @@ Fitted party:
 Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
-Objective function (log-likelihood): -621.198
+Objective function (negative log-likelihood): 621.198
 > # (mtr2 <- glmtree(cbind(nsuccess, nfailure) ~ trt | age, data = dattab, family = binomial))
 > 
 > library("strucchange")
@@ -255,6 +256,27 @@ statistic 1.1198024
 p.value   0.5712655
 
 > 
+> ## check logLik
+> logLik(mtr1)
+'log Lik.' -621.198 (df=8)
+> logLik(tr1)
+'log Lik.' -621.198 (df=6)
+> 
+> sum(objfun(tr1, newdata = dat))
+[1] -621.198
+> objfun(tr1, newdata = dat, sum = TRUE)
+[1] -621.198
+> sum(objfun(tr1))
+[1] -621.198
+> objfun(tr1, sum = TRUE)
+[1] -621.198
+> 
+> library("ggplot2")
+> ofs <- data.frame(objfun_bmod1 = objfun(bmod1), 
++                   objfun_tr1 = objfun(tr1))
+> ggplot(ofs, aes(objfun_bmod1, objfun_tr1)) + geom_jitter(alpha = 0.3)
+> 
+> 
 > 
 > ### linear model and missings
 > data("MathExam14W", package = "psychotools")
@@ -293,7 +315,7 @@ No data given. I'm using data set MathExam from the current environment parent.f
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Log-likelihood: -3195.249
+Objective function: -276167.6
 > 
 > ## create data with NAs
 > Math_mx <- Math_mz <- MathExam
@@ -322,7 +344,7 @@ Log-likelihood: -3195.249
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Log-likelihood: -3185.587
+Objective function: -274637.2
 Warning message:
 In .prepare_args(model = model, data = data, zformula = zformula,  :
   NAs in model variables (pcorrect, group). Omitting rows with NAs.
@@ -348,32 +370,68 @@ No data given. I'm using data set Math_mx from the current environment parent.fr
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Log-likelihood: -3185.587
+Objective function: -274637.2
 Warning message:
 In .prepare_args(model = model, data = data, zformula = zformula,  :
   NAs in model variables (pcorrect, group). Omitting rows with NAs.
 > (tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
 [1] root
 |   [2] tests <= 84.61538
-|   |   [3] tests <= 57.69231: n = 121
+|   |   [3] tests <= 57.69231: n = 124
 |   |       (Intercept)      group2 
-|   |         41.811414   -5.696682 
-|   |   [4] tests > 57.69231: n = 419
+|   |         42.011834   -5.897102 
+|   |   [4] tests > 57.69231: n = 416
 |   |       (Intercept)      group2 
-|   |         54.571083   -1.332217 
+|   |         54.664484   -1.425618 
 |   [5] tests > 84.61538
-|   |   [6] tests <= 92.30769: n = 99
+|   |   [6] tests <= 92.30769: n = 100
 |   |       (Intercept)      group2 
-|   |         67.765568   -4.067862 
-|   |   [7] tests > 92.30769: n = 90
+|   |          66.54741    -2.84970 
+|   |   [7] tests > 92.30769: n = 89
 |   |       (Intercept)      group2 
-|   |         86.587771   -9.513865 
+|   |          88.66397   -11.59006 
 
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Log-likelihood: -3203.227
+Objective function: -278274.8
+> 
+> 
+> ## check logLik
+> (tr_math_mob <- lmtree(pcorrect ~  group | ., data = MathExam, maxdepth = 2))
+Linear model tree
+
+Model formula:
+pcorrect ~ group | .
+
+Fitted party:
+[1] root
+|   [2] tests <= 84.61538
+|   |   [3] tests <= 57.69231(Intercept)      group2 
+|   |         40.694789   -4.580056 
+|   |   [4] tests > 57.69231(Intercept)      group2 
+|   |         55.251855   -2.012988 
+|   [5] tests > 84.61538
+|   |   [6] tests <= 92.30769(Intercept)      group2 
+|   |         66.730769   -3.033063 
+|   |   [7] tests > 92.30769(Intercept)      group2 
+|   |          90.32967   -13.25576 
+
+Number of inner nodes:    3
+Number of terminal nodes: 4
+Number of parameters per node: 2
+Objective function (residual sum of squares): 276167.6
+> 
+> logLik(bmod_math)
+'log Lik.' -3321.166 (df=3)
+> logLik(tr_math)
+'log Lik.' -3195.249 (df=12)
+> logLik(tr_math_mob)
+'log Lik.' -3195.249 (df=15)
+> 
+> sum(bmod_math$residuals^2)
+[1] 386684.1
 > 
 > proc.time()
    user  system elapsed 
-  6.068   0.032   6.098 
+ 12.944   0.052  13.225 

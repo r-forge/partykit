@@ -1,5 +1,5 @@
 
-R version 3.4.2 (2017-09-28) -- "Short Summer"
+R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
 Copyright (C) 2017 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,6 +20,7 @@ Loading required package: partykit
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > library("mvtnorm") 
 > library("survival")
 > 
@@ -73,13 +74,13 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > ## personalised models
 > coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
 > summary(coefs_lm)
-  (Intercept)          aA         
- Min.   :6.371   Min.   :-2.2957  
- 1st Qu.:6.890   1st Qu.:-0.7984  
- Median :7.049   Median : 0.3332  
- Mean   :7.041   Mean   : 0.1246  
- 3rd Qu.:7.214   3rd Qu.: 0.9906  
- Max.   :7.532   Max.   : 2.0727  
+  (Intercept)          aA          
+ Min.   :6.399   Min.   :-2.17929  
+ 1st Qu.:6.874   1st Qu.:-0.87308  
+ Median :7.043   Median : 0.22293  
+ Mean   :7.033   Mean   : 0.09984  
+ 3rd Qu.:7.209   3rd Qu.: 1.01247  
+ Max.   :7.438   Max.   : 2.10290  
 > 
 > 
 > coeffun <- function(model) {
@@ -99,20 +100,20 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > coefs_wb <- pmodel(x = frst_wb, newdata = tsimdata_s,
 +                    fun = coeffun)
 > summary(coefs_wb)
-  (Intercept)          aA              scale          median_s0    
- Min.   :1.888   Min.   :-0.1551   Min.   :0.1233   Min.   :5.865  
- 1st Qu.:1.965   1st Qu.: 0.0535   1st Qu.:0.1717   1st Qu.:6.588  
- Median :1.992   Median : 0.1241   Median :0.2080   Median :6.813  
- Mean   :1.984   Mean   : 0.1167   Mean   :0.2046   Mean   :6.755  
- 3rd Qu.:2.009   3rd Qu.: 0.1931   3rd Qu.:0.2300   3rd Qu.:6.955  
- Max.   :2.040   Max.   : 0.3408   Max.   :0.3416   Max.   :7.214  
+  (Intercept)          aA               scale          median_s0    
+ Min.   :1.845   Min.   :-0.25540   Min.   :0.1278   Min.   :5.667  
+ 1st Qu.:1.968   1st Qu.: 0.03401   1st Qu.:0.1685   1st Qu.:6.626  
+ Median :1.993   Median : 0.13347   Median :0.1997   Median :6.797  
+ Mean   :1.986   Mean   : 0.11016   Mean   :0.2029   Mean   :6.771  
+ 3rd Qu.:2.010   3rd Qu.: 0.20887   3rd Qu.:0.2267   3rd Qu.:6.973  
+ Max.   :2.048   Max.   : 0.38999   Max.   :0.3308   Max.   :7.262  
    median_s1      median_sdiff    
- Min.   :5.826   Min.   :-0.9908  
- 1st Qu.:6.998   1st Qu.: 0.3688  
- Median :7.744   Median : 0.9050  
- Mean   :7.630   Mean   : 0.8755  
- 3rd Qu.:8.264   3rd Qu.: 1.4442  
- Max.   :9.135   Max.   : 2.4450  
+ Min.   :5.443   Min.   :-1.5837  
+ 1st Qu.:6.846   1st Qu.: 0.2277  
+ Median :7.799   Median : 0.9950  
+ Mean   :7.607   Mean   : 0.8362  
+ 3rd Qu.:8.301   3rd Qu.: 1.5367  
+ Max.   :9.364   Max.   : 2.7357  
 > 
 > 
 > ## dependence plot
@@ -128,4 +129,4 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > 
 > proc.time()
    user  system elapsed 
- 12.116   0.080  12.192 
+ 16.716   0.088  16.804 
