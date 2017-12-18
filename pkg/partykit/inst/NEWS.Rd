@@ -5,6 +5,7 @@
 \section{Changes in Version 1.2-0 (2017-12-18)}{
   \subsection{New Features}{
     \itemize{
+      \item{We welcome Heidi Seibold as co-author!}
       \item{Internal re-organisation for \code{ctree} by means of new extensible
             tree infrastructure (available in  \code{extree_data} and 
             \code{extree_fit}). Certain parts of the new infrastructure
