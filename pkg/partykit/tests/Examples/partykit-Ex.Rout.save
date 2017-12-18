@@ -214,139 +214,30 @@ Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
 > lines(lower ~ speed, data = nd, lty = 2)
 > lines(upper ~ speed, data = nd, lty = 2)
 > 
-> ### honest (i.e., out-of-bag) cross-classification of
-> ### true vs. predicted classes
-> data("mammoexp", package = "TH.data")
-> table(mammoexp$ME, predict(cforest(ME ~ ., data = mammoexp, ntree = 50),
-+                            OOB = TRUE, type = "response"))
-               
-                Never Within a Year Over a Year
-  Never           203            31           0
-  Within a Year    58            46           0
-  Over a Year      50            24           0
-> 
-> ### fit forest to censored response
-> if (require("TH.data") && require("survival")) {
-+ 
-+     data("GBSG2", package = "TH.data")
-+     bst <- cforest(Surv(time, cens) ~ ., data = GBSG2, ntree = 50)
-+  
-+     ### estimate conditional Kaplan-Meier curves
-+     print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
-+ 
-+     print(gettree(bst))
-+ }
-Loading required package: TH.data
-Loading required package: survival
-Loading required package: MASS
-
-Attaching package: ‘TH.data’
-
-The following object is masked from ‘package:MASS’:
-
-    geyser
-
-$`1`
-Call: survfit(formula = y ~ 1, weights = w, subset = w > 0)
-
-records       n  events  median 0.95LCL 0.95UCL 
-    205     689     338    1806    1601    1814 
-
-$`2`
-Call: survfit(formula = y ~ 1, weights = w, subset = w > 0)
-
-records       n  events  median 0.95LCL 0.95UCL 
-    184     629     287    2015    1807    2018 
-
-
-Model formula:
-Surv(time, cens) ~ horTh + age + menostat + tsize + tgrade + 
-    pnodes + progrec + estrec
-
-Fitted party:
-[1] root
-|   [2] pnodes <= 3
-|   |   [3] tsize <= 14
-|   |   |   [4] menostat in Pre: Inf (n = 12)
-|   |   |   [5] menostat in Post: Inf (n = 8)
-|   |   [6] tsize > 14
-|   |   |   [7] progrec <= 44
-|   |   |   |   [8] estrec <= 120
-|   |   |   |   |   [9] estrec <= 74
-|   |   |   |   |   |   [10] tsize <= 35
-|   |   |   |   |   |   |   [11] tsize <= 22
-|   |   |   |   |   |   |   |   [12] tsize <= 19: Inf (n = 10)
-|   |   |   |   |   |   |   |   [13] tsize > 19: 1387.000 (n = 15)
-|   |   |   |   |   |   |   [14] tsize > 22
-|   |   |   |   |   |   |   |   [15] progrec <= 0: 1093.000 (n = 10)
-|   |   |   |   |   |   |   |   [16] progrec > 0
-|   |   |   |   |   |   |   |   |   [17] menostat in Pre: Inf (n = 8)
-|   |   |   |   |   |   |   |   |   [18] menostat in Post
-|   |   |   |   |   |   |   |   |   |   [19] tsize <= 30: Inf (n = 17)
-|   |   |   |   |   |   |   |   |   |   [20] tsize > 30: Inf (n = 7)
-|   |   |   |   |   |   [21] tsize > 35: 731.000 (n = 12)
-|   |   |   |   |   [22] estrec > 74: 1157.000 (n = 14)
-|   |   |   |   [23] estrec > 120: 2372.000 (n = 19)
-|   |   |   [24] progrec > 44
-|   |   |   |   [25] estrec <= 26: Inf (n = 18)
-|   |   |   |   [26] estrec > 26
-|   |   |   |   |   [27] tgrade <= I
-|   |   |   |   |   |   [28] progrec <= 140: Inf (n = 12)
-|   |   |   |   |   |   [29] progrec > 140: Inf (n = 11)
-|   |   |   |   |   [30] tgrade > I
-|   |   |   |   |   |   [31] tgrade <= II
-|   |   |   |   |   |   |   [32] tsize <= 22
-|   |   |   |   |   |   |   |   [33] pnodes <= 1: Inf (n = 9)
-|   |   |   |   |   |   |   |   [34] pnodes > 1: Inf (n = 15)
-|   |   |   |   |   |   |   [35] tsize > 22
-|   |   |   |   |   |   |   |   [36] estrec <= 187
-|   |   |   |   |   |   |   |   |   [37] age <= 49: Inf (n = 12)
-|   |   |   |   |   |   |   |   |   [38] age > 49: 1379.000 (n = 8)
-|   |   |   |   |   |   |   |   [39] estrec > 187: 1105.000 (n = 12)
-|   |   |   |   |   |   [40] tgrade > II: Inf (n = 8)
-|   [41] pnodes > 3
-|   |   [42] progrec <= 55
-|   |   |   [43] age <= 66
-|   |   |   |   [44] pnodes <= 10
-|   |   |   |   |   [45] age <= 61
-|   |   |   |   |   |   [46] pnodes <= 5
-|   |   |   |   |   |   |   [47] age <= 44: 491.000 (n = 7)
-|   |   |   |   |   |   |   [48] age > 44: 498.000 (n = 14)
-|   |   |   |   |   |   [49] pnodes > 5
-|   |   |   |   |   |   |   [50] pnodes <= 7
-|   |   |   |   |   |   |   |   [51] estrec <= 3: Inf (n = 9)
-|   |   |   |   |   |   |   |   [52] estrec > 3: 981.000 (n = 11)
-|   |   |   |   |   |   |   [53] pnodes > 7
-|   |   |   |   |   |   |   |   [54] estrec <= 10: 827.000 (n = 13)
-|   |   |   |   |   |   |   |   [55] estrec > 10: 645.500 (n = 8)
-|   |   |   |   |   [56] age > 61: 1225.000 (n = 14)
-|   |   |   |   [57] pnodes > 10
-|   |   |   |   |   [58] tsize <= 38
-|   |   |   |   |   |   [59] horTh in no: 556.000 (n = 16)
-|   |   |   |   |   |   [60] horTh in yes: 794.500 (n = 8)
-|   |   |   |   |   [61] tsize > 38: 945.000 (n = 13)
-|   |   |   [62] age > 66: 573.000 (n = 9)
-|   |   [63] progrec > 55
-|   |   |   [64] estrec <= 191
-|   |   |   |   [65] tgrade <= I: Inf (n = 11)
-|   |   |   |   [66] tgrade > I
-|   |   |   |   |   [67] estrec <= 57: 1807.000 (n = 18)
-|   |   |   |   |   [68] estrec > 57
-|   |   |   |   |   |   [69] horTh in no: 1162.000 (n = 18)
-|   |   |   |   |   |   [70] horTh in yes: 2018.000 (n = 7)
-|   |   |   [71] estrec > 191
-|   |   |   |   [72] pnodes <= 5: 1806.000 (n = 9)
-|   |   |   |   [73] pnodes > 5: Inf (n = 11)
-
-Number of inner nodes:    36
-Number of terminal nodes: 37
+> ## Not run: 
+> ##D 
+> ##D ### honest (i.e., out-of-bag) cross-classification of
+> ##D ### true vs. predicted classes
+> ##D data("mammoexp", package = "TH.data")
+> ##D table(mammoexp$ME, predict(cforest(ME ~ ., data = mammoexp, ntree = 50),
+> ##D                            OOB = TRUE, type = "response"))
+> ##D 
+> ##D ### fit forest to censored response
+> ##D if (require("TH.data") && require("survival")) {
+> ##D 
+> ##D     data("GBSG2", package = "TH.data")
+> ##D     bst <- cforest(Surv(time, cens) ~ ., data = GBSG2, ntree = 50)
+> ##D  
+> ##D     ### estimate conditional Kaplan-Meier curves
+> ##D     print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
+> ##D 
+> ##D     print(gettree(bst))
+> ##D }
+> ## End(Not run)
 > 
 > 
 > 
 > cleanEx()
-
-detaching ‘package:TH.data’, ‘package:MASS’, ‘package:survival’
-
 > nameEx("ctree")
 > ### * ctree
 > 
@@ -803,7 +694,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0x8d00de0>
+<environment: 0x88e04f8>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -822,7 +713,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0x8d00de0>
+<environment: 0x88e04f8>
 > 
 > 
 > 
@@ -2520,7 +2411,7 @@ nativeSpeaker           age      shoeSize
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  18.164 0.092 18.258 0 0 
+Time elapsed:  13.376 0.088 13.506 0 0 
 > grDevices::dev.off()
 null device 
           1 

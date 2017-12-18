@@ -258,6 +258,8 @@ lines(median ~ speed, data = nd, lty = 2, lwd = 1.5)
 lines(lower ~ speed, data = nd, lty = 2)
 lines(upper ~ speed, data = nd, lty = 2)
 
+\dontrun{
+
 ### honest (i.e., out-of-bag) cross-classification of
 ### true vs. predicted classes
 data("mammoexp", package = "TH.data")
@@ -274,6 +276,7 @@ if (require("TH.data") && require("survival")) {
     print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
 
     print(gettree(bst))
+}
 }
 }
 
