@@ -47,6 +47,8 @@
     \item{\code{nodeapply} did not produce the same results for permutations of \code{ids}.
           Spotted by Heidi Seibold.}
     \item{Out-of-bag predictions in \code{predict.cforest} were incorrect.}
+    \item{\code{perm} in \code{predict} was only considered when
+          \code{newdata} was given. Spotted by Heidi Seibold.}
   }
   }
 }

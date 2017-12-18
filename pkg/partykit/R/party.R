@@ -242,9 +242,10 @@ nodeapply.partynode <- function(obj, ids = 1, FUN = NULL, ...) {
 predict.party <- function(object, newdata = NULL, perm = NULL, ...)
 {
     ### compute fitted node ids first
-    fitted <- if(is.null(newdata)) {    
+    fitted <- if(is.null(newdata) && is.null(perm)) {    
         object$fitted[["(fitted)"]]	
     } else {
+      if (is.null(newdata)) newdata <- model.frame(object)
       terminal <- nodeids(object, terminal = TRUE)
 	
       if(max(terminal) == 1L) {
