@@ -12,7 +12,7 @@ Authors@R: c(person("Jon", "Eugster", role = "ctr"),
   person("Sophie", "Schneider", role = "ctr"),
   person("Craig", "Wang", role = "ctr"),
   person("Torsten", "Hothorn", role = c("aut", "cre"),
-         email = "Torsten.Hothorn@R-project.org"))
+         email = "Torsten.Hothorn@R-project.org", comment = c(ORCID = "0000-0001-8301-0471")))
 Description: Plot party trees in left-right orientation instead of the
   classical top-down layout.
 Depends: grid, partykit
