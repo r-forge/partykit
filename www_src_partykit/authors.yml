@@ -7,6 +7,13 @@
   email: Torsten.Hothorn_@_R-project.org
   image: /img/torsten_hothorn.jpg
   comment: ~
+- name: Heidi Seibold
+  given: Heidi
+  family: Seibold
+  role: aut
+  email: heidi.seibold_@_uzh.ch
+  image: /img/seibold_heidi.jpg
+  comment: ~
 - name: Achim Zeileis
   given: Achim
   family: Zeileis
@@ -14,4 +21,3 @@
   email: Achim.Zeileis_@_R-project.org
   image: /img/achim_zeileis.jpg
   comment: ~
-
