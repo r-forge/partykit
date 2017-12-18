@@ -11,7 +11,7 @@
 #' predict method is used and arguments can be passed to it via \code{predict_args}.
 #' @param predict_args If \code{type = "pass"} arguments can be passed on to the
 #' model predict function.
-#' @param ... ignored.
+#' @param ... passed on to predict.party (e.g. \code{perm}).
 #'
 #' @return predictions
 #' 
@@ -19,11 +19,12 @@
 #' 
 #' @importFrom partykit predict.party
 #' @export
-predict.pmtree <- function(object, newdata = NULL, type = "node", predict_args = list(), ...) {
+predict.pmtree <- function(object, newdata = NULL, type = "node", 
+                           predict_args = list(), perm = NULL, ...) {
   
   ## node
-  # terminals <- nodeids(object, terminal = TRUE)
-  node <- predict.party(object, newdata = newdata, type = "node")
+  if(is.numeric(perm)) perm <- names(object$data)[perm]
+  node <- predict.party(object, newdata = newdata, type = "node", perm = perm, ...)
   if(type == "node") return(node)
   
   if(is.null(newdata)) newdata <- object$data
@@ -113,6 +114,7 @@ objfun.pmtree <- function(x,
   ## get models from terminal nodes
   which_node <- predict(x, type = "node", newdata = newdata,
                         perm = perm, ...)
+  if(!is.null(perm)) newdata <- x$data
   tnodes <- unique(which_node)
   mods <- nodeapply(x, ids = tnodes, FUN = function(n) n$info$object)
   
@@ -122,11 +124,11 @@ objfun.pmtree <- function(x,
     ## get contributions of objfun in each node
     get_objfun_node_unordered <- function(nd) {
       if(is.null(newdata)) {
-        sum(objfun(mods[[as.character(nd)]], weights = weights))
+        sum(objfun(mods[[as.character(nd)]], weights = weights[which_node == nd]))
       } else {
         sum(objfun(mods[[as.character(nd)]],
-                      newdata = newdata[which_node == nd, ], 
-                   weights = weights))
+                   newdata = newdata[which_node == nd, ], 
+                   weights = weights[which_node == nd]))
       }
     }
 
@@ -142,7 +144,7 @@ objfun.pmtree <- function(x,
     
     ## get objective function for each observation
     get_objfun_node <- function(i) {
-      objfun(mods[[w_n_char[i]]], newdata[i, ], weights = weights)
+      objfun(mods[[w_n_char[i]]], newdata[i, ], weights = weights[i])
     }
     return(sapply(seq_len(NROW(newdata)), get_objfun_node))
   }
@@ -172,13 +174,13 @@ objfun.pmtree <- function(x,
 #' @return Returns an object of class \code{\link[stats]{logLik}}.
 #' 
 #' @export
-logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = NULL, ...) {
+logLik.pmtree <- function(object, dfsplit = 0, newdata = NULL, weights = NULL, perm = NULL, ...) {
   
   ## compute degrees of freedom
   dfs <- (length(object) - width(object)) * dfsplit
   df <- NULL
   
-  if (missing(newdata) && is.null(perm) && is.null(weights)) {
+  if (is.null(newdata) && is.null(perm) && is.null(weights)) {
     ## get info of all terminal nodes
     ids <- nodeids(object, terminal = TRUE) 
     info <- nodeapply(object, ids = ids, function(x) x$info)
@@ -189,13 +191,24 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata, weights = NULL, perm = N
     if(!any(sapply(ndf, is.null)))  df <- sum(ndf) + dfs
     
   } else {
-    stop("not yet implemented")
+    if(class(object$info$model)[1] == "lm")
+      stop("not yet implemented") 
+    
+    ll <- objfun(x = object, newdata = newdata, weights = weights, perm = perm, 
+                 sum = TRUE, ...)
+    df <- NA
   }
+
+  
+  ## number of observations
+  nobs <- ifelse(!is.null(weights), sum(weights),
+           ifelse(is.null(newdata), object$nobs,
+                  nrow(newdata)))
   
   structure(
     sum(as.numeric(ll)),
     df = df,
-    nobs = object$nobs,
+    nobs = nobs,
     class = "logLik"
   )
 }

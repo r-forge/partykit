@@ -62,6 +62,18 @@ objfun(tr1, newdata = dat, sum = TRUE)
 sum(objfun(tr1))
 objfun(tr1, sum = TRUE)
 
+
+## variable importance
+logLik(tr1)
+logLik(tr1, perm = "age")
+a1 <- predict.party(tr1, perm = "age", type = "node")
+a2 <- predict(tr1, perm = "age", type = "node")
+a3 <- predict(tr1, perm = 3, type = "node")
+b <- predict.party(tr1, type = "node")
+varimp(tr1, nperm = 5)
+varimp(tr1, nperm = 5)
+
+
 library("ggplot2")
 ofs <- data.frame(objfun_bmod1 = objfun(bmod1), 
                   objfun_tr1 = objfun(tr1))

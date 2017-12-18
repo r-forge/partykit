@@ -26,47 +26,24 @@ pmtree <- function(model, data = NULL, zformula = ~.,
   
   ### nmax not possible because data come from model
   stopifnot(all(!is.finite(control$nmax)))
-
+  
   args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control)
   
   ## call ctree
   args$ytrafo <- function(data, weights, control, ...) 
-      .modelfit(data = data, weights = weights, control = control, 
-                model = model, coeffun = coeffun, ...)
+    .modelfit(data = data, weights = weights, control = control, 
+              model = model, coeffun = coeffun, ...)
   ret <- do.call("ctree", args)
   
   ### add modelinfo to teminal nodes if not there yet, but wanted
   which_terminals <- nodeids(ret, terminal = TRUE)
-  # which_all <- nodeids(ret)
-  
-  idx <- get_paths(nodeapply(ret)[[1]], which_terminals)
-  names(idx) <- which_terminals
-  tree_ret <- unclass(ret)
-  subset_term <- predict(ret, type = "node")
-  
   if(control$saveinfo) {
-    for (i in which_terminals) {
-      ichar <- as.character(i)
-      idn <- idx[[ichar]]
-      
-      if(length(idn) > 1) idn <- c(1, idn)
-      iinfo <- tree_ret[[idn]]$info
-      subsi <- subset_term == i
-      
-      if (is.null(iinfo)) {
-        di <- args$data[subsi, ]
-        umod <- update(model, data = di)
-        iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
-                      objfun = ifelse(class(umod)[[1]] == "lm", 
-                                      sum(objfun(umod)), 
-                                      - logLik(umod)), 
-                      object = umod)
-        tree_ret[[idn]]$info <- iinfo
-      } 
-      tree_ret[[idn]]$info$nobs <- sum(subsi)
-      
-    }
+    tree_ret <- .add_modelinfo(ret, nodeids = which_terminals,
+                               data = args$data, model = model,
+                               coeffun = coeffun)
+  } else {
+    tree_ret <- ret
   }
   
   ## prepare return object
@@ -77,6 +54,49 @@ pmtree <- function(model, data = NULL, zformula = ~.,
   # tree_ret$data <- data
   tree_ret$nobs <- sum(unlist(
     nodeapply(tree_ret, ids = which_terminals, function(x) x$info$nobs)
-    ))
+  ))
   return(tree_ret)
+}
+
+
+
+#' Add model information to a personalised-model-ctree 
+#'
+#' For internal use.
+#'
+#' @param x constparty object.
+#' @param nodeids node ids, usually the terminal ids.
+#'
+#' @return tree with added info. Class still to be added.
+.add_modelinfo <- function(x, nodeids, data, model, coeffun) {
+  
+  idx <- get_paths(nodeapply(x)[[1]], nodeids)
+  names(idx) <- nodeids
+  tree_ret <- unclass(x)
+  subset_term <- predict(x, type = "node")
+  
+  # if(saveinfo) {
+  for (i in nodeids) {
+    ichar <- as.character(i)
+    idn <- idx[[ichar]]
+    
+    if(length(idn) > 1) idn <- c(1, idn)
+    iinfo <- tree_ret[[idn]]$info
+    subsi <- subset_term == i
+    
+    if (is.null(iinfo)) {
+      di <- data[subsi, ]
+      umod <- update(model, data = di)
+      iinfo <- list(estfun = estfun(umod), coefficients = coeffun(umod),
+                    objfun = ifelse(class(umod)[[1]] == "lm", 
+                                    sum(objfun(umod)), 
+                                    - logLik(umod)), 
+                    object = umod)
+      tree_ret[[idn]]$info <- iinfo
+    } 
+    tree_ret[[idn]]$info$nobs <- sum(subsi)
+    
+  }
+  # }
+  tree_ret
 }

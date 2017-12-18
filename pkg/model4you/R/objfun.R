@@ -91,12 +91,16 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
     w <- rep.int(1, N)
     if(is.null(newdata) & !is.null(x$weights)) w <- x$weights 
   } else {
+    ## FIXME: should length(objfun) be equal to nrow(data) or sum(w) ?
     excl <- w == 0
+    if( !(length(w) %in% c(1, length(res))) ) 
+      stop("weights must be of length 1 or length n")
     if (any(excl)) {
       res <- res[!excl]
       N <- length(res)
       w <- w[!excl]
     }
+    if (sum(!excl) == 0) res <- NA
   }
   
   val <- - (w * res^2)

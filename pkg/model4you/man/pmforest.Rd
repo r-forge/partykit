@@ -2,6 +2,7 @@
 % Please edit documentation in R/pmforest.R
 \name{pmforest}
 \alias{pmforest}
+\alias{gettree.pmforest}
 \title{Compute model-based forest from model.}
 \usage{
 pmforest(model, data = NULL, zformula = ~., ntree = 500L,
@@ -9,6 +10,8 @@ pmforest(model, data = NULL, zformula = ~., ntree = 500L,
   applyfun = NULL, cores = NULL, control = ctree_control(teststat =
   "quad", testtype = "Univ", mincriterion = 0, saveinfo = FALSE, lookahead =
   TRUE, ...), trace = FALSE, ...)
+
+\method{gettree}{pmforest}(object, tree = 1L, saveinfo = TRUE, ...)
 }
 \arguments{
 \item{model}{a model object.}
@@ -41,6 +44,12 @@ equal to the number of input variables.}
 the forest grows.}
 
 \item{...}{additional parameters passed on to model fit such as weights.}
+
+\item{object}{an object returned by pmforest.}
+
+\item{tree}{an integer, the number of the tree to extract from the forest.}
+
+\item{saveinfo}{logical. Should the model info be stored in terminal nodes?}
 }
 \value{
 cforest object

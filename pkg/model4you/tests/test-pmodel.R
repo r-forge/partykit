@@ -79,3 +79,9 @@ summary(coefs_wb)
 #   geom_point(data = dp_wb, aes(y = median_sdiff, x = z1, color = "estimates wb"), alpha = 0.5)
 
 
+## Variable importance
+of <- function(x, newdata = NULL, weights = NULL, 
+               perm = NULL, ...) {
+  objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
+}
+vi_lm <- varimp(frst_lm, risk = of)

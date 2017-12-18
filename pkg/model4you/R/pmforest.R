@@ -34,10 +34,10 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
                                              mincriterion = 0, saveinfo = FALSE, 
                                              lookahead = TRUE, ...), 
                      trace = FALSE, ...) {
-
+  
   ### nmax not possible because data come from model
   stopifnot(all(!is.finite(control$nmax)))
-
+  
   cl <- match.call()
   args <- .prepare_args(model = model, data = data, zformula = zformula, 
                         control = control, ntree = ntree, perturb = perturb, 
@@ -46,12 +46,33 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
   
   ## call cforest
   args$ytrafo <- function(data, weights, control, ...) 
-      .modelfit(data = data, weights = weights, control = control, model = model, ...)
+    .modelfit(data = data, weights = weights, control = control, model = model, ...)
   args$mtry <- mtry
   ret <- do.call("cforest", args)
   ret$info$model <- model
   ret$info$zformula <- zformula
   ret$call <- cl
+  class(ret) <- c("pmforest", class(ret))
   
+  return(ret)
+}
+
+#' @rdname pmforest 
+#' 
+#' @param object an object returned by pmforest.
+#' @param tree an integer, the number of the tree to extract from the forest.
+#' @param saveinfo logical. Should the model info be stored in terminal nodes?
+#' @export
+gettree.pmforest <- function(object, tree = 1L, saveinfo = TRUE, coeffun = coef, ...) {
+  ret <- gettree.cforest(object = object, tree = tree, ...)
+  cl <- class(ret)
+  
+  if(saveinfo) {
+    which_terminals <- nodeids(ret, terminal = TRUE)
+    ret <- .add_modelinfo(ret, nodeids = which_terminals, data = object$data,
+                          model = object$info$model, coeffun = coeffun)
+  } 
+  
+  class(ret) <- c("pmtree", cl)
   return(ret)
 }
