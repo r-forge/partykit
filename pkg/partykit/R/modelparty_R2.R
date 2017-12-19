@@ -56,9 +56,9 @@
   }
   if(vcov != "info") {
     meat <- if(is.null(cluster)) {
-      crossprod(process/sqrt(weights))
+      crossprod(process/sqrt(weights)) #FIXME# scaling with sqrt(weights) only appropriate for case weights?
     } else {
-      crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum)))
+      crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum))) #FIXME# scaling with sqrt(weights) only appropriate for case weights?
     }
   }
   ## from strucchange

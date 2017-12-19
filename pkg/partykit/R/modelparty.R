@@ -234,10 +234,10 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
     }
     if(vcov != "info") {
       meat <- if(is.null(cluster)) {
-        crossprod(process/sqrt(weights))
+        crossprod(process/sqrt(weights)) #FIXME# scaling with sqrt(weights) only appropriate for case weights?
       } else {
         ## nclus <- length(unique(cluster)) ## nclus / (nclus - 1L) * 
-        crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum)))
+        crossprod(as.matrix(apply(process/sqrt(weights), 2L, tapply, cluster, sum))) #FIXME# see above
       }
     }
     J12 <- root.matrix(switch(vcov,
