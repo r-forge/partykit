@@ -34,7 +34,7 @@
   }
   \subsection{Bugfixes}{
   \itemize{
-    \item{Bug fix in code{mob()} if \code{weights} are used and \code{caseweights = TRUE} (the default).
+    \item{Bug fix in \code{mob()} if \code{weights} are used and \code{caseweights = TRUE} (the default).
           The statistics for the parameter instability tests were computed incorrectly and
 	  consequently the selection of splitting variables and also the stopping criterion
 	  were affected/incorrect.} 
