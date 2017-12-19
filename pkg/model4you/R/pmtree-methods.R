@@ -192,7 +192,7 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata = NULL, weights = NULL, p
     
   } else {
     if(class(object$info$model)[1] == "lm")
-      stop("not yet implemented") 
+      stop("logLik not yet implemented for lm. Try objfun(..., sum = TRUE).") 
     
     ll <- objfun(x = object, newdata = newdata, weights = weights, perm = perm, 
                  sum = TRUE, ...)

@@ -71,7 +71,6 @@ a2 <- predict(tr1, perm = "age", type = "node")
 a3 <- predict(tr1, perm = 3, type = "node")
 b <- predict.party(tr1, type = "node")
 varimp(tr1, nperm = 5)
-varimp(tr1, nperm = 5)
 
 
 library("ggplot2")
@@ -118,3 +117,17 @@ logLik(tr_math)
 logLik(tr_math_mob)
 
 sum(bmod_math$residuals^2)
+
+## varimp
+of <- function(x, newdata = NULL, weights = NULL, 
+               perm = NULL, ...) {
+  - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
+}
+varimp(tr_math, nperm = 2, risk = of)
+
+# deeper tree
+w <- rep(1, nrow(Math_mx))
+w[5:100] <- 0
+tr_math_d <- pmtree(bmod_math, data = Math_mx, weights = w,
+                    control = ctree_control(alpha = 0.7))
+varimp(tr_math_d, risk = of)

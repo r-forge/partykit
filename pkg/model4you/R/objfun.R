@@ -74,7 +74,7 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
   
   ## get residuals
   if(is.null(newdata)) {
-    res <- x$residuals
+    res <- matrix(x$residuals)
   } else {
     yhat <- predict(x, newdata = newdata)
     modformula <- Formula::as.Formula(x$call$formula)
@@ -90,20 +90,24 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
   if (is.null(w <- weights)) {
     w <- rep.int(1, N)
     if(is.null(newdata) & !is.null(x$weights)) w <- x$weights 
-  } else {
-    ## FIXME: should length(objfun) be equal to nrow(data) or sum(w) ?
-    excl <- w == 0
-    if( !(length(w) %in% c(1, length(res))) ) 
-      stop("weights must be of length 1 or length n")
-    if (any(excl)) {
-      res <- res[!excl]
-      N <- length(res)
-      w <- w[!excl]
-    }
-    if (sum(!excl) == 0) res <- NA
-  }
+  } 
+  # else {
+  #   ## FIXME: should length(objfun) be equal to nrow(data) or sum(w) ?
+  #   excl <- w == 0
+  #   if( !(length(w) %in% c(1, NROW(res))) ) {
+  #     browser()
+  #     stop("must be of length 1 or length n")
+  #   }
+  #   if (any(excl)) {
+  #     res <- res[!excl, ]
+  #     N <- NROW(res)
+  #     w <- w[!excl]
+  #   }
+  #   if (sum(!excl) == 0) res <- NA
+  # }
   
   val <- - (w * res^2)
+  N <- sum(w) ## FIXME: is N = sum(w) or is N = length(val) ?
 
   attr(val, "nobs") <- N
   attr(val, "df") <- p + 1
