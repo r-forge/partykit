@@ -50,6 +50,11 @@
     \item{Out-of-bag predictions in \code{predict.cforest} were incorrect.}
     \item{\code{perm} in \code{predict} was only considered when
           \code{newdata} was given. Spotted by Heidi Seibold.}
+    \item{Don't try to search for binary splits in unordered factors with more than 31
+          levels. This potentially caused an integer overrun in previous versions.
+          \code{party::ctree()} uses an approximation for binary split
+          searches in unordered factors; thus, using \pkg{party} might be an
+          alternative.}
   }
   }
 }
