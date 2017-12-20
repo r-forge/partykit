@@ -650,6 +650,7 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 \Abstract{
 While many regression models consider only the mean of the response variable recent advances in parametric modeling have made it possible to model all distribution parameters. In that way the underlying distribution can be fully specified allowing for a wide range of analysis and prediction methods which are particularly valuable in applications such as probabilistic weather forecasting. In generalized additive models for location, scale and shape (GAMLSS, \citealt{stasinopoulos2005}) each distribution parameter can be modeled separately by its own generalized additive model (GAM) capturing linear and non-linear effects. A different approach that would make it possible to also model non-additive effects and interactions is to apply tree-structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). 
 %%%<TH> no references in abstract </TH>
+%%%<TH> "random forest" generisch; Breiman and Cutler's randomForest </TH>
 This class of models 
 %%%<TH> "this" means trees and forests? </TH>
 will now be integrated in probabilistic forecasting providing a novel general distributional framework for these methods. In particular, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. 
@@ -1234,9 +1235,9 @@ In our application of precipitation forecasting the response variable, which is 
 $$
 \ell(\mu, \sigma; Y) = 
 \begin{cases}
-    \log\left(\frac{1}{\sigma} \cdot \phi(\frac{Y - \mu}{\sigma}) \right), & \text{if } Y > 0\\
+    \log\left(\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right), & \text{if } Y > 0\\
     \vspace{0.1cm}
-    \log\left(\Phi(\frac{-\mu}{\sigma})\right), & \text{if } Y = 0
+    \log\left(\Phi\left(\frac{-\mu}{\sigma}\right)\right), & \text{if } Y = 0
 \end{cases}
 $$
 where $\phi$ and $\Phi$ are the probability density function and the distribution function of the standard normal distribution $\mathcal{N}(0,1)$. Next to the censored normal distribution the censored logistic distribution is also often chosen for the modeling of precipitation amounts. In \citealt{Gebetsberger2017} this choice has been made in order to be able to deal with heavy tails which often appear in precipitation data. Another frequent application of probabilistic forecasting in meteorology is the modeling of near surface air temperature. In this case a normal distribution is often selected.
@@ -1295,7 +1296,7 @@ The exact way of determining how and where to split varies across different tree
 \end{enumerate}
 The stopping criterion in step 5 can for example be a minimum number of observations in a node or a p-value for the statistical tests applied in step 3.
 %%% <TH> we need a little more detail here or a reference to a better
-%%% description of mob/ctree </TH>
+%%% description of mob/ctree OR appendix</TH>
 
 Executing these steps results in a stepwise parametric model where a complete distribution is fit in each node of the tree.
 
@@ -1339,7 +1340,7 @@ $$
 where $T$ is the number of trees of the forest, $B^s$ is the number of terminal nodes of the \textit{s}-th tree and $\mathcal{B}^s_b$ represents the \textit{b}-th terminal node of the \textit{s}-th tree.\\
 
 %%%<TH> we need to cite "Transformation Forests" for the interpretation of
-%%% random forests as adaptive nearest neighbors </TH>
+%%% random forests as adaptive local ML </TH>
 
 This individual set of weights $\bold{\omega}^{forest}(\bold{z}^{\ast}) = (\omega^{forest}_1(\bold{z}^{\ast}), \ldots, \omega^{forest}_n(\bold{z}^{\ast}))$ for the new set of covariates $\bold{z}^{\ast}$ can now be included in the estimation process of the distribution parameters and in that way leads to its individual parameter vector $\hat{\theta}(\bold{z}^{\ast})$.
 $$
