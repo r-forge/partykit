@@ -271,6 +271,20 @@ p.value   0.5712655
 > objfun(tr1, sum = TRUE)
 [1] -621.198
 > 
+> 
+> ## variable importance
+> logLik(tr1)
+'log Lik.' -621.198 (df=6)
+> logLik(tr1, perm = "age")
+'log Lik.' -674.0438 (df=NA)
+> a1 <- predict.party(tr1, perm = "age", type = "node")
+> a2 <- predict(tr1, perm = "age", type = "node")
+> a3 <- predict(tr1, perm = 3, type = "node")
+> b <- predict.party(tr1, type = "node")
+> varimp(tr1, nperm = 5)
+'log Lik.' 55.4331 (df=6)
+> 
+> 
 > library("ggplot2")
 > ofs <- data.frame(objfun_bmod1 = objfun(bmod1), 
 +                   objfun_tr1 = objfun(tr1))
@@ -377,24 +391,24 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 > (tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
 [1] root
 |   [2] tests <= 84.61538
-|   |   [3] tests <= 57.69231: n = 124
+|   |   [3] tests <= 57.69231: n = 123
 |   |       (Intercept)      group2 
-|   |         42.011834   -5.897102 
-|   |   [4] tests > 57.69231: n = 416
+|   |         41.586538   -5.471806 
+|   |   [4] tests > 57.69231: n = 420
 |   |       (Intercept)      group2 
-|   |         54.664484   -1.425618 
+|   |         54.807692   -1.568826 
 |   [5] tests > 84.61538
-|   |   [6] tests <= 92.30769: n = 100
+|   |   [6] tests <= 92.30769: n = 97
 |   |       (Intercept)      group2 
-|   |          66.54741    -2.84970 
+|   |         66.730769   -3.033063 
 |   |   [7] tests > 92.30769: n = 89
 |   |       (Intercept)      group2 
-|   |          88.66397   -11.59006 
+|   |          89.06883   -11.99492 
 
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Objective function: -278274.8
+Objective function: -276926.2
 > 
 > 
 > ## check logLik
@@ -406,32 +420,49 @@ pcorrect ~ group | .
 
 Fitted party:
 [1] root
-|   [2] tests <= 84.61538
-|   |   [3] tests <= 57.69231(Intercept)      group2 
-|   |         40.694789   -4.580056 
-|   |   [4] tests > 57.69231(Intercept)      group2 
-|   |         55.251855   -2.012988 
-|   [5] tests > 84.61538
-|   |   [6] tests <= 92.30769(Intercept)      group2 
-|   |         66.730769   -3.033063 
-|   |   [7] tests > 92.30769(Intercept)      group2 
-|   |          90.32967   -13.25576 
+|   [2] tests <= 84.61538: n = 546
+|       (Intercept)      group2 
+|         51.767152   -2.048578 
+|   [3] tests > 84.61538: n = 183
+|       (Intercept)      group2 
+|         77.743590   -7.729345 
 
-Number of inner nodes:    3
-Number of terminal nodes: 4
+Number of inner nodes:    1
+Number of terminal nodes: 2
 Number of parameters per node: 2
-Objective function (residual sum of squares): 276167.6
+Objective function (residual sum of squares): 315116.8
 > 
 > logLik(bmod_math)
 'log Lik.' -3321.166 (df=3)
 > logLik(tr_math)
 'log Lik.' -3195.249 (df=12)
 > logLik(tr_math_mob)
-'log Lik.' -3195.249 (df=15)
+'log Lik.' -3245.756 (df=7)
 > 
 > sum(bmod_math$residuals^2)
 [1] 386684.1
 > 
+> ## varimp
+> of <- function(x, newdata = NULL, weights = NULL, 
++                perm = NULL, ...) {
++   - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
++ }
+> varimp(tr_math, nperm = 2, risk = of)
+   tests 
+167022.9 
+> 
+> # deeper tree
+> w <- rep(1, nrow(Math_mx))
+> w[5:100] <- 0
+> tr_math_d <- pmtree(bmod_math, data = Math_mx, weights = w,
++                     control = ctree_control(alpha = 0.7))
+Warning message:
+In .prepare_args(model = model, data = data, zformula = zformula,  :
+  NAs in model variables (pcorrect, group). Omitting rows with NAs.
+> varimp(tr_math_d, risk = of)
+      tests     attempt      gender       study    semester 
+269734.5165  72661.7239  15878.6172   2973.8659    932.7745 
+> 
 > proc.time()
    user  system elapsed 
- 12.944   0.052  13.225 
+ 13.916   0.088  14.006 

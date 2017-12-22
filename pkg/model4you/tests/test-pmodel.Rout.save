@@ -62,25 +62,25 @@ Loading required package: rpart
 > ## forest
 > frst_lm <- pmforest(basemodel_lm, ntree = 40, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
-+                     control = ctree_control(mincriterion = 0))
++                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
 No data given. I'm using data set simdata from the current environment parent.frame(). 
                    Please check if that is what you want.
 > frst_wb <- pmforest(basemodel_wb, ntree = 40, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
-+                     control = ctree_control(mincriterion = 0))
++                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
 No data given. I'm using data set simdata_s from the current environment parent.frame(). 
                    Please check if that is what you want.
 > 
 > ## personalised models
 > coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
 > summary(coefs_lm)
-  (Intercept)          aA          
- Min.   :6.399   Min.   :-2.17929  
- 1st Qu.:6.874   1st Qu.:-0.87308  
- Median :7.043   Median : 0.22293  
- Mean   :7.033   Mean   : 0.09984  
- 3rd Qu.:7.209   3rd Qu.: 1.01247  
- Max.   :7.438   Max.   : 2.10290  
+  (Intercept)          aA         
+ Min.   :6.399   Min.   :-2.1793  
+ 1st Qu.:6.874   1st Qu.:-0.8731  
+ Median :7.043   Median : 0.2253  
+ Mean   :7.034   Mean   : 0.1006  
+ 3rd Qu.:7.209   3rd Qu.: 1.0125  
+ Max.   :7.436   Max.   : 2.1326  
 > 
 > 
 > coeffun <- function(model) {
@@ -101,19 +101,19 @@ No data given. I'm using data set simdata_s from the current environment parent.
 +                    fun = coeffun)
 > summary(coefs_wb)
   (Intercept)          aA               scale          median_s0    
- Min.   :1.845   Min.   :-0.25540   Min.   :0.1278   Min.   :5.667  
- 1st Qu.:1.968   1st Qu.: 0.03401   1st Qu.:0.1685   1st Qu.:6.626  
- Median :1.993   Median : 0.13347   Median :0.1997   Median :6.797  
- Mean   :1.986   Mean   : 0.11016   Mean   :0.2029   Mean   :6.771  
- 3rd Qu.:2.010   3rd Qu.: 0.20887   3rd Qu.:0.2267   3rd Qu.:6.973  
- Max.   :2.048   Max.   : 0.38999   Max.   :0.3308   Max.   :7.262  
+ Min.   :1.856   Min.   :-0.24360   Min.   :0.1302   Min.   :5.690  
+ 1st Qu.:1.965   1st Qu.: 0.02931   1st Qu.:0.1725   1st Qu.:6.604  
+ Median :1.990   Median : 0.12703   Median :0.1998   Median :6.801  
+ Mean   :1.984   Mean   : 0.10975   Mean   :0.2036   Mean   :6.758  
+ 3rd Qu.:2.008   3rd Qu.: 0.20695   3rd Qu.:0.2305   3rd Qu.:6.993  
+ Max.   :2.048   Max.   : 0.35648   Max.   :0.3358   Max.   :7.297  
    median_s1      median_sdiff    
- Min.   :5.443   Min.   :-1.5837  
- 1st Qu.:6.846   1st Qu.: 0.2277  
- Median :7.799   Median : 0.9950  
- Mean   :7.607   Mean   : 0.8362  
- 3rd Qu.:8.301   3rd Qu.: 1.5367  
- Max.   :9.364   Max.   : 2.7357  
+ Min.   :5.531   Min.   :-1.5256  
+ 1st Qu.:6.904   1st Qu.: 0.2058  
+ Median :7.852   Median : 0.9173  
+ Mean   :7.591   Mean   : 0.8328  
+ 3rd Qu.:8.249   3rd Qu.: 1.5560  
+ Max.   :9.222   Max.   : 2.4738  
 > 
 > 
 > ## dependence plot
@@ -126,7 +126,14 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > #   geom_point(data = dp_wb, aes(y = median_sdiff, x = z1, color = "estimates wb"), alpha = 0.5)
 > 
 > 
+> ## Variable importance
+> of <- function(x, newdata = NULL, weights = NULL, 
++                perm = NULL, ...) {
++   - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
++ }
+> vi_lm <- varimp(frst_lm, risk = of, nperm = 1)
+> plot(data.frame(variable = names(vi_lm), VI = vi_lm))
 > 
 > proc.time()
    user  system elapsed 
- 16.716   0.088  16.804 
+ 64.288   0.188  65.053 

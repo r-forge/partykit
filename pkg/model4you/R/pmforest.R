@@ -62,6 +62,10 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
 #' @param object an object returned by pmforest.
 #' @param tree an integer, the number of the tree to extract from the forest.
 #' @param saveinfo logical. Should the model info be stored in terminal nodes?
+#' @param coeffun function that takes the model object and returns the coefficients. 
+#' Useful when coef() does not return all coefficients (e.g. survreg).
+#' 
+#' @seealso \code{\link[partykit]{gettree}}
 #' @export
 gettree.pmforest <- function(object, tree = 1L, saveinfo = TRUE, coeffun = coef, ...) {
   ret <- gettree.cforest(object = object, tree = tree, ...)

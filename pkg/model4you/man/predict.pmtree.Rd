@@ -5,7 +5,7 @@
 \title{pmtree predictions}
 \usage{
 \method{predict}{pmtree}(object, newdata = NULL, type = "node",
-  predict_args = list(), ...)
+  predict_args = list(), perm = NULL, ...)
 }
 \arguments{
 \item{object}{pmtree object.}
@@ -20,7 +20,13 @@ predict method is used and arguments can be passed to it via \code{predict_args}
 \item{predict_args}{If \code{type = "pass"} arguments can be passed on to the
 model predict function.}
 
-\item{...}{ignored.}
+\item{perm}{an optional character vector of variable names (or integer vector 
+of variable location in \code{newdata}). Splits of nodes 
+with a primary split in any of these variables will be permuted (after dealing 
+with surrogates). Note that surrogate split in the perm variables will no be 
+permuted.}
+
+\item{...}{passed on to predict.party (e.g. \code{perm}).}
 }
 \value{
 predictions

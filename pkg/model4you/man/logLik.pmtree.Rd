@@ -4,8 +4,8 @@
 \alias{logLik.pmtree}
 \title{Extract log-Likelihood}
 \usage{
-\method{logLik}{pmtree}(object, dfsplit = 0, newdata, weights = NULL,
-  perm = NULL, ...)
+\method{logLik}{pmtree}(object, dfsplit = 0, newdata = NULL,
+  weights = NULL, perm = NULL, ...)
 }
 \arguments{
 \item{object}{pmtree object.}

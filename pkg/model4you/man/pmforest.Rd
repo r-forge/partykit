@@ -11,7 +11,8 @@ pmforest(model, data = NULL, zformula = ~., ntree = 500L,
   "quad", testtype = "Univ", mincriterion = 0, saveinfo = FALSE, lookahead =
   TRUE, ...), trace = FALSE, ...)
 
-\method{gettree}{pmforest}(object, tree = 1L, saveinfo = TRUE, ...)
+\method{gettree}{pmforest}(object, tree = 1L, saveinfo = TRUE,
+  coeffun = coef, ...)
 }
 \arguments{
 \item{model}{a model object.}
@@ -50,10 +51,16 @@ the forest grows.}
 \item{tree}{an integer, the number of the tree to extract from the forest.}
 
 \item{saveinfo}{logical. Should the model info be stored in terminal nodes?}
+
+\item{coeffun}{function that takes the model object and returns the coefficients. 
+Useful when coef() does not return all coefficients (e.g. survreg).}
 }
 \value{
 cforest object
 }
 \description{
 Input a parametric model and get a forest.
+}
+\seealso{
+\code{\link[partykit]{gettree}}
 }
