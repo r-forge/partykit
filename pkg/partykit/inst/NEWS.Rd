@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-1 (2017-12-22)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{\code{lookahead} didn't work in the presence of missing values.}
+  }
+  }
+}
+
 \section{Changes in Version 1.2-0 (2017-12-18)}{
   \subsection{New Features}{
     \itemize{
