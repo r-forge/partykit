@@ -5,7 +5,14 @@
 \section{Changes in Version 1.2-1 (2017-12-22)}{
   \subsection{Bugfixes}{
   \itemize{
-    \item{\code{lookahead} didn't work in the presence of missing values.}
+    \item{Bug fix for case weights in \code{mob()} in previous version (1.2-0)
+      introduced a bug in the handling of proportionality weights. Both cases
+      are handled correctly now.}
+    \item{\code{glmtree} can now handle \code{caseweights = TRUE} correctly
+      for \code{vcov} other than the default \code{"opg"}. Internally,
+      the \code{glm} objects are adjusted by correcting the dispersion
+      estimate and the degrees of freedom.}
+    \item{\code{lookahead} did not work in the presence of missing values.}
   }
   }
 }
