@@ -694,7 +694,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0x88e04f8>
+<environment: 0x563123b79050>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -713,7 +713,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0x88e04f8>
+<environment: 0x563123b79050>
 > 
 > 
 > 
@@ -1093,7 +1093,7 @@ F-statistic: 112.2 on 1 and 125 DF,  p-value: < 2.2e-16
 + 1 - deviance(tr_lm)/deviance(tr_null)
 + 1 - deviance(tr_tree)/deviance(tr_null)
 + }
-[1] 0.38957
+[1] 0.3820419
 > 
 > 
 > 
@@ -2411,7 +2411,7 @@ nativeSpeaker           age      shoeSize
 > ###
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  13.376 0.088 13.506 0 0 
+Time elapsed:  14.668 0.076 14.762 0 0 
 > grDevices::dev.off()
 null device 
           1 
