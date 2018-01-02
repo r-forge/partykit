@@ -21,7 +21,7 @@ Depends: R (>= 3.1.0), graphics, grid, libcoin (>= 1.0-0), mvtnorm, rpart (>= 4.
 Imports: grDevices, stats, utils, survival, Formula (>= 1.2-1), inum (>= 1.0-0)
 Suggests: XML, pmml, rJava, sandwich, strucchange, vcd,
   AER, mlbench, TH.data (>= 1.0-3), coin (>= 1.1-0), RWeka (>= 0.4-19), datasets,
-  parallel, psychotools, psychotree, party
+  parallel, psychotools (>= 0.3-0), psychotree, party
 LazyData: yes
 License: GPL-2 | GPL-3
 URL: http://partykit.R-Forge.R-project.org/partykit
