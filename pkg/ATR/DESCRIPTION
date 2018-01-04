@@ -1,6 +1,6 @@
 Package: ATR
 Title: Alternative Tree Representation
-Date: 2017-12-18
+Date: 2018-01-04
 Version: 0.1-0
 Authors@R: c(person("Jon", "Eugster", role = "ctr"),
   person("Andrea", "Farnham", role = "ctr"),
