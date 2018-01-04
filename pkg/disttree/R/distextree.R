@@ -4,7 +4,6 @@
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
                        control = distextree_control(...), converged = NULL, scores = NULL, 
                        doFit = TRUE, bd = NULL,
-                       #type.tree = "ctree",   ## should be in distextree_control 
                        decorrelate = "none",
                        censtype = "none", censpoint = NULL,
                        ocontrol = list(), ...) {
@@ -17,6 +16,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   ## FIX ME: not necessary to set type of tree, but tests etc.
   # type.tree <- match.arg(type.tree, c("mob", "ctree"))
   # if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
+  
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   # check formula
   oformula <- as.formula(formula)
@@ -31,7 +31,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
   mf <- mf[c(1L, m)]
-  mf$yx <- "none"
+  mf$yx <- "matrix"      # FIX ME: in ctree "none" ?
+  mf$ytype <- "vector"
   
   # function ytrafo is fixed within distextree (does not depend on x)
   #if (is.function(ytrafo)) {
@@ -95,16 +96,19 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   #############################################
   # INSERT HERE: ytrafo
   ## wrapper function to apply distfit in ctree
+  
+  ## FIX ME: new/different structure in extree; necessary input: "y", "x", "offset", "weights", "start"?
   ytrafo <- function(data, weights = NULL, control) {
     
-    Y <- model.frame(data, yxonly = TRUE)
-    if(dim(Y)[2] > 1) stop("response variable has to be univariate") 
-    Y <- Y[,1]
+    Y <- data$yx[[1]]
+    if(NCOL(Y) > 1) stop("response variable has to be univariate") 
+    if(inherits(Y, "interval")) stop("can not deal with binned intervals yet") 
     
     modelscores_decor <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
       
       ys <- Y[subset]
-      subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
+      subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
+      ## FIX ME: scores with or without weights?
       # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
       start <- info$coefficients
       
@@ -113,7 +117,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
                        estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       
       if(estfun) {
-        ef <- as.matrix(model$estfun)
+        ef <- as.matrix(model$estfun) # distfit returns weighted scores!
         
         if(decorrelate != "none") {
           n <- NROW(ef)
@@ -147,8 +151,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
       object <-  if(object) model else NULL
       
       ret <- list(estfun = estfun,
+                  unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
                   coefficients = coef(model, type = "parameter"),
-                  objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
+                  objfun = -logLik(model),  # optional function to be minimized 
                   object = object,
                   converged = model$converged  # FIX ME: warnings if distfit does not converge
       )
@@ -161,16 +166,37 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   #############################################
   
   
-  
+  #############################################
+  # adaption to new version of extree (different structure of ytrafo, compare to ctree)
   if (is.null(control$update))
     control$update <- TRUE
   nf <- names(formals(ytrafo))
-  if (all(c("data", "weights", "control") %in% nf))
+  if (all(c("data", "weights", "control") %in% nf))     
     ytrafo <- ytrafo(data = d, weights = weights, control = control)
   nf <- names(formals(ytrafo))
   stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
               all(c("y", "x", "weights", "offset", "start") %in% nf))
+  #############################################
+   
+  ## FIX ME: implement function checking whether all response values are equal in one node
+  # if so, return FALSE
+  # still to do: which control arguments should be used here? (now not used)
+  # allow to hand over additional conditions in further 'converged' functions?
+  converged <- function(data, weights, control){
+    #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
+    convfun <- function(subset, weights){
+      ys <- data$yx[[1]][subset]
+      ws <- if(is.null(weights)) rep.int(1, NROW(ys)) else weights[subset]
+      conv <- length(unique(ys[ws > 0]))>1
+      return(conv)
+    }
+    return(convfun)
+  }
   
+  # not necessary since converged is fixed here (defined above), 
+  # but has to be checked if further 'converged' functions are handed over
+  # FIX ME: various 'converged' functions?
+  # FIX ME: how is this function applied on single nodes? 
   if (is.function(converged)) {
     stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
     converged <- converged(d, weights, control = control)
@@ -180,7 +206,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   update <- function(subset, weights, control, doFit = TRUE)
     extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
-                          subset = subset, weights = weights, ctrl = control, doFit = doFit)
+               subset = subset, weights = weights, ctrl = control, doFit = doFit)
   if (!doFit) return(list(d = d, update = update))
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
@@ -200,9 +226,13 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   ret$trafo <- trafo
   class(ret) <- c("constparty", class(ret))
   
+
   ################################################
   ## INSERTED HERE:
   # distributional fit: calculate coefficients for terminal nodes using distfit()
+  
+  ## FIX ME: first check whether there is already a fitted model in each of the nodes, 
+  # if so, extract coefficients instead of calculating them again in the following lines
   
   # number of terminal nodes
   n_tn <- width(ret)
@@ -287,7 +317,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
 
 
 distextree_control <- function(type.tree = NULL,
-                               criterion = "p.value",    ## FIX ME: set default? c("statistic", "p.value"), 
+                               criterion = c("p.value", "statistic"),
                                logmincriterion = log(0.95), 
                                minsplit = 20L,
                                minbucket = 7L, 
@@ -307,10 +337,13 @@ distextree_control <- function(type.tree = NULL,
                                applyfun = NULL, 
                                cores = NULL,
                                saveinfo = TRUE,
-                               testflavour = c("ctree", "exhaustive", "mfluc"),
-                               bonferroni = TRUE,       # FIX ME: different then extree_control default
-                               splitflavour = c("ctree", "exhaustive"),
+                               bonferroni = TRUE,       # FIX ME: different than extree_control default
                                update = NULL,
+                               splitflavour = c("ctree", "exhaustive"),  # FIX ME: no working function provided yet for "exhaustive" 
+                               testflavour = c("ctree", "mfluc"),   # FIX ME: "exhaustive"
+                               nresample = 9999L,
+                               intersplit = FALSE,
+                               tol = sqrt(.Machine$double.eps),
                                ## FIX ME: additional arguments for ctree
                                teststat = c("quadratic", "maximum"), 
                                splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
@@ -319,13 +352,27 @@ distextree_control <- function(type.tree = NULL,
                                             "Univariate", "Teststatistic"),
                                pargs = GenzBretz(),
                                ## FIX ME: additional arguments for exhaustive
-                               restart = TRUE) 
+                               restart = TRUE,
+                               breakties = FALSE,
+                               parm = NULL,
+                               dfsplit = TRUE,
+                               vcov = c("opg", "info", "sandwich"),
+                               ordinal = c("chisq", "max", "L2"),
+                               ytype = c("vector", "data.frame", "matrix"),
+                               #nrep = 10000L,
+                               terminal = "object",
+                               model = TRUE,
+                               inner = "object",
+                               trim = 0.1
+                               ) 
 {
   
   add_control <- NULL
   
-  if (length(testflavour) == 3) testflavour <- testflavour[1]
-  if (length(splitflavour) == 2) splitflavour <- splitflavour[1]
+  if (length(criterion) == 2) criterion <- criterion[1]
+  if (length(testflavour) == 2 & is.null(type.tree)) testflavour <- testflavour[1]
+  if (length(splitflavour) == 2 & is.null(type.tree)) splitflavour <- splitflavour[1]
+  
   
   if(!is.null(type.tree)) {
     
@@ -340,52 +387,17 @@ distextree_control <- function(type.tree = NULL,
           
           testflavour <- "ctree"
           splitflavour <- "ctree"
-            
-         
-          if(FALSE){
-            control <- ctree_control(teststat = c("quadratic", "maximum"), 
-                                     splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
-                                     splittest = FALSE,
-                                     testtype = c("Bonferroni", "MonteCarlo", 
-                                                  "Univariate", "Teststatistic"),
-                                     pargs = GenzBretz(),
-                                     nmax = c("yx" = Inf, "z" = Inf),
-                                     alpha = 0.05, 
-                                     mincriterion = 1 - alpha, 
-                                     logmincriterion = log(mincriterion), 
-                                     minsplit = minsplit, 
-                                     minbucket = minbucket, 
-                                     minprob = minprob, 
-                                     stump = FALSE, 
-                                     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
-                                     MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
-                                     nresample = 9999L, 
-                                     tol = sqrt(.Machine$double.eps),
-                                     maxsurrogate = 0L, 
-                                     numsurrogate = FALSE,
-                                     mtry = Inf, 
-                                     maxdepth = Inf, 
-                                     multiway = FALSE, 
-                                     splittry = 2L, 
-                                     intersplit = FALSE,
-                                     majority = FALSE, 
-                                     caseweights = TRUE, 
-                                     applyfun = NULL, 
-                                     cores = NULL,
-                                     saveinfo = TRUE,
-                                     update = NULL)
-          }
-          
+
         }
       }
       
       if(type.tree == "mob"){        
         if(!("exhaustive" %in% splitflavour & "mfluc" %in% testflavour)){
-          stop("for type.tree = 'ctree' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
+          stop("for type.tree = 'mob' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
         } else {
           
           testflavour <- "mfluc"
-          splitflavour <- "exhaustive"
+          splitflavour <- "ctree"   # no working function provided yet for "exhaustive"
           
           if(FALSE){
             control <- mob_control(alpha = 0.05, 
@@ -436,6 +448,12 @@ distextree_control <- function(type.tree = NULL,
       ttesttype <- "MonteCarlo"
     }
     
+    if (MIA && maxsurrogate > 0)
+      warning("Mixing MIA splits with surrogate splits does not make sense")
+    
+    if (MIA && majority)
+      warning("Mixing MIA splits with majority does not make sense")
+    
     splitstat <- match.arg(splitstat)
     teststat <- match.arg(teststat)
     
@@ -447,9 +465,10 @@ distextree_control <- function(type.tree = NULL,
                         splittest = splittest, 
                         pargs = pargs,
                         testtype = testtype, 
-                        nresample = 9999L,     # FIX ME
-                        tol = sqrt(.Machine$double.eps),    # FIX ME
-                        intersplit = TRUE)                  # FIX ME
+                        MIA = MIA,
+                        nresample = nresample,     # FIX ME
+                        tol = tol,                 # FIX ME
+                        intersplit = intersplit)                  # FIX ME
     
     criterion2 = ifelse("Teststatistic" %in% testtype, "statistic", "p.value")
     if(criterion != criterion2) stop("'criterion' does not match 'testtype'")
@@ -459,14 +478,31 @@ distextree_control <- function(type.tree = NULL,
     
   }
   
-  if(testflavour == "exhaustive" | splitflavour == "exhaustive") {
+  if(testflavour == "mfluc" | splitflavour == "exhaustive") {
     add_control <- c(add_control,
-                     list(restart = restart))
+                     list(restart = restart,
+                          breakties = breakties,
+                          parm = parm,
+                          dfsplit = dfsplit,
+                          vcov = vcov,
+                          ordinal = ordinal,
+                          ytype = ytype,
+                          #nrep = nrep,
+                          terminal = terminal,
+                          model = model,
+                          inner = inner,
+                          trim = trim))
   }
   
   
+  if (splitflavour == "ctree") splitfun = partykit:::.ctree_split() 
+  if (splitflavour == "exhaustive") splitfun = partykit:::.objfun_test()    ## FIX ME: .objfun_test() requires argument data, write new function
   
+  if (testflavour == "ctree") selectfun = partykit:::.ctree_select()
+  if (testflavour == "mfluc") selectfun = partykit:::.mfluc_select()
   
+  svselectfun = partykit:::.ctree_select()
+  svsplitfun = partykit:::.ctree_split(minbucket = 0)
   
   control <- c(partykit:::extree_control(criterion = criterion, 
                                          logmincriterion = logmincriterion, 
@@ -476,7 +512,6 @@ distextree_control <- function(type.tree = NULL,
                                          nmax = nmax,
                                          stump = stump,
                                          lookahead = lookahead, ### try trafo() for daugther nodes before implementing the split
-                                         MIA = MIA,
                                          maxsurrogate = maxsurrogate, 
                                          numsurrogate = numsurrogate,
                                          mtry = mtry,
@@ -488,10 +523,12 @@ distextree_control <- function(type.tree = NULL,
                                          applyfun = applyfun, 
                                          cores = cores,
                                          saveinfo = saveinfo,
-                                         testflavour = testflavour,
                                          bonferroni = bonferroni,  
-                                         splitflavour = splitflavour,
-                                         update = update),   
+                                         update = update,
+                                         selectfun = selectfun,
+                                         splitfun = splitfun,
+                                         svselectfun = svselectfun,
+                                         svsplitfun = svsplitfun),   
                add_control)
   
   return(control)
