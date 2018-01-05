@@ -1,6 +1,6 @@
 utils::globalVariables(c(".tree", ".ranef", ".weights"))
 
-lmertree <- function(formula, data, weights = NULL,
+lmertree <- function(formula, data, weights = NULL, offset = NULL,
                      ranefstart = NULL, abstol = 0.001, maxit = 100, 
                      joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
                      lmer.control = lmerControl(), ...)
@@ -40,34 +40,56 @@ lmertree <- function(formula, data, weights = NULL,
   
   ## iterate between lmer and lmtree estimation
   while (continue) {
+    
+    ## if offset was specified, add it to .ranef:
+    if (!is.null(offset)) {
+      data$.ranef <- data$.ranef + offset
+    }
+        
     iteration <- iteration + 1L
     
     ## lmtree
     tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, dfsplit = FALSE, ...)
-    if(plot) plot(tree)
-    data$.tree <- if(joint) {
+    if (plot) plot(tree)
+    data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
     } else {
       predict(tree, newdata = data, type = "response")
     }
     
     ## lmer
-    if(joint) {
+    if (joint) {
       ## estimate full lmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
         rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
                                               formula(ff, lhs = 0L, rhs = 2L)), 
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        lme <- lmer(rf.alt, data = data, weights = .weights, control = lmer.control)
+        if (is.null(offset)) {
+          lme <- lmer(rf.alt, data = data, weights = .weights, 
+                      control = lmer.control)          
+        } else {
+          lme <- lmer(rf.alt, data = data, weights = .weights, 
+                      offset = offset, control = lmer.control)
+        }
       } else {
-        lme <- lmer(rf, data = data, weights = .weights, control = lmer.control)
+        if (is.null(offset)) {
+          lme <- lmer(rf, data = data, weights = .weights, 
+                      control = lmer.control)          
+        } else {
+          lme <- lmer(rf, data = data, weights = .weights,
+                      offset = offset, control = lmer.control)
+        }
       }
       #b <- structure(lme@beta, .Names = names(coef(lme)[[1L]]))
       b <- structure(lme@beta, .Names = names(fixef(lme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
       data$.ranef <- suppressWarnings(suppressMessages(predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
+      ## if offset was specified, add it to .tree:
+      if (!is.null(offset)) {
+        data$.tree <- data$.tree + offset
+      }
       ## estimate only a partial lmer model using the .tree fitted
       ## values as an offset
       lme <- lmer(rf, data = data, offset = .tree, weights = .weights, control = lmer.control)
@@ -108,8 +130,9 @@ lmertree <- function(formula, data, weights = NULL,
 }
 
 glmertree <- function(formula, data, family = "binomial", weights = NULL,
-                      ranefstart = NULL, abstol = 0.001, maxit = 100, 
-                      joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
+                      offset = NULL, ranefstart = NULL, abstol = 0.001, 
+                      maxit = 100, joint = TRUE, dfsplit = TRUE, 
+                      verbose = FALSE, plot = FALSE,
                       glmer.control = glmerControl(), ...)
 {
   ## remember call
@@ -149,10 +172,16 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   while (continue) {
     iteration <- iteration + 1L
     
+    ## if offset was specified, add it to .ranef:
+    if (!is.null(offset)) {
+      data$.ranef <- data$.ranef + offset
+    }
+    
     ## glmtree
-    tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, dfsplit = FALSE, ...)
-    if(plot) plot(tree)
-    data$.tree <- if(joint) {
+    tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
+                    weights = .weights, dfsplit = FALSE, ...)
+    if (plot) plot(tree)
+    data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
     } else {
       predict(tree, newdata = data, type = "link")
@@ -166,24 +195,37 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
         rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
                                               formula(ff, lhs = 0L, rhs = 2L)), 
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        glme <- glmer(rf.alt, data = data, family = family, weights = .weights,
-                      control = glmer.control)
+        if (is.null(offset)) {
+          glme <- glmer(rf.alt, data = data, family = family, 
+                        weights = .weights, control = glmer.control)
+        } else {
+          glme <- glmer(rf.alt, data = data, family = family, 
+                        weights = .weights, offset = offset, 
+                        control = glmer.control)          
+        }
       } else {
-        glme <- glmer(rf, data = data, family = family, weights = .weights,
+        if (is.null(offset)) {
+          glme <- glmer(rf, data = data, family = family, weights = .weights,
                       control = glmer.control)
-      }
+        } else {
+          glme <- glmer(rf, data = data, family = family, weights = .weights,
+                        offset = offset, control = glmer.control)
+        }
+      }       
       #b <- structure(glme@beta, .Names = names(coef(glme)[[1L]]))
       b <- structure(glme@beta, .Names = names(fixef(glme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
-      data$.ranef <- suppressWarnings(suppressMessages(predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
+      data$.ranef <- suppressWarnings(suppressMessages(
+        predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
-      ## estimate only a partial glmer model using the .tree fitted
-      ## values as an offset
+      ## if offset was specified, add it to .tree:
+      if (!is.null(offset)) {
+        data$.tree <- data$.tree + offset
+      }
       glme <- glmer(rf, data = data, family = family, offset = .tree, 
                     weights = .weights, control = glmer.control)
       data$.ranef <- predict(glme, newdata = data, type = "link")
     }
-    
     ## iteration information
     newloglik <- logLik(glme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
