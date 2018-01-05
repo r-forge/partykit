@@ -36,13 +36,13 @@
 }
 
 \usage{
-lmertree(formula, data, weights = NULL,
+lmertree(formula, data, weights = NULL, offset = NULL,
   ranefstart = NULL, abstol = 0.001, maxit = 100, 
   joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
   lmer.control = lmerControl(), \dots)
 
 glmertree(formula, data, family = "binomial", weights = NULL,
-  ranefstart = NULL, abstol = 0.001, maxit = 100, 
+  offset = NULL, ranefstart = NULL, abstol = 0.001, maxit = 100, 
   joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
   glmer.control = glmerControl(), \dots)
 }
@@ -57,6 +57,10 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   \item{weights}{numeric. An optional numeric vector of weights. (Note that
     this is passed with standard evaluation, i.e., it is not enough to pass
     the name of a column in \code{data}.)}
+  \item{offset}{numeric. An optional numeric vector of values to be included in 
+    the linear predictor with a coeffcient of one. (Note that this is passed with
+    standard evaluation, i.e., it is not enough to pass the name of a column in 
+    \code{data}.)}
   \item{ranefstart}{numeric. A vector of length \code{nrow(data)}, to be used as
     an offset in estimation of the first tree. \code{NULL} by default,
     which results in a zero offset initialization.}
