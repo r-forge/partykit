@@ -430,6 +430,10 @@ coef.distfit <- function(object, type = "parameter" , ...) {
 predict.distfit <- function(object, type = c("response", "parameter"), ...){
   # calculation of the expected value 
   # of the given distribution with the calculated parameters
+  
+  # per default 'type' is set to 'response'
+  if(length(type)>1) type <- type[1]
+  
   if(type == "response") {
     
     if(object$family$censored)
@@ -542,7 +546,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
 
 print.distfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("Fitted distributional model (", x$family, ")\n\n")
+  cat("Fitted distributional model (", x$family$family.name, ")\n\n")
   if(!(x$family$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {
@@ -592,7 +596,7 @@ print.summary.distfit <- function(x, digits = max(3, getOption("digits") - 3), .
   if(!(x$family$mle) && !x$converged) {
     cat("model did not converge\n")
   } else {
-    cat(paste("Distribution Family:\n", x$family, "\n\n", sep = ""))
+    cat(paste("Distribution Family:\n", x$family$family.name, "\n\n", sep = ""))
     
     cat(paste("Standardized residuals:\n", sep = ""))
     print(structure(round(as.vector(quantile(x$residuals)), digits = digits),
@@ -628,7 +632,7 @@ getSummary.distfit <- function(obj, alpha = 0.05, ...) {
   
   ## return everything
   return(list(
-    family = obj$family,
+    family = obj$family$family.name,
     coef = cf,
     sumstat = c(
       "N" = obj$nobs,
