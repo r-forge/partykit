@@ -43,6 +43,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
     # linkinvdr only used in the method vcov for type = "parameter"
+
   }
   
   np <- length(family$link)
@@ -304,6 +305,10 @@ print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 predict.disttree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
 {
+  
+  # per default 'type' is set to 'parameter'
+  if(length(type)>1) type <- type[1]
+  
   if((type == "node") || (type == "response")) {
     # if mob was applied
     if(inherits(object, "modelparty")){
