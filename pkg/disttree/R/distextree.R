@@ -50,6 +50,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   subset <- 1:NROW(model.frame(d))
   if (length(d$yxmissings) > 0) subset <- subset[!(subset %in% d$yxmissings)]
   
+  if(is.null(control$partyvars)) control$partyvars <- d$variables$z
+  
   weights <- model.weights(model.frame(d))
   
   
@@ -95,7 +97,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   #############################################
   # INSERT HERE: ytrafo
-  ## wrapper function to apply distfit in ctree
+  ## wrapper function to apply distfit in extree
   
   ## FIX ME: new/different structure in extree; necessary input: "y", "x", "offset", "weights", "start"?
   ytrafo <- function(data, weights = NULL, control) {
@@ -143,7 +145,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
         
         estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data$data)) 
         estfun[subset,] <- ef
-        ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
+        ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
       } else estfun <- NULL
       
       
@@ -205,7 +207,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   }            
   
   update <- function(subset, weights, control, doFit = TRUE)
-    extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+    extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = control$partyvars, 
                subset = subset, weights = weights, ctrl = control, doFit = doFit)
   if (!doFit) return(list(d = d, update = update))
   tree <- update(subset = subset, weights = weights, control = control)
@@ -312,10 +314,6 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
 
 
 
-
-## FIX ME: distextree_control()
-
-
 distextree_control <- function(type.tree = NULL,
                                criterion = c("p.value", "statistic"),
                                logmincriterion = log(0.95), 
@@ -340,10 +338,12 @@ distextree_control <- function(type.tree = NULL,
                                bonferroni = TRUE,       # FIX ME: different than extree_control default
                                update = NULL,
                                splitflavour = c("ctree", "exhaustive"),  # FIX ME: no working function provided yet for "exhaustive" 
-                               testflavour = c("ctree", "mfluc"),   # FIX ME: "exhaustive"
+                               testflavour = c("ctree", "mfluc", "guide"),   # FIX ME: "exhaustive"
                                nresample = 9999L,
                                intersplit = FALSE,
                                tol = sqrt(.Machine$double.eps),
+                               partyvars = NULL,   # per default it will be set to partyvars = data$variables$z after applying extree_data
+                               
                                ## FIX ME: additional arguments for ctree
                                teststat = c("quadratic", "maximum"), 
                                splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
@@ -370,7 +370,7 @@ distextree_control <- function(type.tree = NULL,
   add_control <- NULL
   
   if (length(criterion) == 2) criterion <- criterion[1]
-  if (length(testflavour) == 2 & is.null(type.tree)) testflavour <- testflavour[1]
+  if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
   if (length(splitflavour) == 2 & is.null(type.tree)) splitflavour <- splitflavour[1]
   
   
@@ -500,6 +500,7 @@ distextree_control <- function(type.tree = NULL,
   
   if (testflavour == "ctree") selectfun = partykit:::.ctree_select()
   if (testflavour == "mfluc") selectfun = partykit:::.mfluc_select()
+  if (testflavour == "guide") selectfun = disttree:::.guide_select()
   
   svselectfun = partykit:::.ctree_select()
   svsplitfun = partykit:::.ctree_split(minbucket = 0)
@@ -539,139 +540,202 @@ distextree_control <- function(type.tree = NULL,
 
 
 
+.guide_select <- function(...)
+  function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    args <- list(...)
+    ctrl[names(args)] <- args
+    partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test)
+  }
 
-if(FALSE){
+.guide_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
   
-ctree_control <- function
-  (
-    
-    teststat = c("quadratic", "maximum"), 
-    splitstat = c("quadratic", "maximum"), ### much better for q > 1, max was default
-    splittest = FALSE,
-    testtype = c("Bonferroni", "MonteCarlo", 
-                 "Univariate", "Teststatistic"),
-    pargs = GenzBretz(),
-    nmax = c("yx" = Inf, "z" = Inf),
-    alpha = 0.05, 
-    mincriterion = 1 - alpha, 
-    logmincriterion = log(mincriterion), 
-    minsplit = 20L, 
-    minbucket = 7L, 
-    minprob = 0.01, 
-    stump = FALSE, 
-    lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
-    MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
-    nresample = 9999L, 
-    tol = sqrt(.Machine$double.eps),
-    maxsurrogate = 0L, 
-    numsurrogate = FALSE,
-    mtry = Inf, 
-    maxdepth = Inf, 
-    multiway = FALSE, 
-    splittry = 2L, 
-    intersplit = FALSE,
-    majority = FALSE, 
-    caseweights = TRUE, 
-    applyfun = NULL, 
-    cores = NULL,
-    saveinfo = TRUE,
-    update = NULL
-  ) {
-    
-    testtype <- match.arg(testtype, several.ok = TRUE)
-    if (length(testtype) == 4) testtype <- testtype[1]
-    ttesttype <- testtype
-    if (length(testtype) > 1) {
-      stopifnot(all(testtype %in% c("Bonferroni", "MonteCarlo")))
-      ttesttype <- "MonteCarlo"
-    }
-    
-    splitstat <- match.arg(splitstat)
-    teststat <- match.arg(teststat)
-    
-    if (!caseweights)
-      stop("only caseweights currently implemented in ctree")
-    
-    c(extree_control(criterion = ifelse("Teststatistic" %in% testtype, 
-                                        "statistic", "p.value"),
-                     logmincriterion = logmincriterion, minsplit = minsplit, 
-                     minbucket = minbucket, minprob = minprob, 
-                     nmax = nmax, stump = stump, lookahead = lookahead,
-                     mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-                     splittry = splittry, MIA = MIA, maxsurrogate = maxsurrogate, 
-                     numsurrogate = numsurrogate,
-                     majority = majority, caseweights = caseweights, 
-                     applyfun = applyfun, saveinfo = saveinfo,  ### always
-                     testflavour = "ctree", 
-                     bonferroni = "Bonferroni" %in% testtype, 
-                     splitflavour = "ctree", update = update),
-      list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-           testtype = ttesttype, nresample = nresample, tol = tol,
-           intersplit = intersplit))
+  ## TO DO: include subset and weights (SPLITONLY, MIA, ... ?)
+  ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+  iy <- data$yxindex ### data[["yx", type = "index"]]
+  Y <- model$estfun
+  x <- data[[j]]
+  # only select those other covariates which are also in partyvars
+  ix_others <- c(1:NCOL(data$data))[data$variables$z + ctrl$partyvars == 2]
+  ix_others <- ix_others[!ix_others == j]
+  
+  # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
+  # separately for each parameter
+  for(k in 1:model$object$npar){
+    respos <- (Y[,k]>0)
+    #respos <- factor((Y[,k]>0), levels = c(FALSE,TRUE), labels = c(0,1))
+    Y <- cbind(Y, respos)
+    colnames(Y)[(model$object$npar + k)] <- paste0("rp",k)
   }
   
+  if(is.numeric(x)){
+    x_cat <- rep.int(1, length(x))
+    q1 <- quantile(x, 0.25)
+    q2 <- quantile(x, 0.50)
+    q3 <- quantile(x, 0.75)
+    for(l in 1: length(x)){
+      if(x[l] > q1 & x[l] <= q2) x_cat[l] <- 2
+      if(x[l] > q2 & x[l] <= q3) x_cat[l] <- 3
+      if(x[l] > q3) x_cat[l] <- 4
+    }
+    x_cat <- factor(x_cat, levels = c(1:4))
+  } else {
+    x_cat <- x
+  }
   
-
-
+  ## compute curvature test (for each parameter separately)
+  curv_tst <- chisq.test(x = x_cat, y = Y[,(model$object$npar+1)])
+  if(model$object$npar > 1){
+    for(k in 2:model$object$npar){
+      tst <- chisq.test(x = x_cat, y = Y[,(model$object$npar+k)])
+      if(tst$p.value < curv_tst$p.value) curv_tst <- tst
+    }
+  }  
   
-extree_control <- function
-  (
-    criterion, 
-    logmincriterion, 
-    minsplit = 20L,
-    minbucket = 7L, 
-    minprob = 0.01, 
-    nmax = Inf,
-    stump = FALSE,
-    lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
-    MIA = FALSE,
-    maxsurrogate = 0L, 
-    numsurrogate = FALSE,
-    mtry = Inf,
-    maxdepth = Inf, 
-    multiway = FALSE, 
-    splittry = 2L,
-    majority = FALSE, 
-    caseweights = TRUE, 
-    applyfun = NULL, 
-    cores = NULL,
-    saveinfo = TRUE,
-    testflavour = c("ctree", "exhaustive", "mfluc"),
-    bonferroni = FALSE,
-    splitflavour = c("ctree", "exhaustive"),
-    update = NULL
-  ) {
+  ## compute interaction test (for each parameter and for each of the other covariates separately)
+  # only keep test if p.value is smaller than the one resulting from the curvature test
+  if(length(ix_others)>0){
     
-    ## apply infrastructure for determining split points
-    if (is.null(applyfun)) {
-      applyfun <- if(is.null(cores)) {
-        lapply
-      } else {
-        function(X, FUN, ...)
-          parallel::mclapply(X, FUN, ..., mc.cores = cores)
+    min_tst <- curv_tst
+    
+    for(v in ix_others){
+      
+      xo <- data[[v]]
+      x_cat_2d <- rep.int(1, length(x))
+      
+      if(is.factor(x) & is.factor(xo)){
+        c1 <- length(levels(x))
+        c2 <- length(levels(xo))
+        for(l in 1:length(x)){
+          for(m in 1:c1){
+            for(n in 1:c2){
+              if(x[l] == levels(x)[m] & xo[l] == levels(xo)[n]) x_cat_2d[l] <- (m-1)*c2+n
+            }
+          }
+        }
       }
+      
+      if(is.factor(x) & is.numeric(xo)){
+        c1 <- length(levels(x))
+        med_xo <- median(xo)
+        for(l in 1:length(x)){
+          for(m in 1:c1){
+            if(x[l] == levels(x)[m]){
+              x_cat_2d[l] <- if(xo[l] > med_xo) c1+m else m
+            }
+          }
+        }
+      }
+      
+      if(is.numeric(x) & is.factor(xo)){
+        c2 <- length(levels(xo))
+        med_x <- median(x)
+        for(l in 1:length(x)){
+          for(n in 1:c2){
+            if(xo[l] == levels(xo)[n]){
+              x_cat_2d[l] <- if(x[l] > med_x) c2+n else n
+            }
+          }
+        }
+      }
+      
+      if(is.numeric(x) & is.numeric(xo)){
+        med_x <- median(x)
+        med_xo <- median(xo)
+        for(l in 1:length(x)){
+          if(x[l] <= med_x) {
+            x_cat_2d[l] <- if(xo[l] <= med_x) 1 else 2
+          } else {
+            x_cat_2d[l] <- if(xo[l] <= med_x) 3 else 4
+          }
+        }
+      }
+      
+      int_tst <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+1)])
+      if(model$object$npar > 1){
+        for(k in 2:model$object$npar){
+          tst <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+k)])
+          if(tst$p.value < int_tst$p.value) int_tst <- tst
+        }
+      }  
+      
+      if(int_tst$p.value < min_tst$p.value) min_tst <- int_tst
+    }
+  }
+  
+  return(min_tst)
+  
+  ### copied from .ctree_test_1d:
+  if(FALSE){
+    if (!is.null(iy)) {
+      stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
+      return(.ctree_test_2d(data = data, j = j, Y = Y, iy = iy, 
+                            subset = subset, weights = weights, 
+                            SPLITONLY = SPLITONLY, ctrl = ctrl))
     }
     
-    ### well, it is implemented but not correctly so
-    if (multiway & maxsurrogate > 0L)
-      stop("surrogate splits currently not implemented for multiway splits")
+    stopifnot(NROW(Y) == length(ix))
     
-    if (MIA && maxsurrogate > 0)
-      warning("Mixing MIA splits with surrogate splits does not make sense")
+    NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
+    NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
+    if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
+      subsetNArm <- subset[!(subset %in% NAyx)]
+    } else {
+      subsetNArm <- subset[!(subset %in% c(NAyx, NAz))]
+    }
     
-    if (MIA && majority)
-      warning("Mixing MIA splits with majority does not make sense")
+    return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm, 
+                          weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
     
-    list(criterion = criterion, logmincriterion = logmincriterion,
-         minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, nmax = nmax,
-         lookahead = lookahead, mtry = mtry,
-         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         MIA = MIA, maxsurrogate = maxsurrogate, 
-         numsurrogate = numsurrogate, majority = majority,
-         caseweights = caseweights, applyfun = applyfun,
-         saveinfo = saveinfo, testflavour = match.arg(testflavour), 
-         bonferroni = bonferroni,
-         splitflavour = match.arg(splitflavour), update = update)
+    
+    x <- data[[j]]
+    MIA <- FALSE
+    if (ctrl$MIA) {
+      NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
+      MIA <- (length(NAs) > 0)
+    }
+    
+    ### X for (ordered) factors is always dummy matrix
+    if (is.factor(x) || is.ordered(x))
+      X <- data$zindex[[j]] ### data[[j, type = "index"]]
+    
+    scores <- data[[j, type = "scores"]]
+    ORDERED <- is.ordered(x) || is.numeric(x)
+    
+    ux <- Xleft <- Xright <- NULL
+    
+    if (ctrl$splittest || SPLITONLY) {
+      MAXSELECT <- TRUE
+      if (is.numeric(x)) {
+        X <- data$zindex[[j]] ###data[[j, type = "index"]]
+        ux <- levels(X)
+      }
+      if (MIA) {
+        Xlev <- attr(X, "levels")
+        Xleft <- X + 1L
+        Xleft[NAs] <- 1L
+        Xright <- X
+        Xright[NAs] <- as.integer(length(Xlev) + 1L)
+        attr(Xleft, "levels") <- c(NA, Xlev)
+        attr(Xright, "levels") <- c(Xlev, NA)
+      } 
+    } else {
+      MAXSELECT <- FALSE
+      if (is.numeric(x)) {
+        if (storage.mode(x) == "double") {
+          X <- x
+        } else {
+          X <- as.double(x) ### copy when necessary
+        }
+      }
+      MIA <- FALSE
+    }
+    cluster <- data[["(cluster)"]]
+    
+    .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
+                         ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
+                         j = j, Y = Y, iy = NULL, subset = subset, weights = weights, 
+                         cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
+                         MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
   }
 }
+
