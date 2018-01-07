@@ -31,6 +31,9 @@ export(
   "disttree",
   "distextree",
 
+  ## control function for 'distextree'
+  "distextree_control",
+
   ## distributional forest
   "distforest",
 
