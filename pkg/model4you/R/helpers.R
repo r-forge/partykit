@@ -56,6 +56,7 @@
     ## add estfun if wanted
     if(estfun) {
       ef <- estfun(mod)
+      if("coxph" %in% class(mod)) ef <- as.matrix(cbind(residuals(mod, "martingale"), ef))
       ret$estfun <- matrix(0, nrow = NROW(data), ncol = NCOL(ef))
       ret$estfun[subset,] <- ef
       if(!is.null(parm)) ret$estfun <- ret$estfun[, parm]

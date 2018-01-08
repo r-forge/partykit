@@ -1,6 +1,5 @@
 ---
-title: model4you reproducing "Individual treatment effect prediction for amyotrophic
-  lateral sclerosis patients"
+title: "model4you reproducing: Individual treatment effect prediction for amyotrophic lateral sclerosis patients"
 author: "Heidi Seibold"
 date: "December 22, 2017"
 output: html_document

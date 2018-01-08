@@ -25,8 +25,12 @@ If NULL the range in the data will be used.}
 Can be used on its own but is also useable as plotfun in 
 \code{\link{node_pmterminal}}.
 }
+\details{
+In case of an offset, the value of the offset variable will be set to
+the median of the values in the data.
+}
 \examples{
-## exmaple taken from ?lm
+## example taken from ?lm
 ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
 trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
 group <- gl(2, 10, 20, labels = c("Ctl","Trt"))
@@ -34,6 +38,13 @@ weight <- c(ctl, trt)
 data <- data.frame(weight, group)
 lm.D9 <- lm(weight ~ group, data = data)
 lm_plot(lm.D9)
+
+## example taken from ?glm (modified version)
+data(anorexia, package = "MASS")
+anorexia$treatment <- anorexia$Treat != "Cont"
+anorex.1 <- glm(Postwt ~ treatment + offset(Prewt),
+                family = gaussian, data = anorexia)
+lm_plot(anorex.1)
 
 
 }

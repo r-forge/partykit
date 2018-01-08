@@ -112,7 +112,7 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #'
 #' Can be used on its own but is also useable as plotfun in 
 #' \code{\link{node_pmterminal}}.
-#'
+#' 
 #' @param mod A model of class lm.
 #' @param data optional data frame. If NULL the data stored in mod is used.
 #' @param densest should additional to the model density kernel density estimates
@@ -121,8 +121,11 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #' @param yrange Range of the y variable to be used for plotting. 
 #'  If NULL the range in the data will be used.
 #'
+#' @details In case of an offset, the value of the offset variable will be set to
+#' the median of the values in the data.
+#'
 #' @examples 
-#' ## exmaple taken from ?lm
+#' ## example taken from ?lm
 #' ctl <- c(4.17,5.58,5.18,6.11,4.50,4.61,5.17,4.53,5.33,5.14)
 #' trt <- c(4.81,4.17,4.41,3.59,5.87,3.83,6.03,4.89,4.32,4.69)
 #' group <- gl(2, 10, 20, labels = c("Ctl","Trt"))
@@ -130,6 +133,13 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #' data <- data.frame(weight, group)
 #' lm.D9 <- lm(weight ~ group, data = data)
 #' lm_plot(lm.D9)
+#' 
+#' ## example taken from ?glm (modified version)
+#' data(anorexia, package = "MASS")
+#' anorexia$treatment <- anorexia$Treat != "Cont"
+#' anorex.1 <- glm(Postwt ~ treatment + offset(Prewt),
+#'                 family = gaussian, data = anorexia)
+#' lm_plot(anorex.1)
 #' 
 #' 
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
@@ -144,16 +154,22 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
   xformula <- formula(modformula, lhs = 0, rhs = 1)
+  offset_id <- attr(terms(xformula), "offset")
   yformula <- formula(modformula, lhs = 1, rhs = 0)
   if(is.null(data)) data <- eval(modcall$data)
-  xdat <- unique(get_all_vars(xformula, data = data))
+  all_x <- get_all_vars(xformula, data = data)
+  if(!is.null(offset_id)) {
+    # stop("don't know how to handle offsets yet")
+    all_x[, offset_id] <- median(all_x[, offset_id])
+  }
+  xdat <- unique(all_x)
   ydat <- get_all_vars(yformula, data = data)
   ynam <- names(ydat) # as.character(yformula[[2]])
   if(is.null(yrange)) yrange <- range(ydat)
   
   ## get density functions for each treatment group
-  k <- 50
-  means <- cbind(mean = predict(mod, newdata = xdat), 
+  k <- 100
+  means <- cbind(mean = predict(mod, newdata = xdat, type = "response"), 
                  xdat)
   sigma <- sigma(mod)
   ygrid <- seq(from = yrange[1], to = yrange[2], length.out = k)
@@ -239,6 +255,68 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
 }
 
 
+#' Survival plot for a given coxph model
+#' with one binary covariate.
+#'
+#' Can be used on its own but is also useable as plotfun in 
+#' \code{\link{node_pmterminal}}.
+#'
+#' @param mod A model of class coxph.
+#' @param data optional data frame. If NULL the data stored in mod is used.
+#' @param theme A ggplot2 theme.
+#' @param yrange Range of the y variable to be used for plotting. 
+#'  If NULL it will be 0 to max(y).
+#'
+#' @examples
+#' if(require("survival")) {
+#'   coxph_plot(coxph(Surv(futime, fustat) ~ factor(rx), ovarian))
+#' }
+#' 
+#' @importFrom ggplot2 ggplot geom_step theme_classic aes_string coord_cartesian
+#' @importFrom stats model.frame predict formula terms get_all_vars
+#' @importFrom survival Surv survreg
+#' @importFrom Formula as.Formula 
+#' @export
+coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
+                         yrange = NULL) {
+  cl <- class(mod)
+  if(!("coxph" %in% cl)) stop("model should be of class coxph, but is of class ", cl)
+  
+  ## get formula and data
+  modcall <- getCall(mod)
+  modformula <- as.Formula(eval(modcall$formula))
+  xformula <- formula(modformula, lhs = 0, rhs = 1)
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
+  if(is.null(data)) data <- eval(modcall$data)
+  xdat <- unique(get_all_vars(xformula, data = data))
+  if(is.null(yrange)) {
+    ymax <- max(model.frame(yformula, data = data))
+    yrange <- c(0, ymax)
+  }
+  
+  ## get survivor functions for each treatment group
+  p <- seq(.01, .99, by=.02)
+  s_raw <- survfit(mod, newdata = xdat)
+  pr <- do.call("rbind", 
+                lapply(1:NROW(xdat), 
+                       function(i) data.frame(xdat[i, , drop = FALSE],
+                                              pr = s_raw$time, 
+                                              probability = s_raw$surv[ , i],
+                                              row.names = NULL)))
+  pr <- rbind(pr, 
+              data.frame(xdat, pr = c(0, 0), probability = c(1, 1)))
+  pr[[1]] <- as.factor(pr[[1]])
+  
+  ## plot
+  xnam <- names(xdat)
+  ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam, 
+                               color = xnam)) + 
+    geom_step() + coord_cartesian(xlim = yrange, ylim = 0:1) + 
+    xlab(as.character(yformula[[2]])[2]) + 
+    theme 
+}
+
+
 
 #' Panel-Generator for Visualization of pmtrees
 #'
@@ -278,15 +356,19 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
                             ...)
 {
   
+  dots <- list(...)
   nam <- names(obj)
   mod <- obj$info$model
   wterminals <- predict(obj, type = "node")
   dat <- obj$data
-  modcall <- getCall(mod)
-  modformula <- as.Formula(eval(modcall$formula))
-  yformula <- formula(modformula, lhs = 1, rhs = 0)
-  ydat <- get_all_vars(yformula, data = dat)
-  yrange <- range(ydat)
+  
+  if(! "yrange" %in% names(dots)) {
+    modcall <- getCall(mod)
+    modformula <- as.Formula(eval(modcall$formula))
+    yformula <- formula(modformula, lhs = 1, rhs = 0)
+    ydat <- get_all_vars(yformula, data = dat)
+    dots$yrange <- range(ydat)
+  }
   
   ### panel function for the inner nodes
   rval <- function(node, .nid = nid) {  
@@ -327,13 +409,14 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
                        width = unit(0.95, "npc"),
                        height = unit(0.95, "npc"))
     pushViewport(plotvp)
-    pl <- plotfun(nmod, data = subset(dat, (wterminals == id_node(node))), 
-                  yrange = yrange, ...)
+    pl <- do.call("plotfun", 
+                  args = c(list(mod = nmod, 
+                                data = subset(dat, (wterminals == id_node(node)))), 
+                           dots))
     print(pl, vp = plotvp)
     popViewport()
     
     
-    # nidtxt <- paste0(nam[nid], ", n = ", node$info$nobs)
     nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, "npc"),
                          width = max(unit(1, "lines"), unit(1.3, "strwidth", nid)),
                          height = max(unit(1, "lines"), unit(1.3, "strheight", nid)))

@@ -119,7 +119,8 @@ objfun.pmtree <- function(x,
   ## get models from terminal nodes
   which_node <- predict(x, type = "node", newdata = newdata,
                         perm = perm, ...)
-  if(!is.null(perm)) newdata <- x$data
+  # if(!is.null(perm)) 
+  newdata <- x$data
   tnodes <- unique(which_node)
   mods <- nodeapply(x, ids = tnodes, FUN = function(n) n$info$object)
   
@@ -128,13 +129,13 @@ objfun.pmtree <- function(x,
     
     ## get contributions of objfun in each node
     get_objfun_node_unordered <- function(nd) {
-      if(is.null(newdata)) {
-        sum(objfun(mods[[as.character(nd)]], weights = weights[which_node == nd]))
-      } else {
+      # if(is.null(newdata)) {
+      #   sum(objfun(mods[[as.character(nd)]], weights = weights[which_node == nd]))
+      # } else {
         sum(objfun(mods[[as.character(nd)]],
                    newdata = newdata[which_node == nd, ], 
                    weights = weights[which_node == nd]))
-      }
+      # }
     }
 
     ## return the unordered contributions
