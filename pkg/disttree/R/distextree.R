@@ -339,6 +339,8 @@ distextree_control <- function(type.tree = NULL,
                                update = NULL,
                                splitflavour = c("ctree", "exhaustive"),  # FIX ME: no working function provided yet for "exhaustive" 
                                testflavour = c("ctree", "mfluc", "guide"),   # FIX ME: "exhaustive"
+                               guide_interaction = TRUE,
+                               guide_unweighted = FALSE,
                                nresample = 9999L,
                                intersplit = FALSE,
                                tol = sqrt(.Machine$double.eps),
@@ -494,13 +496,19 @@ distextree_control <- function(type.tree = NULL,
                           trim = trim))
   }
   
+  if(testflavour == "guide") {
+    add_control <- c(add_control,
+                     list(guide_interaction = guide_interaction,
+                          guide_unweighted = guide_unweighted))
+  }
+  
   
   if (splitflavour == "ctree") splitfun = partykit:::.ctree_split() 
   if (splitflavour == "exhaustive") splitfun = partykit:::.objfun_test()    ## FIX ME: .objfun_test() requires argument data, write new function
   
   if (testflavour == "ctree") selectfun = partykit:::.ctree_select()
   if (testflavour == "mfluc") selectfun = partykit:::.mfluc_select()
-  if (testflavour == "guide") selectfun = disttree:::.guide_select()
+  if (testflavour == "guide") selectfun = .guide_select()
   
   svselectfun = partykit:::.ctree_select()
   svsplitfun = partykit:::.ctree_split(minbucket = 0)
@@ -549,11 +557,16 @@ distextree_control <- function(type.tree = NULL,
 
 .guide_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
   
-  ## TO DO: include subset and weights (SPLITONLY, MIA, ... ?)
+  ## TO DO: include SPLITONLY, MIA, ... ?
   ix <- data$zindex[[j]] ### data[[j, type = "index"]]
   iy <- data$yxindex ### data[["yx", type = "index"]]
-  Y <- model$estfun
+  Y <- model$estfun  ## model from distfit, returns wheigthed scores
+  if(ctrl$guide_unweighted) Y <- Y/weights  ## FIX ME: influence of weights only on categorization
   x <- data[[j]]
+  if(!is.null(subset)) {
+    Y <- Y[subset]
+    x <- x[subset]
+  }
   # only select those other covariates which are also in partyvars
   ix_others <- c(1:NCOL(data$data))[data$variables$z + ctrl$partyvars == 2]
   ix_others <- ix_others[!ix_others == j]
@@ -591,15 +604,16 @@ distextree_control <- function(type.tree = NULL,
     }
   }  
   
+  min_tst <- curv_tst
+  
   ## compute interaction test (for each parameter and for each of the other covariates separately)
   # only keep test if p.value is smaller than the one resulting from the curvature test
-  if(length(ix_others)>0){
-    
-    min_tst <- curv_tst
+  if(ctrl$guideinteraction & length(ix_others)>0){
     
     for(v in ix_others){
       
       xo <- data[[v]]
+      if(!is.null(subset)) xo <- xo[subset]
       x_cat_2d <- rep.int(1, length(x))
       
       if(is.factor(x) & is.factor(xo)){
@@ -664,78 +678,5 @@ distextree_control <- function(type.tree = NULL,
   
   return(min_tst)
   
-  ### copied from .ctree_test_1d:
-  if(FALSE){
-    if (!is.null(iy)) {
-      stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
-      return(.ctree_test_2d(data = data, j = j, Y = Y, iy = iy, 
-                            subset = subset, weights = weights, 
-                            SPLITONLY = SPLITONLY, ctrl = ctrl))
-    }
-    
-    stopifnot(NROW(Y) == length(ix))
-    
-    NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
-    NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
-    if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
-      subsetNArm <- subset[!(subset %in% NAyx)]
-    } else {
-      subsetNArm <- subset[!(subset %in% c(NAyx, NAz))]
-    }
-    
-    return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm, 
-                          weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
-    
-    
-    x <- data[[j]]
-    MIA <- FALSE
-    if (ctrl$MIA) {
-      NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
-      MIA <- (length(NAs) > 0)
-    }
-    
-    ### X for (ordered) factors is always dummy matrix
-    if (is.factor(x) || is.ordered(x))
-      X <- data$zindex[[j]] ### data[[j, type = "index"]]
-    
-    scores <- data[[j, type = "scores"]]
-    ORDERED <- is.ordered(x) || is.numeric(x)
-    
-    ux <- Xleft <- Xright <- NULL
-    
-    if (ctrl$splittest || SPLITONLY) {
-      MAXSELECT <- TRUE
-      if (is.numeric(x)) {
-        X <- data$zindex[[j]] ###data[[j, type = "index"]]
-        ux <- levels(X)
-      }
-      if (MIA) {
-        Xlev <- attr(X, "levels")
-        Xleft <- X + 1L
-        Xleft[NAs] <- 1L
-        Xright <- X
-        Xright[NAs] <- as.integer(length(Xlev) + 1L)
-        attr(Xleft, "levels") <- c(NA, Xlev)
-        attr(Xright, "levels") <- c(Xlev, NA)
-      } 
-    } else {
-      MAXSELECT <- FALSE
-      if (is.numeric(x)) {
-        if (storage.mode(x) == "double") {
-          X <- x
-        } else {
-          X <- as.double(x) ### copy when necessary
-        }
-      }
-      MIA <- FALSE
-    }
-    cluster <- data[["(cluster)"]]
-    
-    .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
-                         ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
-                         j = j, Y = Y, iy = NULL, subset = subset, weights = weights, 
-                         cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
-                         MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
-  }
 }
 
