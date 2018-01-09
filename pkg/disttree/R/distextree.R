@@ -497,6 +497,8 @@ distextree_control <- function(type.tree = NULL,
   }
   
   if(testflavour == "guide") {
+    
+    if(!criterion == "p.value") stop("For testflavour GUIDE only 'p.value' can be selected as criterion")
     add_control <- c(add_control,
                      list(guide_interaction = guide_interaction,
                           guide_unweighted = guide_unweighted))
@@ -545,14 +547,40 @@ distextree_control <- function(type.tree = NULL,
 
 
 
-
+# use different version of .select than partykit:::select for GUIDE as selectfun 
+# (returns p.values from curvature and interaction tests instead of p.value and teststatistic)
+.select_g <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
+  ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+  rownames(ret$criteria) <- c("statistic", "p.value")
+  colnames(ret$criteria) <- names(model.frame(data))
+  if (length(whichvar) == 0) return(ret)
+  ### <FIXME> allow joint MC in the absense of missings; fix seeds
+  ### write ctree_test / ... with whichvar and loop over variables there
+  ### </FIXME>
+  for (j in whichvar) {
+    tst <- FUN(model = model, trafo = trafo, data = data, 
+               subset = subset, weights = weights, j = j, 
+               SPLITONLY = FALSE, ctrl = ctrl)
+    ret$criteria["statistic",j] <- - as.numeric(tst["p.curv"])
+    ret$criteria["p.value",j] <- - as.numeric(tst["p.min"])
+    
+    # for testflavour = "guide" only "p.value" can be chosen as criterion
+    # because 2 p.values need to be returned (from curvature test and the min from curvature and interaction test)
+    # the min is stored as 'p.value' in the returned matrix
+    # if this min is from an interaction test, two covariates will have the same p.value
+    # in this case the one with the lower p.value from the curvature test should be chosen
+    # in extree: among the two covariates with the lowest p.value (highest negativ p.value) the one with the higher test statistic is chosen (ranked)
+    # -> the negative p.value from the curvature test is stored as "statistic"
+  }
+  ret
+}
 
 
 .guide_select <- function(...)
   function(model, trafo, data, subset, weights, whichvar, ctrl) {
     args <- list(...)
     ctrl[names(args)] <- args
-    partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test)
+    .select_g(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test)   # optional: use partykit:::.select
   }
 
 .guide_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
@@ -564,9 +592,13 @@ distextree_control <- function(type.tree = NULL,
   if(ctrl$guide_unweighted) Y <- Y/weights  ## FIX ME: influence of weights only on categorization
   x <- data[[j]]
   if(!is.null(subset)) {
-    Y <- Y[subset]
+    Y <- if(is.vector(Y)) Y[subset] else Y[subset,]
     x <- x[subset]
   }
+  
+  # if all values of the selected covariate are equal return highest possible p.value
+  if(length(unique(x))<2) return(c(p.min = 1, p.curv = 1))
+  
   # only select those other covariates which are also in partyvars
   ix_others <- c(1:NCOL(data$data))[data$variables$z + ctrl$partyvars == 2]
   ix_others <- ix_others[!ix_others == j]
@@ -596,87 +628,94 @@ distextree_control <- function(type.tree = NULL,
   }
   
   ## compute curvature test (for each parameter separately)
-  curv_tst <- chisq.test(x = x_cat, y = Y[,(model$object$npar+1)])
+  p.curv <- chisq.test(x = x_cat, y = Y[,(model$object$npar+1)])$p.value
   if(model$object$npar > 1){
     for(k in 2:model$object$npar){
-      tst <- chisq.test(x = x_cat, y = Y[,(model$object$npar+k)])
-      if(tst$p.value < curv_tst$p.value) curv_tst <- tst
+      p <- chisq.test(x = x_cat, y = Y[,(model$object$npar+k)])$p.value
+      if(p < p.curv) p.curv <- p
     }
   }  
   
-  min_tst <- curv_tst
+  p.min <- p.curv
   
   ## compute interaction test (for each parameter and for each of the other covariates separately)
   # only keep test if p.value is smaller than the one resulting from the curvature test
-  if(ctrl$guideinteraction & length(ix_others)>0){
+  if(ctrl$guide_interaction & length(ix_others)>0){
     
     for(v in ix_others){
       
       xo <- data[[v]]
       if(!is.null(subset)) xo <- xo[subset]
-      x_cat_2d <- rep.int(1, length(x))
       
-      if(is.factor(x) & is.factor(xo)){
-        c1 <- length(levels(x))
-        c2 <- length(levels(xo))
-        for(l in 1:length(x)){
-          for(m in 1:c1){
+      # only consider other covariate for interaction test if not all of its values are equal
+      if(length(unique(xo))>1){
+        
+        x_cat_2d <- rep.int(1, length(x))
+        
+        if(is.factor(x) & is.factor(xo)){
+          c1 <- length(levels(x))
+          c2 <- length(levels(xo))
+          for(l in 1:length(x)){
+            for(m in 1:c1){
+              for(n in 1:c2){
+                if(x[l] == levels(x)[m] & xo[l] == levels(xo)[n]) x_cat_2d[l] <- (m-1)*c2+n
+              }
+            }
+          }
+        }
+        
+        if(is.factor(x) & is.numeric(xo)){
+          c1 <- length(levels(x))
+          med_xo <- median(xo)
+          for(l in 1:length(x)){
+            for(m in 1:c1){
+              if(x[l] == levels(x)[m]){
+                x_cat_2d[l] <- if(xo[l] > med_xo) c1+m else m
+              }
+            }
+          }
+        }
+        
+        if(is.numeric(x) & is.factor(xo)){
+          c2 <- length(levels(xo))
+          med_x <- median(x)
+          for(l in 1:length(x)){
             for(n in 1:c2){
-              if(x[l] == levels(x)[m] & xo[l] == levels(xo)[n]) x_cat_2d[l] <- (m-1)*c2+n
+              if(xo[l] == levels(xo)[n]){
+                x_cat_2d[l] <- if(x[l] > med_x) c2+n else n
+              }
             }
           }
         }
-      }
-      
-      if(is.factor(x) & is.numeric(xo)){
-        c1 <- length(levels(x))
-        med_xo <- median(xo)
-        for(l in 1:length(x)){
-          for(m in 1:c1){
-            if(x[l] == levels(x)[m]){
-              x_cat_2d[l] <- if(xo[l] > med_xo) c1+m else m
+        
+        if(is.numeric(x) & is.numeric(xo)){
+          med_x <- median(x)
+          med_xo <- median(xo)
+          for(l in 1:length(x)){
+            if(x[l] <= med_x) {
+              x_cat_2d[l] <- if(xo[l] <= med_x) 1 else 2
+            } else {
+              x_cat_2d[l] <- if(xo[l] <= med_x) 3 else 4
             }
           }
         }
-      }
-      
-      if(is.numeric(x) & is.factor(xo)){
-        c2 <- length(levels(xo))
-        med_x <- median(x)
-        for(l in 1:length(x)){
-          for(n in 1:c2){
-            if(xo[l] == levels(xo)[n]){
-              x_cat_2d[l] <- if(x[l] > med_x) c2+n else n
-            }
+        
+        p.int <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+1)])$p.value
+        if(model$object$npar > 1){
+          for(k in 2:model$object$npar){
+            p <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+k)])$p.value
+            if(p < p.int) p.int <- p
           }
-        }
+        }  
+        
+        if(p.int < p.min) p.min <- p.int
       }
-      
-      if(is.numeric(x) & is.numeric(xo)){
-        med_x <- median(x)
-        med_xo <- median(xo)
-        for(l in 1:length(x)){
-          if(x[l] <= med_x) {
-            x_cat_2d[l] <- if(xo[l] <= med_x) 1 else 2
-          } else {
-            x_cat_2d[l] <- if(xo[l] <= med_x) 3 else 4
-          }
-        }
-      }
-      
-      int_tst <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+1)])
-      if(model$object$npar > 1){
-        for(k in 2:model$object$npar){
-          tst <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+k)])
-          if(tst$p.value < int_tst$p.value) int_tst <- tst
-        }
-      }  
-      
-      if(int_tst$p.value < min_tst$p.value) min_tst <- int_tst
     }
   }
   
-  return(min_tst)
+  ret <- c(p.min = p.min, p.curv = p.curv)
+  
+  return(ret)
   
 }
 
