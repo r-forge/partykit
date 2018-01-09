@@ -4,10 +4,10 @@ Date: 2017-12-13
 Title: Precipitation Observations and NWP Forecasts from GEFS
 Authors@R: c(person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at"),
              person(given = "Reto", family = "Stauffer", role = "aut", email = "Reto.Stauffer@uibk.ac.at"),
-             person(given = "Achim", family = "Zeileis", role = c("aut", "cre"), email = "Achim.Zeileis@R-project.org",
+             person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org",
                   comment = c(ORCID = "0000-0003-0918-3766")))
 Description: Precipitation observations for the month of July in the years 1985-2012 for 95 stations in Tyrol, Austria, obtained from EHYD.
              Numerical weather prediction (NWP) forecasts from GEFS.
 LazyData: yes
-Depends: R (>= 3.0.0)
+Depends: R (>= 3.1.0), disttree
 License: GPL-2 | GPL-3

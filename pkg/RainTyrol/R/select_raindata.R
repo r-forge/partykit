@@ -1,5 +1,3 @@
-library("RainTyrol")
-
 data("rainTyrol")
 
 #####
