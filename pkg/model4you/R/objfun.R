@@ -64,6 +64,67 @@ objfun <- function(x, newdata = NULL, ...)
 }
 
 #' @rdname objfun
+#' 
+#' @importFrom survival survreg psurvreg dsurvreg
+#' @importFrom stats model.frame formula predict
+#' 
+#' @examples
+#' if(require("survival")) {
+#'   x <- survreg(Surv(futime, fustat) ~ rx, ovarian, dist = "weibull")
+#'   newdata <- ovarian[3:5, ]
+#' 
+#'   sum(objfun.survreg(x))
+#'   x$loglik
+#' 
+#'   objfun.survreg(x, newdata = newdata)
+#' }
+#' 
+#' @export
+objfun.survreg <- function(x, newdata = NULL, weights = NULL, ...) {
+  
+  ## get outcome
+  modformula <- Formula::as.Formula(x$terms)
+  yformula <- formula(modformula, lhs = 1, rhs = 0)
+  if(is.null(newdata)) {
+    ymf <- model.frame(x)
+  } else {
+    ymf <- model.frame(yformula, data = newdata)
+  }
+  y <- as.matrix(ymf[[1]])
+  if(attr(ymf[[1]], "type") != "right") stop("So far only right censored outcome allowed.")
+  
+  ## weights
+  if(is.null(weights)) weights <- rep(1, times = NROW(y))
+  
+  ## get linear predictor
+  if(is.null(newdata)) {
+    lp <- predict(x, type = "linear")
+  } else{
+    lp <- predict(x, newdata = newdata, type = "linear")
+  }
+  y <- cbind(y, lp = lp, weights = weights)
+  scale <- x$scale
+  
+  ## get Likelihood contributions
+  ## = density for uncensored observations
+  ## = survivor (1 - CDF) for censored observations
+  get_lik <- function(t) {
+    if(t["status"] == 0) {
+      t["weights"] * (1 - psurvreg(q = t["time"], mean = t["lp"], 
+                                   scale = scale, distribution = "weibull"))
+    } else {
+      t["weights"] * dsurvreg(x = t["time"], mean = t["lp"], 
+                              scale = scale, distribution = "weibull")
+    }
+  }
+  contribs <- apply(y, 1, get_lik)
+  
+  ## return log-Likelihood contributions
+  return(log(contribs))
+}
+
+
+#' @rdname objfun
 #' @export
 objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
 {

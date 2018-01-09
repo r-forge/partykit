@@ -2,11 +2,14 @@
 % Please edit documentation in R/objfun.R
 \name{objfun}
 \alias{objfun}
+\alias{objfun.survreg}
 \alias{objfun.lm}
 \alias{objfun.glm}
 \title{Objective function}
 \usage{
 objfun(x, newdata = NULL, ...)
+
+\method{objfun}{survreg}(x, newdata = NULL, weights = NULL, ...)
 
 \method{objfun}{lm}(x, newdata = NULL, weights = NULL, ...)
 
@@ -42,5 +45,15 @@ glm.D93 <- glm(counts ~ outcome + treatment, family = poisson())
 logLik_contributions <- objfun(glm.D93)
 sum(logLik_contributions)
 logLik(glm.D93)
+
+if(require("survival")) {
+  x <- survreg(Surv(futime, fustat) ~ rx, ovarian, dist = "weibull")
+  newdata <- ovarian[3:5, ]
+
+  sum(objfun.survreg(x))
+  x$loglik
+
+  objfun.survreg(x, newdata = newdata)
+}
 
 }
