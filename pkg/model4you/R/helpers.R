@@ -20,7 +20,7 @@
 #' \item{estfun}{ \code{estfun}. }
 #' 
 #' @importFrom sandwich estfun
-#' @importFrom stats update coef logLik getCall as.formula
+#' @importFrom stats update coef logLik getCall as.formula residuals
 .modelfit <- function(model, data, coeffun = coef, weights, control, parm = NULL) {
   
   fitfun <- function(subset, weights, info = NULL, estfun = TRUE, object = FALSE) { 
@@ -56,7 +56,8 @@
     ## add estfun if wanted
     if(estfun) {
       ef <- estfun(mod)
-      if("coxph" %in% class(mod)) ef <- as.matrix(cbind(residuals(mod, "martingale"), ef))
+      if("coxph" %in% class(mod)) 
+        ef <- as.matrix(cbind(residuals(mod, "martingale"), ef))
       ret$estfun <- matrix(0, nrow = NROW(data), ncol = NCOL(ef))
       ret$estfun[subset,] <- ef
       if(!is.null(parm)) ret$estfun <- ret$estfun[, parm]

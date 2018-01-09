@@ -160,7 +160,7 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   all_x <- get_all_vars(xformula, data = data)
   if(!is.null(offset_id)) {
     # stop("don't know how to handle offsets yet")
-    all_x[, offset_id] <- median(all_x[, offset_id])
+    all_x[, offset_id] <- stats::median(all_x[, offset_id])
   }
   xdat <- unique(all_x)
   ydat <- get_all_vars(yformula, data = data)
@@ -296,7 +296,7 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
   
   ## get survivor functions for each treatment group
   p <- seq(.01, .99, by=.02)
-  s_raw <- survfit(mod, newdata = xdat)
+  s_raw <- survival::survfit(mod, newdata = xdat)
   pr <- do.call("rbind", 
                 lapply(1:NROW(xdat), 
                        function(i) data.frame(xdat[i, , drop = FALSE],

@@ -119,8 +119,8 @@ objfun.pmtree <- function(x,
   ## get models from terminal nodes
   which_node <- predict(x, type = "node", newdata = newdata,
                         perm = perm, ...)
-  # if(!is.null(perm)) 
-  newdata <- x$data
+  if(!is.null(perm) & is.null(newdata))
+    newdata <- x$data
   tnodes <- unique(which_node)
   mods <- nodeapply(x, ids = tnodes, FUN = function(n) n$info$object)
   
@@ -132,12 +132,12 @@ objfun.pmtree <- function(x,
       # if(is.null(newdata)) {
       #   sum(objfun(mods[[as.character(nd)]], weights = weights[which_node == nd]))
       # } else {
-        sum(objfun(mods[[as.character(nd)]],
-                   newdata = newdata[which_node == nd, ], 
-                   weights = weights[which_node == nd]))
+      sum(objfun(mods[[as.character(nd)]],
+                 newdata = newdata[which_node == nd, ], 
+                 weights = weights[which_node == nd]))
       # }
     }
-
+    
     ## return the unordered contributions
     return(sum(sapply(tnodes, get_objfun_node_unordered)))
     
@@ -204,12 +204,12 @@ logLik.pmtree <- function(object, dfsplit = 0, newdata = NULL, weights = NULL, p
                  sum = TRUE, ...)
     df <- NA
   }
-
+  
   
   ## number of observations
   nobs <- ifelse(!is.null(weights), sum(weights),
-           ifelse(is.null(newdata), object$nobs,
-                  nrow(newdata)))
+                 ifelse(is.null(newdata), object$nobs,
+                        nrow(newdata)))
   
   structure(
     sum(as.numeric(ll)),

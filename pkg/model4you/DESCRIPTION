@@ -1,6 +1,6 @@
 Package: model4you
 Title: Personalised Models
-Date: 2017-12-22
+Date: 2016-01-09
 Version: 1.0-0
 Authors@R: c(person(given = "Heidi", family = "Seibold", 
                     role = c("aut", "cre"), email = "Heidi.Seibold@uzh.ch"),
@@ -27,7 +27,8 @@ Suggests:
     strucchange,
     plyr,
     knitr,
-    ggbeeswarm
+    ggbeeswarm,
+    MASS
 License: GPL-2 | GPL-3
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1
