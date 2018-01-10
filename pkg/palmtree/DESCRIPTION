@@ -1,6 +1,6 @@
 Package: palmtree
 Title: Partially Additive (Generalized) Linear Model Trees
-Date: 2017-04-26
+Date: 2018-01-10
 Version: 0.0-0
 Authors@R: c(person(given = "Heidi", family = "Seibold", role = c("aut", "cre"), email = "Heidi.Seibold@uzh.ch",
                     comment = c(ORCID = "0000-0002-8960-9642")),
