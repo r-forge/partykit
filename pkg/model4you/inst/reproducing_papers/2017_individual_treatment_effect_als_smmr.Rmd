@@ -1,8 +1,11 @@
 ---
-title: "model4you reproducing: Individual treatment effect prediction for amyotrophic lateral sclerosis patients"
+title: 'model4you reproducing: Individual treatment effect prediction for amyotrophic
+  lateral sclerosis patients'
 author: "Heidi Seibold"
 date: "December 22, 2017"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -99,16 +102,33 @@ ggplot(vi_alssurv_d, aes(x = variable, y = VI)) +
 
 ## dependence plot
 ```{r}
+dp_plot <- function(var, data) {
+  p <- ggplot(data, aes_string(y = "RiluzoleYes", x = var))
+  
+  if(is.factor(data[, var])) {
+    p <- p + geom_boxplot()
+  } else {
+    p <- p + geom_point() + geom_smooth(se = FALSE)
+  }
+  
+  print(p)
+}
+
 dp_alsfrs <- cbind(pm_alsfrs, ALSFRSdata)
 
-dp_plot_alsfrs <- function(var) {
-  print(ggplot(dp_alsfrs, aes_string(y = "RiluzoleYes", x = var)) +
-    geom_point() + geom_smooth(se = FALSE))
-}
-dp_plot_alsfrs("time_onset_treatment")
-dp_plot_alsfrs("value_creatinine")
-dp_plot_alsfrs("value_phosphorus")
-dp_plot_alsfrs("subjectliters_fvc")
+dp_plot("time_onset_treatment", dp_alsfrs)
+dp_plot("value_creatinine", dp_alsfrs)
+dp_plot("value_phosphorus", dp_alsfrs)
+dp_plot("subjectliters_fvc", dp_alsfrs)
+
+
+dp_alssurv <- cbind(pm_alssurv, ALSsurvdata)
+
+dp_plot("age", dp_alssurv)
+dp_plot("time_onset_treatment", dp_alssurv)
+dp_plot("weakness", dp_alssurv)
+dp_plot("height", dp_alssurv)
+
 ```
 
 
