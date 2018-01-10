@@ -126,16 +126,17 @@ objfun.pmtree <- function(x,
   
   ## if the order does not matter, this is faster
   if(sum) {
+    if(!is.null(weights) & is.null(newdata)) {
+      # which_node[weights == 0] <- NA
+      newdata <- x$data
+    } 
     
     ## get contributions of objfun in each node
     get_objfun_node_unordered <- function(nd) {
-      # if(is.null(newdata)) {
-      #   sum(objfun(mods[[as.character(nd)]], weights = weights[which_node == nd]))
-      # } else {
+      wn <- (which_node == nd) & !is.na(which_node)
       sum(objfun(mods[[as.character(nd)]],
-                 newdata = newdata[which_node == nd, ], 
-                 weights = weights[which_node == nd]))
-      # }
+                 newdata = newdata[wn, ], 
+                 weights = weights[wn]))
     }
     
     ## return the unordered contributions

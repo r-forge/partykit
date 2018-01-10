@@ -73,10 +73,10 @@ objfun <- function(x, newdata = NULL, ...)
 #'   x <- survreg(Surv(futime, fustat) ~ rx, ovarian, dist = "weibull")
 #'   newdata <- ovarian[3:5, ]
 #' 
-#'   sum(objfun.survreg(x))
+#'   sum(objfun(x))
 #'   x$loglik
 #' 
-#'   objfun.survreg(x, newdata = newdata)
+#'   objfun(x, newdata = newdata)
 #' }
 #' 
 #' @export
@@ -117,10 +117,13 @@ objfun.survreg <- function(x, newdata = NULL, weights = NULL, ...) {
                               scale = scale, distribution = "weibull")
     }
   }
-  contribs <- apply(y, 1, get_lik)
+  contribs <- log(apply(y, 1, get_lik))
+  contribs[weights == 0] <- 0
+  ## FIXME: what about censored observations with high time? 
+  ## => Leads to Survivor = 0 => logLik = -Inf
   
   ## return log-Likelihood contributions
-  return(log(contribs))
+  return(contribs)
 }
 
 

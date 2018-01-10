@@ -50,10 +50,10 @@ if(require("survival")) {
   x <- survreg(Surv(futime, fustat) ~ rx, ovarian, dist = "weibull")
   newdata <- ovarian[3:5, ]
 
-  sum(objfun.survreg(x))
+  sum(objfun(x))
   x$loglik
 
-  objfun.survreg(x, newdata = newdata)
+  objfun(x, newdata = newdata)
 }
 
 }

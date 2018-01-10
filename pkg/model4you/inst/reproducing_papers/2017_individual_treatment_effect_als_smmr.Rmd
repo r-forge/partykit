@@ -68,6 +68,7 @@ pm_alssurv <- pmodel(frst_alssurv, fun = coeffun)
 
 ## Variable importance
 ```{r}
+set.seed(123)
 vi_alsfrs <- varimp(frst_alsfrs, 
                     risk = function(x, ...) -objfun(x, sum = TRUE, ...), 
                     nperm = 1)
