@@ -117,10 +117,12 @@ objfun.survreg <- function(x, newdata = NULL, weights = NULL, ...) {
                               scale = scale, distribution = "weibull")
     }
   }
-  contribs <- log(apply(y, 1, get_lik))
+  
+  lik_contribs <- apply(y, 1, get_lik)
+  
+  ## make sure logLik is not -Inf for censored observations with high time
+  contribs <- log(pmax(lik_contribs, sqrt(.Machine$double.eps))) 
   contribs[weights == 0] <- 0
-  ## FIXME: what about censored observations with high time? 
-  ## => Leads to Survivor = 0 => logLik = -Inf
   
   ## return log-Likelihood contributions
   return(contribs)
