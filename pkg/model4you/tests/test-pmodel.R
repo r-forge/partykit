@@ -69,16 +69,7 @@ coefs_wb <- pmodel(x = frst_wb, newdata = tsimdata_s,
 summary(coefs_wb)
 
 
-## dependence plot
-# library("ggplot2")
-# dp_lm <- cbind(coefs_lm, tsimdata)
-# dp_wb <- cbind(coefs_wb, tsimdata)
-# ggplot(tsimdata) +
-#   stat_function(fun = function(z1) 0.2 + beta * cos(z1), aes(color = "true treatment\neffect")) +
-#   geom_point(data = dp_lm, aes(y = aA, x = z1, color = "estimates lm"), alpha = 0.5) +
-#   geom_point(data = dp_wb, aes(y = median_sdiff, x = z1, color = "estimates wb"), alpha = 0.5)
-
-
 ## Variable importance
-vi_lm <- varimp(frst_lm)
-plot(data.frame(variable = names(vi_lm), VI = vi_lm))
+set.seed(123)
+(vi_lm <- varimp(frst_lm))
+(vi_wb <- varimp(frst_wb))

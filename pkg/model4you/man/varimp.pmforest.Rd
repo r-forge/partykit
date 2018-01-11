@@ -5,7 +5,8 @@
 \title{Variable Importance for pmforest}
 \usage{
 \method{varimp}{pmforest}(object, nperm = 1L, OOB = TRUE,
-  risk = function(x, ...) -objfun(x, sum = TRUE, ...), ...)
+  risk = function(x, ...) -objfun(x, sum = TRUE, ...), conditional = FALSE,
+  threshold = 0.2, ...)
 }
 \arguments{
 \item{object}{DESCRIPTION.}
@@ -18,10 +19,18 @@ out-of-bag sample or the learning sample (not suggested).}
 \item{risk}{the risk to be evaluated. By default the objective function 
 (e.g. log-Likelihood) is used.}
 
-\item{...}{passed on to \code{\link[partykit]{varimp.cforest}}.}
+\item{conditional}{a logical determining whether unconditional or conditional 
+computation of the importance is performed.}
+
+\item{threshold}{the value of the test statistic or 1 - p-value of the 
+association between the variable of interest and a covariate that must be 
+exceeded inorder to include the covariate in the conditioning scheme for the 
+variable of interest (only relevant if conditional = TRUE).}
+
+\item{...}{passed on to \code{\link{objfun}}.}
 }
 \value{
-A vector of ‘mean decrease in accuracy’ importance scores.
+A vector of 'mean decrease in accuracy' importance scores.
 }
 \description{
 See \code{\link[partykit]{varimp.cforest}}.

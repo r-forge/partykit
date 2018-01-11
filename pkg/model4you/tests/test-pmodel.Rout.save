@@ -60,12 +60,12 @@ Loading required package: rpart
 > basemodel_wb <- survreg(Surv(y, cens) ~ a, data = simdata_s)
 > 
 > ## forest
-> frst_lm <- pmforest(basemodel_lm, ntree = 40, 
+> frst_lm <- pmforest(basemodel_lm, ntree = 10, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
 +                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
 No data given. I'm using data set simdata from the current environment parent.frame(). 
                    Please check if that is what you want.
-> frst_wb <- pmforest(basemodel_wb, ntree = 40, 
+> frst_wb <- pmforest(basemodel_wb, ntree = 10, 
 +                     perturb = list(replace = FALSE, fraction = 0.632),
 +                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
 No data given. I'm using data set simdata_s from the current environment parent.frame(). 
@@ -74,13 +74,13 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > ## personalised models
 > coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
 > summary(coefs_lm)
-  (Intercept)          aA         
- Min.   :6.399   Min.   :-2.1793  
- 1st Qu.:6.874   1st Qu.:-0.8731  
- Median :7.043   Median : 0.2253  
- Mean   :7.034   Mean   : 0.1006  
- 3rd Qu.:7.209   3rd Qu.: 1.0125  
- Max.   :7.436   Max.   : 2.1326  
+  (Intercept)          aA          
+ Min.   :6.083   Min.   :-2.06955  
+ 1st Qu.:6.838   1st Qu.:-0.67986  
+ Median :7.097   Median :-0.02111  
+ Mean   :7.044   Mean   : 0.03952  
+ 3rd Qu.:7.269   3rd Qu.: 0.72868  
+ Max.   :7.662   Max.   : 2.27505  
 > 
 > 
 > coeffun <- function(model) {
@@ -101,39 +101,30 @@ No data given. I'm using data set simdata_s from the current environment parent.
 +                    fun = coeffun)
 > summary(coefs_wb)
   (Intercept)          aA               scale          median_s0    
- Min.   :1.856   Min.   :-0.24360   Min.   :0.1302   Min.   :5.690  
- 1st Qu.:1.965   1st Qu.: 0.02931   1st Qu.:0.1725   1st Qu.:6.604  
- Median :1.990   Median : 0.12703   Median :0.1998   Median :6.801  
- Mean   :1.984   Mean   : 0.10975   Mean   :0.2036   Mean   :6.758  
- 3rd Qu.:2.008   3rd Qu.: 0.20695   3rd Qu.:0.2305   3rd Qu.:6.993  
- Max.   :2.048   Max.   : 0.35648   Max.   :0.3358   Max.   :7.297  
+ Min.   :1.837   Min.   :-0.18402   Min.   :0.1242   Min.   :5.564  
+ 1st Qu.:1.973   1st Qu.: 0.03964   1st Qu.:0.1734   1st Qu.:6.649  
+ Median :1.997   Median : 0.09375   Median :0.2025   Median :6.852  
+ Mean   :1.989   Mean   : 0.09052   Mean   :0.2074   Mean   :6.783  
+ 3rd Qu.:2.017   3rd Qu.: 0.15010   3rd Qu.:0.2349   3rd Qu.:6.975  
+ Max.   :2.058   Max.   : 0.35433   Max.   :0.3334   Max.   :7.293  
    median_s1      median_sdiff    
- Min.   :5.531   Min.   :-1.5256  
- 1st Qu.:6.904   1st Qu.: 0.2058  
- Median :7.852   Median : 0.9173  
- Mean   :7.591   Mean   : 0.8328  
- 3rd Qu.:8.249   3rd Qu.: 1.5560  
- Max.   :9.222   Max.   : 2.4738  
-> 
-> 
-> ## dependence plot
-> # library("ggplot2")
-> # dp_lm <- cbind(coefs_lm, tsimdata)
-> # dp_wb <- cbind(coefs_wb, tsimdata)
-> # ggplot(tsimdata) +
-> #   stat_function(fun = function(z1) 0.2 + beta * cos(z1), aes(color = "true treatment\neffect")) +
-> #   geom_point(data = dp_lm, aes(y = aA, x = z1, color = "estimates lm"), alpha = 0.5) +
-> #   geom_point(data = dp_wb, aes(y = median_sdiff, x = z1, color = "estimates wb"), alpha = 0.5)
+ Min.   :5.619   Min.   :-1.1664  
+ 1st Qu.:6.853   1st Qu.: 0.2761  
+ Median :7.501   Median : 0.6648  
+ Mean   :7.459   Mean   : 0.6755  
+ 3rd Qu.:7.984   3rd Qu.: 1.0902  
+ Max.   :9.126   Max.   : 2.5114  
 > 
 > 
 > ## Variable importance
-> of <- function(x, newdata = NULL, weights = NULL, 
-+                perm = NULL, ...) {
-+   - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
-+ }
-> vi_lm <- varimp(frst_lm, risk = of, nperm = 1)
-> plot(data.frame(variable = names(vi_lm), VI = vi_lm))
+> set.seed(123)
+> (vi_lm <- varimp(frst_lm))
+       z1        z2        z3        z4        z5 
+276.42033  94.80836  56.22248  76.87214  49.14115 
+> (vi_wb <- varimp(frst_wb))
+       z1        z2        z3        z4        z5 
+138.89357  61.41739  39.61967  31.26725  29.62056 
 > 
 > proc.time()
    user  system elapsed 
- 64.288   0.188  65.053 
+ 21.248   0.052  21.330 
