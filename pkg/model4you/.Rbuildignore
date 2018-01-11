@@ -4,3 +4,7 @@
 .Rhistory
 R/.Rhistory
 vignettes
+^.*/*._cache
+^.*/*._files
+^.*/cache
+
