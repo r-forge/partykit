@@ -70,11 +70,9 @@ pm_alssurv <- pmodel(frst_alssurv, fun = coeffun)
 
 
 ## Variable importance
-```{r}
+```{r varimp}
 set.seed(123)
-vi_alsfrs <- varimp(frst_alsfrs, 
-                    risk = function(x, ...) -objfun(x, sum = TRUE, ...), 
-                    nperm = 1)
+vi_alsfrs <- varimp(frst_alsfrs)
 var <- names(vi_alsfrs)
 vi_alsfrs_d <- data.frame(variable = factor(var, levels = var[order(vi_alsfrs)]), 
                           VI = vi_alsfrs)
@@ -85,9 +83,7 @@ ggplot(vi_alsfrs_d, aes(x = variable, y = VI)) +
   theme(panel.grid.major.y = element_blank())
 
 
-vi_alssurv <- varimp(frst_alssurv, 
-                     risk = function(x, ...) -objfun(x, sum = TRUE, ...), 
-                     nperm = 1)
+vi_alssurv <- varimp(frst_alssurv)
 var <- names(vi_alssurv)
 vi_alssurv_d <- data.frame(variable = factor(var, levels = var[order(vi_alssurv)]), 
                           VI = vi_alssurv)

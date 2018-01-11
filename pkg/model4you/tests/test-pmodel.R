@@ -38,10 +38,10 @@ basemodel_lm <- lm(y ~ a, data = simdata)
 basemodel_wb <- survreg(Surv(y, cens) ~ a, data = simdata_s)
 
 ## forest
-frst_lm <- pmforest(basemodel_lm, ntree = 40, 
+frst_lm <- pmforest(basemodel_lm, ntree = 10, 
                     perturb = list(replace = FALSE, fraction = 0.632),
                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
-frst_wb <- pmforest(basemodel_wb, ntree = 40, 
+frst_wb <- pmforest(basemodel_wb, ntree = 10, 
                     perturb = list(replace = FALSE, fraction = 0.632),
                     control = ctree_control(mincriterion = 0, lookahead = TRUE))
 
@@ -80,9 +80,5 @@ summary(coefs_wb)
 
 
 ## Variable importance
-of <- function(x, newdata = NULL, weights = NULL, 
-               perm = NULL, ...) {
-  - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
-}
-vi_lm <- varimp(frst_lm, risk = of, nperm = 1)
+vi_lm <- varimp(frst_lm)
 plot(data.frame(variable = names(vi_lm), VI = vi_lm))
