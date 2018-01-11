@@ -7,4 +7,4 @@ vignettes
 ^.*/*._cache
 ^.*/*._files
 ^.*/cache
-
+inst/reproducing_papers/data
