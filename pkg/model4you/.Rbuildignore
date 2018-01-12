@@ -8,3 +8,4 @@ vignettes
 ^.*/*._files
 ^.*/cache
 inst/reproducing_papers/data
+tests/man_model4you.R
