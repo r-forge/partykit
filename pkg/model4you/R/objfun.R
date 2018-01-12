@@ -146,7 +146,7 @@ objfun.lm <- function(x, newdata = NULL, weights = NULL, ...)
     modformula <- Formula::as.Formula(x$call$formula)
     yformula <- formula(modformula, lhs = 1, rhs = 0)
     y <- get_all_vars(yformula, data = newdata)
-    res <- y - yhat
+    res <- as.matrix(y - yhat)
   }
   
   p <- x$rank

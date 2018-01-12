@@ -18,6 +18,7 @@
 #' @param ... passed on to \code{\link{objfun}}.
 #'
 #' @return A vector of 'mean decrease in accuracy' importance scores.
+#' @export
 varimp.pmforest <- function(object, nperm = 1L, OOB = TRUE,
                             risk = function(x, ...) - objfun(x, sum = TRUE, ...), 
                             conditional = FALSE, threshold = .2, ...) {
