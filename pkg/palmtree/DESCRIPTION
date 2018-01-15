@@ -11,5 +11,6 @@ Authors@R: c(person(given = "Heidi", family = "Seibold", role = c("aut", "cre"),
 Description: Model-based trees with global model parameters.
 Depends: R (>= 3.1.0), partykit
 Imports: Formula (>= 1.2-1)
-Suggests: mvtnorm
+Suggests: mvtnorm, psychotools
 License: GPL-2 | GPL-3
+RoxygenNote: 6.0.1
