@@ -410,7 +410,7 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
     }
     mf$nmax <- control$nmax
     ## evaluate model.frame
-    mf[[1L]] <- quote(extree_data)
+    mf[[1L]] <- quote(partykit::extree_data)
 
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)

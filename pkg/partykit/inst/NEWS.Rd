@@ -13,6 +13,8 @@
       the \code{glm} objects are adjusted by correcting the dispersion
       estimate and the degrees of freedom.}
     \item{\code{lookahead} did not work in the presence of missing values.}
+    \item{Calling \code{partykit::ctree} did not work when partykit was not
+      attached.}
   }
   }
 }
