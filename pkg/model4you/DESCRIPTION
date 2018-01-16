@@ -1,5 +1,5 @@
 Package: model4you
-Title: Stratified and Personalised Models Based on Model-Based Trees and Forests.
+Title: Stratified and Personalised Models Based on Model-Based Trees and Forests
 Date: 2018-01-15
 Version: 0.9-0
 Authors@R: c(person(given = "Heidi", family = "Seibold", 
