@@ -129,14 +129,15 @@ newdat <- MathExam[1:5, ]
 @
 
 <<math_pmodl>>=
-forest_math <- pmforest(bmod_math)
-pmod_math <- pmodel(forest_math)
-head(pmod_math)
+set.seed(123)
+forest_math <- pmforest(bmod_math, ntree = 100)
+pmod_coef_math <- pmodel(forest_math)
+head(pmod_coef_math)
 @
 
 
 <<math_dp1, fig.width=4, fig.height=4, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot.", "Bee plot.")>>=
-dpdat_math <- cbind(pmod_math, MathExam)
+dpdat_math <- cbind(pmod_coef_math, MathExam)
 
 ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
   geom_point(alpha = 0.2, size = 1) + 
@@ -158,6 +159,17 @@ ggplot(dpdat_math, aes(x = attempt, y = group2, color = attempt)) +
 ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
   geom_quasirandom(alpha = 0.5) +
   theme(legend.position = "none")
+@
+
+
+<<math_tst, fig.height=5, out.width='.7\\linewidth'>>=
+pmods_math <- pmodel(x = forest_math, fun = identity)
+tst <- test_heterogeneity(forest = forest_math, 
+                          pmodels = pmods_math, 
+                          B = 10) 
+tst$pvalue
+plot(tst)
+tst
 @
 
 
@@ -198,7 +210,8 @@ plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
 @
 
 <<GBSG2_forest>>=
-frst <- pmforest(bmod)
+set.seed(123)
+frst <- pmforest(bmod, ntree = 100)
 @
 
 <<GBSG_pmod1>>=
@@ -248,8 +261,20 @@ do.call(grid.arrange, lapply(dps, function(p) {
 @
 
 
+<<GBSG2_varimp, fig.height=5, out.width='.7\\textwidth'>>=
+set.seed(123)
+vi <- varimp(frst)
+var <- names(vi)
+vi_d <- data.frame(variable = factor(var, levels = var[order(vi)]), 
+                   VI = vi)
+
+ggplot(vi_d, aes(x = variable, y = VI)) + 
+  geom_bar(stat = "identity", width = .1) +
+  coord_flip() +
+  theme(panel.grid.major.y = element_blank())
+@
 
 
-% \bibliography{party}
+
 
 \end{document}
