@@ -13,7 +13,7 @@ test_heterogeneity(forest, pmodels = NULL, data = NULL, B = 100)
 \arguments{
 \item{forest}{pmforest object.}
 
-\item{pmodels}{pmodel.identity object (pmodel(..., fun = identity)).}
+\item{pmodels}{pmodel_identity object (pmodel(..., fun = identity)).}
 
 \item{data}{data.}
 
@@ -27,10 +27,19 @@ test_heterogeneity(forest, pmodels = NULL, data = NULL, B = 100)
 list where the first element is the p-value und the 
 second element is a data.frame with all neccessary infos to
 compute the p-value.
+
+The test statistic is the difference in objective function between
+the base model and the personalised models.
+To compute the distribution under the Null we draw parametric bootstrap 
+samples from the base model. For each bootstrap sample we again compute
+the difference in objective function between the base model and the 
+personalised models. If the difference in the original data is greater
+than the difference in the bootstrap samples, we reject the null-hypothesis.
 }
 \description{
 This is a rudimentary test if there is 
 heterogeneity in the model parameters.
+The null-hypothesis is: the base model is the correct model.
 }
 \examples{
 \dontrun{
@@ -53,9 +62,9 @@ pmods <- pmodel(frst, fun = identity)
 ## purposes.
 tst <- test_heterogeneity(forest = frst, 
                           pmodels = pmods, 
-                          model = mod,
                           B = 10) 
 tst$pvalue
+tst
 plot(tst)
 }
 

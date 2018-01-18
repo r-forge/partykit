@@ -3,15 +3,24 @@
 #'
 #' This is a rudimentary test if there is 
 #' heterogeneity in the model parameters.
+#' The null-hypothesis is: the base model is the correct model.
 #'
 #' @param forest pmforest object.
-#' @param pmodels pmodel.identity object (pmodel(..., fun = identity)).
+#' @param pmodels pmodel_identity object (pmodel(..., fun = identity)).
 #' @param data data.
 #' @param B number of bootstrap samples.
 #'
 #' @return list where the first element is the p-value und the 
 #' second element is a data.frame with all neccessary infos to
 #' compute the p-value.
+#' 
+#' The test statistic is the difference in objective function between
+#' the base model and the personalised models.
+#' To compute the distribution under the Null we draw parametric bootstrap 
+#' samples from the base model. For each bootstrap sample we again compute
+#' the difference in objective function between the base model and the 
+#' personalised models. If the difference in the original data is greater
+#' than the difference in the bootstrap samples, we reject the null-hypothesis.
 #' 
 #' @examples
 #' \dontrun{
@@ -34,9 +43,9 @@
 #' ## purposes.
 #' tst <- test_heterogeneity(forest = frst, 
 #'                           pmodels = pmods, 
-#'                           model = mod,
 #'                           B = 10) 
 #' tst$pvalue
+#' tst
 #' plot(tst)
 #' }
 #' 
@@ -59,29 +68,29 @@ test_heterogeneity <- function(forest, pmodels = NULL, data = NULL, B = 100) {
   }
   
   ## compute log-Likelihoods under the Null-Hypothesis
-  get_loglik_yn <- function(yn) {
+  get_objfun_yn <- function(yn) {
     dat[ , ynam] <- yn
     m_new <- update(model, data = dat)
     frst_new <- update(object = forest, model = m_new, data = dat)
     pmods_new <- pmodel(frst_new, fun = identity)
-    c(base_model = logLik(m_new), 
-      personalised_models = logLik(pmods_new))
+    c(base_model = sum(objfun(m_new)), 
+      personalised_models = sum(objfun(pmods_new)))
   }
-  logliks_null <- sapply(ys_new, get_loglik_yn)
+  objfuns_null <- sapply(ys_new, get_objfun_yn)
   
   ## compute log-Likelihoods for orignial data
-  logliks <- c(base_model = logLik(model), 
-               personalised_models = logLik(pmodels))
+  objfuns <- c(base_model = sum(objfun(model)), 
+               personalised_models = sum(objfun(pmodels)))
   
   ## put all likelihoods in a data.frame with the needed info
-  lls <- rbind.data.frame(logliks, t(logliks_null))
+  lls <- rbind.data.frame(objfuns, t(objfuns_null))
   lls$sim <- grepl("sim", row.names(lls))
   lls$hypothesis <- c("H[1]", "H[0]")[lls$sim + 1]
-  lls$diff <- lls$base_model - lls$personalised_models
+  lls$diff <- lls$personalised_models - lls$base_model 
   
   ## create the return object
-  ret <- list(pvalue = sum(lls$diff[!lls$sim] > lls$diff[lls$sim]) / B,
-              logLiks = lls)
+  ret <- list(pvalue = sum(lls$diff[!lls$sim] < lls$diff[lls$sim]) / B,
+              objfun = lls)
   class(ret) <- "heterogeneity_test"
   return(ret)
 }
@@ -96,7 +105,7 @@ test_heterogeneity <- function(forest, pmodels = NULL, data = NULL, B = 100) {
 #' 
 #' @export
 plot.heterogeneity_test <- function(x, ...) {
-  lls <- x$logLiks
+  lls <- x$objfun
   sim <- lls[lls$sim, ]
   orig <- lls[!lls$sim, ]
   ggplot() + 
@@ -106,7 +115,7 @@ plot.heterogeneity_test <- function(x, ...) {
                linetype = 2) +
     scale_linetype(labels = expression(H[0], data)) + 
     theme(legend.title=element_blank()) +
-    labs(x = "Difference in log-Likelihoods\n between base model and personalised models")
+    labs(x = "Difference in objective functions\n between personalised models and base model")
 }
 
 

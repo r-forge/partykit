@@ -7,7 +7,7 @@
 \alias{objfun.glm}
 \title{Objective function}
 \usage{
-objfun(x, newdata = NULL, ...)
+objfun(x, ...)
 
 \method{objfun}{survreg}(x, newdata = NULL, weights = NULL, ...)
 
@@ -18,9 +18,9 @@ objfun(x, newdata = NULL, ...)
 \arguments{
 \item{x}{model object.}
 
-\item{newdata}{optional. New data frame. Can be useful for model evaluation / benchmarking.}
-
 \item{...}{further arguments passed on to \code{objfun} methods.}
+
+\item{newdata}{optional. New data frame. Can be useful for model evaluation / benchmarking.}
 
 \item{weights}{optional. Prior weights. See \code{\link[stats]{glm}} or \code{\link[stats]{lm}}.}
 

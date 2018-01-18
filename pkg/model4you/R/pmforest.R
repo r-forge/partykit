@@ -51,7 +51,7 @@ pmforest <- function(model, data = NULL, zformula = ~., ntree = 500L,
   ret <- do.call("cforest", args)
   ret$info$model <- model
   ret$info$zformula <- zformula
-  ret$call <- cl
+  ret$info$call <- cl
   class(ret) <- c("pmforest", class(ret))
   
   return(ret)

@@ -58,7 +58,7 @@ rss.default <- function(object, ...) {
 #' logLik(glm.D93)
 #' 
 #' @export
-objfun <- function(x, newdata = NULL, ...)
+objfun <- function(x, ...)
 {
   UseMethod("objfun")
 }

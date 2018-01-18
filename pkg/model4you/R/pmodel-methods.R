@@ -4,27 +4,23 @@
 #' Get the contributions of an objective function (e.g. likelihood contributions)
 #' and the sum thereof (e.g. log-Likelihood).
 #'
-#' @param object object of class pmodel.identity (obtained by \code{pmodel(..., fun = identity)}). 
+#' @param object object of class pmodel_identity (obtained by \code{pmodel(..., fun = identity)}). 
 #' @param ... additional parameters passed on to \code{\link{objfun}}.
 #' @param add_df it is not very clear what the degrees of freedom are in personalised models.
 #'  With this argument you can add/substract degrees of freedom at your convenience. Default
 #'  is \code{0} which means adding up the degrees of freedom of all individual models.
-#' 
-#' @details 
-#' Note that \code{logLik.pmodel.identity} returns the sum of contributions and
-#' thus not neccessarily the log-Likelihood, if the objective function is not
-#' the log-Likelihood. For example if the base model is a linear model (\code{lm})
-#' the objective function are the negative squared residuals and thus 
-#' logLik.pmodel.identity will return the sum of squared residuals.
 #'
 #' For examples see \code{\link{pmodel}}.
 #' 
-objfun.pmodel.identity <- function(object, ...) {
+#' @export
+objfun.pmodel_identity <- function(object, ...) {
   
   nobs <- length(object)
   data <- attr(object, "data")
+  if(is.null(data)) stop("Object pmodel_identity has to have a data attribute for objfun().")
   
-  ofl <- lapply(seq_len(nobs), function(i) objfun(object[[i]], newdata = data[i, ], ...))
+  comp_of <- function(i) objfun(object[[i]], newdata = data[i, ], ...)
+  ofl <- lapply(seq_len(nobs), comp_of)
   of <- unlist(ofl)
   
   attr(of, "class") <- "objfun"
@@ -34,12 +30,18 @@ objfun.pmodel.identity <- function(object, ...) {
   return(of)
 }
 
-#' @rdname objfun.pmodel.identity
+#' @rdname objfun.pmodel_identity
 #' 
 #' @export
-logLik.pmodel.identity <- function(object, add_df = 0, ...) {
+logLik.pmodel_identity <- function(object, add_df = 0, ...) {
   
-  of <- objfun.pmodel.identity(object, ...)
+  islm <- sapply(object, function(x) {
+    cx <- class(x)
+    "lm" %in% cx & !("glm" %in% cx)
+  })
+  if(any(islm)) stop("logLik not yet implemented for pesonalised lm().")
+  
+  of <- objfun.pmodel_identity(object, ...)
   
   structure(
     sum(of),

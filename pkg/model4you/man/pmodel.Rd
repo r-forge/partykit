@@ -85,7 +85,7 @@ if(require("mvtnorm") & require("survival")) {
   
   # compare predictive objective functions of personalised models versus
   # base model
-  logLik(pmodels_lm) # -RSS personalised models
+  sum(objfun(pmodels_lm)) # -RSS personalised models
   sum(objfun(basemodel_lm, newdata = tsimdata)) # -RSS base model
   
   
