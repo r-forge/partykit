@@ -99,71 +99,67 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   # INSERT HERE: ytrafo
   ## wrapper function to apply distfit in extree
   
-  ## FIX ME: new/different structure in extree; necessary input: "y", "x", "offset", "weights", "start"?
-  ytrafo <- function(data, weights = NULL, control) {
+  Y <- d$yx[[1]]
+  if(NCOL(Y) > 1) stop("response variable has to be univariate") 
+  if(inherits(Y, "interval")) stop("can not deal with binned intervals yet") 
+  
+  ytrafo <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
     
-    Y <- data$yx[[1]]
-    if(NCOL(Y) > 1) stop("response variable has to be univariate") 
-    if(inherits(Y, "interval")) stop("can not deal with binned intervals yet") 
+    ys <- Y[subset]
+    subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
+    ## FIX ME: scores with or without weights?
+    # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
+    start <- info$coefficients
     
-    modelscores_decor <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
+    model <- distfit(ys, family = family, weights = subweights, start = start,
+                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                     estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+    
+    if(estfun) {
+      ef <- as.matrix(model$estfun) # distfit returns weighted scores!
       
-      ys <- Y[subset]
-      subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
-      ## FIX ME: scores with or without weights?
-      # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-      start <- info$coefficients
-      
-      model <- distfit(ys, family = family, weights = subweights, start = start,
-                       vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                       estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-      
-      if(estfun) {
-        ef <- as.matrix(model$estfun) # distfit returns weighted scores!
+      if(decorrelate != "none") {
+        n <- NROW(ef)
+        ef <- ef/sqrt(n)
         
-        if(decorrelate != "none") {
-          n <- NROW(ef)
-          ef <- ef/sqrt(n)
-          
-          vcov <- if(decorrelate == "vcov") {
-            vcov(model, type = "link") * n
-          } else {
-            solve(crossprod(ef))
-          }
-          
-          root.matrix <- function(X) {
-            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-              X.eigen <- eigen(X, symmetric = TRUE)
-              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-              sqomega <- sqrt(diag(X.eigen$values))
-              V <- X.eigen$vectors
-              return(V %*% sqomega %*% t(V))
-            }
-          }
-          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        vcov <- if(decorrelate == "vcov") {
+          vcov(model, type = "link") * n
+        } else {
+          solve(crossprod(ef))
         }
         
-        estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data$data)) 
-        estfun[subset,] <- ef
-        ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
-      } else estfun <- NULL
+        root.matrix <- function(X) {
+          if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+            X.eigen <- eigen(X, symmetric = TRUE)
+            if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+            sqomega <- sqrt(diag(X.eigen$values))
+            V <- X.eigen$vectors
+            return(V %*% sqomega %*% t(V))
+          }
+        }
+        ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+      }
       
-      
-      
-      object <-  if(object) model else NULL
-      
-      ret <- list(estfun = estfun,
-                  unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
-                  coefficients = coef(model, type = "parameter"),
-                  objfun = -logLik(model),  # optional function to be minimized 
-                  object = object,
-                  converged = model$converged  # FIX ME: warnings if distfit does not converge
-      )
-      return(ret)
-    }
+      estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(d$data)) 
+      estfun[subset,] <- ef
+      ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
+    } else estfun <- NULL
     
-    return(modelscores_decor)
-  }    
+    
+    
+    object <-  if(object) model else NULL
+    
+    ret <- list(estfun = estfun,
+                unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
+                coefficients = coef(model, type = "parameter"),
+                objfun = -logLik(model),  # optional function to be minimized 
+                object = object,
+                converged = model$converged  # FIX ME: warnings if distfit does not converge
+    )
+    return(ret)
+  }
+
+ 
   
   #############################################
   
@@ -173,9 +169,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   if (is.null(control$update))
     control$update <- TRUE
   nf <- names(formals(ytrafo))
-  if (all(c("data", "weights", "control") %in% nf))     
-    ytrafo <- ytrafo(data = d, weights = weights, control = control)
-  nf <- names(formals(ytrafo))
+  #if (all(c("data", "weights", "control") %in% nf))     
+  #  ytrafo <- ytrafo(data = d, weights = weights, control = control)
+  #nf <- names(formals(ytrafo))
   stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
               all(c("y", "x", "weights", "offset", "start") %in% nf))
   #############################################
@@ -337,7 +333,7 @@ distextree_control <- function(type.tree = NULL,
                                saveinfo = TRUE,
                                bonferroni = TRUE,       # FIX ME: different than extree_control default
                                update = NULL,
-                               splitflavour = c("ctree", "exhaustive"),  # FIX ME: no working function provided yet for "exhaustive" 
+                               splitflavour = c("ctree", "exhaustive"),  
                                testflavour = c("ctree", "mfluc", "guide"),   # FIX ME: "exhaustive"
                                guide_interaction = TRUE,
                                guide_unweighted = FALSE,
@@ -399,7 +395,7 @@ distextree_control <- function(type.tree = NULL,
         } else {
           
           testflavour <- "mfluc"
-          splitflavour <- "ctree"   # no working function provided yet for "exhaustive"
+          splitflavour <- "exhaustive"  
           
           if(FALSE){
             control <- mob_control(alpha = 0.05, 
@@ -498,7 +494,7 @@ distextree_control <- function(type.tree = NULL,
   
   if(testflavour == "guide") {
     
-    if(!criterion == "p.value") stop("For testflavour GUIDE only 'p.value' can be selected as criterion")
+    if(!criterion == "p.value" & guide_interaction) stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
     add_control <- c(add_control,
                      list(guide_interaction = guide_interaction,
                           guide_unweighted = guide_unweighted))
@@ -506,11 +502,11 @@ distextree_control <- function(type.tree = NULL,
   
   
   if (splitflavour == "ctree") splitfun = partykit:::.ctree_split() 
-  if (splitflavour == "exhaustive") splitfun = partykit:::.objfun_test()    ## FIX ME: .objfun_test() requires argument data, write new function
+  if (splitflavour == "exhaustive") splitfun = partykit:::.objfun_split()   
   
   if (testflavour == "ctree") selectfun = partykit:::.ctree_select()
   if (testflavour == "mfluc") selectfun = partykit:::.mfluc_select()
-  if (testflavour == "guide") selectfun = .guide_select()
+  if (testflavour == "guide") selectfun = partykit:::.guide_select()
   
   svselectfun = partykit:::.ctree_select()
   svsplitfun = partykit:::.ctree_split(minbucket = 0)
@@ -547,6 +543,7 @@ distextree_control <- function(type.tree = NULL,
 
 
 
+if(FALSE) {
 # use different version of .select than partykit:::select for GUIDE as selectfun 
 # (returns p.values from curvature and interaction tests instead of p.value and teststatistic)
 .select_g <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
@@ -719,3 +716,4 @@ distextree_control <- function(type.tree = NULL,
   
 }
 
+}
