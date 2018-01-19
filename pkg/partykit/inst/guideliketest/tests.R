@@ -104,14 +104,14 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
   ## FIX ME: get the right data set (d, data, ... ?)
   ytrafo <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
     
-    formula <- formula(d$terms$all)
+    lmformula <- Formula::Formula(d$terms$yx)   ## FIX ME: only regressors for lm, drop splitting variables
     sdata <- d$data[subset,]
     
     ## FIX ME: error in lm if weights are handed over
     ## FIX ME: scores with or without weights?
     #subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     
-    model <- lm(formula = formula, data = sdata) #, weights = subweights) error in lm if weights are handed over
+    model <- lm(formula = lmformula, data = sdata) #, weights = subweights) error in lm if weights are handed over
     
     ## FIX ME: add argument 'decorrelate' to control
     decorrelate <- "vcov"
