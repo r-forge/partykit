@@ -65,7 +65,8 @@ if(FALSE){
   if(length(ctrl$guide_testtype) > 1) ctrl$guide_testtype <- ctrl$guide_testtype[1]
   if(!ctrl$guide_testtype %in% c("max", "sum", "coin")) stop("guide_testtype has to be one of the following options: max, sum, coin")
   
-  if(is.null(ctrl$guide_parm)) ctrl$guide_parm <- c(1:length(data$variables$z))[data$variables$z > 0]
+  if(is.null(ctrl$guide_parm)) ctrl$guide_parm <- data$variables$x - length(data$variables$y)
+  #if(is.null(ctrl$guide_parm)) ctrl$guide_parm <- c(1:length(data$variables$x))[data$variables$x > 0]
   
   if(!ctrl$guide_decorrelate %in% c("vcov", "opg", "none")) stop("guide_decorrelate has to be set to one of the following options: none, vcov, opg")
       
@@ -219,7 +220,7 @@ if(FALSE){
   .guide_test_int <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
     
     ## TO DO: include SPLITONLY, MIA, ... ?
-    ##        add ctrl argument 'guide_parm', a vector of indices of the parameters that should be considered
+    ##        add ctrl argument 'guide_parm', a vector of indices of the parameters that should be considered (only within the regressors, starting at 1)
     
     #ix <- data$zindex[[j]] ### data[[j, type = "index"]]
     #iy <- data$yxindex ### data[["yx", type = "index"]]
