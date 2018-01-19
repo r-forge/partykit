@@ -9,6 +9,7 @@
 #' @param type character denoting the type of predicted value. The terminal node 
 #' is returned for \code{"node"}. If \code{type = "pass"} the model 
 #' predict method is used and arguments can be passed to it via \code{predict_args}.
+#' If \code{type = "coef"} the the model coefficients are returned.
 #' @param predict_args If \code{type = "pass"} arguments can be passed on to the
 #' model predict function.
 #' @param perm an optional character vector of variable names (or integer vector 
@@ -35,26 +36,34 @@ predict.pmtree <- function(object, newdata = NULL, type = "node",
   if(is.null(newdata)) newdata <- object$data
   
   ## response
-  if(type == "pass") {
+  if(type %in% c("pass", "coef")) {
     trdatnodes <- object$fitted["(fitted)"]
     
     # predict outcome using respective models
     unode <- sort(unique(node))
     newdata$.node <- node
     newdata$.id <- seq_len(NROW(newdata))
-    pr <- lapply(unode, function(nd) {
-      
+    
+    prfun <- function(nd, type = "pass") {
       # model
       mod <- update(object$info$model, 
                     subset = (trdatnodes == nd))
       
-      # prediction
-      args <- c(list(object = mod,
-                     newdata = newdata[newdata$.node == nd, ]),
-                predict_args)
-      pred <- do.call(predict, args = args)
-      data.frame(pred, .id = newdata$.id[newdata$.node == nd])
-    })
+      if(type == "coef") {
+        data.frame(t(coef(mod)), 
+                   .id = newdata$.id[newdata$.node == nd], 
+                   check.names = FALSE)
+      } else { # type = "pass"
+        
+        # prediction
+        args <- c(list(object = mod,
+                       newdata = newdata[newdata$.node == nd, ]),
+                  predict_args)
+        pred <- do.call(predict, args = args)
+        data.frame(pred, .id = newdata$.id[newdata$.node == nd])
+      }
+    }
+    pr <- lapply(unode, prfun, type = type)
     pr <- do.call(rbind, pr)
     
     ## return sorted predictions
@@ -352,4 +361,17 @@ print.summary.pmtree <- function(x, digits = 4, ...) {
   if(is.character(x$objfs)) cat(x$objfs) else {
     print(x$objfs)
   }
+}
+
+
+#' @rdname print.pmtree 
+#' 
+#' @export
+coef.pmtree <- function(object, node = NULL, ...) {
+  
+  ids <- if(is.null(node)) nodeids(object, terminal = TRUE) else node
+  info <- nodeapply(object, ids = ids, function(x) x$info)
+  
+  ## coefficients
+  t(sapply(info, function(x) x$coefficients))
 }

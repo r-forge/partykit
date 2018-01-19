@@ -16,6 +16,10 @@ plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
 summary(tr)
 summary(tr, node = 1:2)
 
+coef(tr)
+coef(tr, node = 1)
+coef(bmod)
+
 logLik(bmod)
 logLik(tr)
 

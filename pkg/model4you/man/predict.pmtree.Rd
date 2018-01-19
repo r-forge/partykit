@@ -15,7 +15,8 @@ which to predict, if omitted, \code{object$data} is used.}
 
 \item{type}{character denoting the type of predicted value. The terminal node 
 is returned for \code{"node"}. If \code{type = "pass"} the model 
-predict method is used and arguments can be passed to it via \code{predict_args}.}
+predict method is used and arguments can be passed to it via \code{predict_args}.
+If \code{type = "coef"} the the model coefficients are returned.}
 
 \item{predict_args}{If \code{type = "pass"} arguments can be passed on to the
 model predict function.}

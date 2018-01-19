@@ -4,6 +4,7 @@
 \alias{print.pmtree}
 \alias{summary.pmtree}
 \alias{print.summary.pmtree}
+\alias{coef.pmtree}
 \title{Methods for pmtree}
 \usage{
 \method{print}{pmtree}(x, node = NULL, FUN = NULL,
@@ -12,6 +13,8 @@
 \method{summary}{pmtree}(object, node = NULL, ...)
 
 \method{print}{summary.pmtree}(x, digits = 4, ...)
+
+\method{coef}{pmtree}(object, node = NULL, ...)
 }
 \arguments{
 \item{x}{object.}
