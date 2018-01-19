@@ -5,12 +5,12 @@
 \alias{logLik.pmodel_identity}
 \title{Objective function of personalised models}
 \usage{
-\method{objfun}{pmodel_identity}(object, ...)
+\method{objfun}{pmodel_identity}(x, ...)
 
 \method{logLik}{pmodel_identity}(object, add_df = 0, ...)
 }
 \arguments{
-\item{object}{object of class pmodel_identity (obtained by \code{pmodel(..., fun = identity)}).}
+\item{x, object}{object of class pmodel_identity (obtained by \code{pmodel(..., fun = identity)}).}
 
 \item{...}{additional parameters passed on to \code{\link{objfun}}.}
 

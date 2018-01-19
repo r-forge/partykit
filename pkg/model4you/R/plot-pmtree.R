@@ -278,7 +278,7 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
 #' @importFrom Formula as.Formula 
 #' @export
 coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
-                         yrange = NULL) {
+                       yrange = NULL) {
   cl <- class(mod)
   if(!("coxph" %in% cl)) stop("model should be of class coxph, but is of class ", cl)
   
@@ -363,11 +363,15 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
   dat <- obj$data
   
   if(! "yrange" %in% names(dots)) {
-    modcall <- getCall(mod)
-    modformula <- as.Formula(eval(modcall$formula))
-    yformula <- formula(modformula, lhs = 1, rhs = 0)
-    ydat <- get_all_vars(yformula, data = dat)
-    dots$yrange <- range(ydat)
+    if("glm" %in% class(mod) && stats::family(mod)$family == "binomial") {
+      dots$yrange <- c(0, 1)
+    } else {
+      modcall <- getCall(mod)
+      modformula <- as.Formula(eval(modcall$formula))
+      yformula <- formula(modformula, lhs = 1, rhs = 0)
+      ydat <- get_all_vars(yformula, data = dat)
+      dots$yrange <- range(ydat)
+    }
   }
   
   ### panel function for the inner nodes
