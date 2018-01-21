@@ -1,9 +1,13 @@
 library("partykit")
+library("Formula")
 
 comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"), 
                       subset, weights, 
                       guide_testtype = c("sum", "max", "coin"), 
-                      decorrelate = "vcov"){
+                      decorrelate = "vcov",
+                      guide_parm = NULL,
+                      xgroups = NULL,
+                      ygroups = NULL){
   
   na.action = na.pass
   converged = NULL
@@ -23,11 +27,17 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
     
     control <- partykit:::extree_control(criterion = "p.value",
                                          selectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
-                                                                   guide_testtype = guide_testtype),  
+                                                                   guide_testtype = guide_testtype,
+                                                                   guide_parm = guide_parm,
+                                                                   xgroups = xgroups,
+                                                                   ygroups = ygroups),  
                                          splitfun = partykit:::.objfun_split(restart = TRUE,
                                                                              intersplit = TRUE),
                                          svselectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
-                                                                     guide_testtype = guide_testtype), 
+                                                                     guide_testtype = guide_testtype,
+                                                                     guide_parm = guide_parm,
+                                                                     xgroups = xgroups,
+                                                                     ygroups = ygroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
@@ -83,13 +93,16 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
   }
   
   
+  control$inner <- "object"
+  control$temrinal <- "object"
+  
   ## set up model.frame() call
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data", "subset", "weights"), names(mf), 0L)
   mf <- mf[c(1L, m)]
-  mf$yx <- "none"
-  
+  mf$yx <- "matrix"
   mf$nmax <- control$nmax
+  mf$ytype <- control$ytype
   ## evaluate model.frame
   mf[[1L]] <- quote(partykit::extree_data)
   
@@ -101,10 +114,9 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
   if (is.null(control$update)) control$update <- TRUE
   
   # wrapper function to use lm() as trafo
-  ## FIX ME: get the right data set (d, data, ... ?)
   ytrafo <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
     
-    lmformula <- Formula::Formula(d$terms$yx)   ## FIX ME: only regressors for lm, drop splitting variables
+    lmformula <- if(is.null(d$terms$yx)) Formula(d$terms$all) else Formula(d$terms$yx)   ## FIX ME: only regressors for lm, drop splitting variables
     sdata <- d$data[subset,]
     
     ## FIX ME: error in lm if weights are handed over
@@ -169,36 +181,110 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
   
   
   converged <- TRUE
+  control$model <- TRUE
   
   update <- function(subset, weights, control, doFit = TRUE)
     extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
                subset = subset, weights = weights, ctrl = control, doFit = doFit)
   if (!doFit) return(list(d = d, update = update))
+  
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
-  tree <- tree$nodes
   
+  ### prepare as modelparty
   mf <- model.frame(d)
-  if (is.null(weights)) weights <- rep(1, nrow(mf))
+  if (length(weights) == 0) weights <- rep(1, nrow(mf))
   
-  fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
+  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf),
                        "(weights)" = weights,
                        check.names = FALSE)
-  fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
-  names(fitted)[3] <- "(response)"
-  ret <- party(tree, data = mf, fitted = fitted, 
-               info = list(call = match.call(), control = control))
-  ret$update <- update
-  ret$trafo <- trafo
-  class(ret) <- c("constparty", class(ret))
   
-  ### doesn't work for Surv objects
-  # ret$terms <- terms(formula, data = mf)
-  ret$terms <- d$terms$all
-  ### need to adjust print and plot methods
-  ### for multivariate responses
-  ### if (length(response) > 1) class(ret) <- "party"
-  return(ret)
+  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE]
+  names(fitted)[3] <- "(response)"
+  
+  control$ytype <- ifelse(is.vector(y), "vector", class(y))
+  # x <- model.matrix(modelf, data = mmf)
+  control$xtype <- "matrix" # TODO: find out when to use data.frame
+  
+  ## return party object
+  rval <- party(tree$nodes, 
+                data = if(control$model) mf else mf[0,],
+                fitted = fitted,
+                terms = d$terms$all,
+                info = list(
+                  call = match.call(),
+                  formula = formula,
+                  Formula = as.Formula(formula),
+                  terms = list(response = d$terms$yx, partitioning = d$terms$z),
+                  fit = ytrafo,
+                  control = control,
+                  dots = list(),
+                  nreg = NCOL(d$yx$x)
+                )
+  )
+  class(rval) <- c("modelparty", class(rval))
+  
+  ### add modelinfo (object) and estfun if not there yet, but wanted
+  # TODO: check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+  
+  idx <- lapply(which_all, partykit:::.get_path, obj = tree$nodes)
+  names(idx) <- which_all
+  tree_ret <- unclass(rval)
+  subset_term <- predict(rval, type = "node")
+  
+  for (i in which_all) {
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+    
+    if (i %in% which_terminals) winfo <- "object" else winfo <- control$inner
+    #if (i %in% which_terminals) winfo <- control$terminal else winfo <- control$inner
+    
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) | 
+          any(! winfo %in% names(iinfo))) {
+        iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
+                       estfun = ("estfun" %in% winfo),
+                       object = ("object" %in% winfo))
+      }
+    }
+    
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
+  }
+  
+  class(tree_ret) <- class(rval)
+  
+  return(tree_ret)
+  
+  if(FALSE){
+    tree <- tree$nodes
+    
+    mf <- model.frame(d)
+    if (is.null(weights)) weights <- rep(1, nrow(mf))
+    
+    fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
+                         "(weights)" = weights,
+                         check.names = FALSE)
+    fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
+    names(fitted)[3] <- "(response)"
+    ret <- party(tree, data = mf, fitted = fitted, 
+                 info = list(call = match.call(), control = control))
+    ret$update <- update
+    ret$trafo <- trafo
+    class(ret) <- c("constparty", class(ret))
+    
+    ### doesn't work for Surv objects
+    # ret$terms <- terms(formula, data = mf)
+    ret$terms <- d$terms$all
+    ### need to adjust print and plot methods
+    ### for multivariate responses
+    ### if (length(response) > 1) class(ret) <- "party"
+    return(ret)
+  }
   
 }
 
@@ -245,7 +331,7 @@ dgp <- function(n = 100, delta = 1, xi = 0,
   z9 <- runif(n, -1, 1)
   z10 <- runif(n, -1, 1)
   
-  if(!only_intercept)  x <- if(binary_regressor) rbinom(n, 1, 0.5) else runif(100, min = -1, max = 1)
+  if(!only_intercept)  x <- if(binary_regressor) (-1)^rbinom(n, 1, 0.5) else runif(100, min = -1, max = 1)
   
   e <- rnorm(n, 0, sigma)
   
@@ -272,7 +358,9 @@ dgp <- function(n = 100, delta = 1, xi = 0,
   
   y <- if(only_intercept) beta0 + e else beta0 + beta1 * x + e
   
-  d <- data.frame(y = y, x = x, z1 = z1, z2 = z2, z3 = z3, z4 = z4, z5 = z5, z6 = z6, z7 = z7, z8 = z8, z9 = z9, z10 = z10)
+  d <- data.frame(y = y, x = x, 
+                  z1 = z1, z2 = z2, z3 = z3, z4 = z4, z5 = z5, z6 = z6, z7 = z7, z8 = z8, z9 = z9, z10 = z10,
+                  beta0 = beta0, beta1 = beta1)
     
   return(d)
 }
@@ -284,12 +372,21 @@ dgp <- function(n = 100, delta = 1, xi = 0,
 # compare
 
 d <- dgp(400, vary_beta = "beta1", beta0 = 3)
-d <- dgp(400, vary_beta = "all")
+d <- dgp(400, vary_beta = "all", xi = -0.5)
+d <- dgp(1000, vary_beta = "all", xi = -0.5, binary_regressor = FALSE)
+d <- dgp(1000, vary_beta = "all", xi = -0.0, binary_regressor = FALSE)
 
-ctest <- comptests(y~x|z1, data = d, testfun = "ctree")
-mtest <- comptests(y~x|z1, data = d, testfun = "mfluc")
-gstest <- comptests(y~x|z1, data = d, testfun = "guide", guide_testtype = "sum")
-gmtest <- comptests(y~x|z1, data = d, testfun = "guide", guide_testtype = "max")
+d <- dgp(400, vary_beta = "all", xi = -0.4, delta = 3, binary_regressor = TRUE)
+
+
+ctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree")
+mtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc")
+gstest <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                    guide_testtype = "sum", guide_parm = c(1,2),
+                    xgroups = NULL, ygroups = NULL)
+gmtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                    guide_testtype = "max", guide_parm = c(1,2),
+                    xgroups = NULL, ygroups = NULL)
 
 ctest
 
@@ -297,6 +394,11 @@ plot(ctest)
 plot(mtest)
 plot(gmtest)
 plot(gstest)
+
+plot(ctest, terminal_panel = node_bivplot)
+plot(mtest, terminal_panel = node_bivplot)
+plot(gmtest, terminal_panel = node_bivplot)
+plot(gstest, terminal_panel = node_bivplot)
 
 
 
