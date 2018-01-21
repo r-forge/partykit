@@ -65,8 +65,11 @@ if(FALSE){
   if(length(ctrl$guide_testtype) > 1) ctrl$guide_testtype <- ctrl$guide_testtype[1]
   if(!ctrl$guide_testtype %in% c("max", "sum", "coin")) stop("guide_testtype has to be one of the following options: max, sum, coin")
   
-  if(is.null(ctrl$guide_parm)) ctrl$guide_parm <- data$variables$x - length(data$variables$y)
-  #if(is.null(ctrl$guide_parm)) ctrl$guide_parm <- c(1:length(data$variables$x))[data$variables$x > 0]
+  if(is.null(ctrl$guide_parm)) {
+    # indices of residuals to be considered (for intercept and regressors)
+    if(length(data$variables$x) > 0) ctrl$guide_parm <- c(1, data$variables$x - length(data$variables$y) + 1)
+    if(length(data$variables$x)== 0) ctrl$guide_parm <- c(1, c(1:length(data$variables$z))[data$variables$z > 0] - length(data$variables$y) + 1)
+  }
   
   if(!ctrl$guide_decorrelate %in% c("vcov", "opg", "none")) stop("guide_decorrelate has to be set to one of the following options: none, vcov, opg")
       
@@ -127,24 +130,56 @@ if(FALSE){
   # and Teststatistic = 0
   if(length(unique(x))<2) return(list(p.value = log(1-1), statistic = log(0)))
   
-  # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
-  # separately for each parameter
-  Ybin <- data.frame(factor(Y[,ctrl$guide_parm[1]]>0))
-  colnames(Ybin)[NCOL(Ybin)] <- paste0("rp", ctrl$guide_parm[1])
-  if(length(ctrl$guide_parm)>1){
-    for(k in ctrl$guide_parm[-1]){
-      respos <- factor(Y[,k]>0)
-      Ybin <- cbind(Ybin, respos)
-      colnames(Ybin)[NCOL(Ybin)] <- paste0("rp",k)
+  
+  # categorize residuals
+  if(is.null(ctrl$ygroups)){
+    # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
+    # separately for each parameter
+    Ybin <- data.frame(factor(Y[,ctrl$guide_parm[1]]>0))
+    colnames(Ybin)[NCOL(Ybin)] <- paste0("rp", ctrl$guide_parm[1])
+    
+    if(length(ctrl$guide_parm)>1){
+      for(k in ctrl$guide_parm[-1]){
+        respos <- factor(Y[,k]>0)
+        Ybin <- cbind(Ybin, respos)
+        colnames(Ybin)[NCOL(Ybin)] <- paste0("rp",k)
+      }
+    }  
+    
+  } else {
+    
+    if(length(ctrl$ygroups)>1) ybreaks <- ctrl$ygroups
+    if(length(ctrl$ygroups)==1) ybreaks <- quantile(Y, c(0:ctrl$ygroups)/ctrl$ygroups)
+    
+    # split Y according to ybreaks
+    # separately for each parameter
+    Ybin <- data.frame(cut(Y[,1], breaks = ybreaks, labels = c(1:ctrl$ygroups), include.lowest = TRUE))
+    colnames(Ybin)[NCOL(Ybin)] <- paste0("res", ctrl$guide_parm[1])
+    
+    if(length(ctrl$guide_parm)>1){
+      for(k in ctrl$guide_parm[-1]){
+        respos <- cut(Y[,k], breaks = ybreaks, labels = c(1:ctrl$ygroups), include.lowest = TRUE)
+        Ybin <- cbind(Ybin, respos)
+        colnames(Ybin)[NCOL(Ybin)] <- paste0("res",k)
+      }
     }
-  }  
+  }    
+    
+    
+  # categorize split variable
+  if(is.null(ctrl$xgroups)) ctrl$xgroups <- 4
+  if(length(ctrl$xgroups)>1) {
+    xbreaks <- ctrl$xgroups
+  } else {
+    xbreaks <- quantile(x, c(0:ctrl$xgroups)/ctrl$xgroups)
+  }
   
   if(is.numeric(x)){
-    x_cat <- cut(x, breaks = quantile(x, c(0:4/4)), labels = c(1:4), include.lowest = TRUE)
+    x_cat <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
   } else {
     x_cat <- x
   }
-  
+
   
   ## compute curvature test (for each parameter separately)
   ## TO DO: depending on ctrl argument use chisq.test or coin::independence_test
