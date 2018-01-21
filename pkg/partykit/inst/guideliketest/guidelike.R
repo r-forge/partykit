@@ -52,7 +52,7 @@ if(FALSE){
   ## test function returning 'p.value' = log(1-pval) and 'statistic' = log(stat) of independence tests
   
   
-  ## TO DO:  - include input arguments xgroups and ygroups
+  ## TO DO:  - fix option coin
   #          - include SPLITONLY, MIA, ... ?
   
   #ix <- data$zindex[[j]] ### data[[j, type = "index"]]
@@ -185,7 +185,8 @@ if(FALSE){
   ## TO DO: depending on ctrl argument use chisq.test or coin::independence_test
   
   if(ctrl$guide_testtype == "coin"){
-    tst_curv <- coin:::independence_test(x_cat ~ Ybin)
+    ip <- new("IndependenceProblem", x=data.frame(x_cat = x_cat), y=Ybin)
+    tst_curv <- coin:::independence_test(ip)
     ret <- list(p.value = log(1 - as.numeric(coin::pvalue(tst_curv))), statistic = log(as.numeric(coin::statistic(tst_curv)))) 
   }
   
