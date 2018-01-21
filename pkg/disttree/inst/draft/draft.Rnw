@@ -1322,7 +1322,7 @@ Forest models differ mainly in the way how the trees are combined to make predic
 %Similar observations have a high probability of ending up in the same terminal node whereas this probability is low for quite different observations. 
 %although the first random forest-type algorithm for the estimation of conditional distribution functions was published more than a decade ago (“bagging survival trees”, Hothorn et al. 2004). 
 In particular, for a new set of covariates $\bold{z} = (z_1, \ldots, z_m) $ such a set of weights 
-$\bold{w}^{\text{forest}}~=~(w^{\text{forest}}_1, \ldots, w^{\text{forest}}_n)$ is obtained by the following procedure: For each tuple $(y_j,\bold{z}_j)$ in the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated by counting the number of trees in which $(y_j,\bold{z}_j)$ ends up in the same terminal node as the new set of covariates $\bold{z}$:
+$\bold{w}^{\text{forest}}~=~(w^{\text{forest}}_1, \ldots, w^{\text{forest}}_n)$ is obtained by the following procedure: For each tuple $(y_i,\bold{z}_i)$ in the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated by counting the number of trees in which $(y_i,\bold{z}_i)$ ends up in the same terminal node as the new set of covariates $\bold{z}$:
 $$
 w^{\text{forest}}_i(\bold{z}) = \sum_{s=1}^T \sum_{b=1}^{B^s} I((\bold{z}_i \in \mathcal{B}^s_b) \land (\bold{z} \in \mathcal{B}^s_b))
 $$
@@ -1710,8 +1710,8 @@ Observations are available on a daily basis, each observation representing the t
 %The data set consists of daily 24h precipitation sums for the month of July from 28 years, starting in 1985 until 2012, both years included. The observations were measured at 95 (?) stations all over Tyrol (and regions close to the frontier). The considered data is provided by .....
 %Next to the variable of interest which is the measured total precipitation within 24 hours of each day (measured from 6 UTC to 6 UTC of the following day), numerical forecasts (from ... ) are used as covariates. These forecasts are ensemble predictions consisting of ... individual forecasts based on varying/perturbed initial conditions.\\
 
-In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. dev., ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
-Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. dev. of mean/minimal/maximal values respectively. Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.
+In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. deviation, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
+Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. deviation of mean/minimal/maximal values respectively. Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.
 
 %%% <TH> hm, now we _are_ using a transformation model without estimating the
 %%% transformation. </TH>
@@ -1726,21 +1726,21 @@ To remove large parts of the skewness of precipitation data, a power transformat
 Basic covariates & {\#} & Variations\\
 \hline
 \emph{tp}: total precipitation            & 12  & ensemble mean of sums over 24h, \\
-\hspace*{0.5cm} power transformed (by $\frac{1}{1.6}$) &    & ensemble std. dev. of sums over 24h, \\ 
+\hspace*{0.5cm} power transformed (by $\frac{1}{1.6}$) &    & ensemble std. deviation of sums over 24h, \\ 
 \emph{cape}: convective available     &    & ensemble minimum of sums over 24h, \\
 \hspace*{0.9cm} potential energy &    & ensemble maximum of sums over 24h\\
 \hspace*{0.9cm} power transformed (by $\frac{1}{1.6}$)&    & \qquad all for 6--30 UTC\\
 \hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
-\hspace*{\fill}                            &    & ensemble std. dev. of sums over 6h\\
+\hspace*{\fill}                            &    & ensemble std. deviation of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 UTC\\
 \hline
 \emph{dswrf}: downwards short wave      & 6 & ensemble mean of mean values, \\
 \hspace*{1.13cm} radiation flux (``sunshine'') &   & ensemble mean of minimal values,\\
 \emph{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
-\emph{pwat}: preciptable water          &   & ensemble std. dev. of mean values,\\
-\emph{tmax}: 2m maximum temperature     &   & ensemble std. dev. of minimal values,\\
-\hspace*{1.15cm}                          &   & ensemble std. dev. of maximal values,\\
+\emph{pwat}: preciptable water          &   & ensemble std. deviation of mean values,\\
+\emph{tmax}: 2m maximum temperature     &   & ensemble std. deviation of minimal values,\\
+\hspace*{1.15cm}                          &   & ensemble std. deviation of maximal values,\\
 \emph{tcolc}: total column-integrated   &   & \qquad all over 6--30 UTC \\
 \hspace*{0.95cm} condensate               &   & \\
 \emph{t500}: temperature on 500 hPa     &   & \\
@@ -1899,38 +1899,6 @@ pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS"
 \end{center}
 \end{figure}
 
-%\begin{figure}[t!]
-%\begin{subfigure}{0.5\textwidth}
-%<<rain_axams_qqr_insample, fig=TRUE, echo=FALSE>>=
-%# in sample
-%set.seed(7)
-%par(mfrow = c(2,2))
-%set.seed(1)
-%qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
-%qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
-%qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
-%qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
-
-%@
-%\caption{\label{qqr_insample} QQR-Plot for station Axams (in sample)}
-%\end{figure}
-
-%\begin{figure}[t!]
-%%\begin{subfigure}{0.5\textwidth}
-%<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE>>=
-%    
-%# out of sample
-%set.seed(7)
-%par(mfrow = c(2,2))
-%set.seed(1)
-%qqrplot(pit_df_t, nsim = 1, main = "distforest (out of bag)")
-%qqrplot(pit_g_t, nsim = 1, main = "gamlss (out of bag)")
-%qqrplot(pit_gb_t, nsim = 1, main = "gamboostLSS (out of bag)")
-%qqrplot(pit_ml_t, nsim = 1, main = "EMOS (out of bag)")
-
-%@
-%\caption{\label{qqr_oosample} QQR-Plot for station Axams (out of sample)}
-%\end{figure}
 
 
   
@@ -2281,8 +2249,45 @@ The corresponding implementation to the novel methods presented in this article 
 %\newpage
 \bibliography{ref.bib}
 
+
 %\newpage
-%\section*{Appendix}
+\section*{Appendix}
+
+%\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+%<<rain_axams_qqr_insample, fig=TRUE, echo=FALSE>>=
+%# in sample
+%set.seed(7)
+%par(mfrow = c(2,2))
+%set.seed(1)
+%qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
+%qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
+%qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
+%qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
+
+%@
+%\caption{\label{qqr_insample} QQR-Plot for station Axams (in sample)}
+%\end{figure}
+
+\begin{figure}[t!]
+\begin{center}
+%\begin{subfigure}{0.8\textwidth}
+<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
+
+# out of sample
+set.seed(7)
+par(mfrow = c(2,2))
+set.seed(1)
+qqrplot(pit_df_t, nsim = 1, main = "distributional forest", ylim = c(-5,5))
+qqrplot(pit_g_t, nsim = 1, main = "prespecified GAM", ylim = c(-5,5))
+qqrplot(pit_gb_t, nsim = 1, main = "boosted GAM", ylim = c(-5,5))
+qqrplot(pit_ml_t, nsim = 1, main = "EMOS", ylim = c(-5,5))
+
+@
+\caption{\label{qqr_oosample} Out-of-sample QQR-plot for station Axams assessed in 2009--2012 based on models learned on data from 1985--2008.}
+\end{center}
+\end{figure}
+
 
 %\begin{figure}[h!]
 %\begin{center}
