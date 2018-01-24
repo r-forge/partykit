@@ -640,6 +640,7 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 
 
 \title{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
+\Shorttitle{Distributional Regression Forests for Probabilistic Precipitation Forecasting}
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
    \And Torsten Hothorn\\Universit\"at Z\"urich
@@ -698,7 +699,7 @@ Applying these novel approaches to precipitation data in a mountainous region wi
 
 \SweaveOpts{eval = TRUE}
 \section{Introduction}
-In regression analysis various models have been developed to describe the relationship between a response variable and a (set of) covariate(s). Starting from linear models (LM) being extended to generalized linear models (GLM) the limitation to model only linear effects has lead to the development of generalized additive models (GAM) also capturing non-linear effects. In Figure~\ref{Devel_parmod} this development is illustrated for the case of one covariate. In the left picture the expected value of the response variable is modeled by a linear function in the covariate. In the middle a GAM is applied where a smooth function allows for more flexibility. 
+In regression analysis various models have been developed to describe the relationship between a response variable and a set of covariates. Starting from linear models (LM) being extended to generalized linear models (GLM) the limitation to model only linear effects has lead to the development of generalized additive models (GAM) also capturing non-linear effects. In Figure~\ref{Devel_parmod} this development is illustrated for the case of one covariate. In the left picture the expected value of the response variable is modeled by a linear function in the covariate. In the middle a GAM is applied where a smooth function allows for more flexibility. 
 
 These models consider only the expectation of the underlying distribution, however, in recent years there has been a paradigm shift from regression models for the mean to distributional regression approaches for probabilistic forecasting. For example in the field of precipitation forecasting linear models such as ensemble model output statistics (EMOS, \citealt{gneiting2005calibrated}) usually acting on the assumption of a normally distributed response variable allow for both parameters, the mean and the variance, to depend linearly on covariates. Based on the resulting model the probability of precipitation can be estimated as well as the expected amount of precipitation. Therefore, these models provide common and widely used tools, also due to their intuitive structure and interpretability. However, the restriction to model only linear effects has risen the interest in applying more flexible models. Generalized additive models for location, scale and shape (GAMLSS, \citealt{stasinopoulos2005}) offer a framework in which each distribution parameter can be modeled separately by its own GAM as illustrated in the right plot of Figure~\ref{Devel_parmod}. These flexible parametric methods provide well fitting models when applied on precipitation data in a rather smooth and homogeneous setting, e.g. areas where no abrupt changes in meteorological/climatological events appear. However, for example in complex terrain in mountainous regions various factors can change rapidly and their effects are difficult to be represented by a smooth parametric model. In this situation a different approach which can deal with these abrupt changes would be to apply tree-structured models such as regression trees (\citealt{breiman1984classification})
 %%%<TH> citation Loh does not fit, maybe omit citations anyway </TH>
@@ -812,7 +813,7 @@ GAMLSS
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
 \end{tikzpicture}
-\caption{\label{Devel_parmod}Development in the field of parametric modeling: (Generalized) linear models (LM, GLM; left), generalized additive models (GAM; middle), generalized additive models for location, scale, and shape (GAMLSS; right).}
+\caption{\label{Devel_parmod}Parametric modeling developments. (Generalized) linear models (left), generalized additive models (middle), generalized additive models for location, scale, and shape (right).}
 \end{figure}
 
 
@@ -947,7 +948,7 @@ Distributional Tree
 \draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](0,-2.4)--(0,-3.2);
 \draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](2.2,-5.4)--(7.9,-2.5);
 \end{tikzpicture}
-\caption{\label{Devel_treeforest}Development in the field of algorithmic trees and forests: regression tree (top left), distributional tree (bottom), random forest (top middle), distributional forest (top right).}
+\caption{\label{Devel_treeforest}Tree and forest developments. Regression tree (top left), distributional tree (bottom), random forest (top middle), distributional forest (top right).}
 \end{figure}
 
 
@@ -1208,7 +1209,7 @@ text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)
 text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)
 text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 @
-\caption{\label{axams_onestation}Predictions of total precipitation at station Axams for July 24 in 2009, 2010, 2011 and 2012 by a distributional forest learned on data from 1985--2008. Observations and predictions are left censored at 0. The corresponding point mass is shown at the censoring point (0).}
+\caption{\label{axams_onestation}Predictions of total precipitation at station Axams for July 24 in 2009, 2010, 2011 and 2012 by a distributional forest learned on data from 1985--2008. Observations are left censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
 \end{center}
 \end{figure}
 
@@ -1799,7 +1800,7 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 \textbf{EMOS} & linear & \emph{tp{\_}mean} & \emph{tp{\_}sprd} \\
 \hline
 \end{tabular}
-\caption[Table caption text]{Table of applied methods together with their type (way of including the covariates) and the included covariates for each distribution parameter.}
+\caption[Table caption text]{Overview of models with type of covariate dependency and included covariates for each distribution parameter.}
 \label{model_specification}
 %}
 \end{center}
@@ -1839,11 +1840,12 @@ As shown in Table~\ref{model_specification} the distributional forest includes a
 
 \begin{figure}[t!]
 \begin{center}
-%\begin{subfigure}{0.7\textwidth}
+%\begin{subfigure}{0.65\textwidth}
 <<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
 par(mar = c(2,10,2,2))
 barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
         horiz = TRUE, las = 1, cex.names = 1.2, axes = FALSE,
+        xlab = "Variable importance: mean decrease in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
         names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
 axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
@@ -1855,7 +1857,7 @@ axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
 %plot(x = sp1[,id_mi[1]], y = sp1[, "sigma"], type = "l", xlab = names_mi[1], ylab = %"sigma")
 %@
 %\end{subfigure}
-\caption{\label{varimp} Variable importance of the distributional forest for station Axams learned on data from 1985--2008 and assessed in 2009--2012 based on mean decrease in accuracy regarding the CRPS (top 10 list).}
+\caption{\label{varimp} CRPS based variable importance for the top 10 covariates in the distributional forest. Based on data for station Axams, learning period 1985--2008 and assessed in 2009--2012.}
 \end{center}
 \end{figure}
 
@@ -1895,7 +1897,7 @@ pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS"
       
 @
 %\end{subfigure}
-\caption{\label{pit_oosample}Out-of-sample PIT histograms for station Axams assessed in 2009--2012 based on models learned on data from 1985--2008.}
+\caption{\label{pit_oosample}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
 \end{center}
 \end{figure}
 
@@ -1956,7 +1958,7 @@ boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
 \center
-\caption{\label{boxplots_crps_axams}CRPS skills score with reference model EMOS from the 10 times 7-fold cross validation at station Axams.}
+\caption{\label{boxplots_crps_axams}CRPS skills score from the 10 times 7-fold cross validation at station Axams (1985--2012). The horizontal orange line pertains to the reference model EMOS.}
 \end{center}
 \end{figure}
 
@@ -2064,7 +2066,7 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
   abline(h = 0, col = pal["EMOS"], lwd = 2)
     
 @
-\caption{\label{boxplot_crps_all}CRPS skills score over all stations with reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
+\caption{\label{boxplot_crps_all}CRPS skills score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in greend and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
 \end{center}
 \end{figure}
 
@@ -2092,7 +2094,7 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
   axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
   
 @
-\caption{\label{map}Map of Tyrol with all observation stations. The type of symbol indicates which model performed best with respect to the CRPS. The color indicates the difference of the CRPS of the distributional forest and the CRPS of the best performing among the other three models (prespecified GAM, boosted GAM and EMOS).}
+\caption{\label{map}Map of Tyrol showing which model performed best at which station (type of symbol). The color codes whether the distributional forest had lower or higher CRPS (red or blue) compared to the best of the other three models (prespecified GAM, boosted GAM and EMOS).}
 \end{center}
 \end{figure}
 
@@ -2277,14 +2279,14 @@ The corresponding implementation to the novel methods presented in this article 
 # out of sample
 set.seed(7)
 par(mfrow = c(2,2))
-set.seed(1)
-qqrplot(pit_df_t, nsim = 1, main = "distributional forest", ylim = c(-5,5))
-qqrplot(pit_g_t, nsim = 1, main = "prespecified GAM", ylim = c(-5,5))
-qqrplot(pit_gb_t, nsim = 1, main = "boosted GAM", ylim = c(-5,5))
-qqrplot(pit_ml_t, nsim = 1, main = "EMOS", ylim = c(-5,5))
+qqrplot(pit_df_t, nsim = 100, main = "distributional forest", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_g_t, nsim = 100, main = "prespecified GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_gb_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
 
+qqrplot(pit_ml_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
 @
-\caption{\label{qqr_oosample} Out-of-sample QQR-plot for station Axams assessed in 2009--2012 based on models learned on data from 1985--2008.}
+\caption{\label{qqr_oosample} Out-of-sample residual QQ-plot (2009--2012) for station Axams based on models learned on data from 1985--2008.}
 \end{center}
 \end{figure}
 
