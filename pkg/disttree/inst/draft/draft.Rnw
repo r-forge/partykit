@@ -1275,10 +1275,10 @@ $$
 $$
 where each segment is represented by a terminal node of the tree.
 
-The exact way of determining how and where to split varies across different tree algorithms. For distributional trees, one of two algorithms can be chosen as a framework to build the tree: either the MOB algorithm (\citealt{zeileis2008model}) or the ctree algorithm (\citealt{hothorn2006unbiased}). Summed up, the steps of building a distributional tree using one of these algorithms are
+The exact way of determining how and where to split varies across different tree algorithms. For distributional trees one possible choice is a permutation test based algorithm which is explained in detail in the appendix. Summed up, the steps of building a distributional tree are:
 \begin{enumerate}
 \item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
-\item Estimate $\bold{\hat{\theta}}$ via maximum likelihood.
+\item Estimate $\bold{\hat{\theta}}$ by solving $\sum_{i=1}^n s(y_i, \theta) = 0$
 \item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ and each partitioning variable $Z_l$.
 %\item Assess whether the \emph{model scores} are associated with
 %    (or change along) any of the available covariates -- e.g.,
@@ -1317,17 +1317,17 @@ Common forest models such as Breiman and Cutler's randomForest consist of trees 
 
 \subsection{Distributional forest}
 \label{distforest}
-A distributional forest consists of an ensemble of distributional trees $\{t_s\}_{s=1,\ldots,T}$. Each of these trees is built on a different data set which can either be a bootstrap or a subset of the original data set. Moreover, in each node a subset of the partitioning variables is chosen randomly as candidates for splitting variables. In that way the correlation among the resulting trees is reduced and therefore also the variance of the model (\citealt{breiman2001random}).
+A distributional forest consists of an ensemble of $T$ distributional trees. Each of these trees is built on a different data set which can either be a bootstrap or a subset of the original data set. Moreover, in each node a subset of the partitioning variables is chosen randomly as candidates for splitting variables. In that way the correlation among the resulting trees is reduced and therefore also the variance of the model (\citealt{breiman2001random}).
 
-Forest models differ mainly in the way how the trees are combined to make predictions. Following the strategy explained and proposed by \cite{transformationforests2017} we interpret random forests as adaptive local likelihood estimators as distributional models are fit locally in subgroups while the term ``adaptive'' refers to the dependence on the splitting variables $\bold{z}$ and the resulting subgroups and weighing schemes. In this case the forest itself is only used to evaluate neighborhood relationships among the observations which can then be included in the fitting process. In transformation forests by \cite{transformationforests2017} so-called ``nearest neighbor weights'' are calculated as a measure of distance between observations. This approach has also already been applied in several random forest-type methods such as in ``adaptive nearest neighbors'' by \cite{lin2006}, in ``quantile regression forests''  by  \cite{meinshausen2006} and in ``random survival forests'' by \cite{ishwaran2008}. The idea of nearest neighbor weights is to measure similarity of a pair of observations by counting the number of trees in which it is asigned to the same terminal node.
+Forest models differ mainly in the way how the trees are combined to make predictions. Following the strategy explained and proposed by \cite{transformationforests2017} we interpret random forests as adaptive local likelihood estimators as distributional models are fit locally in subgroups while the term ``adaptive'' refers to the dependence on the splitting variables $\bold{Z}$ and the resulting subgroups and weighing schemes. In this case the forest itself is only used to evaluate neighborhood relationships among the observations which can then be included in the fitting process. In transformation forests by \cite{transformationforests2017} so-called ``nearest neighbor weights'' are calculated as a measure of distance between observations. This approach has also already been applied in several random forest-type methods such as in ``adaptive nearest neighbors'' by \cite{lin2006}, in ``quantile regression forests''  by  \cite{meinshausen2006} and in ``bagging survival trees'' by \cite{hothorn2004}. The idea of nearest neighbor weights is to measure similarity of a pair of observations by counting the number of trees in which it is asigned to the same terminal node.
 %Similar observations have a high probability of ending up in the same terminal node whereas this probability is low for quite different observations. 
 %although the first random forest-type algorithm for the estimation of conditional distribution functions was published more than a decade ago (“bagging survival trees”, Hothorn et al. 2004). 
 In particular, for a new set of covariates $\bold{z} = (z_1, \ldots, z_m) $ such a set of weights 
 $\bold{w}^{\text{forest}}~=~(w^{\text{forest}}_1, \ldots, w^{\text{forest}}_n)$ is obtained by the following procedure: For each tuple $(y_i,\bold{z}_i)$ in the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated by counting the number of trees in which $(y_i,\bold{z}_i)$ ends up in the same terminal node as the new set of covariates $\bold{z}$:
 $$
-w^{\text{forest}}_i(\bold{z}) = \sum_{s=1}^T \sum_{b=1}^{B^s} I((\bold{z}_i \in \mathcal{B}^s_b) \land (\bold{z} \in \mathcal{B}^s_b))
+w^{\text{forest}}_i(\bold{z}) = \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))
 $$
-where $T$ is the number of trees of the forest, $B^s$ is the number of terminal nodes of the \textit{s}-th tree and $\mathcal{B}^s_b$ represents the \textit{b}-th terminal node of the \textit{s}-th tree.
+where $T$ is the number of trees of the forest, $B^t$ is the number of terminal nodes of the \textit{t}-th tree and $\mathcal{B}^t_b$ represents the \textit{b}-th terminal node of the \textit{t}-th tree.
 
 Therefore, contrary to distributional trees, in distributional forests the whole learning data set can be used to fit the distributional model and specify the predicted distribution for a new set of covariates. Compared to the formula for predictions made by distributional trees the vector of tree weights $\bold{w}^{\text{tree}}$ containing only zeros and ones is now replaced by a vector of integer valued forest weights.
 %%% <TH> we need references for the nearest neighbor weights, copy from
@@ -1341,10 +1341,6 @@ $$
 While in a distributional tree the same distribution is specified for all sets of covariates being in the same node, a distributional forest predicts and fits a different distribution for each different set of covariates due to the individual weights calculated separately for each set of covariates.
 
 As this novel methodology combines the advantages of smooth and flexible parametric modeling with those of tree-structured modeling it provides a model that can deal with a wide range of situations. Abrupt changes and non-additive effects can be captured by its tree structure while smooth effects can be modeled reasonably well by combining various tree and smoothing the steps imposed by a single tree. As scores are considered for each distribution parameter (separate) effects in different parameters can be captured. At the same time, also interactions are detected automatically by splitting the data in a way that is sensitive to changes in either each of the parameters or combined in various parameters.
-
-%%% <TH> this should go into the discussion or the interpretation of the
-%%% empirical results </TH>
-Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
 
 
 
@@ -1831,7 +1827,7 @@ $$
 \subsection{Application for one station}
 First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available from 1985 through the year 2012.
 
-The results of fitting one distributional forest to the first 24 years of the data set and predicting the total amount of precipitation for one specific day of each of the four successive years have been shown in Figure~\ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of the distributional forest and compare its results to those of the GAM models and the EMOS model based on probability integral transform (PIT) histograms (\citealt{gneiting2007}).
+The results of fitting one distributional forest to the first 24 years of the data set and predicting the total amount of precipitation for one specific day of each of the four successive years have been shown in Figure~\ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of the distributional forest and compare its results to those of the GAM models and the EMOS model based on residual QQ-plots. In the appendix the corresponding probability integral transform (PIT) histograms (\citealt{gneiting2007}) can be found.
 %%% <TH> wouldn't be a uniform QQ-plot be more appropriate? </TH>
 
 %%%<TH> always us the term "distributional forest"
@@ -1842,7 +1838,7 @@ As shown in Table~\ref{model_specification} the distributional forest includes a
 \begin{center}
 %\begin{subfigure}{0.65\textwidth}
 <<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
-par(mar = c(2,10,2,2))
+par(mar = c(3,10,2,2))
 barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
         horiz = TRUE, las = 1, cex.names = 1.2, axes = FALSE,
         xlab = "Variable importance: mean decrease in CRPS",
@@ -1861,49 +1857,45 @@ axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
 \end{center}
 \end{figure}
 
-To get another impression of the quality of the predictions made by the tested methods a PIT histogram is plotted in Figure~\ref{pit_oosample} for out-of-sample predictions of each of the models. A perfectly calibrated model would lead to a PIT histogram with a uniform distribution (a density of 1 for each bin as indicated by the red horizontal line). Overall, it can be stated that all four model provide well calibrated forecasts.
+In Figure~\ref{pit_oosample} another impression of the quality of the predictions made by the tested methods is given by residual QQ-plots for out-of-sample predictions of each of the models. For these plots 100 randomized quantile residuals are simulated per observation. The closer the points are to the diagonal line the better the estimated distributional model fits the data. Overall, it can be stated that all four models provide well calibrated forecasts.
 
-  
 
-%\begin{figure}[t!]
-%\begin{subfigure}{0.5\textwidth}
-%<<rain_axams_pit_insample, fig=TRUE, echo=FALSE>>=
-%
-%# in sample
-%set.seed(7)
-%par(mfrow = c(2,2))
-%pithist(pit_df_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
-%pithist(pit_g_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
-%pithist(pit_gb_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
-%pithist(pit_ml_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
-%
-%@
-%\caption{\label{pit_insample} PIT histograms for station Axams (in sample)}
-%\end{figure}
 
 \begin{figure}[t!]
 \begin{center}
 %\begin{subfigure}{0.8\textwidth}
-<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
-    
+<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
+
 # out of sample
 set.seed(7)
-
 par(mfrow = c(2,2))
-pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "distributional forest", ylim = c(0,1.5))
-pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespecified GAM", ylim = c(0,1.5))
-pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAM", ylim = c(0,1.5))
-pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
-      
+qqrplot(pit_df_t, nsim = 100, main = "distributional forest", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_g_t, nsim = 100, main = "prespecified GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_gb_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+
+qqrplot(pit_ml_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
 @
-%\end{subfigure}
-\caption{\label{pit_oosample}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
+\caption{\label{qqr_oosample} Out-of-sample residual QQ-plot (2009--2012) for station Axams based on models learned on data from 1985--2008.}
 \end{center}
 \end{figure}
 
-
-
   
+%\begin{figure}[t!]
+%\begin{subfigure}{0.5\textwidth}
+%<<rain_axams_qqr_insample, fig=TRUE, echo=FALSE>>=
+%# in sample
+%set.seed(7)
+%par(mfrow = c(2,2))
+%set.seed(1)
+%qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
+%qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
+%qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
+%qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
+
+%@
+%\caption{\label{qqr_insample} QQR-Plot for station Axams (in sample)}
+%\end{figure}
 
 
 
@@ -1950,14 +1942,12 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <-
 
 \begin{figure}[t!]
 \begin{center}
-\center
 <<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE, height=4.5, width = 6.5>>=
 boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
         names = c("distributional forest", "prespecified GAM", "boosted GAM"),
         ylab = "CRPS skills score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
-\center
 \caption{\label{boxplots_crps_axams}CRPS skills score from the 10 times 7-fold cross validation at station Axams (1985--2012). The horizontal orange line pertains to the reference model EMOS.}
 \end{center}
 \end{figure}
@@ -2074,18 +2064,20 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
 
 \begin{figure}[h!]
 \begin{center}
-<<map, fig=TRUE, echo=FALSE, height=6, width=9>>=
+\setkeys{Gin}{width=0.99\textwidth}
+<<map, fig=TRUE, echo=FALSE, height=6.1, width=9>>=
   
   layout(cbind(1, 2), width = c(9, 1))
   par(mar = c(5,4,4,0.1))
   raster::image(tirol.dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
                 xlim = c(9.8,13.2), 
-                ylim = c(46.6, 47.8))
+                ylim = c(46.6, 47.85))
   plot(tirol.gadm, add = TRUE)
   points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
-  legend("topleft", pch=c(21,24,25,22), legend = c("distributional forest", "prespecified GAM", "boosted GAM", "EMOS"), cex = 1, bty = "n")
-  
+  legend(x = 9.8, y = 47.795, pch=c(21,24,25,22), legend = c("distributional forest", "prespecified GAM", "boosted GAM", "EMOS"), cex = 1, bty = "n")
+  text(x = 10.3, y = 47.8, labels = "Models with lowest CRPS")
+  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.74), line = 0.3)
   par(mar = c(0.5,0.2,0.5,2.3))
   ## legend
   plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
@@ -2104,6 +2096,9 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
 
 \section{Discussion}
 
+%%% <TH> this should go into the discussion or the interpretation of the
+%%% empirical results </TH>
+Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
 
 
 
@@ -2111,126 +2106,6 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
 The corresponding implementation to the novel methods presented in this article is available on R-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a distributional forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{hothorn2015partykit}).
 
 
-
-
-
-%\newpage
-%\section{References}
-
-%Hothorn T, Hornik K, Zeileis A (2006). 
-%``Unbiased Recursive Partitioning: A Conditional Inference Framework.''
-%\textit{Journal of Computational and Graphical Statistics}, 
-%\textbf{15}(3), 651--674. 
-%\doi{10.1198/106186006X133933}\\
-%\\
-%Zeileis A, Hothorn T, Hornik K (2008). 
-%``Model-Based Recursive Partitioning.''
-%\textit{Journal of Computational and Graphical Statistics}, 
-%\textbf{17}(2), 492--514. 
-%\doi{10.1198/106186008X319331}\\
-%\\
-%Hothorn T, Zeileis A (2015). 
-%``partykit: A Modular Toolkit for Recursive Partytioning in R.''
-%\textit{Journal of Machine Learning Research}, 
-%\textbf{16}, 3905--3909. 
-%\url{http://www.jmlr.org/papers/v16/hothorn15a.html}\\
-%\\
-%Stasinopoulos DM, Rigby RA (2007).
-%``Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.''
-%\textit{Journal of Statistical Software}, 
-%\textbf{23}(7), 1--46.
-%\doi{10.18637/jss.v023.i07}\\
-%\\
-%Stasinopoulos DM, Rigby RA (2005).
-%``Generalized Additive Models for Location Scale and Shape (with discussion)''
-%\textit{Applied Statistics},
-%\textbf{54}(3), 507--554.
-%\doi{10.1111/j.1467-9876.2005.00510.x}\\
-%\\
-%Seibold H, Zeileis A, Hothorn T (2017).
-%``Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.''
-%\textit{Statistical Methods in Medical Research}, 
-%\textbf{12}(1), 45--63.
-%\doi{10.1177/0962280217693034}\\
-%\\
-%Hothorn T, Zeileis A (2017).
-%``Transformation Forests.''
-%\emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
-%\url{http://arxiv.org/abs/1701.02110}\\
-%\\
-%Messner JW, Mayr GJ, Zeileis A (2016).
-%``Heteroscedastic Censored and Truncated Regression with {crch}''
-%\textit{The R Journal},
-%\textbf{8}(1), 173--181.
-%\url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}\\
-%\\
-%Zeileis A, Wiel MA, Hornik K, Hothorn T (2008).
-%``Implementing a {Class} of {Permutation} {Tests}: {The} {Coin} {Package}''
-%\textit{Journal of Statistical Software},
-%\textbf{28}(8), 1--23.
-%\doi{10.18637/jss.v028.i08}\\
-%%publisher={American Statistical Association}
-%\\
-%Zeileis A, Hothorn T, Hornik K (2010).
-%``Party with the {MOB}: {Model-Based} {Recursive} {Partitioning} in {R}''
-%\textit{R package version 0.9-9999}.
-%\url{https://cran.r-project.org/web/packages/party/vignettes/MOB.pdf}\\
-%\\
-%Breiman L (2001).
-%``Random {Forests}''
-%\textit{Machine Learning},
-%\textbf{45}(1), 5--32
-%%\doi{10.1023/A:1010933404324}
-%%publisher={Springer}\\
-%\\
-%Loh WY (2011).
-%``Classification and {Regression} {Trees}''
-%\textit{Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery},
-%\textbf{1}(1), 14--23.
-%\doi{10.1002/widm.8}
-%%publisher={Wiley Online Library}\\
-%\\
-%Hothorn T (Maintainer), Hornik K, Strobl C, Zeileis A (2015).
-%``Package 'party' ''
-%\textit{Package Reference Manual for Party Version 0.9--0.998},
-%\textbf{16}, 37.\\
-%%  \doi{}
-%\\
-%Yee TW (2010).
-%``The {VGAM} {Package} for {Categorical} {Data} {Analysis}''
-%\textit{Journal of Statistical Software},
-%\textbf{32}(10), 1--34.
-%\url{http://www.jstatsoft.org/v32/i10/}\\
-%\\
-%Umlauf N, Klein N, Zeileis A (2017).
-%``{BAMLSS}: {B}ayesian Additive Models for Location, Scale
-%  and Shape (and Beyond)''
-%\textit{Working Papers in Economics and Statistics, Research
-%  Platform Empirical and Experimental Economics, Universit\"at
-%  Innsbruck},
-%\textbf{2017-05},
-%\url{http://EconPapers.RePEc.org/RePEc:inn:wpaper:2017-05}\\
-%%type = {Working Paper},
-%%number = {2017-05},
-%%month = {February},
-%\\
-%Benjamin Hofner and Andreas Mayr and Nora Fenske and
-%  Matthias Schmid (2017). 
-%``{gamboostLSS}: Boosting Methods for {GAMLSS} Models''
-%\textit{{R} package version 2.0-0}.
-%\url{https://CRAN.R-project.org/package=gamboostLSS}\\
-%\\
-%Liaw A, Wiener M (2002).
-%``Classification and Regression by randomForest''
-%\textit{R News},
-%\textbf{2}(3), 18--22.
-%\url{http://CRAN.R-project.org/doc/Rnews/}
-%\\
-%Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
-%``Calibrated probabilistic forecasting using ensemble model output statistics and minimum CRPS estimation''
-%\textit{Monthly Weather Review},
-%\textbf{133}(5), 1098--1118.
-%\doi{https://doi.org/10.1175/MWR2904.1}
 
 
 
@@ -2255,40 +2130,117 @@ The corresponding implementation to the novel methods presented in this article 
 %\newpage
 \section*{Appendix}
 
+\subsection*{Tree algorithm}
+The tree algorithm used in the applications discussed in this paper is explained in the following. For notational simplicity, the testing and splitting procedure is described for the root node with observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. In each child node the corresponding subset of observations depends on the assignment made by the foregoing split.\\
+
+\begin{itemize}
+\item A distributional model $D(Y, \theta)$ is fit to the set of observations $\{y_i\}_{i = 1,\ldots,n}$ by estimating the distribution parameter $\hat{\theta}$. This parameter can be a multidimensional vector $(\hat{\theta}_1, \ldots, \hat{\theta}_K)$, $K \in \mathbb{N}$, depending on the type of distribution. The estimation is done by maximizing the log-likelihood function $\ell(\theta; Y)$, i.e.
+$$
+\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+$$
+which is equal to solving
+$$
+\sum_{i=1}^n s(\theta, y_i) = \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\theta; y_i) = 0
+$$
+for $\theta$.
+
+\item Calculate score values 
+$$
+s(\hat{\theta}, y_i) = 
+\begin{pmatrix} 
+s(\hat{\theta}, y_1) \\
+s(\hat{\theta}, y_2) \\
+\vdots \\
+s(\hat{\theta}, y_n)
+\end{pmatrix} =
+\begin{pmatrix} 
+s(\hat{\theta}, y_1)_1 & s(\hat{\theta}, y_1)_2 & \ldots & s(\hat{\theta}, y_1)_K\\
+s(\hat{\theta}, y_2)_1 & s(\hat{\theta}, y_2)_2 & \ldots & s(\hat{\theta}, y_2)_K\\
+\vdots & \vdots & \ddots & \vdots \\
+s(\hat{\theta}, y_n)_1 & s(\hat{\theta}, y_n)_2 & \ldots & s(\hat{\theta}, y_n)_K
+\end{pmatrix}
+$$
+
+\item Test for independence between each column of scores $\left(s(\hat{\theta}, y_i)_k\right)_{i=1,\ldots,n}$ for $k\in\{1,\ldots,K\}$, and split variable $Z_j \in \{Z_1, \ldots, Z_m\}$.  
+\begin{align*}
+H_0^{1,j}:  \left(s(\hat{\theta}, y_i)_1\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j \\
+H_0^{2,j}:  \left(s(\hat{\theta}, y_i)_2\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j \\
+\vdots \hspace{3cm}\\
+H_0^{K,j}:  \left(s(\hat{\theta}, y_i)_K\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j 
+\end{align*}
+
+To test these hypotheses permutation testing with the multivariate linear statistic
+$$
+T_{j} = \sum_{i=1}^n g_j(z_{ji}) \cdot s(\hat{\theta}, y_i)
+$$
+is applied. The type of the transformation function $g_j$ depends on the type of the split variable $Z_j$. If $Z_j$ is numeric then $g_j$ is simply the identity function $g_j(z_{ji}) = z_{ji}$. If $Z_j$ is a categorical variable with $L$ categories then $g_j(z_{ji}) = e_L(z_{ji}) = (\I(z_{ji} = 1), \ldots, \I(z_{ji} = L))$ such that $g_j$ is a unit vector where the element corresponding to the value of $z_{ji}$ is $1$. Observations with missing values are excluded from the sums.
+
+With the conditional expectation $\mu_{j}$ and the covariance $\Sigma_{j}$ as derived by \cite{strasser1999} the test statistic can be standardized. For a numeric split variable this results in the Pearson correlation coefficient
+$$
+c(t_{j},\mu_{j},\Sigma_{j}) = \left|\frac{t_{j} - \mu_{j}}{\sqrt{\Sigma_{j}}}\right|.
+$$
+Otherwise the standardized form is
+$$
+c(t_{j},\mu_{jk},\Sigma_{j}) = \max_{l=1,\ldots,L}\left|\frac{(t_{j} - \mu_{j})_l}{\sqrt{(\Sigma_{j})_{ll}}}\right|.
+$$
+The smaller the p-value corresponding to the standardized test statistic $c(t_{j},\mu_{j},\Sigma_{j})$ is the stronger the discrepancy from the assumption of independence between the scores and the split variable $Z_j$.
+
+\item After Bonferroni adjusting the p-vlaues check whether any of the resulting p-values is beneath the selected significance level. If so, choose the partitioning variable $Z_{j^\ast}$ with the lowest p-value to the scores corresponding to the distribution parameters relevant for the split.
+
+\item Choose the breakpoint that leads to the highest discrepancy between score functions in the two resulting subgroups. This difference can be measured by the linear statistic
+$$
+T_{j^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\hat{\theta}, y_i)
+$$
+where $\mathcal{B}_{1r}$ is the first of the two new subgroups that are defined by splitting in split point $r$ of variable $Z_{j^{\ast}}$. The split point is then chosen as follows:
+$$
+r^{\ast} = \argmin_{r} c(t_{j^{\ast}}^r,\mu_{j^{\ast}}^r,\Sigma_{j^{\ast}}^r).
+$$
+
+\item Repeat the testing and splitting procedure in each of the resulting subgroups until some stopping criterion is reached. This criterion can for example be a minimal number of observations in a node or a minimal p-value for the statistical tests. 
+
+\end{itemize}
+
+This permutation test based tree algorithm is presented in \citealt{hothorn2006unbiased} as the ctree algorithm. A different framework to build a tree is provided by the MOB algorithm which is based on M-fluctuation tests (\citealt{zeileis2008model}).
+
+
+
 %\begin{figure}[t!]
 %\begin{subfigure}{0.5\textwidth}
-%<<rain_axams_qqr_insample, fig=TRUE, echo=FALSE>>=
+%<<rain_axams_pit_insample, fig=TRUE, echo=FALSE>>=
+%
 %# in sample
 %set.seed(7)
 %par(mfrow = c(2,2))
-%set.seed(1)
-%qqrplot(pit_df_l, nsim = 1, main = "distforest (in bag)")
-%qqrplot(pit_g_l, nsim = 1, main = "gamlss (in bag)")
-%qqrplot(pit_gb_l, nsim = 1, main = "gamboostLSS (in bag)")
-%qqrplot(pit_ml_l, nsim = 1, main = "EMOS (in bag)")
-
+%pithist(pit_df_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+%pithist(pit_g_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+%pithist(pit_gb_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+%pithist(pit_ml_l, nsim = 1000, breaks = seq(0, 1, length.out = 9))
+%
 %@
-%\caption{\label{qqr_insample} QQR-Plot for station Axams (in sample)}
+%\caption{\label{pit_insample} PIT histograms for station Axams (in sample)}
 %\end{figure}
 
+\subsection*{Probability integral transform (PIT) histograms}
 \begin{figure}[t!]
 \begin{center}
 %\begin{subfigure}{0.8\textwidth}
-<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
-
+<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
+    
 # out of sample
-set.seed(7)
-par(mfrow = c(2,2))
-qqrplot(pit_df_t, nsim = 100, main = "distributional forest", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_g_t, nsim = 100, main = "prespecified GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_gb_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+set.seed(4)
 
-qqrplot(pit_ml_t, nsim = 100, main = "boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+par(mfrow = c(2,2))
+pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "distributional forest", ylim = c(0,1.5))
+pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespecified GAM", ylim = c(0,1.5))
+pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAM", ylim = c(0,1.5))
+pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
+      
 @
-\caption{\label{qqr_oosample} Out-of-sample residual QQ-plot (2009--2012) for station Axams based on models learned on data from 1985--2008.}
+%\end{subfigure}
+\caption{\label{pit_oosample}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
 \end{center}
 \end{figure}
+
 
 
 %\begin{figure}[h!]
