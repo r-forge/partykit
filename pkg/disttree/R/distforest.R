@@ -463,8 +463,9 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
 
 
 
-logLik.distforest <- function(object, newdata = NULL, ...) {
+logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
+    if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")
     if(!is.null(object$loglik)) return(structure(object$loglik, df = NA, class = "logLik"))
     newdata <- object$data
   } 
@@ -474,6 +475,9 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
   
   # extract response
   Y <- model.response(mf, "numeric")
+  
+  # check weights
+  if(is.null(weights)) weights <- rep.int(1, NROW(newdata)) else stopifnot(NROW(newdata) == nrow(weights))
   
   ll <- 0
   pred.par <- predict(object, newdata = newdata, type = "parameter")
@@ -486,10 +490,11 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     for(i in 1:(nrow(newdata))){
       par <- pred.par[i,]
       eta <-  as.numeric(distlist$linkfun(par))
+      weight <- weights[i]
       ydata <- Y
       if(!survival::is.Surv(ydata)) {
-        if(censtype == "left") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
-        if(censtype == "right") ll <- ll + distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
+        if(censtype == "left") ll <- ll + weight * distlist$ddist(survival::Surv(ydata, ydata > censpoint, type = "left"), eta = eta, log = TRUE)
+        if(censtype == "right") ll <- ll + weight * distlist$ddist(survival::Surv(ydata, ydata < censpoint, type = "right"), eta = eta, log = TRUE)
         ## FIX ME: interval censored
       } else ll <- ll + distlist$ddist(ydata, eta = eta,  log=TRUE)
     }
@@ -497,7 +502,8 @@ logLik.distforest <- function(object, newdata = NULL, ...) {
     for(i in 1:(nrow(newdata))){
       par <- pred.par[i,]
       eta <-  as.numeric(distlist$linkfun(par))
-      ll <- ll + distlist$ddist(Y[i], eta = eta,  log=TRUE)
+      weight <- weights[i]
+      ll <- ll + weight * distlist$ddist(Y[i], eta = eta,  log=TRUE)
     }
   }
   return(structure(ll, df = NA, class = "logLik"))
