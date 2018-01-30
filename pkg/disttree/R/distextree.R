@@ -335,8 +335,8 @@ distextree_control <- function(type.tree = NULL,
                                update = NULL,
                                splitflavour = c("ctree", "exhaustive"),  
                                testflavour = c("ctree", "mfluc", "guide"),   # FIX ME: "exhaustive"
-                               guide_interaction = TRUE,
-                               guide_unweighted = FALSE,
+                               guide_interaction = FALSE,
+                               #guide_unweighted = FALSE,
                                nresample = 9999L,
                                intersplit = FALSE,
                                tol = sqrt(.Machine$double.eps),
@@ -352,7 +352,7 @@ distextree_control <- function(type.tree = NULL,
                                ## FIX ME: additional arguments for exhaustive
                                restart = TRUE,
                                breakties = FALSE,
-                               parm = NULL,
+                               parm = NULL,  ## FIX ME: match with partyvars above
                                dfsplit = TRUE,
                                vcov = c("opg", "info", "sandwich"),
                                ordinal = c("chisq", "max", "L2"),
@@ -361,7 +361,17 @@ distextree_control <- function(type.tree = NULL,
                                terminal = "object",
                                model = TRUE,
                                inner = "object",
-                               trim = 0.1
+                               trim = 0.1,
+                               ## FIX ME: additional arguments for guide
+                               guide_parm = NULL,  # a vector of indices of the parameters (incl. intercept) for which estfun should be considered
+                               guide_testtype = c("max", "sum", "coin"),
+                               interaction = FALSE,
+                               guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
+                               # unless ytrafo returns decorrelated scores
+                               # FIX ME: c("none","vcov","opg")
+                               xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
+                               ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
+                               weighted.scores = FALSE   # logical, should scores be weighted in GUIDE 
                                ) 
 {
   
@@ -396,36 +406,6 @@ distextree_control <- function(type.tree = NULL,
           
           testflavour <- "mfluc"
           splitflavour <- "exhaustive"  
-          
-          if(FALSE){
-            control <- mob_control(alpha = 0.05, 
-                                   bonferroni = TRUE, 
-                                   minsize = minbucket,   ## FIX ME: minsize minimal number of obs in node after splitting? 
-                                   maxdepth = Inf,
-                                   mtry = Inf, 
-                                   trim = 0.1, 
-                                   breakties = FALSE, 
-                                   parm = NULL, 
-                                   dfsplit = TRUE, 
-                                   prune = NULL, 
-                                   restart = TRUE,
-                                   verbose = FALSE, 
-                                   caseweights = TRUE, 
-                                   ytype = "vector", 
-                                   xtype = "matrix",
-                                   terminal = "object", 
-                                   inner = terminal, 
-                                   model = TRUE,
-                                   numsplit = "left", 
-                                   catsplit = "binary", 
-                                   vcov = "opg", 
-                                   ordinal = "chisq", 
-                                   nrep = 10000,
-                                   minsplit = minsize,   ## FIX ME: per default minsplit and minbucket are set to the same value? both minsize?
-                                   minbucket = minsize,
-                                   applyfun = NULL, 
-                                   cores = NULL)
-          }
           
         }
       }
@@ -496,8 +476,16 @@ distextree_control <- function(type.tree = NULL,
     
     if(!criterion == "p.value" & guide_interaction) stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
     add_control <- c(add_control,
-                     list(guide_interaction = guide_interaction,
-                          guide_unweighted = guide_unweighted))
+                     list(guide_parm = guide_parm,  # a vector of indices of parameters for which estfun should be considered
+                          guide_testtype = guide_testtype,
+                          interaction = interaction,
+                          guide_decorrelate = guide_decorrelate,   # needs to be set to other than "none" for testtype max and sum 
+                          # unless ytrafo returns decorrelated scores
+                          # FIX ME: c("none","vcov","opg")
+                          xgroups = xgroups,  # number of categories for split variables (optionally breaks can be handed over)
+                          ygroups = ygroups,  # number of categories for scores (optionally breaks can be handed over)
+                          weighted.scores = weighted.scores)   # logical, should scores be weighted
+                     )
   }
   
   
