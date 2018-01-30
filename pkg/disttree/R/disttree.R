@@ -342,52 +342,58 @@ coef.disttree <- function(object, ...){
 }
 
 
-logLik.disttree <- function(object, newdata = NULL, ...) {
+logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
-    return(structure(object$loglik, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
-  } else {
-    ll <- 0
-    # predicted nodes for the new dataset
-    pred.node <- predict(object, newdata = newdata, type = "node")
-    # coefficients in the terminal nodes
-    coef_tn <- coef(object)
-    # number of terminal nodes
-    n_tn <- width(object) # <- nrow(coef_tn)
-    # id of terminal nodes
-    id_tn <- rownames(coef_tn)
-    # get link fun and ddist from distribution list
-    linkfun <- object$info$family$linkfun
-    ddist <- object$info$family$ddist
-    
-    
-    if(object$info$family$gamlssobj && object$info$family$censored) {
-      censtype <- object$info$censtype
-      censpoint <- object$info$censpoint
-      for(i in 1:n_tn){
-        par <- coef_tn[i,]
-        eta <-  as.numeric(linkfun(par))
-        # response variable of the observations that end up in this terminal node
-        nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-        if(length(nobs_tn) > 0L){
-          if(!survival::is.Surv(nobs_tn)) {
-            if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE)
-            if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE)
-            ## FIX ME: interval censored
-          } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
-        }
-      }
-    } else {
-      for(i in 1:n_tn){
-        par <- coef_tn[i,]
-        eta <-  as.numeric(linkfun(par))
-        # response variable of the observations that end up in this terminal node
-        nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-        if(length(nobs_tn) > 0L) ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+    if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")
+    if(!is.null(object$loglik)) return(structure(object$loglik, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
+    newdata <- object$data
+  }    
+  
+  if(!is.null(weights)) stopifnot(NROW(newdata) == nrow(weights))
+  ll <- 0
+  # predicted nodes for the new dataset
+  pred.node <- predict(object, newdata = newdata, type = "node")
+  # coefficients in the terminal nodes
+  coef_tn <- coef(object)
+  # number of terminal nodes
+  n_tn <- width(object) # <- nrow(coef_tn)
+  # id of terminal nodes
+  id_tn <- rownames(coef_tn)
+  # get link fun and ddist from distribution list
+  linkfun <- object$info$family$linkfun
+  ddist <- object$info$family$ddist
+  
+  
+  if(object$info$family$gamlssobj && object$info$family$censored) {
+    censtype <- object$info$censtype
+    censpoint <- object$info$censpoint
+    for(i in 1:n_tn){
+      par <- coef_tn[i,]
+      eta <-  as.numeric(linkfun(par))
+      # response variable and weights of the observations that end up in this terminal node
+      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      if(length(nobs_tn) > 0L){
+        if(!survival::is.Surv(nobs_tn)) {
+          if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
+          if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
+          ## FIX ME: interval censored
+        } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
       }
     }
-    return(structure(ll, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
+  } else {
+    for(i in 1:n_tn){
+      par <- coef_tn[i,]
+      eta <-  as.numeric(linkfun(par))
+      # response variable and weights of the observations that end up in this terminal node
+      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      if(length(nobs_tn) > 0L) ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE, weights = weights_tn)
+    }
   }
+  return(structure(ll, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
 }
+
 
 
 
