@@ -6,21 +6,31 @@
 # - if(guide_interaction) choose .select_g within .guide_select, else .select as usual
 
 
-.guide_select <- function(guide_parm = NULL,  # a vector of indices of parameters for which estfun should be considered
-                          guide_testtype = c("max", "sum", "coin"),
-                          interaction = FALSE,
-                          guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
-                                                        # unless ytrafo returns decorrelated scores
-                          # FIX ME: c("none","vcov","opg")
-                          xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
-                          ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
-                          weighted.scores = FALSE   # logical, should scores be weighted
-                          ) {
+## arguments for guide_select -> guide_test: 
+#guide_parm = NULL,  # a vector of indices of parameters for which estfun should be considered
+#guide_testtype = c("max", "sum", "coin"),
+#interaction = FALSE,
+#guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
+## unless ytrafo returns decorrelated scores
+## FIX ME: c("none","vcov","opg")
+#xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
+#ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
+#weighted.scores = FALSE   # logical, should scores be weighted
+
+.guide_select <- function(...) {
   function(model, trafo, data, subset, weights, whichvar, ctrl) {
-    args <- list(guide_parm = guide_parm, guide_testtype = guide_testtype, guide_decorrelate = guide_decorrelate, 
-                 xgroups = xgroups, ygroups = ygroups, weighted.scores = weighted.scores)
+    args <- list(...)
     ctrl[names(args)] <- args
-    if(interaction){
+    
+    if(!"guide_parm" %in% names(ctrl)) ctrl$guide_parm <- NULL
+    if(!"guide_testtype" %in% names(ctrl)) ctrl$guide_testtype <- c("max", "sum", "coin")
+    if(!"interaction" %in% names(ctrl)) ctrl$interaction <- FALSE
+    if(!"weighted.scores" %in% names(ctrl)) ctrl$weighted.scores <- FALSE
+    if(!"xgroups" %in% names(ctrl)) ctrl$xgroups <- NULL
+    if(!"ygroups" %in% names(ctrl)) ctrl$ygroups <- NULL
+    if(!"guide_decorrelate" %in% names(ctrl)) ctrl$guide_decorrelate <- "vcov"
+    
+    if(ctrl$interaction){
       partykit:::.select_int(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test_int)
     } else {
       partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test)
@@ -67,8 +77,9 @@ if(FALSE){
   
   if(is.null(ctrl$guide_parm)) {
     # indices of residuals to be considered (for intercept and regressors)
-    if(length(data$variables$x) > 0) ctrl$guide_parm <- c(1, data$variables$x - length(data$variables$y) + 1)
-    if(length(data$variables$x)== 0) ctrl$guide_parm <- c(1, c(1:length(data$variables$z))[data$variables$z > 0] - length(data$variables$y) + 1)
+    ctrl$guide_parm <- c(1:NCOL(Y))
+    #if(length(data$variables$x) > 0) ctrl$guide_parm <- c(1, data$variables$x - length(data$variables$y) + 1)
+    #if(length(data$variables$x)== 0) ctrl$guide_parm <- c(1, c(1:length(data$variables$z))[data$variables$z > 0] - length(data$variables$y) + 1)
   }
   
   if(!ctrl$guide_decorrelate %in% c("vcov", "opg", "none")) stop("guide_decorrelate has to be set to one of the following options: none, vcov, opg")
@@ -95,11 +106,13 @@ if(FALSE){
   }
   
   if(ctrl$guide_decorrelate != "none") {
+    ef <- as.matrix(Y)
     n <- NROW(ef)
     ef <- ef/sqrt(n)
     
-    vcov <- if(ctrl$guide_decorrelate == "vcov") {
-      vcov(model) * n
+    if(is.null(vcov(model$object))) warning("vcov is not stored in model object and therefore not used for decorrelation")
+    vcov <- if(ctrl$guide_decorrelate == "vcov" & !is.null(vcov(model$object))) {
+      vcov(model$object) * n
     } else {
       solve(crossprod(ef))
     }
@@ -118,6 +131,7 @@ if(FALSE){
   
   
   # should scores be weighted ?
+  if(is.null(weights) | length(weights) == 0) weights <- rep.int(1, NCOL(Y)) 
   if(!ctrl$weighted.scores && !model$unweighted) Y <- Y/weights  ## FIX ME: influence of weights only on categorization
   x <- data[[j]]
   if(!is.null(subset)) {
@@ -185,9 +199,11 @@ if(FALSE){
   ## TO DO: depending on ctrl argument use chisq.test or coin::independence_test
   
   if(ctrl$guide_testtype == "coin"){
+    require("coin")
     ip <- new("IndependenceProblem", x=data.frame(x_cat = x_cat), y=Ybin)
-    tst_curv <- coin:::independence_test(ip)
-    ret <- list(p.value = log(1 - as.numeric(coin::pvalue(tst_curv))), statistic = log(as.numeric(coin::statistic(tst_curv)))) 
+    tst_curv <- independence_test(ip)    # coin:::independence_test(ip)
+    ret <- list(p.value = log(1 - as.numeric(pvalue(tst_curv))), statistic = log(as.numeric(statistic(tst_curv)))) 
+    # ret <- list(p.value = log(1 - as.numeric(coin::pvalue(tst_curv))), statistic = log(as.numeric(coin::statistic(tst_curv)))) 
   }
   
   if(ctrl$guide_testtype == "sum" | ctrl$guide_testtype == "max") {

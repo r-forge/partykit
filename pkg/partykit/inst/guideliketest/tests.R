@@ -30,14 +30,16 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
                                                                    guide_testtype = guide_testtype,
                                                                    guide_parm = guide_parm,
                                                                    xgroups = xgroups,
-                                                                   ygroups = ygroups),  
+                                                                   ygroups = ygroups,
+                                                                   interaction = FALSE),  
                                          splitfun = partykit:::.objfun_split(restart = TRUE,
                                                                              intersplit = TRUE),
                                          svselectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
                                                                      guide_testtype = guide_testtype,
                                                                      guide_parm = guide_parm,
                                                                      xgroups = xgroups,
-                                                                     ygroups = ygroups), 
+                                                                     ygroups = ygroups,
+                                                                     interaction = FALSE), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
@@ -290,19 +292,6 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
 
 
 
-ctest <- comptests(dist~speed, data = cars, testfun = "ctree")
-mtest <- comptests(dist~speed, data = cars, testfun = "mfluc")
-gstest <- comptests(dist~speed, data = cars, testfun = "guide", guide_testtype = "sum")
-gmtest <- comptests(dist~speed, data = cars, testfun = "guide", guide_testtype = "max")
-
-plot(ctest)
-plot(mtest)
-plot(gmtest)
-plot(gstest)
-
-
-
-
 ###########
 # DGP
 
@@ -377,29 +366,65 @@ d <- dgp(1000, vary_beta = "all", xi = -0.5, binary_regressor = FALSE)
 d <- dgp(1000, vary_beta = "all", xi = -0.0, binary_regressor = FALSE)
 
 d <- dgp(400, vary_beta = "all", xi = -0.4, delta = 3, binary_regressor = TRUE)
+d <- dgp(200, vary_beta = "beta0", beta1 = 2, xi = 0.0, binary_regressor = FALSE)
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = -0.5, binary_regressor = FALSE)
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE)
 
 
 ctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree")
 mtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc")
-gstest <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gstest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                     guide_testtype = "sum", guide_parm = c(1,2),
                     xgroups = NULL, ygroups = NULL)
-gmtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gmtest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                     guide_testtype = "max", guide_parm = c(1,2),
                     xgroups = NULL, ygroups = NULL)
+gctest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                    guide_testtype = "coin", guide_parm = c(1,2),
+                    xgroups = NULL, ygroups = NULL)
+gstest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "sum", guide_parm = c(1),
+                      xgroups = NULL, ygroups = NULL)
+gmtest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "max", guide_parm = c(1),
+                      xgroups = NULL, ygroups = NULL)
+gctest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "coin", guide_parm = c(1),
+                      xgroups = NULL, ygroups = NULL)
+gstest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "sum", guide_parm = c(2),
+                      xgroups = NULL, ygroups = NULL)
+gmtest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "max", guide_parm = c(2),
+                      xgroups = NULL, ygroups = NULL)
+gctest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                      guide_testtype = "coin", guide_parm = c(2),
+                      xgroups = NULL, ygroups = NULL)
 
-ctest
 
 plot(ctest)
 plot(mtest)
-plot(gmtest)
-plot(gstest)
+plot(gmtest12)
+plot(gstest12)
+plot(gctest12)
+plot(gmtest1)
+plot(gstest1)
+plot(gctest1)
+plot(gmtest2)
+plot(gstest2)
+plot(gctest2)
 
 plot(ctest, terminal_panel = node_bivplot)
 plot(mtest, terminal_panel = node_bivplot)
-plot(gmtest, terminal_panel = node_bivplot)
-plot(gstest, terminal_panel = node_bivplot)
-
+plot(gmtest12, terminal_panel = node_bivplot)
+plot(gstest12, terminal_panel = node_bivplot)
+plot(gctest12, terminal_panel = node_bivplot)
+plot(gmtest1, terminal_panel = node_bivplot)
+plot(gstest1, terminal_panel = node_bivplot)
+plot(gctest1, terminal_panel = node_bivplot)
+plot(gmtest2, terminal_panel = node_bivplot)
+plot(gstest2, terminal_panel = node_bivplot)
+plot(gctest2, terminal_panel = node_bivplot)
 
 
 
