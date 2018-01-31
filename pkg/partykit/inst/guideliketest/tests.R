@@ -2,7 +2,7 @@ library("partykit")
 library("Formula")
 
 comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"), 
-                      subset, weights, 
+                      subset, weights, stump = TRUE,
                       guide_testtype = c("sum", "max", "coin"), 
                       decorrelate = "vcov",
                       guide_parm = NULL,
@@ -43,7 +43,8 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
-                                         update = TRUE)
+                                         update = TRUE,
+                                         stump = stump)
   }
   
   if(testfun == "ctree"){
@@ -63,7 +64,8 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
-                                         update = TRUE)
+                                         update = TRUE,
+                                         stump = stump)
   }
   
   if(testfun == "mfluc"){
@@ -91,7 +93,8 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc"),
                               svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                     intersplit = TRUE),
                               logmincriterion = log(1-0.05),
-                              update = TRUE)
+                              update = TRUE,
+                              stump = stump)
   }
   
   
@@ -429,91 +432,203 @@ plot(gctest2, terminal_panel = node_bivplot)
 
 
 
-#####################################################
-# data set
 
-d <- extree_data(dist~speed, data = cars)
-
-
-dg <- extree_fit(d, trafo = ytrafo, 
-                 weights = rep.int(1, NROW(d$data)),
-                 subset = c(1 : NROW(d$data)),
-                 partyvars = d$variables$z,
-                 converged = NULL,
-                 ctrl = partykit:::extree_control(criterion = "p.value",
-                                                  selectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
-                                                                            guide_testtype = "sum"),  
-                                                  splitfun = partykit:::.objfun_split(restart = TRUE,
-                                                                                      intersplit = TRUE),
-                                                  svselectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
-                                                                              guide_testtype = "sum"), 
-                                                  svsplitfun = partykit:::.objfun_split(restart = TRUE,
-                                                                                        intersplit = TRUE),
-                                                  logmincriterion = log(1-0.05),
-                                                  update = TRUE))
-
-dg$nodes
-ctree(dist~speed, data = cars, ytrafo = ytrafo, control = ctree_control(update = TRUE,
-                                                                        logmincriterion = log(1-0.05)))
-
-party(dg$nodes, data = cars)
-plot(party(dg$nodes, data =cars))
-plot(ctree(dist~speed, data = cars))
+###################################################
+# various data sets
 
 
+simcomp <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
+                    vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, binary_regressor = TRUE)
+{
+  set.seed(seed)
+  
+  ## call
+  cl <- match.call()
+  
+  pval_ctest <- pval_mtest <- pval_gstest12 <- pval_gmtest12 <- pval_gctest12 <- pval_gstest1 <- 
+    pval_gmtest1 <-   pval_gctest1 <- pval_gstest2 <- pval_gmtest2 <- pval_gctest2 <- numeric(length = nrep)
+  
+  sv_ctest <- sv_mtest <- sv_gstest12 <- sv_gmtest12 <- sv_gctest12 <- sv_gstest1 <- 
+    sv_gmtest1 <-   sv_gctest1 <- sv_gstest2 <- sv_gmtest2 <- sv_gctest2 <- character(length = nrep)
+  
+  for(i in 1:nrep){
+    
+    d <- dgp(n = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
+             binary_regressor = binary_regressor, seed = seed + i)
+    
+    ctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree", stump = stump)
+    mtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc", stump = stump)
+    gstest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                          guide_testtype = "sum", guide_parm = c(1,2),
+                          xgroups = NULL, ygroups = NULL, stump = stump)
+    gmtest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                          guide_testtype = "max", guide_parm = c(1,2),
+                          xgroups = NULL, ygroups = NULL, stump = stump)
+    gctest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                          guide_testtype = "coin", guide_parm = c(1,2),
+                          xgroups = NULL, ygroups = NULL, stump = stump)
+    gstest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "sum", guide_parm = c(1),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    gmtest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "max", guide_parm = c(1),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    gctest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "coin", guide_parm = c(1),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    gstest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "sum", guide_parm = c(2),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    gmtest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "max", guide_parm = c(2),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    gctest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+                         guide_testtype = "coin", guide_parm = c(2),
+                         xgroups = NULL, ygroups = NULL, stump = stump)
+    
+    
+    pval_ctest[i] <- info_node(ctest$node)$p.value
+    pval_mtest[i] <- info_node(mtest$node)$p.value
+    pval_gstest12[i] <- info_node(gstest12$node)$p.value
+    pval_gmtest12[i] <- info_node(gmtest12$node)$p.value
+    pval_gctest12[i] <- info_node(gctest12$node)$p.value
+    pval_gstest1[i] <- info_node(gstest1$node)$p.value
+    pval_gmtest1[i] <- info_node(gmtest1$node)$p.value
+    pval_gctest1[i] <- info_node(gctest1$node)$p.value
+    pval_gstest2[i] <- info_node(gstest2$node)$p.value
+    pval_gmtest2[i] <- info_node(gmtest2$node)$p.value
+    pval_gctest2[i] <- info_node(gctest2$node)$p.value
+    
+    sv_ctest[i] <- names(info_node(ctest$node)$p.value)
+    sv_mtest[i] <- names(info_node(mtest$node)$p.value)
+    sv_gstest12[i] <- names(info_node(gstest12$node)$p.value)
+    sv_gmtest12[i] <- names(info_node(gmtest12$node)$p.value)
+    sv_gctest12[i] <- names(info_node(gctest12$node)$p.value)
+    sv_gstest1[i] <- names(info_node(gstest1$node)$p.value)
+    sv_gmtest1[i] <- names(info_node(gmtest1$node)$p.value)
+    sv_gctest1[i] <- names(info_node(gctest1$node)$p.value)
+    sv_gstest2[i] <- names(info_node(gstest2$node)$p.value)
+    sv_gmtest2[i] <- names(info_node(gmtest2$node)$p.value)
+    sv_gctest2[i] <- names(info_node(gctest2$node)$p.value)
+
+  }
+  
+ return(list(pval_ctest = pval_ctest,
+             pval_mtest = pval_mtest,
+             pval_gstest12 = pval_gstest12,
+             pval_gmtest12 = pval_gmtest12,
+             pval_gctest12 = pval_gctest12,
+             pval_gstest1 = pval_gstest1,
+             pval_gmtest1 = pval_gmtest1,
+             pval_gctest1 = pval_gctest1,
+             pval_gstest2 = pval_gstest2,
+             pval_gmtest2 = pval_gmtest2,
+             pval_gctest2 = pval_gctest2,
+             sv_ctest = sv_ctest,
+             sv_mtest = sv_mtest,
+             sv_gstest12 = sv_gstest12,
+             sv_gmtest12 = sv_gmtest12,
+             sv_gctest12 = sv_gctest12,
+             sv_gstest1 = sv_gstest1,
+             sv_gmtest1 = sv_gmtest1,
+             sv_gctest1 = sv_gctest1,
+             sv_gstest2 = sv_gstest2,
+             sv_gmtest2 = sv_gmtest2,
+             sv_gctest2 = sv_gctest2,
+             call = cl))
+}
 
 
-#####################################################################################
 
-# control arguments for ctree as testfunction:
-ctest_control <- c(partykit:::extree_control(criterion = "p.value",
-                                             logmincriterion = logmincriterion, minsplit = minsplit, 
-                                             minbucket = minbucket, minprob = minprob, 
-                                             nmax = nmax, stump = stump, lookahead = lookahead,
-                                             mtry = mtry, maxdepth = maxdepth, multiway = multiway, 
-                                             splittry = splittry, maxsurrogate = maxsurrogate, 
-                                             numsurrogate = numsurrogate,
-                                             majority = majority, caseweights = caseweights, 
-                                             applyfun = applyfun, saveinfo = saveinfo,  ### always
-                                             selectfun = .ctree_select(),
-                                             splitfun = if (splitflavour == "ctree") .ctree_split() else .objfun_test(),  ## FIX ME .objfun_split()  (also fix in ctree)
-                                             svselectfun = .ctree_select(),
-                                             svsplitfun =.ctree_split(minbucket = 0),
-                                             bonferroni = "Bonferroni" %in% testtype, 
-                                             update = update),
-                   list(teststat = teststat, splitstat = splitstat, splittest = splittest, pargs = pargs,
-                        testtype = ttesttype, nresample = nresample, tol = tol,
-                        intersplit = intersplit, MIA = MIA))
-
-testctrl <- partykit:::extree_control(criterion = "p.value", 
-                                      logmincriterion = log(0.05), 
-                                      minsplit = 20L,
-                                      minbucket = 7L, 
-                                      minprob = 0.01, 
-                                      nmax = Inf,
-                                      stump = FALSE,
-                                      lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
-                                      maxsurrogate = 0L, 
-                                      numsurrogate = FALSE,
-                                      mtry = Inf,
-                                      maxdepth = Inf, 
-                                      multiway = FALSE, 
-                                      splittry = 2L,
-                                      majority = FALSE, 
-                                      caseweights = TRUE, 
-                                      applyfun = NULL, 
-                                      cores = NULL,
-                                      saveinfo = TRUE,
-                                      bonferroni = FALSE,
-                                      update = TRUE,   # FIX ME: per default set to NULL ?
-                                      selectfun = "ctree", 
-                                      splitfun = "ctree", 
-                                      svselectfun = "ctree", 
-                                      svsplitfun = "ctree"
-)
+simtest <- simcomp(nobs = 100, nrep = 100, seed = 7,
+                   vary_beta = "beta1", beta0=0, xi = 0.5,
+                   stump = TRUE, binary_regressor = FALSE)
 
 
 
-ctest <- ctree(dist~speed, data = cars, ytrafo = ytrafo)
-ctest <- extree_fit(data = d, trafo = ytrafo, ctrl = ctree_control(update = TRUE, splitflavour = "exhaustive"),
-                    weights = rep.int(1, NROW(d)))
+
+
+# mean over all p-values (incl. p-values > 0.05)
+mean_all <- cbind(mean(simtest$pval_ctest),
+                  mean(simtest$pval_mtest),
+                  mean(simtest$pval_gstest12),
+                  mean(simtest$pval_gmtest12),
+                  mean(simtest$pval_gctest12),
+                  mean(simtest$pval_gstest1),
+                  mean(simtest$pval_gmtest1),
+                  mean(simtest$pval_gctest1),
+                  mean(simtest$pval_gstest2),
+                  mean(simtest$pval_gmtest2),
+                  mean(simtest$pval_gctest2))
+colnames(mean_all) <-  c("c","m", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+mean_all
+
+# percentage of trees with correct split variable (incl. p-values > 0.05)
+prop_var <- cbind(sum(simtest$sv_ctest == "z1")/length(simtest$sv_ctest),
+                    sum(simtest$sv_mtest == "z1")/length(simtest$sv_mtest),
+                    sum(simtest$sv_gstest12 == "z1")/length(simtest$sv_gstest12),
+                    sum(simtest$sv_gmtest12 == "z1")/length(simtest$sv_gmtest12),
+                    sum(simtest$sv_gctest12 == "z1")/length(simtest$sv_gctest12),
+                    sum(simtest$sv_gstest1 == "z1")/length(simtest$sv_gstest1),
+                    sum(simtest$sv_gmtest1 == "z1")/length(simtest$sv_gmtest1),
+                    sum(simtest$sv_gctest1 == "z1")/length(simtest$sv_gctest1),
+                    sum(simtest$sv_gstest2 == "z1")/length(simtest$sv_gstest2),
+                    sum(simtest$sv_gmtest2 == "z1")/length(simtest$sv_gmtest2),
+                    sum(simtest$sv_gctest2 == "z1")/length(simtest$sv_gctest2))
+colnames(prop_var) <-  c("c","m", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+barplot(prop_var, ylim = c(0,1))
+
+# percentage of trees with p-values <= 0.05
+prop_005 <- cbind(sum(simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
+                  sum(simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
+                  sum(simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
+                  sum(simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
+                  sum(simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
+                  sum(simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
+                  sum(simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
+                  sum(simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
+                  sum(simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
+                  sum(simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
+                  sum(simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
+colnames(prop_005) <-  c("c","m", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+barplot(prop_005, ylim = c(0,1))
+
+# percentage of trees with correct split variable and p-values <= 0.05
+prop_var005 <- cbind(sum(simtest$sv_ctest == "z1" & simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
+                       sum(simtest$sv_mtest == "z1" & simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
+                       sum(simtest$sv_gstest12 == "z1" & simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
+                       sum(simtest$sv_gmtest12 == "z1" & simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
+                       sum(simtest$sv_gctest12 == "z1" & simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
+                       sum(simtest$sv_gstest1 == "z1" & simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
+                       sum(simtest$sv_gmtest1 == "z1" & simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
+                       sum(simtest$sv_gctest1 == "z1" & simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
+                       sum(simtest$sv_gstest2 == "z1" & simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
+                       sum(simtest$sv_gmtest2 == "z1" & simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
+                       sum(simtest$sv_gctest2 == "z1" & simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
+colnames(prop_var005) <-  c("c","m", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+barplot(prop_var005, ylim = c(0,1))
+
+
+
+boxplot(simtest$pval_ctest, simtest$pval_mtest, 
+        simtest$pval_gstest12, simtest$pval_gmtest12, simtest$pval_gctest12,
+        simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
+        simtest$pval_gstest2, simtest$pval_gmtest2, simtest$pval_gctest2,
+        outline = FALSE, 
+        names = c("c","m",
+                  "gs12","gm12","gc12",
+                  "gs1","gm1","gc1",
+                  "gs2","gm2","gc2"))
+
+
+boxplot(simtest$pval_ctest, simtest$pval_mtest, 
+        simtest$pval_gstest12, simtest$pval_gmtest12, #simtest$pval_gctest12,
+        #simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
+        simtest$pval_gstest2, simtest$pval_gmtest2, #simtest$pval_gctest2,
+        outline = FALSE, 
+        names = c("c","m",
+                  "gs12","gm12", #"gc12",
+                  #"gs1","gm1","gc1",
+                  "gs2","gm2")) #,"gc2"))
+
+
