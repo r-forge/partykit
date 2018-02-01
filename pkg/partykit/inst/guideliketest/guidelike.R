@@ -17,6 +17,7 @@
 #ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
 #weighted.scores = FALSE   # logical, should scores be weighted
 
+
 .guide_select <- function(...) {
   function(model, trafo, data, subset, weights, whichvar, ctrl) {
     args <- list(...)
@@ -237,6 +238,391 @@ if(FALSE){
   
   return(ret)
   
+}
+
+
+
+
+
+
+##### ctree and mfluc tests with categorization of explanatory variables
+
+## ctree_cat
+.ctree_cat_select <- function(...)
+  function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    args <- list(...)
+    ctrl[names(args)] <- args
+    partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_cat_test)
+  }
+
+.ctree_cat_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
+  
+  ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+  iy <- data$yxindex ### data[["yx", type = "index"]]
+  Y <- model$estfun
+  
+  if (!is.null(iy)) {
+    stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
+    return(.ctree_cat_test_2d(data = data, j = j, Y = Y, iy = iy, 
+                          subset = subset, weights = weights, 
+                          SPLITONLY = SPLITONLY, ctrl = ctrl))
+  }
+  
+  stopifnot(NROW(Y) == length(ix))
+  
+  NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
+  NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
+  if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
+    subsetNArm <- subset[!(subset %in% NAyx)]
+  } else {
+    subsetNArm <- subset[!(subset %in% c(NAyx, NAz))]
+  }
+  
+  return(.ctree_cat_test_1d(data = data, j = j, Y = Y, subset = subsetNArm, 
+                        weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
+}
+
+
+
+.ctree_cat_test_1d <- function(data, j, Y, subset, weights, SPLITONLY = FALSE, ctrl) {
+  
+  x <- data[[j]]
+  
+  # categorize split variable
+  if(!is.numeric(x) & !is.null(ctrl$xgroups)) warning("xgroups is only used for categorization of numerical split variables")
+  if(is.numeric(x)){
+    if(is.null(ctrl$xgroups)) ctrl$xgroups <- 4
+    if(length(ctrl$xgroups)>1) {
+      xbreaks <- ctrl$xgroups
+    } else {
+      xbreaks <- quantile(x, c(0:ctrl$xgroups)/ctrl$xgroups)
+    }
+    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+  }
+  
+  MIA <- FALSE
+  if (ctrl$MIA) {
+    NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
+    MIA <- (length(NAs) > 0)
+  }
+  
+  ### X for (ordered) factors is always dummy matrix
+  if (is.factor(x) || is.ordered(x))
+    X <- inum::enum(x)     ## FIX ME: split variable has been categorized before, apply enum here (in extree_data inum is applied)
+    #X <- data$zindex[[j]] ### data[[j, type = "index"]]
+  
+  scores <- data[[j, type = "scores"]]
+  ORDERED <- is.ordered(x) || is.numeric(x)
+  
+  ux <- Xleft <- Xright <- NULL
+  
+  if (ctrl$splittest || SPLITONLY) {
+    MAXSELECT <- TRUE
+    if (is.numeric(x)) {
+      X <- data$zindex[[j]] ###data[[j, type = "index"]]
+      ux <- levels(X)
+    }
+    if (MIA) {
+      Xlev <- attr(X, "levels")
+      Xleft <- X + 1L
+      Xleft[NAs] <- 1L
+      Xright <- X
+      Xright[NAs] <- as.integer(length(Xlev) + 1L)
+      attr(Xleft, "levels") <- c(NA, Xlev)
+      attr(Xright, "levels") <- c(Xlev, NA)
+    } 
+  } else {
+    MAXSELECT <- FALSE
+    if (is.numeric(x)) {
+      if (storage.mode(x) == "double") {
+        X <- x
+      } else {
+        X <- as.double(x) ### copy when necessary
+      }
+    }
+    MIA <- FALSE
+  }
+  cluster <- data[["(cluster)"]]
+  
+  partykit:::.ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright, 
+                       ixleft = NULL, ixright = NULL, ux = ux, scores = scores, 
+                       j = j, Y = Y, iy = NULL, subset = subset, weights = weights, 
+                       cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
+                       MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
+}
+
+
+.ctree_cat_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
+  
+  x <- data[[j]]
+  
+  # categorize split variable
+  if(!is.numeric(x) & !is.null(ctrl$xgroups)) warning("xgroups is only used for categorization of numerical split variables")
+  if(is.numeric(x)){
+    if(is.null(ctrl$xgroups)) ctrl$xgroups <- 4
+    if(length(ctrl$xgroups)>1) {
+      xbreaks <- ctrl$xgroups
+    } else {
+      xbreaks <- quantile(x, c(0:ctrl$xgroups)/ctrl$xgroups)
+    }
+    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+  }
+  
+  ix <- inum::enum(x)     ## FIX ME: split variable has been categorized before, apply enum here (in extree_data inum is applied)
+  #ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+  ux <- attr(ix, "levels")
+  
+  MIA <- FALSE
+  if (ctrl$MIA) MIA <- any(ix[subset] == 0)
+  
+  ### X for (ordered) factors is always dummy matrix
+  if (is.factor(x) || is.ordered(x))
+    X <- integer(0)
+  
+  scores <- data[[j, type = "scores"]]
+  ORDERED <- is.ordered(x) || is.numeric(x)
+  
+  if (ctrl$splittest || SPLITONLY) {
+    MAXSELECT <- TRUE
+    X <- integer(0)
+    
+    if (MIA) {
+      Xlev <- attr(ix, "levels")
+      ixleft <- ix + 1L
+      ixright <- ix
+      ixright[ixright == 0L] <- as.integer(length(Xlev) + 1L)
+      attr(ixleft, "levels") <- c(NA, Xlev)
+      attr(ixright, "levels") <- c(Xlev, NA)
+      Xleft <- Xright <- X
+    } 
+  } else {
+    MAXSELECT <- FALSE
+    MIA <- FALSE
+    if (is.numeric(x))
+      X <- matrix(c(0, as.double(attr(ix, "levels"))), ncol = 1)
+  }
+  cluster <- data[["(cluster)"]]
+  
+  partykit:::.ctree_test_internal(x = x, X = X, ix = ix, Xleft = Xleft, Xright = Xright, 
+                       ixleft = ixleft, ixright = ixright, ux = ux, scores = scores, 
+                       j = j, Y = Y, iy = iy, subset = subset, weights = weights, 
+                       cluster = cluster, MIA = MIA, SPLITONLY = SPLITONLY, 
+                       MAXSELECT = MAXSELECT, ORDERED = ORDERED, ctrl = ctrl)
+}
+
+
+
+## mfluc_cat
+.mfluc_cat_select <- function(...)
+  function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    args <- list(...)
+    ctrl[names(args)] <- args
+    partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .mfluc_cat_test)
+  }
+
+
+
+.mfluc_cat_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
+{
+  
+  stopifnot(!SPLITONLY)
+  stopifnot(is.null(data[["yx", type = "index"]]))
+  z <- data[[j]][subset]
+  
+  # categorize split variable
+  if(!is.numeric(z) & !is.null(ctrl$xgroups)) warning("xgroups is only used for categorization of numerical split variables")
+  if(is.numeric(z)){
+    if(is.null(ctrl$xgroups)) ctrl$xgroups <- 4
+    if(length(ctrl$xgroups)>1) {
+      xbreaks <- ctrl$xgroups
+    } else {
+      xbreaks <- quantile(z, c(0:ctrl$xgroups)/ctrl$xgroups)
+    }
+    z <- cut(z, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+  }
+  
+  estfun <- model$estfun[subset,,drop = FALSE]
+  cluster <- data[["(cluster)"]][subset]
+  if(length(weights) == 0) {
+    weights <- rep(1, NROW(estfun))
+  } else {
+    weights <- weights[subset]
+  }
+  obj <- model$obj
+  
+  if(length(unique(z)) < 2L) return(list(statistic = NA, p.value = NA))
+  
+  ## set up return values
+  m <- NCOL(z)
+  pval <- rep.int(NA_real_, m)
+  stat <- rep.int(0, m)
+  ifac <- rep.int(FALSE, m)
+  
+  ## estimating functions (dropping zero weight observations)
+  process <- as.matrix(estfun)
+  ww0 <- (weights > 0)
+  process <- process[ww0, , drop = FALSE]
+  if(!is.null(cluster)) cluster <- droplevels(cluster[ww0]) 
+  weights <- weights[ww0]
+  z <- z[ww0]
+  k <- NCOL(process)
+  n <- NROW(process)
+  nobs <- if(ctrl$caseweights && any(weights != 1L)) sum(weights) else n
+  
+  
+  ## stop if all collumn values in process are the same
+  if(all(apply(process, 2, function(x) length(unique(x))) == 1)) 
+    return(list(statistic = NA, p.value = NA))
+  
+  ## scale process
+  process <- process/sqrt(nobs)
+  vcov <- ctrl$vcov
+  if(is.null(obj)) vcov <- "opg"
+  if(vcov != "opg") {
+    bread <- vcov(obj) * nobs
+  }
+  if(vcov != "info") {
+    ## correct scaling of estfun for variance estimate:
+    ## - caseweights=FALSE: weights are integral part of the estfun -> squared in estimate
+    ## - caseweights=TRUE: weights are just a factor in variance estimate -> require division by sqrt(weights)
+    meat <- if(is.null(cluster)) {
+      crossprod(if(ctrl$caseweights) process/sqrt(weights) else process)
+    } else {
+      crossprod(as.matrix(apply(if(ctrl$caseweights) process/sqrt(weights) else process, 2L, tapply, cluster, sum)))
+    }
+  }
+  ## from strucchange
+  root.matrix <- function(X) {
+    if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+      X.eigen <- eigen(X, symmetric = TRUE)
+      if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+      sqomega <- sqrt(diag(X.eigen$values))
+      V <- X.eigen$vectors
+      return(V %*% sqomega %*% t(V))
+    }
+  }
+  J12 <- root.matrix(switch(vcov,
+                            "opg" = chol2inv(chol(meat)),
+                            "info" = bread,
+                            "sandwich" = bread %*% meat %*% bread
+  ))
+  process <- t(J12 %*% t(process))  
+  
+  
+  ## get critical values for supLM statistic
+  from <- if(ctrl$trim > 1) ctrl$trim else ceiling(nobs * ctrl$trim)
+  from <- max(from, ctrl$minbucket)
+  to <- nobs - from
+  lambda <- ((nobs - from) * to)/(from * (nobs - to))
+  
+  beta <- partykit:::mob_beta_suplm
+  logp.supLM <- function(x, k, lambda)
+  {
+    if(k > 40L) {
+      ## use Estrella (2003) asymptotic approximation
+      logp_estrella2003 <- function(x, k, lambda)
+        -lgamma(k/2) + k/2 * log(x/2) - x/2 + log(abs(log(lambda) * 
+                                                        (1 - k/x) + 2/x))
+      ## FIXME: Estrella only works well for large enough x
+      ## hence require x > 1.5 * k for Estrella approximation and
+      ## use an ad hoc interpolation for larger p-values
+      p <- ifelse(x <= 1.5 * k, 
+                  (x/(1.5 * k))^sqrt(k) * logp_estrella2003(1.5 * k, k, lambda), 
+                  logp_estrella2003(x, k, lambda))
+    } else {
+      ## use Hansen (1997) approximation
+      nb <- ncol(beta) - 1L
+      tau <- if(lambda < 1) lambda else 1/(1 + sqrt(lambda))
+      beta <- beta[(((k - 1) * 25 + 1):(k * 25)),]
+      dummy <- beta[,(1L:nb)] %*% x^(0:(nb-1))
+      dummy <- dummy * (dummy > 0)
+      pp <- pchisq(dummy, beta[,(nb+1)], lower.tail = FALSE, log.p = TRUE)
+      if(tau == 0.5) {
+        p <- pchisq(x, k, lower.tail = FALSE, log.p = TRUE)
+      } else if(tau <= 0.01) {
+        p <- pp[25L]
+      } else if(tau >= 0.49) {
+        p <- log((exp(log(0.5 - tau) + pp[1L]) + exp(log(tau - 0.49) + pchisq(x, k, lower.tail = FALSE, log.p = TRUE))) * 100)
+        ## if p becomes so small that 'correct' weighted averaging does not work, resort to 'naive' averaging
+        if(!is.finite(p)) p <- mean(c(pp[1L], pchisq(x, k, lower.tail = FALSE, log.p = TRUE)))
+      } else {
+        taua <- (0.51 - tau) * 50
+        tau1 <- floor(taua)
+        p <- log(exp(log(tau1 + 1 - taua) + pp[tau1]) + exp(log(taua-tau1) + pp[tau1 + 1L]))
+        ## if p becomes so small that 'correct' weighted averaging does not work, resort to 'naive' averaging
+        if(!is.finite(p)) p <- mean(pp[tau1 + 0L:1L])
+      }
+    }
+    return(as.vector(p))
+  }
+  
+  ## compute statistic and p-value
+  if(is.factor(z)) {
+    oi <- order(z)
+    proci <- process[oi, , drop = FALSE]
+    
+    ifac <- TRUE
+    iord <- is.ordered(z) & (ctrl$ordinal != "chisq")
+    
+    ## order partitioning variable
+    z <- z[oi]
+    # re-apply factor() added to drop unused levels
+    z <- factor(z, levels = unique(z))
+    # compute segment weights
+    segweights <- if(ctrl$caseweights) tapply(weights[oi], z, sum) else table(z)
+    segweights <- as.vector(segweights)/nobs
+    
+    # compute statistic only if at least two levels are left
+    if(length(segweights) < 2L) {
+      stat <- 0
+      pval <- NA_real_
+    } else if(iord) {
+      proci <- apply(proci, 2L, cumsum)
+      tt0 <- head(cumsum(table(z)), -1L)
+      tt <- head(cumsum(segweights), -1L)
+      if(ctrl$ordinal == "max") {
+        stat <- max(abs(proci[tt0, ] / sqrt(tt * (1-tt))))
+        pval <- log(as.numeric(1 - mvtnorm::pmvnorm(
+          lower = -stat, upper = stat,
+          mean = rep(0, length(tt)),
+          sigma = outer(tt, tt, function(x, y)
+            sqrt(pmin(x, y) * (1 - pmax(x, y)) / 
+                   ((pmax(x, y) * (1 - pmin(x, y))))))
+        )^k))
+      } else {
+        proci <- rowSums(proci^2)
+        stat <- max(proci[tt0] / (tt * (1-tt)))
+        pval <- log(strucchange::ordL2BB(segweights, nproc = k, nrep = ctrl$nrep)$computePval(stat, nproc = k))
+      }
+    } else {      
+      stat <- sum(sapply(1L:k, function(j) (tapply(proci[,j], z, sum)^2)/segweights))
+      pval <- pchisq(stat, k*(length(levels(z))-1), log.p = TRUE, lower.tail = FALSE)
+    }
+  } else {
+    oi <- if(ctrl$breakties) {
+      mm <- sort(unique(z))
+      mm <- ifelse(length(mm) > 1L, min(diff(mm))/10, 1)
+      order(z + runif(length(z), min = -mm, max = +mm))
+    } else {
+      order(z)
+    }
+    proci <- process[oi, , drop = FALSE]
+    proci <- apply(proci, 2L, cumsum)
+    tt0 <- if(ctrl$caseweights && any(weights != 1L)) cumsum(weights[oi]) else 1:n
+    stat <- if(from < to) {
+      xx <- rowSums(proci^2)
+      xx <- xx[tt0 >= from & tt0 <= to]
+      tt <- tt0[tt0 >= from & tt0 <= to]/nobs
+      max(xx/(tt * (1 - tt)))	  
+    } else {
+      0
+    }
+    pval <- if(from < to) logp.supLM(stat, k, lambda) else NA
+  }
+  
+  ## return version of pvalue that .extree_node deals with
+  rval <- list(statistic = log(stat), p.value = log1p(-exp(pval)))
+  return(rval)
 }
 
 
