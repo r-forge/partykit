@@ -19,7 +19,7 @@ sum(objfun(pmods))
 ## Note that B should be at least 100
 ## The low B is just for demonstration 
 ## purposes.
-tst <- test_heterogeneity(forest = frst, 
-                          pmodels = pmods, 
-                          B = 5) 
+tst <- pmtest(forest = frst, 
+              pmodels = pmods, 
+              B = 5) 
 tst

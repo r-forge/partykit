@@ -41,9 +41,9 @@
 #' ## Note that B should be at least 100
 #' ## The low B is just for demonstration 
 #' ## purposes.
-#' tst <- test_heterogeneity(forest = frst, 
-#'                           pmodels = pmods, 
-#'                           B = 10) 
+#' tst <- pmtest(forest = frst, 
+#'               pmodels = pmods, 
+#'               B = 10) 
 #' tst$pvalue
 #' tst
 #' plot(tst)
@@ -52,7 +52,7 @@
 #' @importFrom stats simulate
 #' 
 #' @export
-test_heterogeneity <- function(forest, pmodels = NULL, data = NULL, B = 100) {
+pmtest <- function(forest, pmodels = NULL, data = NULL, B = 100) {
   
   ## simulate new y
   model <- forest$info$model
@@ -96,7 +96,7 @@ test_heterogeneity <- function(forest, pmodels = NULL, data = NULL, B = 100) {
 }
 
 
-#' @rdname test_heterogeneity
+#' @rdname pmtest
 #'
 #' @param x object of class heterogeneity_test.
 #' @param ... ignored.

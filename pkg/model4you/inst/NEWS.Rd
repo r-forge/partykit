@@ -8,6 +8,12 @@
     \item{Fixed bug in binomial_glm_plot().}
   }
   }
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{Renamed test_heterogeneity() to pmtest().}
+  }
+  }
+
 }
 
 

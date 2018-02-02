@@ -164,9 +164,9 @@ ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
 
 <<math_tst, fig.height=5, out.width='.7\\linewidth'>>=
 pmods_math <- pmodel(x = forest_math, fun = identity)
-tst <- test_heterogeneity(forest = forest_math, 
-                          pmodels = pmods_math, 
-                          B = 10) 
+tst <- pmtest(forest = forest_math, 
+              pmodels = pmods_math, 
+              B = 10) 
 tst$pvalue
 plot(tst)
 tst
