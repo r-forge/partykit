@@ -72,6 +72,18 @@ Objective function:
   node 1   node 2 
 2632.096 1093.182 
 > 
+> coef(tr)
+  (Intercept)  horThyes
+2    7.859026 0.4001011
+4    7.293645 0.3038557
+5    6.980875 0.1630104
+> coef(tr, node = 1)
+  (Intercept)  horThyes
+1    7.608449 0.3059506
+> coef(bmod)
+(Intercept)    horThyes 
+  7.6084486   0.3059506 
+> 
 > logLik(bmod)
 'log Lik.' -2632.096 (df=3)
 > logLik(tr)
@@ -465,4 +477,4 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 > 
 > proc.time()
    user  system elapsed 
- 13.916   0.088  14.006 
+ 11.068   0.056  11.129 
