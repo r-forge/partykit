@@ -1,13 +1,86 @@
 library("partykit")
 library("Formula")
 
-comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat"), 
+
+###########
+# DGP
+
+dgp <- function(nobs = 100, delta = 1, xi = 0,
+                sigma = 1, seed = 7, only_intercept = FALSE, 
+                binary_regressor = TRUE, binary_beta = TRUE,
+                vary_beta = c("all", "beta0", "beta1"),
+                beta0 = NULL, beta1 = NULL,
+                z1dist = c("norm", "unif")){
+  
+  if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
+  if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
+  if(length(z1dist) > 1) z1dist <- z1dist[1]
+  if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
+  
+  
+  set.seed(seed)
+  
+  if(z1dist == "norm") {
+    z1 <- rnorm(nobs, 0, 1) 
+    z2 <- runif(nobs,-1,1)
+  } else {
+    z1 <- runif(nobs,-1,1)
+    z2 <- rnorm(nobs, 0, 1) 
+  }
+  z3 <- rnorm(nobs, 0, 1)
+  z4 <- rnorm(nobs, 0, 1)
+  z5 <- rnorm(nobs, 0, 1)
+  z6 <- rnorm(nobs, 0, 1)
+  z7 <- runif(nobs, -1, 1)
+  z8 <- runif(nobs, -1, 1)
+  z9 <- runif(nobs, -1, 1)
+  z10 <- runif(nobs, -1, 1)
+  
+  #if(!only_intercept)  {
+  x <- if(binary_regressor) (-1)^rbinom(nobs, 1, 0.5) else runif(nobs, min = -1, max = 1)
+  #}
+  
+  e <- rnorm(nobs, 0, sigma)
+  
+  if(vary_beta == "all"){
+    if(binary_beta){
+      beta0 <- delta * (-1)^(z1<=xi)
+      beta1 <- delta * (-1)^(z1<=xi) * (-1)   # opposite signs if both betas vary
+    } else {
+      beta0 <- delta * z1
+      beta1 <- delta * z1 * (-1)   # opposite signs if both betas vary
+    }
+  }
+  
+  if(vary_beta == "beta0"){
+    beta0 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
+    beta1 <- beta1
+  }
+  
+  if(vary_beta == "beta1"){
+    beta0 <- beta0
+    beta1 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
+  }
+  
+  
+  y <- if(only_intercept) beta0 + e else beta0 + beta1 * x + e
+  
+  d <- data.frame(y = y, x = x, 
+                  z1 = z1, z2 = z2, z3 = z3, z4 = z4, z5 = z5, z6 = z6, z7 = z7, z8 = z8, z9 = z9, z10 = z10,
+                  beta0 = beta0, beta1 = beta1)
+  
+  return(d)
+}
+
+
+
+## FIX ME: no decorrelation for length(guide_parm) = 1
+evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat"), 
                       subset, weights, stump = TRUE,
                       guide_testtype = c("sum", "max", "coin"), 
                       decorrelate = "vcov",
                       guide_parm = NULL,
-                      xgroups = NULL,
-                      ygroups = NULL){
+                      xgroups = NULL, ygroups = NULL){
   
   na.action = na.pass
   converged = NULL
@@ -349,74 +422,8 @@ comptests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
 }
 
 
-
-###########
-# DGP
-
-dgp <- function(n = 100, delta = 1, xi = 0,
-                sigma = 1, seed = 7,
-                only_intercept = FALSE, 
-                binary_regressor = TRUE, 
-                vary_beta = c("all", "beta0", "beta1"),
-                binary_beta = TRUE,
-                beta0 = NULL,
-                beta1 = NULL){
-  
-  if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
-  if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
-  
-  set.seed(seed)
-  
-  z1 <- rnorm(n, 0, 1)
-  z2 <- rnorm(n, 0, 1)
-  z3 <- rnorm(n, 0, 1)
-  z4 <- rnorm(n, 0, 1)
-  z5 <- rnorm(n, 0, 1)
-  z6 <- runif(n, -1, 1)
-  z7 <- runif(n, -1, 1)
-  z8 <- runif(n, -1, 1)
-  z9 <- runif(n, -1, 1)
-  z10 <- runif(n, -1, 1)
-  
-  if(!only_intercept)  x <- if(binary_regressor) (-1)^rbinom(n, 1, 0.5) else runif(100, min = -1, max = 1)
-  
-  e <- rnorm(n, 0, sigma)
-  
-  if(vary_beta == "all"){
-    if(binary_beta){
-      beta0 <- delta * (-1)^(z1<=xi)
-      beta1 <- delta * (-1)^(z1<=xi) * (-1)   # opposite signs if both betas vary
-    } else {
-      beta0 <- delta * z1
-      beta1 <- delta * z1 * (-1)   # opposite signs if both betas vary
-    }
-  }
-  
-  if(vary_beta == "beta0"){
-    beta0 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
-    beta1 <- beta1
-  }
-  
-  if(vary_beta == "beta1"){
-    beta0 <- beta0
-    beta1 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
-  }
-  
-  
-  y <- if(only_intercept) beta0 + e else beta0 + beta1 * x + e
-  
-  d <- data.frame(y = y, x = x, 
-                  z1 = z1, z2 = z2, z3 = z3, z4 = z4, z5 = z5, z6 = z6, z7 = z7, z8 = z8, z9 = z9, z10 = z10,
-                  beta0 = beta0, beta1 = beta1)
-    
-  return(d)
-}
-
-
-
-
 ############
-# compare
+# compare on one data set
 
 d <- dgp(400, vary_beta = "beta1", beta0 = 3)
 d <- dgp(400, vary_beta = "all", xi = -0.5)
@@ -428,36 +435,41 @@ d <- dgp(200, vary_beta = "beta0", beta1 = 2, xi = 0.0, binary_regressor = FALSE
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = -0.5, binary_regressor = FALSE)
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE)
 
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE, binary_beta = TRUE, delta = 5)
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE, binary_beta = FALSE, delta = 5)
 
-ctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree")
-mtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc")
-cctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree_cat")
-mctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc_cat")
-gstest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.5, binary_regressor = FALSE, binary_beta = TRUE, delta = 5, z1dist = "unif")
+
+
+ctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree")
+mtest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "mfluc")
+cctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree_cat")
+mctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "mfluc_cat")
+gstest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                     guide_testtype = "sum", guide_parm = c(1,2),
                     xgroups = NULL, ygroups = NULL)
-gmtest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gmtest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                     guide_testtype = "max", guide_parm = c(1,2),
                     xgroups = NULL, ygroups = NULL)
-gctest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gctest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                     guide_testtype = "coin", guide_parm = c(1,2),
                     xgroups = NULL, ygroups = NULL)
-gstest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gstest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "sum", guide_parm = c(1),
                       xgroups = NULL, ygroups = NULL)
-gmtest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gmtest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "max", guide_parm = c(1),
                       xgroups = NULL, ygroups = NULL)
-gctest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gctest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "coin", guide_parm = c(1),
                       xgroups = NULL, ygroups = NULL)
-gstest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gstest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "sum", guide_parm = c(2),
                       xgroups = NULL, ygroups = NULL)
-gmtest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gmtest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "max", guide_parm = c(2),
                       xgroups = NULL, ygroups = NULL)
-gctest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+gctest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
                       guide_testtype = "coin", guide_parm = c(2),
                       xgroups = NULL, ygroups = NULL)
 
@@ -498,234 +510,344 @@ plot(gctest2, terminal_panel = node_bivplot)
 # various data sets
 
 
-simcomp <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
-                    vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, binary_regressor = TRUE)
+sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
+                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                    vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
+                    binary_regressor = TRUE, binary_beta = TRUE, z1dist = "norm",
+                    sigma = 1, only_intercept = FALSE, alpha = 0.05,
+                    test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                             "guide_sum_12", "guide_max_12", "guide_coin_12",
+                             "guide_sum_1", "guide_max_1", "guide_coin_1",
+                             "guide_sum_2", "guide_max_2", "guide_coin_2"))
 {
   set.seed(seed)
   
   ## call
   cl <- match.call()
   
-  pval_ctest <- pval_mtest <- pval_cctest <- pval_mctest <- pval_gstest12 <- pval_gmtest12 <- pval_gctest12 <- pval_gstest1 <- 
-    pval_gmtest1 <-   pval_gctest1 <- pval_gstest2 <- pval_gmtest2 <- pval_gctest2 <- numeric(length = nrep)
+  pval <- matrix(rep(NA, length(test)*nrep), ncol = length(test))
+  sv <- matrix(rep(NA, length(test)*nrep), ncol = length(test))
+  colnames(pval) <- colnames(sv) <- test
   
-  sv_ctest <- sv_mtest <- sv_cctest <- sv_mctest <- sv_gstest12 <- sv_gmtest12 <- sv_gctest12 <- sv_gstest1 <- 
-    sv_gmtest1 <-   sv_gctest1 <- sv_gstest2 <- sv_gmtest2 <- sv_gctest2 <- character(length = nrep)
+  
+  #pval_ctest <- pval_mtest <- pval_cctest <- pval_mctest <- pval_gstest12 <- pval_gmtest12 <- pval_gctest12 <- pval_gstest1 <- 
+  #  pval_gmtest1 <-   pval_gctest1 <- pval_gstest2 <- pval_gmtest2 <- pval_gctest2 <- numeric(length = nrep)
+  #
+  #sv_ctest <- sv_mtest <- sv_cctest <- sv_mctest <- sv_gstest12 <- sv_gmtest12 <- sv_gctest12 <- sv_gstest1 <- 
+  #  sv_gmtest1 <-   sv_gctest1 <- sv_gstest2 <- sv_gmtest2 <- sv_gctest2 <- character(length = nrep)
   
   for(i in 1:nrep){
     
-    d <- dgp(n = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
-             binary_regressor = binary_regressor, seed = seed + i)
+    d <- dgp(nobs = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
+             binary_regressor = binary_regressor, 
+             binary_beta = binary_beta, z1dist = z1dist,
+             seed = seed + i, sigma = sigma, only_intercept = only_intercept)
     
-    ctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree", stump = stump)
-    mtest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc", stump = stump)
-    cctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "ctree_cat", stump = stump)
-    mctest <- comptests(y~x|z1+z2+z3, data = d, testfun = "mfluc_cat", stump = stump)
-    gstest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                          guide_testtype = "sum", guide_parm = c(1,2),
-                          xgroups = NULL, ygroups = NULL, stump = stump)
-    gmtest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                          guide_testtype = "max", guide_parm = c(1,2),
-                          xgroups = NULL, ygroups = NULL, stump = stump)
-    gctest12 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                          guide_testtype = "coin", guide_parm = c(1,2),
-                          xgroups = NULL, ygroups = NULL, stump = stump)
-    gstest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "sum", guide_parm = c(1),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
-    gmtest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "max", guide_parm = c(1),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
-    gctest1 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "coin", guide_parm = c(1),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
-    gstest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "sum", guide_parm = c(2),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
-    gmtest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "max", guide_parm = c(2),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
-    gctest2 <- comptests(y~x|z1+z2+z3, data = d, testfun = "guide", 
-                         guide_testtype = "coin", guide_parm = c(2),
-                         xgroups = NULL, ygroups = NULL, stump = stump)
+    compute_pval <- function(test) {
+      test <- match.arg(test, c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                                "guide_sum_12", "guide_max_12", "guide_coin_12",
+                                "guide_sum_1", "guide_max_1", "guide_coin_1",
+                                "guide_sum_2", "guide_max_2", "guide_coin_2"))
+      testres <- switch(test,
+                        "ctree" = evaltests(formula, data = d, testfun = "ctree", stump = stump),
+                        "mfluc" = evaltests(formula, data = d, testfun = "mfluc", stump = stump),
+                        "ctree_cat" = evaltests(formula, data = d, testfun = "ctree_cat", stump = stump),
+                        "mfluc_cat" = evaltests(formula, data = d, testfun = "mfluc_cat", stump = stump),
+                        "guide_sum_12" = evaltests(formula, data = d, testfun = "guide", 
+                                              guide_testtype = "sum", guide_parm = c(1,2),
+                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_max_12" = evaltests(formula, data = d, testfun = "guide", 
+                                              guide_testtype = "max", guide_parm = c(1,2),
+                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_coin_12" = evaltests(formula, data = d, testfun = "guide", 
+                                              guide_testtype = "coin", guide_parm = c(1,2),
+                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_sum_1" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "sum", guide_parm = c(1),
+                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_max_1" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "max", guide_parm = c(1),
+                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_coin_1" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "coin", guide_parm = c(1),
+                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_sum_2" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "sum", guide_parm = c(2),
+                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_max_2" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "max", guide_parm = c(2),
+                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                        "guide_coin_2" = evaltests(formula, data = d, testfun = "guide", 
+                                             guide_testtype = "coin", guide_parm = c(2),
+                                             xgroups = NULL, ygroups = NULL, stump = stump)
+                        )
+      c("pval" = info_node(testres$node)$p.value,
+        "sv" = names(info_node(testres$node)$p.value))
+    }
     
+    resmat <- sapply(test, compute_pval)
+    pval[i,] <- resmat[1,]
+    sv[i,] <- resmat[2,]
     
-    pval_ctest[i] <- info_node(ctest$node)$p.value
-    pval_mtest[i] <- info_node(mtest$node)$p.value
-    pval_cctest[i] <- info_node(cctest$node)$p.value
-    pval_mctest[i] <- info_node(mctest$node)$p.value
-    pval_gstest12[i] <- info_node(gstest12$node)$p.value
-    pval_gmtest12[i] <- info_node(gmtest12$node)$p.value
-    pval_gctest12[i] <- info_node(gctest12$node)$p.value
-    pval_gstest1[i] <- info_node(gstest1$node)$p.value
-    pval_gmtest1[i] <- info_node(gmtest1$node)$p.value
-    pval_gctest1[i] <- info_node(gctest1$node)$p.value
-    pval_gstest2[i] <- info_node(gstest2$node)$p.value
-    pval_gmtest2[i] <- info_node(gmtest2$node)$p.value
-    pval_gctest2[i] <- info_node(gctest2$node)$p.value
-    
-    sv_ctest[i] <- names(info_node(ctest$node)$p.value)
-    sv_mtest[i] <- names(info_node(mtest$node)$p.value)
-    sv_cctest[i] <- names(info_node(cctest$node)$p.value)
-    sv_mctest[i] <- names(info_node(mctest$node)$p.value)
-    sv_gstest12[i] <- names(info_node(gstest12$node)$p.value)
-    sv_gmtest12[i] <- names(info_node(gmtest12$node)$p.value)
-    sv_gctest12[i] <- names(info_node(gctest12$node)$p.value)
-    sv_gstest1[i] <- names(info_node(gstest1$node)$p.value)
-    sv_gmtest1[i] <- names(info_node(gmtest1$node)$p.value)
-    sv_gctest1[i] <- names(info_node(gctest1$node)$p.value)
-    sv_gstest2[i] <- names(info_node(gstest2$node)$p.value)
-    sv_gmtest2[i] <- names(info_node(gmtest2$node)$p.value)
-    sv_gctest2[i] <- names(info_node(gctest2$node)$p.value)
-
   }
   
- return(list(pval_ctest = pval_ctest,
-             pval_mtest = pval_mtest,
-             pval_cctest = pval_cctest,
-             pval_mctest = pval_mctest,
-             pval_gstest12 = pval_gstest12,
-             pval_gmtest12 = pval_gmtest12,
-             pval_gctest12 = pval_gctest12,
-             pval_gstest1 = pval_gstest1,
-             pval_gmtest1 = pval_gmtest1,
-             pval_gctest1 = pval_gctest1,
-             pval_gstest2 = pval_gstest2,
-             pval_gmtest2 = pval_gmtest2,
-             pval_gctest2 = pval_gctest2,
-             sv_ctest = sv_ctest,
-             sv_mtest = sv_mtest,
-             sv_cctest = sv_cctest,
-             sv_mctest = sv_mctest,
-             sv_gstest12 = sv_gstest12,
-             sv_gmtest12 = sv_gmtest12,
-             sv_gctest12 = sv_gctest12,
-             sv_gstest1 = sv_gstest1,
-             sv_gmtest1 = sv_gmtest1,
-             sv_gctest1 = sv_gctest1,
-             sv_gstest2 = sv_gstest2,
-             sv_gmtest2 = sv_gmtest2,
-             sv_gctest2 = sv_gctest2,
-             call = cl))
+  
+  prop_nosplit <- colMeans(pval > alpha)
+  
+  #prop_split <- colMeans(pval <= alpha)
+  
+  pval_T <- pval
+  pval_T[which(sv !="z1")] <- 1
+  prop_T <- colMeans(pval_T < alpha)
+  
+  pval_F <- pval
+  pval_F[which(sv =="z1")] <- 1
+  prop_F <- colMeans(pval_F < alpha)
+  
+  return(list(prop_nosplit = prop_nosplit,
+              #prop_split = prop_split,
+              prop_F = prop_F,
+              prop_T = prop_T))
 }
 
 
 
-simtest <- simcomp(nobs = 100, nrep = 100, seed = 7,
-                   vary_beta = "beta1", beta0=0, xi = 0.5,
-                   stump = TRUE, binary_regressor = FALSE)
+
+
+if(FALSE){
+  simtest <- sim(nobs = 100, nrep = 100, seed = 7,
+                 formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                 vary_beta = "beta1", beta0=1, xi = 0.8, delta = 2,
+                 stump = TRUE, binary_regressor = FALSE,
+                 binary_beta = FALSE, z1dist = "unif",
+                 sigma = 1, only_intercept = FALSE,
+                 test = c("ctree","mfluc"))
+}
+
+
+############# wrapper function applying simcomp over varying variables of interest
+
+simwrapper <- function(nobs = 200, nrep = 100,
+                       delta = seq(from = 1, to = 5, by = 2),
+                       xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
+                       binary_regressor = c(TRUE, FALSE),
+                       binary_beta = c(TRUE, FALSE),
+                       only_intercept = c(TRUE, FALSE),
+                       test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                                "guide_sum_12", "guide_max_12", "guide_coin_12",
+                                "guide_sum_1", "guide_max_1", "guide_coin_1",
+                                "guide_sum_2", "guide_max_2", "guide_coin_2"),
+                       beta0=0, beta1 = 1,
+                       stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+{
+  prs <- expand.grid(delta = delta, xi = xi, vary_beta = vary_beta,
+                     binary_regressor = binary_regressor,
+                     binary_beta = binary_beta,
+                     only_intercept = only_intercept)
+  
+  rmid <- which((prs$only_intercept == TRUE & prs$vary_beta != "beta0"))
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  rmid <- which(prs$binary_beta == FALSE & prs$xi != 0)
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  rmid <- which(prs$only_intercept == TRUE & prs$binary_regressor == FALSE)
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  
+  rownames(prs) <- c(1:NROW(prs))
+
+  nprs <- nrow(prs)
+  ntest <- length(test)
+  prop_nosplit <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_F <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_T <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  
+  for(i in 1:nprs) {
+    reslist <- sim(nobs = nobs, nrep = nrep, stump = stump,
+                   formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                   beta0 = beta0, beta1 = beta1, z1dist = z1dist,
+                   sigma = sigma, alpha = alpha,
+                   test = test,
+                   vary_beta = prs$vary_beta[i], 
+                   binary_regressor = prs$binary_regressor[i],
+                   binary_beta = prs$binary_beta[i],
+                   xi = prs$xi[i],
+                   only_intercept = prs$only_intercept[i])
+    
+    prop_nosplit[i,] <- reslist$prop_nosplit
+    prop_F[i,] <- reslist$prop_F
+    prop_T[i,] <- reslist$prop_T
+  }
+  
+  rval <- data.frame()
+  for(i in 1:ntest) rval <- rbind(rval, prs)
+  rval$test <- gl(ntest, nprs, labels = test)
+  rval$prop_nosplit <- as.vector(prop_nosplit)
+  rval$prop_F <- as.vector(prop_F)
+  rval$prop_T <- as.vector(prop_T)
+  rval$delta <- factor(rval$delta)
+  rval$vary_beta <- factor(rval$vary_beta)
+  rval$binary_regressor <- factor(rval$binary_regressor)
+  rval$binary_beta <- factor(rval$binary_beta)
+  rval$xi <- factor(rval$xi)
+  rval$only_intercept <- factor(rval$only_intercept)
+  
+  return(rval)
+}
 
 
 
 
 
-# mean over all p-values (incl. p-values > 0.05)
-mean_all <- cbind(mean(simtest$pval_ctest),
-                  mean(simtest$pval_mtest),
-                  mean(simtest$pval_cctest),
-                  mean(simtest$pval_mctest),
-                  mean(simtest$pval_gstest12),
-                  mean(simtest$pval_gmtest12),
-                  mean(simtest$pval_gctest12),
-                  mean(simtest$pval_gstest1),
-                  mean(simtest$pval_gmtest1),
-                  mean(simtest$pval_gctest1),
-                  mean(simtest$pval_gstest2),
-                  mean(simtest$pval_gmtest2),
-                  mean(simtest$pval_gctest2))
-colnames(mean_all) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
-mean_all
-
-# percentage of trees with correct split variable (incl. p-values > 0.05)
-prop_var <- cbind(sum(simtest$sv_ctest == "z1")/length(simtest$sv_ctest),
-                  sum(simtest$sv_mtest == "z1")/length(simtest$sv_mtest),
-                  sum(simtest$sv_cctest == "z1")/length(simtest$sv_cctest),
-                  sum(simtest$sv_mctest == "z1")/length(simtest$sv_mctest),
-                  sum(simtest$sv_gstest12 == "z1")/length(simtest$sv_gstest12),
-                  sum(simtest$sv_gmtest12 == "z1")/length(simtest$sv_gmtest12),
-                  sum(simtest$sv_gctest12 == "z1")/length(simtest$sv_gctest12),
-                  sum(simtest$sv_gstest1 == "z1")/length(simtest$sv_gstest1),
-                  sum(simtest$sv_gmtest1 == "z1")/length(simtest$sv_gmtest1),
-                  sum(simtest$sv_gctest1 == "z1")/length(simtest$sv_gctest1),
-                  sum(simtest$sv_gstest2 == "z1")/length(simtest$sv_gstest2),
-                  sum(simtest$sv_gmtest2 == "z1")/length(simtest$sv_gmtest2),
-                  sum(simtest$sv_gctest2 == "z1")/length(simtest$sv_gctest2))
-colnames(prop_var) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
-barplot(prop_var, ylim = c(0,1))
-
-# percentage of trees with p-values <= 0.05
-prop_005 <- cbind(sum(simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
-                  sum(simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
-                  sum(simtest$pval_cctest <= 0.05)/length(simtest$sv_cctest),
-                  sum(simtest$pval_mctest <= 0.05)/length(simtest$sv_mctest),
-                  sum(simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
-                  sum(simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
-                  sum(simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
-                  sum(simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
-                  sum(simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
-                  sum(simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
-                  sum(simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
-                  sum(simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
-                  sum(simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
-colnames(prop_005) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
-barplot(prop_005, ylim = c(0,1))
-
-# percentage of trees with correct split variable and p-values <= 0.05
-prop_var005 <- cbind(sum(simtest$sv_ctest == "z1" & simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
-                     sum(simtest$sv_mtest == "z1" & simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
-                     sum(simtest$sv_cctest == "z1" & simtest$pval_cctest <= 0.05)/length(simtest$sv_cctest),
-                     sum(simtest$sv_mctest == "z1" & simtest$pval_mctest <= 0.05)/length(simtest$sv_mctest),
-                     sum(simtest$sv_gstest12 == "z1" & simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
-                     sum(simtest$sv_gmtest12 == "z1" & simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
-                     sum(simtest$sv_gctest12 == "z1" & simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
-                     sum(simtest$sv_gstest1 == "z1" & simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
-                     sum(simtest$sv_gmtest1 == "z1" & simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
-                     sum(simtest$sv_gctest1 == "z1" & simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
-                     sum(simtest$sv_gstest2 == "z1" & simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
-                     sum(simtest$sv_gmtest2 == "z1" & simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
-                     sum(simtest$sv_gctest2 == "z1" & simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
-colnames(prop_var005) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
-barplot(prop_var005, ylim = c(0,1))
+simres <- simwrapper(nobs = 250, nrep = 200,
+                     delta = seq(from = 1, to = 5, by = 2),
+                     xi = c(0, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
+                     #binary_regressor = c(TRUE, FALSE),
+                     binary_regressor = FALSE,
+                     binary_beta = c(TRUE, FALSE),
+                     #only_intercept = c(TRUE, FALSE),
+                     only_intercept = FALSE,
+                     test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                              "guide_sum_12", "guide_max_12", "guide_coin_12",
+                              "guide_sum_1", "guide_max_1", "guide_coin_1",
+                              "guide_sum_2", "guide_max_2", "guide_coin_2"),
+                     beta0 = 0, beta1 = 1,
+                     stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-# boxplot of all p-values
-boxplot(simtest$pval_ctest, simtest$pval_mtest, 
-        simtest$pval_cctest, simtest$pval_mctest, 
-        simtest$pval_gstest12, simtest$pval_gmtest12, simtest$pval_gctest12,
-        simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
-        simtest$pval_gstest2, simtest$pval_gmtest2, simtest$pval_gctest2,
-        outline = FALSE, 
-        names = c("c","m", "cc", "mc",
-                  "gs12","gm12","gc12",
-                  "gs1","gm1","gc1",
-                  "gs2","gm2","gc2"))
+library("lattice")
+xyplot(prop_T ~ xi | binary_beta + binary_regressor, 
+       groups = ~ test,
+       data = simres)
+
+tab <- xtabs(prop_T ~ delta + xi + binary_beta + binary_regressor + test,
+             data = simres)
+ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "test"), 
+       col.vars = "delta")
 
 
-# boxplot of all p-values if correct split variable was found
-boxplot(simtest$pval_ctest[simtest$sv_ctest == "z1"], simtest$pval_mtest[simtest$sv_mtest == "z1"], 
-        simtest$pval_cctest[simtest$sv_cctest == "z1"], simtest$pval_mctest[simtest$sv_mctest == "z1"], 
-        simtest$pval_gstest12[simtest$sv_gstest12 == "z1"], simtest$pval_gmtest12[simtest$sv_gmtest12 == "z1"], 
-        simtest$pval_gctest12[simtest$sv_gctest12 == "z1"],
-        simtest$pval_gstest1[simtest$sv_gstest1 == "z1"], simtest$pval_gmtest1[simtest$sv_gmtest1 == "z1"], 
-        simtest$pval_gctest1[simtest$sv_gctest1 == "z1"],
-        simtest$pval_gstest2[simtest$sv_gstest2 == "z1"], simtest$pval_gmtest2[simtest$sv_gmtest2 == "z1"], 
-        simtest$pval_gctest2[simtest$sv_gctest2 == "z1"],
-        outline = FALSE, 
-        names = c("c","m", "cc", "mc",
-                  "gs12","gm12","gc12",
-                  "gs1","gm1","gc1",
-                  "gs2","gm2","gc2"))
 
-
-boxplot(simtest$pval_ctest, simtest$pval_mtest, 
-        simtest$pval_cctest, simtest$pval_mctest, 
-        simtest$pval_gstest12, simtest$pval_gmtest12, #simtest$pval_gctest12,
-        #simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
-        simtest$pval_gstest2, simtest$pval_gmtest2, #simtest$pval_gctest2,
-        outline = FALSE, 
-        names = c("c", "m", "cc", "mc",
-                  "gs12","gm12", #"gc12",
-                  #"gs1","gm1","gc1",
-                  "gs2","gm2")) #,"gc2"))
-
-
+if(FALSE){
+  b1fix_contbeta_contreg <- simcomp(nobs = 100, nrep = 100, seed = 7,
+                                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                                    z1dist = "unif", sigma = 1, only_intercept = FALSE,
+                                    vary_beta = "beta0", beta1 = 1, xi = 0.0, delta = 2,
+                                    stump = TRUE, binary_regressor = FALSE,
+                                    binary_beta = FALSE)
+  
+  save(b1fix_contbeta_contreg, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/b1fix_contbeta_contreg.rda")
+  
+  
+  
+  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/b1fix_contbeta_contreg.rda")
+  simtest <- b1fix_contbeta_contreg
+  
+  # mean over all p-values (incl. p-values > 0.05)
+  mean_all <- cbind(mean(simtest$pval_ctest),
+                    mean(simtest$pval_mtest),
+                    mean(simtest$pval_cctest),
+                    mean(simtest$pval_mctest),
+                    mean(simtest$pval_gstest12),
+                    mean(simtest$pval_gmtest12),
+                    mean(simtest$pval_gctest12),
+                    mean(simtest$pval_gstest1),
+                    mean(simtest$pval_gmtest1),
+                    mean(simtest$pval_gctest1),
+                    mean(simtest$pval_gstest2),
+                    mean(simtest$pval_gmtest2),
+                    mean(simtest$pval_gctest2))
+  colnames(mean_all) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+  mean_all
+  
+  # percentage of trees with correct split variable (incl. p-values > 0.05)
+  prop_var <- cbind(sum(simtest$sv_ctest == "z1")/length(simtest$sv_ctest),
+                    sum(simtest$sv_mtest == "z1")/length(simtest$sv_mtest),
+                    sum(simtest$sv_cctest == "z1")/length(simtest$sv_cctest),
+                    sum(simtest$sv_mctest == "z1")/length(simtest$sv_mctest),
+                    sum(simtest$sv_gstest12 == "z1")/length(simtest$sv_gstest12),
+                    sum(simtest$sv_gmtest12 == "z1")/length(simtest$sv_gmtest12),
+                    sum(simtest$sv_gctest12 == "z1")/length(simtest$sv_gctest12),
+                    sum(simtest$sv_gstest1 == "z1")/length(simtest$sv_gstest1),
+                    sum(simtest$sv_gmtest1 == "z1")/length(simtest$sv_gmtest1),
+                    sum(simtest$sv_gctest1 == "z1")/length(simtest$sv_gctest1),
+                    sum(simtest$sv_gstest2 == "z1")/length(simtest$sv_gstest2),
+                    sum(simtest$sv_gmtest2 == "z1")/length(simtest$sv_gmtest2),
+                    sum(simtest$sv_gctest2 == "z1")/length(simtest$sv_gctest2))
+  colnames(prop_var) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+  barplot(prop_var, ylim = c(0,1))
+  
+  # percentage of trees with p-values <= 0.05
+  prop_005 <- cbind(sum(simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
+                    sum(simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
+                    sum(simtest$pval_cctest <= 0.05)/length(simtest$sv_cctest),
+                    sum(simtest$pval_mctest <= 0.05)/length(simtest$sv_mctest),
+                    sum(simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
+                    sum(simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
+                    sum(simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
+                    sum(simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
+                    sum(simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
+                    sum(simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
+                    sum(simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
+                    sum(simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
+                    sum(simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
+  colnames(prop_005) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+  barplot(prop_005, ylim = c(0,1))
+  
+  # percentage of trees with correct split variable and p-values <= 0.05
+  prop_var005 <- cbind(sum(simtest$sv_ctest == "z1" & simtest$pval_ctest <= 0.05)/length(simtest$sv_ctest),
+                       sum(simtest$sv_mtest == "z1" & simtest$pval_mtest <= 0.05)/length(simtest$sv_mtest),
+                       sum(simtest$sv_cctest == "z1" & simtest$pval_cctest <= 0.05)/length(simtest$sv_cctest),
+                       sum(simtest$sv_mctest == "z1" & simtest$pval_mctest <= 0.05)/length(simtest$sv_mctest),
+                       sum(simtest$sv_gstest12 == "z1" & simtest$pval_gstest12 <= 0.05)/length(simtest$sv_gstest12),
+                       sum(simtest$sv_gmtest12 == "z1" & simtest$pval_gmtest12 <= 0.05)/length(simtest$sv_gmtest12),
+                       sum(simtest$sv_gctest12 == "z1" & simtest$pval_gctest12 <= 0.05)/length(simtest$sv_gctest12),
+                       sum(simtest$sv_gstest1 == "z1" & simtest$pval_gstest1 <= 0.05)/length(simtest$sv_gstest1),
+                       sum(simtest$sv_gmtest1 == "z1" & simtest$pval_gmtest1 <= 0.05)/length(simtest$sv_gmtest1),
+                       sum(simtest$sv_gctest1 == "z1" & simtest$pval_gctest1 <= 0.05)/length(simtest$sv_gctest1),
+                       sum(simtest$sv_gstest2 == "z1" & simtest$pval_gstest2 <= 0.05)/length(simtest$sv_gstest2),
+                       sum(simtest$sv_gmtest2 == "z1" & simtest$pval_gmtest2 <= 0.05)/length(simtest$sv_gmtest2),
+                       sum(simtest$sv_gctest2 == "z1" & simtest$pval_gctest2 <= 0.05)/length(simtest$sv_gctest2))
+  colnames(prop_var005) <-  c("c","m", "cc", "mc", "gs12","gm12","gc12", "gs1","gm1","gc1", "gs2","gm2","gc2")
+  barplot(prop_var005, ylim = c(0,1))
+  
+  
+  # boxplot of all p-values
+  boxplot(simtest$pval_ctest, simtest$pval_mtest, 
+          simtest$pval_cctest, simtest$pval_mctest, 
+          simtest$pval_gstest12, simtest$pval_gmtest12, simtest$pval_gctest12,
+          simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
+          simtest$pval_gstest2, simtest$pval_gmtest2, simtest$pval_gctest2,
+          outline = FALSE, 
+          names = c("c","m", "cc", "mc",
+                    "gs12","gm12","gc12",
+                    "gs1","gm1","gc1",
+                    "gs2","gm2","gc2"))
+  
+  
+  # boxplot of all p-values if correct split variable was found
+  boxplot(simtest$pval_ctest[simtest$sv_ctest == "z1"], simtest$pval_mtest[simtest$sv_mtest == "z1"], 
+          simtest$pval_cctest[simtest$sv_cctest == "z1"], simtest$pval_mctest[simtest$sv_mctest == "z1"], 
+          simtest$pval_gstest12[simtest$sv_gstest12 == "z1"], simtest$pval_gmtest12[simtest$sv_gmtest12 == "z1"], 
+          simtest$pval_gctest12[simtest$sv_gctest12 == "z1"],
+          simtest$pval_gstest1[simtest$sv_gstest1 == "z1"], simtest$pval_gmtest1[simtest$sv_gmtest1 == "z1"], 
+          simtest$pval_gctest1[simtest$sv_gctest1 == "z1"],
+          simtest$pval_gstest2[simtest$sv_gstest2 == "z1"], simtest$pval_gmtest2[simtest$sv_gmtest2 == "z1"], 
+          simtest$pval_gctest2[simtest$sv_gctest2 == "z1"],
+          outline = FALSE, 
+          names = c("c","m", "cc", "mc",
+                    "gs12","gm12","gc12",
+                    "gs1","gm1","gc1",
+                    "gs2","gm2","gc2"))
+  
+  
+  boxplot(simtest$pval_ctest, simtest$pval_mtest, 
+          simtest$pval_cctest, simtest$pval_mctest, 
+          simtest$pval_gstest12, simtest$pval_gmtest12, simtest$pval_gctest12,
+          simtest$pval_gstest1, simtest$pval_gmtest1, simtest$pval_gctest1,
+          #simtest$pval_gstest2, simtest$pval_gmtest2, simtest$pval_gctest2,
+          outline = FALSE, 
+          names = c("c", "m", "cc", "mc",
+                    "gs12","gm12", "gc12",
+                    "gs1","gm1","gc1")) #,
+  #"gs2","gm2","gc2"))
+  
+  
+}
