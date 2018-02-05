@@ -431,7 +431,7 @@ d <- dgp(1000, vary_beta = "all", xi = -0.5, binary_regressor = FALSE)
 d <- dgp(1000, vary_beta = "all", xi = -0.0, binary_regressor = FALSE)
 
 d <- dgp(400, vary_beta = "all", xi = -0.4, delta = 3, binary_regressor = TRUE)
-d <- dgp(200, vary_beta = "beta0", beta1 = 2, xi = 0.0, binary_regressor = FALSE)
+d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE)
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = -0.5, binary_regressor = FALSE)
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE)
 
@@ -581,20 +581,20 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
                                              guide_testtype = "coin", guide_parm = c(2),
                                              xgroups = NULL, ygroups = NULL, stump = stump)
                         )
-      c("pval" = info_node(testres$node)$p.value,
-        "sv" = names(info_node(testres$node)$p.value))
+      list(pval = as.numeric(info_node(testres$node)$p.value),
+           sv = names(info_node(testres$node)$p.value))
     }
     
     resmat <- sapply(test, compute_pval)
-    pval[i,] <- resmat[1,]
-    sv[i,] <- resmat[2,]
+    pval[i,] <- unlist(resmat["pval",])
+    sv[i,] <- unlist(resmat["sv",])
     
   }
   
   
   prop_nosplit <- colMeans(pval > alpha)
   
-  #prop_split <- colMeans(pval <= alpha)
+  prop_split <- colMeans(pval <= alpha)
   
   pval_T <- pval
   pval_T[which(sv !="z1")] <- 1
@@ -605,7 +605,7 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
   prop_F <- colMeans(pval_F < alpha)
   
   return(list(prop_nosplit = prop_nosplit,
-              #prop_split = prop_split,
+              prop_split = prop_split,
               prop_F = prop_F,
               prop_T = prop_T))
 }
@@ -657,6 +657,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
   nprs <- nrow(prs)
   ntest <- length(test)
   prop_nosplit <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_split <- matrix(rep(NA, ntest * nprs), ncol = ntest)
   prop_F <- matrix(rep(NA, ntest * nprs), ncol = ntest)
   prop_T <- matrix(rep(NA, ntest * nprs), ncol = ntest)
   
@@ -673,6 +674,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
                    only_intercept = prs$only_intercept[i])
     
     prop_nosplit[i,] <- reslist$prop_nosplit
+    prop_split[i,] <- reslist$prop_split
     prop_F[i,] <- reslist$prop_F
     prop_T[i,] <- reslist$prop_T
   }
@@ -681,6 +683,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
   for(i in 1:ntest) rval <- rbind(rval, prs)
   rval$test <- gl(ntest, nprs, labels = test)
   rval$prop_nosplit <- as.vector(prop_nosplit)
+  rval$prop_split <- as.vector(prop_split)
   rval$prop_F <- as.vector(prop_F)
   rval$prop_T <- as.vector(prop_T)
   rval$delta <- factor(rval$delta)
@@ -712,16 +715,30 @@ simres <- simwrapper(nobs = 250, nrep = 200,
                      beta0 = 0, beta1 = 1,
                      stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
+simres <- simwrapper(nobs = 100, nrep = 10,
+                     delta = seq(from = 1, to = 3, by = 2),
+                     xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
+                     #binary_regressor = c(TRUE, FALSE),
+                     binary_regressor = FALSE,
+                     binary_beta = c(TRUE, FALSE),
+                     #only_intercept = c(TRUE, FALSE),
+                     only_intercept = FALSE,
+                     test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                              "guide_sum_12", "guide_max_12", "guide_coin_12",
+                              "guide_sum_1", "guide_max_1", "guide_coin_1",
+                              "guide_sum_2", "guide_max_2", "guide_coin_2"),
+                     beta0 = 0, beta1 = 1,
+                     stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 library("lattice")
-xyplot(prop_T ~ xi | binary_beta + binary_regressor, 
+xyplot(prop_split ~ xi | binary_beta + binary_regressor, 
        groups = ~ test,
        data = simres)
 
 tab <- xtabs(prop_T ~ delta + xi + binary_beta + binary_regressor + test,
              data = simres)
-ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "test"), 
-       col.vars = "delta")
+ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "delta"), 
+       col.vars = "test")
 
 
 

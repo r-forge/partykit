@@ -202,7 +202,7 @@ if(FALSE){
   if(ctrl$guide_testtype == "coin"){
     require("coin")
     ip <- new("IndependenceProblem", x=data.frame(x_cat = x_cat), y=Ybin)
-    tst_curv <- independence_test(ip)    # coin:::independence_test(ip)
+    tst_curv <- independence_test(ip, teststat = "quadratic")    # coin:::independence_test(ip, teststat = "quadratic")
     ret <- list(p.value = log(1 - as.numeric(pvalue(tst_curv))), statistic = log(as.numeric(statistic(tst_curv)))) 
     # ret <- list(p.value = log(1 - as.numeric(coin::pvalue(tst_curv))), statistic = log(as.numeric(coin::statistic(tst_curv)))) 
   }
