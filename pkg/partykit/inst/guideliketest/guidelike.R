@@ -89,9 +89,9 @@ if(FALSE){
   if(!is.null(model$decorrelated)) {
     
     if(!model$decorrelated) {
-      # check if argument decorrelate is set to TRUE for testtype max or sum
-      if((ctrl$guide_testtype == "sum" | ctrl$guide_testtype == "max") & ctrl$guide_decorrelate == "none") {
-        stop("guide_decorrelate has to be set to TRUE for guide_testtype 'sum' or 'max'")
+      # check if argument decorrelate is set to TRUE for testtype max or sum with scores of more than one parameter considered
+      if((ctrl$guide_testtype == "sum" | ctrl$guide_testtype == "max") & ctrl$guide_decorrelate == "none" & length(ctrl$guide_parm) > 1) {
+        stop("guide_decorrelate has to be set to TRUE for guide_testtype 'sum' or 'max' if guide_parm has more than one element")
       }
     }
     
@@ -100,9 +100,9 @@ if(FALSE){
       ctrl$guide_decorrelate <- "none"
     }
   } else {
-    # check if argument decorrelate is set to TRUE for testtype max or sum
-    if((ctrl$guide_testtype == "sum" | ctrl$guide_testtype == "max") & ctrl$guide_decorrelate == "none") {
-      stop("guide_decorrelate has to be set to TRUE for guide_testtype 'sum' or 'max'")
+    # check if argument decorrelate is set to TRUE for testtype max or sum with scores of more than one parameter considered
+    if((ctrl$guide_testtype == "sum" | ctrl$guide_testtype == "max") & ctrl$guide_decorrelate == "none" & length(ctrl$guide_parm) > 1) {
+      stop("guide_decorrelate has to be set to TRUE for guide_testtype 'sum' or 'max' if guide_parm has more than one element")
     }
   }
   

@@ -100,7 +100,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
     if(!guide_testtype %in% c("max", "sum", "coin")) stop("testfun hast to be one of the following options: 'max', 'sum', 'coin'")
     
     control <- partykit:::extree_control(criterion = "p.value",
-                                         selectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
+                                         selectfun = .guide_select(guide_decorrelate = "none",    # if required, decorrelation already within ytrafo 
                                                                    guide_testtype = guide_testtype,
                                                                    guide_parm = guide_parm,
                                                                    xgroups = xgroups,
@@ -108,7 +108,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                    interaction = FALSE),  
                                          splitfun = partykit:::.objfun_split(restart = TRUE,
                                                                              intersplit = TRUE),
-                                         svselectfun = .guide_select(guide_decorrelate = "none",    # because of decorrelation within ytrafo 
+                                         svselectfun = .guide_select(guide_decorrelate = "none",    # if required, decorrelation already within ytrafo 
                                                                      guide_testtype = guide_testtype,
                                                                      guide_parm = guide_parm,
                                                                      xgroups = xgroups,
@@ -227,7 +227,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
   
   
   control$inner <- "object"
-  control$temrinal <- "object"
+  control$terminal <- "object"
   
   ## set up model.frame() call
   mf <- match.call(expand.dots = FALSE)
@@ -259,7 +259,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
     model <- lm(formula = lmformula, data = sdata) #, weights = subweights) error in lm if weights are handed over
     
     ## FIX ME: add argument 'decorrelate' to control
-    decorrelate <- "vcov"
+    #decorrelate <- "vcov"
     #decorrelate <- "opg"
     #decorrelate <- "none"
     
@@ -424,7 +424,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
 
 ############
 # compare on one data set
-
+if(FALSE){
 d <- dgp(400, vary_beta = "beta1", beta0 = 3)
 d <- dgp(400, vary_beta = "all", xi = -0.5)
 d <- dgp(1000, vary_beta = "all", xi = -0.5, binary_regressor = FALSE)
@@ -501,7 +501,7 @@ plot(gctest1, terminal_panel = node_bivplot)
 plot(gmtest2, terminal_panel = node_bivplot)
 plot(gstest2, terminal_panel = node_bivplot)
 plot(gctest2, terminal_panel = node_bivplot)
-
+}
 
 
 
@@ -518,7 +518,9 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
                     test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
                              "guide_sum_12", "guide_max_12", "guide_coin_12",
                              "guide_sum_1", "guide_max_1", "guide_coin_1",
-                             "guide_sum_2", "guide_max_2", "guide_coin_2"))
+                             "guide_sum_2", "guide_max_2", "guide_coin_2",
+                             "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                             "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
 {
   set.seed(seed)
   
@@ -539,47 +541,69 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
   for(i in 1:nrep){
     
     d <- dgp(nobs = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
-             binary_regressor = binary_regressor, 
+             binary_regressor = binary_regressor, delta = delta,
              binary_beta = binary_beta, z1dist = z1dist,
              seed = seed + i, sigma = sigma, only_intercept = only_intercept)
     
+
     compute_pval <- function(test) {
       test <- match.arg(test, c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
                                 "guide_sum_12", "guide_max_12", "guide_coin_12",
                                 "guide_sum_1", "guide_max_1", "guide_coin_1",
-                                "guide_sum_2", "guide_max_2", "guide_coin_2"))
+                                "guide_sum_2", "guide_max_2", "guide_coin_2",
+                                "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                                "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"
+                                ))
       testres <- switch(test,
-                        "ctree" = evaltests(formula, data = d, testfun = "ctree", stump = stump),
-                        "mfluc" = evaltests(formula, data = d, testfun = "mfluc", stump = stump),
-                        "ctree_cat" = evaltests(formula, data = d, testfun = "ctree_cat", stump = stump),
-                        "mfluc_cat" = evaltests(formula, data = d, testfun = "mfluc_cat", stump = stump),
+                        "ctree" = evaltests(formula, data = d, testfun = "ctree", stump = stump, decorrelate = "vcov"),
+                        "mfluc" = evaltests(formula, data = d, testfun = "mfluc", stump = stump, decorrelate = "vcov"),
+                        "ctree_cat" = evaltests(formula, data = d, testfun = "ctree_cat", stump = stump, decorrelate = "vcov"),
+                        "mfluc_cat" = evaltests(formula, data = d, testfun = "mfluc_cat", stump = stump, decorrelate = "vcov"),
                         "guide_sum_12" = evaltests(formula, data = d, testfun = "guide", 
                                               guide_testtype = "sum", guide_parm = c(1,2),
-                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                                              xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_max_12" = evaltests(formula, data = d, testfun = "guide", 
                                               guide_testtype = "max", guide_parm = c(1,2),
-                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                                              xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_coin_12" = evaltests(formula, data = d, testfun = "guide", 
                                               guide_testtype = "coin", guide_parm = c(1,2),
-                                              xgroups = NULL, ygroups = NULL, stump = stump),
+                                              xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_sum_1" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "sum", guide_parm = c(1),
-                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_max_1" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "max", guide_parm = c(1),
-                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_coin_1" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "coin", guide_parm = c(1),
-                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_sum_2" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "sum", guide_parm = c(2),
-                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_max_2" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "max", guide_parm = c(2),
-                                             xgroups = NULL, ygroups = NULL, stump = stump),
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
                         "guide_coin_2" = evaltests(formula, data = d, testfun = "guide", 
                                              guide_testtype = "coin", guide_parm = c(2),
-                                             xgroups = NULL, ygroups = NULL, stump = stump)
+                                             xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
+                        "guide_sum_1_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                  guide_testtype = "sum", guide_parm = c(1),
+                                                  xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none"),
+                        "guide_max_1_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                  guide_testtype = "max", guide_parm = c(1),
+                                                  xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none"),
+                        "guide_coin_1_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                   guide_testtype = "coin", guide_parm = c(1),
+                                                   xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none"),
+                        "guide_sum_2_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                  guide_testtype = "sum", guide_parm = c(2),
+                                                  xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none"),
+                        "guide_max_2_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                  guide_testtype = "max", guide_parm = c(2),
+                                                  xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none"),
+                        "guide_coin_2_cor" = evaltests(formula, data = d, testfun = "guide", 
+                                                   guide_testtype = "coin", guide_parm = c(2),
+                                                   xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "none")
                         )
       list(pval = as.numeric(info_node(testres$node)$p.value),
            sv = names(info_node(testres$node)$p.value))
@@ -636,7 +660,9 @@ simwrapper <- function(nobs = 200, nrep = 100,
                        test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
                                 "guide_sum_12", "guide_max_12", "guide_coin_12",
                                 "guide_sum_1", "guide_max_1", "guide_coin_1",
-                                "guide_sum_2", "guide_max_2", "guide_coin_2"),
+                                "guide_sum_2", "guide_max_2", "guide_coin_2",
+                                "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                                "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
                        beta0=0, beta1 = 1,
                        stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 {
@@ -671,7 +697,8 @@ simwrapper <- function(nobs = 200, nrep = 100,
                    binary_regressor = prs$binary_regressor[i],
                    binary_beta = prs$binary_beta[i],
                    xi = prs$xi[i],
-                   only_intercept = prs$only_intercept[i])
+                   only_intercept = prs$only_intercept[i],
+                   delta = prs$delta[i])
     
     prop_nosplit[i,] <- reslist$prop_nosplit
     prop_split[i,] <- reslist$prop_split
@@ -700,8 +727,8 @@ simwrapper <- function(nobs = 200, nrep = 100,
 
 
 
-simres <- simwrapper(nobs = 250, nrep = 200,
-                     delta = seq(from = 1, to = 5, by = 2),
+simres <- simwrapper(nobs = 200, nrep = 10,
+                     delta = seq(from = 0.5, to = 1.5, by = 0.5),
                      xi = c(0, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
                      #binary_regressor = c(TRUE, FALSE),
                      binary_regressor = FALSE,
@@ -711,34 +738,80 @@ simres <- simwrapper(nobs = 250, nrep = 200,
                      test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
                               "guide_sum_12", "guide_max_12", "guide_coin_12",
                               "guide_sum_1", "guide_max_1", "guide_coin_1",
-                              "guide_sum_2", "guide_max_2", "guide_coin_2"),
+                              "guide_sum_2", "guide_max_2", "guide_coin_2",
+                              "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                              "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
                      beta0 = 0, beta1 = 1,
                      stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
-simres <- simwrapper(nobs = 100, nrep = 10,
-                     delta = seq(from = 1, to = 3, by = 2),
-                     xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
-                     #binary_regressor = c(TRUE, FALSE),
-                     binary_regressor = FALSE,
-                     binary_beta = c(TRUE, FALSE),
-                     #only_intercept = c(TRUE, FALSE),
-                     only_intercept = FALSE,
-                     test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
-                              "guide_sum_12", "guide_max_12", "guide_coin_12",
-                              "guide_sum_1", "guide_max_1", "guide_coin_1",
-                              "guide_sum_2", "guide_max_2", "guide_coin_2"),
-                     beta0 = 0, beta1 = 1,
-                     stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
 
 library("lattice")
-xyplot(prop_split ~ xi | binary_beta + binary_regressor, 
-       groups = ~ test,
-       data = simres)
+load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
+
+xyplot(prop_split ~ vary_beta | xi + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
+
+
+# models considering all scores
+s_allscores <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", 
+                                          "guide_sum_12", "guide_max_12", "guide_coin_12"))
+s_allscores$test <- factor(s_allscores$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
+
+
+# all GUIDE models
+s_guide <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12",
+                                      "guide_sum_1", "guide_max_1", "guide_coin_1",
+                                      "guide_sum_2", "guide_max_2", "guide_coin_2",
+                                      "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                                      "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
+s_guide$test <- factor(s_guide$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+
+
+# GUIDE_12 models
+s_guide12 <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12"))
+s_guide12$test <- factor(s_guide12$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
+
+
+# GUIDE_1 models
+s_guide1 <- subset(simres, test %in% c("guide_sum_1", "guide_max_1", "guide_coin_1",
+                                       "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor"))
+s_guide1$test <- factor(s_guide1$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
+
+
+# GUIDE_2 models
+s_guide2 <- subset(simres, test %in% c("guide_sum_2", "guide_max_2", "guide_coin_2",
+                                       "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
+s_guide2$test <- factor(s_guide2$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
+
+
+# ctree, mfluc, GUIDE_12_max
+s_scores2 <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", "guide_max_12"))
+s_scores2$test <- factor(s_scores2$test)
+xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+
+
+
 
 tab <- xtabs(prop_T ~ delta + xi + binary_beta + binary_regressor + test,
              data = simres)
 ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "delta"), 
        col.vars = "test")
+
+
+
 
 
 
