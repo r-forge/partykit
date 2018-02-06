@@ -666,6 +666,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
                        beta0=0, beta1 = 1,
                        stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 {
+  
   prs <- expand.grid(delta = delta, xi = xi, vary_beta = vary_beta,
                      binary_regressor = binary_regressor,
                      binary_beta = binary_beta,
@@ -727,7 +728,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
 
 
 
-simres <- simwrapper(nobs = 200, nrep = 10,
+simres <- simwrapper(nobs = 250, nrep = 100,
                      delta = seq(from = 0.5, to = 1.5, by = 0.5),
                      xi = c(0, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
                      #binary_regressor = c(TRUE, FALSE),
@@ -745,7 +746,7 @@ simres <- simwrapper(nobs = 200, nrep = 10,
                      stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180207.rda")
 
 library("lattice")
 load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
