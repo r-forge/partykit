@@ -1278,7 +1278,7 @@ where each segment is represented by a terminal node of the tree.
 The exact way of determining how and where to split varies across different tree algorithms. For distributional trees one possible choice is a permutation test based algorithm which is explained in detail in the appendix. Summed up, the steps of building a distributional tree are:
 \begin{enumerate}
 \item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
-\item Estimate $\bold{\hat{\theta}}$ by solving $\sum_{i=1}^n s(y_i, \theta) = 0$
+\item Estimate $\bold{\hat{\theta}}$ by solving $\sum_{i=1}^n s(y_i, \hat{\theta}) = 0$.
 \item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ and each partitioning variable $Z_l$.
 %\item Assess whether the \emph{model scores} are associated with
 %    (or change along) any of the available covariates -- e.g.,
