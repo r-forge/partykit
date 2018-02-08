@@ -703,7 +703,7 @@ is modeled through a linear function of the covariates (see the left panel of
 Figure~\ref{Devel_parmod} for a schematic illustration). Over the last decades
 this has been extended in various directions including:
 \begin{itemize}
-  \item Generalized linear models (GLMs, \citealp{McCullagh+Nelder:1986})
+  \item Generalized linear models (GLMs, \citealp{McCullagh+Nelder:1983})
     encompassing an additional nonlinear link function for the conditional mean.
   \item Generalized additive models (GAMs, \citealp{Hastie+Tibshirani:1986})
     allowing for smooth nonlinear effects in the covariates
@@ -972,43 +972,63 @@ Distributional Tree
 \caption{\label{Devel_treeforest}Tree and forest developments. Regression tree (top left), distributional tree (bottom), random forest (top middle), distributional forest (top right).}
 \end{figure}
 
-For these reasons, regression trees and particularly random forests provide
-valuable features which can contribute to improving models for probabilistic
-forecasting. Therefore, we are going to introduce a novel general distributional
-framework for these methods by presenting distributional trees and forests which
-embed the idea of flexible parametric modeling into the framework of regression
-trees and random forests. In Figure~\ref{Devel_treeforest} the developments in
-the field of tree-structured models together with the novel approaches of
-distributional trees and forests are illustrated for the case of one covariate.
-In the top left picture the step function modeling the mean of the response
-variable represents the division into three terminal subgroups by a regression
-tree. This is extended in the bottom left picture where a distributional tree
-models not only the mean but also the variance of the response variable by its
-own step function. The top middle picture shows that combining an ensemble of
-trees to a random forest can lead to smoother effects while the tree structure
-assures that abrupt changes are captured as well. Again, an extension of the
-random forest model considering only the mean is made in the top right picture.
-Here a distributional forest models the mean and the variance capturing abrupt
-changes but also smooth effects. 
 
-However, for example in complex
-terrain in mountainous regions various factors can change rapidly and their
-effects are difficult to be represented by a smooth parametric model. In this
-situation a different approach which can deal with these abrupt changes would be
-to apply tree-structured models such as regression trees
-(\citealt{breiman1984classification}) or random forests such as Breiman and
-Cutler's randomForest (\citealt{breiman2001random}). Moreover, these models are
+The before discussed models with the response depending on additive linear or smooth nonlinear terms
+of the covariates are powerful tools as long as only smooth effects are to be considered.
+A different approach that can also deal with non-additive effects
+and possibly unknown interactions of covariates is to apply tree-based methods. 
+A regression tree (\citealt{breiman1984classification})
+works on the idea of separating the data into more homogeneous subgroups based on
+covariates. However, the resulting step function as illustrated in the left panel of
+Figure \ref{Devel_treeforest} can often be too rough and imposes abrupt changes on the model/data even in
+case of smooth transitions. Random forest models such as Breiman and
+Cutler's randomForest (\citealt{breiman2001random}) encounter this problem/disadvantage by combining an
+ensemble of trees such that steps are smoothed out in case of smooth effects while abrupt changes
+are still captured by its tree-based structure (see the top middel panel of Figure \ref{Devel_treeforest}).
+While classic regression trees and random forests only model the mean of the response
+we are now going to combine the idea of these tree based-methods with the progress
+made in the field of (flexible) parametric modelling. In particular, the development from mean regression
+models to distributional models will be embeded in the framework or regression trees and
+random forests providing distributional trees and forests. This development is illustrated
+in the bottom panel of Figure~\ref{Devel_treeforest} for distributional trees and in the top right panel
+for distributional forests.
+
+In many modeling situations, especially when the type of effects are not known in advance,
+it can be challenging to specify a well fitting model. The novel methodology of distributional 
+trees and forests provides a framework that covers a wide range of effects including linear and nonlinear
+additive and non-additive effects as well as interactions of covariates. Moreover, these models are
 particularly advantageous in case of many covariates with unknown effects or
 interactions as the variable selection is done automatically within the model
 fitting process. Therefore, no additional effort or knowledge for the
-specification of the model is required in advance. However, even though their
-main advantage of being able to model non-additive effects and interactions
-without any necessary prespecification can play to their strength, regression
-trees are not an adequate choice if (additional) smooth effects appear as well.
-In this situation a random forest provides a good compromise as it combines a
-set of trees such that the steps imposed by the trees are smoothed out in case
-of smooth effects while abrupt changes are still captured by the tree structure
-of the model.
+specification of the model is required in advance.
+
+For these reasons, distributional trees and forests provide
+valuable features which can contribute to improving models for probabilistic
+forecasting. For example in precipitation/weather forecasting (for complex terrain) 
+in mountainous regions various influencing factors can change rapidly and their effects are 
+difficult to be represented by a smooth parametric model. (Additionally, a wide grid over
+this complex terrain can lead to abrupt changes within just one cell.)
+
+In the application discussed in this paper precipitation forecasts are made for a mountainous region
+in the Alps covering mainly Tyrol, Austria, and adjacent areas. Predictions are based on data from 
+85 observation stations and 28 years (1985--2012). The total amount of precipitation within 24 hours
+is modeled with the assumption of the underlying distribution being a censored normal distribution 
+with censoring point 0. As covariates a large number of meteorlogical quantities are provided by 
+ensembles of numerical weather prediction models. 
+Next to distributional other methods commonly used in this research area are applied and their results are compared. 
+In a first setting only one observation station is taken into consideration. The models are trained on data from 
+24 years and probabilistic predictions of the consecutive 4 years are validated. A brief outlook on the results of 
+this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2009, 2010, 2011 and 2012 
+the density functions of the distributions estimated by a distributional forest are plotted together with the 
+corresponding observations. This illustrates that appropriate probabilistic forecasts 
+are provided by this model as they are close to the observed values. Beside the expected values the predictions 
+provided by distributional models offer a wide range of information as they specify the whole distribution and 
+therefore enable further methods of inference and analysis. In section \ref{ProbabilisticForecasting} this example 
+will be further discussed and it will be shown that the predictions made by the distributional forest are 
+reasonably well fitting, not only for the mean parameter of the distribution but also for its second parameter, 
+the scale parameter, and therefore the whole distribution.
+
+
 
 
 %In the field of regression analysis many statistical models have already been developed to model the relationship between a response variable and one or more explanatory variables.\\
@@ -1034,9 +1054,9 @@ of the model.
 %These (future) steps are illustrated in Figure~\ref{Devel_treeforest}, embedded in the development made in the field of tree and forest algorithms.\\
 
 
-After explaining the novel methodology in Section~\ref{Methodology} of this paper the focus will then be put on an application in the field of probabilistic forecasting in Section~\ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a very large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration. The models are trained on data from 24 years and probabilistic predictions of the consecutive 4 years are validated. A brief outlook on the results of this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2009, 2010, 2011 and 2012 the density functions of the distributions estimated by a distributional forest are plotted together with the corresponding observations. This illustrates that well fitting predicted expected values 
+%After explaining the novel methodology in Section~\ref{Methodology} of this paper the focus will then be put on an application in the field of probabilistic forecasting in Section~\ref{ProbabilisticForecasting}. The new method is applied on precipitation data in a mountainous region with a very large number of numerical weather prediction quantities and the results are compared to those of other methods commonly used in this research area. In a first setting only one observation station is taken into consideration. The models are trained on data from 24 years and probabilistic predictions of the consecutive 4 years are validated. A brief outlook on the results of this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2009, 2010, 2011 and 2012 the density functions of the distributions estimated by a distributional forest are plotted together with the corresponding observations. This illustrates that well fitting predicted expected values 
 %%% well fitting predicted expected values -> appropriate probabilistic forecasts? </TH>
-are provided by this model as they are close to the observed values. Beside the expected values the predictions provided by distributional models offer a wide range of information as they specify the whole distribution and therefore enable further methods of inference and analysis. In section \ref{ProbabilisticForecasting} this example will be further discussed and it will be shown that the predictions made by the distributional forest are reasonably well fitting, not only for the mean parameter of the distribution but also for its second parameter, the scale parameter, and therefore the whole distribution.
+%are provided by this model as they are close to the observed values. Beside the expected values the predictions provided by distributional models offer a wide range of information as they specify the whole distribution and therefore enable further methods of inference and analysis. In section \ref{ProbabilisticForecasting} this example will be further discussed and it will be shown that the predictions made by the distributional forest are reasonably well fitting, not only for the mean parameter of the distribution but also for its second parameter, the scale parameter, and therefore the whole distribution.
 
 
 <<echo=FALSE, results=hide>>=
