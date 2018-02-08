@@ -1,8 +1,13 @@
 R/distforest_mob.R
 R/disttree_urp.R
+R/ytrafo_score.R
 R/test_distributions.R
-R/ytrafo_scores.R
+R/try_guide.R
 man/.Rhistory
+inst/CMStatistics2017
+inst/useR2017
+inst/JSM2018
+inst/Psychoco2018
 inst/draft/simulation
 inst/draft/simulation_10cov
 inst/draft/simresults
