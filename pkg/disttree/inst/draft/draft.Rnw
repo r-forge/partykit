@@ -705,7 +705,7 @@ this has been extended in various directions including:
 \begin{itemize}
   \item Generalized linear models (GLMs, \citealp{McCullagh+Nelder:1983})
     encompassing an additional nonlinear link function for the conditional mean.
-  \item Generalized additive models (GAMs, \citealp{Hastie+Tibshirani:1986})
+  \item Generalized additive models (GAMs, \citealp{Hastie+Tibshirani:1989})
     allowing for smooth nonlinear effects in the covariates
     (Figure~\ref{Devel_parmod}, middle).
   \item Generalized additive models for location, scale, and shape
