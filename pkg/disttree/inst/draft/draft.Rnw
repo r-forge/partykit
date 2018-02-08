@@ -831,7 +831,7 @@ expected precipitation (say from the expected 10\% to 90\% quantile). Similar
 considerations apply for other meteorological quantities and hence attention
 in the weather forecasting literature has been shifting from classical linear
 models \citep{Glahn+Lowry:1972} towards probabilistic models such as the
-non-homogenous Gaussian regression (NGR) of \cite{gneiting2005calibrated}.
+non-homogeneous Gaussian regression (NGR) of \cite{gneiting2005calibrated}.
 The NGR typically describes the mean of some meteorological response variable through
 the average of the corresponding quantity from an ensemble of physically-based
 numerical weather predictions (NWPs). Similarly, the variance of the response
@@ -980,20 +980,21 @@ and possibly unknown interactions of covariates is to apply tree-based methods.
 A regression tree (\citealt{breiman1984classification})
 works on the idea of separating the data into more homogeneous subgroups based on
 covariates. However, the resulting step function as illustrated in the left panel of
-Figure \ref{Devel_treeforest} can often be too rough and imposes abrupt changes on the model/data even in
+Figure \ref{Devel_treeforest} can often be too rough and impose abrupt changes on the model even in
 case of smooth transitions. Random forest models such as Breiman and
-Cutler's randomForest (\citealt{breiman2001random}) encounter this problem/disadvantage by combining an
+Cutler's randomForest (\citealt{breiman2001random}) encounter this problem by combining an
 ensemble of trees such that steps are smoothed out in case of smooth effects while abrupt changes
-are still captured by its tree-based structure (see the top middel panel of Figure \ref{Devel_treeforest}).
+are still captured by its tree-based structure (see the top middle panel of Figure \ref{Devel_treeforest}).
+
 While classic regression trees and random forests only model the mean of the response
 we are now going to combine the idea of these tree based-methods with the progress
-made in the field of (flexible) parametric modelling. In particular, the development from mean regression
-models to distributional models will be embeded in the framework or regression trees and
+made in the field of flexible parametric modelling. In particular, the development from mean regression
+models to distributional models will be embedded in the framework of regression trees and
 random forests providing distributional trees and forests. This development is illustrated
 in the bottom panel of Figure~\ref{Devel_treeforest} for distributional trees and in the top right panel
 for distributional forests.
 
-In many modeling situations, especially when the type of effects are not known in advance,
+In many modeling situations, especially when the types of effects are not known in advance,
 it can be challenging to specify a well fitting model. The novel methodology of distributional 
 trees and forests provides a framework that covers a wide range of effects including linear and nonlinear
 additive and non-additive effects as well as interactions of covariates. Moreover, these models are
@@ -1004,29 +1005,30 @@ specification of the model is required in advance.
 
 For these reasons, distributional trees and forests provide
 valuable features which can contribute to improving models for probabilistic
-forecasting. For example in precipitation/weather forecasting (for complex terrain) 
-in mountainous regions various influencing factors can change rapidly and their effects are 
-difficult to be represented by a smooth parametric model. (Additionally, a wide grid over
-this complex terrain can lead to abrupt changes within just one cell.)
+forecasting. For example weather forecasting in mountainous regions various influencing factors 
+can change rapidly and their effects are  difficult to be represented by a smooth parametric model. 
+Additionally, large spacing of the grid applied in numerical weather prediction models over 
+complex terrain can lead to abrupt changes within just one cell.
 
 In the application discussed in this paper precipitation forecasts are made for a mountainous region
-in the Alps covering mainly Tyrol, Austria, and adjacent areas. Predictions are based on data from 
+in the Alps covering mainly Tyrol in Austria and adjacent areas. Predictions are based on data from 
 85 observation stations and 28 years (1985--2012). The total amount of precipitation within 24 hours
 is modeled with the assumption of the underlying distribution being a censored normal distribution 
-with censoring point 0. As covariates a large number of meteorlogical quantities are provided by 
+with censoring point 0. As covariates a large number of meteorological quantities are provided by 
 ensembles of numerical weather prediction models. 
-Next to distributional other methods commonly used in this research area are applied and their results are compared. 
-In a first setting only one observation station is taken into consideration. The models are trained on data from 
-24 years and probabilistic predictions of the consecutive 4 years are validated. A brief outlook on the results of 
-this setting is given by Figure~\ref{axams_onestation}. For the 24th of July of 2009, 2010, 2011 and 2012 
-the density functions of the distributions estimated by a distributional forest are plotted together with the 
-corresponding observations. This illustrates that appropriate probabilistic forecasts 
-are provided by this model as they are close to the observed values. Beside the expected values the predictions 
-provided by distributional models offer a wide range of information as they specify the whole distribution and 
-therefore enable further methods of inference and analysis. In section \ref{ProbabilisticForecasting} this example 
-will be further discussed and it will be shown that the predictions made by the distributional forest are 
-reasonably well fitting, not only for the mean parameter of the distribution but also for its second parameter, 
-the scale parameter, and therefore the whole distribution.
+Next to distributional forests other methods commonly used in this research area are applied and their 
+results are compared. In a first setting only one observation station is taken into consideration.
+The models are trained on data from 24 years and probabilistic predictions of the consecutive 4 years 
+are validated. A brief outlook on the results of this setting is given by Figure~\ref{axams_onestation}. 
+For the 24th of July of 2009, 2010, 2011 and 2012 the density functions of the distributions estimated 
+by a distributional forest are plotted together with the corresponding observations. This illustrates 
+that appropriate probabilistic forecasts are provided by this model as they are close to the observed 
+values. Beside the expected values the predictions made by distributional models offer a wide range 
+of information as they specify the whole distribution and therefore enable further methods of inference 
+and analysis. In section \ref{ProbabilisticForecasting} this application will be further discussed and it 
+will be shown that the predictions provided by the distributional forest are reasonably well fitting, not 
+only for the mean parameter of the distribution but also for its second parameter, the scale parameter, 
+and therefore the whole distribution.
 
 
 
@@ -2144,7 +2146,7 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
   abline(h = 0, col = pal["EMOS"], lwd = 2)
     
 @
-\caption{\label{boxplot_crps_all}CRPS skills score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in greend and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
+\caption{\label{boxplot_crps_all}CRPS skills score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in green and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
 \end{center}
 \end{figure}
 
@@ -2273,7 +2275,7 @@ c(t_{j},\mu_{jk},\Sigma_{j}) = \max_{l=1,\ldots,L}\left|\frac{(t_{j} - \mu_{j})_
 $$
 The smaller the p-value corresponding to the standardized test statistic $c(t_{j},\mu_{j},\Sigma_{j})$ is the stronger the discrepancy from the assumption of independence between the scores and the split variable $Z_j$.
 
-\item After Bonferroni adjusting the p-vlaues check whether any of the resulting p-values is beneath the selected significance level. If so, choose the partitioning variable $Z_{j^\ast}$ with the lowest p-value to the scores corresponding to the distribution parameters relevant for the split.
+\item After Bonferroni adjusting the p-values check whether any of the resulting p-values is beneath the selected significance level. If so, choose the partitioning variable $Z_{j^\ast}$ with the lowest p-value to the scores corresponding to the distribution parameters relevant for the split.
 
 \item Choose the breakpoint that leads to the highest discrepancy between score functions in the two resulting subgroups. This difference can be measured by the linear statistic
 $$
