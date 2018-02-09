@@ -1,11 +1,11 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber]{uibk}
+\usetheme[nototalframenumber, noslidenumber, url]{uibk}
 
 \title{Distributional Regression Forests for Probabilistic Modeling and Forecasting}
-\author{Achim Zeileis, Torsten Hothorn,\\ Lisa Schlosser, Heidi Seibold}
+\author{Lisa Schlosser, Torsten Hothorn, Heidi Seibold, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
-\URL{https://R-Forge.R-project.org/projects/partykit/}
-\headerimage{3}
+\URL{https://eeecon.uibk.ac.at/~zeileis/}
+\headerimage{4}
 
 
 \setbeamertemplate{caption}{\insertcaption} 
@@ -575,7 +575,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 \frametitle{Motivation}
 \vspace{-0.41cm}
 \begin{figure}[!htb]
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 <<motivation_GLM, echo=FALSE, results=hide>>=
 nobs <- 200
@@ -596,7 +596,7 @@ lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 \end{center}
 \endminipage
 \visible<3->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 <<motivation_GAM, echo=FALSE, results=hide>>=
 ## GAM
@@ -617,7 +617,7 @@ lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 \end{center}
 \endminipage
 \visible<4->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 <<motivation_GAMLSS, echo=FALSE, results=hide>>=
 ## GAMLSS
@@ -689,7 +689,7 @@ $\ldots$}
 \frametitle{Motivation}
 \vspace{-0.2cm}
 \begin{figure}[!htb]
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 <<motivation_regtree, echo=FALSE, results=hide>>=
 ## Reg. Tree
@@ -714,7 +714,7 @@ lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 
 \endminipage
 \visible<2->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
  \begin{center}
 <<motivation_randforest, echo=FALSE, results=hide>>=
 ## Random Forest
@@ -733,7 +733,7 @@ lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 
 \endminipage
 \visible<3->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
   \visible<3->{
   \begin{center}
   \begin{tikzpicture}
@@ -743,7 +743,7 @@ lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
   \end{center}}
 \endminipage
 
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 \vspace{0.0cm}
 \visible<1->{
@@ -768,7 +768,7 @@ Regression Tree\\
 \end{center}
 \endminipage
 \hspace{0.65cm}
-\minipage{0.29\textwidth}
+\minipage{0.28\textwidth}
 \begin{center}
 \vspace{0.0cm}
 \visible<2->{
@@ -855,142 +855,6 @@ based on \code{partykit}\\
   \item Stabilization and regularization of the model.
 \end{itemize}
 \end{frame}
-
-
-\subsection{Building Distributional Trees and Forests}
-\begin{frame}
-\frametitle{Building Distributional Trees and Forests}
-{\bf Tree:}
-\begin{enumerate}
-\item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
-\item Estimate $\hat{\theta}$ via maximum likelihood.
-\item Test for associations or instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each partitioning variable $x_i$.
-%\item Assess whether the \emph{model scores} are associated with
-%    (or change along) any of the available covariates -- e.g.,
-%    using parameter instability tests (\emph{strucchange}) or
-%    conditional inference (\emph{coin}).
-\item Split the sample along the partitioning variable with the strongest association or instability.
-    Choose breakpoint with highest improvement in log-likelihood.
-\item Repeat steps 2--4 recursively in the subgroups
-    until some stopping criterion is met.
-    %-- e.g., for significance or sample size.
-%\item Choose the variable with the strongest association
-%\item Choose the split point which leads to the highest improvement of the model
-%\item Split and repeat 2-6 in each node until a stopping criterion is met
-\end{enumerate}
-
-\vspace{0.4cm}
-{\bf Forest:} Ensemble of trees.
-\begin{itemize}
-\item Bootstrap or subsamples.
-\item Random input variable sampling.
-\end{itemize}
-\end{frame}
-
-
-\begin{frame}
-\frametitle{Prediction}
-%\vspace{1cm}
-{\bf Tree:}\\
-\begin{enumerate}
-\item Select the subsample of the learning data which ends up in the same terminal node as the new observation.
-\item Estimate $\hat{\theta}$ on this subsample.
-\end{enumerate}
-\vspace{0.5cm}
-
-{\bf Forest:}\\
-\begin{enumerate}
-\item For each learning observation calculate a weight by counting the number of trees in which it ends up in the same terminal node as the new observation.
-\item Estimate $\hat{\theta}$ on the weighted learning data.
-\end{enumerate}
-% but weighted by similarities of the learning data and the new observation over all trees
-%\item Evaluate final node for new observation in each of the trees and investigate similarities with each of the learning observations
-%\item Fit a distributional model for the new observation with different influences of the learning observations defined by weights
-\end{frame}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-\begin{frame}
-\frametitle{Global likelihood estimation}
-\begin{itemize}
-\item Specified log-likelihood function $$\ell(\theta; y_i)$$ with distribution parameter $\theta$ and observation $y_i$ of a learning data set $\{y_i\}_{i = 1,\ldots,n}$.
-
-\bigskip
-
-\item Estimation of $\hat{\bold{\theta}}$ via maximum likelihood 
-$$
-\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
-$$
-equivalent to solving 
-$$
-\sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = \sum_{i=1}^n s(y_i, \hat{\theta}) = 0.
-$$
-\end{itemize}
-
-
-\end{frame}
-
-
-\begin{frame}
-\frametitle{Adaptive local likelihood estimation}
-\medskip
-{\bf Tree:}\\
-\medskip
-For a set of covariates $\bold{x}$, a learning data set $\{(y_i, \bold{x}_i)\}_{i =1,\ldots,n}$ and subgroups $\mathcal{B}_1, \ldots, \mathcal{B}_B$ calculate weights
-$$
-w^{\text{tree}}_i(\bold{x}) = \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b))
-$$
-which are then included in the estimation of $\hat{\theta}$
-$$
-\hat{\theta}_{\text{tree}}(\bold{x}) = \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{tree}}_i(\bold{x}) \cdot \ell(\theta; y_i).
-$$
-\end{frame}
-
-
-\begin{frame}
-\frametitle{Adaptive local likelihood estimation}
-\medskip
-{\bf Forest:}\\
-\medskip
-For a set of covariates $\bold{x}$, a learning data set $\{(y_i, \bold{x}_i)\}_{i =1,\ldots,n}$, $T$~trees and corresponding subgroups $\mathcal{B}_1^t, \ldots, \mathcal{B}_B^t$ calculate weights
-$$
-w^{\text{forest}}_i(\bold{x}) = \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
-$$
-which are then included in the estimation of $\hat{\theta}$
-$$
-\hat{\theta}_{\text{forest}}(\bold{x}) =  \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{forest}}_i(\bold{x}) \cdot \ell(\theta; y_i).
-$$
-\end{frame}
-
-
-
-\begin{frame}
-\frametitle{Adaptive local likelihood estimation}
-{\bf Base model:}\\
-\vspace{-0.5cm}
-$$
-\hat{\theta}(\bold{x}) =  \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
-$$
-
-{\bf Tree:}\\
-\vspace{-0.5cm}
-$$
-w^{\text{tree}}_i(\bold{x}) = \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b))
-$$
-$$
-\hat{\theta}_{\text{tree}}(\bold{x}) = \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{tree}}_i(\bold{x}) \cdot \ell(\theta; y_i).
-$$
-
-{\bf Forest:}\\
-\vspace{-0.5cm}
-$$
-w^{\text{forest}}_i(\bold{x}) = \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
-$$
-$$
-\hat{\theta}_{\text{forest}}(\bold{x}) =  \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{forest}}_i(\bold{x}) \cdot \ell(\theta; y_i)
-$$
-\end{frame}
-
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1344,6 +1208,98 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 %\end{frame}
 
 
+\begin{frame}
+\frametitle{Global likelihood estimation}
+\begin{itemize}
+\item Specified log-likelihood function $$\ell(\theta; y_i)$$ with distribution parameter $\theta$ and observation $y_i$ of a learning data set $\{y_i\}_{i = 1,\ldots,n}$.
+
+\bigskip
+
+\item Estimation of $\hat{\bold{\theta}}$ via maximum likelihood 
+$$
+\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i).
+$$
+%% equivalent to solving 
+%% $$
+%% \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = \sum_{i=1}^n s(y_i, \hat{\theta}) = 0.
+%% $$
+\end{itemize}
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Adaptive local likelihood estimation}
+
+$$
+\hat{\theta}(\bold{x}) = \max_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell(\theta; y_i).
+$$
+
+Needed: Weights.
+
+Via tree: 0/1.
+
+Via forest: averaged across trees.
+
+\end{frame}
+
+
+
+\subsection{Building Distributional Trees and Forests}
+\begin{frame}
+\frametitle{Building Distributional Trees and Forests}
+{\bf Tree:}
+\begin{enumerate}
+\item Estimate $\hat{\theta}$ via maximum likelihood.
+\item Test for associations or instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each partitioning variable $x_i$.
+\item Split the sample along the partitioning variable with the strongest association or instability.
+    Choose breakpoint with highest improvement in log-likelihood.
+\item Repeat steps 1--3 recursively until some stopping criterion is met, yielding
+    $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
+\end{enumerate}
+
+\bigskip
+
+{\bf Forest:} Ensemble of $T$ trees.
+\begin{itemize}
+\item Bootstrap or subsamples.
+\item Random input variable sampling.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Adaptive local likelihood estimation}
+
+
+{\bf Estimator:}
+$$
+\hat{\theta}(\bold{x}) =  \max_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell(\theta; y_i)
+$$
+
+\bigskip
+
+\textbf{Weights:}
+
+\begin{eqnarray*}
+w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.3cm]
+w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.3cm]
+w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
+\end{eqnarray*}
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Simulation}
+
+Overview
+
+\end{frame}
+
+
+
 
 
 %\SweaveOpts{eval=FALSE}
@@ -1665,28 +1621,35 @@ plot_ll(simlist)
 
 
 \begin{frame}
-\frametitle{Alternative: Transformation trees and forests}
+\frametitle{Alternative: Transformation model}
 
 \medskip
 
-{\bf General framework / Conditional model:}
+{\bf Distribution function:}
 $$
-\mathbb{P}(Y\leq y|X=x) = \mathbb{P}_{Y|X=x} = \mathbb{P}_{Y, \theta(x)} 
-$$
-
-\bigskip
-
-{\bf Transformation model:}
-$$
-\mathbb{P}(Y\leq y|X=x) = \Phi(\bold{a}_{Bs,d}(y)^T \theta(x)) 
+F(y) = \Phi(\bold{a}_{Bs,d}(y)^\top \theta) 
 $$
 
 \begin{itemize} 
-\item $\bold{a}_{Bs,d}(y)^T \theta(x)$ is a smooth, monotone Bernstein polynomial of degree $d$.
-\item $d=1$ means $\mathbb{P}(Y\leq y|X=x) = \mathcal{N}(\mu(x),\sigma^2(x))$.
+\item $\bold{a}_{Bs,d}(y)^\top \theta$ is a smooth, monotone Bernstein polynomial of degree $d$.
+\item $d=1$ corresponds to $\mathcal{N}(\mu,\sigma^2)$.
 \item $d=5$ is surprisingly flexible.
 \end{itemize}
-%All ``classical'' distributions:  Distributional forests
+
+\medskip
+
+\textbf{Example:} Body Mass Index explained by lifestyle factors (Switzerland).
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Alternative: Transformation model}
+
+\vspace*{0.4cm}
+
+\includegraphics[width=\textwidth]{cmpx-tree.pdf}
+
 \end{frame}
 
 
@@ -1779,29 +1742,27 @@ Hothorn T, Zeileis A (2017).
 \end{frame}
 
 
+%% \begin{frame}[fragile]
+%% \frametitle{Simulation}
+%% \begin{center}
+%% \vspace*{-1cm}
+%% \setkeys{Gin}{width=0.8\linewidth}
+%% <<plotsim_RMSE_par, fig=TRUE, echo=FALSE>>=
+%% plot_rmse(simlist, type = "par")
+%% @
+%% \end{center}
+%% \end{frame}
 
-
-\begin{frame}[fragile]
-\frametitle{Simulation}
-\begin{center}
-\vspace*{-1cm}
-\setkeys{Gin}{width=0.8\linewidth}
-<<plotsim_RMSE_par, fig=TRUE, echo=FALSE>>=
-plot_rmse(simlist, type = "par")
-@
-\end{center}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{Simulation}
-\begin{center}
-\vspace*{-1cm}
-\setkeys{Gin}{width=0.8\linewidth}
-<<plotsim_RMSE_exp, fig=TRUE, echo=FALSE>>=
-plot_rmse(simlist, type = "exp")
-@
-\end{center}
-\end{frame}
+%% \begin{frame}[fragile]
+%% \frametitle{Simulation}
+%% \begin{center}
+%% \vspace*{-1cm}
+%% \setkeys{Gin}{width=0.8\linewidth}
+%% <<plotsim_RMSE_exp, fig=TRUE, echo=FALSE>>=
+%% plot_rmse(simlist, type = "exp")
+%% @
+%% \end{center}
+%% \end{frame}
 
 \end{document}
 
