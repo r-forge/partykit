@@ -696,19 +696,19 @@ Applying these novel approaches to precipitation data in a mountainous region wi
 \SweaveOpts{eval = TRUE}
 \section{Introduction}
 
-In regression analysis various models have been developed to describe the
+In regression analysis a wide range of models has been developed to describe the
 relationship between a response variable and a set of covariates. The classical
 model is the linear model (LM) where the conditional mean of the response
 is modeled through a linear function of the covariates (see the left panel of
 Figure~\ref{Devel_parmod} for a schematic illustration). Over the last decades
 this has been extended in various directions including:
 \begin{itemize}
-  \item Generalized linear models (GLMs, \citealp{McCullagh+Nelder:1989})
+  \item \emph{Generalized linear models} (GLMs, \citealp{Nelder+Wedderburn:1972})
     encompassing an additional nonlinear link function for the conditional mean.
-  \item Generalized additive models (GAMs, \citealp{Hastie+Tibshirani:1986})
+  \item \emph{Generalized additive models} (GAMs, \citealp{Hastie+Tibshirani:1986})
     allowing for smooth nonlinear effects in the covariates
     (Figure~\ref{Devel_parmod}, middle).
-  \item Generalized additive models for location, scale, and shape
+  \item \emph{Generalized additive models for location, scale, and shape}
     (GAMLSS, \citealt{stasinopoulos2005}) adopting a probabilistic modeling
     approach. In GAMLSS, each parameter of a statistical distribution can depend
     on an additive predictor of the covariates comprising linear and/or
@@ -817,11 +817,11 @@ GAMLSS
 \end{figure}
 
 
-While in many applications conditional mean regression models had been receiving
+While in many applications conditional mean regression models have been receiving
 the most attention, there has been a paradigm shift over the last decade towards
 distributional regression models. An important reason for this is that in many
 fields forecasts of the mean are not the only (or not even the main) concern but
-that there is an increasing interest in probabilistic forecasts. Quantities of
+instead there is an increasing interest in probabilistic forecasts. Quantities of
 interest typically include exceedence probabilities for certain thresholds of the
 response or quantiles of the response distribution. As an example, consider
 weather forecasting where there is less interest in the mean amount of
@@ -978,27 +978,33 @@ Distributional Tree
 \caption{\label{Devel_treeforest}Tree and forest developments. Regression tree (top left), distributional tree (bottom), random forest (top middle), distributional forest (top right).}
 \end{figure}
 
-
-The so far discussed parametric models with the response depending on additive linear or 
-smooth nonlinear terms of the covariates are powerful tools as long as only smooth effects 
-are to be considered. A different approach that can also deal with non-additive effects and 
-possibly unknown interactions of covariates is to apply tree-based methods. 
-A regression tree (\citealt{breiman1984classification}) works on the idea of separating 
-the data into more homogeneous subgroups based on covariates. However, the resulting step 
-function, as illustrated in the left panel of Figure \ref{Devel_treeforest}, can often be too 
-rough and impose abrupt changes on the model even in case of smooth transitions. Random 
-forest models such as Breiman and Cutler's randomForest (\citealt{breiman2001random}) 
-solve this problem by combining an ensemble of trees such that steps are smoothed 
-out in case of smooth effects while abrupt changes are still captured by its tree-based 
-structure (see the top middle panel of Figure \ref{Devel_treeforest}).
-
+In summary, the models discussed so far provide a broad and powerful toolset for
+parametric distributional fits depending on a specified set of additive linear or
+smooth nonlinear terms. A rather different approach to capturing the dependence on
+covariates are tree-based models.
+\begin{itemize}
+  \item \emph{Regression trees} (\citealt{breiman1984classification}) recursively
+    split the data into more homogeneous subgroups and can thus capture abrupt shifts
+    (Figure~\ref{Devel_treeforest}, top left) and approximate nonlinear functions.
+    Furthermore, trees automatically carry out a forward selection of covariates and
+    their interactions. 
+  \item \emph{Random forests} (\citealt{breiman2001random}) average the predictions of
+    an ensemble of trees fitted to resampled versions of the learning data. This
+    stabilizes the recursive partitions from individual trees and hence better
+    approximates smooth functions (Figure~\ref{Devel_treeforest}, top middle)
+\end{itemize}
 While classical regression trees and random forests only model the mean of the response
-we are now going to combine the idea of these tree based-methods with the progress
-made in the field of flexible parametric modeling. In particular, the development from mean regression
-models to distributional models will be embedded in the framework of regression trees and
-random forests providing distributional trees and forests. This development is illustrated
-in the bottom panel of Figure~\ref{Devel_treeforest} for distributional trees and in the top right panel
-for distributional forests.
+we propose to follow the ideas from (semi-)parametric regression modeling -- as outlined
+in Figure~\ref{Devel_parmod} -- and combine tree-based methods with parametric distributional models,
+yielding two novel techniques:
+\begin{itemize}
+  \item \emph{Distributional trees} split the data into more homogenous groups with
+    respect to a parametric distribution, thus capturing changes in any distribution
+    paramer like location, scale, or shape (Figure~\ref{Devel_treeforest}, bottom left)
+  \item \emph{Distributional forests} utilize an ensemble of distributional trees
+    for obtaining stabilized and smoothed parametric predictions (Figure~\ref{Devel_treeforest},
+    top right).
+\end{itemize}
 
 In many modeling situations, especially when the types of effects are not known in advance,
 it can be challenging to specify a well fitting model. The novel methodology of distributional 
