@@ -1,6 +1,7 @@
 library("partykit")
 library("Formula")
-
+library("parallel")
+source("~/svn/partykit/pkg/partykit/inst/guideliketest/guidelike.R")
 
 ###########
 # DGP
@@ -116,6 +117,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                      interaction = FALSE), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
+                                         bonferroni = TRUE,
                                          logmincriterion = log(1-0.05),
                                          update = TRUE,
                                          stump = stump)
@@ -139,6 +141,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
                                          update = TRUE,
+                                         bonferroni = TRUE,
                                          stump = stump)
   }
   
@@ -162,6 +165,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
                                          update = TRUE,
+                                         bonferroni = TRUE,
                                          stump = stump)
   }
   
@@ -191,6 +195,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                     intersplit = TRUE),
                               logmincriterion = log(1-0.05),
                               update = TRUE,
+                              bonferroni = TRUE,
                               stump = stump)
   }
   
@@ -222,6 +227,7 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
                                          update = TRUE,
+                                         bonferroni = TRUE,
                                          stump = stump)
   }
   
@@ -651,7 +657,7 @@ if(FALSE){
 
 ############# wrapper function applying simcomp over varying variables of interest
 
-simwrapper <- function(nobs = 200, nrep = 100,
+simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                        delta = seq(from = 1, to = 5, by = 2),
                        xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
                        binary_regressor = c(TRUE, FALSE),
@@ -689,7 +695,7 @@ simwrapper <- function(nobs = 200, nrep = 100,
   prop_T <- matrix(rep(NA, ntest * nprs), ncol = ntest)
   
   for(i in 1:nprs) {
-    reslist <- sim(nobs = nobs, nrep = nrep, stump = stump,
+    reslist <- sim(nobs = nobs, nrep = nrep, stump = stump, seed = seed,
                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
                    beta0 = beta0, beta1 = beta1, z1dist = z1dist,
                    sigma = sigma, alpha = alpha,
@@ -728,89 +734,196 @@ simwrapper <- function(nobs = 200, nrep = 100,
 
 
 
-simres <- simwrapper(nobs = 250, nrep = 100,
-                     delta = seq(from = 0.5, to = 1.5, by = 0.5),
-                     xi = c(0, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
-                     #binary_regressor = c(TRUE, FALSE),
-                     binary_regressor = FALSE,
-                     binary_beta = c(TRUE, FALSE),
-                     #only_intercept = c(TRUE, FALSE),
-                     only_intercept = FALSE,
-                     test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
-                              "guide_sum_12", "guide_max_12", "guide_coin_12",
-                              "guide_sum_1", "guide_max_1", "guide_coin_1",
-                              "guide_sum_2", "guide_max_2", "guide_coin_2",
-                              "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
-                              "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
-                     beta0 = 0, beta1 = 1,
-                     stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7,
+                         delta = seq(from = 1, to = 5, by = 2),
+                         xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
+                         binary_regressor = c(TRUE, FALSE),
+                         binary_beta = c(TRUE, FALSE),
+                         only_intercept = c(TRUE, FALSE),
+                         test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                                  "guide_sum_12", "guide_max_12", "guide_coin_12",
+                                  "guide_sum_1", "guide_max_1", "guide_coin_1",
+                                  "guide_sum_2", "guide_max_2", "guide_coin_2",
+                                  "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                                  "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
+                         beta0=0, beta1 = 1,
+                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+{
+  
+  prs <- expand.grid(delta = delta, xi = xi, vary_beta = vary_beta,
+                     binary_regressor = binary_regressor,
+                     binary_beta = binary_beta,
+                     only_intercept = only_intercept)
+  
+  rmid <- which((prs$only_intercept == TRUE & prs$vary_beta != "beta0"))
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  rmid <- which(prs$binary_beta == FALSE & prs$xi != 0)
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  rmid <- which(prs$only_intercept == TRUE & prs$binary_regressor == FALSE)
+  if(length(rmid) > 0) prs <- prs[-rmid,]
+  
+  rownames(prs) <- c(1:NROW(prs))
+  
+  nprs <- nrow(prs)
+  ntest <- length(test)
+  
+  res <- mclapply(1:nprs, 
+                  function(i) {
+                    reslist <- sim(nobs = nobs, nrep = nrep, stump = stump, seed = seed,
+                                   formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                                   beta0 = beta0, beta1 = beta1, z1dist = z1dist,
+                                   sigma = sigma, alpha = alpha,
+                                   test = test,
+                                   vary_beta = prs$vary_beta[i], 
+                                   binary_regressor = prs$binary_regressor[i],
+                                   binary_beta = prs$binary_beta[i],
+                                   xi = prs$xi[i],
+                                   only_intercept = prs$only_intercept[i],
+                                   delta = prs$delta[i])
+                    
+                    
+                    #prop_nosplit[i,] <- reslist$prop_nosplit
+                    #prop_split[i,] <- reslist$prop_split
+                    #prop_F[i,] <- reslist$prop_F
+                    #prop_T[i,] <- reslist$prop_T
+                    
+                    return(reslist)
+                  },
+                  mc.cores = detectCores() - 1
+  )
+  
+  prop_nosplit <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_split <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_F <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  prop_T <- matrix(rep(NA, ntest * nprs), ncol = ntest)
+  
+  for(i in 1:nprs){
+    prop_nosplit[i,] <- res[[i]]$prop_nosplit
+    prop_split[i,] <- res[[i]]$prop_split
+    prop_F[i,] <- res[[i]]$prop_F
+    prop_T[i,] <- res[[i]]$prop_T
+  }
+    
+  
+  rval <- data.frame()
+  for(i in 1:ntest) rval <- rbind(rval, prs)
+  rval$test <- gl(ntest, nprs, labels = test)
+  rval$prop_nosplit <- as.vector(prop_nosplit)
+  rval$prop_split <- as.vector(prop_split)
+  rval$prop_F <- as.vector(prop_F)
+  rval$prop_T <- as.vector(prop_T)
+  rval$delta <- factor(rval$delta)
+  rval$vary_beta <- factor(rval$vary_beta)
+  rval$binary_regressor <- factor(rval$binary_regressor)
+  rval$binary_beta <- factor(rval$binary_beta)
+  rval$xi <- factor(rval$xi)
+  rval$only_intercept <- factor(rval$only_intercept)
+  
+  return(rval)
+}
 
 
-save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180207.rda")
-
-library("lattice")
-load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
-
-xyplot(prop_split ~ vary_beta | xi + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
 
 
-# models considering all scores
-s_allscores <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", 
-                                          "guide_sum_12", "guide_max_12", "guide_coin_12"))
-s_allscores$test <- factor(s_allscores$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
+
+simres <- simwrapper_p(nobs = 250, nrep = 100,
+                       delta = seq(from = 0, to = 1, by = 0.25),
+                       xi = c(0, 0.5, 0.8), 
+                       vary_beta = c("all", "beta0", "beta1"),
+                       binary_regressor = c(TRUE, FALSE),
+                       #binary_regressor = FALSE,
+                       binary_beta = c(TRUE, FALSE),
+                       only_intercept = c(TRUE, FALSE),
+                       #only_intercept = FALSE,
+                       test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                                "guide_sum_12", 
+                                "guide_coin_12",
+                                "guide_sum_1_cor"),
+                       beta0 = 0, beta1 = 1,
+                       stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-# all GUIDE models
-s_guide <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12",
-                                      "guide_sum_1", "guide_max_1", "guide_coin_1",
-                                      "guide_sum_2", "guide_max_2", "guide_coin_2",
-                                      "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
-                                      "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
-s_guide$test <- factor(s_guide$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
-
-
-# GUIDE_12 models
-s_guide12 <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12"))
-s_guide12$test <- factor(s_guide12$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
-
-
-# GUIDE_1 models
-s_guide1 <- subset(simres, test %in% c("guide_sum_1", "guide_max_1", "guide_coin_1",
-                                       "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor"))
-s_guide1$test <- factor(s_guide1$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
-
-
-# GUIDE_2 models
-s_guide2 <- subset(simres, test %in% c("guide_sum_2", "guide_max_2", "guide_coin_2",
-                                       "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
-s_guide2$test <- factor(s_guide2$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
-
-
-# ctree, mfluc, GUIDE_12_max
-s_scores2 <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", "guide_max_12"))
-s_scores2$test <- factor(s_scores2$test)
-xyplot(prop_split ~ xi | vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
-xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180209.rda")
 
 
 
 
-tab <- xtabs(prop_T ~ delta + xi + binary_beta + binary_regressor + test,
-             data = simres)
-ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "delta"), 
-       col.vars = "test")
 
+
+if(FALSE){
+  library("lattice")
+  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
+  
+  xyplot(prop_split ~ vary_beta | xi + binary_beta + delta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
+  
+  
+  # models considering all scores
+  s_allscores <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", 
+                                            "guide_sum_12", "guide_max_12", "guide_coin_12"))
+  s_allscores$test <- factor(s_allscores$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
+  
+  
+  # all GUIDE models
+  s_guide <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12",
+                                        "guide_sum_1", "guide_max_1", "guide_coin_1",
+                                        "guide_sum_2", "guide_max_2", "guide_coin_2",
+                                        "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                                        "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
+  s_guide$test <- factor(s_guide$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+  
+  # all GUIDE models sum
+  s_guide <- subset(simres, test %in% c("guide_sum_12",
+                                        "guide_sum_1", 
+                                        "guide_sum_2", 
+                                        "guide_sum_1_cor", 
+                                        "guide_sum_2_cor"))
+  s_guide$test <- factor(s_guide$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide, type = "b", auto.key = TRUE)
+  
+  
+  # GUIDE_12 models
+  s_guide12 <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12"))
+  s_guide12$test <- factor(s_guide12$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide12, type = "b", auto.key = TRUE)
+  
+  
+  # GUIDE_1 models
+  s_guide1 <- subset(simres, test %in% c("guide_sum_1", "guide_max_1", "guide_coin_1",
+                                         "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor"))
+  s_guide1$test <- factor(s_guide1$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide1, type = "b", auto.key = TRUE)
+  
+  
+  # GUIDE_2 models
+  s_guide2 <- subset(simres, test %in% c("guide_sum_2", "guide_max_2", "guide_coin_2",
+                                         "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
+  s_guide2$test <- factor(s_guide2$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
+  
+  
+  # ctree, mfluc, GUIDE_12_max
+  s_scores2 <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", "guide_max_12"))
+  s_scores2$test <- factor(s_scores2$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+  
+  
+  
+  
+  tab <- xtabs(prop_T ~ delta + xi + binary_beta + binary_regressor + test,
+               data = simres)
+  ftable(tab, row.vars = c("xi", "binary_beta", "binary_regressor", "delta"), 
+         col.vars = "test")
+}
 
 
 
