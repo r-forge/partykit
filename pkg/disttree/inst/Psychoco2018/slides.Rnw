@@ -1,6 +1,6 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
 %\usetheme[nototalframenumber, noslidenumber, url]{uibk}
-\usetheme[nototalframenumber, noslidenumber]{uibk}
+\usetheme[nototalframenumber, noslidenumber, url]{uibk}
 
 \title{Distributional Regression Forests for Probabilistic Modeling and Forecasting}
 \author{Lisa Schlosser, Torsten Hothorn, Heidi Seibold, Achim Zeileis}
@@ -836,14 +836,14 @@ based on \code{partykit}\\
 \begin{frame}
 \frametitle{Goals}
 
-\textbf{Distributional:} \\
-\vspace{0.1 cm}
-\hspace{0.5cm} Specify the complete probability distribution\\
-\hspace{0.5cm} (including location, scale, and shape).
+\textbf{Distributional:}
+\begin{itemize}
+  \item Specify the complete probability distribution (including location, scale, and shape).
+\end{itemize}
 
 \medskip
 
-{\bf Tree:}
+\textbf{Tree:}
 \begin{itemize}
   \item Automatic detection of steps and abrupt changes. %(data driven)
   \item Capture non-linear and non-additive effects and interactions.
@@ -851,7 +851,7 @@ based on \code{partykit}\\
 
 \medskip
 
-{\bf Forest:}
+\textbf{Forest:}
 \begin{itemize}
   \item Smoother effects.
   \item Stabilization and regularization of the model.
@@ -1213,19 +1213,22 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 \begin{frame}
 \frametitle{Global likelihood estimation}
 \begin{itemize}
-\item Specify distribution family with distribution function 
-$$F(y) = \mathbb{P}_{\theta}(Y\leq y)$$ 
-and log-likelihood function $$\ell(\theta; y).$$ 
-The full distribution is then defined by the parameter vector $\theta \in \Theta$ representing location, scale, and shape. 
 
- 
-\bigskip
+\item Specify a parametric distribution family $F(\cdot; \theta)$ with parameter vector
+  $\theta \in \Theta$ capturing location, scale, shape.
 
-\item Estimate $\hat{\bold{\theta}}$ via maximum likelihood 
-$$
-\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i).
-$$
-for a learning data set $\{y_i\}_{i = 1,\ldots,n}.$
+\item Cumulative distribution function and log-likelihood:
+  \begin{eqnarray*}
+  F(y; \theta)    & = & \mathbb{P}_{\theta}(Y\leq y)\\
+  \ell(\theta; y) & = & \log(f(y; \theta))
+  \end{eqnarray*}
+
+\item Estimate $\hat{\bold{\theta}}$ via maximum likelihood
+  based on a learning sample $y_1,\dots, y_n$:
+\[
+\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+\]
+
 %% equivalent to solving 
 %% $$
 %% \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = \sum_{i=1}^n s(y_i, \hat{\theta}) = 0.
@@ -1239,24 +1242,22 @@ for a learning data set $\{y_i\}_{i = 1,\ldots,n}.$
 \begin{frame}
 \frametitle{Adaptive local likelihood estimation}
 
-$$
+\textbf{Idea:} Covariates captured through adaptive weights.
+\[
 \hat{\theta}(\bold{x}) = \max_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell(\theta; y_i).
-$$
+\]
 
 \bigskip
 
-How to calculate weights $\{w_i(\bold{x})\}_{i=1,\dots,n}$?\\
+\textbf{Question:} How to choose weighting function $w_i(\bold{x})$?
 
 \bigskip
 
-Two strategies:
+\textbf{Possible answers:} Based on learning sample $y_1, \dots, y_n$ and (possibly new) observation $\bold{x}$.
 \begin{itemize}
-\item Build a tree and let $w_i(\bold{x}) \in \{0,1\}$ indicate whether $\bold{x}$ is in the same subgroup as the $i$-th learning observation.
-\item Build an ensemble of trees on resampled versions of the learning data and let $w_i(\bold{x}) \in  \mathbb{N}_0$ count the number of trees in which $\bold{x}$ is in the same subgroup as the $i$-th learning observation.
-%\item Via a tree model: $w_i(\bold{x}) \in \{0,1\}$ indicates whether $\bold{x}$ is in the same terminal node as the $i$-th learning observation.
-%\item Via a forest model: $w_i(\bold{x}) \in  \mathbb{N}_0$ counts the number of trees in which $\bold{x}$ is in the same terminal node as the $i$-th learning observation. 
+\item \emph{Tree:} $w_i(\bold{x}) \in \{0,1\}$ indicates whether $\bold{x}$ and $y_i$ are classified into the same subgroup.
+\item \emph{Forest:} $w_i(\bold{x}) \in  [0, 1]$ averages the weights for $\bold{x}$ and $y_i$ across trees.
 \end{itemize}
-
 
 
 \end{frame}
@@ -1265,10 +1266,10 @@ Two strategies:
 
 \subsection{Building distributional trees and forests}
 \begin{frame}
-\frametitle{Building distributional trees and forests}
-{\bf Tree:}
+\frametitle{Distributional trees and forests}
+\textbf{Tree:}
 \begin{enumerate}
-\item Estimate $\hat{\theta}$ via maximum likelihood.
+\item Estimate $\hat{\theta}$ via maximum likelihood (without covariates).
 \item Test for associations or instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each partitioning variable $x_i$.
 \item Split the sample along the partitioning variable with the strongest association or instability.
     Choose breakpoint with highest improvement in log-likelihood.
@@ -1278,7 +1279,7 @@ Two strategies:
 
 \bigskip
 
-{\bf Forest:} Ensemble of $T$ trees.
+\textbf{Forest:} Ensemble of $T$ trees.
 \begin{itemize}
 \item Bootstrap or subsamples.
 \item Random input variable sampling.
@@ -1290,10 +1291,10 @@ Two strategies:
 \frametitle{Adaptive local likelihood estimation}
 
 
-{\bf Estimator:}
-$$
+\textbf{Estimator:}
+\[
 \hat{\theta}(\bold{x}) =  \max_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell(\theta; y_i)
-$$
+\]
 
 \bigskip
 
@@ -1310,28 +1311,27 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 
 \begin{frame}
 \frametitle{Simulation}
-{\bf Models}:
 
-\smallskip
-
-\hspace{0.55 em} disttree, distforest (100 trees), gamlss\\
+\textbf{Models:} \code{disttree}, \code{distforest} (100 trees), \code{gamlss}.
 
 \bigskip
 
-{\bf DGP}:
+\textbf{Data:}
+\begin{eqnarray*}
+  y         & \sim & \mathcal{N}(\mu(x), \sigma(x))\\
+  x         & \sim & \mathcal{U}(-0.4, 1) \\
+  \mu(x)    & =    & 10 \cdot \exp\left\{ -(4 \cdot x - 2)^{2 \cdot \kappa} \right\}\\
+  \sigma(x) & =    & 0.5 + 2 \cdot |x|
+\end{eqnarray*}
 
-\smallskip
+\bigskip
 
-\begin{tabular}{ll}
-Response:         & $y \sim \mathcal{N}(\mu(x), \sigma(x))$ with\\
-                  & \qquad $\mu(x) =  10 \cdot \exp\left(-(4 \cdot x - 2)^{4}\right)$\\
-                  & \qquad $\sigma(x) = 0.5 + 2 \cdot |x|$\\
-Covariate:        & $x \sim  \mathcal{U}([-0.4,1])$\\
-\# observations:  & 300 
-\end{tabular}
+\textbf{Parameters:}
+\begin{itemize}
+  \item 1 replication: $n = 300$, $\kappa = 2$.
+  \item 150 replications: $n = 1000$, $\kappa = 1, 8, 15, \dots, 71$.
+\end{itemize}
 \end{frame}
-
-
 
 
 
@@ -1421,47 +1421,6 @@ plot1(learndata, dt=dt, df=df, g=g, all.var = TRUE)
 \end{center}
 \end{frame}
 
-
-\begin{frame}
-\frametitle{Simulation}
-
-{\bf Models}:
-
-\footnotesize
-\hspace{0.55 em} disttree, distforest (100 trees), gamlss\\
-
-\bigskip
-
-\normalsize
-{\bf DGP}:
-
-\smallskip
-
-\footnotesize
-\begin{tabular}{ll}
-Response:         & $y \sim \mathcal{N}(\mu(x), \sigma(x))$ with\\
-                 & \qquad $\mu(x) =  10 \cdot \exp\left(-(4 \cdot x - 2)^{2 \cdot \kappa}\right)$\\
-                 & \qquad $\sigma(x) = 0.5 + 2 \cdot |x|$\\
-                 & (increasing $\kappa$ leads to steeper transitions)\\
-Covariate:        & $x \sim  \mathcal{U}([-0.4,1])$\\
-\# observations:  & 1000 
-\end{tabular}
-
-\bigskip
-
-\normalsize
-{\bf Evaluation} over increasing $\kappa$:
-
-\smallskip
-
-\footnotesize
-\begin{tabular}{ll}
-Interval for $\kappa$:     & $[1, 71]$ \\
-Stepsize for $\kappa$:     & 7 \\
-\# replications per step:  & 150 
-\end{tabular}
-
-\end{frame}
 
 
 <<get_simlist, echo=FALSE, results=hide>>=
@@ -1668,7 +1627,7 @@ plot_ll(simlist)
 \frametitle{Choosing a distribution}
 
 \medskip
-{\bf Based on:}
+\textbf{Based on:}
 \begin{itemize}
 \item Recommendations by specialist literature.
 \item Expert subject matter knowledge.
@@ -1677,7 +1636,7 @@ plot_ll(simlist)
 \end{itemize}
 
 \bigskip
-{\bf Examples:}
+\textbf{Examples:}
 \begin{itemize}
 \item Survival times: Weibull distribution, exponential distribution.
 \item Wages, precipitation: censored normal distribution.
@@ -1688,8 +1647,9 @@ plot_ll(simlist)
 
 
 \begin{frame}
-\frametitle{Alternative: Transformation models}
-{\bf Advantages:}
+\frametitle{Transformation models}
+
+\textbf{Advantages:}
 \begin{itemize}
 \item Does not require specification of distribution family.
 \item More flexible framework.
@@ -1697,11 +1657,10 @@ plot_ll(simlist)
 
 \bigskip
 
-{\bf Distribution function:}
-$$
-F(y) = \Phi(\bold{a}_{Bs,d}(y)^\top \theta) 
-$$
-
+\textbf{Distribution function:}
+\[
+F(y; \theta) = \Phi(\bold{a}_{Bs,d}(y)^\top \theta) 
+\]
 \begin{itemize} 
 \item $\bold{a}_{Bs,d}(y)^\top \theta$ is a smooth, monotone Bernstein polynomial of degree $d$.
 \item $d=1$ corresponds to $\mathcal{N}(\mu,\sigma^2)$.
@@ -1714,17 +1673,13 @@ $$
 
 \end{frame}
 
-%\newgeometry{left=0.2cm, right=0.2cm, top = 0.5cm, bottom=0.5cm}
 \begin{frame}
-\frametitle{Alternative: Transformation model}
+\frametitle{Transformation models}
 
 \vspace*{0.4cm}
 \includegraphics[width=1.05\textwidth]{cmpx-tree.pdf}
 
 \end{frame}
-%\restoregeometry
-
-
 
 
 \begin{frame}
@@ -1744,11 +1699,11 @@ $$
 \medskip
 
 \begin{tabular}{ll}
-\code{distfit}    & Distributional fits (ML, \code{gamlss.family}/custom \code{list}).\\
+\code{distfit}    & Distributional fit (ML, \code{gamlss.family}/custom \code{list}).\\
                   & No covariates. \\
-\code{disttree}   & Distributional trees (\code{ctree}/\code{mob} + \code{distfit}).\\
+\code{disttree}   & Distributional tree (\code{ctree}/\code{mob} + \code{distfit}).\\
                   & Covariates as partitioning variables. \\
-\code{distforest} & Distributional forests (ensemble of \code{disttree}s).\\
+\code{distforest} & Distributional forest (\code{disttree} ensemble).\\
                   & Covariates as partitioning variables.
 \end{tabular}
 
@@ -1764,6 +1719,27 @@ $$
 \frametitle{References}
 
 \footnotesize
+
+Schlosser L, Hothorn T, Stauffer R, Zeileis A (2018).
+  \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
+  \emph{Manuscript under preparation}.
+
+\medskip
+
+Hothorn T, Zeileis A (2017).
+  \dquote{Transformation Forests.}
+  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+  \url{http://arxiv.org/abs/1701.02110}
+
+\medskip
+
+Hothorn T, Zeileis A (2015).
+ \dquote{partykit: A Modular Toolkit for Recursive Partytioning in R.}
+ \textit{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
+
+\medskip
 
 Hothorn T, Hornik K, Zeileis A (2006).
  \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
@@ -1781,59 +1757,14 @@ Zeileis A, Hothorn T, Hornik K (2008).
 
 \medskip
 
-Hothorn T, Zeileis A (2015).
- \dquote{partykit: A Modular Toolkit for Recursive Partytioning in R.}
- \textit{Journal of Machine Learning Research},
- \textbf{16}, 3905--3909.
- \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
-
-\medskip
-
 Stasinopoulos DM, Rigby RA (2007).
   \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in R.}
   \textit{Journal of Statistical Software}, 
   \textbf{23}(7), 1--46.
   \doi{10.18637/jss.v023.i07}
   
-\medskip
-
-Seibold H, Zeileis A, Hothorn T (2017).
-  \dquote{Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.}
-  \textit{Statistical Methods in Medical Research}, 
-  \textbf{12}(1), 45--63.
-  \doi{10.1177/0962280217693034}
-
-\medskip
-
-Hothorn T, Zeileis A (2017).
-  \dquote{Transformation Forests.}
-  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
-  \url{http://arxiv.org/abs/1701.02110}
-
 \end{frame}
 
-
-%% \begin{frame}[fragile]
-%% \frametitle{Simulation}
-%% \begin{center}
-%% \vspace*{-1cm}
-%% \setkeys{Gin}{width=0.8\linewidth}
-%% <<plotsim_RMSE_par, fig=TRUE, echo=FALSE>>=
-%% plot_rmse(simlist, type = "par")
-%% @
-%% \end{center}
-%% \end{frame}
-
-%% \begin{frame}[fragile]
-%% \frametitle{Simulation}
-%% \begin{center}
-%% \vspace*{-1cm}
-%% \setkeys{Gin}{width=0.8\linewidth}
-%% <<plotsim_RMSE_exp, fig=TRUE, echo=FALSE>>=
-%% plot_rmse(simlist, type = "exp")
-%% @
-%% \end{center}
-%% \end{frame}
 
 \end{document}
 
