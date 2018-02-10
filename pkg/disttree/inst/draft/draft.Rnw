@@ -1644,7 +1644,7 @@ where \(\mathbf{1}\) is the indicator function.
 
 In this application the CRPS is evaluated out of sample on a data set that has not been used to build the model. The mean CRPS over this data set is used for validation. Since the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation.
 
-For the purpose of comparing the performance of a distributional forest to those of other models the so-called skills score can be calculated with respect to the CRPS and one model being chosen as a reference. In that way we obtain a measure of how much a method improves the model performance in terms of CRPS compared to the reference method.
+For the purpose of comparing the performance of a distributional forest to those of other models the so-called skill score can be calculated with respect to the CRPS and one model being chosen as a reference. In that way we obtain a measure of how much a method improves the model performance in terms of CRPS compared to the reference method.
 $$
 \text{SkillsScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
 $$
@@ -1700,7 +1700,7 @@ qqrplot(pit_ml_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0
 \end{figure}
 
   
-After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data set for which predictions are made and evaluated. This is done by calculating the CRPS value for each of the observations in the testing data set and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. The resulting skills scores are illustrated in Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model represented by the horizontal line at height 0.
+After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data set for which predictions are made and evaluated. This is done by calculating the CRPS value for each of the observations in the testing data set and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. The resulting skill scores are illustrated in Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model represented by the horizontal line at height 0.
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
 if(file.exists("rain_Axams_7x10.rda")){
@@ -1734,16 +1734,16 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <- colnames(rain
 
 \begin{figure}[t!]
 \centering
-<<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE, height=4.5, width = 6.5>>=
+<<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 6.5>>=
 boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAM", "Boosted GAM"),
-        ylab = "CRPS skills score", col = "lightgray") 
+        ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
-\caption{\label{boxplots_crps_axams}CRPS skills score from the 10 times 7-fold cross validation at station Axams (1985--2012). The horizontal orange line pertains to the reference model EMOS.}
+\caption{\label{boxplots_crps_axams}CRPS skill score from the 10 times 7-fold cross validation at station Axams (1985--2012). The horizontal orange line pertains to the reference model EMOS.}
 \end{figure}
 
-The CRPS skills score boxplot shows that, in this setting, both GAM models and the distributional forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the distributional forest even reaches an improvement rate close to 6 percent.
+The CRPS skill score boxplot shows that, in this setting, both GAM models and the distributional forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the distributional forest even reaches an improvement rate close to 6 percent.
 
 From this result we can conclude that the distributional forest provides a powerful alternative framework where only little or almost no effort is required to set up the model and which is competitive to existing methods that are commonly used for this kind of application or even outperforms them.
 
@@ -1753,7 +1753,7 @@ For the prespecified GAM model the covariates needed to be selected and interact
 \SweaveOpts{eval = TRUE}
 %\newpage
 \subsection{Application for all stations}
-Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this particular station we are now going to apply the methods on all 95 stations. At each of them, the first 24 years are used as learning data set and predictions are made for the last 4 years of available observations. For these out-of-sample predictions the CRPS skills score with respect to the EMOS model as reference is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skills score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The green line represents the results for the station Axams.
+Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this particular station we are now going to apply the methods on all 95 stations. At each of them, the first 24 years are used as learning data set and predictions are made for the last 4 years of available observations. For these out-of-sample predictions the CRPS skill score with respect to the EMOS model as reference is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skill score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The green line represents the results for the station Axams.
 %NAs in gamlss in 13 stations!!!\\
 %for example in 13th station in complete{\_}stations\\
 %\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
@@ -1791,7 +1791,7 @@ for(i in 2:(length(res)-1))  crps_all <- rbind(crps_all, res[[i]]$results["crps"
 #colnames(ll_all) <- colnames(rmse_all) <- 
   colnames(crps_all) <- colnames(res[[1]]$results)
 
-# skills score
+# skill score
 s <- 1 - crps_all[, 2:4]/crps_all[,6]
 colnames(s) <- c("Distributional forest", "Prespecified GAM", "Boosted GAM")
 
@@ -1836,18 +1836,18 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 
 \begin{figure}[t!]
 \centering
-<<rain_all_crps_skills_score, fig=TRUE, echo=FALSE, width = 6.5>>=
+<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, width = 6.5>>=
   matplot(t(s[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE, 
-          xlab = "", ylab = "CRPS skills score", xlim = c(0.5, 3.5))
+          xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 3.5))
 lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)  
 # Station Axams is the 77th station which is the 70th in the list of complete stations
   boxplot(s, add = TRUE, col = "transparent")
   abline(h = 0, col = pal["EMOS"], lwd = 2)
     
 @
-\caption{\label{boxplot_crps_all}CRPS skills score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in green and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
+\caption{\label{boxplot_crps_all}CRPS skill score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in green and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
 \end{figure}
 
 Figure~\ref{map} shows the location of all stations in the data set. Each observation station is illustrated by a symbol with the type of symbol representing the method that performed best in terms of CRPS at this station. The color of the symbol indicates the difference of the CRPS of the distributional forest and the CRPS of the best performing among the other three models (prespecified GAM, boosted GAM and EMOS).
