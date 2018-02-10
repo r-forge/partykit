@@ -1,5 +1,6 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber, url]{uibk}
+%\usetheme[nototalframenumber, noslidenumber, url]{uibk}
+\usetheme[nototalframenumber, noslidenumber]{uibk}
 
 \title{Distributional Regression Forests for Probabilistic Modeling and Forecasting}
 \author{Lisa Schlosser, Torsten Hothorn, Heidi Seibold, Achim Zeileis}
@@ -13,6 +14,7 @@
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 \graphicspath{{plots/}}
+\usepackage{geometry}
 
 %% colors
 \definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
@@ -859,7 +861,7 @@ based on \code{partykit}\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{frame}
-\frametitle{Fitting a Tree}
+\frametitle{Distributional trees}
 \vspace*{-0.12cm}
 \begin{center} 
 DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
@@ -1006,7 +1008,7 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 @
 
 \begin{frame}[fragile]
-\frametitle{Fitting a Tree}
+\frametitle{Distributional trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -1034,7 +1036,7 @@ plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
 
 
 \begin{frame}[fragile]
-\frametitle{Fitting a Tree}
+\frametitle{Distributional trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -1051,7 +1053,7 @@ plot(as.constparty(tree), tnex = 1.7, drop = TRUE,
 
 
 \begin{frame}[fragile]
-\frametitle{Fitting a Tree}
+\frametitle{Distributional trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -1154,7 +1156,7 @@ plot(tree, tnex = 1.7, drop = TRUE,
 \end{center}
 \end{frame}
 %\begin{frame}
-%\frametitle{Fitting a Tree}
+%\frametitle{Distributional trees}
 %\center
 %\vspace*{-1cm}
 %\setkeys{Gin}{width=0.8\linewidth}
@@ -1180,7 +1182,7 @@ odata <- alldata[order(alldata["x"]),]
 
 
 \begin{frame}[fragile]
-\frametitle{Fitting a Tree}
+\frametitle{Distributional trees}
 \begin{center}
 \vspace*{-1.03cm}
 \setkeys{Gin}{width=0.8\linewidth}
@@ -1200,7 +1202,7 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 
 
 %\begin{frame}
-%\frametitle{Fitting a Tree}
+%\frametitle{Distributional trees}
 %\center
 %\vspace*{-0.7cm}
 %\setkeys{Gin}{width=0.8\linewidth}
@@ -1211,14 +1213,19 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 \begin{frame}
 \frametitle{Global likelihood estimation}
 \begin{itemize}
-\item Specified log-likelihood function $$\ell(\theta; y_i)$$ with distribution parameter $\theta$ and observation $y_i$ of a learning data set $\{y_i\}_{i = 1,\ldots,n}$.
+\item Specify distribution family with distribution function 
+$$F(y) = \mathbb{P}_{\theta}(Y\leq y)$$ 
+and log-likelihood function $$\ell(\theta; y).$$ 
+The full distribution is then defined by the parameter vector $\theta \in \Theta$ representing location, scale, and shape. 
 
+ 
 \bigskip
 
-\item Estimation of $\hat{\bold{\theta}}$ via maximum likelihood 
+\item Estimate $\hat{\bold{\theta}}$ via maximum likelihood 
 $$
 \hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i).
 $$
+for a learning data set $\{y_i\}_{i = 1,\ldots,n}.$
 %% equivalent to solving 
 %% $$
 %% \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = \sum_{i=1}^n s(y_i, \hat{\theta}) = 0.
@@ -1236,19 +1243,29 @@ $$
 \hat{\theta}(\bold{x}) = \max_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell(\theta; y_i).
 $$
 
-Needed: Weights.
+\bigskip
 
-Via tree: 0/1.
+How to calculate weights $\{w_i(\bold{x})\}_{i=1,\dots,n}$?\\
 
-Via forest: averaged across trees.
+\bigskip
+
+Two strategies:
+\begin{itemize}
+\item Build a tree and let $w_i(\bold{x}) \in \{0,1\}$ indicate whether $\bold{x}$ is in the same subgroup as the $i$-th learning observation.
+\item Build an ensemble of trees on resampled versions of the learning data and let $w_i(\bold{x}) \in  \mathbb{N}_0$ count the number of trees in which $\bold{x}$ is in the same subgroup as the $i$-th learning observation.
+%\item Via a tree model: $w_i(\bold{x}) \in \{0,1\}$ indicates whether $\bold{x}$ is in the same terminal node as the $i$-th learning observation.
+%\item Via a forest model: $w_i(\bold{x}) \in  \mathbb{N}_0$ counts the number of trees in which $\bold{x}$ is in the same terminal node as the $i$-th learning observation. 
+\end{itemize}
+
+
 
 \end{frame}
 
 
 
-\subsection{Building Distributional Trees and Forests}
+\subsection{Building distributional trees and forests}
 \begin{frame}
-\frametitle{Building Distributional Trees and Forests}
+\frametitle{Building distributional trees and forests}
 {\bf Tree:}
 \begin{enumerate}
 \item Estimate $\hat{\theta}$ via maximum likelihood.
@@ -1293,9 +1310,25 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 
 \begin{frame}
 \frametitle{Simulation}
+{\bf Models}:
 
-Overview
+\smallskip
 
+\hspace{0.55 em} disttree, distforest (100 trees), gamlss\\
+
+\bigskip
+
+{\bf DGP}:
+
+\smallskip
+
+\begin{tabular}{ll}
+Response:         & $y \sim \mathcal{N}(\mu(x), \sigma(x))$ with\\
+                  & \qquad $\mu(x) =  10 \cdot \exp\left(-(4 \cdot x - 2)^{4}\right)$\\
+                  & \qquad $\sigma(x) = 0.5 + 2 \cdot |x|$\\
+Covariate:        & $x \sim  \mathcal{U}([-0.4,1])$\\
+\# observations:  & 300 
+\end{tabular}
 \end{frame}
 
 
@@ -1388,16 +1421,48 @@ plot1(learndata, dt=dt, df=df, g=g, all.var = TRUE)
 \end{center}
 \end{frame}
 
-%\begin{frame}[fragile]
-%\frametitle{Simulation}
-%\begin{center}
-%\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%<<oneforest_exp1_sigma, fig=TRUE, echo=FALSE>>=
-%plot1sigma(learndata,dt, df, g)
-%@
-%\end{center}
-%\end{frame}
+
+\begin{frame}
+\frametitle{Simulation}
+
+{\bf Models}:
+
+\footnotesize
+\hspace{0.55 em} disttree, distforest (100 trees), gamlss\\
+
+\bigskip
+
+\normalsize
+{\bf DGP}:
+
+\smallskip
+
+\footnotesize
+\begin{tabular}{ll}
+Response:         & $y \sim \mathcal{N}(\mu(x), \sigma(x))$ with\\
+                 & \qquad $\mu(x) =  10 \cdot \exp\left(-(4 \cdot x - 2)^{2 \cdot \kappa}\right)$\\
+                 & \qquad $\sigma(x) = 0.5 + 2 \cdot |x|$\\
+                 & (increasing $\kappa$ leads to steeper transitions)\\
+Covariate:        & $x \sim  \mathcal{U}([-0.4,1])$\\
+\# observations:  & 1000 
+\end{tabular}
+
+\bigskip
+
+\normalsize
+{\bf Evaluation} over increasing $\kappa$:
+
+\smallskip
+
+\footnotesize
+\begin{tabular}{ll}
+Interval for $\kappa$:     & $[1, 71]$ \\
+Stepsize for $\kappa$:     & 7 \\
+\# replications per step:  & 150 
+\end{tabular}
+
+\end{frame}
+
 
 <<get_simlist, echo=FALSE, results=hide>>=
 if(file.exists("simlist.rda")){
@@ -1513,6 +1578,7 @@ plot_ll <- function(simlist){
   par(mar=c(5.1,4.1,4.1,3.1))
   plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = pal["tree"], ylim = ylim,
        xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+  axis(1, at=c(1,71), lab=c(1, 71), mgp=c(3, .5, 0))
   title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
   title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
   title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
@@ -1527,9 +1593,9 @@ plot_ll <- function(simlist){
   #mtext(text= "gamlss", side = 3, col = pal["gamlss"], line = 1, adj = 0.7)
   #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.4)
   #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.6)
-  mtext(text= "smooth", side = 1, line = 1, adj = 0)
-  mtext(text= "steep", side = 1, line = 1, adj = 1)
-  mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+  mtext(text= "smooth", side = 1, line = 2, adj = 0)
+  mtext(text= "steep", side = 1, line = 2, adj = 1)
+  mtext(text= TeX('$\\kappa$'), side = 1, line = 2)
   mtext(text= "Log-Likelihood", side = 2, line = 1)
   mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 16.7)
   mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = -8)
@@ -1545,8 +1611,8 @@ plot_ll <- function(simlist){
   segments(0.99,0.3,0.99,0.47,lwd=1)
     
   #add arrows below
-  arrows(0.45,0.085,0.3,0.085,lwd=1) ## add arrow
-  arrows(0.6,0.085,0.75,0.085,lwd=1) ## add arrow
+  arrows(0.45,0.047,0.3,0.047,lwd=1) ## add arrow
+  arrows(0.6,0.047,0.75,0.047,lwd=1) ## add arrow
     
   # plot parameters  reset to prior values
   par(parsave)
@@ -1604,8 +1670,9 @@ plot_ll(simlist)
 \medskip
 {\bf Based on:}
 \begin{itemize}
-\item Recommendations by subject matter literature.
-\item Experiences from other modelling situations.
+\item Recommendations by specialist literature.
+\item Expert subject matter knowledge.
+\item Experiences from other modeling situations.
 \item Common simplifications/generalizations/assumptions.
 \end{itemize}
 
@@ -1621,9 +1688,14 @@ plot_ll(simlist)
 
 
 \begin{frame}
-\frametitle{Alternative: Transformation model}
+\frametitle{Alternative: Transformation models}
+{\bf Advantages:}
+\begin{itemize}
+\item Does not require specification of distribution family.
+\item More flexible framework.
+\end{itemize}
 
-\medskip
+\bigskip
 
 {\bf Distribution function:}
 $$
@@ -1642,16 +1714,15 @@ $$
 
 \end{frame}
 
-
+%\newgeometry{left=0.2cm, right=0.2cm, top = 0.5cm, bottom=0.5cm}
 \begin{frame}
 \frametitle{Alternative: Transformation model}
 
 \vspace*{0.4cm}
-
-\includegraphics[width=\textwidth]{cmpx-tree.pdf}
+\includegraphics[width=1.05\textwidth]{cmpx-tree.pdf}
 
 \end{frame}
-
+%\restoregeometry
 
 
 
