@@ -85,20 +85,13 @@
 \SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
 <<preliminaries, echo=FALSE, results=hide>>=
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
-library("ggplot2")
-theme_set(theme_bw(base_size = 18))
 library("disttree")
 library("Formula")  # FIX ME: should be imported in disttree
 library("gamlss")
-library("randomForest")
-library("lattice")
 library("crch")
-library("latex2exp")
-library("parallel")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
 library("mgcv")
-library("MASS")
 library("countreg")
 
 ## HCL palette
@@ -527,13 +520,6 @@ or random forests. %(\citealt{breiman2001random}).
 This class of tree and forest models will now be integrated in probabilistic forecasting providing a novel general distributional framework for these methods. In particular, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. 
 %%%<TH> break-up very long sentence </TH>
 Applying these novel approaches to precipitation data in a mountainous region with a very large number of numerical weather prediction quantities shows one of their main advantages in selecting variables automatically and illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge and experience from meteorology or based on a computationally more demanding boosting approach.
-
-
-%For example in the field of probabilistic weather forecasting linear models such as ensemble model output statistics (EMOS, \citealt{gneiting2005calibrated}) provide common and widely used tools allowing for clear interpretations. Usually acting on the assumption of a normally distributed response variable both parameters, the mean and the variance, depend linearly on covariates in this type of model. However, the restriction to model only linear effects requires further extensions which allow for more flexibility. Generalized additive models for location, scale, and shape (GAMLSS, \citealt{stasinopoulos2005}) can also capture non-linear effects as each distribution parameter can be modeled separately by its own generalized additive model (GAM). A different approach that would make it possible to also model non-additive effects and interactions is to apply tree-structured models such as regression trees (\citealt{loh2011classification}) or random forests (\citealt{breiman2001random}). This class of models will now be integrated in probabilistic forecasting providing a novel general distributional framework for these methods. We are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. Applying these novel approaches to precipitation data in a mountainous region with a large number of numerical weather prediction quantities illustrates their strengths as their performance is compared to GAMLSS models that are specified based either on subject-matter knowledge and experience from meteorology or based on a computationally more demanding boosting approach.
-
-%In regression analysis one is interested in the relationship between a dependent variable and one or more explanatory variables. Various methods to fit statistical models to the data set have been developed, starting from linear models considering only the mean of the response variable and ranging to probabilistic models where all parameters of a distribution are fit to the given data set.\\
-%If there is a strong variation within the data it might be advantageous to split the data first into more homogeneous subgroups based on given covariates and then fit a local model in each subgroup rather than fitting one global model to the whole data set. This can be done by applying regression trees and forests.\\
-%Both of these two concepts, parametric modeling and algorithmic trees, have been investigated and developed further, however, mostly separated from each other. Therefore, our goal is to embed the progress made in the field of probabilistic modeling in the idea of algorithmic tree and forest models. In particular, more flexible models such as GAMLSS (\citealt{stasinopoulos2005}) should be fitted in the nodes of a tree in order to capture location, scale, and shape as well as censoring, tail behavior etc. while non-additive effects of the explanatory variables can be detected automatically by the splitting algorithm used to build the tree. In distributional forests an ensemble of distributional trees is built and used to calculate weights which are then included in the fitting process of a distributional model. These forest models can detect smooth effects as well as abrupt changes and interactions in a reasonable way without needing any kind of variable selection or information about the expected effects advance and therefore offers a good compromise particularly in complex settings. 
 }
 \Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, distributional regression}
 
@@ -872,21 +858,35 @@ probabilistic forecasts by leveraging the strengths of random forests: the abili
 capture both smooth and abruptly changing functions along with simultaneous selection of
 variables and possibly complex interactions. Thus, these properties make the method particularly
 appealing in case of many covariates with unknown effects where it would be challenging
-to specify a GAMLSS.
+to specify a distributional regression model like GAMLSS.
 
-In weather forecasting, these properties are appealing in mountainous regions and complex terrain
-where small-scale effects are not well-resolved in the NWP outputs. As these are computed at
-a coarser scale, there may be abrupt local effects in the meteorological observations within a single
-NWP grid cell. To illustrate this in practice, precipitation forecasts are obtained with distributional
-forests at 85 meteorological stations in a mountainous region in the Alps, covering mainly Tyrol,
-Austria, and adjacent areas. More specifically, a zero-censored Gaussian distribution is
-employed to model 24-hour total precipitation so that the zero-censored point mass describes the
-probability of no precipitation on a given day (see Figure~\ref{axams_onestation}). Forecasts
-for July are established based on data from the same month in the years 1985--2012 along with
-a large number of NWP ensemble outputs as covariates. As Figure~\ref{axams_onestation} shows,
-the station-wise models yield a full distributional forecast for each day -- here for the same
-day (July~24) at one station (Axams) over four years (2009--2012) -- based on the previous 24~years as training data.
-The corresponding observations conform reasonably well with the predictions.
+In weather forecasting, these properties are appealing in mountainous regions
+and complex terrain where small-scale effects are not well-resolved in the NWP
+outputs. As these are computed at a coarser scale, there may be abrupt local
+effects within a single NWP grid cell. To illustrate this in practice,
+precipitation forecasts are obtained with distributional forests at 95
+meteorological stations in a mountainous region in the Alps, covering mainly
+Tyrol, Austria, and adjacent areas. More specifically, a zero-censored Gaussian
+distribution is employed to model 24-hour total precipitation so that the
+zero-censored point mass describes the probability of no precipitation on a
+given day (see Figure~\ref{axams_onestation}). Forecasts for July are
+established based on data from the same month in the years 1985--2012 along with
+82~covariates derived from a wide range of NWP ensemble outputs. As
+Figure~\ref{axams_onestation} shows, the station-wise models yield a full
+distributional forecast for each day -- here for the same day (July~24) at one
+station (Axams) over four years (2009--2012) -- based on the previous 24~years
+as training data. The corresponding observations conform reasonably well with
+the predictions. In Section~\ref{ProbabilisticForecasting} we investigate the
+performance of distributional forests in this forecasting task in more detail.
+It is shown that they perform at least on par and sometimes clearly better than
+three alternative zero-censored Gaussian models: a standard ensemble model
+output statistics approach (EMOS, \citealp{gneiting2005calibrated}), a GAMLSS
+with regressors prespecified based on meteorological expertise following
+\cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
+\citep{gamboostLSS2016} using non-homogenous boosting
+\citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
+82~available regressors.
+
 
 <<echo=FALSE, results=hide>>=
 #### Axams prediction 24 - 4
@@ -1538,7 +1538,7 @@ Observations are available on a daily basis, each observation representing the t
 
 
 In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. deviation, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
-Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. deviation of mean/minimal/maximal values respectively. Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82 covariates are available in this setting.
+Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. deviation of mean/minimal/maximal values respectively. Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82~covariates are available in this setting.
 
 %%% <TH> hm, now we _are_ using a transformation model without estimating the
 %%% transformation. </TH>
@@ -1633,6 +1633,10 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 
 For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \emph{tp{\_}mean1218} and \emph{cape{\_}mean1218} for the location parameter and once between \emph{tp{\_}sprd1218} and \emph{cape{\_}mean1218} for the scale parameter. These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.
 
+\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAM. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
+
+\fixme{A description of the boosting approach is currently missing completely.}
+
 In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made based on the results of \citealt{Gebetsberger2017} where different link functions (identity, quadratic and logarithmic function) have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function lead to the best performance of the EMOS model in this application.
 
 In order to compare the performance of the chosen methods, the continuous ranked probability score (CRPS) is calculated for each model. The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
@@ -1660,7 +1664,7 @@ The results of fitting one distributional forest to the first 24 years of the da
 %%% <TH> wouldn't be a uniform QQ-plot be more appropriate? </TH>
 
 %%%<TH> always us the term "distributional forest"
-As shown in Table~\ref{model_specification} the distributional forest includes all 82 covariates. A single tree model allows to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a distributional forest though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 year are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
+As shown in Table~\ref{model_specification} the distributional forest includes all 82~covariates. A single tree model allows to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a distributional forest though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 year are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
   
 
 \begin{figure}[t!]
@@ -1892,10 +1896,10 @@ Even though many situations demand for the use of specifically tailored models p
 
 
 \section*{Computational details}
-The corresponding implementation to the novel methods presented in this article is available on R-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a distributional forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{hothorn2015partykit}).
+The corresponding implementation to the novel methods presented in this article is available on \textsf{R}-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a distributional forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{hothorn2015partykit}).
 
 
-
+\fixme{Avoid nocite, make all relevant citations properly in the text.}
 
 
 
