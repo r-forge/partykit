@@ -37,16 +37,20 @@ export(
   ## distributional forest
   "distforest",
 
-  ## family list generating function
+  ## family list generating function (input: GAMLSS family object)
   "make_dist_list",
 
-  ## family lists
+  ## family list generating functions
   "dist_gaussian",
   "dist_weibull",
   "dist_poisson",
   "dist_exponential",
   "dist_gamma",
-  
+  "dist_crch",
+
+  ## complete family lists
+  "dist_list_normal",
+  "dist_list_cens_normal",
   
   ## additional summary function
   "getSummary.distfit"
