@@ -474,7 +474,7 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
                    censtype = "left", censpoint = 0, type.tree = "ctree", 
                    control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
                                            mincriterion = tree_mincrit, minsplit = tree_minsplit,
-                                           minbucket = tree_minbucket))
+                                           minbucket = tree_minbucket, saveinfo = FALSE))
   }
                         
                         
@@ -492,7 +492,8 @@ rain_axams_pred <- function(seedconst = 7, ntree = 100,
                      ntree = ntree, censtype = "left", censpoint = 0,
                      control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                              mincriterion = forest_mincrit, minsplit = forest_minsplit,
-                                             minbucket = forest_minbucket), mtry = forest_mtry)
+                                             minbucket = forest_minbucket, saveinfo = FALSE), 
+                     mtry = forest_mtry)
   }
                         
                         
