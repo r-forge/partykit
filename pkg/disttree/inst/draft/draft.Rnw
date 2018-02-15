@@ -1118,285 +1118,22 @@ As this novel methodology combines the advantages of smooth and flexible paramet
 
 
 
-
-
-
-\SweaveOpts{eval = FALSE}
-%\newpage
-%\section{Simulation Study}
-%\label{Simulation}
-%Within this simulation study the performance of distributional trees and forests is tested and compared to other models, showing situations where one or the other method is more advantageous than others. 
-
-%In the case of smooth parameter functions without any abrupt changes / non-additive effects a smooth parametric model such as GAMLSS is clearly the first choice while a stepfunction can be modeled best by applying a tree-structured model. Even though for both of these extreme situations a specifically advantageous method is provided, a forest model can be a good compromise and performs well in a wide range of settings including the two mentioned before. (Therefore, a forest is a recommendable choice particularly when no information about the type of parameter function is provided.)
-
-%Generally, a smooth parametric model such as GAMLSS should be the most successful method if the parameter function is smooth with no rapid changes. However, if there are any jumps or non-additive effects or interactions, the trees should be more effective in detecting these steps and therefore also lead to a better fitting forest. But this situation might also appear for smooth functions which contain sections with very steep slopes. Therefore, it is now of great interest, whether the concept of smooth parametric models or of trees and forests covers a broader range of functions where it is superior to the other.\\
-
-
-%The new methods are evaluated on generated data sets and their results are then compared to those of a GAMLSS (\citealt{stasinopoulos2005}) which fits a separate generalized additive model to each of the distribution parameter and in that way specifies a whole distribution and is a very efficient option for smooth effects of the covariates on the parameters.\\
-%Each generated data set includes 500 samples consisiting of the value of a response variable $Y$ and six covariates $X_1, \ldots, X_6$ which are all independent and distributed as follows:
-%$$
-%X_1, X_2, X_3 \sim \textit{Unif}([-1,1])
-%$$
-%$$
-%X_4, X_5, X_6 \sim \textit{Binom}(1, 0.5)
-%$$
-
-%The distribution of the response variable is a left-censored normal distribution with censoring point 0. The corresponding distribution parameters are defined by a parameter function $f$ depending on the covariates and an additional factor $\kappa$, also known as the smoothness constraint, which regulates the steepness of certain sections of the parameter function. For low values of $\kappa$ the resulting parameters change rather slowly over varying values of the covariates while high values of $\kappa$ lead to abrupt changes. \\ 
-%The location parameter $\mu$ depends on $X_1, X_4$ and $\kappa$ and the scale parameter $\sigma$ depends on $\mu, X_1$ and $\kappa$. The other covariates $X_2, X_3, X_5$ and $X_6$ are used as noise variables.\\
-%The latent variable $Y^{\ast}$ is generated based on the following setting.
-%\begin{center}
-%$$ 
-%Y^{\ast} \sim \mathcal{N} (f(X_1, X_4, \kappa))
-%$$
-%with
-%$$
-%f(X_1, X_4, \kappa) = \left(\mu(X_1, X_4, \kappa) , \sigma(\mu,X_1,\kappa)\right)
-%$$ 
-%and
-%\begin{align*}
-%\mu(X_1, X_4, \kappa) = 0.2 
-%+ \begin{cases}
-%    7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})},
-%    & \text{if } X_1 < 0.4 \text{ and } X_4 = 0\\
-%    7 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2},       
-%    & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 0\\
-%    10 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})},
-%    & \text{if } X_1 < 0.4 \text{ and } X_4 = 1\\
-%    13 \cdot \exp{(-(3 \cdot X_1-1.2)^{(2\cdot \kappa)})} \cdot \frac{1}{2} + \frac{7}{2},       
-%    & \text{if } X_1 \geq 0.4 \text{ and } X_4 = 1
-%\end{cases}
-%\end{align*}
-
-%$$
-%\sigma(\mu, X_1,\kappa) = 0.5 + \frac{\mu}{5} + 2 \cdot \mathbf{1}(X_1 < -0.4)
-%$$
-%%where $\Lambda$ is the cumulative distribution function of the logistic distribution
-%%$$
-%%\Lambda(\omega) = \frac{1}{1 + \exp(-\omega)}
-%%$$
-%The response variable $Y$ is defined as 
-%$$
-%Y = 
-%\begin{cases}
-%    Y^{\ast},& \text{if } Y^{\ast} \geq 0\\
-%    0,       & \text{else}
-%\end{cases}
-%$$
-%\end{center}
-
-
-%To illustrate the parameter functions and the impact of $\kappa$ together with the results of the considered methods they are first applied on one generated data set only where $\kappa$ is set to~1 and then to a second data set where $\kappa$ is set to 10. In Figure~\ref{plot_sim_oneset_mu} the location parameter function $\mu(X_1, X_4, \kappa)$ is plotted along the covariate $X_1$ together with the estimated values of the different models for fixed covariates $x_4 = 0$ and $(x_2, x_3, x_5, x_6) = (0,0,0,0)$. \\
-
-%\SweaveOpts{eval = TRUE}
-<<eval = FALSE, echo=FALSE, results=hide>>=
-
-source("oneset.R")
-    
-#if(file.exists("oneset1.rda")){
-#  load("oneset1.rda")
-#} else {
-  
-  #define parameter function
-  #kappa <- 1
-  fun1 <- function(x){
-    mu <- 0.2 + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*1)))) * as.numeric(x[,1] < 0.4) + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*1))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
-      (3 * (exp(-(3*x[,1]-1.2)^(2*1)))) * x[,4]
-    sigma <- 0.5 + 
-      mu/5 + 
-      #(x[,1]>0.4)  #*x[,4]#+
-      2*(x[,1] < -0.4) 
-      #plogis((1^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
-      #4*(1-plogis((1^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
-      #5 * abs(x[,1]) * x[,4]
-    par <- cbind(mu, sigma)
-    return(par)
-  }
-  
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  
-  oneset1 <- sim_oneset_vary_x1(parfun = fun1, nobs = 500, seedconst = 74, ntree = 100,
-                                 formula = y~x1+x2+x3+x4+x5+x6, 
-                                 tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95, 
-                                 forest_minsplit = 20, forest_minbucket = 7, forest_mincrit = 0, 
-                                 forest_mtry = 3, type.tree = "ctree", 
-                                 censNO = TRUE, 
-                                 pred_fix_x2 = 0.9,
-                                 pred_fix_x4 = 0,
-                                 nrunif = 3,
-                                 nrcovform = 6)
-
-  
-#  save(oneset1, file = "oneset1.rda")
-#}
-
-    
-#if(file.exists("oneset10.rda")){
-#  load("oneset10.rda")
-#} else {
-  
-  #define parameter function
-  #kappa <- 10
-  fun10 <- function(x){
-    mu <- 0.2 + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*10)))) * as.numeric(x[,1] < 0.4) + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*10))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
-      (3 * (exp(-(3*x[,1]-1.2)^(2*10)))) * x[,4]
-    sigma <- 0.5 + 
-      mu/5 + 
-      #(x[,1]>0.4)  #*x[,4]#+
-      2*(x[,1] < -0.4) 
-      #plogis((10^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
-      #4*(1-plogis((10^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
-      #5 * abs(x[,1]) * x[,4]
-    par <- cbind(mu, sigma)
-    return(par)
-  }
-  
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  
-  oneset10 <- sim_oneset_vary_x1(parfun = fun10, nobs = 500, seedconst = 74, ntree = 100,
-                                 formula = y~x1+x2+x3+x4+x5+x6, 
-                                 tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95, 
-                                 forest_minsplit = 20, forest_minbucket = 7, forest_mincrit = 0, 
-                                 forest_mtry = 3, type.tree = "ctree", 
-                                 censNO = TRUE, 
-                                 pred_fix_x2 = 0.9,
-                                 pred_fix_x4 = 0,
-                                 nrunif = 3,
-                                 nrcovform = 6)
-
-  
-#  save(oneset10, file = "oneset10.rda")
-#}
-@
-
-
-%\begin{figure}[t!]
-%\begin{subfigure}{0.6\textwidth}
-%<<sim_oneset1_mu, fig=TRUE, echo=FALSE>>=
-%plot_oneset(oneset1, compare_mu =TRUE, add_dt = TRUE, add_df = TRUE, add_g = TRUE, plot_legend = TRUE, w_sigma = FALSE)
-%@
-%\end{subfigure}
-%\hspace{-1cm}
-%\begin{subfigure}{0.6\textwidth}
-%<<sim_oneset10_mu, fig=TRUE, echo=FALSE>>=
-%plot_oneset(oneset10, compare_mu =TRUE, add_dt = TRUE, add_df = TRUE, add_g = TRUE, plot_legend = TRUE, w_sigma = FALSE)
-%@
-%\end{subfigure}
-%\caption{\label{plot_sim_oneset_mu} Smooth parameter function (left window, $\kappa = 1$) and parameter function with abrupt changes (right %window, $\kappa = 10$) together with the predicted location parameter $\mu$ of the tree model, the forest model and the GAMLSS,  plotted along %$x_1$ while all the other covariates are kept at fixed values.}
-%\end{figure}
-
-%In the case of smooth effects of the coefficients on the parameter function ($\kappa = 1$, left window in Figure~\ref{plot_sim_oneset_mu}) the fitted parameters of the GAMLSS are closest to the true parameters while the steps of the tree are cleary too rough. By combining various trees the forest can smooth out these steps, however, not as well as the GAMLSS.\\
-%Looking at the other extreme situation in which the parameter functions include abrupt changes ($\kappa = 10$, right window in Figure~\ref{plot_sim_oneset_mu}) the tree captures them very well wich also leads to a good fit of the forest model. In contrast to the two tree-structured models the GAMLSS has its difficulties with these steps and therefore fluctuates around the true parameter functions.\\
-
-%To get a more profound impression, the methods are evaluated on various data sets. The value of $\kappa$ is increasing from 1 to 10 by a stepsize of 1 and for each step 100 data sets are generated.\\
-%%\subsubsection{Means of Comparison}
-%In order to compare the performance of the chosen methods over various data sets, the continuous ranked probability score (CRPS) is calculated for each model on each data set. 
-
-%three different values are calculated for the resulting models: the root of the mean squared error (RMSE), the log-likelihood value and the continuous ranked probability score (CRPS). All of them are evaluated out of sample, e.g. on a part of the data set that has not been used to build the model.\\
-%Therefore, overfitting would lead to worse results.\\
-%\\
-%The RMSE represents how close the estimated expected values are to the true observations. For a response variable $Y$ and a set of observations $\textbf{y} = \{y_i\}_{i = 1,\ldots,n}$ with the corresponding estimated parameters $\hat{\boldsymbol{\theta}} = \{\hat{\theta}_i\}_{i = 1,\ldots,n}$ the RMSE is defined as follows.
-
-%$$
-%\text{RMSE}(Y, \boldsymbol{y}, \boldsymbol{\hat{\theta}}) = \sqrt{\frac{1}{n} \sum_{i=1}^n (\mathbb{E}_{\hat{\theta}_i}(Y) - y_i)^2}
-%$$
-
-%In most cases this value does not measure the distributional fit as only the expected value is considered. However, in the case of a censored normal distribution the expected value of the observed variable is a transformation of the expected value of the latent variable which includes the location and the scale parameter.\\
-%\\
-%A typical way to evaluate the distributional fit is provided by the log-likelihood value. For each observation $y$ and the corresponding predicted parameter $\hat{\theta}$ the value of the log-likelihood function $\ell(\hat{\theta}; y)$ is calculated and then averaged over all observations in the testing data set. The higher the value the better the predictions of the model are.\\
-%\\
-%The CRPS is another value that measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
-%The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
-%$$
-%\text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
-%$$
-%where \(\mathbf{1}\) is the indicator function. \\
-%In this simulation study the CRPS is evaluated out of sample on a data set that has not been used to build the model but has been generated by the same process and with the same settings as the original data set. In the following this second data set is called testing data set while the original data set on which the models are built on is called learning data set.
-%The mean CRPS over the whole testing data set is used for validation. As the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation. \\
-
-
-%The methods are then compared by the out-of-sample RMSE for the location parameter $\mu$ and the shape parameter $\sigma$ as well as by %the out-of-sample log-likelihood of the fitted models, averaged within each step.
-%(In that way it can be investigated how the results change for a changing value of $\kappa$.)
-
-
-%\SweaveOpts{eval = FALSE}
-
-<<eval = FALSE, echo=FALSE, results=hide>>=
-if(file.exists("simres.rda")){
-  load("simres.rda")
-} else {
-  #source("~/svn/partykit/pkg/disttree/inst/draft/.R")
-  source("gensim.R")
-  
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  
-  simfun <- function(x, kappa){
-    mu <- 0.2 + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * as.numeric(x[,1] < 0.4) + 
-      (7 * (exp(-(3*x[,1]-1.2)^(2*kappa))) * (1/2) + 7/2) * as.numeric(x[,1]>= 0.4) +
-      (3 * (exp(-(3*x[,1]-1.2)^(2*kappa)))) * x[,4]
-    sigma <- 0.5 + 
-      mu/5 + 
-      #(x[,1]>0.4)  #*x[,4]#+
-      2*(x[,1] < -0.4) 
-    #plogis((kappa^(1.8)) * 4 * (x[,2] + 0.7)) #* x[,4]
-    #4*(1-plogis((kappa^(1.8)) * 2 * (x[,1] + 0.5))) * x[,4]
-    #5 * abs(x[,1]) * x[,4]
-    par <- cbind(mu, sigma)
-    return(par)
-  }
-    
-    
-  simres <- gensim(parfun = simfun,
-                   seedconst = 74, nrep = 100, ntree = 100,
-                   nsteps = 10, stepsize = 1,
-                   formula = y~x1+x2+x3+x4+x5+x6,
-                   nobs = 500, testnobs = 500L,
-                   tree_minsplit = 20, tree_minbucket = 7, tree_mincrit = 0.95,
-                   forest_minsplit = 20, forest_minbucket = 7, forest_mincrit = 0, 
-                   forest_mtry = 3,
-                   censNO = TRUE,
-                   gamboost_cvr = FALSE,
-                   eval_disttree = TRUE,
-                   eval_distforest = TRUE,
-                   eval_gamlss = TRUE,
-                   eval_bamlss = FALSE,
-                   eval_gamboostLSS = FALSE,
-                   eval_randomForest = FALSE,
-                   eval_cforest = FALSE,
-                   nrunif = 3,
-                   nrcovform = 6)
-  
-  save(simres, file = "simres.rda")
-}
-@
-
-
-
-
 \SweaveOpts{eval = TRUE}
 
 \section{Probabilistic precipitation forecasting in complex terrain}
 \label{ProbabilisticForecasting}
 
 
-As explained in the introduction, distributional trees and forests provide a new approach in probabilistic forecasting which combines advantages of parametric models that are already used in this field and tree-structured models which provide features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, these new methods are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. 
+As explained in the introduction, distributional forests provide a new approach in probabilistic forecasting by embedding the ideas of flexible parametric modeling into the framework of tree-structured models. In that way this novel methodology offers additional features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, distributional forests are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. Their results are compared to those of other zero-censored Gaussian models including a standard ensemble model output approach and two GAMLSS models. For one of the GAMLSS models the regressors have been selected and interactions have been specified in advance based on subject-matter knowledge and experience from meteorology. The other one is based on a computationally more demanding boosting approach.
 
 \subsection{Data}
 \label{data}
-The data set used for training and validation consists of observed daily precipitation sums provided by the National Hydrographical Service (\citealt{ehyd}) and numerical weather forecasts from the {U.S.} National Oceanic and Atmospheric Administration (NOAA).
+The data set used for training and validation consists of observed precipitation sums provided by the National Hydrographical Service (\citealt{ehyd}) and numerical weather forecasts from the {U.S.} National Oceanic and Atmospheric Administration (NOAA).
 Both, observations and weather forecasts are available from 1985 trough the year 2012, focusing on July only in this article.
 
-Observations are available on a daily basis, each observation representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and its close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized daily at 0~UTC from December 1984 to present providing forecasts on 26 hourly temporal resolution. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertainty of the atmospheric state. 
+Observations are available on a daily basis, each representing the total precipitation sum fallen within 24~hours observed at 6~UTC at 95 stations all over Tyrol and its close surrounding. The observations are undergoing a rigorous quality check before made available to the public.  As covariates the second generation reforecast data set of the global ensemble forecast system (GEFS) is used (\citealt{hamill2013}).  This data set consists of an 11-member ensemble based on a fixed version of the numerical model and a horizontal grid-spacing of about $50~\times~50 \text{km}^2$ initialized daily at 0~UTC from December 1984 to present providing forecasts on 26 hourly temporal resolution. Each of the 11 ensemble members uses slightly different perturbed initial conditions trying to predict the situation specific uncertainty of the atmospheric state. 
 
-
-In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since each forecast variable consists of an ensemble of individual predictions, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. deviation, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window.\\
+In particular, 14 basic forecast variables are considered with up to 12 variations of each of these variables being included as covariates. Since an ensemble of individual predictions is provided for each forecast variable, the possible variations include the mean, the standard deviation, the minimum and the maximum over all ensemble members, noted as ensemble mean, ensemble std. deviation, ensemble minimum and ensemble maximum. All of these values can be calculated on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour time window. 
 Another possible option is to consider the mean, minimum or maximum over 24 hours for each individual prediction and then take the ensemble mean or ensemble standard deviation, noted as ensemble mean of mean/minimal/maximal values or ensemble std. deviation of mean/minimal/maximal values respectively. Table~\ref{covariates} shows all variables together with the number of variations and the provided variations listed in the last column. Altogether 82~covariates are available in this setting.
 
 %%% <TH> hm, now we _are_ using a transformation model without estimating the
@@ -1456,8 +1193,29 @@ Basic covariates & {\#} & Variations\\
 
 
 \subsection{Models and evaluation}
-Next to distributional forests three other methods are applied to this data set and their results are compared based on the continuous ranked probability score (CRPS). One of the reference models is an EMOS model as this is a common choice in this type of setting and research field. The other two models are both GAMs, once in a prespecified form in terms of variable selection for each distribution parameter and once applying a boosting algorithm. 
-The chosen methods and their specifications are listed in Table~\ref{model_specification}.
+
+Next to distributional forests three other methods are applied to this data set:
+
+\begin{itemize}
+
+\item An ensemble model output statistics (EMOS, \citealp{gneiting2005calibrated}) model where the location parameter and the logarithm of the scale parameter depend linearly on the ensemble mean forecast of the total daily precipitation sum and the corresponding ensemble standard deviation respectively.
+The choice of the logarithmic function as link function for the scale parameter has been made based on the results of \citealt{Gebetsberger2017} where different link functions have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function led to the best performance of the EMOS model in this application.
+
+\item A GAMLSS where for each distribution parameter the selection of covariates and the specification of interactions is done in advance, both based on meteorological expert knowledge following \cite{Stauffer+Umlauf+Messner:2017} (prespecified GAM). Among the available 82 regressors, 9 where selected for the location parameter and 6 for the scale parameter. Additionally, for each distribution parameter one interaction term is specified in which convective availbale energy is interacting with total precipitation (with the ensemble mean for the location parameter and with the ensemble standard deviation for the scale parameter). 
+%In this terms an ensemble mean of 6 hour sums of convective available energy is interacting with an ensemble mean or standarad deviation of 6 hour sums of total precipitation.  
+These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information (and is therefore expected to profit from this advantage).
+\item A boosted GAMLSS \citep{gamboostLSS2016} using non-homogenous boosting
+\citep{Messner+Mayr+Zeileis:2017} for an automatic selection of covariates (boosted GAM). The idea of this (boosting) approach is to iteratively minimize a loss function where in each step only the coefficient leading to the highest improvement of the current model is updated. As the initial coefficients are all zero, only the most important covariates are included with nonzero coefficients while less relevant variables are ignored if the procedure is stopped before convergence.
+\end{itemize}
+
+
+%\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAM. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
+
+%\fixme{A description of the boosting approach is currently missing completely.}
+
+ 
+The selected methods and their specifications are listed in Table~\ref{model_specification}.
+
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 %\begin{minipage}{\textwidth}
@@ -1490,26 +1248,21 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 %}
 \end{table}
 
-For the prespecified GAM model the covariates were selected manually based on meteorological knowledge and experience. Additionally, interactions are specified in advance, once between \emph{tp{\_}mean1218} and \emph{cape{\_}mean1218} for the location parameter and once between \emph{tp{\_}sprd1218} and \emph{cape{\_}mean1218} for the scale parameter. These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information and is therefore expected to profit from this advantage.
+In order to compare the performance of the chosen methods, the continuous ranked probability score (CRPS) is calculated for each model. 
+\fixme{Adding reference for CPRS}
 
-\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAM. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
-
-\fixme{A description of the boosting approach is currently missing completely.}
-
-In the EMOS model the logarithmic function is chosen as the link function for the scale parameter. This choice has been made based on the results of \citealt{Gebetsberger2017} where different link functions (identity, quadratic and logarithmic function) have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function lead to the best performance of the EMOS model in this application.
-
-In order to compare the performance of the chosen methods, the continuous ranked probability score (CRPS) is calculated for each model. The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
+The CRPS measures the accuracy of a probabilistic model. For one observation $y$ with the predicted distribution function $F$ the CRPS value is calculated by
 $$
 \text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
 $$
 where \(\mathbf{1}\) is the indicator function.
 %%% <TH> y > z??? </TH>
 
-In this application the CRPS is evaluated out of sample on a data set that has not been used to build the model. The mean CRPS over this data set is used for validation. Since the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observation.
+In this application the CRPS is evaluated out of sample, e.g. on a part of the data set that has not been used to build the model. The mean CRPS over this subset of the data is used for validation. Since the CRPS can be seen as a generalization of the mean absolute error, a low value indicates a good fit. In applications, one big advantage in terms of interpretability is that the resulting value is on the scale of the observations.
 
-For the purpose of comparing the performance of a distributional forest to those of other models the so-called skill score can be calculated with respect to the CRPS and one model being chosen as a reference. In that way we obtain a measure of how much a method improves the model performance in terms of CRPS compared to the reference method.
+For the purpose of comparing the models' performances with respect to a reference model the so-called skill score of the CRPS can be calculated. In that way a measure of how much a method improves the model fit in terms of CRPS compared to the reference method is obtained.
 $$
-\text{SkillsScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
+\text{SkillScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
 $$
 
 
@@ -1517,13 +1270,12 @@ $$
 
 \subsection{Application for one station}
 \label{Application for one station}
-First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations of the month of July of 28 years are available from 1985 through the year 2012.
-
-The results of fitting one distributional forest to the first 24 years of the data set and predicting the total amount of precipitation for one specific day of each of the four successive years have been shown in Figure~\ref{axams_onestation} as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of the distributional forest and compare its results to those of the GAM models and the EMOS model based on residual QQ-plots.
+First of all we focus on one observation station, Axams in Tyrol. This station is selected due to its geographical closeness to Innsbruck, the capital of Tyrol. As for all other stations, daily observations and numerical weather predictions are available for the month of July of 28 years from 1985 through the year 2012.
+In Figure~\ref{axams_onestation} the results of fitting a distributional forest to the first 24 years of the data set and predicting the total amount of precipitation for one specific day of each of the four successive years have been shown as a motivational example for a probabilistic forecast. Staying with this fitted model we are now going to analyze variable importance of the distributional forest and compare its results to those of the GAM models and the EMOS model based on residual QQ-plots.
 %%% <TH> wouldn't be a uniform QQ-plot be more appropriate? </TH>
 
 %%%<TH> always us the term "distributional forest"
-As shown in Table~\ref{model_specification} the distributional forest includes all 82~covariates. A single tree model allows to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a distributional forest though, for each of the trees a subset of these covariates is chosen randomly as possible split variables which is one of the reasons leading to different splitting variables being chosen in each tree. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 year are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
+As shown in Table~\ref{model_specification} the distributional forest includes all 82~covariates. A single tree model would allow to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a forest model though, for each node in each of the trees a subset of these covariates is chosen randomly as possible split variables to select one from. Moreover, each tree is built on a resampled version of the learning data. For these reasons the choices of split variables vary over the trees of a forest making it difficult to analyze the impact of covariates just by investigating the different trees. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 yearz are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
   
 
 \begin{figure}[t!]
@@ -1563,7 +1315,7 @@ qqrplot(pit_ml_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0
 \end{figure}
 
   
-After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data set for which predictions are made and evaluated. This is done by calculating the CRPS value for each of the observations in the testing data set and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings over which, again, the average values are stored. This whole procedure is repeated 10 times. The resulting skill scores are illustrated in Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model represented by the horizontal line at height 0.
+After analyzing the results of the models on one data set only where visualization is easier, we now want to get a more profound impression of the performances of the different methods. For that reason a cross validation framework is considered for the station Axams. The data set over all 28 years is split into 7 subsets each consisting of 4 randomly selected years. While 6 of these subsets are used as learning data the 7th is the testing data set for which predictions are made and evaluated. This is done by calculating the CRPS value for each of the observations in the testing data set and then averaging them. Each of the 7 parts is selected as testing data once which leads to 7 different settings of which again the average values are stored. This whole procedure is repeated 10 times. The resulting skill scores are illustrated in Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model represented by the horizontal line at height 0.
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
 if(file.exists("rain_Axams_7x10.rda")){
@@ -1605,18 +1357,14 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
 \caption{\label{boxplots_crps_axams}CRPS skill score from the 10 times 7-fold cross validation at station Axams (1985--2012). The horizontal orange line pertains to the reference model EMOS.}
 \end{figure}
+This CRPS skill score boxplot shows that, in this setting, both GAM models and the distributional forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the distributional forest even reaches an improvement rate close to 6 percent.
 
-The CRPS skill score boxplot shows that, in this setting, both GAM models and the distributional forest perform better than the EMOS model. While the two GAM models lead to an improvement of around 4 percent with the boosted version being slightly ahead, the distributional forest even reaches an improvement rate close to 6 percent.
-
-From this result we can conclude that the distributional forest provides a powerful alternative framework where only little or almost no effort is required to set up the model and which is competitive to existing methods that are commonly used for this kind of application or even outperforms them.
-
-For the prespecified GAM model the covariates needed to be selected and interactions needed to be defined in advance. To do so, meteorological experience and knowledge is required and a lot of thought has to be put in these decisions. Moreover, making such decisions is always equivalent to influencing the resulting model and comes along with the risk of having missed important facts or even imposing certain effects on the model which might not correspond to the truth. This risk is avoided in the boosted GAM as all covariates are included and the selection of the influential covariates is done within a boosting framework. However, the trade off here is a remarkably higher computational effort. To build a distributional forest the user does not have to put any additional effort in it and therefore is not required to provide any expert knowledge or additional information about the setting. Variable selection is done automatically and interactions are detected by the tree structure of the model. In this particular setting, a very high number of covariates is available which intensifies the impact of the above mentioned strength of the distributional forest model. Therefore, in comparing these methods one advantage of distributional forests is clearly outlined as they offer a very flexible framework which enables an easy use of the method and at the same time lead to an improvement in the predictive performance.
 
 
 \SweaveOpts{eval = TRUE}
 %\newpage
 \subsection{Application for all stations}
-Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this particular station we are now going to apply the methods on all 95 stations. At each of them, the first 24 years are used as learning data set and predictions are made for the last 4 years of available observations. For these out-of-sample predictions the CRPS skill score with respect to the EMOS model as reference is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skill score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The green line represents the results for the station Axams.
+Until now the focus has been on one observation station only. To show that the presented results do not depend on the choice of this particular station we are now going to apply the methods on all 95 stations. At each of them, the first 24 years are used as learning data set and predictions are made for the last 4 years of available observations. For these out-of-sample predictions the CRPS skill score with the EMOS model as reference model is calculated for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots of the CRPS skill score values are plotted and show that the distributional forest leads to the highest improvement averaged over all stations. The green line represents the results for the station Axams.
 %NAs in gamlss in 13 stations!!!\\
 %for example in 13th station in complete{\_}stations\\
 %\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
@@ -1742,6 +1490,9 @@ Figure~\ref{map} shows the location of all stations in the data set. Each observ
 \caption{\label{map}Map of Tyrol showing which model performed best at which station (type of symbol). The color codes whether the distributional forest had lower or higher CRPS (red or blue) compared to the best of the other three models (prespecified GAM, boosted GAM and EMOS).}
 \end{figure}
 
+From these result we can conclude that the distributional forest provides a powerful alternative framework where only little or almost no effort is required to set up the model and which is competitive to existing methods that are commonly used for this kind of application or even outperforms them.
+
+For the prespecified GAM model the covariates needed to be selected and interactions needed to be defined in advance. To do so, meteorological experience and knowledge is required and a lot of thought has to be put in these decisions. Moreover, making such decisions is always equivalent to influencing the resulting model and comes along with the risk of having missed important facts or even imposing certain effects on the model which might not correspond to the truth. This risk is avoided in the boosted GAM as all covariates are included and the selection of the influential covariates is done within a boosting framework. However, the trade off here is a remarkably higher computational effort. To build a distributional forest the user does not have to put any additional effort in it and therefore is not required to provide any expert knowledge or additional information about the setting. Variable selection is done automatically and interactions are detected by the tree structure of the model. In this particular setting, a very high number of covariates is available which intensifies the impact of the above mentioned strength of the distributional forest model. Therefore, in comparing these methods one advantage of distributional forests is clearly outlined as they offer a very flexible framework which enables an easy use of the method and at the same time lead to an improvement in the predictive performance.
 
 
 
