@@ -131,7 +131,7 @@ dist_gaussian <- function() {
 
 
 
-###### censored normal or logistic distributions
+###### censored gaussian or logistic distributions
 dist_crch <- function(dist = c("normal","logistic"), 
                       type = c("left", "right", "interval"),
                       censpoint = 0)
@@ -282,13 +282,13 @@ dist_crch <- function(dist = c("normal","logistic"),
     }
     
     ## additional functions pdist, qdist, rdist
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = eta[2], 
                                                                               lower.tail = lower.tail, log.p = log.p, 
                                                                               left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = eta[2], 
                                                                               lower.tail = lower.tail, log.p = log.p, 
                                                                               left = left, right = right)
-    rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+    rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
   }
   
   
@@ -355,13 +355,13 @@ dist_crch <- function(dist = c("normal","logistic"),
     }
     
     ## additional functions pdist, qdist, rdist
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pclogis(q, mean = eta[1], sd = eta[2], 
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pclogis(q, mean = eta[1], sd = eta[2], 
                                                                                lower.tail = lower.tail, log.p = log.p, 
                                                                                left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qclogis(p, mean = eta[1], sd = eta[2], 
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qclogis(p, mean = eta[1], sd = eta[2], 
                                                                                lower.tail = lower.tail, log.p = log.p, 
                                                                                left = left, right = right)
-    rdist <- function(n, eta) crch:::rclogis(n, mean = eta[1], sd = eta[2], left = left, right = right)
+    rdist <- function(n, eta) crch::rclogis(n, mean = eta[1], sd = eta[2], left = left, right = right)
   }
   
   
@@ -1151,13 +1151,13 @@ dist_gamma <- function() {
   
   
   ## additional functions pdist, qdist, rdist
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch:::pcnorm(q, mean = eta[1], sd = eta[2], 
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = eta[2], 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch:::qcnorm(p, mean = eta[1], sd = eta[2], 
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = eta[2], 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  rdist <- function(n, eta) crch:::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
   
   
   link <- c("identity", "log")
