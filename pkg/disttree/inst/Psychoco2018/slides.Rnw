@@ -1624,25 +1624,28 @@ plot_ll(simlist)
 
 
 \begin{frame}
-\frametitle{Choosing a distribution}
+\frametitle{Model specification}
 
-\medskip
-\textbf{Based on:}
+\textbf{Covariates:} Automatically through adaptive forest weights.
+
+\bigskip
+
+\textbf{Response:} Distributional specification needed.
 \begin{itemize}
-\item Recommendations by specialist literature.
-\item Expert subject matter knowledge.
-\item Experiences from other modeling situations.
-\item Common simplifications/generalizations/assumptions.
+\item Continuous responses: Gaussian, \dots
+\item Limited responses: Censored Gaussian, \dots
+\item Survival times: Exponential, Weibull, \dots
+\item Count: Poisson, negative binomial, \dots
 \end{itemize}
 
 \bigskip
-\textbf{Examples:}
-\begin{itemize}
-\item Survival times: Weibull distribution, exponential distribution.
-\item Wages, precipitation: censored normal distribution.
-\item Temperature: normal distribution.
-\item Count of events/accidents (insurance): Poisson distribution.
-\end{itemize}
+
+\textbf{Guidance:} Literature, theory, experience, \dots
+
+\bigskip
+
+\textbf{Alternative:} Transformation models.
+
 \end{frame}
 
 
