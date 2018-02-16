@@ -1,5 +1,5 @@
 \name{rainAxams}
-\alias{rainlist}
+\alias{rainAxams}
 
 \title{Observations and covariates for station Axams}
 
@@ -12,19 +12,32 @@ A data frames consisting of power transformed observations of precipitation sums
 \describe{
   \item{robs}{numeric. Observed total precipitation (power transformed).}
   \item{year}{integer. Year in which the observation was taken.}
-  \item{tppow}{numeric. Predicted total precipitation (power transformed).}
-  \item{capepow}{numeric. Predicted convective available potential energy (power transformed).}
-  \item{dswrf}{numeric. Predicted downwards short wave radiation flux (``sunshine'').}
-  \item{msl}{numeric. Predicted mean sea level pressure.}
-  \item{pwat}{numeric. Predicted preciptable water.}
-  \item{tmax}{numeric. Predicted 2m maximum temperature.}
-  \item{tcolc}{numeric. Predicted total column-integrated condensate.}
-  \item{t500}{numeric. Predicted temperature on 500 hPa.}
-  \item{t700}{numeric. Predicted temperature on 700 hPa.}
-  \item{t8500}{numeric. Predicted temperature on 850 hPa.}
-  \item{tdiff500700}{numeric. Predicted temperature difference 500 to 850 hPa.}
-  \item{tdiff500850}{numeric. Predicted temperature difference 500 to 700 hPa.}
-  \item{tdiff700850}{numeric. Predicted temperature difference 700 to 850 hPa.}
+  \item{tppow_max, tppow_mean, tppow_mean0612, tppow_mean1218,
+        tppow_mean1824, tppow_mean2430, tppow_min, tppow_sprd,
+        tppow_sprd0612, tppow_sprd1218, tppow_sprd1824, tppow_sprd2430}{numeric. Predicted total precipitation (power transformed).}
+  \item{capepow_max, capepow_mean, capepow_mean0612,
+        capepow_mean1218, capepow_mean1224, capepow_mean1230, capepow_min,
+        capepow_sprd, capepow_sprd0612, capepow_sprd1218, capepow_sprd1224,
+        capepow_sprd1230}{numeric. Predicted convective available potential energy (power transformed).}
+  \item{dswrf_mean_max, dswrf_mean_mean, dswrf_mean_min,
+        dswrf_sprd_max, dswrf_sprd_mean, dswrf_sprd_min}{numeric. Predicted downwards short wave radiation flux (``sunshine'').}
+  \item{msl_diff, msl_mean_max, msl_mean_mean, msl_mean_min,
+        msl_sprd_max, msl_sprd_mean, msl_sprd_min}{numeric. Predicted mean sea level pressure.}
+  \item{pwat_mean_max, pwat_mean_mean, pwat_mean_min,
+        pwat_sprd_max, pwat_sprd_mean, pwat_sprd_min}{numeric. Predicted preciptable water.}
+  \item{tmax_mean_max, tmax_mean_mean, tmax_mean_min, 
+        tmax_sprd_max, tmax_sprd_mean, tmax_sprd_min}{numeric. Predicted 2m maximum temperature.}
+  \item{tcolc_mean_max, tcolc_mean_mean, tcolc_mean_min, 
+        tcolc_sprd_max, tcolc_sprd_mean, tcolc_sprd_min}{numeric. Predicted total column-integrated condensate.}
+  \item{t500_mean_max, t500_mean_mean, t500_mean_min,
+        t500_sprd_max, t500_sprd_mean, t500_sprd_min}{numeric. Predicted temperature on 500 hPa.}
+  \item{t700_mean_max, t700_mean_mean, t700_mean_min,
+        t700_sprd_max, t700_sprd_mean, t700_sprd_min}{numeric. Predicted temperature on 700 hPa.}
+  \item{t850_mean_max, t850_mean_mean, t850_mean_min,
+        t850_sprd_max, t850_sprd_mean, t850_sprd_min}{numeric. Predicted temperature on 850 hPa.}
+  \item{tdiff500700_max, tdiff500700_mean, tdiff500700_min}{numeric. Predicted temperature difference 500 to 700 hPa.}
+  \item{tdiff500850_max, tdiff500850_mean, tdiff500850_min}{numeric. Predicted temperature difference 500 to 850 hPa.}
+  \item{tdiff700850_max, tdiff700850_mean, tdiff700850_min}{numeric. Predicted temperature difference 700 to 850 hPa.}
 }
 }
 
