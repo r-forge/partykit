@@ -4,25 +4,38 @@
 \alias{dist_weibull}
 \alias{dist_gamma}
 \alias{dist_poisson}
+\alias{dist_crch}
+\alias{dist_list_normal}
+\alias{dist_list_cens_normal}
 
 \title{Family List Generating Functions}
 
 \description{
- The functions \code{dist_gaussian},  \code{exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} g   generate a distribution family list with all the required elements to fit a distribution in \code{distfit}. 
+ The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family list with all the required elements to fit a distribution in \code{distfit}. 
+ 
+ Complete distribution family lists are provided by \code{dist_list_normal} and \code{dist_list_cens_normal}.
 }
 
 \usage{
   dist_gaussian()
+  dist_crch(dist = c("normal", "logistic"), type = c("left",
+                 "right", "interval"), censpoint = 0)
   dist_exponential()
   dist_weibull()
   dist_gamma()
   dist_poisson()
 }
 
-\arguments{}
+\arguments{
+\item{dist}{Either a gaussian ('normal') or a logistic ('logistic') distribution can be selected.}
+\item{type}{Type of censoring can be selectes ('left', 'right' or 'interval')}
+\item{censpoint}{Censoring point can be set (per default set to 0).}
+}
 
 \details{
-  The functions \code{dist_gaussian},  \code{exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} g   generate a distribution family list with all the required elements to fit a distribution in \code{distfit}. These lists include a density function, a score function, a hessian function, starting values, link functions and inverse link functions.
+  The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family list with all the required elements to fit a distribution in \code{distfit}. These lists include a density function, a score function, a hessian function, starting values, link functions and inverse link functions.
+  
+  Complete distribution family lists are provided by \code{dist_list_normal} and \code{dist_list_cens_normal} for the normal and censored normal distribution respectively.
 }
 
 \value{
