@@ -3,6 +3,7 @@ R/disttree_urp.R
 R/ytrafo_score.R
 R/test_distributions.R
 R/try_guide.R
+R/examples.R
 man/.Rhistory
 inst/CMStatistics2017
 inst/useR2017
