@@ -4,6 +4,7 @@
 disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
                      type.tree = "mob", decorrelate = "none", offset,
                      censtype = "none", censpoint = NULL, weights = NULL,
+                     terminal_objects = FALSE,
                      control = mob_control(), ocontrol = list(), ...)
 {
   ## keep call
@@ -156,7 +157,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       if(dim(Y)[2] > 1) stop("response variable has to be univariate") 
       Y <- Y[,1]
       
-      modelscores_decor <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
+      modelscores_decor <- function(subset, weights, estfun = TRUE, object = FALSE, info = NULL) {
         
         ys <- Y[subset]
         subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
@@ -248,6 +249,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     
     loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
     
+    ## FIX ME: object slot stays NULL, object is not stored
+    if(terminal_objects) rval[[id_tn[1]]]$info$object <- model1
+      
     if(n_tn>1){
       for(i in (2:n_tn)){
         model <- distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
@@ -256,6 +260,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
         loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
+        
+        ## FIX ME: object slot stays NULL, object is not stored
+        if(terminal_objects) rval[[id_tn[i]]]$info$object <- model
       }
     }
     
