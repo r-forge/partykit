@@ -18,6 +18,7 @@
 disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
          type.tree = "mob", decorrelate = "none", offset,
          censtype = "none", censpoint = NULL, weights = NULL,
+         terminal_objects = FALSE,
          control = mob_control(), ocontrol = list(), ...)
 }
 
@@ -44,12 +45,13 @@ disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
     of the Fisher information).}
   \item{offset}{FIX ME.}
   \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
-  \item{censpoint}{numeric value. Censoring point can be set for censored response.}
-  \item{weights}{optional numeric vector of case weights.}
+  \item{censpoint}{Numeric value. Censoring point can be set for censored response.}
+  \item{weights}{Optional numeric vector of case weights.}
+  \item{terminal_objects}{Logical argument deciding whether a model object should be fit to the terminal node.}
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
-  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
+  \item{\dots}{Further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
 }
 
 \details{
