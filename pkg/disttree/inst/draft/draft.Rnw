@@ -705,9 +705,9 @@ we propose to follow the ideas from GAMLSS modeling -- as outlined
 in Figure~\ref{Devel_parmod} -- and combine tree-based methods with parametric distributional models,
 yielding two novel techniques:
 \begin{itemize}
-  \item \emph{Distributional trees} split the data into more homogenous groups with
+  \item \emph{Distributional trees} split the data into more homogeneous groups with
     respect to a parametric distribution, thus capturing changes in any distribution
-    paramer like location, scale, or shape (Figure~\ref{Devel_treeforest}, bottom left)
+    parameter like location, scale, or shape (Figure~\ref{Devel_treeforest}, bottom left)
   \item \emph{Distributional forests} utilize an ensemble of distributional trees
     for obtaining stabilized and smoothed parametric predictions (Figure~\ref{Devel_treeforest},
     top right).
@@ -742,7 +742,7 @@ three alternative zero-censored Gaussian models: a standard ensemble model
 output statistics approach (EMOS, \citealp{gneiting2005calibrated}), a GAMLSS
 with regressors prespecified based on meteorological expertise following
 \cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
-\citep{gamboostLSS2016} using non-homogenous boosting
+\citep{gamboostLSS2016} using non-homogeneous boosting
 \citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
 82~available regressors.
 
@@ -1021,7 +1021,7 @@ In that way, a whole distribution is specified with all its features, including 
 
 A common way of including these covariates is to consider them as regressors in a distributional model such that each parameter $\theta$ depends on covariates $\bold{Z} = (Z_1,\ldots,Z_m)$. This could for example be done by a linear function $g$. In that way the fitted model would be specified as $D(Y, \theta = g(\bold{Z}))$. In order to avoid the restriction to linear effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ to specify a more flexible model $D(Y, \theta = f_1(\bold{Z}) + \ldots + f_p(\bold{Z}))$ applying a GAM structure. Another approach to distributional regression is proposed by \citealt{Klein2015} where each parameter of a possibly complex distribution can be modeled by an additive term consisting of a variety of different functional effect types. These include non-linear effects, spatial effects, random coefficients and interaction surfaces which extends the flexibility compared to parametric models such as GAMLSS modeling only smooth effects.
 
-However, the restriction to additive models remains. Therefore, a different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the next subsection of this article. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
+However, the restriction to additive models remains. Therefore, a different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the following. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
 
 
 \subsection{Distributional tree}
@@ -1123,8 +1123,12 @@ As this novel methodology combines the advantages of smooth and flexible paramet
 \section{Probabilistic precipitation forecasting in complex terrain}
 \label{ProbabilisticForecasting}
 
+%% TO DO: valueable features, why relevant in weather forecasting, what was missing here before? (complex terrain, many covariates, all kinds of effects could appear, interactions unknown)
 
-As explained in the introduction, distributional forests provide a new approach in probabilistic forecasting by embedding the ideas of flexible parametric modeling into the framework of tree-structured models. In that way this novel methodology offers additional features that could be particularly valuable in probabilistic forecasting but have not yet been applied in this kind of settings. To show their strengths in practice, distributional forests are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. Their results are compared to those of other zero-censored Gaussian models including a standard ensemble model output approach and two GAMLSS models. For one of the GAMLSS models the regressors have been selected and interactions have been specified in advance based on subject-matter knowledge and experience from meteorology. The other one is based on a computationally more demanding boosting approach.
+In weather forecasting, various factors can make it challenging to build a well fitting model. Complex physical processes in the atmosphere depend on possibly rapidly changing circumstances. Often it is hard to tell which of these circumstances have a relevant impact on the quantity of interest and what type of effect that can be or how they might interact. A profound basis of information can be obtained from numerical weather prediction (NWP) models as they provide predictions for a large number of meteorological quantities. However, while including too many variables in a model can lead to overfitting, excluding variables in advance can result in a loss of valuable information. Therefore, the task of selecting variables and specifying interactions forms the basis of building an adequate model. Moreover, this model has to be able to deal with a wide range of effects as abrupt changes can appear as well as smooth transitions. Especially if the considered region includes complex terrain, a large grid spacing of NWP models can lead to abrupt local effects within a single NWP grid cell.
+
+As explained in the introduction, distributional forests provide a new approach in probabilistic forecasting by embedding the ideas of flexible parametric modeling into the framework of tree-structured models. The ability to deal with a wide variety of effects and an automatic variable selection and detection of interactions are features provided by distributional forests that could be particularly valuable in probabilistic (weather) forecasting in order to tackle the above mentioned challenges.
+To show their strengths in practice, distributional forests are now applied to probabilistic precipitation forecasts in a mountainous region based on a large number of numerical weather prediction quantities. Their results are compared to those of other zero-censored Gaussian models including a standard ensemble model output approach and two GAMLSS models. For one of the GAMLSS models the regressors have been selected and interactions have been specified in advance based on subject-matter knowledge and experience from meteorology. The other one is based on a computationally more demanding boosting approach.
 
 \subsection{Data}
 \label{data}
@@ -1189,7 +1193,7 @@ Basic covariates & {\#} & Variations\\
 \end{minipage} 
 %}
 \end{table}
-
+\fixme{dswrf\_mean/sprd\_min not included in formula but in the 82 covariates}
 
 
 \subsection{Models and evaluation}
@@ -1201,10 +1205,10 @@ Next to distributional forests three other methods are applied to this data set:
 \item An ensemble model output statistics (EMOS, \citealp{gneiting2005calibrated}) model where the location parameter and the logarithm of the scale parameter depend linearly on the ensemble mean forecast of the total daily precipitation sum and the corresponding ensemble standard deviation respectively.
 The choice of the logarithmic function as link function for the scale parameter has been made based on the results of \citealt{Gebetsberger2017} where different link functions have been compared. Moreover, testing the identity, quadratic and logarithmic function as link functions in this setting supported this choice as the logarithmic function led to the best performance of the EMOS model in this application.
 
-\item A GAMLSS where for each distribution parameter the selection of covariates and the specification of interactions is done in advance, both based on meteorological expert knowledge following \cite{Stauffer+Umlauf+Messner:2017} (prespecified GAM). Among the available 82 regressors, 9 where selected for the location parameter and 6 for the scale parameter. Additionally, for each distribution parameter one interaction term is specified in which convective availbale energy is interacting with total precipitation (with the ensemble mean for the location parameter and with the ensemble standard deviation for the scale parameter). 
+\item A GAMLSS where for each distribution parameter the selection of covariates and the specification of interactions is done in advance, both based on meteorological expert knowledge following \cite{Stauffer+Umlauf+Messner:2017} (prespecified GAM). Among the available 82 regressors, 9 where selected for the location parameter and 6 for the scale parameter. Additionally, for each distribution parameter one interaction term is specified in which convective available energy is interacting with total precipitation (with the ensemble mean for the location parameter and with the ensemble standard deviation for the scale parameter). 
 %In this terms an ensemble mean of 6 hour sums of convective available energy is interacting with an ensemble mean or standarad deviation of 6 hour sums of total precipitation.  
 These interactions might capture events with a high potential for moderate or severe thunderstorms with large amounts of precipitation. By putting extra effort in the specification of the formulas the prespecified GAM model is provided with additional information (and is therefore expected to profit from this advantage).
-\item A boosted GAMLSS \citep{gamboostLSS2016} using non-homogenous boosting
+\item A boosted GAMLSS \citep{gamboostLSS2016} using non-homogeneous boosting
 \citep{Messner+Mayr+Zeileis:2017} for an automatic selection of covariates (boosted GAM). The idea of this (boosting) approach is to iteratively minimize a loss function where in each step only the coefficient leading to the highest improvement of the current model is updated. As the initial coefficients are all zero, only the most important covariates are included with nonzero coefficients while less relevant variables are ignored if the procedure is stopped before convergence.
 \end{itemize}
 
@@ -1275,7 +1279,7 @@ In Figure~\ref{axams_onestation} the results of fitting a distributional forest 
 %%% <TH> wouldn't be a uniform QQ-plot be more appropriate? </TH>
 
 %%%<TH> always us the term "distributional forest"
-As shown in Table~\ref{model_specification} the distributional forest includes all 82~covariates. A single tree model would allow to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a forest model though, for each node in each of the trees a subset of these covariates is chosen randomly as possible split variables to select one from. Moreover, each tree is built on a resampled version of the learning data. For these reasons the choices of split variables vary over the trees of a forest making it difficult to analyze the impact of covariates just by investigating the different trees. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 yearz are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
+As shown in Table~\ref{model_specification} the distributional forest includes all 82~covariates. A single tree model would allow to easily analyze which covariates are used as split variables in the nodes and hence have an impact on the response variable. In a forest model though, for each node in each of the trees a subset of these covariates is chosen randomly as possible split variables to select one from. Moreover, each tree is built on a resampled version of the learning data. For these reasons the choices of split variables vary over the trees of a forest making it difficult to analyze the impact of covariates just by investigating the different trees. To get an overview of which covariates have the most influential effect on the response variable a standard measurement of variable importance for forest models has been applied. Based on the mean decrease in accuracy regarding the CRPS the 10 leading covariates of the above described distributional forest for station Axams learned on the first 24 years are listed in Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation is the most influential variable. In particular, five variations of this variable are among the top ten of the list of covariates ordered by variable importance.  
   
 
 \begin{figure}[t!]
