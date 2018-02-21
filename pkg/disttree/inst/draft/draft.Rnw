@@ -992,15 +992,16 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \label{Methodology}
 
 \subsection{Motivation}
-As illustrated in Figure~\ref{Devel_parmod} a wide range of tools have been developed in the field of parametric modeling (which can be applied in research areas such as probabilistic forecasting). The shift from modeling only the expected value of the response to probabilistic modeling allows for much broader inference. In many applications further features such as the ability to capture non-additive effects or interactions are desirable which demands for more flexible models. Since tree-structured models provide these required features combining them with parametric models can offer a framework that is able to deal with a wide variety of different modeling situations. 
-
-In this section the novel methodology which embeds parametric modeling into the idea of tree-structured models will be introduced step by step. Starting with a simple distributional fit in Section~\ref{distfit} will be followed by building a distributional tree in Section~\ref{disttree} and finally a distributional forest in Section~\ref{distforest}.
+As illustrated in Figure~\ref{Devel_parmod} a wide range of tools has been developed in the field of parametric modeling. 
+%The shift from conditional mean regression models to distributional regression models allows for much broader inference. In many applications further features such as the ability to capture non-additive effects or interactions are desirable which demands for more flexibility. 
+Especially the shift from conditional mean regression models to distributional regression models has increased the application spectrum of these models as it allows for much broader inference. In some cases further features such as the ability to capture non-additive effects or interactions are desirable which demands for more flexibility. 
+Since tree-structured models provide these required features, combining them with parametric models can offer a framework that is able to deal with a wide variety of different modeling situations. In this section the novel methodology which embeds parametric modeling into the idea of tree-structured models will be introduced step by step. Starting with a simple distributional fit in Section~\ref{distfit} will be followed by building a distributional tree in Section~\ref{disttree} and finally a distributional forest in Section~\ref{distforest}.
 
 \subsection{Distributional fit}
 \label{distfit}
 Fitting a distributional model to a set of observations without considering any covariates is a well known procedure which can for example be done by applying the maximum likelihood method. This is also the chosen approach in the methodology described in this section. %%% <TH> is is repeated on page 5, remove here </TH>
 
-The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family has to be specified in advance such that a log-likelihood function $\ell(\theta; Y)$ is provided. Using the GAMLSS framework (\citealt{Rigby+Stasinopoulos:2005}) a wide range of distributions can be selected where each distribution parameter can be specified separately. This enables the model to deal with various features that can usually be very challenging in model fitting such as censoring, truncation or heavy tails.
+The goal is to fit a distributional model $D(Y, \theta)$ to a response variable $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution family with density function $f$ has to be specified in advance such that a log-likelihood function $\ell(\theta; Y) = \log(f(Y; \theta)$ is provided. Using the GAMLSS framework (\citealt{Rigby+Stasinopoulos:2005}) a wide range of distributions can be selected where each distribution parameter can be specified separately. This enables the model to deal with various features that can make the task of fitting a model very challenging such as censoring, truncation or heavy tails.
 
 In our application of precipitation forecasting the response variable, which is the power transformed total precipitation amount within 24 hours, is expected to be normally distributed with mean/location parameter $\mu$ and standard deviation/scale parameter $\sigma$ and left-censored with censoring point 0. (The power transformation is used to remove large parts of the skewness of the data as further explained in Section~\ref{data}.) Therefore, the corresponding log-likelihood function with parameter vector $\theta = (\mu, \sigma)$ is
 $$
@@ -1023,7 +1024,7 @@ In that way, a whole distribution is specified with all its features, including 
 
 A common way of including these covariates is to consider them as regressors in a distributional model such that each parameter $\theta$ depends on covariates $\bold{Z} = (Z_1,\ldots,Z_m)$. This could for example be done by a linear function $g$. In that way the fitted model would be specified as $D(Y, \theta = g(\bold{Z}))$. In order to avoid the restriction to linear effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ to specify a more flexible model $D(Y, \theta = f_1(\bold{Z}) + \ldots + f_p(\bold{Z}))$ applying a GAM structure. Another approach to distributional regression is proposed by \cite{Klein+Kneib+Lang:2015} where each parameter of a possibly complex distribution can be modeled by an additive term consisting of a variety of different functional effect types. These include non-linear effects, spatial effects, random coefficients and interaction surfaces which extends the flexibility compared to parametric models such as GAMLSS modeling only smooth effects.
 
-However, the restriction to additive models remains. Therefore, a different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the following. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
+A different approach on how to include covariates that also allows for non-additive effects and interactions is considered in the following. In particular, the covariates can be used to separate the data into more homogeneous subgroups. Doing so after fitting a global model to the whole data set (without considering any covariates) and then fitting a local model to each subgroup should improve the model remarkably. This procedure of splitting a data set into subgroups can be done by applying a tree algorithm.
 
 
 \subsection{Distributional tree}
@@ -1036,21 +1037,20 @@ to decide whether the data set should be split into subgroups or not. In particu
 $$
 s(\hat{\theta}, y_i) = \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i).
 $$ 
-These values express how well the model fits the data regarding each parameter. Ideally they should fluctuate randomly around zero, similar to residuals in ordinary least squares estimations, but in this case there is a score value for each pair of estimated parameter $\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ and observation $y_j \in \{y_i\}_{i = 1,\ldots, n}$. This enables the model to be sensitive to changes in each of the parameters which is one of the main advantages of distributional trees over other tree models considering only the mean of the distribution.
+These values express how well the model fits the data regarding each parameter. Ideally they should fluctuate randomly around zero, similar to residuals in ordinary least squares estimation, but in this case there is a score value for each pair of estimated parameter $\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ and observation $y_j \in \{y_i\}_{i = 1,\ldots, n}$. This enables the model to be sensitive to changes in each of the parameters which is one of the main advantages of distributional trees over other tree models considering only the mean of the distribution.
 
-Statistical tests are applied to check whether there is a significant dependency between the scores and each of the partitioning variables $Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$. If so, the data set is split into subgroups based on the values of the partitioning variable that shows the highest dependency.
-
-In a next step a local distributional model is fit in each of the subgroups. Repeating this procedure of fitting a model, applying statistical tests to evaluate parameter instability and splitting the data set depending on the test results leads to a tree structure. In that way the learning data set is separated into \textit{B} disjoint segments such that
+Statistical tests are applied to check whether there is a significant dependency between the scores and each of the partitioning variables $Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$. If so, the data set is split into subgroups based on the values of the partitioning variable that shows the highest dependency. The exact way of determining how and where to split varies across different tree algorithms. For distributional trees one possible choice is a permutation test based algorithm which is explained in detail in the appendix. 
+After splitting the data the next step is to fit a local distributional model in each of the subgroups. Repeating this procedure of fitting a model, applying statistical tests to evaluate parameter instability and splitting the data set depending on the test results leads to a tree structure. In that way the learning data set is separated into \textit{B} disjoint segments such that
 $$
 \mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b
 $$
 where each segment is represented by a terminal node of the tree.
 
-The exact way of determining how and where to split varies across different tree algorithms. For distributional trees one possible choice is a permutation test based algorithm which is explained in detail in the appendix. Summed up, the steps of building a distributional tree are:
+Summed up, the steps of building a distributional tree are:
 \begin{enumerate}
 \item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
 \item Estimate $\bold{\hat{\theta}}$ by solving $\sum_{i=1}^n s(y_i, \hat{\theta}) = 0$.
-\item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ and each partitioning variable $Z_l$.
+\item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ and each partitioning variable~$Z_l$.
 %\item Assess whether the \emph{model scores} are associated with
 %    (or change along) any of the available covariates -- e.g.,
 %    using parameter instability tests (\emph{strucchange}) or
@@ -1496,18 +1496,20 @@ Even though for some stations, especially in East Tyrol, one of the two GAMs and
 \caption{\label{map}Map of Tyrol showing which model performed best at which station (type of symbol). The color codes whether the distributional forest had lower or higher CRPS (red or blue) compared to the best of the other three models (prespecified GAM, boosted GAM and EMOS).}
 \end{figure}
 
-From these results we can conclude that a distributional forest provides a powerful alternative framework requiring only little effort to set up a model which is competitive to commonly used methods or even outperforms them. 
-Even though a proper selection of covariates and specification of interactions in advance can lead to better fitting (and probably less complex) models, this presupposes profound knowledge of all influencing factors. Otherwise, important aspects might be missed or effects which do not correspond to the truth might be imposed on the model. This risk can be avoided by applying a boosting algorithm for an automatic variable selection. In this case the trade-off is often a remarkably higher computational effort. 
-To build a distributional forest the user is not required to provide any expert knowledge or additional information about the setting as variable selection and detection of interactions are done automatically by the tree-structure of the model. This feature is particularly advantageous in case of a very high number of covariates. Therefore, the above discussed application illustrates the strengths of distributional forests as they offer a very flexible framework which enables an easy use of the method and at the same time lead to an overall improvement in the predictive performance in this setting.
 
 
 
 
 \section{Discussion}
 
+From the results in Section~\ref{ProbabilisticForecasting} we can conclude that distributional forests provide a powerful alternative framework requiring only little effort to set up a model which is competitive to commonly used methods or even outperforms them. 
+Even though a proper selection of covariates and specification of interactions in advance can lead to better fitting (and probably less complex) models, this presupposes profound knowledge of all influencing factors. Otherwise, important aspects might be missed or effects which do not correspond to the truth might be imposed on the model. This risk can be avoided by applying a boosting algorithm for an automatic variable selection. In this case the trade-off is often a remarkably higher computational effort. 
+To build a distributional forest the user is not required to provide any expert knowledge or additional information about the setting as variable selection and detection of interactions are done automatically by the tree-structure of the model. This feature is particularly advantageous in case of a very high number of covariates. Therefore, the above discussed application illustrates the strengths of distributional forests as they offer a very flexible framework which enables an easy use of the method and at the same time lead to an overall improvement in the predictive performance in this setting. Especially in situations where no or only little information is available about possible influences, effects or interactions this novel methodology can be seen as a good and recommendable compromise being able to deal with a wide range of modelling situations in a reasonable way.
+
+
 %%% <TH> this should go into the discussion or the interpretation of the
 %%% empirical results </TH>
-Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
+%Even though many situations demand for the use of specifically tailored models providing the needed features and therefore being clearly advantageous and the best choice, it is often hard to tell in advance which features will be required. In these cases a distributional forest is a recommendable compromise providing reasonable models and performing well without any prespecification or additional knowledge needed in advance. 
 
 
 
@@ -1516,7 +1518,6 @@ The corresponding implementation to the novel methods presented in this article 
 
 
 \fixme{Avoid nocite, make all relevant citations properly in the text.}
-
 
 
 
@@ -1540,6 +1541,7 @@ The corresponding implementation to the novel methods presented in this article 
 \begin{appendix}
 
 \section{Tree algorithm}
+\label{treealgorithm}
 The tree algorithm used in the applications discussed in this paper is explained in the following. For notational simplicity, the testing and splitting procedure is described for the root node with observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. In each child node the corresponding subset of observations depends on the assignment made by the foregoing split.\\
 
 \begin{itemize}
