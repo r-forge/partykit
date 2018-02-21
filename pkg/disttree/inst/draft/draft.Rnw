@@ -1306,16 +1306,15 @@ In Figure~\ref{qqr_oosample} an impression of the quality of predictions made by
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.99\textwidth}
-<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5>>=
+<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5, pdf = FALSE, png = TRUE, resolution = 150>>=
 # out of sample
 set.seed(7)
 par(mfrow = c(2,2))
-qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
-qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
 
-qqrplot(pit_ml_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0.1, alpha = 0.02), pch = 19)
+qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAM", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{qqr_oosample} Out-of-sample residual QQ-plots (2009--2012) for station Axams based on models learned on data from 1985--2008.}
 \end{figure}
