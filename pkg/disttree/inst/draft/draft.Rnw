@@ -1186,12 +1186,13 @@ in each node.
 
 %%% <TH> we need to be much more precise here: random forests is Breiman's and Cutler's
 %%% random forest. Maybe it is better to not mention this method at any time. </TH>
-Common forest models (such as Breiman and Cutler's randomForest) consist of 
-trees only considering the mean of the distribution of the response variable. 
-For that reason, changes in other parameters can only be detected if they 
-are connected to changes in the location parameter, e.g. if they depend on 
-the location parameter. As explained before, a distributional tree considers
-scores for all distribution parameters. Therefore, a forest consisting of 
+Common forest models such as the original forest technique by 
+\cite{Breiman+Cutler:2004} consist of trees only considering the mean of the 
+distribution of the response variable. For that reason, changes in other 
+parameters can only be detected if they are connected to changes in the 
+location parameter, e.g. if they depend on the location parameter. 
+As explained before, a distributional tree considers scores for all 
+distribution parameters. Therefore, a forest consisting of 
 distributional trees can also capture separate effects in each of the 
 distribution parameters. For that reason distributional forests are
 now going to be introduced.
@@ -1923,16 +1924,6 @@ was applied. The EMOS models were built using the function
 (\citealt{Messner+Mayr+Zeileis:2016})
 
 
-\fixme{Avoid nocite, make all relevant citations properly in the text.}
-
-
-\nocite{Seibold+Zeileis+Hothorn:2016, Seibold+Zeileis+Hothorn:2017, Yee:2010}
-% Zeileis+Wiel+Hornik:2008, 
-% Zeileis+Hothorn+Hornik:2010, 
-
-
-%\newpage
-%\newpage
 \bibliography{ref.bib}
 
 
@@ -1942,7 +1933,8 @@ was applied. The EMOS models were built using the function
 \section{Tree algorithm}
 \label{treealgorithm}
 The tree algorithm used in the applications discussed in this paper 
-is explained in the following. For notational simplicity, the testing 
+is going to be explained following the ideas presented in 
+\cite{Seibold+Zeileis+Hothorn:2017}. For notational simplicity, the testing 
 and splitting procedure is described for the root node with observations 
 $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. In each child node the 
 corresponding subset of observations depends on the assignment made 
