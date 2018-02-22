@@ -1466,7 +1466,7 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
 \caption{\label{boxplot_crps_all}CRPS skill score for each station (grey lines) and aggregated over all stations (boxplots). Station Axams is highlighted in green and the horizontal orange line pertains to the reference model EMOS. The models are learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
 \end{figure}
 
-Figure~\ref{map} shows a map of Tyrol with the location of all observation stations included in the data set. Each station is illustrated by a symbol with the type of symbol representing the method that performed best in terms of CRPS at this station. The color of the symbol indicates the difference between the CRPS of the distributional forest and the CRPS of the best performing among the other three models (prespecified GAM, boosted GAM and EMOS).
+Figure~\ref{map} shows a map of Tyrol (based on the SRTM 90m Digital Elevation Data, \cite{srtm}) with the location of all observation stations included in the data set. Each station is illustrated by a symbol with the type of symbol representing the method that performed best in terms of CRPS at this station. The color of the symbol indicates the difference between the CRPS of the distributional forest and the CRPS of the best performing among the other three models (prespecified GAM, boosted GAM and EMOS).
 Even though for some stations, especially in East Tyrol, one of the two GAMs and for a few others the EMOS model leads to the best results, for the majority of stations the distributional forest performs best.
 
 \begin{figure}[t!]
@@ -1514,8 +1514,15 @@ To build a distributional forest the user is not required to provide any expert 
 
 
 \section*{Computational details}
-The corresponding implementation to the novel methods presented in this article is available on \textsf{R}-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a distributional forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{Hothorn+Zeileis:2015}).
+The corresponding implementation to the novel methods presented in this article is available on \textsf{R}-Forge in an \textsf{R} package called \textbf{disttree} within the project \textbf{partykit} (\url{https://R-Forge.R-project.org/projects/partykit/}). The function \code{disttree} uses either the \code{mob} or \code{ctree} function as a framework to build a tree. Similarly, the function \code{distforest} is based on the \code{cforest} function which provides a framework to build a distributional forest. All three functions, \code{mob}, \code{ctree} and \code{cforest}, are provided in the package \textbf{partykit} (\citealt{Hothorn+Zeileis:2015}). To specify a distribution family the user can hand over one of the following objects as input argument in \code{distfit}, \code{disttree} and \code{distforest}: 
+\begin{itemize}
+\item a GAMLLS family object from the \textsf{R} package \textbf{gamlss.dist} (\citealt{Stasinopoulos+Rigby:2007}).
+\item a family list generating function from the package \textbf{disttree}.
+\item a complete family list from the package \textbf{disttree}.
+\item a custom list containing all required information about the distribution family.
+\end{itemize}
 
+In Section~\ref{ProbabilisticForecasting} the prespecified GAMs were built using the function \code{gamlss} from the \textsf{R} package \textbf{gamlss.dist} (\citealt{Stasinopoulos+Rigby:2007}). For the boosted GAMs the function \code{gamboostLSS} from the \textsf{R} package \textbf{gamboostLSS} (\citealt{Hofner+Mayr+Schmid:2016}) was applied. The EMOS models were built using the function \code{crch} from the \textsf{R} package \textbf{crch} (\citealt{Messner+Mayr+Zeileis:2016})
 
 \fixme{Avoid nocite, make all relevant citations properly in the text.}
 
@@ -1527,10 +1534,10 @@ The corresponding implementation to the novel methods presented in this article 
 
 
 %\newpage
-\nocite{Messner+Mayr+Zeileis:2016, Stasinopoulos+Rigby:2007, Seibold+Zeileis+Hothorn:2016, Seibold+Zeileis+Hothorn:2017, Yee:2010, Hofner+Mayr+Schmid:2016, srtm}
+\nocite{Seibold+Zeileis+Hothorn:2016, Seibold+Zeileis+Hothorn:2017, Yee:2010}
 % Zeileis+Wiel+Hornik:2008, 
 % Zeileis+Hothorn+Hornik:2010, 
-% hothorn2015package,
+
 
 %\newpage
 %\newpage
