@@ -1364,6 +1364,7 @@ mean/minimal/maximal values respectively. Table~\ref{covariates}
 shows all variables together with the number of variations and 
 the provided variations listed in the last column. Altogether 
 82~covariates are available in this setting. 
+
 \fixme{Mention that dswrf\_mean/sprd\_min is not included?}
 
 %%% <TH> hm, now we _are_ using a transformation model without estimating the
@@ -1446,8 +1447,8 @@ Next to distributional forests three other methods are applied to this data set:
 \item An ensemble model output statistics 
 (EMOS, \citealp{Gneiting+Raftery+Westveld:2005}) model where the 
 location parameter and the logarithm of the scale parameter depend 
-linearly on the ensemble mean forecast of the total daily precipitation 
-sum and the corresponding ensemble standard deviation respectively.
+linearly on the ensemble mean forecast of total daily precipitation 
+sums and the corresponding ensemble standard deviation respectively.
 The choice of the logarithmic function as link function for the scale 
 parameter has been made based on the results of 
 \cite{Gebetsberger+Messner+Mayr:2017} where different link functions 
@@ -1525,7 +1526,7 @@ ranked probability score (CRPS) is calculated for each model.
 \fixme{Adding reference for CPRS}
 
 The CRPS measures the accuracy of a probabilistic model. 
-For one observation $y$ with the predicted distribution 
+For one observation $y$ with predicted distribution 
 function $F$ the CRPS value is calculated by
 $$
 \text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
@@ -1534,7 +1535,7 @@ where \(\mathbf{1}\) is the indicator function.
 %%% <TH> y > z??? </TH>
 
 In this application the CRPS is evaluated out of sample, 
-e.g. on a part of the data set that has not been used to 
+e.g. on a part of the data set that has not been considered to 
 build the model. The mean CRPS over this subset of the data 
 is used for validation. Since the CRPS can be seen as a 
 generalization of the mean absolute error, a low value indicates 
@@ -1635,9 +1636,8 @@ for station Axams based on models learned on data from 1985--2008.}
 
   
 After analyzing the results of the models on only one data set where 
-visualization is easier, we now want to get a more profound impression 
-of the performances of the different methods. For that reason the four 
-methods are evaluated in a cross validation framework for the station Axams. 
+visualization is easier, the methods are now going to be evaluated
+in a cross validation framework for the station Axams. 
 The data set over all 28 years is split into 7 subsets each consisting of 
 4 randomly selected years. While 6 of these subsets are used as learning 
 data the 7th is the testing data set for which predictions are made and 
