@@ -76,8 +76,11 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
 
 
 ## FIX ME: no decorrelation for length(guide_parm) = 1
-evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat"), 
+evaltests <- function(formula, data, 
+                      testfun = c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat", 
+                                  "ctree_bin", "mfluc_bin", "ctree_cat_bin", "mfluc_cat_bin"), 
                       subset, weights, stump = TRUE,
+                      ctree_max = c(FALSE, TRUE),
                       guide_testtype = c("sum", "max", "coin"), 
                       decorrelate = "vcov",
                       guide_parm = NULL,
@@ -89,10 +92,14 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
   doFit = TRUE
   offset = NULL 
   cluster = NULL
+  if(length(ctree_max) > 1) ctree_max <- ctree_max[1]
+  splittest <- ctree_max
   
   if(length(testfun) > 1) testfun <- testfun[1]
-  if(!testfun %in% c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat")) 
-    stop("testfun hast to be one of the following options: 'guide', 'ctree', 'mfluc', 'ctree_cat', 'mfluc_cat'")
+  if(!testfun %in% c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat", 
+                     "ctree_bin", "mfluc_bin", "ctree_cat_bin", "mfluc_cat_bin")) 
+    stop("testfun hast to be one of the following options: 'guide', 'ctree', 'mfluc', 'ctree_cat', 'mfluc_cat',
+         'ctree_bin', 'mfluc_bin', 'ctree_cat_bin', 'mfluc_cat_bin'")
   
   
   if(testfun == "guide"){
@@ -126,14 +133,14 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
   if(testfun == "ctree"){
     control <- partykit:::extree_control(criterion = "p.value",
                                          selectfun = partykit:::.ctree_select(teststat = "quadratic", splitstat = "quadratic", 
-                                                                              splittest = FALSE, pargs = GenzBretz(),
+                                                                              splittest = splittest, pargs = GenzBretz(),
                                                                               testtype = "MonteCarlo", nresample = 9999L, 
                                                                               tol = sqrt(.Machine$double.eps),
                                                                               intersplit = TRUE, MIA = FALSE),
                                          splitfun = partykit:::.objfun_split(restart = TRUE,
                                                                              intersplit = TRUE),
                                          svselectfun = partykit:::.ctree_select(teststat = "quadratic", splitstat = "quadratic", 
-                                                                                splittest = FALSE, pargs = GenzBretz(),
+                                                                                splittest = splittest, pargs = GenzBretz(),
                                                                                 testtype = "MonteCarlo", nresample = 9999L, 
                                                                                 tol = sqrt(.Machine$double.eps),
                                                                                 intersplit = TRUE, MIA = FALSE), 
@@ -148,19 +155,67 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
   if(testfun == "ctree_cat"){
     control <- partykit:::extree_control(criterion = "p.value",
                                          selectfun = .ctree_cat_select(teststat = "quadratic", splitstat = "quadratic", 
-                                                                              splittest = FALSE, pargs = GenzBretz(),
-                                                                              testtype = "MonteCarlo", nresample = 9999L, 
-                                                                              tol = sqrt(.Machine$double.eps),
-                                                                              intersplit = TRUE, MIA = FALSE,
-                                                                              xgroups = xgroups),
+                                                                       splittest = splittest, pargs = GenzBretz(),
+                                                                       testtype = "MonteCarlo", nresample = 9999L, 
+                                                                       tol = sqrt(.Machine$double.eps),
+                                                                       intersplit = TRUE, MIA = FALSE,
+                                                                       xgroups = xgroups),
                                          splitfun = partykit:::.objfun_split(restart = TRUE,
                                                                              intersplit = TRUE),
                                          svselectfun = .ctree_cat_select(teststat = "quadratic", splitstat = "quadratic", 
-                                                                                splittest = FALSE, pargs = GenzBretz(),
-                                                                                testtype = "MonteCarlo", nresample = 9999L, 
-                                                                                tol = sqrt(.Machine$double.eps),
-                                                                                intersplit = TRUE, MIA = FALSE,
-                                                                                xgroups = xgroups), 
+                                                                         splittest = splittest, pargs = GenzBretz(),
+                                                                         testtype = "MonteCarlo", nresample = 9999L, 
+                                                                         tol = sqrt(.Machine$double.eps),
+                                                                         intersplit = TRUE, MIA = FALSE,
+                                                                         xgroups = xgroups), 
+                                         svsplitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                               intersplit = TRUE),
+                                         logmincriterion = log(1-0.05),
+                                         update = TRUE,
+                                         bonferroni = TRUE,
+                                         stump = stump)
+  }
+  
+  if(testfun == "ctree_bin"){
+    control <- partykit:::extree_control(criterion = "p.value",
+                                         selectfun = .ctree_bin_select(teststat = "quadratic", splitstat = "quadratic", 
+                                                                       splittest = splittest, pargs = GenzBretz(),
+                                                                       testtype = "MonteCarlo", nresample = 9999L, 
+                                                                       tol = sqrt(.Machine$double.eps),
+                                                                       intersplit = TRUE, MIA = FALSE,
+                                                                       xgroups = xgroups),
+                                         splitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                             intersplit = TRUE),
+                                         svselectfun = .ctree_bin_select(teststat = "quadratic", splitstat = "quadratic", 
+                                                                         splittest = splittest, pargs = GenzBretz(),
+                                                                         testtype = "MonteCarlo", nresample = 9999L, 
+                                                                         tol = sqrt(.Machine$double.eps),
+                                                                         intersplit = TRUE, MIA = FALSE,
+                                                                         xgroups = xgroups), 
+                                         svsplitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                               intersplit = TRUE),
+                                         logmincriterion = log(1-0.05),
+                                         update = TRUE,
+                                         bonferroni = TRUE,
+                                         stump = stump)
+  }
+  
+  if(testfun == "ctree_cat_bin"){
+    control <- partykit:::extree_control(criterion = "p.value",
+                                         selectfun = .ctree_cat_bin_select(teststat = "quadratic", splitstat = "quadratic", 
+                                                                           splittest = splittest, pargs = GenzBretz(),
+                                                                           testtype = "MonteCarlo", nresample = 9999L, 
+                                                                           tol = sqrt(.Machine$double.eps),
+                                                                           intersplit = TRUE, MIA = FALSE,
+                                                                           xgroups = xgroups),
+                                         splitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                             intersplit = TRUE),
+                                         svselectfun = .ctree_cat_bin_select(teststat = "quadratic", splitstat = "quadratic", 
+                                                                             splittest = splittest, pargs = GenzBretz(),
+                                                                             testtype = "MonteCarlo", nresample = 9999L, 
+                                                                             tol = sqrt(.Machine$double.eps),
+                                                                             intersplit = TRUE, MIA = FALSE,
+                                                                             xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          logmincriterion = log(1-0.05),
@@ -230,6 +285,72 @@ evaltests <- function(formula, data, testfun = c("guide", "ctree", "mfluc", "ctr
                                          bonferroni = TRUE,
                                          stump = stump)
   }
+  
+  if(testfun == "mfluc_bin"){
+    control <- partykit:::extree_control(criterion = "p.value",
+                                         selectfun = .mfluc_bin_select(breakties = FALSE, 
+                                                                       intersplit = TRUE, parm = NULL, 
+                                                                       dfsplit = TRUE, 
+                                                                       restart = TRUE, model = TRUE, 
+                                                                       vcov = "sandwich", 
+                                                                       ordinal = "chisq", 
+                                                                       ytype = "vector",
+                                                                       nrep = 10000L, terminal = "object", 
+                                                                       inner = "object", trim = 0.1,
+                                                                       xgroups = xgroups),  
+                                         splitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                             intersplit = TRUE),
+                                         svselectfun = .mfluc_bin_select(breakties = FALSE, 
+                                                                         intersplit = TRUE, parm = NULL, 
+                                                                         dfsplit = TRUE, 
+                                                                         restart = TRUE, model = TRUE, 
+                                                                         vcov = "sandwich", 
+                                                                         ordinal = "chisq", 
+                                                                         ytype = "vector",
+                                                                         nrep = 10000L, terminal = "object", 
+                                                                         inner = "object", trim = 0.1,
+                                                                         xgroups = xgroups), 
+                                         svsplitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                               intersplit = TRUE),
+                                         logmincriterion = log(1-0.05),
+                                         update = TRUE,
+                                         bonferroni = TRUE,
+                                         stump = stump)
+  }
+  
+  if(testfun == "mfluc_cat_bin"){
+    control <- partykit:::extree_control(criterion = "p.value",
+                                         selectfun = .mfluc_cat_bin_select(breakties = FALSE, 
+                                                                           intersplit = TRUE, parm = NULL, 
+                                                                           dfsplit = TRUE, 
+                                                                           restart = TRUE, model = TRUE, 
+                                                                           vcov = "sandwich", 
+                                                                           ordinal = "chisq", 
+                                                                           ytype = "vector",
+                                                                           nrep = 10000L, terminal = "object", 
+                                                                           inner = "object", trim = 0.1,
+                                                                           xgroups = xgroups),  
+                                         splitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                             intersplit = TRUE),
+                                         svselectfun = .mfluc_cat_bin_select(breakties = FALSE, 
+                                                                             intersplit = TRUE, parm = NULL, 
+                                                                             dfsplit = TRUE, 
+                                                                             restart = TRUE, model = TRUE, 
+                                                                             vcov = "sandwich", 
+                                                                             ordinal = "chisq", 
+                                                                             ytype = "vector",
+                                                                             nrep = 10000L, terminal = "object", 
+                                                                             inner = "object", trim = 0.1,
+                                                                             xgroups = xgroups), 
+                                         svsplitfun = partykit:::.objfun_split(restart = TRUE,
+                                                                               intersplit = TRUE),
+                                         logmincriterion = log(1-0.05),
+                                         update = TRUE,
+                                         bonferroni = TRUE,
+                                         stump = stump)
+  }
+  
+  
   
   
   control$inner <- "object"
@@ -521,7 +642,10 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
                     vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
                     binary_regressor = TRUE, binary_beta = TRUE, z1dist = "norm",
                     sigma = 1, only_intercept = FALSE, alpha = 0.05,
-                    test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                    test = c("ctree", "mfluc", "ctree_max", 
+                             "ctree_cat", "ctree_max_cat", "mfluc_cat",
+                             "ctree_bin", "ctree_max_bin", "mfluc_bin",
+                             "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
                              "guide_sum_12", "guide_max_12", "guide_coin_12",
                              "guide_sum_1", "guide_max_1", "guide_coin_1",
                              "guide_sum_2", "guide_max_2", "guide_coin_2",
@@ -537,13 +661,6 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
   sv <- matrix(rep(NA, length(test)*nrep), ncol = length(test))
   colnames(pval) <- colnames(sv) <- test
   
-  
-  #pval_ctest <- pval_mtest <- pval_cctest <- pval_mctest <- pval_gstest12 <- pval_gmtest12 <- pval_gctest12 <- pval_gstest1 <- 
-  #  pval_gmtest1 <-   pval_gctest1 <- pval_gstest2 <- pval_gmtest2 <- pval_gctest2 <- numeric(length = nrep)
-  #
-  #sv_ctest <- sv_mtest <- sv_cctest <- sv_mctest <- sv_gstest12 <- sv_gmtest12 <- sv_gctest12 <- sv_gstest1 <- 
-  #  sv_gmtest1 <-   sv_gctest1 <- sv_gstest2 <- sv_gmtest2 <- sv_gctest2 <- character(length = nrep)
-  
   for(i in 1:nrep){
     
     d <- dgp(nobs = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
@@ -553,18 +670,32 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
     
 
     compute_pval <- function(test) {
-      test <- match.arg(test, c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+      test <- match.arg(test, c("ctree", "mfluc", "ctree_max", 
+                                "ctree_cat", "ctree_max_cat", "mfluc_cat",
+                                "ctree_bin", "ctree_max_bin", "mfluc_bin",
+                                "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
                                 "guide_sum_12", "guide_max_12", "guide_coin_12",
                                 "guide_sum_1", "guide_max_1", "guide_coin_1",
                                 "guide_sum_2", "guide_max_2", "guide_coin_2",
                                 "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
-                                "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"
-                                ))
+                                "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
       testres <- switch(test,
                         "ctree" = evaltests(formula, data = d, testfun = "ctree", stump = stump, decorrelate = "vcov"),
+                        "ctree_max" = evaltests(formula, data = d, testfun = "ctree", stump = stump, decorrelate = "vcov", ctree_max = TRUE),
                         "mfluc" = evaltests(formula, data = d, testfun = "mfluc", stump = stump, decorrelate = "vcov"),
+                        
                         "ctree_cat" = evaltests(formula, data = d, testfun = "ctree_cat", stump = stump, decorrelate = "vcov"),
+                        "ctree_max_cat" = evaltests(formula, data = d, testfun = "ctree_cat", stump = stump, decorrelate = "vcov", ctree_max = TRUE),
                         "mfluc_cat" = evaltests(formula, data = d, testfun = "mfluc_cat", stump = stump, decorrelate = "vcov"),
+                        
+                        "ctree_bin" = evaltests(formula, data = d, testfun = "ctree_bin", stump = stump, decorrelate = "vcov"),
+                        "ctree_max_bin" = evaltests(formula, data = d, testfun = "ctree_bin", stump = stump, decorrelate = "vcov", ctree_max = TRUE),
+                        "mfluc_bin" = evaltests(formula, data = d, testfun = "mfluc_bin", stump = stump, decorrelate = "vcov"),
+                        
+                        "ctree_cat_bin" = evaltests(formula, data = d, testfun = "ctree_cat_bin", stump = stump, decorrelate = "vcov"),
+                        "ctree_max_cat_bin" = evaltests(formula, data = d, testfun = "ctree_cat_bin", stump = stump, decorrelate = "vcov", ctree_max = TRUE),
+                        "mfluc_cat_bin" = evaltests(formula, data = d, testfun = "mfluc_cat_bin", stump = stump, decorrelate = "vcov"),
+                        
                         "guide_sum_12" = evaltests(formula, data = d, testfun = "guide", 
                                               guide_testtype = "sum", guide_parm = c(1,2),
                                               xgroups = NULL, ygroups = NULL, stump = stump, decorrelate = "vcov"),
@@ -663,7 +794,10 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                        binary_regressor = c(TRUE, FALSE),
                        binary_beta = c(TRUE, FALSE),
                        only_intercept = c(TRUE, FALSE),
-                       test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                       test = c("ctree", "mfluc", "ctree_max", 
+                                "ctree_cat", "ctree_max_cat", "mfluc_cat",
+                                "ctree_bin", "ctree_max_bin", "mfluc_bin",
+                                "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
                                 "guide_sum_12", "guide_max_12", "guide_coin_12",
                                 "guide_sum_1", "guide_max_1", "guide_coin_1",
                                 "guide_sum_2", "guide_max_2", "guide_coin_2",
@@ -740,7 +874,10 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7,
                          binary_regressor = c(TRUE, FALSE),
                          binary_beta = c(TRUE, FALSE),
                          only_intercept = c(TRUE, FALSE),
-                         test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                         test = c("ctree", "mfluc", "ctree_max", 
+                                  "ctree_cat", "ctree_max_cat", "mfluc_cat",
+                                  "ctree_bin", "ctree_max_bin", "mfluc_bin",
+                                  "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
                                   "guide_sum_12", "guide_max_12", "guide_coin_12",
                                   "guide_sum_1", "guide_max_1", "guide_coin_1",
                                   "guide_sum_2", "guide_max_2", "guide_coin_2",
@@ -835,7 +972,10 @@ simres <- simwrapper_p(nobs = 250, nrep = 100,
                        binary_beta = c(TRUE, FALSE),
                        only_intercept = c(TRUE, FALSE),
                        #only_intercept = FALSE,
-                       test = c("ctree", "mfluc", "ctree_cat", "mfluc_cat",
+                       test = c("ctree", "mfluc", "ctree_max",
+                                "ctree_cat", "mfluc_cat","ctree_max_cat",
+                                "ctree_bin", "mfluc_bin","ctree_max_bin",
+                                "ctree_cat_bin", "mfluc_cat_bin","ctree_max_cat_bin",
                                 "guide_sum_12", 
                                 "guide_coin_12",
                                 "guide_sum_1_cor"),
@@ -843,7 +983,7 @@ simres <- simwrapper_p(nobs = 250, nrep = 100,
                        stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180209.rda")
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180222.rda")
 
 
 
@@ -852,10 +992,53 @@ save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20
 
 if(FALSE){
   library("lattice")
-  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180206.rda")
+  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180211.rda")
+  
+  
+  subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+  subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+  subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12", 
+                                        "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+  subdata <- subset(simres, test %in% c("ctree_cat_bin", "mfluc_cat_bin", "guide_coin_12"))
+  subdata <- subset(simres, test %in% c("ctree_bin", "mfluc_bin", "guide_coin_12"))
+  subdata <- subset(simres, test %in% c("ctree_cat", "mfluc_cat", "guide_coin_12"))
+  subdata$test <- factor(subdata$test)
+  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = subdata,
+         type = "b", auto.key = TRUE)
+  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = subdata,
+         type = "b", auto.key = TRUE, 
+         subset = (binary_regressor == TRUE & only_intercept == FALSE))
+  
+  
+  subdata <- subset(simres, test %in% c("ctree", "mfluc",
+                                        "ctree_max", "ctree_max_cat",
+                                        "guide_sum_12", 
+                                        "guide_coin_12",
+                                        "guide_sum_1_cor"))
+  subdata$test <- factor(subdata$test)
+  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = subdata,
+         type = "b", auto.key = TRUE, 
+         subset = (binary_regressor == TRUE & only_intercept == FALSE) 
+  )
+  
+  subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_max",
+                                        "guide_sum_12", 
+                                        "guide_coin_12",
+                                        "guide_sum_1_cor"))
+  subdata$test <- factor(subdata$test)
+  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = subdata,
+         type = "b", auto.key = TRUE, 
+         subset = (binary_regressor == TRUE & only_intercept == FALSE) 
+  )
+  
+  
   
   xyplot(prop_split ~ vary_beta | xi + binary_beta + delta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
-  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta + binary_regressor + only_intercept, groups = ~ test, data = simres, type = "b", auto.key = TRUE)
   
   
   # models considering all scores
@@ -865,6 +1048,17 @@ if(FALSE){
   xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
   xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_allscores, type = "b", auto.key = TRUE)
   
+  # ctree vs ctree_max
+  s_ctree <- subset(simres, test %in% c("ctree", "ctree_max", "ctree_cat", "ctree_max_cat"))
+  s_ctree$test <- factor(s_ctree$test)
+  xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_ctree, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_ctree, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = s_ctree, type = "b", auto.key = TRUE, 
+         subset = binary_regressor == TRUE & only_intercept == FALSE)
+  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
+         data = s_ctree, type = "b", auto.key = TRUE, 
+         subset = binary_regressor == TRUE & only_intercept == FALSE)
   
   # all GUIDE models
   s_guide <- subset(simres, test %in% c("guide_sum_12", "guide_max_12", "guide_coin_12",
@@ -910,11 +1104,17 @@ if(FALSE){
   xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_guide2, type = "b", auto.key = TRUE)
   
   
-  # ctree, mfluc, GUIDE_12_max
-  s_scores2 <- subset(simres, test %in% c("ctree", "mfluc", "ctree_cat", "mfluc_cat", "guide_max_12"))
+  # ctree, mfluc, GUIDE_12
+  s_scores2 <- subset(simres, test %in% c("ctree", "mfluc", "ctree_max", 
+                                          "ctree_cat", "mfluc_cat", 
+                                          "guide_sum_12", "guide_coin_12",
+                                          "guide_sum_1_cor"))
   s_scores2$test <- factor(s_scores2$test)
   xyplot(prop_split ~ xi | vary_beta + binary_beta + delta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
   xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_scores2, type = "b", auto.key = TRUE)
+  xyplot(prop_split ~ delta | xi + vary_beta + binary_beta, groups = ~ test, data = s_scores2, 
+         subset = binary_regressor == TRUE & only_intercept == FALSE,
+         type = "b", auto.key = TRUE)
   
   
   
