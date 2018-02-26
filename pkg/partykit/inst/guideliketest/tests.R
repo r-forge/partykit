@@ -11,12 +11,14 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
                 binary_regressor = TRUE, binary_beta = TRUE,
                 vary_beta = c("all", "beta0", "beta1"),
                 beta0 = NULL, beta1 = NULL,
+                nrsteps = 1,
                 z1dist = c("norm", "unif")){
   
   if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
   if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
   if(length(z1dist) > 1) z1dist <- z1dist[1]
   if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
+  if(!nrsteps %in% c(1,2)) stop("nrsteps can only be 1 or 2")
   
   
   set.seed(seed)
@@ -37,31 +39,59 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
   z9 <- runif(nobs, -1, 1)
   z10 <- runif(nobs, -1, 1)
   
-  #if(!only_intercept)  {
   x <- if(binary_regressor) (-1)^rbinom(nobs, 1, 0.5) else runif(nobs, min = -1, max = 1)
-  #}
   
   e <- rnorm(nobs, 0, sigma)
   
-  if(vary_beta == "all"){
-    if(binary_beta){
-      beta0 <- delta * (-1)^(z1<=xi)
-      beta1 <- delta * (-1)^(z1<=xi) * (-1)   # opposite signs if both betas vary
-    } else {
-      beta0 <- delta * z1
-      beta1 <- delta * z1 * (-1)   # opposite signs if both betas vary
+  # for binary beta: one step at break point xi, 
+  # for continuous beta: linear function
+  if(nrsteps == 1) {
+    if(vary_beta == "all"){
+      if(binary_beta){
+        beta0 <- delta * (-1)^(z1<xi)
+        beta1 <- delta * (-1)^(z1<xi) * (-1)   # opposite signs if both betas vary
+      } else {
+        beta0 <- delta * z1
+        beta1 <- delta * z1 * (-1)   # opposite signs if both betas vary
+      }
     }
-  }
+    
+    if(vary_beta == "beta0"){
+      beta0 <- if(binary_beta) delta * (-1)^(z1<xi) else delta * z1
+      beta1 <- beta1
+    }
+    
+    if(vary_beta == "beta1"){
+      beta0 <- beta0
+      beta1 <- if(binary_beta) delta * (-1)^(z1<xi) else delta * z1
+    }
+  }  
   
-  if(vary_beta == "beta0"){
-    beta0 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
-    beta1 <- beta1
-  }
   
-  if(vary_beta == "beta1"){
-    beta0 <- beta0
-    beta1 <- if(binary_beta) delta * (-1)^(z1<=xi) else delta * z1
-  }
+  # for binary beta: two steps (one upwards and one downwards) at +/- xi, 
+  # for continuous beta: quadratic function
+  if(nrsteps == 2) {
+    if(vary_beta == "all"){
+      if(binary_beta){
+        beta0 <- delta * (-1)^(abs(z1)<xi)
+        beta1 <- delta * (-1)^(abs(z1)<xi) * (-1)   # opposite signs if both betas vary
+      } else {
+        beta0 <- delta * z1^2
+        beta1 <- delta * z1^2 * (-1)   # opposite signs if both betas vary
+      }
+    }
+    
+    if(vary_beta == "beta0"){
+      beta0 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
+      beta1 <- beta1
+    }
+    
+    if(vary_beta == "beta1"){
+      beta0 <- beta0
+      beta1 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
+    }
+  }  
+  
   
   
   y <- if(only_intercept) beta0 + e else beta0 + beta1 * x + e
@@ -637,7 +667,7 @@ plot(gctest2, terminal_panel = node_bivplot)
 # various data sets
 
 
-sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
+sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
                     formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
                     vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
                     binary_regressor = TRUE, binary_beta = TRUE, z1dist = "norm",
@@ -665,7 +695,7 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE,
     
     d <- dgp(nobs = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
              binary_regressor = binary_regressor, delta = delta,
-             binary_beta = binary_beta, z1dist = z1dist,
+             binary_beta = binary_beta, z1dist = z1dist, nrsteps = nrsteps,
              seed = seed + i, sigma = sigma, only_intercept = only_intercept)
     
 
@@ -793,6 +823,7 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                        xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
                        binary_regressor = c(TRUE, FALSE),
                        binary_beta = c(TRUE, FALSE),
+                       nrsteps = 1,
                        only_intercept = c(TRUE, FALSE),
                        test = c("ctree", "mfluc", "ctree_max", 
                                 "ctree_cat", "ctree_max_cat", "mfluc_cat",
@@ -833,7 +864,7 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
                    beta0 = beta0, beta1 = beta1, z1dist = z1dist,
                    sigma = sigma, alpha = alpha,
-                   test = test,
+                   test = test, nrsteps = nrsteps,
                    vary_beta = prs$vary_beta[i], 
                    binary_regressor = prs$binary_regressor[i],
                    binary_beta = prs$binary_beta[i],
@@ -868,7 +899,7 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
 
 
 
-simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7,
+simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1,
                          delta = seq(from = 1, to = 5, by = 2),
                          xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
                          binary_regressor = c(TRUE, FALSE),
@@ -910,7 +941,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7,
                                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
                                    beta0 = beta0, beta1 = beta1, z1dist = z1dist,
                                    sigma = sigma, alpha = alpha,
-                                   test = test,
+                                   test = test, nrsteps = nrsteps,
                                    vary_beta = prs$vary_beta[i], 
                                    binary_regressor = prs$binary_regressor[i],
                                    binary_beta = prs$binary_beta[i],
@@ -963,9 +994,9 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7,
 
 
 
-simres <- simwrapper_p(nobs = 250, nrep = 100,
+simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
                        delta = seq(from = 0, to = 1, by = 0.25),
-                       xi = c(0, 0.5, 0.8), 
+                       xi = c(0, 0.2, 0.5, 0.8), 
                        vary_beta = c("all", "beta0", "beta1"),
                        binary_regressor = c(TRUE, FALSE),
                        #binary_regressor = FALSE,
@@ -983,7 +1014,7 @@ simres <- simwrapper_p(nobs = 250, nrep = 100,
                        stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180222.rda")
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180224_1step.rda")
 
 
 
@@ -992,7 +1023,7 @@ save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20
 
 if(FALSE){
   library("lattice")
-  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180211.rda")
+  load("~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180224_2step.rda")
   
   
   subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
@@ -1003,9 +1034,6 @@ if(FALSE){
   subdata <- subset(simres, test %in% c("ctree_bin", "mfluc_bin", "guide_coin_12"))
   subdata <- subset(simres, test %in% c("ctree_cat", "mfluc_cat", "guide_coin_12"))
   subdata$test <- factor(subdata$test)
-  xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
-         data = subdata,
-         type = "b", auto.key = TRUE)
   xyplot(prop_T ~ delta | xi + vary_beta + binary_beta, groups = ~ test, 
          data = subdata,
          type = "b", auto.key = TRUE, 
