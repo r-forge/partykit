@@ -146,7 +146,7 @@ if(FALSE){
   if(length(unique(x))<2) return(list(p.value = log(1-1), statistic = log(0)))
   
   
-  # categorize residuals
+  # categorize scores
   if(is.null(ctrl$ygroups)){
     # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
     # separately for each parameter
@@ -648,12 +648,18 @@ if(FALSE){
   iy <- data$yxindex ### data[["yx", type = "index"]]
   Y <- model$estfun
   
-  # categorize residuals
+  # categorize scores
   if(is.null(ctrl$ygroups)){
     
     # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
-    Y <-(Y>0)*1    # *1 to store numerical instead of logical values
-  
+    #Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    Y <- sign(Y)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values    
+    #if(NCOL(Y) == 1) Y <- data.frame(factor(Y>0))
+    #if(NCOL(Y) > 1){
+    #  Ybin <- data.frame(factor(Y[,1]))
+    #  for(i in 2:NCOL(Y)) Ybin <- cbind(Ybin, factor(Y[,i]>0))
+    #  Y <- Ybin
+    #}
   } else {
     
     if(length(ctrl$ygroups)>1) ybreaks <- ctrl$ygroups
@@ -710,12 +716,18 @@ if(FALSE){
   
   estfun <- model$estfun[subset,,drop = FALSE]
   
-  # categorize residuals
+  # categorize scores
   if(is.null(ctrl$ygroups)){
     
     # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    estfun <- (estfun>0)*1    # *1 to store numerical instead of logical values
-    
+    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    estfun <- sign(estfun)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    #if(NCOL(estfun) == 1) estfun <- data.frame(factor(estfun>0))
+    #if(NCOL(estfun) > 1){
+    #  estfunbin <- data.frame(factor(estfun[,1]>0))
+    #  for(i in 2:NCOL(estfun)) estfunbin <- cbind(estfunbin, factor(estfun[,i]>0))
+    #  estfun <- estfunbin
+    #}
   } else {
     
     if(length(ctrl$ygroups)>1) ybreaks <- ctrl$ygroups
@@ -935,12 +947,18 @@ if(FALSE){
   iy <- data$yxindex ### data[["yx", type = "index"]]
   Y <- model$estfun
   
-  # categorize residuals
+  # categorize scores
   if(is.null(ctrl$ygroups)){
     
     # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
-    Y <- (Y>0)*1
-    
+    #Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    Y <- sign(Y)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    #if(NCOL(Y) == 1) Y <- data.frame(factor(Y>0))
+    #if(NCOL(Y) > 1){
+    #  Ybin <- data.frame(factor(Y[,1]))
+    #  for(i in 2:NCOL(Y)) Ybin <- cbind(Ybin, factor(Y[,i]>0))
+    #  Y <- Ybin
+    #}
   } else {
     
     if(length(ctrl$ygroups)>1) ybreaks <- ctrl$ygroups
@@ -1008,12 +1026,18 @@ if(FALSE){
   
   estfun <- model$estfun[subset,,drop = FALSE]
   
-  # categorize residuals
+  # categorize scores
   if(is.null(ctrl$ygroups)){
     
     # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    estfun <- (estfun>0)*1    # *1 to store numerical instead of logical values
-    
+    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    estfun <- sign(estfun)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values  
+    #if(NCOL(estfun) == 1) estfun <- data.frame(factor(estfun>0))
+    #if(NCOL(estfun) > 1){
+    #  estfunbin <- data.frame(factor(estfun[,1]>0))
+    #  for(i in 2:NCOL(estfun)) estfunbin <- cbind(estfunbin, factor(estfun[,i]>0))
+    #  estfun <- estfunbin
+    #}
   } else {
     
     if(length(ctrl$ygroups)>1) ybreaks <- ctrl$ygroups

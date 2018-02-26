@@ -1,0 +1,376 @@
+\documentclass{article}
+
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+library("partykit")
+library("Formula")
+library("parallel")
+library("lattice")
+source("guidelike.R")
+load("sim/simres20180224_1step.rda")
+@
+
+\title{Comparison of different testing functions}
+
+\begin{document}
+
+
+\section{All: 1 step}
+\setkeys{Gin}{width=\linewidth}
+<<all_TTF1, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == TRUE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+\newpage  
+<<all_TFF1, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+
+\newpage
+\section{Influence of binarization of scores and/or categorization of split variables: 1 step}
+
+\subsection{ctree}
+<<ctree_cat_bin_TFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata, 
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<ctree_cat_bin_FFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata, 
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+\newpage
+\subsection{mfluc}
+  
+<<mfluc_cat_bin_TFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<mfluc_cat_bin_FFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+\newpage
+\section{GUIDE vs ctree and mfluc with binarized scores and categorized splitvariables: 1 step}
+<<guide_vs_cat_bin_TFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc_cat_bin", "ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_vs_cat_bin_FFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc_cat_bin", "ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+
+\newpage
+\section{GUIDE versions: 1 step}
+
+<<guide_versions_TTF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_TFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_FTF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_FFF1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage
+\section{check alpha: 1 step}
+\subsection{ctree}
+<<check_alpha_ctree1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,0.1))
+@
+
+\newpage  
+\subsection{mfluc}
+<<check_alpha_mfluc1, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,0.1))
+@
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%load data set for 2 step function
+<<>>=
+load("sim/simres20180224_2step.rda")
+@
+
+\newpage
+\section{All: 2 steps}
+<<all_TTF2, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == TRUE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+\newpage  
+<<all_TFF2, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+\newpage  
+<<all_FTF2, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == FALSE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+\newpage  
+<<all_FFF2, fig=TRUE, echo=TRUE, height=10, width=8>>=
+simres$test <- factor(simres$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = simres, 
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = FALSE, ylim = c(0,1))
+@
+
+
+
+\newpage
+\section{Influence of binarization of scores and/or categorization of split variables: 2 steps}
+
+\subsection{ctree}
+<<ctree_cat_bin_TFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata, 
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<ctree_cat_bin_FFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata, 
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+\newpage
+\subsection{mfluc}
+ 
+<<mfluc_cat_bin_TTF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<mfluc_cat_bin_TFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<mfluc_cat_bin_FTF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<mfluc_cat_bin_FFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage
+\section{GUIDE vs ctree and mfluc with binarized scores and categorized splitvariables: 2 steps}
+<<guide_vs_cat_bin_TFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc_cat_bin", "ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_vs_cat_bin_FFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("mfluc_cat_bin", "ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+
+
+
+\newpage
+\section{GUIDE versions}
+<<guide_versions_TTF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_TFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_FTF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == TRUE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+\newpage  
+<<guide_versions_FFF2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subset(simres, test %in% c("ctree_cat_bin", "ctree_max_cat_bin", "guide_coin_12", "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == FALSE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,1))
+@
+
+
+\newpage
+\section{check alpha: 2 steps}
+\subsection{ctree}
+<<check_alpha_ctree2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subdata <- subset(simres, test %in% c("ctree", "ctree_cat", "ctree_bin", "ctree_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,0.1))
+@
+
+\newpage  
+\subsection{mfluc}
+<<check_alpha_mfluc2, fig=TRUE, echo=TRUE, height=9, width=8>>=
+subdata <- subdata <- subset(simres, test %in% c("mfluc", "mfluc_cat", "mfluc_bin", "mfluc_cat_bin", "guide_coin_12"))
+subdata$test <- factor(subdata$test)
+xyplot(prop_T ~ delta | xi + vary_beta, groups = ~ test, 
+       data = subdata,
+       subset = binary_beta == TRUE & binary_regressor == FALSE & only_intercept == FALSE, 
+       type = "b", auto.key = TRUE, ylim = c(0,0.1))
+@
+\end{document}
