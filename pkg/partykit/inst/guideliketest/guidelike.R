@@ -720,8 +720,17 @@ if(FALSE){
   if(is.null(ctrl$ygroups)){
     
     # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
-    estfun <- sign(estfun)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
+    estfun <- sign(estfun)            # FIX ME: Y should be a factor
+    
+    ## scale estfun such that each column sums up to 1
+    for(i in 1:NCOL(estfun)){
+      negprop <- sum(estfun[,i] < 0)/NROW(estfun)
+      posprop <- sum(estfun[,i] > 0)/NROW(estfun)
+      estfun[estfun[,i]<0, i] <- -posprop
+      estfun[estfun[,i]>0, i] <- negprop
+    }
+  
     #if(NCOL(estfun) == 1) estfun <- data.frame(factor(estfun>0))
     #if(NCOL(estfun) > 1){
     #  estfunbin <- data.frame(factor(estfun[,1]>0))
@@ -1030,8 +1039,17 @@ if(FALSE){
   if(is.null(ctrl$ygroups)){
     
     # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
-    estfun <- sign(estfun)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values  
+    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
+    estfun <- sign(estfun)            # FIX ME: Y should be a factor
+    
+    ## scale estfun such that each column sums up to 1
+    for(i in 1:NCOL(estfun)){
+      negprop <- sum(estfun[,i] < 0)/NROW(estfun)
+      posprop <- sum(estfun[,i] > 0)/NROW(estfun)
+      estfun[estfun[,i]<0, i] <- -posprop
+      estfun[estfun[,i]>0, i] <- negprop
+    }
+    
     #if(NCOL(estfun) == 1) estfun <- data.frame(factor(estfun>0))
     #if(NCOL(estfun) > 1){
     #  estfunbin <- data.frame(factor(estfun[,1]>0))
