@@ -1,24 +1,30 @@
-ccprune <- function(object, costfunction = NULL) {
+ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
   
-  is.null(costfunction) costfunction <- "err"
+  # per default use residual sum of squares
+  is.null(costfunction) costfunction <- "RSS"   
   
-  if(costfunction == "err"){
+  if(costfunction == "RSS"){
      cf <- function(object){
       if(inherits(object, "partynode"))
-        err <- sum((object$info$object$model$y - object$info$object$fitted.values)^2)
+        RSS <- sum((object$info$object$model$y - object$info$object$fitted.values)^2)
       if(inherits(object, "modelparty"))
-        err <- sum((object$data$y - fitted(object))^2)
-      return(err)
+        RSS <- sum((object$data$y - fitted(object))^2)
+      return(RSS)
     }
-    
   }
   
   if(is.function(costfunction)) cf <- costfunction
+  
+  
+  
+  ###############################################################
+  ## 1st step: select finite step of subtrees which are candidates for the optimal tree
   
   ## FIX ME: get T1 out of T_max = object
   T1 <- object
   Tree <- T1
   T_all <- list(T1)
+  alpha_all <- numeric()
   
   while(width(Tree) > 1){
     
@@ -30,15 +36,16 @@ ccprune <- function(object, costfunction = NULL) {
     
     for(i in inids){
       
-      # costfunction evaluated at the inner node i
-      cfi <- partykit::nodeapply(Tree, ids = i, FUN = cf)[[1]]
+      # costfunction evaluated at tree pruned at inner node i
+      Tp <- nodeprune(Tree[[i]], ids = 1)
+      cfi <- cf(Tp)
       
       # costfunction evaluated at the branch with node i as root node 
-      tnids <- partykit::nodeapply(Tree, ids = i, FUN = function(node) nodeids(node, terminal = TRUE))[[1]]
-      cfb <- sum(unlist(partykit::nodeapply(Tree, ids = tnids, FUN = cfbranch)))
+      cfb <- cf(Tree[[i]])
       
       #replace current alpha min if the new alpha is smaller
-      alpha <- (cfi-cfb) / (length(tnids) - 1)
+      alpha <- (cfi-cfb) / (width(Tree[[i]]) - 1)
+      
       if(alpha <= alpha_min) {
         if(alpha < alpha_min) t_min_id <- i 
         if(alpha == alpha_min) t_min_id <- cbind(t_min_id, i)
@@ -49,9 +56,81 @@ ccprune <- function(object, costfunction = NULL) {
     ## cut off branch at node t_min_id
     Tree <- nodeprune(Tree, ids = t_min_id)
     T_all[[length(T_all)+1]] <- Tree
-    
+    alpha_all <- c(alpha_all, alpha_min)
   }
   
-  ## FIX ME: select best tree out of T_all by cross validation
+  
+  
+  
+  ###############################################################
+  ## 2nd step: select best tree out of T_all by cross validation
+
+  nobs <- NROW(object$data)
+  alpha_mid <- sqrt(alpha_all * c(alpha_all[-1], alpha_all[length(alpha_all)]+0.1))
+  buildcl <- object$info$call
+  testids <- list()
+  allids <- c(1:nobs)
+  
+  ## store results from cross-validation in a list of matrices (one matrix for each fold)
+  # for each tree in the newly built sequence of minimal cost-complex tree store 
+  # the corresponding alpha and prediction error on test data
+  cvres <- list()
+  
+  set.seed(7)
+  
+  for(j in 1:nrfolds){
+    testids[[j]] <- sample(allids, round(nobs/nrfolds), replace = FALSE)
+    allids <- allids[!(allids %in% testids[[j]])]
+  
+    # split in to learning data and testdata
+    learndata <- object$data[!(c(1:nobs) %in% testids[[j]]),]
+    testdata <- object$data[(c(1:nobs) %in% testids[[j]]),]
+    
+    # build large tree on learning data
+    buildcl$data <- learndata
+    Tree <- eval(buildcl, parent.frame())
+    
+    resmat <- matrix(ncol = 2, nrow = 0)
+    colnames(resmat) <- c("alpha", "pred.err")
+    
+    while(width(Tree) > 1){
+      
+      # ids of inner nodes
+      inids <- nodeids(Tree)[!(nodeids(Tree) %in% nodeids(Tree, terminal = TRUE))]
+      
+      alpha_min <- Inf
+      t_min_id <- integer()
+      
+      for(i in inids){
+        
+        # costfunction evaluated at tree pruned at inner node i
+        Tp <- nodeprune(Tree[[i]], ids = 1)
+        cfi <- cf(Tp)
+        
+        # costfunction evaluated at the branch with node i as root node 
+        cfb <- cf(Tree[[i]])
+        
+        #replace current alpha min if the new alpha is smaller
+        alpha <- (cfi-cfb) / (width(Tree[[i]]) - 1)
+        
+        if(alpha <= alpha_min) {
+          if(alpha < alpha_min) t_min_id <- i 
+          if(alpha == alpha_min) t_min_id <- cbind(t_min_id, i)
+          alpha_min <- alpha
+        }
+      }
+      
+      ## cut off branch at node t_min_id
+      Tree <- nodeprune(Tree, ids = t_min_id)
+      
+      resmat <- rbind(resmat, c(alpha_min,
+                                mean((testdata$y - predict(Tree, newdata = testdata))^2)))
+      
+    }
+    
+    # stores results for fold j
+    cvres[[j]] <- resmat
+  }
+  
 
 }
