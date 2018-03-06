@@ -1,4 +1,6 @@
-ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
+ccprune <- function(object, costfunction = NULL, nrfolds = 10, SE1rule = FALSE, seed = 7) {
+  
+  cl <- match.call()
   
   # per default use residual sum of squares
   if(is.null(costfunction)) costfunction <- "RSS"   
@@ -75,7 +77,7 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
   # the corresponding alpha and prediction error on test data
   cvres <- list()
   
-  set.seed(7)
+  set.seed(seed)
   
   for(j in 1:nrfolds){
     testids[[j]] <- sample(allids, round(nobs/nrfolds), replace = FALSE)
@@ -136,6 +138,7 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
   # over the errors of the cross validation trees with alpha
   # closest to the alpha of the tree of T_all
   averr <- numeric(length = length(T_all))
+  if(SE1rule) serr <- numeric(length = length(T_all))
   
   ## FIX ME: add 0 as first element to alpha_mid
   # as the maximal Tree corresponds to the minimizing tree for alpha = 0
@@ -153,9 +156,21 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
     }
     
     averr[i] <- mean(err)
+    if(SE1rule) serr[i] <- sd(err)/sqrt(length(err))
   }
   
-  Tree <- T_all[[which.min(averr)]]
+  # select optimal tree
+  mintreeid <- which.min(averr)
+  if(SE1rule) {
+    # select the smallest tree of those beneath the upper error limit (mean + standard error)
+    errlimit <- averr[mintreeid] + serr[mintreeid]
+    candidatesid <- c(1:length(T_all))[averr <= errlimit]
+    Tree <- T_all[[max(candidatesid)]]
+  } else {
+    Tree <- T_all[[mintreeid]]
+  }
   
-  return(Tree)
+  return(list(Tree = Tree,
+              averr = averr,
+              call = cl))
 }
