@@ -61,9 +61,13 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     the linear predictor with a coeffcient of one. (Note that this is passed with
     standard evaluation, i.e., it is not enough to pass the name of a column in 
     \code{data}.)}
-  \item{ranefstart}{numeric. A vector of length \code{nrow(data)}, to be used as
-    an offset in estimation of the first tree. \code{NULL} by default,
-    which results in a zero offset initialization.}
+  \item{ranefstart}{numeric vector, \code{TRUE}, or \code{NULL}. Specifies the 
+    offset to be used in estimation of the first tree. \code{NULL} by default,
+    which results in a zero offset initialization. Alternatively, a numeric vector 
+    of length \code{nrow(data)} with starting values can be supplied; if 
+    \code{ranefstart = TRUE} is specified, random effects will be estimated first
+    and the first tree will be grown using the random-effects predictions as an
+    offset.}
   \item{abstol}{numeric. The convergence criterion used for estimation of the model.
     When the difference in log-likelihoods of the random-effects model from two
     consecutive iterations is smaller than \code{abstol}, estimation of the

@@ -25,18 +25,24 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
   
+  ## weights
+  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
+  
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
     rep(0, times = dim(data)[1L])
+  } else if (ranefstart && length(ranefstart) == 1) {
+    ## generate ranefstart from lme null model: 
+    predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
+                data = data, weights = .weights, 
+                offset = offset, control = lmer.control),
+            newdata = data)
   } else {
     ranefstart  
   }
   continue <- TRUE
   oldloglik <- -Inf
-  
-  ## weights
-  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
   
   ## iterate between lmer and lmtree estimation
   while (continue) {
@@ -62,9 +68,7 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
       ## estimate full lmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
-        rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
-                                              formula(ff, lhs = 0L, rhs = 2L)), 
-                          lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+        rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
         if (is.null(offset)) {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
                       control = lmer.control)          
@@ -155,18 +159,24 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
   
+  ## weights
+  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
+  
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
     rep(0, times = dim(data)[1L])
+  } else if (ranefstart && length(ranefstart) == 1) {
+    ## generate ranefstart from lme null model: 
+    predict(glmer(formula(ff, lhs = 1L, rhs = 2L),
+                data = data, weights = .weights, type = "link", 
+                offset = offset, family = family, control = glmer.control),
+            newdata = data)
   } else {
     ranefstart  
   }
   continue <- TRUE
   oldloglik <- -Inf
-  
-  ## weights
-  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
   
   ## iterate between glmer and glmtree estimation
   while (continue) {
@@ -192,9 +202,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       ## estimate full glmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
-        rf.alt <- formula(Formula::as.Formula(formula(ff, lhs = 1L, rhs = 1L), 
-                                              formula(ff, lhs = 0L, rhs = 2L)), 
-                          lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+        rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
         if (is.null(offset)) {
           glme <- glmer(rf.alt, data = data, family = family, 
                         weights = .weights, control = glmer.control)
