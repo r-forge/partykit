@@ -1,7 +1,7 @@
 ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
   
   # per default use residual sum of squares
-  is.null(costfunction) costfunction <- "RSS"   
+  if(is.null(costfunction)) costfunction <- "RSS"   
   
   if(costfunction == "RSS"){
      cf <- function(object){
@@ -20,10 +20,9 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
   ###############################################################
   ## 1st step: select finite step of subtrees which are candidates for the optimal tree
   
-  ## FIX ME: get T1 out of T_max = object
-  T1 <- object
-  Tree <- T1
-  T_all <- list(T1)
+  ## FIX ME: get first Tree out of T_max = object
+  Tree <- object
+  T_all <- list(Tree)
   alpha_all <- numeric()
   
   while(width(Tree) > 1){
@@ -124,7 +123,8 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
       Tree <- nodeprune(Tree, ids = t_min_id)
       
       resmat <- rbind(resmat, c(alpha_min,
-                                mean((testdata$y - predict(Tree, newdata = testdata))^2)))
+                                mean((testdata$y - predict(Tree, newdata = testdata, 
+                                                           type = "response"))^2)))
       
     }
     
@@ -132,5 +132,30 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10) {
     cvres[[j]] <- resmat
   }
   
-
+  ## estimate error for each tree of T_all by averaging
+  # over the errors of the cross validation trees with alpha
+  # closest to the alpha of the tree of T_all
+  averr <- numeric(length = length(T_all))
+  
+  ## FIX ME: add 0 as first element to alpha_mid
+  # as the maximal Tree corresponds to the minimizing tree for alpha = 0
+  alpha_mid <- c(0, alpha_mid)
+  
+  for(i in 1:length(T_all)){
+    
+    Tree <- T_all[[i]]
+    alpha <- alpha_mid[[i]]
+    
+    err <- numeric(length = length(nrfolds))
+    
+    for(j in 1:nrfolds){
+      err[j] <- cvres[[j]][which.min(abs(cvres[[j]][,"alpha"] - alpha)), "pred.err"]
+    }
+    
+    averr[i] <- mean(err)
+  }
+  
+  Tree <- T_all[[which.min(averr)]]
+  
+  return(Tree)
 }
