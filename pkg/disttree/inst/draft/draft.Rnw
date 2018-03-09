@@ -1303,16 +1303,16 @@ model. Moreover, this model has to be able to deal with a wide
 range of effects as abrupt changes can appear as well as smooth 
 transitions. Especially if the considered region includes complex 
 terrain, a large grid spacing of NWP models can lead to abrupt 
-local effects within a single NWP grid cell.
+local effects within a single grid cell.
 
 As explained in the introduction, distributional forests provide 
 a new approach in probabilistic forecasting by embedding the ideas 
 of flexible parametric modeling into the framework of tree-structured 
-models. The ability to deal with a wide variety of effects and an 
-automatic variable selection and detection of interactions are 
-features provided by distributional forests that could be particularly 
+models. In that way, they offer features that could be particularly 
 valuable in probabilistic weather forecasting in order to tackle 
-the above mentioned challenges.
+the above mentioned challenges. Among these features are the ability 
+to deal with a wide variety of effects and an automatic variable 
+selection and detection of interactions. 
 To show their strengths in practice, distributional forests are 
 now applied to probabilistic precipitation forecasts in a 
 mountainous region based on a large number of numerical weather 
@@ -1444,8 +1444,8 @@ Next to distributional forests three other methods are applied to this data set:
 
 \begin{itemize}
 
-\item An ensemble model output statistics 
-(EMOS, \citealp{Gneiting+Raftery+Westveld:2005}) model where the 
+\item Ensemble model output statistics 
+(EMOS, \citealp{Gneiting+Raftery+Westveld:2005}): The 
 location parameter and the logarithm of the scale parameter depend 
 linearly on the ensemble mean forecast of total daily precipitation 
 sums and the corresponding ensemble standard deviation respectively.
@@ -1456,11 +1456,11 @@ have been compared. Moreover, testing the identity, quadratic and
 logarithmic function as link functions in this setting supported 
 this choice as the logarithmic function led to the best performance 
 of the EMOS model in this application.
-\item A GAMLSS where for each distribution parameter the selection 
+\item Prespecified GAMLSS: For each distribution parameter the selection 
 of covariates and the specification of interactions is done in 
 advance, both based on meteorological expert knowledge following 
-\cite{Stauffer+Umlauf+Messner:2017} (prespecified GAM). Among the 
-available 82 regressors, 9 where selected for the location parameter 
+\cite{Stauffer+Umlauf+Messner:2017}. Among the 
+available 82 regressors, 9 are selected for the location parameter 
 and 6 for the scale parameter. Additionally, for each distribution 
 parameter one interaction term is specified in which convective 
 available energy is interacting with total precipitation (with the 
@@ -1471,9 +1471,9 @@ thunderstorms with large amounts of precipitation. By putting
 extra effort in the specification of the formulas the prespecified 
 GAM is provided with additional information and is therefore 
 expected to profit from this advantage.
-\item A boosted GAMLSS \citep{Hofner+Mayr+Schmid:2016} using 
-non-homogeneous boosting \citep{Messner+Mayr+Zeileis:2017} 
-for an automatic selection of covariates (boosted GAM). 
+\item Boosted GAMLSS: Non-homogeneous boosting 
+\citep{Messner+Mayr+Zeileis:2017} is used for an automatic 
+selection of covariates \citep{Hofner+Mayr+Schmid:2016}. 
 The idea of this boosting approach is to iteratively minimize 
 a loss function where in each step only the coefficient leading 
 to the highest improvement of the current model is updated. As 
@@ -1483,7 +1483,7 @@ relevant variables are ignored if the procedure is stopped before
 convergence.
 \end{itemize}
 
-%\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAM. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
+%\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAMLSS. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
 
 %\fixme{A description of the boosting approach is currently missing completely.}
 
@@ -1499,7 +1499,7 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
 \textbf{Distributional forest} & recursive    & all & all \\ 
                 & partitioning &     &     \\ 
 \hline
-\textbf{Prespecified GAM} & spline  & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},\\
+\textbf{Prespecified GAMLSS} & spline  & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},\\
                             & in each & \emph{tp{\_}max},  & \emph{dswrf{\_}sprd{\_}mean},\\
  & & \emph{tp{\_}mean1218} $\ast$ & \emph{tp{\_}sprd1218} $\ast$\\ 
  & & \quad \emph{cape{\_}mean1218}, & \quad \emph{cape{\_}mean1218},\\
@@ -1509,7 +1509,7 @@ Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
  & & \emph{tdiff500850{\_}mean}, & \\
  & & \emph{msl{\_}diff} & \\
 \hline
-\textbf{Boosted GAM} & spline  & all & all \\
+\textbf{Boosted GAMLSS} & spline  & all & all \\
                        & in each &     &     \\
 \hline
 \textbf{EMOS} & linear & \emph{tp{\_}mean} & \emph{tp{\_}sprd} \\
@@ -1557,7 +1557,7 @@ $$
 \subsection{Application for one station}
 \label{Application for one station}
 First of all we focus on one observation station, Axams in Tyrol. This 
-station was selected due to its geographical closeness to Innsbruck, 
+station is selected due to its geographical closeness to Innsbruck, 
 the capital of Tyrol. As for all other stations, daily observations and 
 numerical weather predictions are available for the month of July of 
 28~years from 1985 through the year 2012. In Figure~\ref{axams_onestation} 
@@ -1566,8 +1566,8 @@ data set and predicting the total amount of precipitation for one specific
 day of each of the four successive years have been shown as a motivational 
 example for a probabilistic forecast. Staying with this fitted model we are 
 now going to analyze variable importance of the distributional forest model 
-and compare its results to those of the GAMs and the EMOS model based on 
-residual QQ-plots.
+and compare its results to those of the prespecified and the boosted GAMLSS 
+and the EMOS model based on residual QQ-plots.
 
 %%%<TH> always us the term "distributional forest"
 As shown in Table~\ref{model_specification} the distributional forest 
@@ -1626,8 +1626,8 @@ set.seed(7)
 par(mfrow = c(2,2))
 
 qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAM", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAM", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{qqr_oosample} Out-of-sample residual QQ-plots (2009--2012) 
@@ -1648,8 +1648,8 @@ of which again the average values are stored. This whole procedure is repeated
 10 times. The resulting skill scores are illustrated in 
 Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model 
 represented by the horizontal line at height 0. This CRPS skill score boxplot 
-shows that, in this setting, both GAMs and the distributional forest perform 
-better than the EMOS model. While the two GAMs lead to an improvement of 
+shows that, in this setting, both GAMLSS and the distributional forest perform 
+better than the EMOS model. While the two GAMLSS lead to an improvement of 
 around 4 percent with the boosted version being slightly ahead, the 
 distributional forest even reaches an improvement rate close to 6 percent.
 <<echo=FALSE, results=hide>>=
@@ -1685,9 +1685,9 @@ colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <- colnames(rain
 
 \begin{figure}[t!]
 \centering
-<<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 6.5>>=
+<<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 7>>=
 boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
-        names = c("Distributional forest", "Prespecified GAM", "Boosted GAM"),
+        names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
@@ -1751,7 +1751,7 @@ for(i in 2:(length(res)-1))  crps_all <- rbind(crps_all, res[[i]]$results["crps"
 
 # skill score
 s <- 1 - crps_all[, 2:4]/crps_all[,6]
-colnames(s) <- c("Distributional forest", "Prespecified GAM", "Boosted GAM")
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 
 ## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
 
@@ -1794,7 +1794,7 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 
 \begin{figure}[t!]
 \centering
-<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, width = 6.5>>=
+<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, width = 7>>=
   matplot(t(s[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE, 
@@ -1817,8 +1817,8 @@ data set. Each station is illustrated by a symbol with the type of symbol
 representing the method that performed best in terms of CRPS at this station. 
 The color of the symbol indicates the difference between the CRPS of the 
 distributional forest and the CRPS of the best performing among the other 
-three models (prespecified GAM, boosted GAM and EMOS).
-Even though for some stations, especially in East Tyrol, one of the two GAMs 
+three models (prespecified GAMLSS, boosted GAMLSS and EMOS).
+Even though for some stations, especially in East Tyrol, one of the two GAMLSS 
 and for a few others the EMOS model leads to the best results, for the 
 majority of stations the distributional forest performs best.
 
@@ -1832,12 +1832,12 @@ majority of stations the distributional forest performs best.
   raster::image(tirol.dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
                 xlim = c(9.8,13.2), 
-                ylim = c(46.6, 47.85))
+                ylim = c(46.6, 47.87))
   plot(tirol.gadm, add = TRUE)
   points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
-  legend(x = 9.8, y = 47.795, pch=c(21,24,25,22), legend = c("Distributional forest", "Prespecified GAM", "Boosted GAM", "EMOS"), cex = 1, bty = "n")
-  text(x = 10.3, y = 47.8, labels = "Models with lowest CRPS")
-  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.74), line = 0.3)
+  legend(x = 9.8, y = 47.815, pch=c(21,24,25,22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
+  text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
+  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
   par(mar = c(0.5,0.2,0.5,2.3))
   ## legend
   plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
@@ -1849,7 +1849,7 @@ majority of stations the distributional forest performs best.
 \caption{\label{map}Map of Tyrol showing which model performed best at 
 which station (type of symbol). The color codes whether the distributional 
 forest had lower or higher CRPS (red or blue) compared to the best of the 
-other three models (prespecified GAM, boosted GAM and EMOS).}
+other three models (prespecified GAMLSS, boosted GAMLSS and EMOS).}
 \end{figure}
 
 
@@ -1895,18 +1895,20 @@ with a wide range of modelling situations in a reasonable way.
 The corresponding implementation to the novel methods presented 
 in this article is available on \textsf{R}-Forge in an \textsf{R} 
 package called \textbf{disttree} within the project \textbf{partykit} 
-(\url{https://R-Forge.R-project.org/projects/partykit/}). The function 
-\code{disttree} uses either the \code{mob} or \code{ctree} function 
-as a framework to build a tree. Similarly, the function 
-\code{distforest} is based on the \code{cforest} function which 
-provides a framework to build a distributional forest. All three 
+(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
+\code{distfit} fits a distributional model and is called within the
+tree-building function \code{disttree} and the forest-building
+function \code{distforest}. 
+Within \code{disttree} either the \code{mob} or \code{ctree} function 
+can be applied as a framework to build a tree. Similarly, the function 
+\code{distforest} is based on the function \code{cforest}. All three 
 functions, \code{mob}, \code{ctree} and \code{cforest}, are provided 
 in the package \textbf{partykit} (\citealt{Hothorn+Zeileis:2015}). 
 To specify a distribution family the user can hand over one of the 
 following objects as input argument in \code{distfit}, \code{disttree} 
 and \code{distforest}: 
 \begin{itemize}
-\item a GAMLLS family object from the \textsf{R} package \textbf{gamlss} 
+\item a GAMLLS family object from the \textsf{R} package \textbf{gamlss.dist} 
 (\citealt{Stasinopoulos+Rigby:2007}).
 \item a family list generating function from the package \textbf{disttree}.
 \item a complete family list from the package \textbf{disttree}.
@@ -1914,10 +1916,10 @@ and \code{distforest}:
 distribution family.
 \end{itemize}
 
-In Section~\ref{ProbabilisticForecasting} the prespecified GAMs were 
+In Section~\ref{ProbabilisticForecasting} the prespecified GAMLSS were 
 built using the function \code{gamlss} from the \textsf{R} package 
-\textbf{gamlss.dist} (\citealt{Stasinopoulos+Rigby:2007}). For the 
-boosted GAMs the function \code{gamboostLSS} from the \textsf{R} 
+\textbf{gamlss} (\citealt{Stasinopoulos+Rigby:2007}). For the 
+boosted GAMLSS the function \code{gamboostLSS} from the \textsf{R} 
 package \textbf{gamboostLSS} (\citealt{Hofner+Mayr+Schmid:2016}) 
 was applied. The EMOS models were built using the function 
 \code{crch} from the \textsf{R} package \textbf{crch} 
@@ -2074,8 +2076,8 @@ set.seed(4)
 
 par(mfrow = c(2,2))
 pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
-pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAM", ylim = c(0,1.5))
-pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAM", ylim = c(0,1.5))
+pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
+pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
 pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
       
 @
