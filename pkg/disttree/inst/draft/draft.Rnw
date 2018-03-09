@@ -396,7 +396,8 @@ Applying these novel approaches to precipitation data in a mountainous region wi
   E-mail: \email{Lisa.Schlosser@uibk.ac.at}, \email{Reto.Stauffer@uibk.ac.at},\\
   \email{Achim.Zeileis@R-project.org} \\
   URL: \url{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/},\\
-  \url{http://retostauffer.org/}, \url{https://eeecon.uibk.ac.at/~zeileis/}\\
+  \phantom{URL: }\url{https://retostauffer.org/},\\
+  \phantom{URL: }\url{https://eeecon.uibk.ac.at/~zeileis/}\\
   
   Torsten Hothorn\\
   Universit\"at Z\"urich \\
@@ -725,7 +726,8 @@ outputs. As these are computed at a coarser scale, there may be abrupt local
 effects within a single NWP grid cell. To illustrate this in practice,
 precipitation forecasts are obtained with distributional forests at 95
 meteorological stations in a mountainous region in the Alps, covering mainly
-Tyrol, Austria, and adjacent areas. More specifically, a zero-censored Gaussian
+Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{map}).
+More specifically, a zero-censored Gaussian
 distribution is employed to model 24-hour total precipitation so that the
 zero-censored point mass describes the probability of no precipitation on a
 given day (see Figure~\ref{axams_onestation}). Forecasts for July are
@@ -1286,107 +1288,48 @@ in either each of the parameters or combined in various parameters.
 \section{Probabilistic precipitation forecasting in complex terrain}
 \label{ProbabilisticForecasting}
 
-In weather forecasting, various factors can make it challenging to 
-build a well fitting model. Complex physical processes in the 
-atmosphere depend on possibly rapidly changing circumstances. 
-Often it is hard to tell which of these circumstances have a 
-relevant impact on the quantity of interest and what type of 
-effect that can be or how they might interact. A profound 
-basis of information can be obtained from numerical weather 
-prediction (NWP) models as they provide predictions for a 
-large number of meteorological quantities. However, while 
-including too many variables in a model can lead to overfitting, 
-excluding variables in advance can result in a loss of valuable 
-information. Therefore, the task of selecting variables and 
-specifying interactions forms the basis of building an adequate 
-model. Moreover, this model has to be able to deal with a wide 
-range of effects as abrupt changes can appear as well as smooth 
-transitions. Especially if the considered region includes complex 
-terrain, a large grid spacing of NWP models can lead to abrupt 
-local effects within a single grid cell.
+Many weather forecasting models leverage the strengths of modern
+numerical weather prediction (NWP) systems \citep[see][]{Bauer+Thorpe+Brunet:2015}
+and produce high-quality forecasts adapted to specific sites/locations
+through distributional regression models like EMOS
+(ensemble model output statistics, \citealp{Gneiting+Raftery+Westveld:2005}).
+In the case of precipiation forecasting, EMOS explains past precipitation
+sums by the NWP output ``total precipitation'' (\emph{tp}), using its
+ensemble mean as the predictor variable for the location parameter and
+the ensemble standard deviation for the scale parameter.
 
-As explained in the introduction, distributional forests provide 
-a new approach in probabilistic forecasting by embedding the ideas 
-of flexible parametric modeling into the framework of tree-structured 
-models. In that way, they offer features that could be particularly 
-valuable in probabilistic weather forecasting in order to tackle 
-the above mentioned challenges. Among these features are the ability 
-to deal with a wide variety of effects and an automatic variable 
-selection and detection of interactions. 
-To show their strengths in practice, distributional forests are 
-now applied to probabilistic precipitation forecasts in a 
-mountainous region based on a large number of numerical weather 
-prediction quantities. Their results are compared to those of 
-other zero-censored Gaussian models including a standard ensemble 
-model output approach and two GAMLSS. For one of the GAMLSS the 
-regressors have been selected and interactions have been specified 
-in advance based on subject-matter knowledge and experience from 
-meteorology. The other one is based on a computationally more 
-demanding boosting approach.
+While this approach alone is already highly effective in the plains,
+it typically does not perform as well in complex terrain due to unresolved
+effects in the NWP system. For example, in the Tyrolean Alps -- considered
+in the following application case study -- the NWP grid cells of $50 \times 50$
+km$^2$ are too coarse to capture mountains, valleys, etc. Therefore,
+it is often possible to substantially improve the EMOS by including
+further predictor variables, either from local observations or from
+other NWP outputs. Unfortunately, it is typically unclear which
+variables are relevant for improving the predictions. Simply including
+all available variables may be computationally burdensome and
+can lead to overfitting but, on the other hand, excluding too many variables
+may result in a loss of valuable information. Therefore, selecting
+the relevant variables and interactions is crucial for improving the
+forecasting model.
+
+In the following, it is illustrated how distributional regression forests
+can solve this problem of automatically selecting relevant variables,
+interactions, and potentially nonlinear effects. For fitting the forest
+only the response distribution and the list of potential predictor variables
+need to be specified (along with a few algorithmic details) and then
+the model fit is determined by the forest in a data-driven way. Here, we
+employ a zero-censored Gaussian distribution and 82~predictor variables
+computed from ensemble means and spreads of various NWP outputs.
+The predictive performance of the forest is compared to three other
+zero-censored Gaussian models: (a) a standard basic EMOS, (b) a GAMLSS
+with prespecified effects and interactions based on meteorological
+knowedge/experience, and (c) a boosted GAMLSS with automatic
+selection of smooth additive terms based on all 82~predictor variables.
 
 \subsection{Data}
 \label{data}
-The data set used for training and validation consists of observed 
-precipitation sums provided by the National Hydrographical Service 
-(\citealt{ehyd}) and numerical weather forecasts from the {U.S.} 
-National Oceanic and Atmospheric Administration (NOAA).
-Both, observations and weather forecasts are available from 1985 
-trough the year 2012, focusing on July only in this article.
 
-Observations are available on a daily basis, each representing the 
-total precipitation sum fallen within 24~hours observed at 6~UTC 
-at 95 stations all over Tyrol and its close surrounding. The 
-observations are undergoing a rigorous quality check before made 
-available to the public.  As covariates the second generation 
-reforecast data set of the global ensemble forecast system (GEFS) 
-is used (\citealt{Hamill+Bates+Whitaker:2013}).  This data set 
-consists of an 11-member ensemble based on a fixed version of the 
-numerical model and a horizontal grid-spacing of about $50~\times~50 
-\text{km}^2$ initialized daily at 0~UTC from December 1984 to present 
-providing forecasts on 26 hourly temporal resolution. Each of the 
-11 ensemble members uses slightly different perturbed initial 
-conditions trying to predict the situation specific uncertainty 
-of the atmospheric state. 
-
-In particular, 14 basic forecast variables are considered with up 
-to 12 variations of each of these variables being included as 
-covariates. Since an ensemble of individual predictions is provided 
-for each forecast variable, the possible variations include the mean, 
-the standard deviation, the minimum and the maximum over all ensemble 
-members, noted as ensemble mean, ensemble std. deviation, ensemble 
-minimum and ensemble maximum. All of these values can be calculated 
-on the sums over 24 hours (6--6 UTC of the following day) or a 6 hour 
-time window. Another possible option is to consider the mean, minimum 
-or maximum over 24 hours for each individual prediction and then take 
-the ensemble mean or ensemble standard deviation, noted as ensemble 
-mean of mean/minimal/maximal values or ensemble std. deviation of 
-mean/minimal/maximal values respectively. Table~\ref{covariates} 
-shows all variables together with the number of variations and 
-the provided variations listed in the last column. Altogether 
-82~covariates are available in this setting. 
-
-\fixme{Mention that dswrf\_mean/sprd\_min is not included?}
-
-%%% <TH> hm, now we _are_ using a transformation model without estimating the
-%%% transformation. </TH>
-To remove large parts of the skewness of precipitation data, 
-a power transformation has been used frequently (Box and Cox 1964). 
-In literature, cubic (\citealt{Stidd:1973}) or square root 
-(\citealt{Hutchinson:1998}) transformations have often been 
-suggested but may vary for different climatic zones or temporal 
-aggregation periods. In \cite{Stauffer+Mayr+Messner:2017} 
-optimization methods have been applied to find the best transformation 
-factor which resulted in a value of $\frac{1}{1.6}$. Since the 
-observation data set used for this optimization contains the 
-observations considered in this article the same factor is 
-chosen here for the power transformation of the response variable 
-\emph{tp} (total precipitation). The resulting transformed 
-variable is expected to be normally distributed and left-censored 
-at censoring point 0. For simplicity the same transformation has 
-been chosen for the variable \emph{cape} (convective available 
-potential energy).
-
-%\newpage
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
@@ -1436,84 +1379,65 @@ Basic covariates & {\#} & Variations\\
 %}
 \end{table}
 
+Training and validation data consist of observed 
+daily precipitation sums provided by the National Hydrographical Service 
+(\citealt{ehyd}) and numerical weather forecasts from the U.S.~National
+Oceanic and Atmospheric Administration (NOAA).
+Both, observations and forecasts are available for 1985--2012 and
+the analysis is exemplified using July as the month with the most precipitation
+in Tyrol.
+
+Observations are obtained for 95~stations all over Tyrol and surroundings,
+providing 24~hour precipitation sums measured at 6~UTC and rigorously
+quality-checked by the National Hydrographical Service. NWP outputs
+are obtained from the second generation reforecast data set of the
+global ensemble forecast system \citep[GEFS,][]{Hamill+Bates+Whitaker:2013}. 
+This data set consists of an 11-member ensemble based on a fixed version of the 
+numerical model and a horizontal grid spacing of about $50 \times 50$ 
+km$^2$ initialized daily at 0~UTC from December 1984 to present 
+providing forecasts on 26 hourly temporal resolution. Each of the 
+11 ensemble members uses slightly different perturbed initial 
+conditions trying to predict the situation specific uncertainty 
+of the atmospheric state. 
+
+From the GEFS outputs 14 basic forecast variables are considered with up 
+to 12 variations of each of these variables such as mean/maximum/minimum
+or different aggregation time ranges, etc. A detailed overview is
+provided in Table~\ref{covariates}, yielding 82~predictor variables in total.
+\fixme{Mention that dswrf\_mean/sprd\_min is not included?}
+
+To remove large parts of the skewness of precipitation data, 
+a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
+cubic \citep{Stidd:1973} or square root \citep{Hutchinson:1998} transformations.
+However, the power parameter may vary for different climatic zones or temporal 
+aggregation periods and hence we follow \cite{Stauffer+Mayr+Messner:2017} 
+in their choice of $\frac{1}{1.6}$ as a suitable power parameter for the
+region of Tyrol. The same power transformation is applied to both the
+observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{tp}) and
+``convective available potential energy'' (\emph{cape}).
 
 
 \subsection{Models and evaluation}
-
-Next to distributional forests three other methods are applied to this data set:
-
-\begin{itemize}
-
-\item Ensemble model output statistics 
-(EMOS, \citealp{Gneiting+Raftery+Westveld:2005}): The 
-location parameter and the logarithm of the scale parameter depend 
-linearly on the ensemble mean forecast of total daily precipitation 
-sums and the corresponding ensemble standard deviation respectively.
-The choice of the logarithmic function as link function for the scale 
-parameter has been made based on the results of 
-\cite{Gebetsberger+Messner+Mayr:2017} where different link functions 
-have been compared. Moreover, testing the identity, quadratic and 
-logarithmic function as link functions in this setting supported 
-this choice as the logarithmic function led to the best performance 
-of the EMOS model in this application.
-\item Prespecified GAMLSS: For each distribution parameter the selection 
-of covariates and the specification of interactions is done in 
-advance, both based on meteorological expert knowledge following 
-\cite{Stauffer+Umlauf+Messner:2017}. Among the 
-available 82 regressors, 9 are selected for the location parameter 
-and 6 for the scale parameter. Additionally, for each distribution 
-parameter one interaction term is specified in which convective 
-available energy is interacting with total precipitation (with the 
-ensemble mean for the location parameter and with the ensemble 
-standard deviation for the scale parameter). These interactions 
-might capture events with a high potential for moderate or severe 
-thunderstorms with large amounts of precipitation. By putting 
-extra effort in the specification of the formulas the prespecified 
-GAM is provided with additional information and is therefore 
-expected to profit from this advantage.
-\item Boosted GAMLSS: Non-homogeneous boosting 
-\citep{Messner+Mayr+Zeileis:2017} is used for an automatic 
-selection of covariates \citep{Hofner+Mayr+Schmid:2016}. 
-The idea of this boosting approach is to iteratively minimize 
-a loss function where in each step only the coefficient leading 
-to the highest improvement of the current model is updated. As 
-the initial coefficients are all zero, only the most important 
-covariates are included with nonzero coefficients while less 
-relevant variables are ignored if the procedure is stopped before 
-convergence.
-\end{itemize}
-
-%\fixme{Adding a reference to the above paragraph would be good, justifying our knowledge/experience regarding the prespecified GAMLSS. Probably Stauffer+Umlauf+Messner:2017 as I have done in the intro.}
-
-%\fixme{A description of the boosting approach is currently missing completely.}
-
- 
-The selected methods and their specifications are listed in Table~\ref{model_specification}.
 
 \begin{table}[t!]
 \centering
 \begin{tabular}{ l l l l }
 \hline
-Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$) \\
-\hline
-\textbf{Distributional forest} & recursive    & all & all \\ 
-                & partitioning &     &     \\ 
-\hline
-\textbf{Prespecified GAMLSS} & spline  & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},\\
-                            & in each & \emph{tp{\_}max},  & \emph{dswrf{\_}sprd{\_}mean},\\
+Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$)                                  \\ \hline
+Distributional forest & recursive    & all                & all                           \\ 
+                      & partitioning &                    &                               \\ \hline
+EMOS                  & linear       & \emph{tp{\_}mean}  & \emph{tp{\_}sprd}             \\ \hline
+Prespecified GAMLSS   & spline       & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},            \\
+                      & in each      & \emph{tp{\_}max},  & \emph{dswrf{\_}sprd{\_}mean}, \\
  & & \emph{tp{\_}mean1218} $\ast$ & \emph{tp{\_}sprd1218} $\ast$\\ 
  & & \quad \emph{cape{\_}mean1218}, & \quad \emph{cape{\_}mean1218},\\
  & & \emph{dswrf{\_}mean{\_}mean}, & \emph{tcolc{\_}sprd{\_}mean},\\
  & & \emph{tcolc{\_}mean{\_}mean}, & \emph{tdiff500850{\_}mean}\\
  & & \emph{pwat{\_}mean{\_}mean}, & \\
  & & \emph{tdiff500850{\_}mean}, & \\
- & & \emph{msl{\_}diff} & \\
-\hline
-\textbf{Boosted GAMLSS} & spline  & all & all \\
-                       & in each &     &     \\
-\hline
-\textbf{EMOS} & linear & \emph{tp{\_}mean} & \emph{tp{\_}sprd} \\
-\hline
+ & & \emph{msl{\_}diff} & \\ \hline
+Boosted GAMLSS        & spline  & all & all \\
+                      & in each &     &     \\ \hline
 \end{tabular}
 \caption[Table caption text]{Overview of models with type of 
 covariate dependency and included covariates for each distribution 
@@ -1521,34 +1445,66 @@ parameter.}
 \label{model_specification}
 \end{table}
 
-In order to compare the performance of the chosen methods, the continuous 
-ranked probability score (CRPS) is calculated for each model. 
-\fixme{Adding reference for CPRS}
+The following zero-censored Gaussian regression models are employed
+in the empirical case study, see also Table~\ref{model_specification} for
+further details:
+%
+\begin{itemize}
 
-The CRPS measures the accuracy of a probabilistic model. 
-For one observation $y$ with predicted distribution 
-function $F$ the CRPS value is calculated by
+\item \emph{Distributional forest:} All 82~predictor variables are
+  considered for learning a forest of 100 trees. Bootstrap
+  sampling is employed for each tree using a third of the predictors
+  in each split of the tree (``mtry''). Parameters are estimated by
+  adaptive local likelihood based on the forest weights, as described
+  in Section~\ref{Methodology}.
+
+\item \emph{EMOS:} Standard ensemble model output statistics are used
+  with the total precipitation ensemble mean as regressor in the location
+  submodel and the ensemble standard deviation in the scale submodel.
+  The parameters are estimated by maximum likelihood, using an identity
+  link for the location and a log link for the scale
+  \citep[following the advice of][]{Gebetsberger+Messner+Mayr:2017}.
+
+\item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
+  the most relevant predictors, based on meteorological expert knowledge
+  following \cite{Stauffer+Umlauf+Messner:2017}. More specifically, based
+  on the 82~available variables, 8 terms are included in the location
+  submodel and 6 in the scale submodel. Both involve an interaction of
+  \emph{tp} and \emph{cape} in the afternoon (between 12 and 18 UTC)
+  to capture the potential for thunderstorms that frequently occur in
+  summer afternoons in the Alps. The model is estimated by maximum
+  penalized likelihood using a backfitting algorithm \citep{Stasinopoulos+Rigby:2007}.
+
+\item \emph{Boosted GAMLSS:} Smooth additive splines are selected
+  automatically from all 82~available variables, using non-cyclic boosting
+  for parameter estimation \citep{Hofner+Mayr+Schmid:2016,Messner+Mayr+Zeileis:2017}.
+  This updates the predictor terms for the location or scale submodels iteratively
+  by maximizing the log-likelihood only for the variable yielding the
+  highest improvement. The iteration stops early -- before fully maximizing
+  the in-sample likelihood -- based on a (computationally intensive)
+  out-of-bag bootstrap estimate of the log-likelihood. The grid considered for
+  the number of boosting iterations (``mstop'') is: $50, 75, \dots, 975, 1000$.
+
+\end{itemize}
+
+The predictive performance in terms of full probabilistic forecasts is
+assessed using the continuous ranked probability score (CRPS, \fixme{reference}).
+For each of the models this assesses the discrepancy of the
+predicted distribution function $F$ from the observation $y$ by
 $$
 \text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
 $$
-where \(\mathbf{1}\) is the indicator function.
-%%% <TH> y > z??? </TH>
+where \(\mathbf{1}\) is the indicator function. In the subsequent
+applications, the mean CRPS is always evaluated out of sample, 
+either using cross-validation or a hold-out data set (2009--2012)
+that was not used for learning (1985--2008). CRPS is a proper
+scoring rule \fixme{citation} and lower values indicate a better fit.
 
-In this application the CRPS is evaluated out of sample, 
-e.g. on a part of the data set that has not been considered to 
-build the model. The mean CRPS over this subset of the data 
-is used for validation. Since the CRPS can be seen as a 
-generalization of the mean absolute error, a low value indicates 
-a good fit. In applications, one big advantage in terms of 
-interpretability is that the resulting value is on the scale of 
-the observations.
-
-For the purpose of comparing the models' performances with respect 
-to a reference model the so-called skill score of the CRPS can be 
-calculated. In that way a measure of how much a method improves the
-model fit in terms of CRPS compared to the reference method is obtained.
+To assess differences in the improvement of the forests and GAMLSS
+models over the basic EMOS, a CRPS-based skill score with EMOS as
+the reference method is computed as well:
 $$
-\text{SkillScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{reference}}}
+\text{SkillScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{EMOS}}}.
 $$
 
 
@@ -1624,11 +1580,10 @@ supported by the corresponding probability integral transform (PIT) histograms
 # out of sample
 set.seed(7)
 par(mfrow = c(2,2))
-
 qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{qqr_oosample} Out-of-sample residual QQ-plots (2009--2012) 
 for station Axams based on models learned on data from 1985--2008.}
@@ -1835,7 +1790,7 @@ majority of stations the distributional forest performs best.
                 ylim = c(46.6, 47.87))
   plot(tirol.gadm, add = TRUE)
   points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
-  legend(x = 9.8, y = 47.815, pch=c(21,24,25,22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
+  legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
   text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
   mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
   par(mar = c(0.5,0.2,0.5,2.3))
@@ -1908,7 +1863,7 @@ To specify a distribution family the user can hand over one of the
 following objects as input argument in \code{distfit}, \code{disttree} 
 and \code{distforest}: 
 \begin{itemize}
-\item a GAMLLS family object from the \textsf{R} package \textbf{gamlss.dist} 
+\item a GAMLSS family object from the \textsf{R} package \textbf{gamlss.dist} 
 (\citealt{Stasinopoulos+Rigby:2007}).
 \item a family list generating function from the package \textbf{disttree}.
 \item a complete family list from the package \textbf{disttree}.
@@ -2076,9 +2031,9 @@ set.seed(4)
 
 par(mfrow = c(2,2))
 pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
+pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
 pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
 pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
-pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
       
 @
 %\end{subfigure}
