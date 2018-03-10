@@ -1498,7 +1498,7 @@ where \(\mathbf{1}\) is the indicator function. In the subsequent
 applications, the mean CRPS is always evaluated out of sample, 
 either using cross-validation or a hold-out data set (2009--2012)
 that was not used for learning (1985--2008). CRPS is a proper
-scoring rule \fixme{citation} and lower values indicate a better fit.
+scoring rule \citep{Gneiting+Raftery:2007} and lower values indicate a better fit.
 
 To assess differences in the improvement of the forests and GAMLSS
 models over the basic EMOS, a CRPS-based skill score with EMOS as
