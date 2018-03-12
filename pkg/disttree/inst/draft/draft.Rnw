@@ -1055,13 +1055,15 @@ distribution is often selected.
 With the specification of the distribution family and its log-likelihood 
 function the task of fitting a distributional model turns into the task 
 of determining the distribution parameter~$\theta$. This is done by the 
-following maximization.
+following maximization based on a learning sample $\{y_i\}_{i=1,\ldots,n}$ 
+of the response variable $Y$.
 $$
 \hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
-where $\{y_i\}_{i=1,\ldots,n}$ are the observations of the response 
-variable $Y$.
-
+which is equal to solving 
+$$
+\sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = 0.
+$$
 In that way, a whole distribution is specified with all its features, 
 including location, scale, and shape. However, fitting one global model 
 to the whole data set might be too much of a generalization and therefore 
@@ -1101,7 +1103,7 @@ applying a tree algorithm.
 
 \subsection{Distributional tree}
 \label{disttree}
-Given the fit of a global distributional model $D(Y, \bold{\hat{\theta}})$ 
+Given the fit of a global distributional model $D(Y, \bold{\hat{\theta}})$, 
 the idea is to use the information provided by this model together with a 
 set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ 
 to decide whether the data set should be split into subgroups or not. 
