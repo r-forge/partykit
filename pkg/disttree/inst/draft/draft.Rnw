@@ -732,7 +732,7 @@ distribution is employed to model 24-hour total precipitation so that the
 zero-censored point mass describes the probability of no precipitation on a
 given day (see Figure~\ref{axams_onestation}). Forecasts for July are
 established based on data from the same month in the years 1985--2012 along with
-82~covariates derived from a wide range of NWP ensemble outputs. As
+80~covariates derived from a wide range of NWP ensemble outputs. As
 Figure~\ref{axams_onestation} shows, the station-wise models yield a full
 distributional forecast for each day -- here for the same day (July~24) at one
 station (Axams) over four years (2009--2012) -- based on the previous 24~years
@@ -746,7 +746,7 @@ with regressors prespecified based on meteorological expertise following
 \cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
 \citep{Hofner+Mayr+Schmid:2016} using non-homogeneous boosting
 \citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
-82~available regressors.
+80~available regressors.
 
 
 <<echo=FALSE, results=hide>>=
@@ -1319,13 +1319,13 @@ interactions, and potentially nonlinear effects. For fitting the forest
 only the response distribution and the list of potential predictor variables
 need to be specified (along with a few algorithmic details) and then
 the model fit is determined by the forest in a data-driven way. Here, we
-employ a zero-censored Gaussian distribution and 82~predictor variables
+employ a zero-censored Gaussian distribution and 80~predictor variables
 computed from ensemble means and spreads of various NWP outputs.
 The predictive performance of the forest is compared to three other
 zero-censored Gaussian models: (a) a standard basic EMOS, (b) a GAMLSS
 with prespecified effects and interactions based on meteorological
 knowedge/experience, and (c) a boosted GAMLSS with automatic
-selection of smooth additive terms based on all 82~predictor variables.
+selection of smooth additive terms based on all 80~predictor variables.
 
 \subsection{Data}
 \label{data}
@@ -1403,8 +1403,7 @@ of the atmospheric state.
 From the GEFS outputs 14 basic forecast variables are considered with up 
 to 12 variations of each of these variables such as mean/maximum/minimum
 or different aggregation time ranges, etc. A detailed overview is
-provided in Table~\ref{covariates}, yielding 82~predictor variables in total.
-\fixme{Mention that dswrf\_mean/sprd\_min is not included?}
+provided in Table~\ref{covariates}, yielding 80~predictor variables in total. (Since the minimum of the ``variable downwards short wave radiation flux'' (\emph{dswrf}) over 24 hours is always 0, the ensemble mean and standard deviation of these minimal values are not considered.) \fixme{Mention that dswrf\_mean/sprd\_min is not included?}
 
 To remove large parts of the skewness of precipitation data, 
 a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
@@ -1451,7 +1450,7 @@ further details:
 %
 \begin{itemize}
 
-\item \emph{Distributional forest:} All 82~predictor variables are
+\item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Bootstrap
   sampling is employed for each tree using a third of the predictors
   in each split of the tree (``mtry''). Parameters are estimated by
@@ -1468,7 +1467,7 @@ further details:
 \item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
   the most relevant predictors, based on meteorological expert knowledge
   following \cite{Stauffer+Umlauf+Messner:2017}. More specifically, based
-  on the 82~available variables, 8 terms are included in the location
+  on the 80~available variables, 8 terms are included in the location
   submodel and 6 in the scale submodel. Both involve an interaction of
   \emph{tp} and \emph{cape} in the afternoon (between 12 and 18 UTC)
   to capture the potential for thunderstorms that frequently occur in
@@ -1476,7 +1475,7 @@ further details:
   penalized likelihood using a backfitting algorithm \citep{Stasinopoulos+Rigby:2007}.
 
 \item \emph{Boosted GAMLSS:} Smooth additive splines are selected
-  automatically from all 82~available variables, using non-cyclic boosting
+  automatically from all 80~available variables, using non-cyclic boosting
   for parameter estimation \citep{Hofner+Mayr+Schmid:2016,Messner+Mayr+Zeileis:2017}.
   This updates the predictor terms for the location or scale submodels iteratively
   by maximizing the log-likelihood only for the variable yielding the
@@ -1520,9 +1519,9 @@ numerical weather predictions are available for the month of July of
 the results of fitting a distributional forest to the first 24 years of the 
 data set and predicting the total amount of precipitation for one specific 
 day of each of the four successive years have been shown as a motivational 
-example for a probabilistic forecast. Staying with this fitted model we are 
-now going to analyze variable importance of the distributional forest model 
-and compare its results to those of the prespecified and the boosted GAMLSS 
+example for a probabilistic forecast. Staying with this fitted model,
+variable importance of the distributional forest model will be analyzed and its
+performance will be compared to those of the prespecified and the boosted GAMLSS 
 and the EMOS model based on residual QQ-plots.
 
 %%%<TH> always us the term "distributional forest"
@@ -1540,9 +1539,9 @@ effect on the response variable a standard measurement of variable importance
 for forest models has been applied. Based on the mean decrease in accuracy 
 regarding the CRPS the 10 leading covariates of the above described distributional 
 forest for station Axams learned on the first 24 years are listed in 
-Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation 
-is the most influential variable. In particular, five variations of this variable 
-are among the top ten of the list of covariates ordered by variable importance.  
+Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation (\emph{tp}) is the most influential variable. In particular, five variations of 
+this variable are among the top ten of the list of covariates ordered by 
+variable importance.  
   
 
 \begin{figure}[t!]
@@ -1603,9 +1602,9 @@ of which again the average values are stored. This whole procedure is repeated
 10 times. The resulting skill scores are illustrated in 
 Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model 
 represented by the horizontal line at height 0. This CRPS skill score boxplot 
-shows that, in this setting, both GAMLSS and the distributional forest perform 
-better than the EMOS model. While the two GAMLSS lead to an improvement of 
-around 4 percent with the boosted version being slightly ahead, the 
+shows that, in this setting, both GAMLSS models and the distributional forest 
+perform better than the EMOS model. While the two GAMLSS lead to an improvement 
+of around 4 percent with the boosted version being slightly ahead, the 
 distributional forest even reaches an improvement rate close to 6 percent.
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
@@ -1658,13 +1657,13 @@ line pertains to the reference model EMOS.}
 %\newpage
 \subsection{Application for all stations}
 Until now the focus has been on one observation station only. To test and 
-compare the four methods under different geographical circumstances we are 
-now going to apply them on all 95 stations. At each of them, the first 
+compare the four methods under different geographical circumstances they
+are applied on all 95 stations. For each station, the first 
 24 years are used as learning data set and predictions are made for the 
 ensuing 4 years of available observations. For these out-of-sample predictions 
 the CRPS skill score with the EMOS model as reference model is calculated 
 for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots 
-of the CRPS skill score values are plotted and show that the distributional 
+of the CRPS skill score values are plotted illustrating that the distributional 
 forest leads to the highest improvement averaged over all stations.
 The green line represents the results for the station Axams.
 %NAs in gamlss in 13 stations!!!\\
@@ -1773,8 +1772,8 @@ representing the method that performed best in terms of CRPS at this station.
 The color of the symbol indicates the difference between the CRPS of the 
 distributional forest and the CRPS of the best performing among the other 
 three models (prespecified GAMLSS, boosted GAMLSS and EMOS).
-Even though for some stations, especially in East Tyrol, one of the two GAMLSS 
-and for a few others the EMOS model leads to the best results, for the 
+Even though for some stations, especially in East Tyrol, one of the two GAMLSS
+models and for a few others the EMOS model leads to the best results, for the 
 majority of stations the distributional forest performs best.
 
 \begin{figure}[t!]
@@ -1835,7 +1834,7 @@ improvement in the predictive performance in this setting. Especially
 in situations where no or only little information is available about 
 possible influences, effects or interactions this novel methodology 
 can be seen as a good and recommendable compromise being able to deal 
-with a wide range of modelling situations in a reasonable way.
+with a wide range of modeling situations in a reasonable way.
 
 %Even though many situations demand for the use of specifically tailored 
 %models providing the needed features and therefore being clearly advantageous 
