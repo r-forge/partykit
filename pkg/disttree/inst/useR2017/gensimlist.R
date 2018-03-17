@@ -1,5 +1,5 @@
 ### generates simlist which will then be plotted in slides.Rnw
-gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
+gensimlist <- function(seed = 7, nrep = 100, ntree = 100, covariate = c("x1"))
 {
   library("disttree")
   library("gamlss")
@@ -128,9 +128,12 @@ gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
                              linkinv = linkinv, 
                              linkinvdr = linkinvdr,
                              startfun = startfun,
-                             mle = mle
+                             mle = mle,
+                             gamlssobj = FALSE,
+                             censored = FALSE
     )
   }
+  
   
   
   
@@ -275,7 +278,7 @@ gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
   # (optionally with plot)
   sim_fun <- function(fun, nsteps = 10, ntree = 10, nobs = 200, nrep = 10, 
                       family = dist_list_normal, kappa.start = 0, stepsize = 1,
-                      type.gfun = "linear", covariate = c("x1"),
+                      type.gfun = "linear", covariate = covariate,
                       g.interact = FALSE, var.nobs = FALSE, kappa.fix = NULL,
                       plot = c("none", "RMSE", "loglikelihood"), type.tree = "mob",
                       ctree_minbucket = 7, ctree_mincrit = 0, 
@@ -567,7 +570,8 @@ gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
       
       av.loglik.dt = as.numeric(resframe["av.loglik.dt",]),
       av.loglik.df = as.numeric(resframe["av.loglik.df",]),
-      av.loglik.g = as.numeric(resframe["av.loglik.g",]),
+      av.loglik.g
+      = as.numeric(resframe["av.loglik.g",]),
       
       x.axis = x.axis
     )
@@ -597,3 +601,181 @@ gensimlist <- function(seed = 7, nrep = 100, ntree = 100)
   return(simlist)
 }
   
+
+
+
+## HCL palette
+pal <- hcl(c(10, 128, 260), 100, 50)
+names(pal) <- c("forest", "tree", "gamlss")
+
+pallight <- hcl(c(10, 128, 260), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss")
+
+transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
+
+
+# plots for various data sets
+# results given in simlist
+# plot RMSE
+plot_rmse <- function(simlist, type = c("exp", "par")){
+  
+  if(type == "exp"){
+    #dev.off() 
+    rmse <- cbind(simlist$av.rmse.exp.true.dt, simlist$av.rmse.exp.true.df, simlist$av.rmse.exp.true.g,
+                  simlist$av.rmse.exp.obs.dt, simlist$av.rmse.exp.obs.df, simlist$av.rmse.exp.obs.g)
+    colnames(rmse) <- c("dt.true", "df.true", "g.true", "dt.obs", "df.obs", "g.obs")
+    ylim <- c(min(rmse), max(rmse))
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(x = simlist$x.axis, y = rmse[,"dt.true"], type = "l", col = pal["tree"], ylim = ylim,
+         xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    lines(x = simlist$x.axis, y = rmse[,"dt.obs"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"df.true"], type = "l", col = pal["forest"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"df.obs"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"g.true"], type = "l", col = pal["gamlss"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"g.obs"], type = "l", lty = 2, col = pal["gamlss"], lwd = 2)
+    #legend('left', c("disttree", "distforest", "gamlss"), col = c(pal["tree"], pal["forest"], pal["gamlss"]), lty = 1)
+    mtext(text= "smooth", side = 1, line = 1, adj = 0)
+    mtext(text= "steep", side = 1, line = 1, adj = 1)
+    mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+    mtext(text= "RMSE", side = 2, line = 1)
+    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 5)
+    mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = 13)
+    mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = 16.5)
+    
+    
+    # add arrows
+    parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='', ylab='', col='white', axes = FALSE) 
+    
+    #add arrow on the right side (downwards, for RMSE)
+    arrows(0.99,0.47, 0.99,0.3,lwd=1) ## add arrow
+    text(0.99,0.5, 'better')
+    segments(0.99,0.53,0.99,0.7,lwd=1)
+    
+    #add arrows below
+    arrows(0.45,0.085,0.3,0.085,lwd=1) ## add arrow
+    arrows(0.6,0.085,0.75,0.085,lwd=1) ## add arrow
+    
+    # plot parameters  reset to prior values
+    par(parsave)
+  } 
+  
+  if(type == "par"){
+    rmse <- cbind(simlist$av.rmse.mu.dt, simlist$av.rmse.mu.df, simlist$av.rmse.mu.g, 
+                  simlist$av.rmse.sigma.dt, simlist$av.rmse.sigma.df, simlist$av.rmse.sigma.g)
+    colnames(rmse) <- c("mu.dt", "mu.df", "mu.g", "sigma.dt", "sigma.df", "sigma.g")
+    ylim <- c(min(rmse), max(rmse))
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(x = simlist$x.axis, y = rmse[,"mu.dt"], type = "l", col = pal["tree"], ylim = ylim,
+         xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.dt"], type = "l", lty = 2, col = pal["tree"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"mu.df"], type = "l", col = pal["forest"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.df"], type = "l", lty = 2, col = pal["forest"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"mu.g"], type = "l", col = pal["gamlss"], lwd = 2)
+    lines(x = simlist$x.axis, y = rmse[,"sigma.g"], type = "l", lty = 2, col = pal["gamlss"], lwd = 2)
+    #legend('topleft', c("disttree", "distforest", "gamlss"), col = c(pal["tree"], pal["forest"],pal["gamlss"]), lty = 1)
+    mtext(text= "smooth", side = 1, line = 1, adj = 0)
+    mtext(text= "steep", side = 1, line = 1, adj = 1)
+    mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+    mtext(text= "RMSE", side = 2, line = 1)
+    mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = -7)
+    mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = 8)
+    mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = 14)
+    
+    # add arrows
+    parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+    plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='',ylab='',col='white', axes = FALSE) 
+    
+    #add arrow on the right side (downwards, for RMSE)
+    arrows(0.99,0.47,0.99,0.3,lwd=1) ## add arrow
+    text(0.99,0.5, 'better')
+    segments(0.99,0.53,0.99,0.7,lwd=1)
+    
+    #add arrows below
+    arrows(0.45,0.085,0.3,0.085,lwd=1) ## add arrow
+    arrows(0.6,0.085,0.75,0.085,lwd=1) ## add arrow
+    
+    # plot parameters  reset to prior values
+    par(parsave)
+  }
+}
+
+# plot loglikelihood
+plot_ll <- function(simlist){
+  ll <- cbind(simlist$av.loglik.dt, simlist$av.loglik.df, simlist$av.loglik.g)
+  colnames(ll) <- c("dt", "df","g")
+  ylim <- c(min(ll), max(ll))
+  par(mar=c(5.1,4.1,4.1,3.1))
+  plot(x = simlist$x.axis, y = ll[,"dt"], type = "l", col = pal["tree"], ylim = ylim,
+       xlab = "", ylab = "", xaxt="n", yaxt="n", lwd = 2)
+  title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+  title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+  title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+  title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+  title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+  
+  lines(x = simlist$x.axis, y = ll[,"df"], type = "l", col = pal["forest"], lwd = 2)
+  lines(x = simlist$x.axis, y = ll[,"g"], type = "l", col = pal["gamlss"], lwd = 2)
+  #legend('topright', c("disttree", "distforest", "gamlss"), col = c(pal["tree"], pal["forest"],pal["gamlss"]), lty = 1)
+  #mtext(text= "disttree", side = 3, col = pal["tree"], line = 1, adj = 0.3)
+  #mtext(text= "distforest", side = 3, col = pal["forest"], line = 1, adj = 0.5)
+  #mtext(text= "gamlss", side = 3, col = pal["gamlss"], line = 1, adj = 0.7)
+  #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.4)
+  #mtext(text= "vs.", side = 3, col = "black", line = 1, adj = 0.6)
+  mtext(text= "smooth", side = 1, line = 1, adj = 0)
+  mtext(text= "steep", side = 1, line = 1, adj = 1)
+  mtext(text= TeX('$\\kappa$'), side = 1, line = 1)
+  mtext(text= "Log-Likelihood", side = 2, line = 1)
+  mtext(text= "disttree", side = 2, col = pal["tree"], las = 1, line = 0.2, padj = 16.7)
+  mtext(text= "distforest", side = 2, col = pal["forest"], las = 1, line = 0.2, padj = -8)
+  mtext(text= "gamlss", side = 2, col = pal["gamlss"], las = 1, line = 0.3, padj = -16)
+  
+  # add arrows
+  parsave <- par(new = TRUE,  mar = c(0,0,0,0))
+  plot(0,0,xlim=c(0,1),ylim=c(0,1),type="n",xlab='', ylab='', col='white', axes = FALSE) 
+  
+  #add arrow on the right side (upwards, for LL)
+  arrows(0.99,0.53,0.99,0.7,lwd=1) ## add arrow
+  text(0.99,0.5, 'better')
+  segments(0.99,0.3,0.99,0.47,lwd=1)
+  
+  #add arrows below
+  arrows(0.45,0.085,0.3,0.085,lwd=1) ## add arrow
+  arrows(0.6,0.085,0.75,0.085,lwd=1) ## add arrow
+  
+  # plot parameters  reset to prior values
+  par(parsave)
+}
+
+
+
+
+
+
+if(FALSE){
+  
+  simlist <- gensimlist(seed = 9, nrep = 70, ntree = 100, covariate = c("x1", "x2"))
+  
+  
+  
+  
+  
+  
+  
+  
+  plot_ll(simlist)
+  plot_rmse(simlist, type = "par")
+  plot_rmse(simlist, type = "exp")
+  
+  
+}
