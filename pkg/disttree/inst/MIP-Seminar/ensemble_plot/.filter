@@ -1,0 +1,10 @@
+# Only surface temperature and precipitation
+switch(shortName) {
+   case "tp":
+      print "found [shortName]";
+      write;
+   case "2t":
+      print "found [shortName]";
+      write;
+   default:
+}
