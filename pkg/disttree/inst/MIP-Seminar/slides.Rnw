@@ -358,7 +358,7 @@ Y = daily precipitation sums
 \textbf{Application/Motivation:}
 \begin{itemize}
 \item Prediction.
-\item Analysis of dependencies and interactions.
+\item Caption of dependencies and interactions.
 \end{itemize}
 }
 \vspace{0.5cm}
@@ -401,7 +401,7 @@ Y = daily precipitation sums
 \visible<2->{
 \begin{minipage}{0.65\textwidth}
 \textbf{Example:} 
-\only<2-3>{Linear model}\only<4>{Generalized additive model}\only<5>{Generalized additive model\\ for location, scale, and shape}
+\only<2-3>{Linear model}\only<4>{Generalized additive model}\only<5-6>{Generalized additive model\\ for location, scale, and shape}
 \\
 \only<2-3>{
 $$\visible<3>{\mathbb{E}(Y|X) = } f(X; \alpha) = \alpha_0 + \alpha_1 \cdot X$$  
@@ -409,11 +409,11 @@ $$\visible<3>{\mathbb{E}(Y|X) = } f(X; \alpha) = \alpha_0 + \alpha_1 \cdot X$$
 \only<4>{
 $$\mathbb{E}(Y|X) = f(X; \alpha) = \alpha + s(X)$$  
 }
-\only<5>{
+\only<5-6>{
 \vspace{-0.8cm}
 \begin{align*}
-\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
-\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
+\visible<6>{\mathbb{E}(Y|X) = }\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
+\visible<6>{\sqrt{Var(Y|X)} = }\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
 \end{align*}
 }
 \end{minipage}
@@ -461,7 +461,7 @@ ytrue <- x^3
 var <- exp(-(2*x)^2)/2
 y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 @
-\only<5>{
+\only<5-6>{
 <<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
@@ -1176,7 +1176,7 @@ $$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\SweaveOpts{eval=FALSE}
+\SweaveOpts{eval=TRUE}
 
 
 <<pred_axams, echo=FALSE, results=hide>>=
@@ -1472,24 +1472,32 @@ axis(4, at = brk, las = 1, mgp=c(0,0,-1.2), cex = 1.5)
 \begin{frame}
 \frametitle{References}
 
-\vspace{-0.2cm}
+\vspace{0.5cm}
+%\vspace{-0.2cm}
 
 \footnotesize
-Hothorn T, Hornik K, Zeileis A (2006).
- \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
- \textit{Journal of Computational and Graphical Statistics},
- \textbf{15}(3), 651--674.
- \doi{10.1198/106186006X133933}
+
+%Hothorn T, Hornik K, Zeileis A (2006).
+% \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+% \textit{Journal of Computational and Graphical Statistics},
+% \textbf{15}(3), 651--674.
+% \doi{10.1198/106186006X133933}
  
-\medskip
+%\medskip
 
-Zeileis A, Hothorn T, Hornik K (2008).
- \dquote{Model-Based Recursive Partitioning.}
-  \textit{Journal of Computational and Graphical Statistics},
-  \textbf{17}(2), 492--514.
-  \doi{10.1198/106186008X319331}
+%Zeileis A, Hothorn T, Hornik K (2008).
+% \dquote{Model-Based Recursive Partitioning.}
+%  \textit{Journal of Computational and Graphical Statistics},
+%  \textbf{17}(2), 492--514.
+%  \doi{10.1198/106186008X319331}
 
-\medskip
+%\medskip
+
+Schlosser L, Hothorn T, Stauffer R, Zeileis A (2018).
+  \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
+  \emph{Manuscript under preparation}.
+
+\bigskip
 
 Hothorn T, Zeileis A (2015).
  \dquote{\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
@@ -1497,7 +1505,7 @@ Hothorn T, Zeileis A (2015).
  \textbf{16}, 3905--3909.
  \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
 
-\medskip
+\bigskip
 
 Stasinopoulos DM, Rigby RA (2007).
   \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in \textsf{R}.}
@@ -1520,48 +1528,48 @@ Stasinopoulos DM, Rigby RA (2007).
 %  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
 %  \url{http://arxiv.org/abs/1701.02110}
 
-\medskip
+%\medskip
 
-Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
-  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and Minimum CRPS Estimation}
-  \textit{Monthly Weather Review}, 
-  \textbf{133}(5), 1098--1118.
-  \doi{10.1175/MWR2904.1}
+%Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
+%  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and Minimum CRPS Estimation}
+%  \textit{Monthly Weather Review}, 
+%  \textbf{133}(5), 1098--1118.
+%  \doi{10.1175/MWR2904.1}
   
-\medskip
+%\medskip
 
-Hofner B, Mayr A, Schmid M (2016).
-  \dquote{\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and Variable Selection in the {GAMLSS} Framework}
-  \textit{Journal of Statistical Software},
-  \textbf{74}(1), 1--31.
-  \doi{10.18637/jss.v074.i01}
+%Hofner B, Mayr A, Schmid M (2016).
+%  \dquote{\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and Variable Selection in the {GAMLSS} Framework}
+%  \textit{Journal of Statistical Software},
+%  \textbf{74}(1), 1--31.
+%  \doi{10.18637/jss.v074.i01}
 
 \end{frame}
 
 
-\begin{frame}
-\frametitle{References (2)}
+%\begin{frame}
+%\frametitle{References (2)}
 
-\vspace{-0.2cm}
+%\vspace{-0.2cm}
 
-\footnotesize
+%\footnotesize
 
-% Reference for the observation data set
-BMLFUW (2016).
-  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
-  \text{Available at \url{http://ehyd.gv.at}}, 
-  \text{Accessed: 2016--02--29}.
+%% Reference for the observation data set
+%BMLFUW (2016).
+%  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
+%  \text{Available at \url{http://ehyd.gv.at}}, 
+%  \text{Accessed: 2016--02--29}.
 
-\medskip
+%\medskip
 
 % Reference for the GFS reforecast version 2 data set 
-Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
-  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
-  \textit{Bulletin of the American Meteorological Society}, 
-  \textbf{94}(10), 1553--1565.
-  \doi{10.1175/BAMS-D-12-00014.1}
+%Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
+%  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
+%  \textit{Bulletin of the American Meteorological Society}, 
+%  \textbf{94}(10), 1553--1565.
+%  \doi{10.1175/BAMS-D-12-00014.1}
 
-\medskip
+%\medskip
 
 %Breiman L (2001).
 %  \dquote{Random {Forests}}
@@ -1569,29 +1577,29 @@ Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Z
 %  \textbf{45}(1), 5--32.
 %  \doi{10.1023/A:1010933404324}
 
-Messner J W,  Mayr G J, Zeileis A (2016).
-  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
-  \textit{The \textsf{R} Journal}, 
-  \textbf{8}(1), 173--181.\\
-  \scriptsize
-  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
-  \footnotesize
+%Messner J W,  Mayr G J, Zeileis A (2016).
+%  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
+%  \textit{The \textsf{R} Journal}, 
+%  \textbf{8}(1), 173--181.\\
+%  \scriptsize
+%  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
+%  \footnotesize
 
-\medskip
+%\medskip
 
-Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
-  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored Additive Regression Model}
-  \textit{International Journal of Climatology}, 
-  \textbf{37}(7), 3264--3275.
-  \doi{10.1002/joc.4913}
+%Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
+%  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored Additive Regression Model}
+%  \textit{International Journal of Climatology}, 
+%  \textbf{37}(7), 3264--3275.
+%  \doi{10.1002/joc.4913}
   
-\medskip
+%\medskip
 
-Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
-  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
-  \textit{Monthly Weather Review}, 
-  \text{Forthcoming}.
-  \doi{10.1175/MWR-D-16-0388.1}
+%Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
+%  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link %Functions}
+%  \textit{Monthly Weather Review}, 
+%  \text{Forthcoming}.
+%  \doi{10.1175/MWR-D-16-0388.1}
 
 %\medskip
 
@@ -1600,7 +1608,7 @@ Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
 %  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
 %  \text{Accessed: 2016--07--10}.
 
-\end{frame}
+%\end{frame}
 
 
 
