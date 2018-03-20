@@ -6,23 +6,14 @@
 %\VignettePackage{disttree}
 
 %% packages
-\usepackage{amstext}
-\usepackage{amsfonts}
-\usepackage{amsmath}
-\usepackage{thumbpdf,lmodern}
-%\usepackage{rotating}
-%\usepackage{caption}
-%\captionsetup{format=hang}
-%\usepackage{subcaption}
-\usepackage{Sweave}
-%\usepackage{enumitem}
-%\usepackage{graphicx}
-\usepackage{array, makecell}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta}
-\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
-%\usepackage[pagebackref=true]{hyperref}
-%\usepackage{doi}
+\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
+
+%% tikz
+\usepackage{array,makecell,tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
+
+%% need no \usepackage{Sweave}
+\SweaveOpts{concordance=FALSE, eps=FALSE, keep.source=TRUE, eval = TRUE}
 
 %% commands
 \newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
@@ -432,13 +423,7 @@ the GAMLSS approaches.
 }
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
-
-\SweaveOpts{eps=FALSE, keep.source=TRUE, eval = TRUE}
-
-
-\SweaveOpts{eval = TRUE}
 \section{Introduction}
 
 In regression analysis a wide range of models has been developed to describe the
@@ -1018,123 +1003,119 @@ with regressors prespecified based on meteorological expertise following
 \section{Methodology}
 \label{Methodology}
 
-As illustrated in Figure~\ref{Devel_parmod} a wide range of tools has been developed 
-in the field of parametric modeling. Especially the shift from conditional mean 
-regression models to distributional regression models has increased the application 
-spectrum by allowing for much broader inference. In some cases further features 
-such as the ability to capture non-additive effects or interactions are desirable 
-which demands for more flexibility. Since tree-structured models provide these 
-required features, combining them with parametric models can offer a framework 
-that is able to deal with a wide variety of different modeling situations. 
-In this section the novel methodology which embeds parametric modeling into 
-the idea of tree-structured models will be introduced step by step. Starting 
-with a simple distributional fit in Section~\ref{distfit} will be followed by 
-building a distributional tree in Section~\ref{disttree} and finally a distributional 
-forest in Section~\ref{distforest}.
+To embed the distributional approach from GAMLSS into regression trees and random
+forests, we proceed in three steps. (1)~To fix notation, we briefly review fitting
+distributions using standard maximum likelihood in in Section~\ref{distfit}.
+(2)~A recursive partitioning strategy based on the corresponding scores (or
+gradients) is introduced in Section~\ref{disttree}, leading to distributional
+trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
+employed to establish distributional forests in Section~\ref{distforest}.
+
+The general distributional notation is exemplified in all three steps for the
+zero-censored Gaussian distribution. The latter is employed in the empirical
+in the empirical case study in Section~\ref{ProbabilisticForecasting} to model
+power-transformed daily precipitation amounts.
+
 
 \subsection{Distributional fit}
 \label{distfit}
-Fitting a distributional model to a set of observations without considering any 
-covariates is a well known procedure which can for example be done by applying 
-the maximum likelihood method. This is also the chosen approach in the methodology 
-described in this section. 
-%%% <TH> is is repeated on page 5, remove here </TH>
 
-The goal is to fit a distributional model $\mathcal{D}(Y, \theta)$ to a response variable 
-$Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters 
-$\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution 
-family with density function $f$ has to be specified in advance such that a 
-log-likelihood function $\ell(\theta; Y) = \log(f(Y; \theta)$ is provided. Using 
-the GAMLSS framework (\citealt{Rigby+Stasinopoulos:2005}) a wide range of distributions 
-can be selected where each distribution parameter can be specified separately. 
-This enables the model to deal with various features that can make the task of 
-fitting a model very challenging such as censoring, truncation or heavy tails.
+A distributional model $\mathcal{D}(Y, \bm{\theta})$ is considered for the response
+variable $Y \in \mathcal{Y}$ using the distributional family $\mathcal{D}$ with
+\textit{k}-dimensional parameter vector $\bm{\theta} \in \bold{\Theta}$. Based on the
+corresponding probability density function $f(Y; \bm{\theta})$ the log-likelihood
+function is defined $\ell(\bm{\theta}; Y) = \log\{f(Y; \bm{\theta})\}$. The GAMLSS
+framework \citep{Rigby+Stasinopoulos:2005} provides a wide range of such
+distributional families with parameterizations corresponding to location, scale,
+and shape. Furthermore, censoring and/or truncation of these distributions
+can be incorporated in the usual straightforward way \fixme{reference needed}.
 
-In our application of precipitation forecasting the response variable, which is 
-the power transformed total precipitation amount within 24 hours, is expected 
-to be normally distributed with mean/location parameter $\mu$ and standard 
-deviation/scale parameter $\sigma$ and left-censored with censoring point 0. 
-(The power transformation is used to remove large parts of the skewness of 
-the data as further explained in Section~\ref{data}.) Therefore, the 
-corresponding log-likelihood function with parameter vector 
-$\theta = (\mu, \sigma)$ is
+To capture both location and scale of the probabilistic precipitation forecasts
+while accounting for a point mass at zero precipitation (i.e., dry days without
+rain), zero-censored Gaussian distribution with with mean/location parameter
+$\mu$ and standard deviation/scale parameter $\sigma$ is employed. Therefore,
+the corresponding log-likelihood function with parameter vector 
+$\bm{\theta} = (\mu, \sigma)$ is
 $$
 \ell(\mu, \sigma; Y) = 
 \begin{cases}
-    \log\left(\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right), & \text{if } Y > 0\\
-    \vspace{0.1cm}
-    \log\left(\Phi\left(\frac{-\mu}{\sigma}\right)\right), & \text{if } Y = 0
+    \log\left\{\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
+    \log\left\{\Phi\left(\frac{-\mu}{\sigma}\right)\right\}, & \text{if } Y = 0
 \end{cases}
 $$
 where $\phi$ and $\Phi$ are the probability density function and the 
 distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
-Next to the censored normal distribution also the censored logistic 
-distribution is often chosen for the modeling of precipitation amounts. In 
-\cite{Gebetsberger+Messner+Mayr:2017} this choice has been made in order 
-to be able to deal with heavy tails which often appear in precipitation 
-data. Another frequent application of probabilistic forecasting in meteorology 
-is the modeling of near surface air temperature. In this case a normal 
-distribution is often selected.
+Other distributions $\mathcal{D}$ and corresponding log-likelihoods
+$\ell(\mu, \sigma; Y)$ could be set up in the same way, e.g., for
+censored shifted gamma distributions \citep{Scheuerer+Hamill:2015} or
+zero-censored logistic distributions \citep{Gebetsberger+Messner+Mayr:2017}.
 
 With the specification of the distribution family and its log-likelihood 
 function the task of fitting a distributional model turns into the task 
-of determining the distribution parameter~$\theta$. This is done by the 
-following maximization based on a learning sample $\{y_i\}_{i=1,\ldots,n}$ 
-of the response variable $Y$.
+of estimating the distribution parameter~$\bm{\theta}$. This is commonly done by
+maximum likelihood (ML) based on the learning sample
+$\{y_i\}_{i = 1, \dots, n}$ of the response variable $Y$. The maximum
+likelihood estimator (MLE) $\bm{\hat \theta}$ is given by
+$$ \label{eq:mle}
+\bm{\hat \theta} = \argmax_{\bm{\theta} \in \bold{\Theta}} \sum_{i=1}^n \ell(\bm{\theta}; y_i).
 $$
-\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+Equivalently, this can be defined based on the corresponding first-order
+conditions
+$$ \label{eq:foc}
+\sum_{i = 1}^n s(\bm{\hat \theta}, y_i) = 0,
 $$
-which is equal to solving 
-$$
-\sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = 0.
-$$
-In that way, a whole distribution is specified with all its features, 
-including location, scale, and shape. However, fitting one global model 
-to the whole data set might be too much of a generalization and therefore 
-not represent the data and its features in a reasonable way. Moreover, 
-if covariates are available it is desirable to include them into the model 
-as they might provide important additional information. In our application 
-on precipitation data a wide range of covariates is available from a numerical 
-ensemble prediction system considering precipitation, temperature, sea level 
-pressure and other meteorological quantities which might be of interest and 
-have an influence on the predictions.
-
-A common way of including these covariates is to consider them as regressors 
-in a distributional model such that each parameter $\theta$ depends on covariates 
-$\bold{Z} = (Z_1,\ldots,Z_m)$. This could for example be done by a linear function 
-$g$. In that way the fitted model would be specified as 
-$\mathcal{D}(Y, \theta = g(\bold{Z}))$. In order to avoid the restriction to linear 
-effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ 
-to specify a more flexible model 
-$\mathcal{D}(Y, \theta = f_1(\bold{Z}) + \ldots + f_p(\bold{Z}))$ applying a GAM structure. 
-Another approach to distributional regression is proposed by 
-\cite{Klein+Kneib+Lang:2015} where each parameter of a possibly complex 
-distribution can be modeled by an additive term consisting of a variety of 
-different functional effect types. These include non-linear effects, spatial 
-effects, random coefficients and interaction surfaces which extends the 
-flexibility compared to parametric models such as GAMLSS modeling only 
-smooth effects.
-
-A different approach on how to include covariates that also allows for 
-non-additive effects and interactions is considered in the following. 
-In particular, the covariates can be used to separate the data into more 
-homogeneous subgroups. Doing so after fitting a global model to the whole 
-data set (without considering any covariates) and then fitting a local 
-model to each subgroup should improve the model remarkably. This 
-procedure of splitting a data set into subgroups can be done by 
-applying a tree algorithm.
+where $s(\bm{\theta}, y_i)$ is the associated score function
+$$ \label{eq:score}
+s(\bm{\theta}, y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i).
+$$ 
+The latter is subsequently employed as a general goodness-of-fit measure
+for individual observations $y_i$ and parameters $\bm{\theta}$.
 
 
 \subsection{Distributional tree}
 \label{disttree}
-Given the fit of a global distributional model $\mathcal{D}(Y, \bold{\hat{\theta}})$, 
-the idea is to use the information provided by this model together with a 
-set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ 
-to decide whether the data set should be split into subgroups or not. 
-In particular, the information provided by the fitted model are the scores 
+
+Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
+for reasonably representing the data and covariates $\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
+employed to capture differences in the distribution parameters $\bm{\theta}$.
+In weather forecasting, these covariates typically include the output
+from numerical weather prediction systems and/or lagged weather observations.
+
+To incorporate the covariates into the distributional model, GAMLSS considers
+them as regressors so that an additive predictor
+$g_j(\theta_j) = f_{j,1}(\bold{Z}) + f_{j,2}(\bold{Z}) + \dots$
+with link function $g_j(\cdot)$ is used for every parameter $\theta_j$
+($j = 1, \dots, k$) based on smooth terms $f_{j,k}$ such as
+nonlinear effects, spatial effects, random coefficients, or interaction surfaces
+\citep{Klein+Kneib+Lang:2015}. However, this requires specifying the
+additive terms and their functional forms in advance which is often difficult in
+practice, especially if the number of covariates $m$ is large.
+
+Regression trees generally take a different approach for automatically
+including covariates in a data-driven way that also allows for abrupt
+changes, non-additive effects, and interactions. In the context of
+distributional models the goal is to partition the covariate space
+$\mathcal{Z}$ recursively into disjoint segments so that a homogenous
+distributional model for the response $Y$ can be found with segment-specific
+parameters. More specifically, the $B$ disjoint segments $\mathcal{B}_b$
+($b = 1, \dots, B$) partition the covariate space
+$$ \label{eq:partition}
+\mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b,
 $$
-s(\hat{\theta}, y_i) = \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i).
-$$ 
+and a local distributional model $\mathcal{D}(Y, \bm{theta}^(b))$
+(i.e., with segment-specific parameters $\bm{theta}^(b)$) is fitted to the
+response $Y$ in that segment.
+
+To find the segments $\mathcal{B}_b$ that are (approximately) homogenous
+with respect to the distributional model with given parameters, the idea
+is to use a gradient-based recursive partitioning approach. In a given
+subsample of the learning data this fits the model by ML (see
+Equation~\ref{eq:mle}) and then assess the goodness of fit by looking at the
+scores $s(\bm{\hat \theta}; y_i)$ (see Equation~\ref{eq:score}).
+
+\fixme{still more to do}
+
+
 These values express how well the model fits the data regarding each 
 parameter. Ideally they should fluctuate randomly around zero, 
 similar to residuals in ordinary least squares estimation, but in 
@@ -1198,7 +1179,7 @@ $$
 The predicted distribution for $\bold{z}$ is then fully 
 specified by the estimated parameter $\hat{\theta}(\bold{z})$ where
 $$
-\hat{\theta}(\bold{z}) = \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\theta; y_i).
+\hat{\theta}(\bold{z}) = \argmax_{\theta \in \Theta} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\theta; y_i).
 $$
 
 While the clear structure of such a tree model is advantageous in 
@@ -1263,7 +1244,7 @@ the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculate
 by counting the number of trees in which $(y_i,\bold{z}_i)$ ends up in the same 
 terminal node as $\bold{z}$:
 $$
-w^{\text{forest}}_i(\bold{z}) = \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))
+w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))
 $$
 where $T$ is the number of trees of the forest, $B^t$ is the number of terminal 
 nodes of the \textit{t}-th tree and $\mathcal{B}^t_b$ represents the \textit{b}-th 
@@ -1285,7 +1266,7 @@ for the set of covariates $\bold{z}$ can now be included in the
 estimation process of the distribution parameters and in that way leads 
 to its individual parameter vector $\hat{\theta}(\bold{z})$ where
 $$
-\hat{\theta}(\bold{z}) =  \max_{\theta \in \Theta} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\theta; y_i)
+\hat{\theta}(\bold{z}) =  \argmax_{\theta \in \Theta} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\theta; y_i)
 $$
 While in a distributional tree the same distribution is specified for all 
 sets of covariates being in the same node, a distributional forest predicts 
@@ -1930,7 +1911,7 @@ vector $(\hat{\theta}_1, \ldots, \hat{\theta}_K)$, $K \in \mathbb{N}$,
 depending on the type of distribution. The estimation is done by 
 maximizing the log-likelihood function $\ell(\theta; Y)$, i.e.
 $$
-\hat{\theta} = \max_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
 which is equal to solving
 $$
