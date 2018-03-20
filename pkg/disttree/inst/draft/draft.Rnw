@@ -376,13 +376,35 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 \Abstract{
-While many regression models consider only the mean of the response variable recent advances in parametric modeling have made it possible to model all distribution parameters. In that way the underlying distribution can be fully specified allowing for a wide range of analysis and prediction methods which are particularly valuable in applications such as probabilistic weather forecasting. In generalized additive models for location, scale, and shape %(GAMLSS, \citealt{Rigby+Stasinopoulos:2005}) 
-each distribution parameter can be modeled separately by its own generalized additive model (GAM) capturing linear and non-linear effects. A different approach that would make it possible to also model non-additive effects and interactions is to apply tree-structured models such as regression trees %(\citealt{Loh:2011}) 
-or random forests. %(\citealt{Breiman:2001}). 
-%%%<TH> "random forest" generisch; Breiman and Cutler's randomForest </TH>
-This class of tree and forest models will now be integrated in probabilistic forecasting providing a novel general distributional framework for these methods. In particular, we are going to introduce distributional trees and forests which embed the idea of flexible parametric modeling into the framework of regression trees and random forests. 
-%%%<TH> break-up very long sentence </TH>
-Applying these novel approaches to precipitation data in a mountainous region with a very large number of numerical weather prediction quantities shows one of their main advantages in selecting variables automatically and illustrates their strengths as their performance is compared to GAMLSS that are specified based either on subject-matter knowledge and experience from meteorology or based on a computationally more demanding boosting approach.
+To obtain a probabilistic model for a dependent variable based on some set of
+explanatory variables, a distributional approach is often adopted where the
+parameter(s) of the distribution are linked to regressors. In many classical
+models this often only captures the location/expectation of the distribution but
+over the last decade there has been increasing interest in distributional
+regression approaches modeling all parameters including location, scale, and
+shape. Notably, so-called non-homogenous Gaussian regression models both
+mean and variance of a Gaussian response variable and is particularly
+popular in weather forecasting and, more generally, the GAMLSS framework
+allows to establish generalized additive models for location, scale, and shape
+with smooth linear or nonlinear effects.
+%
+However, in situations where variable selection is required and/or there are
+non-smooth dependencies or interactions (especially unknown or of high-order),
+it is challenging to establish a good GAMLSS. A natural alternative in these
+situations would be the application of regression trees or random forests but,
+so far, no general distributional framework is available for these. Therefore,
+a framework for distributional trees and forests is proposed that blends
+regression trees and random forests with classical distributions from the GAMLSS
+framework as well as their censored or truncated counterparts.
+%
+To illustrate these novel approaches in practice, they are employed to obtain
+probabilistic precipitation forecasts at numerous locations in a mountainous
+region (Tyrol, Austria) based on a very large number of numerical weather
+prediction quantities. Comparisons with GAMLSS using either a specification
+based on prior meteorological knowledge or a computationally more demanding
+boosting approach show that distributional random forests automatically
+select variables and interactions, performing on par or often even better than
+the GAMLSS approaches.
 }
 \Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, distributional regression}
 
@@ -425,6 +447,9 @@ model is the linear model (LM) where the conditional mean of the response
 is modeled through a linear function of the covariates (see the left panel of
 Figure~\ref{Devel_parmod} for a schematic illustration). Over the last decades
 this has been extended in various directions including:
+
+\pagebreak
+
 \begin{itemize}
   \item \emph{Generalized linear models} (GLMs, \citealp{Nelder+Wedderburn:1972})
     encompassing an additional nonlinear link function for the conditional mean.
@@ -720,34 +745,6 @@ variables and possibly complex interactions. Thus, these properties make the met
 appealing in case of many covariates with unknown effects where it would be challenging
 to specify a distributional regression model like GAMLSS.
 
-In weather forecasting, these properties are appealing in mountainous regions
-and complex terrain where small-scale effects are not well-resolved in the NWP
-outputs. As these are computed at a coarser scale, there may be abrupt local
-effects within a single NWP grid cell. To illustrate this in practice,
-precipitation forecasts are obtained with distributional forests at 95
-meteorological stations in a mountainous region in the Alps, covering mainly
-Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{map}).
-More specifically, a zero-censored Gaussian
-distribution is employed to model 24-hour total precipitation so that the
-zero-censored point mass describes the probability of no precipitation on a
-given day (see Figure~\ref{axams_onestation}). Forecasts for July are
-established based on data from the same month in the years 1985--2012 along with
-80~covariates derived from a wide range of NWP ensemble outputs. As
-Figure~\ref{axams_onestation} shows, the station-wise models yield a full
-distributional forecast for each day -- here for the same day (July~24) at one
-station (Axams) over four years (2009--2012) -- based on the previous 24~years
-as training data. The corresponding observations conform reasonably well with
-the predictions. In Section~\ref{ProbabilisticForecasting} we investigate the
-performance of distributional forests in this forecasting task in more detail.
-It is shown that they perform at least on par and sometimes clearly better than
-three alternative zero-censored Gaussian models: a standard ensemble model
-output statistics approach (EMOS, \citealp{Gneiting+Raftery+Westveld:2005}), a GAMLSS
-with regressors prespecified based on meteorological expertise following
-\cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
-\citep{Hofner+Mayr+Schmid:2016} using non-homogeneous boosting
-\citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
-80~available regressors.
-
 
 <<echo=FALSE, results=hide>>=
 #### Axams prediction 24 - 4
@@ -988,12 +985,39 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \caption{\label{axams_onestation}Predictions of total precipitation at station Axams for July 24 in 2009, 2010, 2011 and 2012 by a distributional forest learned on data from 1985--2008. Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
 \end{figure}
 
+In weather forecasting, these properties are appealing in mountainous regions
+and complex terrain where small-scale effects are not well-resolved in the NWP
+outputs. As these are computed at a coarser scale, there may be abrupt local
+effects within a single NWP grid cell. To illustrate this in practice,
+precipitation forecasts are obtained with distributional forests at 95
+meteorological stations in a mountainous region in the Alps, covering mainly
+Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{map}).
+More specifically, a zero-censored Gaussian
+distribution is employed to model 24-hour total precipitation so that the
+zero-censored point mass describes the probability of no precipitation on a
+given day (see Figure~\ref{axams_onestation}). Forecasts for July are
+established based on data from the same month in the years 1985--2012 along with
+80~covariates derived from a wide range of NWP ensemble outputs. As
+Figure~\ref{axams_onestation} shows, the station-wise models yield a full
+distributional forecast for each day -- here for the same day (July~24) at one
+station (Axams) over four years (2009--2012) -- based on the previous 24~years
+as training data. The corresponding observations conform reasonably well with
+the predictions. In Section~\ref{ProbabilisticForecasting} we investigate the
+performance of distributional forests in this forecasting task in more detail.
+It is shown that they perform at least on par and sometimes clearly better than
+three alternative zero-censored Gaussian models: a standard ensemble model
+output statistics approach (EMOS, \citealp{Gneiting+Raftery+Westveld:2005}), a GAMLSS
+with regressors prespecified based on meteorological expertise following
+\cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
+\citep{Hofner+Mayr+Schmid:2016} using non-homogeneous boosting
+\citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
+80~available regressors.
+
 
 
 \section{Methodology}
 \label{Methodology}
 
-\subsection{Motivation}
 As illustrated in Figure~\ref{Devel_parmod} a wide range of tools has been developed 
 in the field of parametric modeling. Especially the shift from conditional mean 
 regression models to distributional regression models has increased the application 
@@ -1016,7 +1040,7 @@ the maximum likelihood method. This is also the chosen approach in the methodolo
 described in this section. 
 %%% <TH> is is repeated on page 5, remove here </TH>
 
-The goal is to fit a distributional model $D(Y, \theta)$ to a response variable 
+The goal is to fit a distributional model $\mathcal{D}(Y, \theta)$ to a response variable 
 $Y \in \mathcal{Y}$ for a \textit{k}-dimensional vector of distribution parameters 
 $\theta \in \Theta$ in case of a \textit{k}-parametric distribution. The distribution 
 family with density function $f$ has to be specified in advance such that a 
@@ -1079,10 +1103,10 @@ A common way of including these covariates is to consider them as regressors
 in a distributional model such that each parameter $\theta$ depends on covariates 
 $\bold{Z} = (Z_1,\ldots,Z_m)$. This could for example be done by a linear function 
 $g$. In that way the fitted model would be specified as 
-$D(Y, \theta = g(\bold{Z}))$. In order to avoid the restriction to linear 
+$\mathcal{D}(Y, \theta = g(\bold{Z}))$. In order to avoid the restriction to linear 
 effects one might also use a set of smooth functions $\{f_i\}_{i = 1,\ldots,p}$ 
 to specify a more flexible model 
-$D(Y, \theta = f_1(\bold{Z}) + \ldots + f_p(\bold{Z}))$ applying a GAM structure. 
+$\mathcal{D}(Y, \theta = f_1(\bold{Z}) + \ldots + f_p(\bold{Z}))$ applying a GAM structure. 
 Another approach to distributional regression is proposed by 
 \cite{Klein+Kneib+Lang:2015} where each parameter of a possibly complex 
 distribution can be modeled by an additive term consisting of a variety of 
@@ -1103,7 +1127,7 @@ applying a tree algorithm.
 
 \subsection{Distributional tree}
 \label{disttree}
-Given the fit of a global distributional model $D(Y, \bold{\hat{\theta}})$, 
+Given the fit of a global distributional model $\mathcal{D}(Y, \bold{\hat{\theta}})$, 
 the idea is to use the information provided by this model together with a 
 set of covariates $\bold{Z} = (Z_1, \ldots, Z_m) \in \mathcal{Z}$ 
 to decide whether the data set should be split into subgroups or not. 
@@ -1899,7 +1923,7 @@ corresponding subset of observations depends on the assignment made
 by the foregoing split.
 
 \begin{itemize}
-\item A distributional model $D(Y, \theta)$ is fit to the set of 
+\item A distributional model $\mathcal{D}(Y, \theta)$ is fit to the set of 
 observations $\{y_i\}_{i = 1,\ldots,n}$ by estimating the distribution 
 parameter $\hat{\theta}$. This parameter can be a multidimensional 
 vector $(\hat{\theta}_1, \ldots, \hat{\theta}_K)$, $K \in \mathbb{N}$, 
