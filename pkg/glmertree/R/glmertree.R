@@ -1,12 +1,18 @@
 utils::globalVariables(c(".tree", ".ranef", ".weights"))
 
 lmertree <- function(formula, data, weights = NULL, offset = NULL,
-                     ranefstart = NULL, abstol = 0.001, maxit = 100, 
-                     joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
+                     ranefstart = NULL, cluster = NULL, abstol = 0.001, 
+                     maxit = 100, joint = TRUE, dfsplit = TRUE, 
+                     verbose = FALSE, plot = FALSE, 
                      lmer.control = lmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
+  
+  ## check if data is complete, print warning if not 
+  if (nrow(data) != sum(stats::complete.cases(data))) {
+    warning("data contains missing observations, note that listwise deletion will be employed.") 
+  }
   
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
@@ -28,6 +34,16 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
   
+  ## cluster argument
+  if (!is.null(cl$cluster)) {
+    if (!(is.numeric(cluster) || is.character(cluster) || is.factor(cluster))) {
+      warning("Argument 'cluster' should be NULL, or a numeric, factor or character vector.")
+    } 
+    if (length(cluster) != nrow(data)) {
+      warning("Argument 'cluster' should be a vector of length nrow(data)")
+    }
+  }
+    
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
@@ -54,8 +70,14 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
         
     iteration <- iteration + 1L
     
-    ## lmtree
-    tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, dfsplit = FALSE, ...)
+    tree <- do.call(lmtree, args = list(formula = tf, 
+                                        data = data, 
+                                        offset = data$.ranef, 
+                                        cluster = cluster, 
+                                        weights = data$.weights,
+                                        dfsplit = dfsplit,
+                                        ...))
+    
     if (plot) plot(tree)
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
@@ -133,10 +155,11 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
   return(result)
 }
 
+
 glmertree <- function(formula, data, family = "binomial", weights = NULL,
-                      offset = NULL, ranefstart = NULL, abstol = 0.001, 
-                      maxit = 100, joint = TRUE, dfsplit = TRUE, 
-                      verbose = FALSE, plot = FALSE,
+                      offset = NULL, ranefstart = NULL, cluster = NULL,
+                      abstol = 0.001, maxit = 100, joint = TRUE, 
+                      dfsplit = TRUE, verbose = FALSE, plot = FALSE, 
                       glmer.control = glmerControl(), ...)
 {
   ## remember call
@@ -159,8 +182,23 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
   
+  ## check if data is complete, print warning if not 
+  if (nrow(data) != sum(stats::complete.cases(data))) {
+    warning("data contains missing observations, note that listwise deletion will be employed.") 
+  }
+  
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
+  
+  ## cluster argument
+  if (!is.null(cl$cluster)) {
+    if (!(is.numeric(cluster) || is.character(cluster) || is.factor(cluster))) {
+      warning("Argument 'cluster' should be NULL, or a numeric, factor or character vector.")
+    } 
+    if (length(cluster) != nrow(data)) {
+      warning("Argument 'cluster' should be a vector of length nrow(data)")
+    }
+  }
   
   ## initialization
   iteration <- 0L
@@ -169,9 +207,9 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   } else if (ranefstart && length(ranefstart) == 1) {
     ## generate ranefstart from lme null model: 
     predict(glmer(formula(ff, lhs = 1L, rhs = 2L),
-                data = data, weights = .weights, type = "link", 
+                data = data, weights = .weights,
                 offset = offset, family = family, control = glmer.control),
-            newdata = data)
+            newdata = data, type = "link")
   } else {
     ranefstart  
   }
@@ -187,9 +225,15 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       data$.ranef <- data$.ranef + offset
     }
     
-    ## glmtree
-    tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
-                    weights = .weights, dfsplit = FALSE, ...)
+    tree <- do.call(glmtree, args = list(formula = tf, 
+                                         data = data, 
+                                         family = family,
+                                         offset = data$.ranef, 
+                                         cluster = cluster, 
+                                         weights = data$.weights,
+                                         dfsplit = dfsplit,
+                                         ...))
+    
     if (plot) plot(tree)
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
