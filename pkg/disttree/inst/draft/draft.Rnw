@@ -999,16 +999,16 @@ on an NGR, a GAMLSS with regressors prespecified based on meteorological experti
 
 To embed the distributional approach from GAMLSS into regression trees and random
 forests, we proceed in three steps. (1)~To fix notation, we briefly review fitting
-distributions using standard maximum likelihood in in Section~\ref{sec:distfit}.
+distributions using standard maximum likelihood in Section~\ref{sec:distfit}.
 (2)~A recursive partitioning strategy based on the corresponding scores (or
 gradients) is introduced in Section~\ref{sec:disttree}, leading to distributional
 trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
 employed to establish distributional forests in Section~\ref{sec:distforest}.
 
 The general distributional notation is exemplified in all three steps for the
-zero-censored Gaussian distribution. The latter is employed in the empirical
-in the empirical case study in Section~\ref{sec:precipitation} to model
-power-transformed daily precipitation amounts.
+zero-censored Gaussian distribution. The latter is employed in the empirical 
+case study in Section~\ref{sec:precipitation} to model power-transformed daily 
+precipitation amounts.
 
 
 \subsection{Distributional fit}
@@ -1026,7 +1026,7 @@ can be incorporated in the usual straightforward way \fixme{reference needed}.
 
 To capture both location and scale of the probabilistic precipitation forecasts
 while accounting for a point mass at zero precipitation (i.e., dry days without
-rain), zero-censored Gaussian distribution with with mean/location parameter
+rain), zero-censored Gaussian distribution with mean/location parameter
 $\mu$ and standard deviation/scale parameter $\sigma$ is employed. Therefore,
 the corresponding log-likelihood function with parameter vector 
 $\bm{\theta} = (\mu, \sigma)$ is
@@ -1115,7 +1115,7 @@ In summary, distributional trees are fitted recursively via:
   in the current subsample.
 \item Test for associations or instabilities of the scores $s(\bm{\hat \theta}, y_i)$ 
   and $Z_{l,i}$ for each partitioning variable~$Z_l$ ($l = 1, \dots, m$).
-\item Split the sample along the partitioning variable $Z_{l,i}^*$ with the
+\item Split the sample along the partitioning variable $Z_l^*$ with the
   strongest association or instability. Choose the breakpoint with the highest
   improvement in the log-likelihood or the highest discrepancy .
 \item Repeat steps 1--3 recursively in the subsamples until these become too
@@ -1202,7 +1202,7 @@ numerical weather prediction (NWP) systems \citep[see][]{Bauer+Thorpe+Brunet:201
 and produce high-quality forecasts adapted to specific sites/locations
 through distributional regression models like EMOS
 (ensemble model output statistics, \citealp{Gneiting+Raftery+Westveld:2005}).
-In the case of precipiation forecasting, EMOS explains past precipitation
+In the case of precipitation forecasting, EMOS explains past precipitation
 sums by the NWP output ``total precipitation'' (\emph{tp}), using its
 ensemble mean as the predictor variable for the location parameter and
 the ensemble standard deviation for the scale parameter.
@@ -1233,7 +1233,7 @@ computed from ensemble means and spreads of various NWP outputs.
 The predictive performance of the forest is compared to three other
 zero-censored Gaussian models: (a) a standard basic EMOS, (b) a GAMLSS
 with prespecified effects and interactions based on meteorological
-knowedge/experience, and (c) a boosted GAMLSS with automatic
+knowledge/experience, and (c) a boosted GAMLSS with automatic
 selection of smooth additive terms based on all 80~predictor variables.
 
 \subsection{Data}
@@ -1514,7 +1514,7 @@ To assess predictive performance, a full cross-validation is carried out
 rather than relying on just the one test set for the years 2009--2012.
 To do so, 10 times 7-fold cross-validation is carried out where each
 splits the available 28~years into 7~subsets of 4~randomly selected years.
-The models learned on 6~folds (= 24~years) and evaluated on the 7-th fold
+The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
 (= 4~years) using the average CRPS across all observations.
 The resulting 10~CRPS skill scores are displayed by boxplots in
 Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
@@ -1926,10 +1926,10 @@ which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
 
 As an alternative to QQ~plots based on randomized quantile residuals,
 PIT (probability integral transform) histograms 
-\cite{Gneiting+Balabdaoui+Raftery:2007} are a commonly used to 
+\cite{Gneiting+Balabdaoui+Raftery:2007} are a commonly used tool to 
 assess how well-calibrated distributional fits are.
 Figure~\ref{fig:pit} shows out-of-sample PIT histograms for the same
-probabilistic forecasts as Figure~\ref{fig:qq}, confirming that
+probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that
 despite some deviations the overall calibration of all models is acceptable.
 
 \begin{figure}[t!]
