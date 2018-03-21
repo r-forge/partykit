@@ -37,14 +37,14 @@
 
 \usage{
 lmertree(formula, data, weights = NULL, offset = NULL,
-  ranefstart = NULL, abstol = 0.001, maxit = 100, 
+  ranefstart = NULL, cluster = NULL, abstol = 0.001, maxit = 100, 
   joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
   lmer.control = lmerControl(), \dots)
 
 glmertree(formula, data, family = "binomial", weights = NULL,
-  offset = NULL, ranefstart = NULL, abstol = 0.001, maxit = 100, 
-  joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
-  glmer.control = glmerControl(), \dots)
+  offset = NULL, ranefstart = NULL, cluster = NULL, abstol = 0.001, 
+  maxit = 100, joint = TRUE, dfsplit = TRUE, verbose = FALSE, 
+  plot = FALSE, glmer.control = glmerControl(), \dots)
 }
 
 \arguments{
@@ -68,6 +68,9 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     \code{ranefstart = TRUE} is specified, random effects will be estimated first
     and the first tree will be grown using the random-effects predictions as an
     offset.}
+  \item{cluster}{optional vector (numeric, character or factor) with a cluster ID 
+    to be employed for clustered covariances in the parameter stability tests. If
+    \code{NULL}, clustered covariances are not employed.}
   \item{abstol}{numeric. The convergence criterion used for estimation of the model.
     When the difference in log-likelihoods of the random-effects model from two
     consecutive iterations is smaller than \code{abstol}, estimation of the
