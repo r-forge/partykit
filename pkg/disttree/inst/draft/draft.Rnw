@@ -1,8 +1,8 @@
 \documentclass[nojss]{jss}
 
 %\VignetteIndexEntry{disttree: Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
-%\VignetteDepends{partykit, gamlss.dist}
-%\VignetteKeywords{regression trees, random forests, distributional regression, recursive partitioning}
+%\VignetteDepends{disttree, crch, countreg, gamlss, gamlss.cens}
+%\VignetteKeywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, distributional regression}
 %\VignettePackage{disttree}
 
 %% packages
@@ -13,7 +13,7 @@
 \usetikzlibrary{arrows.meta,positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 
 %% need no \usepackage{Sweave}
-\SweaveOpts{concordance=FALSE, eps=FALSE, keep.source=TRUE, eval = TRUE}
+\SweaveOpts{engine = R, concordance = FALSE, eps = FALSE, keep.source = TRUE, eval = TRUE}
 
 %% commands
 \newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
@@ -72,18 +72,14 @@
 \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
 
 
-
-\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
 <<preliminaries, echo=FALSE, results=hide>>=
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
 library("disttree")
-library("Formula")  # FIX ME: should be imported in disttree
-library("gamlss")
 library("crch")
+library("countreg")
+library("gamlss")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
-library("mgcv")
-library("countreg")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
@@ -424,12 +420,13 @@ computationally more demanding boosting approach.
 \begin{document}
 
 \section{Introduction}
+\label{sec:introduction}
 
 In regression analysis a wide range of models has been developed to describe the
 relationship between a response variable and a set of covariates. The classical
 model is the linear model (LM) where the conditional mean of the response
 is modeled through a linear function of the covariates (see the left panel of
-Figure~\ref{Devel_parmod} for a schematic illustration). Over the last decades
+Figure~\ref{fig:gam} for a schematic illustration). Over the last decades
 this has been extended in various directions including:
 
 \pagebreak
@@ -439,12 +436,12 @@ this has been extended in various directions including:
     encompassing an additional nonlinear link function for the conditional mean.
   \item \emph{Generalized additive models} (GAMs, \citealp{Hastie+Tibshirani:1986})
     allowing for smooth nonlinear effects in the covariates
-    (Figure~\ref{Devel_parmod}, middle).
+    (Figure~\ref{fig:gam}, middle).
   \item \emph{Generalized additive models for location, scale, and shape}
     (GAMLSS, \citealt{Rigby+Stasinopoulos:2005}) adopting a probabilistic modeling
     approach. In GAMLSS, each parameter of a statistical distribution can depend
     on an additive predictor of the covariates comprising linear and/or
-    smooth nonlinear terms (Figure~\ref{Devel_parmod}, right).
+    smooth nonlinear terms (Figure~\ref{fig:gam}, right).
 \end{itemize}
 Thus, the above-mentioned models provide a broad toolbox for capturing different
 aspects of the response (mean only vs.\ full distribution) and different types
@@ -539,7 +536,7 @@ GAMLSS
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
 \end{tikzpicture}
-\caption{\label{Devel_parmod}Parametric modeling developments. (Generalized) linear models (left), generalized additive models (middle), generalized additive models for location, scale, and shape (right).}
+\caption{\label{fig:gam}Parametric modeling developments. (Generalized) linear models (left), generalized additive models (middle), generalized additive models for location, scale, and shape (right).}
 \end{figure}
 
 
@@ -564,9 +561,6 @@ numerical weather predictions (NWPs). Similarly, the variance of the response
 is captured through the variance of the ensemble of NWP outputs. Thus, the NGR
 considers both the mean as well as the uncertainty of the NWP model outputs
 to obtain probabilistic forecasts calibrated to a particular site.
-
-%% late: introduce MOS and EMOS? more details about precipitation forecasting
-%In ensemble model output statistics (EMOS, \cite{Gneiting+Raftery+Westveld:2005}) this idea is taken one step further. Usually acting on the assumption of a normally distributed response variable this model allows for both parameters, the mean and the variance, to depend linearly on covariates provided by NWPs. However, the restriction to model only linear effects has risen the interest in applying more flexible models such as offered by the GAMLSS framework.
 
 \begin{figure}[t!]
 \begin{tikzpicture}
@@ -690,7 +684,7 @@ Distributional Tree
 \draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](0,-2.4)--(0,-3.2);
 \draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](2.2,-5.4)--(7.9,-2.5);
 \end{tikzpicture}
-\caption{\label{Devel_treeforest}Tree and forest developments.
+\caption{\label{fig:tree}Tree and forest developments.
 Regression tree (top left), distributional tree (bottom left), random forest
 (top middle), and distributional forest (top right).}
 \end{figure}
@@ -702,24 +696,24 @@ covariates are tree-based models.
 \begin{itemize}
   \item \emph{Regression trees} (\citealt{Breiman+Friedman+Stone:1984}) recursively
     split the data into more homogeneous subgroups and can thus capture abrupt shifts
-    (Figure~\ref{Devel_treeforest}, top left) and approximate nonlinear functions.
+    (Figure~\ref{fig:tree}, top left) and approximate nonlinear functions.
     Furthermore, trees automatically carry out a forward selection of covariates and
     their interactions. 
   \item \emph{Random forests} (\citealt{Breiman:2001}) average the predictions of
     an ensemble of trees fitted to resampled versions of the learning data. This
     stabilizes the recursive partitions from individual trees and hence better
-    approximates smooth functions (Figure~\ref{Devel_treeforest}, top middle)
+    approximates smooth functions (Figure~\ref{fig:tree}, top middle)
 \end{itemize}
 While classical regression trees and random forests only model the mean of the response
 we propose to follow the ideas from GAMLSS modeling -- as outlined
-in Figure~\ref{Devel_parmod} -- and combine tree-based methods with parametric distributional models,
+in Figure~\ref{fig:gam} -- and combine tree-based methods with parametric distributional models,
 yielding two novel techniques:
 \begin{itemize}
   \item \emph{Distributional trees} split the data into more homogeneous groups with
     respect to a parametric distribution, thus capturing changes in any distribution
-    parameter like location, scale, or shape (Figure~\ref{Devel_treeforest}, bottom left)
+    parameter like location, scale, or shape (Figure~\ref{fig:tree}, bottom left)
   \item \emph{Distributional forests} utilize an ensemble of distributional trees
-    for obtaining stabilized and smoothed parametric predictions (Figure~\ref{Devel_treeforest},
+    for obtaining stabilized and smoothed parametric predictions (Figure~\ref{fig:tree},
     top right).
 \end{itemize}
 In the following, particular focus is given to distributional forests as a method for obtaining
@@ -791,7 +785,7 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 
 
 
-## PIT histograms and qqr-plots
+## PIT histograms and qqrplots
 
 ## get predicted parameter
 # for learndata and testdata
@@ -967,7 +961,7 @@ text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)
 text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)
 text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 @
-\caption{\label{axams_onestation}Predictions of total precipitation at station Axams for July 24 in 2009, 2010, 2011 and 2012 by a distributional forest learned on data from 1985--2008. Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
+\caption{\label{fig:axams-dist}Predictions of total precipitation at station Axams for July 24 in 2009, 2010, 2011 and 2012 by a distributional forest learned on data from 1985--2008. Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
 \end{figure}
 
 In weather forecasting, these properties are appealing in mountainous regions
@@ -976,24 +970,24 @@ outputs. As these are computed at a coarser scale, there may be abrupt local
 effects within a single NWP grid cell. To illustrate this in practice,
 precipitation forecasts are obtained with distributional forests at 95
 meteorological stations in a mountainous region in the Alps, covering mainly
-Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{map}).
+Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{fig:all-map}).
 More specifically, a zero-censored Gaussian
 distribution is employed to model 24-hour total precipitation so that the
 zero-censored point mass describes the probability of no precipitation on a
-given day (see Figure~\ref{axams_onestation}). Forecasts for July are
+given day (see Figure~\ref{fig:axams-dist}). Forecasts for July are
 established based on data from the same month in the years 1985--2012 along with
 80~covariates derived from a wide range of NWP ensemble outputs. As
-Figure~\ref{axams_onestation} shows, the station-wise models yield a full
+Figure~\ref{fig:axams-dist} shows, the station-wise models yield a full
 distributional forecast for each day -- here for the same day (July~24) at one
 station (Axams) over four years (2009--2012) -- based on the previous 24~years
 as training data. The corresponding observations conform reasonably well with
-the predictions. In Section~\ref{ProbabilisticForecasting} we investigate the
+the predictions. In Section~\ref{sec:precipitation} we investigate the
 performance of distributional forests in this forecasting task in more detail.
 It is shown that they perform at least on par and sometimes clearly better than
 three alternative zero-censored Gaussian models: a standard ensemble model
-output statistics approach (EMOS, \citealp{Gneiting+Raftery+Westveld:2005}), a GAMLSS
-with regressors prespecified based on meteorological expertise following
-\cite{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
+output statistics approach \citep[EMOS,][]{Gneiting+Raftery+Westveld:2005} based
+on an NGR, a GAMLSS with regressors prespecified based on meteorological expertise
+\citep[following][]{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
 \citep{Hofner+Mayr+Schmid:2016} using non-homogeneous boosting
 \citep{Messner+Mayr+Zeileis:2017} as a technique for variable selection from all
 80~available regressors.
@@ -1001,24 +995,24 @@ with regressors prespecified based on meteorological expertise following
 
 
 \section{Methodology}
-\label{Methodology}
+\label{sec:methods}
 
 To embed the distributional approach from GAMLSS into regression trees and random
 forests, we proceed in three steps. (1)~To fix notation, we briefly review fitting
-distributions using standard maximum likelihood in in Section~\ref{distfit}.
+distributions using standard maximum likelihood in in Section~\ref{sec:distfit}.
 (2)~A recursive partitioning strategy based on the corresponding scores (or
-gradients) is introduced in Section~\ref{disttree}, leading to distributional
+gradients) is introduced in Section~\ref{sec:disttree}, leading to distributional
 trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
-employed to establish distributional forests in Section~\ref{distforest}.
+employed to establish distributional forests in Section~\ref{sec:distforest}.
 
 The general distributional notation is exemplified in all three steps for the
 zero-censored Gaussian distribution. The latter is employed in the empirical
-in the empirical case study in Section~\ref{ProbabilisticForecasting} to model
+in the empirical case study in Section~\ref{sec:precipitation} to model
 power-transformed daily precipitation amounts.
 
 
 \subsection{Distributional fit}
-\label{distfit}
+\label{sec:distfit}
 
 A distributional model $\mathcal{D}(Y, \bm{\theta})$ is considered for the response
 variable $Y \in \mathcal{Y}$ using the distributional family $\mathcal{D}$ with
@@ -1074,7 +1068,7 @@ one individual observation $y_i$.
 
 
 \subsection{Distributional tree}
-\label{disttree}
+\label{sec:disttree}
 
 Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
 for reasonably representing the response distribution and covariates
@@ -1155,7 +1149,7 @@ $$
 $$
 
 \subsection{Distributional forest}
-\label{distforest}
+\label{sec:distforest}
 
 While the simple recursive structure of a tree model is easy to visualize and
 interpret, the abrupt changes are often too rough, instable, and impose steps
@@ -1200,10 +1194,8 @@ high-order interactions (through the trees) and smooth effects (through
 the forest).
 
 
-\SweaveOpts{eval = TRUE}
-
 \section{Probabilistic precipitation forecasting in complex terrain}
-\label{ProbabilisticForecasting}
+\label{sec:precipitation}
 
 Many weather forecasting models leverage the strengths of modern
 numerical weather prediction (NWP) systems \citep[see][]{Bauer+Thorpe+Brunet:2015}
@@ -1245,7 +1237,7 @@ knowedge/experience, and (c) a boosted GAMLSS with automatic
 selection of smooth additive terms based on all 80~predictor variables.
 
 \subsection{Data}
-\label{data}
+\label{sec:data}
 
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
@@ -1291,7 +1283,7 @@ Basic covariates & {\#} & Variations\\
 \hline
 \end{tabular}
 \caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.}
-\label{covariates}
+\label{tab:covariates}
 \end{minipage} 
 %}
 \end{table}
@@ -1320,7 +1312,7 @@ of the atmospheric state.
 From the GEFS outputs 14 basic forecast variables are considered with up 
 to 12 variations of each of these variables such as mean/maximum/minimum
 or different aggregation time ranges, etc. A detailed overview is
-provided in Table~\ref{covariates}, yielding 80~predictor variables in total.
+provided in Table~\ref{tab:covariates}, yielding 80~predictor variables in total.
 (Since the minimum of the ``variable downwards short wave radiation flux'',
 \emph{dswrf}, over 24 hours is always 0, the ensemble mean and standard
 deviation of these minimal values are not considered.)
@@ -1337,6 +1329,7 @@ observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{t
 
 
 \subsection{Models and evaluation}
+\label{sec:evaluation}
 
 \begin{table}[t!]
 \centering
@@ -1361,11 +1354,11 @@ Boosted GAMLSS        & spline  & all & all \\
 \caption[Table caption text]{Overview of models with type of 
 covariate dependency and included covariates for each distribution 
 parameter.}
-\label{model_specification}
+\label{tab:models}
 \end{table}
 
 The following zero-censored Gaussian regression models are employed
-in the empirical case study, see also Table~\ref{model_specification} for
+in the empirical case study, see also Table~\ref{tab:models} for
 further details:
 %
 \begin{itemize}
@@ -1375,7 +1368,7 @@ further details:
   sampling is employed for each tree using a third of the predictors
   in each split of the tree (``mtry''). Parameters are estimated by
   adaptive local likelihood based on the forest weights, as described
-  in Section~\ref{Methodology}.
+  in Section~\ref{sec:methods}.
 
 \item \emph{EMOS:} Standard ensemble model output statistics are used
   with the total precipitation ensemble mean as regressor in the location
@@ -1423,75 +1416,30 @@ To assess differences in the improvement of the forests and GAMLSS
 models over the basic EMOS, a CRPS-based skill score with EMOS as
 the reference method is computed as well:
 $$
-\text{SkillScore}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{EMOS}}}.
+\text{CRPSS}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{EMOS}}}.
 $$
 
 
 
 
 \subsection{Application for one station}
-\label{Application for one station}
+\label{sec:axams}
 
 In a first step, we show a detailed comparison of the competing models
 for one observation station, Axams in Tyrol (selected somewhat arbitrarily
-as the closest in the data set to Innsbruck, capital of Tyrol). As for all
-other stations, daily observations and  numerical weather predictions are available for the month of July of 
-28~years from 1985 through the year 2012. In Figure~\ref{axams_onestation} 
-the results of fitting a distributional forest to the first 24 years of the 
-data set and predicting the total amount of precipitation for one specific 
-day of each of the four successive years have been shown as a motivational 
-example for a probabilistic forecast. Staying with this fitted model,
-variable importance of the distributional forest model will be analyzed and its
-performance will be compared to those of the prespecified and the boosted GAMLSS 
-and the EMOS model based on residual QQ-plots.
-
-%%%<TH> always us the term "distributional forest"
-As shown in Table~\ref{model_specification} the distributional forest 
-includes all of the available covariates. A single tree model would allow 
-to easily analyze which covariates are used as split variables in the nodes 
-and hence have a significant impact on the response variable. In a forest 
-model though, for each node in each of the trees a subset of the covariates 
-is chosen randomly as possible split variables to select one from. Moreover, 
-each tree is built on a resampled version of the learning data. For these 
-reasons the choices of split variables vary over the trees of a forest making 
-it difficult to analyze the impact of covariates just by investigating the 
-different trees. To get an overview of which covariates have the most influential 
-effect on the response variable a standard measurement of variable importance 
-for forest models has been applied. Based on the mean decrease in accuracy 
-regarding the CRPS the 10 leading covariates of the above described distributional 
-forest for station Axams learned on the first 24 years are listed in 
-Figure~\ref{varimp}. As expected, the numerical forecast for total precipitation (\emph{tp}) is the most influential variable. In particular, five variations of 
-this variable are among the top ten of the list of covariates ordered by 
-variable importance.  
-  
-
-\begin{figure}[t!]
-\centering
-\setkeys{Gin}{width=0.7\textwidth}
-<<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
-par(mar = c(3,10,2,2))
-barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
-        horiz = TRUE, las = 1, axes = FALSE,
-        xlab = "Variable importance: mean decrease in CRPS",
-        font.axis = 3, #list(family="HersheySerif", face=3),
-        names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
-axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
-@
-\caption{\label{varimp} CRPS-based variable importance for the top 10 covariates 
-in the distributional forest. Based on data for station Axams, learning period 
-1985--2008 and assessed in 2009--2012.}
-\end{figure}
-
-In Figure~\ref{qqr_oosample} an impression of the quality of predictions made 
-by the tested methods is given by residual QQ-plots for out-of-sample predictions 
-of each of the models. For these plots 100 randomized quantile residuals are 
-simulated per observation. The closer the points are to the diagonal line the 
-better the estimated distributional model fits the data. Overall, it can be 
-stated that all four models provide well calibrated forecasts. This is also 
-supported by the corresponding probability integral transform (PIT) histograms 
-(\citealt{Gneiting+Balabdaoui+Raftery:2007}) in the appendix.
-
-
+as the closest in the data set to Innsbruck, capital of Tyrol that three of the
+authors are based in). As for all other stations, daily precipitation observations and
+numerical weather predictions are available for the month of July from 1985
+to 2012. In Figure~\ref{fig:axams-dist} in the introduction the probabilistic
+forecasts from the distributional forest, trained on 1985--2008, for July 24
+in 2009--2012 have already been shown as a motivational example. The figure
+depicts the point masses at zero (i.e., the probability of a dry day) and
+the forecasted probability density function for the total amount of precipitation,
+showing that these differ considerably in location, scale, and the amount of
+censoring while conforming quite well with the actual precipitation observations
+from those days. But, of course, this is just one selected day and we are interested
+in assessing how well the distributional fits are calibrated and what the
+relative predictive performance is.
 
 \begin{figure}[t!]
 \centering
@@ -1499,34 +1447,26 @@ supported by the corresponding probability integral transform (PIT) histograms
 <<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5, pdf = FALSE, png = TRUE, resolution = 150>>=
 # out of sample
 set.seed(7)
-par(mfrow = c(2,2))
-qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_ml_t, nsim = 100, main = "EMOS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_g_t, nsim = 100, main = "Prespecified GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAMLSS", ylim = c(-5,5), col = gray(0.04, alpha = 0.01), pch = 19)
+par(mfrow = c(2, 2))
+qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml_t, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g_t,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
-\caption{\label{qqr_oosample} Out-of-sample residual QQ-plots (2009--2012) 
+\caption{\label{fig:axams-qq} Out-of-sample residual QQ~plots (2009--2012) 
 for station Axams based on models learned on data from 1985--2008.}
 \end{figure}
 
-  
-After analyzing the results of the models on only one data set where 
-visualization is easier, the methods are now going to be evaluated
-in a cross validation framework for the station Axams. 
-The data set over all 28 years is split into 7 subsets each consisting of 
-4 randomly selected years. While 6 of these subsets are used as learning 
-data the 7th is the testing data set for which predictions are made and 
-evaluated. This is done by calculating the CRPS value for each of the 
-observations in the testing data set and then averaging them. Each of the 
-7 parts is selected once as testing data which leads to 7 different settings 
-of which again the average values are stored. This whole procedure is repeated 
-10 times. The resulting skill scores are illustrated in 
-Figure~\ref{boxplots_crps_axams} using the EMOS model as the reference model 
-represented by the horizontal line at height 0. This CRPS skill score boxplot 
-shows that, in this setting, both GAMLSS models and the distributional forest 
-perform better than the EMOS model. While the two GAMLSS lead to an improvement 
-of around 4 percent with the boosted version being slightly ahead, the 
-distributional forest even reaches an improvement rate close to 6 percent.
+To assess calibration Figure~\ref{fig:axams-qq} shows residual QQ~plots for
+out-of-sample predictions (2009--2012) from the different models trained on
+1985--2008. Due to the point masses at zero 100 draws from the randomized
+quantile residuals \citep{Dunn+Smyth:1996} are plotted in semi-transparent
+gray. Overall, the randomized quantile residuals conform quite well with the
+theoretical standard normal quantile (i.e., form a straight line), indicating
+that all four models are sufficiently well calibrated. This is also 
+supported by the corresponding PIT (probability integral transform) histograms 
+in Appendix~\ref{app:pit}.
+
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
 if(file.exists("rain_Axams_7x10.rda")){
@@ -1557,7 +1497,6 @@ for(i in 1:(length(rainres)-1)){
 colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <- colnames(rainres[[1]]$rmse)
 @
 
-
 \begin{figure}[t!]
 \centering
 <<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 7>>=
@@ -1566,24 +1505,81 @@ boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
         ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 @
-\caption{\label{boxplots_crps_axams}CRPS skill score from the 10 times 
+\caption{\label{fig:axams-crps}CRPS skill score from the 10 times 
 7-fold cross validation at station Axams (1985--2012). The horizontal orange 
 line pertains to the reference model EMOS.}
 \end{figure}
 
+To assess predictive performance, a full cross-validation is carried out
+rather than relying on just the one test set for the years 2009--2012.
+To do so, 10 times 7-fold cross-validation is carried out where each
+splits the available 28~years into 7~subsets of 4~randomly selected years.
+The models learned on 6~folds (= 24~years) and evaluated on the 7-th fold
+(= 4~years) using the average CRPS across all observations.
+The resulting 10~CRPS skill scores are displayed by boxplots in
+Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
+line at a CRPSS of 0). Clearly, both GAMLSS models and the distributional forest 
+perform better than the EMOS model. While the two GAMLSS lead to an improvement 
+of around 4~percent, the distributional forest has a slightly higher improvement
+of around 5.5~percent.
+
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.7\textwidth}
+<<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
+par(mar = c(3,10,2,2))
+barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
+        horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Variable importance: mean decrease in CRPS",
+        font.axis = 3, #list(family="HersheySerif", face=3),
+        names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
+axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
+@
+\caption{\label{fig:axams-varimp} CRPS-based variable importance for the top 10 covariates 
+in the distributional forest. Based on data for station Axams, learning period 
+1985--2008 and assessed in 2009--2012.}
+\end{figure}
+
+Finally, it is of interest how this improvement in predictive performance
+by the distributional forest is accomplished, i.e., which of the 80~covariates
+are selected in the trees of the forest. As the 100~trees of the forest
+
+\fixme{still not finished}
+
+As shown in Table~\ref{tab:models} the distributional forest 
+includes all of the available covariates. A single tree model would allow 
+to easily analyze which covariates are used as split variables in the nodes 
+and hence have a significant impact on the response variable. In a forest 
+model though, for each node in each of the trees a subset of the covariates 
+is chosen randomly as possible split variables to select one from. Moreover, 
+each tree is built on a resampled version of the learning data. For these 
+reasons the choices of split variables vary over the trees of a forest making 
+it difficult to analyze the impact of covariates just by investigating the 
+different trees. 
+
+To get an overview of which covariates have the most influential 
+effect on the response variable a standard measurement of variable importance 
+for forest models has been applied. Based on the mean decrease in accuracy 
+regarding the CRPS the 10 leading covariates of the above described distributional 
+forest for station Axams learned on the first 24 years are listed in 
+Figure~\ref{fig:axams-varimp}. As expected, the numerical forecast for total precipitation
+(\emph{tp}) is the most influential variable. In particular, five variations of 
+this variable are among the top ten of the list of covariates ordered by 
+variable importance.  
+  
 
 
 
-\SweaveOpts{eval = TRUE}
-%\newpage
 \subsection{Application for all stations}
+\label{sec:all}
+
 Until now the focus has been on one observation station only. To test and 
 compare the four methods under different geographical circumstances they
 are applied on all 95 stations. For each station, the first 
 24 years are used as learning data set and predictions are made for the 
 ensuing 4 years of available observations. For these out-of-sample predictions 
 the CRPS skill score with the EMOS model as reference model is calculated 
-for each method at each station. In Figure~\ref{boxplot_crps_all} the boxplots 
+for each method at each station. In Figure~\ref{fig:all-crps} the boxplots 
 of the CRPS skill score values are plotted illustrating that the distributional 
 forest leads to the highest improvement averaged over all stations.
 The green line represents the results for the station Axams.
@@ -1661,8 +1657,6 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
                              data = subset(ehyd.statlist[res$complete_stations,],
                                            select = -c(lon,lat)),
                              proj4string = crs(tirol.dem))
-
-#library("colorspace")
 @
 
 
@@ -1680,13 +1674,13 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
   abline(h = 0, col = pal["EMOS"], lwd = 2)
     
 @
-\caption{\label{boxplot_crps_all}CRPS skill score for each station (grey lines) 
+\caption{\label{fig:all-crps}CRPS skill score for each station (grey lines) 
 and aggregated over all stations (boxplots). Station Axams is highlighted in green 
 and the horizontal orange line pertains to the reference model EMOS. The models are 
 learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
 \end{figure}
 
-Figure~\ref{map} shows a map of Tyrol (based on the SRTM 90m Digital Elevation 
+Figure~\ref{fig:all-map} shows a map of Tyrol (based on the SRTM 90m Digital Elevation 
 Data, \cite{srtm}) with the location of all observation stations included in the 
 data set. Each station is illustrated by a symbol with the type of symbol 
 representing the method that performed best in terms of CRPS at this station. 
@@ -1721,7 +1715,7 @@ majority of stations the distributional forest performs best.
   axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
   
 @
-\caption{\label{map}Map of Tyrol showing which model performed best at 
+\caption{\label{fig:all-map}Map of Tyrol showing which model performed best at 
 which station (type of symbol). The color codes whether the distributional 
 forest had lower or higher CRPS (red or blue) compared to the best of the 
 other three models (prespecified GAMLSS, boosted GAMLSS and EMOS).}
@@ -1732,8 +1726,9 @@ other three models (prespecified GAMLSS, boosted GAMLSS and EMOS).}
 
 
 \section{Discussion}
+\label{sec:discussion}
 
-From the results in Section~\ref{ProbabilisticForecasting} we can conclude 
+From the results in Section~\ref{sec:precipitation} we can conclude 
 that distributional forests provide a powerful alternative framework requiring 
 only little effort to set up a model which is competitive to commonly used 
 methods or even outperforms them. Even though a proper selection of covariates 
@@ -1791,7 +1786,7 @@ and \code{distforest}:
 distribution family.
 \end{itemize}
 
-In Section~\ref{ProbabilisticForecasting} the prespecified GAMLSS were 
+In Section~\ref{sec:precipitation} the prespecified GAMLSS were 
 built using the function \code{gamlss} from the \textsf{R} package 
 \textbf{gamlss} (\citealt{Stasinopoulos+Rigby:2007}). For the 
 boosted GAMLSS the function \code{gamboostLSS} from the \textsf{R} 
@@ -1807,7 +1802,15 @@ was applied. The EMOS models were built using the function
 \newpage
 \begin{appendix}
 
-\section{Tree algorithm} \label{app:tree}
+\section{Tree algorithm}
+\label{app:tree}
+
+\fixme{Shorten/omit parts that are in the main paper already. Focus in
+the description on what is actually used in the application, i.e.,
+reduce the emphasis of the modularity of the framework.}
+
+\fixme{Adapt notation.}
+
 The tree algorithm used in the applications discussed in this paper 
 is going to be explained following the ideas presented in 
 \cite{Seibold+Zeileis+Hothorn:2017}. For notational simplicity, the testing 
@@ -1918,27 +1921,16 @@ A different framework to build a tree is provided by the MOB algorithm
 which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
 
 
-\section{Probability integral transform (PIT) histograms}
-Probability integral transform (PIT) histograms 
-\cite{Gneiting+Balabdaoui+Raftery:2007} are a commonly used tool to 
-assess the predictive power of distributional forecasting methods, 
-particularly in the field of meteorological forecasting.
+\section{PIT histograms}
+\label{app:pit}
 
-Let $x$ be an observation with true distribution function $G$ and 
-predicted distribution function $F$. Then the corresponding probability 
-integral transform (PIT) value is $p = F(x)$. In the ideal case of a 
-perfect prediction and $F$ being continuous $p$ follows a uniform distribution. 
-This uniformity can be analysed applying a histogram. The closer the bars 
-of a PIT histogram are to the value 1, the closer the distribution of $p$ 
-is to a uniform distribution and therefore the better the predicted 
-distribution models the true distribution.
-
-The PIT histograms in Figure~\ref{pit_oosample} correspond to the forecasts 
-presented in Section~\ref{Application for one station}. Daily observations 
-of total precipitation from station Axams are considered and predictions 
-are made for the 24th of July 2009, 2010, 2011 and 2012, based on data 
-from the previous 24 years.
-
+As an alternative to QQ~plots based on randomized quantile residuals,
+PIT (probability integral transform) histograms 
+\cite{Gneiting+Balabdaoui+Raftery:2007} are a commonly used to 
+assess how well-calibrated distributional fits are.
+Figure~\ref{fig:pit} shows out-of-sample PIT histograms for the same
+probabilistic forecasts as Figure~\ref{fig:qq}, confirming that
+despite some deviations the overall calibration of all models is acceptable.
 
 \begin{figure}[t!]
 \centering
@@ -1956,7 +1948,7 @@ pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boost
       
 @
 %\end{subfigure}
-\caption{\label{pit_oosample}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
+\caption{\label{fig:pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
 \end{figure}
 
 \end{appendix}
