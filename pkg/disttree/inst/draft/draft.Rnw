@@ -370,16 +370,16 @@ plot_crps <- function(simres, ylim = NULL, legend = TRUE){
 To obtain a probabilistic model for a dependent variable based on some set of
 explanatory variables, a distributional approach is often adopted where the
 parameter(s) of the distribution are linked to regressors. In many classical
-models this often only captures the location/expectation of the distribution but
+models this only captures the location/expectation of the distribution but
 over the last decade there has been increasing interest in distributional
 regression approaches modeling all parameters including location, scale, and
-shape. Notably, so-called non-homogenous Gaussian regression models both
-mean and variance of a Gaussian response variable and is particularly
+shape. Notably, so-called non-homogenous Gaussian regression (NGR) models both
+mean and variance of a Gaussian response and is particularly
 popular in weather forecasting and, more generally, the GAMLSS framework
 allows to establish generalized additive models for location, scale, and shape
 with smooth linear or nonlinear effects.
 %
-However, in situations where variable selection is required and/or there are
+However, when variable selection is required and/or there are
 non-smooth dependencies or interactions (especially unknown or of high-order),
 it is challenging to establish a good GAMLSS. A natural alternative in these
 situations would be the application of regression trees or random forests but,
@@ -391,11 +391,10 @@ framework as well as their censored or truncated counterparts.
 To illustrate these novel approaches in practice, they are employed to obtain
 probabilistic precipitation forecasts at numerous locations in a mountainous
 region (Tyrol, Austria) based on a very large number of numerical weather
-prediction quantities. Comparisons with GAMLSS using either a specification
-based on prior meteorological knowledge or a computationally more demanding
-boosting approach show that distributional random forests automatically
-select variables and interactions, performing on par or often even better than
-the GAMLSS approaches.
+prediction quantities. It is shown that distributional random forests
+automatically select variables and interactions, performing on par or often even
+better than GAMLSS specified either through prior meteorological knowledge or a
+computationally more demanding boosting approach.
 }
 \Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, distributional regression}
 
@@ -925,7 +924,8 @@ if(file.exists("vimp_crps.rda")){
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.8\textwidth}
-<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4.5>>=
+<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=4>>=
+par(mar = c(4, 4, 3, 1.5))
 plot(x = x, y = y1, type = "l", col = "red", 
      main = paste0("July ", pday), ylab = "Density", 
      xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
@@ -1069,30 +1069,32 @@ $$ \label{eq:score}
 s(\bm{\theta}, y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i).
 $$ 
 The latter is subsequently employed as a general goodness-of-fit measure
-for individual observations $y_i$ and parameters $\bm{\theta}$.
+to assess how well the distribution with parameters $\bm{\theta}$ fits
+one individual observation $y_i$.
 
 
 \subsection{Distributional tree}
 \label{disttree}
 
 Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
-for reasonably representing the data and covariates $\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
+for reasonably representing the response distribution and covariates
+$\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
 employed to capture differences in the distribution parameters $\bm{\theta}$.
 In weather forecasting, these covariates typically include the output
 from numerical weather prediction systems and/or lagged weather observations.
 
 To incorporate the covariates into the distributional model, GAMLSS considers
-them as regressors so that an additive predictor
-$g_j(\theta_j) = f_{j,1}(\bold{Z}) + f_{j,2}(\bold{Z}) + \dots$
-with link function $g_j(\cdot)$ is used for every parameter $\theta_j$
+them as regressors in additive predictors
+$g_j(\theta_j) = f_{j,1}(\bold{Z}) + f_{j,2}(\bold{Z}) + \dots$.
+Link functions $g_j(\cdot)$ are used for every parameter $\theta_j$
 ($j = 1, \dots, k$) based on smooth terms $f_{j,k}$ such as
 nonlinear effects, spatial effects, random coefficients, or interaction surfaces
 \citep{Klein+Kneib+Lang:2015}. However, this requires specifying the
-additive terms and their functional forms in advance which is often difficult in
+additive terms and their functional forms in advance which can be challenging in
 practice, especially if the number of covariates $m$ is large.
 
 Regression trees generally take a different approach for automatically
-including covariates in a data-driven way that also allows for abrupt
+including covariates in a data-driven way and allowing for abrupt
 changes, non-additive effects, and interactions. In the context of
 distributional models the goal is to partition the covariate space
 $\mathcal{Z}$ recursively into disjoint segments so that a homogenous
@@ -1102,192 +1104,100 @@ parameters. More specifically, the $B$ disjoint segments $\mathcal{B}_b$
 $$ \label{eq:partition}
 \mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b,
 $$
-and a local distributional model $\mathcal{D}(Y, \bm{theta}^(b))$
-(i.e., with segment-specific parameters $\bm{theta}^(b)$) is fitted to the
+and a local distributional model $\mathcal{D}(Y, \bm{\theta}^{(b)})$
+(i.e., with segment-specific parameters $\bm{\theta}^{(b)}$) is fitted to the
 response $Y$ in that segment.
 
 To find the segments $\mathcal{B}_b$ that are (approximately) homogenous
 with respect to the distributional model with given parameters, the idea
-is to use a gradient-based recursive partitioning approach. In a given
+is to use a gradient-based recursive-partitioning approach. In a given
 subsample of the learning data this fits the model by ML (see
-Equation~\ref{eq:mle}) and then assess the goodness of fit by looking at the
-scores $s(\bm{\hat \theta}; y_i)$ (see Equation~\ref{eq:score}).
+Equation~\ref{eq:mle}) and then assesses the goodness of fit by assessing the
+corresponding scores $s(\bm{\hat \theta}; y_i)$ (see Equation~\ref{eq:score}).
 
-\fixme{still more to do}
-
-
-These values express how well the model fits the data regarding each 
-parameter. Ideally they should fluctuate randomly around zero, 
-similar to residuals in ordinary least squares estimation, but in 
-this case there is a score value for each pair of estimated parameter 
-$\hat{\theta}_j \in (\hat{\theta}_1, \ldots, \hat{\theta}_k) = \bold{\hat{\theta}}$ 
-and observation $y_j \in \{y_i\}_{i = 1,\ldots, n}$. This enables the 
-model to be sensitive to changes in each of the parameters which is one 
-of the main advantages of distributional trees over other tree models 
-considering only the mean of the distribution.
-
-Statistical tests are applied to check whether there is a significant 
-dependency between the scores and each of the partitioning variables 
-$Z_l \in \bold{Z} = (Z_1, \ldots, Z_m)$. If so, the data set is split 
-into subgroups based on the values of the partitioning variable that 
-shows the highest dependency. The exact way of determining how and where 
-to split varies across different tree algorithms. For distributional trees 
-one possible choice is a permutation test based algorithm which is explained 
-in detail in the appendix. 
-
-After splitting the data the next step is to 
-fit a local distributional model in each of the subgroups. Repeating this 
-procedure of fitting a model, applying statistical tests to evaluate parameter 
-instability and splitting the data set depending on the test results leads 
-to a tree structure. In that way the learning data set is separated into 
-\textit{B} disjoint segments such that
-$$
-\mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b
-$$
-where each segment is represented by a terminal node of the tree.
-
-Summed up, the steps of building a distributional tree are:
+In summary, distributional trees are fitted recursively via:
 \begin{enumerate}
-\item Specify a distribution family with log-likelihood function $\ell(\theta; y)$.
-\item Estimate $\bold{\hat{\theta}}$ by solving $\sum_{i=1}^n s(\hat{\theta}, y_i) = 0$.
-\item Test for associations or instabilities of the scores $s(\bold{\hat{\theta}}, y_i)$ 
-and each partitioning variable~$Z_l$.
-\item Split the sample along the partitioning variable with the strongest association 
-or instability. Choose the breakpoint with the highest improvement in log-likelihood.
-\item Repeat steps 2--4 recursively in the subgroups until some stopping criterion is reached.
-
+\item Estimate $\bm{\hat \theta}$ via maximum likelihood for the observations
+  in the current subsample.
+\item Test for associations or instabilities of the scores $s(\bm{\hat \theta}, y_i)$ 
+  and $Z_{l,i}$ for each partitioning variable~$Z_l$ ($l = 1, \dots, m$).
+\item Split the sample along the partitioning variable $Z_{l,i}^*$ with the
+  strongest association or instability. Choose the breakpoint with the highest
+  improvement in the log-likelihood or the highest discrepancy .
+\item Repeat steps 1--3 recursively in the subsamples until these become too
+  small or there is no significant association/instability (or some other
+  stopping criterion is reached).
 \end{enumerate}
-The stopping criterion in step 5 can for example be a minimum number of 
-observations in a node or a p-value for the statistical tests applied in step 3.
-%%% <TH> we need a little more detail here or a reference to a better
-%%% description of mob/ctree OR appendix</TH>
+%
+Different inference techniques can be used for assessing the association between
+scores and covariates in step~3. In the following we use the general class of
+permutation tests introduced by \cite{Hothorn+Hornik+VanDeWiel:2006} which is
+also the basis of conditional inference trees \citep[CTree,][]{Hothorn+Hornik+Zeileis:2006}.
+Alternatively, one could use asymptotic M-fluctuation tests for parameter
+instability \citep{Zeileis+Hornik:2007} as in model-based recursive partitioning
+\citep[MOB,][]{Zeileis+Hothorn+Hornik:2008}. More details are provided in
+Appendix~\ref{app:tree}.
 
-Executing these steps results in a stepwise parametric model where a complete 
-distribution is fit in each node of the tree.
-
-For distributional trees a prediction for a (possibly new) set of covariates 
-$\bold{z} = (z_1, \ldots, z_m)$ is made with the following strategy: 
-All observations of the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ 
-which end up in the same terminal node of the tree as $\bold{z}$ are selected 
-and a distributional model is fit on this subset. Selecting these observations
-is done by including a weight vector 
-$\bold{w}^{\text{tree}} = (w^{\text{tree}}_1, \ldots, w^{\text{tree}}_n)$ 
-in the fitting process where
+For obtaining probabilistic predictions from the tree for a (possibly new) set
+of covariates $\bold{z} = (z_1, \ldots, z_m)$, the observation simply has to
+be ``sent down'' the tree and the corresponding segment-specific MLE has to be
+obtained. This can also be understood as a weighted MLE where the weights
+select those observations from the learning sample that fall into the same
+segment:
 $$
-w^{\text{tree}}_i(\bold{z}) = \sum_{b=1}^B I((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z} \in \mathcal{B}_b)).
+w^{\text{tree}}_i(\bold{z}) = \sum_{b=1}^B \mathbf{1}((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z} \in \mathcal{B}_b)),
 $$
-The predicted distribution for $\bold{z}$ is then fully 
-specified by the estimated parameter $\hat{\theta}(\bold{z})$ where
+where $\mathbf{1}(\cdot)$ is the indicator function. The predicted distribution
+for a given $\bold{z}$ is then fully specified by the estimated parameter
+$\bm{\hat \theta}(\bold{z})$ where
 $$
-\hat{\theta}(\bold{z}) = \argmax_{\theta \in \Theta} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\theta; y_i).
+\bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 $$
-
-While the clear structure of such a tree model is advantageous in 
-interpreting and analyzing it, the abrupt changes are often too rough 
-and impose steps on the model even if the true underlying effect is 
-smooth. In these situations bagging can solve the problem by combining 
-an ensemble of trees such that wrongly detected abrupt changes of the 
-model are turned into almost smooth transitions. In that way, all kinds 
-of effects can be modeled, which is also one the of the main advantages 
-of forest models taking bagging one step further as the variance is 
-reduced by sampling the covariates considered for the splitting process 
-in each node.
-
-%%% <TH> we need to be much more precise here: random forests is Breiman's and Cutler's
-%%% random forest. Maybe it is better to not mention this method at any time. </TH>
-Common forest models such as the original forest technique by 
-\cite{Breiman+Cutler:2004} consist of trees only considering the mean of the 
-distribution of the response variable. For that reason, changes in other 
-parameters can only be detected if they are connected to changes in the 
-location parameter, e.g. if they depend on the location parameter. 
-As explained before, a distributional tree considers scores for all 
-distribution parameters. Therefore, a forest consisting of 
-distributional trees can also capture separate effects in each of the 
-distribution parameters. For that reason distributional forests are
-now going to be introduced.
 
 \subsection{Distributional forest}
 \label{distforest}
-A distributional forest consists of an ensemble of $T$ distributional trees. 
-Each of these trees is built on a different data set which can either be a bootstrap 
-or a subset of the original data set. Moreover, in each node a subset of the 
-partitioning variables is chosen randomly as candidates for splitting variables. 
-In that way the correlation among the resulting trees is reduced and therefore also 
-the variance of the model (\citealt{Breiman:2001}).
 
-Forest models differ mainly in the way how the trees are combined to make predictions. 
-Following the strategy explained and proposed by \cite{Hothorn+Zeileis:2017} we 
-interpret random forests as adaptive local likelihood estimators as distributional 
-models are fit locally in subgroups while the term ``adaptive'' refers to the 
-dependence on the splitting variables $\bold{Z}$ and the resulting subgroups 
-and weighing schemes. In this case the forest itself is only used to evaluate 
-neighborhood relationships among the observations which can then be included 
-in the fitting process. In transformation forests by \cite{Hothorn+Zeileis:2017} 
-so-called ``nearest neighbor weights'' are calculated as a measure of distance 
-between observations. This approach has also already been applied in several 
-random forest-type methods such as in ``adaptive nearest neighbors'' by 
-\cite{Lin+Jeon:2006}, in ``quantile regression forests''  by  \cite{Meinshausen:2006} 
-and in ``bagging survival trees'' by \cite{Hothorn+Lausen+Benner:2004}. 
-The idea of nearest neighbor weights is to measure similarity of a pair of 
-observations by counting the number of trees in which it is asigned to the 
-same terminal node.
-%Similar observations have a high probability of ending up in the same terminal 
-%node whereas this probability is low for quite different observations. 
-%although the first random forest-type algorithm for the estimation of 
-%conditional distribution functions was published more than a decade ago 
-%(bagging survival trees, Hothorn et al. 2004). 
-In particular, for a (possibly new) set of covariates 
-$\bold{z} = (z_1, \ldots, z_m) $  such a set of weights 
-$\bold{w}^{\text{forest}}~=~(w^{\text{forest}}_1, \ldots, w^{\text{forest}}_n)$ 
-is obtained by the following procedure: For each tuple $(y_i,\bold{z}_i)$ in 
-the learning data set $\{(y_i,\bold{z}_i)\}_{i=1\ldots,n}$ a weight is calculated 
-by counting the number of trees in which $(y_i,\bold{z}_i)$ ends up in the same 
-terminal node as $\bold{z}$:
+While the simple recursive structure of a tree model is easy to visualize and
+interpret, the abrupt changes are often too rough, instable, and impose steps
+on the model even if the true underlying effect is smooth. Hence, ensemble
+methods such as bagging or random forests \citep{Breiman:2001} typically smooth
+the effects, stabilize the model, and improve predictive performance.
+
+While classical random forests \citep{Breiman:2001} grow ensembles of trees
+that pick up changes in the location of the response across the covariates,
+\emph{distributional forests} employ an ensemble of $T$~\emph{distributional trees}. These
+pick up changes in the ``direction'' of any distribution parameter by
+considering the full score vector for choosing splitting variables and split
+points. Each of the distributional trees is grown on a different data set
+obtained through bootstrap sampling (or subsampling) and in each node only a
+random subset of the covariates $\bold{Z}$ is considered. As usual in random
+forests, this reduces the correlation among the trees and stabilizes the
+variance of the model.
+
+
+To obtain probabilistic predictions from a distributional forest, it still
+needs to be specified how to compute the parameter estimates
+$\bm{\hat \theta}(\bold{z})$ for a (potentially new) set of covariates $\bold{z}$.
+Following \cite{Hothorn+Zeileis:2017} we interpret random forests as adaptive
+local likelihood estimators using the averaged ``nearest neighbor weights''
+\citep{Lin+Jeon:2006} from the $T$~trees in the forest
 $$
-w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))
+w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \mathbf{1}((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))
 $$
-where $T$ is the number of trees of the forest, $B^t$ is the number of terminal 
-nodes of the \textit{t}-th tree and $\mathcal{B}^t_b$ represents the \textit{b}-th 
-terminal node of the \textit{t}-th tree.
-
-Therefore, contrary to distributional trees, in distributional forests the whole 
-learning data set can be used to fit a distributional model and specify the 
-predicted distribution for a set of covariates. Compared to the formula for
-predictions made by distributional trees the vector of tree weights 
-$\bold{w}^{\text{tree}}$ containing only zeros and ones is now replaced by a 
-vector of integer valued forest weights.
-%%% <TH> we need references for the nearest neighbor weights, copy from
-%%% "Transformation Forests" </TH>
-%%%<TH> we need to cite "Transformation Forests" for the interpretation of
-%%% random forests as adaptive local ML </TH>
-This individual set of weights 
-$\bold{w}^{\text{forest}}(\bold{z}) = (w^{\text{forest}}_1(\bold{z}), \ldots, w^{\text{forest}}_n(\bold{z}))$ 
-for the set of covariates $\bold{z}$ can now be included in the 
-estimation process of the distribution parameters and in that way leads 
-to its individual parameter vector $\hat{\theta}(\bold{z})$ where
+Thus, these $w^{\text{forest}}_i(\bold{z}) \in [0, 1]$ whereas
+$w^{\text{tree}}_i(\bold{z}) \in \{0, 1\}$. Hence, weights cannot only be $0$
+or $1$ but change more smoothly, giving high weight to those observations $i$
+from the learning sample that co-occur in the same segment $\mathcal{B}_b^t$
+as the new observation $\bold{z}$ for many of the trees $t = 1, \dots, T$.
+Consequently, the parameter estimates may, in principle, change for every
+observation and can be obtained by
 $$
-\hat{\theta}(\bold{z}) =  \argmax_{\theta \in \Theta} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\theta; y_i)
+\bm{\hat \theta}(\bold{z}) =  \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 $$
-While in a distributional tree the same distribution is specified for all 
-sets of covariates being in the same node, a distributional forest predicts 
-and fits a different distribution for each different set of covariates due 
-to the individual weights calculated separately for each set of covariates.
-
-As this novel methodology combines the advantages of smooth and flexible 
-parametric modeling with those of tree-structured modeling it provides a 
-model that can deal with a wide range of situations. Abrupt changes and 
-non-additive effects can be captured by its tree structure while smooth 
-effects can be modeled reasonably well by combining various tree and 
-smoothing the steps imposed by a single tree. As scores are considered 
-for each distribution parameter (separate) effects in different parameters 
-can be captured. At the same time, also interactions are detected 
-automatically by splitting the data in a way that is sensitive to changes 
-in either each of the parameters or combined in various parameters.
-
-
-
-
-
+In summary, this yields a parametric distributional regression model 
+(through the score-based approach) that can capture both abrupt effects and
+high-order interactions (through the trees) and smooth effects (through
+the forest).
 
 
 \SweaveOpts{eval = TRUE}
@@ -1410,7 +1320,10 @@ of the atmospheric state.
 From the GEFS outputs 14 basic forecast variables are considered with up 
 to 12 variations of each of these variables such as mean/maximum/minimum
 or different aggregation time ranges, etc. A detailed overview is
-provided in Table~\ref{covariates}, yielding 80~predictor variables in total. (Since the minimum of the ``variable downwards short wave radiation flux'' (\emph{dswrf}) over 24 hours is always 0, the ensemble mean and standard deviation of these minimal values are not considered.) \fixme{Mention that dswrf\_mean/sprd\_min is not included?}
+provided in Table~\ref{covariates}, yielding 80~predictor variables in total.
+(Since the minimum of the ``variable downwards short wave radiation flux'',
+\emph{dswrf}, over 24 hours is always 0, the ensemble mean and standard
+deviation of these minimal values are not considered.)
 
 To remove large parts of the skewness of precipitation data, 
 a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
@@ -1518,10 +1431,11 @@ $$
 
 \subsection{Application for one station}
 \label{Application for one station}
-First of all we focus on one observation station, Axams in Tyrol. This 
-station is selected due to its geographical closeness to Innsbruck, 
-the capital of Tyrol. As for all other stations, daily observations and 
-numerical weather predictions are available for the month of July of 
+
+In a first step, we show a detailed comparison of the competing models
+for one observation station, Axams in Tyrol (selected somewhat arbitrarily
+as the closest in the data set to Innsbruck, capital of Tyrol). As for all
+other stations, daily observations and  numerical weather predictions are available for the month of July of 
 28~years from 1985 through the year 2012. In Figure~\ref{axams_onestation} 
 the results of fitting a distributional forest to the first 24 years of the 
 data set and predicting the total amount of precipitation for one specific 
@@ -1893,8 +1807,7 @@ was applied. The EMOS models were built using the function
 \newpage
 \begin{appendix}
 
-\section{Tree algorithm}
-\label{treealgorithm}
+\section{Tree algorithm} \label{app:tree}
 The tree algorithm used in the applications discussed in this paper 
 is going to be explained following the ideas presented in 
 \cite{Seibold+Zeileis+Hothorn:2017}. For notational simplicity, the testing 
@@ -1904,12 +1817,12 @@ corresponding subset of observations depends on the assignment made
 by the foregoing split.
 
 \begin{itemize}
-\item A distributional model $\mathcal{D}(Y, \theta)$ is fit to the set of 
+\item A distributional model $\mathcal{D}(Y, \bm{\theta})$ is fit to the set of 
 observations $\{y_i\}_{i = 1,\ldots,n}$ by estimating the distribution 
-parameter $\hat{\theta}$. This parameter can be a multidimensional 
+parameter $\bm{\hat \theta}$. This parameter can be a multidimensional 
 vector $(\hat{\theta}_1, \ldots, \hat{\theta}_K)$, $K \in \mathbb{N}$, 
 depending on the type of distribution. The estimation is done by 
-maximizing the log-likelihood function $\ell(\theta; Y)$, i.e.
+maximizing the log-likelihood function $\ell(\bm{\theta}; Y)$, i.e.
 $$
 \hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
 $$
