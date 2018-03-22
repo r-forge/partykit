@@ -1,4 +1,4 @@
-utils::globalVariables(c(".tree", ".ranef", ".weights"))
+utils::globalVariables(c(".tree", ".ranef", ".weights", ".cluster"))
 
 lmertree <- function(formula, data, weights = NULL, offset = NULL,
                      ranefstart = NULL, cluster = NULL, abstol = 0.001, 
@@ -70,13 +70,22 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
         
     iteration <- iteration + 1L
     
-    tree <- do.call(lmtree, args = list(formula = tf, 
-                                        data = data, 
-                                        offset = data$.ranef, 
-                                        cluster = cluster, 
-                                        weights = data$.weights,
-                                        dfsplit = dfsplit,
-                                        ...))
+   # tree <- do.call(lmtree, args = list(formula = tf, 
+  #                                      data = data, 
+  #                                      offset = data$.ranef, 
+  #                                      cluster = cluster, 
+  #                                      weights = data$.weights,
+  #                                      dfsplit = dfsplit,
+  #                                      ...))
+    
+    if(is.null(cluster)) {
+      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+              dfsplit = dfsplit, ...)
+    } else {
+      data$.cluster <- cluster
+      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+              cluster = .cluster, dfsplit = dfsplit, ...)
+    }
     
     if (plot) plot(tree)
     data$.tree <- if (joint) {
@@ -182,11 +191,6 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
   
-  ## check if data is complete, print warning if not 
-  if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing observations, note that listwise deletion will be employed.") 
-  }
-  
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
   
@@ -225,14 +229,23 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       data$.ranef <- data$.ranef + offset
     }
     
-    tree <- do.call(glmtree, args = list(formula = tf, 
-                                         data = data, 
-                                         family = family,
-                                         offset = data$.ranef, 
-                                         cluster = cluster, 
-                                         weights = data$.weights,
-                                         dfsplit = dfsplit,
-                                         ...))
+    #tree <- do.call(glmtree, args = list(formula = tf, 
+    #                                     data = data, 
+    #                                     family = family,
+    #                                     offset = data$.ranef, 
+    #                                     cluster = cluster, 
+    #                                     weights = data$.weights,
+    #                                     dfsplit = dfsplit,
+    #                                     ...))
+    
+    if(is.null(cluster)) {
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, 
+              dfsplit = dfsplit, ...)
+    } else {
+      data$.cluster <- cluster
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, 
+              cluster = .cluster, dfsplit = dfsplit, ...)
+    }
     
     if (plot) plot(tree)
     data$.tree <- if (joint) {
