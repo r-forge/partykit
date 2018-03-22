@@ -88,7 +88,7 @@ names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
 names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 
-transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
+transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 
 
@@ -582,7 +582,7 @@ for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
 par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 @
 \endminipage};
@@ -599,7 +599,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*
 par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-#lines(x = x, y = ytrue, col = "grey", lwd=5, main = "")
+#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
 lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 @
 \endminipage};
@@ -950,10 +950,10 @@ points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
 points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
 points(x = pred4[1], y = pred4[2], col = "purple", pch = 4)
 
-lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgrey", type = "l", lty = 2)
+lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgray", type = "l", lty = 2)
+lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgray", type = "l", lty = 2)
+lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l", lty = 2)
+lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2)
 
 # add labels
 text(x = -0.8, y = lh1, labels = "2009", col = "red", cex = 0.8)
@@ -1022,7 +1022,8 @@ function is defined $\ell(\bm{\theta}; Y) = \log\{f(Y; \bm{\theta})\}$. The GAML
 framework \citep{Rigby+Stasinopoulos:2005} provides a wide range of such
 distributional families with parameterizations corresponding to location, scale,
 and shape. Furthermore, censoring and/or truncation of these distributions
-can be incorporated in the usual straightforward way \fixme{reference needed}.
+can be incorporated in the usual straightforward way
+\citep[see e.g.,][Chapter~7.2]{Long:1997}.
 
 To capture both location and scale of the probabilistic precipitation forecasts
 while accounting for a point mass at zero precipitation (i.e., dry days without
@@ -1427,8 +1428,8 @@ $$
 
 In a first step, we show a detailed comparison of the competing models
 for one observation station, Axams in Tyrol (selected somewhat arbitrarily
-as the closest in the data set to Innsbruck, capital of Tyrol that three of the
-authors are based in). As for all other stations, daily precipitation observations and
+as the closest in the data set to Innsbruck, capital of Tyrol and base of three of the
+authors). As for all other stations, daily precipitation observations and
 numerical weather predictions are available for the month of July from 1985
 to 2012. In Figure~\ref{fig:axams-dist} in the introduction the probabilistic
 forecasts from the distributional forest, trained on 1985--2008, for July 24
@@ -1543,53 +1544,28 @@ in the distributional forest. Based on data for station Axams, learning period
 Finally, it is of interest how this improvement in predictive performance
 by the distributional forest is accomplished, i.e., which of the 80~covariates
 are selected in the trees of the forest. As the 100~trees of the forest
+do not allow to simply assess the variables' role graphically, a common
+solution for random forests in general is to consider variable importance
+measures. Here, this is defined as the amount of change in CRPS when
+the association between one covariate and the response variable is
+artificially broken through permutation (and thus also breaking the
+association to the remaining covariates).
 
-\fixme{still not finished}
-
-As shown in Table~\ref{tab:models} the distributional forest 
-includes all of the available covariates. A single tree model would allow 
-to easily analyze which covariates are used as split variables in the nodes 
-and hence have a significant impact on the response variable. In a forest 
-model though, for each node in each of the trees a subset of the covariates 
-is chosen randomly as possible split variables to select one from. Moreover, 
-each tree is built on a resampled version of the learning data. For these 
-reasons the choices of split variables vary over the trees of a forest making 
-it difficult to analyze the impact of covariates just by investigating the 
-different trees. 
-
-To get an overview of which covariates have the most influential 
-effect on the response variable a standard measurement of variable importance 
-for forest models has been applied. Based on the mean decrease in accuracy 
-regarding the CRPS the 10 leading covariates of the above described distributional 
-forest for station Axams learned on the first 24 years are listed in 
-Figure~\ref{fig:axams-varimp}. As expected, the numerical forecast for total precipitation
-(\emph{tp}) is the most influential variable. In particular, five variations of 
-this variable are among the top ten of the list of covariates ordered by 
-variable importance.  
+Figure~\ref{fig:axams-varimp} shows 10~covariates with the highest permutation
+importance (i.e., change in CRPS) for station Axams. As expected the NWP outputs
+for total precipitation (\emph{tp}) are particularly important along with total
+column-integrated condensate (\emph{tcolc}). Also, both variables occur
+in various transformations such as means (either of the full day or certain parts
+of the afternoon), spreads, or minima/maxima. Thus, while the covariates
+themselves are not surprising, a specification with all the transformations
+would typically not have been considered in a GAMLSS.
   
 
-
+\pagebreak
 
 \subsection{Application for all stations}
 \label{sec:all}
 
-Until now the focus has been on one observation station only. To test and 
-compare the four methods under different geographical circumstances they
-are applied on all 95 stations. For each station, the first 
-24 years are used as learning data set and predictions are made for the 
-ensuing 4 years of available observations. For these out-of-sample predictions 
-the CRPS skill score with the EMOS model as reference model is calculated 
-for each method at each station. In Figure~\ref{fig:all-crps} the boxplots 
-of the CRPS skill score values are plotted illustrating that the distributional 
-forest leads to the highest improvement averaged over all stations.
-The green line represents the results for the station Axams.
-%NAs in gamlss in 13 stations!!!\\
-%for example in 13th station in complete{\_}stations\\
-%\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
-%\text{NA's in the working vector or weights for parameter mu}
-%\\
-% sum(is.na(crps[,3]))
-%<<eval = TRUE, echo = FALSE>>=
 <<echo = FALSE>>=
 #### prediction over all stations 24 - 4
 if(file.exists("rain_pred_24to4.rda")){
@@ -1661,10 +1637,11 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 
 
 
-\begin{figure}[t!]
+\begin{figure}[p!]
 \centering
-<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, width = 7>>=
-  matplot(t(s[,]), type = "l", lwd = 2, 
+<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, height = 4.5, width = 7>>=
+par(mar = c(3.1, 4.1, 1.1, 2.1))
+matplot(t(s[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE, 
           xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 3.5))
@@ -1674,25 +1651,13 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
   abline(h = 0, col = pal["EMOS"], lwd = 2)
     
 @
-\caption{\label{fig:all-crps}CRPS skill score for each station (grey lines) 
-and aggregated over all stations (boxplots). Station Axams is highlighted in green 
+\caption{\label{fig:all-crps}CRPS skill score for each station (gray lines
+with boxplots superimposed). Station Axams is highlighted in green 
 and the horizontal orange line pertains to the reference model EMOS. The models are 
-learned on data from 24 years (1985--2008) and validated on 4 years (2009--2012).}
-\end{figure}
+learned on 1985--2008 and validated for 2009--2012.}
 
-Figure~\ref{fig:all-map} shows a map of Tyrol (based on the SRTM 90m Digital Elevation 
-Data, \cite{srtm}) with the location of all observation stations included in the 
-data set. Each station is illustrated by a symbol with the type of symbol 
-representing the method that performed best in terms of CRPS at this station. 
-The color of the symbol indicates the difference between the CRPS of the 
-distributional forest and the CRPS of the best performing among the other 
-three models (prespecified GAMLSS, boosted GAMLSS and EMOS).
-Even though for some stations, especially in East Tyrol, one of the two GAMLSS
-models and for a few others the EMOS model leads to the best results, for the 
-majority of stations the distributional forest performs best.
+\vspace*{0.4cm}
 
-\begin{figure}[t!]
-\centering
 \setkeys{Gin}{width=0.99\textwidth}
 <<map, fig=TRUE, echo=FALSE, height=6.1, width=9>>=
   
@@ -1715,85 +1680,94 @@ majority of stations the distributional forest performs best.
   axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
   
 @
-\caption{\label{fig:all-map}Map of Tyrol showing which model performed best at 
-which station (type of symbol). The color codes whether the distributional 
-forest had lower or higher CRPS (red or blue) compared to the best of the 
-other three models (prespecified GAMLSS, boosted GAMLSS and EMOS).}
+\caption{\label{fig:all-map}Map of Tyrol coding the best-performing model
+for each station (type of symbol). The color codes whether the distributional 
+forest had higher (green) or lower (red) CRPS compared to the best of the 
+other three models.}
 \end{figure}
 
 
+After considering only one observation station up to now, a second step
+evaluates and compares the competing methods on all 95~stations. As in the previous
+section, all models are learned on the first 24~years and evaluated by the
+average CRPS on the last 4~years. More specifically, the CRPS skill score
+against the EMOS model is computed for the out-of-sample predictions at each
+station and visualized by parallel coordinates plots with boxplots superimposed
+in Figure~\ref{fig:all-crps}. Overall distributional forests have a slightly
+higher improvement in CRPSS compared to the two GAMLSS which is best seen
+by looking at the boxplots and also in the green line representating the results
+for station Axams. The underlying parallel coordinates additionally
+bring out that the prespecified GAMLSS sometimes performs rather differently
+(sometimes better, sometimes worse) compared to the two data-driven models.
+Finally, because some CRPSS become negative, it is also clear that the simple
+EMOS performs better than the other models for a few of the stations.
 
+%NAs in gamlss in 13 stations!!!\\
+%for example in 13th station in complete{\_}stations\\
+%\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
+%\text{NA's in the working vector or weights for parameter mu}
+%\\
+% sum(is.na(crps[,3]))
+%<<eval = TRUE, echo = FALSE>>=
+
+
+To assess whether these differences in predictive performance are due to differences
+in the topology, Figure~\ref{fig:all-map} shows a brief summary for each station
+on a map of Tyrol (based on the SRTM 90m Digital Elevation 
+Data, \cite{srtm}). Each station is illustrated by a symbol that conveys which
+model performed best in terms of CRPS on the last 4~years of the data.
+Additionally, the color of the symbol indicates the CRPS difference between 
+distributional forest and the best-performing other model. Green signals that
+the distributional forest performs better than the other models whereas red
+signals that another model performs better. Overall the distributional forest
+performs on par (gray) or better (green) for the majority of stations. Only
+for a few stations in the north-east EMOS performs best, and in East Tyrol
+the prespecified EMOS performs particularly well.
 
 
 \section{Discussion}
 \label{sec:discussion}
 
-From the results in Section~\ref{sec:precipitation} we can conclude 
-that distributional forests provide a powerful alternative framework requiring 
-only little effort to set up a model which is competitive to commonly used 
-methods or even outperforms them. Even though a proper selection of covariates 
-and specification of interactions in advance can lead to better fitting 
-(and probably less complex) models, this presupposes profound knowledge of 
-all influencing factors. Otherwise, important aspects might be missed or 
-effects which do not correspond to the truth might be imposed on the model. 
-This risk can be avoided by applying a boosting algorithm for an automatic 
-variable selection. In this case the trade-off is often a remarkably higher 
-computational effort. To build a distributional forest the user is not 
-required to provide any expert knowledge or additional information about 
-the setting as variable selection and detection of interactions are done 
-automatically by the tree-structure of the model. This feature is 
-particularly advantageous in case of a very high number of covariates. 
-Therefore, the above discussed application illustrates the strengths of 
-distributional forests as they offer a very flexible framework which 
-enables an easy use of the method and at the same time lead to an overall 
-improvement in the predictive performance in this setting. Especially 
-in situations where no or only little information is available about 
-possible influences, effects or interactions this novel methodology 
-can be seen as a good and recommendable compromise being able to deal 
-with a wide range of modeling situations in a reasonable way.
+Distributional regression modeling is combined with tree-based modeling
+to obtain a novel and flexible method for probabilistic forecasting.
+The resulting distributional trees and forests can capture abrupt and
+nonlinear effects and interactions in a data-driven way. By basing the
+split point and split variable selection on a full likelihood and
+corresponding score function, the trees and forests can not only pick
+up changes in the location but also the scale or shape of a distributional
+family.
 
-%Even though many situations demand for the use of specifically tailored 
-%models providing the needed features and therefore being clearly advantageous 
-%and the best choice, it is often hard to tell in advance which features 
-%will be required. In these cases a distributional forest is a 
-%recommendable compromise providing reasonable models and performing 
-%well without any prespecification or additional knowledge needed in advance. 
-
+Distributional forests are an attractive alternative when prespecifying or boosting
+all effects and interactions in a GAMLSS model is challenging. They are
+rather straightforward to specify requiring only little prior subject
+matter knowledge and also work well in the presence of many potential
+covariates. The application to precipitation forecasting in complex terrain
+illustrates that distributional forests often perform on par or even
+better than their GAMLSS counterparts. Hence, they form a useful addition
+to the toolbox of probabilistic forecasts, especially in meteorology.
 
 
 \section*{Computational details}
-The corresponding implementation to the novel methods presented 
-in this article is available on \textsf{R}-Forge in an \textsf{R} 
-package called \textbf{disttree} within the project \textbf{partykit} 
-(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
-\code{distfit} fits a distributional model and is called within the
-tree-building function \code{disttree} and the forest-building
-function \code{distforest}. 
-Within \code{disttree} either the \code{mob} or \code{ctree} function 
-can be applied as a framework to build a tree. Similarly, the function 
-\code{distforest} is based on the function \code{cforest}. All three 
-functions, \code{mob}, \code{ctree} and \code{cforest}, are provided 
-in the package \textbf{partykit} (\citealt{Hothorn+Zeileis:2015}). 
-To specify a distribution family the user can hand over one of the 
-following objects as input argument in \code{distfit}, \code{disttree} 
-and \code{distforest}: 
-\begin{itemize}
-\item a GAMLSS family object from the \textsf{R} package \textbf{gamlss.dist} 
-(\citealt{Stasinopoulos+Rigby:2007}).
-\item a family list generating function from the package \textbf{disttree}.
-\item a complete family list from the package \textbf{disttree}.
-\item a custom list containing all required information about the 
-distribution family.
-\end{itemize}
 
-In Section~\ref{sec:precipitation} the prespecified GAMLSS were 
-built using the function \code{gamlss} from the \textsf{R} package 
-\textbf{gamlss} (\citealt{Stasinopoulos+Rigby:2007}). For the 
-boosted GAMLSS the function \code{gamboostLSS} from the \textsf{R} 
-package \textbf{gamboostLSS} (\citealt{Hofner+Mayr+Schmid:2016}) 
-was applied. The EMOS models were built using the function 
-\code{crch} from the \textsf{R} package \textbf{crch} 
-(\citealt{Messner+Mayr+Zeileis:2016})
+The proposed methods are in the \textsf{R} package \textbf{disttree} on
+\textsf{R}-Forge within the \textbf{partykit} project
+(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
+\code{distfit} fits distributional models by maximum likelihood, which is
+used as the basis for the tree-building function \code{disttree}, upon which
+the \code{distforest} is built. All functions can either be used with
+GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
+(\citealt{Stasinopoulos+Rigby:2007}) or with custom lists containing
+all required information about the distribution family.
+
+In addition to \textbf{disttree}, Section~\ref{sec:precipitation} employs
+the functions \code{crch} from the \textsf{R} package \textbf{crch} 
+\citep{Messner+Mayr+Zeileis:2016} for the EMOS models,
+\code{gamlss} from the \textsf{R} package \textbf{gamlss}
+\citep{Stasinopoulos+Rigby:2007} for the prespecified GAMLSS, and
+\code{gamboostLSS} from the \textsf{R} package \textbf{gamboostLSS}
+\citep{Hofner+Mayr+Schmid:2016} for the boosted GAMLSS.
+
+\fixme{replication code?}
 
 
 \bibliography{ref.bib}
