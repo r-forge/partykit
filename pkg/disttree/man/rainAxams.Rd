@@ -24,16 +24,18 @@ bi-linearly interpolated to the station location.
 }
 
 \format{
-A \code{data.frame} consisting of power transformed observations of daily
-precipitation sums and the corresponding meteorological ensemble predictions
-for station Axams. The base variables of the numerical ensemble predictions are
-listed below. For each of them variations such as ensemble mean/standard
-deviation/minimum/maximum are included in the dataset.
+A \code{data.frame} consisting of the station's name, observation day and year,
+power transformed observations of daily precipitation sums and the corresponding 
+meteorological ensemble predictions for station Axams. The base variables of 
+the numerical ensemble predictions are listed below. For each of them variations 
+such as ensemble mean/standard deviation/minimum/maximum are included in the dataset.
 All ``power transformed'' values use the same power parameter \code{p=1/1.6}.
 
 \describe{
+  \item{station}{\code{character}. Name of the observation station.}
   \item{robs}{\code{numeric}. Observed total precipitation (power transformed).}
   \item{year}{\code{integer}. Year in which the observation was taken.}
+  \item{day}{\code{integer}. Day for which the observation was taken.}
   \item{tppow_mean, tppow_sprd, tppow_min, tppow_max, 
         tppow_mean0612, tppow_mean1218, tppow_mean1824, tppow_mean2430,
         ppow_sprd0612, tppow_sprd1218, tppow_sprd1824, tppow_sprd2430}{\code{numeric}.
