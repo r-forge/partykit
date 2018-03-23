@@ -1,5 +1,5 @@
-\name{stations}
-\alias{stations}
+\name{stationsTyrol}
+\alias{stationsTyrol}
 
 \title{Observation stations}
 
@@ -8,13 +8,13 @@
 \usage{data("stations")}
 
 \format{
-A data frame containing 95 observations stations and 5 variables.
+A data frame containing 95 observation stations and 5 variables.
 \describe{
-  \item{stationnr}{numeric. Stationnumber}
-  \item{stationname}{character. Stationname.}
+  \item{name}{character. Stationname.}
+  \item{id}{numeric. Stationnumber}
   \item{lon}{numeric. Longitutde.}
   \item{lat}{numeric. Latitude.}
-  \item{height}{numeric. Height.}
+  \item{alt}{numeric. Altitude.}
   }
 }
 
