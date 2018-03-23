@@ -5,7 +5,7 @@
 
 \description{All 95 observations stations including all necessary information about each station.}
 
-\usage{data("stations")}
+\usage{data("stationsTyrol")}
 
 \format{
 A data frame containing 95 observation stations and 5 variables.
@@ -26,8 +26,8 @@ A data frame containing 95 observation stations and 5 variables.
 
 
 \examples{
-data("stations")
-head(stations)
+data("stationsTyrol")
+head(stationsTyrol)
 }
 
 \keyword{datasets}
