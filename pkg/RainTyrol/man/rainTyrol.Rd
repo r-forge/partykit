@@ -3,15 +3,17 @@
 
 \title{Observations and covariates for all 95 stations}
 
-\description{Observations of precipitation sums and numerical ensemble predictions of meteorological quantities.}
+\description{Observations of precipitation sums and numerical ensemble predictions of meteorological quantities for 95 observation stations in Tyrol.}
 
 \usage{data("rainTyrol")}
 
 \format{
-A list of data frames, one data frame for each of the 95 observation stations. Each data frame consists of power transformed observations and numerical ensemble predictions of meteorological quantities. The base variables of the numerical ensemble predictions are listed below. For each of them variations such as ensemble mean/standard deviation/minimum/maximum are provided.
+A data frame containing the stations' names, observation day and year, power transformed observations and numerical ensemble predictions of meteorological quantities. The base variables of the numerical ensemble predictions are listed below. For each of them variations such as ensemble mean/standard deviation/minimum/maximum are provided.
 \describe{
-  \item{robs}{numeric. Observed total precipitation (power transformed).}
+  \item{station}{character. Name of the observation station.}
   \item{year}{integer. Year in which the observation was taken.}
+  \item{day}{integer. Day for which the observation was taken.}
+  \item{robs}{numeric. Observed total precipitation (power transformed).}
   \item{tppow}{numeric. Predicted total precipitation (power transformed).}
   \item{capepow}{numeric. Predicted convective available potential energy (power transformed).}
   \item{dswrf}{numeric. Predicted downwards short wave radiation flux (``sunshine'').}
@@ -45,7 +47,6 @@ Accessed: 2016--02--29.
 
 \examples{
 data("rainTyrol")
-head(rainTyrol$Axams)
 }
 
 \keyword{datasets}
