@@ -3,7 +3,6 @@
 #######################################################
 
 library("disttree")
-set.seed(7)
 
 
 #####
@@ -118,6 +117,8 @@ testdata <- rainAxams[rainAxams$year %in% c(109, 110, 111, 112),]
 ############
 # fitting the models
 
+set.seed(7)
+
 # fit distributional tree
 dt <- disttree(dt.formula, 
                data = learndata, family = dist_list_cens_normal, 
@@ -125,7 +126,6 @@ dt <- disttree(dt.formula,
                control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
                                        mincriterion = 0.95, minsplit = 50,
                                        minbucket = 20))
-
 
 # visualization
 plot(dt)
@@ -142,9 +142,34 @@ df <- distforest(df.formula,
                                          mincriterion = 0, minsplit = 50,
                                          minbucket = 20))
 
+############
+# fit other heteroscedastic censored gaussian models
+
+# fit prespecified GAM (covariates selected based on meteorological expert knowledge)
+g_learndata <- learndata
+g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
+g <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
+            family = cens("NO", type = "left"),
+            control = gamlss.control(n.cyc = 100),
+            i.control = glim.control(cyc = 100, bf.cyc = 100))
+
+# fit boosted GAM
+gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata, 
+                  families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
+                  control = boost_control(mstop = 1000L))
+# find optimal value for mstop (evalution is very time-consuming)
+grid <- seq(50,1000, by = 25)
+cvr <- cvrisk(gb, grid = grid)
+mstop(gb) <- mstop(cvr)
+
+# fit linear model with only total precipitation as covariate (Ensemble Model Output Statistics, EMOS)
+ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
+           data = learndata, dist = "gaussian", left = 0, link.scale = "log")
+
 
 
 ############
+# only distforest:
 # predict expected total precipitation for one day in July of the 4 test years and
 # plot corresponding predicted density functions for 2009, 2010, 2011 and 2012
 
@@ -200,7 +225,7 @@ plot(x = x, y = y1, type = "l", col = "red",
 lines(x = x, y = y2, type = "l", col = "blue")
 lines(x = x, y = y3, type = "l", col = "darkgreen")
 lines(x = x, y = y4, type = "l", col = "purple")
-legend('topright', c("predicted distribution", "point mass at censoring point", "observation"),
+legend('topright', c("Predicted distribution", "Point mass at censoring point", "Observation"),
        bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8)
 
 # plot point mass
@@ -237,33 +262,10 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 
 
 
+
+
 ############
-# Comparison to other heteroscedastic censored gaussian models
-
-# fit prespecified GAM (covariates selected based on meteorological expert knowledge)
-g_learndata <- learndata
-g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
-g <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-            family = cens("NO", type = "left"),
-            control = gamlss.control(n.cyc = 100),
-            i.control = glim.control(cyc = 100, bf.cyc = 100))
-
-# fit boosted GAM
-gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata, 
-                  families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
-                  control = boost_control(mstop = 500L))
-# find optimal value for mstop (evalution is very time-consuming)
-grid <- seq(50,1000, by = 25)
-cvr <- cvrisk(gb, grid = grid)
-mstop(gb) <- mstop(cvr)
-
-# fit linear model with only total precipitation as covariate (Ensemble Model Output Statistics, EMOS)
-ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-           data = learndata, dist = "gaussian", left = 0, link.scale = "log")
-
-
-
-## get predicted parameter for testdata
+# get predicted parameter of all models for testdata
 
 # distributional tree
 pdt <- predict(dt, newdata = testdata, type = "parameter")
@@ -376,17 +378,23 @@ results
 
 
 
-##
-# PIT histograms
+## PIT histograms
 set.seed(4)
-
-par(mfrow = c(2,3))
+par(mfrow = c(2,2))
 library("countreg")
 
-pithist(pit_dt, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Tree", ylim = c(0,1.5))
-pithist(pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Forest", ylim = c(0,1.5))
-pithist(pit_g,  nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "prespGAM", ylim = c(0,1.5))
-pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boostGAM", ylim = c(0,1.5))
+pithist(pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
 pithist(pit_ml, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
+pithist(pit_g,  nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
+pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAMLSS", ylim = c(0,1.5))
+#pithist(pit_dt, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional tree", ylim = c(0,1.5))
 
 
+## QQR plots
+set.seed(7)
+par(mfrow = c(2, 2))
+qqrplot(pit_df, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+#qqrplot(pit_dt, nsim = 100, main = "Distributional tree",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
