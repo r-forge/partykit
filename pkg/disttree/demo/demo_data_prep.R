@@ -94,7 +94,10 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   
   #######################
   # get covariates (numerical ensemble predictions) for each station
+  # stored in a list
   rainlist <- list()
+  # or in a data.frame
+  raindf <- data.frame()
   
   for(i in 1:nrow(stations_comp)){
     rain <- rain_all_July85
@@ -107,7 +110,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     load(paste0("rainData/prepared/GEFSV2_prepared_", stationnr, ".rda", sep = ""))
     prediction <- prepared
     Sys.setenv("TZ" = "UTC")
-    prediction$day <-as.POSIXlt(prediction$init)$yday
+    #prediction$day <-as.POSIXlt(prediction$init)$yday
     prediction$year <- as.POSIXlt(prediction$init)$year
     #head(prediction)
     
@@ -124,9 +127,9 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     # (pred starts at 00UTC and predicts from 06UTC until 30UTC = 06UTC of next day, 
     # observations are meassured from 06UTC of previous day to 06UTC of current day)
     
-    raindata <- cbind(rain$date, rain$obs, rain$robs, prediction)
+    raindata <- cbind(rain$day, rain$year, rain$robs, prediction)
     #head(raindata[,c(1:10)])
-    colnames(raindata)[c(1:3)] <- c("date", "obs", "robs")
+    colnames(raindata)[c(1:4)] <- c("day", "year", "robs")
     
     
     
@@ -153,7 +156,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     
     ######################################################
     # only keep variables with sufficient values
-    raindata <- raindata[, c("robs", "year",
+    raindata <- raindata[, c("year", "day", "robs",
                              "tppow_mean", "tppow_sprd", "tppow_min", "tppow_max", 
                              "tppow_mean0612", "tppow_mean1218", "tppow_mean1824", "tppow_mean2430", 
                              "tppow_sprd0612", "tppow_sprd1218", "tppow_sprd1824", "tppow_sprd2430",
@@ -188,7 +191,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     
     ######################################################
     # only keep variables that are considered for the models in the demo example
-    raindata <- raindata[, c("robs", "year",
+    raindata <- raindata[, c("year", "day", "robs",
                              "tppow_mean", "tppow_sprd", "tppow_min", "tppow_max", 
                              "tppow_mean0612", "tppow_mean1218", "tppow_mean1824", "tppow_mean2430", 
                              "tppow_sprd0612", "tppow_sprd1218", "tppow_sprd1824", "tppow_sprd2430",
@@ -221,20 +224,45 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     #new vairable msl_diff
     raindata$msl_diff <- raindata$msl_mean_max - raindata$msl_mean_min
     
+    ## change year from 85-112 to 1985-2012
+    raindata$year <- raindata$year + 1900
+    
     ## FIX ME: check years (85-112)
     # table(raindata$year)
     rainlist$raindata <- raindata
-    names(rainlist)[length(rainlist)] <- strsplit(stationname, split = " ")[[1]][1]
+    name <- strsplit(stationname, split = " ")[[1]][1]
+    names(rainlist)[length(rainlist)] <- name
+    
+    station <- rep(name, length = NROW(raindata))
+    raindata <- cbind(station, raindata)
+    raindf <- rbind(raindf, raindata)
+    
   }
 }
 
 # save data
 {
   stations <- stations_comp
-  save(stations, file = "~/svn/partykit/pkg/RainTyrol/data/stations.rda")
-  rainTyrol <- rainlist
+  names <- numeric(length(NROW(stations)))
+  for(i in 1:NROW(stations)) names[i] <- strsplit(as.character(stations[i,"stationname"]), " ")[[1]][1]
+  stations$name <- names
+  stations <- stations[,c("name", "stationnr", "lon", "lat", "height")]
+  colnames(stations) <- c("name", "id", "lon", "lat", "alt")
+  stationsTyrol <- stations
+  save(stationsTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/stationsTyrol.rda")
+  
+  ## save as list over all stations:
+  # rainTyrol <- rainlist
+  # save(rainTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/rainTyrol.rda")
+  # rainAxams <- rainlist$Axams
+  # save(rainAxams, file = "~/svn/partykit/pkg/disttree/data/rainAxams.rda")
+  
+  ## or as data.frame containing all stations and additional column with the stationname
+  rainTyrol <- raindf
+  rownames(rainTyrol) <- c(1:NROW(rainTyrol))
   save(rainTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/rainTyrol.rda")
-  rainAxams <- rainlist$Axams
+  rainAxams <- rainTyrol[rainTyrol$station == "Axams",]
+  rownames(rainAxams) <- c(1:NROW(rainAxams))
   save(rainAxams, file = "~/svn/partykit/pkg/disttree/data/rainAxams.rda")
 }
 
