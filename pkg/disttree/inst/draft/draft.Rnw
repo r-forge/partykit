@@ -90,265 +90,6 @@ names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 
 transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
-
-
-
-# plot RMSE
-plot_rmse <- function(simres, type = c("exp", "par"), ylim = NULL, legend = TRUE){
-  
-  if(type == "exp"){
-    rmse <- NULL
-    colnames <- NULL
-    col <- NULL
-    legendnames <- NULL
-    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.dt"], simres$resmat[,"av.rmse.exp.obs.dt"])
-      colnames <- c(colnames, "dt.true", "dt.obs")
-      col <- c(col, pal["tree"])
-      legendnames <- c(legendnames, "tree")
-    }
-    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.df"], simres$resmat[,"av.rmse.exp.obs.df"])
-      colnames <- c(colnames, "df.true", "df.obs")
-      col <- c(col, pal["forest"])
-      legendnames <- c(legendnames, "distributional forest")
-    }
-    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.g"], simres$resmat[,"av.rmse.exp.obs.g"])
-      colnames <- c(colnames, "g.true", "g.obs")
-      col <- c(col, pal["gamlss"])
-      legendnames <- c(legendnames, "gamlss")
-    }
-    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.b"], simres$resmat[,"av.rmse.exp.obs.b"])
-      colnames <- c(colnames, "b.true", "b.obs")
-      col <- c(col, pal["bamlss"])
-      legendnames <- c(legendnames, "bamlss")
-    }
-    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.gb"], simres$resmat[,"av.rmse.exp.obs.gb"])
-      colnames <- c(colnames, "gb.true", "gb.obs")
-      col <- c(col, pal["gamboostLSS"])
-      legendnames <- c(legendnames, "gamboostLSS")
-    }
-    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.rf"], simres$resmat[,"av.rmse.exp.obs.rf"])
-      colnames <- c(colnames, "rf.true", "rf.obs")
-      col <- c(col, pal["randomForest"])
-      legendnames <- c(legendnames, "randomForest")
-    }
-    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.exp.true.cf"], simres$resmat[,"av.rmse.exp.obs.cf"])
-      colnames <- c(colnames, "cf.true","cf.obs")
-      col <- c(col, pal["cforest"])
-      legendnames <- c(legendnames, "cforest")
-    }
-    
-    colnames(rmse) <- colnames
-    if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
-    
-    plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
-         xlab = expression(kappa), ylab = "RMSE")
-    lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
-    
-    for(i in 1:(length(col)-1)){
-      lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
-      lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
-    }
-    if(legend) legend('topleft', legendnames, 
-                      col = col, lty = 1, cex = 0.7)
-  } 
-  
-  if(type == "par"){
-    
-    rmse <- NULL
-    colnames <- NULL
-    col <- NULL
-    legendnames <- NULL
-    if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.dt"], simres$resmat[,"av.rmse.sigma.dt"])
-      colnames <- c(colnames, "dt.true", "dt.obs")
-      col <- c(col, pal["tree"])
-      legendnames <- c(legendnames, "tree")
-    }
-    if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.df"], simres$resmat[,"av.rmse.sigma.df"])
-      colnames <- c(colnames, "df.true", "df.obs")
-      col <- c(col, pal["forest"])
-      legendnames <- c(legendnames, "distributional forest")
-    }
-    if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.g"], simres$resmat[,"av.rmse.sigma.g"])
-      colnames <- c(colnames, "g.true", "g.obs")
-      col <- c(col, pal["gamlss"])
-      legendnames <- c(legendnames, "gamlss")
-    }
-    if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.b"], simres$resmat[,"av.rmse.sigma.b"])
-      colnames <- c(colnames, "b.true", "b.obs")
-      col <- c(col, pal["bamlss"])
-      legendnames <- c(legendnames, "bamlss")
-    }
-    if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.gb"], simres$resmat[,"av.rmse.sigma.gb"])
-      colnames <- c(colnames, "gb.true", "gb.obs")
-      col <- c(col, pal["gamboostLSS"])
-      legendnames <- c(legendnames, "gamboostLSS")
-    }
-    if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.rf"], simres$resmat[,"av.rmse.sigma.rf"])
-      colnames <- c(colnames, "rf.true", "rf.obs")
-      col <- c(col, pal["randomForest"])
-      legendnames <- c(legendnames, "randomForest")
-    }
-    if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
-      rmse <- cbind(rmse, simres$resmat[,"av.rmse.mu.cf"], simres$resmat[,"av.rmse.sigma.cf"])
-      colnames <- c(colnames, "cf.true","cf.obs")
-      col <- c(col, pal["cforest"])
-      legendnames <- c(legendnames, "cforest")
-    }
-    
-    colnames(rmse) <- colnames
-    if(is.null(ylim)) ylim <- c(min(na.omit(rmse)), max(na.omit(rmse)))
-    
-    plot(x = simres$x.axis, y = rmse[,1], type = "l", col = col[1], ylim = ylim,
-         xlab = expression(kappa), ylab = "RMSE")
-    lines(x = simres$x.axis, y = rmse[,2], type = "l", lty = 2, col = col[1])
-    
-    for(i in 1:(length(col)-1)){
-      lines(x = simres$x.axis, y = rmse[,(2*i+1)], type = "l", col = col[i+1])
-      lines(x = simres$x.axis, y = rmse[,(2*i+2)], type = "l", lty = 2, col = col[i+1])
-    }
-    if(legend) legend('topleft', legendnames, 
-                      col = col, lty = 1, cex = 0.7)
-  }
-}
-
-# plot loglikelihood
-plot_ll <- function(simres, ylim = NULL, legend = TRUE){
-  
-  ll <- NULL
-  colnames <- NULL
-  col <- NULL
-  legendnames <- NULL
-  if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.dt"])
-    colnames <- c(colnames, "dt.ll")
-    col <- c(col, pal["tree"])
-    legendnames <- c(legendnames, "tree")
-  }
-  if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.df"])
-    colnames <- c(colnames, "df.ll")
-    col <- c(col, pal["forest"])
-    legendnames <- c(legendnames, "distributional forest")
-  }
-  if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.g"])
-    colnames <- c(colnames, "g.true")
-    col <- c(col, pal["gamlss"])
-    legendnames <- c(legendnames, "gamlss")
-  }
-  if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.b"])
-    colnames <- c(colnames, "b.true")
-    col <- c(col, pal["bamlss"])
-    legendnames <- c(legendnames, "bamlss")
-  }
-  if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.gb"])
-    colnames <- c(colnames, "gb.true")
-    col <- c(col, pal["gamboostLSS"])
-    legendnames <- c(legendnames, "gamboostLSS")
-  }
-  if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.rf"])
-    colnames <- c(colnames, "rf.true")
-    col <- c(col, pal["randomForest"])
-    legendnames <- c(legendnames, "randomForest")
-  }
-  if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
-    ll <- cbind(ll, simres$resmat[,"av.loglik.cf"])
-    colnames <- c(colnames, "cf.true")
-    col <- c(col, pal["cforest"])
-    legendnames <- c(legendnames, "cforest")
-  }
-  
-  colnames(ll) <- colnames
-  if(is.null(ylim)) ylim <- c(min(na.omit(ll)), max(na.omit(ll)))
-  
-  plot(x = simres$x.axis, y = ll[,1], type = "l", col = col[1], ylim = ylim,
-       xlab = expression(kappa), ylab = "log-likelihood")
-  
-  for(i in 2:length(col)){
-    lines(x = simres$x.axis, y = ll[,i], type = "l", col = col[i])
-  }
-  if(legend) legend('topleft', legendnames, 
-                    col = col, lty = 1, cex = 0.7)
-}
-
-# plot crpse
-plot_crps <- function(simres, ylim = NULL, legend = TRUE){
-  
-  crps <- NULL
-  colnames <- NULL
-  col <- NULL
-  legendnames <- NULL
-  if("av.rmse.exp.true.dt" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.dt"])
-    colnames <- c(colnames, "dt.crps")
-    col <- c(col, pal["tree"])
-    legendnames <- c(legendnames, "tree")
-  }
-  if("av.rmse.exp.true.df" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.df"])
-    colnames <- c(colnames, "df.crps")
-    col <- c(col, pal["forest"])
-    legendnames <- c(legendnames, "distributional forest")
-  }
-  if("av.rmse.exp.true.g" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.g"])
-    colnames <- c(colnames, "g.true")
-    col <- c(col, pal["gamlss"])
-    legendnames <- c(legendnames, "gamlss")
-  }
-  if("av.rmse.exp.true.b" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.b"])
-    colnames <- c(colnames, "b.true")
-    col <- c(col, pal["bamlss"])
-    legendnames <- c(legendnames, "bamlss")
-  }
-  if("av.rmse.exp.true.gb" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.gb"])
-    colnames <- c(colnames, "gb.true")
-    col <- c(col, pal["gamboostLSS"])
-    legendnames <- c(legendnames, "gamboostLSS")
-  }
-  if("av.rmse.exp.true.rf" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.rf"])
-    colnames <- c(colnames, "rf.true")
-    col <- c(col, pal["randomForest"])
-    legendnames <- c(legendnames, "randomForest")
-  }
-  if("av.rmse.exp.true.cf" %in% colnames(simres$resmat)) {
-    crps <- cbind(crps, simres$resmat[,"av.crps.cf"])
-    colnames <- c(colnames, "cf.true")
-    col <- c(col, pal["cforest"])
-    legendnames <- c(legendnames, "cforest")
-  }
-  
-  colnames(crps) <- colnames
-  if(is.null(ylim)) ylim <- c(min(na.omit(crps)), max(na.omit(crps)))
-  
-  plot(x = simres$x.axis, y = crps[,1], type = "l", col = col[1], ylim = ylim,
-       xlab = expression(kappa), ylab = "CRPS")
-  
-  for(i in 2:length(col)){
-    lines(x = simres$x.axis, y = crps[,i], type = "l", col = col[i])
-  }
-  if(legend) legend('topright', legendnames, 
-                    col = col, lty = 1, cex = 1, bty = "n")
-}
 @
 
 
@@ -1695,7 +1436,7 @@ against the EMOS model is computed for the out-of-sample predictions at each
 station and visualized by parallel coordinates plots with boxplots superimposed
 in Figure~\ref{fig:all-crps}. Overall distributional forests have a slightly
 higher improvement in CRPSS compared to the two GAMLSS which is best seen
-by looking at the boxplots and also in the green line representating the results
+by looking at the boxplots and also in the green line representing the results
 for station Axams. The underlying parallel coordinates additionally
 bring out that the prespecified GAMLSS sometimes performs rather differently
 (sometimes better, sometimes worse) compared to the two data-driven models.
@@ -1785,112 +1526,102 @@ reduce the emphasis of the modularity of the framework.}
 
 \fixme{Adapt notation.}
 
-The tree algorithm used in the applications discussed in this paper 
-is going to be explained following the ideas presented in 
-\cite{Seibold+Zeileis+Hothorn:2017}. For notational simplicity, the testing 
-and splitting procedure is described for the root node with observations 
-$\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. In each child node the 
-corresponding subset of observations depends on the assignment made 
-by the foregoing split.
+In the following, the tree algorithm applied in the empirical case study 
+discussed in this paper is going to be explained. For notational simplicity, 
+the testing and splitting procedure is described for the root node with 
+observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. 
+In each child node the corresponding subset of observations depends on 
+the assignment made by the foregoing split.
 
-\begin{itemize}
-\item A distributional model $\mathcal{D}(Y, \bm{\theta})$ is fit to the set of 
-observations $\{y_i\}_{i = 1,\ldots,n}$ by estimating the distribution 
-parameter $\bm{\hat \theta}$. This parameter can be a multidimensional 
-vector $(\hat{\theta}_1, \ldots, \hat{\theta}_K)$, $K \in \mathbb{N}$, 
-depending on the type of distribution. The estimation is done by 
-maximizing the log-likelihood function $\ell(\bm{\theta}; Y)$, i.e.
+After fitting a distributional model $\mathcal{D}(Y, \bm{\theta})$ to 
+the set of observations $\{y_i\}_{i = 1,\ldots,n}$ as explained in 
+Section~\ref{sec:distfit} the resulting estimated parameter 
+$\bm{\hat{\theta}} = 
+(\hat{\theta}_1, \ldots, \hat{\theta}_k)$, $k \in \mathbb{N}$ 
+can be plugged in the score function $s(\bm{\theta}, Y)$.
+In that way a meassurement of goodness-of-fit is obtained for each
+parameter $\theta_j$ and each observation $y_i$.\\
+To use this information, statistical tests are employed to detect
+dependencies between the score values
 $$
-\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
-$$
-which is equal to solving
-$$
-\sum_{i=1}^n s(\theta, y_i) = \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\theta; y_i) = 0
-$$
-for $\theta$.
-
-\item Calculate score values 
-$$
-s(\hat{\theta}, y_i) = 
+s(\bm{\hat{\theta}}, y) = 
+%\begin{pmatrix} 
+%s(\bm{\hat{\theta}}, y_1) \\
+%s(\bm{\hat{\theta}}, y_2) \\
+%\vdots \\
+%s(\bm{\hat{\theta}}, y_n)
+%\end{pmatrix} =
 \begin{pmatrix} 
-s(\hat{\theta}, y_1) \\
-s(\hat{\theta}, y_2) \\
-\vdots \\
-s(\hat{\theta}, y_n)
-\end{pmatrix} =
-\begin{pmatrix} 
-s(\hat{\theta}, y_1)_1 & s(\hat{\theta}, y_1)_2 & \ldots & s(\hat{\theta}, y_1)_K\\
-s(\hat{\theta}, y_2)_1 & s(\hat{\theta}, y_2)_2 & \ldots & s(\hat{\theta}, y_2)_K\\
+s(\bm{\hat{\theta}}, y_1)_1 & s(\bm{\hat{\theta}}, y_1)_2 & \ldots & s(\bm{\hat{\theta}}, y_1)_k\\
+s(\bm{\hat{\theta}}, y_2)_1 & s(\bm{\hat{\theta}}, y_2)_2 & \ldots & s(\bm{\hat{\theta}}, y_2)_k\\
 \vdots & \vdots & \ddots & \vdots \\
-s(\hat{\theta}, y_n)_1 & s(\hat{\theta}, y_n)_2 & \ldots & s(\hat{\theta}, y_n)_K
+s(\bm{\hat{\theta}}, y_n)_1 & s(\bm{\hat{\theta}}, y_n)_2 & \ldots & s(\bm{\hat{\theta}}, y_n)_k
 \end{pmatrix}
 $$
-
-\item Test for independence between each column of scores $\left(s(\hat{\theta}, y_i)_k\right)_{i=1,\ldots,n}$ for $k\in\{1,\ldots,K\}$, and split variable $Z_j \in \{Z_1, \ldots, Z_m\}$.  
+and each variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
 \begin{align*}
-H_0^{1,j}:  \left(s(\hat{\theta}, y_i)_1\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j \\
-H_0^{2,j}:  \left(s(\hat{\theta}, y_i)_2\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j \\
-\vdots \hspace{3cm}\\
-H_0^{K,j}:  \left(s(\hat{\theta}, y_i)_K\right)_{i=1,\ldots,n} \qquad \bot \qquad Z_j 
+H_0^l:  s(\bm{\hat{\theta}}, y) \qquad \bot \qquad Z_l 
 \end{align*}
 
-To test these hypotheses permutation testing with the multivariate linear statistic
+These hypotheses are assessed by applying permutation testing with 
+the multivariate linear statistic
 $$
-T_{j} = \sum_{i=1}^n g_j(z_{ji}) \cdot s(\hat{\theta}, y_i)
+T_{l} = \sum_{i=1}^n v_l(z_{li}) \cdot s(\bm{\hat{\theta}}, y_i).
 $$
-is applied. The type of the transformation function $g_j$ depends on 
-the type of the split variable $Z_j$. If $Z_j$ is numeric then $g_j$ 
-is simply the identity function $g_j(z_{ji}) = z_{ji}$. If $Z_j$ is 
-a categorical variable with $L$ categories then 
-$g_j(z_{ji}) = e_L(z_{ji}) = (\I(z_{ji} = 1), \ldots, \I(z_{ji} = L))$ 
-such that $g_j$ is a unit vector where the element corresponding to 
-the value of $z_{ji}$ is $1$. Observations with missing values are 
+The type of the transformation function $v_l$ depends on 
+the type of the split variable $Z_l$. If $Z_l$ is numeric then $v_l$ 
+is simply the identity function $v_l(z_{li}) = z_{li}$. If $Z_l$ is 
+a categorical variable with $H$ categories then 
+$v_l(z_{li}) = e_H(z_{li}) = (\I(z_{ji} = 1), \ldots, \I(z_{li} = H))$ 
+such that $v_l$ is a unit vector where the element corresponding to 
+the value of $z_{li}$ is $1$. Observations with missing values are 
 excluded from the sums.
 
-With the conditional expectation $\mu_{j}$ and the covariance 
-$\Sigma_{j}$ as derived by \cite{Strasser+Weber:1999} the test 
-statistic can be standardized. For a numeric split variable this 
-results in the Pearson correlation coefficient
+With the conditional expectation $\mu_{l}$ and the covariance 
+$\Sigma_{l}$ as derived by \cite{Strasser+Weber:1999} the test 
+statistic can be standardized. The observed multivariate linear 
+statistic $t$ is mapped into the real line by a  univariate test 
+statistic $c$. In the application of this paper a quadratic form 
+is chosen, such that
 $$
-c(t_{j},\mu_{j},\Sigma_{j}) = \left|\frac{t_{j} - \mu_{j}}{\sqrt{\Sigma_{j}}}\right|.
+c_{quad}(t,\mu,\Sigma) = (t-\mu)\Sigma^+(t-\mu)^{\top}
 $$
-Otherwise the standardized form is
-$$
-c(t_{j},\mu_{jk},\Sigma_{j}) = \max_{l=1,\ldots,L}\left|\frac{(t_{j} - \mu_{j})_l}{\sqrt{(\Sigma_{j})_{ll}}}\right|.
-$$
+where $\Sigma^+$ is the Moore-Penrose inverse of $\Sigma$. Alternatively,
+the maximum of the absolute values of the standardized linear statistic
+can be considered.
+
 The smaller the p-value corresponding to the standardized test 
-statistic $c(t_{j},\mu_{j},\Sigma_{j})$ is the stronger the discrepancy 
+statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
 from the assumption of independence between the scores and the split 
-variable $Z_j$.
+variable $Z_l$.
 
-\item After Bonferroni adjusting the p-values check whether any of 
-the resulting p-values is beneath the selected significance level. 
-If so, choose the partitioning variable $Z_{j^\ast}$ with the lowest 
-p-value to the scores corresponding to the distribution parameters 
-relevant for the split.
+After Bonferroni adjusting the p-values it has to be assessed whether
+any of the resulting p-values is beneath the selected significance level. 
+If so, the partitioning variable $Z_{l^\ast}$ with the lowest p-value 
+is chosen as splitting variable.
 
-\item Choose the breakpoint that leads to the highest discrepancy 
-between score functions in the two resulting subgroups. This 
-difference can be measured by the linear statistic
+As split point the breakpoint that leads to the highest discrepancy 
+between score functions in the two resulting subgroups is selected. 
+This difference can be measured by the linear statistic
 $$
-T_{j^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\hat{\theta}, y_i)
+T_{l^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\bm{\hat{\theta}}, y_i)
 $$
 where $\mathcal{B}_{1r}$ is the first of the two new subgroups that 
-are defined by splitting in split point $r$ of variable $Z_{j^{\ast}}$. 
+are defined by splitting in split point $r$ of variable $Z_{l^{\ast}}$. 
 The split point is then chosen as follows:
 $$
-r^{\ast} = \argmin_{r} c(t_{j^{\ast}}^r,\mu_{j^{\ast}}^r,\Sigma_{j^{\ast}}^r).
+r^{\ast} = \argmin_{r} c(t_{l^{\ast}}^r,\mu_{j^{\ast}}^r,\Sigma_{l^{\ast}}^r).
 $$
 
-\item Repeat the testing and splitting procedure in each of the resulting 
+Repeat the testing and splitting procedure in each of the resulting 
 subgroups until some stopping criterion is reached. This criterion 
 can for example be a minimal number of observations in a node or a 
-minimal p-value for the statistical tests. 
-
-\end{itemize}
+minimal p-value for the statistical tests. In that way pre-pruning
+is applied in order to find right-sized trees and hence 
+avoid overfitting.
 
 This permutation test based tree algorithm is presented in 
-\cite{Hothorn+Hornik+Zeileis:2006} as the ctree algorithm. 
+\cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
 A different framework to build a tree is provided by the MOB algorithm 
 which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
 
