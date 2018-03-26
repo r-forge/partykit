@@ -44,7 +44,7 @@ eval(station, train, test,
 \value{
   \code{eval} returns a list with the following components:
   \item{CRPS}{CRPS of all methods, average over testing data}
-  \item{ll}{Log-Likelihood of all methods, average over testing data}
+  \item{LS}{Logarithmic score of all methods, average over testing data}
   \item{RMSE}{Rooted mean squared error of all methods, average over testing data}
 }
 
