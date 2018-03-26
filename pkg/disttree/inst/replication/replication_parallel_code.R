@@ -28,7 +28,6 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 #### cross validation at station Axams
 
 nrep_cross <- 10
-crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
 seed <- 7
 
 res_cross <- mclapply(1:nrep_cross,
@@ -37,7 +36,7 @@ res_cross <- mclapply(1:nrep_cross,
                         set.seed(seed*i)
                         
                         # randomly split data in 7 parts each including 4 years
-                        years <- c(1985:2012)
+                        years <- 1985:2012
                         testyears <- list()
                         for(j in 1:7){
                           testyears[[j]] <- sample(years, 4, replace = FALSE)
@@ -60,11 +59,23 @@ res_cross <- mclapply(1:nrep_cross,
                         }
                         
                         colnames(crps) <- names(res$crps)
-                        crps_cross[i,] <- colMeans(crps, na.rm = TRUE)
                         return(reslist)
                       },
                       mc.cores = detectCores() - 1
 )
+
+# extract CRPS
+crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
+# loop over all repetitions
+for(i in 1:length(res_cross)){
+  #loop over all 7 folds (for 7 methods)
+  crps_cross_int <- matrix(nrow = length(res_cross[[1]]), ncol = 7)
+  for(j in 1:length(res_cross[[1]])){
+    crps_cross_int[j,] <- res_cross[[i]][[j]]$crps
+  }
+  crps_cross[i,] <- colMeans(crps_cross_int, na.rm = TRUE)
+}
+colnames(crps_cross) <- names(res_cross[[1]][[1]]$crps) 
 
 save(crps_cross, file = "crps_cross.rda")
 save(res_cross, file = "res_cross.rda")
@@ -85,12 +96,11 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 ### over all observation stations
 
 
-data("stationsTyrol")
-stations <- stationsTyrol$name
-test <- c(2009:2012)
-train <- c(1985:2008)
+data("StationsTyrol")
+stations <- StationsTyrol$name
+test <- 2009:2012
+train <- 1985:2008
 
-crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
 
 res_24to4_all <- mclapply(1:length(stations),
                           function(i){
@@ -102,13 +112,19 @@ res_24to4_all <- mclapply(1:length(stations),
                                         test = test,
                                         gamboost_cvr = TRUE)
                             
-                            crps_24to4_all[i,] <- res$crps
                             return(res)
                           },
                           mc.cores = detectCores() - 1
 )
 
-colnames(crps_24to4_all) <- names(res$crps)
+# extract crps
+crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
+# loop over all stations
+for(i in 1:length(stations)){
+  crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
+}
+
+colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
 rownames(crps_24to4_all) <- stations
 
 save(crps_24to4_all, file = "crps_24to4_all.rda")
@@ -157,9 +173,9 @@ if(FALSE){
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/ehyd.statlist.rda")
   
   # Create SpatialPointsDataFrame from station list
-  sp <- SpatialPointsDataFrame(subset(stationsTyrol,
+  sp <- SpatialPointsDataFrame(subset(StationsTyrol,
                                       select=c(lon,lat)),
-                               data = subset(stationsTyrol,
+                               data = subset(StationsTyrol,
                                              select = -c(lon,lat)),
                                proj4string = crs(tirol.dem))
   

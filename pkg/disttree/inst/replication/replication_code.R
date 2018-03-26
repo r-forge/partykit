@@ -64,6 +64,8 @@ for(i in 1:nrep_cross){
   res_cross[[i]] <- reslist
 }
 
+colnames(crps_cross) <- colnames(crps) 
+
 save(crps_cross, file = "crps_cross.rda")
 save(res_cross, file = "res_cross.rda")
 
