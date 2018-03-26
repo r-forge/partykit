@@ -10,4 +10,6 @@ Description: Precipitation observations for the month of July in the years 1985-
              Numerical weather prediction (NWP) forecasts from GEFS.
 LazyData: yes
 Depends: R (>= 3.1.0), disttree
+Imports: gamlss.cens, gamlss.dist
+Suggests: gamlss, gamboostLSS, crch, scoringRules, parallel
 License: GPL-2 | GPL-3
