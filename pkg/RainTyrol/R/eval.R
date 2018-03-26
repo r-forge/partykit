@@ -1,4 +1,3 @@
-
 eval <- function(station, train, test, 
                  ntree = 100,
                  tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
@@ -17,7 +16,7 @@ eval <- function(station, train, test,
   
   library("RainTyrol")
   data("StationsTyrol")
-  if(!(station %in% stationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
+  if(!(station %in% StationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
   
   library("disttree")
   library("gamlss")
@@ -28,7 +27,7 @@ eval <- function(station, train, test,
   
   ## load data
   data("RainTyrol")
-  rain <- rainTyrol[rainTyrol$station == station, ]
+  rain <- RainTyrol[RainTyrol$station == station, ]
   
   ############
   # formula

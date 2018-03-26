@@ -8,7 +8,5 @@ importFrom("gamlss.dist",
 )
 
 export(
-"eval",
-"RainTyrol",
-"StationsTyrol"
+"eval"
 )
