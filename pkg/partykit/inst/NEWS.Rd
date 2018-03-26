@@ -26,6 +26,8 @@
     \item{\code{lookahead} did not work in the presence of missing values.}
     \item{Calling \code{partykit::ctree} did not work when partykit was not
       attached.}
+    \item{\code{node_inner} now allows to set a different \code{gpar(fontsize = ...)}
+      in the inner nodes compared to the overall tree.}
   }
   }
 }
