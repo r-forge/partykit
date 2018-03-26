@@ -16,7 +16,7 @@ eval <- function(station, train, test,
   if(!is.character(station)) stop("argument 'station' has to be a character")
   
   library("RainTyrol")
-  data("stationsTyrol")
+  data("StationsTyrol")
   if(!(station %in% stationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
   
   library("disttree")
@@ -25,12 +25,9 @@ eval <- function(station, train, test,
   library("gamlss.cens")
   gen.cens(NO, type = "left")
   library("gamboostLSS")
-  library("crch")
-  library("scoringRules")
-  library("parallel")
   
   ## load data
-  data("rainTyrol")
+  data("RainTyrol")
   rain <- rainTyrol[rainTyrol$station == station, ]
   
   ############
@@ -123,7 +120,7 @@ eval <- function(station, train, test,
     dt_time <- system.time(dt <- disttree(dt.formula, 
                                           data = learndata, family = dist_list_cens_normal, 
                                           censtype = "left", censpoint = 0, type.tree = "mob", 
-                                          control = mob_control(restart = FALSE, numsplit = "center", 
+                                          control = partykit::mob_control(restart = FALSE, numsplit = "center", 
                                                                 alpha = 1-tree_mincrit, minsplit = tree_minsplit,
                                                                 minbucket = tree_minbucket)))
   }
@@ -131,7 +128,7 @@ eval <- function(station, train, test,
     dt_time <- system.time(dt <- disttree(dt.formula, 
                                           data = learndata, family = dist_list_cens_normal, 
                                           censtype = "left", censpoint = 0, type.tree = "ctree", 
-                                          control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                          control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
                                                                   mincriterion = tree_mincrit, minsplit = tree_minsplit,
                                                                   minbucket = tree_minbucket)))
   }
@@ -141,7 +138,7 @@ eval <- function(station, train, test,
     df_time <- system.time(df <- distforest(df.formula, 
                                             data = learndata, family = dist_list_cens_normal, type.tree = "mob", 
                                             ntree = ntree, censtype = "left", censpoint = 0,
-                                            control = mob_control(restart = FALSE, numsplit = "center", 
+                                            control = partykit::mob_control(restart = FALSE, numsplit = "center", 
                                                                   alpha = 1-forest_mincrit, minsplit = forest_minsplit,
                                                                   minbucket = forest_minbucket), mtry = forest_mtry))
   }
@@ -149,7 +146,7 @@ eval <- function(station, train, test,
     df_time <- system.time(df <- distforest(df.formula, 
                                             data = learndata, family = dist_list_cens_normal, type.tree = "ctree", 
                                             ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
-                                            control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                            control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                                     mincriterion = forest_mincrit, minsplit = forest_minsplit,
                                                                     minbucket = forest_minbucket), mtry = forest_mtry))
   }
@@ -158,32 +155,34 @@ eval <- function(station, train, test,
                           
                           
   g_learndata <- learndata
-  g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
+  g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
   g_time <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
                                         family = cens("NO", type = "left"),
                                         control = gamlss.control(n.cyc = 100),
                                         i.control = glim.control(cyc = 100, bf.cyc = 100))))
+  
   if(inherits(g, "try-error")) {
     g_time <- NA
     g <- NA
     g_error <- TRUE
   } else g_error <- FALSE
-                          
-                          
+  
+  
   #gb <- gb
   gb_time <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                           families = as.families(fname = cens("NO", type = "left")), method = "noncyclic",
+                                           families = as.families(fname = cens("NO", type = "left")), 
+                                           method = "noncyclic",
                                            control = boost_control(mstop = 1000L)))
   if(gamboost_cvr){
     grid <- seq(50, 1000, by = 25)
-    gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
-    mstop(gb) <- mstop(cvr)
-    cvr_opt <- mstop(cvr) 
+    gb_cvr_time <- system.time(cvr <- gamboostLSS::cvrisk(gb, grid = grid))
+    gamboostLSS::mstop(gb) <- gamboostLSS::mstop(cvr)
+    cvr_opt <- gamboostLSS::mstop(cvr) 
   } else cvr_opt <- gb_cvr_time <- NA
   
                           
-  mi_time <- system.time(mi <- try(crch(formula = robs ~ tppow_mean | tppow_sprd, 
+  mi_time <- system.time(mi <- try(crch::crch(formula = robs ~ tppow_mean | tppow_sprd, 
                                         data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
   if(inherits(mi, "try-error")) {
     mi_time <- NA
@@ -191,7 +190,7 @@ eval <- function(station, train, test,
     mi_error <- TRUE
   } else mi_error <- FALSE
   
-  ml_time <- system.time(ml <- try(crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
+  ml_time <- system.time(ml <- try(crch::crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
                                         data = learndata, dist = "gaussian", left = 0, link.scale = "log")))
   if(inherits(ml, "try-error")) {
     ml_time <- NA
@@ -199,7 +198,7 @@ eval <- function(station, train, test,
     ml_error <- TRUE
   } else ml_error <- FALSE
   
-  mq_time <- system.time(mq <- try(crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
+  mq_time <- system.time(mq <- try(crch::crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
                                         data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic")))
   if(inherits(mq, "try-error")) {
     mq_time <- NA
@@ -282,13 +281,13 @@ eval <- function(station, train, test,
   
   
   # CPRS
-  crps_dt <- mean(crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_df <- mean(crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_g <- if(!g_na) mean(crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_gb <- mean(crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_mi <- if(!mi_na) mean(crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_ml <- if(!ml_na) mean(crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_mq <- if(!mq_na) mean(crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  crps_dt <- mean(scoringRules::crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  crps_df <- mean(scoringRules::crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  crps_g <- if(!g_na) mean(scoringRules::crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  crps_gb <- mean(scoringRules::crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  crps_mi <- if(!mi_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  crps_ml <- if(!ml_na) mean(scoringRules::crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  crps_mq <- if(!mq_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
   
   # RMSE
   rmse_dt <- sqrt(mean((dt_exp - testdata[,"robs"])^2, na.rm = TRUE))
@@ -341,10 +340,10 @@ eval <- function(station, train, test,
   res <- list()
   res$call <- cl
   
-  res$ll <- c(ll_dt, ll_df, ll_g, ll_gb, ll_mi, ll_ml, ll_mq)
+  res$ls <- c(ll_dt, ll_df, ll_g, ll_gb, ll_mi, ll_ml, ll_mq)
   res$rmse <- c(rmse_dt, rmse_df, rmse_g, rmse_gb, rmse_mi, rmse_ml, rmse_mq)
   res$crps <- c(crps_dt, crps_df, crps_g, crps_gb, crps_mi, crps_ml, crps_mq)
-  names(res$rmse) <- names(res$ll) <- names(res$crps) <- 
+  names(res$rmse) <- names(res$ls) <- names(res$crps) <- 
     c("disttree", "distforest", "gamlss", "gamboostLSS", "emos_id", "emos_log", "emos_quad")
   
   res$cvr_opt <- cvr_opt
