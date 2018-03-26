@@ -3,6 +3,17 @@
 \title{NEWS file for the \pkg{partykit} package}
 
 \section{Changes in Version 1.2-1 (2017-12-22)}{
+  \subsection{New Features}{
+    \itemize{
+      \item{New \code{scale} argument for \code{predict} in \code{cforest}.
+            For simple regression forests, predicting
+            the conditional mean by nearest neighbor weights with
+            \code{scale = TRUE} is now
+            equivalent to the aggregation of means. The unscaled version
+            proposed in <doi:10.1002/sim.1593> can be obtained with
+            \code{scale = FALSE}.}
+    }
+  }
   \subsection{Bugfixes}{
   \itemize{
     \item{Bug fix for case weights in \code{mob()} in previous version (1.2-0)
