@@ -23,7 +23,7 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
         trace = FALSE, \dots)
 \method{predict}{cforest}(object, newdata = NULL, 
         type = c("response", "prob", "weights", "node"),
-        OOB = FALSE, FUN = NULL, simplify = TRUE, \dots)
+        OOB = FALSE, FUN = NULL, simplify = TRUE, scale = TRUE, \dots)
 \method{gettree}{cforest}(object, tree = 1L, \dots)
 }
 
@@ -118,6 +118,11 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
     a logical indicating whether the resulting list
                    of predictions should be converted to a suitable
                    vector or matrix (if possible).}
+  \item{scale}{a logical indicating scaling of the nearest neighbor weights
+               by the sum of weights in the corresponding terminal node of
+               each tree. In the simple regression forest, predicting
+               the conditional mean by nearest neighbor weights will be
+               equivalent to (but slower!) the aggregation of means.}
   \item{tree}{ an integer, the number of the tree to extract from the forest.}
   \item{\dots}{ additional arguments. }
 }
