@@ -1,2 +1,14 @@
 import("disttree")
-export("eval")
+importFrom("gamlss.cens",
+  "cens",
+  "gen.cens"
+)
+importFrom("gamlss.dist",
+  "NO"
+)
+
+export(
+"eval",
+"RainTyrol",
+"StationsTyrol"
+)
