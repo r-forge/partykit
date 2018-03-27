@@ -958,7 +958,7 @@ goodness-of-fit of $\mathcal{D}(Y; \theta)$ as split variable.
 {\bf Forest:} Ensemble of trees.
 \begin{itemize}
 \item Varying subsamples.
-\item Combine/average over trees.
+\item Combine / average over trees.
 \end{itemize}
 }
 \end{frame}
@@ -996,6 +996,11 @@ title <- sprintf("%s\n%s",
                  "Global Forecast System (GFS) Ensemble Forecast for Innsbruck, Airport",
                  sprintf("Forecast initialized %s",strftime(init,"%Y-%m-%d %H:%M UTC")))
 
+# observations
+load("STAGEobs_tawes_11121.rda")
+# "2018-03-14 01:00:00 CET" in line 321
+obs <- obs[-c(1:320),]
+
 getZoo <- function( x, variable ) {
   x <- subset( x, varname == variable )
   if ( nrow(x) == 0 ) stop("Ups, variable seems not to exist at all!")
@@ -1008,17 +1013,21 @@ GFS_t2m  <- getZoo( GFS, "tmp2m" )
 # temperature bias: model simulates temperature for height 1675 (~1070 m higher than true height)
 # => add 10.7 degrees to account for bias (approx. 1 degree / 100 m)
 GFS_t2m <- GFS_t2m + 10.7
+# first value of rain is 18 hours later than temperature 
+#(both start at 6:00 but rain is cumulated over 24 hours)
+# -> drop first 3 values of temperature
+GFS_t2m <- GFS_t2m[-c(1:3),]
+GFS_t2m$obs <- obs[,"obs$tl"]
+GFS_t2m <- GFS_t2m[c(1:40),]
 
 GFS_rain <- getZoo( GFS, "apcpsfc" )
+GFS_rain$obs <- obs[,"rr6"]
 # precipitaion sums over 24 hours (00:00 UTC - 00:00 UTC +1day)
 GFS_rain24 <- GFS_rain[c((1:10)*4),]
 for(i in 1:NROW(GFS_rain24)){
   GFS_rain24[i,] <- colSums(GFS_rain[c((4*i-3):(4*i)),])
 }
-# first value of rain is 18 hours later than temperature 
-#(both start at 6:00 but rain is cumulated over 24 hours)
-# -> drop first 3 values of temperature
-GFS_t2m <- GFS_t2m[-c(1:3),]
+## FIX ME: add observations
 
 
 # Two POSIXct vectors for the axis
@@ -1045,6 +1054,33 @@ GFS_rain_mean <- GFS_rain_mean[,1]
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
 plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+#plot( GFS_t2m_mean, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+#plot( GFS_rain[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+#plot( GFS_rain_mean, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_1_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,c(1,22)], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
 #plot( GFS_t2m_mean, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
