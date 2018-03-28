@@ -1,5 +1,5 @@
-\name{rainAxams}
-\alias{rainAxams}
+\name{RainAxams}
+\alias{RainAxams}
 
 \title{Observations and covariates for station Axams}
 
@@ -10,7 +10,7 @@ specific site.  This site is Axams located in the Eastern European Alps
 (11.28E 47.23N, 890 meters a.m.s.l.).
 }
 
-\usage{data("rainAxams")}
+\usage{data("RainAxams")}
 
 \details{
 The site is maintained by the hydrographical service Tyrol and provides daily
@@ -89,9 +89,9 @@ All ``power transformed'' values use the same power parameter \code{p=1/1.6}.
 }
 
 \examples{
-data("rainAxams")
-head(rainAxams)
-colnames(rainAxams)
+data("RainAxams")
+head(RainAxams)
+colnames(RainAxams)
 }
 
 \keyword{datasets}
