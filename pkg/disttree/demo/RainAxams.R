@@ -7,7 +7,7 @@ library("disttree")
 
 #####
 # load observations and covariates 
-data("rainAxams")
+data("RainAxams")
 
 
 #####
@@ -109,8 +109,8 @@ gen.cens(NO, type = "left")
 
 # learning data: 24 years (1985 - 2008, both inlcuded)
 # testing data: 4 successive years (2009, 2010, 2011, 2012)
-learndata <- rainAxams[rainAxams$year < 109,]
-testdata <- rainAxams[rainAxams$year %in% c(109, 110, 111, 112),]
+learndata <- RainAxams[RainAxams$year < 2009,]
+testdata <- RainAxams[RainAxams$year %in% c(2009, 2010, 2011, 2012),]
 
 
 
@@ -190,6 +190,7 @@ cbind(df_exp, testdata[pdays,"robs"])
 
 # prepare data for needed for the plot
 # distribution functions
+set.seed(7)
 x <- c(0.01, sort(runif(500,0.01,8)))
 y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
 y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
@@ -398,3 +399,41 @@ qqrplot(pit_ml, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col
 qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 #qqrplot(pit_dt, nsim = 100, main = "Distributional tree",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+
+
+
+## Variable importance
+  
+set.seed(7)
+  
+# locally redefine logLik.distforest to use crps in varimp()
+logLik.distforest <- function(object, newdata = NULL, ...) {
+  if(is.null(newdata)) {
+    newdata <- object$data
+  } 
+  
+  # predict parameter
+  pdf <- predict(object, newdata = newdata, type = "parameter")
+  df_mu <- pdf$mu
+  df_sigma <- pdf$sigma
+  
+  # calculate CRPS
+  crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  
+  return(structure(crps, df = NA, class = "logLik"))
+}
+
+vimp_crps <- varimp(df, nperm = 1L)
+
+rm(logLik.distforest) 
+
+# plot top 10 in terms of variable importance
+barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
+        horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Variable importance: mean decrease in CRPS",
+        font.axis = 3, #list(family="HersheySerif", face=3),
+        names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
+axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
+
+
+
