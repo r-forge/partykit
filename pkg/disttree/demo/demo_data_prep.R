@@ -249,13 +249,13 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   stations <- stations[,c("name", "stationnr", "lon", "lat", "height")]
   colnames(stations) <- c("name", "id", "lon", "lat", "alt")
   StationsTyrol <- stations
-  save(StationsTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/StationsTyrol")
+  save(StationsTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/StationsTyrol.rda")
   
   ## save as list over all stations:
-  # rainTyrol <- rainlist
-  # save(rainTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/rainTyrol.rda")
-  # rainAxams <- rainlist$Axams
-  # save(rainAxams, file = "~/svn/partykit/pkg/disttree/data/rainAxams.rda")
+  # RainTyrol <- rainlist
+  # save(RainTyrol, file = "~/svn/partykit/pkg/RainTyrol/data/RainTyrol.rda")
+  # RainAxams <- rainlist$Axams
+  # save(RainAxams, file = "~/svn/partykit/pkg/disttree/data/RainAxams.rda")
   
   ## or as data.frame containing all stations and additional column with the stationname
   RainTyrol <- raindf
