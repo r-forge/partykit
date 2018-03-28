@@ -998,8 +998,10 @@ title <- sprintf("%s\n%s",
 
 # observations
 load("STAGEobs_tawes_11121.rda")
-# "2018-03-14 01:00:00 CET" in line 321
-obs <- obs[-c(1:320),]
+# "2018-03-14 00:00:00" in line 321 (first entry for temperature)
+# "2018-03-13 06:00:00" in line 317 (first entry for rain -> aggregated to 24h sums)
+# "2018-03-23 00:00:00" in line 357
+obs <- obs[318:357,]
 
 getZoo <- function( x, variable ) {
   x <- subset( x, varname == variable )
@@ -1013,12 +1015,11 @@ GFS_t2m  <- getZoo( GFS, "tmp2m" )
 # temperature bias: model simulates temperature for height 1675 (~1070 m higher than true height)
 # => add 10.7 degrees to account for bias (approx. 1 degree / 100 m)
 GFS_t2m <- GFS_t2m + 10.7
+GFS_t2m$obs <- obs[,"obs$tl"]
 # first value of rain is 18 hours later than temperature 
 #(both start at 6:00 but rain is cumulated over 24 hours)
 # -> drop first 3 values of temperature
 GFS_t2m <- GFS_t2m[-c(1:3),]
-GFS_t2m$obs <- obs[,"obs$tl"]
-GFS_t2m <- GFS_t2m[c(1:40),]
 
 GFS_rain <- getZoo( GFS, "apcpsfc" )
 GFS_rain$obs <- obs[,"rr6"]
@@ -1027,7 +1028,6 @@ GFS_rain24 <- GFS_rain[c((1:10)*4),]
 for(i in 1:NROW(GFS_rain24)){
   GFS_rain24[i,] <- colSums(GFS_rain[c((4*i-3):(4*i)),])
 }
-## FIX ME: add observations
 
 
 # Two POSIXct vectors for the axis
@@ -1036,13 +1036,13 @@ minor <- seq(min(index(GFS_t2m)),max(index(GFS_t2m)),by=3*3600)
 
 # GFS_t2m_mean <- rowMeans(GFS_t2m)
 GFS_t2m_mean <- GFS_t2m
-GFS_t2m_mean[,1] <- rowMeans(GFS_t2m)
+GFS_t2m_mean[,1] <- rowMeans(GFS_t2m[,-NCOL(GFS_t2m)])
 GFS_t2m_mean <- GFS_t2m_mean[,1]
 
 # GFS_rain_mean <- rowMeans(GFS_rain)
-GFS_rain_mean <- GFS_rain
-GFS_rain_mean[,1] <- rowMeans(GFS_rain)
-GFS_rain_mean <- GFS_rain_mean[,1]
+GFS_rain24_mean <- GFS_rain24
+GFS_rain24_mean[,1] <- rowMeans(GFS_rain24[,-NCOL(GFS_rain24)])
+GFS_rain24_mean <- GFS_rain24_mean[,1]
 @
 
 
@@ -1064,9 +1064,10 @@ plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rai
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
 
-axis( side = 1, at = minor, strftime(minor,"%H") )
+#axis( side = 1, at = minor, strftime(minor,"%H") )
 axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
-      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
 
 @
 \end{frame}
@@ -1080,20 +1081,22 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 <<ensemble_1_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
-plot( GFS_t2m[,c(1,22)], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
-#plot( GFS_t2m_mean, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05 )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
-plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
-#plot( GFS_rain[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
-#plot( GFS_rain_mean, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
 
-axis( side = 1, at = minor, strftime(minor,"%H") )
+#axis( side = 1, at = minor, strftime(minor,"%H") )
 axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
-      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
 
 @
 \end{frame}
@@ -1103,21 +1106,25 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{-0.3cm}
 \setkeys{Gin}{width=1.1\linewidth}
-<<ensemble_2_plot, fig=TRUE, echo=FALSE, width=9>>=
+<<ensemble_2_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
-plot( GFS_t2m[,c(1,2)], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+plot( GFS_t2m[,c(1,2)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05 )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
-plot( GFS_rain24[,c(1,2)], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
-#plot( GFS_rain[,c(1,2)], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+plot( GFS_rain24[,c(1,2)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
 
-axis( side = 1, at = minor, strftime(minor,"%H") )
+#axis( side = 1, at = minor, strftime(minor,"%H") )
 axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
-      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
 
 @
 \end{frame}
@@ -1126,21 +1133,25 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{-0.3cm}
 \setkeys{Gin}{width=1.1\linewidth}
-<<ensemble_3_plot, fig=TRUE, echo=FALSE, width=9>>=
+<<ensemble_3_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
-plot( GFS_t2m[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+plot( GFS_t2m[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05 )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
-plot( GFS_rain24[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
-#plot( GFS_rain[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+plot( GFS_rain24[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
 
-axis( side = 1, at = minor, strftime(minor,"%H") )
+#axis( side = 1, at = minor, strftime(minor,"%H") )
 axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
-      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
 
 @
 \end{frame}
@@ -1149,21 +1160,25 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{-0.3cm}
 \setkeys{Gin}{width=1.1\linewidth}
-<<ensemble_20_plot, fig=TRUE, echo=FALSE, width=9>>=
+<<ensemble_20_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
-plot( GFS_t2m, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+plot( GFS_t2m[,-NCOL(GFS_t2m)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05 )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
-plot( GFS_rain24, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
-#plot( GFS_rain, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+plot( GFS_rain24[,-NCOL(GFS_rain24)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
 
-axis( side = 1, at = minor, strftime(minor,"%H") )
+#axis( side = 1, at = minor, strftime(minor,"%H") )
 axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
-      line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
 
 @
 \end{frame}
