@@ -172,6 +172,7 @@ if(FALSE){
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/tirol.dem.rda")
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/ehyd.statlist.rda")
   
+  data(StationsTyrol)
   # Create SpatialPointsDataFrame from station list
   sp <- SpatialPointsDataFrame(subset(StationsTyrol,
                                       select=c(lon,lat)),
