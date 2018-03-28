@@ -168,9 +168,8 @@ if(FALSE){
   library("raster") # dem (digital elevation model)
   library("sp")     # gadm www.gadm.org/country
   
-  load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/tirol.gadm.rda")
-  load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/tirol.dem.rda")
-  load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/demo/ehyd.statlist.rda")
+  load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/tirol.rda")
+  load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/dem.rda")
   
   data(StationsTyrol)
   # Create SpatialPointsDataFrame from station list
@@ -178,17 +177,17 @@ if(FALSE){
                                       select=c(lon,lat)),
                                data = subset(StationsTyrol,
                                              select = -c(lon,lat)),
-                               proj4string = crs(tirol.dem))
+                               proj4string = crs(dem))
   
   
   ## plot map of Tyrol with all 95 observations
   layout(cbind(1, 2), width = c(9, 1))
   par(mar = c(5,4,4,0.1))
-  raster::image(tirol.dem, col = rev(gray.colors(100)),
+  raster::image(dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
                 xlim = c(9.8,13.2), 
                 ylim = c(46.6, 47.87))
-  plot(tirol.gadm, add = TRUE)
+  plot(tirol, add = TRUE)
   points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
   legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
   text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
