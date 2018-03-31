@@ -35,6 +35,7 @@ library("lattice")
 library("crch")
 library("latex2exp")
 library("parallel")
+library("RainTyrol")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
 
@@ -782,10 +783,10 @@ ytree_up <- rep.int(15, length(x))
 for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
 @
 \begin{minipage}{0.25\textwidth}
-\vspace{0.5cm}
+\vspace{0.7cm}
 \visible<2->{
 <<plot_motivation_GAMLSS_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(4,0,4,0))
+par(mar=c(3,0,3,0))
 plot(x_g, y_g, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
 polygon(c(x_g, rev(x_g)), c(ytrue_g + 0.1 + var, rev(ytrue_g - 0.1 - var)),
   col = pallight["forest"], border = "transparent")
@@ -796,7 +797,7 @@ box(lwd = 5)
 }
 \visible<3->{
 <<plot_motivation_regtree_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(4,0,4,0))
+par(mar=c(3,0,3,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
@@ -807,7 +808,7 @@ lines(x = x, y = ytree_up, col = pal["forest"], lwd=12, lty = 2)
 }
 \visible<4->{
 <<plot_motivation_randforest4_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(4,0,4,0))
+par(mar=c(3,0,3,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
@@ -1656,50 +1657,72 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \end{frame}
 
 
+
 <<echo = FALSE>>=
 #### prediction over all stations 24 - 4
-if(file.exists("rain_pred_24to4.rda")){
-  load("rain_pred_24to4.rda")
+#### prediction over all stations 24 - 4
+if(file.exists("crps_24to4_all.rda")){
+  load("crps_24to4_all.rda")
 } else {
   
-  source("rain_pred_24to4.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
+  data("StationsTyrol")
+  stations <- StationsTyrol$name
+  test <- 2009:2012
+  train <- 1985:2008
   
-  res <- rain_pred(seedconst = 7,
-                   gamboost_cvr = TRUE,
-                   frac = FALSE)
   
-  save(res, file = "rain_pred_24to4.rda")
+  res_24to4_all <- mclapply(1:length(stations),
+                            function(i){
+                              
+                              set.seed(7)
+                              
+                              res <- eval(station = stations[i],
+                                          train = train,
+                                          test = test,
+                                          gamboost_cvr = TRUE)
+                              
+                              return(res)
+                            },
+                            mc.cores = detectCores() - 1
+  )
+  
+  # extract crps
+  crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
+  # loop over all stations
+  for(i in 1:length(stations)){
+    crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
+  }
+  
+  colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
+  rownames(crps_24to4_all) <- stations
+  
+  save(crps_24to4_all, file = "crps_24to4_all.rda")
+  save(res_24to4_all, file = "res_24to4_all.rda")
+  
 }
  
-crps_all <- res[[1]]$results["crps",]
-for(i in 2:(length(res)-1))  crps_all <- rbind(crps_all, res[[i]]$results["crps",])
 
-colnames(crps_all) <- colnames(res[[1]]$results)
-
-# skills score
-s <- 1 - crps_all[, 2:4]/crps_all[,6]
-colnames(s) <- c("Forest", "prespecified GAM", "boosted GAM")
+# skill score
+s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 
 ## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
 
-crps <- crps_all[,c("distforest", "gamlss", "gamboostLSS", "EMOS log")]  
+crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
 
-## best method
-bst <- apply(crps, 1, which.min)
+# best method
+bst <- apply(crps_map, 1, which.min)
 
-## distance of forest to best other method
-dst <- crps[,1] - crps[cbind(1:nrow(crps), apply(crps[, -1], 1, which.min) + 1)]
+# distance of forest to best other method
+dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
 
-## breaks/groups
+# breaks/groups
 brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
 #brk <- c(-0.1, -0.05, -0.01, 0.01, 0.05, 0.1)
 grp <- cut(dst, breaks = brk)
 
-## HCL colors (relatively flashy, essentially CARTO Tropic)
+# HCL colors (relatively flashy, essentially CARTO Tropic)
 clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
-
 
 
 library("raster") # dem (digital elevation model)
@@ -1707,15 +1730,14 @@ library("sp")     # gadm www.gadm.org/country
 
 load("../draft/plot_map_rain/data/tirol.rda")
 load("../draft/plot_map_rain/data/dem.rda")
-load("../draft/plot_map_rain/demo/ehyd.statlist.rda")
-  
+
+data(StationsTyrol)
 # Create SpatialPointsDataFrame from station list
-sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
                                     select=c(lon,lat)),
-                             data = subset(ehyd.statlist[res$complete_stations,],
+                             data = subset(StationsTyrol,
                                            select = -c(lon,lat)),
                              proj4string = crs(dem))
-
 @
 
 
@@ -1727,11 +1749,13 @@ sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
 \setkeys{Gin}{width=0.95\textwidth}
 <<map, fig=TRUE, echo=FALSE, width=10, height=6.5>>=
   
+  ## plot map of Tyrol with all 95 observations
   layout(cbind(1, 2), width = c(9, 1))
   par(mar = c(5,4,4,0.1))
   raster::image(dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", cex.main=1.7,
-                ylab = "Latitude", xlab = "Longitude", 
+                ylab = "Latitude", xlab = "Longitude",
+                cex.lab = 1.4,
                 xlim = c(9.8,13.2), 
                 ylim = c(46.6, 47.87))
   plot(tirol, add = TRUE)
