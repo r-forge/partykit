@@ -80,6 +80,7 @@ library("countreg")
 library("gamlss")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
+library("RainTyrol")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
@@ -467,20 +468,12 @@ challenging to specify a distributional regression model like GAMLSS.
 
 <<echo=FALSE, results=hide>>=
 #### Axams prediction 24 - 4
-if(file.exists("rain_Axams_pred_24to4.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_Axams_pred_24to4.rda")
-  load("rain_Axams_pred_24to4.rda")
+if(file.exists("Axams_24to4.rda")){
+  load("Axams_24to4.rda")
 } else {
-  #source("~/svn/partykit/pkg/disttree/inst/draft/rain_axams_pred_24to4.R")
-  source("rain_axams_pred_24to4.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  res <- rain_axams_pred(seedconst = 7, ntree = 100,
-                         forest_mtry = 27,   # if frac == TRUE: nvar/3 = 30
-                         gamboost_cvr = TRUE,
-                         frac = FALSE)
-  
-  save(res, file = "rain_Axams_pred_24to4.rda")
+  source("Axams_24to4.R")
+  Axams_24to4 <- Axams_24to4()
+  save(Axams_24to4, file = "Axams_24to4.rda")
 }
 
 #### prepare data for plot of estimated density functions
@@ -489,15 +482,14 @@ if(file.exists("rain_Axams_pred_24to4.rda")){
 pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
 
 pdays <- if(pday<19) c(pday, pday + 31, pday + 62, pday + 92) else c(pday, pday + 31, pday + 61, pday + 92)
-pdf <- predict(res$df, newdata = res$testdata[pdays,], type = "parameter")
+pdf <- predict(Axams_24to4$df, newdata = Axams_24to4$testdata[pdays,], type = "parameter")
 df_mu <- pdf$mu
 df_sigma <- pdf$sigma
 df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
-cbind(df_exp, res$testdata[pdays,"robs"])
+cbind(df_exp, Axams_24to4$testdata[pdays,"robs"])
 
 
 # plot predicted distributions together with observations
-#set.seed(res$call$seedconst)
 set.seed(7)
 x <- c(0.01, sort(runif(500,0.01,8)))
 y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -513,10 +505,10 @@ pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
 pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 # predictions
-pred1 <- c(res$testdata[pdays,"robs"][1], crch::dcnorm(res$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(res$testdata[pdays,"robs"][2], crch::dcnorm(res$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(res$testdata[pdays,"robs"][3], crch::dcnorm(res$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-pred4 <- c(res$testdata[pdays,"robs"][4], crch::dcnorm(res$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+pred1 <- c(Axams_24to4$testdata[pdays,"robs"][1], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(Axams_24to4$testdata[pdays,"robs"][2], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(Axams_24to4$testdata[pdays,"robs"][3], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+pred4 <- c(Axams_24to4$testdata[pdays,"robs"][4], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 #legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -526,103 +518,81 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 
 
 
+
+
+############
+# get predicted parameter of all models for testdata
+
+# distributional tree
+pdt <- predict(Axams_24to4$dt, newdata = Axams_24to4$testdata, type = "parameter")
+dt_mu <- pdt$mu
+dt_sigma <- pdt$sigma
+dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
+
+# distributional forest
+pdf <- predict(Axams_24to4$df, newdata = Axams_24to4$testdata, type = "parameter")
+df_mu <- pdf$mu
+df_sigma <- pdf$sigma
+df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+
+# prespecified GAM
+g_mu <- predict(Axams_24to4$g, newdata = Axams_24to4$testdata, what = "mu", type = "response", data = Axams_24to4$g_learndata)
+g_sigma <- predict(Axams_24to4$g, newdata = Axams_24to4$testdata, what = "sigma", type = "response", data = Axams_24to4$g_learndata)
+g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+
+# boosted GAM
+pgb <- predict(Axams_24to4$gb, newdata = Axams_24to4$testdata, parameter = c("mu","sigma"), type = "response")
+gb_mu <- pgb$mu
+gb_sigma <- pgb$sigma
+gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+
+# EMOS
+ml_mu <- predict(Axams_24to4$ml, type = "location", newdata = Axams_24to4$testdata)
+ml_sigma <- predict(Axams_24to4$ml, type = "scale", newdata = Axams_24to4$testdata)
+ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+
+
+
+
+
+
+############
 ## PIT histograms and qqrplots
 
 ## get predicted parameter
 # for learndata and testdata
 {
   set.seed(7)
-  ## disttree
-  if(FALSE){
-    # in sample
-    pdt <- predict(res$dt, type = "parameter")
-    dt_mu_l <- pdt$mu 
-    dt_sigma_l <- pdt$sigma 
-    pit_dt_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = dt_mu_l, sd = dt_sigma_l))
-    pit_dt_l[res$learndata[,"robs"]>0, 1] <- pit_dt_l[res$learndata[,"robs"]>0, 2]
-  }  
-  # out of sample
-  pdt <- predict(res$dt, type = "parameter", newdata = res$testdata)
-  dt_mu_t <- pdt$mu 
-  dt_sigma_t <- pdt$sigma 
-  pit_dt_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = dt_mu_t, sd = dt_sigma_t))
-  pit_dt_t[res$testdata[,"robs"]>0, 1] <- pit_dt_t[res$testdata[,"robs"]>0, 2]
   
+  # distributional tree
+  pit_dt <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = dt_mu, sd = dt_sigma))
+  pit_dt[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_dt[Axams_24to4$testdata[,"robs"]>0, 2]
   
-  ## distforest
-  if(FALSE){
-    # in sample
-    pdf <- predict(res$df, type = "parameter")
-    df_mu_l <- pdf$mu
-    df_sigma_l <- pdf$sigma
-    pit_df_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = df_mu_l, sd = df_sigma_l))
-    pit_df_l[res$learndata[,"robs"]>0, 1] <- pit_df_l[res$learndata[,"robs"]>0, 2]
-  }
-  # out of sample
-  pdf <- predict(res$df, type = "parameter", newdata = res$testdata)
-  df_mu_t <- pdf$mu
-  df_sigma_t <- pdf$sigma
-  pit_df_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = df_mu_t, sd = df_sigma_t))
-  pit_df_t[res$testdata[,"robs"]>0, 1] <- pit_df_t[res$testdata[,"robs"]>0, 2]
+  # distributional forest
+  pit_df <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = df_mu, sd = df_sigma))
+  pit_df[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_df[Axams_24to4$testdata[,"robs"]>0, 2]
   
+  # prespecified GAM
+  pit_g <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = g_mu, sd = g_sigma))
+  pit_g[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_g[Axams_24to4$testdata[,"robs"]>0, 2]
   
-  ## gamlss
-  g_learndata <- res$learndata
-  g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
-  if(FALSE){
-    # in sample
-    g_mu_l <- predict(res$g, what = "mu", type = "response")
-    g_sigma_l <- predict(res$g, what = "sigma", type = "response")
-    pit_g_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = g_mu_l, sd = g_sigma_l))
-    pit_g_l[res$learndata[,"robs"]>0, 1] <- pit_g_l[res$learndata[,"robs"]>0, 2]
-  }  
-  # out of sample
-  g_mu_t <- predict(res$g, what = "mu", type = "response", newdata = res$testdata)
-  g_sigma_t <- predict(res$g, what = "sigma", type = "response", newdata = res$testdata)
-  pit_g_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = g_mu_t, sd = g_sigma_t))
-  pit_g_t[res$testdata[,"robs"]>0, 1] <- pit_g_t[res$testdata[,"robs"]>0, 2]
+  # boosted GAM
+  pit_gb <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = gb_mu, sd = gb_sigma))
+  pit_gb[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_gb[Axams_24to4$testdata[,"robs"]>0, 2]
   
-  
-  #gamboostLSS
-  if(FALSE){
-    #in sample
-    pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response")
-    gb_mu_l <- pgb$mu
-    gb_sigma_l <- pgb$sigma
-    pit_gb_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = gb_mu_l, sd = gb_sigma_l))
-    pit_gb_l[res$learndata[,"robs"]>0, 1] <- pit_gb_l[res$learndata[,"robs"]>0, 2]
-  }  
-  # out of sample
-  pgb <- predict(res$gb, parameter = c("mu","sigma"), type = "response", newdata = res$testdata)
-  gb_mu_t <- pgb$mu
-  gb_sigma_t <- pgb$sigma
-  pit_gb_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = gb_mu_t, sd = gb_sigma_t))
-  pit_gb_t[res$testdata[,"robs"]>0, 1] <- pit_gb_t[res$testdata[,"robs"]>0, 2]
-  
-  
-  #EMOS
-  if(FALSE){
-    # in sample
-    ml_mu_l <- predict(res$ml, type = "location")     # returns parameter on response scale
-    ml_sigma_l <- predict(res$ml, type = "scale")
-    pit_ml_l <- cbind(0, pnorm(res$learndata[,"robs"], mean = ml_mu_l, sd = ml_sigma_l))
-    pit_ml_l[res$learndata[,"robs"]>0, 1] <- pit_ml_l[res$learndata[,"robs"]>0, 2]
-  }  
-  # out of sample
-  ml_mu_t <- predict(res$ml, type = "location", newdata = res$testdata)     # returns parameter on response scale
-  ml_sigma_t <- predict(res$ml, type = "scale", newdata = res$testdata)
-  pit_ml_t <- cbind(0, pnorm(res$testdata[,"robs"], mean = ml_mu_t, sd = ml_sigma_t))
-  pit_ml_t[res$testdata[,"robs"]>0, 1] <- pit_ml_t[res$testdata[,"robs"]>0, 2]
+  # EMOS
+  pit_ml <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = ml_mu, sd = ml_sigma))
+  pit_ml[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_ml[Axams_24to4$testdata[,"robs"]>0, 2]
   
 }
 
 
 ## Variable importance
 if(file.exists("vimp_crps.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
   load("vimp_crps.rda")
 } else {
   
+  set.seed(7)
   # locally redefine logLik.distforest to use crps in varimp()
   logLik.distforest <- function(object, newdata = NULL, ...) {
     if(is.null(newdata)) {
@@ -640,21 +610,14 @@ if(file.exists("vimp_crps.rda")){
     return(structure(crps, df = NA, class = "logLik"))
   }
   
-  vimp_crps <- varimp(res$df, nperm = 1L)
-  #vimp10_crps <- varimp(res$df, nperm = 10L)
-  #vimp100_crps <- varimp(res$df, nperm = 100L)
-  #vimp1000_crps <- varimp(res$df, nperm = 1000L)
+  vimp_crps <- varimp(Axams_24to4$df, nperm = 1L)
   
-  save(vimp_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp_crps.rda")
-  #save(vimp10_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp10_crps.rda")
-  #save(vimp100_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp100_crps.rda")
-  #save(vimp1000_crps, file = "~/svn/partykit/pkg/disttree/inst/draft/vimp1000_crps.rda")
+  save(vimp_crps, file = "vimp_crps.rda")
   
   rm(logLik.distforest) 
 }
     
 @
-
 
 \begin{figure}[t!]
 \centering
@@ -1200,10 +1163,10 @@ distributional fits.
 # out of sample
 set.seed(7)
 par(mfrow = c(2, 2))
-qqrplot(pit_df_t, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_ml_t, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_g_t,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
-qqrplot(pit_gb_t, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_df, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{fig:axams-qq} Out-of-sample residual QQ~plots (2009--2012) 
 for station Axams based on models learned on data from 1985--2008.}
@@ -1222,38 +1185,70 @@ Appendix~\ref{app:pit}.
 
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
-if(file.exists("rain_Axams_7x10.rda")){
-  load("rain_Axams_7x10.rda")
+if(file.exists("crps_cross.rda")){
+  load("crps_cross.rda")
 } else {
-  source("rain_cross_7x10.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
-  rainres <- rain_cross(stationname = "Axams", 
-                        seedconst = 7, ntree = 100,
-                        forest_mtry = 27,
-                        gamboost_cvr = TRUE,
-                        frac = FALSE)
   
-  save(rainres, file = "rain_Axams_7x10.rda")
+  nrep_cross <- 10
+  seed <- 7
+  
+  res_cross <- mclapply(1:nrep_cross,
+                        function(i){
+                          
+                          set.seed(seed*i)
+                          
+                          # randomly split data in 7 parts each including 4 years
+                          years <- 1985:2012
+                          testyears <- list()
+                          for(j in 1:7){
+                            testyears[[j]] <- sample(years, 4, replace = FALSE)
+                            years <- years[!(years %in% testyears[[j]])]
+                          }
+                          
+                          #crps <- matrix(nrow = 7, ncol = 7)
+                          reslist <- list()
+                          for(k in 1:7){
+                            test <- testyears[[k]]
+                            train <- c(1985:2012)[!c(1985:2012) %in% test]
+                            
+                            res <- eval(station = "Axams",
+                                        train = train,
+                                        test = test,
+                                        gamboost_cvr = TRUE)
+                            
+                            #crps[k,] <- res$crps
+                            reslist[[k]] <- res
+                          }
+                          
+                          #colnames(crps) <- names(res$crps)
+                          return(reslist)
+                        },
+                        mc.cores = detectCores() - 1
+  )
+  
+  # extract CRPS
+  crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
+  # loop over all repetitions
+  for(i in 1:length(res_cross)){
+    #loop over all 7 folds (for 7 methods)
+    crps_cross_int <- matrix(nrow = length(res_cross[[1]]), ncol = 7)
+    for(j in 1:length(res_cross[[1]])){
+      crps_cross_int[j,] <- res_cross[[i]][[j]]$crps
+    }
+    crps_cross[i,] <- colMeans(crps_cross_int, na.rm = TRUE)
+  }
+  colnames(crps_cross) <- names(res_cross[[1]][[1]]$crps) 
+  
+  save(crps_cross, file = "crps_cross.rda")
+  save(res_cross, file = "res_cross.rda")
+  
 }
-
-rain_rmse <- matrix(0, ncol = ncol(rainres[[1]]$rmse), length(rainres)-1)
-rain_ll <- matrix(0, ncol = ncol(rainres[[1]]$ll), length(rainres)-1)
-rain_crps <- matrix(0, ncol = ncol(rainres[[1]]$crps), length(rainres)-1)
-
-for(i in 1:(length(rainres)-1)){
-  rain_rmse[i,] <- colMeans(rainres[[i]]$rmse, na.rm = TRUE)
-  rain_ll[i,] <- colMeans(rainres[[i]]$ll, na.rm = TRUE)
-  rain_crps[i,] <- colMeans(rainres[[i]]$crps, na.rm = TRUE)
-}
-
-colnames(rain_rmse) <- colnames(rain_ll) <- colnames(rain_crps) <- colnames(rainres[[1]]$rmse)
 @
 
 \begin{figure}[t!]
 \centering
 <<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 7>>=
-boxplot(1 - rain_crps[,c(2,3,4)] / rain_crps[,6], ylim = c(-0.005, 0.065),
+boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
@@ -1322,71 +1317,83 @@ zu werfen haben wir aber auch schon getan. Hier muss noch ein besserer Abschluss
 
 <<echo = FALSE>>=
 #### prediction over all stations 24 - 4
-if(file.exists("rain_pred_24to4.rda")){
-  #load("~/svn/partykit/pkg/disttree/inst/draft/rain_pred_24to4.rda")
-  load("rain_pred_24to4.rda")
+if(file.exists("crps_24to4_all.rda")){
+  load("crps_24to4_all.rda")
 } else {
   
-  source("rain_pred_24to4.R")
-  library("gamlss.cens")
-  gen.cens("NO", type = "left")
+  data("StationsTyrol")
+  stations <- StationsTyrol$name
+  test <- 2009:2012
+  train <- 1985:2008
   
-  res <- rain_pred(seedconst = 7,
-                   gamboost_cvr = TRUE,
-                   frac = FALSE)
   
-  save(res, file = "rain_pred_24to4.rda")
+  res_24to4_all <- mclapply(1:length(stations),
+                            function(i){
+                              
+                              set.seed(7)
+                              
+                              res <- eval(station = stations[i],
+                                          train = train,
+                                          test = test,
+                                          gamboost_cvr = TRUE)
+                              
+                              return(res)
+                            },
+                            mc.cores = detectCores() - 1
+  )
+  
+  # extract crps
+  crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
+  # loop over all stations
+  for(i in 1:length(stations)){
+    crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
+  }
+  
+  colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
+  rownames(crps_24to4_all) <- stations
+  
+  save(crps_24to4_all, file = "crps_24to4_all.rda")
+  save(res_24to4_all, file = "res_24to4_all.rda")
+  
 }
  
-#ll_all <- res[[1]]$results["ll",]
-#for(i in 2:(length(res)-1)) ll_all <- rbind(ll_all, res[[i]]$results["ll",])
-
-#rmse_all <- res[[1]]$results["rmse",]
-#for(i in 2:(length(res)-1)) rmse_all <- rbind(rmse_all, res[[i]]$results["rmse",])
-
-crps_all <- res[[1]]$results["crps",]
-for(i in 2:(length(res)-1))  crps_all <- rbind(crps_all, res[[i]]$results["crps",])
-
-#colnames(ll_all) <- colnames(rmse_all) <- 
-  colnames(crps_all) <- colnames(res[[1]]$results)
 
 # skill score
-s <- 1 - crps_all[, 2:4]/crps_all[,6]
+s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
 colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 
 ## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
 
-crps <- crps_all[,c("distforest", "gamlss", "gamboostLSS", "EMOS log")]  
+crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
 
-## best method
-bst <- apply(crps, 1, which.min)
+# best method
+bst <- apply(crps_map, 1, which.min)
 
-## distance of forest to best other method
-dst <- crps[,1] - crps[cbind(1:nrow(crps), apply(crps[, -1], 1, which.min) + 1)]
+# distance of forest to best other method
+dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
 
-## breaks/groups
+# breaks/groups
 brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
 #brk <- c(-0.1, -0.05, -0.01, 0.01, 0.05, 0.1)
 grp <- cut(dst, breaks = brk)
 
-## HCL colors (relatively flashy, essentially CARTO Tropic)
+# HCL colors (relatively flashy, essentially CARTO Tropic)
 clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
-
 
 
 library("raster") # dem (digital elevation model)
 library("sp")     # gadm www.gadm.org/country
 
-load("plot_map_rain/demo/tirol.gadm.rda")
-load("plot_map_rain/demo/tirol.dem.rda")
-load("plot_map_rain/demo/ehyd.statlist.rda")
-  
+load("plot_map_rain/data/tirol.rda")
+load("plot_map_rain/data/dem.rda")
+
+data(StationsTyrol)
 # Create SpatialPointsDataFrame from station list
-sp <- SpatialPointsDataFrame(subset(ehyd.statlist[res$complete_stations,],
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
                                     select=c(lon,lat)),
-                             data = subset(ehyd.statlist[res$complete_stations,],
+                             data = subset(StationsTyrol,
                                            select = -c(lon,lat)),
-                             proj4string = crs(tirol.dem))
+                             proj4string = crs(dem))
 @
 
 
@@ -1415,13 +1422,14 @@ learned on 1985--2008 and validated for 2009--2012.}
 \setkeys{Gin}{width=0.99\textwidth}
 <<map, fig=TRUE, echo=FALSE, height=6.1, width=9>>=
   
+  ## plot map of Tyrol with all 95 observations
   layout(cbind(1, 2), width = c(9, 1))
   par(mar = c(5,4,4,0.1))
-  raster::image(tirol.dem, col = rev(gray.colors(100)),
+  raster::image(dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
                 xlim = c(9.8,13.2), 
                 ylim = c(46.6, 47.87))
-  plot(tirol.gadm, add = TRUE)
+  plot(tirol, add = TRUE)
   points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
   legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
   text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
@@ -1432,13 +1440,12 @@ learned on 1985--2008 and validated for 2009--2012.}
        xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
   rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
   axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
-  
+
 @
 \caption{\label{fig:all-map}Map of Tyrol coding the best-performing model
 for each station (type of symbol). The color codes whether the distributional 
 forest had higher (green) or lower (red) CRPS compared to the best of the 
-other three models. The background shows the local topography, the darker the
-higher \citep{srtm}.}
+other three models. The background shows the local topography \citep{Robinson:2014}.}
 \end{figure}
 
 
@@ -1669,10 +1676,10 @@ some deviations the overall calibration of all models is acceptable.
 set.seed(4)
 
 par(mfrow = c(2,2))
-pithist(pit_df_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
-pithist(pit_ml_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
-pithist(pit_g_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
-pithist(pit_gb_t, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
+pithist(pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
+pithist(pit_ml, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
+pithist(pit_g, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
+pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
       
 @
 %\end{subfigure}
