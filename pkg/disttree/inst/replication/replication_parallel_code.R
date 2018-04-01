@@ -134,6 +134,7 @@ save(res_24to4_all, file = "res_24to4_all.rda")
 
 # boxplot of crps_24to4_all
 s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 matplot(t(s[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, 
@@ -168,6 +169,7 @@ if(FALSE){
   library("raster") # dem (digital elevation model)
   library("sp")     # gadm www.gadm.org/country
   
+  ## FIX ME: provide data in package RainTyrol
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/tirol.rda")
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/dem.rda")
   
