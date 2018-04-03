@@ -8,5 +8,5 @@ importFrom("gamlss.dist",
 )
 
 export(
-"eval"
+"evalmodels"
 )
