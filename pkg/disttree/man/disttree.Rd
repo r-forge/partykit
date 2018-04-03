@@ -19,7 +19,7 @@ disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
          type.tree = "mob", decorrelate = "none", offset,
          censtype = "none", censpoint = NULL, weights = NULL,
          terminal_objects = FALSE,
-         control = mob_control(), ocontrol = list(), ...)
+         control = partykit::mob_control(), ocontrol = list(), ...)
 }
 
 \arguments{
