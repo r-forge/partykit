@@ -1211,10 +1211,10 @@ if(file.exists("crps_cross.rda")){
                             test <- testyears[[k]]
                             train <- c(1985:2012)[!c(1985:2012) %in% test]
                             
-                            res <- eval(station = "Axams",
-                                        train = train,
-                                        test = test,
-                                        gamboost_cvr = TRUE)
+                            res <- evalmodels(station = "Axams",
+                                              train = train,
+                                              test = test,
+                                              gamboost_cvr = TRUE)
                             
                             #crps[k,] <- res$crps
                             reslist[[k]] <- res
@@ -1332,10 +1332,10 @@ if(file.exists("crps_24to4_all.rda")){
                               
                               set.seed(7)
                               
-                              res <- eval(station = stations[i],
-                                          train = train,
-                                          test = test,
-                                          gamboost_cvr = TRUE)
+                              res <- evalmodels(station = stations[i],
+                                                train = train,
+                                                test = test,
+                                                gamboost_cvr = TRUE)
                               
                               return(res)
                             },
