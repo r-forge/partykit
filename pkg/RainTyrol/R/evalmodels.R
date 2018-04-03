@@ -1,4 +1,4 @@
-eval <- function(station, train, test, 
+evalmodels <- function(station, train, test, 
                  ntree = 100,
                  tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
                  forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
@@ -14,20 +14,19 @@ eval <- function(station, train, test,
   ## check station
   if(!is.character(station)) stop("argument 'station' has to be a character")
   
-  library("RainTyrol")
-  data("StationsTyrol")
+  ## load data
+  data("RainTyrol", package = "RainTyrol")
+  data("StationsTyrol", package = "RainTyrol")
   if(!(station %in% StationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
+  rain <- RainTyrol[RainTyrol$station == station, ]
   
-  library("disttree")
+  #library("disttree")
   library("gamlss")
   library("gamlss.dist")
   library("gamlss.cens")
   gen.cens(NO, type = "left")
   library("gamboostLSS")
   
-  ## load data
-  data("RainTyrol")
-  rain <- RainTyrol[RainTyrol$station == station, ]
   
   ############
   # formula
@@ -116,34 +115,34 @@ eval <- function(station, train, test,
   learndata <- rain[rain$year %in% train, ]
   
   if(type.tree == "mob"){
-    dt_time <- system.time(dt <- disttree(dt.formula, 
-                                          data = learndata, family = dist_list_cens_normal, 
-                                          censtype = "left", censpoint = 0, type.tree = "mob", 
-                                          control = partykit::mob_control(restart = FALSE, numsplit = "center", 
-                                                                alpha = 1-tree_mincrit, minsplit = tree_minsplit,
-                                                                minbucket = tree_minbucket)))
+    dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
+                                                    data = learndata, family = disttree::dist_list_cens_normal, 
+                                                    censtype = "left", censpoint = 0, type.tree = "mob", 
+                                                    control = partykit::mob_control(restart = FALSE, numsplit = "center", 
+                                                                                    alpha = 1-tree_mincrit, minsplit = tree_minsplit,
+                                                                                    minbucket = tree_minbucket)))
   }
   if(type.tree == "ctree"){
-    dt_time <- system.time(dt <- disttree(dt.formula, 
-                                          data = learndata, family = dist_list_cens_normal, 
-                                          censtype = "left", censpoint = 0, type.tree = "ctree", 
-                                          control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                                  mincriterion = tree_mincrit, minsplit = tree_minsplit,
-                                                                  minbucket = tree_minbucket)))
+    dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
+                                                    data = learndata, family = disttree::dist_list_cens_normal, 
+                                                    censtype = "left", censpoint = 0, type.tree = "ctree", 
+                                                    control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                                                      mincriterion = tree_mincrit, minsplit = tree_minsplit,
+                                                                                      minbucket = tree_minbucket)))
   }
                           
                           
   if(type.tree == "mob"){
-    df_time <- system.time(df <- distforest(df.formula, 
-                                            data = learndata, family = dist_list_cens_normal, type.tree = "mob", 
+    df_time <- system.time(df <- disttree::distforest(df.formula, 
+                                            data = learndata, family = disttree::dist_list_cens_normal, type.tree = "mob", 
                                             ntree = ntree, censtype = "left", censpoint = 0,
                                             control = partykit::mob_control(restart = FALSE, numsplit = "center", 
                                                                   alpha = 1-forest_mincrit, minsplit = forest_minsplit,
                                                                   minbucket = forest_minbucket), mtry = forest_mtry))
   }
   if(type.tree == "ctree"){
-    df_time <- system.time(df <- distforest(df.formula, 
-                                            data = learndata, family = dist_list_cens_normal, type.tree = "ctree", 
+    df_time <- system.time(df <- disttree::distforest(df.formula, 
+                                            data = learndata, family = disttree::dist_list_cens_normal, type.tree = "ctree", 
                                             ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
                                             control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                                     mincriterion = forest_mincrit, minsplit = forest_minsplit,
@@ -175,9 +174,9 @@ eval <- function(station, train, test,
                                            control = boost_control(mstop = 1000L)))
   if(gamboost_cvr){
     grid <- seq(50, 1000, by = 25)
-    gb_cvr_time <- system.time(cvr <- gamboostLSS::cvrisk(gb, grid = grid))
-    gamboostLSS::mstop(gb) <- gamboostLSS::mstop(cvr)
-    cvr_opt <- gamboostLSS::mstop(cvr) 
+    gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
+    mstop(gb) <- mstop(cvr)
+    cvr_opt <- mstop(cvr) 
   } else cvr_opt <- gb_cvr_time <- NA
   
                           
@@ -301,21 +300,21 @@ eval <- function(station, train, test,
   dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- numeric(length = NROW(testdata))
   for(j in 1:(NROW(testdata))){
     
-    eta_dt <- as.numeric(dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
-    eta_df <- as.numeric(dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
-    eta_g <- if(!g_na) as.numeric(dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
-    eta_gb <- as.numeric(dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
-    eta_mi <- if(!mi_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
-    eta_ml <- if(!ml_na) as.numeric(dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
-    eta_mq <- if(!mq_na) as.numeric(dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
+    eta_dt <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
+    eta_df <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
+    eta_g <- if(!g_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
+    eta_gb <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
+    eta_mi <- if(!mi_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+    eta_ml <- if(!ml_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+    eta_mq <- if(!mq_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
     
-    dtll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
-    dfll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-    gll[j] <- if(!g_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
-    gbll[j] <- dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
-    mill[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
-    mlll[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
-    mqll[j] <- if(!mi_na) dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
+    dtll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
+    dfll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
+    gll[j] <- if(!g_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+    gbll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
+    mill[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+    mlll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+    mqll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
     
   }
   
