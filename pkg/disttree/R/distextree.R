@@ -20,9 +20,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
   # check formula
   oformula <- as.formula(formula)
-  formula <- as.Formula(formula)
+  formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
-    formula <- Formula(formula(formula, rhs = 2L))  
+    formula <- Formula::Formula(formula(formula, rhs = 2L))  
     ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
@@ -42,7 +42,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   mf$nmax <- control$nmax
   ## evaluate model.frame
-  mf[[1L]] <- quote(extree_data)
+  mf[[1L]] <- quote(partykit::extree_data)
   
   d <- eval(mf, parent.frame())
   #subset <- partykit:::.start_subset(d)  ## FIX ME: export function?
@@ -84,7 +84,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     
     # if family is a gamlss family object or gamlss family function
     if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
@@ -111,9 +111,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
     start <- info$coefficients
     
-    model <- distfit(ys, family = family, weights = subweights, start = start,
-                     vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                     estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+    model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
+                               vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                               estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distfit returns weighted scores!
@@ -203,8 +203,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   }            
   
   update <- function(subset, weights, control, doFit = TRUE)
-    extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = control$partyvars, 
-               subset = subset, weights = weights, ctrl = control, doFit = doFit)
+    partykit::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = control$partyvars, 
+                         subset = subset, weights = weights, ctrl = control, doFit = doFit)
   if (!doFit) return(list(d = d, update = update))
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
@@ -218,7 +218,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
                        check.names = FALSE)
   fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
   names(fitted)[3] <- "(response)"
-  ret <- party(tree, data = mf, fitted = fitted, 
+  ret <- partykit::party(tree, data = mf, fitted = fitted, 
                info = list(call = match.call(), control = control))
   ret$update <- update
   ret$trafo <- trafo
@@ -244,9 +244,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   ## get coefficients for terminal nodes:
   Y <- ret$fitted$`(response)`
   # first iteration out of loop:
-  model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                    vcov = FALSE, type.hessian = "analytic", 
-                    estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+  model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+                              vcov = FALSE, type.hessian = "analytic", 
+                              estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
   coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
   # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
   colnames(coefficients_par) <- names(model1$par)
@@ -261,9 +261,9 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   if(n_tn>1){
     for(i in (2:n_tn)){
-      model <- distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                       vcov = FALSE, type.hessian = "analytic", 
-                       estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+      model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+                                 vcov = FALSE, type.hessian = "analytic", 
+                                 estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       coefficients_par[i,] <- model$par
       # coefficients_eta[i,] <- model$eta
       loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))

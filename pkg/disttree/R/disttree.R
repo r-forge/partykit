@@ -5,7 +5,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
                      type.tree = "mob", decorrelate = "none", offset,
                      censtype = "none", censpoint = NULL, weights = NULL,
                      terminal_objects = FALSE,
-                     control = mob_control(), ocontrol = list(), ...)
+                     control = partykit::mob_control(), ocontrol = list(), ...)
 {
   ## keep call
   cl <- match.call(expand.dots = TRUE)
@@ -39,7 +39,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     
     # if family is a gamlss family object or gamlss family function
     if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
@@ -59,9 +59,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   
   ## formula
   oformula <- as.formula(formula)
-  formula <- as.Formula(formula)
+  formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
-    formula <- Formula(formula(formula, rhs = 2L))  
+    formula <- Formula::Formula(formula(formula, rhs = 2L))  
     ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
@@ -84,9 +84,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
       
-      model <- distfit(y, family = family, weights = weights, start = start,
-                       vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                       censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+      model <- disttree::distfit(y, family = family, weights = weights, start = start,
+                                 vcov = vcov, estfun = estfun, type.hessian = type.hessian,
+                                 censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       
       ef <- NULL
       if(estfun) {
@@ -132,8 +132,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     # if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    m[[1L]] <- as.name("mob")
-    # m[[1L]] <- as.name("partykitR1::mob")
+    m[[1L]] <- quote(partykit::mob)
+    # m[[1L]] <- quote(partykitR1::mob)
     rval <- eval(m, parent.frame())
     
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
@@ -164,9 +164,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
         start <- info$coefficients
         
-        model <- distfit(ys, family = family, weights = subweights, start = start,
-                         vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+        model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
+                                   vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                                   estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
         
         if(estfun) {
           ef <- as.matrix(model$estfun)
@@ -219,7 +219,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    m[[1L]] <- as.name("ctree")
+    m[[1L]] <- quote(partykit::ctree)
     rval <- eval(m, parent.frame())
     
     # number of terminal nodes
@@ -234,9 +234,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     ## get coefficients for terminal nodes:
     Y <- rval$fitted$`(response)`
     # first iteration out of loop:
-    model1 <- distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                      vcov = FALSE, type.hessian = "analytic", 
-                      estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+    model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+                                vcov = FALSE, type.hessian = "analytic", 
+                                estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
     colnames(coefficients_par) <- names(model1$par)
@@ -254,9 +254,9 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       
     if(n_tn>1){
       for(i in (2:n_tn)){
-        model <- distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                         vcov = FALSE, type.hessian = "analytic", 
-                         estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+        model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+                                   vcov = FALSE, type.hessian = "analytic", 
+                                   estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
         loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
@@ -319,7 +319,7 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   if((type == "node") || (type == "response")) {
     # if mob was applied
     if(inherits(object, "modelparty")){
-      return(predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
+      return(partykit::predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
     }
     # if ctree was applied
     if(inherits(object, "constparty")){

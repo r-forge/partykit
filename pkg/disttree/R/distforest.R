@@ -1,8 +1,8 @@
 distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL,
                        type.tree = "ctree", decorrelate = "none", offset,
                        censtype = "none", censpoint = NULL, weights = NULL,
-                       control = ctree_control(teststat = "quad", testtype = "Univ", 
-                                               mincriterion = 0, ...), 
+                       control = partykit::ctree_control(teststat = "quad", testtype = "Univ", 
+                                                         mincriterion = 0, ...), 
                        ocontrol = list(), ntree = 500L, fit = TRUE, 
                        perturb = list(replace = FALSE, fraction = 0.632), 
                        fitted.OOB = TRUE, cores = NULL, applyfun = NULL,
@@ -41,12 +41,12 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     # if family is a gamlss family object or gamlss family function
     if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
     # linkinvdr only used in the method vcov for type = "parameter"
-
+    
   }
   
   np <- length(family$link)
@@ -62,21 +62,21 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   
   ## formula
   oformula <- as.formula(formula)
-  formula <- as.Formula(formula)
+  formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
-    formula <- Formula(formula(formula, rhs = 2L))  
+    formula <- Formula::Formula(formula(formula, rhs = 2L))  
     ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
   m$formula <- formula
-
+  
   
   if(type.tree == "ctree") {
     
     # select arguments for cforest and put them in the right order
     mnames <- match(c("formula", "data", "weights", "subset", "offset", "cluster", 
-                  "strata", "na.action", "control", "ntree", "perturb", "mtry", "applyfun", "cores"), names(m), 0L)
+                      "strata", "na.action", "control", "ntree", "perturb", "mtry", "applyfun", "cores"), names(m), 0L)
     m <- m[c(1L, mnames)]
     
     
@@ -94,10 +94,10 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
         # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
         start <- info$coefficients
         
-        model <- distfit(ys, family = family, weights = subweights, start = start,
-                         vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
-                         estfun = estfun, censtype = censtype, censpoint = censpoint,
-                         ocontrol = ocontrol, ...)
+        model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
+                                   vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                                   estfun = estfun, censtype = censtype, censpoint = censpoint,
+                                   ocontrol = ocontrol, ...)
         
         if(estfun) {
           ef <- as.matrix(model$estfun)
@@ -129,7 +129,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
           ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
         } else estfun <- NULL
         
-
+        
         object <-  if(object) model else NULL
         
         ret <- list(estfun = estfun,
@@ -148,7 +148,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     #for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
     if("..." %in% names(m)) m[["..."]] <- NULL
     #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    m[[1L]] <- as.name("cforest")
+    m[[1L]] <- quote(partykit::cforest)
     rval <- eval(m, parent.frame())
   }
   
@@ -165,7 +165,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     cl$na.action <- na.action
     frame <- parent.frame()
-
+    
     ## FIX ME: weights?
     # weights <- rep.int(1, nrow(data))
     
@@ -179,10 +179,10 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
       
-      model <- distfit(y, family = family, weights = weights, start = start,
-                     vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                     censtype = censtype, censpoint = censpoint,
-                     ocontrol = ocontrol, ...)
+      model <- disttree::distfit(y, family = family, weights = weights, start = start,
+                                 vcov = vcov, estfun = estfun, type.hessian = type.hessian,
+                                 censtype = censtype, censpoint = censpoint,
+                                 ocontrol = ocontrol, ...)
       
       ef <- NULL
       if(estfun) {
@@ -221,8 +221,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       return(rval)
     }
     
-    tree <- mob(formula, data = data,
-                fit= dist_family_fit, control = control)
+    tree <- partykit::mob(formula, data = data,
+                          fit= dist_family_fit, control = control)
     
     tree$mf <- model.frame(formula, data)
     strata <- tree$mf[["(strata)"]]
@@ -270,7 +270,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     forest <- applyfun(1:ntree, function(b) {
       sdata <- data[rw[[b]],]
-      mob(formula, data = sdata, fit= dist_family_fit, control = control)$node
+      partykit::mob(formula, data = sdata, fit= dist_family_fit, control = control)$node
     })
     
     #forest <- list()
@@ -295,14 +295,14 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     control$applyfun <- applyfun
     
     ## FIXME: export constparties() from partykit
-    rval <- constparties(nodes = forest, data = tree$mf, weights = rw,
-                                   fitted = fitted, terms = terms(mf), 
-                                   info = list(call = match.call(), control = control))
+    rval <- partykit:::constparties(nodes = forest, data = tree$mf, weights = rw,
+                                    fitted = fitted, terms = terms(mf), 
+                                    info = list(call = match.call(), control = control))
     
     #rval$fit <- tree$fit
     class(rval) <- c("distforest", class(rval))
   }
-
+  
   
   
   if(fit) {
@@ -313,14 +313,14 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     # logscore <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
     
     # extract weights
-    w <- predict.cforest(rval, type = "weights", OOB = fitted.OOB)
+    w <- partykit::predict.cforest(rval, type = "weights", OOB = fitted.OOB)
     
     Y <- rval$fitted$`(response)`
     
     for(i in 1:nrow(data)){
       wi <- w[,i]
       # personalized model for observation data[i,]
-      pm <-  distfit(Y, family = family, weights = wi, vcov = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+      pm <-  disttree::distfit(Y, family = family, weights = wi, vcov = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
       loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
@@ -351,15 +351,15 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   class(rval) <- c("distforest", class(rval))
   return(rval)
 }
-  
-  
+
+
 
 
 ###################
 # methods for class 'distforest'
 
 predict.distforest <- function (object, newdata = NULL, type = c("response", "parameter", "prob", 
-                                                              "weights", "node"), OOB = FALSE, ...) 
+                                                                 "weights", "node"), OOB = FALSE, ...) 
 {
   responses <- object$fitted[["(response)"]]
   forest <- object$nodes
@@ -374,17 +374,17 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
   nam <- rownames(nd)
   type <- match.arg(type)
   if (type == "node") 
-    return(lapply(forest, fitted_node, data = nd, vmatch = vmatch, 
+    return(lapply(forest, partykit::fitted_node, data = nd, vmatch = vmatch, 
                   ...))
   rw <- object$weights
   applyfun <- lapply
   if (!is.null(object$info)) 
     applyfun <- object$info$control$applyfun
   bw <- applyfun(1:length(forest), function(b) {
-    ids <- nodeids(forest[[b]], terminal = TRUE)
-    fnewdata <- fitted_node(forest[[b]], nd, vmatch = vmatch, 
-                            ...)
-    fdata <- fitted_node(forest[[b]], object$data, ...)
+    ids <- partykit::nodeids(forest[[b]], terminal = TRUE)
+    fnewdata <- partykit::fitted_node(forest[[b]], nd, vmatch = vmatch, 
+                                      ...)
+    fdata <- partykit::fitted_node(forest[[b]], object$data, ...)
     tw <- rw[[b]]
     if (OOB) 
       tw <- as.integer(tw == 0)
@@ -404,16 +404,16 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
   
   if(type == "response"){
     if(!is.null(newdata)) {
-
+      
       # get weights for new data
       #nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = OOB)
       nw <- w
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
-                     censtype = object$info$censtype, censpoint = object$info$censpoint)
+      pm <-  disttree::distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
+                               censtype = object$info$censtype, censpoint = object$info$censpoint)
       pred.val1 <- predict(pm, type = "response")
-        
+      
       pred.val <- data.frame(idx = 1:nrow(nd))
       pred.val[1,] <- pred.val1
       
@@ -421,8 +421,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
-                         censtype = object$info$censtype, censpoint = object$info$censpoint)
+          pm <-  disttree::distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
+                                   censtype = object$info$censtype, censpoint = object$info$censpoint)
           pred.val[i,] <- predict(pm, type = "response")
         }
       }
@@ -436,13 +436,13 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
     if(!is.null(newdata)) {
       
       # get weights for new data
-      nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
+      nw <- partykit::predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
       
       # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
-                     censtype = object$info$censtype, censpoint = object$info$censpoint)
+      pm <-  disttree::distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
+                               censtype = object$info$censtype, censpoint = object$info$censpoint)
       pred.par1 <- coef(pm, type = "parameter")
-
+      
       pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = length(pred.par1)))
       pred.par[1,] <- pred.par1
       
@@ -450,8 +450,8 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
         for(i in 2:nrow(nd)){
           nwi <- nw[,i]
           # personalized model
-          pm <-  distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
-                         censtype = object$info$censtype, censpoint = object$info$censpoint)
+          pm <-  disttree::distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
+                                   censtype = object$info$censtype, censpoint = object$info$censpoint)
           pred.par[i,] <- coef(pm, type = "parameter")
         }
       }
@@ -482,7 +482,7 @@ logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...) {
   
   ll <- 0
   pred.par <- predict(object, newdata = newdata, type = "parameter")
-  distlist <- if(inherits(object$info$family, "gamlss.family")) make_dist_list(object$info$family) else object$info$family
+  distlist <- if(inherits(object$info$family, "gamlss.family")) disttree::make_dist_list(object$info$family) else object$info$family
   ## FIXME: get family for all types of input for 'family'
   
   if(object$info$family$gamlssobj && object$info$family$censored) {
@@ -515,36 +515,36 @@ logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...) {
 ## FIXME: currently copied from partykit:::constparties
 ## -> check with TH whether this can be documented/exported from partykit
 constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info = NULL) {
-
-    stopifnot(all(sapply(nodes, function(x) inherits(x, "partynode"))))
-    stopifnot(inherits(data, "data.frame"))
-    stopifnot(inherits(weights, "list"))
-
-    if(!is.null(fitted)) {
-        stopifnot(inherits(fitted, "data.frame"))
-        stopifnot(nrow(data) == 0L | nrow(data) == nrow(fitted))
-        if (nrow(data) == 0L)
-            stopifnot("(response)" %in% names(fitted))
-    } else {
-        stopifnot(nrow(data) > 0L)
-        stopifnot(!is.null(terms))
-        fitted <- data.frame("(response)" = model.response(model.frame(terms, data = data, 
-                                                                       na.action = na.pass)),
-                             check.names = FALSE)
-    }
-
-    ret <- list(nodes = nodes, data = data, weights = weights, fitted = fitted)
-    class(ret) <- c("constparties", "parties")
-
-    if(!is.null(terms)) {
-        stopifnot(inherits(terms, "terms"))
-        ret$terms <- terms
-    }
-
-    if (!is.null(info))
-        ret$info <- info
-
-    ret
+  
+  stopifnot(all(sapply(nodes, function(x) inherits(x, "partynode"))))
+  stopifnot(inherits(data, "data.frame"))
+  stopifnot(inherits(weights, "list"))
+  
+  if(!is.null(fitted)) {
+    stopifnot(inherits(fitted, "data.frame"))
+    stopifnot(nrow(data) == 0L | nrow(data) == nrow(fitted))
+    if (nrow(data) == 0L)
+      stopifnot("(response)" %in% names(fitted))
+  } else {
+    stopifnot(nrow(data) > 0L)
+    stopifnot(!is.null(terms))
+    fitted <- data.frame("(response)" = model.response(model.frame(terms, data = data, 
+                                                                   na.action = na.pass)),
+                         check.names = FALSE)
+  }
+  
+  ret <- list(nodes = nodes, data = data, weights = weights, fitted = fitted)
+  class(ret) <- c("constparties", "parties")
+  
+  if(!is.null(terms)) {
+    stopifnot(inherits(terms, "terms"))
+    ret$terms <- terms
+  }
+  
+  if (!is.null(info))
+    ret$info <- info
+  
+  ret
 }
 
 

@@ -78,7 +78,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     
     # if family is a gamlss family object or gamlss family function
     if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- make_dist_list(family, bd = bd)
+    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
     if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
@@ -258,13 +258,13 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
                        hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
-                optimization restarted with 'BFGS' and additional argumetns ignored")
+                optimization restarted with 'BFGS' and additional arguments ignored")
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
                          hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
         if(inherits(opt, "try-error")) {
           warning("Error in 'optim()' for method 'L-BFGS-B',
-                optimization restarted with 'Nelder-Mead' and additional argumetns ignored")
+                optimization restarted with 'Nelder-Mead' and additional arguments ignored")
           print(starteta)
           method <- "Nelder-Mead"
           opt <- optim(par = starteta, fn = nll, method = method,
@@ -280,7 +280,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     ## loglikelihood value
     loglik = -opt$value
     
-    converged <- (opt$convergence == 0)   # optim returns 0 for successul completion 
+    converged <- (opt$convergence == 0)   # optim returns 0 for successful completion 
     
   } else {
     eta <- family$startfun(y, weights)
