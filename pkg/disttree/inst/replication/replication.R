@@ -1,10 +1,10 @@
 ## FIXMEs:
-# - where to store eval.R?
+# - where to store evalmodels.R?
 # - where to store data for map?
 # - provide original complete data set and demo_data_prep.R?
 
-## TO DO: export eval.R from RainTyrol
-#source("~/svn/partykit/pkg/RainTyrol/R/eval.R")
+## TO DO: export evalmodels.R from RainTyrol
+#source("~/svn/partykit/pkg/RainTyrol/R/evalmodels.R")
 
 library("disttree")
 library("crch")
@@ -23,60 +23,73 @@ names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 
 transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
+## set function for parallelization
+applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = detectCores() - 1)
+
 
 #####################################################  
 #### cross validation at station Axams
 
 nrep_cross <- 10
-crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
-res_cross <- list()
 seed <- 7
 
-for(i in 1:nrep_cross){
-  
-  set.seed(seed*i)
-  
-  # randomly split data in 7 parts each including 4 years
-  years <- c(1985:2012)
-  testyears <- list()
-  for(j in 1:7){
-    testyears[[j]] <- sample(years, 4, replace = FALSE)
-    years <- years[!(years %in% testyears[[j]])]
-  }
-  
-  crps <- matrix(nrow = 7, ncol = 7)
-  reslist <- list()
-  for(k in 1:7){
-    test <- testyears[[k]]
-    train <- c(1985:2012)[!c(1985:2012) %in% test]
-    
-    res <- eval(station = "Axams",
-                train = train,
-                test = test,
-                gamboost_cvr = TRUE)
-    
-    crps[k,] <- res$crps
-    reslist[[k]] <- res
-  }
-  
-  colnames(crps) <- names(res$crps)
-  crps_cross[i,] <- colMeans(crps, na.rm = TRUE)
-  res_cross[[i]] <- reslist
-}
+res_cross <- applyfun(1:nrep_cross,
+                      function(i){
+                        
+                        set.seed(seed*i)
+                        
+                        # randomly split data in 7 parts each including 4 years
+                        years <- 1985:2012
+                        testyears <- list()
+                        for(j in 1:7){
+                          testyears[[j]] <- sample(years, 4, replace = FALSE)
+                          years <- years[!(years %in% testyears[[j]])]
+                        }
+                        
+                        crps <- matrix(nrow = 7, ncol = 7)
+                        reslist <- list()
+                        for(k in 1:7){
+                          test <- testyears[[k]]
+                          train <- c(1985:2012)[!c(1985:2012) %in% test]
+                          
+                          res <- evalmodels(station = "Axams",
+                                            train = train,
+                                            test = test,
+                                            gamboost_cvr = TRUE)
+                          
+                          crps[k,] <- res$crps
+                          reslist[[k]] <- res
+                        }
+                        
+                        colnames(crps) <- names(res$crps)
+                        return(reslist)
+                      }
+)
 
-colnames(crps_cross) <- colnames(crps) 
+# extract CRPS
+crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
+# loop over all repetitions
+for(i in 1:length(res_cross)){
+  #loop over all 7 folds (for 7 methods)
+  crps_cross_int <- matrix(nrow = length(res_cross[[1]]), ncol = 7)
+  for(j in 1:length(res_cross[[1]])){
+    crps_cross_int[j,] <- res_cross[[i]][[j]]$crps
+  }
+  crps_cross[i,] <- colMeans(crps_cross_int, na.rm = TRUE)
+}
+colnames(crps_cross) <- names(res_cross[[1]][[1]]$crps) 
 
 save(crps_cross, file = "crps_cross.rda")
 save(res_cross, file = "res_cross.rda")
-
-
+                
+                
 ## boxplot of crps_cross for station Axams
 boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal["EMOS"], lwd = 2)
-
-
+  
+  
 
 
 
@@ -84,34 +97,45 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 ### models learned on 24 years (1985-2008) and evaluated on 4 years (2009-2012)
 ### over all observation stations
 
-set.seed(7)
+
 data("StationsTyrol")
 stations <- StationsTyrol$name
 test <- 2009:2012
 train <- 1985:2008
 
+
+res_24to4_all <- applyfun(1:length(stations),
+                          function(i){
+                            
+                            set.seed(7)
+                            
+                            res <- evalmodels(station = stations[i],
+                                              train = train,
+                                              test = test,
+                                              gamboost_cvr = TRUE)
+                            
+                            return(res)
+                          }
+)
+
+# extract crps
 crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
-res_24to4_all <- list()
+# loop over all stations
 for(i in 1:length(stations)){
-  
-  res <- eval(station = stations[i],
-              train = train,
-              test = test,
-              gamboost_cvr = TRUE)
-  
-  crps_24to4_all[i,] <- res$crps
-  res_24to4_all[[i]] <- res
+  crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
 }
 
-colnames(crps_24to4_all) <- names(res$crps)
+colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
 rownames(crps_24to4_all) <- stations
 
 save(crps_24to4_all, file = "crps_24to4_all.rda")
 save(res_24to4_all, file = "res_24to4_all.rda")
 
 
+
 # boxplot of crps_24to4_all
 s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 matplot(t(s[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, 
@@ -121,7 +145,7 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
 boxplot(s, add = TRUE, col = "transparent")
 abline(h = 0, col = pal["EMOS"], lwd = 2)
 
-
+   
 
 ## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
 # FIXME: data source
@@ -146,6 +170,7 @@ if(FALSE){
   library("raster") # dem (digital elevation model)
   library("sp")     # gadm www.gadm.org/country
   
+  ## FIX ME: provide data in package RainTyrol
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/tirol.rda")
   load("~/svn/partykit/pkg/disttree/inst/draft/plot_map_rain/data/dem.rda")
   
@@ -176,4 +201,5 @@ if(FALSE){
        xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
   rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
   axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
-}
+}  
+  
