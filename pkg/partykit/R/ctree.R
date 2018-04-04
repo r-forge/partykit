@@ -401,7 +401,8 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
 
     ## set up model.frame() call
     mf <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
+    m <- match(c("formula", "data", "subset", "na.action", "weights", 
+                 "offset", "cluster", "scores"), names(mf), 0L)
     mf <- mf[c(1L, m)]
     mf$yx <- "none"
     if (is.function(ytrafo)) {
