@@ -26,6 +26,9 @@
 \SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
 <<preliminaries, echo=FALSE, results=hide>>=
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+
+set.seed(7)
+
 library("ggplot2")
 theme_set(theme_bw(base_size = 18))
 library("disttree")
@@ -400,7 +403,7 @@ Y = daily precipitation sums\\
 Summary:
 \begin{itemize}
 \item<8-10> Stochastic model to approximate data generating process.\\
-\only<9-10>{$\Rightarrow$ fixed $f$\\}
+\only<9-10>{$\Rightarrow$ fixed $f$.\\}
 \item<10> Disadvantage: Risk of incorrect assumptions.
 \end{itemize}
 }
@@ -422,7 +425,8 @@ $$\mathbb{E}(Y|X) = f(X; \alpha) = \alpha + s(X)$$
 \vspace{0.15cm}
 }
 \only<5-6>{
-\vspace{-0.8cm}
+\vspace{-1.3cm}
+
 \begin{align*}
 \visible<6>{\mathbb{E}(Y|X) = }\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
 \visible<6>{\sqrt{Var(Y|X)} = }\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
@@ -547,7 +551,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i
 \vspace{-0.4cm}
 \visible<2->{
 \begin{itemize}
-\item Flexible approximation with no/few assumptions %\\
+\item Flexible approximation with no/few assumptions. %\\
 %$\Rightarrow$ no fixed $f$.
 \item Data-driven model fitting.
 \end{itemize}
@@ -560,7 +564,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i
 %\vspace{-0.8cm}
 \begin{center}
 \only<3>{
-\vspace{-1cm}
+\vspace{-0.96cm}
 \resizebox{0.6\textwidth}{!}{
 <<plot_raintree, fig=TRUE, echo=FALSE, width=4, height=2.7>>=
 par(mar=c(0,0,0,0), oma=c(0,0,0.4,0))
@@ -574,28 +578,30 @@ plot(p,
 
 \vspace{-0.7cm}
 \begin{flushleft}
-\noindent {\small X = rain now, humdity\\
-Y = rain 24h}
+\noindent {\small X = rain today, humidity\\
+Y = rain tomorrow}
 \end{flushleft}}
 \only<4->{
 \vspace{-0.5cm}
 \resizebox{0.55\textwidth}{!}{
 \begin{tikzpicture}
 %\draw[ellipse, draw=black, align=center, scale = 0.7, minimum width=170pt, minimum height = 35pt] (set) at (1, 3) {};
-\draw[gray] (1,3.5) ellipse (3 and 0.8);
+\draw[gray,rounded corners=10pt] (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\draw[gray] (1,3.5) ellipse (3 and 0.8);
 \begin{scope}
-\clip (1,3.5) ellipse (3 and 0.8);
+\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\clip (1,3.5) ellipse (3 and 0.8);
 \pgfmathsetseed{7}
 \foreach \p in {1,...,200} {\fill[gray] (1+3*rand,3.5+0.8*rand) circle (0.04);}
 \end{scope}
 \visible<5->{
-\node[ellipse, draw=black!50!green, align=center, minimum width=80pt, minimum height = 40pt, line width = 3pt] (subset1) at (0.2, 3.5) {};
+\node[ellipse, draw=black!50!green, align=center, minimum width=80pt, minimum height = 40pt, line width = 3pt] (subset1) at (0.1, 3.5) {};
 }
 \visible<7->{
 \node[ellipse, draw = blue, align=center, minimum width=100pt, minimum height = 30pt, line width = 3pt] (subset2) at (1.2, 3.6) {};
 }
 \visible<9->{
-\node[ellipse, draw = orange, align=center, minimum width=120pt, minimum height = 20pt, line width = 3pt] (subset3) at (1.6, 3.2) {};
+\node[ellipse, draw = orange, align=center, minimum width=120pt, minimum height = 25pt, line width = 3pt] (subset3) at (1.6, 3.3) {};
 }
 \visible<6->{
   \node[ellipse, fill=black!50!green, align=center] (n00) at (-1, 2) {};
@@ -644,92 +650,113 @@ Y = rain 24h}
 \hspace{-1cm}
 \begin{minipage}{0.4\textwidth}
 \begin{center}
+\vspace{0.1cm}
+
 \only<3-5>{
-%\vspace{-0.29cm}
+%\vspace{0.01cm}
 <<plot_motivation_regtree, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,3,2,5))
+par(mar=c(3,3,2,5.5))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=7, lty = 2)
-mtext("rain", side = 4, las = TRUE, at = 15, line = 0.5, cex = 3, col = pal["forest"])
-mtext("no", side = 4, las = TRUE, at = 10, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain", side = 4, las = TRUE, at = 8, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
-mtext("humidity", side = 1, line = 1.4, cex = 3)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
-%\hspace{-1cm}
 }
 \only<6-7>{
+%\vspace{0.01cm}
+\hspace{-0.2cm}
 <<plot_motivation_randforest1, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,3,2,5))
+par(mar=c(3,3,2,5.5))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=7, lty = 2)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
-mtext("rain", side = 4, las = TRUE, at = 15, line = 0.5, cex = 3, col = pal["forest"])
-mtext("no", side = 4, las = TRUE, at = 10, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain", side = 4, las = TRUE, at = 8, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
-mtext("humidity", side = 1, line = 1.4, cex = 3)
+lines(x = x, y = ytree_up, col = pal["tree"], lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
 \only<8-9>{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
 <<plot_motivation_randforest2, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,3,2,5))
+par(mar=c(3,3,2,5.5))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=7, lty = 2)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
 lines(x = x, y = ytree3, col = "blue", lwd=7)
-mtext("rain", side = 4, las = TRUE, at = 15, line = 0.5, cex = 3, col = pal["forest"])
-mtext("no", side = 4, las = TRUE, at = 10, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain", side = 4, las = TRUE, at = 8, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
-mtext("humidity", side = 1, line = 1.4, cex = 3)
+lines(x = x, y = ytree_up, col = "blue", lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
 \only<10>{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
 <<plot_motivation_randforest3, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,3,2,5))
+par(mar=c(3,3,2,5.5))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=7, lty = 2)
+lines(x = x, y = ytree_up, col = "orange", lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
 lines(x = x, y = ytree3, col = "blue", lwd=7)
 lines(x = x, y = ytree4, col = "orange", lwd=7)
-mtext("rain", side = 4, las = TRUE, at = 15, line = 0.5, cex = 3, col = pal["forest"])
-mtext("no", side = 4, las = TRUE, at = 10, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain", side = 4, las = TRUE, at = 8, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
-mtext("humidity", side = 1, line = 1.4, cex = 3)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
 \only<11->{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
 <<plot_motivation_randforest4, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,3,2,5))
+par(mar=c(3,3,2,5.5))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=7, lty = 2)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = yforest, col = pal["forest"], lwd=7)
-mtext("rain", side = 4, las = TRUE, at = 15, line = 0.5, cex = 3, col = pal["forest"])
-mtext("no", side = 4, las = TRUE, at = 10, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain", side = 4, las = TRUE, at = 8, line = 0.5, cex = 3, col = pal["forest"])
-mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
-mtext("humidity", side = 1, line = 1.4, cex = 3)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
 \end{center}
@@ -971,12 +998,12 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 \def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
 
 \begin{frame}[fragile]
-\frametitle{Fitting a Tree}
+\frametitle{Distributional Tree}
 \begin{minipage}{0.78\textwidth}
 \begin{center}
 \vspace{0.2cm}
 \visible<2->{
-Model: \code{disttree(y ~ x)}\\
+Model: \code{disttree(y $\sim$ x)}\\
 }
 \vspace{-0.2cm}
 \only<2-3>{
@@ -1108,14 +1135,14 @@ R-package \code{disttree}
 \center
 \visible<5->{
 Algorithmic \\
-Modelling\\
+Modeling\\
 }
 
 \vspace{1.3cm}
 
 \visible<6->{
 Data \\
-Modelling
+Modeling
 }
 
 \vspace{1.4cm}
@@ -1161,9 +1188,9 @@ Combined \visible<8->{\checkmark}
 \begin{enumerate}
 \item<3-> Fit global distributional model $\mathcal{D}(Y; \theta)$: \\ % to the whole data set:\\
 Estimate model parameters $\hat{\theta}$.
-\item<6-> Evaluate goodnes of fit \\
+\item<6-> Evaluate goodness of fit \\
 (for each parameter and each observation).
-\item<8-> Choose covariate $X$ with strongest influence on goodness-of-fit of $\mathcal{D}(Y; \theta)$ as split variable.
+\item<8-> Choose covariate $X$ with strongest influence on goodness of fit of $\mathcal{D}(Y; \hat{\theta})$ as split variable.
 \end{enumerate}
 \end{minipage}
 \begin{minipage}{0.25\textwidth}
@@ -1219,7 +1246,7 @@ Estimate model parameters $\hat{\theta}$.
 \end{enumerate}
 \end{adjustwidth}
 \vspace{0.4cm}
-\visible<14->{
+\visible<13->{
 {\bf Forest:} Ensemble of trees.
 \begin{itemize}
 \item Varying subsamples.
@@ -1483,7 +1510,7 @@ $$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace*{0.2cm}
-\textbf{Application for one stations:}
+\textbf{Application for one station:}
 \begin{itemize}
 \item Learn forest model on data from 24 years (1985--2008).
 \item Evaluate on 4 years (2009--2012).
@@ -1648,11 +1675,11 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Precipitation}
 \vspace{0.2cm}
-\textbf{Application for all 95 station:}
+\textbf{Application for all 95 stations:}
 \begin{itemize}
 \item Learn forest model on data from 24 years.
 \item Evaluate on 4 years.
-\item Compare to commonly used heteroscedastic censored Gaussian models:
+\item Compare to commonly used heteroscedastic censored Gaussian models.
 \end{itemize}
 \end{frame}
 
@@ -1676,10 +1703,10 @@ if(file.exists("crps_24to4_all.rda")){
                               
                               set.seed(7)
                               
-                              res <- eval(station = stations[i],
-                                          train = train,
-                                          test = test,
-                                          gamboost_cvr = TRUE)
+                              res <- evalmodels(station = stations[i],
+                                                train = train,
+                                                test = test,
+                                                gamboost_cvr = TRUE)
                               
                               return(res)
                             },
@@ -1755,7 +1782,7 @@ sp <- SpatialPointsDataFrame(subset(StationsTyrol,
   raster::image(dem, col = rev(gray.colors(100)),
                 main="Stations in Tyrol", cex.main=1.7,
                 ylab = "Latitude", xlab = "Longitude",
-                cex.lab = 1.4,
+                cex.lab = 1.3,
                 xlim = c(9.8,13.2), 
                 ylim = c(46.6, 47.87))
   plot(tirol, add = TRUE)
