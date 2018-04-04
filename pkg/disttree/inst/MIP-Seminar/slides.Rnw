@@ -55,7 +55,7 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 ######## data generating process based on a predefined tree or a parameter function
 # if tree: 2 splits => 3 terminal nodes
-# 10 split variables (x1, ..., x10) are availabe (5 numeric, 2 binary, 3 categorical)
+# 10 split variables (x1, ..., x10) are available (5 numeric, 2 binary, 3 categorical)
 #
 # input: n            ..... nr of observations
 #        family       ..... distribution of the generated observations
@@ -317,7 +317,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 \section{Distributional Trees and Forests}
 
 \begin{frame}[fragile]
-\frametitle{Statistical modeling}
+\frametitle{Statistical Modeling}
 \visible<2,3, 6-> {Assumption:}
 \vspace{-0.7cm}
 \begin{center}
@@ -378,7 +378,7 @@ Y = daily precipitation sums\\
 
 
 \begin{frame}[fragile]
-\frametitle{Data modeling}
+\frametitle{Data Modeling}
 \vspace{-0.1cm}
 \begin{center}
 \begin{tikzpicture}
@@ -515,16 +515,21 @@ set.seed(7)
 kappa <- 12
 nobs <- 120
 x <- c(1:nobs)/nobs
-ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- ytree_up <- yforest <- numeric(length = length(x))
+ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- 
+  ytree_up <- ytree_up2 <- ytree_up3 <- ytree_up4 <- 
+  yforest <- numeric(length = length(x))
 for(i in 1:nobs) ytrue[i] <- if(x[i]<0.55) 4 else 4+5*plogis(kappa*(3*(x[i]-0.36)-1))
 y <- ytrue + rnorm(nobs,0,2)
 y_up <- rep.int(15, length(x)) + rnorm(nobs,0,1)
 for(i in 1:nobs) ytree[i] <- if(x[i]<0.7) 4 else 9
-for(i in 1:nobs) ytree2[i] <- if(x[i]<0.6) 4 else 9
-for(i in 1:nobs) ytree3[i] <- if(x[i]<0.75) 4 else 9
-for(i in 1:nobs) ytree4[i] <- if(x[i]<0.55) 4 else 9
+for(i in 1:nobs) ytree2[i] <- if(x[i]<0.63) 4.3 else 9.4
+for(i in 1:nobs) ytree3[i] <- if(x[i]<0.75) 3.7 else 9.2
+for(i in 1:nobs) ytree4[i] <- if(x[i]<0.55) 4.4 else 8.7
 ytree_up <- rep.int(15, length(x))
-for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
+ytree_up2 <- rep.int(14.5, length(x))
+ytree_up3 <- rep.int(15.3, length(x))
+ytree_up4 <- rep.int(15.5, length(x))
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.63) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
 @
 <<motivation_randforest, echo=FALSE, results=hide>>=
 ## Random Forest
@@ -533,7 +538,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i
 
 
 \begin{frame}[fragile]
-\frametitle{Algorithmic modeling}
+\frametitle{Algorithmic Modeling}
 \vspace{-0.1cm}
 \begin{center}
 \begin{tikzpicture}
@@ -560,7 +565,7 @@ for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i
 \visible<3->{
 \begin{minipage}{0.6\textwidth}
 %\vspace{-0.5cm}
-\textbf{Example:} \only<3-6>{Tree model\only<3>{\\}\only<4-6>{s}}\only<7->{Forest model}\\
+\textbf{Example:} \only<3>{Tree model}\only<4-10>{Subsampling}\only<3>{\\}\only<11->{Forest model}\\
 %\vspace{-0.8cm}
 \begin{center}
 \only<3>{
@@ -578,8 +583,8 @@ plot(p,
 
 \vspace{-0.7cm}
 \begin{flushleft}
-\noindent {\small X = rain today, humidity\\
-Y = rain tomorrow}
+\noindent {\small X = rain now, humidity\\
+Y = rain 24h}
 \end{flushleft}}
 \only<4->{
 \vspace{-0.5cm}
@@ -663,11 +668,11 @@ box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
 mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
@@ -683,13 +688,13 @@ box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
-lines(x = x, y = ytree_up, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
 mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
 mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
@@ -706,13 +711,14 @@ lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
 lines(x = x, y = ytree3, col = "blue", lwd=7)
-lines(x = x, y = ytree_up, col = "blue", lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up3, col = "blue", lwd=7)
 mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
 mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
@@ -726,16 +732,19 @@ plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
 lines(x = x, y = ytree, col = pal["forest"], lwd=7)
-lines(x = x, y = ytree_up, col = "orange", lwd=7)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
 lines(x = x, y = ytree3, col = "blue", lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up3, col = "blue", lwd=7)
 lines(x = x, y = ytree4, col = "orange", lwd=7)
+lines(x = x, y = ytree_up4, col = "orange", lwd=7)
 mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
 mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
@@ -751,11 +760,11 @@ box(lwd=5)
 lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
 lines(x = x, y = yforest, col = pal["forest"], lwd=7)
 mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
 mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("today", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
-mtext("rain tomorrow", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
 mtext("humidity", side = 1, line = 1.5, cex = 3)
 @
 }
@@ -768,19 +777,34 @@ mtext("humidity", side = 1, line = 1.5, cex = 3)
 
 \begin{frame}
 \frametitle{Goals}
-\vspace{-0.7 cm}
+\vspace{-0.4cm}
 \begin{minipage}{0.7\textwidth}
 \textbf{Available:} \\
-\vspace{-0.3 cm}
+\vspace{-0.5 cm}
 \begin{itemize}
-  \item<2-> Probabilistic forecast\\
-  $\rightarrow$ Distributional approach
-  \item<3-> Automatic detection of steps and abrupt changes,
-  automatic selection of variables and interactions\\
-  $\rightarrow$ Tree approach
-  \item<4-> Smoothing and regularization\\
-  $\rightarrow$ Forest approach
+  \item Distributional regression:\\
+  Probabilistic forecast.
+  \item Regression Trees:\\
+  Automatic detection of abrupt changes,
+  and selection of variables/interactions.
+  \item Random Forests:\\
+  Smoothing and regularization.
 \end{itemize}
+
+\vspace{1cm}
+
+\visible<2->{
+\textbf{Missing:} Synthesis
+
+\vspace{0.2cm}
+
+$\Rightarrow$ PhD-Thesis
+
+\vspace{0.1cm}
+
+%{\small 
+(what I've been working on the last 2 years)
+}
 \end{minipage}
 <<motivation_GAMLSS_syn, echo=FALSE, results=hide>>=
 ## GAMLSS
@@ -789,77 +813,76 @@ nobs <- 200
 x_g <- c(1:nobs)/nobs
 x_g <- 2*(x_g-0.5)
 ytrue_g <- x_g^3
-var <- exp(-(2*x_g)^2)/2
-y_g <- ytrue_g + rnorm(nobs, 0, 0.1 + var)
+var_g <- exp(-(2*x_g)^2)/2
+y_g <- ytrue_g + rnorm(nobs, 0, 0.1 + var_g)
 @
 <<motivation_regtree_syn, echo=FALSE, results=hide>>=
 ## Reg. Tree
-set.seed(7)
-nobs <- 120
+set.seed(74)
+nobs <- 170
 kappa <- 12
 x <- c(1:nobs)/nobs
-ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- ytree_up <- yforest <- numeric(length = length(x))
-for(i in 1:nobs) ytrue[i] <- if(x[i]<0.55) 4 else 4+5*plogis(kappa*(3*(x[i]-0.36)-1))
-y <- ytrue + rnorm(nobs,0,2)
-y_up <- rep.int(15, length(x)) + rnorm(nobs,0,1)
+ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- ytree_up <- yforest <- var <- var_up <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<0.2) 4 else 4+5*plogis(kappa*(3*(x[i]-0.33)-1))
+ytrue_up <- rep.int(15, length(x))
+for(i in 1:nobs) var_up[i] <- if(x[i]<0.15) 3 else (if(x[i]<0.35) 2 else (if(x[i]<0.5) 2 else (if(x[i]<0.7) 1 else (if(x[i]<0.8) 1.5 else (if(x[i]<0.9) 2 else (2.5))))))
+for(i in 1:nobs) var[i] <- if(x[i]<0.15) 4 else (if(x[i]<0.2) 3 else (if(x[i]<0.25) 2 else (if(x[i]<0.4) 1 else (if(x[i]<0.8) 2 else (if(x[i]<0.9) 2.5 else (3))))))
+y <- ytrue + rnorm(nobs,0, sqrt(var))
+y_up <- ytrue_up + rnorm(nobs,0, sqrt(var_up))
 for(i in 1:nobs) ytree[i] <- if(x[i]<0.7) 4 else 9
-for(i in 1:nobs) ytree2[i] <- if(x[i]<0.6) 4 else 9
-for(i in 1:nobs) ytree3[i] <- if(x[i]<0.75) 4 else 9
-for(i in 1:nobs) ytree4[i] <- if(x[i]<0.55) 4 else 9
 ytree_up <- rep.int(15, length(x))
 for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
 @
 \begin{minipage}{0.25\textwidth}
-\vspace{0.7cm}
-\visible<2->{
-<<plot_motivation_GAMLSS_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,0,3,0))
+\vspace{0.4cm}
+<<plot_motivation_GAMLSS_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
 plot(x_g, y_g, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
-polygon(c(x_g, rev(x_g)), c(ytrue_g + 0.1 + var, rev(ytrue_g - 0.1 - var)),
+polygon(c(x_g, rev(x_g)), c(ytrue_g + 0.1 + var_g, rev(ytrue_g - 0.1 - var_g)),
   col = pallight["forest"], border = "transparent")
-lines(x_g, ytrue_g, col = pal["forest"], lwd=12)
+lines(x_g, ytrue_g, col = pal["forest"], lwd=10)
 points(x_g, y_g, col = "slategray", pch = 19)
 box(lwd = 5)
 @
-}
-\visible<3->{
-<<plot_motivation_regtree_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,0,3,0))
+
+<<plot_motivation_regtree_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytree, col = pal["forest"], lwd=12)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=12, lty = 2)
+lines(x = x, y = ytree, col = pal["forest"], lwd=10)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
 @
-}
-\visible<4->{
-<<plot_motivation_randforest4_syn, fig=TRUE, echo=FALSE, width=7>>=
-par(mar=c(3,0,3,0))
+
+<<plot_motivation_randforest4_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
      ylim = c(min(c(y,y_up)), max(c(y,y_up))))
 points(x=x, y = y_up, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytree_up, col = pal["forest"], lwd=12, lty = 2)
-lines(x = x, y = yforest, col = pal["forest"], lwd=12)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
+lines(x = x, y = yforest, col = pal["forest"], lwd=10)
+@
+
+\vspace{0.2cm}
+
+\visible<2->{
+<<plot_motivation_distforest, fig=TRUE, echo=FALSE, width=6>>=
+par(mar=c(0,0,3,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+polygon(c(x, rev(x)), c(yforest + var, rev(yforest - var)),
+  col = pallight["forest"], border = "transparent")
+polygon(c(x, rev(x)), c(ytrue_up + var_up, rev(ytrue_up - var_up)),
+  col = pallight["forest"], border = "transparent")
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
+lines(x = x, y = yforest, col = pal["forest"], lwd=10)
 @
 }
 \end{minipage}
-
-%\vspace{0.1cm}
-
-\visible<5->{
-\textbf{Missing:} Synthesis\\
-}
-
-\vspace{0.5cm}
-
-\visible<6->{
-$\Rightarrow$ PhD-Thesis  
-}
-\visible<7->{
-(what I've been working on for the last 2 years)
-}
 \end{frame}
 
 
@@ -1345,12 +1368,12 @@ GFS_rain24_mean <- GFS_rain24_mean[,1]
 <<ensemble_1_plot, fig=TRUE, echo=FALSE, width=9>>=
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
-plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05, col = "slategray" )
 #plot( GFS_t2m_mean, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
-plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
 #plot( GFS_rain[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
 #plot( GFS_rain_mean, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
 abline( v = main, lty = 2 )
@@ -1374,13 +1397,13 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
 plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", 
-      ylim = range(GFS_t2m)*1.05 )
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
 lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
 plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", 
-      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
 lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
@@ -1402,13 +1425,13 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
 plot( GFS_t2m[,c(1,2)], screen=1, xaxs="i", xaxt="n", 
-      ylim = range(GFS_t2m)*1.05 )
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
 lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
 plot( GFS_rain24[,c(1,2)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
-      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
 lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
@@ -1429,13 +1452,13 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
 plot( GFS_t2m[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", 
-      ylim = range(GFS_t2m)*1.05 )
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
 lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
 plot( GFS_rain24[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
-      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
 lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
@@ -1456,13 +1479,13 @@ axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
 par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
 layout( matrix(1:2,ncol=1) )
 plot( GFS_t2m[,-NCOL(GFS_t2m)], screen=1, xaxs="i", xaxt="n", 
-      ylim = range(GFS_t2m)*1.05 )
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
 lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
 plot( GFS_rain24[,-NCOL(GFS_rain24)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
-      ylim=range(GFS_rain24)*c(0,1.05), type = "o" )
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
 lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
 abline( v = main, lty = 2 )
 mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
