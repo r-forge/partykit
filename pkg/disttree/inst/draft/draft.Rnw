@@ -740,10 +740,13 @@ $\bm{\theta} = (\mu, \sigma)$ is
 $$
 \ell(\mu, \sigma; Y) = 
 \begin{cases}
-    \log\left\{\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
-    \log\left\{\Phi\left(\frac{-\mu}{\sigma}\right)\right\}, & \text{if } Y = 0
+    %\log\left\{\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
+    %\log\left\{\Phi\left(\frac{-\mu}{\sigma}\right)\right\}, & \text{if } Y = 0
+    \log\left\{\sigma^{-1} \cdot \phi\left((Y - \mu) \cdot \sigma^{-1}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
+    \log\left\{\Phi\left((-\mu) \cdto \sigma^{-1}\right)\right\}, & \text{if } Y = 0
 \end{cases}
 $$
+
 where $\phi$ and $\Phi$ are the probability density function and the 
 distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
 Other distributions $\mathcal{D}$ and corresponding log-likelihoods
@@ -763,11 +766,11 @@ $$
 Equivalently, this can be defined based on the corresponding first-order
 conditions
 $$ \label{eq:foc}
-\sum_{i = 1}^n s(\bm{\hat \theta}, y_i) = 0,
+\sum_{i = 1}^n s(\bm{\hat{\theta}}, y_i) = 0,
 $$
-where $s(\bm{\theta}, y_i)$ is the associated score function
+where $s(\bm{\hat \theta}, y_i)$ is the associated score function
 $$ \label{eq:score}
-s(\bm{\theta}, y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i).
+s(\bm{\hat{\theta}}, y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i) \mid_{\bm{\theta} = \bm{\hat{\theta}}}.
 $$ 
 The latter is subsequently employed as a general goodness-of-fit measure
 to assess how well the distribution with parameters $\bm{\theta}$ fits
@@ -899,6 +902,23 @@ In summary, this yields a parametric distributional regression model
 (through the score-based approach) that can capture both abrupt effects and
 high-order interactions (through the trees) and smooth effects (through
 the forest).
+
+Distributional random forests share some concepts and algorithmic aspects 
+with other generalizations of Breiman and Cutler's random forests. Nearest 
+neighbor weights are employed for aggregation in survival forests 
+\citep{Hothorn+Lausen+Benner:2004},
+quantile regression forests \citep{Meinshausen:2006},
+transformation forests \citep{Hothorn+Zeileis:2017},
+and generalized random forests for causal inferences 
+\citep{Athey+Tibshirani+Wager:2017}.
+These procedures aggregate over trees fitted to specific score functions 
+(e.g., log rank scores in survival trees, model residuals in transformation 
+or generalized forests). Distributional random forests, in contrast to these 
+nonparametric approaches, provide a compromise between model flexibility 
+and interpretability: The parameters of a problem-specific distribution 
+(zero left-censored normal for precipitation) have a clear meaning but 
+may depend on external variables in a quite general way.
+
 
 
 \section{Probabilistic precipitation forecasting in complex terrain}
@@ -1034,7 +1054,7 @@ a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
 cubic \citep{Stidd:1973} or square root \citep{Hutchinson:1998} transformations.
 However, the power parameter may vary for different climatic zones or temporal 
 aggregation periods and hence we follow \cite{Stauffer+Mayr+Messner:2017} 
-in their choice of $\frac{1}{1.6}$ as a suitable power parameter for the
+in their choice of $1.6^{-1}}$ as a suitable power parameter for the
 region of Tyrol. The same power transformation is applied to both the
 observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{tp}) and
 ``convective available potential energy'' (\emph{cape}).
@@ -1093,8 +1113,8 @@ further details:
 \item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
   the most relevant predictors based on meteorological expert knowledge
   following \cite{Stauffer+Umlauf+Messner:2017}. More specifically, based
-  on the 80~available variables, 8 terms are included in the location
-  submodel and 6 in the scale submodel. Both involve an interaction of
+  on the 80~available variables, eight terms are included in the location
+  submodel and six in the scale submodel. Both involve an interaction of
   \emph{tp} and \emph{cape} in the afternoon (between 1200\,UTC and 1800\,UTC)
   to capture the potential for thunderstorms that frequently occur in
   summer afternoons in the Alps. The model is estimated by maximum
@@ -1262,9 +1282,9 @@ To assess the predictive performance, a full cross-validation is carried out
 rather than relying on just the one fixed test set for the years 2009--2012.
 To do so, a 10 times 7-fold cross-validation is carried out where each
 splits the available 28~years into 7~subsets of 4~randomly selected years.
-The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
+The models are learned on six~folds (= 24~years) and evaluated on the 7-th fold
 (= 4~years) using the average CRPS across all observations.
-The resulting 10~CRPS skill scores are displayed by boxplots in
+The resulting ten~CRPS skill scores are displayed by boxplots in
 Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
 line at a CRPSS of 0). Both GAMLSS models and the distributional forest 
 perform distinctly better than the EMOS model. While the two GAMLSS lead to an improvement 
@@ -1537,7 +1557,7 @@ PIT histograms (Figure~\ref{fig:axams-pit})
 and QQR plots (Figure~\ref{fig:axams-qq}).
 Full replication of all results can be obtained using the companion 
 \textsf{R} package \textbf{RainTyrol} and the \textsf{R} code of
-\code{replication_code.R} provided in the package \textbf{disttree}.
+\code{replication.R} provided in the package \textbf{disttree}.
 
 \fixme{Replication code is already available as described above,
 but still needs some small corrections (naming, parallelization,
@@ -1569,7 +1589,7 @@ the set of observations $\{y_i\}_{i = 1,\ldots,n}$ as explained in
 Section~\ref{sec:distfit} the resulting estimated parameter 
 $\bm{\hat{\theta}} = 
 (\hat{\theta}_1, \ldots, \hat{\theta}_k)$, $k \in \mathbb{N}$ 
-can be plugged in the score function $s(\bm{\theta}, Y)$.
+can be plugged in the score function $s(\bm{\hat{\theta}}, Y)$.
 In that way a measurement of goodness-of-fit is obtained for each
 parameter $\theta_j$ and each observation $y_i$.\\
 To use this information, statistical tests are employed to detect
@@ -1591,7 +1611,7 @@ s(\bm{\hat{\theta}}, y_n)_1 & s(\bm{\hat{\theta}}, y_n)_2 & \ldots & s(\bm{\hat{
 $$
 and each variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
 \begin{align*}
-H_0^l:  s(\bm{\hat{\theta}}, y) \qquad \bot \qquad Z_l 
+H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l 
 \end{align*}
 
 These hypotheses are assessed by applying permutation testing with 
@@ -1611,28 +1631,28 @@ excluded from the sums.
 With the conditional expectation $\mu_{l}$ and the covariance 
 $\Sigma_{l}$ as derived by \cite{Strasser+Weber:1999} the test 
 statistic can be standardized. The observed multivariate linear 
-statistic $t$ is mapped into the real line by a  univariate test 
+statistic $t$ is mapped onto the real line by a  univariate test 
 statistic $c$. In the application of this paper a quadratic form 
 is chosen, such that
 $$
-c_{quad}(t,\mu,\Sigma) = (t-\mu)\Sigma^+(t-\mu)^{\top}
+c_{\text{quad}}(t,\mu,\Sigma) = (t-\mu)\Sigma^+(t-\mu)^{\top}
 $$
 where $\Sigma^+$ is the Moore-Penrose inverse of $\Sigma$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered.
 
-The smaller the p-value corresponding to the standardized test 
+The smaller the $p$-value corresponding to the standardized test 
 statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
 from the assumption of independence between the scores and the split 
 variable $Z_l$.
 
-After Bonferroni-adjusting the p-values it has to be assessed whether
-any of the resulting p-values is beneath the selected significance level. 
-If so, the partitioning variable $Z_{l^\ast}$ with the lowest p-value 
+After Bonferroni-adjusting the $p$-values it has to be assessed whether
+any of the resulting $p$-values is beneath the selected significance level. 
+If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
 is chosen as splitting variable.
 
-As split point the breakpoint that leads to the highest discrepancy 
-between score functions in the two resulting subgroups is selected. 
+The breakpoint that leads to the highest discrepancy between score functions 
+in the two resulting subgroups is selected as split point. 
 This difference can be measured by the linear statistic
 $$
 T_{l^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\bm{\hat{\theta}}, y_i)
@@ -1644,10 +1664,10 @@ $$
 r^{\ast} = \argmin_{r} c(t_{l^{\ast}}^r,\mu_{j^{\ast}}^r,\Sigma_{l^{\ast}}^r).
 $$
 
-Repeat the testing and splitting procedure in each of the resulting 
+One repeats the testing and splitting procedure in each of the resulting 
 subgroups until some stopping criterion is reached. This criterion 
 can for example be a minimal number of observations in a node or a 
-minimal p-value for the statistical tests. In that way pre-pruning
+minimal $p$-value for the statistical tests. In that way pre-pruning
 is applied in order to find right-sized trees and hence 
 avoid overfitting.
 
@@ -1663,7 +1683,7 @@ which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
 As an alternative to QQ~plots based on randomized quantile residuals,
 probability integral transform (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) 
 histograms are a commonly used tool to assess how well-calibrated distributional 
-fits are. Figure~\ref{fig:pit} shows out-of-sample PIT histograms for the same
+fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
 probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite
 some deviations the overall calibration of all models is acceptable.
 
@@ -1683,7 +1703,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
       
 @
 %\end{subfigure}
-\caption{\label{fig:pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
+\caption{\label{fig:axams-pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
 \end{figure}
 
 \end{appendix}
