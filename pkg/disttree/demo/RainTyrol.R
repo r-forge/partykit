@@ -16,7 +16,7 @@ names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
 transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 ## set function for parallelization
-applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = detectCores() - 1)
+applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
 
 
 #####################################################  
