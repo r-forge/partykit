@@ -81,11 +81,7 @@ library("RainTyrol")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
-names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
 pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
-names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
 transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 @
 
@@ -203,7 +199,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+lines(x = x, y = ytrue, col = pal[1], lwd = 7, main = "")
 @
 \endminipage};
 \node (b) at (5,0) 
@@ -223,7 +219,7 @@ y <- ytrue + rnorm(nobs,0,0.3)
 par(mar=c(2,0,2,0))
 plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
-lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+lines(x = x, y = ytrue, col = pal[1], lwd = 7, main = "")
 @
 \endminipage};
 \node (c) at (10,0) 
@@ -244,8 +240,8 @@ y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 par(mar=c(2,0,2,0))
 plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
 polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
-  col = pallight["forest"], border = "transparent")
-lines(x, ytrue, col = pal["forest"], lwd=7)
+  col = pallight[1], border = "transparent")
+lines(x, ytrue, col = pal[1], lwd=7)
 points(x, y, col = "slategray", pch = 19)
 box(lwd = 5)
 @
@@ -322,7 +318,7 @@ par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
-lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree, col = pal[1], lwd=7)
 @
 \endminipage};
 \node (b) at (5,0) 
@@ -339,7 +335,7 @@ par(mar=c(2,0,2,0))
 plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
 box(lwd=5)
 #lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
-lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
+lines(x = x, y = yforest, col = pal[1], lwd=7, main = "")
 @
 \endminipage};
 \node (c) at (10,0) 
@@ -362,8 +358,8 @@ plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
 usr <- par("usr")
 rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
 polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
-  col = pallight["forest"], border = "transparent")
-lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
+  col = pallight[1], border = "transparent")
+lines(x = x, y = yforest, col = pal[1], lwd=7, main = "")
 points(x, y, col = "slategray", pch = 19)
 box(lwd=8)
 @
@@ -408,9 +404,9 @@ par(mar = c(2, 0, 2, 0))
 plot(x, y, xaxt="n", yaxt="n", ann=FALSE, type = "n")
 usr <- par("usr")
 rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
-lines(x = x, y = ytree, col = pal["forest"], lwd=7, main = "")
+lines(x = x, y = ytree, col = pal[1], lwd=7, main = "")
 polygon(c(x, rev(x)), c(ytree + var, rev(ytree - var)),
-  col = pallight["forest"], border = "transparent")
+  col = pallight[1], border = "transparent")
 points(x, y, col = "slategray", pch = 19)
 box(lwd=8)
 @
@@ -1266,10 +1262,11 @@ if(file.exists("crps_cross.rda")){
 \begin{figure}[t!]
 \centering
 <<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 7>>=
+par(mar = c(2.5,2,1,2))
 boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
-abline(h = 0, col = pal["EMOS"], lwd = 2)
+abline(h = 0, col = pal[5], lwd = 2)
 @
 \caption{\label{fig:axams-crps}CRPS skill score from the 10 times 
 7-fold cross validation at station Axams (1985--2012). The horizontal orange 
@@ -1399,10 +1396,12 @@ clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power 
 library("raster") # dem (digital elevation model)
 library("sp")     # gadm www.gadm.org/country
 
-load("plot_map_rain/data/tirol.rda")
-load("plot_map_rain/data/dem.rda")
+#load("plot_map_rain/data/tirol.rda")
+#load("plot_map_rain/data/dem.rda")
 
-data(StationsTyrol)
+data(StationsTyrol, package = "RainTyrol")
+data(MapTyrol, package = "RainTyrol")
+data(MapTyrol_border, package = "RainTyrol")
 # Create SpatialPointsDataFrame from station list
 sp <- SpatialPointsDataFrame(subset(StationsTyrol,
                                     select=c(lon,lat)),
@@ -1424,7 +1423,7 @@ matplot(t(s[,]), type = "l", lwd = 2,
 lines(s[70,], col = pal[2], type = "o", pch = 19, lwd = 2)  
 # Station Axams is the 77th station which is the 70th in the list of complete stations
   boxplot(s, add = TRUE, col = "transparent")
-  abline(h = 0, col = pal["EMOS"], lwd = 2)
+  abline(h = 0, col = pal[5], lwd = 2)
     
 @
 \caption{\label{fig:all-crps}CRPS skill score for each station (gray lines
