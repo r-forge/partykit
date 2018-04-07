@@ -7,7 +7,7 @@
 
 \details{Downloaded from \url{http://www.earthenv.org/DEM}}
 
-\usage{data("MapTyrol", package = "RainTyrol")}
+\usage{data("MapTyrol")}
 
 \format{
 A \code{RasterLayer} containing topographic data of Tyrol and surrounding areas.

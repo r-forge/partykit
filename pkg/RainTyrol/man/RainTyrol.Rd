@@ -9,7 +9,7 @@ meteorological quantities from an ensemble prediction system for
 95 observation stations in Tyrol.
 }
 
-\usage{data("RainTyrol", package = "RainTyrol")}
+\usage{data("RainTyrol")}
 
 \details{
 These observation sites are maintained by the hydrographical service Tyrol and 

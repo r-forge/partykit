@@ -7,7 +7,7 @@
 
 \details{Downloaded from \url{https://www.data.gv.at/katalog/dataset/vgd-stichtagsdaten-1-250-000}}
 
-\usage{data("MapTyrol_border", package = "RainTyrol")}
+\usage{data("MapTyrol_border")}
 
 \format{
 An object of class \code{SpatialPolygons} containing the border of Tyrol.
