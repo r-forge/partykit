@@ -4,7 +4,6 @@
 
 library("disttree")
 
-
 #####
 # load observations and covariates 
 data("RainAxams")
