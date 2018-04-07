@@ -1,14 +1,14 @@
-\name{stationsTyrol}
-\alias{stationsTyrol}
+\name{StationsTyrol}
+\alias{StationsTyrol}
 
 \title{Observation stations}
 
 \description{All 95 observations stations including all necessary information about each station.}
 
-\usage{data("stationsTyrol")}
+\usage{data("StationsTyrol")}
 
 \format{
-A data frame containing 95 observation stations and 5 variables.
+A \code{data.frame} containing 95 observation stations and 5 variables.
 \describe{
   \item{name}{character. Stationname.}
   \item{id}{numeric. Stationnumber}
@@ -26,8 +26,8 @@ A data frame containing 95 observation stations and 5 variables.
 
 
 \examples{
-data("stationsTyrol")
-head(stationsTyrol)
+data("StationsTyrol", package = "RainTyrol")
+head(StationsTyrol)
 }
 
 \keyword{datasets}

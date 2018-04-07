@@ -1,5 +1,5 @@
-\name{rainTyrol}
-\alias{rainTyrol}
+\name{RainTyrol}
+\alias{RainTyrol}
 
 \title{Observations and covariates for all 95 stations}
 
@@ -9,7 +9,7 @@ meteorological quantities from an ensemble prediction system for
 95 observation stations in Tyrol.
 }
 
-\usage{data("rainTyrol")}
+\usage{data("RainTyrol", package = "RainTyrol")}
 
 \details{
 These observation sites are maintained by the hydrographical service Tyrol and 
@@ -90,9 +90,9 @@ All ``power transformed'' values use the same power parameter \code{p=1/1.6}.
 
 
 \examples{
-data("rainTyrol")
-head(rainTyrol)
-colnames(rainTyrol)
+data("RainTyrol", package = "RainTyrol")
+head(RainTyrol)
+colnames(RainTyrol)
 }
 
 \keyword{datasets}
