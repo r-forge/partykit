@@ -6,7 +6,7 @@ library("disttree")
 
 #####
 # load observations and covariates 
-data("RainAxams")
+data("RainAxams", package = "disttree")
 
 
 ##### 
