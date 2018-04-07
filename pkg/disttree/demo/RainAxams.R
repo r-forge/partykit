@@ -10,6 +10,11 @@ library("disttree")
 data("RainAxams")
 
 
+##### 
+# HCL palette
+pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+
+
 #####
 # formula
 {
@@ -218,48 +223,47 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 
 
 ## PLOT
-plot(x = x, y = y1, type = "l", col = "red", 
+par(mar = c(3.8, 4, 2.3, 1.5))
+plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
      main = paste0("July ", pday), ylab = "Density", 
      xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
      xlim = c(-1.5,8))
-lines(x = x, y = y2, type = "l", col = "blue")
-lines(x = x, y = y3, type = "l", col = "darkgreen")
-lines(x = x, y = y4, type = "l", col = "purple")
-legend('topright', c("Predicted distribution", "Point mass at censoring point", "Observation"),
-       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8)
+
+lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
+lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
+lines(x = x, y = y4, type = "l", col = pal[4], lwd = 1.3)
+legend("topright", c("Predicted distribution", "Point mass at censoring point", "Observation"),
+       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8, lwd = 1.3)
 
 # plot point mass
-lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
-lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
-lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
-lines(x = c(pm4[1], pm4[1]), y = c(pm4[2], 0), col = "purple", type = "l", lwd = 1)
-points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
-points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
-points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
-points(x = pm4[1], y = pm4[2], col = "purple", pch = 19)
+lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = pal[1], type = "l", lwd = 1.3)
+lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = pal[3], type = "l", lwd = 1.3)
+lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = pal[2], type = "l", lwd = 1.3)
+lines(x = c(pm4[1], pm4[1]), y = c(pm4[2], 0), col = pal[4], type = "l", lwd = 1.3)
+
+points(x = pm1[1], y = pm1[2], col = pal[1], pch = 19)
+points(x = pm2[1], y = pm2[2], col = pal[3], pch = 19)
+points(x = pm3[1], y = pm3[2], col = pal[2], pch = 19)
+points(x = pm4[1], y = pm4[2], col = pal[4], pch = 19)
+
 
 # plot predictions
-points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
-points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
-points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
-points(x = pred4[1], y = pred4[2], col = "purple", pch = 4)
-lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
-lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgrey", type = "l", lty = 2)
+points(x = pred1[1], y = pred1[2], col = pal[1], pch = 4)
+points(x = pred2[1], y = pred2[2], col = pal[3], pch = 4)
+points(x = pred3[1], y = pred3[2], col = pal[2], pch = 4)
+points(x = pred4[1], y = pred4[2], col = pal[4], pch = 4)
+
+lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 
 # add labels
-text(x = -0.8, y = lh1, labels = "2009", col = "red", cex = 0.8)
-text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)
-text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)
-text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
-
-
-
-
-
-
+text(x = -0.8, y = lh1, labels = "2009", col = pal[1], cex = 0.8)
+text(x = -0.8, y = lh2, labels = "2010", col = pal[3], cex = 0.8)
+text(x = -0.8, y = lh3, labels = "2011", col = pal[2], cex = 0.8)
+text(x = -0.8, y = lh4, labels = "2012", col = pal[4], cex = 0.8)
 
 
 

@@ -8,12 +8,6 @@ library("RainTyrol")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
-names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
-pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
-names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
-transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 ## set function for parallelization
 applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
@@ -79,7 +73,7 @@ save(res_cross, file = "res_cross.rda")
 boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
-abline(h = 0, col = pal["EMOS"], lwd = 2)
+abline(h = 0, col = pal[5], lwd = 2)
   
   
 
@@ -135,7 +129,7 @@ matplot(t(s[,]), type = "l", lwd = 2,
 lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)  
 # Station Axams is the 77th station which is the 70th in the list of complete stations
 boxplot(s, add = TRUE, col = "transparent")
-abline(h = 0, col = pal["EMOS"], lwd = 2)
+abline(h = 0, col = pal[5], lwd = 2)
 
    
 
