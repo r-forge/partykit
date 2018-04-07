@@ -5,7 +5,7 @@ year <- sub("-.*", "", meta$Date)
 note <- sprintf("R package version %s", meta$Version)
 
 citEntry(entry = "Manual",
-         title = "RainTyrol: FIXME",
+         title = "RainTyrol: Precipitation data for 95 observation stations in Tyrol, Austria",
          author = as.person("Lisa Schlosser, Reto Stauffer, Achim Zeileis"),
          year         = year,
          note         = note,
@@ -45,5 +45,19 @@ citEntry(entry = "other",
 	 header = "To cite the data (observations), please use:"
 )
 
+
+citEntry(entry = "Article",
+         title = "{E}arth{E}nv-{DEM90}: A Nearly-Global, Void-Free, Multi-Scale Smoothed, 90m Digital Elevation Model From Fused {ASTER} and {SRTM} Data",
+         author = personList(as.person("Natalie Robinson"),
+                             as.person("James Regetz"),
+                             as.person("Robert P. Guralnick")), 
+         year         = "2014",
+	 journal      = "ISPRS Journal of Photogrammetry and Remote Sensing",
+	 volume       = "87",
+	 pages        = "57--67",
+         doi          = "10.1016/j.isprsjprs.2013.11.002",
+         issn         = "0924-2716",
+	 header = "To cite the data used for the map, please use:"
+)
 
 
