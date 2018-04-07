@@ -10,7 +10,7 @@ specific site.  This site is Axams located in the Eastern European Alps
 (11.28E 47.23N, 890 meters a.m.s.l.).
 }
 
-\usage{data("RainAxams", package = "disttree")}
+\usage{data("RainAxams")}
 
 \details{
 The site is maintained by the hydrographical service Tyrol and provides daily
