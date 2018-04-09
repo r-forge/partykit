@@ -415,9 +415,9 @@ Distributional tree
 \vspace{0.2cm}
 \endminipage};
 \draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
-\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](7.1,0)--(7.9,0);
-\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](0,-2.4)--(0,-3.2);
-\draw[-{>[scale=4, length=2, width=3]},line width=0.9pt](2.2,-5.4)--(7.9,-2.5);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](0,-2.4)--(0,-3.2);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.2,-5.4)--(7.9,-2.5);
 \end{tikzpicture}
 \caption{\label{fig:tree}Tree and forest developments.
 Regression tree (top left), distributional tree (bottom left), random forest
