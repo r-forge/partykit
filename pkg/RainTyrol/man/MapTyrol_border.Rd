@@ -1,11 +1,12 @@
 \name{MapTyrol_border}
 \alias{MapTyrol_border}
+\encoding{UTF-8}
 
 \title{Border of Tyrol}
 
 \description{Data to plot the borders of Tyrol.}
 
-\details{Downloaded from \url{https://www.data.gv.at/katalog/dataset/vgd-stichtagsdaten-1-250-000}}
+\source{\url{https://www.data.gv.at/katalog/dataset/vgd-stichtagsdaten-1-250-000}}
 
 \usage{data("MapTyrol_border")}
 
