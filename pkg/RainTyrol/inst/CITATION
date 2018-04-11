@@ -1,29 +1,27 @@
-citHeader("When using RainTyrol in publications, please cite both the RainTyrol package and the data sources:")
+bibentry("TechReport",
+         title       = "Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain",
+         author      = as.person("Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis"),
+         institution = "arXiv.org E-Print Archive",
+         year        = "2018",
+         type        = "arXiv",
+         number      = "1804.02921",
+         month       = "April",
+         url         = "http://arxiv.org/abs/1804.02921",
 
-if(!exists("meta") || is.null(meta)) meta <- packageDescription("pwt8")
-year <- sub("-.*", "", meta$Date)
-note <- sprintf("R package version %s", meta$Version)
-
-citEntry(entry = "Manual",
-         title = "RainTyrol: Precipitation data for 95 observation stations in Tyrol, Austria",
-         author = as.person("Lisa Schlosser, Reto Stauffer, Achim Zeileis"),
-         year         = year,
-         note         = note,
-	 url          = "http://R-Forge.R-project.org/projects/partykit/",
-
-	 header = "To cite RainTyrol, the R package, please use:"
+	 header  = "To cite the R package RainTyrol please use:",
+	 mheader = "When using RainTyrol in publications, please cite both the RainTyrol package and the data sources:"
 )
 
-citEntry(entry = "Article",
-         title = "{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset",
-         author = personList(as.person("Thomas M. Hamill"),
-                             as.person("Gary T. Bates"),
-                             as.person("Jeffrey S. Whitaker"),
-                             as.person("Donald R. Murray"),
-	                     as.person("Michael Fiorino"), 
-	                     as.person("Thomas J. Galarneau Jr."),
-	                     as.person("Yuejian Zhu"), 
-	                     as.person("William Lapenta")), 
+bibentry("Article",
+         title  = "{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset",
+         author = c(as.person("Thomas M. Hamill"),
+                    as.person("Gary T. Bates"),
+                    as.person("Jeffrey S. Whitaker"),
+                    as.person("Donald R. Murray"),
+	            as.person("Michael Fiorino"), 
+	            person(given = c("Thomas", "J."), family = "Galarneau Jr."),
+	            as.person("Yuejian Zhu"), 
+	            as.person("William Lapenta")), 
          year         = "2013",
 	 journal      = "Bulletin of the American Meteorological Society",
 	 volume       = "94",
@@ -34,23 +32,22 @@ citEntry(entry = "Article",
 	 header = "To cite the data (covariates), please use:"
 )
 
-
-citEntry(entry = "other",
-         title = "{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt",
-         author = personList("{BMLFUW}"), 
-         year         = "2016",
-         note         = "Available at \url{http://ehyd.gv.at}",
-         note         = "Accessed: 2016--02--29",
+bibentry("Misc",
+         title  = "{B}undesministerium f\\\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt",
+         author = person(given = "BMLFUW"), 
+         year   = "2016",
+         url    = "http://ehyd.gv.at/",
+         note   = "Accessed: 2016-02-29",
          
 	 header = "To cite the data (observations), please use:"
 )
 
 
-citEntry(entry = "Article",
+bibentry("Article",
          title = "{E}arth{E}nv-{DEM90}: A Nearly-Global, Void-Free, Multi-Scale Smoothed, 90m Digital Elevation Model From Fused {ASTER} and {SRTM} Data",
-         author = personList(as.person("Natalie Robinson"),
-                             as.person("James Regetz"),
-                             as.person("Robert P. Guralnick")), 
+         author = c(as.person("Natalie Robinson"),
+                    as.person("James Regetz"),
+                    as.person("Robert P. Guralnick")), 
          year         = "2014",
 	 journal      = "ISPRS Journal of Photogrammetry and Remote Sensing",
 	 volume       = "87",
