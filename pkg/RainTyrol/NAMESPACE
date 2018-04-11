@@ -1,12 +1,6 @@
-import("disttree")
-importFrom("gamlss.cens",
-  "cens",
-  "gen.cens"
-)
-importFrom("gamlss.dist",
-  "NO"
-)
+importFrom("stats", "dnorm", "pnorm", "predict")
+importFrom("utils", "data")
 
 export(
-"evalmodels"
+  "evalmodels"
 )
