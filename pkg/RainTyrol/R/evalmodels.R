@@ -1,3 +1,5 @@
+utils::globalVariables(c("RainTyrol", "StationsTyrol", "NO"))
+
 evalmodels <- function(station, train, test, 
                        ntree = 100,
                        tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
@@ -20,12 +22,16 @@ evalmodels <- function(station, train, test,
   if(!(station %in% StationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
   rain <- RainTyrol[RainTyrol$station == station, ]
   
-  #library("disttree")
-  library("gamlss")
-  library("gamlss.dist")
-  library("gamlss.cens")
-  gen.cens(NO, type = "left")
-  library("gamboostLSS")
+  stopifnot(
+    requireNamespace("crch") &
+    requireNamespace("disttree") &
+    requireNamespace("gamlss") &
+    requireNamespace("gamlss.cens") &
+    requireNamespace("gamlss.dist") &
+    requireNamespace("gamboostLSS") &
+    requireNamespace("mboost")
+  )
+  gamlss.cens::gen.cens(NO, type = "left")
   
   
   ############
@@ -155,10 +161,10 @@ evalmodels <- function(station, train, test,
   g_learndata <- learndata
   g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
-  g_time <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                        family = cens("NO", type = "left"),
-                                        control = gamlss.control(n.cyc = 100),
-                                        i.control = glim.control(cyc = 100, bf.cyc = 100))))
+  g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
+                                        family = gamlss.cens::cens("NO", type = "left"),
+                                        control = gamlss::gamlss.control(n.cyc = 100),
+                                        i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
   
   if(inherits(g, "try-error")) {
     g_time <- NA
@@ -168,15 +174,15 @@ evalmodels <- function(station, train, test,
   
   
   #gb <- gb
-  gb_time <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                           families = as.families(fname = cens("NO", type = "left")), 
+  gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
+                                           families = gamboostLSS::as.families(fname = gamlss.cens::cens("NO", type = "left")), 
                                            method = "noncyclic",
-                                           control = boost_control(mstop = 1000L)))
+                                           control = mboost::boost_control(mstop = 1000L)))
   if(gamboost_cvr){
     grid <- seq(50, 1000, by = 25)
-    gb_cvr_time <- system.time(cvr <- cvrisk(gb, grid = grid))
-    mstop(gb) <- mstop(cvr)
-    cvr_opt <- mstop(cvr) 
+    gb_cvr_time <- system.time(cvr <- mboost::cvrisk(gb, grid = grid))
+    mboost::mstop(gb) <- mboost::mstop(cvr)
+    cvr_opt <- mboost::mstop(cvr) 
   } else cvr_opt <- gb_cvr_time <- NA
   
                           
