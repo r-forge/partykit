@@ -1,4 +1,4 @@
-utils::globalVariables(c("RainTyrol", "StationsTyrol", "NO"))
+utils::globalVariables(c("RainTyrol", "StationsTyrol"))
 
 evalmodels <- function(station, train, test, 
                        ntree = 100,
@@ -31,8 +31,13 @@ evalmodels <- function(station, train, test,
     requireNamespace("gamboostLSS") &
     requireNamespace("mboost")
   )
+  NO <- gamlss.dist::NO
+  dNO <- gamlss.dist::dNO
+  pNO <- gamlss.dist::pNO
+  qNO <- gamlss.dist::qNO
+  rNO <- gamlss.dist::rNO
   gamlss.cens::gen.cens(NO, type = "left")
-  
+  cNO <- gamlss.cens::cens(NO, type = "left")
   
   ############
   # formula
@@ -162,7 +167,7 @@ evalmodels <- function(station, train, test,
   g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
   g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                        family = gamlss.cens::cens("NO", type = "left"),
+                                        family = cNO,
                                         control = gamlss::gamlss.control(n.cyc = 100),
                                         i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
   
@@ -175,7 +180,7 @@ evalmodels <- function(station, train, test,
   
   #gb <- gb
   gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                           families = gamboostLSS::as.families(fname = gamlss.cens::cens("NO", type = "left")), 
+                                           families = gamboostLSS::as.families(fname = cNO), 
                                            method = "noncyclic",
                                            control = mboost::boost_control(mstop = 1000L)))
   if(gamboost_cvr){
