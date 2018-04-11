@@ -38,9 +38,6 @@ evalmodels(station, train, test,
   \item{gamboost_cvr}{\code{logical}, Should \code{\link[gamboostLSS]{cvrisk}} be applied to find the optimal value for 'mstop'.}
 }
 
-\details{
-}
-
 \value{
   \code{evalmodels} returns a list with the following components:
   \item{CRPS}{CRPS of all methods, average over testing data}
@@ -51,8 +48,22 @@ evalmodels(station, train, test,
 %\references{}
 
 \examples{
+if(require("crch") &
+   require("disttree") &
+   require("gamlss") &
+   require("gamlss.dist") &
+   require("gamlss.cens") &
+   require("gamboostLSS") &
+   require("mboost") &
+   require("partykit") &
+   require("scoringRules") &
+   require("survival")
+) {
+
 evalmodels(station = "Axams",
            train = c(1985:2008),
            test = c(2009:2012))
+
+}
 }
 
