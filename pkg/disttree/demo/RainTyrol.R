@@ -1,3 +1,20 @@
+#######################################################
+### Probabilistic Forecasting on Precipitation Data ###
+#######################################################
+
+## Replication material for: 
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
+## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
+## URL: http://arxiv.org/abs/1804.02921
+
+## This demo includes the cross-validation on one station (Axams) 
+## and the application on all 95 observation stations.
+## Further results for the station Axams can be obtained using demo
+## demo("RainAxams", package = "disttree")
+
+## Computation time: approximately 16 hours (on our machines, using 15 kernels) 
+
+
 library("disttree")
 library("crch")
 library("countreg")
@@ -6,15 +23,15 @@ library("gamlss.cens")
 gen.cens(NO, type = "left")
 library("RainTyrol")
 
-## HCL palette
+# HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
-## set function for parallelization
+# set function for parallelization
 applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
 
 
-#####################################################  
-#### cross validation at station Axams
+#####
+# cross validation at station Axams
 
 nrep_cross <- 10
 seed <- 7
@@ -67,21 +84,21 @@ colnames(crps_cross) <- names(res_cross[[1]][[1]]$crps)
 
 save(crps_cross, file = "crps_cross.rda")
 save(res_cross, file = "res_cross.rda")
-                
-                
+
+
 ## boxplot of crps_cross for station Axams
 boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
         names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         ylab = "CRPS skill score", col = "lightgray") 
 abline(h = 0, col = pal[5], lwd = 2)
-  
-  
 
 
 
-######################################################
-### models learned on 24 years (1985-2008) and evaluated on 4 years (2009-2012)
-### over all observation stations
+
+
+#####
+# models learned on 24 years (1985-2008) and evaluated on 4 years (2009-2012)
+# over all observation stations
 
 
 data("StationsTyrol", package = "RainTyrol")
@@ -131,60 +148,57 @@ lines(s[70,], col = "limegreen", type = "o", pch = 19, lwd = 2)
 boxplot(s, add = TRUE, col = "transparent")
 abline(h = 0, col = pal[5], lwd = 2)
 
-   
 
-## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
-# FIXME: data source
-if(FALSE){  
-  crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
-  
-  # best method
-  bst <- apply(crps_map, 1, which.min)
-  
-  # distance of forest to best other method
-  dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
-  
-  # breaks/groups
-  brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
-  #brk <- c(-0.1, -0.05, -0.01, 0.01, 0.05, 0.1)
-  grp <- cut(dst, breaks = brk)
-  
-  # HCL colors (relatively flashy, essentially CARTO Tropic)
-  clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
-  
-  
-  library("raster") # dem (digital elevation model)
-  library("sp")     # gadm www.gadm.org/country
-  
-  
-  data(StationsTyrol, package = "RainTyrol")
-  data(MapTyrol, package = "RainTyrol")
-  data(MapTyrol_border, package = "RainTyrol")
-  # Create SpatialPointsDataFrame from station list
-  sp <- SpatialPointsDataFrame(subset(StationsTyrol,
-                                      select=c(lon,lat)),
-                               data = subset(StationsTyrol,
-                                             select = -c(lon,lat)),
-                               proj4string = crs(dem))
-  
-  
-  ## plot map of Tyrol with all 95 observations
-  layout(cbind(1, 2), width = c(9, 1))
-  par(mar = c(5,4,4,0.1))
-  raster::image(dem, col = rev(gray.colors(100)),
-                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
-                xlim = c(9.8,13.2), 
-                ylim = c(46.6, 47.87))
-  plot(tirol, add = TRUE)
-  points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
-  legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
-  text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
-  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
-  par(mar = c(0.5,0.2,0.5,2.3))
-  ## legend
-  plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
-       xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
-  rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
-  axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
-}  
-  
+
+
+#####
+# prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
+
+crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
+
+# best method
+bst <- apply(crps_map, 1, which.min)
+
+# distance of forest to best other method
+dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
+
+# breaks/groups
+brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
+grp <- cut(dst, breaks = brk)
+
+# HCL colors (relatively flashy, essentially CARTO Tropic)
+clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
+
+
+library("raster") # dem (digital elevation model)
+library("sp")     # gadm www.gadm.org/country
+
+
+data(StationsTyrol, package = "RainTyrol")
+data(MapTyrol, package = "RainTyrol")
+# Create SpatialPointsDataFrame from station list
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
+                                    select=c(lon,lat)),
+                             data = subset(StationsTyrol,
+                                           select = -c(lon,lat)),
+                             proj4string = crs(MapTyrol$RasterLayer))
+
+
+# plot map of Tyrol with all 95 observations
+layout(cbind(1, 2), width = c(9, 1))
+par(mar = c(5,4,4,0.1))
+raster::image(MapTyrol$RasterLayer, col = rev(gray.colors(100)),
+              main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
+              xlim = c(9.8,13.2), 
+              ylim = c(46.6, 47.87))
+plot(MapTyrol$SpatialPolygons, add = TRUE)
+points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
+legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
+text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
+mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
+par(mar = c(0.5,0.2,0.5,2.3))
+# legend
+plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
+     xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
+rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
+axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))

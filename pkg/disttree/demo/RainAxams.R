@@ -2,6 +2,19 @@
 ### Probabilistic Forecasting on Precipitation Data ###
 #######################################################
 
+## Replication material for: 
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
+## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
+## URL: http://arxiv.org/abs/1804.02921
+
+## This demo includes the application on one station (Axams) 
+## (models learned on 24 years and evaluated on 4 years)
+## Full replication of all other results can be obtained with
+## demo("RainTyrol", package = "disttree")
+
+## Computation time: approximately 18 minutes (on our machines, using 1 kernel)
+
+
 library("disttree")
 
 #####
@@ -118,7 +131,7 @@ testdata <- RainAxams[RainAxams$year %in% c(2009, 2010, 2011, 2012),]
 
 
 
-############
+#####
 # fitting the models
 
 set.seed(7)
@@ -146,7 +159,8 @@ df <- distforest(df.formula,
                                          mincriterion = 0, minsplit = 50,
                                          minbucket = 20))
 
-############
+
+#####
 # fit other heteroscedastic censored gaussian models
 
 # fit prespecified GAM (covariates selected based on meteorological expert knowledge)
@@ -172,7 +186,7 @@ ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001),
 
 
 
-############
+#####
 # only distforest:
 # predict expected total precipitation for one day in July of the 4 test years and
 # plot corresponding predicted density functions for 2009, 2010, 2011 and 2012
@@ -214,14 +228,14 @@ pred2 <- c(testdata[pdays,"robs"][2], crch::dcnorm(testdata[pdays,"robs"][2], me
 pred3 <- c(testdata[pdays,"robs"][3], crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
 pred4 <- c(testdata[pdays,"robs"][4], crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
-#legendheight
+# legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
 lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
 lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
 lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 
 
-## PLOT
+# plot
 par(mar = c(3.8, 4, 2.3, 1.5))
 plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
      main = paste0("July ", pday), ylab = "Density", 
@@ -268,7 +282,7 @@ text(x = -0.8, y = lh4, labels = "2012", col = pal[4], cex = 0.8)
 
 
 
-############
+#####
 # get predicted parameter of all models for testdata
 
 # distributional tree
@@ -351,7 +365,8 @@ results
 
 
 
-## PIT histograms
+#####
+# PIT histograms and QQR plots
 
 # prepare data
 {
@@ -382,7 +397,7 @@ results
 
 
 
-## PIT histograms
+# plot PIT histograms
 set.seed(4)
 par(mfrow = c(2,2))
 library("countreg")
@@ -394,7 +409,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted
 #pithist(pit_dt, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional tree", ylim = c(0,1.5))
 
 
-## QQR plots
+# plot QQR plots
 set.seed(7)
 par(mfrow = c(2, 2))
 qqrplot(pit_df, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
@@ -405,7 +420,8 @@ qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col
 
 
 
-## Variable importance
+#####
+# Variable importance
   
 set.seed(7)
   
@@ -431,6 +447,7 @@ vimp_crps <- varimp(df, nperm = 1L)
 rm(logLik.distforest) 
 
 # plot top 10 in terms of variable importance
+par(mfrow = c(1, 1), mar = c(5, 10, 2, 4))
 barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
         horiz = TRUE, las = 1, axes = FALSE,
         xlab = "Variable importance: mean decrease in CRPS",
