@@ -437,7 +437,7 @@ covariates are tree-based models.
   \item \emph{Random forests} (\citealt{Breiman:2001}) average the predictions of
     an ensemble of trees fitted to resampled versions of the learning data. This
     stabilizes the recursive partitions from individual trees and hence better
-    approximates smooth functions (Figure~\ref{fig:tree}, top middle)
+    approximates smooth functions (Figure~\ref{fig:tree}, top middle).
 \end{itemize}
 While classical regression trees and random forests only model the mean of the response
 we propose to follow the ideas from GAMLSS modeling -- as outlined
@@ -446,7 +446,7 @@ yielding two novel techniques:
 \begin{itemize}
   \item \emph{Distributional regression trees} (for short: \emph{distributional trees}) split the data into more homogeneous groups with
     respect to a parametric distribution, thus capturing changes in any distribution
-    parameter like location, scale, or shape (Figure~\ref{fig:tree}, bottom left)
+    parameter like location, scale, or shape (Figure~\ref{fig:tree}, bottom left).
   \item \emph{Distributional regression forests} (for short: \emph{distributional forests}) utilize an ensemble of distributional trees
     for obtaining stabilized and smoothed parametric predictions (Figure~\ref{fig:tree},
     top right).
@@ -820,7 +820,7 @@ To sum up, distributional trees are fitted recursively via:
   and $Z_{l,i}$ for each partitioning variable~$Z_l$ ($l = 1, \dots, m$).
 \item Split the sample along the partitioning variable $Z_l^*$ with the
   strongest association or instability. Choose the breakpoint with the highest
-  improvement in the log-likelihood or the highest discrepancy .
+  improvement in the log-likelihood or the highest discrepancy.
 \item Repeat steps 1--3 recursively in the subsamples until these become too
   small or there is no significant association/instability (or some other
   stopping criterion is reached).
