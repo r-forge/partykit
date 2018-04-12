@@ -318,15 +318,15 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 \begin{frame}[fragile]
 \frametitle{Statistical Modeling}
-\visible<2,3, 6-> {Assumption:}
+\visible<2,3, 5-> {Assumption:}
 \vspace{-0.7cm}
 \begin{center}
 \begin{tikzpicture}
-\visible<2,3, 6-> {\node[] at (0,0.4) {X};}
-\visible<4-5>{
+\visible<2,3, 5-> {\node[] at (0,0.4) {X};}
+\visible<4>{
 \node[inner sep=0pt] (today) at (-1.8,-0.4)
     {\includegraphics[width=.365\textwidth]{today.png}};
-\node[font=\scriptsize] at (-1.9,-2) {15.03.2018};
+\node[font=\scriptsize] at (-1.9,-2) {2018-03-15};
 }
 \visible<2->{
 \draw[->] (0.4,0.4)--(0.9,0.4);
@@ -334,21 +334,21 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 \node[font=\scriptsize] at (1.75,0.4) {nature};
 \draw[->] (2.6,0.4)--(3.1,0.4);
 }
-\visible<2,3, 6->{
+\visible<2,3, 5->{
 \node[] at (3.5,0.4) {Y};
 }
-\visible<4-5>{
+\visible<4>{
 \node[inner sep=0pt] (future) at (5.3,-0.4)
     {\includegraphics[width=.365\textwidth]{future.png}};
-\node[font=\scriptsize] at (5.4,-2) {16.03.2018};
+\node[font=\scriptsize] at (5.4,-2) {2018-03-16};
 }
 \end{tikzpicture}
 \end{center}
-\visible<3, 6->{
+\visible<3, 5->{
 \vspace{-2cm}
 Approximation of reality based on a set of observations.\\
 }
-\visible<5>{
+\visible<4>{
 \vspace{2cm}
 X = observed precipitation of today,\\
 \qquad current temperature / humidity / \dots,\\
@@ -358,7 +358,7 @@ Y = daily precipitation sums\\
 }
 
 \vspace{-3.5cm}
-\visible<7->{
+\visible<6->{
 \textbf{Application/Motivation:}
 \begin{itemize}
 \item Prediction.
@@ -366,7 +366,7 @@ Y = daily precipitation sums\\
 \end{itemize}
 }
 \vspace{0.5cm}
-\visible<8->{
+\visible<7->{
 \textbf{Two main approaches / ``cultures'':}
 \begin{itemize}
 \item Data modeling.
@@ -391,27 +391,27 @@ Y = daily precipitation sums\\
 \end{tikzpicture}
 \end{center}
 \vspace{-0.4cm}
-\only<1-6>{
+\only<1-5>{
 \begin{itemize}
 \item Approximate data generating process up to a few unknown processes.
 \item Mathematical equations, model assumptions.
 \item Data: estimation of parameters.
 \end{itemize}
 }
-\only<7-10>{
+\only<6->{
 \vspace{1cm}
 Summary:
 \begin{itemize}
-\item<8-10> Stochastic model to approximate data generating process.\\
-\only<9-10>{$\Rightarrow$ fixed $f$.\\}
-\item<10> Disadvantage: Risk of incorrect assumptions.
+\item Stochastic model to approximate data generating process.\\
+\only{$\Rightarrow$ fixed $f$.\\}
+\item Disadvantage: Risk of incorrect assumptions.
 \end{itemize}
 }
 \only<1>{\vspace{1cm}}
 
 \vspace{0.1cm}
 
-\visible<2-6>{
+\visible<2-5>{
 \begin{minipage}{0.65\textwidth}
 \textbf{Example:} 
 \only<2-3>{Linear model}\only<4>{Generalized additive model}\only<5-6>{Generalized additive model\\ for location, scale, and shape}
@@ -424,12 +424,12 @@ $$\visible<3>{\mathbb{E}(Y|X) = } f(X; \alpha) = \alpha_0 + \alpha_1 \cdot X$$
 $$\mathbb{E}(Y|X) = f(X; \alpha) = \alpha + s(X)$$  
 \vspace{0.15cm}
 }
-\only<5-6>{
-\vspace{-1.3cm}
+\only<5>{
+\vspace{-1.29cm}
 
 \begin{align*}
-\visible<6>{\mathbb{E}(Y|X) = }\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
-\visible<6>{\sqrt{Var(Y|X)} = }\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
+\visible<5>{\mathbb{E}(Y|X) = }\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
+\visible<5>{\sqrt{Var(Y|X)} = }\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
 \end{align*}
 }
 \end{minipage}
@@ -477,7 +477,7 @@ ytrue <- x^3
 var <- exp(-(2*x)^2)/2
 y <- ytrue + rnorm(nobs, 0, 0.1 + var)
 @
-\only<5-6>{
+\only<5>{
 <<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
 par(mar=c(2,0,2,0))
 plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
@@ -1025,11 +1025,11 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 \begin{minipage}{0.78\textwidth}
 \begin{center}
 \vspace{0.2cm}
-\visible<2->{
+\visible<1->{
 Model: \code{disttree(y $\sim$ x)}\\
 }
 \vspace{-0.2cm}
-\only<2-3>{
+\only<1>{
 %\setkeys{Gin}{width=0.\linewidth, height=0.68\linewidth}
 <<plottree_estpar, fig=TRUE, echo=FALSE, width = 7>>=
 # function for output in terminal panels
@@ -1049,7 +1049,7 @@ plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
 }
-\only<4->{
+\only<2->{
 %\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
 <<plottree_dens, fig=TRUE, echo=FALSE, width = 7>>=
 node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
@@ -1146,7 +1146,7 @@ plot(tree, tnex = 1.7, drop = TRUE,
      ip_args = list(fill = paltrees[c(2, 3)]))
 @
 }
-\visible<3->{
+\visible<1->{
 R-package \code{disttree}
 }
 \end{center}
@@ -1156,22 +1156,22 @@ R-package \code{disttree}
 \vspace{1.9cm}
 
 \center
-\visible<5->{
+\visible<3->{
 Algorithmic \\
 Modeling\\
 }
 
 \vspace{1.3cm}
 
-\visible<6->{
+\visible<4->{
 Data \\
 Modeling
 }
 
 \vspace{1.4cm}
 
-\visible<7->{
-Combined \visible<8->{\checkmark}
+\visible<5->{
+Combined \visible<6->{\checkmark}
 }
 \end{minipage}
 \end{frame}
@@ -1886,7 +1886,8 @@ sp <- SpatialPointsDataFrame(subset(StationsTyrol,
 
 Schlosser L, Hothorn T, Stauffer R, Zeileis A (2018).
   \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
-  \emph{Manuscript under preparation}.
+  \emph{arXiv 1804.02921}, arXiv.org E-Print Archive.
+  \url{http://arxiv.org/abs/1804.02921}
 
 \bigskip
 
