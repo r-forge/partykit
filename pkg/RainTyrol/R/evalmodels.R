@@ -1,11 +1,10 @@
-utils::globalVariables(c("RainTyrol", "StationsTyrol"))
+utils::globalVariables(c("RainTyrol", "StationsTyrol", "NO", "NOlc", "dNOlc", "pNOlc", "qNOlc", "rNOlc"))
 
 evalmodels <- function(station, train, test, 
                        ntree = 100,
                        tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
                        forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
                        forest_mtry = 27,
-                       type.tree = "ctree",
                        gamboost_cvr = FALSE)
 {
   cl <- match.call()
@@ -22,22 +21,21 @@ evalmodels <- function(station, train, test,
   if(!(station %in% StationsTyrol$name)) stop("selected station is not among the 95 availble observation stations")
   rain <- RainTyrol[RainTyrol$station == station, ]
   
-  stopifnot(
-    requireNamespace("crch") &
-    requireNamespace("disttree") &
-    requireNamespace("gamlss") &
-    requireNamespace("gamlss.cens") &
-    requireNamespace("gamlss.dist") &
-    requireNamespace("gamboostLSS") &
-    requireNamespace("mboost")
-  )
-  NO <- gamlss.dist::NO
-  dNO <- gamlss.dist::dNO
-  pNO <- gamlss.dist::pNO
-  qNO <- gamlss.dist::qNO
-  rNO <- gamlss.dist::rNO
+  ## for convenience: copy spline functions
+  pb <- gamlss::pb
+  bbs <- mboost::bbs
+
+  ## for gamlss: families/distributions need to be on search path of the _user_
+  assign("NO",  gamlss.dist::NO,  pos = ".GlobalEnv")
+  assign("dNO", gamlss.dist::dNO, pos = ".GlobalEnv")
+  assign("pNO", gamlss.dist::pNO, pos = ".GlobalEnv")
+  assign("qNO", gamlss.dist::qNO, pos = ".GlobalEnv")
+  assign("rNO", gamlss.dist::rNO, pos = ".GlobalEnv")
   gamlss.cens::gen.cens(NO, type = "left")
-  cNO <- gamlss.cens::cens(NO, type = "left")
+  assign("NOlc",  NOlc,  pos = ".GlobalEnv")
+  assign("dNOlc", dNOlc, pos = ".GlobalEnv")
+  assign("pNOlc", pNOlc, pos = ".GlobalEnv")
+  assign("qNOlc", qNOlc, pos = ".GlobalEnv")
   
   ############
   # formula
@@ -125,49 +123,28 @@ evalmodels <- function(station, train, test,
   testdata <- rain[rain$year %in% test, ]
   learndata <- rain[rain$year %in% train, ]
   
-  if(type.tree == "mob"){
-    dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
-                                                    data = learndata, family = disttree::dist_list_cens_normal, 
-                                                    censtype = "left", censpoint = 0, type.tree = "mob", 
-                                                    control = partykit::mob_control(restart = FALSE, numsplit = "center", 
-                                                                                    alpha = 1-tree_mincrit, minsplit = tree_minsplit,
-                                                                                    minbucket = tree_minbucket)))
-  }
-  if(type.tree == "ctree"){
-    dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
-                                                    data = learndata, family = disttree::dist_list_cens_normal, 
-                                                    censtype = "left", censpoint = 0, type.tree = "ctree", 
-                                                    control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                                                      mincriterion = tree_mincrit, minsplit = tree_minsplit,
-                                                                                      minbucket = tree_minbucket)))
-  }
+  dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
+  						  data = learndata, family = disttree::dist_list_cens_normal, 
+  						  censtype = "left", censpoint = 0, type.tree = "ctree", 
+  						  control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+  										    mincriterion = tree_mincrit, minsplit = tree_minsplit,
+  										    minbucket = tree_minbucket)))
                           
                           
-  if(type.tree == "mob"){
-    df_time <- system.time(df <- disttree::distforest(df.formula, 
-                                            data = learndata, family = disttree::dist_list_cens_normal, type.tree = "mob", 
-                                            ntree = ntree, censtype = "left", censpoint = 0,
-                                            control = partykit::mob_control(restart = FALSE, numsplit = "center", 
-                                                                  alpha = 1-forest_mincrit, minsplit = forest_minsplit,
-                                                                  minbucket = forest_minbucket), mtry = forest_mtry))
-  }
-  if(type.tree == "ctree"){
-    df_time <- system.time(df <- disttree::distforest(df.formula, 
-                                            data = learndata, family = disttree::dist_list_cens_normal, type.tree = "ctree", 
-                                            ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
-                                            control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                                    mincriterion = forest_mincrit, minsplit = forest_minsplit,
-                                                                    minbucket = forest_minbucket), mtry = forest_mtry))
-  }
-                          
-                          
+  df_time <- system.time(df <- disttree::distforest(df.formula, 
+  					  data = learndata, family = disttree::dist_list_cens_normal, type.tree = "ctree", 
+  					  ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
+  					  control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
+  								  mincriterion = forest_mincrit, minsplit = forest_minsplit,
+  								  minbucket = forest_minbucket), mtry = forest_mtry))
+  			
                           
                           
   g_learndata <- learndata
   g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
   g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                        family = cNO,
+                                        family = NOlc,
                                         control = gamlss::gamlss.control(n.cyc = 100),
                                         i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
   
@@ -180,7 +157,7 @@ evalmodels <- function(station, train, test,
   
   #gb <- gb
   gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                           families = gamboostLSS::as.families(fname = cNO), 
+                                           families = gamboostLSS::as.families(fname = "NOlc"), 
                                            method = "noncyclic",
                                            control = mboost::boost_control(mstop = 1000L)))
   if(gamboost_cvr){
@@ -263,7 +240,6 @@ evalmodels <- function(station, train, test,
     mi_sigma <- try(predict(mi, type = "scale", newdata = testdata))
     if(inherits(mi_mu, "try-error") | inherits(mi_sigma, "try-error")) {
       mi_mu <- mi_sigma <- mi_exp <- NA
-      mi_error_seed[i] <- seedconst * k
     } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
                           } else mi_mu <- mi_sigma <- mi_exp <- NA
   mi_na <- any(c(all(is.na(mi)), all(is.na(mi_mu)), all(is.na(mi_sigma))))
@@ -273,7 +249,6 @@ evalmodels <- function(station, train, test,
     ml_sigma <- try(predict(ml, type = "scale", newdata = testdata))
     if(inherits(ml_mu, "try-error") | inherits(ml_sigma, "try-error")) {
       ml_mu <- ml_sigma <- ml_exp <- NA
-      ml_error_seed[i] <- seedconst * k
     } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
   } else ml_mu <- ml_sigma <- ml_exp <- NA
   ml_na <- any(c(all(is.na(ml)), all(is.na(ml_mu)), all(is.na(ml_sigma))))
@@ -283,7 +258,6 @@ evalmodels <- function(station, train, test,
     mq_sigma <- try(predict(mq, type = "scale", newdata = testdata))
     if(inherits(mq_mu, "try-error") | inherits(mq_sigma, "try-error")) {
       mq_mu <- mq_sigma <- mq_exp <- NA
-      mq_error_seed[i] <- seedconst * k
     } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
   } else mq_mu <- mq_sigma <- mq_exp <- NA
   mq_na <- any(c(all(is.na(mq)), all(is.na(mq_mu)), all(is.na(mq_sigma))))
