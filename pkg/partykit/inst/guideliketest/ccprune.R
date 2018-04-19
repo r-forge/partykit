@@ -6,14 +6,37 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10, SE1rule = FALSE, 
   if(is.null(costfunction)) costfunction <- "RSS"   
   
   if(costfunction == "RSS"){
-     cf <- function(object){
-      if(inherits(object, "partynode"))
-        RSS <- sum((object$info$object$model$y - object$info$object$fitted.values)^2)
-      if(inherits(object, "modelparty"))
-        RSS <- sum((object$data$y - fitted(object))^2)
-      return(RSS)
+     cf <- function(object, newdata = NULL, mean = FALSE){
+       if(is.null(newdata)) {
+         if(mean) return(mean((object$data$y - fitted(object))^2)) 
+         return(sum((object$data$y - fitted(object))^2))
+       } else {
+         if(mean) return(mean((newdata$y - predict(object, newdata = newdata, type = "response"))^2))
+         return(sum((newdata$y - predict(object, newdata = newdata, type = "response"))^2))
+       }
     }
   }
+  
+  
+  ## FIX ME: 
+  # - degrees of freedom for AIC?
+  # - evaluation on newdata for cross validation
+  if(costfunction == "AIC"){
+    cf <- function(object, newdata = NULL, mean = FALSE){
+      ll <- logLik_modelparty_lm_nd(object, newdata = newdata)
+      aic <- (-2 * as.numeric(ll) + 2 * attr(ll, "df"))
+      return(aic)
+    }
+  }
+  
+  
+  if(costfunction == "loglikelihood"){
+    cf <- function(object, newdata = NULL, mean = FALSE){
+      ll <- as.numeric(logLik_modelparty_lm_nd(object, newdata = newdata))
+      return(ll)
+    }
+  }
+  
   
   if(is.function(costfunction)) cf <- costfunction
   
@@ -39,10 +62,14 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10, SE1rule = FALSE, 
       
       # costfunction evaluated at tree pruned at inner node i
       Tp <- nodeprune(Tree[[i]], ids = 1)
-      cfi <- cf(Tp)
+      cfi <- cf(Tp, mean = FALSE)  
+      ## sum instead of mean because the nr of obs in this subtree is of importance
+      # (compare R(T): includes probability of being in node t which is nobs(t)/nobs)
       
       # costfunction evaluated at the branch with node i as root node 
-      cfb <- cf(Tree[[i]])
+      cfb <- cf(Tree[[i]], mean = FALSE)  
+      ## sum instead of mean because the nr of obs in this subtree is of importance
+      # (compare R(T): includes probability of being in node t which is nobs(t)/nobs)
       
       #replace current alpha min if the new alpha is smaller
       alpha <- (cfi-cfb) / (width(Tree[[i]]) - 1)
@@ -106,10 +133,10 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10, SE1rule = FALSE, 
         
         # costfunction evaluated at tree pruned at inner node i
         Tp <- nodeprune(Tree[[i]], ids = 1)
-        cfi <- cf(Tp)
+        cfi <- cf(Tp, mean = FALSE)
         
         # costfunction evaluated at the branch with node i as root node 
-        cfb <- cf(Tree[[i]])
+        cfb <- cf(Tree[[i]], mean = FALSE)
         
         #replace current alpha min if the new alpha is smaller
         alpha <- (cfi-cfb) / (width(Tree[[i]]) - 1)
@@ -125,8 +152,7 @@ ccprune <- function(object, costfunction = NULL, nrfolds = 10, SE1rule = FALSE, 
       Tree <- nodeprune(Tree, ids = t_min_id)
       
       resmat <- rbind(resmat, c(alpha_min,
-                                mean((testdata$y - predict(Tree, newdata = testdata, 
-                                                           type = "response"))^2)))
+                                cf(Tree, newdata = testdata, mean = TRUE)))
       
     }
     
