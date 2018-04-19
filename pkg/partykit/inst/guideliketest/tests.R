@@ -11,11 +11,14 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
                 binary_regressor = TRUE, binary_beta = TRUE,
                 vary_beta = c("all", "beta0", "beta1"),
                 beta0 = NULL, beta1 = NULL,
-                nrsteps = 1,
-                z1dist = c("norm", "unif")){
+                nrsteps = 1, nrlevels = 2, 
+                z1dist = c("unif", "norm")){
   
+  if(nrsteps == 1 & nrlevels > 2) stop("for 1 step only two levels are possible")
   if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
   if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
+  if(vary_beta == "beta0" & is.null(beta1)) stop("if only beta0 varies, a fixed value has to set for beta1")
+  if(vary_beta == "beta1" & is.null(beta0)) stop("if only beta1 varies, a fixed value has to set for beta0")
   if(length(z1dist) > 1) z1dist <- z1dist[1]
   if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
   if(!nrsteps %in% c(1,2)) stop("nrsteps can only be 1 or 2")
@@ -71,24 +74,48 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
   # for binary beta: two steps (one upwards and one downwards) at +/- xi, 
   # for continuous beta: quadratic function
   if(nrsteps == 2) {
-    if(vary_beta == "all"){
-      if(binary_beta){
-        beta0 <- delta * (-1)^(abs(z1)<xi)
-        beta1 <- delta * (-1)^(abs(z1)<xi) * (-1)   # opposite signs if both betas vary
-      } else {
-        beta0 <- delta * z1^2
-        beta1 <- delta * z1^2 * (-1)   # opposite signs if both betas vary
+    if(nrlevels == 2){
+      if(vary_beta == "all"){
+        if(binary_beta){
+          beta0 <- delta * (-1)^(abs(z1)<xi)
+          beta1 <- delta * (-1)^(abs(z1)<xi) * (-1)   # opposite signs if both betas vary
+        } else {
+          beta0 <- delta * z1^2
+          beta1 <- delta * z1^2 * (-1)   # opposite signs if both betas vary
+        }
+      }
+      
+      if(vary_beta == "beta0"){
+        beta0 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
+        beta1 <- beta1
+      }
+      
+      if(vary_beta == "beta1"){
+        beta0 <- beta0
+        beta1 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
       }
     }
     
-    if(vary_beta == "beta0"){
-      beta0 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
-      beta1 <- beta1
-    }
-    
-    if(vary_beta == "beta1"){
-      beta0 <- beta0
-      beta1 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) else delta * z1^2
+    if(nrlevels == 3){
+      if(vary_beta == "all"){
+        if(binary_beta){
+          beta0 <- delta * (-1)^(abs(z1)<xi) * 0^(z1>=xi)
+          beta1 <- delta * (-1)^(abs(z1)<xi) * (-1) * 0^(z1>=xi)  # opposite signs if both betas vary
+        } else {
+          beta0 <- delta * z1^2 * 0.5^(x>0)
+          beta1 <- delta * z1^2 * (-1) * 0.5^(x>0)   # opposite signs if both betas vary
+        }
+      }
+      
+      if(vary_beta == "beta0"){
+        beta0 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) * 0^(z1>=xi) else delta * z1^2 * 0.5^(x>0)
+        beta1 <- beta1
+      }
+      
+      if(vary_beta == "beta1"){
+        beta0 <- beta0
+        beta1 <- if(binary_beta) delta * (-1)^(abs(z1)<xi) * 0^(z1>=xi) else delta * z1^2 * 0.5^(x>0)
+      }
     }
   }  
   
@@ -109,7 +136,7 @@ dgp <- function(nobs = 100, delta = 1, xi = 0,
 evaltests <- function(formula, data, 
                       testfun = c("guide", "ctree", "mfluc", "ctree_cat", "mfluc_cat", 
                                   "ctree_bin", "mfluc_bin", "ctree_cat_bin", "mfluc_cat_bin"), 
-                      subset, weights, stump = TRUE,
+                      subset, weights, stump = TRUE, alpha = 0.05,
                       ctree_max = c(FALSE, TRUE),
                       guide_testtype = c("sum", "max", "coin"), 
                       decorrelate = "vcov",
@@ -155,7 +182,7 @@ evaltests <- function(formula, data,
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
                                          bonferroni = TRUE,
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          stump = stump)
   }
@@ -176,7 +203,7 @@ evaltests <- function(formula, data,
                                                                                 intersplit = TRUE, MIA = FALSE), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -200,7 +227,7 @@ evaltests <- function(formula, data,
                                                                          xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -224,7 +251,7 @@ evaltests <- function(formula, data,
                                                                          xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -248,7 +275,7 @@ evaltests <- function(formula, data,
                                                                              xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -278,7 +305,7 @@ evaltests <- function(formula, data,
                                                                      inner = "object", trim = 0.1), 
                               svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                     intersplit = TRUE),
-                              logmincriterion = log(1-0.05),
+                              logmincriterion = log(1-alpha),
                               update = TRUE,
                               bonferroni = TRUE,
                               stump = stump)
@@ -310,7 +337,7 @@ evaltests <- function(formula, data,
                                                                                 xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -342,7 +369,7 @@ evaltests <- function(formula, data,
                                                                          xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -374,7 +401,7 @@ evaltests <- function(formula, data,
                                                                              xgroups = xgroups), 
                                          svsplitfun = partykit:::.objfun_split(restart = TRUE,
                                                                                intersplit = TRUE),
-                                         logmincriterion = log(1-0.05),
+                                         logmincriterion = log(1-alpha),
                                          update = TRUE,
                                          bonferroni = TRUE,
                                          stump = stump)
@@ -595,7 +622,7 @@ d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE, binary_beta = TRUE, delta = 5)
 d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.0, binary_regressor = FALSE, binary_beta = FALSE, delta = 5)
 
-d <- dgp(200, vary_beta = "beta1", beta0 = 0, xi = 0.5, binary_regressor = FALSE, binary_beta = TRUE, delta = 5, z1dist = "unif")
+d <- dgp(200, vary_beta = "all", xi = 0.7, binary_regressor = FALSE, binary_beta = TRUE, delta = 1, z1dist = "unif")
 
 
 ctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree")
@@ -668,19 +695,19 @@ plot(gctest2, terminal_panel = node_bivplot)
 
 
 sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
-                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
-                    vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
-                    binary_regressor = TRUE, binary_beta = TRUE, z1dist = "norm",
-                    sigma = 1, only_intercept = FALSE, alpha = 0.05,
-                    test = c("ctree", "mfluc", "ctree_max", 
-                             "ctree_cat", "ctree_max_cat", "mfluc_cat",
-                             "ctree_bin", "ctree_max_bin", "mfluc_bin",
-                             "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
-                             "guide_sum_12", "guide_max_12", "guide_coin_12",
-                             "guide_sum_1", "guide_max_1", "guide_coin_1",
-                             "guide_sum_2", "guide_max_2", "guide_coin_2",
-                             "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
-                             "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
+                formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
+                vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
+                binary_regressor = TRUE, binary_beta = TRUE, z1dist = "norm",
+                sigma = 1, only_intercept = FALSE, alpha = 0.05,
+                test = c("ctree", "mfluc", "ctree_max", 
+                         "ctree_cat", "ctree_max_cat", "mfluc_cat",
+                         "ctree_bin", "ctree_max_bin", "mfluc_bin",
+                         "ctree_cat_bin", "ctree_max_cat_bin", "mfluc_cat_bin",
+                         "guide_sum_12", "guide_max_12", "guide_coin_12",
+                         "guide_sum_1", "guide_max_1", "guide_coin_1",
+                         "guide_sum_2", "guide_max_2", "guide_coin_2",
+                         "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
+                         "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"))
 {
   set.seed(seed)
   
@@ -816,7 +843,7 @@ if(FALSE){
 }
 
 
-############# wrapper function applying simcomp over varying variables of interest
+############# wrapper function applying sim over varying variables of interest
 
 simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                        delta = seq(from = 1, to = 5, by = 2),
@@ -993,7 +1020,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1,
 
 
 
-
+if(FALSE){
 simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
                        delta = seq(from = 0, to = 1, by = 0.25),
                        xi = c(0, 0.2, 0.5, 0.8), 
@@ -1014,8 +1041,8 @@ simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
                        stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
 
 
-save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180224_1step.rda")
-
+save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180418_1step.rda")
+}
 
 
 
