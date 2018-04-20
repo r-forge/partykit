@@ -56,7 +56,7 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
                  \code{party} package. \code{saveinfo = FALSE} leads to less
                  memory hungry representations of trees. Note that arguments
                  \code{mtry}, \code{cores} and \code{applyfun} in
-                 \code{\link{ctree_control}} are ignored for \code{\link{cforestl}},
+                 \code{\link{ctree_control}} are ignored for \code{\link{cforest}},
                  because they are already set.}
   \item{ytrafo}{an optional named list of functions to be applied to the response
                 variable(s) before testing their association with the explanatory
