@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2018-04-03 r74516) -- "Unsuffered Consequences"
+R Under development (unstable) (2018-04-18 r74618) -- "Unsuffered Consequences"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -228,7 +228,7 @@ Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
 > ##D 
 > ##D     data("GBSG2", package = "TH.data")
 > ##D     bst <- cforest(Surv(time, cens) ~ ., data = GBSG2, ntree = 50)
-> ##D  
+> ##D 
 > ##D     ### estimate conditional Kaplan-Meier curves
 > ##D     print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
 > ##D 
@@ -329,6 +329,13 @@ Number of terminal nodes: 4
 + }
 Loading required package: TH.data
 Loading required package: survival
+
+Attaching package: ‘survival’
+
+The following object is masked from ‘package:rpart’:
+
+    solder
+
 Loading required package: MASS
 
 Attaching package: ‘TH.data’
@@ -695,7 +702,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0xc383688>
+<environment: 0xb1eaa50>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -714,7 +721,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0xc383688>
+<environment: 0xb1eaa50>
 > 
 > 
 > 
@@ -967,6 +974,13 @@ The following objects are masked from ‘package:base’:
 
 Loading required package: sandwich
 Loading required package: survival
+
+Attaching package: ‘survival’
+
+The following object is masked from ‘package:rpart’:
+
+    solder
+
 
 -- Node 1 ---------------------------------
 Number of observations: 180
@@ -2415,7 +2429,7 @@ nativeSpeaker           age      shoeSize
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  31.588 0.36 32.02 0 0 
+Time elapsed:  20.592 0.348 20.977 0 0 
 > grDevices::dev.off()
 null device 
           1 
