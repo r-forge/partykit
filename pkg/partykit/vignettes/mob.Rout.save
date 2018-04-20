@@ -525,6 +525,13 @@ Objective function (negative log-likelihood): 1061
 
 > library("survival")
 
+Attaching package: 'survival'
+
+The following object is masked from 'package:rpart':
+
+    solder
+
+
 > wbreg <- function(y, x, start = NULL, weights = NULL, 
 +     offset = NULL, ...) {
 +     survreg(y ~ 0 + x, weights = weights, dist = "weibull", ... .... [TRUNCATED] 
@@ -696,4 +703,4 @@ $`7`
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  9.247   0.043   9.287 
+ 12.276   0.196  12.517 

@@ -1,6 +1,6 @@
 
-R version 3.4.3 (2017-11-30) -- "Kite-Eating Tree"
-Copyright (C) 2017 The R Foundation for Statistical Computing
+R Under development (unstable) (2018-04-18 r74618) -- "Unsuffered Consequences"
+Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -255,4 +255,4 @@ Sepal.Length  Sepal.Width Petal.Length  Petal.Width
 > 
 > proc.time()
    user  system elapsed 
-  6.064   0.056   6.118 
+  9.644   0.180   9.843 
