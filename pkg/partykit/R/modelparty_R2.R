@@ -61,7 +61,7 @@
     meat <- if(is.null(cluster)) {
       crossprod(if(ctrl$caseweights) process/sqrt(weights) else process)
     } else {
-      crossprod(as.matrix(apply(if(ctrl$caseweights) process/sqrt(weights) else process, 2L, tapply, cluster, sum)))
+      crossprod(as.matrix(apply(if(ctrl$caseweights) process/sqrt(weights) else process, 2L, tapply, as.numeric(cluster), sum)))
     }
   }
   ## from strucchange
