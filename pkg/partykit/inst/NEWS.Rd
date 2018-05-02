@@ -2,6 +2,21 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-2 (2018-mm-dd)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{In \code{mob()} using the \code{cluster} argument with a \code{factor}
+      variable sometimes lead to \code{NA}s in the covariance matrix estimate
+      if empty categories occured in subgroups. The problem had been introduced
+      in version 1.2-0 and has been fixed now.}
+    \item{Methods for the \code{sctest} generic from the \pkg{strucchange}
+      package are now dynamically registered if \pkg{strucchange} is loaded.
+      Alternatively, the methods can be called directly using their full names
+      \code{sctest.constparty} and \code{sctest.modelparty}.}
+  }
+  }
+}
+
 \section{Changes in Version 1.2-1 (2018-04-20)}{
   \subsection{New Features}{
     \itemize{
