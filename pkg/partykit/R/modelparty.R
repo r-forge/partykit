@@ -240,7 +240,7 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
         crossprod(if(control$caseweights) process/sqrt(weights) else process)
       } else {
         ## nclus <- length(unique(cluster)) ## nclus / (nclus - 1L) * 
-        crossprod(as.matrix(apply(if(control$caseweights) process/sqrt(weights) else process, 2L, tapply, cluster, sum)))
+        crossprod(as.matrix(apply(if(control$caseweights) process/sqrt(weights) else process, 2L, tapply, as.numeric(cluster), sum)))
       }
     }
     J12 <- root.matrix(switch(vcov,
