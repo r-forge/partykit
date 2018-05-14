@@ -587,6 +587,10 @@ Objective function: 809.9
 
 > library("psychotools")
 
+> library("sandwich")
+
+> estfun.btmodel <- psychotools::estfun.btmodel
+
 > btfit1 <- function(y, x = NULL, start = NULL, weights = NULL, 
 +     offset = NULL, ...) btmodel(y, ...)
 
@@ -703,4 +707,4 @@ $`7`
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
- 12.276   0.196  12.517 
+ 25.832   0.392  26.238 
