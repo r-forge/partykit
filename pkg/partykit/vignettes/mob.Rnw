@@ -1430,10 +1430,6 @@ To fit the Bradley-Terry tree to the data, the available building blocks
 just have to be tied together. First, we set up the basic/simple model fitting
 interface described in Section~\ref{sec:fit}:
 %
-<<btfit-setup, echo = FALSE>>=
-### psychotools does not register estfun
-library("sandwich")
-estfun.btmodel <- psychotools::estfun.btmodel
 @
 <<btfit1>>=
 btfit1 <- function(y, x = NULL, start = NULL, weights = NULL,
