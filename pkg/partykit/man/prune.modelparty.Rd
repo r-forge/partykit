@@ -60,19 +60,21 @@ glm_big <- glmtree(formula = fmla, data = d, maxdepth = 2, alpha = 1)
 AIC(lm_big)
 AIC(glm_big)
 
+if (require("rpart")) {
 
-## pruning
-lm_aic <- prune(lm_big, type = "AIC")
-lm_bic <- prune(lm_big, type = "BIC")
+  ## pruning
+  lm_aic <- prune(lm_big, type = "AIC")
+  lm_bic <- prune(lm_big, type = "BIC")
 
-width(lm_big)
-width(lm_aic)
-width(lm_bic)
+  width(lm_big)
+  width(lm_aic)
+  width(lm_bic)
 
-glm_aic <- prune(glm_big, type = "AIC")
-glm_bic <- prune(glm_big, type = "BIC")
+  glm_aic <- prune(glm_big, type = "AIC")
+  glm_bic <- prune(glm_big, type = "BIC")
 
-width(glm_big)
-width(glm_aic)
-width(glm_bic)
+  width(glm_big)
+  width(glm_aic)
+  width(glm_bic)
+}
 }
