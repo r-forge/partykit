@@ -56,10 +56,10 @@ knitr::opts_chunk$set(cache = TRUE, message = FALSE, fig.align = "center")
 library("dplyr")
 library("stringr")
 
-knit_hooks$set(inline = function(x) { 
-  if (is.numeric(x)) return(knitr:::format_sci(x, 'latex')) 
+knit_hooks$set(inline = function(x) {
+  if (is.numeric(x)) return(knitr:::format_sci(x, 'latex'))
   highr:::hi_latex(x) %>%  str_replace("hlopt", "textalltt")
-  }) 
+  })
 @
 
 
@@ -155,7 +155,7 @@ other individuals given they do or don't receive the treatment of interest.
 
 For cases where the assumption that all individuals have the same intercept and
 treatment effect is too strict the R package \emph{model4you} offers two
-options: 
+options:
 
 \paragraph{1. Model-based trees} identify subgroups where within the subgroups
 the model parameters are similar and between groups the model parameters are
@@ -170,24 +170,24 @@ line of code lets the user compute a model-based tree in R:
 <<eval=FALSE>>=
 strat_models <- pmtree(base_model)
 @
-Note that \Sexpr{'pmtree()'} uses the data given in the call of the base 
-model. It automatically uses variables not used in the model formula 
-(in the example above \Sexpr{'response ~ treatment'}) as potential subgroup 
+Note that \Sexpr{'pmtree()'} uses the data given in the call of the base
+model. It automatically uses variables not used in the model formula
+(in the example above \Sexpr{'response ~ treatment'}) as potential subgroup
 defining variables. This can be edited using the \Sexpr{'zformula'} argument.
 
 \paragraph{2. Personalised models} use model-based random forests to estimate
 similarity of individuals in terms of model parameters. For each individual a
 personalised model can be estimated based on a weighted set of the original
 data, where the similarity measure corresponds to the weight. Details on the
-personalised models can be found in \citep{seibold_individual_2017}.  
+personalised models can be found in \citep{seibold_individual_2017}.
 Computing personalised models for all observations in the training data is
 simple:
 <<eval=FALSE>>=
 pm_forest <- pmforest(base_model)
 pers_models <- pmodel(pm_forest)
-@ 
+@
 Again here the potential effect-modifying variables are taken by default
-as all variable not given in the model formula and can be defined using 
+as all variable not given in the model formula and can be defined using
 the \Sexpr{'zformula'} argument in \Sexpr{'pmforest()'}.
 
 
@@ -228,7 +228,7 @@ MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
 To investigate whether the exam was fair, we asses whether the two groups
 differ in terms of the percentage of correctly answered exam questions. This
 can be done using a simple linear model regressing the percentage points of
-correct anwers on the exam group. 
+correct anwers on the exam group.
 <<math_bmod>>=
 bmod_math <- lm(pcorrect ~ group, data = MathExam)
 @
@@ -238,7 +238,7 @@ cbind(estimate = coef(bmod_math), confint(bmod_math))
 @
 The model can be visualised by plotting the estimated densities
 (see Figure~\ref{fig:math_bmod_vis}):
-<<math_bmod_vis, fig.height=2.5, fig.width=5, out.width="0.7\\textwidth", fig.cap = "Density estimates of base model for the Mathematics Exam data.">>=  
+<<math_bmod_vis, fig.height=2.5, fig.width=5, out.width="0.7\\textwidth", fig.cap = "Density estimates of base model for the Mathematics Exam data.">>=
 lm_plot(bmod_math)
 @
 Both the estimates and confidence intervals and the density curves suggest
@@ -247,9 +247,9 @@ really hold for all types of students?
 
 A tree based on this model can be computed and visualised in only two lines of
 code:
-<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for the Mathematics Exam datam.">>=  
+<<math_tree, fig.width = 13, fig.cap = "Personalised model tree for the Mathematics Exam datam.">>=
 tr_math <- pmtree(bmod_math, control = ctree_control(maxdepth = 2))
-plot(tr_math, terminal_panel = node_pmterminal(tr_math, 
+plot(tr_math, terminal_panel = node_pmterminal(tr_math,
                                                plotfun = lm_plot))
 @
 
@@ -283,7 +283,7 @@ even better than the scatter plot (both shown in Figure~\ref{fig:math_dp1}).
 dpdat_math <- cbind(pmods_math, MathExam)
 
 ggplot(dpdat_math, aes(x = tests, y = group2)) +
-  geom_point(alpha = 0.2, size = 1) + 
+  geom_point(alpha = 0.2, size = 1) +
   geom_smooth(fill = NA, method = "loess") +
   theme(legend.position = "none") +
   ylab("estmated individual\nexam group effect")
@@ -294,7 +294,7 @@ ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
   ylab("estmated individual\nexam group effect")
 @
 
-For the number of previous attempts to pass the exam and the gender box plots, 
+For the number of previous attempts to pass the exam and the gender box plots,
 bee plots or a combination thereof can be used (Figure~\ref{fig:math_dp2}).
 <<math_dp2, fig.width=4, fig.height=3, out.width='.48\\linewidth', fig.cap="Dependence plots for the number of previous attempts and gender.", fig.subcap=c('Number of previous attempts.', 'Gender.')>>=
 
@@ -311,7 +311,7 @@ ggplot(dpdat_math, aes(x = gender, y = group2, color = gender)) +
 @
 
 With the tools provided by the \emph{model4you} package it is
-very simple to create understandable stratified and personalised models and 
+very simple to create understandable stratified and personalised models and
 compelling visualisations that can be used to communicate theses models.
 
 
@@ -321,14 +321,14 @@ The R package \emph{model4you} is focused on ease of use and interpretability.
 Users can take a simple model that they know and understand as basis and simply
 plug it into \Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether
 they want subgroup wise or personalised models. The basis for these
-functionalities is provided by the \emph{partykit} 
+functionalities is provided by the \emph{partykit}
 package which is a widely
-used R package for trees and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}. 
+used R package for trees and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}.
 The \emph{model4you} package provides
 wrappers for the well implemented and tested functions
 \Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::cforest()'} and extends the
-functionalities to allow for the computation of personalised models and to 
-improve usability and interpretability. 
+functionalities to allow for the computation of personalised models and to
+improve usability and interpretability.
 
 The \emph{partykit} package provides the basis for functionalities in other
 packages namely \emph{glmertree}, \emph{psychotree}, \emph{betareg} (all on
@@ -342,7 +342,7 @@ CRAN), \emph{trtf}, \emph{disttree}, \emph{lagsarlmtree} and \emph{palmtree}
 \section*{Quality control}
 All packages on CRAN undergo standard checks for compatibility with the R
 package ecosystem.  The R package contains examples and tests. These were run
-and checked on Linux 86\_64 and Windows. 
+and checked on Linux 86\_64 and Windows.
 
 %\textcolor{blue}{Detail the level of testing that has been carried out on the code (e.g. unit, functional, load etc.), and in which environments. If not already included in the software documentation, provide details of how a user could quickly understand if the software is working (e.g. providing examples of running the software with sample input and output data). }
 
@@ -370,13 +370,13 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 
 \section*{Software location:}
 
-{\bf Archive} %\textcolor{blue}{(e.g. institutional repository, general repository) (required ??? please see instructions on journal website for depositing archive copy of software in a suitable repository)} 
+{\bf Archive} %\textcolor{blue}{(e.g. institutional repository, general repository) (required ??? please see instructions on journal website for depositing archive copy of software in a suitable repository)}
 
 \begin{description}[noitemsep,topsep=0pt]
 \item[Name:] CRAN
 \item[Persistent identifier:] \url{https://cran.r-project.org/package=model4you} %TODO upload to CRAN
 \item[Licence:] GPL-2 $\vert$ GPL-3
-\item[Publisher:] Heidi Seibold 
+\item[Publisher:] Heidi Seibold
 \item[Version published:] \textcolor{blue}{The version number of the software archived.}
 \item[Date published:] \textcolor{blue}{dd/mm/yy}
 \end{description}
@@ -417,7 +417,7 @@ variables.
 
 We encourage users to use the party tag on Stackoverflow
 (\url{http://stackoverflow.com/questions/tagged/party}) in case of questions or
-problems. 
+problems.
 
 %\textcolor{blue}{Please describe in as much detail as possible the ways in which the software could be reused by other researchers both within and outside of your field. This should include the use cases for the software, and also details of how the software might be modified or extended (including how contributors should contact you) if appropriate. Also you must include details of what support mechanisms are in place for this software (even if there is no support).}
 
@@ -444,7 +444,7 @@ The authors declare that they have no competing interests.
 \bibliography{ref_model4you}
 
 % \textcolor{blue}{Please enter references in the Harvard style and include a DOI where available, citing them in the text with a number in square brackets, e.g. \\ }
-% 
+%
 % \textcolor{blue}{[1] Piwowar, H A 2011 Who Shares? Who Doesn't? Factors Associated with Openly Archiving Raw Research Data. PLoS ONE 6(7): e18657. DOI: \\ http://dx.doi.org/10.1371/journal.pone.0018657.}
 
 \vspace{2cm}
