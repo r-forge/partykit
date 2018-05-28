@@ -42,7 +42,9 @@ criteria like AIC, BIC, or related user-defined criteria.
   
   For \code{"AIC"} and \code{"BIC"} \code{type} is transformed so that AIC
   or BIC are computed. However, this assumes that the \code{objfun} used in \code{tree}
-  is actually the negative log-likelihood.
+  is actually the negative log-likelihood. The degrees of freedom assumed for a split 
+  can be set via the \code{dfsplit} argument in \code{\link{mob_control}} when computing
+  the \code{tree} or manipulated later by changing the value of \code{tree$info$control$dfsplit}.
 }
 
 \value{
