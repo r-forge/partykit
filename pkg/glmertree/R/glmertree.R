@@ -70,14 +70,6 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
         
     iteration <- iteration + 1L
     
-   # tree <- do.call(lmtree, args = list(formula = tf, 
-  #                                      data = data, 
-  #                                      offset = data$.ranef, 
-  #                                      cluster = cluster, 
-  #                                      weights = data$.weights,
-  #                                      dfsplit = dfsplit,
-  #                                      ...))
-    
     if(is.null(cluster)) {
       tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
               dfsplit = dfsplit, ...)
@@ -99,7 +91,11 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
       ## estimate full lmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
-        rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
+        ## If tree of depth 1 was grown, (g)lmer model should not include interactions:
+        rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
+        rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
+                      lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+        #rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
         if (is.null(offset)) {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
                       control = lmer.control)          
@@ -228,16 +224,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     if (!is.null(offset)) {
       data$.ranef <- data$.ranef + offset
     }
-    
-    #tree <- do.call(glmtree, args = list(formula = tf, 
-    #                                     data = data, 
-    #                                     family = family,
-    #                                     offset = data$.ranef, 
-    #                                     cluster = cluster, 
-    #                                     weights = data$.weights,
-    #                                     dfsplit = dfsplit,
-    #                                     ...))
-    
+
     if(is.null(cluster)) {
       tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, 
               dfsplit = dfsplit, ...)
@@ -259,7 +246,12 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       ## estimate full glmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
-        rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
+        ## If tree of depth 1 was grown, (g)lmer model should not include interactions:
+        rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
+        rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
+                          lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+        #rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
+
         if (is.null(offset)) {
           glme <- glmer(rf.alt, data = data, family = family, 
                         weights = .weights, control = glmer.control)
