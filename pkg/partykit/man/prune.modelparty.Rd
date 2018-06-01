@@ -5,7 +5,7 @@
 \title{Post-Prune \code{modelparty} Objects}
 
 \usage{
-\method{prune}{modelparty}(tree, type = "AIC", ...)
+prune.modelparty(tree, type = "AIC", ...)
 }
 
 \description{
@@ -27,9 +27,9 @@ criteria like AIC, BIC, or related user-defined criteria.
   or does is not sufficient (e.g., possibly in large samples) the \code{prune}
   method can be used for subsequent post-pruning based on information criteria.
 
-  The generic \code{\link[rpart]{prune}} function is from the \pkg{rpart} package
-  but \code{prune.modelparty} can also be called directly if \pkg{rpart} is not
-  attached.
+  The function \code{prune.modelparty} can be called directly but it is also
+  registered dynamically with the generic \code{\link[rpart]{prune}} function
+  from the \pkg{rpart} package if the latter is attached.
 
   To customize the post-pruning strategy,
   \code{type} can be set to a \code{function(objfun, df, nobs)}
