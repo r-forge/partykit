@@ -10,9 +10,11 @@
       if empty categories occured in subgroups. The problem had been introduced
       in version 1.2-0 and has been fixed now.}
     \item{Methods for the \code{sctest} generic from the \pkg{strucchange}
-      package are now dynamically registered if \pkg{strucchange} is loaded.
+      package are now dynamically registered if \pkg{strucchange} is attached.
       Alternatively, the methods can be called directly using their full names
       \code{sctest.constparty} and \code{sctest.modelparty}.}
+    \item{The \code{prune.modelparty} function is now fully exported but
+      it is also registered with the \code{prune} generic from \pkg{rpart}.}
   }
   }
 }

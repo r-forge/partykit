@@ -28,8 +28,9 @@ criteria like AIC, BIC, or related user-defined criteria.
   method can be used for subsequent post-pruning based on information criteria.
 
   The function \code{prune.modelparty} can be called directly but it is also
-  registered dynamically with the generic \code{\link[rpart]{prune}} function
-  from the \pkg{rpart} package if the latter is attached.
+  registered as a method for the generic \code{\link[rpart]{prune}} function
+  from the \pkg{rpart} package. Thus, if \pkg{rpart} is attached,
+  \code{prune(tree, type = "AIC", ...)} also works (see examples below).
 
   To customize the post-pruning strategy,
   \code{type} can be set to a \code{function(objfun, df, nobs)}
