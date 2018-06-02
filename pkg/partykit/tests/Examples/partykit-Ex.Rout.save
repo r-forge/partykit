@@ -1,5 +1,5 @@
 
-R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+R version 3.5.0 (2018-04-23) -- "Joy in Playing"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -26,6 +26,7 @@ Loading required package: libcoin
 Loading required package: mvtnorm
 > 
 > base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> base::assign(".old_wd", base::getwd(), pos = 'CheckExEnv')
 > cleanEx()
 > nameEx("HuntingSpiders")
 > ### * HuntingSpiders
@@ -693,7 +694,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0x56333166e428>
+<environment: 0x5603efaa8678>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -712,7 +713,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0x56333166e428>
+<environment: 0x5603efaa8678>
 > 
 > 
 > 
@@ -2422,9 +2423,10 @@ nativeSpeaker           age      shoeSize
 > 
 > ### * <FOOTER>
 > ###
+> cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  20.436 0.12 21.184 0 0 
+Time elapsed:  13.121 0.107 13.268 0 0 
 > grDevices::dev.off()
 null device 
           1 
