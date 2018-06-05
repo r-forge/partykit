@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-2 (2018-05-14)}{
+\section{Changes in Version 1.2-2 (2018-06-05)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{In \code{mob()} using the \code{cluster} argument with a \code{factor}
