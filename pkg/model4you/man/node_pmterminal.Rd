@@ -15,8 +15,8 @@ node_pmterminal(obj, digits = 2, confint = TRUE, plotfun,
 
 \item{confint}{Should a confidence interval be computed.}
 
-\item{plotfun}{Plotting function to be used. Needs to be of format 
-\code{function(mod, data)} where \code{mod} is the model object. 
+\item{plotfun}{Plotting function to be used. Needs to be of format
+\code{function(mod, data)} where \code{mod} is the model object.
 See examples for more details.}
 
 \item{nid}{function to retrieve info on what is plottet as node ids.}
@@ -24,8 +24,8 @@ See examples for more details.}
 \item{...}{arguments passed on to plotfun.}
 }
 \description{
-The plot method for party and constparty objects are rather flexible and can 
-be extended by panel functions. The pre-defined panel-generating function of 
+The plot method for party and constparty objects are rather flexible and can
+be extended by panel functions. The pre-defined panel-generating function of
 class grapcon_generator for pmtrees is documented here.
 }
 \examples{
@@ -36,7 +36,7 @@ survreg_plot(mod_surv)
 
 ## partition model and plot
 tr_surv <- pmtree(mod_surv)
-plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survreg_plot, 
+plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survreg_plot,
                                                confint = TRUE))
 }
 
