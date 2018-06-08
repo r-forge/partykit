@@ -11,7 +11,7 @@ survreg_plot(bmod)
 
 ## partitioned model
 tr <- pmtree(bmod)
-plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot, 
+plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
                                           confint = TRUE))
 summary(tr)
 summary(tr, node = 1:2)
@@ -24,7 +24,7 @@ logLik(bmod)
 logLik(tr)
 
 
-### glm binomial 
+### glm binomial
 set.seed(2)
 n <- 1000
 trt <- factor(rep(1:2, each = n/2))
@@ -36,7 +36,7 @@ success <- rbinom(n = n, size = 1, prob = expit(eff))
 
 dat <- data.frame(success, trt, age)
 library("plyr")
-dattab <- ddply(.data = dat, .variables = .(trt, age), 
+dattab <- ddply(.data = dat, .variables = .(trt, age),
                 function(x) data.frame(nsuccess = sum(x$success),
                                        nfailure = NROW(x) - sum(x$success)))
 
@@ -78,7 +78,7 @@ varimp(tr1, nperm = 5)
 
 
 library("ggplot2")
-ofs <- data.frame(objfun_bmod1 = objfun(bmod1), 
+ofs <- data.frame(objfun_bmod1 = objfun(bmod1),
                   objfun_tr1 = objfun(tr1))
 ggplot(ofs, aes(objfun_bmod1, objfun_tr1)) + geom_jitter(alpha = 0.3)
 
@@ -123,7 +123,7 @@ logLik(tr_math_mob)
 sum(bmod_math$residuals^2)
 
 ## varimp
-of <- function(x, newdata = NULL, weights = NULL, 
+of <- function(x, newdata = NULL, weights = NULL,
                perm = NULL, ...) {
   - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
 }
@@ -135,3 +135,87 @@ w[5:100] <- 0
 tr_math_d <- pmtree(bmod_math, data = Math_mx, weights = w,
                     control = ctree_control(alpha = 0.7))
 varimp(tr_math_d, risk = of)
+
+
+### check different formulas
+set.seed(1212)
+n <- 90
+d1 <- d2 <- d3 <- data.frame(y = abs(rnorm(n) + 5), x = 1:n - 10,
+  trt = rep(1:3, each = n/3), z1 = rnorm(n))
+d2$trt <- factor(d2$trt)
+d3$trt <- ordered(d3$trt)
+
+f <- list(
+  y ~ 1,
+  y ~ x,
+  y ~ trt,
+  y ~ trt + x,
+  y ~ trt + offset(x),
+  y ~ trt + x + offset(x),
+  y ~ trt + offset(as.numeric(trt)),
+  y ~ factor(trt),
+  y ~ factor(trt) + offset(x),
+  y ~ factor(x > as.numeric(trt)),
+  y ~ interaction(x, trt),
+  y ~ 0 + trt
+)
+
+try_pmtree <- function(bmod, data) {
+  # try(pmtree(bmod, data = data))
+  "pmtree" %in% class(try(pmtree(bmod, data = data), silent = TRUE))
+}
+
+run_lm <- function(formula, data, ...) {
+  eval(substitute(lm(fm, data = data, ...), list(fm = formula)))
+}
+
+run_survreg <- function(formula, data, ...) {
+  eval(substitute(survreg(fm, data = data, ...), list(fm = formula)))
+}
+
+run_coxph <- function(formula, data, ...) {
+  eval(substitute(coxph(fm, data = data, ...), list(fm = formula)))
+}
+
+## expected results
+ok1 <- list(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE)
+ok2 <- list(FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE, TRUE, TRUE, TRUE, TRUE)
+ok3 <- ok2
+
+
+## checks with lm
+lm1 <- lapply(f, run_lm, data = d1, model = FALSE)
+identical(lapply(lm1, try_pmtree, data = d1), ok1)
+
+lm2 <- lapply(f, run_lm, data = d2, model = FALSE)
+identical(lapply(lm2, try_pmtree, data = d2), ok2)
+
+lm3 <- lapply(f, run_lm, data = d3, model = FALSE)
+identical(lapply(lm3, try_pmtree, data = d3), ok3)
+
+## checks with survreg
+library("survival")
+d1$y <- d2$y <- d3$y <- Surv(d1$y + 0.5)
+
+survreg1 <- lapply(f, run_survreg, data = d1, model = FALSE)
+identical(lapply(survreg1, try_pmtree, data = d1), ok1)
+
+survreg2 <- lapply(f, run_survreg, data = d2, model = FALSE)
+identical(lapply(survreg2, try_pmtree, data = d2), ok2)
+
+survreg3 <- lapply(f, run_survreg, data = d3, model = FALSE)
+identical(lapply(survreg3, try_pmtree, data = d3), ok3)
+
+
+
+## checks with coxph
+coxph1 <- lapply(f, run_coxph, data = d1, model = FALSE)
+identical(lapply(coxph1, try_pmtree, data = d1), ok1)
+
+coxph2 <- lapply(f, run_coxph, data = d2, model = FALSE)
+identical(lapply(coxph2, try_pmtree, data = d2), ok2)
+
+coxph3 <- lapply(f, run_coxph, data = d3, model = FALSE)
+identical(lapply(coxph3, try_pmtree, data = d3), ok3)
+
+

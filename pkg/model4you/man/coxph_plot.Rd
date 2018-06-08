@@ -14,11 +14,11 @@ coxph_plot(mod, data = NULL, theme = theme_classic(), yrange = NULL)
 
 \item{theme}{A ggplot2 theme.}
 
-\item{yrange}{Range of the y variable to be used for plotting. 
+\item{yrange}{Range of the y variable to be used for plotting.
 If NULL it will be 0 to max(y).}
 }
 \description{
-Can be used on its own but is also useable as plotfun in 
+Can be used on its own but is also useable as plotfun in
 \code{\link{node_pmterminal}}.
 }
 \examples{
