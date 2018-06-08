@@ -44,6 +44,7 @@
     ## get convergence info
     if (is.null(control$converged)) {
       conv <- if (is.null(mod$converged)) TRUE else mod$converged
+      if(class(mod) == "survreg" && any(is.na(mod$coef))) conv <- FALSE
     } else {
       conv <- control$converged(mod, data, subset)
     }
