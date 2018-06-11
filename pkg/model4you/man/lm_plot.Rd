@@ -41,10 +41,9 @@ lm_plot(lm.D9)
 
 ## example taken from ?glm (modified version)
 data(anorexia, package = "MASS")
-anorexia$treatment <- anorexia$Treat != "Cont"
+anorexia$treatment <- factor(anorexia$Treat != "Cont")
 anorex.1 <- glm(Postwt ~ treatment + offset(Prewt),
                 family = gaussian, data = anorexia)
 lm_plot(anorex.1)
-
 
 }
