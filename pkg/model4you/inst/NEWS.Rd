@@ -8,9 +8,9 @@
     \item{Fixed bug in binomial_glm_plot().}
   }
   }
-  \subsection{Bugfixes}{
+  \subsection{Other}{
   \itemize{
-    \item{Renamed test_heterogeneity() to pmtest().}
+    \item{Added check if the model entered has a single factor covariate.}
   }
   }
 
