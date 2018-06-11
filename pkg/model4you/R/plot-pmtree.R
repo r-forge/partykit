@@ -58,6 +58,10 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
   fam <- stats::family(mod)$family
   if(fam != "binomial") stop("model should have family binomail, but has family ", fam)
 
+  ## check if model has on factor covariate
+  if(!one_factor(mod))
+    stop("Model needs to be with a single factor covariate. Please check!")
+
   ## get formula and data
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
@@ -150,6 +154,10 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   cl <- class(mod)
   if(!("lm" %in% cl) & length(cl) != 1) stop("model should be of class lm, is of class ", cl)
 
+  ## check if model has on factor covariate
+  if(!one_factor(mod))
+    stop("Model needs to be with a single factor covariate. Please check!")
+
   ## get formula and data
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
@@ -225,6 +233,10 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
   cl <- class(mod)
   if(!("survreg" %in% cl)) stop("model should be of class survreg, but is of class ", cl)
 
+  ## check if model has on factor covariate
+  if(!one_factor(mod))
+    stop("Model needs to be with a single factor covariate. Please check!")
+
   ## get formula and data
   modcall <- getCall(mod)
   modformula <- as.Formula(eval(modcall$formula))
@@ -283,6 +295,10 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
                        yrange = NULL) {
   cl <- class(mod)
   if(!("coxph" %in% cl)) stop("model should be of class coxph, but is of class ", cl)
+
+  ## check if model has on factor covariate
+  if(!one_factor(mod))
+    stop("Model needs to be with a single factor covariate. Please check!")
 
   ## get formula and data
   modcall <- getCall(mod)

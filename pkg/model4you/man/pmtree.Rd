@@ -17,7 +17,7 @@ Default is to use all variables in data that are not in the model (i.e. \code{~ 
 
 \item{control}{control parameters, see \code{\link[partykit]{ctree_control}}.}
 
-\item{coeffun}{function that takes the model object and returns the coefficients. 
+\item{coeffun}{function that takes the model object and returns the coefficients.
 Useful when \code{coef()} does not return all coefficients (e.g. \code{survreg}).}
 
 \item{...}{additional parameters passed on to model fit such as weights.}
