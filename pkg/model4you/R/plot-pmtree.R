@@ -140,11 +140,10 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #'
 #' ## example taken from ?glm (modified version)
 #' data(anorexia, package = "MASS")
-#' anorexia$treatment <- anorexia$Treat != "Cont"
+#' anorexia$treatment <- factor(anorexia$Treat != "Cont")
 #' anorex.1 <- glm(Postwt ~ treatment + offset(Prewt),
 #'                 family = gaussian, data = anorexia)
 #' lm_plot(anorex.1)
-#'
 #'
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export

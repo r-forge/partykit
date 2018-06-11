@@ -98,19 +98,19 @@ No data given. I'm using data set simdata_s from the current environment parent.
 +                    fun = coeffun)
 > summary(coefs_wb)
   (Intercept)          aA               scale          median_s0    
- Min.   :1.833   Min.   :-0.18204   Min.   :0.1246   Min.   :5.579  
- 1st Qu.:1.971   1st Qu.: 0.02887   1st Qu.:0.1793   1st Qu.:6.627  
- Median :1.995   Median : 0.09685   Median :0.2067   Median :6.839  
- Mean   :1.989   Mean   : 0.08811   Mean   :0.2104   Mean   :6.772  
- 3rd Qu.:2.018   3rd Qu.: 0.15046   3rd Qu.:0.2353   3rd Qu.:6.970  
- Max.   :2.064   Max.   : 0.37519   Max.   :0.3411   Max.   :7.336  
+ Min.   :1.865   Min.   :-0.19163   Min.   :0.1189   Min.   :5.726  
+ 1st Qu.:1.972   1st Qu.: 0.02691   1st Qu.:0.1713   1st Qu.:6.640  
+ Median :1.993   Median : 0.09052   Median :0.2071   Median :6.849  
+ Mean   :1.987   Mean   : 0.08881   Mean   :0.2079   Mean   :6.766  
+ 3rd Qu.:2.016   3rd Qu.: 0.18074   3rd Qu.:0.2348   3rd Qu.:6.961  
+ Max.   :2.060   Max.   : 0.31687   Max.   :0.3339   Max.   :7.481  
    median_s1      median_sdiff    
- Min.   :5.556   Min.   :-1.1437  
- 1st Qu.:6.861   1st Qu.: 0.1988  
- Median :7.544   Median : 0.6617  
- Mean   :7.430   Mean   : 0.6580  
- 3rd Qu.:7.993   3rd Qu.: 1.1185  
- Max.   :9.075   Max.   : 2.6604  
+ Min.   :5.522   Min.   :-1.2053  
+ 1st Qu.:6.850   1st Qu.: 0.1870  
+ Median :7.373   Median : 0.6193  
+ Mean   :7.440   Mean   : 0.6739  
+ 3rd Qu.:8.074   3rd Qu.: 1.2791  
+ Max.   :9.123   Max.   : 2.4165  
 > 
 > 
 > ## Variable importance
@@ -120,8 +120,8 @@ No data given. I'm using data set simdata_s from the current environment parent.
 276.42033  94.80836  56.22248  76.87214  49.14115 
 > (vi_wb <- varimp(frst_wb))
        z1        z2        z3        z4        z5 
-138.89357  61.41739  39.61967  31.26725  29.62056 
+175.05534  55.50342  30.40423  26.41688  38.69822 
 > 
 > proc.time()
    user  system elapsed 
- 17.349   0.060  17.404 
+ 16.864   0.059  16.922 
