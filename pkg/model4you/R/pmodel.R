@@ -46,8 +46,8 @@ pmodel <- function(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coe
     ## return model or coefficients
     fun(pmod)
   }
-  
   ret <- apply(pweights, 2, get_pmod)
+
   if(class(ret) == "matrix") ret <- t(ret)
   if(all.equal(fun, identity) == TRUE) class(ret) <- c("pmodel_identity", class(ret))
   class(ret) <- c("pmodel", class(ret))
