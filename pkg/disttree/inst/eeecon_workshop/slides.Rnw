@@ -1,0 +1,2107 @@
+\documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
+\usetheme[nototalframenumber, noslidenumber]{uibk}
+
+\title{Flexible Probabilistic Forecasting with Distributional Trees and Forests}
+\author{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
+%\author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
+\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+\URL{https://R-Forge.R-project.org/projects/partykit/}
+\headerimage{3}
+
+
+\setbeamertemplate{caption}{\insertcaption} 
+%% includes a replacement for \usepackage{Sweave}
+\usepackage{changepage}
+\usepackage{amsmath,tikz}
+\usepackage{calc}
+\usepackage{graphicx}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
+\graphicspath{{plots/}}
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+
+ 
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+
+set.seed(7)
+
+# setwd("~/svn/partykit/pkg/disttree/inst/eeecon_workshop")
+library("ggplot2")
+theme_set(theme_bw(base_size = 18))
+library("disttree")
+#library("partykitR1")
+library("gamlss")
+library("lattice")
+library("crch")
+library("latex2exp")
+library("parallel")
+library("RainTyrol")
+library("gamlss.cens")
+gen.cens(NO, type = "left")
+
+## HCL palette
+pal <- hcl(c(10, 128, 260), 100, 50)
+names(pal) <- c("forest", "tree", "gamlss")
+
+pallight <- hcl(c(10, 128, 260), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss")
+
+transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
+
+
+
+######## data generating process based on a predefined tree or a parameter function
+# if tree: 2 splits => 3 terminal nodes
+# 10 split variables (x1, ..., x10) are available (5 numeric, 2 binary, 3 categorical)
+#
+# input: n            ..... nr of observations
+#        family       ..... distribution of the generated observations
+#        split.matrix ..... indices of the variables used for the splits together with the corresponding split points
+#        parm.matrix  ..... set of distribution parameters for each subgroup
+#        fun          ..... parameter function
+#
+# output: data.frame with generated observations y (generated seperatly in each subgroups with given distributions parameters),
+#                         the given split variables x1, ..., x10 for each observation and
+#                         the index of the subgroup for each observation or
+#                         the distribution parameter for each observation
+
+# FIX: until now only complete lists can be handed over (dist_list...)
+dgp <- function(n, family = dist_list_normal, 
+                fun = NULL,
+                split.matrix = matrix(nrow = 2, ncol = 2), 
+                par.matrix = matrix(nrow = 3, ncol = 2), 
+                round.sp = 3)
+{
+  
+  # generating the possible split variables
+  x1 <- runif(n,-0.4,1)
+  x2 <- runif(n,-10,10)
+  x3 <- runif(n,0,100)
+  x4 <- x1 + rnorm(n, sd = 0.1)
+  x5 <- x1 + rnorm(n, sd = 0.3)
+  x6 <- rbinom(n,1,0.5)
+  x7 <- rbinom(n,1,0.5)
+  x8 <- sample(1:4, n, replace = TRUE) 
+  x9 <- sample(1:5, n, replace = TRUE) 
+  x10 <- sample(1:7, n, replace = TRUE)
+  #x11 <- runif(n,-0.5,1)
+  x <- cbind(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+  # reduce nr of possible split points by rounding values of split variables
+  x <- round(x, digits = round.sp)
+  
+  y <- vector(mode = "numeric", length = n)
+  
+  # getting the random function
+  if(is.function(family)) family <- family()
+  if(inherits(family, "gamlss.family")) {
+    rfun <- get(paste0("r",family$family[[1]]))
+  } else {
+    if(family$family.name == "Normal Distribution") rfun <- rNO
+    if(family$family.name == "censored Normal Distribution") rfun <- rNO
+    if(family$family.name == "Poisson Distribution") rfun <- rPO
+    if(family$family.name == "Weibull Distribution") rfun <- survival:::rsurvreg 
+  }
+  
+  
+  if(is.null(fun)) {
+    index <- vector(mode = "numeric", length = n)
+    sv = split.matrix[,1]    # index of split variables
+    sp = split.matrix[,2]    # split points
+    par = par.matrix
+    
+    # splitting based on the given split variables and split points and
+    # generating the observations seperatly for each subgroup (with the corresponding given distribution parameters)
+    for(k in 1:n){
+      if(x[k, sv[1]] <= sp[1]){
+        y[k] <- do.call(rfun, as.list(c(1,par[1,])))
+        index[k] <- 2L
+      } else {
+        if(x[k, sv[2]] <= sp[2]){
+          y[k] <- do.call(rfun, as.list(c(1,par[2,]))) 
+          index[k] <- 4L
+        } else {
+          y[k] <- do.call(rfun, as.list(c(1,par[3,])))
+          index[k] <- 5L
+        }
+      }
+    }
+    d <- as.data.frame(cbind(y, x, index))
+    colnames(d) <- c("y", paste0("x", c(1:10)), "index")
+    
+  } else {
+    
+    dpar <- fun(x)
+    
+    if(!(family$family.name == "Poisson Distribution")){
+      y <- rfun(n, dpar[,1], dpar[,2])
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "mu", "sigma")
+    } else {
+      y <- rfun(n, dpar)
+      d <- as.data.frame(cbind(y, x, dpar))
+      colnames(d) <- c("y", paste0("x", c(1:10)), "lambda")
+    }
+  }
+  
+  
+  if(family$family.name == "censored Normal Distribution") {
+    #d$ystar <- d$y
+    d$y <- pmax(d$y, 0)
+  }
+  
+  return(d)
+}
+
+
+
+
+
+
+############################################ 
+# parameter functions
+
+### plotting function for one data set
+plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par = FALSE, g.par = FALSE, dt.par = FALSE, all.var = FALSE) 
+{
+  plotdata <- cbind(learndata[,c("y","x1","mu","sigma")],
+                    df$fitted.par,
+                    dt$fitted.par,
+                    #coef(dt)[paste(dt$fitted[,1]),],
+                    g$mu.fv, g$sigma.fv)
+  
+  colnames(plotdata) <- c("y","x1","true.mu","true.sigma", 
+                          "fitted.mu.df","fitted.sigma.df",
+                          "fitted.mu.dt","fitted.sigma.dt",
+                          "fitted.mu.g","fitted.sigma.g")
+  sp <- plotdata[order(plotdata["x1"]),]
+  
+
+  if(!(any(dt.par, df.par, g.par, all.par, all.var))){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "True parameters", cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+  col = transpgrey, border = "transparent")
+    #lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", lty = 1, col = 'grey')
+    #lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", lty = 1, col = 'grey')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$')), 
+    #       col = c('black', transpgrey), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # disttree
+  if(dt.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "disttree", col.main = pal["tree"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = 'greenyellow')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey', pal["tree"], pallight["tree"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # distforest
+  if(df.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", main = "distforest", col.main = pal["forest"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = 'orange')
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = 'orange')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')), 
+    #       col = c('black','grey',pal["forest"], pallight["forest"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+
+  
+  # gamlss
+  if(g.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey",  main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, xaxt="n", yaxt="n", xlab = "", ylab = "")
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'grey')
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2.5)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = 'lightblue')
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\mu \\pm \\sigma$'), 
+    #                    TeX('$\\hat{\\mu}$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$')),  
+    #       col = c('black','grey',pal["gamlss"], pallight["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+  # disttree vs. distforest vs. gamlss
+  if(all.par){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
+    lines(x = sp$x, y = sp$true.mu, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$fitted.mu.dt, type = "l", col = pal["tree"], lwd = 2)
+    lines(x = sp$x, y = sp$fitted.mu.df, type = "l", col = pal["forest"], lwd = 2)
+    lines(x = sp$x, y = sp$fitted.mu.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #legend('topleft', c(TeX('$\\mu$'), TeX('$\\hat{\\mu}$ disttree'),
+    #                    TeX('$\\hat{\\mu}$ distforest'), TeX('$\\hat{\\mu}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+    legend(x = -0.5, y = 13.95, expression(mu), bty = "n")
+  }
+  
+  # variance: disttree vs. distforest vs. gamlss
+  if(all.var){
+    par(mar=c(5.1,4.1,4.1,3.1))
+    plot(y = sp$y, x = sp$x, type = "p", col="grey", xaxt="n", yaxt="n", xlab = "", ylab = "")
+    title(main = "disttree", col.main = pal["tree"], cex.main = 1.2, font.main = 2, adj = 0.19)
+    title(main = "distforest", col.main = pal["forest"], cex.main = 1.2, font.main = 2, adj = 0.5)
+    title(main = "gamlss", col.main = pal["gamlss"], cex.main = 1.2, font.main = 2, adj = 0.8)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.35)
+    title(main = "vs.", col.main = "black", cex.main = 1.2, font.main = 2, adj = 0.65)
+    
+    #polygon(c(sp$x, rev(sp$x)), c(sp$true.mu + sp$true.sigma, rev(sp$true.mu - sp$true.sigma)),
+    #col = transpgrey, border = "transparent")
+    lines(x = sp$x, y = sp$true.mu + sp$true.sigma, type = "l", col = 'black')
+    lines(x = sp$x, y = sp$true.mu - sp$true.sigma, type = "l", col = 'black')
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.dt + sp$fitted.sigma.dt, rev(sp$fitted.mu.dt - sp$fitted.sigma.dt)),
+  col = pallight["tree"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.dt + sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.dt - sp$fitted.sigma.dt, type = "l", col = pal["tree"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.df + sp$fitted.sigma.df, rev(sp$fitted.mu.df - sp$fitted.sigma.df)),
+  col = pallight["forest"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.df + sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.df - sp$fitted.sigma.df, type = "l", col = pal["forest"], lwd = 2)
+    polygon(c(sp$x, rev(sp$x)), c(sp$fitted.mu.g + sp$fitted.sigma.g, rev(sp$fitted.mu.g - sp$fitted.sigma.g)),
+  col = pallight["gamlss"], border = "transparent")
+    #lines(x = sp$x, y = sp$fitted.mu.g + sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #lines(x = sp$x, y = sp$fitted.mu.g - sp$fitted.sigma.g, type = "l", col = pal["gamlss"], lwd = 2)
+    #legend('topleft', c(TeX('$\\mu \\pm \\sigma$'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ disttree'),
+    #                    TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ distforest'), TeX('$\\hat{\\mu} \\pm \\hat{\\sigma}$ gamlss')), 
+    #       col = c('black',pal["tree"],pal["forest"],pal["gamlss"]), lty = 1, bty = "n", lwd = 2.5)
+  legend(x = -0.5, y = 14, expression(mu %+-% sigma), bty = "n")
+  }
+  
+}
+
+@
+
+
+
+
+\begin{document}
+
+\section{Distributional Trees and Forests}
+
+\begin{frame}[fragile]
+\frametitle{Statistical Modeling}
+\visible<2,3, 5-> {Assumption:}
+\vspace{-0.7cm}
+\begin{center}
+\begin{tikzpicture}
+\visible<2,3, 5-> {\node[] at (0,0.4) {X};}
+\visible<4>{
+\node[inner sep=0pt] (today) at (-1.8,-0.4)
+    {\includegraphics[width=.365\textwidth]{today.png}};
+\node[font=\scriptsize] at (-1.9,-2) {2018-03-15};
+}
+\visible<2->{
+\draw[->] (0.4,0.4)--(0.9,0.4);
+\draw[] (1,0) rectangle (2.5,0.8);
+\node[font=\scriptsize] at (1.75,0.4) {nature};
+\draw[->] (2.6,0.4)--(3.1,0.4);
+}
+\visible<2,3, 5->{
+\node[] at (3.5,0.4) {Y};
+}
+\visible<4>{
+\node[inner sep=0pt] (future) at (5.3,-0.4)
+    {\includegraphics[width=.365\textwidth]{future.png}};
+\node[font=\scriptsize] at (5.4,-2) {2018-03-16};
+}
+\end{tikzpicture}
+\end{center}
+\visible<3, 5->{
+\vspace{-2cm}
+Approximation of reality based on a set of observations.\\
+}
+\visible<4>{
+\vspace{2cm}
+X = observed precipitation of today,\\
+\qquad current temperature / humidity / \dots,\\
+\qquad physical model output\\
+\vspace{0.15cm}
+Y = daily precipitation sums\\
+}
+
+\vspace{-3.5cm}
+\visible<6->{
+\textbf{Application/Motivation:}
+\begin{itemize}
+\item Prediction.
+\item Capturing dependencies and interactions.
+\end{itemize}
+}
+\vspace{0.5cm}
+\visible<7->{
+\textbf{Two main approaches / ``cultures'':}
+\begin{itemize}
+\item Data modeling.
+\item Algorithmic modeling.
+\end{itemize}
+}
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\frametitle{Data Modeling}
+\vspace{-0.1cm}
+\begin{center}
+\begin{tikzpicture}
+\node[] at (0,0.4) {X};
+\draw[->] (0.4,0.4)--(0.9,0.4);
+\draw[] (1,0) rectangle (2.5,0.8);
+\node[font=\scriptsize] at (1.75,0.4) {f(X; par)};
+\draw[->] (2.6,0.4)--(3.1,0.4);
+\node[] at (3.5,0.4) {Y};
+\end{tikzpicture}
+\end{center}
+\vspace{-0.4cm}
+\only<1-5>{
+\begin{itemize}
+\item Approximate data generating process up to a few unknown processes.
+\item Mathematical equations, model assumptions.
+\item Data: estimation of parameters.
+\end{itemize}
+}
+\only<6->{
+\vspace{1cm}
+Summary:
+\begin{itemize}
+\item Stochastic model to approximate data generating process.\\
+\only{$\Rightarrow$ fixed $f$.\\}
+\item Disadvantage: Risk of incorrect assumptions.
+\end{itemize}
+}
+\only<1>{\vspace{1cm}}
+
+\vspace{0.1cm}
+
+\visible<2-5>{
+\begin{minipage}{0.65\textwidth}
+\textbf{Example:} 
+\only<2-3>{Linear model}\only<4>{Generalized additive model}\only<5-6>{Generalized additive model\\ for location, scale, and shape}
+\\
+\only<2-3>{
+$$\visible<3>{\mathbb{E}(Y|X) = } f(X; \alpha) = \alpha_0 + \alpha_1 \cdot X$$  
+\vspace{0.15cm}
+}
+\only<4>{
+$$\mathbb{E}(Y|X) = f(X; \alpha) = \alpha + s(X)$$  
+\vspace{0.15cm}
+}
+\only<5>{
+\vspace{-1.29cm}
+
+\begin{align*}
+\visible<5>{\mathbb{E}(Y|X) = }\mu(X) = \alpha_{\mu} + s_{\mu}(X)\\  
+\visible<5>{\sqrt{Var(Y|X)} = }\sigma(X) = \alpha_{\sigma} + s_{\sigma}(X)
+\end{align*}
+}
+\end{minipage}
+%\vspace{-0.6cm}
+%\hfill
+\begin{minipage}{0.3\textwidth}
+<<motivation_GLM, echo=FALSE, results=hide>>=
+nobs <- 200
+## GLM
+set.seed(7)
+x <- c(1:nobs)/nobs
+ytrue <- 1+x*1.5
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+\only<2-3>{
+<<plot_motivation_GLM_single, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+@
+}
+<<motivation_GAM, echo=FALSE, results=hide>>=
+## GAM
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3 
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+\only<4>{
+<<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+@
+}
+<<motivation_GAMLSS, echo=FALSE, results=hide>>=
+## GAMLSS
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3
+var <- exp(-(2*x)^2)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+@
+\only<5>{
+<<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = pallight["forest"], border = "transparent")
+lines(x, ytrue, col = pal["forest"], lwd=7)
+points(x, y, col = "slategray", pch = 19)
+box(lwd = 5)
+@
+}
+\end{minipage}
+}
+\end{frame}
+
+
+<<raintree, echo=FALSE, results=hide>>=
+load("weather.rda")
+#d <- data.frame(rain24 = numeric(0), rain = logical(0), wind = numeric(0), 
+#                humidity = numeric(0), airpressure = numeric(0), temperature = numeric(0))
+
+sp_rain <- partysplit(2L, index = 1:2)
+sp_humidity <- partysplit(4L, breaks = 70)
+
+pn <- partynode(1L, split = sp_rain, kids = list(
+  partynode(2L, split = sp_humidity, kids = list(
+      partynode(3L, info = "4 mm/24h"),
+      partynode(4L, info = "9 mm/24h"))),
+  partynode(5L, info = "15 mm/24h")))
+
+p <- party(pn, weather)
+@
+<<motivation_regtree, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(7)
+kappa <- 12
+nobs <- 120
+x <- c(1:nobs)/nobs
+ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- 
+  ytree_up <- ytree_up2 <- ytree_up3 <- ytree_up4 <- 
+  yforest <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<0.55) 4 else 4+5*plogis(kappa*(3*(x[i]-0.36)-1))
+y <- ytrue + rnorm(nobs,0,2)
+y_up <- rep.int(15, length(x)) + rnorm(nobs,0,1)
+for(i in 1:nobs) ytree[i] <- if(x[i]<0.7) 4 else 9
+for(i in 1:nobs) ytree2[i] <- if(x[i]<0.63) 4.3 else 9.4
+for(i in 1:nobs) ytree3[i] <- if(x[i]<0.75) 3.7 else 9.2
+for(i in 1:nobs) ytree4[i] <- if(x[i]<0.55) 4.4 else 8.7
+ytree_up <- rep.int(15, length(x))
+ytree_up2 <- rep.int(14.5, length(x))
+ytree_up3 <- rep.int(15.3, length(x))
+ytree_up4 <- rep.int(15.5, length(x))
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.63) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
+@
+<<motivation_randforest, echo=FALSE, results=hide>>=
+## Random Forest
+#%for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Algorithmic Modeling}
+\vspace{-0.1cm}
+\begin{center}
+\begin{tikzpicture}
+\node[] at (0,0.4) {X};
+\draw[->] (0.4,0.4)--(0.9,0.4);
+\draw[] (1,0) rectangle (2.5,0.8);
+\node[font=\scriptsize] at (1.75,0.4) {nature};
+\draw[->] (2.6,0.4)--(3.1,0.4);
+\node[] at (3.5,0.4) {Y};
+\draw[<->] (0.1,0.1) .. controls (0.2, -0.4) and (0.4, -0.5) .. (0.8,-0.5);
+\draw[<->] (2.7,-0.5) .. controls (3.1, -0.5) and (3.3, -0.4) .. (3.4,0.1);
+\node[font=\scriptsize] at (1.75,-0.5) {algorithm};
+\end{tikzpicture}
+\end{center}
+\vspace{-0.4cm}
+\visible<2->{
+\begin{itemize}
+\item Flexible approximation with no/few assumptions. %\\
+%$\Rightarrow$ no fixed $f$.
+\item Data-driven model fitting.
+\end{itemize}
+}
+\only<2>{\vspace{1cm}}
+\visible<3->{
+\begin{minipage}{0.6\textwidth}
+%\vspace{-0.5cm}
+\textbf{Example:} \only<3>{Tree model}\only<4-10>{Subsampling}\only<3>{\\}\only<11->{Forest model}\\
+%\vspace{-0.8cm}
+\begin{center}
+\only<3>{
+\vspace{-0.96cm}
+\resizebox{0.6\textwidth}{!}{
+<<plot_raintree, fig=TRUE, echo=FALSE, width=4, height=2.7>>=
+par(mar=c(0,0,0,0), oma=c(0,0,0.4,0))
+paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+plot(p,
+     tp_args = list(FUN = identity, width = 9, fill = paltrees[c(1, 3)]), 
+     ip_args = list(fill = paltrees[c(2, 3)]),
+     drop_terminal = TRUE, tnex = 1)
+@
+}
+
+\vspace{-0.7cm}
+\begin{flushleft}
+\noindent {\small X = rain now, humidity\\
+Y = rain 24h}
+\end{flushleft}}
+\only<4->{
+\vspace{-0.5cm}
+\resizebox{0.55\textwidth}{!}{
+\begin{tikzpicture}
+%\draw[ellipse, draw=black, align=center, scale = 0.7, minimum width=170pt, minimum height = 35pt] (set) at (1, 3) {};
+\draw[gray,rounded corners=10pt] (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\draw[gray] (1,3.5) ellipse (3 and 0.8);
+\begin{scope}
+\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\clip (1,3.5) ellipse (3 and 0.8);
+\pgfmathsetseed{7}
+\foreach \p in {1,...,200} {\fill[gray] (1+3*rand,3.5+0.8*rand) circle (0.04);}
+\end{scope}
+\visible<5->{
+\node[ellipse, draw=black!50!green, align=center, minimum width=80pt, minimum height = 40pt, line width = 3pt] (subset1) at (0.1, 3.5) {};
+}
+\visible<7->{
+\node[ellipse, draw = blue, align=center, minimum width=100pt, minimum height = 30pt, line width = 3pt] (subset2) at (1.2, 3.6) {};
+}
+\visible<9->{
+\node[ellipse, draw = orange, align=center, minimum width=120pt, minimum height = 25pt, line width = 3pt] (subset3) at (1.6, 3.3) {};
+}
+\visible<6->{
+  \node[ellipse, fill=black!50!green, align=center] (n00) at (-1, 2) {};
+  \node[ellipse, fill=black!50!green, align=center] (n01) at (-1.25, 1.25) {};
+  \draw[-, line width=1pt] (n00) -- (n01);
+  \node[rectangle, fill=black!50!green, align=center] (n02) at (-1.5, 0.5) {};
+  \draw[-, line width=1pt] (n01) -- (n02);
+  \node[rectangle, fill=black!50!green, align=center] (n03) at (-1, 0.5) {};
+  \draw[-, line width=1pt] (n01) -- (n03);
+  \node[rectangle, fill=black!50!green, align=center] (n04) at (-0.5, 0.5) {};
+  \draw[-, line width=1pt] (n00) -- (n04);
+}
+\visible<8->{
+  \node[ellipse, fill=blue, align=center] (n10) at (1, 2) {};
+  \node[ellipse, fill=blue, align=center] (n11) at (0.75, 1.25) {};
+  \draw[-, line width=1pt] (n10) -- (n11);
+  \node[rectangle, fill=blue, align=center] (n12) at (0.5, 0.5) {};
+  \draw[-, line width=1pt] (n11) -- (n12);
+  \node[rectangle, fill=blue, align=center] (n13) at (1, 0.5) {};
+  \draw[-, line width=1pt] (n11) -- (n13);
+  \node[rectangle, fill=blue, align=center] (n14) at (1.5, 0.5) {};
+  \draw[-, line width=1pt] (n10) -- (n14);
+}
+\visible<10->{
+  \node[ellipse, fill=orange, align=center] (n20) at (3, 2) {};
+  \node[ellipse, fill=orange, align=center] (n21) at (2.75, 1.25) {};
+  \draw[-, line width=1pt] (n20) -- (n21);
+  \node[rectangle, fill=orange, align=center] (n22) at (2.5, 0.5) {};
+  \draw[-, line width=1pt] (n21) -- (n22);
+  \node[rectangle, fill=orange, align=center] (n23) at (3, 0.5) {};
+  \draw[-, line width=1pt] (n21) -- (n23);
+  \node[rectangle, fill=orange, align=center] (n24) at (3.5, 0.5) {};
+  \draw[-, line width=1pt] (n20) -- (n24);
+}
+\visible<11->{
+\draw[-, line width=1pt] (-1, -0.2) -- (0.2,-0.7);
+\draw[-, line width=1pt] (1, -0.2) -- (1,-0.7);
+\draw[-, line width=1pt] (3, -0.2) -- (1.8,-0.7);
+\node[rectangle, align=center] (combine) at (1, -1) {\large average};
+}
+\end{tikzpicture}
+}
+}
+\end{center}
+\end{minipage}
+\hspace{-1cm}
+\begin{minipage}{0.4\textwidth}
+\begin{center}
+\vspace{0.1cm}
+
+\only<3-5>{
+%\vspace{0.01cm}
+<<plot_motivation_regtree, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
+@
+}
+\only<6-7>{
+%\vspace{0.01cm}
+\hspace{-0.2cm}
+<<plot_motivation_randforest1, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
+@
+}
+\only<8-9>{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
+<<plot_motivation_randforest2, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree3, col = "blue", lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up3, col = "blue", lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
+@
+}
+\only<10>{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
+<<plot_motivation_randforest3, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+lines(x = x, y = ytree2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree3, col = "blue", lwd=7)
+lines(x = x, y = ytree_up2, col = pal["tree"], lwd=7)
+lines(x = x, y = ytree_up3, col = "blue", lwd=7)
+lines(x = x, y = ytree4, col = "orange", lwd=7)
+lines(x = x, y = ytree_up4, col = "orange", lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
+@
+}
+\only<11->{
+%\vspace{0.01cm}
+\hspace{-0.3cm}
+<<plot_motivation_randforest4, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=7)
+lines(x = x, y = yforest, col = pal["forest"], lwd=7)
+mtext("rain", side = 4, las = TRUE, at = 16, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 14.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("no", side = 4, las = TRUE, at = 10.3, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain", side = 4, las = TRUE, at = 9, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("now", side = 4, las = TRUE, at = 7.7, line = 0.5, cex = 2.5, col = pal["forest"])
+mtext("rain 24h", side = 2, las = FALSE, line = 1, cex = 3)
+mtext("humidity", side = 1, line = 1.5, cex = 3)
+@
+}
+\end{center}
+\end{minipage}
+}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Goals}
+\vspace{-0.4cm}
+\begin{minipage}{0.7\textwidth}
+\textbf{Available:} \\
+\vspace{-0.5 cm}
+\begin{itemize}
+  \item Distributional regression:\\
+  Probabilistic forecast.
+  \item Regression trees:\\
+  Automatic detection of abrupt changes,
+  and selection of variables/interactions.
+  \item Random forests:\\
+  Smoothing and regularization.
+\end{itemize}
+
+\vspace{1cm}
+
+\visible<2->{
+\textbf{Missing:} Synthesis
+
+\vspace{0.2cm}
+
+$\Rightarrow$ Distributional trees and forests
+
+\vspace{0.1cm}
+
+}
+\end{minipage}
+<<motivation_GAMLSS_syn, echo=FALSE, results=hide>>=
+## GAMLSS
+set.seed(7)
+nobs <- 200
+x_g <- c(1:nobs)/nobs
+x_g <- 2*(x_g-0.5)
+ytrue_g <- x_g^3
+var_g <- exp(-(2*x_g)^2)/2
+y_g <- ytrue_g + rnorm(nobs, 0, 0.1 + var_g)
+@
+<<motivation_regtree_syn, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(74)
+nobs <- 170
+kappa <- 12
+x <- c(1:nobs)/nobs
+ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- ytree_up <- yforest <- var <- var_up <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<0.2) 4 else 4+5*plogis(kappa*(3*(x[i]-0.33)-1))
+ytrue_up <- rep.int(15, length(x))
+for(i in 1:nobs) var_up[i] <- if(x[i]<0.15) 3 else (if(x[i]<0.35) 2 else (if(x[i]<0.5) 2 else (if(x[i]<0.7) 1 else (if(x[i]<0.8) 1.5 else (if(x[i]<0.9) 2 else (2.5))))))
+for(i in 1:nobs) var[i] <- if(x[i]<0.15) 4 else (if(x[i]<0.2) 3 else (if(x[i]<0.25) 2 else (if(x[i]<0.4) 1 else (if(x[i]<0.8) 2 else (if(x[i]<0.9) 2.5 else (3))))))
+y <- ytrue + rnorm(nobs,0, sqrt(var))
+y_up <- ytrue_up + rnorm(nobs,0, sqrt(var_up))
+for(i in 1:nobs) ytree[i] <- if(x[i]<0.7) 4 else 9
+ytree_up <- rep.int(15, length(x))
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.55) 4 else {if(x[i]<0.6) 5 else {if(x[i]<0.7) 6.5 else {if(x[i]<0.75) 8 else 9}}}
+@
+\begin{minipage}{0.25\textwidth}
+\vspace{0.4cm}
+<<plot_motivation_GAMLSS_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
+plot(x_g, y_g, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x_g, rev(x_g)), c(ytrue_g + 0.1 + var_g, rev(ytrue_g - 0.1 - var_g)),
+  col = pallight["forest"], border = "transparent")
+lines(x_g, ytrue_g, col = pal["forest"], lwd=10)
+points(x_g, y_g, col = "slategray", pch = 19)
+box(lwd = 5)
+@
+
+<<plot_motivation_regtree_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree, col = pal["forest"], lwd=10)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
+@
+
+<<plot_motivation_randforest4_syn, fig=TRUE, echo=FALSE, width=8.5>>=
+par(mar=c(1,0,1,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
+lines(x = x, y = yforest, col = pal["forest"], lwd=10)
+@
+
+\vspace{0.2cm}
+
+\visible<2->{
+<<plot_motivation_distforest, fig=TRUE, echo=FALSE, width=6>>=
+par(mar=c(0,0,3,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19,
+     ylim = c(min(c(y,y_up)), max(c(y,y_up))))
+polygon(c(x, rev(x)), c(yforest + var, rev(yforest - var)),
+  col = pallight["forest"], border = "transparent")
+polygon(c(x, rev(x)), c(ytrue_up + var_up, rev(ytrue_up - var_up)),
+  col = pallight["forest"], border = "transparent")
+points(x=x, y = y_up, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytree_up, col = pal["forest"], lwd=10)
+lines(x = x, y = yforest, col = pal["forest"], lwd=10)
+@
+}
+\end{minipage}
+\end{frame}
+
+
+
+
+
+<<dgp_tree, echo=FALSE, results=hide>>=
+data <- data.frame(x = numeric(0), x = numeric(0), x = numeric(0))
+names(data) <- c("x","x","x")
+fig <- party(
+  partynode(1L,
+            split = partysplit(2L, breaks = 0.4),
+            kids = list(
+              partynode(2L, info = c(
+                "n = 200",
+                "   True parameters:   ",
+                expression(mu == '4'),
+                expression(sigma == '1')
+              )),
+              partynode(3L,
+                        split = partysplit(3L, breaks = 0.8),
+                        kids = list(
+                          partynode(4L, info = c(
+                            "n = 200",
+                            "   True parameters:   ",
+                            expression(mu == '12'),
+                            expression(sigma == '3')
+                          )),
+                          partynode(5L, info = c(
+                            "n = 100",
+                            "   True parameters:   ",
+                            expression(mu == '4'),
+                            expression(sigma == '3')
+                          )))))),
+  data
+)
+
+
+node_inner_ext <- function (obj, id = TRUE, pval = TRUE, abbreviate = FALSE, fill = "white", 
+    gp = gpar()) 
+{
+    meta <- obj$data
+    nam <- names(obj)
+    extract_label <- function(node) {
+        if (is.terminal(node)) 
+            return(rep.int("", 2L))
+        varlab <- character_split(split_node(node), meta)$name
+        if (abbreviate > 0L) 
+            varlab <- abbreviate(varlab, as.integer(abbreviate))
+        if (pval) {
+            nullna <- function(x) is.null(x) || is.na(x)
+            pval <- suppressWarnings(try(!nullna(info_node(node)$p.value), 
+                silent = TRUE))
+            pval <- if (inherits(pval, "try-error")) 
+                FALSE
+            else pval
+        }
+        if (pval) {
+            pvalue <- node$info$p.value
+            plab <- ifelse(pvalue < 10^(-3L), paste("p <", 10^(-3L)), 
+                paste("p =", round(pvalue, digits = 3L)))
+        }
+        else {
+            plab <- ""
+        }
+        return(c(varlab, plab))
+    }
+    maxstr <- function(node) {
+        lab <- extract_label(node)
+        klab <- if (is.terminal(node)) 
+            ""
+        else unlist(lapply(kids_node(node), maxstr))
+        lab <- c(lab, klab)
+        lab <- unlist(lapply(lab, function(x) strsplit(x, "\n")))
+        lab <- lab[which.max(nchar(lab))]
+        if (length(lab) < 1L) 
+            lab <- ""
+        return(lab)
+    }
+    nstr <- maxstr(node_party(obj))
+    if (nchar(nstr) < 6) 
+        nstr <- "aAAAAa"
+    rval <- function(node) {
+        node_vp <- viewport(x = unit(0.5, "npc"), y = unit(0.5, 
+            "npc"), width = unit(1, "strwidth", nstr) * 1.3, 
+            height = unit(3, "lines"), name = paste("node_inner", 
+                id_node(node), sep = ""), gp = gp)
+        pushViewport(node_vp)
+        xell <- c(seq(0, 0.2, by = 0.01), seq(0.2, 0.8, by = 0.05), 
+            seq(0.8, 1, by = 0.01))
+        yell <- sqrt(xell * (1 - xell))
+        xell <- xell*1.11 - 0.055             # to adapt size of the ellipse to the size with p-value
+        lab <- extract_label(node)
+        fill <- rep(fill, length.out = 2L)
+        grid.polygon(x = unit(c(xell, rev(xell)), "npc"), y = unit(c(yell, 
+            -yell) + 0.5, "npc"), gp = gpar(fill = fill[1]))
+        grid.text(lab[1L], y = unit(1.5 + 0.5,                  # to adapt position of x to its position with p-value
+            "lines"))
+        #grid.text(lab[1L], y = unit(1.5 + 0.5 * (lab[2L] != ""), 
+        #    "lines"))
+        grid.text(lab[2L], y = unit(1, "lines"))
+        if (id) {
+            nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, 
+                "npc"), width = max(unit(1, "lines"), unit(1.3, 
+                "strwidth", nam[id_node(node)])), height = max(unit(1, 
+                "lines"), unit(1.3, "strheight", nam[id_node(node)])))
+            pushViewport(nodeIDvp)
+            grid.rect(gp = gpar(fill = fill[2]))
+            grid.text(nam[id_node(node)])
+            popViewport()
+        }
+        upViewport()
+    }
+    return(rval)
+}
+
+class(node_inner_ext) <- "grapcon_generator"
+
+
+@
+
+<<tree, echo=FALSE, results=hide>>=
+set.seed(7)
+nobs <- 500
+x <- runif(nobs, 0, 1)
+mu <- sigma <- ytrue <- numeric(length = nobs)
+for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+y <- rnorm(nobs, mean = mu, sd = sigma)
+#y <- rcnorm(nobs, mean = mu, sd = sigma, left = 0)
+ytrue <- mu
+data <- data.frame(cbind(y,x, ytrue))
+tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
+#tree <- disttree(y ~ x, data = data, family = dist_list_cens_normal)
+@
+
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;} 
+
+\begin{frame}[fragile]
+\frametitle{Distributional Tree}
+\begin{minipage}{0.78\textwidth}
+\begin{center}
+\vspace{0.2cm}
+\visible<1->{
+Model: \code{disttree(y $\sim$ x)}\\
+}
+\vspace{-0.2cm}
+\only<1>{
+%\setkeys{Gin}{width=0.\linewidth, height=0.68\linewidth}
+<<plottree_estpar, fig=TRUE, echo=FALSE, width = 7>>=
+# function for output in terminal panels
+FUN <- function (x) 
+{
+  cf <- x$coefficients
+  cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), ""))
+  c(sprintf("n = %s", x$nobs), "Estimated parameters:", parse(text = paste0("mu == '", format(round(cf[1], 2), nsmall = 2), "'")), 
+                                                        parse(text = paste0("sigma == '", format(round(cf[2], 2), nsmall = 2), "'")))
+}
+
+paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+
+## plot version using FUN and tree of class 'disttree'
+plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
+     tp_args = list(fill = paltrees[c(1, 3)], width = 18), 
+     ip_args = list(fill = paltrees[c(2, 3)]))
+@
+}
+\only<2->{
+%\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
+<<plottree_dens, fig=TRUE, echo=FALSE, width = 7>>=
+node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
+                          main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
+                          fill = paltrees[c(1, 3)], col = "black", lwd = 0.5, ...) 
+{
+  yobs <- tree$data[,as.character(tree$info$formula[[2]])]
+  ylines <- 1.5
+  if (is.null(xscale)) xscale <- c(-5.1,22.5)
+  if (is.null(yscale)) yscale <- c(-0.05,0.45)
+  xr <- xscale
+  yr <- yscale
+  
+  if (horizontal) {
+    yyy <- xscale
+    xscale <- yscale
+    yscale <- yyy
+  }
+  
+  rval <- function(node) {
+    yrange <- seq(from = -20, to = 90)/4
+    ydens <- node$info$object$ddist(yrange)
+    
+    top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
+                                            widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
+                                            heights = unit(c(1, 1), c("lines", "null"))), 
+                       width = unit(1, "npc"), 
+                       height = unit(1, "npc") - unit(2, "lines"), 
+                       name = paste("node_density",node$id, sep = ""))
+    pushViewport(top_vp)
+    grid.rect(gp = gpar(fill = "white", col = 0))
+    top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+    pushViewport(top)
+    mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
+    
+    grid.text(mainlab)
+    popViewport()
+    plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
+                     xscale = xscale, yscale = yscale, 
+                     name = paste("node_density",  node$id, "plot", sep = ""))
+    pushViewport(plot)
+    yd <- ydens
+    xd <- yrange
+    if (horizontal) {
+      yyy <- xd
+      xd <- yd
+      yd <- yyy
+      yyy <- xr
+      xr <- yr
+      yr <- yyy
+      rxd <- rep(0, length(xd))
+      ryd <- rev(yd)
+    } else {
+      rxd <- rev(xd)
+      ryd <- rep(0, length(yd))
+    }
+    
+    if (rug) {
+      nodeobs <- node$info$object$y
+      if (horizontal) {
+        grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
+                  default.units = "native", just = c("right", "bottom"),
+		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+      } else {
+        grid.rect(x = nodeobs, y = yscale[1], 
+                  width = 0, height = abs(yscale[1]), default.units = "native", 
+                  just = c("center", "bottom"),
+		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+        #           default.units = "native")
+        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+        #           default.units = "native")
+      }
+    }
+
+    
+    grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
+              gp = gpar(col = "black", fill = fill, lwd = lwd))
+    #grid.lines(x = xd, y = yd, default.units = "native", 
+    #           gp = gpar(col = col, lwd = lwd))
+    grid.xaxis()
+    grid.yaxis()
+    grid.rect(gp = gpar(fill = "transparent"))
+    upViewport(2)
+  }
+  return(rval)
+}
+
+class(node_density) <- "grapcon_generator"
+
+plot(tree, tnex = 1.7, drop = TRUE,
+     terminal_panel = node_density,
+     tp_args = list(fill = paltrees[c(1, 3)]), 
+     ip_args = list(fill = paltrees[c(2, 3)]))
+@
+}
+\visible<1->{
+R~package~\code{disttree}
+}
+\end{center}
+\end{minipage}
+\begin{minipage}{0.21\textwidth}
+
+\vspace{1.9cm}
+
+\center
+\visible<3->{
+Algorithmic \\
+Modeling\\
+}
+
+\vspace{1.3cm}
+
+\visible<4->{
+Data \\
+Modeling
+}
+
+\vspace{1.4cm}
+
+\visible<5->{
+Combined \visible<6->{\checkmark}
+}
+\end{minipage}
+\end{frame}
+
+
+
+%<<densities, eval=TRUE, echo=FALSE, results=hide>>=
+%x <- c(-300:300)/100
+%set.seed(7)
+%y1 <- dnorm(x, mean = 0, sd = 0.7)
+%y2 <- dnorm(x, mean = 0.8, sd = 0.5)
+%y3 <- dnorm(x, mean = -0.7, sd = 1.2)
+%@
+
+%<<density1, fig=TRUE, echo=FALSE>>=
+%par(mar=c(0,0,0,0))
+%plot(x, y1, type = "l", col = "red", ylim = c(0,0.8), lwd=2,
+%     xaxt='n', yaxt='n')
+%@
+
+%<<density2, fig=TRUE, echo=FALSE>>=
+%par(mar=c(0,0,0,0))
+%plot(x, y2, type = "l", col = "red", ylim = c(0,0.8), lwd=2,
+%     xaxt='n', yaxt='n')
+%@
+
+%<<density3, fig=TRUE, echo=FALSE>>=
+%par(mar=c(0,0,0,0))
+%plot(x, y3, type = "l", col = "red", ylim = c(0,0.8), lwd=2,
+%     xaxt='n', yaxt='n')
+%@
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{frame}
+%\frametitle{Global Likelihood Estimation}
+%\begin{itemize}
+
+%\item Specify a parametric distribution family $F(\cdot;\theta)$ with parameter vector
+%  $\theta \in \Theta$ capturing location, scale, shape.
+
+%\item Log-likelihood function:
+%  \begin{eqnarray*}
+%  \ell(\theta; y) & = & \log(f(y; \theta))
+%  \end{eqnarray*}
+
+%\item Estimate $\hat{\bold{\theta}}$ via maximum likelihood
+%  based on a learning sample $y_1,\dots, y_n$:
+%\[
+%\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)
+%\]
+
+%% equivalent to solving 
+%% $$
+%% \sum_{i=1}^n \frac{\partial \ell}{\partial \theta}(\hat{\theta}; y_i) = \sum_{i=1}^n s(y_i, \hat{\theta}) = 0.
+%% $$
+%\end{itemize}
+
+
+%\end{frame}
+
+
+%\begin{frame}
+%\frametitle{Adaptive Local Likelihood Estimation}
+
+%\textbf{Idea:} Capture covariates through adaptive weights.
+%\[
+%\hat{\theta}(\bold{x}) = \argmax_{\theta \in \Theta} \sum_{i=1}^n w_i(\bold{x}) \cdot \ell%(\theta; y_i).
+%\]
+
+%\bigskip
+
+%\textbf{Question:} How to choose weighting function $w_i(\bold{x})$?
+
+%\bigskip
+
+%\textbf{Possible answers:} Based on learning sample $\{(y_i, \bold{x}_i)\}_{i=1, \dots, n}$ and (possibly new) observation $\bold{x}$.
+%\begin{itemize}
+%\item \emph{Tree:} $w_i(\bold{x}) \in \{0,1\}$ indicates whether $\bold{x}$ and $\bold{x}_i$ are classified into the same subgroup.
+%\item \emph{Forest:} $w_i(\bold{x}) \in  [0, 1]$ averages the weights for $\bold{x}$ and $\bold{x}_i$ across trees.
+%\end{itemize}
+
+%\textbf{Possible answers:} Based on learning sample $y_1, \dots, y_n$ and (possibly new) observation $\bold{x}$.
+%\begin{itemize}
+%\item \emph{Tree:} $w_i(\bold{x}) \in \{0,1\}$ indicates whether $\bold{x}$ and $y_i$ are classified into the same subgroup.
+%\item \emph{Forest:} $w_i(\bold{x}) \in  [0, 1]$ averages the weights for $\bold{x}$ and $y_i$ across trees.
+%\end{itemize}
+
+
+%\end{frame}
+
+
+\begin{frame}
+\frametitle{Building Distributional Trees and Forests}
+\begin{minipage}{0.7\textwidth}
+{\bf Tree:}
+\begin{enumerate}
+\item<3-> Fit global distributional model $\mathcal{D}(Y; \theta)$: \\ % to the whole data set:\\
+Estimate $\hat{\theta}$ via maximum likelihood\\
+$\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
+\item<7-> Test for associations/instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each covariate $X_i$.
+\end{enumerate}
+\end{minipage}
+\begin{minipage}{0.23\textwidth}
+%\vspace{-0.1cm}
+\begin{tikzpicture}
+\visible<2-3>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
+}
+\visible<4>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\mathcal{D}(Y;\hat{\theta}$)};
+}
+\visible<5->{
+\node[inner sep=0pt] (density1) at (0.8, 1.7)
+    {\includegraphics[width=0.6\textwidth]{density1.jpeg}};
+}
+\visible<6-8>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {?};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {?};
+\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1);
+\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2);
+}
+\visible<9-10>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$Y_2$};
+\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2) node [midway, right] {\scriptsize $X > p$};
+}
+\visible<11>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\mathcal{D}(Y_1;\hat{\theta_1}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$\mathcal{D}(Y_2;\hat{\theta_2}$)};
+}
+\visible<11->{
+\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2) node [midway, right] {\scriptsize $X > p$};
+}
+\visible<12->{
+\node[inner sep=0pt] (density2) at (-0.1,-0.1)
+    {\includegraphics[width=0.5\textwidth]{density2.jpeg}};
+}
+\visible<12->{
+\node[inner sep=0pt] (density3) at (1.7,-0.1)
+    {\includegraphics[width=0.5\textwidth]{density3.jpeg}};
+}
+\end{tikzpicture}
+\end{minipage}
+\vspace{0.1cm}
+%\begin{adjustwidth}{-0.0em}{-1em}
+\begin{enumerate}
+\setcounter{enumi}{2}
+\item<8-> Split along the covariate $X$ with strongest association or instability and at breakpoint $p$ with highest improvement \\
+in log-likelihood.
+\item<10-> Repeat steps 1--3 recursively until some stopping criterion \\
+is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
+\end{enumerate}
+%\end{adjustwidth}
+\vspace{0.4cm}
+\visible<13->{
+{\bf Forest:} Ensemble of $T$ trees.
+\begin{itemize}
+\item Bootstrap or subsamples.
+\item Random input variable sampling.
+\end{itemize}
+}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Adaptive Local Likelihood Estimation}
+
+Parameter estimator for a \only<1-3>{global}\only<4->{local} model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$}:
+
+\[
+\hat{\theta}\visible<2->{(\bold{x})} =  \argmax_{\theta \in \Theta} \sum_{i=1}^n \visible<2->{w_i(\bold{x}) \cdot} \ell(\theta; y_i)
+\]
+
+\bigskip
+
+\visible<3->{
+\textbf{Weights:}
+\begin{eqnarray*}
+w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.25cm]
+\visible<4->{
+w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.2cm]
+\visible<5->{
+w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
+\end{eqnarray*}
+}}}
+\end{frame}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SweaveOpts{eval=TRUE}
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{0.4cm}
+\textbf{Goal:} Predict daily precipitation amount in alpine regions.\\
+\medskip
+\textbf{Physical knowledge:} Numerical Weather Prediction (NWP) system.\\
+\medskip
+\textbf{Statistical post-processing} necessary due to uncertain initial conditions and unresolved processes.
+
+%Numerical Weather Prediction (NWP) based on a global physical model numerically simulating atmospheric processes on a $50\times 50 \text{km}^2$ grid.\\
+\end{frame}
+
+
+<<echo = FALSE, results=hide>>=
+library("zoo")
+
+Sys.setenv("TZ"="UTC")
+
+# -------------------------------------------------------------------
+# GFS ensemble forecast
+# -------------------------------------------------------------------
+
+GFS   <- read.table("ensemble_plot/GENS_00_innsbruck-flughafen.txt", header = TRUE)
+init  <- min(as.POSIXct(GFS$timestamp-GFS$step*3600,origin="1970-01-01"))
+title <- sprintf("%s\n%s",
+                 "Global Forecast System (GFS) Ensemble Forecast for Innsbruck, Airport",
+                 sprintf("Forecast initialized %s",strftime(init,"%Y-%m-%d %H:%M UTC")))
+
+# observations
+load("STAGEobs_tawes_11121.rda")
+# "2018-03-14 00:00:00" in line 321 (first entry for temperature)
+# "2018-03-13 06:00:00" in line 317 (first entry for rain -> aggregated to 24h sums)
+# "2018-03-23 00:00:00" in line 357
+obs <- obs[318:357,]
+
+getZoo <- function( x, variable ) {
+  x <- subset( x, varname == variable )
+  if ( nrow(x) == 0 ) stop("Ups, variable seems not to exist at all!")
+  # Else create zoo
+  x <- zoo( subset(x,select=-c(varname,timestamp,step)),
+            as.POSIXct(x$timestamp,origin="1970-01-01") )
+  x
+}
+GFS_t2m  <- getZoo( GFS, "tmp2m" )
+# temperature bias: model simulates temperature for height 1675 (~1070 m higher than true height)
+# => add 10.7 degrees to account for bias (approx. 1 degree / 100 m)
+GFS_t2m <- GFS_t2m + 10.7
+GFS_t2m$obs <- obs[,"obs$tl"]
+# first value of rain is 18 hours later than temperature 
+#(both start at 6:00 but rain is cumulated over 24 hours)
+# -> drop first 3 values of temperature
+GFS_t2m <- GFS_t2m[-c(1:3),]
+
+GFS_rain <- getZoo( GFS, "apcpsfc" )
+GFS_rain$obs <- obs[,"rr6"]
+# precipitaion sums over 24 hours (00:00 UTC - 00:00 UTC +1day)
+GFS_rain24 <- GFS_rain[c((1:10)*4),]
+for(i in 1:NROW(GFS_rain24)){
+  GFS_rain24[i,] <- colSums(GFS_rain[c((4*i-3):(4*i)),])
+}
+
+
+# Two POSIXct vectors for the axis
+main  <- seq(min(as.POSIXct(as.Date(index(GFS_t2m)))),max(index(GFS_t2m)),by=86400)
+minor <- seq(min(index(GFS_t2m)),max(index(GFS_t2m)),by=3*3600)
+
+# GFS_t2m_mean <- rowMeans(GFS_t2m)
+GFS_t2m_mean <- GFS_t2m
+GFS_t2m_mean[,1] <- rowMeans(GFS_t2m[,-NCOL(GFS_t2m)])
+GFS_t2m_mean <- GFS_t2m_mean[,1]
+
+# GFS_rain_mean <- rowMeans(GFS_rain)
+GFS_rain24_mean <- GFS_rain24
+GFS_rain24_mean[,1] <- rowMeans(GFS_rain24[,-NCOL(GFS_rain24)])
+GFS_rain24_mean <- GFS_rain24_mean[,1]
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_1_plot, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05, col = "slategray" )
+#plot( GFS_t2m_mean, screen=1, xaxs="i", xaxt="n", ylim = range(GFS_t2m)*1.05)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
+#plot( GFS_rain[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+#plot( GFS_rain_mean, screen=1, xaxs="i", xaxt="n", yaxs="i", ylim=range(GFS_rain)*c(0,1.05) )
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+#axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_1_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,1], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,1], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+#axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_2_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,c(1,2)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,c(1,2)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+#axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_3_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,c(1,2,3)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+#axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{-0.3cm}
+\setkeys{Gin}{width=1.1\linewidth}
+<<ensemble_20_plot+obs, fig=TRUE, echo=FALSE, width=9>>=
+par(mar=c(0.4,0,0.2,0), oma=c(6,3.2,5,4))
+layout( matrix(1:2,ncol=1) )
+plot( GFS_t2m[,-NCOL(GFS_t2m)], screen=1, xaxs="i", xaxt="n", 
+      ylim = range(GFS_t2m)*1.05, col = "slategray" )
+lines( GFS_t2m[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 3, line = 1, cex = 1.2, font = 2, title )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Temperature [°C]" )
+plot( GFS_rain24[,-NCOL(GFS_rain24)], screen=1, xaxs="i", xaxt="n", yaxs="i", 
+      ylim=range(GFS_rain24)*c(0,1.05), type = "o", col = "slategray" )
+lines( GFS_rain24[,"obs"], col = "red", lwd = 2)
+abline( v = main, lty = 2 )
+mtext( side = 2, line = 2.3, cex = 1, font = 1, text = "Rain [mm/6h]" )
+
+#axis( side = 1, at = minor, strftime(minor,"%H") )
+axis( side = 1, at = main + 42300,  strftime(main,"%b %d"),
+      line = 0, col.ticks=NA, col.axis="gray30", col = NA )
+#     line = 2, col.ticks=NA, col.axis="gray30", col = NA )
+
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{0.1cm}
+\textbf{Idea:} Statistical model with numerical predictions as covariates.\\
+\vspace{0.4cm}
+\textbf{Distribution assumption:}\\
+\vspace{-0.25cm}
+$$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) \quad \text{censored at 0.}$$
+%\vspace{2cm}
+\visible<2->{
+\textbf{Data:}
+%\vspace{-1cm}
+\begin{itemize}
+\item \textbf{Y:} Observation data (National Hydrographical Service):\\
+\begin{itemize}
+\item 95 observation stations in Tyrol, Austria.\\
+\item Daily 24h precipitation sums (July, 1985--2012).
+%\item Daily 24h precipitation sums from July over 28 years (1985--2012).
+\end{itemize}
+\vspace{0.1cm}
+\item \textbf{X:} NWP model output (Global Ensemble Forecast System):\\
+\vspace{0.14cm}
+\quad \small{Ensemble predictions of various meteorological quantities\\
+\quad (precipitation, temperature, air pressure, sunshine, \dots)\\
+\quad $\rightarrow$ 80 covariates.}
+\end{itemize}
+}
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace*{0.2cm}
+\textbf{Application for one station:}
+\begin{itemize}
+\item Learn forest model on data from 24 years (1985--2008).
+\item Evaluate on 4 years (2009--2012).
+\end{itemize}
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\SweaveOpts{eval=TRUE}
+
+
+<<pred_axams, echo=FALSE, results=hide>>=
+load("data_Axams.rda")
+
+# tree and forest formula
+{
+  dt.formula <- df.formula <- 
+      robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
+      tppow_mean0612 + tppow_mean1218 + tppow_mean1824 + tppow_mean2430 + 
+      tppow_sprd0612 + tppow_sprd1218 + tppow_sprd1824 + tppow_sprd2430 + 
+      capepow_mean + capepow_sprd + capepow_min + capepow_max + 
+      capepow_mean0612 + capepow_mean1218 + capepow_mean1224 + capepow_mean1230 +
+      capepow_sprd0612 + capepow_sprd1218 + capepow_sprd1224 + capepow_sprd1230 +
+      dswrf_mean_mean + dswrf_mean_max +  
+      dswrf_sprd_mean + dswrf_sprd_max + 
+      msl_mean_mean + msl_mean_min + msl_mean_max + 
+      msl_sprd_mean + msl_sprd_min + msl_sprd_max +
+      pwat_mean_mean + pwat_mean_min + pwat_mean_max + 
+      pwat_sprd_mean + pwat_sprd_min + pwat_sprd_max +
+      tmax_mean_mean + tmax_mean_min + tmax_mean_max +
+      tmax_sprd_mean + tmax_sprd_min + tmax_sprd_max +
+      tcolc_mean_mean + tcolc_mean_min + tcolc_mean_max +
+      tcolc_sprd_mean + tcolc_sprd_min + tcolc_sprd_max +
+      t500_mean_mean + t500_mean_min + t500_mean_max +
+      t700_mean_mean + t700_mean_min + t700_mean_max +
+      t850_mean_mean + t850_mean_min + t850_mean_max +
+      t500_sprd_mean + t500_sprd_min + t500_sprd_max +
+      t700_sprd_mean + t700_sprd_min + t700_sprd_max +
+      t850_sprd_mean + t850_sprd_min + t850_sprd_max +
+      tdiff500850_mean + tdiff500850_min + tdiff500850_max +
+      tdiff700850_mean + tdiff700850_min + tdiff700850_max +
+      tdiff500700_mean + tdiff500700_min + tdiff500700_max +
+      msl_diff
+    
+    
+  }
+
+
+learndata <- data_axams[data_axams$year < 109,]
+testdata <- data_axams[data_axams$year %in% c(109, 110, 111, 112),]
+  
+  
+                        
+##############################################################
+# fitting the models
+set.seed(7)
+
+df <- distforest(df.formula, data = learndata, family = dist_list_cens_normal, 
+                 type.tree = "ctree", ntree = 100, censtype = "left", censpoint = 0,
+                 control = ctree_control(teststat = "quad", testtype = "Univ",
+                                         intersplit = TRUE,
+                                         mincriterion = 0, minsplit = 50,
+                                         minbucket = 20), mtry = 27)
+
+
+
+#### prepare data for plot of estimated density functions
+# predictions for one day (in each of the four years) 
+# (19th of July 2011 is missing)
+pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+
+pdays <- if(pday<19) c(pday, pday + 31, pday + 62, pday + 92) else c(pday, pday + 31, pday + 61, pday + 92)
+pdf <- predict(df, newdata = testdata[pdays,], type = "parameter")
+df_mu <- pdf$mu
+df_sigma <- pdf$sigma
+df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+cbind(df_exp, testdata[pdays,"robs"])
+
+
+# plot predicted distributions together with observations
+#set.seed(res$call$seedconst)
+set.seed(7)
+x <- c(0.01, sort(runif(500,0.01,8)))
+y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
+y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
+y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
+y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
+dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
+
+# point mass (slightly shifted)
+pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
+pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
+pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
+pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
+
+# predictions
+pred1 <- c(testdata[pdays,"robs"][1], crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(testdata[pdays,"robs"][2], crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(testdata[pdays,"robs"][3], crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+pred4 <- c(testdata[pdays,"robs"][4], crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+
+#legendheight
+lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
+lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
+lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
+lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\begin{center}
+\vspace*{-0.2cm}
+<<plot_pred_axams_24July, fig=TRUE, echo=FALSE, height=5.2>>=
+plot(x = x, y = y1, type = "l", col = "red", 
+     main = paste0("Axams, July ", pday), ylab = "Density", 
+     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     #xlab = expression(Total~precipitation~group("[", mm^(1/1.6)~per~day,"]")),
+     #{\frac{1}{1.6}}$,
+     ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
+     xlim = c(-1.5,8))
+
+lines(x = x, y = y2, type = "l", col = "blue")
+lines(x = x, y = y3, type = "l", col = "darkgreen")
+lines(x = x, y = y4, type = "l", col = "purple")
+legend('topright', c("predicted distribution", "point mass at censoring point", "observation"),
+       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8)
+
+# plot point mass
+lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = "red", type = "l", lwd = 1)
+lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = "blue", type = "l", lwd = 1)
+lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = "darkgreen", type = "l", lwd = 1)
+lines(x = c(pm4[1], pm4[1]), y = c(pm4[2], 0), col = "purple", type = "l", lwd = 1)
+
+points(x = pm1[1], y = pm1[2], col = "red", pch = 19)
+points(x = pm2[1], y = pm2[2], col = "blue", pch = 19)
+points(x = pm3[1], y = pm3[2], col = "darkgreen", pch = 19)
+points(x = pm4[1], y = pm4[2], col = "purple", pch = 19)
+
+
+# plot predictions
+points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
+points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
+points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
+points(x = pred4[1], y = pred4[2], col = "purple", pch = 4)
+
+lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
+lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
+lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l", lty = 2)
+lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgrey", type = "l", lty = 2)
+
+# add labels
+text(x = -0.8, y = lh1, labels = "2009", col = "red", cex = 0.8)
+text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)
+text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)
+text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)
+@
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\vspace{0.2cm}
+\textbf{Application for all 95 stations:}
+\begin{itemize}
+\item Learn forest model on data from 24 years.
+\item Evaluate on 4 years.
+\item Compare to commonly used heteroscedastic censored Gaussian models.
+\end{itemize}
+\end{frame}
+
+
+
+<<echo = FALSE>>=
+#### prediction over all stations 24 - 4
+#### prediction over all stations 24 - 4
+if(file.exists("crps_24to4_all.rda")){
+  load("crps_24to4_all.rda")
+} else {
+  
+  data("StationsTyrol")
+  stations <- StationsTyrol$name
+  test <- 2009:2012
+  train <- 1985:2008
+  
+  
+  res_24to4_all <- mclapply(1:length(stations),
+                            function(i){
+                              
+                              set.seed(7)
+                              
+                              res <- evalmodels(station = stations[i],
+                                                train = train,
+                                                test = test,
+                                                gamboost_cvr = TRUE)
+                              
+                              return(res)
+                            },
+                            mc.cores = detectCores() - 1
+  )
+  
+  # extract crps
+  crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
+  # loop over all stations
+  for(i in 1:length(stations)){
+    crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
+  }
+  
+  colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
+  rownames(crps_24to4_all) <- stations
+  
+  save(crps_24to4_all, file = "crps_24to4_all.rda")
+  save(res_24to4_all, file = "res_24to4_all.rda")
+  
+}
+ 
+
+# skill score
+s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
+
+## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
+
+crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
+
+# best method
+bst <- apply(crps_map, 1, which.min)
+
+# distance of forest to best other method
+dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
+
+# breaks/groups
+brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
+#brk <- c(-0.1, -0.05, -0.01, 0.01, 0.05, 0.1)
+grp <- cut(dst, breaks = brk)
+
+# HCL colors (relatively flashy, essentially CARTO Tropic)
+clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
+
+
+library("raster") # dem (digital elevation model)
+library("sp")     # gadm www.gadm.org/country
+
+load("../draft/plot_map_rain/data/tirol.rda")
+load("../draft/plot_map_rain/data/dem.rda")
+
+data(StationsTyrol)
+# Create SpatialPointsDataFrame from station list
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
+                                    select=c(lon,lat)),
+                             data = subset(StationsTyrol,
+                                           select = -c(lon,lat)),
+                             proj4string = crs(dem))
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Precipitation}
+\begin{center}
+%\vspace*{-2cm}
+
+\setkeys{Gin}{width=0.95\textwidth}
+<<map, fig=TRUE, echo=FALSE, width=10, height=6.5>>=
+  
+  ## plot map of Tyrol with all 95 observations
+  layout(cbind(1, 2), width = c(9, 1))
+  par(mar = c(5,4,4,0.1))
+  raster::image(dem, col = rev(gray.colors(100)),
+                main="Stations in Tyrol", cex.main=1.7,
+                ylab = "Latitude", xlab = "Longitude",
+                cex.lab = 1.3,
+                xlim = c(9.8,13.2), 
+                ylim = c(46.6, 47.87))
+  plot(tirol, add = TRUE)
+  points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
+  legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
+  text(x = 10.25, y = 47.82, labels = "Models with lowest CRPS")
+  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
+  par(mar = c(0.5,0.2,0.5,2.3))
+  ## legend
+  plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
+       xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
+  rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
+  axis(4, at = brk, las = 1, mgp=c(0,-0.4,-1.2))
+
+@
+\end{center}
+\end{frame}
+
+
+
+
+\begin{frame}
+\frametitle{Software}
+\vspace{0.4cm}
+\textbf{Package:} \emph{disttree} available on R-Forge at\\
+
+\medskip
+
+\url{https://R-Forge.R-project.org/projects/partykit/}\\
+
+\bigskip
+\bigskip
+
+\textbf{Main functions:}
+
+\medskip
+
+\begin{tabular}{ll}
+\code{distfit}    & Distributional fits (ML, \code{gamlss.family}/custom \code{list}).\\
+                  & No covariates. \\
+\code{disttree}   & Distributional trees (\code{ctree}/\code{mob} + \code{distfit}).\\
+                  & Covariates as partitioning variables. \\
+\code{distforest} & Distributional forests (ensemble of \code{disttree}s).\\
+                  & Covariates as partitioning variables.
+\end{tabular}
+
+\end{frame}
+
+
+
+
+
+\subsection{References}
+
+\begin{frame}
+\frametitle{References}
+
+\vspace{0.5cm}
+%\vspace{-0.2cm}
+
+\footnotesize
+
+%Hothorn T, Hornik K, Zeileis A (2006).
+% \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+% \textit{Journal of Computational and Graphical Statistics},
+% \textbf{15}(3), 651--674.
+% \doi{10.1198/106186006X133933}
+ 
+%\medskip
+
+%Zeileis A, Hothorn T, Hornik K (2008).
+% \dquote{Model-Based Recursive Partitioning.}
+%  \textit{Journal of Computational and Graphical Statistics},
+%  \textbf{17}(2), 492--514.
+%  \doi{10.1198/106186008X319331}
+
+%\medskip
+
+Schlosser L, Hothorn T, Stauffer R, Zeileis A (2018).
+  \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
+  \emph{arXiv 1804.02921}, arXiv.org E-Print Archive.
+  \url{http://arxiv.org/abs/1804.02921}
+and 
+  \emph{Working Papers, Faculty of Economics and Statistics, University of Innsbruck},
+  \url{https://EconPapers.repec.org/RePEc:inn:wpaper:2018-08}
+
+
+\bigskip
+
+Hothorn T, Zeileis A (2015).
+ \dquote{\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
+ \textit{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
+
+\bigskip
+
+Stasinopoulos DM, Rigby RA (2007).
+  \dquote{Generalized Additive Models for Location Scale and Shape (GAMLSS) in \textsf{R}.}
+  \textit{Journal of Statistical Software}, 
+  \textbf{23}(7), 1--46.
+  \doi{10.18637/jss.v023.i07}
+  
+%\medskip
+
+%Seibold H, Zeileis A, Hothorn T (2017).
+%  \dquote{Individual Treatment Effect Prediction for Amyotrophic Lateral Sclerosis Patients.}
+%  \textit{Statistical Methods in Medical Research}, 
+%  \textbf{12}(1), 45--63.
+%  \doi{10.1177/0962280217693034}
+
+%\medskip
+
+%Hothorn T, Zeileis A (2017).
+%  \dquote{Transformation Forests.}
+%  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+%  \url{http://arxiv.org/abs/1701.02110}
+
+%\medskip
+
+%Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
+%  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and Minimum CRPS Estimation}
+%  \textit{Monthly Weather Review}, 
+%  \textbf{133}(5), 1098--1118.
+%  \doi{10.1175/MWR2904.1}
+  
+%\medskip
+
+%Hofner B, Mayr A, Schmid M (2016).
+%  \dquote{\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and Variable Selection in the {GAMLSS} Framework}
+%  \textit{Journal of Statistical Software},
+%  \textbf{74}(1), 1--31.
+%  \doi{10.18637/jss.v074.i01}
+
+\end{frame}
+
+
+%\begin{frame}
+%\frametitle{References (2)}
+
+%\vspace{-0.2cm}
+
+%\footnotesize
+
+%% Reference for the observation data set
+%BMLFUW (2016).
+%  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
+%  \text{Available at \url{http://ehyd.gv.at}}, 
+%  \text{Accessed: 2016--02--29}.
+
+%\medskip
+
+% Reference for the GFS reforecast version 2 data set 
+%Hamill T M, Bates G T, Whitaker J S, Murray D R, Fiorino M, Galarneau T J Jr., Zhu Y, Lapenta W (2013).
+%  \dquote{{NOAA}'s Second-Generation Global Medium-Range Ensemble Reforecast Dataset}
+%  \textit{Bulletin of the American Meteorological Society}, 
+%  \textbf{94}(10), 1553--1565.
+%  \doi{10.1175/BAMS-D-12-00014.1}
+
+%\medskip
+
+%Breiman L (2001).
+%  \dquote{Random {Forests}}
+%  \textit{Machine Learning}, 
+%  \textbf{45}(1), 5--32.
+%  \doi{10.1023/A:1010933404324}
+
+%Messner J W,  Mayr G J, Zeileis A (2016).
+%  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
+%  \textit{The \textsf{R} Journal}, 
+%  \textbf{8}(1), 173--181.\\
+%  \scriptsize
+%  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
+%  \footnotesize
+
+%\medskip
+
+%Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
+%  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored Additive Regression Model}
+%  \textit{International Journal of Climatology}, 
+%  \textbf{37}(7), 3264--3275.
+%  \doi{10.1002/joc.4913}
+  
+%\medskip
+
+%Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
+%  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link %Functions}
+%  \textit{Monthly Weather Review}, 
+%  \text{Forthcoming}.
+%  \doi{10.1175/MWR-D-16-0388.1}
+
+%\medskip
+
+%{CGIAR-CSI} (2016).
+%  \dquote{{SRTM} 90m Digital Elevation Database {v4.1}}
+%  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
+%  \text{Accessed: 2016--07--10}.
+
+%\end{frame}
+
+
+
+
+
+\end{document}
+
+
+
+
