@@ -1179,6 +1179,43 @@ Combined \visible<6->{\checkmark}
 
 
 
+<<treedata, echo=FALSE, results=hide>>=
+set.seed(54)
+nobs <- 500
+x <- runif(nobs, 0, 1)
+mu <- sigma <- ytrue <- numeric(length = nobs)
+for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+y <- rnorm(nobs, mean = mu, sd = sigma)
+ytrue <- mu
+data <- data.frame(cbind(y,x, ytrue))
+
+alldata <- cbind(data, mu, sigma)
+odata <- alldata[order(alldata["x"]),]
+@
+
+
+\begin{frame}[fragile]
+\frametitle{Distributional trees}
+\begin{center}
+\vspace*{-1.03cm}
+\setkeys{Gin}{width=0.8\linewidth}
+<<plottree_xyplot, fig=TRUE, echo=FALSE>>=
+par(mar=c(5.1,4.1,4.1,3.1))
+plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "grey")
+#plot(y=odata$y, x=odata$x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray")
+lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
+polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
+  col = pallight["forest"], border = "transparent")
+legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
+#lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
+#lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
+@
+\end{center}
+\end{frame}
+
+
+
 %<<densities, eval=TRUE, echo=FALSE, results=hide>>=
 %x <- c(-300:300)/100
 %set.seed(7)
@@ -1346,7 +1383,7 @@ is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
 \begin{frame}
 \frametitle{Adaptive Local Likelihood Estimation}
 
-Parameter estimator for a \only<1-3>{global}\only<4->{local} model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$}:
+\textbf{Parameter estimator} for \only<1-3>{\textbf{a global}}\only<4->{\textbf{an adaptive local}}\\ model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$} :
 
 \[
 \hat{\theta}\visible<2->{(\bold{x})} =  \argmax_{\theta \in \Theta} \sum_{i=1}^n \visible<2->{w_i(\bold{x}) \cdot} \ell(\theta; y_i)
@@ -1357,9 +1394,9 @@ Parameter estimator for a \only<1-3>{global}\only<4->{local} model with learning
 \visible<3->{
 \textbf{Weights:}
 \begin{eqnarray*}
-w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.25cm]
+w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.2cm]
 \visible<4->{
-w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.2cm]
+w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.1cm]
 \visible<5->{
 w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
 \end{eqnarray*}
