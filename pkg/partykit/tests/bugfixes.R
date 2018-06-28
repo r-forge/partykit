@@ -337,7 +337,7 @@ f[10]$node$split
 library("mlbench")
 data("Vowel")
 ct <- ctree(V2 ~ V1, data = Vowel[1:200,]) ### only levels 1:4 in V1
-p1 <- predict(ct, newdata = Vowel) ### 14 levels in V1
+try(p1 <- predict(ct, newdata = Vowel)) ### 14 levels in V1
 
 ### deal with empty levels for teststat = "quad" by
 ### removing elements of the teststatistic with zero variance
@@ -765,8 +765,8 @@ cp <- as.constparty(cp)
 
 nd <- data.frame(outlook = factor("overcast", levels = levels(WeatherPlay$outlook)), 
                  humidity = 10, temperature = 10, windy = "yes")
-predict(cp, type = "node", newdata = nd)
-predict(cp, type = "response", newdata = nd)
+try(predict(cp, type = "node", newdata = nd))
+try(predict(cp, type = "response", newdata = nd))
 as.simpleparty(cp)
 print(cp)
 

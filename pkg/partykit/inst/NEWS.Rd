@@ -2,6 +2,16 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-3 (2018-06-27)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{\code{predict} did not pay attention to \code{xlev}; this caused
+          problems when empty factor levels were removed prior to tree fitting. See
+         \url{https://stackoverflow.com/questions/51043870/lmtree-suspect-behavior-with-factors}.}
+  }
+}
+}
+
 \section{Changes in Version 1.2-2 (2018-06-05)}{
   \subsection{Bugfixes}{
   \itemize{
