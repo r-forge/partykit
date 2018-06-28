@@ -169,8 +169,11 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     vmatch <- 1:ncol(nd)
     NOnewdata <- TRUE
     if (!is.null(newdata)) {
+        factors <- which(sapply(nd, is.factor))
+        xlev <- lapply(factors, function(x) levels(nd[[x]]))
+        names(xlev) <- names(nd)[factors]
         nd <- model.frame(object$predictf, ### all variables W/O response
-                          data = newdata, na.action = na.pass)
+                          data = newdata, na.action = na.pass, xlev = xlev)
         OOB <- FALSE
         vmatch <- match(names(object$data), names(nd))
         NOnewdata <- FALSE
