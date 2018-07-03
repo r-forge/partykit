@@ -3,7 +3,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
                        censtype = "none", censpoint = NULL, weights = NULL,
                        control = partykit::ctree_control(teststat = "quad", testtype = "Univ", 
                                                          mincriterion = 0, ...), 
-                       ocontrol = list(), ntree = 500L, fit = TRUE, 
+                       ocontrol = list(), hessian = c(NULL, "analytic", "numeric"),
+                       ntree = 500L, fit = TRUE, 
                        perturb = list(replace = FALSE, fraction = 0.632), 
                        fitted.OOB = TRUE, cores = NULL, applyfun = NULL,
                        mtry = ceiling(sqrt(nvar)),
@@ -95,7 +96,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
         start <- info$coefficients
         
         model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
-                                   vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                                   vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                    estfun = estfun, censtype = censtype, censpoint = censpoint,
                                    ocontrol = ocontrol, ...)
         
@@ -174,7 +175,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     ## glue code for calling distfit() with given family in mob()
     dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
                                 cluster = NULL, vcov = FALSE, estfun = TRUE, 
-                                object = FALSE, type.hessian = "analytic", ...)
+                                object = FALSE, ...)
     {
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
@@ -306,8 +307,8 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
   
   
   if(fit) {
-    ### calculate fitted value, fitted distribution parameters, loglikelihood (and log scores) for every observation
-    fitted <- data.frame(idx = 1:nrow(data))
+    ### calculate (fitted value,) fitted distribution parameters, loglikelihood (and log scores) for every observation
+    # fitted <- data.frame(idx = 1:nrow(data))
     fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
     loglik <- data.frame(idx = 1:nrow(data))
     # logscore <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
@@ -321,7 +322,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       wi <- w[,i]
       # personalized model for observation data[i,]
       pm <-  disttree::distfit(Y, family = family, weights = wi, vcov = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-      fitted[i,] <- predict(pm, type = "response")
+      # fitted[i,] <- predict(pm, type = "response")
       fitted.par[i,] <- coef(pm, type = "parameter")
       loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
       # logscore[i,] <- pm$family$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
@@ -329,7 +330,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     
     if(is.null(weights) || (length(weights)==0L || is.function(weights))) weights <- numeric(nrow(data)) + 1
     rval$fitted$`(weights)` <- weights
-    rval$fitted$`(fitted.response)` <- fitted
+    # rval$fitted$`(fitted.response)` <- fitted
     
     
     names(fitted.par) <- names(coef(pm, type = "parameter"))
@@ -358,7 +359,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
 ###################
 # methods for class 'distforest'
 
-predict.distforest <- function (object, newdata = NULL, type = c("response", "parameter", "prob", 
+predict.distforest <- function (object, newdata = NULL, type = c("parameter", "response", "prob", 
                                                                  "weights", "node"), OOB = FALSE, ...) 
 {
   responses <- object$fitted[["(response)"]]
@@ -403,7 +404,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
   
   
   if(type == "response"){
-    if(!is.null(newdata)) {
+    # if(!is.null(newdata)) {
       
       # get weights for new data
       #nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = OOB)
@@ -429,7 +430,7 @@ predict.distforest <- function (object, newdata = NULL, type = c("response", "pa
       pred <- pred.val
       colnames(pred) <- c("(fitted.response)")
       return(pred)
-    } else return(object$fitted$`(fitted.response)`)
+    #} else return(object$fitted$`(fitted.response)`)
   }
   
   if(type == "parameter"){
