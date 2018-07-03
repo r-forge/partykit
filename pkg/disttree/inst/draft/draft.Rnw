@@ -66,7 +66,7 @@
 \newcommand{\eoob}{\widehat{\text{Err}}^{(oob)}}
 \newcommand{\bft}{\mathbf{t}}
 
-
+\numberwithin{equation}{subsection}
 
 
 <<preliminaries, echo=FALSE, results=hide>>=
@@ -280,12 +280,12 @@ the most attention, there has been a paradigm shift over the last decade towards
 distributional regression models. An important reason for this is that in many
 fields forecasts of the mean are not the only (or not even the main) concern but
 instead there is an increasing interest in probabilistic forecasts. Quantities of
-interest typically include exceedence probabilities for certain thresholds of the
+interest typically include exceedance probabilities for certain thresholds of the
 response or quantiles of the response distribution. Specifically, consider
 weather forecasting where there is less interest in the mean amount of
 precipitation on the next day. Instead, the probability of rain vs.\ no rain
 is typically more relevant or, in some situations, a prediction interval of
-expected precipitation (say from the expected 10\% to 90\% quantile). Similar
+expected precipitation (say from the expected \textit{10\%} to \textit{90\%} quantile). Similar
 considerations apply for other meteorological quantities and hence attention
 in the weather forecasting literature has been shifting from classical linear 
 deterministic models \citep{Glahn+Lowry:1972} towards probabilistic models such as the
@@ -491,17 +491,20 @@ y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
 y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
 dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
 
+# switch x-axis back to untransformed scale
+x <- x^(1.6)
+
 # point mass (slightly shifted)
-pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
-pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
-pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
-pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
+pm1 <- c(0.15, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))     #  0.05
+pm2 <- c(0.05, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))     #  0.01
+pm3 <- c(-0.05, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))    # -0.03
+pm4 <- c(-0.15, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))    # -0.07
 
 # predictions
-pred1 <- c(Axams_24to4$testdata[pdays,"robs"][1], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(Axams_24to4$testdata[pdays,"robs"][2], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(Axams_24to4$testdata[pdays,"robs"][3], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-pred4 <- c(Axams_24to4$testdata[pdays,"robs"][4], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+pred1 <- c(Axams_24to4$testdata[pdays,"robs"][1]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(Axams_24to4$testdata[pdays,"robs"][2]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(Axams_24to4$testdata[pdays,"robs"][3]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+pred4 <- c(Axams_24to4$testdata[pdays,"robs"][4]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 #legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -619,9 +622,10 @@ if(file.exists("vimp_crps.rda")){
 par(mar = c(3.8, 4, 2.3, 1.5))
 plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
      main = paste0("July ", pday), ylab = "Density", 
-     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     xlab = expression(Total~precipitation~"["~mm~"/"~"24h"~"]"),
+     # xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
-     xlim = c(-1.5,8))
+     xlim = c(-2,28))     #  xlim = c(-1.5,8))
     
 lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
 lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
@@ -653,10 +657,10 @@ lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l
 lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 
 # add labels
-text(x = -0.8, y = lh1, labels = "2009", col = pal[1], cex = 0.8)
-text(x = -0.8, y = lh2, labels = "2010", col = pal[3], cex = 0.8)
-text(x = -0.8, y = lh3, labels = "2011", col = pal[2], cex = 0.8)
-text(x = -0.8, y = lh4, labels = "2012", col = pal[4], cex = 0.8)
+text(x = -1.7, y = lh1, labels = "2009", col = pal[1], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh2, labels = "2010", col = pal[3], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
 \caption{\label{fig:axams-dist}Total precipitation predictions by a distributional forest
 at station Axams for July 24 in 2009, 2010, 2011 and 2012 learned on data from 1985--2008.
@@ -752,18 +756,21 @@ of estimating the distribution parameter~$\bm{\theta}$. This is commonly done by
 maximum likelihood (ML) based on the learning sample with observations
 $\{y_i\}_{i = 1, \dots, n}$ of the response variable $Y$. The maximum
 likelihood estimator (MLE) $\bm{\hat \theta}$ is given by
-$$ \label{eq:mle}
+\begin{equation}
+\label{eq:mle}
 \bm{\hat \theta} = \argmax_{\bm{\theta} \in \bold{\Theta}} \sum_{i=1}^n \ell(\bm{\theta}; y_i).
-$$
+\end{equation}
 Equivalently, this can be defined based on the corresponding first-order
 conditions
-$$ \label{eq:foc}
+\begin{equation}
+\label{eq:foc}
 \sum_{i = 1}^n s(\bm{\hat{\theta}}, y_i) = 0,
-$$
+\end{equation}
 where $s(\bm{\theta}; y_i)$ is the associated score function
-$$ \label{eq:score}
+\begin{equation}
+\label{eq:score}
 s(\bm{\theta}; y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i).
-$$ 
+\end{equation}
 The latter is subsequently employed as a general goodness-of-fit measure
 to assess how well the distribution with parameters $\bm{\theta}$ fits
 one individual observation $y_i$.
@@ -798,9 +805,10 @@ $\mathcal{Z}$ recursively into disjoint segments so that a homogenous
 distributional model for the response $Y$ can be found with segment-specific
 parameters. More specifically, the $B$ disjoint segments $\mathcal{B}_b$
 ($b = 1, \dots, B$) partition the covariate space
-$$ \label{eq:partition}
+\begin{equation}
+\label{eq:partition}
 \mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b,
-$$
+\end{equation}
 and a local distributional model $\mathcal{D}(Y, \bm{\theta}^{(b)})$
 (i.e., with segment-specific parameters $\bm{\theta}^{(b)}$) is fitted to the
 response $Y$ in each segment.
@@ -968,6 +976,12 @@ selection of smooth additive terms based on all 80~predictor variables.
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
+\caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.
+Time periods indicate aggregation time periods in hours after NWP model
+initialization (e.g., 6--30 corresponds to +6\,h to +30\,h ahead forecasts,
+0600\,UTC to 0600\,UTC of the next day). $^*$Minimum values of \emph{dswrf}
+over 24\,h are always zero and thus neglected.}
+\label{tab:covariates}
 \begin{tabular}{ l  c  l }
 \hline
 Basic covariates & {\#} & Variations\\
@@ -1008,12 +1022,6 @@ Basic covariates & {\#} & Variations\\
 \hspace{1.6cm} difference            &   & \qquad over 6--30 \\
 \hline
 \end{tabular}
-\caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.
-Time periods indicate aggregation time periods in hours after NWP model
-initialization (e.g., 6--30 corresponds to +6\,h to +30\,h ahead forecasts,
-0600\,UTC to 0600\,UTC of the next day). $^*$Minimum values of \emph{dswrf}
-over 24\,h are always zero and thus neglected.}
-\label{tab:covariates}
 \end{minipage} 
 %}
 \end{table}
@@ -1060,6 +1068,11 @@ observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{t
 
 \begin{table}[t!]
 \centering
+\caption[Table caption text]{Overview of models with type of 
+covariate dependency and included covariates for each distribution 
+parameter. \emph{A} $\ast$ \emph{B} indicates an interaction between
+covariate \emph{A} and \emph{B}.}
+\label{tab:models}
 \begin{tabular}{ l l l l }
 \hline
 Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$)                                  \\ \hline
@@ -1078,11 +1091,6 @@ Prespecified GAMLSS   & spline       & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},  
 Boosted GAMLSS        & spline  & all & all \\
                       & in each &     &     \\ \hline
 \end{tabular}
-\caption[Table caption text]{Overview of models with type of 
-covariate dependency and included covariates for each distribution 
-parameter. \emph{A} $\ast$ \emph{B} indicates an interaction between
-covariate \emph{A} and \emph{B}.}
-\label{tab:models}
 \end{table}
 
 The following zero-censored Gaussian regression models are employed
@@ -1097,6 +1105,9 @@ further details:
   in each split of the tree (``mtry''). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}.
+  % stopping criteria:
+  % tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
+  % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
 
 \item \emph{EMOS:} Standard ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
