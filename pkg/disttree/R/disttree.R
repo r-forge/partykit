@@ -4,7 +4,7 @@
 disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
                      type.tree = "mob", decorrelate = "none", offset,
                      censtype = "none", censpoint = NULL, weights = NULL,
-                     terminal_objects = FALSE,
+                     terminal_objects = FALSE, hessian = c(NULL, "analytic", "numeric"),
                      control = partykit::mob_control(), ocontrol = list(), ...)
 {
   ## keep call
@@ -79,7 +79,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     ## glue code for calling distfit() with given family in mob()
     dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
                                 cluster = NULL, vcov = FALSE, estfun = TRUE, 
-                                object = FALSE, type.hessian = "analytic", ...)
+                                object = FALSE, ...)
     {
       if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
       if(!is.null(offset)) warning("offset not used")
@@ -138,7 +138,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     
     rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
     rval$fitted$`(response)` <- model.response(rval$data)
-    rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
+    # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
     rval$loglik <- logLik(rval)
   }
@@ -165,7 +165,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
         start <- info$coefficients
         
         model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
-                                   vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                                   vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                    estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
         
         if(estfun) {
@@ -235,7 +235,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     Y <- rval$fitted$`(response)`
     # first iteration out of loop:
     model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                                vcov = FALSE, type.hessian = "analytic", 
+                                vcov = FALSE, type.hessian = type.hessian, 
                                 estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
     # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
@@ -255,7 +255,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     if(n_tn>1){
       for(i in (2:n_tn)){
         model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                                   vcov = FALSE, type.hessian = "analytic", 
+                                   vcov = FALSE, type.hessian = type.hessian, 
                                    estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
         coefficients_par[i,] <- model$par
         # coefficients_eta[i,] <- model$eta
@@ -267,7 +267,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     }
     
     rval$coefficients <- coefficients_par
-    rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
+    # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$loglik <- loglik
   }
   
