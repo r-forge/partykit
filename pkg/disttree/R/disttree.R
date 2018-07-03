@@ -4,7 +4,7 @@
 disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
                      type.tree = "mob", decorrelate = "none", offset,
                      censtype = "none", censpoint = NULL, weights = NULL,
-                     terminal_objects = FALSE, hessian = c(NULL, "analytic", "numeric"),
+                     terminal_objects = FALSE, type.hessian = c(NULL, "analytic", "numeric"),
                      control = partykit::mob_control(), ocontrol = list(), ...)
 {
   ## keep call
