@@ -1,5 +1,5 @@
 distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, type.hessian = "analytic", estfun = TRUE, 
+                    vcov = TRUE, type.hessian = c(NULL, "analytic", "numeric"), estfun = TRUE, 
                     bd = NULL, fixed = NULL, fixed.values = NULL, 
                     censtype = "none", censpoint = NULL, ocontrol = list(), ...)
 {
@@ -12,7 +12,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ## match call
   cl <- match.call()
   
-  ## check if 'method' is an additional argument (for optim)
+  ## check if 'method' is an additional argument (for optim, handed over via '...')
   method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
 
   ## number of observations
@@ -86,7 +86,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
   }
 
-  
+  if(!all(type.hessian %in% c(NULL, "analytic", "numeric"))) stop("argument 'type.hessian' can only be 'NULL', 'numeric' or 'analytic'")
+  if(length(type.hessian) > 1) type.hessian <- type.hessian[1]
+  if(is.null(type.hessian)) {
+    type.hessian <- if(is.null(family$hdist)) "numeric" else "analytic"
+  }
   if(type.hessian == "numeric") family$hdist <- NULL
   if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
   
@@ -241,15 +245,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   if(!family$mle) {
     ## optimize negative log-likelihood
-    
-    # (in case 'method' is handed over via '...' it is not set as an argument)
-    if(is.null(cl$method)) {
-      opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
-    } else {
-      opt <- try(optim(par = starteta, fn = nll, gr = grad,
-                       hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
-    }
+    opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
+                     hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
     if(inherits(opt, "try-error")) {
       if(method != "L-BFGS-B") method <- "L-BFGS-B"
       warning("Error in 'optim()' for given method and additional arguments in '...', 
@@ -427,11 +424,11 @@ coef.distfit <- function(object, type = "parameter" , ...) {
 }
 
 ## FIX: censored logistic distribution
-predict.distfit <- function(object, type = c("response", "parameter"), ...){
-  # calculation of the expected value 
+predict.distfit <- function(object, type = c("parameter", "response"), ...){
+  # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
   
-  # per default 'type' is set to 'response'
+  # per default 'type' is set to 'parameter'
   if(length(type)>1) type <- type[1]
   
   if(type == "response") {
