@@ -3,8 +3,8 @@
 
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
                        control = distextree_control(...), converged = NULL, scores = NULL, 
-                       doFit = TRUE, bd = NULL,
-                       decorrelate = "none",
+                       doFit = TRUE, bd = NULL, # terminal_objects = FALSE,
+                       decorrelate = "none", hessian = c(NULL, "analytic", "numeric"),
                        censtype = "none", censpoint = NULL,
                        ocontrol = list(), ...) {
   
@@ -112,7 +112,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     start <- info$coefficients
     
     model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
-                               vcov = (decorrelate == "vcov"), type.hessian = "analytic", 
+                               vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     
     if(estfun) {
@@ -147,7 +147,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     
     
     
-    object <-  if(object) model else NULL
+    object <- if(object) model else NULL
     
     ret <- list(estfun = estfun,
                 unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
@@ -245,7 +245,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   Y <- ret$fitted$`(response)`
   # first iteration out of loop:
   model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                              vcov = FALSE, type.hessian = "analytic", 
+                              vcov = FALSE, type.hessian = type.hessian, 
                               estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
   coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
   # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
@@ -262,7 +262,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   if(n_tn>1){
     for(i in (2:n_tn)){
       model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                                 vcov = FALSE, type.hessian = "analytic", 
+                                 vcov = FALSE, type.hessian = type.hessian, 
                                  estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       coefficients_par[i,] <- model$par
       # coefficients_eta[i,] <- model$eta
@@ -271,7 +271,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   }
   
   ret$coefficients <- coefficients_par
-  ret$fitted$`(fitted.response)` <- predict(ret, type = "response")
+  # ret$fitted$`(fitted.response)` <- predict(ret, type = "response")
   ret$loglik <- loglik
 
   ## extend class and keep original call/family/control
