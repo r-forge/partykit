@@ -18,7 +18,7 @@
 disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
          type.tree = "mob", decorrelate = "none", offset,
          censtype = "none", censpoint = NULL, weights = NULL,
-         terminal_objects = FALSE,
+         terminal_objects = FALSE, type.hessian = c(NULL, "analytic", "numeric"),
          control = partykit::mob_control(), ocontrol = list(), ...)
 }
 
@@ -48,6 +48,7 @@ disttree(formula, data, na.action, cluster, family = NO(), bd = NULL,
   \item{censpoint}{Numeric value. Censoring point can be set for censored response.}
   \item{weights}{Optional numeric vector of case weights.}
   \item{terminal_objects}{Logical argument deciding whether a model object should be fit to the terminal node.}
+  \item{type.hessian}{Can either be NULL, 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For NULL it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
