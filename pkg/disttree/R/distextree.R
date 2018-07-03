@@ -2,9 +2,10 @@
 # new version of disttree using extree directly without applying ctree
 
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
-                       control = distextree_control(...), converged = NULL, scores = NULL, 
+                       control = distextree_control(...), type.hessian = c(NULL, "analytic", "numeric"),
+                       converged = NULL, scores = NULL, 
                        doFit = TRUE, bd = NULL, # terminal_objects = FALSE,
-                       decorrelate = "none", hessian = c(NULL, "analytic", "numeric"),
+                       decorrelate = "none", 
                        censtype = "none", censpoint = NULL,
                        ocontrol = list(), ...) {
   
@@ -29,7 +30,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   ## set up model.frame() call
   mf <- match.call(expand.dots = FALSE)
-  m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "scores"), names(mf), 0L)
+  m <- match(c("formula", "data", "subset", "na.action", "weights", 
+               "offset", "cluster", "scores"), names(mf), 0L)
   mf <- mf[c(1L, m)]
   mf$yx <- "matrix"      # FIX ME: in ctree "none" ?
   mf$ytype <- "vector"
