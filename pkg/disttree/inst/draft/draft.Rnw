@@ -53,7 +53,1710 @@
 \newcommand{\K}{\mathbf{K}}
 \newcommand{\W}{\mathbf{W}}
 \newcommand{\D}{\mathbf{D}}
+\newcommand{\I}{\mathbf{I}}\documentclass[nojss]{jss}
+\shortcites{Hamill+Bates+Whitaker:2013}
+
+%\VignetteIndexEntry{disttree: Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
+%\VignetteDepends{disttree, crch, countreg, gamlss, gamlss.cens}
+%\VignetteKeywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, GAMLSS}
+%\VignettePackage{disttree}
+
+%% packages
+\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
+
+%% tikz
+\usepackage{array,makecell,tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
+
+%% need no \usepackage{Sweave}
+\SweaveOpts{engine = R, concordance = FALSE, eps = FALSE, keep.source = TRUE, eval = TRUE}
+
+%% commands
+\newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
+\renewcommand{\Prob}{\mathbb{P} }
+\renewcommand{\E}{\mathbb{E}}
+\newcommand{\V}{\mathbb{V}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\R}{\mathbb{R} }
+\newcommand{\N}{\mathbb{N} }
+\newcommand{\C}{\mathbb{C} }
+\newcommand{\argmin}{\operatorname{argmin}\displaylimits}
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+\newcommand{\LS}{\mathcal{L}_n}
+\newcommand{\TS}{\mathcal{T}_n}
+\newcommand{\LSc}{\mathcal{L}_{\text{comb},n}}
+\newcommand{\LSbc}{\mathcal{L}^*_{\text{comb},n}}
+\newcommand{\F}{\mathcal{F}}
+\newcommand{\A}{\mathcal{A}}
+\newcommand{\yn}{y_{\text{new}}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\X}{\mathbf{X}}
+\newcommand{\Y}{\mathbf{Y}}
+\newcommand{\sX}{\mathcal{X}}
+\newcommand{\sY}{\mathcal{Y}}
+\newcommand{\T}{\mathbf{T}}
+\newcommand{\x}{\mathbf{x}}
+\renewcommand{\a}{\mathbf{a}}
+\newcommand{\xn}{\mathbf{x}_{\text{new}}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\w}{\mathbf{w}}
+\newcommand{\ws}{\mathbf{w}_\cdot}
+\renewcommand{\t}{\mathbf{t}}
+\newcommand{\M}{\mathbf{M}}
+\renewcommand{\vec}{\text{vec}}
+\newcommand{\B}{\mathbf{B}}
+\newcommand{\K}{\mathbf{K}}
+\newcommand{\W}{\mathbf{W}}
+\newcommand{\D}{\mathbf{D}}
 \newcommand{\I}{\mathbf{I}}
+\newcommand{\bS}{\mathbf{S}}
+\newcommand{\cellx}{\pi_n[\x]}
+\newcommand{\partn}{\pi_n(\mathcal{L}_n)}
+\newcommand{\err}{\text{Err}}
+\newcommand{\ea}{\widehat{\text{Err}}^{(a)}}
+\newcommand{\ecv}{\widehat{\text{Err}}^{(cv1)}}
+\newcommand{\ecvten}{\widehat{\text{Err}}^{(cv10)}}
+\newcommand{\eone}{\widehat{\text{Err}}^{(1)}}
+\newcommand{\eplus}{\widehat{\text{Err}}^{(.632+)}}
+\newcommand{\eoob}{\widehat{\text{Err}}^{(oob)}}
+\newcommand{\bft}{\mathbf{t}}
+
+
+
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+library("disttree")
+library("crch")
+library("countreg")
+library("gamlss")
+library("gamlss.cens")
+gen.cens(NO, type = "left")
+library("RainTyrol")
+
+## HCL palette
+pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
+transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
+@
+
+
+
+\title{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
+\Shorttitle{Distributional Regression Forests for Probabilistic Precipitation Forecasting}
+
+\author{Lisa Schlosser\\Universit\"at Innsbruck
+   \And Torsten Hothorn\\Universit\"at Z\"urich
+   \And Reto Stauffer\\Universit\"at Innsbruck
+   \And Achim Zeileis\\Universit\"at Innsbruck}
+\Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
+
+\Abstract{
+To obtain a probabilistic model for a dependent variable based on some set of
+explanatory variables, a distributional approach is often adopted where the
+parameters of the distribution are linked to regressors. In many classical
+models this only captures the location of the distribution but
+over the last decade there has been increasing interest in distributional
+regression approaches modeling all parameters including location, scale, and
+shape. Notably, so-called non-homogenous Gaussian regression (NGR) models both
+mean and variance of a Gaussian response and is particularly
+popular in weather forecasting. More generally, the GAMLSS framework
+allows to establish generalized additive models for location, scale, and shape
+with smooth linear or nonlinear effects.
+%
+However, when variable selection is required and/or there are
+non-smooth dependencies or interactions (especially unknown or of high-order),
+it is challenging to establish a good GAMLSS. A natural alternative in these
+situations would be the application of regression trees or random forests but,
+so far, no general distributional framework is available for these. Therefore,
+a framework for distributional regression trees and forests is proposed that blends
+regression trees and random forests with classical distributions from the GAMLSS
+framework as well as their censored or truncated counterparts.
+%
+To illustrate these novel approaches in practice, they are employed to obtain
+probabilistic precipitation forecasts at numerous sites in a mountainous
+region (Tyrol, Austria) based on a large number of numerical weather
+prediction quantities. It is shown that the novel distributional regression forests
+automatically select variables and interactions, performing on par or often even
+better than GAMLSS specified either through prior meteorological knowledge or a
+computationally more demanding boosting approach.
+}
+\Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, GAMLSS}
+
+\Address{
+  Lisa Schlosser, Reto Stauffer, Achim Zeileis \\
+  Universit\"at Innsbruck \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Lisa.Schlosser@uibk.ac.at}, \email{Reto.Stauffer@uibk.ac.at},\\
+  \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/},\\
+  \phantom{URL: }\url{https://retostauffer.org/},\\
+  \phantom{URL: }\url{https://eeecon.uibk.ac.at/~zeileis/}\\
+  
+  Torsten Hothorn\\
+  Universit\"at Z\"urich \\
+  Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
+  Hirschengraben 84\\
+  CH-8001 Z\"urich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+  
+}
+
+\begin{document}
+
+\section{Introduction}
+\label{sec:introduction}
+
+In regression analysis a wide range of models has been developed to describe the
+relationship between a response variable and a set of covariates. The classical
+model is the linear model (LM) where the conditional mean of the response
+is modeled through a linear function of the covariates (see the left panel of
+Figure~\ref{fig:gam} for a schematic illustration). Over the last decades
+this has been extended in various directions including:
+
+\pagebreak
+
+\begin{itemize}
+  \item \emph{Generalized linear models} (GLMs, \citealp{Nelder+Wedderburn:1972})
+    encompassing an additional nonlinear link function for the conditional mean.
+  \item \emph{Generalized additive models} (GAMs, \citealp{Hastie+Tibshirani:1986})
+    allowing for smooth nonlinear effects in the covariates
+    (Figure~\ref{fig:gam}, middle).
+  \item \emph{Generalized additive models for location, scale, and shape}
+    (GAMLSS, \citealt{Rigby+Stasinopoulos:2005}) adopting a probabilistic modeling
+    approach. In GAMLSS, each parameter of a statistical distribution can depend
+    on an additive predictor of the covariates comprising linear and/or
+    smooth nonlinear terms (Figure~\ref{fig:gam}, right).
+\end{itemize}
+Thus, the above-mentioned models provide a broad toolbox for capturing different
+aspects of the response (mean only vs.\ full distribution) and different types
+of dependencies on the covariates (linear vs.\ nonlinear additive terms).
+
+\begin{figure}[t!]
+\begin{tikzpicture}
+\node (a) at (0,0){
+\minipage{0.29\textwidth}
+\centering
+<<motivation_GLM, echo=FALSE, results=hide>>=
+nobs <- 200
+## GLM
+set.seed(7)
+x <- c(1:nobs)/nobs
+ytrue <- 1+x*1.5
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+
+<<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal[1], lwd = 7, main = "")
+@
+\endminipage};
+\node (b) at (5,0) 
+{
+\minipage{0.29\textwidth}
+\centering
+<<motivation_GAM, echo=FALSE, results=hide>>=
+## GAM
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3 
+y <- ytrue + rnorm(nobs,0,0.3)
+@
+
+<<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x, y = ytrue, col = pal[1], lwd = 7, main = "")
+@
+\endminipage};
+\node (c) at (10,0) 
+{
+\minipage{0.29\textwidth}
+\centering
+<<motivation_GAMLSS, echo=FALSE, results=hide>>=
+## GAMLSS
+set.seed(7)
+x <- c(1:nobs)/nobs
+x <- 2*(x-0.5)
+ytrue <- x^3
+var <- exp(-(2*x)^2)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+@
+
+<<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = pallight[1], border = "transparent")
+lines(x, ytrue, col = pal[1], lwd=7)
+points(x, y, col = "slategray", pch = 19)
+box(lwd = 5)
+@
+\endminipage};
+\node (d) at (0,-2) 
+{
+\minipage{0.29\textwidth}
+\centering
+\vspace{0.0cm}
+LM, GLM  
+\endminipage};
+\node (e) at (5,-2) 
+{
+\minipage{0.29\textwidth}
+\centering
+\vspace{0.0cm}
+GAM 
+\endminipage};
+\node at (10,-2)
+{
+\minipage{0.28\textwidth}
+\centering
+\vspace{0.0cm}
+GAMLSS 
+\endminipage};
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
+\end{tikzpicture}
+\caption{\label{fig:gam}Parametric modeling developments. (Generalized) linear models (left),
+generalized additive models (middle), generalized additive models for location, scale, and shape (right).}
+\end{figure}
+
+
+While in many applications conditional mean regression models have been receiving
+the most attention, there has been a paradigm shift over the last decade towards
+distributional regression models. An important reason for this is that in many
+fields forecasts of the mean are not the only (or not even the main) concern but
+instead there is an increasing interest in probabilistic forecasts. Quantities of
+interest typically include exceedence probabilities for certain thresholds of the
+response or quantiles of the response distribution. Specifically, consider
+weather forecasting where there is less interest in the mean amount of
+precipitation on the next day. Instead, the probability of rain vs.\ no rain
+is typically more relevant or, in some situations, a prediction interval of
+expected precipitation (say from the expected 10\% to 90\% quantile). Similar
+considerations apply for other meteorological quantities and hence attention
+in the weather forecasting literature has been shifting from classical linear 
+deterministic models \citep{Glahn+Lowry:1972} towards probabilistic models such as the
+non-homogeneous Gaussian regression (NGR) of \cite{Gneiting+Raftery+Westveld:2005}.
+The NGR typically describes the mean of some meteorological response variable through
+the average of the corresponding quantity from an ensemble of physically-based
+numerical weather predictions (NWPs). Similarly, the variance of the response
+is captured through the variance of the ensemble of NWPs. Thus, the NGR
+considers both the mean as well as the uncertainty of the ensemble predictions
+to obtain probabilistic forecasts calibrated to a particular site.
+
+\begin{figure}[t!]
+\begin{tikzpicture}
+\node (a) at (0,0){
+\minipage{0.29\textwidth}
+\centering
+<<motivation_regtree, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(7)
+kappa <- 12
+x <- c(1:nobs)/nobs
+ytrue <- ytree <- yforest <- numeric(length = length(x))
+for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
+y <- ytrue + rnorm(nobs,0,0.3)
+for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
+@
+
+<<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
+lines(x = x, y = ytree, col = pal[1], lwd=7)
+@
+\endminipage};
+\node (b) at (5,0) 
+{
+\minipage{0.29\textwidth}
+\centering
+<<motivation_randforest, echo=FALSE, results=hide>>=
+## Random Forest
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+@
+
+<<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
+par(mar=c(2,0,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
+lines(x = x, y = yforest, col = pal[1], lwd=7, main = "")
+@
+\endminipage};
+\node (c) at (10,0) 
+{
+\minipage{0.29\textwidth}
+\centering
+<<motivation_distforest, echo=FALSE, results=hide>>=
+## distforest
+set.seed(4723)
+for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+xt <- 2*(x-0.5)
+var <- exp(-(2*xt)^4)/2
+y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+x <- c(1:nobs)/nobs
+@
+
+<<plot_motivation_distforest, fig=TRUE, echo=FALSE>>=
+par(mar = c(2, 0, 2, 0))
+plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+usr <- par("usr")
+rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
+polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+  col = pallight[1], border = "transparent")
+lines(x = x, y = yforest, col = pal[1], lwd=7, main = "")
+points(x, y, col = "slategray", pch = 19)
+box(lwd=8)
+@
+\endminipage};
+\node (d) at (0,-2) 
+{
+\minipage{0.29\textwidth}
+\centering
+\vspace{0.0cm}
+Regression tree 
+\endminipage};
+\node (e) at (5,-2) 
+{
+\minipage{0.29\textwidth}
+\centering
+\vspace{0.0cm}
+Random forest 
+\endminipage};
+\node at (10,-2)
+{
+\minipage{0.28\textwidth}
+\centering
+\vspace{0.0cm}
+Distributional forest 
+\endminipage};
+\node (g) at (0,-5.4) 
+{
+\minipage{0.29\textwidth}
+\vspace{0.2cm}
+%\hspace{0.0cm}
+\centering
+<<motivation_disttree, echo=FALSE, results=hide>>=
+## disttree
+set.seed(74)
+x <- c(1:nobs)/nobs
+var <- ytree/3
+y <- ytrue + rnorm(nobs,0,var)
+@
+
+<<plot_motivation_disttree, fig=TRUE, echo=FALSE>>=
+par(mar = c(2, 0, 2, 0))
+plot(x, y, xaxt="n", yaxt="n", ann=FALSE, type = "n")
+usr <- par("usr")
+rect(usr[1], usr[3], usr[2], usr[4], col = gray(0.94), border = "transparent")
+lines(x = x, y = ytree, col = pal[1], lwd=7, main = "")
+polygon(c(x, rev(x)), c(ytree + var, rev(ytree - var)),
+  col = pallight[1], border = "transparent")
+points(x, y, col = "slategray", pch = 19)
+box(lwd=8)
+@
+\vspace{-0.2cm}%\\
+Distributional tree
+\vspace{0.2cm}
+\endminipage};
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.1,0)--(2.9,0);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](7.1,0)--(7.9,0);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](0,-2.4)--(0,-3.2);
+\draw[-{>[scale=4, length=2, width=3]},line width=0.4pt](2.2,-5.4)--(7.9,-2.5);
+\end{tikzpicture}
+\caption{\label{fig:tree}Tree and forest developments.
+Regression tree (top left), distributional tree (bottom left), random forest
+(top middle), and distributional forest (top right).}
+\end{figure}
+
+In summary, the models discussed so far provide a broad and powerful toolset for
+parametric distributional fits depending on a specified set of additive linear or
+smooth nonlinear terms. A rather different approach to capturing the dependence on
+covariates are tree-based models.
+\begin{itemize}
+  \item \emph{Regression trees} (\citealt{Breiman+Friedman+Stone:1984}) recursively
+    split the data into more homogeneous subgroups and can thus capture abrupt shifts
+    (Figure~\ref{fig:tree}, top left) and approximate nonlinear functions.
+    Furthermore, trees automatically carry out a forward selection of covariates and
+    their interactions. 
+  \item \emph{Random forests} (\citealt{Breiman:2001}) average the predictions of
+    an ensemble of trees fitted to resampled versions of the learning data. This
+    stabilizes the recursive partitions from individual trees and hence better
+    approximates smooth functions (Figure~\ref{fig:tree}, top middle).
+\end{itemize}
+While classical regression trees and random forests only model the mean of the response
+we propose to follow the ideas from GAMLSS modeling -- as outlined
+in Figure~\ref{fig:gam} -- and combine tree-based methods with parametric distributional models,
+yielding two novel techniques:
+\begin{itemize}
+  \item \emph{Distributional regression trees} (for short: \emph{distributional trees}) split the data into more homogeneous groups with
+    respect to a parametric distribution, thus capturing changes in any distribution
+    parameter like location, scale, or shape (Figure~\ref{fig:tree}, bottom left).
+  \item \emph{Distributional regression forests} (for short: \emph{distributional forests}) utilize an ensemble of distributional trees
+    for obtaining stabilized and smoothed parametric predictions (Figure~\ref{fig:tree},
+    top right).
+\end{itemize}
+In the following, particular focus is given to distributional forests as a method for obtaining
+probabilistic forecasts by leveraging the strengths of random forests: the ability to
+capture both smooth and abruptly changing functions along with simultaneous selection of
+variables and possibly complex interactions. Thus, these properties make the method particularly
+appealing in case of many covariates with unknown effects and interactions where it would be 
+challenging to specify a distributional regression model like GAMLSS.
+
+
+<<echo=FALSE, results=hide>>=
+#### Axams prediction 24 - 4
+if(file.exists("Axams_24to4.rda")){
+  load("Axams_24to4.rda")
+} else {
+  source("Axams_24to4.R")
+  Axams_24to4 <- Axams_24to4()
+  save(Axams_24to4, file = "Axams_24to4.rda")
+}
+
+#### prepare data for plot of estimated density functions
+# predictions for one day (in each of the four years) 
+# (19th of July 2011 is missing)
+pday <- 24  # 2 (hohe Beobachtung zu niedrig geschaetzt), 4, 15, evtl. auch 7, 8, 23 (eine 0-Beobachtung und 2 sehr aehnliche), 
+
+pdays <- if(pday<19) c(pday, pday + 31, pday + 62, pday + 92) else c(pday, pday + 31, pday + 61, pday + 92)
+pdf <- predict(Axams_24to4$df, newdata = Axams_24to4$testdata[pdays,], type = "parameter")
+df_mu <- pdf$mu
+df_sigma <- pdf$sigma
+df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+cbind(df_exp, Axams_24to4$testdata[pdays,"robs"])
+
+
+# plot predicted distributions together with observations
+set.seed(7)
+x <- c(0.01, sort(runif(500,0.01,8)))
+y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
+y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
+y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
+y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
+dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
+
+# point mass (slightly shifted)
+pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
+pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
+pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
+pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
+
+# predictions
+pred1 <- c(Axams_24to4$testdata[pdays,"robs"][1], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(Axams_24to4$testdata[pdays,"robs"][2], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(Axams_24to4$testdata[pdays,"robs"][3], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+pred4 <- c(Axams_24to4$testdata[pdays,"robs"][4], crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+
+#legendheight
+lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
+lh2 <- crch::dcnorm(0.01, mean = df_mu[2], sd = df_sigma[2], left = 0)
+lh3 <- crch::dcnorm(0.01, mean = df_mu[3], sd = df_sigma[3], left = 0)
+lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
+
+
+
+
+
+############
+# get predicted parameter of all models for testdata
+
+# distributional tree
+pdt <- predict(Axams_24to4$dt, newdata = Axams_24to4$testdata, type = "parameter")
+dt_mu <- pdt$mu
+dt_sigma <- pdt$sigma
+dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
+
+# distributional forest
+pdf <- predict(Axams_24to4$df, newdata = Axams_24to4$testdata, type = "parameter")
+df_mu <- pdf$mu
+df_sigma <- pdf$sigma
+df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+
+# prespecified GAM
+g_mu <- predict(Axams_24to4$g, newdata = Axams_24to4$testdata, what = "mu", type = "response", data = Axams_24to4$g_learndata)
+g_sigma <- predict(Axams_24to4$g, newdata = Axams_24to4$testdata, what = "sigma", type = "response", data = Axams_24to4$g_learndata)
+g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+
+# boosted GAM
+pgb <- predict(Axams_24to4$gb, newdata = Axams_24to4$testdata, parameter = c("mu","sigma"), type = "response")
+gb_mu <- pgb$mu
+gb_sigma <- pgb$sigma
+gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+
+# EMOS
+ml_mu <- predict(Axams_24to4$ml, type = "location", newdata = Axams_24to4$testdata)
+ml_sigma <- predict(Axams_24to4$ml, type = "scale", newdata = Axams_24to4$testdata)
+ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+
+
+
+
+
+
+############
+## PIT histograms and qqrplots
+
+## get predicted parameter
+# for learndata and testdata
+{
+  set.seed(7)
+  
+  # distributional tree
+  pit_dt <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = dt_mu, sd = dt_sigma))
+  pit_dt[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_dt[Axams_24to4$testdata[,"robs"]>0, 2]
+  
+  # distributional forest
+  pit_df <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = df_mu, sd = df_sigma))
+  pit_df[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_df[Axams_24to4$testdata[,"robs"]>0, 2]
+  
+  # prespecified GAM
+  pit_g <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = g_mu, sd = g_sigma))
+  pit_g[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_g[Axams_24to4$testdata[,"robs"]>0, 2]
+  
+  # boosted GAM
+  pit_gb <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = gb_mu, sd = gb_sigma))
+  pit_gb[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_gb[Axams_24to4$testdata[,"robs"]>0, 2]
+  
+  # EMOS
+  pit_ml <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = ml_mu, sd = ml_sigma))
+  pit_ml[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_ml[Axams_24to4$testdata[,"robs"]>0, 2]
+  
+}
+
+
+## Variable importance
+if(file.exists("vimp_crps.rda")){
+  load("vimp_crps.rda")
+} else {
+  
+  set.seed(7)
+  # locally redefine logLik.distforest to use crps in varimp()
+  logLik.distforest <- function(object, newdata = NULL, ...) {
+    if(is.null(newdata)) {
+      newdata <- object$data
+    } 
+    
+    # predict parameter
+    pdf <- predict(object, newdata = newdata, type = "parameter")
+    df_mu <- pdf$mu
+    df_sigma <- pdf$sigma
+    
+    # calculate CRPS
+    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  
+    return(structure(crps, df = NA, class = "logLik"))
+  }
+  
+  vimp_crps <- varimp(Axams_24to4$df, nperm = 1L)
+  
+  save(vimp_crps, file = "vimp_crps.rda")
+  
+  rm(logLik.distforest) 
+}
+    
+@
+
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.75\textwidth}
+<<rain_Axams_pred, fig=TRUE, echo=FALSE, width=6.5, height=3.8>>=
+par(mar = c(3.8, 4, 2.3, 1.5))
+plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
+     main = paste0("July ", pday), ylab = "Density", 
+     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
+     xlim = c(-1.5,8))
+    
+lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
+lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
+lines(x = x, y = y4, type = "l", col = pal[4], lwd = 1.3)
+legend("topright", c("Predicted distribution", "Point mass at censoring point", "Observation"),
+       bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8, lwd = 1.3)
+
+# plot point mass
+lines(x = c(pm1[1], pm1[1]), y = c(pm1[2], 0), col = pal[1], type = "l", lwd = 1.3)
+lines(x = c(pm2[1], pm2[1]), y = c(pm2[2], 0), col = pal[3], type = "l", lwd = 1.3)
+lines(x = c(pm3[1], pm3[1]), y = c(pm3[2], 0), col = pal[2], type = "l", lwd = 1.3)
+lines(x = c(pm4[1], pm4[1]), y = c(pm4[2], 0), col = pal[4], type = "l", lwd = 1.3)
+
+points(x = pm1[1], y = pm1[2], col = pal[1], pch = 19)
+points(x = pm2[1], y = pm2[2], col = pal[3], pch = 19)
+points(x = pm3[1], y = pm3[2], col = pal[2], pch = 19)
+points(x = pm4[1], y = pm4[2], col = pal[4], pch = 19)
+
+
+# plot predictions
+points(x = pred1[1], y = pred1[2], col = pal[1], pch = 4)
+points(x = pred2[1], y = pred2[2], col = pal[3], pch = 4)
+points(x = pred3[1], y = pred3[2], col = pal[2], pch = 4)
+points(x = pred4[1], y = pred4[2], col = pal[4], pch = 4)
+
+lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+
+# add labels
+text(x = -0.8, y = lh1, labels = "2009", col = pal[1], cex = 0.8)
+text(x = -0.8, y = lh2, labels = "2010", col = pal[3], cex = 0.8)
+text(x = -0.8, y = lh3, labels = "2011", col = pal[2], cex = 0.8)
+text(x = -0.8, y = lh4, labels = "2012", col = pal[4], cex = 0.8)
+@
+\caption{\label{fig:axams-dist}Total precipitation predictions by a distributional forest
+at station Axams for July 24 in 2009, 2010, 2011 and 2012 learned on data from 1985--2008.
+Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
+\end{figure}
+
+In weather forecasting, these properties are especially appealing in 
+mountainous regions and complex terrain where a wide range of local-scale
+effects are not yet resolved by the NWP models. 
+Thus, effects with abrupt changes and possibly nonlinear interactions 
+might be required to account for site-specific unresolved features.
+To illustrate this in practice,
+precipitation forecasts are obtained with distributional forests at 95
+meteorological stations in a mountainous region in the Alps, covering mainly
+Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{fig:all-map}).
+More specifically, a Gaussian distribution, left-censored at zero, is employed to model 24-hour total precipitation so that the
+zero-censored point mass describes the probability of observing no precipitation 
+on a given day (see Figure~\ref{fig:axams-dist}). Forecasts for July are
+established based on data from the same month over the years 1985--2012 including
+80~covariates derived from a wide range of different NWP quantities. As
+Figure~\ref{fig:axams-dist} shows, the station-wise forests yield a full
+distributional forecast for each day -- here for one specific day (July~24) at one
+station (Axams) over four years (2009--2012) -- based on the previous 24~years
+as learning data. The corresponding observations conform reasonably well with
+the predictions. In Section~\ref{sec:precipitation} we investigate the
+performance of distributional forests in this forecasting task in more detail.
+Compared to three alternative zero-censored Gaussian models distributional forests
+perform at least on par and sometimes clearly better while requiring no expert
+knowledge for the model specification. The three alternatives are: a standard ensemble model
+output statistics approach \citep[EMOS,][]{Gneiting+Raftery+Westveld:2005} based
+on an NGR, a GAMLSS with regressors prespecified based on meteorological expertise
+\citep[following][]{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
+\citep{Hofner+Mayr+Schmid:2016} using non-homogeneous boosting
+\citep{Messner+Mayr+Zeileis:2017} as an alternative technique for variable selection among all
+80~available regressors.
+
+
+
+\section{Methodology}
+\label{sec:methods}
+
+To embed the distributional approach from GAMLSS into regression trees and random
+forests, we proceed in three steps. (1)~To fix notation, we briefly review fitting
+distributions using standard maximum likelihood in Section~\ref{sec:distfit}.
+(2)~A recursive partitioning strategy based on the corresponding scores (or
+gradients) is introduced in Section~\ref{sec:disttree}, leading to distributional
+trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
+employed to establish distributional forests in Section~\ref{sec:distforest}.
+
+The general distributional notation is exemplified in all three steps for the
+Gaussian distribution, left-censored at zero. The latter is employed in the empirical 
+case study in Section~\ref{sec:precipitation} to model power-transformed daily 
+precipitation amounts.
+
+
+\subsection{Distributional fit}
+\label{sec:distfit}
+
+A distributional model $\mathcal{D}(Y, \bm{\theta})$ is considered for the response
+variable $Y \in \mathcal{Y}$ using the distributional family $\mathcal{D}$ with
+\textit{k}-dimensional parameter vector $\bm{\theta} \in \bold{\Theta}$ and
+corresponding log-likelihood function $\ell(\bm{\theta}; Y)$. The GAMLSS
+framework \citep{Rigby+Stasinopoulos:2005} provides a wide range of such
+distributional families with parameterizations corresponding to location, scale,
+and shape. Furthermore, censoring and/or truncation of these distributions
+can be incorporated in the usual straightforward way
+\citep[see e.g.,][Chapter~7.2]{Long:1997}.
+
+To capture both location and scale of the probabilistic precipitation forecasts
+while accounting for a point mass at zero (i.e., dry days without
+rain), a Gaussian distribution left-censored at zero (for short: zero-censored Gaussian)
+with location parameter $\mu$ and scale parameter $\sigma$ is employed. Therefore,
+the corresponding log-likelihood function with parameter vector 
+$\bm{\theta} = (\mu, \sigma)$ is
+$$
+\ell(\mu, \sigma; Y) = 
+\begin{cases}
+    \log\left\{\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
+    \log\left\{\Phi\left(\frac{-\mu}{\sigma}\right)\right\}, & \text{if } Y = 0
+\end{cases}
+$$
+
+where $\phi$ and $\Phi$ are the probability density function and the 
+distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
+Other distributions $\mathcal{D}$ and corresponding log-likelihoods
+$\ell(\mu, \sigma; Y)$ could be set up in the same way, e.g., for
+censored shifted gamma distributions \citep{Scheuerer+Hamill:2015} or
+zero-censored logistic distributions \citep{Gebetsberger+Messner+Mayr:2017}.
+
+With the specification of the distribution family and its log-likelihood 
+function the task of fitting a distributional model turns into the task 
+of estimating the distribution parameter~$\bm{\theta}$. This is commonly done by
+maximum likelihood (ML) based on the learning sample with observations
+$\{y_i\}_{i = 1, \dots, n}$ of the response variable $Y$. The maximum
+likelihood estimator (MLE) $\bm{\hat \theta}$ is given by
+$$ \label{eq:mle}
+\bm{\hat \theta} = \argmax_{\bm{\theta} \in \bold{\Theta}} \sum_{i=1}^n \ell(\bm{\theta}; y_i).
+$$
+Equivalently, this can be defined based on the corresponding first-order
+conditions
+$$ \label{eq:foc}
+\sum_{i = 1}^n s(\bm{\hat{\theta}}, y_i) = 0,
+$$
+where $s(\bm{\theta}; y_i)$ is the associated score function
+$$ \label{eq:score}
+s(\bm{\theta}; y_i) = \frac{\partial \ell}{\partial \bm{\theta}}(\bm{\theta}; y_i).
+$$ 
+The latter is subsequently employed as a general goodness-of-fit measure
+to assess how well the distribution with parameters $\bm{\theta}$ fits
+one individual observation $y_i$.
+
+
+\subsection{Distributional tree}
+\label{sec:disttree}
+
+Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
+for reasonably representing the response distribution and covariates
+$\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
+employed to capture differences in the distribution parameters $\bm{\theta}$.
+In weather forecasting, these covariates typically include the output
+from numerical weather prediction systems and/or lagged meteorological observations.
+
+To incorporate the covariates into the distributional model, 
+they are considered as regressors in additive predictors
+$g_j(\theta_j) = f_{j,1}(\bold{Z}) + f_{j,2}(\bold{Z}) + \dots$
+in GAMLSS.
+Link functions $g_j(\cdot)$ are used for every parameter $\theta_j$
+($j = 1, \dots, k$) based on smooth terms $f_{j,k}$ such as
+nonlinear effects, spatial effects, random coefficients, or interaction surfaces
+\citep{Klein+Kneib+Lang:2015}. However, this requires specifying the
+additive terms and their functional forms in advance which can be challenging in
+practice and potentially require domain knowledge, especially if the number of covariates $m$ is large.
+
+Regression trees generally take a different approach for automatically
+including covariates in a data-driven way and allowing for abrupt
+changes, nonlinear and non-additive effects, and interactions. In the context of
+distributional models the goal is to partition the covariate space
+$\mathcal{Z}$ recursively into disjoint segments so that a homogenous
+distributional model for the response $Y$ can be found with segment-specific
+parameters. More specifically, the $B$ disjoint segments $\mathcal{B}_b$
+($b = 1, \dots, B$) partition the covariate space
+$$ \label{eq:partition}
+\mathcal{Z} = \dot{\bigcup\limits_{b = 1, \ldots, \textit{B}}} \mathcal{B}_b,
+$$
+and a local distributional model $\mathcal{D}(Y, \bm{\theta}^{(b)})$
+(i.e., with segment-specific parameters $\bm{\theta}^{(b)}$) is fitted to the
+response $Y$ in each segment.
+
+To find the segments $\mathcal{B}_b$ that are (approximately) homogenous
+with respect to the distributional model with given parameters, the idea
+is to use a gradient-based recursive-partitioning approach. In a given
+subsample of the learning data this fits the model by ML (see
+Equation~\ref{eq:mle}) and then assesses the goodness of fit by assessing the
+corresponding scores $s(\bm{\hat \theta}; y_i)$ (see Equation~\ref{eq:score}).
+
+To sum up, distributional trees are fitted recursively via:
+\begin{enumerate}
+\item Estimate $\bm{\hat \theta}$ via maximum likelihood for the observations
+  in the current subsample.
+\item Test for associations or instabilities of the scores $s(\bm{\hat \theta}, y_i)$ 
+  and $Z_{l,i}$ for each partitioning variable~$Z_l$ ($l = 1, \dots, m$).
+\item Split the sample along the partitioning variable $Z_l^*$ with the
+  strongest association or instability. Choose the breakpoint with the highest
+  improvement in the log-likelihood or the highest discrepancy.
+\item Repeat steps 1--3 recursively in the subsamples until these become too
+  small or there is no significant association/instability (or some other
+  stopping criterion is reached).
+\end{enumerate}
+%
+Different inference techniques can be used for assessing the association between
+scores and covariates in step~3. In the following we use the general class of
+permutation tests introduced by \cite{Hothorn+Hornik+VanDeWiel:2006} which is
+also the basis of conditional inference trees \citep[CTree,][]{Hothorn+Hornik+Zeileis:2006}.
+Alternatively, one could use asymptotic M-fluctuation tests for parameter
+instability \citep{Zeileis+Hornik:2007} as in model-based recursive partitioning
+\citep[MOB,][]{Zeileis+Hothorn+Hornik:2008}. More details are provided in
+Appendix~\ref{app:tree}.
+
+For obtaining probabilistic predictions from the tree for a (possibly new) set
+of covariates $\bold{z} = (z_1, \ldots, z_m)$, the observation simply has to
+be ``sent down'' the tree and the corresponding segment-specific MLE has to be
+obtained. This can also be understood as a weighted MLE where the weights
+select those observations from the learning sample that fall into the same
+segment:
+$$
+w^{\text{tree}}_i(\bold{z}) = \sum_{b=1}^B \mathbf{1}((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z} \in \mathcal{B}_b)),
+$$
+where $\mathbf{1}(\cdot)$ is the indicator function. The predicted distribution
+for a given $\bold{z}$ is then fully specified by the estimated parameter
+$\bm{\hat \theta}(\bold{z})$ where
+$$
+\bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
+$$
+
+\subsection{Distributional forest}
+\label{sec:distforest}
+
+While the simple recursive structure of a tree model is easy to visualize and
+interpret, the abrupt changes are often too rough, instable, and impose steps
+on the model even if the true underlying effect is smooth. Hence, ensemble
+methods such as bagging or random forests \citep{Breiman:2001} are typically
+applied to smooth the effects, stabilize the model, and improve predictive performance.
+
+While Breiman and Cutler's random forests \citep{Breiman:2001} grow ensembles of trees
+that pick up changes in the location of the response across the covariates,
+\emph{distributional forests} employ an ensemble of $T$~\emph{distributional trees}. These
+pick up changes in the ``direction'' of any distribution parameter by
+considering the full score vector for choosing splitting variables and split
+points. Each of the distributional trees is grown on a different data set
+obtained through bootstrap sampling (or subsampling) and in each node only a
+random subset of the covariates $\bold{Z}$ is considered. As usual in random
+forests, this reduces the correlation among the trees and stabilizes the
+variance of the model.
+
+
+To obtain probabilistic predictions from a distributional forest, it still
+needs to be specified how to compute the parameter estimates
+$\bm{\hat \theta}(\bold{z})$ for a (potentially new) set of covariates $\bold{z}$.
+Following \cite{Hothorn+Zeileis:2017} we interpret random forests as adaptive
+local likelihood estimators using the averaged ``nearest neighbor weights''
+\citep{Lin+Jeon:2006} from the $T$~trees in the forest
+$$
+w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t}
+\frac{\mathbf{1}((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))}{|\mathcal{B}^t_b|},
+$$
+where $|\mathcal{B}^t_b|$ denotes the number of observations in the $b$-th
+segment of the $t$-th tree.
+Thus, these $w^{\text{forest}}_i(\bold{z}) \in [0, 1]$ whereas
+$w^{\text{tree}}_i(\bold{z}) \in \{0, 1\}$. Hence, weights cannot only be $0$
+or $1$ but change more smoothly, giving high weight to those observations $i$
+from the learning sample that co-occur in the same segment $\mathcal{B}_b^t$
+as the new observation $\bold{z}$ for many of the trees $t = 1, \dots, T$.
+Consequently, the parameter estimates may, in principle, change for every
+observation and can be obtained by
+$$
+\bm{\hat \theta}(\bold{z}) =  \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
+$$
+In summary, this yields a parametric distributional regression model 
+(through the score-based approach) that can capture both abrupt effects and
+high-order interactions (through the trees) and smooth effects (through
+the forest).
+
+Distributional forests share some concepts and algorithmic aspects 
+with other generalizations of Breiman and Cutler's random forests. Nearest 
+neighbor weights are employed for aggregation in survival forests 
+\citep{Hothorn+Lausen+Benner:2004},
+quantile regression forests \citep{Meinshausen:2006},
+transformation forests \citep{Hothorn+Zeileis:2017},
+and generalized random forests for causal inferences 
+\citep{Athey+Tibshirani+Wager:2017}.
+These procedures aggregate over trees fitted to specific score functions 
+(e.g., log rank scores in survival trees, model residuals in transformation 
+or generalized forests). Distributional forests, in contrast to these 
+nonparametric approaches, provide a compromise between model flexibility 
+and interpretability: The parameters of a problem-specific distribution 
+(zero-censored Gaussian for precipitation) have a clear meaning but 
+may depend on external variables in a quite general way.
+
+
+
+\section{Probabilistic precipitation forecasting in complex terrain}
+\label{sec:precipitation}
+
+Many statistical weather forecasting models leverage the strengths of modern
+numerical weather prediction (NWP) systems
+\citep[see][]{Bauer+Thorpe+Brunet:2015}.  
+One frequently used method based on
+distributional regression models is the ensemble model output statistics 
+(EMOS) approach first proposed by
+\cite{Gneiting+Raftery+Westveld:2005} to produce high-quality forecasts for
+specific quantities and sites.  
+In case of precipitation forecasting EMOS typically uses the ensemble mean of 
+``total precipitation'' (\emph{tp}) forecasts as predictor for the location parameter and
+the corresponding ensemble standard deviation for the scale part of the statistical model
+to correct for possible errors of the ensemble in both, the expectation but also
+the uncertainty of a specific forecast. 
+
+While this approach alone is already highly effective in the plains,
+it typically does not perform as well in complex terrain due to unresolved
+effects in the NWP system. For example, in the Tyrolean Alps -- considered
+in the following case study -- the NWP grid cells of $50 \times 50$
+km$^2$ are too coarse to capture single mountains, narrow valleys, etc. 
+Therefore, it is often possible to substantially improve the predictive 
+performance of the EMOS by including additional predictor variables, either 
+from local meteorological observations or an NWP model. Unfortunately, it is typically unknown 
+which variables are relevant for improving the predictions. Simply including
+all available variables may be computationally burdensome and
+can lead to overfitting but, on the other hand, excluding too many variables
+may result in a loss of valuable information. Therefore, selecting
+the relevant variables and interactions among all possible covariates is 
+crucial for improving the statistical forecasting model.
+
+In the following, it is illustrated how distributional forests can
+solve this problem without requiring prior expert knowledge.  For fitting the
+forest only the response distribution and the list of potential predictor
+variables need to be specified (along with a few algorithmic details) and then
+the relevant variables, interactions, and potentially nonlinear effects are
+determined automatically in a data-driven way. Here, we employ a zero-censored
+Gaussian distribution and 80~predictor variables computed from ensemble means
+and spreads of various NWP outputs. The predictive performance of the forest is
+compared to three other zero-censored Gaussian models: (a)~a standard basic
+EMOS, (b)~a GAMLSS with prespecified effects and interactions based on
+meteorological knowledge/experience, and (c)~a boosted GAMLSS with automatic
+selection of smooth additive terms based on all 80~predictor variables.
+
+\subsection{Data}
+\label{sec:data}
+
+\begin{table}[t!]
+%\resizebox{1.4\textwidth}{!}{
+\begin{minipage}{\textwidth}
+\begin{tabular}{ l  c  l }
+\hline
+Basic covariates & {\#} & Variations\\
+\hline
+\emph{tp}: total precipitation,           & 12  & ensemble mean of sums over 24h, \\
+\hspace*{0.5cm} power transformed (by $1.6^{-1}$) &    & ensemble std. deviation of sums over 24h, \\ 
+\emph{cape}: convective available     &    & ensemble minimum of sums over 24h, \\
+\hspace*{0.9cm} potential energy, &    & ensemble maximum of sums over 24h\\
+\hspace*{0.9cm} power transformed (by $1.6^{-1}$)&    & \qquad all for 6--30 \\
+\hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
+\hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 \\
+\hspace*{\fill}                            &    & ensemble std. deviation of sums over 6h\\
+\hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 \\
+\hline
+\emph{dswrf}: downwards short wave      & 6 & ensemble mean of mean values, \\
+\hspace*{1.13cm} radiation flux (``sunshine'') &   & ensemble mean of minimum values$^*$,\\
+\emph{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
+\emph{pwat}: precipitable water         &   & ensemble std. deviation of mean values,\\
+\emph{tmax}: 2m maximum temperature     &   & ensemble std. deviation of minimum values$^*$,\\
+\hspace*{1.15cm}                          &   & ensemble std. deviation of maximal values,\\
+\emph{tcolc}: total column-integrated   &   & \qquad all over 6--30 \\
+\hspace*{0.95cm} condensate               &   & \\
+\emph{t500}: temperature on 500 hPa     &   & \\
+\hspace*{1cm}                             &   & \\
+\emph{t700}: temperature on 700 hPa     &   & \\
+\hspace*{1cm}                             &   & \\
+\emph{t850}: temperature on 850 hPa     &   & \\
+\hspace{1cm}                              &   & \\
+\hline
+\emph{tdiff500850}: temperature         & 3 & ensemble mean of difference in mean,\\
+\hspace*{\fill} difference 500 to 850 hPa &   & ensemble minimum of difference in mean,\\
+\emph{tdiff500700}: temperature         &   & ensemble maximum of difference in mean\\
+\hspace*{\fill} difference 500 to 700 hPa &   & \qquad all over 6--30 \\
+\emph{tdiff700850}: temperature         &   & \\
+\hspace*{\fill} difference 700 to 850 hPa &   & \\
+\hline
+\emph{msl{\_}diff}: mean sea level pressure & 1 & \emph{msl{\_}mean{\_}max} $-$ \emph{msl{\_}mean{\_}min}\\
+\hspace{1.6cm} difference            &   & \qquad over 6--30 \\
+\hline
+\end{tabular}
+\caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.
+Time periods indicate aggregation time periods in hours after NWP model
+initialization (e.g., 6--30 corresponds to +6\,h to +30\,h ahead forecasts,
+0600\,UTC to 0600\,UTC of the next day). $^*$Minimum values of \emph{dswrf}
+over 24\,h are always zero and thus neglected.}
+\label{tab:covariates}
+\end{minipage} 
+%}
+\end{table}
+
+Learning and validation data consist of observed 
+daily precipitation sums provided by the National Hydrographical Service 
+(\citealt{ehyd}) and numerical weather forecasts from the U.S.~National
+Oceanic and Atmospheric Administration (NOAA).
+Both, observations and forecasts are available for 1985--2012 and
+the analysis is exemplified using July, the month with the most precipitation
+in Tyrol.
+
+Observations are obtained for 95~stations all over Tyrol and surroundings,
+providing 24-hour precipitation sums measured at 0600\,UTC and rigorously
+quality-checked by the National Hydrographical Service. NWP outputs
+are obtained from the second generation reforecast data set of the
+global ensemble forecast system \citep[GEFS,][]{Hamill+Bates+Whitaker:2013}. 
+This data set consists of an 11-member ensemble based on a fixed version of the 
+numerical model and a horizontal grid spacing of about {$50 \times 50$ km$^2$}
+initialized daily at 0000~UTC from December 1984 to present 
+providing forecasts on a 6-hourly temporal resolution. Each of the 
+11 ensemble members uses slightly different perturbed initial 
+conditions to predict the situation-specific uncertainty 
+of the atmospheric state. 
+
+From the GEFS, 14 basic forecast variables are considered with up 
+to 12 variations each such as mean/maximum/minimum
+over different aggregation time periods. A detailed overview is
+provided in Table~\ref{tab:covariates}, yielding 80~predictor variables in total.
+
+To remove large parts of the skewness of precipitation data, 
+a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
+cubic \citep{Stidd:1973} or square root \citep{Hutchinson:1998} transformations.
+However, the power parameter may vary for different climatic zones or temporal 
+aggregation periods and hence we follow \cite{Stauffer+Mayr+Messner:2017} 
+in their choice of $1.6^{-1}$ as a suitable power parameter for the
+region of Tyrol. The same power transformation is applied to both the
+observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{tp}) and
+``convective available potential energy'' (\emph{cape}).
+
+
+\subsection{Models and evaluation}
+\label{sec:evaluation}
+
+\begin{table}[t!]
+\centering
+\begin{tabular}{ l l l l }
+\hline
+Model & Type & Location ($\mu$) & Scale ($\log(\sigma)$)                                  \\ \hline
+Distributional forest & recursive    & all                & all                           \\ 
+                      & partitioning &                    &                               \\ \hline
+EMOS                  & linear       & \emph{tp{\_}mean}  & \emph{tp{\_}sprd}             \\ \hline
+Prespecified GAMLSS   & spline       & \emph{tp{\_}mean}, & \emph{tp{\_}sprd},            \\
+                      & in each      & \emph{tp{\_}max},  & \emph{dswrf{\_}sprd{\_}mean}, \\
+ & & \emph{tp{\_}mean1218} $\ast$ & \emph{tp{\_}sprd1218} $\ast$\\ 
+ & & \quad \emph{cape{\_}mean1218}, & \quad \emph{cape{\_}mean1218},\\
+ & & \emph{dswrf{\_}mean{\_}mean}, & \emph{tcolc{\_}sprd{\_}mean},\\
+ & & \emph{tcolc{\_}mean{\_}mean}, & \emph{tdiff500850{\_}mean}\\
+ & & \emph{pwat{\_}mean{\_}mean}, & \\
+ & & \emph{tdiff500850{\_}mean}, & \\
+ & & \emph{msl{\_}diff} & \\ \hline
+Boosted GAMLSS        & spline  & all & all \\
+                      & in each &     &     \\ \hline
+\end{tabular}
+\caption[Table caption text]{Overview of models with type of 
+covariate dependency and included covariates for each distribution 
+parameter. \emph{A} $\ast$ \emph{B} indicates an interaction between
+covariate \emph{A} and \emph{B}.}
+\label{tab:models}
+\end{table}
+
+The following zero-censored Gaussian regression models are employed
+in the empirical case study, see Table~\ref{tab:models} for
+further details:
+%
+\begin{itemize}
+
+\item \emph{Distributional forest:} All 80~predictor variables are
+  considered for learning a forest of 100 trees. Bootstrap
+  sampling is employed for each tree using a third of the predictors
+  in each split of the tree (``mtry''). Parameters are estimated by
+  adaptive local likelihood based on the forest weights as described
+  in Section~\ref{sec:methods}.
+
+\item \emph{EMOS:} Standard ensemble model output statistics
+  models use the ensemble mean of total precipitation as regressor in the location
+  submodel and the corresponding ensemble standard deviation in the scale submodel.
+  The parameters are estimated by maximum likelihood, using an identity
+  link for the location part and a log link for the scale part
+  \citep[following the advice of][]{Gebetsberger+Messner+Mayr:2017}.
+
+\item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
+  the most relevant predictors based on meteorological expert knowledge
+  following \cite{Stauffer+Umlauf+Messner:2017}. More specifically, based
+  on the 80~available variables, eight terms are included in the location
+  submodel and five in the scale submodel. Both involve an interaction of
+  \emph{tp} and \emph{cape} in the afternoon (between 1200\,UTC and 1800\,UTC)
+  to capture the potential for thunderstorms that frequently occur in
+  summer afternoons in the Alps. The model is estimated by maximum
+  penalized likelihood using a backfitting algorithm \citep{Stasinopoulos+Rigby:2007}.
+
+\item \emph{Boosted GAMLSS:} Smooth additive splines are selected
+  automatically from all 80~available variables, using non-cyclic boosting
+  for parameter estimation \citep{Hofner+Mayr+Schmid:2016,Messner+Mayr+Zeileis:2017}.
+  This updates the predictor terms for the location or scale submodels iteratively
+  by maximizing the log-likelihood only for the variable yielding the
+  biggest improvement. The iteration stops early -- before fully maximizing
+  the in-sample likelihood -- based on a (computationally intensive)
+  out-of-bag bootstrap estimate of the log-likelihood. The grid considered for
+  the number of boosting iterations (``mstop'') is: $50, 75, \dots, 975, 1000$.
+
+\end{itemize}
+
+The predictive performance in terms of full probabilistic forecasts is
+assessed using the continuous ranked probability score (CRPS, \citealt{Hersbach:2000}).
+For each of the models this assesses the discrepancy of the
+predicted distribution function $F$ from the observation $y$ by
+$$
+\text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
+$$
+where \(\mathbf{1}(\cdot)\) is the indicator function. In the subsequent
+applications, the mean CRPS is always evaluated out of sample, 
+either using cross-validation or a hold-out data set (2009--2012)
+that was not used for learning (1985--2008). CRPS is a proper scoring rule
+\citep{Gneiting+Raftery:2007} often used within the meteorological community.
+Lower values indicate better performance.
+
+To assess differences in the improvement of the forests and GAMLSS
+models over the basic EMOS, a CRPS-based skill score with EMOS as
+the reference method is computed:
+$$
+\text{CRPSS}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{EMOS}}}.
+$$
+
+
+
+
+\subsection{Application for one station}
+\label{sec:axams}
+
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.99\textwidth}
+<<rain_axams_qqr_oosample, fig=TRUE, echo=FALSE, width = 6.5, pdf = FALSE, png = TRUE, resolution = 150>>=
+# out of sample
+set.seed(7)
+par(mfrow = c(2, 2))
+qqrplot(pit_df, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_ml, nsim = 100, main = "EMOS",                  ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+@
+\caption{\label{fig:axams-qq} Out-of-sample residual QQ~plots (2009--2012) 
+for station Axams based on models learned on data from 1985--2008.}
+\end{figure}
+
+In a first step, we show a detailed comparison of the competing models
+for one observation site, Axams in Tyrol (in the center of the study area,
+see Figure~\ref{fig:all-map}). As for all other stations, daily precipitation observations and
+numerical weather predictions are available for the month of July from 1985
+through 2012. In Figure~\ref{fig:axams-dist} in the introduction the probabilistic
+forecasts from the distributional forest, trained on 1985--2008, for July 24
+in 2009--2012 have already been shown as a motivational example. The figure
+shows that the model properly
+depicts the point masses at zero (i.e., the probability of a dry day) and
+the forecasted probability density function for the total amount of precipitation.
+The four sample forecasts differ considerably in location $\mu$, scale $\sigma$, and the amount of
+censoring while conforming quite well with the actual observations
+from these days. While this is a nice illustrative example we are  
+interested in the overall predictive performance and calibration of the
+distributional fits.
+
+To assess calibration Figure~\ref{fig:axams-qq} shows residual QQ~plots for
+out-of-sample predictions (2009--2012) from the different models trained on
+1985--2008. Due to the point masses at zero 100 draws from the randomized
+quantile residuals \citep{Dunn+Smyth:1996} are plotted in semi-transparent
+gray. Overall, the randomized quantile residuals conform quite well with the
+theoretical standard normal quantile (i.e., form a straight line close to the 
+diagonal), indicating that all four models are sufficiently well calibrated. 
+This is also supported by the corresponding probability integral transform
+(PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) histograms in
+Appendix~\ref{app:pit}.
+
+<<echo=FALSE, results=hide>>=
+#### cross validation rain
+if(file.exists("crps_cross.rda")){
+  load("crps_cross.rda")
+} else {
+  
+  nrep_cross <- 10
+  seed <- 7
+  
+  res_cross <- mclapply(1:nrep_cross,
+                        function(i){
+                          
+                          set.seed(seed*i)
+                          
+                          # randomly split data in 7 parts each including 4 years
+                          years <- 1985:2012
+                          testyears <- list()
+                          for(j in 1:7){
+                            testyears[[j]] <- sample(years, 4, replace = FALSE)
+                            years <- years[!(years %in% testyears[[j]])]
+                          }
+                          
+                          #crps <- matrix(nrow = 7, ncol = 7)
+                          reslist <- list()
+                          for(k in 1:7){
+                            test <- testyears[[k]]
+                            train <- c(1985:2012)[!c(1985:2012) %in% test]
+                            
+                            res <- evalmodels(station = "Axams",
+                                              train = train,
+                                              test = test,
+                                              gamboost_cvr = TRUE)
+                            
+                            #crps[k,] <- res$crps
+                            reslist[[k]] <- res
+                          }
+                          
+                          #colnames(crps) <- names(res$crps)
+                          return(reslist)
+                        },
+                        mc.cores = detectCores() - 1
+  )
+  
+  # extract CRPS
+  crps_cross <- matrix(nrow = nrep_cross, ncol = 7)
+  # loop over all repetitions
+  for(i in 1:length(res_cross)){
+    #loop over all 7 folds (for 7 methods)
+    crps_cross_int <- matrix(nrow = length(res_cross[[1]]), ncol = 7)
+    for(j in 1:length(res_cross[[1]])){
+      crps_cross_int[j,] <- res_cross[[i]][[j]]$crps
+    }
+    crps_cross[i,] <- colMeans(crps_cross_int, na.rm = TRUE)
+  }
+  colnames(crps_cross) <- names(res_cross[[1]][[1]]$crps) 
+  
+  save(crps_cross, file = "crps_cross.rda")
+  save(res_cross, file = "res_cross.rda")
+  
+}
+@
+
+\begin{figure}[t!]
+\centering
+<<rain_cross_axams_crps_skill_score, fig=TRUE, echo=FALSE, height=4.5, width = 7>>=
+par(mar = c(2.5,2,1,2))
+boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
+        names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
+        ylab = "CRPS skill score", col = "lightgray") 
+abline(h = 0, col = pal[5], lwd = 2)
+@
+\caption{\label{fig:axams-crps}CRPS skill score from the 10 times 
+7-fold cross validation at station Axams (1985--2012). The horizontal orange 
+line pertains to the reference model EMOS.}
+\end{figure}
+
+To assess the predictive performance, a full cross-validation is carried out
+rather than relying on just the one fixed test set for the years 2009--2012.
+To do so, a 10 times 7-fold cross-validation is carried out where each
+splits the available 28~years into 7~subsets of 4~randomly selected years.
+The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
+(= 4~years) using the average CRPS across all observations.
+The resulting 10~CRPS skill scores are displayed by boxplots in
+Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
+line at a CRPSS of 0). Both GAMLSS models and the distributional forest 
+perform distinctly better than the EMOS model. While the two GAMLSS lead to an improvement 
+of around 4~percent, the distributional forest has a slightly higher improvement
+of around 5.5~percent in median.
+
+\begin{figure}[t!]
+\centering
+\setkeys{Gin}{width=0.7\textwidth}
+<<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.2>>=
+par(mar = c(2.5,10,1,2))
+barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
+        horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Variable importance: mean decrease in CRPS",
+        font.axis = 3, #list(family="HersheySerif", face=3),
+        names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
+axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
+@
+\caption{\label{fig:axams-varimp} CRPS-based variable importance for the top 10 covariates 
+in the distributional forest. Based on data for station Axams, learning period 
+1985--2008 and assessed in 2009--2012.}
+\end{figure}
+
+Finally, it is of interest how this improvement in predictive performance
+by the distributional forest is accomplished, i.e., which of the 80~covariates
+are selected in the trees of the forest. As the 100~trees of the forest
+do not allow to simply assess the variables' role graphically, a common
+solution for random forests in general is to consider variable importance
+measures. Here, this is defined as the amount of change in CRPS when
+the association between one covariate and the response variable is
+artificially broken through permutation (and thus also breaking the
+association to the remaining covariates).
+
+Figure~\ref{fig:axams-varimp} shows the 10~covariates with the highest permutation
+importance (i.e., change in CRPS) for station Axams. As expected the NWP outputs
+for total precipitation (\emph{tp}) are particularly important along with total
+column-integrated condensate (\emph{tcolc}). Also, both variables occur
+in various transformations such as means (either of the full day or certain parts
+of the afternoon), spreads, or minima/maxima. Thus, while the covariates
+themselves are not surprising, selecting a GAMLSS with a particular combination
+of all the transformations would be much more challenging.
+
+%\pagebreak
+
+\subsection{Application for all stations}
+\label{sec:all}
+
+<<echo = FALSE>>=
+#### prediction over all stations 24 - 4
+if(file.exists("crps_24to4_all.rda")){
+  load("crps_24to4_all.rda")
+} else {
+  
+  data("StationsTyrol")
+  stations <- StationsTyrol$name
+  test <- 2009:2012
+  train <- 1985:2008
+  
+  
+  res_24to4_all <- mclapply(1:length(stations),
+                            function(i){
+                              
+                              set.seed(7)
+                              
+                              res <- evalmodels(station = stations[i],
+                                                train = train,
+                                                test = test,
+                                                gamboost_cvr = TRUE)
+                              
+                              return(res)
+                            },
+                            mc.cores = detectCores() - 1
+  )
+  
+  # extract crps
+  crps_24to4_all <- matrix(nrow = length(stations), ncol = 7)
+  # loop over all stations
+  for(i in 1:length(stations)){
+    crps_24to4_all[i,] <- res_24to4_all[[i]]$crps
+  }
+  
+  colnames(crps_24to4_all) <- names(res_24to4_all[[1]]$crps)
+  rownames(crps_24to4_all) <- stations
+  
+  save(crps_24to4_all, file = "crps_24to4_all.rda")
+  save(res_24to4_all, file = "res_24to4_all.rda")
+  
+}
+ 
+
+# skill score
+s <- 1 - crps_24to4_all[, 2:4]/crps_24to4_all[,6] 
+colnames(s) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
+
+## prepare data for map which shows where distforest performed better than gamlss or gamboostLSS based on the crps
+
+crps_map <- crps_24to4_all[,c("distforest", "gamlss", "gamboostLSS", "emos_log")]  
+
+# best method
+bst <- apply(crps_map, 1, which.min)
+
+# distance of forest to best other method
+dst <- crps_map[,1] - crps_map[cbind(1:nrow(crps_map), apply(crps_map[, -1], 1, which.min) + 1)]
+
+# breaks/groups
+brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
+#brk <- c(-0.1, -0.05, -0.01, 0.01, 0.05, 0.1)
+grp <- cut(dst, breaks = brk)
+
+# HCL colors (relatively flashy, essentially CARTO Tropic)
+clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
+
+
+library("raster") # dem (digital elevation model)
+library("sp")     # gadm www.gadm.org/country
+
+#load("plot_map_rain/data/tirol.rda")
+#load("plot_map_rain/data/dem.rda")
+
+data(StationsTyrol, package = "RainTyrol")
+data(MapTyrol, package = "RainTyrol")
+# data(MapTyrol_border, package = "RainTyrol")
+# Create SpatialPointsDataFrame from station list
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
+                                    select=c(lon,lat)),
+                             data = subset(StationsTyrol,
+                                           select = -c(lon,lat)),
+                             proj4string = crs(MapTyrol$RasterLayer))
+@
+
+
+
+\begin{figure}[p!]
+\centering
+<<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, height = 4.5, width = 7>>=
+par(mar = c(3.1, 4.1, 1.1, 2.1))
+matplot(t(s[,]), type = "l", lwd = 2, 
+          col = gray(0.5, alpha = 0.2),
+          lty = 1, axes = FALSE, 
+          xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 3.5))
+lines(s[70,], col = pal[2], type = "o", pch = 19, lwd = 2)  
+# Station Axams is the 77th station which is the 70th in the list of complete stations
+  boxplot(s, add = TRUE, col = "transparent")
+  abline(h = 0, col = pal[5], lwd = 2)
+    
+@
+\caption{\label{fig:all-crps}CRPS skill score for each station (gray lines
+with boxplots superimposed). Station Axams is highlighted in green 
+and the horizontal orange line pertains to the reference model EMOS. The models are 
+learned on 1985--2008 and validated for 2009--2012.}
+
+\vspace*{0.4cm}
+
+\setkeys{Gin}{width=0.99\textwidth}
+<<map, fig=TRUE, echo=FALSE, height=6.1, width=9>>=
+  
+  ## plot map of Tyrol with all 95 observations
+  layout(cbind(1, 2), width = c(9, 1))
+  par(mar = c(5,4,4,0.1))
+  raster::image(MapTyrol$RasterLayer, col = rev(gray.colors(100)),
+                main="Stations in Tyrol", ylab = "Latitude", xlab = "Longitude", 
+                xlim = c(9.8,13.2), 
+                ylim = c(46.6, 47.87))
+  plot(MapTyrol$SpatialPolygons, add = TRUE)
+  points(sp[70,], pch = 19, col = "black", cex = 1.85)
+  points(sp, pch = c(21, 24, 25, 22)[bst], bg = clr[grp], col = "black", las = 1, cex = 1.5)
+  legend(x = 9.8, y = 47.815, pch = c(21, 24, 25, 22), legend = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS"), cex = 1, bty = "n")
+  text(x = 10.3, y = 47.82, labels = "Models with lowest CRPS")
+  mtext("CRPS\ndifference", side=4, las = TRUE, at = c(x = 13.5, y = 47.76), line = 0.3)
+  par(mar = c(0.5,0.2,0.5,2.3))
+  ## legend
+  plot(0, 0, type = "n", axes = FALSE, xlab = "", ylab = "",
+       xlim = c(0, 1), ylim = c(-0.2, 0.2), xaxs = "i", yaxs = "i")
+  rect(0, brk[-6], 0.5, brk[-1], col = rev(clr))
+  axis(4, at = brk, las = 1, mgp=c(0,-0.5,-1))
+
+@
+\caption{\label{fig:all-map}Map of Tyrol coding the best-performing model
+for each station (type of symbol). The color codes whether the distributional 
+forest had higher (green) or lower (red) CRPS compared to the best of the 
+other three models. The background shows the local topography \citep{Robinson:2014}.
+Station Axams is highlighted in bold.}
+\end{figure}
+
+
+After considering only one observational site up to now, a second step
+evaluates and compares the competing methods on all 95 available stations. As in the previous
+section, all models are learned on the first 24~years and evaluated by the
+average CRPS on the last 4~years. More specifically, the CRPS skill score
+against the EMOS model is computed for the out-of-sample predictions at each
+station and visualized by parallel coordinates plots with boxplots superimposed
+in Figure~\ref{fig:all-crps}. Overall, distributional forests have a slightly
+higher improvement in CRPSS compared to the two GAMLSS which is best seen
+by looking at the boxplots and the green line representing the results
+for station Axams. The underlying parallel coordinates additionally
+bring out that the prespecified GAMLSS sometimes performs rather differently
+(sometimes better, sometimes worse) compared to the two data-driven models.
+Values below zero show that, for some stations, EMOS performs better
+than the more complex statistical methods.
+%NAs in gamlss in 13 stations!!!\\
+%for example in 13th station in complete{\_}stations\\
+%\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
+%\text{NA's in the working vector or weights for parameter mu}
+%\\
+% sum(is.na(crps[,3]))
+%<<eval = TRUE, echo = FALSE>>=
+
+
+To assess whether these differences in predictive performance are due to differences
+in the topography, Figure~\ref{fig:all-map} shows a brief spatial summary of all
+stations. Each station is illustrated by a symbol that conveys which
+model performed best in terms of CRPS on the last 4~years of the data.
+Additionally, the color of the symbol indicates the CRPS difference between 
+distributional forest and the best-performing other model. Green signals that
+the distributional forest performs better than the other models whereas red
+signals that another model performs better. Overall the distributional forest
+performs on par (gray) or better (green) for the majority of stations. Only
+for a few stations in the north-east EMOS performs best, and in East Tyrol
+the prespecified GAMLSS performs particularly well.
+
+
+\section{Discussion}
+\label{sec:discussion}
+
+Distributional regression modeling is combined with tree-based modeling
+to obtain a novel and flexible method for probabilistic forecasting.
+The resulting distributional trees and forests can capture abrupt and
+nonlinear effects and interactions in a data-driven way. By basing the
+split point and split variable selection on a full likelihood and
+corresponding score function, the trees and forests can not only pick
+up changes in the location but also the scale or shape of any distributional
+family.
+
+Distributional forests are an attractive alternative when prespecifying or
+boosting all possible effects and interactions in a GAMLSS model is
+challenging.  Distributional forests are rather straightforward to specify
+requiring only little prior subject matter knowledge and also work well in the
+presence of many potential covariates. The application to precipitation
+forecasting in complex terrain illustrates that distributional forests often
+perform on par or even better than their GAMLSS counterparts. Hence, they form
+a useful addition to the already available toolbox of probabilistic forecasts
+for disciplines such as meteorology.
+
+
+\section*{Computational details}
+
+The proposed methods are in the \textsf{R} package \textbf{disttree}
+(version~\Sexpr{packageVersion("disttree")}) based on the \textbf{partykit}
+package (version~\Sexpr{packageVersion("partykit")}), both available 
+on \textsf{R}-Forge at
+(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
+\code{distfit} fits distributional models by maximum likelihood, which is
+used as the basis for the tree-building function \code{disttree}, upon which
+the \code{distforest} is built. All functions can either be used with
+GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
+(\citealt{Stasinopoulos+Rigby:2007}, version~\Sexpr{packageVersion("gamlss.dist")})
+or with custom lists containing all required information about the distribution family.
+
+In addition to \textbf{disttree}, Section~\ref{sec:precipitation} employs
+\textsf{R} package \textbf{crch} 
+\citep[version~\Sexpr{packageVersion("crch")}]{Messner+Mayr+Zeileis:2016} for the EMOS models,
+\textbf{gamlss}
+\citep[version~\Sexpr{packageVersion("gamlss")}]{Stasinopoulos+Rigby:2007} for the prespecified GAMLSS, and
+\textbf{gamboostLSS}
+\citep[version~\Sexpr{packageVersion("gamboostLSS")}]{Hofner+Mayr+Schmid:2016} for the boosted GAMLSS.
+
+The fitted distributional forest for July 24 and
+observation station Axams (including Figure~\ref{fig:axams-dist})
+is reproducible using 
+\code{demo("RainAxams", package = "disttree")}.
+This also includes fitting the other zero-censored
+Gaussian models considered in this paper and generating the corresponding 
+QQ~plots (Figure~\ref{fig:axams-qq}) and
+PIT histograms (Figure~\ref{fig:axams-pit}).
+Full replication of all results can be obtained with
+\code{demo("RainTyrol", package = "disttree")}
+requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),
+also available within the \textsf{R}-Forge~project.
+
+
+
+\bibliography{ref.bib}
+
+
+\newpage
+\begin{appendix}
+
+\section{Tree algorithm}
+\label{app:tree}
+
+In the following, the tree algorithm applied in the empirical case study 
+discussed in this paper is explained. For notational simplicity, 
+the testing and splitting procedure is described for the root node, i.e.,
+the entire learning sample with observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. 
+In each child node the corresponding subsample depends on 
+the foregoing split(s).
+
+After fitting a distributional model $\mathcal{D}(Y, \bm{\theta})$ to 
+the learning sample with observations $\{y_i\}_{i = 1,\ldots,n}$ as explained in 
+Section~\ref{sec:distfit} the resulting estimated parameter 
+$\bm{\hat{\theta}} = 
+(\hat{\theta}_1, \ldots, \hat{\theta}_k)$, $k \in \mathbb{N}$ 
+can be plugged in the score function $s(\bm{\theta}, Y)$.
+In that way a goodness-of-fit measurement is obtained for each
+parameter $\theta_j$ and each observation $y_i$.
+To use this information, statistical tests are employed to detect
+dependencies between the score values
+$$
+s(\bm{\hat{\theta}}, y) = 
+%\begin{pmatrix} 
+%s(\bm{\hat{\theta}}, y_1) \\
+%s(\bm{\hat{\theta}}, y_2) \\
+%\vdots \\
+%s(\bm{\hat{\theta}}, y_n)
+%\end{pmatrix} =
+\begin{pmatrix} 
+s(\bm{\hat{\theta}}, y_1)_1 & s(\bm{\hat{\theta}}, y_1)_2 & \ldots & s(\bm{\hat{\theta}}, y_1)_k\\
+\vdots & \vdots & \ddots & \vdots \\
+s(\bm{\hat{\theta}}, y_n)_1 & s(\bm{\hat{\theta}}, y_n)_2 & \ldots & s(\bm{\hat{\theta}}, y_n)_k
+\end{pmatrix}
+$$
+and each variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
+\begin{align*}
+H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l 
+\end{align*}
+
+These hypotheses are assessed with permutation tests based on
+the multivariate linear statistic
+$$
+T_{l} = \sum_{i=1}^n v_l(z_{li}) \cdot s(\bm{\hat{\theta}}, y_i).
+$$
+The type of the transformation function $v_l$ depends on 
+the type of the split variable $Z_l$. If $Z_l$ is numeric then $v_l$ 
+is simply the identity function $v_l(z_{li}) = z_{li}$. If $Z_l$ is 
+a categorical variable with $H$ categories then 
+$v_l(z_{li}) = e_H(z_{li}) = (\I(z_{ji} = 1), \ldots, \I(z_{li} = H))$ 
+such that $v_l$ is a unit vector where the element corresponding to 
+the value of $z_{li}$ is $1$. Observations with missing values are 
+excluded from the sums.
+
+With the conditional expectation $\mu_{l}$ and the covariance 
+$\Sigma_{l}$ as derived by \cite{Strasser+Weber:1999} the test 
+statistic can be standardized. The observed multivariate linear 
+statistic $t$ is mapped onto the real line by a  univariate test 
+statistic $c$. In the application of this paper a quadratic form 
+is chosen, such that
+$$
+c_{\text{quad}}(t,\mu,\Sigma) = (t-\mu)\Sigma^+(t-\mu)^{\top}
+$$
+where $\Sigma^+$ is the Moore-Penrose inverse of $\Sigma$. Alternatively,
+the maximum of the absolute values of the standardized linear statistic
+can be considered.
+
+The smaller the $p$-value corresponding to the standardized test 
+statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
+from the assumption of independence between the scores and the split 
+variable $Z_l$.
+%
+After Bonferroni-adjusting the $p$-values it has to be assessed whether
+any of the resulting $p$-values is beneath the selected significance level. 
+If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
+is chosen as splitting variable.
+
+The breakpoint that leads to the highest discrepancy between score functions 
+in the two resulting subgroups is selected as split point. 
+This is measured by the linear statistic
+$$
+T_{l^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\bm{\hat{\theta}}, y_i)
+$$
+where $\mathcal{B}_{1r}$ is the first of the two new subgroups that 
+are defined by splitting in split point $r$ of variable $Z_{l^{\ast}}$. 
+The split point is then chosen as follows:
+$$
+r^{\ast} = \argmin_{r} c(t_{l^{\ast}}^r,\mu_{j^{\ast}}^r,\Sigma_{l^{\ast}}^r).
+$$
+One repeats the testing and splitting procedure in each of the resulting 
+subgroups until some stopping criterion is reached. This criterion 
+can for example be a minimal number of observations in a node or a 
+minimal $p$-value for the statistical tests. In that way pre-pruning
+is applied in order to find right-sized trees and hence 
+avoid overfitting.
+
+This permutation test based tree algorithm is presented in 
+\cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
+A different framework to build a tree is provided by the MOB algorithm 
+which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
+
+
+\section{PIT histograms}
+\label{app:pit}
+
+\begin{figure}[b!]
+\centering
+%\begin{subfigure}{0.8\textwidth}
+<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE, width = 7>>=
+    
+# out of sample
+set.seed(4)
+
+par(mfrow = c(2, 2), mar = c(4, 4, 2, 1))
+pithist(pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0,1.5))
+pithist(pit_ml, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0,1.5))
+pithist(pit_g, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0,1.5))
+pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
+      
+@
+%\end{subfigure}
+\caption{\label{fig:axams-pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
+\end{figure}
+
+As an alternative to QQ~plots based on randomized quantile residuals,
+probability integral transform (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) 
+histograms are a commonly used tool to assess how well-calibrated distributional 
+fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
+probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite
+some deviations the overall calibration of all models is acceptable.
+
+\end{appendix}
+
+
+\end{document}
+
 \newcommand{\bS}{\mathbf{S}}
 \newcommand{\cellx}{\pi_n[\x]}
 \newcommand{\partn}{\pi_n(\mathcal{L}_n)}
@@ -1620,27 +3323,31 @@ H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l
 These hypotheses are assessed with permutation tests based on
 the multivariate linear statistic
 $$
-T_{l} = \sum_{i=1}^n v_l(z_{li}) \cdot s(\bm{\hat{\theta}}, y_i).
+T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\bm{\hat{\theta}}, Y_i)\right)
 $$
-The type of the transformation function $v_l$ depends on 
-the type of the split variable $Z_l$. If $Z_l$ is numeric then $v_l$ 
-is simply the identity function $v_l(z_{li}) = z_{li}$. If $Z_l$ is 
-a categorical variable with $H$ categories then 
-$v_l(z_{li}) = e_H(z_{li}) = (\I(z_{ji} = 1), \ldots, \I(z_{li} = H))$ 
-such that $v_l$ is a unit vector where the element corresponding to 
-the value of $z_{li}$ is $1$. Observations with missing values are 
-excluded from the sums.
+where $s(\bm{\hat{\theta}}, Y_i) \in \mathbb{R}^{1\times k}$ and the 
+type of the transformation function $v_l$ depends on the type of the split 
+variable $Z_l$. If $Z_l$ is numeric then $v_l$ is simply the identity 
+function $v_l(Z_{li}) = Z_{li}$ and therefore $T_l \in \mathbb{R}^k$ as 
+the ``vec'' operator converts the $1 \times k$ matrix into a $k$ column vector. 
+If $Z_l$ is a categorical variable with $H$ categories then 
+$v_l(Z_{li}) = e_H(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$ 
+such that $v_l$ is a $H$-dimensional unit vector where the element corresponding to 
+the value of $Z_{li}$ is $1$. In this case the statistic $T_l \in \mathbb{R}^{H \cdot k}$
+as the ``vec'' operator converts the $H \times k$ matrix into a $k$ column vector 
+by column-wise combination. Observations with missing values are excluded from the sums.
 
-With the conditional expectation $\mu_{l}$ and the covariance 
-$\Sigma_{l}$ as derived by \cite{Strasser+Weber:1999} the test 
-statistic can be standardized. The observed multivariate linear 
-statistic $t$ is mapped onto the real line by a  univariate test 
-statistic $c$. In the application of this paper a quadratic form 
-is chosen, such that
+With the conditional expectation $\mu_l$ and the covariance 
+$\Sigma_l$ of $T_l$ as derived by 
+\cite{Strasser+Weber:1999} the test statistic can be standardized. 
+The observed multivariate linear statistic $t_l$ which is either an
+$k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of Y,
+is mapped onto the real line by a univariate test statistic $c$. 
+In the application of this paper a quadratic form is chosen, such that
 $$
-c_{\text{quad}}(t,\mu,\Sigma) = (t-\mu)\Sigma^+(t-\mu)^{\top}
+c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 $$
-where $\Sigma^+$ is the Moore-Penrose inverse of $\Sigma$. Alternatively,
+where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered.
 
@@ -1652,7 +3359,7 @@ variable $Z_l$.
 After Bonferroni-adjusting the $p$-values it has to be assessed whether
 any of the resulting $p$-values is beneath the selected significance level. 
 If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
-is chosen as splitting variable.
+is chosen as splitting variable. Otherwise no further split is made is in this node.
 
 The breakpoint that leads to the highest discrepancy between score functions 
 in the two resulting subgroups is selected as split point. 
