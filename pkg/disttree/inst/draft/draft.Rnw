@@ -3365,9 +3365,10 @@ The breakpoint that leads to the highest discrepancy between score functions
 in the two resulting subgroups is selected as split point. 
 This is measured by the linear statistic
 $$
-T_{l^{\ast}}^r = \sum_{i \in \mathcal{B}_{1r}} s(\bm{\hat{\theta}}, y_i)
+T_{l^{\ast}}^r = \min_{s=1,2}\sum_{i \in \mathcal{B}_{sr}} s(\bm{\hat{\theta}}, Y_i)
 $$
-where $\mathcal{B}_{1r}$ is the first of the two new subgroups that 
+where $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ are the two new subgroups, without 
+any particular ordering, that 
 are defined by splitting in split point $r$ of variable $Z_{l^{\ast}}$. 
 The split point is then chosen as follows:
 $$
