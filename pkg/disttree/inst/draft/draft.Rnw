@@ -858,6 +858,10 @@ $\bm{\hat \theta}(\bold{z})$ where
 $$
 \bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 $$
+Even though this parameter depends on the given $z$ it has to be noted that
+it is the same for all other observations that are in the same terminal node of 
+the tree as $z$ and therefore does not necessarily have to be recalculated for
+each of them.
 
 \subsection{Distributional forest}
 \label{sec:distforest}
@@ -1104,10 +1108,21 @@ further details:
   sampling is employed for each tree using a third of the predictors
   in each split of the tree (``mtry''). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
-  in Section~\ref{sec:methods}.
+  in Section~\ref{sec:methods}. As stopping criteria the minimal number
+  of observations to perform a split (\code{minsplit}) is set to 50, 
+  the minimal number of observations in a terminal node (\code{minsbucket})
+  is set to 20 and the value that must be exceeded in the statistical tests 
+  (e.g. $1-\text{p-vlaue$}) for variable selection is kept at the default value $0$.
   % stopping criteria:
-  % tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
+  
+  % default in ctree_control within distforest:
+  % mincriterion = 0
+  
+  % default values in ctree_control:
+  % alpha = 0.05, mincriterion = 1 - alpha,
+  % minsplit = 20L, minbucket = 7L,
+  % minprob = 0.01
 
 \item \emph{EMOS:} Standard ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
@@ -1178,7 +1193,8 @@ qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col
 qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{fig:axams-qq} Out-of-sample residual QQ~plots (2009--2012) 
-for station Axams based on models learned on data from 1985--2008.}
+for station Axams based on models learned on data from 1985--2008. 
+(Residuals of precipitation are on the powertransformed scale.)}
 \end{figure}
 
 In a first step, we show a detailed comparison of the competing models
@@ -1287,7 +1303,8 @@ line pertains to the reference model EMOS.}
 To assess the predictive performance, a full cross-validation is carried out
 rather than relying on just the one fixed test set for the years 2009--2012.
 To do so, a 10 times 7-fold cross-validation is carried out where each
-splits the available 28~years into 7~subsets of 4~randomly selected years.
+splits the available 28~years into 7~subsets of 4~randomly selected and 
+therefore mostly not subsequent years.
 The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
 (= 4~years) using the average CRPS across all observations.
 The resulting 10~CRPS skill scores are displayed by boxplots in
