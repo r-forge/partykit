@@ -1,8 +1,7 @@
 distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, estfun = TRUE, 
-                    bd = NULL, fixed = NULL, fixed.values = NULL,   
+                    vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), 
+                    estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL,   
                     censtype = "none", censpoint = NULL, 
-                    type.hessian = c("checklist", "analytic", "numeric"),
                     ocontrol = list(), ...)
                     #ocontrol = list(method = "L-BFGS-B", 
                     #                type.hessian = c("checklist", "analytic", "numeric")),
