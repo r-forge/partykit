@@ -62,12 +62,12 @@ dist_gaussian <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = eta[2], 
+  ## additional functions pdist, qdist, rdist on link scale
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p)
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = eta[2], 
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p)
-  rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = eta[2])
+  rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = exp(eta[2]))
   
   
   link <- c("identity", "log")
@@ -281,14 +281,14 @@ dist_crch <- function(dist = c("normal","logistic"),
       return(hess)
     }
     
-    ## additional functions pdist, qdist, rdist
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = eta[2], 
+    ## additional functions pdist, qdist, rdist on link scale
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                               lower.tail = lower.tail, log.p = log.p, 
                                                                               left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = eta[2], 
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                               lower.tail = lower.tail, log.p = log.p, 
                                                                               left = left, right = right)
-    rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+    rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   }
   
   
@@ -354,14 +354,15 @@ dist_crch <- function(dist = c("normal","logistic"),
       return(hess)
     }
     
-    ## additional functions pdist, qdist, rdist
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pclogis(q, mean = eta[1], sd = eta[2], 
+    ## additional functions pdist, qdist, rdist on link scale
+    # FIX ME: better par instead of eta?
+    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pclogis(q, mean = eta[1], sd = exp(eta[2]), 
                                                                                lower.tail = lower.tail, log.p = log.p, 
                                                                                left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qclogis(p, mean = eta[1], sd = eta[2], 
+    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qclogis(p, mean = eta[1], sd = exp(eta[2]), 
                                                                                lower.tail = lower.tail, log.p = log.p, 
                                                                                left = left, right = right)
-    rdist <- function(n, eta) crch::rclogis(n, mean = eta[1], sd = eta[2], left = left, right = right)
+    rdist <- function(n, eta) crch::rclogis(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   }
   
   
@@ -540,8 +541,8 @@ dist_weibull <- function() {
   
   
   
-  ## additional functions pdist, qdist, rdist
-  
+  ## additional functions pdist, qdist, rdist on link scale
+  # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pweibull(q, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qweibull(p, shape = 1/exp(eta[2]), scale = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
   rdist <- function(n, eta) rweibull(n, shape = 1/exp(eta[2]), scale = exp(eta[1]))
@@ -662,10 +663,11 @@ dist_poisson <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) ppois(q, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qpois(p, lambda = exp(eta[1]), lower.tail = lower.tail, log.p = log.p)
-  rdist <- function(n, eta) rpois(n, lambda = exp(eta[1]))
+  ## additional functions pdist, qdist, rdist on link scale
+  # FIX ME: par instead of eta better?
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) ppois(q, lambda = exp(eta), lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qpois(p, lambda = exp(eta), lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rpois(n, lambda = exp(eta))
   
   
   
@@ -772,7 +774,8 @@ dist_exponential <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
+  ## additional functions pdist, qdist, rdist on link-scale
+  # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pexp(q, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qexp(p, rate = exp(eta), lower.tail = lower.tail, log.p = log.p)
   rdist <- function(n, eta) rexp(n, rate = exp(eta))
@@ -886,7 +889,8 @@ dist_gamma <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
+  ## additional functions pdist, qdist, rdist on link-scale
+  # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pgamma(q, shape = exp(eta[1]), scale = exp(eta[2]), 
                                                                      lower.tail = lower.tail, log.p = log.p)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qgamma(p, shape = exp(eta[1]), scale = exp(eta[2]),
@@ -1021,10 +1025,13 @@ dist_gamma <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
-  pdist <- pnorm
-  qdist <- qnorm
-  rdist <- rnorm  
+  
+  ## additional functions pdist, qdist, rdist on link scale
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = exp(eta[2]), 
+                                                                    lower.tail = lower.tail, log.p = log.p)
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = exp(eta[2]), 
+                                                                    lower.tail = lower.tail, log.p = log.p)
+  rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = exp(eta[2]))
   
   
   link <- c("identity", "log")
@@ -1150,14 +1157,15 @@ dist_gamma <- function() {
   }
   
   
-  ## additional functions pdist, qdist, rdist
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = eta[2], 
+  ## additional functions pdist, qdist, rdist on link-scale
+  # FIX ME: par instead of eta better?
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = eta[2], 
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = eta[2], left = left, right = right)
+  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   
   
   link <- c("identity", "log")
