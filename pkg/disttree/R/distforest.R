@@ -3,7 +3,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
                        censtype = "none", censpoint = NULL, weights = NULL,
                        control = partykit::ctree_control(teststat = "quad", testtype = "Univ", 
                                                          mincriterion = 0, ...), 
-                       ocontrol = list(), type.hessian = c(NULL, "analytic", "numeric"),
+                       ocontrol = list(), type.hessian = c("checklist", "analytic", "numeric"),
                        ntree = 500L, fit = TRUE, 
                        perturb = list(replace = FALSE, fraction = 0.632), 
                        fitted.OOB = TRUE, cores = NULL, applyfun = NULL,
