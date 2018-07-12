@@ -1,8 +1,16 @@
 distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, type.hessian = c(NULL, "analytic", "numeric"), estfun = TRUE, 
-                    bd = NULL, fixed = NULL, fixed.values = NULL, 
-                    censtype = "none", censpoint = NULL, ocontrol = list(), ...)
+                    vcov = TRUE, estfun = TRUE, 
+                    bd = NULL, fixed = NULL, fixed.values = NULL,   
+                    censtype = "none", censpoint = NULL, 
+                    type.hessian = c("checklist", "analytic", "numeric"),
+                    ocontrol = list(), ...)
+                    #ocontrol = list(method = "L-BFGS-B", 
+                    #                type.hessian = c("checklist", "analytic", "numeric")),
+                    #...)
 {
+  
+  ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
+  ## type.hessian = c("checklist", "analytic", "numeric")
   ## start on par scale
   ## start.eta on link scale
   
@@ -11,6 +19,11 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   ## match call
   cl <- match.call()
+  
+  ## FIX ME: add type.hessian and method to ocontrol? (see above)
+  # type.hessian <- ocontrol$type.hessian
+  # method <- ocontrol$method
+  # ocontrol$type.hessian <- ocontrol$method <- NULL
   
   ## check if 'method' is an additional argument (for optim, handed over via '...')
   method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
@@ -86,9 +99,9 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
   }
 
-  if(!all(type.hessian %in% c(NULL, "analytic", "numeric"))) stop("argument 'type.hessian' can only be 'NULL', 'numeric' or 'analytic'")
+  if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
   if(length(type.hessian) > 1) type.hessian <- type.hessian[1]
-  if(is.null(type.hessian)) {
+  if(type.hessian == "checklist") {
     type.hessian <- if(is.null(family$hdist)) "numeric" else "analytic"
   }
   if(type.hessian == "numeric") family$hdist <- NULL
@@ -256,6 +269,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'BFGS' and additional arguments ignored")
+        ## FIX ME: first keep additional arguments, only if this fails as well change method
+        ## FIX ME: order of steps?
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
                          hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
