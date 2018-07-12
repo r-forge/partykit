@@ -16,7 +16,7 @@
 distextree(formula, data, subset, weights, family = NO(), 
            na.action = na.pass, offset, cluster,
            control = distextree_control(...), 
-           type.hessian = c(NULL, "analytic", "numeric"),
+           type.hessian = c("checklist", "analytic", "numeric"),
            converged = NULL, scores = NULL, 
            doFit = TRUE, bd = NULL,
            decorrelate = "none",
@@ -41,7 +41,7 @@ distextree(formula, data, subset, weights, family = NO(),
     cluster ID to be employed for clustered covariances in the parameter
     stability tests.}
   \item{control}{Control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
-  \item{type.hessian}{Can either be NULL, 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For NULL it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+ \item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
   \item{converged}{An optional function for checking user-defined criteria before splits are implemented.}
   \item{scores}{An optional named list of scores to be attached to ordered factors.}
   \item{doFit}{A logical indicating if the tree shall be grown (TRUE) or not FALSE}

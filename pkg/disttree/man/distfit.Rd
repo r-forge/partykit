@@ -28,7 +28,7 @@
 
 \usage{
 distfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-        vcov = TRUE, type.hessian = c(NULL, "analytic", "numeric"), estfun = TRUE, 
+        vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), estfun = TRUE, 
         bd = NULL, fixed = NULL, fixed.values = NULL, 
         censtype = "none", censpoint = NULL, ocontrol = list(), ...)
 }
@@ -41,7 +41,7 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
   \item{start.eta}{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}.}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
-  \item{type.hessian}{Can either be NULL, 'analytic' or 'numeric' to decide how the hessian matrix should be calculated. For NULL it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+\item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
   \item{estfun}{logical. Should the matrix of observation-wise
     score contributions (or empirical estimating functions) be
     returned?}
