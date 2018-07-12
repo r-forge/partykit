@@ -17,7 +17,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL
            type.tree = "ctree", decorrelate = "none", offset,
            censtype = "none", censpoint = NULL, weights = NULL,
            control = partykit::ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...),
-           ocontrol = list(), type.hessian = c(NULL, "analytic", "numeric"),
+           ocontrol = list(), type.hessian = c("checklist", "analytic", "numeric"),
            ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
            cores = NULL, applyfun = NULL,
            mtry = ceiling(sqrt(nvar)),
@@ -52,7 +52,7 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
   \item{ocontrol}{List with control parameters passed to
     \code{\link[stats]{optim}} in \code{distfit}.}
-  \item{type.hessian}{Can either be NULL, 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For NULL it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+  \item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
   \item{ntree}{Number of trees to grow for the forest.}
   \item{fit}{logical. if TRUE, fitted and predicted values and  predicted parameters are calculated for the learning data (together with loglikelihood)}
   \item{perturb}{a list with arguments \code{replace} and \code{fraction} determining which type of
