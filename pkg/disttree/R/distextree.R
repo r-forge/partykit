@@ -2,7 +2,7 @@
 # new version of disttree using extree directly without applying ctree
 
 distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
-                       control = distextree_control(...), type.hessian = c(NULL, "analytic", "numeric"),
+                       control = distextree_control(...), type.hessian = c("checklist", "analytic", "numeric"),
                        converged = NULL, scores = NULL, 
                        doFit = TRUE, bd = NULL, # terminal_objects = FALSE,
                        decorrelate = "none", 
