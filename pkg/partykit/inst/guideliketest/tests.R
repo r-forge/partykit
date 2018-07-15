@@ -30,13 +30,15 @@ adj_rand_index <- function(x, y) {
 # -> similar scenario as for vary_beta = "beta0"
 # -> guide1 could easily find split
 
-dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vector with 2 elements for nrsteps = 2
+dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  
+                      # xi can also be a vector with 2 elements for nrsteps = 2
                       sigma = 1, seed = 7, only_intercept = FALSE, 
                       binary_regressor = TRUE, binary_beta = TRUE,
                       vary_beta = c("all", "beta0", "beta1"),
                       beta0 = NULL, beta1 = NULL,
                       nrsteps = 1, nrlevels = 2, shift = 0,
-                      z1dist = c("unif", "norm")){
+                      z1dist = c("unif", "norm"),
+                      nrsplitvar = 1 ){ # nrsplitvar not needed but to match form of dgp_tree
   
   if(nrsteps == 1 & nrlevels > 2) stop("for 1 step only two levels are possible")
   if(nrsteps == 1 & length(xi)>1) stop("for 1 step only one split point xi can be handed over")
@@ -83,10 +85,10 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vecto
     if(vary_beta == "all"){
       if(binary_beta){
         beta0 <- delta * (-1)^(z1<xi)
-        beta1 <- delta * (-1)^(z1<xi) * (-1)   # opposite signs if both betas vary
+        beta1 <- delta * (-1)^(z1<xi) * (-1)   # opposite signs  for beta0 and beta1   
       } else {
         beta0 <- delta * z1
-        beta1 <- delta * z1 * (-1)   # opposite signs if both betas vary
+        beta1 <- delta * z1 * (-1)   # opposite signs for beta0 and beta1
       }
     }
     
@@ -97,7 +99,8 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vecto
     
     if(vary_beta == "beta1"){
       beta0 <- beta0
-      beta1 <- if(binary_beta) delta * (-1)^(z1<xi) else delta * z1
+      beta1 <- if(binary_beta) delta * (-1)^(z1<xi) * (-1) else delta * z1 * (-1) 
+      # opposite signs for beta0 and beta1
     }
     
     if(binary_beta) id <- 1+(z1>=xi)
@@ -125,14 +128,14 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vecto
       if(vary_beta == "all"){
         if(binary_beta){
           beta0 <- delta * (-1)^(xi1<z1 & z1<xi2)
-          beta1 <- delta * (-1)^(xi1<z1 & z1<xi2) * (-1)   # opposite signs if both betas vary
+          beta1 <- delta * (-1)^(xi1<z1 & z1<xi2) * (-1)   # opposite signs for beta0 and beta1
         } else {
           if(shift>0){
             beta0 <- delta * ((z1-shift)^2 * 1/(1+shift)^2 * (z1<shift) + (z1-shift)^2 * 1/(1-shift)^2 * (z1>=shift)) * 2 -1
             beta1 <- (delta * ((z1-shift)^2 * 1/(1+shift)^2 * (z1<shift) + (z1-shift)^2 * 1/(1-shift)^2 * (z1>=shift)) * 2 -1) * (-1)   # opposite signs if both betas vary
           } else {
             beta0 <- delta * 2 * z1^2 - 1
-            beta1 <- (delta * 2 * z1^2 - 1) * (-1)   # opposite signs if both betas vary
+            beta1 <- (delta * 2 * z1^2 - 1) * (-1)   # opposite signs for beta0 and beta1
           }
         }
       }
@@ -166,10 +169,10 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vecto
       if(vary_beta == "all"){
         if(binary_beta){
           beta0 <- delta * (-1)^(xi1<z1) * 0^(z1>=xi2)
-          beta1 <- delta * (-1)^(xi1<z1) * 0^(z1>=xi2) * (-1)   # opposite signs if both betas vary
+          beta1 <- delta * (-1)^(xi1<z1) * 0^(z1>=xi2) * (-1)   # opposite signs for beta0 and beta1
         } else {
           beta0 <- (delta * z1^2 * 0.5^(z1>0)) * 2 - 1
-          beta1 <- ((delta * z1^2 * 0.5^(z1>0)) * 2 - 1) * (-1)   # opposite signs if both betas vary
+          beta1 <- ((delta * z1^2 * 0.5^(z1>0)) * 2 - 1) * (-1)   # opposite signs for beta0 and beta1
         }
       }
       
@@ -202,6 +205,7 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  # xi can also be a vecto
 
 
 
+
 dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),  
                      sigma = 1, seed = 7, only_intercept = FALSE, 
                      binary_regressor = TRUE, binary_beta = TRUE,
@@ -211,7 +215,7 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
                      z1dist = c("unif", "norm"),
                      nrsteps = NULL, nrlevels = NULL, shift = NULL # not needed but to match form of dgp_stump
                      )
-  {
+{
   
   # check input values
   if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
@@ -221,16 +225,17 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
   if(length(z1dist) > 1) z1dist <- z1dist[1]
   if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
   if(nrsplitvar > 2) stop("not more than two splitvariables can be selected")
-  if(nrsplitvar == 2 & length(xi) < 2) stop("for two splitvariables two splitpoints need to be set in argument 'xi'")
+  #if(nrsplitvar == 2 & length(xi) < 2) stop("for two splitvariables two splitpoints need to be set in argument 'xi'")
   if(nrsplitvar == 1 & length(xi) == 2) if(xi[2]<xi[1]) stop("for one splitvariable with two splitpoints the first splitpoint
                                                              has to be smaller than or equal to the second")
-
+ 
+  
   
   set.seed(seed)
   
   # beta0 and/or beta1 symmetric around 0? (otherwise two split points are handed over)
   # (only for one splitvariable, because for two splitvariables xi has to have two elements)
-  sym <- !(length(xi)>1)
+  sym <- (nrsplitvar == 1 & !(length(xi)>1))
   if(sym) {
     xi1 <- -xi
     xi2 <- xi
@@ -238,6 +243,9 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
     xi1 <- xi[1]
     xi2 <- xi[2]
   }
+  
+  equalxi <- (nrsplitvar == 2 & !(length(xi)>1))
+  if(equalxi) xi1 <- xi2 <- xi
   
   if(z1dist == "norm") {
     z1 <- rnorm(nobs, 0, 1) 
@@ -260,18 +268,18 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
   id <- numeric(length(z1))
   
   x <- if(binary_regressor) (-1)^rbinom(nobs, 1, 0.5) else runif(nobs, min = -1, max = 1)
-
-
+  
+  
   if(nrsplitvar == 1) {
     # for binary beta: one step in each parameter at break point xi1 or xi2, 
     # for continuous beta: plogis function
     if(vary_beta == "all"){
       if(binary_beta){
         beta0 <- delta * (-1)^(z1<xi1)
-        beta1 <- delta * (-1)^(z1<xi2) * (-1)   # opposite signs if both betas vary 
+        beta1 <- delta * (-1)^(z1<xi2) * (-1)   # opposite signs for beta0 and beta1 
       } else {
         beta0 <- delta * plogis(z1, xi1, 1/5) * 2 - 1
-        beta1 <- delta * (plogis(z1, xi2, 1/5) * 2 - 1) * (-1)   # opposite signs if both betas vary
+        beta1 <- delta * (plogis(z1, xi2, 1/5) * 2 - 1) * (-1)   # opposite signs for beta0 and beta1
       }
     }
     
@@ -298,29 +306,29 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
   }
   
   
-
+  
   if(nrsplitvar == 2) {
     
     # for binary beta: one step in each parameter at break point xi1 or xi2, 
     # for continuous beta: plogis function
     if(vary_beta == "all"){
       if(binary_beta){
-        if(z2<xi2){
-          beta0 <- -delta 
-          beta1 <- -delta
-        } else {
-          if(z1<xi1){
-            beta0 <- -delta 
-            beta1 <- delta
-          } else {
-            beta0 <- delta 
-            beta1 <- delta
-          }
-          
-          # beta0 <- (z2<xi2) * (-delta) + (z2>=xi2) * ((-delta) * (z1<xi1) + delta * (z1>=xi1))
-          # beta1 <- (z2<xi2) * (-delta) + (z2>=xi2) * delta
-          
-        }
+        #if(z2<xi2){
+        #  beta0 <- -delta 
+        #  beta1 <- -delta
+        #} else {
+        #  if(z1<xi1){
+        #    beta0 <- -delta 
+        #    beta1 <- delta
+        #  } else {
+        #    beta0 <- delta 
+        #    beta1 <- delta
+        #  }
+        #}
+        
+        beta0 <- (z2<xi2) * (-delta) + (z2>=xi2) * ((-delta) * (z1<xi1) + delta * (z1>=xi1))
+        beta1 <- (z2<xi2) * (-delta) + (z2>=xi2) * delta
+        
       } else {
         beta0 <- delta * ((plogis(z2, xi2, 1/5) * (plogis(z1, xi1, 1/5))) * 2 - 1)
         beta1 <- delta * (plogis(z2, xi2, 1/5) * 2 - 1)
@@ -349,7 +357,7 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
       }
     }
     
-    if(binary_beta) id <- 1 + (z2>=xi2) + (z2>=xi2)*(z1>=xi2)
+    if(binary_beta) id <- 1 + (z2>=xi2) + (z2>=xi2)*(z1>=xi1)
   }
   
   
@@ -875,6 +883,17 @@ if(FALSE){
   
   d <- dgp_stump(nobs = 250, xi = 0.3, binary_regressor = FALSE, vary_beta = "all", nrsteps = 2, nrlevels = 2, binary_beta = TRUE)
   
+  d <- dgp_tree(nobs = 400, xi = c(0,0.5), binary_regressor = TRUE, vary_beta = "all", 
+                 binary_beta = TRUE, nrsplitvar = 2)
+  d <- dgp_tree(nobs = 400, xi = c(0,-0.4), binary_regressor = FALSE, vary_beta = "all", 
+                binary_beta = TRUE, nrsplitvar = 2, sigma = 0.1)
+  
+  plot(d$x[d$id==1], d$y[d$id==1], ylim = c(min(d$y), max(d$y)))
+  points(d$x[d$id==2], d$y[d$id==2], col = "red")
+  points(d$x[d$id==3], d$y[d$id==3], col = "green")
+  l <- lm(y~x, data = d)
+  abline(l)
+  
   ctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree", stump = FALSE)
   mtest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "mfluc", stump = FALSE)
   cctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree_cat", stump = FALSE)
@@ -945,7 +964,7 @@ if(FALSE){
 
 
 sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
-                nrlevels = 2, shift = 0, 
+                nrlevels = 2, shift = 0, nrsplitvar = 1,
                 formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
                 vary_beta = "all", beta0 = 0, beta1 = 1, xi = 0, delta = 1, 
                 binary_regressor = TRUE, binary_beta = TRUE, z1dist = "unif",
@@ -966,7 +985,7 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
   cl <- match.call()
   
   ## FIX ME: better way of handing over two split points (vector xi) for stump=FALSE
-  if(!stump & length(xi)<2){
+  if(!stump & length(xi)<2 & nrsplitvar == 1){
     if(xi == -0.5) xi <- c(-0.5, 0)
     if(xi == -0.4) xi <- c(-0.4, 0.3)
     if(xi == 0) xi <- c(0, 0.5)
@@ -994,7 +1013,7 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
     d <- dgp(nobs = nobs, vary_beta = vary_beta, beta0 = beta0, beta1 = beta1, xi = xi, 
              binary_regressor = binary_regressor, delta = delta,
              binary_beta = binary_beta, z1dist = z1dist, nrsteps = nrsteps,
-             nrlevels = nrlevels, shift = shift,
+             nrlevels = nrlevels, shift = shift, nrsplitvar = nrsplitvar,
              seed = seed + i, sigma = sigma, only_intercept = only_intercept)
     
     # FIXME: different name for function (get_resval ?)
@@ -1191,7 +1210,8 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                        xi = c(0, 0.8), vary_beta = c("all", "beta0", "beta1"),
                        binary_regressor = c(TRUE, FALSE),
                        binary_beta = c(TRUE, FALSE),
-                       nrsteps = 1, shift = 0,
+                       nrsteps = 1, shift = 0, nrlevels = 2,
+                       nrsplitvar = 1,
                        only_intercept = c(TRUE, FALSE),
                        test = c("ctree", "mfluc", "ctree_max", 
                                 "ctree_cat", "ctree_max_cat", "mfluc_cat",
@@ -1203,7 +1223,7 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                                 "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
                                 "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
                        beta0=0, beta1 = 1,
-                       stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+                       stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)  # only needed for dgp_stump
 {
   
   prs <- expand.grid(delta = delta, xi = xi, vary_beta = vary_beta,
@@ -1247,6 +1267,7 @@ simwrapper <- function(nobs = 200, nrep = 100, seed = 7,
                    beta0 = beta0, beta1 = beta1, z1dist = z1dist,
                    sigma = sigma, alpha = alpha,
                    test = test, nrsteps = nrsteps,
+                   nrsplitvar = nrsplitvar,
                    nrlevels = nrlevels, shift = shift,
                    vary_beta = prs$vary_beta[i], 
                    binary_regressor = prs$binary_regressor[i],
@@ -1318,8 +1339,11 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
                                   "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
                                   "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
                          beta0=0, beta1 = 1,
-                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05,
+                         nrsplitvar = 1)
 {
+  
+  cl <- match.call()
   
   prs <- expand.grid(delta = delta, xi = xi, vary_beta = vary_beta,
                      binary_regressor = binary_regressor,
@@ -1346,6 +1370,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
                                    sigma = sigma, alpha = alpha,
                                    test = test, nrsteps = nrsteps,
                                    nrlevels = nrlevels, shift = shift,
+                                   nrsplitvar = nrsplitvar,
                                    vary_beta = prs$vary_beta[i], 
                                    binary_regressor = prs$binary_regressor[i],
                                    binary_beta = prs$binary_beta[i],
@@ -1425,6 +1450,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
   rval$binary_beta <- factor(rval$binary_beta)
   rval$xi <- factor(rval$xi)
   rval$only_intercept <- factor(rval$only_intercept)
+  rval$call <- cl
   
   return(rval)
 }
@@ -1434,8 +1460,9 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
 
 if(FALSE){
   simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
+                         nrsplitvar = 2,
                          delta = seq(from = 0, to = 4, by = 1),
-                         xi = c(-0.5,-0.4,0), 
+                         xi = c(0, 0.2, 0.5, 0.8), 
                          vary_beta = c("all", "beta0", "beta1"),
                          binary_regressor = c(TRUE, FALSE),
                          #binary_regressor = FALSE,
