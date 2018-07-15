@@ -1,0 +1,15 @@
+Distributional Trees and Forests
+
+Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis
+
+Keywords:
+random forest,
+regression trees,
+tree-based methods,
+probabilistic forecasting,
+distributional regression
+
+
+To obtain probabilistic predictions of a dependent variable based on explanatory variables, a distributional approach is often adopted where the distribution parameter(s) are linked to regressors. While many classical models often only capture the expectation of the distribution, newer approaches, such as those from the GAMLSS framework, allow to model all parameters including location, scale, and shape. However, in situations with non-smooth dependencies or interactions (especially unknown or of high order), it is challenging to establish a good GAMLSS. A more natural alternative would be the application of regression trees or random forests but, so far, no general distributional framework is available for these methods. Therefore, the two frameworks are combined here to distributional trees and forests. To illustrate their strengths in practice, they are applied to probabilistic precipitation forecasts based on a large number of numerical weather prediction quantities. In this setting distributional forests perform at least similar or even better than GAMLSS models specified based on meteorological knowledge/experience or on a computationally more demanding boosting approach.
+
+
