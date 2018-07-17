@@ -1,7 +1,8 @@
-utils::globalVariables(c("RainTyrol", "StationsTyrol", "NO", "NOlc", "dNOlc", "pNOlc", "qNOlc", "rNOlc"))
+utils::globalVariables(c("RainTyrol", "StationsTyrol", "NO", "NOlc", "dNOlc", "pNOlc", "qNOlc", "rNOlc",
+                         "LO", "LOlc", "dLOlc", "pLOlc", "qLOlc", "rLOlc"))
 
 evalmodels <- function(station, train, test, 
-                       ntree = 100,
+                       ntree = 100, distfamily = "gaussian",
                        tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
                        forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
                        forest_mtry = 27,
@@ -26,16 +27,31 @@ evalmodels <- function(station, train, test,
   bbs <- mboost::bbs
   
   ## for gamlss: families/distributions need to be on search path of the _user_
-  assign("NO",  gamlss.dist::NO,  pos = ".GlobalEnv")
-  assign("dNO", gamlss.dist::dNO, pos = ".GlobalEnv")
-  assign("pNO", gamlss.dist::pNO, pos = ".GlobalEnv")
-  assign("qNO", gamlss.dist::qNO, pos = ".GlobalEnv")
-  assign("rNO", gamlss.dist::rNO, pos = ".GlobalEnv")
-  gamlss.cens::gen.cens(NO, type = "left")
-  assign("NOlc",  NOlc,  pos = ".GlobalEnv")
-  assign("dNOlc", dNOlc, pos = ".GlobalEnv")
-  assign("pNOlc", pNOlc, pos = ".GlobalEnv")
-  assign("qNOlc", qNOlc, pos = ".GlobalEnv")
+  if(distfamily == "gaussian"){
+    assign("NO",  gamlss.dist::NO,  pos = ".GlobalEnv")
+    assign("dNO", gamlss.dist::dNO, pos = ".GlobalEnv")
+    assign("pNO", gamlss.dist::pNO, pos = ".GlobalEnv")
+    assign("qNO", gamlss.dist::qNO, pos = ".GlobalEnv")
+    assign("rNO", gamlss.dist::rNO, pos = ".GlobalEnv")
+    gamlss.cens::gen.cens(NO, type = "left")
+    assign("NOlc",  NOlc,  pos = ".GlobalEnv")
+    assign("dNOlc", dNOlc, pos = ".GlobalEnv")
+    assign("pNOlc", pNOlc, pos = ".GlobalEnv")
+    assign("qNOlc", qNOlc, pos = ".GlobalEnv")
+  }
+  
+  if(distfamily == "logistic"){
+    assign("LO",  gamlss.dist::LO,  pos = ".GlobalEnv")
+    assign("dLO", gamlss.dist::dLO, pos = ".GlobalEnv")
+    assign("pLO", gamlss.dist::pLO, pos = ".GlobalEnv")
+    assign("qLO", gamlss.dist::qLO, pos = ".GlobalEnv")
+    assign("rLO", gamlss.dist::rLO, pos = ".GlobalEnv")
+    gamlss.cens::gen.cens(LO, type = "left")
+    assign("LOlc",  LOlc,  pos = ".GlobalEnv")
+    assign("dLOlc", dLOlc, pos = ".GlobalEnv")
+    assign("pLOlc", pLOlc, pos = ".GlobalEnv")
+    assign("qLOlc", qLOlc, pos = ".GlobalEnv")
+  }  
   
   pb <- gamlss::pb
   bbs <- mboost::bbs
@@ -126,8 +142,13 @@ evalmodels <- function(station, train, test,
   testdata <- rain[rain$year %in% test, ]
   learndata <- rain[rain$year %in% train, ]
   
+  if(distfamily == "gaussian") family <- disttree::dist_list_cens_normal
+  if(distfamily == "logistic") family <- disttree::dist_crch(dist = "logistic", 
+                                                         type = "left",
+                                                         censpoint = 0)
+
   dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
-                                                  data = learndata, family = disttree::dist_list_cens_normal, 
+                                                  data = learndata, family = family, 
                                                   censtype = "left", censpoint = 0, type.tree = "ctree", 
                                                   control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
                                                                                     mincriterion = tree_mincrit, minsplit = tree_minsplit,
@@ -135,7 +156,7 @@ evalmodels <- function(station, train, test,
   
   
   df_time <- system.time(df <- disttree::distforest(df.formula, 
-                                                    data = learndata, family = disttree::dist_list_cens_normal, type.tree = "ctree", 
+                                                    data = learndata, family = family, type.tree = "ctree", 
                                                     ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
                                                     control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                                                       mincriterion = forest_mincrit, minsplit = forest_minsplit,
@@ -143,11 +164,14 @@ evalmodels <- function(station, train, test,
   
   
   
+  if(distfamily == "gaussian") family <- NOlc
+  if(distfamily == "logistic") family <- LOlc
+  
   g_learndata <- learndata
   g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
   g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                                family = NOlc,
+                                                family = family,
                                                 control = gamlss::gamlss.control(n.cyc = 100),
                                                 i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
   
@@ -158,10 +182,15 @@ evalmodels <- function(station, train, test,
   } else g_error <- FALSE
   
   
-  gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                                        families = gamboostLSS::as.families(fname = "NOlc"), 
-                                                        method = "noncyclic",
-                                                        control = mboost::boost_control(mstop = 1000L)))
+  if(distfamily == "gaussian") gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
+                                                                                 families = gamboostLSS::as.families(fname = "NOlc"), 
+                                                                                 method = "noncyclic",
+                                                                                 control = mboost::boost_control(mstop = 1000L)))
+  if(distfamily == "logistic") gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
+                                                                                 families = gamboostLSS::as.families(fname = "LOlc"), 
+                                                                                 method = "noncyclic",
+                                                                                 control = mboost::boost_control(mstop = 1000L)))
+  
   if(gamboost_cvr){
     grid <- seq(50, 1000, by = 25)
     gb_cvr_time <- system.time(cvr <- mboost::cvrisk(gb, grid = grid))
@@ -170,8 +199,11 @@ evalmodels <- function(station, train, test,
   } else cvr_opt <- gb_cvr_time <- NA
   
   
+  if(distfamily == "gaussian") dist <- "gaussian"
+  if(distfamily == "logistic") dist <- "logistic"
+  
   mi_time <- system.time(mi <- try(crch::crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                              data = learndata, dist = "gaussian", left = 0, link.scale = "identity")))
+                                              data = learndata, dist = dist, left = 0, link.scale = "identity")))
   if(inherits(mi, "try-error")) {
     mi_time <- NA
     mi <- NA
@@ -179,7 +211,7 @@ evalmodels <- function(station, train, test,
   } else mi_error <- FALSE
   
   ml_time <- system.time(ml <- try(crch::crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                                              data = learndata, dist = "gaussian", left = 0, link.scale = "log")))
+                                              data = learndata, dist = dist, left = 0, link.scale = "log")))
   if(inherits(ml, "try-error")) {
     ml_time <- NA
     ml <- NA
@@ -187,7 +219,7 @@ evalmodels <- function(station, train, test,
   } else ml_error <- FALSE
   
   mq_time <- system.time(mq <- try(crch::crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-                                              data = learndata, dist = "gaussian", left = 0, link.scale = "quadratic")))
+                                              data = learndata, dist = dist, left = 0, link.scale = "quadratic")))
   if(inherits(mq, "try-error")) {
     mq_time <- NA
     mq <- NA
