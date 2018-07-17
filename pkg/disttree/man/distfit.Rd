@@ -141,15 +141,17 @@ if(require("crch") & require("gamlss.cens")) {
     gen.cens(LO, type = "left")
     m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0)
     
-    #dist_list_cens_log <- make_censored_dist_list(dist = "logistic", type = "left", censpoint = 0)
-    #m3 <- distfit(RainIbk$rain, family = dist_list_cens_log)
+    dist_list_cens_log <- disttree::dist_crch(dist = "logistic", 
+                                              type = "left",
+                                              censpoint = 0)
+    m3 <- distfit(RainIbk$rain, family = dist_list_cens_log)
     
     coef(m1)
     coef(m2, type = "link")
-    #coef(m3)
+    coef(m3, type = "link")
     logLik(m1)
     logLik(m2)
-    #logLik(m3)
+    logLik(m3)
 }
 }
 
