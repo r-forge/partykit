@@ -167,61 +167,6 @@ dist_crch <- function(dist = c("normal","logistic"),
   parnames <- c("mu", "sigma")
   etanames <- c("mu", "log(sigma)")
   
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
-    par <- c(eta[1], exp(eta[2]))
-    val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
-    if(sum) {
-      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
-      val <- sum(weights * val, na.rm = TRUE)
-    }
-    return(val)
-  }
-  
-  
-  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-    par <- c(eta[1], exp(eta[2]))
-    # y[y==0] <- 1e-323
-    
-    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
-    score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
-    score <- cbind(score_m, score_s)
-    score <- as.matrix(score)
-    colnames(score) <- etanames
-    if(sum) {
-      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
-      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
-      score[score==Inf] = 1.7e308
-      score <- colSums(weights * score, na.rm = TRUE)
-      #if(any(is.nan(score))) print(c(eta, "y", y))
-    }
-    return(score)
-  }
-  
-  
-  hdist <- function(y, eta, weights = NULL) {    
-    ny <- length(y)
-    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
-    
-    par <- c(eta[1], exp(eta[2]))                           
-    # y[y==0] <- 1e-323
-    
-    d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
-    d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-    dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
-    dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
-    dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-    
-    d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
-    d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
-    d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
-    d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
-    
-    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
-    
-    return(hess)
-  }
-  
   
   
   if(dist == "normal") {
@@ -1103,7 +1048,7 @@ dist_gamma <- function() {
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
     par <- c(eta[1], exp(eta[2]))
-    val <- crch::dcnorm(x = y, location = par[1], scale = par[2], left = left, right = right, log = log)
+    val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
       if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
@@ -1116,8 +1061,8 @@ dist_gamma <- function() {
     par <- c(eta[1], exp(eta[2]))
     # y[y==0] <- 1e-323
     
-    score_m <- crch:::scnorm(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
-    score_s <- crch:::scnorm(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+    score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
     colnames(score) <- etanames
@@ -1139,11 +1084,11 @@ dist_gamma <- function() {
     par <- c(eta[1], exp(eta[2]))                           
     # y[y==0] <- 1e-323
     
-    d2mu <- crch:::hcnorm(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
-    d2sigma <- crch:::hcnorm(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
-    dmudsigma <- crch:::hcnorm(x = y, location = par[1], scale = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
-    dsigmadmu <- crch:::hcnorm(x = y, location = par[1], scale = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
-    dsigma <- crch:::scnorm(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
+    d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+    dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+    dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
     
     d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
     d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
@@ -1159,13 +1104,13 @@ dist_gamma <- function() {
   
   ## additional functions pdist, qdist, rdist on link-scale
   # FIX ME: par instead of eta better?
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, location = eta[1], scale = exp(eta[2]), 
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, location = eta[1], scale = exp(eta[2]), 
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                             lower.tail = lower.tail, log.p = log.p, 
                                                                             left = left, right = right)
-  rdist <- function(n, eta) crch::rcnorm(n, location = eta[1], scale = exp(eta[2]), left = left, right = right)
+  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   
   
   link <- c("identity", "log")
