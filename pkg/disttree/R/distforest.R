@@ -359,109 +359,58 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
 ###################
 # methods for class 'distforest'
 
-predict.distforest <- function (object, newdata = NULL, type = c("parameter", "response", "prob", 
-                                                                 "weights", "node"), OOB = FALSE, ...) 
+predict.distforest <- function (object, newdata = NULL, 
+                                type = c("parameter", "response", "prob",  "weights", "node"),  ## FIX ME: check type = "prob" ?
+                                OOB = FALSE, FUN = NULL, simplify = TRUE, scale = TRUE, ...) 
 {
+  
+  # per default 'type' is set to 'parameter'
+  if(length(type)>1) type <- type[1]
+  
+  # for type = "prob" the argument scale has to set to FALSE
+  if(type == "prob" & scale) {
+    warning("for type 'prob' the weights have to be integeres, i.e. the argument 'scale' has to be set to FALSE")
+    scale <- FALSE
+  }
+  
+  if(type %in% c("prob",  "weights", "node"))
+    return(partykit::predict.cforest(object = object, newdata = newdata,
+                                     type = type, OOB = OOB, FUN = FUN, 
+                                     simplify = simplify, scale = scale, ...))
+  
+  if(type == "parameter" & is.null(newdata)) return(object$fitted.par)
+  
+  # get weights
+  w <- partykit::predict.cforest(object = object, newdata = newdata, 
+                                 type = "weights", OOB = OOB, FUN = FUN, 
+                                 simplify = simplify, scale = scale, ...)
+  
   responses <- object$fitted[["(response)"]]
-  forest <- object$nodes
-  nd <- object$data
-  vmatch <- 1:ncol(nd)
-  if (!is.null(newdata)) {
-    nd <- model.frame(delete.response(object$terms), data = newdata, 
-                      na.action = na.pass)
-    OOB <- FALSE
-    vmatch <- match(names(object$data), names(nd))
-  }
-  nam <- rownames(nd)
-  type <- match.arg(type)
-  if (type == "node") 
-    return(lapply(forest, partykit::fitted_node, data = nd, vmatch = vmatch, 
-                  ...))
-  rw <- object$weights
-  applyfun <- lapply
-  if (!is.null(object$info)) 
-    applyfun <- object$info$control$applyfun
-  bw <- applyfun(1:length(forest), function(b) {
-    ids <- partykit::nodeids(forest[[b]], terminal = TRUE)
-    fnewdata <- partykit::fitted_node(forest[[b]], nd, vmatch = vmatch, 
-                                      ...)
-    fdata <- partykit::fitted_node(forest[[b]], object$data, ...)
-    tw <- rw[[b]]
-    if (OOB) 
-      tw <- as.integer(tw == 0)
-    pw <- sapply(ids, function(i) tw * (fdata == i))
-    return(pw[, match(fnewdata, ids), drop = FALSE])
-  })
-  w <- Reduce("+", bw)
-  if (!is.matrix(w)) 
-    w <- matrix(w, ncol = 1)
-  if (type == "weights") {
-    ret <- w
-    colnames(ret) <- nam
-    rownames(ret) <- rownames(responses)
-    return(ret)
+  
+  # number of (possibly new) observations to make predictions for
+  n <- if(is.null(newdata)) ncol(object$data) else ncol(newdata)   # n <- ncol(w)
+  
+  # for type "parameter" the number of columns is set to the number of parameters
+  # for type "response" it is set to 1
+  pred <- if(type == "parameter") {
+    data.frame(matrix(0, nrow = n, ncol = ncol(object$fitted.par))) 
+  } else {
+    data.frame(matrix(0, nrow = n, ncol = 1))
+  }      
+  
+  for(i in 1:ncol(w)){
+    wi <- w[,i]
+    # personalized model
+    pm <-  disttree::distfit(responses, family = object$info$family, weights = wi, vcov = FALSE, 
+                             ocontrol = object$call$ocontrol,
+                             censtype = object$info$censtype, censpoint = object$info$censpoint)
+    pred[i,] <- predict(pm, type = type)
   }
   
-  
-  if(type == "response"){
-    # if(!is.null(newdata)) {
-      
-      # get weights for new data
-      #nw <- predict.cforest(object, newdata = nd, type = "weights", OOB = OOB)
-      nw <- w
-      
-      # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  disttree::distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
-                               censtype = object$info$censtype, censpoint = object$info$censpoint)
-      pred.val1 <- predict(pm, type = "response")
-      
-      pred.val <- data.frame(idx = 1:nrow(nd))
-      pred.val[1,] <- pred.val1
-      
-      if(nrow(nd)>=2){
-        for(i in 2:nrow(nd)){
-          nwi <- nw[,i]
-          # personalized model
-          pm <-  disttree::distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
-                                   censtype = object$info$censtype, censpoint = object$info$censpoint)
-          pred.val[i,] <- predict(pm, type = "response")
-        }
-      }
-      pred <- pred.val
-      colnames(pred) <- c("(fitted.response)")
-      return(pred)
-    #} else return(object$fitted$`(fitted.response)`)
-  }
-  
-  if(type == "parameter"){
-    if(!is.null(newdata)) {
-      
-      # get weights for new data
-      nw <- partykit::predict.cforest(object, newdata = nd, type = "weights", OOB = FALSE)
-      
-      # calculate prediction for the first observation before the loop in order to get the number of parameters
-      pm <-  disttree::distfit(responses, family = object$info$family, weights = nw[,1], vcov = FALSE, ocontrol = object$call$ocontrol,
-                               censtype = object$info$censtype, censpoint = object$info$censpoint)
-      pred.par1 <- coef(pm, type = "parameter")
-      
-      pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = length(pred.par1)))
-      pred.par[1,] <- pred.par1
-      
-      if(nrow(nd)>=2){
-        for(i in 2:nrow(nd)){
-          nwi <- nw[,i]
-          # personalized model
-          pm <-  disttree::distfit(responses, family = object$info$family, weights = nwi, vcov = FALSE, ocontrol = object$call$ocontrol,
-                                   censtype = object$info$censtype, censpoint = object$info$censpoint)
-          pred.par[i,] <- coef(pm, type = "parameter")
-        }
-      }
-      pred <- pred.par
-      colnames(pred) <- c(names(coef(pm, type = "parameter")))
-      return(pred)
-    } else return(object$fitted.par)
-  }
+  colnames(pred) <- if(type == "parameter") c(names(coef(pm, type = "parameter"))) else c("(fitted.response)")
+  return(pred)
 }
+
 
 
 
