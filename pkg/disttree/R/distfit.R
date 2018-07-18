@@ -458,7 +458,7 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
         if("Logistic" %in% strsplit(object$family$family.name, " ")[[1]]){
           mu <- object$par[1]
           scale <- object$par[2]
-          expv <- (1 - (1 / (1 + exp(mu/scale)))) * scale * (1 + exp(-mu/sigma)) * log(1 + exp(mu/scale))
+          expv <- (1 - (1 / (1 + exp(mu/scale)))) * scale * (1 + exp(-mu/scale)) * log(1 + exp(mu/scale))
         } else {
           par <- coef(object, type = "parameter")
           expv <- par[1]
