@@ -437,7 +437,7 @@ coef.distfit <- function(object, type = "parameter" , ...) {
   if(type == "parameter") return(object$par)
 }
 
-## FIX: censored logistic distribution
+
 predict.distfit <- function(object, type = c("parameter", "response"), ...){
   # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
@@ -447,12 +447,25 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
   
   if(type == "response") {
     
+    ## FIX ME: expected value for censored distributions
     if(object$family$censored)
     {
-      par <- coef(object, type = "parameter")
-      expv <- par[1]
-      #lat.expv <- par[1]
-      #object$ddist() / object$pdist()
+      if("Normal" %in% strsplit(object$family$family.name, " ")[[1]]){
+        mu <- object$par[1]
+        sigma <- object$par[2]
+        expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
+      } else {
+        if("Logistic" %in% strsplit(object$family$family.name, " ")[[1]]){
+          mu <- object$par[1]
+          scale <- object$par[2]
+          expv <- (1 - (1 / (1 + exp(mu/scale)))) * scale * (1 + exp(-mu/sigma)) * log(1 + exp(mu/scale))
+        } else {
+          par <- coef(object, type = "parameter")
+          expv <- par[1]
+          #lat.expv <- par[1]
+          #object$ddist() / object$pdist()
+        }
+      }
       return(expv)
     } 
     
