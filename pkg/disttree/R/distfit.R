@@ -445,6 +445,8 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
   # per default 'type' is set to 'parameter'
   if(length(type)>1) type <- type[1]
   
+  if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
+  
   if(type == "response") {
     
     ## FIX ME: expected value for censored distributions
@@ -456,10 +458,13 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
         expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
       } else {
         if("Logistic" %in% strsplit(object$family$family.name, " ")[[1]]){
-          mu <- object$par[1]
+          location <- object$par[1]
           scale <- object$par[2]
-          expv <- (1 - (1 / (1 + exp(mu/scale)))) * scale * (1 + exp(-mu/scale)) * log(1 + exp(mu/scale))
+          expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
         } else {
+          ## FIX ME: expected value for other censored distributions:
+          warning("For censored distributions other than the censored normal and censored logistic distribution
+                  the location parameter is returned as response.")
           par <- coef(object, type = "parameter")
           expv <- par[1]
           #lat.expv <- par[1]
