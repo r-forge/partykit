@@ -388,7 +388,7 @@ predict.distforest <- function (object, newdata = NULL,
   responses <- object$fitted[["(response)"]]
   
   # number of (possibly new) observations to make predictions for
-  n <- if(is.null(newdata)) ncol(object$data) else ncol(newdata)   # n <- ncol(w)
+  n <- if(is.null(newdata)) nrow(object$data) else nrow(newdata)   # n <- ncol(w)
   
   # for type "parameter" the number of columns is set to the number of parameters
   # for type "response" it is set to 1
