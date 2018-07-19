@@ -14,7 +14,7 @@
 
 \usage{
 evalmodels(station, train, test, 
-           ntree = 100,
+           ntree = 100, distfamily = "gaussian",
            tree_minsplit = 50, tree_minbucket = 20, tree_mincrit = 0.95,
            forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0,
            forest_mtry = 27,
@@ -26,6 +26,7 @@ evalmodels(station, train, test,
   \item{train}{\code{numeric}, (vector of) years the models should be trained on (available: 1985--2012)}
   \item{test}{\code{numeric}, (vector of) years the models should be tested on (available: 1985--2012)}
   \item{ntree}{\code{numeric}, number of trees in the distributional forest.}
+  \item{distfamily}{\code{character}, name of the distribution that should be used, can be either a gaussian or a logistic distribution.}
   \item{tree_minsplit}{\code{numeric}, the minimum sum of weights in a node in order to be considered for splitting in the distributional tree.}
   \item{tree_mincrit}{\code{numeric}, the value of the test statistic or 1 - p-value that must be exceeded in order to implement a split in the distributional tree.}
   \item{tree_minbucket}{\code{numeric}, the minimum sum of weights in a terminal node in the distributional tree.}

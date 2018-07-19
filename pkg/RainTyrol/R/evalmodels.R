@@ -10,6 +10,8 @@ evalmodels <- function(station, train, test,
 {
   cl <- match.call()
   
+  if(!distfamily %in% c("gaussian", "logistic")) stop("distfamily can only be 'gaussian' or 'logistic'")
+  
   ## check input arguments train and test
   if(any(!(c(train, test) %in% c(1985:2012)))) stop("training and testing years can only be chosen out of 1985-2012")
   ## in the 
@@ -143,9 +145,9 @@ evalmodels <- function(station, train, test,
   learndata <- rain[rain$year %in% train, ]
   
   if(distfamily == "gaussian") family <- disttree::dist_list_cens_normal
-  if(distfamily == "logistic") family <- disttree::dist_crch(dist = "logistic", 
-                                                         type = "left",
-                                                         censpoint = 0)
+  if(distfamily == "logistic") family <- dist_list_cens_log <- disttree::dist_crch(dist = "logistic", 
+                                                                                   type = "left",
+                                                                                   censpoint = 0)
 
   dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
                                                   data = learndata, family = family, 
@@ -233,7 +235,11 @@ evalmodels <- function(station, train, test,
   dt_predtime <- system.time(pdt <- predict(dt, newdata = testdata, type = "parameter"))
   dt_mu <- pdt$mu
   dt_sigma <- pdt$sigma
-  dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
+  if(distfamily == "gaussian"){
+    dt_exp <- pnorm(dt_mu/dt_sigma) * (dt_mu + dt_sigma * (dnorm(dt_mu/dt_sigma) / pnorm(dt_mu/dt_sigma)))
+  } else {
+    dt_exp <- (1 - (1 / (1 + exp(dt_mu/dt_sigma)))) * dt_sigma * (1 + exp(-dt_mu/dt_sigma)) * log(1 + exp(dt_mu/dt_sigma))
+  }
   if(any(is.na(dt_exp))){
     dt_exp[dt_sigma <= 0.0002] <- pmax(0, dt_mu[dt_sigma <= 0.0002])    
   }
@@ -242,7 +248,12 @@ evalmodels <- function(station, train, test,
   df_predtime <- system.time(pdf <- predict(df, newdata = testdata, type = "parameter"))
   df_mu <- pdf$mu
   df_sigma <- pdf$sigma
-  df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+  if(distfamily == "gaussian"){
+    df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+  } else {
+    df_exp <- (1 - (1 / (1 + exp(df_mu/df_sigma)))) * df_sigma * (1 + exp(-df_mu/df_sigma)) * log(1 + exp(df_mu/df_sigma))
+  }
+  
   if(any(is.na(df_exp))){
     df_exp[df_sigma <= 0.0002] <- pmax(0, df_mu[df_sigma <= 0.0002])    
   }
@@ -255,7 +266,13 @@ evalmodels <- function(station, train, test,
     if(inherits(g_mu, "try-error") | inherits(g_sigma, "try-error")) {
       g_mu <- g_sigma <- g_exp <- g_predtime <- NA
       g_error <- TRUE
-    } else g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+    } else {
+      if(distfamily == "gaussian"){
+        g_exp <- pnorm(g_mu/g_sigma) * (g_mu + g_sigma * (dnorm(g_mu/g_sigma) / pnorm(g_mu/g_sigma)))
+      } else {
+        g_exp <- (1 - (1 / (1 + exp(g_mu/g_sigma)))) * g_sigma * (1 + exp(-g_mu/g_sigma)) * log(1 + exp(g_mu/g_sigma))
+      }
+    }
   } else g_mu <- g_sigma <- g_exp <- g_predtime <- NA
   g_na <- any(c(all(is.na(g)), all(is.na(g_mu)), all(is.na(g_sigma))))
   
@@ -264,7 +281,11 @@ evalmodels <- function(station, train, test,
   gb_predtime <- system.time(pgb <- predict(gb, newdata = testdata, parameter = list("mu","sigma"), type = "response"))
   gb_mu <- pgb[[1]]
   gb_sigma <- pgb[[2]]
-  gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+  if(distfamily == "gaussian"){
+    gb_exp <- pnorm(gb_mu/gb_sigma) * (gb_mu + gb_sigma * (dnorm(gb_mu/gb_sigma) / pnorm(gb_mu/gb_sigma)))
+  } else {
+    gb_exp <- (1 - (1 / (1 + exp(gb_mu/gb_sigma)))) * gb_sigma * (1 + exp(-gb_mu/gb_sigma)) * log(1 + exp(gb_mu/gb_sigma))
+  }
   
   
   # EMOS
@@ -273,7 +294,13 @@ evalmodels <- function(station, train, test,
       system.time(mi_sigma <- try(predict(mi, type = "scale", newdata = testdata)))
     if(inherits(mi_mu, "try-error") | inherits(mi_sigma, "try-error")) {
       mi_mu <- mi_sigma <- mi_exp <- mi_predtime <- NA
-    } else mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+    } else {
+      if(distfamily == "gaussian"){
+        mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
+      } else {
+        mi_exp <- (1 - (1 / (1 + exp(mi_mu/mi_sigma)))) * mi_sigma * (1 + exp(-mi_mu/mi_sigma)) * log(1 + exp(mi_mu/mi_sigma))
+      }
+    }
   } else mi_mu <- mi_sigma <- mi_exp <- mi_predtime <- NA
   mi_na <- any(c(all(is.na(mi)), all(is.na(mi_mu)), all(is.na(mi_sigma))))
 
@@ -284,7 +311,13 @@ evalmodels <- function(station, train, test,
       system.time(ml_sigma <- try(predict(ml, type = "scale", newdata = testdata)))
     if(inherits(ml_mu, "try-error") | inherits(ml_sigma, "try-error")) {
       ml_mu <- ml_sigma <- ml_exp <- ml_predtime <- NA
-    } else ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+    } else {
+      if(distfamily == "gaussian"){
+        ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
+      } else {
+        ml_exp <- (1 - (1 / (1 + exp(ml_mu/ml_sigma)))) * ml_sigma * (1 + exp(-ml_mu/ml_sigma)) * log(1 + exp(ml_mu/ml_sigma))
+      }
+    }
   } else ml_mu <- ml_sigma <- ml_exp <- ml_predtime <- NA
   ml_na <- any(c(all(is.na(ml)), all(is.na(ml_mu)), all(is.na(ml_sigma))))
   
@@ -294,19 +327,35 @@ evalmodels <- function(station, train, test,
       system.time(mq_sigma <- try(predict(mq, type = "scale", newdata = testdata)))
     if(inherits(mq_mu, "try-error") | inherits(mq_sigma, "try-error")) {
       mq_mu <- mq_sigma <- mq_exp <- mq_predtime <- NA
-    } else mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+    } else {
+      if(distfamily == "gaussian"){
+        mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
+      } else {
+        mq_exp <- (1 - (1 / (1 + exp(mq_mu/mq_sigma)))) * mq_sigma * (1 + exp(-mq_mu/mq_sigma)) * log(1 + exp(mq_mu/mq_sigma))
+      }
+    }
   } else mq_mu <- mq_sigma <- mq_exp <- mq_predtime <- NA
   mq_na <- any(c(all(is.na(mq)), all(is.na(mq_mu)), all(is.na(mq_sigma))))
     
   
   # CPRS
-  crps_dt <- mean(scoringRules::crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_df <- mean(scoringRules::crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_g <- if(!g_na) mean(scoringRules::crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_gb <- mean(scoringRules::crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  crps_mi <- if(!mi_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_ml <- if(!ml_na) mean(scoringRules::crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
-  crps_mq <- if(!mq_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  if(distfamily == "gaussian"){
+    crps_dt <- mean(scoringRules::crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_df <- mean(scoringRules::crps_cnorm(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_g <- if(!g_na) mean(scoringRules::crps_cnorm(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_gb <- mean(scoringRules::crps_cnorm(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_mi <- if(!mi_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_ml <- if(!ml_na) mean(scoringRules::crps_cnorm(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_mq <- if(!mq_na) mean(scoringRules::crps_cnorm(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  } else {
+    crps_dt <- mean(scoringRules::crps_clogis(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_df <- mean(scoringRules::crps_clogis(testdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_g <- if(!g_na) mean(scoringRules::crps_clogis(testdata$robs, location = g_mu, scale = g_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_gb <- mean(scoringRules::crps_clogis(testdata$robs, location = gb_mu, scale = gb_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+    crps_mi <- if(!mi_na) mean(scoringRules::crps_clogis(testdata$robs, location = mi_mu, scale = mi_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_ml <- if(!ml_na) mean(scoringRules::crps_clogis(testdata$robs, location = ml_mu, scale = ml_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+    crps_mq <- if(!mq_na) mean(scoringRules::crps_clogis(testdata$robs, location = mq_mu, scale = mq_sigma, lower = 0, upper = Inf), na.rm = TRUE) else NA
+  }
   
   # RMSE
   rmse_dt <- sqrt(mean((dt_exp - testdata[,"robs"])^2, na.rm = TRUE))
@@ -319,24 +368,46 @@ evalmodels <- function(station, train, test,
   
   # loglikelihood
   dtll <- dfll <- gll <-  gbll <- mill <- mlll <- mqll <- numeric(length = NROW(testdata))
-  for(j in 1:(NROW(testdata))){
-    
-    eta_dt <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
-    eta_df <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
-    eta_g <- if(!g_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
-    eta_gb <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
-    eta_mi <- if(!mi_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
-    eta_ml <- if(!ml_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
-    eta_mq <- if(!mq_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
-    
-    dtll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
-    dfll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-    gll[j] <- if(!g_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
-    gbll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
-    mill[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
-    mlll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
-    mqll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
-    
+  if(distfamily == "gaussian"){
+    for(j in 1:(NROW(testdata))){
+      
+      eta_dt <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(dt_mu, dt_sigma)[j,]))
+      eta_df <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(df_mu, df_sigma)[j,]))
+      eta_g <- if(!g_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
+      eta_gb <- as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(gb_mu, gb_sigma)[j,]))
+      eta_mi <- if(!mi_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+      eta_ml <- if(!ml_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+      eta_mq <- if(!mq_na) as.numeric(disttree::dist_list_cens_normal$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
+      
+      dtll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
+      dfll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
+      gll[j] <- if(!g_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+      gbll[j] <- disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
+      mill[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+      mlll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+      mqll[j] <- if(!mi_na) disttree::dist_list_cens_normal$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
+      
+    }
+  } else {
+    for(j in 1:(NROW(testdata))){
+      
+      eta_dt <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(dt_mu, dt_sigma)[j,]))
+      eta_df <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(df_mu, df_sigma)[j,]))
+      eta_g <- if(!g_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
+      eta_gb <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(gb_mu, gb_sigma)[j,]))
+      eta_mi <- if(!mi_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+      eta_ml <- if(!ml_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+      eta_mq <- if(!mq_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
+      
+      dtll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
+      dfll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
+      gll[j] <- if(!g_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+      gbll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
+      mill[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+      mlll[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+      mqll[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
+      
+    }
   }
   
   ll_dt <- mean(dtll, na.rm = TRUE)
