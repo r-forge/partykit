@@ -36,14 +36,14 @@
 }
 
 \usage{
-lmertree(formula, data, weights = NULL, offset = NULL,
-  ranefstart = NULL, cluster = NULL, abstol = 0.001, maxit = 100, 
-  joint = TRUE, dfsplit = TRUE, verbose = FALSE, plot = FALSE,
-  lmer.control = lmerControl(), \dots)
+lmertree(formula, data, weights = NULL, cluster = NULL, 
+  ranefstart = NULL, offset = NULL, joint = TRUE, 
+  abstol = 0.001, maxit = 100, dfsplit = TRUE, verbose = FALSE, 
+  plot = FALSE, lmer.control = lmerControl(), \dots)
 
 glmertree(formula, data, family = "binomial", weights = NULL,
-  offset = NULL, ranefstart = NULL, cluster = NULL, abstol = 0.001, 
-  maxit = 100, joint = TRUE, dfsplit = TRUE, verbose = FALSE, 
+  cluster = NULL, ranefstart = NULL, offset = NULL, joint = TRUE,
+  abstol = 0.001, maxit = 100, dfsplit = TRUE, verbose = FALSE, 
   plot = FALSE, glmer.control = glmerControl(), \dots)
 }
 
@@ -57,28 +57,34 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   \item{weights}{numeric. An optional numeric vector of weights. (Note that
     this is passed with standard evaluation, i.e., it is not enough to pass
     the name of a column in \code{data}.)}
-  \item{offset}{numeric. An optional numeric vector of values to be included in 
-    the linear predictor with a coeffcient of one. (Note that this is passed with
-    standard evaluation, i.e., it is not enough to pass the name of a column in 
-    \code{data}.)}
-  \item{ranefstart}{numeric vector, \code{TRUE}, or \code{NULL}. Specifies the 
-    offset to be used in estimation of the first tree. \code{NULL} by default,
-    which results in a zero offset initialization. Alternatively, a numeric vector 
-    of length \code{nrow(data)} with starting values can be supplied; if 
-    \code{ranefstart = TRUE} is specified, random effects will be estimated first
-    and the first tree will be grown using the random-effects predictions as an
-    offset.}
-  \item{cluster}{optional vector (numeric, character or factor) with a cluster ID 
-    to be employed for clustered covariances in the parameter stability tests. If
-    \code{NULL}, clustered covariances are not employed.}
+  \item{cluster}{optional vector of cluster IDs to be employed for clustered 
+    covariances in the parameter stability tests. Note that \code{cluster} 
+    can be passed both with standard and non-standard evaluation. That is, a 
+    name of a column in \code{data} may be specified, or a vector of length
+    \code{nrow(data)}. If \code{cluster = NULL} (the default), observation-level
+    instead of cluster-level covariances are employed in the parameter stability 
+    tests. If partitioning variables are measured on the cluster level, the
+    default likely yields spurious splits and inflated Type-I errors. 
+    Specification of the cluster argument will mitigate this effect.}
+  \item{ranefstart}{\code{NULL} (the default), \code{TRUE}, or a numeric 
+    vector of length \code{nrow(data)}. Specifies the offset to be used in 
+    estimation of the first tree. \code{NULL} by default, yielding a zero offset 
+    initialization. If \code{ranefstart = TRUE} is specified, the random effects 
+    will be estimated first and the first tree will be grown using the 
+    random-effects predictions as an offset.}
+  \item{offset}{optional numeric vector to be included in the linear predictor 
+    with a coeffcient of one. Note that \code{offset} can be passed with both 
+    standard and non-standard evaluation. That is, a name of a column in 
+    \code{data} may be specified, or a a numeric vector of length 
+    \code{nrow(data)}.}
+  \item{joint}{logical. Should the fixed effects from the tree be (re-)estimated
+    jointly along with the random effects?}
   \item{abstol}{numeric. The convergence criterion used for estimation of the model.
     When the difference in log-likelihoods of the random-effects model from two
     consecutive iterations is smaller than \code{abstol}, estimation of the
     model tree has converged.} 
   \item{maxit}{numeric. The maximum number of iterations to be performed in
     estimation of the model tree.}
-  \item{joint}{logical. Should the fixed effects from the tree be (re-)estimated
-    jointly along with the random effects?}
   \item{dfsplit}{logical or numeric. \code{as.integer(dfsplit)} is the
     degrees of freedom per selected split employed when extracting
     the log-likelihood.}
@@ -152,12 +158,10 @@ The function returns a list with the following objects:
 }
 
 \references{
-Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2015).
+Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (in press).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
-  with Generalized Linear Mixed-Effects Model Trees}.
-  Working Paper 2015-10. Working Papers in Economics and Statistics,
-  Research Platform Empirical and Experimental Economics, Universität Innsbruck.
-  \url{http://EconPapers.RePEc.org/RePEc:inn:wpaper:2015-10}
+  with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
+  Methods. \url{https://doi.org/10.3758/s13428-017-0971-x}
 }
 
 \seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
@@ -174,7 +178,8 @@ print(lt)
 plot(lt, which = "all") # default behavior, which may also be "tree" or "ranef" 
 coef(lt)
 ranef(lt)
-predict(lt, type = "response") # default behavior, type may also be "node" 
+predict(lt, type = "response") # default behavior, type may also be "node"
+predict(lt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
 residuals(lt)
 
 \donttest{
@@ -186,6 +191,7 @@ plot(gt, which = "all") # default behavior, which may also be "tree" or "ranef"
 coef(gt)
 ranef(gt)
 predict(gt, type = "response") # default behavior, type may also be "node" or "link"
+predict(gt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
 residuals(gt)
 }
 }
