@@ -1,18 +1,39 @@
 utils::globalVariables(c(".tree", ".ranef", ".weights", ".cluster"))
 
-lmertree <- function(formula, data, weights = NULL, offset = NULL,
-                     ranefstart = NULL, cluster = NULL, abstol = 0.001, 
-                     maxit = 100, joint = TRUE, dfsplit = TRUE, 
+lmertree <- function(formula, data, weights = NULL, cluster = NULL,
+                     ranefstart = NULL, offset = NULL, joint = TRUE,
+                     abstol = 0.001, maxit = 100, dfsplit = TRUE, 
                      verbose = FALSE, plot = FALSE, 
                      lmer.control = lmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
   
-  ## check if data is complete, print warning if not 
+  ## check if data is complet, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing observations, note that listwise deletion will be employed.") 
+    warning("data contains missing values, note that listwise deletion will be employed.", .immediate = TRUE) 
   }
+  
+  ## process offset:
+  q_offset <- substitute(offset)
+  offset <- try(offset, silent = TRUE)
+  if (inherits(offset, "try-error") || length(offset) != nrow(data)) {
+    offset <- eval(q_offset, data)
+  }
+
+  ## process cluster:
+  q_cluster <- substitute(cluster)
+  cluster <- try(cluster, silent = TRUE)
+  if (!is.null(q_cluster)) {
+    data$.cluster <- eval(q_cluster, data)
+    if (length(eval(q_cluster, data)) != nrow(data)) {
+      warning("Variable lengths differ for 'cluster' and 'data'.", .immediate = TRUE)
+    }
+  } 
+  if (!is.null(q_cluster) && 
+      !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
+    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
+  } 
   
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
@@ -32,23 +53,13 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
   }
   
   ## weights
-  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
+  data$.weights <- if (is.null(weights)) rep(1, nrow(data)) else weights
   
-  ## cluster argument
-  if (!is.null(cl$cluster)) {
-    if (!(is.numeric(cluster) || is.character(cluster) || is.factor(cluster))) {
-      warning("Argument 'cluster' should be NULL, or a numeric, factor or character vector.")
-    } 
-    if (length(cluster) != nrow(data)) {
-      warning("Argument 'cluster' should be a vector of length nrow(data)")
-    }
-  }
-    
   ## initialization
   iteration <- 0L
   data$.ranef <- if (is.null(ranefstart)) {
     rep(0, times = dim(data)[1L])
-  } else if (ranefstart && length(ranefstart) == 1) {
+  } else if (ranefstart && length(ranefstart) == 1L) {
     ## generate ranefstart from lme null model: 
     predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
                 data = data, weights = .weights, 
@@ -70,23 +81,25 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
         
     iteration <- iteration + 1L
     
-    if(is.null(cluster)) {
+    ## fit tree
+    if (is.null(q_cluster)) {
       tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-              dfsplit = dfsplit, ...)
+                     dfsplit = dfsplit, ...)
     } else {
-      data$.cluster <- cluster
       tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-              cluster = .cluster, dfsplit = dfsplit, ...)
+                     cluster = .cluster, dfsplit = dfsplit, ...)
     }
     
     if (plot) plot(tree)
+    
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
     } else {
-      predict(tree, newdata = data, type = "response")
+      predict(tree, newdata = data, type = "response") 
+      ## note that these predictions already include offset
     }
     
-    ## lmer
+    ## fit lmer
     if (joint) {
       ## estimate full lmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
@@ -95,7 +108,6 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
         rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
         rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
                       lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        #rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
         if (is.null(offset)) {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
                       control = lmer.control)          
@@ -103,35 +115,31 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
           lme <- lmer(rf.alt, data = data, weights = .weights, 
                       offset = offset, control = lmer.control)
         }
-      } else {
+      } else { # a tree was grown
         if (is.null(offset)) {
-          lme <- lmer(rf, data = data, weights = .weights, 
-                      control = lmer.control)          
-        } else {
           lme <- lmer(rf, data = data, weights = .weights,
-                      offset = offset, control = lmer.control)
+                      control = lmer.control)
+        } else {
+          lme <- lmer(rf, data = data, weights = .weights, 
+                      offset = offset, control = lmer.control)          
         }
       }
-      #b <- structure(lme@beta, .Names = names(coef(lme)[[1L]]))
       b <- structure(lme@beta, .Names = names(fixef(lme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
       data$.ranef <- suppressWarnings(suppressMessages(predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
-      ## if offset was specified, add it to .tree:
-      if (!is.null(offset)) {
-        data$.tree <- data$.tree + offset
-      }
       ## estimate only a partial lmer model using the .tree fitted
       ## values as an offset
       lme <- lmer(rf, data = data, offset = .tree, weights = .weights, control = lmer.control)
-      data$.ranef <- predict(lme, newdata = data)    
+      data$.ranef <- predict(lme, newdata = data)
+      ## note that because newdata is specified, predict.merMod will not include offset in predictions
     }
     
     ## iteration information
     newloglik <- logLik(lme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
-    if(verbose) print(newloglik)
+    if (verbose) print(newloglik)
   }
   
   ## collect results
@@ -162,23 +170,49 @@ lmertree <- function(formula, data, weights = NULL, offset = NULL,
 
 
 glmertree <- function(formula, data, family = "binomial", weights = NULL,
-                      offset = NULL, ranefstart = NULL, cluster = NULL,
-                      abstol = 0.001, maxit = 100, joint = TRUE, 
+                      cluster = NULL, ranefstart = NULL, offset = NULL,
+                      joint = TRUE, abstol = 0.001, maxit = 100,  
                       dfsplit = TRUE, verbose = FALSE, plot = FALSE, 
                       glmer.control = glmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
   
+  ## check if data is complet, print warning if not: 
+  if (nrow(data) != sum(stats::complete.cases(data))) {
+    warning("data contains missing values, note that listwise deletion will be employed.", .immediate = TRUE) 
+  }
+  
+  ## process offset:
+  q_offset <- substitute(offset)
+  offset <- try(offset, silent = TRUE)
+  if (inherits(offset, "try-error") || length(offset) != nrow(data)) {
+    offset <- eval(q_offset, data)
+  }
+  
+  ## process cluster:
+  q_cluster <- substitute(cluster)
+  cluster <- try(cluster, silent = TRUE)
+  if (!is.null(q_cluster)) {
+    data$.cluster <- eval(q_cluster, data)
+    if (length(eval(q_cluster, data)) != nrow(data)) {
+      warning("Variable lengths differ for 'cluster' and 'data'.", .immediate = TRUE)
+    }
+  } 
+  if (!is.null(q_cluster) && 
+      !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
+    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
+  }
+  
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
   tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
-  if(length(attr(ff, "rhs")[[2L]]) == 1L) {
+  if (length(attr(ff, "rhs")[[2L]]) == 1L) {
     rf <- (. ~ (1 | id))[[3L]]
     rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
     attr(ff, "rhs")[[2L]] <- rf
   }
-  if(joint) {
+  if (joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
     rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
@@ -189,16 +223,6 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   
   ## weights
   data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
-  
-  ## cluster argument
-  if (!is.null(cl$cluster)) {
-    if (!(is.numeric(cluster) || is.character(cluster) || is.factor(cluster))) {
-      warning("Argument 'cluster' should be NULL, or a numeric, factor or character vector.")
-    } 
-    if (length(cluster) != nrow(data)) {
-      warning("Argument 'cluster' should be a vector of length nrow(data)")
-    }
-  }
   
   ## initialization
   iteration <- 0L
@@ -218,6 +242,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   
   ## iterate between glmer and glmtree estimation
   while (continue) {
+    
     iteration <- iteration + 1L
     
     ## if offset was specified, add it to .ranef:
@@ -225,24 +250,27 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       data$.ranef <- data$.ranef + offset
     }
 
-    if(is.null(cluster)) {
-      tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, 
-              dfsplit = dfsplit, ...)
+    ## fit tree
+    if (is.null(q_cluster)) {
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
+                      weights = .weights, dfsplit = dfsplit, ...)
     } else {
-      data$.cluster <- cluster
-      tree <- glmtree(tf, data = data, family = family, offset = .ranef, weights = .weights, 
-              cluster = .cluster, dfsplit = dfsplit, ...)
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
+                      weights = .weights, cluster = .cluster, 
+                      dfsplit = dfsplit, ...)
     }
     
     if (plot) plot(tree)
+    
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
     } else {
       predict(tree, newdata = data, type = "link")
+      ## note that these predictions already include the offset
     }
     
-    ## glmer
-    if(joint) {
+    ## fit glmer
+    if (joint) {
       ## estimate full glmer model but force all coefficients from the
       ## .tree (and the overall intercept) to zero for the prediction
       if (length(tree) == 1L) {
@@ -250,8 +278,6 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
         rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
         rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        #rf.alt <- formula(ff, lhs = 1L, rhs = 2L)
-
         if (is.null(offset)) {
           glme <- glmer(rf.alt, data = data, family = family, 
                         weights = .weights, control = glmer.control)
@@ -269,25 +295,21 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
                         offset = offset, control = glmer.control)
         }
       }       
-      #b <- structure(glme@beta, .Names = names(coef(glme)[[1L]]))
       b <- structure(glme@beta, .Names = names(fixef(glme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
       data$.ranef <- suppressWarnings(suppressMessages(
         predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
-      ## if offset was specified, add it to .tree:
-      if (!is.null(offset)) {
-        data$.tree <- data$.tree + offset
-      }
       glme <- glmer(rf, data = data, family = family, offset = .tree, 
                     weights = .weights, control = glmer.control)
       data$.ranef <- predict(glme, newdata = data, type = "link")
+      ## note that because newdata is specified, predict.merMod will not include offset in predictions
     }
     ## iteration information
     newloglik <- logLik(glme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
-    if(verbose) print(newloglik)
+    if (verbose) print(newloglik)
   }
   
   ## collect results
