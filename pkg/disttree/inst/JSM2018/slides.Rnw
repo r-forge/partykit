@@ -5,7 +5,8 @@
 \author{Lisa Schlosser, Torsten Hothorn,\\ Heidi Seibold, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 %\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
-\URL{https://R-Forge.R-project.org/projects/partykit/}
+\URL{https://R-Forge.R-project.org/projects/partykit/ \\
+https://partykit.org}
 \headerimage{3}
 
 
@@ -495,7 +496,7 @@ lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 \begin{center}
 \vspace{0.0cm}
 \visible<1->{
-Regression Tree\\
+Regression tree\\
 \vspace{0.5cm}
 \resizebox{0.3\textwidth}{!}{
 \begin{tikzpicture}
@@ -520,7 +521,7 @@ Regression Tree\\
 \begin{center}
 \vspace{0.0cm}
 \visible<2->{
-Random Forest\\
+Random forest\\
 \vspace{0.5cm}
 \resizebox{0.9\textwidth}{!}{
 \begin{tikzpicture}
@@ -606,7 +607,7 @@ based on \code{partykit}\\
 
 
 \begin{frame}
-\frametitle{Distributional trees}
+\frametitle{Distributional Trees}
 \vspace*{-0.12cm}
 \begin{center} 
 DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
@@ -753,7 +754,7 @@ tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
 @
 
 \begin{frame}[fragile]
-\frametitle{Distributional trees}
+\frametitle{Distributional Trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -781,7 +782,7 @@ plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
 
 
 \begin{frame}[fragile]
-\frametitle{Distributional trees}
+\frametitle{Distributional Trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -798,7 +799,7 @@ plot(as.constparty(tree), tnex = 1.7, drop = TRUE,
 
 
 \begin{frame}[fragile]
-\frametitle{Distributional trees}
+\frametitle{Distributional Trees}
 \begin{center}
 \vspace*{-0.12cm}
 Model: \code{disttree(y ~ x)}\\
@@ -901,7 +902,7 @@ plot(tree, tnex = 1.7, drop = TRUE,
 \end{center}
 \end{frame}
 %\begin{frame}
-%\frametitle{Distributional trees}
+%\frametitle{Distributional Trees}
 %\center
 %\vspace*{-1cm}
 %\setkeys{Gin}{width=0.8\linewidth}
@@ -927,7 +928,7 @@ odata <- alldata[order(alldata["x"]),]
 
 
 \begin{frame}[fragile]
-\frametitle{Distributional trees}
+\frametitle{Distributional Trees}
 \begin{center}
 \vspace*{-1.03cm}
 \setkeys{Gin}{width=0.8\linewidth}
@@ -947,7 +948,7 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 
 
 %\begin{frame}
-%\frametitle{Distributional trees}
+%\frametitle{Distributional Trees}
 %\center
 %\vspace*{-0.7cm}
 %\setkeys{Gin}{width=0.8\linewidth}
@@ -969,9 +970,8 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 %    using parameter instability tests (\emph{strucchange}) or
 %    conditional inference (\emph{coin}).
 \item Choose the partitioning variable with the strongest association or instability as split variable.
-\item Choose the breakpoint along this variable with highest improvement in log-likelihood and split the sample.
-\item Repeat steps 2--5 recursively in the subgroups
-    until some stopping criterion is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
+\item Choose the breakpoint along this variable leading to the highest improvement in log-likelihood and split the sample.
+\item Repeat steps 2--5 recursively until some stopping criterion is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
     %-- e.g., for significance or sample size.
 %\item Choose the variable with the strongest association
 %\item Choose the split point which leads to the highest improvement of the model
@@ -990,7 +990,7 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 \begin{frame}
 \frametitle{Adaptive Local Likelihood Estimation}
 
-\textbf{Parameter estimator} for \only<1-3>{\textbf{a global}}\only<4->{\textbf{an adaptive local}}\\ model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$} :
+\textbf{Parameter estimator} for \only<1-2>{\textbf{a global}}\only<3->{\textbf{an adaptive local}}\\ model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$} :
 
 \[
 \hat{\theta}\visible<2->{(\bold{x})} =  \argmax_{\theta \in \Theta} \sum_{i=1}^n \visible<2->{w_i(\bold{x}) \cdot} \ell(\theta; y_i)
@@ -998,13 +998,13 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 
 \bigskip
 
-\visible<3->{
+\visible<2->{
 \textbf{Weights:}
 \begin{eqnarray*}
-w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.2cm]
-\visible<4->{
+w^{\text{global}}_i(\bold{x})   & = & 1 \\[0.2cm]
+\visible<3->{
 w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.1cm]
-\visible<5->{
+\visible<4->{
 w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
 \end{eqnarray*}
 }}}
@@ -1401,19 +1401,23 @@ y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
 dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
 
 # switch x-axis back to untransformed scale
-x <- x^(1.6)
+# x <- x^(1.6)
 
 # point mass (slightly shifted)
-pm1 <- c(0.15, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))     #  0.05
-pm2 <- c(0.05, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))     #  0.01
-pm3 <- c(-0.05, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))    # -0.03
-pm4 <- c(-0.15, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))    # -0.07
+pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))     #  0.15
+pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))     #  0.05
+pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))    # -0.05
+pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))    # -0.15
 
 # predictions
-pred1 <- c(testdata[pdays,"robs"][1]^(1.6), crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(testdata[pdays,"robs"][2]^(1.6), crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(testdata[pdays,"robs"][3]^(1.6), crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-pred4 <- c(testdata[pdays,"robs"][4]^(1.6), crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+pred1 <- c(testdata[pdays,"robs"][1], # ^(1.6), 
+           crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+pred2 <- c(testdata[pdays,"robs"][2], # ^(1.6), 
+           crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+pred3 <- c(testdata[pdays,"robs"][3], # ^(1.6), 
+           crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+pred4 <- c(testdata[pdays,"robs"][4], # ^(1.6), 
+           crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 #legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -1430,10 +1434,10 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 <<plot_pred_axams_24July, fig=TRUE, echo=FALSE, eval=TRUE, height=5.2>>=
 plot(x = x, y = y1, type = "l", col = "red", 
      main = paste0("Axams, July ", pday), ylab = "Density", 
-     xlab = expression(Total~precipitation~"["~mm~"/"~"24h"~"]"),
-     # xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     # xlab = expression(Total~precipitation~"["~mm~"/"~"24h"~"]"),
+     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
-     xlim = c(-2,28))     #  xlim = c(-1.5,8))
+     xlim = c(-1.5,8))     #  xlim = c(-2,28))
 
 lines(x = x, y = y2, type = "l", col = "blue")
 lines(x = x, y = y3, type = "l", col = "darkgreen")
@@ -1454,10 +1458,10 @@ points(x = pm4[1], y = pm4[2], col = "purple", pch = 19)
 
 
 # plot predictions
-points(x = pred1[1], y = pred1[2], col = "red", pch = 4)
-points(x = pred2[1], y = pred2[2], col = "blue", pch = 4)
-points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4)
-points(x = pred4[1], y = pred4[2], col = "purple", pch = 4)
+points(x = pred1[1], y = pred1[2], col = "red", pch = 4, cex = 1.4)
+points(x = pred2[1], y = pred2[2], col = "blue", pch = 4, cex = 1.4)
+points(x = pred3[1], y = pred3[2], col = "darkgreen", pch = 4, cex = 1.4)
+points(x = pred4[1], y = pred4[2], col = "purple", pch = 4, cex = 1.4)
 
 lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgrey", type = "l", lty = 2)
 lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgrey", type = "l", lty = 2)
@@ -1465,10 +1469,10 @@ lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgrey", type = "l
 lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgrey", type = "l", lty = 2)
 
 # add labels
-text(x = -1.7, y = lh1, labels = "2009", col = "red", cex = 0.8)         # -0.8
-text(x = -1.7, y = lh2, labels = "2010", col = "blue", cex = 0.8)        # -0.8
-text(x = -1.7, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)   # -0.8
-text(x = -1.7, y = lh4, labels = "2012", col = "purple", cex = 0.8)      # -0.8
+text(x = -0.8, y = lh1, labels = "2009", col = "red", cex = 0.8)         # -1.7 
+text(x = -0.8, y = lh2, labels = "2010", col = "blue", cex = 0.8)        # -1.7
+text(x = -0.8, y = lh3, labels = "2011", col = "darkgreen", cex = 0.8)   # -1.7
+text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)      # -1.7
 @
 \end{center}
 \end{frame}
@@ -1497,15 +1501,15 @@ text(x = -1.7, y = lh4, labels = "2012", col = "purple", cex = 0.8)      # -0.8
 Model & Type & Variable Selection \\
 \hline
 \vspace{-0.15cm}
-\textbf{Forest} & recursive    & automatic \\ 
-                & partitioning &           \\ 
+\textbf{Distributional forest} & recursive    & automatic \\ 
+                               & partitioning &           \\ 
 \hline
 \vspace{-0.15cm}
-\textbf{prespecified GAM} & spline  & based on expert \\
+\textbf{Prespecified GAM} & spline  & based on expert \\
                           & in each & knowledge      \\
 \hline
 \vspace{-0.15cm}
-\textbf{boosted GAM} & spline  & automatic  \\
+\textbf{Boosted GAM} & spline  & automatic  \\
                      & in each &            \\
 \hline
 \vspace{-0.15cm}
@@ -1590,7 +1594,7 @@ if(file.exists("crps_cross.rda")){
 <<rain_cross_axams_crps_skills_score, fig=TRUE, echo=FALSE, height=5.6, width=6.8>>=
 #par(mar = c(2.5,2,1,2))
 boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
-        names = c("Distributional Forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
+        names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
         main = "Cross validation (with reference model EMOS)",
         cex.main=1.4,
         cex.lab=1.2,
@@ -1903,24 +1907,24 @@ Hofner B, Mayr A, Schmid M (2016).
 \end{frame}
 
 
-%\begin{frame}
-%\frametitle{References (2)}
+\begin{frame}
+\frametitle{References (2)}
 
-%\vspace{-0.2cm}
+%\vspace{-0.1cm}
 
-%\footnotesize
+\footnotesize
 
-%Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
-%  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and %Minimum CRPS Estimation}
-%  \textit{Monthly Weather Review}, 
-%  \textbf{133}(5), 1098--1118.
-%  \doi{10.1175/MWR2904.1}
+Gneiting T, Raftery A E, Westveld III A H, Goldman T (2005).
+  \dquote{Calibrated Probabilistic Forecasting using Ensemble Model Output Statistics and Minimum CRPS Estimation}
+  \textit{Monthly Weather Review}, 
+  \textbf{133}(5), 1098--1118.
+  \doi{10.1175/MWR2904.1}
 
-%\medskip
+\medskip
 
 % Reference for the observation data set
 %BMLFUW (2016).
-%  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtsch%aft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
+%  \dquote{{B}undesministerium f\"ur {L}and und {F}orstwirtschaft, {U}mwelt und {W}asserwirtschaft ({BMLFUW}), {A}bteilung {IV/4} -- {W}asserhaushalt}
 %  \text{Available at \url{http://ehyd.gv.at}}, 
 %  \text{Accessed: 2016--02--29}.
 
@@ -1935,35 +1939,36 @@ Hofner B, Mayr A, Schmid M (2016).
 
 %\medskip
 
-%Breiman L (2001).
-%  \dquote{Random {Forests}}
-%  \textit{Machine Learning}, 
-%  \textbf{45}(1), 5--32.
-%  \doi{10.1023/A:1010933404324}
+Breiman L (2001).
+  \dquote{Random {Forests}}
+  \textit{Machine Learning}, 
+  \textbf{45}(1), 5--32.
+  \doi{10.1023/A:1010933404324}
 
-%Messner J W,  Mayr G J, Zeileis A (2016).
-%  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
-%  \textit{The \textsf{R} Journal}, 
-%  \textbf{8}(1), 173--181.\\
-%  \scriptsize
-%  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
-%  \footnotesize
+\medskip
 
-%\medskip
+Messner J W,  Mayr G J, Zeileis A (2016).
+  \dquote{Heteroscedastic Censored and Truncated Regression with \textbf{crch}}
+  \textit{The \textsf{R} Journal}, 
+  \textbf{8}(1), 173--181.\\
+  \scriptsize
+  \url{https://journal.R-project.org/archive/2016-1/messner-mayr-zeileis.pdf}
 
-%Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
-%  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored %Additive Regression Model}
-%  \textit{International Journal of Climatology}, 
-%  \textbf{37}(7), 3264--3275.
-%  \doi{10.1002/joc.4913}
+\medskip
+\footnotesize
+
+Stauffer R, Mayr G J, Messner J W, Umlauf N, Zeileis A (2017).
+  \dquote{Spatio-Temporal Precipitation Climatology Over Complex Terrain Using a Censored Additive Regression Model}
+  \textit{International Journal of Climatology}, 
+  \textbf{37}(7), 3264--3275.
+  \doi{10.1002/joc.4913}
   
-%\medskip
+\medskip
 
-%Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
-%  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: %Unanimous Predictions, Heavy Tails, and Link Functions}
-%  \textit{Monthly Weather Review}, 
-%  \text{Forthcoming}.
-%  \doi{10.1175/MWR-D-16-0388.1}
+Gebetsberger M, Messner J W, Mayr G J, Zeileis A (2017).
+  \dquote{Fine-Tuning Non-Homogeneous Regression for Probabilistic Precipitation Forecasts: Unanimous Predictions, Heavy Tails, and Link Functions}
+  \textit{Monthly Weather Review}.
+  \doi{10.1175/MWR-D-16-0388.1}
 
 %\medskip
 
@@ -1972,7 +1977,7 @@ Hofner B, Mayr A, Schmid M (2016).
 %  \text{Available at \url{http://srtm.csi.cgiar.org}}, 
 %  \text{Accessed: 2016--07--10}.
 
-%\end{frame}
+\end{frame}
 
 \end{document}
 
