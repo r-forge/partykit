@@ -1305,3 +1305,166 @@ dist_gamma <- function() {
                                 censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
 }
+
+
+
+
+
+
+#### dist_list_hurdle_normal
+{
+  dist_list_hurdle_normal <- list()
+  
+  parnames <- c("mu", "sigma", "pi")
+  etanames <- c("mu", "log(sigma)", "log(pi/(1-pi))")
+  
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
+    par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))
+    
+    if(log) {
+      val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = TRUE) + log(par[3]) 
+    } else {
+      val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = FALSE) * par[3] 
+    }
+    if(sum) {
+      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      val <- sum(weights * val, na.rm = TRUE)
+    }
+    return(val)
+  }
+  
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE, left = 0, right = Inf) {   
+    par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))
+    # y[y==0] <- 1e-323
+    
+    ## score / estfun (first-order partial derivatives of the (positive) log-likelihood function by eta)
+    score_m <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    score_s <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2])       # inner derivation exp(eta[2])
+    score_p <- 1/(1+exp(eta[3]))  
+    score <- cbind(score_m, score_s, score_p)
+    score <- as.matrix(score)
+    colnames(score) <- etanames
+    if(sum) {
+      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+      score[score==Inf] = 1.7e308
+      score <- colSums(weights * score, na.rm = TRUE)
+      #if(any(is.nan(score))) print(c(eta, "y", y))
+    }
+    return(score)
+  }
+  
+  
+  hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
+    ny <- length(y)
+    if(is.null(weights)) weights <- rep.int(1, ny)
+    
+    par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))                           
+    # y[y==0] <- 1e-323
+    
+    d2mu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+    d2sigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    d2pi <- -1/(par[3]^2)
+    dmudsigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+    dmudpi <- 0
+    dsigmadmu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+    dsigmadpi <- 0
+    dpidmu <- 0
+    dpidsigma <- 0
+    dsigma <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+    
+    d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+    d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+    d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+    d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)      
+    d2ld.etamu.d.etapi <- 0
+    d2ld.etasigma.d.etapi <- 0 
+    d2ld.etapi.d.etamu <- 0
+    d2ld.etapi.d.etasigma <- 0 
+    d2ld.etapi2 <- sum(weights * (-exp(eta[3])/((1+exp(eta[3]))^2)), na.rm = TRUE)
+    
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etapi,
+                     d2ld.etasigma.d.etamu, d2ld.etasigma2, d2ld.etasigma.d.etapi,
+                     d2ld.etapi.d.etamu, d2ld.etapi.d.etasigma, d2ld.etapi2), 
+                   nrow = 3)
+    colnames(hess) <- rownames(hess) <-  etanames
+    
+    return(hess)
+  }
+  
+  
+  ## additional functions pdist, qdist, rdist on link-scale
+  # FIX ME: par instead of eta better?
+  # FIX ME: adaption to distribution with third parameter correct?
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
+                                                                           lower.tail = lower.tail, log.p = log.p, 
+                                                                           left = left, right = right) * pbinom(q, 1 prob = exp(eta[3])/(1+exp(eta[3])))
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
+                                                                           lower.tail = lower.tail, log.p = log.p, 
+                                                                           left = left, right = right) * qbinom(p, 1, prob = exp(eta[3])/(1+exp(eta[3])))
+  rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right) * rbinom(n, 1, prob = exp(eta[3])/(1+exp(eta[3])))
+  
+  
+  link <- c("identity", "log", "logit")
+  
+  linkfun <- function(par) {
+    eta <- c(par[1], log(par[2]), log(par[3]/(1-par[3])))
+    names(eta) <- etanames
+    return(eta)
+  }
+  
+  
+  linkinv <- function(eta) {
+    par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3]))) 
+    names(par) <- parnames
+    return(par)
+  }
+  
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(1, exp(eta[2]), exp(eta[3])/(1 + exp(eta[3]))^2)
+    names(dpardeta) <- parnames
+    return(dpardeta)
+  }
+  
+  
+  startfun <- function(y, weights = NULL){
+    yc <- pmax(0,y)  # optional ?
+    if(is.null(weights)) {
+      mu <- mean(yc)
+      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+      pi <- mean(yc>0)
+    } else {
+      mu <- weighted.mean(yc, weights)
+      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+      pi <- weighted.mean(yc>0, weights)
+    }
+    starteta <- c(mu, log(sigma), log(pi/(1-pi)))
+    names(starteta) <- etanames
+    return(starteta)
+  }
+  
+  mle <- FALSE
+  
+  dist_list_hurdle_normal <- list(family.name = "hurdle Normal Distribution",
+                                  ddist = ddist, 
+                                  sdist = sdist, 
+                                  hdist = hdist,
+                                  pdist = pdist,
+                                  qdist = qdist,
+                                  rdist = rdist,
+                                  link = link, 
+                                  linkfun = linkfun, 
+                                  linkinv = linkinv, 
+                                  linkinvdr = linkinvdr,
+                                  startfun = startfun,
+                                  mle = mle,
+                                  gamlssobj = FALSE,
+                                  censored = FALSE   ## FIX ME: new argument 'truncated'?
+  )
+}
+
+
+
+
