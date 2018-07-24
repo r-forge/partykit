@@ -450,6 +450,7 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
   if(type == "response") {
     
     ## FIX ME: expected value for censored distributions
+    ## here only for left censored at 0 -> TO DO: general form
     if(object$family$censored)
     {
       if("Normal" %in% strsplit(object$family$family.name, " ")[[1]]){
@@ -474,6 +475,12 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
       return(expv)
     } 
     
+    if("Normal" %in% strsplit(object$family$family.name, " ")[[1]] &
+       "truncated" %in% strsplit(object$family$family.name, " ")[[1]]){
+      mu <- object$par[1]
+      sigma <- object$par[2]
+      expv <- (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
+    }
     
     f <- function(x){x * object$ddist(x, log = FALSE)}
     expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
