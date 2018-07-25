@@ -54,18 +54,16 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   \item{data}{data.frame to be used for estimating the model tree.}
   \item{family}{family specification for \code{glmtree} and \code{glmer}.
     See \code{\link[stats]{glm}} documentation for families.}
-  \item{weights}{numeric. An optional numeric vector of weights. (Note that
-    this is passed with standard evaluation, i.e., it is not enough to pass
-    the name of a column in \code{data}.)}
+  \item{weights}{numeric. An optional numeric vector of weights. Can be a 
+    name of a column in data or a vector of length \code{nrow(data)}}.
   \item{cluster}{optional vector of cluster IDs to be employed for clustered 
-    covariances in the parameter stability tests. Note that \code{cluster} 
-    can be passed both with standard and non-standard evaluation. That is, a 
-    name of a column in \code{data} may be specified, or a vector of length
-    \code{nrow(data)}. If \code{cluster = NULL} (the default), observation-level
-    instead of cluster-level covariances are employed in the parameter stability 
-    tests. If partitioning variables are measured on the cluster level, the
-    default likely yields spurious splits and inflated Type-I errors. 
-    Specification of the cluster argument will mitigate this effect.}
+    covariances in the parameter stability tests. Can be a name of a column 
+    in \code{data} or a vector of length \code{nrow(data)}. If 
+    \code{cluster = NULL} (the default), observation- instead of cluster-level 
+    covariances are employed in the parameter stability tests. If 
+    partitioning variables are measured on the cluster level, this will
+    likely yield spurious splits, which can be mitigated by specification 
+    of the cluster argument.}
   \item{ranefstart}{\code{NULL} (the default), \code{TRUE}, or a numeric 
     vector of length \code{nrow(data)}. Specifies the offset to be used in 
     estimation of the first tree. \code{NULL} by default, yielding a zero offset 
@@ -73,10 +71,8 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     will be estimated first and the first tree will be grown using the 
     random-effects predictions as an offset.}
   \item{offset}{optional numeric vector to be included in the linear predictor 
-    with a coeffcient of one. Note that \code{offset} can be passed with both 
-    standard and non-standard evaluation. That is, a name of a column in 
-    \code{data} may be specified, or a a numeric vector of length 
-    \code{nrow(data)}.}
+    with a coeffcient of one. Note that \code{offset} can be a name of a column 
+    in \code{data} or a a numeric vector of length \code{nrow(data)}.}
   \item{joint}{logical. Should the fixed effects from the tree be (re-)estimated
     jointly along with the random effects?}
   \item{abstol}{numeric. The convergence criterion used for estimation of the model.
