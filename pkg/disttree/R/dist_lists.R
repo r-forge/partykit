@@ -1399,7 +1399,7 @@ dist_gamma <- function() {
   # FIX ME: adaption to distribution with third parameter correct?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right) * pbinom(q, 1 prob = exp(eta[3])/(1+exp(eta[3])))
+                                                                           left = left, right = right) * pbinom(q, 1, prob = exp(eta[3])/(1+exp(eta[3])))
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
                                                                            left = left, right = right) * qbinom(p, 1, prob = exp(eta[3])/(1+exp(eta[3])))
