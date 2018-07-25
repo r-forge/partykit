@@ -166,14 +166,14 @@ evalmodels <- function(station, train, test,
   
   
   
-  if(distfamily == "gaussian") family <- NOlc
-  if(distfamily == "logistic") family <- LOlc
+  if(distfamily == "gaussian") g_family <- NOlc
+  if(distfamily == "logistic") g_family <- LOlc
   
   g_learndata <- learndata
   g_learndata$robs <- survival::Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   
   g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                                                family = family,
+                                                family = g_family,
                                                 control = gamlss::gamlss.control(n.cyc = 100),
                                                 i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
   
@@ -200,12 +200,9 @@ evalmodels <- function(station, train, test,
     cvr_opt <- mboost::mstop(cvr) 
   } else cvr_opt <- gb_cvr_time <- NA
   
-  
-  if(distfamily == "gaussian") dist <- "gaussian"
-  if(distfamily == "logistic") dist <- "logistic"
-  
+
   mi_time <- system.time(mi <- try(crch::crch(formula = robs ~ tppow_mean | tppow_sprd, 
-                                              data = learndata, dist = dist, left = 0, link.scale = "identity")))
+                                              data = learndata, dist = distfamily, left = 0, link.scale = "identity")))
   if(inherits(mi, "try-error")) {
     mi_time <- NA
     mi <- NA
@@ -213,7 +210,7 @@ evalmodels <- function(station, train, test,
   } else mi_error <- FALSE
   
   ml_time <- system.time(ml <- try(crch::crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                                              data = learndata, dist = dist, left = 0, link.scale = "log")))
+                                              data = learndata, dist = distfamily, left = 0, link.scale = "log")))
   if(inherits(ml, "try-error")) {
     ml_time <- NA
     ml <- NA
@@ -221,7 +218,7 @@ evalmodels <- function(station, train, test,
   } else ml_error <- FALSE
   
   mq_time <- system.time(mq <- try(crch::crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
-                                              data = learndata, dist = dist, left = 0, link.scale = "quadratic")))
+                                              data = learndata, dist = distfamily, left = 0, link.scale = "quadratic")))
   if(inherits(mq, "try-error")) {
     mq_time <- NA
     mq <- NA
@@ -391,21 +388,21 @@ evalmodels <- function(station, train, test,
   } else {
     for(j in 1:(NROW(testdata))){
       
-      eta_dt <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(dt_mu, dt_sigma)[j,]))
-      eta_df <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(df_mu, df_sigma)[j,]))
-      eta_g <- if(!g_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
-      eta_gb <- as.numeric(disttree::dist_list_cens_log$linkfun(cbind(gb_mu, gb_sigma)[j,]))
-      eta_mi <- if(!mi_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
-      eta_ml <- if(!ml_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
-      eta_mq <- if(!mq_na) as.numeric(disttree::dist_list_cens_log$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
+      eta_dt <- as.numeric(dist_list_cens_log$linkfun(cbind(dt_mu, dt_sigma)[j,]))
+      eta_df <- as.numeric(dist_list_cens_log$linkfun(cbind(df_mu, df_sigma)[j,]))
+      eta_g <- if(!g_na) as.numeric(dist_list_cens_log$linkfun(cbind(g_mu, g_sigma)[j,])) else NA
+      eta_gb <- as.numeric(dist_list_cens_log$linkfun(cbind(gb_mu, gb_sigma)[j,]))
+      eta_mi <- if(!mi_na) as.numeric(dist_list_cens_log$linkfun(cbind(mi_mu, mi_sigma)[j,])) else NA
+      eta_ml <- if(!ml_na) as.numeric(dist_list_cens_log$linkfun(cbind(ml_mu, ml_sigma)[j,])) else NA
+      eta_mq <- if(!mq_na) as.numeric(dist_list_cens_log$linkfun(cbind(mq_mu, mq_sigma)[j,])) else NA
       
-      dtll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
-      dfll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
-      gll[j] <- if(!g_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
-      gbll[j] <- disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
-      mill[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
-      mlll[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
-      mqll[j] <- if(!mi_na) disttree::dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
+      dtll[j] <- dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_dt, log=TRUE)
+      dfll[j] <- dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_df, log=TRUE)
+      gll[j] <- if(!g_na) dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_g, log=TRUE) else NA
+      gbll[j] <- dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_gb, log=TRUE)
+      mill[j] <- if(!mi_na) dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mi, log=TRUE) else NA
+      mlll[j] <- if(!mi_na) dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_ml, log=TRUE) else NA
+      mqll[j] <- if(!mi_na) dist_list_cens_log$ddist(testdata[j,"robs"], eta = eta_mq, log=TRUE) else NA
       
     }
   }
