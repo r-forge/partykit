@@ -2,7 +2,7 @@ utils::globalVariables(c(".tree", ".ranef", ".weights", ".cluster"))
 
 lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                      ranefstart = NULL, offset = NULL, joint = TRUE,
-                     abstol = 0.001, maxit = 100, dfsplit = TRUE, 
+                     abstol = 0.001, maxit = 100L, dfsplit = TRUE, 
                      verbose = FALSE, plot = FALSE, 
                      lmer.control = lmerControl(), ...)
 {
@@ -16,14 +16,12 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   
   ## process offset:
   q_offset <- substitute(offset)
-  offset <- try(offset, silent = TRUE)
-  if (inherits(offset, "try-error") || length(offset) != nrow(data)) {
+  if (!is.null(q_offset)) {
     offset <- eval(q_offset, data)
   }
 
   ## process cluster:
   q_cluster <- substitute(cluster)
-  cluster <- try(cluster, silent = TRUE)
   if (!is.null(q_cluster)) {
     data$.cluster <- eval(q_cluster, data)
     if (length(eval(q_cluster, data)) != nrow(data)) {
@@ -34,6 +32,17 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
       !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
     warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
   } 
+  
+  # process weights:
+  q_weights <- substitute(weights)
+  if (!is.null(q_weights)) {
+    data$.weights <- eval(q_weights, data)
+    weights <- eval(q_weights, data)
+    ## Note: Assigning weights and offset as variables outside data prevents lmer from yielding an error
+  } else {
+    data$.weights <- rep(1L, times = nrow(data))
+  }
+  
   
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
@@ -51,9 +60,6 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
-  
-  ## weights
-  data$.weights <- if (is.null(weights)) rep(1, nrow(data)) else weights
   
   ## initialization
   iteration <- 0L
@@ -171,7 +177,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
 
 glmertree <- function(formula, data, family = "binomial", weights = NULL,
                       cluster = NULL, ranefstart = NULL, offset = NULL,
-                      joint = TRUE, abstol = 0.001, maxit = 100,  
+                      joint = TRUE, abstol = 0.001, maxit = 100L,  
                       dfsplit = TRUE, verbose = FALSE, plot = FALSE, 
                       glmer.control = glmerControl(), ...)
 {
@@ -182,17 +188,15 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   if (nrow(data) != sum(stats::complete.cases(data))) {
     warning("data contains missing values, note that listwise deletion will be employed.", .immediate = TRUE) 
   }
-  
+
   ## process offset:
   q_offset <- substitute(offset)
-  offset <- try(offset, silent = TRUE)
-  if (inherits(offset, "try-error") || length(offset) != nrow(data)) {
+  if (!is.null(q_offset)) {
     offset <- eval(q_offset, data)
   }
   
   ## process cluster:
   q_cluster <- substitute(cluster)
-  cluster <- try(cluster, silent = TRUE)
   if (!is.null(q_cluster)) {
     data$.cluster <- eval(q_cluster, data)
     if (length(eval(q_cluster, data)) != nrow(data)) {
@@ -202,6 +206,16 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   if (!is.null(q_cluster) && 
       !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
     warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
+  } 
+  
+  # process weights:
+  q_weights <- substitute(weights)
+  if (!is.null(q_weights)) {
+    data$.weights <- eval(q_weights, data)
+    weights <- eval(q_weights, data)
+    ## Note: Assigning weights and offset as variables outside data prevents lmer from yielding an error.
+  } else {
+    data$.weights <- rep(1L, times = nrow(data))
   }
   
   ## formula processing (full, tree, random)
@@ -220,9 +234,6 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
   }
-  
-  ## weights
-  data$.weights <- if(is.null(weights)) rep(1, nrow(data)) else weights
   
   ## initialization
   iteration <- 0L
