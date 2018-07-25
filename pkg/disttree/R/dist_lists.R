@@ -1,8 +1,8 @@
 ###### Gaussian distribution
 dist_gaussian <- function() {
 
-  parnames <- c("mu", "sigma")
-  etanames <- c("mu", "log(sigma)")
+  # parnames <- c("mu", "sigma")
+  # etanames <- c("mu", "log(sigma)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -31,7 +31,7 @@ dist_gaussian <- function() {
     #                (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
     
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -56,7 +56,7 @@ dist_gaussian <- function() {
     # d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2, na.rm = TRUE)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
     
     return(hess)
   }
@@ -74,21 +74,21 @@ dist_gaussian <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma")
     return(dpardeta)
   }
   
@@ -102,7 +102,7 @@ dist_gaussian <- function() {
       sigma <- sqrt(1/sum(weights) * sum(weights * (y - mu)^2))
     }
     starteta <- c(mu, log(sigma))
-    names(starteta) <- etanames
+    names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
   
@@ -164,8 +164,8 @@ dist_crch <- function(dist = c("normal","logistic"),
   
   dist_list <- list()
   
-  parnames <- c("mu", "sigma")
-  etanames <- c("mu", "log(sigma)")
+  # parnames <- c("mu", "sigma")
+  # etanames <- c("mu", "log(sigma)")
   
   
   
@@ -190,7 +190,7 @@ dist_crch <- function(dist = c("normal","logistic"),
       score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
       score <- cbind(score_m, score_s)
       score <- as.matrix(score)
-      colnames(score) <- etanames
+      colnames(score) <- c("mu", "log(sigma)")
       if(sum) {
         if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
         # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
@@ -221,7 +221,7 @@ dist_crch <- function(dist = c("normal","logistic"),
       d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
       
       hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  etanames
+      colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
       
       return(hess)
     }
@@ -263,7 +263,7 @@ dist_crch <- function(dist = c("normal","logistic"),
       score_s <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
       score <- cbind(score_m, score_s)
       score <- as.matrix(score)
-      colnames(score) <- etanames
+      colnames(score) <- c("mu", "log(sigma)")
       if(sum) {
         if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
         # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
@@ -294,7 +294,7 @@ dist_crch <- function(dist = c("normal","logistic"),
       d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
       
       hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  etanames
+      colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
       
       return(hess)
     }
@@ -317,21 +317,21 @@ dist_crch <- function(dist = c("normal","logistic"),
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma")
     return(dpardeta)
   }
   
@@ -353,7 +353,7 @@ dist_crch <- function(dist = c("normal","logistic"),
       sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
     }
     starteta <- c(mu, log(sigma))
-    names(starteta) <- etanames
+    names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
   
@@ -391,8 +391,8 @@ dist_crch <- function(dist = c("normal","logistic"),
 ## FIX ME: adapt initial values for Weibull distribution
 dist_weibull <- function() {
   
-  parnames <- c("mean", "scale")
-  etanames <- c("mean", "log(scale)")
+  # parnames <- c("mean", "scale")
+  # etanames <- c("mean", "log(scale)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -441,7 +441,7 @@ dist_weibull <- function() {
     
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mean", "log(scale)")
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -478,7 +478,7 @@ dist_weibull <- function() {
     #                       - ((log(y)-par[1])/par[2])^2 * (y/exp(par[1]))^(1/par[2]))
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mean", "log(scale)")
     
     return(hess)
   }
@@ -498,21 +498,21 @@ dist_weibull <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mean", "log(scale)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mean", "scale")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mean", "scale")
     return(dpardeta)
   }
   
@@ -534,7 +534,7 @@ dist_weibull <- function() {
     
     scale <- 1
     starteta <- c(mean, log(scale))
-    names(starteta) <- etanames
+    names(starteta) <- c("mean", "log(scale)")
     return(starteta)
   }
   
@@ -564,8 +564,8 @@ dist_weibull <- function() {
 ###### Poisson distribution
 dist_poisson <- function() {
   
-  parnames <- c("mu")
-  etanames <- c("log(mu)")
+  # parnames <- c("mu")
+  # etanames <- c("log(mu)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -585,7 +585,7 @@ dist_poisson <- function() {
     par <- exp(eta)                           
     score <- (y - par)
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("log(mu)")
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -602,7 +602,7 @@ dist_poisson <- function() {
     par <- exp(eta)                           
     hess <- rep(-par, length(y))
     hess <- as.matrix(sum(weights * hess))
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("log(mu)")
     
     return(hess)
   }
@@ -620,21 +620,21 @@ dist_poisson <- function() {
   
   linkfun <- function(par) {
     eta <- log(par)
-    names(eta) <- etanames
+    names(eta) <- c("log(mu)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- exp(eta)
-    names(par) <- parnames
+    names(par) <- c("mu")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu")
     return(dpardeta)
   }
   
@@ -642,7 +642,7 @@ dist_poisson <- function() {
   startfun <- function(y, weights = NULL){
     mu <- if(is.null(weights) || (length(weights)==0L)) mean(y) else weighted.mean(y, weights)
     starteta <- log(mu)
-    names(starteta) <- etanames
+    names(starteta) <- c("log(mu)")
     return(starteta)
   }
   
@@ -675,8 +675,8 @@ dist_poisson <- function() {
 ###### Exponential distribution
 dist_exponential <- function() {
   
-  parnames <- c("lambda")
-  etanames <- c("log(lambda)")
+  # parnames <- c("lambda")
+  # etanames <- c("log(lambda)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -696,7 +696,7 @@ dist_exponential <- function() {
     par <- exp(eta)                           
     score <- 1 - y * par
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("log(lambda)")
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -713,7 +713,7 @@ dist_exponential <- function() {
     par <- exp(eta)                           
     hess <- -y * par
     hess <- as.matrix(sum(weights * hess))
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("log(lambda)")
     
     return(hess)
   }
@@ -730,21 +730,21 @@ dist_exponential <- function() {
   
   linkfun <- function(par) {
     eta <- log(par)
-    names(eta) <- etanames
+    names(eta) <- c("log(lambda)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- exp(eta)
-    names(par) <- parnames
+    names(par) <- c("lambda")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- exp(eta)
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("lambda")
     return(dpardeta)
   }
   
@@ -752,7 +752,7 @@ dist_exponential <- function() {
   startfun <- function(y, weights = NULL){
     lambda <- if(is.null(weights) || (length(weights)==0L)) length(y)/sum(y) else sum(weights)/sum(weights * y)
     starteta <- log(lambda)
-    names(starteta) <- etanames
+    names(starteta) <- c("log(lambda)")
     return(starteta)
   }
   
@@ -784,8 +784,8 @@ dist_exponential <- function() {
 ###### Gamma distribution
 dist_gamma <- function() {
   
-  parnames <- c("shape", "scale")
-  etanames <- c("log(shape)", "log(scale)")
+  # parnames <- c("shape", "scale")
+  # etanames <- c("log(shape)", "log(scale)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -806,7 +806,7 @@ dist_gamma <- function() {
     score <- cbind((-log(par[2]) + log(y) - 1/lgamma(par[1]) * digamma(par[1])) * par[1], 
                    (-par[1]/par[2] + y/par[2]^2) * par[2])
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("log(shape)", "log(scale)")
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -828,7 +828,7 @@ dist_gamma <- function() {
     d2ld.etasigma2 <- sum(weights * (par[1]/par[2]^2 - 2*y/par[2]^3) * par[2]^2 + (-par[1]/par[2] + y/par[2]^2) * par[2])         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("log(shape)", "log(scale)")
     
     return(hess)
   }
@@ -848,21 +848,21 @@ dist_gamma <- function() {
   
   linkfun <- function(par) {
     eta <- c(log(par[1]), log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("log(shape)", "log(scale)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(exp(eta[1]), exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("shape", "scale")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(exp(eta[1]), exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("shape", "scale")
     return(dpardeta)
   }
   
@@ -873,7 +873,7 @@ dist_gamma <- function() {
     shape <- (y.m/y.sd)^2
     scale <- y.m/shape     # <- y.sd^2/y.m
     starteta <- c(log(shape), log(scale))
-    names(starteta) <- etanames
+    names(starteta) <- c("log(shape)", "log(scale)")
     return(starteta)
   }
   
@@ -909,8 +909,8 @@ dist_gamma <- function() {
 {
   dist_list_normal <- list()
   
-  parnames <- c("mu", "sigma")
-  etanames <- c("mu", "log(sigma)")
+  # parnames <- c("mu", "sigma")
+  # etanames <- c("mu", "log(sigma)")
   
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -939,7 +939,7 @@ dist_gamma <- function() {
     #                (-1/par[2] + ((y - par[1])^2)/(par[2]^3)) * exp(eta[2]))
     
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
@@ -964,7 +964,7 @@ dist_gamma <- function() {
     # d2ld.etasigma2 <- sum(weights * (-2)*(y-par[1])^2/par[2]^2, na.rm = TRUE)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etasigma, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
     
     return(hess)
   }
@@ -983,21 +983,21 @@ dist_gamma <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma")
     return(dpardeta)
   }
   
@@ -1011,7 +1011,7 @@ dist_gamma <- function() {
       sigma <- sqrt(1/sum(weights) * sum(weights * (y - mu)^2))
     }
     starteta <- c(mu, log(sigma))
-    names(starteta) <- etanames
+    names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
   
@@ -1043,8 +1043,8 @@ dist_gamma <- function() {
 {
   dist_list_cens_normal <- list()
   
-  parnames <- c("mu", "sigma")
-  etanames <- c("mu", "log(sigma)")
+  # parnames <- c("mu", "sigma")
+  # etanames <- c("mu", "log(sigma)")
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
     par <- c(eta[1], exp(eta[2]))
@@ -1065,7 +1065,7 @@ dist_gamma <- function() {
     score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
@@ -1096,7 +1096,7 @@ dist_gamma <- function() {
     d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
     
     return(hess)
   }
@@ -1117,21 +1117,21 @@ dist_gamma <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma")
     return(dpardeta)
   }
   
@@ -1146,7 +1146,7 @@ dist_gamma <- function() {
       sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
     }
     starteta <- c(mu, log(sigma))
-    names(starteta) <- etanames
+    names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
   
@@ -1179,8 +1179,8 @@ dist_gamma <- function() {
 {
   dist_list_trunc_normal <- list()
   
-  parnames <- c("mu", "sigma")
-  etanames <- c("mu", "log(sigma)")
+  # parnames <- c("mu", "sigma")
+  # etanames <- c("mu", "log(sigma)")
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
     par <- c(eta[1], exp(eta[2]))
@@ -1201,7 +1201,7 @@ dist_gamma <- function() {
     score_s <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
     score <- cbind(score_m, score_s)
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
@@ -1232,7 +1232,7 @@ dist_gamma <- function() {
     d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
     
     hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
     
     return(hess)
   }
@@ -1253,21 +1253,21 @@ dist_gamma <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]))
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]))
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma")
     return(dpardeta)
   }
   
@@ -1282,7 +1282,7 @@ dist_gamma <- function() {
       sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
     }
     starteta <- c(mu, log(sigma))
-    names(starteta) <- etanames
+    names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
   
@@ -1315,8 +1315,8 @@ dist_gamma <- function() {
 {
   dist_list_hurdle_normal <- list()
   
-  parnames <- c("mu", "sigma", "pi")
-  etanames <- c("mu", "log(sigma)", "log(pi/(1-pi))")
+  # parnames <- c("mu", "sigma", "nu")
+  # etanames <- c("mu", "log(sigma)", "log(nu/(1-nu))")
   
   ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE, left = 0, right = Inf) {     
     par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))
@@ -1344,7 +1344,7 @@ dist_gamma <- function() {
     score_p <- 1/(1+exp(eta[3]))  
     score <- cbind(score_m, score_s, score_p)
     score <- as.matrix(score)
-    colnames(score) <- etanames
+    colnames(score) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     if(sum) {
       if(is.null(weights)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
@@ -1365,30 +1365,30 @@ dist_gamma <- function() {
     
     d2mu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
     d2sigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-    d2pi <- -1/(par[3]^2)
+    d2nu <- -1/(par[3]^2)
     dmudsigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
-    dmudpi <- 0
+    dmudnu <- 0
     dsigmadmu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
-    dsigmadpi <- 0
-    dpidmu <- 0
-    dpidsigma <- 0
+    dsigmadnu <- 0
+    dnudmu <- 0
+    dnudsigma <- 0
     dsigma <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
     
     d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
     d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
     d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
     d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)      
-    d2ld.etamu.d.etapi <- 0
-    d2ld.etasigma.d.etapi <- 0 
-    d2ld.etapi.d.etamu <- 0
-    d2ld.etapi.d.etasigma <- 0 
-    d2ld.etapi2 <- sum(weights * (-exp(eta[3])/((1+exp(eta[3]))^2)), na.rm = TRUE)
+    d2ld.etamu.d.etanu <- 0
+    d2ld.etasigma.d.etanu <- 0 
+    d2ld.etanu.d.etamu <- 0
+    d2ld.etanu.d.etasigma <- 0 
+    d2ld.etanu2 <- sum(weights * (-exp(eta[3])/((1+exp(eta[3]))^2)), na.rm = TRUE)
     
-    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etapi,
-                     d2ld.etasigma.d.etamu, d2ld.etasigma2, d2ld.etasigma.d.etapi,
-                     d2ld.etapi.d.etamu, d2ld.etapi.d.etasigma, d2ld.etapi2), 
+    hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etamu.d.etanu,
+                     d2ld.etasigma.d.etamu, d2ld.etasigma2, d2ld.etasigma.d.etanu,
+                     d2ld.etanu.d.etamu, d2ld.etanu.d.etasigma, d2ld.etanu2), 
                    nrow = 3)
-    colnames(hess) <- rownames(hess) <-  etanames
+    colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)", "log(nu/(1-nu))")
     
     return(hess)
   }
@@ -1410,21 +1410,21 @@ dist_gamma <- function() {
   
   linkfun <- function(par) {
     eta <- c(par[1], log(par[2]), log(par[3]/(1-par[3])))
-    names(eta) <- etanames
+    names(eta) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     return(eta)
   }
   
   
   linkinv <- function(eta) {
     par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3]))) 
-    names(par) <- parnames
+    names(par) <- c("mu", "sigma", "nu")
     return(par)
   }
   
   
   linkinvdr <- function(eta) {
     dpardeta <- c(1, exp(eta[2]), exp(eta[3])/(1 + exp(eta[3]))^2)
-    names(dpardeta) <- parnames
+    names(dpardeta) <- c("mu", "sigma", "nu")
     return(dpardeta)
   }
   
@@ -1434,14 +1434,14 @@ dist_gamma <- function() {
     if(is.null(weights)) {
       mu <- mean(yc)
       sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
-      pi <- mean(yc>0)
+      nu <- mean(yc>0)
     } else {
       mu <- weighted.mean(yc, weights)
       sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
-      pi <- weighted.mean(yc>0, weights)
+      nu <- weighted.mean(yc>0, weights)
     }
-    starteta <- c(mu, log(sigma), log(pi/(1-pi)))
-    names(starteta) <- etanames
+    starteta <- c(mu, log(sigma), log(nu/(1-nu)))
+    names(starteta) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     return(starteta)
   }
   
