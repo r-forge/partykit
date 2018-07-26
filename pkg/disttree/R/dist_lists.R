@@ -132,11 +132,12 @@ dist_gaussian <- function() {
 
 
 ###### censored gaussian or logistic distributions
-dist_crch <- function(dist = c("normal","logistic"), 
+dist_crch <- function(dist = c("gaussian","logistic"), 
                       type = c("left", "right", "interval"),
                       censpoint = 0)
 {
   
+  if(dist == "normal") dist <- "gaussian"
   if(length(dist) > 1) dist <- dist[1]
   if(length(type) > 1) type <- type[1]
   
@@ -337,6 +338,20 @@ dist_crch <- function(dist = c("normal","logistic"),
   
   
   startfun <- function(y, weights = NULL){
+    
+    ## alternative version using for mle = TRUE
+    #if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+    #
+    #x <- cbind(rep(1, length(y)))
+    #colnames(x) <- "(Intercept)"
+    #
+    #starteta <-  c(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+    #                               truncated = FALSE, weights = weights, dist = dist)$coefficients))
+    #
+    #names(starteta) <- c("mu", "log(sigma)")
+    #return(starteta)
+    
+    # for mle = FALSE (to use optim())
     # FIX ME: in case the data is censored with other censoring points, optional ?
     if(type == "interval"){
       yc[yc<censpoint[1]] <- censpoint[1]
@@ -358,6 +373,7 @@ dist_crch <- function(dist = c("normal","logistic"),
   }
   
   mle <- FALSE
+  #mle <- TRUE
   
   dist_list <- list(family.name = family.name,
                     list.name = list.name,
@@ -922,7 +938,7 @@ dist_gamma <- function() {
     # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -941,7 +957,7 @@ dist_gamma <- function() {
     score <- as.matrix(score)
     colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -952,7 +968,7 @@ dist_gamma <- function() {
   
   hdist <- function(y, eta, weights = NULL) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     d2ld.etamu2 <- sum(weights * rep.int(-exp(-2*eta[2]), ny))
     d2ld.etamu.d.etasigma <- sum(weights * (-2)*(y-eta[1]) * exp(-2*eta[2]), na.rm = TRUE)          # should be 0 for exact parameters (here: observed hess)
@@ -1003,7 +1019,7 @@ dist_gamma <- function() {
   
   
   startfun <- function(y, weights = NULL){
-    if(is.null(weights)) {
+    if(is.null(weights) || (length(weights)==0L)) {
       mu <- mean(y)
       sigma <- sqrt(1/length(y) * sum((y - mu)^2))
     } else {
@@ -1050,7 +1066,7 @@ dist_gamma <- function() {
     par <- c(eta[1], exp(eta[2]))
     val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -1067,7 +1083,7 @@ dist_gamma <- function() {
     score <- as.matrix(score)
     colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -1079,7 +1095,7 @@ dist_gamma <- function() {
   
   hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     # y[y==0] <- 1e-323
@@ -1135,8 +1151,21 @@ dist_gamma <- function() {
     return(dpardeta)
   }
   
-  
   startfun <- function(y, weights = NULL){
+    
+    ## alternative version using for mle = TRUE
+    #if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+    
+    #x <- cbind(rep(1, length(y)))
+    #colnames(x) <- "(Intercept)"
+    
+    #starteta <-  c(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+    #                               truncated = FALSE, weights = weights)$coefficients))
+    
+    #names(starteta) <- c("mu", "log(sigma)")
+    #return(starteta)
+    
+    # for mle = FALSE (to use optim())
     yc <- pmax(0,y)  # optional ?
     if(is.null(weights)) {
       mu <- mean(yc)
@@ -1149,7 +1178,9 @@ dist_gamma <- function() {
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
+
   
+  #mle <- TRUE
   mle <- FALSE
   
   dist_list_cens_normal <- list(family.name = "censored Normal Distribution",
@@ -1186,7 +1217,7 @@ dist_gamma <- function() {
     par <- c(eta[1], exp(eta[2]))
     val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
     if(sum) {
-      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -1203,7 +1234,7 @@ dist_gamma <- function() {
     score <- as.matrix(score)
     colnames(score) <- c("mu", "log(sigma)")
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -1215,7 +1246,7 @@ dist_gamma <- function() {
   
   hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]))                           
     # y[y==0] <- 1e-323
@@ -1273,20 +1304,23 @@ dist_gamma <- function() {
   
   
   startfun <- function(y, weights = NULL){
-    yc <- pmax(0,y)  # optional ?
-    if(is.null(weights)) {
-      mu <- mean(yc)
-      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
-    } else {
-      mu <- weighted.mean(yc, weights)
-      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
-    }
-    starteta <- c(mu, log(sigma))
+    
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+    ypos <- y[y > 0]
+    xpos <- cbind(rep(1, length(ypos)))
+    wpos <- weights[y>0]
+    colnames(xpos) <- "(Intercept)"
+    
+    starteta <-  c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                   truncated = TRUE, weights = wpos)$coefficients))
+
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
+    
+    
   
-  mle <- FALSE
+  mle <- TRUE
   
   dist_list_trunc_normal <- list(family.name = "truncated Normal Distribution",
                                 ddist = ddist, 
@@ -1327,7 +1361,7 @@ dist_gamma <- function() {
       val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = FALSE) * par[3] 
     }
     if(sum) {
-      if(is.null(weights)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+      if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
     return(val)
@@ -1346,7 +1380,7 @@ dist_gamma <- function() {
     score <- as.matrix(score)
     colnames(score) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     if(sum) {
-      if(is.null(weights)) weights <- rep.int(1, length(y)[1])
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
       # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
       score[score==Inf] = 1.7e308
       score <- colSums(weights * score, na.rm = TRUE)
@@ -1358,7 +1392,7 @@ dist_gamma <- function() {
   
   hdist <- function(y, eta, weights = NULL, left = 0, right = Inf) {    
     ny <- length(y)
-    if(is.null(weights)) weights <- rep.int(1, ny)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
     
     par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))                           
     # y[y==0] <- 1e-323
@@ -1430,22 +1464,23 @@ dist_gamma <- function() {
   
   
   startfun <- function(y, weights = NULL){
-    yc <- pmax(0,y)  # optional ?
-    if(is.null(weights)) {
-      mu <- mean(yc)
-      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
-      nu <- mean(yc>0)
-    } else {
-      mu <- weighted.mean(yc, weights)
-      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
-      nu <- weighted.mean(yc>0, weights)
-    }
-    starteta <- c(mu, log(sigma), log(nu/(1-nu)))
+    
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+    ypos <- y[y > 0]
+    xpos <- cbind(rep(1, length(ypos)))
+    wpos <- weights[y>0]
+    colnames(xpos) <- "(Intercept)"
+    
+    starteta <-  c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                   truncated = TRUE, weights = wpos)$coefficients), 
+                   qlogis(weighted.mean(y > 0, w = weights)))
+    
+    # starteta <- c(mu, log(sigma), log(nu/(1-nu)))
     names(starteta) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     return(starteta)
   }
   
-  mle <- FALSE
+  mle <- TRUE
   
   dist_list_hurdle_normal <- list(family.name = "hurdle Normal Distribution",
                                   ddist = ddist, 
