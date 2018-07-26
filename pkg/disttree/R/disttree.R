@@ -318,30 +318,29 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   # per default 'type' is set to 'parameter'
   if(length(type)>1) type <- type[1]
   
-  if((type == "node") || (type == "response")) {
-    # if mob was applied
-    if(inherits(object, "modelparty")){
-      return(partykit::predict.modelparty(object = object, newdata = newdata, type = type, OOB = OOB, ...))
-    }
-    # if ctree was applied
-    if(inherits(object, "constparty")){
-      return(partykit::predict.party(object = object, newdata = newdata, type = type, OOB = OOB, ...))
-    }
+  ## get nodes
+  # if ctree was applied
+  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, type = "node", OOB = OOB, ...)
+  # if mob was applied
+  if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, type = "node", OOB = OOB, ...)
+  
+  if(type == "node") return(pred.nodes)
+    
+  ## get parameters
+  groupcoef <- coef(object)
+  if(is.vector(groupcoef)) {
+    groupcoef <- t(as.data.frame(groupcoef))
+    rownames(groupcoef) <- 1
   }
-  if(type == "parameter") {
-    if(inherits(object, "constparty")) pred.subgroup <- partykit::predict.party(object, newdata =  newdata, type = "node")
-    if(inherits(object, "modelparty")) pred.subgroup <- partykit::predict.modelparty(object, newdata =  newdata, type = "node")
-    groupcoef <- coef(object)
-    if(is.vector(groupcoef)) {
-      groupcoef <- t(as.data.frame(groupcoef))
-      rownames(groupcoef) <- 1
-    }
-    pred.par <- groupcoef[paste(pred.subgroup),]
-    rownames(pred.par) <- c(1: (NROW(pred.par)))
-    pred.par <- as.data.frame(pred.par)
-    return(pred.par)
-  }
+  pred.par <- groupcoef[paste(pred.nodes),]
+  rownames(pred.par) <- c(1: (NROW(pred.par)))
+  pred.par <- as.data.frame(pred.par)
+  
+  if(type == "parameter") return(pred.par)
+  
+  if(type == "response") return(get_expectedvalue(object, pred.par))
 }
+
 
 
 
@@ -387,7 +386,7 @@ logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
           if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
           if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
           ## FIX ME: interval censored
-        } else ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE)
+        } else ll <- ll + ddist(nobs_tn, eta = eta, log=TRUE, sum = TRUE)
       }
     }
   } else {

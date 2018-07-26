@@ -437,51 +437,57 @@ coef.distfit <- function(object, type = "parameter" , ...) {
   if(type == "parameter") return(object$par)
 }
 
-
-predict.distfit <- function(object, type = c("parameter", "response"), ...){
-  # for type = "response": calculation of the expected value 
-  # of the given distribution with the calculated parameters
+get_expectedvalue <- function(object, par) {
   
-  # per default 'type' is set to 'parameter'
-  if(length(type)>1) type <- type[1]
+  if(is.vector(par)) par <- t(as.matrix(par))
   
-  if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
+  if(inherits(object, "distfit")) {
+    censored <- object$family$censored
+    family.name <- object$family$family.name
+  }
+  if(inherits(object, "disttree")) {
+    censored <- object$info$family$censored
+    family.name <- object$info$family$family.name
+  }
   
-  if(type == "response") {
-    
-    ## FIX ME: expected value for censored distributions
-    ## here only for left censored at 0 -> TO DO: general form
-    if(object$family$censored)
-    {
-      if("Normal" %in% strsplit(object$family$family.name, " ")[[1]]){
-        mu <- object$par[1]
-        sigma <- object$par[2]
-        expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
+  ## FIX ME: expected value for censored distributions
+  ## here only for left censored at 0 -> TO DO: general form
+  if(censored) {
+    if("Normal" %in% strsplit(family.name, " ")[[1]]){
+      mu <- par[,1]
+      sigma <- par[,2]
+      expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
+    } else {
+      if("Logistic" %in% strsplit(family.name, " ")[[1]]){
+        location <- par[,1]
+        scale <- par[,2]
+        expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
       } else {
-        if("Logistic" %in% strsplit(object$family$family.name, " ")[[1]]){
-          location <- object$par[1]
-          scale <- object$par[2]
-          expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
-        } else {
-          ## FIX ME: expected value for other censored distributions:
-          warning("For censored distributions other than the censored normal and censored logistic distribution
-                  the location parameter is returned as response.")
-          par <- coef(object, type = "parameter")
-          expv <- par[1]
-          #lat.expv <- par[1]
-          #object$ddist() / object$pdist()
-        }
+        ## FIX ME: expected value for other censored distributions:
+        warning("For censored distributions other than the censored normal and censored logistic distribution
+                the location parameter is returned as response/expected value.")
+        expv <- par[,1]
       }
-      return(expv)
-    } 
-    
-    if("Normal" %in% strsplit(object$family$family.name, " ")[[1]] &
-       "truncated" %in% strsplit(object$family$family.name, " ")[[1]]){
-      mu <- object$par[1]
-      sigma <- object$par[2]
-      expv <- (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
     }
-    
+    return(expv)
+  } 
+  
+  if("truncated" %in% strsplit(family.name, " ")[[1]]) {
+    if("Normal" %in% strsplit(family.name, " ")[[1]]){
+      mu <- par[,1]
+      sigma <- par[,2]
+      expv <- (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
+    } else {
+      ## FIX ME: expected value for other truncated distributions:
+      warning("For truncated distributions other than the truncated normal distribution
+                the location parameter is returned as response/expected value.")
+      expv <- par[,1]
+    }
+    return(expv)
+  }
+  
+  # integrate over function f = x * density function with estimated parameters plugged in (already in the object for class 'distfit')
+  if(inherits(object, "distfit")) {
     f <- function(x){x * object$ddist(x, log = FALSE)}
     expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
     if(inherits(expv, "try-error")) {
@@ -495,8 +501,44 @@ predict.distfit <- function(object, type = c("parameter", "response"), ...){
         }
       }
     }
-    return(expv[[1]])
-  } else return(object$par)
+    expv <- expv[[1]]
+  }
+  
+  if(inherits(object, "disttree")){
+    expv <- numeric(length = NROW(par))
+    for(i in 1:NROW(par)){
+      eta <- unlist(object$info$family$linkfun(par[i,]))
+      f <- function(x){x * object$info$family$ddist(x, eta = eta, log = FALSE)}
+      val <- try(integrate(f,-Inf, Inf), silent = TRUE)
+      if(inherits(expv, "try-error")) {
+        val <- try(integrate(f,-Inf, Inf, rel.tol = 1e-03))
+        if(inherits(expv, "try-error")) {
+          val <- try(integrate(f,-Inf, Inf, rel.tol = 1e-02))
+          if(inherits(expv, "try-error")) {
+            print("rel.tol had to be set to 0.1 to calculated expected values for predictions")
+            #print(coef(object))
+            val <- integrate(f,-Inf, Inf, rel.tol = 1e-01)
+          }
+        }
+      }
+      expv[i] <- val[[1]]
+    }
+  }
+  
+  return(expv)
+}
+
+
+predict.distfit <- function(object, type = c("parameter", "response"), ...) {
+  # for type = "response": calculation of the expected value 
+  # of the given distribution with the calculated parameters
+  
+  # per default 'type' is set to 'parameter'
+  if(length(type)>1) type <- type[1]
+  
+  if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
+  
+  if(type == "response") return(get_expectedvalue(object, object$par)) else return(object$par)
 }
 
 vcov.distfit <- function(object, type = "link", ...) {
