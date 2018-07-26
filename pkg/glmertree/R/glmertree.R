@@ -11,7 +11,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   
   ## check if data is complet, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing values, note that listwise deletion will be employed.", .immediate = TRUE) 
+    warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
   }
   
   ## process offset:
@@ -25,12 +25,12 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   if (!is.null(q_cluster)) {
     data$.cluster <- eval(q_cluster, data)
     if (length(eval(q_cluster, data)) != nrow(data)) {
-      warning("Variable lengths differ for 'cluster' and 'data'.", .immediate = TRUE)
+      warning("Variable lengths differ for 'cluster' and 'data'.", immediate. = TRUE)
     }
   } 
   if (!is.null(q_cluster) && 
       !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
-    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
+    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", immediate. = TRUE)
   } 
   
   # process weights:
@@ -186,7 +186,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   
   ## check if data is complet, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing values, note that listwise deletion will be employed.", .immediate = TRUE) 
+    warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
   }
 
   ## process offset:
@@ -200,12 +200,12 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   if (!is.null(q_cluster)) {
     data$.cluster <- eval(q_cluster, data)
     if (length(eval(q_cluster, data)) != nrow(data)) {
-      warning("Variable lengths differ for 'cluster' and 'data'.", .immediate = TRUE)
+      warning("Variable lengths differ for 'cluster' and 'data'.", immediate. = TRUE)
     }
   } 
   if (!is.null(q_cluster) && 
       !inherits(data$.cluster, c("numeric", "character", "factor", "integer"))) {
-    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", .immediate = TRUE)
+    warning("Argument 'cluster' should specify an object of class numeric, factor or character, or NULL.", immediate. = TRUE)
   } 
   
   # process weights:
