@@ -18,7 +18,7 @@
 
 \usage{
   dist_gaussian()
-  dist_crch(dist = c("normal", "logistic"), type = c("left",
+  dist_crch(dist = c("gaussian", "logistic"), type = c("left",
                  "right", "interval"), censpoint = 0)
   dist_exponential()
   dist_weibull()
@@ -27,7 +27,7 @@
 }
 
 \arguments{
-\item{dist}{Either a gaussian ('normal') or a logistic ('logistic') distribution can be selected.}
+\item{dist}{Either a gaussian ('gaussian') or a logistic ('logistic') distribution can be selected.}
 \item{type}{Type of censoring can be selectes ('left', 'right' or 'interval')}
 \item{censpoint}{Censoring point can be set (per default set to 0).}
 }
