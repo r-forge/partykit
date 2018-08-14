@@ -138,7 +138,7 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     # m[[1L]] <- quote(partykitR1::mob)
     rval <- eval(m, parent.frame())
     
-    rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(data)) 
+    rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(rval$data)) 
     rval$fitted$`(response)` <- model.response(rval$data)
     # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
     rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
@@ -286,13 +286,17 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
     if(is.vector(groupcoef)) {
-      groupcoef <- t(as.matrix(groupcoef))
-      rownames(groupcoef) <- 1
+      groupcoef <- as.matrix(groupcoef)
+      colnames(groupcoef) <- 1
     }
     rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
+    if(is.vector(rval$fitted.par)) {
+      rval$fitted.par <- as.matrix(rval$fitted.par)
+      colnames(rval$fitted.par) <- "mu"
+    }
     rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
     rval$fitted.par <- as.data.frame(rval$fitted.par)
-  }
+    }
   
   
   class(rval) <- c("disttree", class(rval))
@@ -320,9 +324,11 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   
   ## get nodes
   # if ctree was applied
-  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, type = "node", OOB = OOB, ...)
+  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
+                                                                           type = "node", OOB = OOB, ...)
   # if mob was applied
-  if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, type = "node", OOB = OOB, ...)
+  if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, 
+                                                                                type = "node", OOB = OOB, ...)
   
   if(type == "node") return(pred.nodes)
     
