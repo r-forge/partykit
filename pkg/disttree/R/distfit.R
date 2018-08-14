@@ -206,37 +206,31 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # check if all observations are equal
   allequ <- (length(unique(y))==1)
   
+  # check if all weights are 0 (happens for low number of trees, FIX ME: how to deal with it)
+  wzero <- all(weights == 0)
+  if(wzero) warning("all weights are 0")
+  
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
   if(is.null(start) && is.null(start.eta)){
-    if(NROW(y)>1) {
+    if(NROW(y)>1 & !allequ) {
       starteta <- family$startfun(y, weights = weights)
     } else {
       ## FIX ME: replacements of starting values apart from location
-      if(NROW(y)==1){ 
-        starteta <- c(y, rep.int(1e-10, length(family$link)-1))
-        warning("only 1 observation in distfit")
+      if(NROW(y)==1 | allequ){ 
+        starteta <- c(unique(y), rep.int(1e-10, length(family$link)-1))
+        warning("only one observation or only equal observations in distfit")
       } else warning("no observation in distfit")
     }
+    
     #all0 <- if(is.Surv(y)) all(y[,2]==0) else all(y==0)
     if(any(starteta[(family$link == "log" | family$link == "logit")] == -Inf)){
       starteta[which((family$link == "log" | family$link == "logit") & (starteta==-Inf))] <- log(0.0001)
-      if(allequ) print("one node with all equal observations: sigma set to 0.0001") else print("log(sigma)=-Inf: sigma set to 0.0001")
-    }
-    if(any(is.na(starteta))) {
-      if(all(weights == 0)) {
-        print("all weights are 0")
-      } else {
-        print("start = NaN but weights are not all 0")
-        print("y=")
-        print(y)
-        print("weights=")
-        print(weights)
-      }
-    # starteta <- family$startfun(y = rep(y, round(weights)))
+      if(allequ) print("one node with all equal observations: sigma set to 0.0001") else 
+        print("parameter on link scale = -Inf: parameter set to 0.0001")
     }
   } else {
     if(!(is.null(start))){
-      # check that those parameters with a log-function in the linkfun are not negative
+      # check that those parameters with a log-function in the linkfun are not negative or zero
       # (if they are, replace them by 1e-10)
       start[start[family$link == "log" | family$link == "logit"]<=0] <- 1e-10 
       starteta <- family$linkfun(start)
@@ -246,12 +240,12 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     }
     if(any(is.na(starteta))) {
       warning("NAs in starteta")
-      print("y=")
-      print(y)
-      print("weights=")
-      print(weights)
-      print("start=")
-      print(start)
+      #print("y=")
+      #print(y)
+      #print("weights=")
+      #print(weights)
+      #print("start=")
+      #print(start)
     }
   }
   
@@ -276,7 +270,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
         if(inherits(opt, "try-error")) {
           warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'Nelder-Mead' and additional arguments ignored")
-          print(starteta)
+          #print(starteta)
           method <- "Nelder-Mead"
           opt <- optim(par = starteta, fn = nll, method = method,
                        hessian = (type.hessian == "numeric"), control = ocontrol)
