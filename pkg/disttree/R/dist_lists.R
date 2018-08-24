@@ -133,6 +133,7 @@ dist_gaussian <- function() {
 
 ###### censored gaussian or logistic distributions
 dist_crch <- function(dist = c("gaussian","logistic"), 
+                      truncated = FALSE,
                       type = c("left", "right", "interval"),
                       censpoint = 0)
 {
@@ -144,14 +145,17 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   if((type == "interval") && !(length(censpoint) == 2)) stop("for type 'intervall' two censoring points have to be set")
   if((type %in% c("left", "right")) && !(length(censpoint) ==1)) stop("for type 'left' or 'right' one censoring point has to be set")
   
-  family.name <- if(dist == "normal") "censored Normal Distribution" else "censored Logistic Distribution"
+  if(truncated) family.name <- if(dist == "gaussian") "truncated Normal Distribution" else "truncated Logistic Distribution"
+  if(!truncated) family.name <- if(dist == "gaussian") "censored Normal Distribution" else "censored Logistic Distribution"
   
   if(type == "interval") {
-    list.name <- paste("dist_list_cens", type, censpoint[1], censpoint[2], sep = "_")
+    if(truncated) list.name <- paste("dist_list_trunc", type, censpoint[1], censpoint[2], sep = "_")
+    if(!truncated) list.name <- paste("dist_list_cens", type, censpoint[1], censpoint[2], sep = "_")
     left <- censpoint[1]
     right <- censpoint[2]
   } else {
-    list.name <- paste("dist_list_cens", type, censpoint, sep = "_")
+    if(truncated) list.name <- paste("dist_list_trunc", type, censpoint, sep = "_")
+    if(!truncated) list.name <- paste("dist_list_cens", type, censpoint, sep = "_")
     if(type == "left") {
       left <- censpoint
       right <- Inf
@@ -170,71 +174,148 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   
   
   
-  if(dist == "normal") {
-    
-    ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
-      par <- c(eta[1], exp(eta[2]))
-      val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
-      if(sum) {
-        if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
-        val <- sum(weights * val, na.rm = TRUE)
+  
+  
+
+  if(truncated) {
+    if(dist == "gaussian") {
+      
+      ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+        par <- c(eta[1], exp(eta[2]))
+        val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+          val <- sum(weights * val, na.rm = TRUE)
+        }
+        return(val)
       }
-      return(val)
-    }
-    
-    
-    sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-      par <- c(eta[1], exp(eta[2]))
-      # y[y==0] <- 1e-323
       
-      score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
-      score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
-      score <- cbind(score_m, score_s)
-      score <- as.matrix(score)
-      colnames(score) <- c("mu", "log(sigma)")
-      if(sum) {
-        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
-        # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
-        score[score==Inf] = 1.7e308
-        score <- colSums(weights * score, na.rm = TRUE)
-        #if(any(is.nan(score))) print(c(eta, "y", y))
+      
+      sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+        par <- c(eta[1], exp(eta[2]))
+        # y[y==0] <- 1e-323
+        
+        score_m <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+        score_s <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+        score <- cbind(score_m, score_s)
+        score <- as.matrix(score)
+        colnames(score) <- c("mu", "log(sigma)")
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
+          # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+          score[score==Inf] = 1.7e308
+          score <- colSums(weights * score, na.rm = TRUE)
+          #if(any(is.nan(score))) print(c(eta, "y", y))
+        }
+        return(score)
       }
-      return(score)
+      
+      
+      hdist <- function(y, eta, weights = NULL) {    
+        ny <- length(y)
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+        
+        par <- c(eta[1], exp(eta[2]))                           
+        # y[y==0] <- 1e-323
+        
+        d2mu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+        d2sigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+        dmudsigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+        dsigmadmu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+        dsigma <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+        
+        d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+        d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+        d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+        d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+        
+        hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+        colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
+        
+        return(hess)
+      }
+      
+      ## additional functions pdist, qdist, rdist on link scale
+      pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
+                                                                               lower.tail = lower.tail, log.p = log.p, 
+                                                                               left = left, right = right)
+      qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
+                                                                               lower.tail = lower.tail, log.p = log.p, 
+                                                                               left = left, right = right)
+      rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
     }
     
     
-    hdist <- function(y, eta, weights = NULL) {    
-      ny <- length(y)
-      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+    
+    
+    if(dist == "logistic") {
       
-      par <- c(eta[1], exp(eta[2]))                           
-      # y[y==0] <- 1e-323
+      ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+        par <- c(eta[1], exp(eta[2]))
+        val <- crch::dtlogis(x = y, location = par[1], scale = par[2], left = left, right = right, log = log)
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+          val <- sum(weights * val, na.rm = TRUE)
+        }
+        return(val)
+      }
       
-      d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
-      d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-      dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
-      dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
-      dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
       
-      d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
-      d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
-      d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
-      d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+      sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+        par <- c(eta[1], exp(eta[2]))
+        # y[y==0] <- 1e-323
+        
+        score_m <- crch:::stlogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
+        score_s <- crch:::stlogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+        score <- cbind(score_m, score_s)
+        score <- as.matrix(score)
+        colnames(score) <- c("mu", "log(sigma)")
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
+          # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+          score[score==Inf] = 1.7e308
+          score <- colSums(weights * score, na.rm = TRUE)
+          #if(any(is.nan(score))) print(c(eta, "y", y))
+        }
+        return(score)
+      }
       
-      hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
       
-      return(hess)
+      hdist <- function(y, eta, weights = NULL) {    
+        ny <- length(y)
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+        
+        par <- c(eta[1], exp(eta[2]))                           
+        # y[y==0] <- 1e-323
+        
+        d2mu <- crch:::htlogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
+        d2sigma <- crch:::htlogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
+        dmudsigma <- crch:::htlogis(x = y, location = par[1], scale = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+        dsigmadmu <- crch:::htlogis(x = y, location = par[1], scale = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+        dsigma <- crch:::stlogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
+        
+        d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+        d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+        d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+        d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+        
+        hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+        colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
+        
+        return(hess)
+      }
+      
+      ## additional functions pdist, qdist, rdist on link scale
+      # FIX ME: better par instead of eta?
+      pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptlogis(q, location = eta[1], scale = exp(eta[2]), 
+                                                                                lower.tail = lower.tail, log.p = log.p, 
+                                                                                left = left, right = right)
+      qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtlogis(p, location = eta[1], scale = exp(eta[2]), 
+                                                                                lower.tail = lower.tail, log.p = log.p, 
+                                                                                left = left, right = right)
+      rdist <- function(n, eta) crch::rtlogis(n, location = eta[1], scale = exp(eta[2]), left = left, right = right)
     }
     
-    ## additional functions pdist, qdist, rdist on link scale
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
-                                                                              lower.tail = lower.tail, log.p = log.p, 
-                                                                              left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
-                                                                              lower.tail = lower.tail, log.p = log.p, 
-                                                                              left = left, right = right)
-    rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   }
   
   
@@ -242,78 +323,148 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   
   
   
+  if(!truncated) {
+    if(dist == "gaussian") {
+      
+      ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+        par <- c(eta[1], exp(eta[2]))
+        val <- crch::dcnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = log)
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+          val <- sum(weights * val, na.rm = TRUE)
+        }
+        return(val)
+      }
+      
+      
+      sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+        par <- c(eta[1], exp(eta[2]))
+        # y[y==0] <- 1e-323
+        
+        score_m <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+        score_s <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+        score <- cbind(score_m, score_s)
+        score <- as.matrix(score)
+        colnames(score) <- c("mu", "log(sigma)")
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
+          # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+          score[score==Inf] = 1.7e308
+          score <- colSums(weights * score, na.rm = TRUE)
+          #if(any(is.nan(score))) print(c(eta, "y", y))
+        }
+        return(score)
+      }
+      
+      
+      hdist <- function(y, eta, weights = NULL) {    
+        ny <- length(y)
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+        
+        par <- c(eta[1], exp(eta[2]))                           
+        # y[y==0] <- 1e-323
+        
+        d2mu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
+        d2sigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+        dmudsigma <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+        dsigmadmu <- crch:::hcnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+        dsigma <- crch:::scnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
+        
+        d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+        d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+        d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+        d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+        
+        hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+        colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
+        
+        return(hess)
+      }
+      
+      ## additional functions pdist, qdist, rdist on link scale
+      pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
+                                                                               lower.tail = lower.tail, log.p = log.p, 
+                                                                               left = left, right = right)
+      qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
+                                                                               lower.tail = lower.tail, log.p = log.p, 
+                                                                               left = left, right = right)
+      rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
+    }
+    
+    
+    
   
-  if(dist == "logistic") {
-    
-    ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
-      par <- c(eta[1], exp(eta[2]))
-      val <- crch::dclogis(x = y, location = par[1], scale = par[2], left = left, right = right, log = log)
-      if(sum) {
-        if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
-        val <- sum(weights * val, na.rm = TRUE)
+    if(dist == "logistic") {
+      
+      ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
+        par <- c(eta[1], exp(eta[2]))
+        val <- crch::dclogis(x = y, location = par[1], scale = par[2], left = left, right = right, log = log)
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
+          val <- sum(weights * val, na.rm = TRUE)
+        }
+        return(val)
       }
-      return(val)
-    }
-    
-    
-    sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-      par <- c(eta[1], exp(eta[2]))
-      # y[y==0] <- 1e-323
       
-      score_m <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
-      score_s <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
-      score <- cbind(score_m, score_s)
-      score <- as.matrix(score)
-      colnames(score) <- c("mu", "log(sigma)")
-      if(sum) {
-        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
-        # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
-        score[score==Inf] = 1.7e308
-        score <- colSums(weights * score, na.rm = TRUE)
-        #if(any(is.nan(score))) print(c(eta, "y", y))
+      
+      sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+        par <- c(eta[1], exp(eta[2]))
+        # y[y==0] <- 1e-323
+        
+        score_m <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
+        score_s <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right) * exp(eta[2]) # inner derivation exp(eta[2])
+        score <- cbind(score_m, score_s)
+        score <- as.matrix(score)
+        colnames(score) <- c("mu", "log(sigma)")
+        if(sum) {
+          if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y)[1])
+          # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN (0 in weights)
+          score[score==Inf] = 1.7e308
+          score <- colSums(weights * score, na.rm = TRUE)
+          #if(any(is.nan(score))) print(c(eta, "y", y))
+        }
+        return(score)
       }
-      return(score)
+      
+      
+      hdist <- function(y, eta, weights = NULL) {    
+        ny <- length(y)
+        if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+        
+        par <- c(eta[1], exp(eta[2]))                           
+        # y[y==0] <- 1e-323
+        
+        d2mu <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
+        d2sigma <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
+        dmudsigma <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
+        dsigmadmu <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
+        dsigma <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
+        
+        d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
+        d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
+        d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
+        d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
+        
+        hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
+        colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
+        
+        return(hess)
+      }
+      
+      ## additional functions pdist, qdist, rdist on link scale
+      # FIX ME: better par instead of eta?
+      pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pclogis(q, location = eta[1], scale = exp(eta[2]), 
+                                                                                lower.tail = lower.tail, log.p = log.p, 
+                                                                                left = left, right = right)
+      qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qclogis(p, location = eta[1], scale = exp(eta[2]), 
+                                                                                lower.tail = lower.tail, log.p = log.p, 
+                                                                                left = left, right = right)
+      rdist <- function(n, eta) crch::rclogis(n, location = eta[1], scale = exp(eta[2]), left = left, right = right)
     }
     
-    
-    hdist <- function(y, eta, weights = NULL) {    
-      ny <- length(y)
-      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
-      
-      par <- c(eta[1], exp(eta[2]))                           
-      # y[y==0] <- 1e-323
-      
-      d2mu <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "mu", left = left, right = right)
-      d2sigma <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
-      dmudsigma <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
-      dsigmadmu <- crch:::hclogis(x = y, location = par[1], scale = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
-      dsigma <- crch:::sclogis(x = y, location = par[1], scale = par[2], which = "sigma", left = left, right = right)
-      
-      d2ld.etamu2 <- sum(weights * d2mu, na.rm = TRUE)
-      d2ld.etamu.d.etasigma <- sum(weights * dmudsigma * par[2], na.rm = TRUE)
-      d2ld.etasigma.d.etamu <- sum(weights * dsigmadmu * par[2], na.rm = TRUE)
-      d2ld.etasigma2 <- sum(weights * (d2sigma * exp(2*eta[2]) + dsigma * par[2]), na.rm = TRUE)         
-      
-      hess <- matrix(c(d2ld.etamu2, d2ld.etamu.d.etasigma, d2ld.etasigma.d.etamu, d2ld.etasigma2), nrow = 2)
-      colnames(hess) <- rownames(hess) <-  c("mu", "log(sigma)")
-      
-      return(hess)
-    }
-    
-    ## additional functions pdist, qdist, rdist on link scale
-    # FIX ME: better par instead of eta?
-    pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pclogis(q, location = eta[1], scale = exp(eta[2]), 
-                                                                               lower.tail = lower.tail, log.p = log.p, 
-                                                                               left = left, right = right)
-    qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qclogis(p, location = eta[1], scale = exp(eta[2]), 
-                                                                               lower.tail = lower.tail, log.p = log.p, 
-                                                                               left = left, right = right)
-    rdist <- function(n, eta) crch::rclogis(n, location = eta[1], scale = exp(eta[2]), left = left, right = right)
   }
-  
-  
-  
-  
+    
+    
   link <- c("identity", "log")
   
   linkfun <- function(par) {
@@ -339,41 +490,65 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   
   startfun <- function(y, weights = NULL){
     
-    ## alternative version using for mle = TRUE
-    #if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
-    #
-    #x <- cbind(rep(1, length(y)))
-    #colnames(x) <- "(Intercept)"
-    #
-    #starteta <-  c(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-    #                               truncated = FALSE, weights = weights, dist = dist)$coefficients))
-    #
-    #names(starteta) <- c("mu", "log(sigma)")
-    #return(starteta)
+    # alternative version using for mle = TRUE
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
-    # for mle = FALSE (to use optim())
-    # FIX ME: in case the data is censored with other censoring points, optional ?
-    if(type == "interval"){
-      yc[yc<censpoint[1]] <- censpoint[1]
-      yc[yc>censpoint[2]] <- censpoint[2]
-    }
-    if(type == "left") yc <- pmax(censpoint,y) 
-    if(type == "right") yc <- pmin(censpoint,y) 
-    
-    if(is.null(weights) || (length(weights)==0L)) {
-      mu <- mean(yc)
-      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    # if only one observation or only equal observations
+    # set mu to the value of this one observation 
+    # and sigma to 1e-10
+    if(length(unique(y)) == 1) {
+      starteta <- c(y, log(1e-10))
     } else {
-      mu <- weighted.mean(yc, weights)
-      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+      
+      x <- cbind(rep(1, length(y)))
+      colnames(x) <- "(Intercept)"
+      
+      starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                      truncated = truncated, weights = weights, dist = dist, 
+                                      control = crch.control(method = "L-BFGS-B", 
+                                                             reltol = 1e-8, factr = 1e7,
+                                                             maxit = 100,
+                                                             hessian = FALSE))$coefficients), 
+                      silent = TRUE)
+      if(inherits(starteta, "try-error")){
+        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+        starteta <- unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                    truncated = truncated, weights = weights, dist = dist, 
+                                    control = crch.control(method = "BFGS", 
+                                                           reltol = 1e-8, factr = 1e7,
+                                                           maxit = 100,
+                                                           hessian = FALSE))$coefficients)
+      }
     }
-    starteta <- c(mu, log(sigma))
+    
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
+    
+    
+    ## for mle = FALSE (to use optim())
+    ## FIX ME: in case the data is censored with other censoring points, optional ?
+    #if(type == "interval"){
+    #  yc[yc<censpoint[1]] <- censpoint[1]
+    #  yc[yc>censpoint[2]] <- censpoint[2]
+    #}
+    #if(type == "left") yc <- pmax(censpoint,y) 
+    #if(type == "right") yc <- pmin(censpoint,y) 
+    
+    #if(is.null(weights) || (length(weights)==0L)) {
+    #  mu <- mean(yc)
+    #  sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    #} else {
+    #  mu <- weighted.mean(yc, weights)
+    #  sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+    #}
+    
+    #starteta <- c(mu, log(sigma))
+    #names(starteta) <- c("mu", "log(sigma)")
+    #return(starteta)
   }
   
-  mle <- FALSE
-  #mle <- TRUE
+  #mle <- FALSE
+  mle <- TRUE
   
   dist_list <- list(family.name = family.name,
                     list.name = list.name,
@@ -393,7 +568,8 @@ dist_crch <- function(dist = c("gaussian","logistic"),
                     startfun = startfun,
                     mle = mle,
                     gamlssobj = FALSE,
-                    censored = TRUE
+                    censored = !truncated,
+                    truncated = truncated
   )
   
   return(dist_list)
@@ -916,6 +1092,249 @@ dist_gamma <- function() {
 
 
 
+
+###### Zero truncated negative binomial
+dist_ztnbinom <- function() {
+  
+  ## parnames <- c("mu", "sigma")
+  ## etanames <- c("log(mu)", "log(sigma)")
+  
+  ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
+    
+    rval <- countreg::dztnbinom(y, mu = exp(eta[1]), sigma = exp(eta[2]), log = log)
+    
+    if(sum) {
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+      rval <- sum(weights * rval, na.rm = TRUE)
+    }
+    return(rval)
+  }
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
+    
+    par  <- c(exp(eta[1]), exp(eta[2]))
+    rval <- countreg::sztnbinom(y, mu = par[1], sigma = par[2], drop = FALSE)
+    rval <- cbind(rval[,1] * par[1], rval[,2] * par[2])
+    colnames(rval) <- c("log(mu)", "log(sigma)")
+    
+    if(sum) {
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+      rval[rval==Inf] = 1.7e308  ## Taken from dist_gaussian
+      rval <- colSums(weights * rval, na.rm = TRUE)
+    }
+    return(rval)
+  }
+  
+  hdist <- function(y, eta, weights = NULL) {
+    ny <- length(y)
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, ny)
+    
+    par <- c(exp(eta[1]), exp(eta[2]))
+    s   <- countreg::sztnbinom(y, mu = weights * par[1], sigma = weights * par[2],
+                               drop = FALSE)
+    h   <- countreg::hztnbinom(y, mu = weights * par[1], sigma = weights * par[2],
+                               drop = FALSE, parameter = c("mu", "sigma", "mu.sigma"))
+    
+    par <- as.matrix(par)
+    
+    hess <- -s * par + h[c("mu", "sigma"), ] * par^2
+    hess <- cbind(hess, h["mu.sigma", ] * par[1, ] * par[2, ])
+    hess <- colSums(hess)
+    
+    rval <- matrix(c(hess[1], rep(hess[3], 2), hess[2]), ncol = 2)
+    colnames(rval) <- rownames(rval) <- c("log(mu)", "log(sigma)")
+    
+    return(rval)
+  }
+  
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+    countreg::pztnbinom(q, mu = exp(eta[1]), sigma = exp(eta[2]),
+                        lower.tail = lower.tail, log.p = log.p)
+  }
+  
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+    countreg::qztnbinom(p, mu = exp(eta[1]), sigma = exp(eta[2]),
+                        lower.tail = lower.tail, log.p = log.p)
+  }
+  
+  rdist <- function(n, eta) {
+    countreg::rztnbinom(n, mu = exp(eta[1]), sigma = exp(eta[2]))
+  }
+  
+  link <- c("log", "log")
+  
+  linkfun <- function(par) {
+    eta <- c(log(par[1]), log(par[2]))
+    names(eta) <- c("log(mu)", "log(sigma)")
+    return(eta)
+  }
+  
+  linkinv <- function(eta) {
+    par <- c(exp(eta[1]), exp(eta[2]))
+    names(par) <- c("mu", "sigma")
+    return(par)
+  }
+  
+  linkinvdr <- function(eta) {
+    dpardeta <- c(exp(eta[1]), exp(eta[2]))
+    names(dpardeta) <- c("mu", "sigma")
+    return(dpardeta)
+  }
+  
+  startfun <- function(y, weights = NULL) {
+    ## I guess there are better starting values than those.
+    ## However, MoMs are hart du calculate analytically.
+    if(is.null(weights) || (length(weights)==0L)) {
+      mu    <- mean(y) - 1 + 0.00001
+      sigma <- 1
+    } else {
+      mu    <- weighted.mean(y, weights) - 1 + 0.00001
+      sigma <- 1
+    }
+    starteta <- c(log(mu), log(sigma))
+    names(starteta) <- c("log(mu)", "log(sigma)")
+    return(starteta)
+  }
+  
+  list(family.name = "ztnbinom",
+       ddist = ddist,
+       sdist = sdist,
+       hdist = hdist,
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link,
+       linkfun = linkfun,
+       linkinv = linkinv,
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = FALSE,
+       gamlssobj = FALSE,
+       censored = FALSE
+  )
+}
+
+
+
+
+
+###### Binomial
+dist_binomial <- function() {
+  
+  # parnames <- "mu"
+  # etanames <- "logit(mu)"
+  
+  ddist <- function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {
+    
+    par  <- 1 / (1 + exp(-eta))
+    rval <- dbinom(y, size = 1, prob = par, log = log)
+    
+    if(sum) {
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+      rval <- sum(weights * rval, na.rm = TRUE)
+    }
+    return(rval)
+  }
+  
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {
+    
+    par  <- 1 / (1 + exp(-eta))
+    rval <- matrix(y - par, ncol = 1)
+    colnames(rval) <- "logit(mu)"
+    
+    if(sum) {
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+      rval[rval==Inf] = 1.7e308
+      rval <- colSums(weights * rval, na.rm = TRUE)
+    }
+    return(rval)
+  } 
+  
+  hdist <- function(y, eta, weights = NULL) {
+    
+    par  <- 1 / (1 + exp(-eta))
+    rval <- matrix(par * (1 - par), ncol = 1, nrow = 1,
+                   dimnames = list(colnames = "logit(mu)",
+                                   rownames = "logit(mu)"))
+    
+    return(rval)
+  }
+  
+  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) {
+    par <- 1 / (1 + exp(-eta))
+    pbinom(q, size = 1, prob = par, lower.tail = lower.tail, log.p = log.p)
+  }
+  
+  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) {
+    par <- 1 / (1 + exp(-eta))
+    qbinom(p, size = 1, prob = par, lower.tail = lower.tail, log.p = log.p)
+  }
+  
+  rdist <- function(n, eta) {
+    par <- 1 / (1 + exp(-eta))
+    rbinom(n, size = 1, prob = par)
+  }
+  
+  link <- "logit"
+  
+  linkfun <- function(par) {
+    eta <- log(par) - log(1 - par)
+    names(eta) <- "logit(mu)"
+    return(eta)
+  }
+  
+  linkinv <- function(eta) {
+    par <- 1 / (1 + exp(-eta))
+    names(par) <- "mu"
+    return(par)
+  }
+  
+  linkinvdr <- function(eta) {
+    expeta   <- exp(-eta)
+    dpardeta <- expeta / (1 + expeta)^2
+    names(dpardeta) <- "mu"
+    return(dpardeta)
+  }
+  
+  startfun <- function(y, weights = NULL) {
+    if(is.logical(y)) y <- as.numeric(y)
+    if(is.factor(y)) {
+      if(length(levels(y)) > 2) stop("factor variable can only have 2 levels for binomial distribution")
+      y <- as.numeric(y)-1
+    }
+    if(is.null(weights) || (length(weights)==0L)) {
+      par <- mean(y)
+    } else {
+      par <- weighted.mean(y, weights)
+    }
+    starteta <- log(par) - log(1 - par)
+    names(starteta) <- "logit(mu)"
+    return(starteta)
+  }
+  
+  list(family.name = "Binomial",
+       ddist = ddist,
+       sdist = sdist,
+       hdist = hdist,
+       pdist = pdist,
+       qdist = qdist,
+       rdist = rdist,
+       link = link,
+       linkfun = linkfun,
+       linkinv = linkinv,
+       linkinvdr = linkinvdr,
+       startfun = startfun,
+       mle = TRUE,
+       gamlssobj = FALSE,
+       censored = FALSE
+  )
+}
+
+
+
+
+
+
 ##########################################
 #complete distribution lists
 
@@ -1154,34 +1573,56 @@ dist_gamma <- function() {
   startfun <- function(y, weights = NULL){
     
     ## alternative version using for mle = TRUE
-    #if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+    if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
-    #x <- cbind(rep(1, length(y)))
-    #colnames(x) <- "(Intercept)"
-    
-    #starteta <-  c(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-    #                               truncated = FALSE, weights = weights)$coefficients))
-    
-    #names(starteta) <- c("mu", "log(sigma)")
-    #return(starteta)
-    
-    # for mle = FALSE (to use optim())
-    yc <- pmax(0,y)  # optional ?
-    if(is.null(weights)) {
-      mu <- mean(yc)
-      sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    # if only one observation or only equal observations
+    # set mu to the value of this one observation 
+    # and sigma to 1e-10
+    if(length(unique(y)) == 1) {
+      starteta <- c(y, log(1e-10))
     } else {
-      mu <- weighted.mean(yc, weights)
-      sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+      
+      x <- cbind(rep(1, length(y)))
+      colnames(x) <- "(Intercept)"
+      
+      starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                      truncated = FALSE, weights = weights, 
+                                      control = crch.control(method = "L-BFGS-B", 
+                                                             reltol = 1e-8, factr = 1e7,
+                                                             maxit = 100,
+                                                             hessian = FALSE))$coefficients), 
+                      silent = TRUE)
+      if(inherits(starteta, "try-error")){
+        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+        starteta <- unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                    truncated = FALSE, weights = weights, 
+                                    control = crch.control(method = "BFGS", 
+                                                           reltol = 1e-8, factr = 1e7,
+                                                           maxit = 100,
+                                                           hessian = FALSE))$coefficients)
+      }
     }
-    starteta <- c(mu, log(sigma))
+
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
+    
+    ## for mle = FALSE (to use optim())
+    #yc <- pmax(0,y)  # optional ?
+    #if(is.null(weights)) {
+    #  mu <- mean(yc)
+    #  sigma <- sqrt(1/length(yc) * sum((yc - mu)^2))
+    #} else {
+    #  mu <- weighted.mean(yc, weights)
+    #  sigma <- sqrt(1/sum(weights) * sum(weights * (yc - mu)^2))
+    #}
+    #starteta <- c(mu, log(sigma))
+    #names(starteta) <- c("mu", "log(sigma)")
+    #return(starteta)
   }
-
   
-  #mle <- TRUE
-  mle <- FALSE
+  
+  mle <- TRUE
+  #mle <- FALSE
   
   dist_list_cens_normal <- list(family.name = "censored Normal Distribution",
                                 ddist = ddist, 
@@ -1302,41 +1743,65 @@ dist_gamma <- function() {
     return(dpardeta)
   }
   
-  
   startfun <- function(y, weights = NULL){
     
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     ypos <- y[y > 0]
-    xpos <- cbind(rep(1, length(ypos)))
-    wpos <- weights[y>0]
-    colnames(xpos) <- "(Intercept)"
     
-    starteta <-  c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                   truncated = TRUE, weights = wpos)$coefficients))
-
+    # if only one or none positive observation or only equal positive observations
+    # set mu to the value of this one observation or 0 for no positive observations
+    # and sigma to 1e-10
+    if(length(unique(ypos)) < 2){
+      if(length(unique(ypos)) == 1) {
+        starteta <- c(unique(ypos), log(1e-10))
+      } else {
+        starteta <- c(0, log(1e-10))}
+    } else {
+      
+      xpos <- cbind(rep(1, length(ypos)))
+      wpos <- weights[y>0]
+      colnames(xpos) <- "(Intercept)"
+      
+      starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                      truncated = TRUE, weights = wpos, 
+                                      control = crch.control(method = "L-BFGS-B", 
+                                                             reltol = 1e-8, factr = 1e7,
+                                                             maxit = 100,
+                                                             hessian = FALSE))$coefficients), 
+                      silent = TRUE)
+      if(inherits(starteta, "try-error")){
+        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+        starteta <- unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                        truncated = TRUE, weights = wpos, 
+                                        control = crch.control(method = "BFGS", 
+                                                               reltol = 1e-8, factr = 1e7,
+                                                               maxit = 100,
+                                                               hessian = FALSE))$coefficients)
+      }
+    }
+    
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
-    
     
   
   mle <- TRUE
   
   dist_list_trunc_normal <- list(family.name = "truncated Normal Distribution",
-                                ddist = ddist, 
-                                sdist = sdist, 
-                                hdist = hdist,
-                                pdist = pdist,
-                                qdist = qdist,
-                                rdist = rdist,
-                                link = link, 
-                                linkfun = linkfun, 
-                                linkinv = linkinv, 
-                                linkinvdr = linkinvdr,
-                                startfun = startfun,
-                                mle = mle,
-                                gamlssobj = FALSE,
-                                censored = FALSE   ## FIX ME: new argument 'truncated'?
+                                 ddist = ddist, 
+                                 sdist = sdist, 
+                                 hdist = hdist,
+                                 pdist = pdist,
+                                 qdist = qdist,
+                                 rdist = rdist,
+                                 link = link, 
+                                 linkfun = linkfun, 
+                                 linkinv = linkinv, 
+                                 linkinvdr = linkinvdr,
+                                 startfun = startfun,
+                                 mle = mle,
+                                 gamlssobj = FALSE,
+                                 censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
 }
 
@@ -1356,9 +1821,11 @@ dist_gamma <- function() {
     par <- c(eta[1], exp(eta[2]), exp(eta[3])/(1 + exp(eta[3])))
     
     if(log) {
-      val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = TRUE) + log(par[3]) 
+      val <- (y>0) * (crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = TRUE) + log(par[3])) +
+        (y==0) * log(1-par[3])
     } else {
-      val <- crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = FALSE) * par[3] 
+      val <- (y>0) * (crch::dtnorm(x = y, mean = par[1], sd = par[2], left = left, right = right, log = FALSE) * par[3]) +
+        (y==0) * (1-par[3])
     }
     if(sum) {
       if(is.null(weights) || (length(weights)==0L)) weights <- if(is.matrix(y)) rep.int(1, dim(y)[1]) else rep.int(1, length(y))
@@ -1375,7 +1842,7 @@ dist_gamma <- function() {
     ## score / estfun (first-order partial derivatives of the (positive) log-likelihood function by eta)
     score_m <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
     score_s <- crch:::stnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right) * exp(eta[2])       # inner derivation exp(eta[2])
-    score_p <- 1/(1+exp(eta[3]))  
+    score_p <- (y>0) * 1/(1+exp(eta[3])) + (y==0) * (-exp(eta[3]/(1+exp(eta[3]))))
     score <- cbind(score_m, score_s, score_p)
     score <- as.matrix(score)
     colnames(score) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
@@ -1399,7 +1866,7 @@ dist_gamma <- function() {
     
     d2mu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu", left = left, right = right)
     d2sigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma", left = left, right = right)
-    d2nu <- -1/(par[3]^2)
+    d2nu <- (y>0) * (-1/(par[3]^2)) + (y==0) * (-1/((1-par[3])^2))
     dmudsigma <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "mu.sigma", left = left, right = right) # FIX: order?
     dmudnu <- 0
     dsigmadmu <- crch:::htnorm(x = y, mean = par[1], sd = par[2], which = "sigma.mu", left = left, right = right) # FIX: order?
@@ -1431,13 +1898,13 @@ dist_gamma <- function() {
   ## additional functions pdist, qdist, rdist on link-scale
   # FIX ME: par instead of eta better?
   # FIX ME: adaption to distribution with third parameter correct?
-  pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
-                                                                           lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right) * pbinom(q, 1, prob = exp(eta[3])/(1+exp(eta[3])))
-  qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
-                                                                           lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right) * qbinom(p, 1, prob = exp(eta[3])/(1+exp(eta[3])))
-  rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right) * rbinom(n, 1, prob = exp(eta[3])/(1+exp(eta[3])))
+  #pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
+  #                                                                         lower.tail = lower.tail, log.p = log.p, 
+  #                                                                         left = left, right = right) * pbinom(q, 1, prob = exp(eta[3])/(1+exp(eta[3])))
+  #qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
+  #                                                                         lower.tail = lower.tail, log.p = log.p, 
+  #                                                                         left = left, right = right) * qbinom(p, 1, prob = exp(eta[3])/(1+exp(eta[3])))
+  #rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right) * rbinom(n, 1, prob = exp(eta[3])/(1+exp(eta[3])))
   
   
   link <- c("identity", "log", "logit")
@@ -1467,15 +1934,41 @@ dist_gamma <- function() {
     
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     ypos <- y[y > 0]
-    xpos <- cbind(rep(1, length(ypos)))
-    wpos <- weights[y>0]
-    colnames(xpos) <- "(Intercept)"
     
-    starteta <-  c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                   truncated = TRUE, weights = wpos)$coefficients), 
-                   qlogis(weighted.mean(y > 0, w = weights)))
+    # if only one or none positive observation or only equal positive observations
+    # set mu to the value of this one observation or 0 for no positive observations
+    # and sigma to 1e-10
+    if(length(unique(ypos)) < 2){
+      if(length(unique(ypos)) == 1) {
+        starteta <- c(unique(ypos), log(1e-10), qlogis(weighted.mean(y > 0, w = weights)))
+      } else {
+        starteta <- c(0, log(1e-10), qlogis(weighted.mean(y > 0, w = weights)))}
+    } else {
+      
+      xpos <- cbind(rep(1, length(ypos)))
+      wpos <- weights[y>0]
+      colnames(xpos) <- "(Intercept)"
+      
+      starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                        truncated = TRUE, weights = wpos, 
+                                        control = crch.control(method = "L-BFGS-B", 
+                                                               reltol = 1e-8, factr = 1e7,
+                                                               maxit = 100,
+                                                               hessian = FALSE))$coefficients), 
+                        if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
+                      silent = TRUE)
+      if(inherits(starteta, "try-error")){
+        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+        starteta <- c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                      truncated = TRUE, weights = wpos, 
+                                      control = crch.control(method = "BFGS", 
+                                                             reltol = 1e-8, factr = 1e7,
+                                                             maxit = 100,
+                                                             hessian = FALSE))$coefficients), 
+                      if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16))
+      }
+    }
     
-    # starteta <- c(mu, log(sigma), log(nu/(1-nu)))
     names(starteta) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     return(starteta)
   }
@@ -1486,9 +1979,9 @@ dist_gamma <- function() {
                                   ddist = ddist, 
                                   sdist = sdist, 
                                   hdist = hdist,
-                                  pdist = pdist,
-                                  qdist = qdist,
-                                  rdist = rdist,
+                                  #pdist = pdist,
+                                  #qdist = qdist,
+                                  #rdist = rdist,
                                   link = link, 
                                   linkfun = linkfun, 
                                   linkinv = linkinv, 
@@ -1499,6 +1992,11 @@ dist_gamma <- function() {
                                   censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
 }
+
+
+
+
+
 
 
 
