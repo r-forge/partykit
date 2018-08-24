@@ -335,10 +335,15 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   ## get parameters
   groupcoef <- coef(object)
   if(is.vector(groupcoef)) {
-    groupcoef <- t(as.data.frame(groupcoef))
-    rownames(groupcoef) <- 1
+    groupcoef <- as.matrix(groupcoef)
+    colnames(groupcoef) <- 1
   }
+
   pred.par <- groupcoef[paste(pred.nodes),]
+  if(is.vector(pred.par)) {
+    pred.par <- as.matrix(pred.par)
+    colnames(pred.par) <- "mu"
+  }
   rownames(pred.par) <- c(1: (NROW(pred.par)))
   pred.par <- as.data.frame(pred.par)
   
