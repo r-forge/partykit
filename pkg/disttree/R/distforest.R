@@ -399,7 +399,7 @@ predict.distforest <- function (object, newdata = NULL,
   }      
   
   for(i in 1:ncol(w)){
-    wi <- w[,i]
+    wi <- w[,i]       ## FIX ME: what to do if all weights for observation i are 0?
     # personalized model
     pm <-  disttree::distfit(responses, family = object$info$family, weights = wi, vcov = FALSE, 
                              ocontrol = object$call$ocontrol,
