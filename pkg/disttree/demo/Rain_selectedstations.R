@@ -315,6 +315,7 @@ stationeval <- function(station, method, distribution)
     
     if(method == "gamboostLSS"){
       g_learndata <- learndata
+      g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
       gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
                         data = g_learndata, 
                         families = if(distribution == "gaussian") as.families(fname = cens("NO", type = "left")) else as.families(fname = cens("LO", type = "left")), 
@@ -542,7 +543,7 @@ stationeval <- function(station, method, distribution)
 
 
 
-wrapper <- function(stationlist = c("Axams", "Lech", "Matrei", "Walchsee", "Vils", "Oetz"), 
+wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz"), 
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "logistic", "hurdle"))
 {
@@ -575,5 +576,6 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Matrei", "Walchsee", "Vils
 }
 
 
-results <- wrapper(stationlist = c("Axams", "Lech", "Vils", "Oetz", "Koessen"))
+results <- wrapper(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Koessen"))
+
 
