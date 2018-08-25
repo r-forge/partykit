@@ -316,13 +316,22 @@ stationeval <- function(station, method, distribution)
     if(method == "gamboostLSS"){
       g_learndata <- learndata
       g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
-      gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
+      if(distribution == "gaussian"){
+        gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
                         data = g_learndata, 
-                        families = if(distribution == "gaussian") as.families(fname = cens("NO", type = "left")) else as.families(fname = cens("LO", type = "left")), 
+                        families =  as.families(fname = cens("NO", type = "left")), 
                         method = "noncyclic",
                         control = boost_control(mstop = 1000L))
+      }
+      if(distribution == "logistic"){
+        gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
+                          data = g_learndata, 
+                          families =  as.families(fname = cens("LO", type = "left")), 
+                          method = "noncyclic",
+                          control = boost_control(mstop = 1000L))
+      }
       # find optimal value for mstop (evalution is very time-consuming)
-      grid <- seq(50,1000, by = 100)  ## FIX ME: changed stepsize from 25 to 100 due to memory problems (Error in mcfork(detached) : unable to fork, possible reason: Cannot allocate memory)"
+      grid <- seq(50,1000, by = 25)  ## FIX ME: changed stepsize from 25 to 100 due to memory problems (Error in mcfork(detached) : unable to fork, possible reason: Cannot allocate memory)"
       cvr <- cvrisk(gb, grid = grid)
       mstop(gb) <- mstop(cvr)
       predpar <- data.frame(predict(gb, newdata = testdata, parameter = "mu", type = "response"),
@@ -543,7 +552,7 @@ stationeval <- function(station, method, distribution)
 
 
 
-wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz"), 
+wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Koessen"), 
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "logistic", "hurdle"))
 {
@@ -576,6 +585,6 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz")
 }
 
 
-results <- wrapper(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Koessen"))
+results <- wrapper()
 
 
