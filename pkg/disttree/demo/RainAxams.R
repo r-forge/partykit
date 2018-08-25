@@ -201,7 +201,8 @@ pdf <- predict(df, newdata = testdata[pdays,], type = "parameter")
 df_mu <- pdf$mu
 df_sigma <- pdf$sigma
 # caclulate predicted expected value
-df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
+df_exp <- predict(df, newdata = testdata[pdays,], type = "response")
+# df_exp <- pnorm(df_mu/df_sigma) * (df_mu + df_sigma * (dnorm(df_mu/df_sigma) / pnorm(df_mu/df_sigma)))
 # predicted expected values together with the corresponding observations
 cbind(df_exp, testdata[pdays,"robs"])
 
@@ -222,11 +223,11 @@ pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
 pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
 pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
 
-# predictions
-pred1 <- c(testdata[pdays,"robs"][1], crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(testdata[pdays,"robs"][2], crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(testdata[pdays,"robs"][3], crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-pred4 <- c(testdata[pdays,"robs"][4], crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+# observations
+obs1 <- c(testdata[pdays,"robs"][1], crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+obs2 <- c(testdata[pdays,"robs"][2], crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+obs3 <- c(testdata[pdays,"robs"][3], crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+obs4 <- c(testdata[pdays,"robs"][4], crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 # legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -261,16 +262,16 @@ points(x = pm3[1], y = pm3[2], col = pal[2], pch = 19)
 points(x = pm4[1], y = pm4[2], col = pal[4], pch = 19)
 
 
-# plot predictions
-points(x = pred1[1], y = pred1[2], col = pal[1], pch = 4)
-points(x = pred2[1], y = pred2[2], col = pal[3], pch = 4)
-points(x = pred3[1], y = pred3[2], col = pal[2], pch = 4)
-points(x = pred4[1], y = pred4[2], col = pal[4], pch = 4)
+# plot observations
+points(x = obs1[1], y = obs1[2], col = pal[1], pch = 4)
+points(x = obs2[1], y = obs2[2], col = pal[3], pch = 4)
+points(x = obs3[1], y = obs3[2], col = pal[2], pch = 4)
+points(x = obs4[1], y = obs4[2], col = pal[4], pch = 4)
 
-lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs1[1], obs1[1]), y = c(obs1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs2[1], obs2[1]), y = c(obs2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs3[1], obs3[1]), y = c(obs3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs4[1], obs4[1]), y = c(obs4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 
 # add labels
 text(x = -0.8, y = lh1, labels = "2009", col = pal[1], cex = 0.8)
