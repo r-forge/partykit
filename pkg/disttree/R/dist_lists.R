@@ -493,34 +493,69 @@ dist_crch <- function(dist = c("gaussian","logistic"),
     # alternative version using for mle = TRUE
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
-    # if only one observation or only equal observations
+    # observations with positive weights
+    y_posweights <- y[weights>0]
+    # if only one observation or only equal observations (with positive weights)
     # set mu to the value of this one observation 
     # and sigma to 1e-10
-    if(length(unique(y)) == 1) {
-      starteta <- c(y, log(1e-10))
+    if(length(unique(y_posweights)) == 1) {
+      starteta <- c(unique(y_posweights), log(1e-10))
     } else {
       
-      x <- cbind(rep(1, length(y)))
-      colnames(x) <- "(Intercept)"
-      
-      starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                      truncated = truncated, weights = weights, dist = dist, 
-                                      control = crch.control(method = "L-BFGS-B", 
-                                                             reltol = 1e-8, factr = 1e7,
-                                                             maxit = 100,
-                                                             hessian = FALSE))$coefficients), 
-                      silent = TRUE)
-      if(inherits(starteta, "try-error")){
-        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                    truncated = truncated, weights = weights, dist = dist, 
-                                    control = crch.control(method = "BFGS", 
-                                                           reltol = 1e-8, factr = 1e7,
-                                                           maxit = 100,
-                                                           hessian = FALSE))$coefficients)
+      # if only one positive observation error in optim (non-finite values)
+      if(sum(y_posweights>0) < 2){
+        starteta <- c(0, log(1e-10))
+      } else {
+        
+        x <- cbind(rep(1, length(y)))
+        colnames(x) <- "(Intercept)"
+        
+        starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                        truncated = truncated, weights = weights, dist = dist, 
+                                        control = crch.control(method = "L-BFGS-B", 
+                                                               reltol = 1e-8, factr = 1e7,
+                                                               maxit = 100,
+                                                               hessian = FALSE))$coefficients), 
+                        silent = TRUE)
+        if(inherits(starteta, "try-error")){
+          warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = truncated, weights = weights, dist = dist, 
+                                          control = crch.control(method = "BFGS", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = truncated, weights = weights, dist = dist, 
+                                          control = crch.control(method = "Nelder-Mead", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method Nelder-Mead in optim, applied method SANN instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = truncated, weights = weights, dist = dist, 
+                                          control = crch.control(method = "SANN", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")) {
+          print("ERROR for all optimization methods")
+          print(c("summary y:", summary(y)))
+          print(c("summary weights:", summary(weights)))
+          save(y, file = "~/svn/partykit/pkg/disttree/demo/error_examples/y.rda")
+          save(weights, file = "~/svn/partykit/pkg/disttree/demo/error_examples/weights.rda")
+        }
       }
-    }
-    
+    }    
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
     
@@ -1575,34 +1610,69 @@ dist_binomial <- function() {
     ## alternative version using for mle = TRUE
     if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
     
-    # if only one observation or only equal observations
+    # observations with positive weights
+    y_posweights <- y[weights>0]
+    # if only one observation or only equal observations (with positive weights)
     # set mu to the value of this one observation 
     # and sigma to 1e-10
-    if(length(unique(y)) == 1) {
-      starteta <- c(y, log(1e-10))
+    if(length(unique(y_posweights)) == 1) {
+      starteta <- c(unique(y_posweights), log(1e-10))
     } else {
       
-      x <- cbind(rep(1, length(y)))
-      colnames(x) <- "(Intercept)"
-      
-      starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                      truncated = FALSE, weights = weights, 
-                                      control = crch.control(method = "L-BFGS-B", 
-                                                             reltol = 1e-8, factr = 1e7,
-                                                             maxit = 100,
-                                                             hessian = FALSE))$coefficients), 
-                      silent = TRUE)
-      if(inherits(starteta, "try-error")){
-        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                    truncated = FALSE, weights = weights, 
-                                    control = crch.control(method = "BFGS", 
-                                                           reltol = 1e-8, factr = 1e7,
-                                                           maxit = 100,
-                                                           hessian = FALSE))$coefficients)
+      # if only one positive observation error in optim (non-finite values)
+      if(sum(y_posweights>0) < 2){
+        starteta <- c(0, log(1e-10))
+      } else {
+        
+        x <- cbind(rep(1, length(y)))
+        colnames(x) <- "(Intercept)"
+        
+        starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                        truncated = FALSE, weights = weights, 
+                                        control = crch.control(method = "L-BFGS-B", 
+                                                               reltol = 1e-8, factr = 1e7,
+                                                               maxit = 100,
+                                                               hessian = FALSE))$coefficients), 
+                        silent = TRUE)
+        if(inherits(starteta, "try-error")){
+          warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = FALSE, weights = weights, 
+                                          control = crch.control(method = "BFGS", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = FALSE, weights = weights, 
+                                          control = crch.control(method = "Nelder-Mead", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method Nelder-Mead in optim, applied method SANN instead")
+          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+                                          truncated = FALSE, weights = weights, 
+                                          control = crch.control(method = "SANN", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")) {
+          print("ERROR for all optimization methods")
+          print(c("summary y:", summary(y)))
+          print(c("summary weights:", summary(weights)))
+          save(y, file = "~/svn/partykit/pkg/disttree/demo/error_examples/y.rda")
+          save(weights, file = "~/svn/partykit/pkg/disttree/demo/error_examples/weights.rda")
+        }
       }
     }
-
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
     
@@ -1759,27 +1829,63 @@ dist_binomial <- function() {
     } else {
       
       xpos <- cbind(rep(1, length(ypos)))
-      wpos <- weights[y>0]
       colnames(xpos) <- "(Intercept)"
+      wpos <- weights[y>0]
       
-      starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                      truncated = TRUE, weights = wpos, 
-                                      control = crch.control(method = "L-BFGS-B", 
-                                                             reltol = 1e-8, factr = 1e7,
-                                                             maxit = 100,
-                                                             hessian = FALSE))$coefficients), 
-                      silent = TRUE)
-      if(inherits(starteta, "try-error")){
-        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+      # check whether there are at least 2 positive observations with weight>0 (for only one: infinite values in optim)
+      if((sum(wpos > 0) < 2) & any(weights > 0)){  ## FIX ME: only one or no positive observation leads to error in optim
+        starteta <- c(0, log(1e-10))
+      } else {
+        
+        # calculate starteta using crch.fit
+        starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                         truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "BFGS", 
+                                        control = crch.control(method = "L-BFGS-B", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                maxit = 100,
-                                                               hessian = FALSE))$coefficients)
+                                                               hessian = FALSE))$coefficients), 
+                        silent = TRUE)
+        if(inherits(starteta, "try-error")){
+          warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+          starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                          truncated = TRUE, weights = wpos, 
+                                          control = crch.control(method = "BFGS", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
+          starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                          truncated = TRUE, weights = wpos, 
+                                          control = crch.control(method = "Nelder-Mead", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method Nelder-Mead in optim, applied method SANN instead")
+          starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                          truncated = TRUE, weights = wpos, 
+                                          control = crch.control(method = "SANN", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 #maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")) {
+          print("ERROR for all optimization methods")
+          print(c("summary y:", summary(y)))
+          print(c("summary ypos:", summary(ypos)))
+          print(c("summary weights:", summary(weights)))
+          print(c("summary wpos:", summary(wpos)))
+          save(y, file = "~/svn/partykit/pkg/disttree/demo/error_examples/y.rda")
+          save(weights, file = "~/svn/partykit/pkg/disttree/demo/error_examples/weights.rda")
+        }
       }
-    }
-    
+    }    
     names(starteta) <- c("mu", "log(sigma)")
     return(starteta)
   }
@@ -1946,35 +2052,73 @@ dist_binomial <- function() {
     } else {
       
       xpos <- cbind(rep(1, length(ypos)))
-      wpos <- weights[y>0]
       colnames(xpos) <- "(Intercept)"
+      wpos <- weights[y>0]
       
-      starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                        truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "L-BFGS-B", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
-                        if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
-                      silent = TRUE)
-      if(inherits(starteta, "try-error")){
-        warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                      truncated = TRUE, weights = wpos, 
-                                      control = crch.control(method = "BFGS", 
-                                                             reltol = 1e-8, factr = 1e7,
-                                                             maxit = 100,
-                                                             hessian = FALSE))$coefficients), 
-                      if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16))
+      # check whether there are at least 2 positive observations with weight>0 (for only one: infinite values in optim)
+      if((sum(wpos > 0) < 2) & any(weights > 0)){  ## FIX ME: only one or no positive observation leads to error in optim
+        starteta <- c(0, log(1e-10), qlogis(weighted.mean(y > 0, w = weights)))
+      } else {
+        
+        # calculate starteta using crch.fit
+        starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                          truncated = TRUE, weights = wpos, 
+                                          control = crch.control(method = "L-BFGS-B", 
+                                                                 reltol = 1e-8, factr = 1e7,
+                                                                 maxit = 100,
+                                                                 hessian = FALSE))$coefficients), 
+                          if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
+                        silent = TRUE)
+        if(inherits(starteta, "try-error")){
+          warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
+          starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                            truncated = TRUE, weights = wpos, 
+                                            control = crch.control(method = "BFGS", 
+                                                                   reltol = 1e-8, factr = 1e7,
+                                                                   maxit = 100,
+                                                                   hessian = FALSE))$coefficients), 
+                            if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")){
+          warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
+          starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                            truncated = TRUE, weights = wpos, 
+                                            control = crch.control(method = "Nelder-Mead", 
+                                                                   reltol = 1e-8, factr = 1e7,
+                                                                   #maxit = 100,
+                                                                   hessian = FALSE))$coefficients), 
+                            if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)),
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")) {
+          warning("Error for method Nelder-Mead in optim, applied method SANN instead")
+          starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+                                            truncated = TRUE, weights = wpos, 
+                                            control = crch.control(method = "SANN", 
+                                                                   reltol = 1e-8, factr = 1e7,
+                                                                   #maxit = 100,
+                                                                   hessian = FALSE))$coefficients), 
+                            if(any(y==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)),
+                          silent = TRUE)
+        }
+        if(inherits(starteta, "try-error")) {
+          print("ERROR for all optimization methods")
+          print(c("summary y:", summary(y)))
+          print(c("summary ypos:", summary(ypos)))
+          print(c("summary weights:", summary(weights)))
+          print(c("summary wpos:", summary(wpos)))
+          save(y, file = "~/svn/partykit/pkg/disttree/demo/error_examples/y.rda")
+          save(weights, file = "~/svn/partykit/pkg/disttree/demo/error_examples/weights.rda")
+        }
       }
-    }
-    
+    }    
     names(starteta) <- c("mu", "log(sigma)", "log(nu/(1-nu))")
     return(starteta)
   }
   
   mle <- TRUE
-  
+    
   dist_list_hurdle_normal <- list(family.name = "hurdle Normal Distribution",
                                   ddist = ddist, 
                                   sdist = sdist, 
