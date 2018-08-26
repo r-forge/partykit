@@ -341,7 +341,7 @@ stationeval <- function(station, method, distribution)
     
     if(method == "EMOS"){
       ml <- crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
-                 data = learndata, dist = distribution, 
+                 data = learndata, dist = as.character(distribution), 
                  left = 0, link.scale = "log")
       predpar <- data.frame(predict(ml, type = "location", newdata = testdata),
                             predict(ml, type = "scale", newdata = testdata))
@@ -552,7 +552,8 @@ stationeval <- function(station, method, distribution)
 
 
 
-wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Koessen"), 
+wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", 
+                                    "Koessen", "See"), 
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "logistic", "hurdle"))
 {
@@ -587,4 +588,6 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz",
 
 results <- wrapper()
 
+save(results, file = "~/svn/partykit/pkg/disttree/demo/Rain_selectedstations.rda")
 
+xyplot(crps ~ method | station, groups = ~ distribution, data = results$means, auto.key = TRUE)
