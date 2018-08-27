@@ -289,10 +289,15 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
       groupcoef <- as.matrix(groupcoef)
       colnames(groupcoef) <- 1
     }
+    # 1-parametric family:
     rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-    if(is.vector(rval$fitted.par)) {
+    if(is.vector(rval$fitted.par) & length(rval$fitted[,1]) > 1) {
       rval$fitted.par <- as.matrix(rval$fitted.par)
       colnames(rval$fitted.par) <- "mu"
+    }
+    # only 1 observation
+    if(is.vector(rval$fitted.par) & length(rval$fitted[,1]) == 1) {
+      rval$fitted.par <- t(as.matrix(rval$fitted.par))
     }
     rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
     rval$fitted.par <- as.data.frame(rval$fitted.par)
@@ -340,9 +345,14 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
   }
 
   pred.par <- groupcoef[paste(pred.nodes),]
-  if(is.vector(pred.par)) {
+  # 1-parametric family
+  if(is.vector(pred.par) & NROW(newdata)[1] > 1) {
     pred.par <- as.matrix(pred.par)
     colnames(pred.par) <- "mu"
+  }
+  # only one new observation
+  if(is.vector(pred.par) & NROW(newdata)[1] == 1) {
+    pred.par <- t(as.matrix(pred.par))
   }
   rownames(pred.par) <- c(1: (NROW(pred.par)))
   pred.par <- as.data.frame(pred.par)
