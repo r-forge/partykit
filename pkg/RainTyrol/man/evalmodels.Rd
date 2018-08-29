@@ -57,7 +57,7 @@ if(require("crch") &
    require("survival")
 ) {
 
-evalmodels(station = "Axams", train = 1985:2008, test = 2009:2012)
+evalmodels(station = "Axams", train = 1985:2008, test = 2009:2012, distfamily = "gaussian")
 
 }
 }
