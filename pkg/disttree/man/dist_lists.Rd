@@ -18,8 +18,8 @@
 
 \usage{
   dist_gaussian()
-  dist_crch(dist = c("gaussian", "logistic"), type = c("left",
-                 "right", "interval"), censpoint = 0)
+  dist_crch(dist = c("gaussian", "logistic"), truncated = FALSE,
+            type = c("left", "right", "interval"), censpoint = 0)
   dist_exponential()
   dist_weibull()
   dist_gamma()
@@ -27,9 +27,11 @@
 }
 
 \arguments{
-\item{dist}{Either a gaussian ('gaussian') or a logistic ('logistic') distribution can be selected.}
-\item{type}{Type of censoring can be selectes ('left', 'right' or 'interval')}
-\item{censpoint}{Censoring point can be set (per default set to 0).}
+\item{dist}{\code{character}. Either a gaussian ('gaussian') or a logistic ('logistic') distribution can be selected.}
+\item{truncated}{\code{logical}. If TRUE truncated family list is generated with 'censpoint' interpreted as truncation points, If FALSE censored family list is generated. Default is FALSE
+}
+\item{type}{\code{character}. Type of censoring can be selectes ('left', 'right' or 'interval')}
+\item{censpoint}{\code{numeric}. Censoring point can be set (per default set to 0).}
 }
 
 \details{
