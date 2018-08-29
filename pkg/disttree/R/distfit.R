@@ -30,11 +30,18 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   ## number of observations
   ny <- NROW(y)
   
+  ## check if all observations are equal
+  allequ <- (length(unique(y)) == 1)
+  
+  
   ## check weights
   if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, ny))
   if(length(weights) != ny) stop("number of observations and length of weights are not equal")
   if(is.table(weights)) weights <- as.vector(weights)
-  if(!any(weights != 0)) {
+  # check if all weights are 0 (happens for low number of trees, FIX ME: how to deal with this?)
+  wzero <- all(weights == 0)
+  if(wzero) {
+    warning("all weights are 0")
     rval <- list(
       npar = NA,
       y = y,
@@ -203,21 +210,17 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     return(gr)
   }
   
-  # check if all observations are equal
-  allequ <- (length(unique(y))==1)
-  
-  # check if all weights are 0 (happens for low number of trees, FIX ME: how to deal with it)
-  wzero <- all(weights == 0)
-  if(wzero) warning("all weights are 0")
-  
   ## calculate initial values if necessary or otherwise transform initial values for the distribution parameters to initial values on the link scale
-  if(is.null(start) && is.null(start.eta)){
+  if((is.null(start) && is.null(start.eta)) | family$mle){
     if(NROW(y)>1 & !allequ) {
       starteta <- family$startfun(y, weights = weights)
     } else {
       ## FIX ME: replacements of starting values apart from location
       if(NROW(y)==1 | allequ){ 
-        starteta <- c(unique(y), rep.int(1e-10, length(family$link)-1))
+        starteta <- try(family$startfun(y, weights = weights))
+        if(inherits(starteta, "try-error") | any(is.na(starteta))){
+          starteta <- family$linkfun(c(unique(y), rep.int(1e-10, length(family$link)-1)))  ## FIX ME: set all other parameters to 1e-10?
+        }
         warning("only one observation or only equal observations in distfit")
       } else warning("no observation in distfit")
     }
@@ -288,7 +291,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     converged <- (opt$convergence == 0)   # optim returns 0 for successful completion 
     
   } else {
-    eta <- family$startfun(y, weights)
+    eta <- starteta
     par <- family$linkinv(eta)
     loglik <- family$ddist(y, eta, log = TRUE, weights = weights, sum = TRUE)
     opt <- NULL
