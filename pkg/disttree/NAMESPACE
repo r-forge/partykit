@@ -2,6 +2,7 @@ import("partykit")
 import("gamlss.dist")
 import("stats")
 import("Formula")
+
 importFrom("graphics",
   "plot",
   "hist",
@@ -47,10 +48,15 @@ export(
   "dist_exponential",
   "dist_gamma",
   "dist_crch",
+  "dist_ztnbinom",
+  "dist_binomial",
+
 
   ## complete family lists
   "dist_list_normal",
   "dist_list_cens_normal",
+  "dist_list_trunc_normal",
+  "dist_list_hurdle_normal",
   
   ## additional summary function
   "getSummary.distfit"
