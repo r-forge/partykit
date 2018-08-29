@@ -240,3 +240,12 @@ names(time_user.self) <- names(time_sys.self) <- names(time_elapsed) <-
 
 fit_time
 time_user.self
+
+time <- list(fit_time = fit_time,
+             time_user.self = time_user.self,
+             time_sys.self = time_sys.self,
+             time_elapsed = time_elapsed,
+             time_user.child = time_user.child,
+             time_sys.child = time_sys.child)
+
+save(time, file = "~/svn/partykit/pkg/disttree/demo/timeAxams.rda")
