@@ -58,7 +58,8 @@ res_cross <- applyfun(1:nrep_cross,
                           res <- evalmodels(station = "Axams",
                                             train = train,
                                             test = test,
-                                            gamboost_cvr = TRUE)
+                                            gamboost_cvr = TRUE,
+                                            distfamily = "gaussian")
                           
                           crps[k,] <- res$crps
                           reslist[[k]] <- res
@@ -115,7 +116,8 @@ res_24to4_all <- applyfun(1:length(stations),
                             res <- evalmodels(station = stations[i],
                                               train = train,
                                               test = test,
-                                              gamboost_cvr = TRUE)
+                                              gamboost_cvr = TRUE,
+                                              distfamily = "gaussian")
                             
                             return(res)
                           }
