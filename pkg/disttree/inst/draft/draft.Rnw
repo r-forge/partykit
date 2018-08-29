@@ -10,7 +10,7 @@
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
 
 %% tikz
-\usepackage{array,makecell,tikz}
+\usepackage{array,makecell,tikz,color,soul}
 \usetikzlibrary{arrows.meta,positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 
 %% need no \usepackage{Sweave}
@@ -500,11 +500,11 @@ pm2 <- c(0.05, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))   
 pm3 <- c(-0.05, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))    # -0.03
 pm4 <- c(-0.15, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))    # -0.07
 
-# predictions
-pred1 <- c(Axams_24to4$testdata[pdays,"robs"][1]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-pred2 <- c(Axams_24to4$testdata[pdays,"robs"][2]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-pred3 <- c(Axams_24to4$testdata[pdays,"robs"][3]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-pred4 <- c(Axams_24to4$testdata[pdays,"robs"][4]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+# observations
+obs1 <- c(Axams_24to4$testdata[pdays,"robs"][1]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+obs2 <- c(Axams_24to4$testdata[pdays,"robs"][2]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+obs3 <- c(Axams_24to4$testdata[pdays,"robs"][3]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+obs4 <- c(Axams_24to4$testdata[pdays,"robs"][4]^(1.6), crch::dcnorm(Axams_24to4$testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 #legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -645,16 +645,16 @@ points(x = pm3[1], y = pm3[2], col = pal[2], pch = 19)
 points(x = pm4[1], y = pm4[2], col = pal[4], pch = 19)
 
 
-# plot predictions
-points(x = pred1[1], y = pred1[2], col = pal[1], pch = 4)
-points(x = pred2[1], y = pred2[2], col = pal[3], pch = 4)
-points(x = pred3[1], y = pred3[2], col = pal[2], pch = 4)
-points(x = pred4[1], y = pred4[2], col = pal[4], pch = 4)
+# plot observations
+points(x = obs1[1], y = obs1[2], col = pal[1], pch = 4, cex = 1.4)
+points(x = obs2[1], y = obs2[2], col = pal[3], pch = 4, cex = 1.4)
+points(x = obs3[1], y = obs3[2], col = pal[2], pch = 4, cex = 1.4)
+points(x = obs4[1], y = obs4[2], col = pal[4], pch = 4, cex = 1.4)
 
-lines(x = c(pred1[1], pred1[1]), y = c(pred1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred2[1], pred2[1]), y = c(pred2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred3[1], pred3[1]), y = c(pred3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
-lines(x = c(pred4[1], pred4[1]), y = c(pred4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs1[1], obs1[1]), y = c(obs1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs2[1], obs2[1]), y = c(obs2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs3[1], obs3[1]), y = c(obs3[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
+lines(x = c(obs4[1], obs4[1]), y = c(obs4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 
 # add labels
 text(x = -1.7, y = lh1, labels = "2009", col = pal[1], cex = 0.8)     # -0.8
@@ -662,9 +662,9 @@ text(x = -1.7, y = lh2, labels = "2010", col = pal[3], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
-\caption{\label{fig:axams-dist}Total precipitation predictions by a distributional forest
+\caption{\label{fig:axams-dist}\hl{Total precipitation predictions by a distributional forest
 at station Axams for July 24 in 2009, 2010, 2011 and 2012 learned on data from 1985--2008.
-Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}
+Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}}
 \end{figure}
 
 In weather forecasting, these properties are especially appealing in 
@@ -858,10 +858,10 @@ $\bm{\hat \theta}(\bold{z})$ where
 $$
 \bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 $$
-Even though this parameter depends on the given $z$ it has to be noted that
+\hl{Even though this parameter depends on the given $z$ it has to be noted that
 it is the same for all other observations that are in the same terminal node of 
 the tree as $z$ and therefore does not necessarily have to be recalculated for
-each of them.
+each of them.}
 
 \subsection{Distributional forest}
 \label{sec:distforest}
@@ -1106,13 +1106,14 @@ further details:
 \item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Bootstrap
   sampling is employed for each tree using a third of the predictors
-  in each split of the tree (``mtry''). Parameters are estimated by
+  in each split of the tree (\code{mtry}). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
-  in Section~\ref{sec:methods}. As stopping criteria the minimal number
-  of observations to perform a split (\code{minsplit}) is set to 50, 
-  the minimal number of observations in a terminal node (\code{minsbucket})
-  is set to 20 and the value that must be exceeded in the statistical tests 
-  (e.g. $1-\text{p-vlaue$}) for variable selection is kept at the default value $0$.
+  in Section~\ref{sec:methods}. 
+  \hl{As stopping criteria the minimal number
+  of observations to perform a split} (\code{minsplit}) \hl{is set to 50, 
+  the minimal number of observations in a terminal node} (\code{minbucket})
+  \hl{is set to 20 and the significance level for variable selection} (\code{alpha}) 
+  \hl{is kept at the default value $1$.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
   
@@ -1302,9 +1303,9 @@ line pertains to the reference model EMOS.}
 
 To assess the predictive performance, a full cross-validation is carried out
 rather than relying on just the one fixed test set for the years 2009--2012.
-To do so, a 10 times 7-fold cross-validation is carried out where each
+\hl{To do so, a 10 times 7-fold cross-validation is carried out where each
 splits the available 28~years into 7~subsets of 4~randomly selected and 
-therefore mostly not subsequent years.
+therefore mostly not subsequent years.}
 The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
 (= 4~years) using the average CRPS across all observations.
 The resulting 10~CRPS skill scores are displayed by boxplots in
@@ -1598,10 +1599,11 @@ also available within the \textsf{R}-Forge~project.
 \section{Tree algorithm}
 \label{app:tree}
 
+
 In the following, the tree algorithm applied in the empirical case study 
 discussed in this paper is explained. For notational simplicity, 
 the testing and splitting procedure is described for the root node, i.e.,
-the entire learning sample with observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. 
+the entire learning sample with observations $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$.
 In each child node the corresponding subsample depends on 
 the foregoing split(s).
 
@@ -1639,7 +1641,7 @@ the multivariate linear statistic
 $$
 T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\bm{\hat{\theta}}, Y_i)\right)
 $$
-where $s(\bm{\hat{\theta}}, Y_i) \in \mathbb{R}^{1\times k}$ and the 
+\hl{where $s(\bm{\hat{\theta}}, Y_i) \in \mathbb{R}^{1\times k}$ and the 
 type of the transformation function $v_l$ depends on the type of the split 
 variable $Z_l$. If $Z_l$ is numeric then $v_l$ is simply the identity 
 function $v_l(Z_{li}) = Z_{li}$ and therefore $T_l \in \mathbb{R}^k$ as 
@@ -1649,19 +1651,19 @@ $v_l(Z_{li}) = e_H(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$
 such that $v_l$ is a $H$-dimensional unit vector where the element corresponding to 
 the value of $Z_{li}$ is $1$. In this case the statistic $T_l \in \mathbb{R}^{H \cdot k}$
 as the ``vec'' operator converts the $H \times k$ matrix into a $k$ column vector 
-by column-wise combination. Observations with missing values are excluded from the sums.
+by column-wise combination.} Observations with missing values are excluded from the sums.
 
 With the conditional expectation $\mu_l$ and the covariance 
 $\Sigma_l$ of $T_l$ as derived by 
 \cite{Strasser+Weber:1999} the test statistic can be standardized. 
-The observed multivariate linear statistic $t_l$ which is either an
+\hl{The observed multivariate linear statistic $t_l$ which is either an
 $k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of Y,
-is mapped onto the real line by a univariate test statistic $c$. 
-In the application of this paper a quadratic form is chosen, such that
+is mapped onto the real line by a univariate test statistic $c$.
+In the application of this paper a quadratic form is chosen, such that}
 $$
 c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 $$
-where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
+\hl{where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$.} Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered.
 
@@ -1673,7 +1675,7 @@ variable $Z_l$.
 After Bonferroni-adjusting the $p$-values it has to be assessed whether
 any of the resulting $p$-values is beneath the selected significance level. 
 If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
-is chosen as splitting variable. Otherwise no further split is made is in this node.
+is chosen as splitting variable. \hl{Otherwise no further split is made is in this node.}
 
 The breakpoint that leads to the highest discrepancy between score functions 
 in the two resulting subgroups is selected as split point. 
@@ -1681,10 +1683,10 @@ This is measured by the linear statistic
 $$
 T_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\bm{\hat{\theta}}, Y_i)
 $$
-for $q \in \{1,2\}$ where $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ are the 
+\hl{for $q \in \{1,2\}$ where $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ are the 
 two new subgroups, without any particular ordering, that are defined by 
-splitting in split point $r$ of variable $Z_{l^{\ast}}$. 
-The split point is then chosen as follows:
+splitting in split point $r$ of variable $Z_{l^{\ast}}$.
+The split point is then chosen as follows:}
 $$
 r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Sigma_{l^{\ast}}^{qr})).
 $$
