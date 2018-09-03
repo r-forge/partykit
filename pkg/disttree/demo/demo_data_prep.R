@@ -309,10 +309,14 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   RainSeeimPaznaun <- RainTyrol[RainTyrol$station == "See im Paznaun",]
   rownames(RainSeeimPaznaun) <- c(1:NROW(RainSeeimPaznaun))
   save(RainSeeimPaznaun, file = "~/svn/partykit/pkg/disttree/data/RainSeeimPaznaun.rda")
-
+  
   RainLadisNeuegg <- RainTyrol[RainTyrol$station == "Ladis-Neuegg",]
   rownames(RainLadisNeuegg) <- c(1:NROW(RainLadisNeuegg))
-  save(RainLadisNeuegg, file = "~/svn/partykit/pkg/disttree/data/RainLadis-Neuegg.rda")
+  save(RainLadisNeuegg, file = "~/svn/partykit/pkg/disttree/data/RainLadisNeuegg.rda")
+  
+  RainLaengenfeld <- RainTyrol[RainTyrol$station == "Laengenfeld",]
+  rownames(RainLaengenfeld) <- c(1:NROW(RainLaengenfeld))
+  save(RainLaengenfeld, file = "~/svn/partykit/pkg/disttree/data/RainLaengenfeld.rda")
   
   RainOetz <- RainTyrol[RainTyrol$station == "Oetz",]
   rownames(RainOetz) <- c(1:NROW(RainOetz))
@@ -326,6 +330,49 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   rownames(RainPassThurn) <- c(1:NROW(RainPassThurn))
   save(RainPassThurn, file = "~/svn/partykit/pkg/disttree/data/RainPassThurn.rda")
   
+  RainRotholz <- RainTyrol[RainTyrol$station == "Rotholz",]
+  rownames(RainRotholz) <- c(1:NROW(RainRotholz))
+  save(RainRotholz, file = "~/svn/partykit/pkg/disttree/data/RainRotholz.rda")
+  
+  RainOchsengartenObergut <- RainTyrol[RainTyrol$station == "Ochsengarten-Obergut",]
+  rownames(RainOchsengartenObergut) <- c(1:NROW(RainOchsengartenObergut))
+  save(RainOchsengartenObergut, file = "~/svn/partykit/pkg/disttree/data/RainOchsengartenObergut.rda")
+  
+  RainStJohannimWalde <- RainTyrol[RainTyrol$station == "St.Johann im Walde",]
+  rownames(RainStJohannimWalde) <- c(1:NROW(RainStJohannimWalde))
+  save(RainStJohannimWalde, file = "~/svn/partykit/pkg/disttree/data/RainStJohannimWalde.rda")
+  
+  RainHinterriss <- RainTyrol[RainTyrol$station == "Hinterriss",]
+  rownames(RainHinterriss) <- c(1:NROW(RainHinterriss))
+  save(RainHinterriss, file = "~/svn/partykit/pkg/disttree/data/RainHinterriss.rda")
+  
+  RainKaunertalVergoetschen <- RainTyrol[RainTyrol$station == "Kaunertal-Vergoetschen",]
+  rownames(RainKaunertalVergoetschen) <- c(1:NROW(RainKaunertalVergoetschen))
+  save(RainKaunertalVergoetschen, file = "~/svn/partykit/pkg/disttree/data/RainKaunertalVergoetschen.rda")
+  
+  RainObsteig <- RainTyrol[RainTyrol$station == "Obsteig",]
+  rownames(RainObsteig) <- c(1:NROW(RainObsteig))
+  save(RainObsteig, file = "~/svn/partykit/pkg/disttree/data/RainObsteig.rda")
+  
+  RainHuetten <- RainTyrol[RainTyrol$station == "Huetten",]
+  rownames(RainHuetten) <- c(1:NROW(RainHuetten))
+  save(RainHuetten, file = "~/svn/partykit/pkg/disttree/data/RainHuetten.rda")
+  
+  RainLanersbach <- RainTyrol[RainTyrol$station == "Lanersbach",]
+  rownames(RainLanersbach) <- c(1:NROW(RainLanersbach))
+  save(RainLanersbach, file = "~/svn/partykit/pkg/disttree/data/RainLanersbach.rda")
+  
+  RainHopfgarteniBrt <- RainTyrol[RainTyrol$station == "Hopfgarten i.Brt.",]
+  rownames(RainHopfgarteniBrt) <- c(1:NROW(RainHopfgarteniBrt))
+  save(RainHopfgarteniBrt, file = "~/svn/partykit/pkg/disttree/data/RainHopfgarteniBrt.rda")
+  
+  RainObertilliach <- RainTyrol[RainTyrol$station == "Obertilliach",]
+  rownames(RainObertilliach) <- c(1:NROW(RainObertilliach))
+  save(RainObertilliach, file = "~/svn/partykit/pkg/disttree/data/RainObertilliach.rda")
+  
+  RainMariaLuggau <- RainTyrol[RainTyrol$station == "Maria Luggau",]
+  rownames(RainMariaLuggau) <- c(1:NROW(RainMariaLuggau))
+  save(RainMariaLuggau, file = "~/svn/partykit/pkg/disttree/data/RainMariaLuggau.rda")
 }
 
 

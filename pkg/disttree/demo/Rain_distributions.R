@@ -65,7 +65,7 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 #####
 
-# formula for gaussian and logistic model and for truncated part of the hurdle model
+# formula for gaussian and logistic model and for truncated part of the hgaussian model
 {
   
   # tree and forest formula
@@ -223,23 +223,23 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 }
 
 
-
+load("~/svn/partykit/pkg/RainTyrol/data/RainTyrol.rda")
 
 
 stationeval <- function(station, method, distribution)
   {
   
   #####
-  # load observations and covariates 
-  load(paste("~/svn/partykit/pkg/disttree/data/Rain", gsub(" ", "", station, fixed = TRUE), ".rda", sep = ""))
-  RainData <- get(paste("Rain", gsub(" ", "", station, fixed = TRUE), sep = ""))
+  # get observations and covariates for selected station
+  RainData <- RainTyrol[RainTyrol$station == as.character(station), ]
+  rownames(RainData) <- c(1:NROW(RainData))
   
   # learning data: 24 years (1985 - 2008, both inlcuded)
   # testing data: 4 successive years (2009, 2010, 2011, 2012)
   learndata <- RainData[RainData$year < 2009,]
   testdata <- RainData[RainData$year %in% c(2009, 2010, 2011, 2012),]
   
-  if(distribution == "hurdle"){
+  if(distribution == "hgaussian"){
     learndata_pos <- learndata[learndata$robs>0,]
     testdata_pos <- testdata[testdata$robs>0,]
   }
@@ -352,7 +352,7 @@ stationeval <- function(station, method, distribution)
     
     
   
-  if(distribution == "hurdle"){
+  if(distribution == "hgaussian"){
     
     if(method == "disttree"){
       # first a binomial tree to decide whether there is any precipitation at all
@@ -513,14 +513,14 @@ stationeval <- function(station, method, distribution)
   {
     linkfun <- switch(as.character(distribution), "gaussian" = dist_list_cens_normal$linkfun,
                       "logistic" = dist_list_cens_log$linkfun,
-                      "hurdle" = dist_list_hurdle_normal$linkfun)
+                      "hgaussian" = dist_list_hgaussian_normal$linkfun)
     ddist <- switch(as.character(distribution), "gaussian" = dist_list_cens_normal$ddist,
                     "logistic" = dist_list_cens_log$ddist,
-                    "hurdle" = dist_list_hurdle_normal$ddist)
+                    "hgaussian" = dist_list_hgaussian_normal$ddist)
     ll <- numeric(length = NROW(testdata))
     for(j in 1:(NROW(testdata))){
       eta <- as.numeric(linkfun(predpar[j,]))
-      if(distribution == "hurdle"){
+      if(distribution == "hgaussian"){
         if(predpar[j,3] == 1) {
           nu <- 1-1e-10
           eta[3] <- log(nu/(1-nu))
@@ -541,7 +541,7 @@ stationeval <- function(station, method, distribution)
     if(distribution == "gaussian") crps <- crps_cnorm(testdata$robs, location = predpar$mu, scale = predpar$sigma, lower = 0, upper = Inf)
     if(distribution == "logistic") crps <- crps_clogis(testdata$robs, location = predpar$mu, scale = predpar$sigma, lower = 0, upper = Inf)
     
-    if(distribution == "hurdle"){
+    if(distribution == "hgaussian"){
       int_upper <- ceiling(max(RainData$robs))  # alternative: quantile(RainData$robs, probs = 0.999)
       for(j in 1:(NROW(testdata))){
         crps[j] <- integrate(function(z){(1 - predpar$nu[j] + predpar$nu[j] * ptnorm(z, mean = predpar$mu[j], sd = predpar$sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
@@ -563,9 +563,11 @@ stationeval <- function(station, method, distribution)
 
 
 wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", "Innervillgraten", "Pass Thurn",
-                                    "Koessen", "See im Paznaun", "Matrei in Osttirol", "Jungholz"), 
+                                    "Koessen", "See im Paznaun", "Matrei in Osttirol", "Jungholz", "Rotholz",
+                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde"),        
+                                    # "Laengenfeld"
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
-                    distributionlist = c("gaussian", "logistic", "hurdle"))
+                    distributionlist = c("gaussian", "hgaussian", "logistic"))
 {
   set <- expand.grid(station = stationlist, 
                      method = methodlist, 
@@ -586,7 +588,7 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz",
   
   means <- cbind(set, rowMeans(crps), rowMeans(ll))
   medians <- cbind(set, apply(crps, 1, median), apply(ll, 1, median))
-  colnames(medians) <- c(colnames(set), "crps", "ll")
+  colnames(medians) <- colnames(means) <- c(colnames(set), "crps", "ll")
   
   results <- list(crps = crps, 
                   ll = ll, 
@@ -605,6 +607,133 @@ save(results, file = "~/svn/partykit/pkg/disttree/demo/Rain_distributions.rda")
 
 ## plots
 if(FALSE){
+  library("lattice")
+  #xyplot(crps ~ method | station, groups = ~ distribution, data = results$means, auto.key = TRUE)
+  
+  strip.background.settings <- trellis.par.get("strip.background")
+  str(strip.background.settings)
+  strip.background.settings$col <- "gray"
+  str(strip.background.settings)
+  trellis.par.set("strip.background", strip.background.settings)
+  
+  strip.border.settings <- trellis.par.get("strip.border")
+  str(strip.border.settings)
+  strip.border.settings$col <- "black"
+  str(strip.border.settings)
+  trellis.par.set("strip.border", strip.border.settings)
+  
+  superpose.line.settings <- trellis.par.get("superpose.line")
+  str(superpose.line.settings)
+  superpose.line.settings$col <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  str(superpose.line.settings)
+  trellis.par.set("superpose.line", superpose.line.settings)
+  
+  superpose.symbol.settings <- trellis.par.get("superpose.symbol")
+  str(superpose.symbol.settings)
+  superpose.symbol.settings$pch <- c(3,16,24,25,15)
+  superpose.symbol.settings$col <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  superpose.symbol.settings$fill <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+  str(superpose.symbol.settings)
+  trellis.par.set("superpose.symbol", superpose.symbol.settings)
+  
+  xyplot(crps ~ distribution | station, groups = ~ method, data = results$means, auto.key = TRUE, type = "o", lwd = 2, lty = 1)
+  
+  xyplot(crps ~ distribution | station, groups = ~ method, data = results$means, 
+         subset = station %in% c("Rotholz", "Innervillgraten", "Pass Thurn",
+                                 "See im Paznaun", "Axams", "Lech", "Walchsee", "Vils"),
+         auto.key = TRUE, type = "o", lwd = 2, lty = 1)
+  
+  
+  ##########
+  # boxplots
+  
+  # crps
+  par(mfrow = c(1,3))
+  boxplot(crps~method, data = results$means, subset = distribution == "gaussian", main = "gaussian",
+          ylim = c(0.65,1.15))
+  boxplot(crps~method, data = results$means, subset = distribution == "logistic", main = "logistic",
+          ylim = c(0.65,1.15))
+  boxplot(crps~method, data = results$means, subset = distribution == "hgaussian", main = "hgaussian",
+          ylim = c(0.65,1.15))
+  
+  
+  # crps skill score by method (reference: EMOS)
+  means <- results$means
+  means$crps_ss_method <- means$crps
+  means$crps_ss_method[means$method == "disttree"] <- 
+    1 - means$crps[means$method == "disttree"] / means$crps[means$method == "EMOS"]
+  means$crps_ss_method[means$method == "distforest"] <- 
+    1 - means$crps[means$method == "distforest"] / means$crps[means$method == "EMOS"]
+  means$crps_ss_method[means$method == "gamlss"] <- 
+    1 - means$crps[means$method == "gamlss"] / means$crps[means$method == "EMOS"]
+  means$crps_ss_method[means$method == "gamboostLSS"] <- 
+    1 - means$crps[means$method == "gamboostLSS"] / means$crps[means$method == "EMOS"]
+  means$crps_ss_method[means$method == "EMOS"] <- 
+    1 - means$crps[means$method == "EMOS"] / means$crps[means$method == "EMOS"]
+  
+  means_sel <- means[means$method %in% c("distforest", "gamlss", "gamboostLSS"),]
+  means_sel$method <- factor(means_sel$method, levels(means_sel$method)[c(2:4)])
+  
+  par(mfrow = c(1,3))
+  boxplot(crps_ss_method~method, data = means_sel, 
+          subset = (distribution == "gaussian"), main = "gaussian",
+          ylim = c(-0.12,0.23))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_method~method, data = means_sel, 
+          subset = (distribution == "logistic"), main = "logistic",
+          ylim = c(-0.12,0.23))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_method~method, data = means_sel, 
+          subset = (distribution == "hgaussian"), main = "hgaussian",
+          ylim = c(-0.12,0.23))
+  abline(h = 0, col = pal[5], lwd = 2)
+  
+  
+  
+  # crps skill score by distribution (reference: gaussian)
+  means$crps_ss_dist <- means$crps
+  means$crps_ss_dist[means$distribution == "gaussian"] <- 
+    1 - means$crps[means$distribution == "gaussian"] / means$crps[means$distribution == "gaussian"]
+  means$crps_ss_dist[means$distribution == "logistic"] <- 
+    1 - means$crps[means$distribution == "logistic"] / means$crps[means$distribution == "gaussian"]
+  means$crps_ss_dist[means$distribution == "hgaussian"] <- 
+    1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "gaussian"]
+  
+  means_sel <- means[means$distribution %in% c("logistic", "hgaussian"),]
+  means_sel$distribution <- factor(means_sel$distribution, levels(means_sel$distribution)[c(2:3)])
+  
+  par(mfrow = c(1,5))
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "disttree"), main = "disttree",
+          ylim = c(-0.12,0.12))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "distforest"), main = "distforest",
+          ylim = c(-0.12,0.12))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "gamlss"), main = "gamlss",
+          ylim = c(-0.12,0.12))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "gamboostLSS"), main = "gamboostLSS",
+          ylim = c(-0.12,0.12))
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "EMOS"), main = "EMOS",
+          ylim = c(-0.12,0.12))
+  abline(h = 0, col = pal[5], lwd = 2)
+}
+
+
+
+{
+  
+  summary(results$crps[results$set$method == "gamboostLSS"])
+  summary(results$crps[results$set$method == "gamlss"])
+  summary(results$crps[results$set$method == "distforest"])
+  
+  
   library("lattice")
   #xyplot(crps ~ method | station, groups = ~ distribution, data = results$medians, auto.key = TRUE)
   
@@ -644,11 +773,11 @@ if(FALSE){
   # crps
   par(mfrow = c(1,3))
   boxplot(crps~method, data = results$medians, subset = distribution == "gaussian", main = "gaussian",
-          ylim = c(0.65,1.15))
+          ylim = c(0.4,1))
   boxplot(crps~method, data = results$medians, subset = distribution == "logistic", main = "logistic",
-          ylim = c(0.65,1.15))
-  boxplot(crps~method, data = results$medians, subset = distribution == "hurdle", main = "hurdle",
-          ylim = c(0.65,1.15))
+          ylim = c(0.4,1))
+  boxplot(crps~method, data = results$medians, subset = distribution == "hgaussian", main = "hgaussian",
+          ylim = c(0.4,1))
   
   
   # crps skill score by method (reference: EMOS)
@@ -671,15 +800,15 @@ if(FALSE){
   par(mfrow = c(1,3))
   boxplot(crps_ss_method~method, data = medians_sel, 
           subset = (distribution == "gaussian"), main = "gaussian",
-          ylim = c(-0.12,0.23))
+          ylim = c(-0.3,0.3))
   abline(h = 0, col = pal[5], lwd = 2)
   boxplot(crps_ss_method~method, data = medians_sel, 
           subset = (distribution == "logistic"), main = "logistic",
-          ylim = c(-0.12,0.23))
+          ylim = c(-0.3,0.3))
   abline(h = 0, col = pal[5], lwd = 2)
   boxplot(crps_ss_method~method, data = medians_sel, 
-          subset = (distribution == "hurdle"), main = "hurdle",
-          ylim = c(-0.12,0.23))
+          subset = (distribution == "hgaussian"), main = "hgaussian",
+          ylim = c(-0.3,0.3))
   abline(h = 0, col = pal[5], lwd = 2)
   
   
@@ -690,27 +819,27 @@ if(FALSE){
     1 - medians$crps[medians$distribution == "gaussian"] / medians$crps[medians$distribution == "gaussian"]
   medians$crps_ss_dist[medians$distribution == "logistic"] <- 
     1 - medians$crps[medians$distribution == "logistic"] / medians$crps[medians$distribution == "gaussian"]
-  medians$crps_ss_dist[medians$distribution == "hurdle"] <- 
-    1 - medians$crps[medians$distribution == "hurdle"] / medians$crps[medians$distribution == "gaussian"]
+  medians$crps_ss_dist[medians$distribution == "hgaussian"] <- 
+    1 - medians$crps[medians$distribution == "hgaussian"] / medians$crps[medians$distribution == "gaussian"]
   
-  medians_sel <- medians[medians$distribution %in% c("logistic", "hurdle"),]
+  medians_sel <- medians[medians$distribution %in% c("logistic", "hgaussian"),]
   medians_sel$distribution <- factor(medians_sel$distribution, levels(medians_sel$distribution)[c(2:3)])
   
   par(mfrow = c(1,4))
   boxplot(crps_ss_dist~distribution, data = medians_sel, 
           subset = (method == "disttree"), main = "distforest",
-          ylim = c(-0.12,0.1))
+          ylim = c(-0.4,0.2))
   abline(h = 0, col = pal[5], lwd = 2)
   boxplot(crps_ss_dist~distribution, data = medians_sel, 
           subset = (method == "distforest"), main = "distforest",
-          ylim = c(-0.12,0.1))
+          ylim = c(-0.4,0.2))
   abline(h = 0, col = pal[5], lwd = 2)
   boxplot(crps_ss_dist~distribution, data = medians_sel, 
           subset = (method == "gamlss"), main = "gamlss",
-          ylim = c(-0.12,0.1))
+          ylim = c(-0.4,0.2))
   abline(h = 0, col = pal[5], lwd = 2)
   boxplot(crps_ss_dist~distribution, data = medians_sel, 
           subset = (method == "gamboostLSS"), main = "gamboostLSS",
-          ylim = c(-0.12,0.1))
+          ylim = c(-0.4,0.2))
   abline(h = 0, col = pal[5], lwd = 2)
 }
