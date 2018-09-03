@@ -150,15 +150,16 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
   
 }
 
-
+load("~/svn/partykit/pkg/RainTyrol/data/RainTyrol.rda")
+# load("~/RainTyrol/data/RainTyrol.rda")
 
 
 stationeval <- function(station) {
   
   #####
-  # load observations and covariates 
-  load(paste("~/svn/partykit/pkg/disttree/data/Rain", station, ".rda", sep = ""))
-  RainData <- get(paste("Rain", station, sep = ""))
+  # get observations and covariates for selected station
+  RainData <- RainTyrol[RainTyrol$station == as.character(station), ]
+  rownames(RainData) <- c(1:NROW(RainData))
   
   # learning data: 24 years (1985 - 2008, both inlcuded)
   # testing data: 4 successive years (2009, 2010, 2011, 2012)
@@ -463,11 +464,14 @@ stationeval <- function(station) {
 }
   
 
-station <- "Axams"
-
-results <- stationeval(station = station)
-save(results, file = paste0("~/svn/partykit/pkg/disttree/demo/results_stationwise/res_", results$station, ".rda"))
-
+if(FALSE){
+  station <- "Axams"
+  
+  results <- stationeval(station = station)
+  save(results, file = paste0("~/svn/partykit/pkg/disttree/demo/results_stationwise/res_", 
+                              gsub(" ", "", gsub(".", "", gsub("-", "", results$station, fixed = T), fixed = T), fixed = T), 
+                              ".rda"))
+}
 
 
 ## plot results
