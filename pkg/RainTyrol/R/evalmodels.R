@@ -148,7 +148,8 @@ evalmodels <- function(station, train, test,
   if(distfamily == "logistic") family <- dist_list_cens_log <- disttree::dist_crch(dist = "logistic", 
                                                                                    type = "left",
                                                                                    censpoint = 0)
-
+  
+  # distributional tree
   dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
                                                   data = learndata, family = family, 
                                                   censtype = "left", censpoint = 0, type.tree = "ctree", 
@@ -156,7 +157,7 @@ evalmodels <- function(station, train, test,
                                                                                     mincriterion = tree_mincrit, minsplit = tree_minsplit,
                                                                                     minbucket = tree_minbucket)))
   
-  
+  # distributional forest
   df_time <- system.time(df <- disttree::distforest(df.formula, 
                                                     data = learndata, family = family, type.tree = "ctree", 
                                                     ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
@@ -165,7 +166,7 @@ evalmodels <- function(station, train, test,
                                                                                       minbucket = forest_minbucket), mtry = forest_mtry))
   
   
-  
+  # prespecified gamlss
   if(distfamily == "gaussian") g_family <- NOlc
   if(distfamily == "logistic") g_family <- LOlc
   
@@ -175,23 +176,30 @@ evalmodels <- function(station, train, test,
   g_time <- system.time(g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
                                                 family = g_family,
                                                 control = gamlss::gamlss.control(n.cyc = 100),
-                                                i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100))))
+                                                i.control = gamlss::glim.control(cyc = 100, bf.cyc = 100)), 
+                                 silent = TRUE))
   
   if(inherits(g, "try-error")) {
     g_time <- NA
-    g <- NA
     g_error <- TRUE
+    g <- try(gamlss::gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
+                            family = g_family,
+                            control = gamlss::gamlss.control(n.cyc = 50),
+                            i.control = gamlss::glim.control(cyc = 50, bf.cyc = 50)), 
+             silent = TRUE)
   } else g_error <- FALSE
   
+  if(inherits(g, "try-error")) g <- NA
   
+  # boosted gamlss (gamboostLSS)
   if(distfamily == "gaussian") gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                                                                 families = gamboostLSS::as.families(fname = "NOlc"), 
-                                                                                 method = "noncyclic",
-                                                                                 control = mboost::boost_control(mstop = 1000L)))
+                                                                                     families = gamboostLSS::as.families(fname = "NOlc"), 
+                                                                                     method = "noncyclic",
+                                                                                     control = mboost::boost_control(mstop = 1000L)))
   if(distfamily == "logistic") gb_time <- system.time(gb <- gamboostLSS::gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), data = g_learndata,
-                                                                                 families = gamboostLSS::as.families(fname = "LOlc"), 
-                                                                                 method = "noncyclic",
-                                                                                 control = mboost::boost_control(mstop = 1000L)))
+                                                                                     families = gamboostLSS::as.families(fname = "LOlc"), 
+                                                                                     method = "noncyclic",
+                                                                                     control = mboost::boost_control(mstop = 1000L)))
   
   if(gamboost_cvr){
     grid <- seq(50, 1000, by = 25)
@@ -200,7 +208,7 @@ evalmodels <- function(station, train, test,
     cvr_opt <- mboost::mstop(cvr) 
   } else cvr_opt <- gb_cvr_time <- NA
   
-
+  # EMOS (id)
   mi_time <- system.time(mi <- try(crch::crch(formula = robs ~ tppow_mean | tppow_sprd, 
                                               data = learndata, dist = distfamily, left = 0, link.scale = "identity")))
   if(inherits(mi, "try-error")) {
@@ -209,6 +217,7 @@ evalmodels <- function(station, train, test,
     mi_error <- TRUE
   } else mi_error <- FALSE
   
+  # EMOS (log)
   ml_time <- system.time(ml <- try(crch::crch(formula = robs ~ tppow_mean | log(tppow_sprd + 0.001), 
                                               data = learndata, dist = distfamily, left = 0, link.scale = "log")))
   if(inherits(ml, "try-error")) {
@@ -217,6 +226,7 @@ evalmodels <- function(station, train, test,
     ml_error <- TRUE
   } else ml_error <- FALSE
   
+  # EMOS (quad)
   mq_time <- system.time(mq <- try(crch::crch(formula = robs ~ tppow_mean | I(tppow_sprd^2), 
                                               data = learndata, dist = distfamily, left = 0, link.scale = "quadratic")))
   if(inherits(mq, "try-error")) {
@@ -255,13 +265,16 @@ evalmodels <- function(station, train, test,
     df_exp[df_sigma <= 0.0002] <- pmax(0, df_mu[df_sigma <= 0.0002])    
   }
   
-
+  
   # gamlss
   if(!(all(is.na(g)))){
     g_predtime <- system.time(g_mu <- try(predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata))) +
       system.time(g_sigma <- try(predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata)))
     if(inherits(g_mu, "try-error") | inherits(g_sigma, "try-error")) {
-      g_mu <- g_sigma <- g_exp <- g_predtime <- NA
+      g_exp <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      g_predtime <- NA
+      if(inherits(g_mu, "try-error")) g_mu <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      if(inherits(g_sigma, "try-error")) g_sigma <- as.numeric(rep.int(NA, times = NROW(testdata)))
       g_error <- TRUE
     } else {
       if(distfamily == "gaussian"){
@@ -270,7 +283,10 @@ evalmodels <- function(station, train, test,
         g_exp <- (1 - (1 / (1 + exp(g_mu/g_sigma)))) * g_sigma * (1 + exp(-g_mu/g_sigma)) * log(1 + exp(g_mu/g_sigma))
       }
     }
-  } else g_mu <- g_sigma <- g_exp <- g_predtime <- NA
+  } else {
+    g_predtime <- NA
+    g_exp <- g_mu <- g_sigma <- as.numeric(rep.int(NA, times = NROW(testdata)))
+  }
   g_na <- any(c(all(is.na(g)), all(is.na(g_mu)), all(is.na(g_sigma))))
   
   
@@ -290,7 +306,11 @@ evalmodels <- function(station, train, test,
     mi_predtime <- system.time(mi_mu <- try(predict(mi, type = "location", newdata = testdata))) +     # returns parameter on response scale
       system.time(mi_sigma <- try(predict(mi, type = "scale", newdata = testdata)))
     if(inherits(mi_mu, "try-error") | inherits(mi_sigma, "try-error")) {
-      mi_mu <- mi_sigma <- mi_exp <- mi_predtime <- NA
+      mi_exp <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      mi_predtime <- NA
+      if(inherits(mi_mu, "try-error")) mi_mu <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      if(inherits(mi_sigma, "try-error")) mi_sigma <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      mi_error <- TRUE
     } else {
       if(distfamily == "gaussian"){
         mi_exp <- pnorm(mi_mu/mi_sigma) * (mi_mu + mi_sigma * (dnorm(mi_mu/mi_sigma) / pnorm(mi_mu/mi_sigma)))
@@ -298,7 +318,10 @@ evalmodels <- function(station, train, test,
         mi_exp <- (1 - (1 / (1 + exp(mi_mu/mi_sigma)))) * mi_sigma * (1 + exp(-mi_mu/mi_sigma)) * log(1 + exp(mi_mu/mi_sigma))
       }
     }
-  } else mi_mu <- mi_sigma <- mi_exp <- mi_predtime <- NA
+  } else {
+    mi_mu <- mi_sigma <- mi_exp <- as.numeric(rep.int(NA, times = NROW(testdata))) 
+    mi_predtime <- NA
+  }
   mi_na <- any(c(all(is.na(mi)), all(is.na(mi_mu)), all(is.na(mi_sigma))))
 
   
@@ -307,7 +330,11 @@ evalmodels <- function(station, train, test,
     ml_predtime <- system.time(ml_mu <- try(predict(ml, type = "location", newdata = testdata))) +     # returns parameter on response scale
       system.time(ml_sigma <- try(predict(ml, type = "scale", newdata = testdata)))
     if(inherits(ml_mu, "try-error") | inherits(ml_sigma, "try-error")) {
-      ml_mu <- ml_sigma <- ml_exp <- ml_predtime <- NA
+      ml_exp <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      ml_predtime <- NA
+      if(inherits(ml_mu, "try-error")) ml_mu <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      if(inherits(ml_sigma, "try-error")) ml_sigma <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      ml_error <- TRUE
     } else {
       if(distfamily == "gaussian"){
         ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / pnorm(ml_mu/ml_sigma)))
@@ -315,7 +342,10 @@ evalmodels <- function(station, train, test,
         ml_exp <- (1 - (1 / (1 + exp(ml_mu/ml_sigma)))) * ml_sigma * (1 + exp(-ml_mu/ml_sigma)) * log(1 + exp(ml_mu/ml_sigma))
       }
     }
-  } else ml_mu <- ml_sigma <- ml_exp <- ml_predtime <- NA
+  } else {
+    ml_mu <- ml_sigma <- ml_exp <- as.numeric(rep.int(NA, times = NROW(testdata))) 
+    ml_predtime <- NA
+  }
   ml_na <- any(c(all(is.na(ml)), all(is.na(ml_mu)), all(is.na(ml_sigma))))
   
   
@@ -323,7 +353,11 @@ evalmodels <- function(station, train, test,
     mq_predtime <- system.time(mq_mu <- try(predict(mq, type = "location", newdata = testdata))) +     # returns parameter on response scale
       system.time(mq_sigma <- try(predict(mq, type = "scale", newdata = testdata)))
     if(inherits(mq_mu, "try-error") | inherits(mq_sigma, "try-error")) {
-      mq_mu <- mq_sigma <- mq_exp <- mq_predtime <- NA
+      mq_exp <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      mq_predtime <- NA
+      if(inherits(mq_mu, "try-error")) mq_mu <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      if(inherits(mq_sigma, "try-error")) mq_sigma <- as.numeric(rep.int(NA, times = NROW(testdata)))
+      mq_error <- TRUE
     } else {
       if(distfamily == "gaussian"){
         mq_exp <- pnorm(mq_mu/mq_sigma) * (mq_mu + mq_sigma * (dnorm(mq_mu/mq_sigma) / pnorm(mq_mu/mq_sigma)))
@@ -331,7 +365,10 @@ evalmodels <- function(station, train, test,
         mq_exp <- (1 - (1 / (1 + exp(mq_mu/mq_sigma)))) * mq_sigma * (1 + exp(-mq_mu/mq_sigma)) * log(1 + exp(mq_mu/mq_sigma))
       }
     }
-  } else mq_mu <- mq_sigma <- mq_exp <- mq_predtime <- NA
+  } else {
+    mq_mu <- mq_sigma <- mq_exp <- as.numeric(rep.int(NA, times = NROW(testdata))) 
+    mq_predtime <- NA
+  }
   mq_na <- any(c(all(is.na(mq)), all(is.na(mq_mu)), all(is.na(mq_sigma))))
     
   
