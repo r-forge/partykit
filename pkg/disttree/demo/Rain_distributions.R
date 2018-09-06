@@ -294,22 +294,16 @@ stationeval <- function(station, method, distribution)
                  silent = TRUE)
       }
       if(inherits(g, "try-error")){
-        warning("Error in gamlss, repeated with 10 itertations only (instead of 100)")
-        g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                        family = if(distribution == "gaussian") cens("NO", type = "left") else cens("LO", type = "left"),
-                        control = gamlss.control(n.cyc = 10),
-                        i.control = glim.control(cyc = 10, bf.cyc = 10)),
-                 silent = TRUE)
+        g <- NA
       }
-      if(inherits(g, "try-error")){
-        warning("Error in gamlss, repeated with 5 itertations only (instead of 100)")
-        g <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
-                    family = if(distribution == "gaussian") cens("NO", type = "left") else cens("LO", type = "left"),
-                    control = gamlss.control(n.cyc = 5),
-                    i.control = glim.control(cyc = 5, bf.cyc = 5))
+      
+      if(!is.na(g)){
+        predpar <- data.frame(predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata),
+                              predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata))
+      } else {
+        predpar <- data.frame(as.numeric(rep.int(NA, times = NROW(testdata))),
+                                   as.numeric(rep.int(NA, times = NROW(testdata))))
       }
-      predpar <- data.frame(predict(g, newdata = testdata, what = "mu", type = "response", data = g_learndata),
-                            predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata))
       colnames(predpar) <- c("mu", "sigma")
     }
     
@@ -404,10 +398,10 @@ stationeval <- function(station, method, distribution)
     
     if(method == "gamlss"){
       g_bin <- try(gamlss(formula = g.mu.formula_bin, 
-                      data = learndata, 
-                      family = BI(),
-                      control = gamlss.control(n.cyc = 100),
-                      i.control = glim.control(cyc = 100, bf.cyc = 100)), silent = TRUE)
+                          data = learndata, 
+                          family = BI(),
+                          control = gamlss.control(n.cyc = 100),
+                          i.control = glim.control(cyc = 100, bf.cyc = 100)), silent = TRUE)
       if(inherits(g_bin, "try-error")){
         warning("Error in gamlss for binomial model, repeated with 50 itertations only (instead of 100)")
         g_bin <- try(gamlss(formula = g.mu.formula_bin, 
@@ -417,27 +411,15 @@ stationeval <- function(station, method, distribution)
                             i.control = glim.control(cyc = 50, bf.cyc = 50)), silent = TRUE)
       }
       if(inherits(g_bin, "try-error")){
-        warning("Error in gamlss for binomial model, repeated with 10 itertations only (instead of 100)")
-        g_bin <- try(gamlss(formula = g.mu.formula_bin, 
-                            data = learndata, 
-                            family = BI(),
-                            control = gamlss.control(n.cyc = 10),
-                            i.control = glim.control(cyc = 10, bf.cyc = 10)), silent = TRUE)
+        g_bin <- NA
       }
-      if(inherits(g_bin, "try-error")){
-        warning("Error in gamlss for binomial model, repeated with 5 itertations only (instead of 100)")
-        g_bin <- gamlss(formula = g.mu.formula_bin, 
-                            data = learndata, 
-                            family = BI(),
-                            control = gamlss.control(n.cyc = 5),
-                            i.control = glim.control(cyc = 5, bf.cyc = 5))
-      }
+
       
       g_tr <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, 
-                     data = learndata_pos, 
-                     family = trun(0, "NO", type = "left"),
-                     control = gamlss.control(n.cyc = 100),
-                     i.control = glim.control(cyc = 100, bf.cyc = 100)), silent = TRUE)
+                         data = learndata_pos, 
+                         family = trun(0, "NO", type = "left"),
+                         control = gamlss.control(n.cyc = 100),
+                         i.control = glim.control(cyc = 100, bf.cyc = 100)), silent = TRUE)
       if(inherits(g_tr, "try-error")){
         warning("Error in gamlss for truncated model, repeated with 50 itertations only (instead of 100)")
         g_tr <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, 
@@ -447,25 +429,18 @@ stationeval <- function(station, method, distribution)
                            i.control = glim.control(cyc = 50, bf.cyc = 50)), silent = TRUE)
       }
       if(inherits(g_tr, "try-error")){
-        warning("Error in gamlss for truncated model, repeated with 10 itertations only (instead of 100)")
-        g_tr <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, 
-                           data = learndata_pos, 
-                           family = trun(0, "NO", type = "left"),
-                           control = gamlss.control(n.cyc = 10),
-                           i.control = glim.control(cyc = 10, bf.cyc = 10)), silent = TRUE)
+        g_tr <- NA
       }
-      if(inherits(g_tr, "try-error")){
-        warning("Error in gamlss for truncated model, repeated with 10 itertations only (instead of 100)")
-        g_tr <- gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, 
-                           data = learndata_pos, 
-                           family = trun(0, "NO", type = "left"),
-                           control = gamlss.control(n.cyc = 5),
-                           i.control = glim.control(cyc = 5, bf.cyc = 5))
+
+      if(!(is.na(g_bin) | is.na(g_tr))){
+        predpar <- data.frame(predict(g_tr, newdata = testdata, what = "mu", type = "response", data = learndata_pos),
+                              predict(g_tr, newdata = testdata, what = "sigma", type = "response", data = learndata_pos))
+        predpar$nu <- as.numeric(predict(g_bin, newdata = testdata, what = "mu", type = "response", data = learndata))
+      } else {
+        predpar <- data.frame(as.numeric(rep.int(NA, times = NROW(testdata))),
+                              as.numeric(rep.int(NA, times = NROW(testdata))),
+                              as.numeric(rep.int(NA, times = NROW(testdata))))
       }
-      
-      predpar <- data.frame(predict(g_tr, newdata = testdata, what = "mu", type = "response", data = learndata_pos),
-                       predict(g_tr, newdata = testdata, what = "sigma", type = "response", data = learndata_pos))
-      predpar$nu <- as.numeric(predict(g_bin, newdata = testdata, what = "mu", type = "response", data = learndata))
     }
     
     if(method == "gamboostLSS"){
@@ -564,7 +539,7 @@ stationeval <- function(station, method, distribution)
 
 wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", "Innervillgraten", "Pass Thurn",
                                     "Koessen", "See im Paznaun", "Matrei in Osttirol", "Jungholz", "Rotholz",
-                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde"),        
+                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde", "Ginzling", "Lanersbach"),        
                                     # "Laengenfeld"
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "hgaussian", "logistic"))
