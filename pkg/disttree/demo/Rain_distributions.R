@@ -57,7 +57,6 @@ assign("qLOlc", qNOlc, pos = ".GlobalEnv")
 
 dist_list_cens_log <- dist_crch(dist = "logistic", type = "left", censpoint = 0)
 
-
 ##### 
 # HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
@@ -432,7 +431,7 @@ stationeval <- function(station, method, distribution)
         g_tr <- NA
       }
 
-      if(!(is.na(g_bin) | is.na(g_tr))){
+      if(!(all(is.na(g_bin)) | all(is.na(g_tr)))){
         predpar <- data.frame(predict(g_tr, newdata = testdata, what = "mu", type = "response", data = learndata_pos),
                               predict(g_tr, newdata = testdata, what = "sigma", type = "response", data = learndata_pos))
         predpar$nu <- as.numeric(predict(g_bin, newdata = testdata, what = "mu", type = "response", data = learndata))
@@ -488,19 +487,19 @@ stationeval <- function(station, method, distribution)
   {
     linkfun <- switch(as.character(distribution), "gaussian" = dist_list_cens_normal$linkfun,
                       "logistic" = dist_list_cens_log$linkfun,
-                      "hgaussian" = dist_list_hgaussian_normal$linkfun)
+                      "hgaussian" = dist_list_hurdle_normal$linkfun)
     ddist <- switch(as.character(distribution), "gaussian" = dist_list_cens_normal$ddist,
                     "logistic" = dist_list_cens_log$ddist,
-                    "hgaussian" = dist_list_hgaussian_normal$ddist)
+                    "hgaussian" = dist_list_hurdle_normal$ddist)
     ll <- numeric(length = NROW(testdata))
     for(j in 1:(NROW(testdata))){
       eta <- as.numeric(linkfun(predpar[j,]))
       if(distribution == "hgaussian"){
-        if(predpar[j,3] == 1) {
+        if(!is.na(predpar[j,3]) & predpar[j,3] == 1) {
           nu <- 1-1e-10
           eta[3] <- log(nu/(1-nu))
         }
-        if(predpar[j,3] == 0) {
+        if(!is.na(predpar[j,3]) & predpar[j,3] == 0) {
           nu <- 1e-10
           eta[3] <- log(nu/(1-nu))
         }
@@ -519,8 +518,10 @@ stationeval <- function(station, method, distribution)
     if(distribution == "hgaussian"){
       int_upper <- ceiling(max(RainData$robs))  # alternative: quantile(RainData$robs, probs = 0.999)
       for(j in 1:(NROW(testdata))){
-        crps[j] <- integrate(function(z){(1 - predpar$nu[j] + predpar$nu[j] * ptnorm(z, mean = predpar$mu[j], sd = predpar$sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
-                             lower = 0, upper = int_upper)$value
+        crps[j] <- if(!any(is.na(predpar[j,]))) { 
+          integrate(function(z){(1 - predpar$nu[j] + predpar$nu[j] * ptnorm(z, mean = predpar$mu[j], sd = predpar$sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
+                    lower = 0, upper = int_upper)$value
+        } else NA
       }
     }
   }    
@@ -537,9 +538,11 @@ stationeval <- function(station, method, distribution)
 
 
 
-wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", "Innervillgraten", "Pass Thurn",
-                                    "Koessen", "See im Paznaun", "Matrei in Osttirol", "Jungholz", "Rotholz",
-                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde", "Ginzling", "Lanersbach"),        
+wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", 
+                                    "Innervillgraten", "Pass Thurn", "Koessen", "See im Paznaun",
+                                    "Matrei in Osttirol", "Jungholz", "Rotholz",
+                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde",
+                                    "Ginzling", "Lanersbach"),        
                                     # "Laengenfeld"
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "hgaussian", "logistic"))
