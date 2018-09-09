@@ -12,7 +12,7 @@
 ## Full replication of all other results can be obtained with
 ## demo("RainTyrol", package = "disttree")
 
-## Computation time: approximately 18 minutes (on our machines, using 1 kernel)
+## Computation time: approximately .. minutes (on our machines, using .. kernels)
 
 
 library("disttree")
@@ -131,9 +131,8 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
   
 }
 
-load("~/svn/partykit/pkg/RainTyrol/data/RainTyrol.rda")
-# load("~/RainTyrol/data/RainTyrol.rda")
 
+data("RainTyrol")
 
 stationeval <- function(station) {
   
@@ -147,6 +146,7 @@ stationeval <- function(station) {
   learndata <- RainData[RainData$year < 2009,]
   testdata <- RainData[RainData$year %in% c(2009, 2010, 2011, 2012),]
   
+  # define matrix to store computation times
   fit_time <- matrix(ncol = 5, nrow = 6)
   colnames(fit_time) <- c("user.self", "sys.self", "elapsed", "user.child", "sys.child")
   rownames(fit_time) <- c("disttree", "distforest", "gamlss", "gamboostLSS", "gamboostLSS_cvr", "EMOS")
@@ -171,7 +171,7 @@ stationeval <- function(station) {
                                                                                   mincriterion = 0, minsplit = 50,
                                                                                   minbucket = 20)))
   
-  # fit prespecified GAM (covariates selected based on meteorological expert knowledge)
+  # fit prespecified GAMLSS (covariates selected based on meteorological expert knowledge)
   g_learndata <- learndata
   g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
   fit_time["gamlss",] <- system.time(g <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, data = g_learndata, 
@@ -194,7 +194,7 @@ stationeval <- function(station) {
     g <- NA
   }
 
-  # fit boosted GAM
+  # fit boosted GAMLSS
   fit_time["gamboostLSS",] <- system.time(gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
                                                             data = g_learndata, 
                                                             families =  as.families(fname = cens("NO", type = "left")), 
@@ -219,7 +219,6 @@ stationeval <- function(station) {
   colnames(pred_time) <- c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS")
   
   # distributional tree
-  ## FIX ME: for loop very time consuming!!!
   pdt <- data.frame()
   for(i in 1:NROW(testdata)){
     pred_time[i, "disttree"] <- system.time(predpar <- predict(dt, newdata = testdata[i,], type = "parameter"))["elapsed"]
@@ -238,7 +237,7 @@ stationeval <- function(station) {
   df_mu <- pdf$mu
   df_sigma <- pdf$sigma
   
-  # prespecified GAM
+  # prespecified GAMLSS
   if(!is.na(g)){
     g_mu <- g_sigma <- numeric()
     for(i in 1:NROW(testdata)){
@@ -251,7 +250,7 @@ stationeval <- function(station) {
   pg <- data.frame(g_mu, g_sigma)
   colnames(pg) <- c("mu", "sigma")
   
-  # boosted GAM
+  # boosted GAMLSS
   pgb <- data.frame()
   for(i in 1:NROW(testdata)){
     pred_time[i, "gamboostLSS"] <- system.time(predpar <- predict(gb, newdata = testdata[i,], parameter = c("mu","sigma"), type = "response"))["elapsed"]
@@ -310,13 +309,10 @@ stationeval <- function(station) {
   ll <- cbind(dtll, dfll, gll, gbll, mlll) 
 
   colnames(ll) <- colnames(crps) <- c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS")
-  
-  #results <- data.frame(ll, crps)
-  
+
   
   
-  ##  PIT histograms
-  
+  ##  calculations for PIT histograms
   set.seed(7)
   
   # distributional tree
@@ -327,13 +323,13 @@ stationeval <- function(station) {
   pit_df <- cbind(0, pnorm(testdata[,"robs"], mean = df_mu, sd = df_sigma))
   pit_df[testdata[,"robs"]>0, 1] <- pit_df[testdata[,"robs"]>0, 2]
   
-  # prespecified GAM
+  # prespecified GAMLSS
   if(!is.na(g)) {
     pit_g <- cbind(0, pnorm(testdata[,"robs"], mean = g_mu, sd = g_sigma))
     pit_g[testdata[,"robs"]>0, 1] <- pit_g[testdata[,"robs"]>0, 2]
   } else pit_g <- NA
   
-  # boosted GAM
+  # boosted GAMLSS
   pit_gb <- cbind(0, pnorm(testdata[,"robs"], mean = gb_mu, sd = gb_sigma))
   pit_gb[testdata[,"robs"]>0, 1] <- pit_gb[testdata[,"robs"]>0, 2]
   
@@ -441,12 +437,17 @@ if(FALSE){
   
   for(station in stationlist) {
     results <- stationeval(station = station)
-    save(results, file = paste0("~/svn/partykit/pkg/disttree/demo/results_stationwise/res_", 
+    save(results, file = paste0("res_", 
                                 gsub("-", "", gsub(".", "", gsub(" ", "", results$station, fixed = T), fixed = T), fixed = T),
                                 ".rda"))
   }
-
+  
+  #save(results, file = paste0("~/svn/partykit/pkg/disttree/demo/results_stationwise/res_", 
+  #                            gsub("-", "", gsub(".", "", gsub(" ", "", results$station, fixed = T), fixed = T), fixed = T),
+  #                            ".rda"))
 }
+
+
 
 ## collect results
 if(FALSE){
@@ -468,7 +469,8 @@ if(FALSE){
 if(FALSE){
   
   station <- "Matrei in Osttirol"
-  load("~/svn/partykit/pkg/disttree/demo/results_stationwise/stationwise.rda")
+  load("stationwise.rda")
+  # load("~/svn/partykit/pkg/disttree/demo/results_stationwise/stationwise.rda")
   results <- stationwise[[station]]
   
   # in case only the separated .rda-file exists:
@@ -522,8 +524,13 @@ if(FALSE){
   
   #save(crps_cross, file = "crps_cross.rda")
   
+  # CRPS skill score
+  crpss_cross <- 1 - crps_cross[, c(2,3,4)] / crps_cross[, 6]
+  
   ## boxplot of crps_cross for station Axams
-  boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.05, 0.2),
+  boxplot(crpss_cross, 
+          ylim = c(min(-0.01, min(crpss_cross, na.rm = TRUE) - 0.01), 
+                   max(-0.01, max(crpss_cross, na.rm = TRUE) + 0.01)),
           names = c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS"),
           ylab = "CRPS skill score", col = "lightgray") 
   abline(h = 0, col = pal[5], lwd = 2)
