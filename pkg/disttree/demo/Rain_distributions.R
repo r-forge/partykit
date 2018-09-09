@@ -12,7 +12,7 @@
 ## Full replication of all other results can be obtained with
 ## demo("RainTyrol", package = "disttree")
 
-## Computation time: approximately 18 minutes (on our machines, using 1 kernel)
+## Computation time: approximately .. minutes (on our machines, using .. kernels)
 
 
 library("disttree")
@@ -24,6 +24,7 @@ library("gamlss.dist")
 library("gamboostLSS")
 library("crch")
 library("scoringRules")
+library("RainTyrol")
 
 # if gamlss.cens family object should be used as family
 library("gamlss.cens")
@@ -55,6 +56,7 @@ assign("dLOlc", dNOlc, pos = ".GlobalEnv")
 assign("pLOlc", pNOlc, pos = ".GlobalEnv")
 assign("qLOlc", qNOlc, pos = ".GlobalEnv")
 
+# distribution list for left-censored at zero logistic distribution
 dist_list_cens_log <- dist_crch(dist = "logistic", type = "left", censpoint = 0)
 
 ##### 
@@ -222,7 +224,8 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 }
 
 
-load("~/svn/partykit/pkg/RainTyrol/data/RainTyrol.rda")
+
+data("RainTyrol.rda")
 
 
 stationeval <- function(station, method, distribution)
@@ -243,8 +246,6 @@ stationeval <- function(station, method, distribution)
     testdata_pos <- testdata[testdata$robs>0,]
   }
 
-
-  # specify distribution family
   
   #####
   # fitting the model
@@ -301,7 +302,7 @@ stationeval <- function(station, method, distribution)
                               predict(g, newdata = testdata, what = "sigma", type = "response", data = g_learndata))
       } else {
         predpar <- data.frame(as.numeric(rep.int(NA, times = NROW(testdata))),
-                                   as.numeric(rep.int(NA, times = NROW(testdata))))
+                              as.numeric(rep.int(NA, times = NROW(testdata))))
       }
       colnames(predpar) <- c("mu", "sigma")
     }
@@ -311,10 +312,10 @@ stationeval <- function(station, method, distribution)
       g_learndata$robs <- Surv(g_learndata$robs, g_learndata$robs>0, type="left")
       if(distribution == "gaussian"){
         gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
-                        data = g_learndata, 
-                        families =  as.families(fname = cens("NO", type = "left")), 
-                        method = "noncyclic",
-                        control = boost_control(mstop = 1000L))
+                          data = g_learndata, 
+                          families =  as.families(fname = cens("NO", type = "left")), 
+                          method = "noncyclic",
+                          control = boost_control(mstop = 1000L))
       }
       if(distribution == "logistic"){
         gb <- gamboostLSS(formula = list(mu = gb.mu.formula, sigma = gb.sigma.formula), 
@@ -342,8 +343,8 @@ stationeval <- function(station, method, distribution)
       
     }
   }
-    
-    
+  
+  
   
   if(distribution == "hgaussian"){
     
@@ -368,7 +369,7 @@ stationeval <- function(station, method, distribution)
       
       predpar <- predict(dt_tr, newdata = testdata, type = "parameter")
       predpar$nu <- predict(dt_bin, newdata = testdata, type = "parameter")$mu
-
+      
     }
     
     if(method == "distforest"){
@@ -412,7 +413,7 @@ stationeval <- function(station, method, distribution)
       if(inherits(g_bin, "try-error")){
         g_bin <- NA
       }
-
+      
       
       g_tr <- try(gamlss(formula = g.mu.formula, sigma.formula = g.sigma.formula, 
                          data = learndata_pos, 
@@ -430,7 +431,7 @@ stationeval <- function(station, method, distribution)
       if(inherits(g_tr, "try-error")){
         g_tr <- NA
       }
-
+      
       if(!(all(is.na(g_bin)) | all(is.na(g_tr)))){
         predpar <- data.frame(predict(g_tr, newdata = testdata, what = "mu", type = "response", data = learndata_pos),
                               predict(g_tr, newdata = testdata, what = "sigma", type = "response", data = learndata_pos))
@@ -480,8 +481,8 @@ stationeval <- function(station, method, distribution)
     
     colnames(predpar) <- c("mu", "sigma", "nu")
   }
-    
-
+  
+  
   
   # loglikelihood
   {
@@ -507,7 +508,7 @@ stationeval <- function(station, method, distribution)
       ll[j] <- ddist(testdata[j,"robs"], eta = eta, log=TRUE)
     }
   }    
-
+  
   # CPRS
   {
     crps <- numeric(length = NROW(testdata))
@@ -530,9 +531,9 @@ stationeval <- function(station, method, distribution)
   results <- data.frame(ll, crps)
   rm(RainData)
   return(results)
-
-}
   
+}
+
 
 
 
@@ -542,8 +543,7 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz",
                                     "Innervillgraten", "Pass Thurn", "Koessen", "See im Paznaun",
                                     "Matrei in Osttirol", "Jungholz", "Rotholz",
                                     "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde",
-                                    "Ginzling", "Lanersbach"),        
-                                    # "Laengenfeld"
+                                    "Ginzling", "Lanersbach"),  
                     methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "hgaussian", "logistic"))
 {
@@ -580,13 +580,17 @@ wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz",
 
 results <- wrapper()
 
-save(results, file = "~/svn/partykit/pkg/disttree/demo/Rain_distributions.rda")
+save(results, file = "Rain_distributions.rda")
+# save(results, file = "~/svn/partykit/pkg/disttree/demo/Rain_distributions.rda")
 
 
 ## plots
 if(FALSE){
+  
   library("lattice")
-  #xyplot(crps ~ method | station, groups = ~ distribution, data = results$means, auto.key = TRUE)
+  
+  load("Rain_distributions.rda")
+  # load("~/svn/partykit/pkg/disttree/demo/Rain_distributions.rda")
   
   strip.background.settings <- trellis.par.get("strip.background")
   str(strip.background.settings)
@@ -614,12 +618,14 @@ if(FALSE){
   str(superpose.symbol.settings)
   trellis.par.set("superpose.symbol", superpose.symbol.settings)
   
-  xyplot(crps ~ distribution | station, groups = ~ method, data = results$means, auto.key = TRUE, type = "o", lwd = 2, lty = 1)
-  
+
   xyplot(crps ~ distribution | station, groups = ~ method, data = results$means, 
-         subset = station %in% c("Rotholz", "Innervillgraten", "Pass Thurn",
-                                 "See im Paznaun", "Axams", "Lech", "Walchsee", "Vils"),
-         auto.key = TRUE, type = "o", lwd = 2, lty = 1)
+         subset = station %in% c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", 
+                                 "Innervillgraten", "Pass Thurn", "Koessen", "See im Paznaun",
+                                 "Matrei in Osttirol", "Jungholz", "Rotholz",
+                                 "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde",
+                                 "Ginzling", "Lanersbach"),
+         auto.key = TRUE, type = "o", lwd = 2, lty = 1, layout = c(3,6))
   
   
   ##########
@@ -705,7 +711,7 @@ if(FALSE){
 
 
 
-{
+if(FALSE) {
   
   summary(results$crps[results$set$method == "gamboostLSS"])
   summary(results$crps[results$set$method == "gamlss"])
