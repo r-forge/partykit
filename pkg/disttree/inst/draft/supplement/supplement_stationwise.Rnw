@@ -1,0 +1,94 @@
+\documentclass[a4paper,11pt]{article}
+
+\usepackage{Sweave}
+\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\title{Supplement 2: Stationwise Evaluation}
+\maketitle
+
+\section{Introduction}
+This application study is supplementary material to the paper ''Distributional 
+Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain''. 
+In Section~3 the presented distributional forest model is employed to obtain 
+probabilistic precipitation forecasts in a mountainous region.
+Next to an evaluation over all 95 observation stations further investigations
+including a cross-validation have been performed for one selected station, Axams.
+Here, this more extensive evaluation is carried out for 18 observation stations.
+
+
+\section{Models and evaluation}
+As in the paper a distributional forest applying a left-censored at zero 
+Gaussian distribution is evaluated together with three other zero-censored 
+Gaussian models: (a)~a standard basic EMOS, (b)~a GAMLSS with prespecified 
+effects and interactions based on meteorological knowledge/experience, and 
+(c)~a boosted GAMLSS with automatic selection of smooth additive terms based 
+on all 80~predictor variables.
+
+First, they are learned on data from 24 years (1985--2008) and evaluated 
+on the following 4 years (2009--2012). 
+To compare the performance of the
+models the continuous ranked probability score (CRPS) is calculated
+for each observation in the testing data set and than averaged.
+Moreover, for each model it is timed, how long the fitting process takes 
+as well as how long it takes them to make one single prediction 
+(on average over all testing observations).
+
+For the forest model variable importance is analyzed and the top 10
+variables are illustrated. All four models are also compared
+visually by residual Q-Q-plots and PIT-histograms.
+
+Second, all four models are evaluated in a 10 times 7-fold cross-validation.
+Again, their performances are compared based on the average CRPS values 
+and the fitting time is meassured for all models as well as the prediction
+time. however, contrary to the first model, the prediction time now refers 
+to the time needed on average to make predictions for the whole testing data, 
+not just for one observation.
+For the cross-validation the CRPS skill score is illustrated in a boxplot 
+where the EMOS model is chosen as reference model, represented by the horizontal
+line at 0.
+
+\section{Stations}
+Out of the 95 observation stations 18 are considered for this 
+benchmark study. They have been selected based on the region
+they are in, their altitude and the performance of the 
+different models in the application in the paper such that
+all of these features are represented equally.
+
+\vspace*{-3cm}
+
+\begin{figure}[h]
+<<map_stationwise, fig=TRUE, echo=FALSE>>=
+##  map
+data("StationsTyrol", package = "RainTyrol")
+data("MapTyrol", package = "RainTyrol")
+library("sp")
+sp <- SpatialPointsDataFrame(subset(StationsTyrol, select = c(lon, lat)),
+                             data = subset(StationsTyrol, select = -c(lon, lat)),
+                             proj4string = raster::crs(MapTyrol$RasterLayer))
+
+plot(MapTyrol$SpatialPolygons)
+points(sp, pch = 21, col = "black", las = 1, cex = 1)
+points(sp[c(5, 6, 16, 20, 23, 25, 32, 33, 46, 47, 48, 56, 57, 70, 71, 79, 82, 83),], pch = 21, bg = hcl(325, 100, 70), cex = 1.5)
+@
+\vspace*{-3cm}
+\caption{\label{fig:map}Map of Tyrol with all 95 observation stations and the 18 considered stations highlighted in pink.}
+\end{figure}
+
+
+
+
+
+
+\section{Discussion}
+Looking at prediction times for one single observation, the distributional forest is on average
+the slowest model, however, the difference is not too big. This changes regarding predictions
+for the a set of observation due to the fact that the forest makes predictions based
+on local neighbour weights. Therefor, for each observation its own weight matrix has to be included in the prediction process making it a more time consuming procedure.
+
+%\bibliography{ref_supplement_stationwise.bib}
+
+\end{document}
