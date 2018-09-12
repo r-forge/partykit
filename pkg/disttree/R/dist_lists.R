@@ -510,18 +510,18 @@ dist_crch <- function(dist = c("gaussian","logistic"),
         x <- cbind(rep(1, length(y)))
         colnames(x) <- "(Intercept)"
         
-        starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+        starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                         truncated = truncated, weights = weights, dist = dist, 
-                                        control = crch.control(method = "L-BFGS-B", 
+                                        control = crch::crch.control(method = "L-BFGS-B", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                maxit = 100,
                                                                hessian = FALSE))$coefficients), 
                         silent = TRUE)
         if(inherits(starteta, "try-error")){
           warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch.control(method = "BFGS", 
+                                          control = crch::crch.control(method = "BFGS", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -529,9 +529,9 @@ dist_crch <- function(dist = c("gaussian","logistic"),
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch.control(method = "Nelder-Mead", 
+                                          control = crch::crch.control(method = "Nelder-Mead", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -539,9 +539,9 @@ dist_crch <- function(dist = c("gaussian","logistic"),
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method Nelder-Mead in optim, applied method SANN instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch.control(method = "SANN", 
+                                          control = crch::crch.control(method = "SANN", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -1627,18 +1627,18 @@ dist_binomial <- function() {
         x <- cbind(rep(1, length(y)))
         colnames(x) <- "(Intercept)"
         
-        starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+        starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                         truncated = FALSE, weights = weights, 
-                                        control = crch.control(method = "L-BFGS-B", 
+                                        control = crch::crch.control(method = "L-BFGS-B", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                maxit = 100,
                                                                hessian = FALSE))$coefficients), 
                         silent = TRUE)
         if(inherits(starteta, "try-error")){
           warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = FALSE, weights = weights, 
-                                          control = crch.control(method = "BFGS", 
+                                          control = crch::crch.control(method = "BFGS", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -1646,9 +1646,9 @@ dist_binomial <- function() {
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = FALSE, weights = weights, 
-                                          control = crch.control(method = "Nelder-Mead", 
+                                          control = crch::crch.control(method = "Nelder-Mead", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -1656,9 +1656,9 @@ dist_binomial <- function() {
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method Nelder-Mead in optim, applied method SANN instead")
-          starteta <- try(unlist(crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
+          starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
                                           truncated = FALSE, weights = weights, 
-                                          control = crch.control(method = "SANN", 
+                                          control = crch::crch.control(method = "SANN", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -1833,19 +1833,19 @@ dist_binomial <- function() {
       colnames(xpos) <- "(Intercept)"
       wpos <- weights[y>0]
       
-      # calculate starteta using crch.fit
-      starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+      # calculate starteta using crch::crch.fit
+      starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                       truncated = TRUE, weights = wpos, 
-                                      control = crch.control(method = "L-BFGS-B", 
+                                      control = crch::crch.control(method = "L-BFGS-B", 
                                                              reltol = 1e-8, factr = 1e7,
                                                              maxit = 100,
                                                              hessian = FALSE))$coefficients), 
                       silent = TRUE)
       if(inherits(starteta, "try-error")){
         warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                         truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "BFGS", 
+                                        control = crch::crch.control(method = "BFGS", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                maxit = 100,
                                                                hessian = FALSE))$coefficients), 
@@ -1853,9 +1853,9 @@ dist_binomial <- function() {
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
-        starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                         truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "Nelder-Mead", 
+                                        control = crch::crch.control(method = "Nelder-Mead", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                #maxit = 100,
                                                                hessian = FALSE))$coefficients), 
@@ -1863,9 +1863,9 @@ dist_binomial <- function() {
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method Nelder-Mead in optim, applied method SANN instead")
-        starteta <- try(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                         truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "SANN", 
+                                        control = crch::crch.control(method = "SANN", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                #maxit = 100,
                                                                hessian = FALSE))$coefficients), 
@@ -2051,10 +2051,10 @@ dist_binomial <- function() {
       colnames(xpos) <- "(Intercept)"
       wpos <- weights[y>0]
 
-      # calculate starteta using crch.fit
-      starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+      # calculate starteta using crch::crch.fit
+      starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                         truncated = TRUE, weights = wpos, 
-                                        control = crch.control(method = "L-BFGS-B", 
+                                        control = crch::crch.control(method = "L-BFGS-B", 
                                                                reltol = 1e-8, factr = 1e7,
                                                                maxit = 100,
                                                                hessian = FALSE))$coefficients), 
@@ -2062,9 +2062,9 @@ dist_binomial <- function() {
                       silent = TRUE)
       if(inherits(starteta, "try-error")){
         warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
-        starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                           truncated = TRUE, weights = wpos, 
-                                          control = crch.control(method = "BFGS", 
+                                          control = crch::crch.control(method = "BFGS", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -2073,9 +2073,9 @@ dist_binomial <- function() {
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
-        starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                           truncated = TRUE, weights = wpos, 
-                                          control = crch.control(method = "Nelder-Mead", 
+                                          control = crch::crch.control(method = "Nelder-Mead", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
@@ -2084,9 +2084,9 @@ dist_binomial <- function() {
       }
       if(inherits(starteta, "try-error")) {
         warning("Error for method Nelder-Mead in optim, applied method SANN instead")
-        starteta <- try(c(unlist(crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
+        starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
                                           truncated = TRUE, weights = wpos, 
-                                          control = crch.control(method = "SANN", 
+                                          control = crch::crch.control(method = "SANN", 
                                                                  reltol = 1e-8, factr = 1e7,
                                                                  #maxit = 100,
                                                                  hessian = FALSE))$coefficients), 
