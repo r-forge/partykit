@@ -285,20 +285,32 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
   
   groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
+    # only 1 subgroup or 1-parametric family
     if(is.vector(groupcoef)) {
-      groupcoef <- as.matrix(groupcoef)
-      colnames(groupcoef) <- 1
+      # 1-parametric family
+      if(length(family$link) == 1){
+        groupcoef <- as.matrix(groupcoef)
+        colnames(groupcoef) <- "mu"
+      } else {
+        # only 1 subgroup
+        groupcoef <- t(as.matrix(groupcoef))
+        rownames(groupcoef) <- "1"
+      }
     }
-    # 1-parametric family:
+    
     rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-    if(is.vector(rval$fitted.par) & length(rval$fitted[,1]) > 1) {
-      rval$fitted.par <- as.matrix(rval$fitted.par)
-      colnames(rval$fitted.par) <- "mu"
+    
+    if(is.vector(rval$fitted.par)){
+      # 1-parametric family
+      if(length(family$link) == 1) {
+        rval$fitted.par <- as.matrix(rval$fitted.par)
+        colnames(rval$fitted.par) <- "mu"
+      } else {
+        # only 1 observation
+        rval$fitted.par <- t(as.matrix(rval$fitted.par))
+      }
     }
-    # only 1 observation
-    if(is.vector(rval$fitted.par) & length(rval$fitted[,1]) == 1) {
-      rval$fitted.par <- t(as.matrix(rval$fitted.par))
-    }
+    
     rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
     rval$fitted.par <- as.data.frame(rval$fitted.par)
     }
@@ -339,21 +351,33 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
     
   ## get parameters
   groupcoef <- coef(object)
+  
+  # only 1 subgroup or 1-parametric family
   if(is.vector(groupcoef)) {
-    groupcoef <- as.matrix(groupcoef)
-    colnames(groupcoef) <- 1
+    # 1-parametric family
+    if(length(family$link) == 1){
+      groupcoef <- as.matrix(groupcoef)
+      colnames(groupcoef) <- "mu"
+    } else {
+      # only 1 subgroup
+      groupcoef <- t(as.matrix(groupcoef))
+      rownames(groupcoef) <- "1"
+    }
   }
 
   pred.par <- groupcoef[paste(pred.nodes),]
-  # 1-parametric family
-  if(is.vector(pred.par) & NROW(newdata)[1] > 1) {
-    pred.par <- as.matrix(pred.par)
-    colnames(pred.par) <- "mu"
+  
+  if(is.vector(pred.par)){
+    # 1-parametric family
+    if(length(object$info$family$link) == 1) {
+      pred.par <- as.matrix(pred.par)
+      colnames(pred.par) <- "mu"
+    } else {
+      # only 1 new observation
+      pred.par <- t(as.matrix(pred.par))
+    }
   }
-  # only one new observation
-  if(is.vector(pred.par) & NROW(newdata)[1] == 1) {
-    pred.par <- t(as.matrix(pred.par))
-  }
+  
   rownames(pred.par) <- c(1: (NROW(pred.par)))
   pred.par <- as.data.frame(pred.par)
   
