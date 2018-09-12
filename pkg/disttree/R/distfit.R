@@ -436,7 +436,15 @@ coef.distfit <- function(object, type = "parameter" , ...) {
 
 get_expectedvalue <- function(object, par) {
   
-  if(is.vector(par)) par <- t(as.matrix(par))
+  if(is.vector(par)) {
+    # 1-parametric distribution
+    if(length(object$info$family$link) == 1){
+      par <- as.matrix(par)
+    } else {
+    # only 1 observation  
+      par <- t(as.matrix(par))  
+    }
+  }
   
   if(inherits(object, "distfit")) {
     censored <- object$family$censored
