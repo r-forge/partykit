@@ -1,4 +1,5 @@
-\documentclass[nojss]{jss}
+%\documentclass[a4paper,11pt]{article}
+\documentclass[nojss, shortnames]{jss}
 
 
 \usepackage{graphicx, natbib}
@@ -13,6 +14,41 @@
    \And Reto Stauffer\\Universit\"at Innsbruck
    \And Achim Zeileis\\Universit\"at Innsbruck}
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
+
+
+\Abstract{In the application discussed in the paper ''Distributional 
+Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+the underlying distribution is assumed to a be left-censored at zero Gaussian distribution.
+In this suppplement the exact same evaluations as in the paper are performed employing
+other distribution assumption. In particular, a left-censored at zero logistic distribution 
+and a hurdle-model are applied and their results are compared to those presented in the paper.}
+
+\Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, GAMLSS}
+
+
+
+\Address{
+  Lisa Schlosser, Reto Stauffer, Achim Zeileis \\
+  Universit\"at Innsbruck \\
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Lisa.Schlosser@uibk.ac.at}, \email{Reto.Stauffer@uibk.ac.at},\\
+  \email{Achim.Zeileis@R-project.org} \\
+  URL: \url{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/},\\
+  \phantom{URL: }\url{https://retostauffer.org/},\\
+  \phantom{URL: }\url{https://eeecon.uibk.ac.at/~zeileis/}\\
+  
+  Torsten Hothorn\\
+  Universit\"at Z\"urich \\
+  Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
+  Hirschengraben 84\\
+  CH-8001 Z\"urich, Switzerland \\
+  E-mail: \email{Torsten.Hothorn@R-project.org}\\
+  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+  
+}
 
 
 \begin{document}
@@ -35,36 +71,31 @@ For (1) we compare the censored Gaussian with a \emph{censored logistic} distrib
 for (2) a Gaussian \emph{hurdle model} (or two-part model) is employed instead of the
 censored Gaussian.
 
-The distribution can not only be exchanged for the distributional forest 
-but for all the models evaluated in this application:
+To compare the performance of the distributional forest to other commonly used methods the exact same models as in the paper are evaluated on the same data set and applying the same settings while only the distribution is exchanged. Further details on the models can be found in Section~3.2.. In particular, Table~2 gives an overview over the models and their specifications. As a brief reminder the approaches are summarized below.
 
 \begin{itemize}
 
 \item \emph{Distributional forest:} All predictor variables are
-  considered for learning a forest where bootstrap
-  sampling is employed for each tree. Parameters are estimated by
-  adaptive local likelihood based on forest weights.
-  
-\item \emph{EMOS:} Standard ensemble model output statistics
-  models use the ensemble mean of total precipitation as regressor in the location
-  submodel and the corresponding ensemble standard deviation in the scale submodel.
-  The parameters are estimated by maximum likelihood, using an identity
-  link for the location part and a log link for the scale part (following the advice of
-  \cite{Gebetsberger+Messner+Mayr:2017}).
+considered for learning a forest where bootstrap
+sampling is employed for each tree. Parameters are estimated by
+adaptive local likelihood based on forest weights.
+
+\item \emph{EMOS} \citep{Gneiting+Raftery+Westveld:2005}: 
+Standard ensemble model output statistics models use the ensemble 
+mean of total precipitation as regressor in the location submodel 
+and the corresponding ensemble standard deviation in the scale submodel.
+The parameters are estimated by maximum likelihood.
 
 \item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
-  the most relevant predictors based on meteorological expert knowledge
-  following \cite{Stauffer+Umlauf+Messner:2017}. The model is estimated by maximum
-  penalized likelihood using a backfitting algorithm (\cite{Stasinopoulos+Rigby:2007}).
+the most relevant predictors based on meteorological expert knowledge
+following \cite{Stauffer+Umlauf+Messner:2017}. The model is estimated by maximum
+penalized likelihood using a backfitting algorithm (\cite{Stasinopoulos+Rigby:2007}).
 
 \item \emph{Boosted GAMLSS:} Smooth additive splines are selected
-  automatically from all available variables, using non-cyclic boosting
-  for parameter estimation (\cite{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}).
-  This updates the predictor terms for the location or scale submodels iteratively
-  by maximizing the log-likelihood only for the variable yielding the
-  biggest improvement. The iteration stops early -- before fully maximizing
-  the in-sample likelihood -- based on a (computationally intensive)
-  out-of-bag bootstrap estimate of the log-likelihood.
+automatically from all available variables, using non-cyclic boosting
+for parameter estimation (\cite{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}).
+The optimal stopping point for the iteration is evaluated based on 
+a (computationally intensive) out-of-bag bootstrap estimate of the log-likelihood.
 
 \end{itemize}
 
@@ -92,23 +123,24 @@ f_{\textit{logistic}}(Y; \mu, \sigma) &=
      \frac{\exp{\left(-\frac{Y - \mu}{\sigma}\right)}}
      {\sigma \cdot \left(1 + \exp{\left(-\frac{Y - \mu}{\sigma}\right)}\right)^2} \\
 F_{\textit{logistic}}(Y; \mu, \sigma) &=
-     \frac{1}{1+ \exp{\left(\frac{\mu}{\sigma}\right)}}.
+     \frac{1}{1+ \exp{\left(-\frac{Y - \mu}{\sigma}\right)}}.
 \end{align}
 
-Regardless of the chosen distribution it has to be considered 
-that precipitation data usually includes a point mass at zero.
-In order to deal with this point mass one of two common strategies 
-can be used.
+Both distributions have to be adapted in our application to capture that
+precipitation is non-negative with a point mass at zero (= no rain).
+Two common strategies for this are to employ either \emph{left-censoring at zero}
+or a \emph{hurdle} (or two-part) approach, combining a binary (zero vs.\ greater) and
+a truncated (postive) part \citep[see][for an overview]{Winkelmann:2006}.
 \begin{itemize}
-\item Censored distribution (\cite{Winkelmann:2006}): 
-In general, censoring data usually leads 
-to a point mass at the censoring point which has to be considered in 
-the modeling process. Therefore, censored distributions are applied as 
-they are able to capture this point mass. 
-In precipitation data, observations can not be negative, thus, left-censoring
-it at zero does not change the data. However, there is a naturally given
-point mass at zero (days without rain) making a censored distribution an 
-appropriate choice to model precipitation data.
+\item Censored distribution \citep{Winkelmann:2006}: 
+%In general, censoring data usually leads 
+%to a point mass at the censoring point which has to be considered in 
+%the modeling process. Therefore, censored distributions are applied as 
+%they are able to capture this point mass. 
+%In precipitation data, observations can not be negative, thus, left-censoring
+%it at zero does not change the data. However, there is a naturally given
+%point mass at zero (days without rain) making a censored distribution an 
+%appropriate choice to model precipitation data.
 For a chosen distribution with probability density function $f$ and
 distribution function $F$ the log-likelihood function of the corresponding 
 censored distribution is
@@ -120,15 +152,19 @@ censored distribution is
 \end{cases}
 \end{equation}
 as seen in Equation~2.1.1. of the paper for a Gaussian distribution.
+For positive values of $Y$ the censored version of the density function
+equals the original non-censored version. For $Y=0$ the censored density
+function takes the values of the probability mass lying left of the 
+censoring point. Therefore, the parameters $\mu$ and $\sigma$ control
+both parts, the point mass and the positive part of the distribution.
 
 \item Hurdle model / Two-part model (\cite{Cragg:1971}, \cite{Mullahy:1986}): 
 An additional parameter $\nu$ describing the probability that there is 
-any precipitation at all, 
-i.e. $\nu = \mathbb{P}(Y>0)$, is estimated by a binary model. 
-Then, a second model is fit to the subset of the data containing 
-only positive observations applying a left-truncated at zero 
-distribution to estimate the location parameter $\mu$ and scale 
-parameter $\sigma$ of the underlying latent variable.
+any precipitation at all, i.e. $\nu = \mathbb{P}(Y>0)$, is included in the model.
+%Then, a second model is fit to the subset of the data containing 
+%only positive observations applying a left-truncated at zero 
+%distribution to estimate the location parameter $\mu$ and scale 
+%parameter $\sigma$ of the underlying latent variable.
 The three-parametric log-likelihood function for the full hurdle model 
 with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
 \begin{equation} \label{eq:hurdle}
@@ -138,7 +174,7 @@ with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
     \log(1 - \nu), & \text{if } Y = 0.
 \end{cases}
 \end{equation}
-
+For $Y=0$ the probability that it won't rain is expressed by $1-\nu$. For $Y>0$ the probability that it will rain $\nu$ is multiplied with the left-truncated at zero density function. Contrary to the censored model, here it is only the parameter $\nu$ controlling the point mass while $\mu$ and $\sigma$ only influence the distribution of the positive observations.
 \end{itemize}
 
 In the paper a left-censored at zero Gaussian distribution is chosen.
@@ -161,7 +197,7 @@ calculated for the hurdle models.
 
 
 \section{Stations}
-Out of the 95 observation stations 18 are considered for this 
+Out of the 95 observation stations 15 are considered for this 
 benchmark study (see Figure~\ref{fig:map}). 
 They have been selected based on the region
 they are in, their altitude and the performance of the 
@@ -171,7 +207,8 @@ all of these features are represented equally.
 
 \begin{figure}[h]
 \vspace*{-3cm}
-<<map, fig=TRUE, echo=FALSE>>=
+\setkeys{Gin}{width=0.99\textwidth}
+<<map_stationwise, fig=TRUE, echo=FALSE>>=
 ##  map
 data("StationsTyrol", package = "RainTyrol")
 data("MapTyrol", package = "RainTyrol")
@@ -181,16 +218,45 @@ sp <- SpatialPointsDataFrame(subset(StationsTyrol, select = c(lon, lat)),
                              proj4string = raster::crs(MapTyrol$RasterLayer))
 
 plot(MapTyrol$SpatialPolygons)
-points(sp, pch = 21, col = "black", las = 1, cex = 1)
-points(sp[c(5, 6, 16, 20, 23, 25, 32, 33, 46, 47, 48, 56, 57, 70, 71, 79, 82, 83),], pch = 21, bg = hcl(325, 100, 70), cex = 1.5)
+points(sp, pch = 21, col = "darkgrey", las = 1, cex = 0.6)
+points(sp[c(5, 6, 20, 23, 25, 32, 33, 46, 47, 56, 57, 70, 79, 82, 83),], pch = 21, bg = hcl(325, 100, 70), cex = 1.5)
+# stationname beneath
+text(sp[c(25, 47, 57, 70),], 
+     labels = StationsTyrol$name[c(25, 47, 57, 70)],
+     pos=1, cex=0.75)
+# stationname left
+text(sp[c(20, 32, 46, 79, 83),], 
+     labels = StationsTyrol$name[c(20, 32, 46, 79, 83)],
+     pos=2, cex=0.75)
+# stationname above
+text(sp[c(6, 33, 82),], 
+     labels = StationsTyrol$name[c(6, 33, 82)],
+     pos=3, cex=0.75)
+# stationname right
+text(sp[c(5, 23, 56),], 
+     labels = StationsTyrol$name[c(5, 23, 56)],
+     pos=4, cex=0.75)
 @
-\vspace*{-3cm}
-\caption{\label{fig:map}Map of Tyrol with all 95 observation stations and the 18 considered stations highlighted in pink.}
+\vspace*{-3.5cm}
+\caption{\label{fig:map}Map of Tyrol with all 95 observation stations and the 15 considered stations highlighted in pink.}
 \end{figure}
 
 
 
+
 \section{Results}
+In Figure~\ref{fig:lattice} each panel belongs to one of the 15 observation stations. The three distributions (left-censored at zero Gaussian distribution = \textit{gaussian}, hurdle model based on the Gaussian distribution = \textit{hgaussian}, left-censored at zero logistic distribution = \textit{logistic}) are compared based on the resulting CRPS values for each of the applied methods that are represented by different colours and symbols. Overall it can be stated that the forest model performs almost equally well with all three distributions. Therefore it seems to be very robust against missspecifications of the distribution.
+For the two GAMLSS models the censored Gaussian and the hurdle model perform similarly at most of the station while applying the censored logistic distribution leads to an increase in CRPS, i.e. to a decline in performance, especially for the prespecified GAMLSS.
+For the EMOS model exchanging the distribution does not have a strong effect on its performance, similar to the forest model. In particular, for the two censored distributions the results are almost equal, only for the hurdle model the CRPS values vary slightly, however in both directions, depending on the station.
+
+When applying a hurdle model for the stations Oetz and Innvervillgraten the prespecified GAMLSS computationally failed to build/fit a model. Therefore this method is not represented in Figure~\ref{fig:lattice} for these two cases.
+
+In stations like Ladis-Neuegg, Matrei in Osttirol or Oetz all methods seem to be very robust and stable over varying distributions. The strongest influence of an exchange of the distribution can be seen for example at stations Jungholz and St.Johann im Walde for the prespecified GAMLSS. 
+
+
+In Figure\ref{fig:box_crpss_gaussian} the tested distributions are compared for each method based on CRPS skill score with the censored Gaussian distribution as reference represented by the horizontal line at zero. The hurdle model leads to a slight improvement for the forest model and the prespecified GAMLSS. Following the median this improvement is a bit stronger for the boosted GAMLSS, however, with a higher deviation as represented by the larger size of the box, similarly as for the EMOS, however with a negative influence indicated by the negative median. Choosing a logistic distribution instead of a Gaussian clearly reduces the strength of the two GAMLSS models, while it has almost no influence on the forest and the EMOS models.
+
+Alltogether it can be stated that the left-censored at zero Gaussian distribution seems to be an appropriate choice while the other two distributions are possible and mostly also reasonable alternatives. However, they do not lead to an overall improvement in performance for this application.
 
 \begin{figure}[h]
 \setkeys{Gin}{width=0.99\textwidth}
@@ -234,58 +300,44 @@ xyplot(crps ~ distribution | station, groups = ~ method,
        data = means, auto.key = TRUE, 
        type = "o", lwd = 2, lty = 1, layout = c(3,6))
 @
-\caption{\label{fig:lattice}CRPS values of all 4 methods, once applied with each of the three distributions for each of the 18 observation stations.}
+\caption{\label{fig:lattice}CRPS values of all 4 methods, once applied with each of the three distributions for each of the 15 observation stations.}
 \end{figure}
+
 
 \begin{figure}[h]
 \setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7>>=
-
-  # crps
-  par(mfrow = c(1,3))
-  boxplot(crps~method, data = means, subset = distribution == "gaussian", main = "gaussian",
-          ylim = c(0.65,1.15), axes = FALSE, ylab = "CRPS")
-  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
-  axis(1, 0:5, c("",
-                 "Distr.
-                 forest",
-                 "Presp.
-                 GAMLSS",
-                 "Boosted
-                 GAMLSS",
-                 "EMOS", ""), las=2)
-  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
-  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
+<<results_box_crpss_gaussian, fig=TRUE, echo=FALSE, height=3, width=7>>=
+  # crps skill score by distribution (reference: gaussian)
+  means$crps_ss_dist <- means$crps
+  means$crps_ss_dist[means$distribution == "gaussian"] <- 
+    1 - means$crps[means$distribution == "gaussian"] / means$crps[means$distribution == "gaussian"]
+  means$crps_ss_dist[means$distribution == "logistic"] <- 
+    1 - means$crps[means$distribution == "logistic"] / means$crps[means$distribution == "gaussian"]
+  means$crps_ss_dist[means$distribution == "hgaussian"] <- 
+    1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "gaussian"]
   
-  boxplot(crps~method, data = means, subset = distribution == "hgaussian", main = "hgaussian",
-          ylim = c(0.65,1.15), las = 2, axes = FALSE)
-  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
-  axis(1, 0:5, c("",
-                 "Distr.
-                 forest",
-                 "Presp.
-                 GAMLSS",
-                 "Boosted
-                 GAMLSS",
-                 "EMOS", ""), las=2)
-  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
-  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
-  boxplot(crps~method, data = means, subset = distribution == "logistic", main = "logistic",
-          ylim = c(0.65,1.15), las = 2, axes = FALSE)
-  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
-  axis(1, 0:5, c("",
-                 "Distr.
-                 forest",
-                 "Presp.
-                 GAMLSS",
-                 "Boosted
-                 GAMLSS",
-                 "EMOS", ""), las=2)
-  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
-  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
-
+  means_sel <- means[means$distribution %in% c("logistic", "hgaussian"),]
+  means_sel$distribution <- factor(means_sel$distribution, levels(means_sel$distribution)[c(2:3)])
+  
+  par(mfrow = c(1,4))
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "Distributional forest"), main = "Distributional forest",
+          ylim = c(-0.12,0.07), las = 2, ylab = "CRPS skill score")
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "Prespecified GAMLSS"), main = "Prespecified GAMLSS",
+          ylim = c(-0.12,0.07), las = 2)
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "Boosted GAMLSS"), main = "Boosted GAMLSS",
+          ylim = c(-0.12,0.07), las = 2)
+  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps_ss_dist~distribution, data = means_sel, 
+          subset = (method == "EMOS"), main = "EMOS",
+          ylim = c(-0.12,0.07), las = 2)
+  abline(h = 0, col = pal[5], lwd = 2)
 @
-\caption{\label{fig:box_crps}(Mean) CRPS values of each of the 18 observation stations, separated by method and distribution.}
+\caption{\label{fig:box_crpss_gaussian}(Mean) CRPS skill score values of each of the 15 observation stations, separated by method and distribution. Gaussian is chosen as reference distribution.}
 \end{figure}
 
 \begin{figure}[h]
@@ -349,65 +401,96 @@ xyplot(crps ~ distribution | station, groups = ~ method,
   axis(4, seq(-0.15, 0.25, 0.05), lwd.ticks = 0, labels = FALSE)
   abline(h = 0, col = pal[5], lwd = 2)
 @
-\caption{\label{fig:box_crpss_EMOS}(Mean) CRPS skill score values of each of the 18 observation stations, separated by method and distribution. EMOS is chosen as reference model.}
+\caption{\label{fig:box_crpss_EMOS}(Mean) CRPS skill score values of each of the 15 observation stations, separated by method and distribution. EMOS is chosen as reference model.}
 \end{figure}
+
+
 
 \begin{figure}[h]
 \setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crpss_gaussian, fig=TRUE, echo=FALSE, height=3, width=7>>=
-  # crps skill score by distribution (reference: gaussian)
-  means$crps_ss_dist <- means$crps
-  means$crps_ss_dist[means$distribution == "gaussian"] <- 
-    1 - means$crps[means$distribution == "gaussian"] / means$crps[means$distribution == "gaussian"]
-  means$crps_ss_dist[means$distribution == "logistic"] <- 
-    1 - means$crps[means$distribution == "logistic"] / means$crps[means$distribution == "gaussian"]
-  means$crps_ss_dist[means$distribution == "hgaussian"] <- 
-    1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "gaussian"]
+<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7>>=
+
+  # crps
+  par(mfrow = c(1,3))
+  boxplot(crps~method, data = means, subset = distribution == "gaussian", main = "gaussian",
+          ylim = c(0.65,1.15), axes = FALSE, ylab = "CRPS")
+  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
+  axis(1, 0:5, c("",
+                 "Distr.
+                 forest",
+                 "Presp.
+                 GAMLSS",
+                 "Boosted
+                 GAMLSS",
+                 "EMOS", ""), las=2)
+  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
+  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
   
-  means_sel <- means[means$distribution %in% c("logistic", "hgaussian"),]
-  means_sel$distribution <- factor(means_sel$distribution, levels(means_sel$distribution)[c(2:3)])
-  
-  par(mfrow = c(1,4))
-  boxplot(crps_ss_dist~distribution, data = means_sel, 
-          subset = (method == "Distributional forest"), main = "Distributional forest",
-          ylim = c(-0.12,0.07), las = 2, ylab = "CRPS skill score")
-  abline(h = 0, col = pal[5], lwd = 2)
-  boxplot(crps_ss_dist~distribution, data = means_sel, 
-          subset = (method == "Prespecified GAMLSS"), main = "Prespecified GAMLSS",
-          ylim = c(-0.12,0.07), las = 2)
-  abline(h = 0, col = pal[5], lwd = 2)
-  boxplot(crps_ss_dist~distribution, data = means_sel, 
-          subset = (method == "Boosted GAMLSS"), main = "Boosted GAMLSS",
-          ylim = c(-0.12,0.07), las = 2)
-  abline(h = 0, col = pal[5], lwd = 2)
-  boxplot(crps_ss_dist~distribution, data = means_sel, 
-          subset = (method == "EMOS"), main = "EMOS",
-          ylim = c(-0.12,0.07), las = 2)
-  abline(h = 0, col = pal[5], lwd = 2)
+  boxplot(crps~method, data = means, subset = distribution == "hgaussian", main = "hgaussian",
+          ylim = c(0.65,1.15), las = 2, axes = FALSE)
+  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
+  axis(1, 0:5, c("",
+                 "Distr.
+                 forest",
+                 "Presp.
+                 GAMLSS",
+                 "Boosted
+                 GAMLSS",
+                 "EMOS", ""), las=2)
+  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
+  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
+  boxplot(crps~method, data = means, subset = distribution == "logistic", main = "logistic",
+          ylim = c(0.65,1.15), las = 2, axes = FALSE)
+  axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 2)
+  axis(1, 0:5, c("",
+                 "Distr.
+                 forest",
+                 "Presp.
+                 GAMLSS",
+                 "Boosted
+                 GAMLSS",
+                 "EMOS", ""), las=2)
+  axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
+  axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
+
 @
-\caption{\label{fig:box_crpss_gaussian}(Mean) CRPS skill score values of each of the 18 observation stations, separated by method and distribution. Gaussian is chosen as reference distribution.}
+\caption{\label{fig:box_crps}(Mean) CRPS values of each of the 15 observation stations, separated by method and distribution.}
 \end{figure}
 
-
 \section{Discussion}
+As mentioned by \cite{Hofner+Mayr+Schmid:2016} the methods provided by GAMLSS ``can be unstable, especially when it comes to selecting possibly different sets of variables for multiple distribution parameters''. These problems have also occured in a few situations for the 
+prespecified GAMLSS model within the cross-validation. In case of this method failing to 
+build a model it is represented by \code{NA}s in the evaluation. 
+
 As explained above the the parameter $\nu$ is modeled separately from $\mu$ and $\sigma$ 
 in the GAMLSS framework which is why two separate models can be built. For the forest model
 an alternative approach would be to build just one model employing the three-parametric
-distribution family. However, testing both versions of the forest model in this application study shows that they both perform almost equally. Over the 18 considered stations the 
-absolute difference in terms of CRPS between the two-forest model and the three-parametric forest is on average 0.0078 and lies between 0.0014 and 0.0267 for each station. Comparing
-these values to the mean CRPS values in Figure~\ref{fig:box_crps} lying between 0.6 and 1.2
-confirms the relatively small difference between the two versions of the forest model.
+distribution family. However, testing both versions of the forest model in this application study shows that they both perform almost equally. Figure~\ref{fig:box_crpss_forests} shows
+the CRPS skill score of the three-parametric forest model over the considered 15 observation
+stations with the two-part forest model as reference. Even though this alternative version
+of the forest model seems to perform better on average, according to the median this 
+improvement is not even one percent, hence neglectably small. Therefore, the two foreset version can be stated to perform almost equally.
 
-<<compare_forests, results=hide, echo=FALSE>>=
+\begin{figure}[h]
+\center
+\setkeys{Gin}{width=0.5\textwidth}
+<<compare_forests, fig=TRUE, results=hide, echo=FALSE, width=4, height=4>>=
   load("crps_forests.rda")
-  sum(crps_forests[,"forest_2p"] > crps_forests[,"forest_h"])
-  summary(crps_forests[,"forest_h"] - crps_forests[,"forest_2p"])
-  summary(abs(crps_forests[,"forest_h"] - crps_forests[,"forest_2p"]))
-  colMeans(crps_forests)  
+  crps_ss_forest_2p <- data.frame(1 - crps_forests[,"forest_2p"] / crps_forests[,"forest_h"])
+  names(crps_ss_forest_2p) <- "Three-parametric forest"
+  boxplot(crps_ss_forest_2p, ylab = "CRPS skill score", names = c("Three-parametric forest"))
+  abline(h = 0, col = pal[5], lwd = 2)
+  axis(1, 0:2, c("","Three-parametric forest", ""), las=1)
+  #sum(crps_forests[,"forest_2p"] > crps_forests[,"forest_h"])
+  #summary(crps_forests[,"forest_h"] - crps_forests[,"forest_2p"])
+  #summary(abs(crps_forests[,"forest_h"] - crps_forests[,"forest_2p"]))
+  #colMeans(crps_forests)  
 @
+\caption{\label{fig:box_crpss_forests}(Mean) CRPS skill score values of each of the 15 observation stations for the three-parametric forest model with the two part forest model as reference model.}
+\end{figure}
 
-
-\bibliography{ref_supplement_distributions.bib}
+%bibliographystyle{jss}
+\bibliography{ref_supplement.bib}
 
 
 \end{document}
