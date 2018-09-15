@@ -1,7 +1,6 @@
 %\documentclass[a4paper,11pt]{article}
 \documentclass[nojss, shortnames]{jss}
 
-
 \usepackage{graphicx, natbib}
 \pagestyle{empty}
 \usepackage{Sweave}
@@ -256,7 +255,6 @@ In stations like Ladis-Neuegg, Matrei in Osttirol or Oetz all methods seem to be
 
 In Figure\ref{fig:box_crpss_gaussian} the tested distributions are compared for each method based on CRPS skill score with the censored Gaussian distribution as reference represented by the horizontal line at zero. The hurdle model leads to a slight improvement for the forest model and the prespecified GAMLSS. Following the median this improvement is a bit stronger for the boosted GAMLSS, however, with a higher deviation as represented by the larger size of the box, similarly as for the EMOS, however with a negative influence indicated by the negative median. Choosing a logistic distribution instead of a Gaussian clearly reduces the strength of the two GAMLSS models, while it has almost no influence on the forest and the EMOS models.
 
-Alltogether it can be stated that the left-censored at zero Gaussian distribution seems to be an appropriate choice while the other two distributions are possible and mostly also reasonable alternatives. However, they do not lead to an overall improvement in performance for this application.
 
 \begin{figure}[h]
 \setkeys{Gin}{width=0.99\textwidth}
@@ -458,9 +456,7 @@ xyplot(crps ~ distribution | station, groups = ~ method,
 \end{figure}
 
 \section{Discussion}
-As mentioned by \cite{Hofner+Mayr+Schmid:2016} the methods provided by GAMLSS ``can be unstable, especially when it comes to selecting possibly different sets of variables for multiple distribution parameters''. These problems have also occured in a few situations for the 
-prespecified GAMLSS model within the cross-validation. In case of this method failing to 
-build a model it is represented by \code{NA}s in the evaluation. 
+Alltogether it can be stated that the left-censored at zero Gaussian distribution seems to be an appropriate choice while the other two distributions are possible and mostly also reasonable alternatives. However, they do not lead to an overall improvement in performance for this application.
 
 As explained above the the parameter $\nu$ is modeled separately from $\mu$ and $\sigma$ 
 in the GAMLSS framework which is why two separate models can be built. For the forest model
