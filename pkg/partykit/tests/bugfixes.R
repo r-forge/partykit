@@ -846,3 +846,10 @@ airct <- ctree(Ozone ~ ., data = airq)
 n1 <- nodeapply(airct, ids = c(3, 5, 6), function(x) x$info$nobs)
 n2 <- nodeapply(airct, ids = c(6, 3, 5), function(x) x$info$nobs)
 stopifnot(all.equal(n1[names(n2)], n2))
+
+### pruning got "fitted" wrong, spotted by Jason Parker
+data("Titanic")
+titan <- as.data.frame(Titanic)
+(tree <- ctree(Survived ~ Class + Sex + Age, data = titan, weights = Freq))
+### prune off nodes 5-12 and check if the other nodes are not affected
+nodeprune(tree, 4)

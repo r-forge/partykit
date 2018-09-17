@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-3 (2018-06-27)}{
+\section{Changes in Version 1.2-3 (2018-09-17)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{\code{predict} did not pay attention to \code{xlev}; this caused
