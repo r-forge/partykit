@@ -8,6 +8,8 @@
     \item{\code{predict} did not pay attention to \code{xlev}; this caused
           problems when empty factor levels were removed prior to tree fitting. See
          \url{https://stackoverflow.com/questions/51043870/lmtree-suspect-behavior-with-factors}.}
+    \item{\code{nodeprune} may have got fitted terminal node numbers wrong,
+          spotted by Jason Parker.}
   }
 }
 }
