@@ -1,10 +1,9 @@
-%\documentclass[a4paper,11pt]{article}
 \documentclass[nojss, shortnames]{jss}
 
 \usepackage{graphicx, natbib}
 \pagestyle{empty}
 \usepackage{Sweave}
-\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,pdfpages,hyperref}
+\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,pdfpages,hyperref,bookmark}
 
 \title{Supplement 2: Stationwise Evaluation}
 
@@ -22,7 +21,7 @@ evaluations including a cross-validation are preformed for one station, Axams.
 In this supplement this exact same analysis as for station Axams is
 made for 14 further observation stations.}
 
-\Keywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, GAMLSS}
+\Keywords{random forests, GAMLSS, evaluation, meteorological stations}
 
 
 
@@ -54,9 +53,8 @@ made for 14 further observation stations.}
 \SweaveOpts{concordance=TRUE}
 
 \section{Introduction}
-This application study is supplementary material to the paper ''Distributional 
-Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain''. 
-In Section~3 the presented distributional forest model is employed to obtain 
+This application study is supplementary material to the application in Section~3 of 
+the paper where the presented distributional forest model is employed to obtain 
 probabilistic precipitation forecasts in a mountainous region.
 Next to an evaluation over all 95 observation stations further investigations
 including a cross-validation have been performed for one selected station, Axams.
@@ -68,15 +66,15 @@ times are measured.
 \section{Models and evaluation}
 As in the paper a distributional forest applying a left-censored at zero 
 Gaussian distribution is evaluated together with three other zero-censored 
-Gaussian models. Further details on all four models can be found in Section~3.2.. 
-In particular, Table~2 gives an overview over the models and their specifications. 
-As a brief reminder the approaches are summarized below.
-
+Gaussian models. Further details on all four models can be found in Section~3.2. of
+the paper. In particular, Table~2 gives an overview over the models and their 
+specifications. As a brief reminder the approaches are summarized below.
+%
 \begin{itemize}
 
 \item \emph{Distributional forest:} All predictor variables are
-considered for learning a forest where bootstrap
-sampling is employed for each tree. Parameters are estimated by
+considered for learning a forest where subsampling is employed 
+for each tree. Parameters are estimated by
 adaptive local likelihood based on forest weights.
 
 \item \emph{EMOS} \citep{Gneiting+Raftery+Westveld:2005}: 
@@ -99,33 +97,44 @@ a (computationally intensive) out-of-bag bootstrap estimate of the log-likelihoo
 \end{itemize}
 
 %\subsection{Subset selection}
-The models are evaluated in two different scenarios.
+The models are always learned on data from 24 years and tested on the 
+remaining 4 years. Splitting the data into these two subsets has been done
+in two different ways leading to the two following evaluation settings.
+%
 \begin{itemize}
-\item Ordered/Base model: The learning data consists of the first 24 years (1985--2008) and the testing data of the following 4 years (2009--2012). 
-\item Cross-validation: The 28 years are randomly split in 7 blocks of 4 years which are not necessarily successive. Each of the blocks is chosen once as testing data while the remaining 6 blocks are the learning data. This procedure is repeated 10 times resulting in a 10 times 7-fold cross-validation framework.
+
+\item Single split: The data is time-ordered. The learning data consists of the first 24 years (1985--2008) and the testing data of the following 4 years (2009--2012). 
+
+\item Cross-validation: In order to not just split the data at one splitpoint the 28 years are randomly split in 7 blocks of 4 years which are not necessarily successive. Each of the blocks is chosen once as testing data while the remaining 6 blocks are the learning data. This procedure is repeated 10 times resulting in a 10 times 7-fold cross-validation framework.
 
 \end{itemize}
 
-The performance of the models are compared based on the following evaluations.
+The performances of the models are compared based on numerical and graphical evaluations.
 
+\textit{Numerical:}
+For the single split setting one value is calculated for each observation in the test data and the mean of these values is considered. For the cross-validation this mean value over all observations in the test data is retrieved from all 70 evaluations and then again the mean of them is considered. This holds for the following measurements.
+%
 \begin{itemize}
-\item CRPS: The continuous ranked probability score (CRPS) is calculated
-for each observation in the testing data set and then averaged. For the cross-validation
-setup the mean of the resulting 70 CRPS average values is listed and all 70 average values
-are illustrated in a boxplot where the EMOS model is chosen as reference model, 
-represented by the horizontal line at 0.
- 
-\item Fit time: It is measured how long it takes to fit the model to the learning data. 
 
-\item Predict time: It is measured how long it takes the model to make predictions. For the ordered model the predict time refers to the time needed to make one single prediction. The mean predict time over all observations in the test data is considered.
-For the cross-validation the predict time refers to the time needed to make all predictions for the test data. The mean predict time over all 70 evaluations in the cross-validation is considered.
+\item CRPS: The continuous ranked probability score (CRPS) is calculated to assess the predictive performance in terms of full probabilistic forecasts.
 
-\item Variable importance: For the forest model it is investigated which variables have the strongest influence on the model and its goodness of fit. For each variable this is measured based on mean decrease in CRPS after permutation. The 10 variables showing the highest values are listed in a barplot.
+\item Time: For all models fitting times and predictions times are measured. In particular, \textit{fit time} refers to the time needed to fit the model to the whole learn data. Depending on the setting \textit{predict time} refers to the time needed to make one prediction in the single split setting and to make predictions for the whole test data in the cross-validation.
 
-\item Residual QQ plots: For each of the models an out-of-sample residual QQ plot for the ordered model provides a visualization of goodness of fit. Randomized residual quantiles are compared to standard normal quantiles.
+\end{itemize}
 
-\item PIT histograms: As an additional visualization out-of-sample probability integral transform histograms illustrated how well-calibrated the distributional fits are for the ordered model.
 
+\textit{Graphical:} The following methods of visualization are applied to provide further means of comparison of all models but also to investigate on the distributional forest in particular.
+%
+\begin{itemize}
+%
+\item Boxplot of the CRPS skill score: With the EMOS as reference model the CRPS skill scores are calculated for the cross-validation setting and illustrated in a boxplot.
+%
+\item Barplot of variable importance: For the forest model it is investigated which variables have the strongest influence on the model and its goodness of fit. For each variable this is measured based on mean decrease in CRPS after permutation. The 10 variables showing the highest values in the single split setting are listed in a barplot.
+%
+\item Residual QQ plots: For each of the models an out-of-sample residual QQ plot for the single split setting provides a visualization of goodness of fit. Randomized residual quantiles are compared to standard normal quantiles.
+%
+\item PIT histograms: As an additional visualization out-of-sample probability integral transform histograms illustrate how well-calibrated the distributional fits are for the single split setting.
+%
 \end{itemize}
 
 
@@ -136,22 +145,21 @@ they are in, their altitude and the performance of the
 different models in the application in the paper such that
 all of these features are represented equally.
 
-Stations: \hyperlink{sumAxams.1}{Axams},
+Selected stations: \hyperlink{sumAxams.1}{Axams},
 \hyperlink{sumLech.1}{Lech},
 \hyperlink{sumZuers.1}{Zuers},
 \hyperlink{sumSeeimPaznaun.1}{See im Paznaun},
-\hyperlink{sumOetz.1}{Oetz},
 \hyperlink{sumJungholz.1}{Jungholz},
-\hyperlink{sumKoessen.1}{Koessen},
-\hyperlink{sumWalchsee.1}{Walchsee},
+\hyperlink{sumLadisNeuegg.1}{Ladis-Neuegg},
+\hyperlink{sumOetz.1}{Oetz},
+\hyperlink{sumOchsengartenObergut.1}{Ochsengarten-Obergut},
 \hyperlink{sumGinzling.1}{Ginzling},
 \hyperlink{sumRotholz.1}{Rotholz},
+\hyperlink{sumWalchsee.1}{Walchsee},
+\hyperlink{sumKoessen.1}{Koessen},
 \hyperlink{sumInnervillgraten.1}{Innervillgraten},
 \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol},
-\hyperlink{sumStJohannimWalde.1}{St.Johann im Walde},
-\hyperlink{sumLadisNeuegg.1}{Ladis-Neuegg},
-\hyperlink{sumOchsengartenObergut.1}{Ochsengarten-Obergut},
-
+\hyperlink{sumStJohannimWalde.1}{St.Johann im Walde}.
 
 
 
@@ -194,49 +202,64 @@ text(sp[c(5, 23, 56),],
 
 
 \section{Results}
-Comparing CRPS skill score values from the cross-validation the distributional forest
-and the two GAMLSS versions show clear improvements compared to the reference model EMOS.
-At many stations the forest and either the prespecified GAMLSS (e.g. at station Innervillgraten) or the boosted GAMLSS (e.g. at station Lech or Zuers) are ahead, almost on the same level, while the second GAMLSS is slightly behind. At stations Axams, See im Paznaun and Ginzling the forest clearly leads to the highest improvement in terms of CRPS. Station St.Johann im Walde stands out as it is the only of the 15 stations where the prespecified GAMLSS is clearly ahead of the other models. But overall it can be stated that all three models perform well with only small variations over stations. Even if one of the evaluated models shows clear advantages in the ordered model (such as the EMOS at station Rotholz or the prespecified GAMLSS at station Innervillgraten) this is evened out within the cross-validation. 
 
-Concerning fitting times either the prespecified GAMLSS (e.g. St.Johann im Walde, Innervillgraten) or the distributional forest (e.g. Zuers, Walchsee, Jungholz, Oetz, Koessen, Ginzling) are the fastest while the boosted GAMLSS usually takes more time, especially if the time required for the selection of the optimal value for \code{mstop} a multiple of the times of the other models is needed.
-
-As to prediction times the EMOS is by far the fastest due to its simple linear structure. The boosted GAMLSS is the second fastest followed by the prespecified GAMLSS and the distributional forest on the 4th place. This order holds for all stations and also for both subsample settings. However, while all four models are comparably fast making one single prediction the forest needs about ten times more time to make predictions for the whole learning data set. This is due to the maximum-likelihood estimation based on observation-specific weights matrices which have to be calculated separately for each observation.
-
-Concerning variable importance three covariates based on total precipitation (\code{tp\_min}, \code{tp\_max}, \code{tp\_mean}) are at the top of the list for almost all stations (except for the two stations Matrei in Osttirol and Ochsengarten-Obergut where a covariate describing total column-integrated condensate is on the third place). This was to be expected since the aim is to predict amounts of precipitation. The other members of the top ten variables vary slightly over stations, however, further covariates concerning total precipitation, total column-integrated condensate and temperature differences are often among them.
+\subsection{Forecasting skills} 
+Comparing CRPS values of the single split setting it can be stated that the forest model works well over all stations. Often it is even the best performing method (e.g. at stations \hyperlink{sumLech.1}{Lech}, \hyperlink{sumSeeimPaznaun.1}{See im Paznaun} and \hyperlink{sumGinzling.1}{Ginzling}), but there are also stations where one of the other models leads to better results. For example at \hyperlink{sumOchsengartenObergut.1}{Ochsengarten-Obergut} the boosted GAMLSS performs best, at \hyperlink{sumRotholz.1}{Rotholz} the EMOS model and at \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol} the prespecified GAMLSS is the best model, however, they do not clearly outperform the forest model. Moreover, these advantages often even out or turn into disadvantages when looking at the CRPS values from the cross-validation. For example at station \hyperlink{sumInnervillgraten.1}{Innervillgraten}, the prespecified GAMLSS is clearly the best in the single split setting, however, in the cross-validation the forest model is slightly ahead. An exception is given by station \hyperlink{sumSt.JohannimWalde.1}{St.Johann im Walde} as it is the only station where the prespecified GAMLSS clearly outperforms all other models in both settings. But overall, the results from the cross validation also support the statement that the forest model performs well on all stations being either the best or among the best performing methods at the majority of stations.
+Moreover, it can be concluded that Axams is an observation station without any unusual features that would lead to outstanding performances of any of the methods. Therefore, it is a reasonable choice as a representative for all 95 station. Examples for stations where the forest model performs better or worse can be found easily, however, in general the methods perform similarly as for station Axams.
 
 
-\section{Discussion}
-Overall, the results presented in this supplement show that Axams is an observation station without any unusual features that would lead to outstanding performances of any of the methods. Therefore, it is a reasonable choice as a representative for all 95 station. Examples for stations where the forest model performs better or worse can be found easily, however, in general the methods perform similarly as for station Axams.
-Also at most observation stations in East Tyrol where the prespecified GAMLSS performed clearly better in the ordered subsample setting the cross-validation confirms that the forest model performs at almost equally well over varying subsample selections.
+%Comparing CRPS skill score values from the cross-validation the distributional forest
+%and the two GAMLSS versions show clear improvements compared to the reference model EMOS.
+%At many stations the forest and either the prespecified GAMLSS (e.g. at station Innervillgraten) or the boosted GAMLSS (e.g. at station Lech or Zuers) are ahead, almost on the same level, while the second GAMLSS is slightly behind. At stations Axams, See im Paznaun and Ginzling the forest clearly leads to the highest improvement in terms of CRPS. Station St.Johann im Walde stands out as it is the only of the 15 stations where the prespecified GAMLSS is clearly ahead of the other models. But overall it can be stated that all three models perform well with only small variations over stations. Even if one of the evaluated models shows clear advantages in the single split setting (such as the EMOS at station Rotholz or the prespecified GAMLSS at station Innervillgraten) this is evened out within the cross-validation. 
 
-As to fit times, all models achieve similar results, however, the cross-validation applied to find the optimal stopping value \code{mstop} for the boosted GAMLSS is extremely time consuming. 
-Looking at prediction times for one single observation, the distributional forest is on average
-the slowest model, however, the difference to the predict times of the other models is not too big. This changes regarding predictions for a whole set of observation due to the fact that the forest computes each single prediction separately as it is based on an observation-specific
-weight matrix. 
 
-As mentioned by \cite{Hofner+Mayr+Schmid:2016} the methods provided by GAMLSS ``can be unstable, especially when it comes to selecting possibly different sets of variables for multiple distribution parameters''. These problems have also occured in a few situations for the 
+\subsection{Computation time}
+The forest model and the two GAMLSS models achieve similar results in both time measurements, fit and predict time, while the EMOS model is clearly the fastest. However, for the boosted GAMLSS the cross-validation applied to find the optimal stopping value \code{mstop} is extremely time consuming. This additional time can not be neglected since the stopping value is crucial for the complexity of the model and the selection of covariates.
+
+As to prediction times it has to be mentioned that the forest can keep up with the other models if only one prediction is made. However, to make predictions for a whole set of new observations the forest clearly needs more time. This is due to the fact that the forest has to computes each single prediction separately as the maximum-likelihood estimation is based on observation-specific weight matrix.
+
+\subsection{Variable importance}
+Concerning variable importance, two covariates based on total precipitation (\code{tp\_max} and \code{tp\_mean}) are at the top of the list for all stations, often clearly ahead of the other covariates. The other members of the top ten variables vary slightly over stations, however, further covariates concerning total precipitation, total column-integrated condensate and temperature differences are often among them.
+
+\subsection{Calibration}
+The PIT histograms and residual QQ plots show that overall all four models are reasonably well calibrated at the majority of stations while at some stations they all fit better (e.g. at station \hyperlink{sumOetz.1}{Oetz}) or worse (e.g. at station \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol}) than on average. One feature of the boosting method that can be detected in the residual QQ plots for many stations is that heavy upper tails are not captured very well. This is also supported by the PIT histogram.
+
+
+\textit{Note:} As mentioned by \cite{Hofner+Mayr+Schmid:2016} the methods provided by GAMLSS ``can be unstable, especially when it comes to selecting possibly different sets of variables for multiple distribution parameters''. These problems have also occurred in a few situations for the 
 prespecified GAMLSS model within the cross-validation. In case of this method failing to 
 build a model it is represented by \code{NA}s in the evaluation.
 
 
-
-%\bibliography{ref_supplement_stationwise.bib}
-
 \includepdf[pages=-, link, linkname=sumAxams]{Axams.pdf}
+\bookmark[dest=sumAxams.1]{Axams}
 \includepdf[pages=-, link, linkname=sumLech]{Lech.pdf}
+\bookmark[dest=sumLech.1]{Lech}
 \includepdf[pages=-, link, linkname=sumZuers]{Zuers.pdf}
+\bookmark[dest=sumZuers.1]{Zuers}
 \includepdf[pages=-, link, linkname=sumSeeimPaznaun]{SeeimPaznaun.pdf}
-\includepdf[pages=-, link, linkname=sumOetz]{Oetz.pdf}
+\bookmark[dest=sumSeeimPaznaun.1]{See im Paznaun}
 \includepdf[pages=-, link, linkname=sumJungholz]{Jungholz.pdf}
-\includepdf[pages=-, link, linkname=sumKoessen]{Koessen.pdf}
-\includepdf[pages=-, link, linkname=sumWalchsee]{Walchsee.pdf}
-\includepdf[pages=-, link, linkname=sumGinzling]{Ginzling.pdf}
-\includepdf[pages=-, link, linkname=sumRotholz]{Rotholz.pdf}
-\includepdf[pages=-, link, linkname=sumInnervillgraten]{Innervillgraten.pdf}
-\includepdf[pages=-, link, linkname=sumMatreiinOsttirol]{MatreiinOsttirol.pdf}
-\includepdf[pages=-, link, linkname=sumStJohannimWalde]{StJohannimWalde.pdf}
+\bookmark[dest=sumJungholz.1]{Jungholz}
 \includepdf[pages=-, link, linkname=sumLadisNeuegg]{LadisNeuegg.pdf}
+\bookmark[dest=sumLadisNeuegg.1]{Ladis-Neuegg}
+\includepdf[pages=-, link, linkname=sumOetz]{Oetz.pdf}
+\bookmark[dest=sumOetz.1]{Oetz}
 \includepdf[pages=-, link, linkname=sumOchsengartenObergut]{OchsengartenObergut.pdf}
+\bookmark[dest=sumOchsengartenObergut.1]{Ochsengarten-Obergut}
+\includepdf[pages=-, link, linkname=sumGinzling]{Ginzling.pdf}
+\bookmark[dest=sumGinzling.1]{Ginzling}
+\includepdf[pages=-, link, linkname=sumRotholz]{Rotholz.pdf}
+\bookmark[dest=sumRotholz.1]{Rotholz}
+\includepdf[pages=-, link, linkname=sumWalchsee]{Walchsee.pdf}
+\bookmark[dest=sumWalchsee.1]{Walchsee}
+\includepdf[pages=-, link, linkname=sumKoessen]{Koessen.pdf}
+\bookmark[dest=sumKoessen.1]{Koessen}
+\includepdf[pages=-, link, linkname=sumInnervillgraten]{Innervillgraten.pdf}
+\bookmark[dest=sumInnervillgraten.1]{Innervillgraten}
+\includepdf[pages=-, link, linkname=sumMatreiinOsttirol]{MatreiinOsttirol.pdf}
+\bookmark[dest=sumMatreiinOsttirol.1]{Matrei in Osttirol}
+\includepdf[pages=-, link, linkname=sumStJohannimWalde]{StJohannimWalde.pdf}
+\bookmark[dest=sumStJohannimWalde.1]{St.Johann im Walde}
 
 
 %bibliographystyle{jss}
