@@ -283,7 +283,7 @@ of Figure~\ref{fig:lattice} for these two cases.
 In Figure~\ref{fig:box_crpss_gaussian} the tested distributions are compared 
 for each method based on CRPS skill score with the censored Gaussian distribution 
 as reference represented by the horizontal line at zero. Again, the forest model 
-and the EMOS show only slight variations (on average not even 1\%) over different 
+and the EMOS show only slight variations (on average not even one percent) over different 
 distributions while the two GAMLSS models perform even or slightly better applying 
 a hurdle model and loose strength when employing a logistic distribution compared 
 to a Gaussian distribution.
@@ -448,7 +448,7 @@ and once based on CRPS values. Both confirm the conclusion that the censored Gau
 model and the hurdle model lead to almost the same results for all methods while only 
 the logistic model shows small variations.
 
-Altogether it can be stated that the left-censored at zero Gaussian distribution seems 
+Altogether it can be stated that for this application the left-censored at zero Gaussian distribution seems 
 to be an appropriate choice while the other two distributions, especially the hurdle model, 
 are also reasonable alternatives. However, they do not lead to an overall improvement in 
 performance for this application.
@@ -576,14 +576,14 @@ c_gaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distributi
 c_gaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "gaussian", "crps"]
 c_gaussian[,4] <- means[means$method == "EMOS" & means$distribution == "gaussian", "crps"]
 
-# CRPS skill score for boosted hgaussian
+# CRPS for hgaussian
 c_hgaussian <- matrix(ncol = 4, nrow = 15)
 c_hgaussian[,1] <- means[means$method == "Distributional forest" & means$distribution == "hgaussian", "crps"]
 c_hgaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "hgaussian", "crps"]
 c_hgaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "hgaussian", "crps"]
 c_hgaussian[,4] <- means[means$method == "EMOS" & means$distribution == "hgaussian", "crps"]
 
-# CRPS skill score for prespecified logistic
+# CRPS for logistic
 c_logistic <- matrix(ncol = 4, nrow = 15)
 c_logistic[,1] <- means[means$method == "Distributional forest" & means$distribution == "logistic", "crps"]
 c_logistic[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "logistic", "crps"]
