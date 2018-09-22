@@ -437,7 +437,7 @@ if(FALSE){
   
   for(station in stationlist) {
     results <- stationeval(station = station)
-    save(results, file = paste0("res_", 
+    save(results, file = paste0("results_stationwise/res_", 
                                 gsub("-", "", gsub(".", "", gsub(" ", "", results$station, fixed = T), fixed = T), fixed = T),
                                 ".rda"))
   }
@@ -453,12 +453,12 @@ if(FALSE){
 if(FALSE){
   
   stationwise <- list()
-  for (i in Sys.glob("res_*.rda")) {
+  for (i in Sys.glob("results_stationwise/res_*.rda")) {
     load(i)
     stationwise[[results$station]] <- results
     # stationwise[[substr(i, 5, nchar(i) - 4)]] <- results
   }
-  save(stationwise, file = "stationwise.rda")
+  save(stationwise, file = "results_stationwise/stationwise.rda")
   
   # remove individual .rda-files
   file.remove(Sys.glob("res_*.rda"))
@@ -468,8 +468,8 @@ if(FALSE){
 ## plot results for one selected station
 if(FALSE){
   
-  station <- "Matrei in Osttirol"
-  load("stationwise.rda")
+  station <- "Vils"
+  load("results_stationwise/stationwise.rda")
   # load("~/svn/partykit/pkg/disttree/demo/results_stationwise/stationwise.rda")
   results <- stationwise[[station]]
   
