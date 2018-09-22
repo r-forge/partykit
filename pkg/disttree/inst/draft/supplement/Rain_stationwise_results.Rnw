@@ -111,7 +111,6 @@ names(varimp10) <- gsub("pow", "", names(varimp10), fixed = TRUE)
 
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 \section*{\huge \Sexpr{station}}
 
