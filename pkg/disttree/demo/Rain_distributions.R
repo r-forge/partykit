@@ -225,7 +225,7 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 
 
-data("RainTyrol.rda")
+data("RainTyrol")
 
 
 stationeval <- function(station, method, distribution)
@@ -539,12 +539,12 @@ stationeval <- function(station, method, distribution)
 
 
 
-wrapper <- function(stationlist = c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", 
-                                    "Innervillgraten", "Pass Thurn", "Koessen", "See im Paznaun",
-                                    "Matrei in Osttirol", "Jungholz", "Rotholz",
-                                    "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde",
-                                    "Ginzling", "Lanersbach"),  
-                    methodlist = c("disttree", "distforest", "gamlss", "gamboostLSS", "EMOS"),
+wrapper <- function(stationlist = c("Axams", "Lech", "Zuers", "See im Paznaun", "Jungholz", 
+                                    "Ladis-Neuegg", "Oetz", "Ochsengarten-Obergut",
+                                    "Ginzling", "Rotholz", "Walchsee", "Koessen", 
+                                    "Innervillgraten", "Matrei in Osttirol", 
+                                    "St.Johann im Walde"),  
+                    methodlist = c("distforest", "gamlss", "gamboostLSS", "EMOS"),
                     distributionlist = c("gaussian", "hgaussian", "logistic"))
 {
   set <- expand.grid(station = stationlist, 
@@ -620,11 +620,12 @@ if(FALSE){
   
 
   xyplot(crps ~ distribution | station, groups = ~ method, data = results$means, 
-         subset = station %in% c("Axams", "Lech", "Walchsee", "Vils", "Oetz", "Zuers", 
-                                 "Innervillgraten", "Pass Thurn", "Koessen", "See im Paznaun",
+         subset = station %in% c("Axams", "Lech", "Walchsee", "Oetz", "Zuers",
+                                 # "Pass Thurn", "Vils", "Lanersbach",
+                                 "Innervillgraten",  "Koessen", "See im Paznaun",
                                  "Matrei in Osttirol", "Jungholz", "Rotholz",
                                  "Ochsengarten-Obergut", "Ladis-Neuegg", "St.Johann im Walde",
-                                 "Ginzling", "Lanersbach"),
+                                 "Ginzling"),
          auto.key = TRUE, type = "o", lwd = 2, lty = 1, layout = c(3,6))
   
   

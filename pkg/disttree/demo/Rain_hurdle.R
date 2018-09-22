@@ -203,9 +203,9 @@ results <- list()
 for(station in stationlist){
   
   #####
-  # load observations and covariates 
-  load(paste("~/svn/partykit/pkg/disttree/data/Rain", station, ".rda", sep = ""))
-  RainData <- get(paste("Rain", station, sep = ""))
+  # get observations and covariates for selected station
+  RainData <- RainTyrol[RainTyrol$station == as.character(station), ]
+  rownames(RainData) <- c(1:NROW(RainData))
   
   # learning data: 24 years (1985 - 2008, both inlcuded)
   # testing data: 4 successive years (2009, 2010, 2011, 2012)
@@ -556,3 +556,19 @@ for(station in stationlist){
 }
 
 save(results, file = "~/svn/partykit/pkg/disttree/demo/Rain_hurdle.rda")
+
+
+
+if(FALSE) {
+  load("~/svn/partykit/pkg/disttree/demo/Rain_hurdle.rda")
+  
+  results$Axams["crps", c("forest_h", "forest_2p")]
+  results$Lech["crps", c("forest_h", "forest_2p")]
+  results$Walchsee["crps", c("forest_h", "forest_2p")]
+  results$Oetz["crps", c("forest_h", "forest_2p")]
+  results$Koessen["crps", c("forest_h", "forest_2p")]
+  results$Vils["crps", c("forest_h", "forest_2p")]
+  results$See["crps", c("forest_h", "forest_2p")]
+  results$Jungholz["crps", c("forest_h", "forest_2p")]
+  
+}
