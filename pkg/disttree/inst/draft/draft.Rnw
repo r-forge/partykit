@@ -285,7 +285,7 @@ response or quantiles of the response distribution. Specifically, consider
 weather forecasting where there is less interest in the mean amount of
 precipitation on the next day. Instead, the probability of rain vs.\ no rain
 is typically more relevant or, in some situations, a prediction interval of
-expected precipitation (say from the expected \textit{10\%} to \textit{90\%} quantile). Similar
+expected precipitation (say from the expected 10\% to 90\% quantiles). Similar
 considerations apply for other meteorological quantities and hence attention
 in the weather forecasting literature has been shifting from classical linear 
 deterministic models \citep{Glahn+Lowry:1972} towards probabilistic models such as the
@@ -735,13 +735,13 @@ rain), a Gaussian distribution left-censored at zero (for short: zero-censored G
 with location parameter $\mu$ and scale parameter $\sigma$ is employed. Therefore,
 the corresponding log-likelihood function with parameter vector 
 $\bm{\theta} = (\mu, \sigma)$ is
-$$
+\begin{equation}
 \ell(\mu, \sigma; Y) = 
 \begin{cases}
     \log\left\{\frac{1}{\sigma} \cdot \phi\left(\frac{Y - \mu}{\sigma}\right) \right\}, & \text{if } Y > 0\\[0.2cm]
     \log\left\{\Phi\left(\frac{-\mu}{\sigma}\right)\right\}, & \text{if } Y = 0
 \end{cases}
-$$
+\end{equation}
 
 where $\phi$ and $\Phi$ are the probability density function and the 
 distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
@@ -878,7 +878,7 @@ that pick up changes in the location of the response across the covariates,
 pick up changes in the ``direction'' of any distribution parameter by
 considering the full score vector for choosing splitting variables and split
 points. Each of the distributional trees is grown on a different data set
-obtained through bootstrap sampling (or subsampling) and in each node only a
+obtained through resampling (bootstrap or subsampling) and in each node only a
 random subset of the covariates $\bold{Z}$ is considered. As usual in random
 forests, this reduces the correlation among the trees and stabilizes the
 variance of the model.
@@ -1104,15 +1104,15 @@ further details:
 \begin{itemize}
 
 \item \emph{Distributional forest:} All 80~predictor variables are
-  considered for learning a forest of 100 trees. Bootstrap
-  sampling is employed for each tree using a third of the predictors
+  considered for learning a forest of 100 trees. Subsampling is employed 
+  for each tree using a third of the predictors
   in each split of the tree (\code{mtry}). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
   \hl{As stopping criteria the minimal number
-  of observations to perform a split} (\code{minsplit}) \hl{is set to 50, 
+  of observations to perform a split} (\code{minsplit}) \hl{is set to $50$, 
   the minimal number of observations in a terminal node} (\code{minbucket})
-  \hl{is set to 20 and the significance level for variable selection} (\code{alpha}) 
+  \hl{is set to $20$ and the significance level for variable selection} (\code{alpha}) 
   \hl{is kept at the default value $1$.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
@@ -1150,7 +1150,7 @@ further details:
   biggest improvement. The iteration stops early -- before fully maximizing
   the in-sample likelihood -- based on a (computationally intensive)
   out-of-bag bootstrap estimate of the log-likelihood. The grid considered for
-  the number of boosting iterations (``mstop'') is: $50, 75, \dots, 975, 1000$.
+  the number of boosting iterations (\code{mstop}) is: $50, 75, \dots, 975, 1000$.
 
 \end{itemize}
 
