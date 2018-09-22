@@ -1,0 +1,199 @@
+\documentclass[a4paper,11pt]{article}
+
+%% layout
+\usepackage[a4paper, total={15cm, 26.5cm}]{geometry}
+\usepackage{graphicx}
+\pagestyle{empty}
+\setlength{\parskip}{0.5ex plus0.1ex minus0.1ex}
+\setlength{\parindent}{0em}
+\usepackage{Sweave}
+
+%% fonts
+\renewcommand{\rmdefault}{phv}
+\renewcommand{\sfdefault}{phv}
+
+<<echo = FALSE, results=hide>>=
+## station
+station <- "_STATION_"
+if(station == "SeeimPaznaun") station <- "See im Paznaun"
+if(station == "MatreiinOsttirol") station <- "Matrei in Osttirol"
+if(station == "LadisNeuegg") station <- "Ladis-Neuegg"
+if(station == "StJohannimWalde") station <- "St.Johann im Walde"
+if(station == "OchsengartenObergut") station <- "Ochsengarten-Obergut"
+
+
+## results data
+load("stationwise.rda")
+results <- stationwise[[station]]
+
+#station_rda <- function(name, root = getwd()) {
+#  for(i in c("~", "-", ".", " ")) name <- gsub(i, "", name, fixed = TRUE)  
+#  file.path(root, paste0("res_", name, ".rda"))
+#}
+#load(station_rda(station))
+
+
+## (i) map
+data("StationsTyrol", package = "RainTyrol")
+data("MapTyrol", package = "RainTyrol")
+library("sp")
+sp <- SpatialPointsDataFrame(subset(StationsTyrol, select = c(lon, lat)),
+  data = subset(StationsTyrol, select = -c(lon, lat)),
+  proj4string = raster::crs(MapTyrol$RasterLayer))
+
+
+## convenience functions to unify results
+cross <- Reduce("c", results$res_cross)
+
+get_cross <- function(what = "crps", which = NULL) {
+  ## methods
+  if(is.null(which)) which <- c("distforest", "gamlss", "gamboostLSS", "gamboostLSS_cvr", "emos_log")
+  if(what != "evaltime") which <- which[which != "gamboostLSS_cvr"]
+
+  ## extract desired quantity (crps, evaltime, predtime)
+  rval <- lapply(cross, "[[", what)
+  rval <- if(what == "crps") {
+    sapply(rval, function(x) x[which])
+  } else {
+    sapply(rval, function(x) x[which, "elapsed"])
+  }
+  
+  ## reshape
+  rval <- t(rval)
+  rval <- aggregate(rval, list(rep(1:10, each = 7)), mean, na.rm = TRUE)[, -1]
+  rval <- as.matrix(rval)
+  which[which == "emos_log"] <- "EMOS"
+  colnames(rval) <- which
+
+  return(rval)
+}
+
+fmt <- function(x) {
+  ## select and aggregate (if necessary)
+  if(!is.null(dim(x))) {
+    x <- if("elapsed" %in% colnames(x)) x[, "elapsed"] else colMeans(x, na.rm = TRUE)
+  }
+  
+  ## round and format to three digits
+  x <- format(round(x, digits = 3), nsmall = 3)
+
+  ## collect results across methods (if necessary)
+  if(length(x) == 1L) return(x)
+  nam <- c("distforest", "gamlss", "gamboostLSS", "gamboostLSS_cvr", "EMOS")
+  x <- x[nam]
+  x[is.na(x)] <- ""
+  names(x) <- nam
+  return(x)
+}
+
+
+## (ii) summary table
+tab <- cbind(
+  "crps_24to4" =     fmt(results$crps),
+  "fittime_24to4" =  fmt(results$fit_time),
+  "predtime_24to4" = fmt(results$pred_time),
+  "crps_cv" =        fmt(get_cross("crps")),
+  "fittime_cv" =     fmt(get_cross("evaltime")),
+  "predtime_cv" =    fmt(get_cross("predtime"))
+)
+
+
+## (iii) crps skill score
+crps_cross <- get_cross("crps")
+crps_cross_mean <- colMeans(crps_cross, na.rm = TRUE)
+crpss_cross <- 1 - crps_cross[, c("distforest", "gamlss", "gamboostLSS")] / crps_cross[, "EMOS"]
+crpss_24to4 <- 1 - colMeans(results$crps[, c("distforest", "gamlss", "gamboostLSS")], na.rm = TRUE) / mean(results$crps[, "EMOS"], na.rm = TRUE)
+
+## (iv) variable importance
+varimp10 <- rev(head(sort(results$vimp_crps, decreasing = TRUE), 10))
+names(varimp10) <- gsub("pow", "", names(varimp10), fixed = TRUE)
+@
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section*{\huge \Sexpr{station}}
+
+Longitude: \Sexpr{fmt(StationsTyrol[StationsTyrol$name == station, "lon"])}
+
+Latitude: \Sexpr{fmt(StationsTyrol[StationsTyrol$name == station, "lat"])}
+
+Altitude: \Sexpr{fmt(StationsTyrol[StationsTyrol$name == station, "alt"])}
+
+\setkeys{Gin}{width=0.7\textwidth}
+\vspace*{-4.1cm}\hspace*{4cm}%
+<<map, fig=TRUE, echo = FALSE, height = 5, width=7=>>=
+plot(MapTyrol$SpatialPolygons)
+points(sp, pch = 21, col = "black", las = 1, cex = 1)
+points(sp[which(sp$name == station), ], pch = 21, bg = hcl(325, 100, 70), cex = 1.5)
+@
+\vspace*{-1.6cm}
+
+\subsection*{Overview}
+
+\begin{tabular}{lrrrrrr}
+\hline
+      & \multicolumn{3}{l}{Single split} & \multicolumn{3}{l}{10 times 7-fold cross-validation} \\
+Model & CRPS & Fit time & Predict time                 & CRPS & Fit time & Predict time                       \\ \hline
+<<tab, echo=FALSE, results=tex>>=
+tab <- apply(tab, 1, paste, collapse = " & ")
+tab <- paste(c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "\\emph{(mstop selection)}", "EMOS"), "&", tab, "\\\\")
+writeLines(tab)
+@
+\hline
+\end{tabular}
+
+\subsection*{CRPS skill score (cross-validation, reference: EMOS)}
+
+\setkeys{Gin}{width=0.73\textwidth}
+<<boxplot_crps_skillscore, fig=TRUE, echo=FALSE, height=4, width=6.4>>=
+par(mar = c(2.5, 4, 1, 2))
+boxplot(crpss_cross, 
+        ylim = c(min(-0.01, min(crpss_cross, na.rm = TRUE) - 0.01), 
+                 max(-0.01, max(crpss_cross, na.rm = TRUE) + 0.01)),
+        main = "",
+        names = c("Distributional\nforest", "Prespecified\nGAMLSS", "Boosted\nGAMLSS"),
+        ylab = "CRPS skill score", col = "lightgray", las = 1) 
+#axis(1, 0:4, c("", "Distributional\nforest", "Prespecified\nGAMLSS", "Boosted\nGAMLSS", ""))
+abline(h = 0, col = hcl(50, 100, 50), lwd = 2)
+# lines(crpss_24to4, col = hcl(128, 100, 50), lwd = 2, type = "o", pch = 19)
+@
+
+\subsection*{Variable importance}
+
+<<varimp, fig=TRUE, echo=FALSE, height=4, width=6.4>>=
+par(mar = c(5, 10, 1, 2))
+barplot(varimp10, horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Mean decrease in CRPS")
+axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.2), las = 1, mgp = c(0, 1, 0))
+@
+
+
+\newpage
+
+\subsection*{Residual QQ plots}
+
+\setkeys{Gin}{width=0.93\textwidth}
+<<qq, fig=TRUE, echo=FALSE, height=6, width = 7, png=TRUE, pdf=FALSE>>=
+library("countreg")
+set.seed(7)
+par(mfrow = c(2, 2))
+qqrplot(results$pit_df, nsim = 100, main = "Distributional forest", ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(results$pit_ml, nsim = 100, main = "EMOS",		    ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+if(!all(is.na(results$pit_g))) qqrplot(results$pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+qqrplot(results$pit_gb, nsim = 100, main = "Boosted GAMLSS",	    ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
+@
+
+\subsection*{PIT histograms}
+
+<<pit, fig=TRUE, echo=FALSE, height=6, width = 7>>=
+set.seed(4)
+par(mfrow = c(2, 2))
+pithist(results$pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0, 1.9))
+pithist(results$pit_ml, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0, 1.9))
+if(!all(is.na(results$pit_g))) pithist(results$pit_g,  nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0, 1.9))
+pithist(results$pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAMLSS", ylim = c(0, 1.9))
+@
+
+\end{document}
