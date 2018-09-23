@@ -14,12 +14,17 @@
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 
-\Abstract{In the application discussed in the paper ''Distributional 
-Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-the presented method is evaluated on 95 observation stations. More extensive
-evaluations including a cross-validation are preformed for one station, Axams.
-In this supplement this exact same analysis as for station Axams is
-made for 14 further observation stations.}
+\Abstract{
+  In the case study presented in the main manuscript ``Distributional Regression
+  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+  the novel distributional regression forests are evaluated and compared with
+  other distributional regression approaches on 95 meteorological stations.
+  Moreover, further details -- including a cross-validation analysis -- are
+  preformed for only one station, Axams. To show that Axams is a fairly typical
+  station and similar insights can be obtained for other stations as well,
+  this supplements presents the same analysis as in Section~3.3 of the main
+  manuscript for 14~further meteorological stations.
+}
 
 \Keywords{random forests, GAMLSS, evaluation, meteorological stations}
 
@@ -50,25 +55,17 @@ made for 14 further observation stations.}
 
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
-
-\section{Introduction}
-This application study is supplementary material to the application in Section~3 of 
-the paper where the presented distributional forest model is employed to obtain 
-probabilistic precipitation forecasts in a mountainous region.
-Next to an evaluation over all 95 observation stations further investigations
-including a cross-validation have been performed for one selected station, Axams.
-Here, this more extensive evaluation is carried out, applying the exact same settings 
-as in the paper, for Axams and 14 further observation stations. Additionally, computation
-times are measured.
 
 
-\section{Models and evaluation}
-As in the paper a distributional forest applying a left-censored at zero 
-Gaussian distribution is evaluated together with three other zero-censored 
-Gaussian models. Further details on all four models can be found in Section~3.2. of
-the paper. In particular, Table~2 gives an overview over the models and their 
-specifications. As a brief reminder the approaches are summarized below.
+\section{Setup}
+
+\subsection{Models}
+
+As introduced in Section~3.2 of the main manuscript, a distributional forest
+based on a Gaussian distribution, left-censored at zero, is evaluated together
+with three other zero-censored Gaussian models. Table~2 of the manuscript provides
+an overview of all models considered and their specifications. As a reminder
+the approaches are briefly summarized below.
 %
 \begin{itemize}
 
@@ -78,7 +75,7 @@ for each tree. Parameters are estimated by
 adaptive local likelihood based on forest weights.
 
 \item \emph{EMOS} \citep{Gneiting+Raftery+Westveld:2005}: 
-Standard ensemble model output statistics models use the ensemble 
+Standard ensemble model output statistics uses the ensemble 
 mean of total precipitation as regressor in the location submodel 
 and the corresponding ensemble standard deviation in the scale submodel.
 The parameters are estimated by maximum likelihood.
@@ -86,64 +83,106 @@ The parameters are estimated by maximum likelihood.
 \item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
 the most relevant predictors based on meteorological expert knowledge
 following \cite{Stauffer+Umlauf+Messner:2017}. The model is estimated by maximum
-penalized likelihood using a backfitting algorithm (\cite{Stasinopoulos+Rigby:2007}).
+penalized likelihood using a backfitting algorithm \citep{Stasinopoulos+Rigby:2007}.
 
 \item \emph{Boosted GAMLSS:} Smooth additive splines are selected
 automatically from all available variables, using non-cyclic boosting
-for parameter estimation (\cite{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}).
-The optimal stopping point for the iteration is evaluated based on 
+for parameter estimation \citep{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}.
+The optimal stopping point for the iterations is determined based on 
 a (computationally intensive) out-of-bag bootstrap estimate of the log-likelihood.
 
 \end{itemize}
 
-%\subsection{Subset selection}
+\subsection{Learning and test samples}
+
 The models are always learned on data from 24 years and tested on the 
 remaining 4 years. Splitting the data into these two subsets is done
 in two different ways leading to the two following evaluation settings.
 %
 \begin{itemize}
 
-\item Single split: The data is time-ordered. The learning data consists of the first 24 years (1985--2008) and the testing data of the following 4 years (2009--2012). 
+\item \emph{Single split}: The data is time-ordered. The learning data consists of the
+first 24 years (1985--2008) and the testing data of the following 4 years
+(2009--2012). 
 
-\item Cross-validation: In order to not just split the data at one splitpoint the 28 years are randomly split in 7 blocks of 4 years which are not necessarily successive. Each of the blocks is chosen once as testing data while the remaining 6 blocks are the learning data. This procedure is repeated 10 times resulting in a 10 times 7-fold cross-validation framework.
+\item \emph{Cross-validation}: In order to not just split the data at one splitpoint
+the 28 years are randomly split into 7 blocks of 4 years which are not
+necessarily successive. Each of the blocks is chosen once as testing data while
+the remaining 6 blocks are the learning data. This procedure is repeated 10
+times resulting in a 10 times 7-fold cross-validation framework.
 
 \end{itemize}
-
+%
 The performances of the models are compared based on numerical and graphical evaluations.
 
-\textit{Numerical:}
-For the single split setting one value is calculated for each observation in the test data and the mean of these values is considered. For the cross-validation this mean value over all observations in the test data is retrieved from all 70 evaluations and then again the mean of them is considered. This holds for the following measurements.
+\subsection{Numerical evaluation}
+
+Several numerical summary statistics are computed in both
+settings. For the single-split setting one value is calculated for each
+observation in the test data and then their mean is reported. For the
+cross-validation setting, the same is done for all 70~splits considered and
+again their mean is reported. The following summary statistics are used.
 %
 \begin{itemize}
 
-\item CRPS: The continuous ranked probability score (CRPS) is calculated to assess the predictive performance in terms of full probabilistic forecasts.
+\item \emph{CRPS}: The continuous ranked probability score (CRPS) is calculated to
+assess the predictive performance in terms of full probabilistic forecasts.
 
-\item Time: For all models fitting times and predictions times are measured. In particular, \textit{fit time} refers to the time needed to fit the model to the whole learn data. Depending on the setting \textit{predict time} refers to the time needed to make one prediction in the single split setting and to make predictions for the whole test data in the cross-validation.
+\item \emph{Computation time}: For all models fitting times and predictions times
+are measured on the same 16-core Linux computer. In particular,
+\textit{fit time} refers to the time needed to fit the model to the learning
+data in a particular split. The \textit{predict time} refers to the time needed
+to compute the out-of-sample prediction. In the single-split setting, the
+predictions are computed observation by observation, i.e., emulating the
+realistic setup where predictions are made once the new NWP model outputs become
+available. In the cross-validation setting, the predictions for the full 4-year
+out-of-sample period in one go. Although this is not realistic in this
+particular application, it might be an interesting quantity for comparing the
+competing regression approaches.
 
 \end{itemize}
+%
+\textit{Note:} For a few splits in the cross-validation, the prespecified GAMLSS
+(as computed by the \proglang{R} package \pkg{gamlss}) failed, leading to \code{NA}s
+in the corresponding summary statistics. As mentioned by \cite{Hofner+Mayr+Schmid:2016}
+such problems are not unusual because GAMLSS ``can be unstable, especially when it comes
+to selecting possibly different sets of variables for multiple distribution parameters''.
 
+\subsection{Graphical evaluation}
 
-\textit{Graphical:} The following methods of visualization are applied to provide further means of comparison of all models but also to investigate on the distributional forest in particular.
+The following methods of visualization are applied to
+provide further means of comparison of all models but also to investigate on the
+distributional forest in particular.
 %
 \begin{itemize}
-%
-\item Boxplot of the CRPS skill score: With the EMOS as reference model the CRPS skill scores are calculated for the cross-validation setting and illustrated in a boxplot.
-%
-\item Barplot of variable importance: For the forest model it is investigated which variables have the strongest influence on the model and its goodness of fit. For each variable this is measured based on mean decrease in CRPS after permutation. The 10 variables showing the highest values in the single split setting are listed in a barplot.
-%
-\item Residual QQ plots: For each of the models an out-of-sample residual QQ plot for the single split setting provides a visualization of goodness of fit. Randomized residual quantiles are compared to standard normal quantiles.
-%
-\item PIT histograms: As an additional visualization out-of-sample probability integral transform histograms illustrate how well-calibrated the distributional fits are for the single split setting.
-%
+
+\item \emph{Boxplot of the CRPS skill score:} With EMOS as the reference model
+the CRPS skill scores are calculated on each of the 70~splits considered in the
+cross-validation setting and illustrated in a boxplot.
+
+\item \emph{Barplot of variable importance:} For the distributional forest it is
+investigated which variables have the strongest influence on the model and its
+goodness of fit. For each variable this is measured based on mean decrease in
+CRPS after permutation. The 10 variables showing the highest values in the
+single-split setting are listed in a barplot.
+
+\item \emph{Residual QQ plots:} For each of the models an out-of-sample residual
+QQ plot for the single-split setting provides a graphical goodness-of-fit
+assessment.
+
+\item \emph{PIT histograms:} Similarly, the out-of-sample probability integral
+transform (PIT) in the single-split setting is amployed as an alternative
+goodness-of-fit visualization.
+
 \end{itemize}
 
 
 \section{Stations}
-Out of the 95 observation stations 15 are considered for this 
-benchmark study. They have been selected based on the region
-they are in, their altitude and the performance of the 
-different models in the application in the paper such that
-all of these features are represented equally.
+
+Out of the 95~observation stations 15 are considered for this 
+supplemental study. They have been selected to cover a wide range regarding
+geographical location, altitude, and which of the competing models performed
+best in the single-split setting reported in Section~3.4 of the main manuscript.
 
 Selected stations: \hyperlink{sumAxams.1}{Axams},
 \hyperlink{sumLech.1}{Lech},
@@ -159,7 +198,7 @@ Selected stations: \hyperlink{sumAxams.1}{Axams},
 \hyperlink{sumKoessen.1}{Koessen},
 \hyperlink{sumInnervillgraten.1}{Innervillgraten},
 \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol},
-\hyperlink{sumStJohannimWalde.1}{St.Johann im Walde}.
+\hyperlink{sumStJohannimWalde.1}{St.~Johann im Walde}.
 
 
 
@@ -203,31 +242,68 @@ text(sp[c(5, 23, 56),],
 
 \section{Results}
 
-\subsection{Forecasting skills} 
-Comparing CRPS values of the single split setting it can be stated that the forest model works well over all stations. Often it is even the best performing method (e.g. at stations \hyperlink{sumLech.1}{Lech}, \hyperlink{sumSeeimPaznaun.1}{See im Paznaun} and \hyperlink{sumGinzling.1}{Ginzling}), but there are also stations where one of the other models leads to better results. For example at \hyperlink{sumOchsengartenObergut.1}{Ochsengarten-Obergut} the boosted GAMLSS performs best, at \hyperlink{sumRotholz.1}{Rotholz} the EMOS model and at \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol} the prespecified GAMLSS is the best model, however, they do not clearly outperform the forest model. Moreover, these advantages often even out or turn into disadvantages when looking at the CRPS values from the cross-validation. For example at station \hyperlink{sumInnervillgraten.1}{Innervillgraten}, the prespecified GAMLSS is clearly the best in the single split setting, however, in the cross-validation the forest model is slightly ahead. An exception is given by station \hyperlink{sumSt.JohannimWalde.1}{St.Johann im Walde} as it is the only station where the prespecified GAMLSS clearly outperforms all other models in both settings. But overall, the results from the cross-validation also support the statement that the forest model performs well on all stations being either the best or among the best performing methods at the majority of stations.
-Moreover, it can be concluded that Axams is an observation station without any unusual features that would lead to outstanding performances of any of the methods. Therefore, it is a reasonable choice as a representative for all 95 station. Examples for stations where the forest model performs better or worse can be found easily, however, in general the methods perform similarly as for station Axams.
+\subsection{Forecasting skill} 
 
+Based on the out-of-sample CRPS results it can be concluded that the
+distributional forest generally performs well on all stations and is typically
+close to (e.g., \hyperlink{sumLech.1}{Lech}) or somewhat better than
+the (next-)best method (e.g., \hyperlink{sumSeeimPaznaun.1}{See im Paznaun} and
+\hyperlink{sumGinzling.1}{Ginzling}). Naturally, there is more variation
+in the single-split results with another models performing better than the
+distributional forest. However, in the cross-validation such differences
+often even out, showing that distributional forests are on par. Examples for
+this include \hyperlink{sumRotholz.1}{Rotholz},
+\hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol}, and 
+\hyperlink{sumOchsengartenObergut.1}{Ochsengarten-Obergut}, where the 
+best models in the single split are EMOS, prespecified GAMLSS and boosted
+GAMLSS, respectively. The only station, where another model performs
+clearly better than distributional forests in both settings, is
+\hyperlink{sumSt.JohannimWalde.1}{St.~Johann im Walde}.
 
-%Comparing CRPS skill score values from the cross-validation the distributional forest
-%and the two GAMLSS versions show clear improvements compared to the reference model EMOS.
-%At many stations the forest and either the prespecified GAMLSS (e.g. at station Innervillgraten) or the boosted GAMLSS (e.g. at station Lech or Zuers) are ahead, almost on the same level, while the second GAMLSS is slightly behind. At stations Axams, See im Paznaun and Ginzling the forest clearly leads to the highest improvement in terms of CRPS. Station St.Johann im Walde stands out as it is the only of the 15 stations where the prespecified GAMLSS is clearly ahead of the other models. But overall it can be stated that all three models perform well with only small variations over stations. Even if one of the evaluated models shows clear advantages in the single split setting (such as the EMOS at station Rotholz or the prespecified GAMLSS at station Innervillgraten) this is evened out within the cross-validation. 
+Overall, the results support the conclusion that distributional forests
+perform well for this prediction task -- they are often on par and sometimes
+even better than the other models considered. Moreover, it is shown that the
+results for Axams are fairly typical and not particularly unusual compared
+to the other stations considered.
 
 
 \subsection{Computation time}
-The forest model and the two GAMLSS models achieve similar results in both time measurements, fit and predict time, while the EMOS model is clearly the fastest. However, for the boosted GAMLSS the cross-validation applied to find the optimal stopping value \code{mstop} is extremely time consuming. This additional time can not be neglected since the stopping value is crucial for the complexity of the model and the selection of covariates.
 
-As to prediction times it has to be mentioned that the forest can keep up with the other models if only one prediction is made. However, to make predictions for a whole set of new observations the forest clearly needs more time. This is due to the fact that the forest has to computes each single prediction separately as the maximum-likelihood estimation is based on observation-specific weight matrix.
+Distributional forests are comparable with respect to the computation times
+to the other two flexible GAMLSS models. Only the basic EMOS model is clearly
+the fastest. Moreover, unlike the other models, the boosted GAMLSS requires
+a time-consuming cross-validation to determine the optimal stopping value
+\code{mstop}. This is crucial for selecting the appropriate model complexity
+and relevant covariates and hence cannot be neglected in the analysis.
+
+The observation-wise prediction times in the single-split setting are in the same
+order of magnitude for the three flexible distributional models. However, when
+many predictions are computed simultaneously in the cross-validation setting,
+then distributional forests are slower than the GAMLSS models. The reason for this
+is that the GAMLSS can set up the model matrices once and then carry out a matrix
+product while the distributional forest necessitates fitting a separate set of
+parameters for each observation-specific weight vector.
+
 
 \subsection{Variable importance}
-Concerning variable importance, two covariates based on total precipitation (\code{tp\_max} and \code{tp\_mean}) are at the top of the list for all stations, often clearly ahead of the other covariates. The other members of the top ten variables vary slightly over stations, however, further covariates concerning total precipitation, total column-integrated condensate and temperature differences are often among them.
+
+Two NWP model outputs based on total precipitation (\code{tp\_max} and
+\code{tp\_mean}) are clearly the most important predictors for precipitation
+at all stations considered. The remaining variables typically follow with
+some margin and vary slightly in their exact order. However, they typically
+encompass some NWP model outputs for total precipitation, total column-integrated
+condensate, and temperature differences.
+
 
 \subsection{Calibration}
-The PIT histograms and residual QQ plots show that overall all four models are reasonably well calibrated at the majority of stations while at some stations they all fit better (e.g. at station \hyperlink{sumOetz.1}{Oetz}) or worse (e.g. at station \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol}) than on average. One feature of the boosting method that can be detected in the residual QQ plots for many stations is that heavy upper tails are not captured very well. This is also supported by the PIT histogram.
 
-
-\textit{Note:} As mentioned by \cite{Hofner+Mayr+Schmid:2016} the methods provided by GAMLSS ``can be unstable, especially when it comes to selecting possibly different sets of variables for multiple distribution parameters''. These problems have also occurred in a few situations for the 
-prespecified GAMLSS model within the cross-validation. In case of this method failing to 
-build a model it is represented by \code{NA}s in the evaluation.
+The PIT histograms and residual QQ plots show that overall all four models are
+reasonably well-calibrated at the majority of stations while at some stations
+they all fit better (e.g., at station \hyperlink{sumOetz.1}{Oetz}) or worse (e.g.,
+at station \hyperlink{sumMatreiinOsttirol.1}{Matrei in Osttirol}) than on
+average. For several stations, however, the boosted GAMLSS does not capture
+the heavy upper tail as well as the other methods which is best seen in the
+residual QQ plots but also the PIT histograms.
 
 
 \includepdf[pages=-, link, linkname=sumAxams]{Axams.pdf}
@@ -259,7 +335,7 @@ build a model it is represented by \code{NA}s in the evaluation.
 \includepdf[pages=-, link, linkname=sumMatreiinOsttirol]{MatreiinOsttirol.pdf}
 \bookmark[dest=sumMatreiinOsttirol.1]{Matrei in Osttirol}
 \includepdf[pages=-, link, linkname=sumStJohannimWalde]{StJohannimWalde.pdf}
-\bookmark[dest=sumStJohannimWalde.1]{St.Johann im Walde}
+\bookmark[dest=sumStJohannimWalde.1]{St.~Johann im Walde}
 
 
 %bibliographystyle{jss}
