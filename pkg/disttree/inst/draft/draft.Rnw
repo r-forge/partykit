@@ -1650,14 +1650,14 @@ If $Z_l$ is a categorical variable with $H$ categories then
 $v_l(Z_{li}) = e_H(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$ 
 such that $v_l$ is a $H$-dimensional unit vector where the element corresponding to 
 the value of $Z_{li}$ is $1$. In this case the statistic $T_l \in \mathbb{R}^{H \cdot k}$
-as the ``vec'' operator converts the $H \times k$ matrix into a $k$ column vector 
+as the ``vec'' operator converts the $H \times k$ matrix into a $H \cdot k$ column vector 
 by column-wise combination.} Observations with missing values are excluded from the sums.
 
 With the conditional expectation $\mu_l$ and the covariance 
 $\Sigma_l$ of $T_l$ as derived by 
 \cite{Strasser+Weber:1999} the test statistic can be standardized. 
 \hl{The observed multivariate linear statistic $t_l$ which is either an
-$k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of Y,
+$k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of $Z_l$,
 is mapped onto the real line by a univariate test statistic $c$.
 In the application of this paper a quadratic form is chosen, such that}
 $$
