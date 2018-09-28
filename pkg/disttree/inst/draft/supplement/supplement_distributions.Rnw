@@ -5,7 +5,7 @@
 \usepackage{Sweave}
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
 
-\title{Supplement 1: Testing different distributions}
+\title{Supplement 1: Different Response Distributions}
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
 \And Torsten Hothorn\\Universit\"at Z\"urich
@@ -14,13 +14,20 @@
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Reto Stauffer, Achim Zeileis}
 
 
-\Abstract{In the application discussed in the paper ''Distributional 
-Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-the underlying distribution is assumed to be a left-censored at zero Gaussian distribution.
-In this supplement the exact same evaluations as in the paper are performed employing
-other distribution assumptions. In particular, a left-censored at zero logistic distribution 
-and a hurdle-model are applied and their results are compared to those of the left-censored 
-at zero Gaussian distribution presented in the paper.}
+\Abstract{
+  In the case study presented in the main manuscript ``Distributional Regression
+  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+  the novel distributional regression forests are based on a Gaussian response distribution,
+  left-censored at zero to accomodate both the non-negativity of precipitation and
+  the point mass at zero. To assess the goodness of fit of this response distribution
+  this supplement employs the same evaluations as in the main manuscript but based on
+  two other distributional assumptions: A logistic distribution, left-censored at zero,
+  is employed to potentially better capture heavy tails -- and a two-part hurdle model
+  combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
+  truncated at zero, for the positive precipitation observations. The latter could
+  potentially better discriminate determinants of the occurrence of precipitation
+  vs.\ the amount of precipitation given that it occurs.
+}
 
 \Keywords{random forests, GAMLSS, hurdle model, logistic, Gaussian}
 
@@ -53,37 +60,38 @@ URL: \url{http://user.math.uzh.ch/hothorn/}\\
 \SweaveOpts{concordance=TRUE}
 
 \section{Introduction}
-This application study is supplementary material to the application presented
-in Section~3 of the paper.
-There, the presented distributional forest model is employed to obtain 
-probabilistic precipitation forecasts in a mountainous region assuming that the 
-response variable (the power-transformed daily precipitation sum) follows a 
-left-censored Gaussian distribution with censoring point~$0$.
 
-To assess how appropriate this distributional assumption is we test the robustness
-of the results with respect to two questions: (1)~Are the tails of the distribution
-captured appropriately by a Gaussian distribution or are \emph{heavier tails} required?
+This supplement extends the case study presented in Section~3.4 of the main
+manuscript by carrying out the same evaluation at 15~stations using two
+alternative response distributions for the power-transformed daily precipitation
+sums.
+
+
+To assess how appropriate the distributional assumption (left-censored Gaussian distribution
+with censoring point zerol; or zero-censored for short) is, two questions are considered:
+(1)~Are the tails of the distribution captured appropriately by a Gaussian distribution or
+are \emph{heavier tails} required?
 (2)~Is the point mass at zero (= no rain) driven by the same determinants as the
 positive observations (= rain) or should this be captured by a \emph{separate parameter}?
-For (1) we compare the censored Gaussian with a \emph{censored logistic} distribution and
-for (2) a Gaussian \emph{hurdle model} (or two-part model) is employed instead of the
-censored Gaussian.
+For (1) we compare the zero-censored Gaussian with a \emph{zero-censored logistic} distribution and
+for (2) a Gaussian \emph{hurdle model} (or two-part model with binary and zero-truncated parts)
+is employed instead of the zero-censored Gaussian.
 
-To compare the performance of the distributional forest to other commonly used
-methods the exact same models as in the paper are evaluated on the same data set 
-and applying the same settings while only the distribution is exchanged. Further 
-details on the models can be found in Section~3.2. of the paper. In particular, 
-Table~2 gives an overview over the models and their specifications. As a brief 
-reminder the approaches are summarized below.
-
+Just as in the main manuscript the performance of the distributional forest is also
+compared with other commonly-used distributional regression models using the same
+data set. Table~2 of the manuscript provides
+an overview of all models considered and their specifications. As a reminder
+the approaches are briefly summarized below.
+%
 \begin{itemize}
 
-\item \emph{Distributional forest:} All predictor variables are considered for 
-learning a forest where subsampling is employed for each tree. Parameters are 
-estimated by adaptive local likelihood based on forest weights.
+\item \emph{Distributional forest:} All predictor variables are
+considered for learning a forest where subsampling is employed 
+for each tree. Parameters are estimated by
+adaptive local likelihood based on forest weights.
 
 \item \emph{EMOS} \citep{Gneiting+Raftery+Westveld:2005}: 
-Standard ensemble model output statistics models use the ensemble 
+Ensemble model output statistics uses the ensemble 
 mean of total precipitation as regressor in the location submodel 
 and the corresponding ensemble standard deviation in the scale submodel.
 The parameters are estimated by maximum likelihood.
@@ -91,22 +99,22 @@ The parameters are estimated by maximum likelihood.
 \item \emph{Prespecified GAMLSS:} Smooth additive splines are selected for
 the most relevant predictors based on meteorological expert knowledge
 following \cite{Stauffer+Umlauf+Messner:2017}. The model is estimated by maximum
-penalized likelihood using a backfitting algorithm (\cite{Stasinopoulos+Rigby:2007}).
+penalized likelihood using a backfitting algorithm \citep{Stasinopoulos+Rigby:2007}.
 
 \item \emph{Boosted GAMLSS:} Smooth additive splines are selected
 automatically from all available variables, using non-cyclic boosting
-for parameter estimation (\cite{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}).
-The optimal stopping point for the iteration is evaluated based on 
+for parameter estimation \citep{Hofner+Mayr+Schmid:2016, Messner+Mayr+Zeileis:2017}.
+The optimal stopping point for the iterations is determined based on 
 a (computationally intensive) out-of-bag bootstrap estimate of the log-likelihood.
 
 \end{itemize}
 
 
-\section{Distributions applied / Distributional approaches}
+\section{Alternative response distributions}
 
-The distribution applied in the paper is based on a Gaussian distribution 
-for which the probability density function $f$ and the distribution 
-function $F$ are defined by
+The main manuscript employes a Gaussian distribution with probability
+density function $f$ (PDF) and cumulative distribution function $F$ (CDF)
+given by
 %
 \begin{align}
 f_{\mathrm{Gaussian}}(Y; \mu, \sigma) &= 
@@ -114,12 +122,11 @@ f_{\mathrm{Gaussian}}(Y; \mu, \sigma) &=
 F_{\mathrm{Gaussian}}(Y; \mu, \sigma) &=
 \Phi\left(\frac{Y-\mu}{\sigma}\right)
 \end{align}
-where $\phi$ and $\Phi$ are the probability density function and the 
-distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
+where $\phi$ and $\Phi$ are the PDF and the CDF of the standard normal
+distribution $\mathcal{N}(0,1)$. 
 
-Alternatively one could also choose a distribution with heavier tails 
-such as a logistic distribution with corresponding probability density 
-function and distribution function
+An alternative distribution with several similar properties but with
+heavier tails is the logistic distribution. The PDF and CDF are given by
 %
 \begin{align}
 f_{\mathrm{logistic}}(Y; \mu, \sigma) &= 
@@ -129,24 +136,15 @@ F_{\mathrm{logistic}}(Y; \mu, \sigma) &=
 \frac{1}{1+ \exp{\left(-\frac{Y - \mu}{\sigma}\right)}}.
 \end{align}
 %
-Both distributions have to be adapted in our application to capture that
+Both distributions have to be adapted in our case study to accomodate that
 precipitation is non-negative with a point mass at zero (= no rain).
 Two common strategies for this are to employ either \emph{left-censoring at zero}
 or a \emph{hurdle} (or two-part) approach, combining a binary (zero vs.\ greater) and
-a truncated (positive) part \citep[see][for an overview]{Winkelmann:2006}.
+a truncated (positive) part \citep[see][for an overview of both techniques]{Winkelmann:2006}.
 \begin{itemize}
-\item Censored distribution \citep{Winkelmann:2006}: 
-%In general, censoring data usually leads 
-%to a point mass at the censoring point which has to be considered in 
-%the modeling process. Therefore, censored distributions are applied as 
-%they are able to capture this point mass. 
-%In precipitation data, observations can not be negative, thus, left-censoring
-%it at zero does not change the data. However, there is a naturally given
-%point mass at zero (days without rain) making a censored distribution an 
-%appropriate choice to model precipitation data.
-For a chosen distribution with probability density function $f$ and
-distribution function $F$ the log-likelihood function of the corresponding 
-censored distribution is
+\item \emph{Censored distribution:}
+For a chosen distribution with PDF $f$ and CDF $F$ the log-likelihood function of the corresponding 
+zero-censored distribution is
 %
 \begin{equation}
 \ell_{\mathrm{cens}}(\mu, \sigma; Y) = 
@@ -156,17 +154,17 @@ censored distribution is
 \end{cases}
 \end{equation}
 %
-as seen in Equation~2.1.1. of the paper for a Gaussian distribution.
-For positive values of $Y$ the censored version of the density function
+as stated in Equation~2.1.1 of the main manuscript for the Gaussian special case.
+For positive values of $Y$ the censored version of the PDF
 equals the original non-censored version. For $Y=0$ the censored density
 function takes the values of the probability mass lying left of the 
 censoring point. Therefore, the parameters $\mu$ and $\sigma$ control
-both parts, the point mass and the positive part of the distribution.
+both aspects, the point mass and the positive part of the distribution.
 
-\item Hurdle model / Two-part model (\cite{Cragg:1971}, \cite{Mullahy:1986}): 
+\item \emph{Hurdle model \citep[or two-part model,][]{Cragg:1971,Mullahy:1986}:}
 An additional parameter $\nu$ describing the probability that there is 
 any precipitation at all, i.e. $\nu = \mathbb{P}(Y>0)$, is included in the model.
-The three-parametric log-likelihood function for the full hurdle model 
+The three-parameter log-likelihood function for the full hurdle model 
 with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
 \begin{equation} \label{eq:hurdle}
 \ell_{\mathrm{hurdle}}(\mu, \sigma, \nu; Y) = 
@@ -175,11 +173,12 @@ with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
 \log(1 - \nu), & \text{if } Y = 0.
 \end{cases}
 \end{equation}
-For $Y=0$ the probability that it won't rain is expressed by $1-\nu$. 
+For $Y=0$ the probability for no rain is expressed by $1-\nu$. 
 For $Y>0$ the probability that it will rain $\nu$ is multiplied with the 
-left-truncated at zero density function. Contrary to the censored model, 
-here it is only the parameter $\nu$ controlling the point mass while $\mu$ 
-and $\sigma$ only influence the distribution of the positive observations.
+left-truncated at zero density function. In contrast to the censored model, 
+there is thus a dedicated parameter $\nu$ controlling the point mass while 
+the other parameters $\mu$ and $\sigma$ only influence the distribution of
+the positive observations.
 
 \end{itemize}
 
