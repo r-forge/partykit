@@ -464,12 +464,16 @@ abline(h = 0, col = pal[5], lwd = 2)
 @
 \caption{\label{fig:box_crpss_gaussian} CRPS skill score (higher = better)
 for hurdle Gaussian and censored logistic distributions in reference to the
-censored Gaussian distribution. Lines correspond to the 15 stations and are
+censored Gaussian distribution (orange horizontal line). Gray lines correspond to the 15~stations and are
 aggregated in the boxplot. The y-axis range is limited
 to $-10$\%, lower values for the two GAMLSS models are not displayed.}
 \end{figure}
 
+\subsubsection*{FIXME: FURTHER GRAPHICS?}
 
+\emph{The same data already shown in Figures~\ref{fig:lattice} and~\ref{fig:box_crpss_gaussian}
+can be displayed in further ways. However, these do not really add much and hence should probably
+be omitted.}
 
 Figures~\ref{fig:box_crpss_EMOS} and \ref{fig:box_crps} compare the methods separately 
 for each distribution, once based on CRPS skill score values with reference model EMOS 
@@ -483,7 +487,7 @@ are also reasonable alternatives. However, they do not lead to an overall improv
 performance for this application.
 
 
-\begin{figure}
+\begin{figure}[t!]
 \setkeys{Gin}{width=0.99\textwidth}
 <<results_box_crpss_EMOS, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
 # crps skill score by method (reference: EMOS)
@@ -593,8 +597,7 @@ EMOS is chosen as reference model.}
 \end{figure}
 
 
-
-\begin{figure}
+\begin{figure}[t!]
 \setkeys{Gin}{width=0.99\textwidth}
 <<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
 
@@ -691,19 +694,34 @@ separated by method and distribution.}
 \end{figure}
 
 
-As explained above, the parameter $\nu$ is modeled separately from $\mu$ and $\sigma$ 
-in the GAMLSS framework which is why two separate models can be built. For the forest model
-an alternative approach would be to build just one model employing the three-parametric
-distribution family. However, testing both versions of the forest model in this application 
-study shows that they both perform almost equally. Figure~\ref{fig:box_crpss_forests} shows
-the CRPS skill score of the three-parametric forest model over the considered 15 observation
-stations with the two-part forest model as reference. Even though this alternative version
-of the forest model seems to perform better on average, according to the median this 
-improvement is not even one percent, hence neglectably small. Therefore, the two forest 
-versions can be stated to perform almost equally well.
+\section{Discussion}
 
-\begin{figure}
-\center
+The comparison of the zero-censored Gaussian models from the main manuscript with the
+alternative distributional specifications in this supplement reveals that a Gaussian hurdle
+may lead to small improvements. However, especially for EMOS and the boosted GAMLSS model
+the outcome is also considerably more variable. Therefore, overall there is no convincing
+enough improvement over the zero-censored Gaussian model which is therefore the focus of
+the main manuscript. Also, the distributional forest appears to be more robust against
+distributional (mis-)specifications compared to the other models.
+
+As a final consideration, we briefly remark that the distributional forest also allows
+for a different hurdle model specification. Previously, we argued that for GAMLSS/EMOS
+the log-likelihood of the hurdle model can be separated additively and hence the maximum
+likelihood fit can be obtained by fitting two separate models for $\nu$ on one hand and
+$\mu$ and $\sigma$ on the other. And therefore the same two-part approach was also adopted
+for the distributional forests. However, an additional alternative is to fit a single
+distributional forest based on the three-parameter log-likelihood from Equation~\ref{eq:hurdle}.
+When all three parameters change simultaneously across the covariates, then this specification
+can be expected to perform somewhat better. Whereas when different variables/effects drive
+the parameters of the model, then the two-part approach implemented in this supplement
+should perform somewhat better. In this particular case study, though, neither approach
+performs clearly better as Figure~\ref{fig:box_crpss_forests} reveals. The figure depicts
+CRPS skill scores for the 15~stations of the one-part hurdle models with the two-part
+hurdle model as the reference. Clearly, both hurdle specifications perform very
+similarly with skill scores being mostly below 1\%.
+
+\begin{figure}[t!]
+\centering
 \setkeys{Gin}{width=0.5\textwidth}
 <<compare_forests, fig=TRUE, results=hide, echo=FALSE, width=4, height=4>>=
 load("crps_forests.rda")
@@ -711,15 +729,15 @@ crps_ss_forest_2p <- data.frame(1 - crps_forests[,"forest_2p"] / crps_forests[,"
 names(crps_ss_forest_2p) <- "Three-parametric forest"
 boxplot(crps_ss_forest_2p, ylab = "CRPS skill score", names = c("Three-parametric forest"))
 abline(h = 0, col = pal[5], lwd = 2)
-axis(1, 0:2, c("","Three-parametric forest", ""), las=1)
+axis(1, 0:2, c("","One-part vs. two-part hurdle forest", ""), las=1)
 @
-\caption{\label{fig:box_crpss_forests}CRPS skill score values of each of 
-the 15 observation stations for the three-parametric forest model with 
-the two-part forest model as reference model.}
+\caption{\label{fig:box_crpss_forests}CRPS skill score (higher = better) for the one-part
+hurdle distributional forest in reference to the two part hurdle distributional forest
+(orange horizontal line).
+}
 \end{figure}
 
-\newpage
-%bibliographystyle{jss}
+
 \bibliography{ref_supplement.bib}
 
 
