@@ -162,8 +162,8 @@ censoring point. Therefore, the parameters $\mu$ and $\sigma$ control
 both aspects, the point mass and the positive part of the distribution.
 
 \item \emph{Hurdle model \citep[or two-part model,][]{Cragg:1971,Mullahy:1986}:}
-An additional parameter $\nu$ describing the probability that there is 
-any precipitation at all, i.e. $\nu = \mathbb{P}(Y>0)$, is included in the model.
+An additional parameter~$\nu$ describing the probability that there is 
+any precipitation at all, i.e., $\nu = \mathbb{P}(Y>0)$, is included in the model.
 The three-parameter log-likelihood function for the full hurdle model 
 with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
 \begin{equation} \label{eq:hurdle}
@@ -173,46 +173,51 @@ with parameter vector $\bm{\theta} = (\mu, \sigma, \nu)$ is
 \log(1 - \nu), & \text{if } Y = 0.
 \end{cases}
 \end{equation}
-For $Y=0$ the probability for no rain is expressed by $1-\nu$. 
-For $Y>0$ the probability that it will rain $\nu$ is multiplied with the 
-left-truncated at zero density function. In contrast to the censored model, 
+For $Y=0$ the probability for no rain is $1-\nu$. 
+For $Y>0$ the probability $\nu$ for no rain is multiplied with the 
+PDF, left-truncated at zero. In contrast to the censored model, 
 there is thus a dedicated parameter $\nu$ controlling the point mass while 
 the other parameters $\mu$ and $\sigma$ only influence the distribution of
 the positive observations.
 
 \end{itemize}
+%
+Note that, due to the logs in the first part of Equation~\ref{eq:hurdle},
+the log-likelihood of the hurdle model can be separated additively into
+a part that depends only on $\nu$ (for all observations) and a part that
+depends on $\mu$ and $\sigma$ (for only the positive observations). Therefore,
+in a GAMLSS approach, the log-likelihood of the $\nu$ submodel can be
+maximized separately from the log-likelihood of the $\mu$ and $\sigma$
+submodels to maximize the overall log-likelihood. Hence in all GAMLSS
+models considered subsequently a binary logit model is employed for
+$Y = 0$ vs.\ $Y > 0$ and a zero-truncated Gaussian model in the case
+of $Y > 0$. Similarly, for the distributional forest two separate forests
+are employed with a binary and a zero-truncated Gaussian response,
+respectively. For comparison with the zero-censored distributions
+the combined three-parameter hurdle model as formulated in Equation~\ref{eq:hurdle}
+is employed.
 
-In the paper a left-censored at zero Gaussian distribution is chosen.
-Here, we additionally apply a left-censored at zero logistic distribution
-and a hurdle model based on a Gaussian distribution.
-
-In the log-likelihood function in Equation~\ref{eq:hurdle} properties of the
-logarithmic function can be applied to split the term for $Y>0$ 
-into two additive terms separating the parameters $\mu$ and $\sigma$
-from the additional parameter $\nu$. Therefore, $\nu$ can be modeled 
-by a separate model in the GAMLSS framework. The same approach is
-chosen for the distributional forest model in this application study.
-
-The models are compared based on the continuous ranked probability 
-score (CRPS). For the censored models the closed form following 
-\cite{Jordan:2018} is used while a numerical approximation is 
-calculated for the hurdle models.
+All models are evaluated using the continuous ranked probability 
+score (CRPS). For the censored models the closed form formulas provided by
+\cite{Jordan:2018} are used while a numerical approximation is 
+employed for the hurdle models.
 
 
 
 \section{Stations}
-Out of the 95 observation stations 15 are considered for this benchmark 
-study (see Figure~\ref{fig:map}). 
-They have been selected based on the region they are in, their altitude 
-and the performance of the different models in the application in the 
-paper such that all of these features are represented equally.
+
+Out of the 95~observation stations 15 are considered for this 
+supplemental study (see Figure~\ref{fig:map}). They have been selected to cover a wide range regarding
+geographical location, altitude, and which of the competing models performed
+best in the single-split setting reported in Section~3.4 of the main manuscript.
 
 Selected stations: Axams, Lech, Zuers, See im Paznaun, Jungholz, Ladis-Neuegg, 
 Oetz, Ochsengarten-Obergut, Ginzling, Rotholz, Walchsee, Koessen, 
-Innervillgraten, Matrei in Osttirol, St.Johann im Walde.
+Innervillgraten, Matrei in Osttirol, St.~Johann im Walde. See also Supplement~2
+(``Stationwise Evaluation'') for more details.
 
-\begin{figure}[h]
-\vspace*{-3cm}
+\begin{figure}[t!]
+\vspace*{-3.8cm}
 \setkeys{Gin}{width=0.99\textwidth}
 <<map_stationwise, fig=TRUE, echo=FALSE>>=
 ##  map
@@ -244,51 +249,47 @@ text(sp[c(5, 23, 56),],
      labels = StationsTyrol$name[c(5, 23, 56)],
      pos=4, cex=0.75)
 @
-\vspace*{-3.5cm}
+\vspace*{-3.8cm}
 \caption{\label{fig:map}Map of Tyrol with all 95 observation stations and 
 the 15 considered stations highlighted in pink.}
 \end{figure}
 
 
-
+\pagebreak
 
 \section{Results}
-In Figure~\ref{fig:lattice} each panel belongs to one of the 15 observation stations. 
-The three distributions \textit{gaussian} (left-censored at zero Gaussian distribution), 
-\textit{hgaussian} (hurdle model based on the Gaussian distribution) and 
-\textit{logistic} (left-censored at zero logistic distribution) are compared based 
-on the resulting CRPS values for each of the four applied methods that are represented 
-by different colors and symbols. 
-Overall, the forest model performs almost equally well for all three distributions. 
-Therefore it seems to be very robust against missspecifications of the distribution.
-For the two GAMLSS models the censored Gaussian and the hurdle model perform similarly 
-at most of the stations while applying the censored logistic distribution leads to an 
-increase in CRPS, i.e. to a decline in performance, especially for the prespecified 
-GAMLSS (for example at stations Zuers and Jungholz).
-For the EMOS model exchanging the distribution does not have a strong effect on its 
-performance, similar to the forest model.
-All in all, exchanging the underlying distribution does not lead to clear 
-improvements of any of the methods, especially the censored Gaussian and the 
-hurdle model achieve almost the same results. However, the robustness against 
-missspecification of the distribution varies slightly over stations. For example 
-at station Matrei in Osttirol all methods seem to be very stable while stronger 
-influences can be seen at station Jungholz.
 
-\textit{Note:} When applying a hurdle model for the stations Oetz and 
-Innvervillgraten the prespecified GAMLSS computationally failed to build/fit 
-a model. Therefore this method is not represented in the corresponding panels 
-of Figure~\ref{fig:lattice} for these two cases.
+\subsubsection*{CRPS for all distributions by model and station}
 
-In Figure~\ref{fig:box_crpss_gaussian} the tested distributions are compared 
-for each method based on CRPS skill score with the censored Gaussian distribution 
-as reference represented by the horizontal line at zero. Again, the forest model 
-and the EMOS show only slight variations (on average not even one percent) over different 
-distributions while the two GAMLSS models perform even or slightly better applying 
-a hurdle model and loose strength when employing a logistic distribution compared 
-to a Gaussian distribution.
+Each panel of Figure~\ref{fig:lattice} compares the CRPS across the three distributions
+considered: \textit{cgaussian} (zero-censored Gaussian), \textit{hgaussian} (Gaussian hurdle model),
+and \textit{clogistic} (zero-censored logistic). The four different models considered
+are coded by both colors and symbols and connected by lines for easier comparison between
+models. As the average CRPS (i.e., the difficulty of the prediction problem) varies
+substantially by station, separate panels are employed for each station.
+%
+\begin{itemize}
 
+\item For the distributional forest all three distributions perform very similarly for all
+stations. Thus, it appears to be very robust against missspecifications of the distribution.
 
-\begin{figure}
+\item Similarly, for the EMOS model all distributions lead to comparable CRPS for all
+stations. However, there is some more variation in CRPS across distributions compared to
+the distributional forest.
+
+\item In contrast, the two GAMLSS models typically perform better (i.e., have lower CRPS) for
+the Gaussian distributions compared to the logistic distribution. The preference of
+censored vs.\ hurdle specification is not unanimous across stations.
+
+\end{itemize}
+%
+\textit{Note:} When applying the hurdle model at stations Oetz and 
+Innvervillgraten the prespecified GAMLSS could not be estimated (using the \proglang{R}
+package \pkg{gamlss}) due to numerical issues in the fitting algorithm.
+Therefore, this method is not represented in the two corresponding panels 
+of Figure~\ref{fig:lattice}.
+
+\begin{figure}[p!]
 \setkeys{Gin}{width=0.99\textwidth}
 <<results_lattice, fig=TRUE, echo=FALSE, results=hide, height=10, width=8>>=
 library("lattice")
@@ -297,12 +298,14 @@ library("lattice")
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 load("Rain_distributions.rda")
+levels(results$means$distribution) <- c("cgaussian", "hgaussian", "clogistic")
+levels(results$means$station)[16] <- "St. Johann im Walde"
+
 stations <- c("Axams", "Lech", "Zuers", "See im Paznaun", "Jungholz", 
               "Ladis-Neuegg", "Oetz", "Ochsengarten-Obergut",
               "Ginzling", "Rotholz", "Walchsee", "Koessen", 
               "Innervillgraten", "Matrei in Osttirol", 
-              "St.Johann im Walde")
-
+              "St. Johann im Walde")
 
 means <- results$means[(results$means$method != "disttree") & 
                          results$means$station %in% stations, ]
@@ -342,48 +345,71 @@ xyplot(crps ~ distribution | station, groups = ~ method,
        drop.unused.levels = TRUE, layout = c(3,5),
        as.table = TRUE, ylab = "CRPS", xlab = "Distribution")
 @
-\caption{\label{fig:lattice}CRPS values of all four methods, once applied with 
-each of the three distributions for each of the 15 observation stations.}
+\caption{\label{fig:lattice}CRPS values (lower = better) across the three
+distributions for all four models and 15~stations.}
 \end{figure}
 
+\subsubsection*{CRPS skill score in reference to zero-censored Gaussian}
 
-\begin{figure}
+To aggregate the CRPS results across stations, CRPS skill scores are visualized
+with boxplots in Figure~\ref{fig:box_crpss_gaussian}, using the zero-censored Gaussian distribution
+as the reference distribution (orange horizontal line at zero). The underlying skill
+scores for each station are also included in the graphic by gray lines.
+%
+\begin{itemize}
+
+\item As before, there are only slight variations for the distributional forest, mostly
+  between $\pm 1$\%. While the median CRPS skill score over the 15 stations for the 
+  Gaussian hurdle model is slightly better than for the simpler zero-censored Gaussian
+  model, this advantage is very small and not systematic across stations.
+  
+\item For EMOS, the median skill score for both Gaussian hurdle and zero-censored logistic
+  are very close to the zero-censored Gaussian reference. However, the variation for the
+  hurdle model is much higher than for the censored model.
+  
+\item For the two GAMLSS models the Gaussian hurdle is quite close to the zero-censored
+  Gaussian reference, while the zero-censored logistic clearly performs worse (especially
+  in the prespecified GAMLSS).
+
+\end{itemize}
+
+\begin{figure}[t!]
 \setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crpss_gaussian, fig=TRUE, echo=FALSE, height=3, width=7>>=
+<<results_box_crpss_gaussian, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
 # crps skill score by distribution (reference: gaussian)
 means$crps_ss_dist <- means$crps
-means$crps_ss_dist[means$distribution == "gaussian"] <- 
-  1 - means$crps[means$distribution == "gaussian"] / means$crps[means$distribution == "gaussian"]
-means$crps_ss_dist[means$distribution == "logistic"] <- 
-  1 - means$crps[means$distribution == "logistic"] / means$crps[means$distribution == "gaussian"]
+means$crps_ss_dist[means$distribution == "cgaussian"] <- 
+  1 - means$crps[means$distribution == "cgaussian"] / means$crps[means$distribution == "cgaussian"]
+means$crps_ss_dist[means$distribution == "clogistic"] <- 
+  1 - means$crps[means$distribution == "clogistic"] / means$crps[means$distribution == "cgaussian"]
 means$crps_ss_dist[means$distribution == "hgaussian"] <- 
-  1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "gaussian"]
+  1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "cgaussian"]
 
-means_sel <- means[means$distribution %in% c("logistic", "hgaussian"),]
+means_sel <- means[means$distribution %in% c("clogistic", "hgaussian"),]
 means_sel$distribution <- factor(means_sel$distribution, 
                                  levels(means_sel$distribution)[c(2:3)])
 
 # CRPS skill score for distributional forest
 s_df <- matrix(ncol = 2, nrow = 15)
 s_df[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-s_df[,2] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "logistic", "crps_ss_dist"]
+s_df[,2] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "clogistic", "crps_ss_dist"]
 
 # CRPS skill score for prespecified GAMLSS
 s_g <- matrix(ncol = 2, nrow = 15)
 s_g[,1] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-s_g[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+s_g[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
 
 # CRPS skill score for boosted GAMLSS
 s_gb <- matrix(ncol = 2, nrow = 15)
 s_gb[,1] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-s_gb[,2] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+s_gb[,2] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
 
 # CRPS skill score for EMOS
 s_emos <- matrix(ncol = 2, nrow = 15)
 s_emos[,1] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-s_emos[,2] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+s_emos[,2] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
 
-colnames(s_df) <- colnames(s_g) <- colnames(s_gb) <- colnames(s_emos) <- c("hgaussian", "logistic")
+colnames(s_df) <- colnames(s_g) <- colnames(s_gb) <- colnames(s_emos) <- c("hgaussian", "clogistic")
 
 
 # boxplots with matplot
@@ -436,10 +462,14 @@ abline(h = 0, col = pal[5], lwd = 2)
 #        ylim = c(-0.12,0.07), las = 2)
 #abline(h = 0, col = pal[5], lwd = 2)
 @
-\caption{\label{fig:box_crpss_gaussian} CRPS skill score values of each of 
-the 15 observation stations, separated by method and distribution. Left-censored 
-at zero Gaussian is chosen as reference distribution.}
+\caption{\label{fig:box_crpss_gaussian} CRPS skill score (higher = better)
+for hurdle Gaussian and censored logistic distributions in reference to the
+censored Gaussian distribution. Lines correspond to the 15 stations and are
+aggregated in the boxplot. The y-axis range is limited
+to $-10$\%, lower values for the two GAMLSS models are not displayed.}
 \end{figure}
+
+
 
 Figures~\ref{fig:box_crpss_EMOS} and \ref{fig:box_crps} compare the methods separately 
 for each distribution, once based on CRPS skill score values with reference model EMOS 
@@ -455,7 +485,7 @@ performance for this application.
 
 \begin{figure}
 \setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crpss_EMOS, fig=TRUE, echo=FALSE, height=3, width=7>>=
+<<results_box_crpss_EMOS, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
 # crps skill score by method (reference: EMOS)
 means$crps_ss_method <- means$crps
 means$crps_ss_method[means$method == "Distributional forest"] <- 
@@ -474,9 +504,9 @@ means_sel$method <- factor(means_sel$method, levels(means_sel$method)[c(1:3)])
 
 # CRPS skill score for gaussian
 s_gaussian <- matrix(ncol = 3, nrow = 15)
-s_gaussian[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "gaussian", "crps_ss_method"]
-s_gaussian[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "gaussian", "crps_ss_method"]
-s_gaussian[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "gaussian", "crps_ss_method"]
+s_gaussian[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "cgaussian", "crps_ss_method"]
+s_gaussian[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "cgaussian", "crps_ss_method"]
+s_gaussian[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "cgaussian", "crps_ss_method"]
 
 # CRPS skill score for boosted hgaussian
 s_hgaussian <- matrix(ncol = 3, nrow = 15)
@@ -486,9 +516,9 @@ s_hgaussian[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$di
 
 # CRPS skill score for prespecified logistic
 s_logistic <- matrix(ncol = 3, nrow = 15)
-s_logistic[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "logistic", "crps_ss_method"]
-s_logistic[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "logistic", "crps_ss_method"]
-s_logistic[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "logistic", "crps_ss_method"]
+s_logistic[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "clogistic", "crps_ss_method"]
+s_logistic[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_method"]
+s_logistic[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_method"]
 
 colnames(s_gaussian) <- colnames(s_hgaussian) <- colnames(s_logistic) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
 
@@ -496,12 +526,12 @@ colnames(s_gaussian) <- colnames(s_hgaussian) <- colnames(s_logistic) <- c("Dist
 par(mfrow = c(1,3), mar = c(5,4,3,0))
 matplot(t(s_gaussian[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
-        lty = 1, axes = FALSE,  main = "gaussian", ylim = c(-0.12,0.23), 
+        lty = 1, axes = FALSE,  main = "cgaussian", ylim = c(-0.12,0.23), 
         xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 3.5))
 boxplot(s_gaussian, add = TRUE, col = "transparent", axes = FALSE)
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_method~method, data = means_sel, 
-#        subset = (distribution == "gaussian"), main = "gaussian",
+#        subset = (distribution == "cgaussian"), main = "cgaussian",
 #        ylim = c(-0.12,0.23), axes = FALSE, ylab = "CRPS skill score")
 axis(1, 0:4, c("",
                "Distr.
@@ -538,12 +568,12 @@ axis(4, seq(-0.15, 0.25, 0.05), lwd.ticks = 0, labels = FALSE)
 par(mar = c(5,0,3,4))
 matplot(t(s_logistic[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
-        lty = 1, axes = FALSE,  main = "logistic", ylim = c(-0.12,0.23), 
+        lty = 1, axes = FALSE,  main = "clogistic", ylim = c(-0.12,0.23), 
         xlab = "", ylab = "", xlim = c(0.5, 3.5))
 boxplot(s_logistic, add = TRUE, col = "transparent", axes = FALSE)
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_method~method, data = means_sel, 
-#        subset = (distribution == "logistic"), main = "logistic",
+#        subset = (distribution == "clogistic"), main = "clogistic",
 #        ylim = c(-0.12,0.23), axes = FALSE)
 axis(2, seq(-0.15, 0.25, 0.05), lwd.ticks = 0, labels = FALSE)
 axis(1, 0:4, c("",
@@ -566,14 +596,14 @@ EMOS is chosen as reference model.}
 
 \begin{figure}
 \setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7>>=
+<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
 
 # CRPS for gaussian
 c_gaussian <- matrix(ncol = 4, nrow = 15)
-c_gaussian[,1] <- means[means$method == "Distributional forest" & means$distribution == "gaussian", "crps"]
-c_gaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "gaussian", "crps"]
-c_gaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "gaussian", "crps"]
-c_gaussian[,4] <- means[means$method == "EMOS" & means$distribution == "gaussian", "crps"]
+c_gaussian[,1] <- means[means$method == "Distributional forest" & means$distribution == "cgaussian", "crps"]
+c_gaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "cgaussian", "crps"]
+c_gaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "cgaussian", "crps"]
+c_gaussian[,4] <- means[means$method == "EMOS" & means$distribution == "cgaussian", "crps"]
 
 # CRPS for hgaussian
 c_hgaussian <- matrix(ncol = 4, nrow = 15)
@@ -584,10 +614,10 @@ c_hgaussian[,4] <- means[means$method == "EMOS" & means$distribution == "hgaussi
 
 # CRPS for logistic
 c_logistic <- matrix(ncol = 4, nrow = 15)
-c_logistic[,1] <- means[means$method == "Distributional forest" & means$distribution == "logistic", "crps"]
-c_logistic[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "logistic", "crps"]
-c_logistic[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "logistic", "crps"]
-c_logistic[,4] <- means[means$method == "EMOS" & means$distribution == "logistic", "crps"]
+c_logistic[,1] <- means[means$method == "Distributional forest" & means$distribution == "clogistic", "crps"]
+c_logistic[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "clogistic", "crps"]
+c_logistic[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "clogistic", "crps"]
+c_logistic[,4] <- means[means$method == "EMOS" & means$distribution == "clogistic", "crps"]
 
 colnames(c_gaussian) <- colnames(c_hgaussian) <- colnames(c_logistic) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS")
 
@@ -595,11 +625,11 @@ colnames(c_gaussian) <- colnames(c_hgaussian) <- colnames(c_logistic) <- c("Dist
 par(mfrow = c(1,3), mar = c(5,4,3,0))
 matplot(t(c_gaussian[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
-        lty = 1, axes = FALSE,  main = "gaussian", 
+        lty = 1, axes = FALSE,  main = "cgaussian", 
         xlab = "", ylab = "CRPS", xlim = c(0.5, 4.5),
         ylim = c(0.65,1.15))
 boxplot(c_gaussian, add = TRUE, col = "transparent", axes = FALSE)
-#boxplot(crps~method, data = means, subset = distribution == "gaussian", main = "gaussian",
+#boxplot(crps~method, data = means, subset = distribution == "cgaussian", main = "cgaussian",
 #        ylim = c(0.65,1.15), axes = FALSE, ylab = "CRPS")
 axis(2, seq(0.6, 1.2, 0.1), seq(0.6, 1.2, 0.1), las = 0)
 axis(1, 0:5, c("",
@@ -637,11 +667,11 @@ axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
 par(mar = c(5,0,3,4))
 matplot(t(c_logistic[,]), type = "l", lwd = 2, 
         col = gray(0.5, alpha = 0.2),
-        lty = 1, axes = FALSE,  main = "logistic", 
+        lty = 1, axes = FALSE,  main = "clogistic", 
         xlab = "", ylab = "CRPS", xlim = c(0.5, 4.5),
         ylim = c(0.65,1.15))
 boxplot(c_logistic, add = TRUE, col = "transparent", axes = FALSE)
-#boxplot(crps~method, data = means, subset = distribution == "logistic", main = "logistic",
+#boxplot(crps~method, data = means, subset = distribution == "clogistic", main = "clogistic",
 #        ylim = c(0.65,1.15), las = 2, axes = FALSE)
 axis(2, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
 axis(1, 0:5, c("",

@@ -75,7 +75,7 @@ for each tree. Parameters are estimated by
 adaptive local likelihood based on forest weights.
 
 \item \emph{EMOS} \citep{Gneiting+Raftery+Westveld:2005}: 
-Standard ensemble model output statistics uses the ensemble 
+Ensemble model output statistics uses the ensemble 
 mean of total precipitation as regressor in the location submodel 
 and the corresponding ensemble standard deviation in the scale submodel.
 The parameters are estimated by maximum likelihood.
