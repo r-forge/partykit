@@ -664,7 +664,7 @@ text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
 \caption{\label{fig:axams-dist}\hl{Total precipitation predictions by a distributional forest
 at station Axams for July 24 in 2009, 2010, 2011 and 2012 learned on data from 1985--2008.
-Observations are left-censored at 0. The corresponding predicted point mass is shown at the censoring point (0).}}
+Observations are modelled by a left-censored at 0 distribution. The corresponding predicted point mass is shown at the censoring point (0).}}
 \end{figure}
 
 In weather forecasting, these properties are especially appealing in 
@@ -1297,7 +1297,7 @@ boxplot(1 - crps_cross[,c(2,3,4)] / crps_cross[,6], ylim = c(-0.005, 0.065),
 abline(h = 0, col = pal[5], lwd = 2)
 @
 \caption{\label{fig:axams-crps}CRPS skill score from the 10 times 
-7-fold cross validation at station Axams (1985--2012). The horizontal orange 
+7-fold cross-validation at station Axams (1985--2012). The horizontal orange 
 line pertains to the reference model EMOS.}
 \end{figure}
 
@@ -1675,7 +1675,9 @@ variable $Z_l$.
 After Bonferroni-adjusting the $p$-values it has to be assessed whether
 any of the resulting $p$-values is beneath the selected significance level. 
 If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
-is chosen as splitting variable. \hl{Otherwise no further split is made is in this node.}
+is chosen as splitting variable. \hl{Otherwise no further split is made 
+in this node as the stopping criterion of no $p$-values being below the 
+significance level is fulfilled.}
 
 The breakpoint that leads to the highest discrepancy between score functions 
 in the two resulting subgroups is selected as split point. 
