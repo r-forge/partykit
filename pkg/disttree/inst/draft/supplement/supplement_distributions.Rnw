@@ -68,7 +68,7 @@ sums.
 
 
 To assess how appropriate the distributional assumption (left-censored Gaussian distribution
-with censoring point zerol; or zero-censored for short) is, two questions are considered:
+with censoring point zero; or zero-censored for short) is, two questions are considered:
 (1)~Are the tails of the distribution captured appropriately by a Gaussian distribution or
 are \emph{heavier tails} required?
 (2)~Is the point mass at zero (= no rain) driven by the same determinants as the
@@ -79,9 +79,10 @@ is employed instead of the zero-censored Gaussian.
 
 Just as in the main manuscript the performance of the distributional forest is also
 compared with other commonly-used distributional regression models using the same
-data set. Table~2 of the manuscript provides
-an overview of all models considered and their specifications. As a reminder
-the approaches are briefly summarized below.
+data set. The models are learned on data from the first 24 years (1985--2008) and 
+evaluated on the following 4 years (2009--2012). Table~2 of the manuscript provides 
+an overview of all models considered and their specifications. As a reminder the 
+approaches are briefly summarized below.
 %
 \begin{itemize}
 
