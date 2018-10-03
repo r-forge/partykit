@@ -109,35 +109,22 @@ Is it obvious how to define the specific stopping criterion and
 if not, can general guidelines for doing so be provided?
 \end{review}
 
-It is difficult to set a minimal size of the learning data for
-the method to be effective, however, the distributional forest
-performed quite well in different applications with at least
-50 observations. 
-The stopping criteria that are based on the number of 
-observations in a node need to be adapted to the size of the
-learning data, especially if the data set is small.
-For example, in the application presented in this paper the 
-learning data consists of 744 observations and each tree is built
-on a subsample of around 470 observations (63.2 percent, as 
-this is the mean fraction for N-out-of-N bootstrapping with 
-replacement and therefore commonly used for subsampling
-in forest models). 
-The stopping criteria are set such that no split will be performed 
-if there are either less than 50 observations 
-in the considered node or if there were less than 20 observations in 
-one of the resulting subgroups of the considered possible split.
-(This information is now also added in Section~3.2., 'Distributional forest').
-Generally, these values (and also the significance level for
-the statistical tests in the tree algorithm) should be kept 
-rather low for a forest model as it is desirable to grow very 
-large trees. Therefore, each of the trees in the forest will 
-most likely overfit the subsample it is learned on, however, this 
-is evened out by combining them to a forest model (with an adequate 
-number of trees). For that reason, setting the stopping criteria too 
-low does not lead to a decrease in goodness of fit, however, the 
-computational costs might increase, especially for large data sets. 
-On the other hand, if they are too high, splits might not be detected 
+The required size of the training data depends heavily on the complexity 
+of the model, however, in different applications which we have tested the 
+distributional forest on it performed quite well with at least 50 observations. 
+Generally, the stopping criteria \texttt{minbucket} and \texttt{minsplit} (both 
+determining the minimal number of observations in a node) and \texttt{alpha} 
+(the significance level for the statistical tests in the tree algorithm) should 
+be kept rather low for a forest model as it is desirable to grow very large trees. 
+(FIX ME: reference?)
+Therefore, each of the trees in the forest will most likely overfit the subsample 
+it is learned on, however, this is evened out by combining them to a forest 
+model (with an adequate number of trees). (FIX ME: reference?) 
+For that reason, setting the stopping criteria too low does not lead to a decrease 
+in goodness of fit, however, the computational costs might increase, especially for 
+large data sets. On the other hand, if they are too high, splits might not be detected 
 such that the corresponding effects are not captured by the model.
+
 
 \textit{FIX ME: too long?}
 
@@ -193,15 +180,9 @@ Wo baut man das am besten ein?
 p7: What is meant by 'domain knowledge'?
 \end{review}
 
-With `domain knowledge' we are referring to expert knowledge 
-in the field of the considered application. 
-If variable selection and further model specifications have 
-to be made in advance this additional knowledge is required 
-in order to make reasonable decisions.
+We have rephrased this as 'expert knowledge in the application domain'
+in Section~2.2..
 
-\begin{reto}
-Im paper entsprechend adressieren (tbd).
-\end{reto}
 
 \begin{review}
 p14: Was there any particular rationale for choosing Axams 
@@ -222,7 +203,10 @@ Fig. 4: Are these the plots for residuals of precipitation
 at the original or at the transformed scale?
 \end{review}
 
-These are the residuals of precipitation on the transformed scale.
+The residual QQ plots (Dunn et al. 1996) illustrate the probability 
+integral transform (PIT, Gneiting et al. 2007) values of the observations 
+in the testing data and are therefore scale invariant. A more detailed 
+explanation can be found in Supplement 2 (Stationwise Evaluation).
 
 \begin{review}
 p17: Is there any explanation why the prespecified GAMLSS 
@@ -316,19 +300,10 @@ left-censored (which may let think that they could be negative).
 Please change into \textit{Observations are truncated at 0}
 \end{review}
 
-You are right, the observations can not be negative and are 
-therefore left-truncated at 0 and not left-censored (we have adapted 
-this in the caption of Figure~3). However, due to days without 
-rain there is a naturally given point mass at zero in precipitation 
-data, similar to the point mass that results from censoring 
-possibly negative data.
-Thus, we use the concept of \textit{censoring} which allows us to directly
-account for the large fraction of observations at zero and the non-negative
-part of the observations at once.
-The online supplement which comes along with our manuscript includes the
-results for a hurdle model where the occurrence of precipitation is addressed
-using a binary model while the non-negative part is
-modeled by a \textit{truncated} Gaussian distribution.
+You are right, our explanation was incorrect, thank you for pointing
+this out! We have now clarified that the model employs a censored
+distribution but the observations are not censored, just non-negative
+with a point mass at 0.
 
 
 \begin{review}
@@ -336,9 +311,11 @@ modeled by a \textit{truncated} Gaussian distribution.
 Please change into \textit{truncation point}
 \end{review}
 
-Since we are applying a censored distribution as explained above we 
-prefer using the term censoring point, even though the data itself 
-is not censored.
+We have rephrased this part of the caption to 'Observations are non-negative 
+and modeled by a Gaussian distribution, left-censored at 0.
+The observations are depicted by crosses and the predicted point mass
+from the model by filled circles.' to clearly distinguish between the model
+and the observations.
 
 
 \begin{review}
@@ -347,7 +324,7 @@ censoring point}\\
 Please change into \textit{Point mass at truncation point}
 \end{review}
 
-See points 3 and 4.
+See point 4.
 
 \begin{review}
 6. {\color{quotecolor}\textit{page 5:} Fig 3, x label: $mm^{(1/1.6)}$/24\textit{h}}\\
@@ -393,7 +370,8 @@ This is now also explained at the end of Section~2.2..
 Please change into \textit{Each of the distributional tree}
 \end{review}
 
-\textit{FIX ME: ?}
+We have rephrased this to 'For each distributional tree a different learning 
+data set is obtained ... '
 
 \begin{review}
 10. {\color{quotecolor}\textit{page 9:} $w_i^{forest}$}\\
@@ -935,11 +913,16 @@ then my impression is that one should rather plot PIT and
 residuals for the predictions.
 \end{review}
 
-\textit{TO DO}
+The PIT histograms and the residual QQ plots visualize the same
+results on different scales. The out-of-sample PIT values are 
+either plotted in a histogram or plotted against the corresponding
+quantiles of the standard normal distribution. A more detailed 
+explanation can be found in Supplement 2 (Stationwise Evaluation) 
+which contains both, PIT histograms and residual QQ plots, 
+for 15 stations. In the manuscript we decided to show only the 
+residual QQ plot as it allows for a better analysis of tail 
+behaviour than the PIT histogram.
 
-\begin{reto}
-Beide? Verstehe ich den Kollegen da richtig?
-\end{reto}
 
 \begin{review}
 4. Figure 5: Which most important variables are included in the 
@@ -999,6 +982,7 @@ one each based on mean sea level pressure, downwards short wave radiation
 flux, temperature and precipitable water respectively.
 
 % load("~/svn/partykit/pkg/disttree/inst/draft/Axams_24to4.rda")
+% gb <- Axams_24to4$gb
 % sgb <- stabsel(gb, cutoff = 0.6, q = 30)
 
 % R> sgb$selected
@@ -1078,6 +1062,16 @@ with stability selection,
 Stability selection,
 \textit{Journal of the Royal Statistical Society, Series B} 
 \textbf{72}: 417--473.
+
+\item[] Dunn, P. K. and Smyth, G. K. (1996).
+Randomized Quantile Residuals,
+\textit{Journal of Computational and Graphical Statistics}
+\textbf{5, 3}: 236--244.
+
+\item[] Gneiting, T., Balabdaoui, F. and Raftery, A. E. (2007).
+Probabilistic Forecasts, Calibration and Sharpness,
+\textit{Journal of the Royal Statistical Society B}
+\textbf{69, 2}: 243--268.
 
 \end{itemize}
 
