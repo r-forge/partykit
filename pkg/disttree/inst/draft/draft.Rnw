@@ -630,7 +630,7 @@ plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3,
 lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
 lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
 lines(x = x, y = y4, type = "l", col = pal[4], lwd = 1.3)
-legend("topright", c("Predicted distribution", "Point mass at censoring point", "Observation"),
+legend("topright", c("Predicted distribution", "Predicted point mass at 0", "Observation"),
        bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8, lwd = 1.3)
 
 # plot point mass
@@ -662,9 +662,12 @@ text(x = -1.7, y = lh2, labels = "2010", col = pal[3], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
-\caption{\label{fig:axams-dist}\hl{Total precipitation predictions by a distributional forest
-at station Axams for July 24 in 2009, 2010, 2011 and 2012 learned on data from 1985--2008.
-Observations are modelled by a left-censored at 0 distribution. The corresponding predicted point mass is shown at the censoring point (0).}}
+\caption{\label{fig:axams-dist}\hl{Total precipitation predictions by a 
+distributional forest at station Axams for July 24 in 2009, 2010, 2011 and 
+2012 learned on data from 1985--2008. Observations are non-negative and 
+modeled by a Gaussian distribution, left-censored at 0.
+The observations are depicted by crosses and the predicted point mass
+from the model by filled circles.}}
 \end{figure}
 
 In weather forecasting, these properties are especially appealing in 
@@ -795,7 +798,8 @@ Link functions $g_j(\cdot)$ are used for every parameter $\theta_j$
 nonlinear effects, spatial effects, random coefficients, or interaction surfaces
 \citep{Klein+Kneib+Lang:2015}. However, this requires specifying the
 additive terms and their functional forms in advance which can be challenging in
-practice and potentially require domain knowledge, especially if the number of covariates $m$ is large.
+practice and potentially require expert knowledge in the application domain, 
+especially if the number of covariates $m$ is large.
 
 Regression trees generally take a different approach for automatically
 including covariates in a data-driven way and allowing for abrupt
@@ -874,11 +878,11 @@ applied to smooth the effects, stabilize the model, and improve predictive perfo
 
 While Breiman and Cutler's random forests \citep{Breiman:2001} grow ensembles of trees
 that pick up changes in the location of the response across the covariates,
-\emph{distributional forests} employ an ensemble of $T$~\emph{distributional trees}. These
-pick up changes in the ``direction'' of any distribution parameter by
+\emph{distributional forests} employ an ensemble of $T$~\emph{distributional trees}. 
+These pick up changes in the ``direction'' of any distribution parameter by
 considering the full score vector for choosing splitting variables and split
-points. Each of the distributional trees is grown on a different data set
-obtained through resampling (bootstrap or subsampling) and in each node only a
+points. \hl{For each distributional tree a different learning data set is obtained} 
+through resampling (bootstrap or subsampling) and in each node only a
 random subset of the covariates $\bold{Z}$ is considered. As usual in random
 forests, this reduces the correlation among the trees and stabilizes the
 variance of the model.
@@ -1194,8 +1198,7 @@ qqrplot(pit_g,  nsim = 100, main = "Prespecified GAMLSS",   ylim = c(-5, 5), col
 qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col = gray(0.04, alpha = 0.01), pch = 19)
 @
 \caption{\label{fig:axams-qq} Out-of-sample residual QQ~plots (2009--2012) 
-for station Axams based on models learned on data from 1985--2008. 
-(Residuals of precipitation are on the powertransformed scale.)}
+for station Axams based on models learned on data from 1985--2008.}
 \end{figure}
 
 In a first step, we show a detailed comparison of the competing models
@@ -1221,9 +1224,10 @@ quantile residuals \citep{Dunn+Smyth:1996} are plotted in semi-transparent
 gray. Overall, the randomized quantile residuals conform quite well with the
 theoretical standard normal quantile (i.e., form a straight line close to the 
 diagonal), indicating that all four models are sufficiently well calibrated. 
-This is also supported by the corresponding probability integral transform
-(PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) histograms in
-Appendix~\ref{app:pit}.
+\hl{This is also supported by the corresponding probability integral transform}
+(PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) \hl{histograms for station
+Axams in Supplement 2 (Stationwise Evaluation) which contains a more 
+detailed explanation of residual QQ plots and PIT histograms.}
 
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
@@ -1324,6 +1328,7 @@ barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_cr
         horiz = TRUE, las = 1, axes = FALSE,
         xlab = "Variable importance: mean decrease in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
+        xlim = c(0,1.1),
         names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
 axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
 @
@@ -1551,6 +1556,7 @@ forecasting in complex terrain illustrates that distributional forests often
 perform on par or even better than their GAMLSS counterparts. Hence, they form
 a useful addition to the already available toolbox of probabilistic forecasts
 for disciplines such as meteorology.
+
 
 
 \section*{Computational details}
