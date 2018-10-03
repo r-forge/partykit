@@ -171,11 +171,23 @@ QQ plot for the single-split setting provides a graphical goodness-of-fit
 assessment.
 
 \item \emph{PIT histograms:} Similarly, the out-of-sample probability integral
-transform (PIT) in the single-split setting is amployed as an alternative
+transform (PIT) in the single-split setting is employed as an alternative
 goodness-of-fit visualization.
 
 \end{itemize}
 
+The Resiudal QQ plots and the PIT histograms visualize the same values,
+however, on different scales. For each observation $y$ of the test sample 
+the corresponding PIT value is calculated by applying the probability function 
+$F(y; \hat{\mu}, \hat{\sigma})$
+with the estimated distribution parameters plugged in. The resulting values
+can either be plotted in a histogram (PIT histogram) or be plotted against
+the corresponding quantiles of a standard normal distribution (residual QQ plot)
+for a continuous variable $Y$. To account for the point mass at 0, for each 
+observation equal to 0 the corresponding PIT value is multiplied with a randomized
+value following a uniform distribution on \[0,1\]. In that way these values
+are apportioned on those bins of the histogram that would not contain any
+values because no observation is beneath 0.
 
 \section{Stations}
 
