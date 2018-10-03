@@ -697,13 +697,24 @@ separated by method and distribution.}
 
 \section{Discussion}
 
-The comparison of the zero-censored Gaussian models from the main manuscript with the
-alternative distributional specifications in this supplement reveals that a Gaussian hurdle
-may lead to small improvements. However, especially for EMOS and the boosted GAMLSS model
-the outcome is also considerably more variable. Therefore, overall there is no convincing
-enough improvement over the zero-censored Gaussian model which is therefore the focus of
-the main manuscript. Also, the distributional forest appears to be more robust against
-distributional (mis-)specifications compared to the other models.
+This supplement shows that the zero-censored Gaussian models from the main
+manuscript and the alternative distributional specifications in this
+supplement perform at least similarly. For some combinations of models and
+stations, the Gaussian hurdle leads to small improvements on average but
+typically with more variability (especially for EMOS and the boosted
+GAMLSS). Therefore, the main manuscript focuses on the zero-censored
+Gaussian model which is well-established in the probabilistic
+precipitation forecasting literature. Moreover, the distributional forest
+can be shown to be rather robust against distributional
+(mis-)specifications compared to the other models.
+
+% The comparison of the zero-censored Gaussian models from the main manuscript with the
+% alternative distributional specifications in this supplement reveals that a Gaussian hurdle
+% may lead to small improvements. However, especially for EMOS and the boosted GAMLSS model
+% the outcome is also considerably more variable. Therefore, overall there is no convincing
+% enough improvement over the zero-censored Gaussian model which is therefore the focus of
+% the main manuscript. Also, the distributional forest appears to be more robust against
+% distributional (mis-)specifications compared to the other models.
 
 As a final consideration, we briefly remark that the distributional forest also allows
 for a different hurdle model specification. Previously, we argued that for GAMLSS/EMOS
