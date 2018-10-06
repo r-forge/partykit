@@ -339,29 +339,34 @@ stationeval <- function(station) {
 
   
   ## Variable importance
-  
   set.seed(7)
+  nperm <- 50
   
-  # locally redefine logLik.distforest to use crps in varimp()
-  logLik.distforest <- function(object, newdata = NULL, ...) {
-    if(is.null(newdata)) {
-      newdata <- object$data
-    } 
-    
-    # predict parameter
-    pdf <- predict(object, newdata = newdata, type = "parameter")
-    df_mu <- pdf$mu
-    df_sigma <- pdf$sigma
-    
-    # calculate CRPS
-    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-    
-    return(structure(crps, df = NA, class = "logLik"))
+  
+  # function to permutate chosen variable and then calculate mean crps
+  meancrps <- function(permute = NULL, newdata = testdata) {
+    if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
+    p <- predict(df, newdata = newdata, type = "parameter")
+    mean(crps_cnorm(newdata$robs, location = p$mu, scale = p$sigma, lower = 0))
   }
   
-  vimp_crps <- varimp(df, nperm = 1L)
+  # apply for all covariates except for dswrf_mean_min and 
+  # dswrf_sprd_min (columns 30 and 33) as they are always 0
   
-  rm(logLik.distforest) 
+  # using only one core
+  # risk_all <- replicate(nperm, sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps))
+  # risk <- rowMeans(risk_all)
+  
+  # or parallel
+  risklist <- applyfun(1:nperm, 
+                       function(i){
+                         sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
+                       })
+  risk <- Reduce("+", risklist) / length(risklist)
+  
+  names(risk) <- names(testdata)[c(5:29, 31, 32, 34: ncol(testdata))]
+  vimp_crps <- risk - meancrps(newdata = testdata)
+  vimp_crps <- sort(vimp_crps, decreasing = TRUE)
   
   
   ## Cross validation
@@ -554,7 +559,7 @@ if(FALSE){
   par(mar = c(5, 10, 1, 2))
   barplot(varimp10, horiz = TRUE, las = 1, axes = FALSE,
           xlab = "Mean decrease in CRPS")
-  axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.2), las = 1, mgp = c(0, 1, 0))
+  axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.02), las = 1, mgp = c(0, 1, 0))
   
     
   ## Plot residual QQ plots
