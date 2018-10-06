@@ -15,6 +15,7 @@
 <<echo = FALSE, results=hide>>=
 ## station
 station <- "_STATION_"
+
 if(station == "SeeimPaznaun") station <- "See im Paznaun"
 if(station == "MatreiinOsttirol") station <- "Matrei in Osttirol"
 if(station == "LadisNeuegg") station <- "Ladis-Neuegg"
@@ -164,8 +165,9 @@ abline(h = 0, col = hcl(50, 100, 50), lwd = 2)
 <<varimp, fig=TRUE, echo=FALSE, height=4, width=6.4>>=
 par(mar = c(5, 10, 1, 2))
 barplot(varimp10, horiz = TRUE, las = 1, axes = FALSE,
-        xlab = "Mean decrease in CRPS")
-axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.2), las = 1, mgp = c(0, 1, 0))
+        xlab = "Mean increase in CRPS",
+        xlim = c(0,0.09))
+axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.02), las = 1, mgp = c(0, 1, 0))
 @
 
 
