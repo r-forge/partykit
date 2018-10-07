@@ -42,7 +42,7 @@ assign("qNOlc", qNOlc, pos = ".GlobalEnv")
 
 
 # set function for parallelization
-applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
+applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, parallel::detectCores() - 1))
 
 
 # HCL palette
@@ -360,6 +360,7 @@ stationeval <- function(station) {
   # or parallel
   risklist <- applyfun(1:nperm, 
                        function(i){
+                         set.seed(i)
                          sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
                        })
   risk <- Reduce("+", risklist) / length(risklist)
