@@ -166,7 +166,7 @@ abline(h = 0, col = hcl(50, 100, 50), lwd = 2)
 par(mar = c(5, 10, 1, 2))
 barplot(varimp10, horiz = TRUE, las = 1, axes = FALSE,
         xlab = "Mean increase in CRPS",
-        xlim = c(0,0.09))
+        xlim = c(0,max(varimp10)))
 axis(1, at = seq(0, ceiling(max(varimp10) * 5)/5, 0.02), las = 1, mgp = c(0, 1, 0))
 @
 
