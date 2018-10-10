@@ -78,11 +78,16 @@ library("gamlss")
 library("gamlss.cens")
 gen.cens(NO, type = "left")
 library("RainTyrol")
+library("scoringRules")
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
 transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
+
+# set function for parallelization
+applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, parallel::detectCores() - 1))
+
 @
 
 
@@ -555,8 +560,7 @@ ml_exp <- pnorm(ml_mu/ml_sigma) * (ml_mu + ml_sigma * (dnorm(ml_mu/ml_sigma) / p
 ############
 ## PIT histograms and qqrplots
 
-## get predicted parameter
-# for learndata and testdata
+## get PIT
 {
   set.seed(7)
   
@@ -589,28 +593,37 @@ if(file.exists("vimp_crps.rda")){
 } else {
   
   set.seed(7)
-  # locally redefine logLik.distforest to use crps in varimp()
-  logLik.distforest <- function(object, newdata = NULL, ...) {
-    if(is.null(newdata)) {
-      newdata <- object$data
-    } 
-    
-    # predict parameter
-    pdf <- predict(object, newdata = newdata, type = "parameter")
-    df_mu <- pdf$mu
-    df_sigma <- pdf$sigma
-    
-    # calculate CRPS
-    crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
+  nperm <- 50
   
-    return(structure(crps, df = NA, class = "logLik"))
+  # function to permutate chosen variable and then calculate mean crps
+  meancrps <- function(permute = NULL, newdata = Axams_24to4$testdata) {
+    if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
+    p <- predict(Axams_24to4$df, newdata = newdata, type = "parameter")
+    mean(crps_cnorm(newdata$robs, location = p$mu, scale = p$sigma, lower = 0))
   }
   
-  vimp_crps <- varimp(Axams_24to4$df, nperm = 1L)
+  # apply for all covariates except for dswrf_mean_min and 
+  # dswrf_sprd_min (columns 30 and 33) as they are always 0
+  
+  # risk <- sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
+  
+  # using only one core
+  # risk_all <- replicate(nperm, sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps))
+  # risk <- rowMeans(risk_all)
+  
+  # or parallel
+  risklist <- applyfun(1:nperm, 
+                       function(i){
+                         set.seed(i)
+                         sapply(c(5:29, 31, 32, 34: ncol(Axams_24to4$testdata)), meancrps)
+                       })
+  risk <- Reduce("+", risklist) / length(risklist)
+  
+  names(risk) <- names(Axams_24to4$testdata)[c(5:29, 31, 32, 34: ncol(Axams_24to4$testdata))]
+  vimp_crps <- risk - meancrps(newdata = Axams_24to4$testdata)
+  vimp_crps <- sort(vimp_crps, decreasing = TRUE)
   
   save(vimp_crps, file = "vimp_crps.rda")
-  
-  rm(logLik.distforest) 
 }
     
 @
@@ -691,8 +704,9 @@ as learning data. The corresponding observations conform reasonably well with
 the predictions. In Section~\ref{sec:precipitation} we investigate the
 performance of distributional forests in this forecasting task in more detail.
 Compared to three alternative zero-censored Gaussian models distributional forests
-perform at least on par and sometimes clearly better while requiring no expert
-knowledge for the model specification. The three alternatives are: a standard ensemble model
+perform at least on par and sometimes clearly better while requiring no meteorological
+knowledge about the athmospheric processes which drive formation of precipitation
+for the model specification. The three alternatives are: a standard ensemble model
 output statistics approach \citep[EMOS,][]{Gneiting+Raftery+Westveld:2005} based
 on an NGR, a GAMLSS with regressors prespecified based on meteorological expertise
 \citep[following][]{Stauffer+Umlauf+Messner:2017}, and a boosted GAMLSS
@@ -876,17 +890,19 @@ on the model even if the true underlying effect is smooth. Hence, ensemble
 methods such as bagging or random forests \citep{Breiman:2001} are typically
 applied to smooth the effects, stabilize the model, and improve predictive performance.
 
-While Breiman and Cutler's random forests \citep{Breiman:2001} grow ensembles of trees
-that pick up changes in the location of the response across the covariates,
-\emph{distributional forests} employ an ensemble of $T$~\emph{distributional trees}. 
-These pick up changes in the ``direction'' of any distribution parameter by
-considering the full score vector for choosing splitting variables and split
-points. \hl{For each distributional tree a different learning data set is obtained} 
-through resampling (bootstrap or subsampling) and in each node only a
-random subset of the covariates $\bold{Z}$ is considered. As usual in random
-forests, this reduces the correlation among the trees and stabilizes the
-variance of the model.
-
+\hl{The idea of random forests is to learn an ensemble of trees, each on a different
+learning data obtained through resampling (bootstrap or subsampling). In each node 
+only a random subset of the covariates $\bold{Z}$ is considered to reduce the 
+correlation among the trees and to stabilizes the variance of the model.
+For a simple regression random forest the mean of predictions over
+all trees is considered. In that way changes in the location  of the response 
+across the covariates are detected} (e.g. in Breiman and Cutler's random forests, 
+\cite{Breiman:2001}).
+\hl{This idea is now taken one step further by embedding it in a distributional 
+framework based on loglikelihood estimation. \emph{Distributional forests} 
+employ an ensemble of $T$~\emph{distributional trees} which pick up changes in 
+the ``direction'' of any distribution parameter by considering the full score 
+vector for choosing splitting variables and split points.}
 
 To obtain probabilistic predictions from a distributional forest, it still
 needs to be specified how to compute the parameter estimates
@@ -1113,11 +1129,10 @@ further details:
   in each split of the tree (\code{mtry}). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
-  \hl{As stopping criteria the minimal number
-  of observations to perform a split} (\code{minsplit}) \hl{is set to $50$, 
-  the minimal number of observations in a terminal node} (\code{minbucket})
-  \hl{is set to $20$ and the significance level for variable selection} (\code{alpha}) 
-  \hl{is kept at the default value $1$.}
+  \hl{As stopping criteria the minimal number of observations to perform a split} 
+  (\code{minsplit}) \hl{is set to $50$, the minimal number of observations in a 
+  terminal node} (\code{minbucket})\hl{is set to $20$ and the significance level 
+  for variable selection} (\code{alpha}) \hl{is kept at the default value $1$.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
   
@@ -1323,14 +1338,14 @@ of around 5.5~percent in median.
 \centering
 \setkeys{Gin}{width=0.7\textwidth}
 <<rain_axams_varim, fig=TRUE, echo=FALSE, width=6.5, height=4.2>>=
-par(mar = c(2.5,10,1,2))
+par(mar = c(4,10,1,2))
 barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
         horiz = TRUE, las = 1, axes = FALSE,
-        xlab = "Variable importance: mean decrease in CRPS",
+        xlab = "Variable importance: mean increase in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
-        xlim = c(0,1.1),
+        xlim = c(0,0.08),
         names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
-axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
+axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
 @
 \caption{\label{fig:axams-varimp} CRPS-based variable importance for the top 10 covariates 
 in the distributional forest. Based on data for station Axams, learning period 
@@ -1519,7 +1534,6 @@ than the more complex statistical methods.
 %\text{NA's in the working vector or weights for parameter mu}
 %\\
 % sum(is.na(crps[,3]))
-%<<eval = TRUE, echo = FALSE>>=
 
 
 To assess whether these differences in predictive performance are due to differences
@@ -1557,7 +1571,109 @@ perform on par or even better than their GAMLSS counterparts. Hence, they form
 a useful addition to the already available toolbox of probabilistic forecasts
 for disciplines such as meteorology.
 
+\subsubsection*{Variable Selection}
+\hl{Generally, there are many possibilities how to specify the variables that are
+to be included in a model. Especially for a low number of variables all types
+of interactions can be employed and mixed effect models and separations into 
+main effects and interaction effects can be considered allowing for easier 
+interpretations} (see for example \cite{Wood+Scheipl+Faraway:2013}, 
+\cite{Goicoa+Adin+Ugarte:2018}, \cite{Ugarte+Adin+Goicoa:2017}).
+However, in the application presented in Section~\ref{sec:precipitation}
+alltogether 80 variables are available. Even if only paired interactions were
+considered this would already lead to 3160 additional covariates in the model
+making it very difficult to keep the model manageable regarding computational
+costs but also interpretability. Therefore, only main effects are considered
+for the distributional forest and the boosted GAMLSS which both automatically
+select covariates while meteorological expert knowledge was applied to 
+select covariates and specify interactions for the prespecified GAMLSS.
+Therefore, 
 
+\subsubsection*{Tuning parameters}
+Setting tuning parameters of a forest model can have a major influence
+not only on the accuracy of the model but also on the computational 
+complexity. 
+For the application in Section~\ref{sec:precipitation} we have 
+selected the values of these parameters (listed in Section~\ref{sec:evaluation}) 
+based on advice from literature and our own experience.
+
+\cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} recommend to 
+build full-grown trees. Therefore, low values should be chosen for the stopping 
+criteria \code{minsplit}, \code{minbucket} and \code{alpha}.
+However, in a distributional model it also has to be considered that a 
+minimal number of observations is required to allow for a reasonable 
+estimation of parameters in each node. For that reason the minimal number
+of observations for which statistical tests are performed in the 
+distributional forest in Section~\ref{sec:precipitation} is set to
+50 (\code{minbucket}) and the minimal number of observations on which
+parameters are estimated is set to 20 (\code{minsplit}).
+
+As stated by \cite{Breiman:2001} and \cite{Hastie+Tibshirani+Friedman:2001} 
+\hl{random forests do not overfit, not even for an increasing number of 
+trees} (\code{ntree}). \hl{Hence, it is recommended to build forests consisting 
+of a large number of trees} (\code{ntree}) \hl{as this generally leads to an increase 
+in accuracy. However, this also comes along with increasing computational costs. 
+Therefore, ``a good choice results from a trade-off between computational 
+complexity and accuracy''} \citep{Biau+Scornet:2016}.
+\hl{Following this advice we chose to build forests consisting of 100 trees. 
+However, increasing this tuning parameter could improve the performance
+of the distributional forest without the problem of overfitting.}
+
+%% TO DOs:
+%% East Tyrol
+\subsubsection*{East Tyrol}
+Figure~\ref{fig:all-map} shows that, contrary to the rest of Tyrol, 
+for the majority of stations in East Tyrol the prespecified GAMLSS performs
+best in this particular setting (learning data: 1985--2008, testing data:
+2009--2012). East Tyrol is located south of the main Alpine Ridge and 
+exhibits different climatological characteristics than the part north of 
+the Alpine Ridge. It seems that the choice of covariates and their interactions 
+we made for the prespecified GAMLSS method is particularly adequate for the 
+region of East Tyrol for this specific analysis. However, the advantages of 
+the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
+validation: 2009--2012) even out in a cross-validation framework for most of 
+the stations in East Tyrol. These results are presented in the online supplement 
+which comes along with our manuscript. There, more extensive evaluations
+are carried out for 15 observation stations, including a cross-validation
+as presented for station Axams in this paper.
+
+\subsubsection*{Choice of station Axams}
+%% choice of station Axams mit Verweis auf Supplement stationwise
+Axams was chosen for the more extensive evaluations presented
+in this paper as it is the observation station being closest 
+to Innsbruck, the capital of Tyrol and the work place of 
+three of the authors, but not based on any other particular 
+features. Furthermore, it has been checked, whether it 
+is an adequate representative of all stations regarding 
+the results of our evaluations. This is now also 
+confirmed by further analysis in the online supplement which
+comes along with our manuscript.
+There, the same evaluations as for station Axams have been carried out for 14 other
+stations, including some of those where the forest does not perform better than
+the other models in the setting as presented in Figure~\ref{fig:all-map}.  
+It shows that the differences in performance even out in the cross-validation 
+framework. There, the forest performs at least equally well compared to the 
+best of the other models at most stations.
+
+
+\subsubsection{Distributional specifications}
+%% choice of distribution mit Verweis auf Supplement distributions
+Moreover, as mentioned before we have tested robustness against 
+distributional misspecification. The results show that applying a 
+left-censored at zero logistic distribution or a Gaussian hurdle model 
+instead of the left-censored at zero Gaussian distribution, as presented 
+in the paper, does not lead to any significant improvements in goodness of 
+fit of the applied models. The exact results are provided in an online 
+supplement which comes with our manuscript.
+
+\subsubsection*{Computational difficulties}
+%% GAMLSS errors with references gamboostLSS Hofner et al.
+As stated by \cite{Hofner+Mayr+Schmid:2016} the AIC-based variable selection 
+methods implemented in the \textsf{R} package \textbf{gamlss} ``can be unstable, 
+especially when it comes to selecting possibly different sets of variables for 
+multiple distribution parameters.'' We have noticed computational problems when
+applying the function \textbf{gamlss} in certain settings within the cross-validation
+framework as it did not succeed in fitting a model. In this cases the method
+was not taken into consideration in the comparison of all applied models.
 
 \section*{Computational details}
 
