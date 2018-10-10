@@ -1,6 +1,6 @@
 \documentclass[american,foldmarks=false,noconfig]{uibklttr}
 %\documentclass{article}
-\usepackage{sfmath,hyperref,color,enumitem}
+\usepackage{sfmath,hyperref,color,enumitem,soul}
 
 \let\code=\texttt
 \let\pkg=\emph
@@ -63,7 +63,7 @@ online supplement.
 
 \end{itemize}
 
-All changes and additons are explained in much more detail in the
+All changes and additions are explained in much more detail in the
 point-to-point reply on the next pages. 
 
 \closing{Best regards,
@@ -111,22 +111,27 @@ if not, can general guidelines for doing so be provided?
 
 The required size of the training data depends heavily on the complexity 
 of the model, however, in different applications which we have tested the 
-distributional forest on it performed quite well with at least 50 observations. 
-Generally, the stopping criteria \texttt{minbucket} and \texttt{minsplit} (both 
+distributional forest on it performed quite well with at least 50 observations. \\
+Applying the Law of Large Numbers it can be shown that random forests do not overfit, 
+not even for an increasing number of trees (Breiman (2001), Hastie et al. (2001), 
+Biau et al. (2016)). Therefore, it is recommended to build a large number of trees
+as this generally leads to more accurate predictions. However, ``the computational cost 
+for inducing a forest increases linearly with the number of trees, so a good choice 
+results from a trade-off between computational complexity and accuracy'' 
+(Biau et al. (2016)). Following this advice, we decided to build forests consisting 
+of 100 trees.\\
+Moreover, Hastie et al. (2001) recommend to build trees of maximal depth:
+``Our experience is that using full-grown trees seldom costs much, and 
+results in one less tuning parameter.''
+Thus, the stopping criteria \texttt{minbucket} and \texttt{minsplit} (both 
 determining the minimal number of observations in a node) and \texttt{alpha} 
 (the significance level for the statistical tests in the tree algorithm) should 
-be kept rather low for a forest model as it is desirable to grow very large trees. 
-(FIX ME: reference?)
-Therefore, each of the trees in the forest will most likely overfit the subsample 
-it is learned on, however, this is evened out by combining them to a forest 
-model (with an adequate number of trees). (FIX ME: reference?) 
-For that reason, setting the stopping criteria too low does not lead to a decrease 
-in goodness of fit, however, the computational costs might increase, especially for 
-large data sets. On the other hand, if they are too high, splits might not be detected 
-such that the corresponding effects are not captured by the model.
-
-
-\textit{FIX ME: too long?}
+be kept rather low. However, in a distributional framework it also has to be 
+considered that the minimal number of observations in a node needs to be high 
+enough in order to allow for estimating the distribution parameters reasonably well.
+In our application we have set \texttt{minsplit} to 50 and \texttt{minbucket} to 20.
+These tuning parameters are now also listed in the main manuscript in Sections~3.2.
+and discussed in Section~4..
 
 
 \begin{review}
@@ -196,7 +201,7 @@ features. Furthermore, it has been checked, whether it
 is an adequate representative of all stations regarding 
 the results of our evaluations. This is now also 
 confirmed by further analysis in the online supplement which
-comes along with our manuscript.
+comes along with our manuscript and discussed in Section~4..
 
 \begin{review}
 Fig. 4: Are these the plots for residuals of precipitation 
@@ -225,6 +230,7 @@ GAMLSS models in this particular setting (training: 1985--2008, validation:
 in East Tyrol. These results are presented in the online supplement which comes
 along with our manuscript showing that the forest performs equally well as the
 prespecified GAMLSS and better than the EMOS at most of the stations.
+Moreover, this point is now also discussed in Section~4. in the main manuscript.
 
 
 \newpage
@@ -370,8 +376,8 @@ This is now also explained at the end of Section~2.2..
 Please change into \textit{Each of the distributional tree}
 \end{review}
 
-We have rephrased this to 'For each distributional tree a different learning 
-data set is obtained ... '
+We have rephrased this the second paragraph of Section~2.3. which
+included this sentence.
 
 \begin{review}
 10. {\color{quotecolor}\textit{page 9:} $w_i^{forest}$}\\
@@ -485,7 +491,9 @@ a split (\texttt{minsplit}) is set to 50,  the minimal number of
 observations in a terminal node (\texttt{minbucket}) is set to 20 
 and the significance level for variable selection (\texttt{alpha}) 
 is kept at the default value 1. We have added this information in 
-the manuscript in Section~3.2., 'Distributional forest'.
+the manuscript in Section~3.2., 'Distributional forest' and
+also discussed the choice of these values in Section~4. and
+in the answer to the second point of the associate editor.
 
 
 \begin{review}
@@ -634,11 +642,25 @@ assumption on the error density is a crucial step which in
 my opinion should not be ignored or assumed not to be a problem.
 \end{review}
 
-Thank you for pointing this out. We have now rerun the exact 
-same evaluations as presented in the paper with different 
-distributional assumptions, including a logistic model and 
-a hurdle model with a truncated part. The exact results can be 
-found in an online supplement.
+We have applied the left-censored at zero Gaussian distribution
+as it has proven to be an adequate choice for this type of 
+application in earlier publications.
+Moreover, the residual QQ plots and PIT histograms illustrate
+that the models are well calibrated employing this distribution.
+But thank you very much for the advice to consider a hurdle model!
+This is definitely a good idea and therefore we have carried out the
+same evaluations as presented in the paper but employing a
+Gaussian hurdle model. Additionally, a left-censored at zero logistic
+distribution has been applied as well in the same setting in
+order to account for heavier tails. The results of these evaluation
+can be found in the online supplement 1 (``Different Response Distributions''). 
+Overall, it is shown that under the logistic distribution the methods perform 
+slightly worse while the hurdle model leads to small improvement in some settings,
+however, this comes along with broader variability. The distributional 
+forest is proven to be very robust against distributional misspecifications.
+Based on these results we decided to keep the distributional assumption
+considered in the main manuscript but we have also discussed the tested
+alternatives in Section~4..
 
 
 \begin{review}
@@ -681,7 +703,7 @@ for a similar application for the very same study area.
 end, the analyst or meteorologist does not obtain an 
 interpretable model and no explanation which variable 
 affects the distribution in which direction is possible. 
-I think, the reason that focussing on predictions should 
+I think, the reason that focusing on predictions should 
 be made clearer and well justified.
 \end{review}
 
@@ -707,10 +729,9 @@ data application.
 
 We apologize for the confusion the missing equation numbers 
 might have caused. They are now added.
-
-\textit{FIX ME: comment on 'there should be a 
-better motivation and connection of the methodology and the 
-data application'?}
+We have also rephrased Section~2.3. which now first introduces random 
+forests and then distributional forests as an extension of classical 
+random forests.
 
 
 \begin{review}
@@ -732,26 +753,14 @@ constraints from the null space of the penalties associated
 with the spatio-temporal interaction effect.
 \end{review}
 
-Thank you for your suggestions and the references. 
-The prespecification of the distribution is expert knowledge in 
-this context as in some of our previous publications we have been 
-working on different response distributions and the censored normal 
-distribution turned out to be one of the best performing. In this article 
-we have not proven whether or not the chosen distribution is the overall
-best for this specific application, however, the main part of the article 
-is and should be the distributional forest and not the application itself. 
-However, we are sure that, given our previous work, the selected methods 
-and model assumptions are well performing and well suited for the practical 
-example presented.
-Moreover, as mentioned before we have tested robustness against 
-distributional misspecification. The results show that applying a 
-left-censored at zero logistic distribution or a Gaussian hurdle model 
-instead of the left-censored at zero Gaussian distribution, as presented 
-in the paper, does not lead to any significant improvements in goodness of 
-fit of the applied models. The exact results are provided in an online 
-supplement which comes with our manuscript.
-
-\textit{FIX ME: refer to Wood, Goicoa, Ugarte}
+Thank you for your suggestions and the references. These are all
+good ideas, however, in our application the number of covariates
+is too large in order to keep a model with all interactions manageable.
+We have also discussed this in Section~4 of the main manuscript and
+rephrased the corresponding sentence in the introduction to ``while 
+requiring no meteorological knowledge about the atmospheric processes 
+which drive formation of precipitation'' in order to clarify that
+this refers only to the variable prespecification in this application.
 
 
 \begin{review}
@@ -768,28 +777,22 @@ and I am wondering whether a meteorologist would really do a
 better job on a relative scale of precipitation.
 \end{review}
 
-You are right, there are clearly some stations where other models perform
-better than the forest. However, at the majority of stations used in our study
-it can at least keep up with them and therefore seems to provide a good and
-reasonable alternative that is very easy to apply as no expert knowledge or
-additional work in advance is required and the computational effort is kept
-relatively small compared to a boosting method. In an online supplement the
-same evaluations as for station Axams have been carried out for 14 other
-stations, including some of those where the forest does not perform better than
-the other models in the setting presented in Figure~8.  It shows that the
-differences in performance even out in the cross-validation framework. There,
-the forest performs at least equally well compared to the best of the other
-models at most stations.
+In order to investigate on these questions we have carried out the full
+analysis as presented for station Axams in the main manuscript for 14
+further observation stations. It shows that the distributional
+forest is very robust against distributional misspecifications
+and almost always competitive with the best among the other methods 
+or even better. The exact results are provided in 
+Supplement 2 (Stationwise Evaluation) and discussed in Section~4. 
+Especially for meteorologists intending to apply model output 
+statistics (MOS) for several hundreds of observation stations 
+(\hl{\texttt{FIXME: reference Reto}})
+the distributional forest provides a good and robust alternative. 
+Even though computational costs are higher than for an EMOS model, 
+they are similar as for a prespecified model and lower than for 
+a model applying variable selection based on cross-validation.
 
-\textit{FIX ME: comments on simulation study? comments on use of
-method by meteorologists? (last sentence)}
 
-\begin{reto}
-``[\dots] I am wondering whether a meteorologist would really do a
-better job on a relative scale of precipitation.'' ist wohl eher eine
-rethorische Frage und tut nix zur Sache wenn du mich fragst.
-Unkommentiert lassen? Oder Z hat vielleicht eine Idee?
-\end{reto}
 
 \begin{review}
 7. How are the folds chosen for performing the predictions? 
@@ -804,6 +807,26 @@ set of 28 years is split randomly into 7 blocks of 4 years which
 are not necessarily successive. This is now also explained in the 
 description of the cross-validation setup third paragraph of 
 Section~3.3..
+We have chosen two different setups: First we learned the model
+on the first 24 years and evaluated on the following 4 years
+in order to provide a classic time ordered setup. 
+However, following (\hl{\texttt{FIXME:} reference Reto})
+no influence of time is to be expected. This is also supported by an 
+autocorrelation coefficient of -0.007 of the out-of-bag quantile 
+residuals of the distributional forest model for station Axams for
+a time lag of 1 day.
+% ## calculation of autocorrelation:
+% load("Axams_24to4.rda") 
+% set.seed(4)
+% pdf <- predict(Axams_24to4$df, newdata = Axams_24to4$testdata, type = "parameter")
+% pit_df <- cbind(0, pnorm(Axams_24to4$testdata[,"robs"], mean = pdf$mu, sd = pdf$sigma))
+% pit_df[Axams_24to4$testdata[,"robs"]>0, 1] <- pit_df[Axams_24to4$testdata[,"robs"]>0, 2]
+% ac <- acf(qqrplot(pit_df)$residuals)
+Then, to evaluate the models in a broader framework a cross-validation 
+with the above described choice of folds was applied, for station
+Axams in the main manuscript and for 14 further stations in 
+Supplement 2 (Stationwise Evaluation).
+
 
 \begin{review}
 8. I found the competing models to be chosen pretty unfair. 
@@ -812,58 +835,67 @@ First, for the prespecified GAMLSS, the authors use
 Why not making a decision on some information criteria such as AIC/BIC? 
 The latter would be done if the analyst decided to use a prespecified 
 GAMLSS. I guess, the GAMLSS could improve a lot by this . 
-Second, what does a basic EMOS exactly mean? Third, why not to include 
-interactions in the boosting algorithm as well? this should be 
-conceptually straight forward? Fourth, why are 100 trees chosen 
-in the forest? Is this a a default value? May this number not also 
-be dependent on the complexity of the model? Why not to choose 
-the number of trees similar to what is done in boosting? this 
-would also increase the computation time of the forest a lot.
 \end{review}
 
-We decided to evaluate two different versions of a GAMLSS: 
-the prespecified GAMLSS where the covariates are selected 
-in advance based on expert knowledge and the boosted GAMLSS
-where all covariates are included. For the latter covariates 
-are selected within the boosting algorithm. As stated by 
-Hofner et al. (2016) the AIC-based variable selection 
-methods implemented in the \textsf{R} package \textbf{gamlss} 
-``can be unstable, especially when it comes to selecting 
-possibly different sets of variables for multiple 
-distribution parameters.''
+As mentioned in point 5 and also discussed in Section~4, the high
+number of covariates (80) restricts the possibilities of variable selection
+and specification. For an AIC or BIC based selection an evaluation
+of 80 main effects for two parameters would make this a very complex
+procedure. Moreover, Hofner et al. (2016) stated that the 
+AIC-based variable selection methods implemented in the \textsf{R} 
+package \textbf{gamlss} ``can be unstable, especially when it comes 
+to selecting possibly different sets of variables for 
+multiple distribution parameters.'' For that reason we decided
+not to choose such a selection method.
 
-By a `basic EMOS' we are referring to the linear distributional 
-regression model based on the idea presented by Gneiting et al. (2005) 
-where only the ensemble mean is included for the location parameter 
-and the ensemble standard deviation for the scale parameter.
+\begin{review}
+Second, what does a basic EMOS exactly mean? 
+\end{review}
 
-In the boosted GAMLSS we did not include interactions as this would
-lead to an extremely high number of covariates that would be hardly
-manageable. Even if we included only the pairwise interactions of all 
-80 covariates we would end up with 3160 additional covariates.
+We have adapted the introduction of a basic EMOS in the main manuscript
+in Section~ ...
+% By a `basic EMOS' we are referring to the linear distributional 
+% regression model based on the idea presented by Gneiting et al. (2005) 
+% where only the ensemble mean is included for the location parameter 
+% and the ensemble standard deviation for the scale parameter.
 
+
+\begin{review}
+Third, why not to include interactions in the boosting algorithm 
+as well? this should be conceptually straight forward? 
+\end{review}
+
+As now discussed in Section~4 including only all pairwise interactions
+of the 80 available variables would already lead to 3160 additional
+covariates which would make the model too complex and hardly manageable
+regarding computational costs. Therefore, we decided not to include
+any interactions in the boosting algorithm.
 % factorial(80)/factorial(80-2)/factorial(2)
 
-\begin{reto}
-K\"onnte man eventuell auch im Paper so erw\"ahnen?
+\begin{review}
+Fourth, why are 100 trees chosen in the forest? Is this a a default 
+value? May this number not also be dependent on the complexity of 
+the model? Why not to choose the number of trees similar to what is 
+done in boosting? this would also increase the computation time of 
+the forest a lot.
+\end{review}
 
-\begin{equation}
-    \frac{n!}{k! \cdot (n-k)!}~~\mbox{bei}~n=80~\mbox{und}~k=2~\mbox{die}~3160~\mbox{Kombinationen.}
-\end{equation}
-\end{reto}
+
+Following Breiman (2001) random forests are very robust and do not overfit, 
+not even for a high number of trees. However, computational costs increase 
+linearly with the number of trees (Biau et al. (2016)).
+Therefore, we followed these recommendations of choosing a high number of
+trees, but still not too high in order to keep the computation time at
+a reasonable level. Moreover, 100 is a commonly used number of trees that
+seems to work very well. Of course, more trees could be applied but 
+the performance is usually not significantly worse with 100 trees.
+Tuning parameters of forest models, including the number of 
+trees (\texttt{ntree}), are now discussed in Section~4 
+of the main manuscript.
 
 
 
-By default the number of trees in a distributional forest
-is set to 500. However, to keep computation time at a 
-reasonable level we decided  to use only 100 trees. 
-But of course, the more trees, the better the complexity of 
-the model can be captured, especially smooth transitions can 
-be modeled better by a higher number of trees.
 
-\textit{FIX ME: comment on 'Why not to choose the number of trees 
-similar to what is done in boosting? this would also increase the 
-computation time of the forest a lot.'}
 
 \bigskip
 
@@ -875,12 +907,21 @@ computation time of the forest a lot.'}
 appendix to an online supplement.
 \end{review}
 
+Thank you for your advice. We have kept only the details regarding
+the presented methodology in the appendix of the main manuscript
+(Appendix A) and extended Appendix B to an online supplement
+(Supplement 2: Stationwise Evaluation).
 
 \begin{review}
 2. Does the EMOS method employ ensemble post-processing 
 techniques? There are recent references using this in weather 
 forecasting (Chen et al.; 2014)?
 \end{review}
+
+We used ``EMOS'' as an expression for a standard post-processing
+model output statistics (MOS, Gneiting et al. (2005)) with a censored 
+distribution. We have revised the introduction of the EMOS model in 
+the main manuscript and hope this now explains the model better.
 
 \textit{FIX ME: add formula for EMOS?}
 
@@ -921,7 +962,7 @@ explanation can be found in Supplement 2 (Stationwise Evaluation)
 which contains both, PIT histograms and residual QQ plots, 
 for 15 stations. In the manuscript we decided to show only the 
 residual QQ plot as it allows for a better analysis of tail 
-behaviour than the PIT histogram.
+behavior than the PIT histogram.
 
 
 \begin{review}
@@ -936,12 +977,28 @@ we decided to present only the top 10 as all following covariates
 are on a rather low and similar level not providing further useful
 information. But this top 10 list is not considered for any 
 specification of the boosted GAMLSS for which all available 
-covariates are included. Out of them, in the exact same setting 
-(Axams, 1985--2008), the boosting algorithm selects 28 covariates 
-for the location parameter, mainly related to precipitation (7) 
-and temperature (11), and 46 covariates for the scale parameter, 
-mainly related to precipitation (10), convective available potential 
-energy (8) and temperature (15).
+covariates are included. As for the distributional forest, 
+we have also calculated variable importance based on mean increase 
+of out-of-bag CRPS for the gamboostLSS model for the exact same 
+setting (station Axams, learned on 1985--2008). The resulting 
+top 10 variables are listed in the following barplot:
+
+\begin{center}
+\includegraphics[width = 0.4\textwidth]{varimp_gb.jpeg}
+\end{center}
+
+Overall it can be stated that the most important covariates of the boosted 
+GAMLSS are similar to the ones of the distributional forest even though they
+are not exactly the same ones and the influence of \texttt{tp\_max} is clearly
+stronger in the boosted GAMLSS.
+
+
+% Out of them, in the exact same setting (Axams, 1985--2008), 
+% the boosting algorithm selects 28 covariates 
+% for the location parameter, mainly related to precipitation (7) 
+% and temperature (11), and 46 covariates for the scale parameter, 
+% mainly related to precipitation (10), convective available potential 
+% energy (8) and temperature (15).
 % mu: 7 tppow, 1 cape, 2 dswrf, 2 msl, 2 pwat, 3 tcolc, 11 temperature
 % sigma: 10 tppow, 8 cape, 1 dswrf, 5 msl, 5 pwat, 2 tcolc, 15 temperature
 
@@ -975,43 +1032,6 @@ energy (8) and temperature (15).
 %[43] "bbs(tdiff500700_mean)" "bbs(tdiff500700_min)"  "bbs(tdiff500700_max)" 
 %[46] "bbs(msl_diff)" 
 
-Applying the stability selection procedure by Meinshausen et al. (2010) and
-Hofner et al. (2015) on the same model shows that the 10 covariates with 
-maximal selection probability are six covariates based on precipitation and 
-one each based on mean sea level pressure, downwards short wave radiation 
-flux, temperature and precipitable water respectively.
-
-% load("~/svn/partykit/pkg/disttree/inst/draft/Axams_24to4.rda")
-% gb <- Axams_24to4$gb
-% sgb <- stabsel(gb, cutoff = 0.6, q = 30)
-
-% R> sgb$selected
-% tppow_min.mu         tppow_max.mu    tppow_mean1824.mu   dswrf_mean_mean.mu 
-%      3                    4                    7                   25 
-% tppow_min.sigma      tppow_max.sigma tppow_sprd2430.sigma  pwat_mean_max.sigma 
-%      83                   84                   92                  117 
-% t700_mean_max.sigma   msl_diff.sigma 
-%      138                  160
-
-% R> head(sort(sgb$max, decreasing = TRUE), 10)
-% tppow_max.mu    tppow_mean1824.mu      tppow_max.sigma  t700_mean_max.sigma 
-%    1.00                 0.94                 0.91                 0.87 
-% dswrf_mean_mean.mu  pwat_mean_max.sigma  tppow_min.sigma tppow_sprd2430.sigma 
-%    0.85                 0.84                 0.81                 0.74 
-% msl_diff.sigma      tppow_min.mu 
-%    0.70                 0.63 
-
-% R> head(sort(rowMeans(sgb$phat), decreasing = TRUE), 10)
-% tppow_max.mu    tppow_mean1824.mu  t700_mean_max.sigma      tppow_max.sigma 
-%    0.99516              0.86018              0.84936              0.84857 
-% tppow_min.sigma  pwat_mean_max.sigma   dswrf_mean_mean.mu tppow_sprd2430.sigma 
-%    0.79779              0.75813              0.74074              0.65091 
-% msl_diff.sigma         tppow_min.mu 
-%    0.63928              0.55443
-
-Overall it can be stated that the most important covariates of the boosted 
-GAMLSS are similar to the ones of the distributional forest even though they
-are not exactly the same ones.
 
 \bigskip
 
@@ -1030,7 +1050,7 @@ and Risk Assessment} p. to appear.
 
 \item[] Ugarte, M. D., Adin, A. and Goicoa, T. (2017). One-dimensional, 
 two-dimensional, and three-dimensional B-splines to specify space-time 
-interations in bayesian disease mapping: Model fitting and model 
+interactions in bayesian disease mapping: Model fitting and model 
 identifiability, \textit{Spatial Statistics} p. to appear.
 
 \item[] Wood, S. N., Scheipl, F. and Faraway, J. J. (2013). 
@@ -1072,6 +1092,20 @@ Randomized Quantile Residuals,
 Probabilistic Forecasts, Calibration and Sharpness,
 \textit{Journal of the Royal Statistical Society B}
 \textbf{69, 2}: 243--268.
+
+\item[] Biau, G. and Scornet, E. (2016).
+A Random Forest Guided Tour,
+\textit{TEST}
+\textbf{25}: 197--227.
+
+\item[] Hastie, T., Tibshirani, R. and Friedman, J. (2001).
+The Elements of Statistical Learning,
+\textit{Springer New York Inc.}.
+
+\item[] Breiman, L. (2001).
+Random Forests,
+\textit{Machine Learning}
+\textbf{45, 1}: 5--32.
 
 \end{itemize}
 
