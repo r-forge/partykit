@@ -30,8 +30,6 @@ testdata <- RainData[RainData$year %in% c(2009, 2010, 2011, 2012),]
   
 ## compute variable importance for the gamboostLSS object 'gb'
 
-set.seed(7)
-
 meancrps <- function(permute = NULL, newdata = testdata) {
   if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
   m <- predict(gb, newdata = newdata, parameter = "mu", type = "response")
@@ -52,6 +50,7 @@ meancrps <- function(permute = NULL, newdata = testdata) {
 # or parallel
 risklist <- applyfun(1:nperm, 
                      function(i){
+                       set.seed(i)
                        sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
                      })
 risk <- Reduce("+", risklist) / length(risklist)
