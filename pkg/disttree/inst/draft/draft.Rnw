@@ -1322,8 +1322,8 @@ line pertains to the reference model EMOS.}
 
 To assess the predictive performance, a full cross-validation is carried out
 rather than relying on just the one fixed test set for the years 2009--2012.
-\hl{To do so, a 10 times 7-fold cross-validation is carried out where each
-splits the available 28~years into 7~subsets of 4~randomly selected and 
+\hl{For each setting in the considered 10 times 7-fold cross-validation the 
+available 28~years are split into 7~subsets of 4~randomly selected and 
 therefore mostly not subsequent years.}
 The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
 (= 4~years) using the average CRPS across all observations.
@@ -1578,50 +1578,46 @@ of interactions can be employed and mixed effect models and separations into
 main effects and interaction effects can be considered allowing for easier 
 interpretations} (see for example \cite{Wood+Scheipl+Faraway:2013}, 
 \cite{Goicoa+Adin+Ugarte:2018}, \cite{Ugarte+Adin+Goicoa:2017}).
-However, in the application presented in Section~\ref{sec:precipitation}
-alltogether 80 variables are available. Even if only paired interactions were
+\hl{However, in the application presented in} Section~\ref{sec:precipitation}
+\hl{alltogether 80 variables are available. Even if only paired interactions were
 considered this would already lead to 3160 additional covariates in the model
 making it very difficult to keep the model manageable regarding computational
 costs but also interpretability. Therefore, only main effects are considered
 for the distributional forest and the boosted GAMLSS which both automatically
 select covariates while meteorological expert knowledge was applied to 
-select covariates and specify interactions for the prespecified GAMLSS.
-Therefore, 
+select covariates and specify interactions for the prespecified GAMLSS.}
 
 \subsubsection*{Tuning parameters}
-Setting tuning parameters of a forest model can have a major influence
+\hl{Setting tuning parameters of a forest model can have a major influence
 not only on the accuracy of the model but also on the computational 
 complexity. 
-For the application in Section~\ref{sec:precipitation} we have 
-selected the values of these parameters (listed in Section~\ref{sec:evaluation}) 
+For the application in} Section~\ref{sec:precipitation} \hl{we have 
+selected the values of these parameters} (listed in Section~\ref{sec:evaluation}) 
 based on advice from literature and our own experience.
 
-\cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} recommend to 
+\cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} \hl{recommend to 
 build full-grown trees. Therefore, low values should be chosen for the stopping 
-criteria \code{minsplit}, \code{minbucket} and \code{alpha}.
-However, in a distributional model it also has to be considered that a 
+criteria} \code{minsplit}, \code{minbucket} and \code{alpha}.
+\hl{However, in a distributional model it also has to be considered that a 
 minimal number of observations is required to allow for a reasonable 
 estimation of parameters in each node. For that reason the minimal number
 of observations for which statistical tests are performed in the 
-distributional forest in Section~\ref{sec:precipitation} is set to
-50 (\code{minbucket}) and the minimal number of observations on which
-parameters are estimated is set to 20 (\code{minsplit}).
+distributional forest in} Section~\ref{sec:precipitation} is set to
+50 (\code{minbucket}) \hl{and the minimal number of observations on which
+parameters are estimated is set to 20} (\code{minsplit}).
 
 As stated by \cite{Breiman:2001} and \cite{Hastie+Tibshirani+Friedman:2001} 
 \hl{random forests do not overfit, not even for an increasing number of 
 trees} (\code{ntree}). \hl{Hence, it is recommended to build forests consisting 
-of a large number of trees} (\code{ntree}) \hl{as this generally leads to an increase 
-in accuracy. However, this also comes along with increasing computational costs. 
+of a large number of trees as this generally leads to an increase 
+in accuracy. However, it also comes along with increasing computational costs. 
 Therefore, ``a good choice results from a trade-off between computational 
 complexity and accuracy''} \citep{Biau+Scornet:2016}.
-\hl{Following this advice we chose to build forests consisting of 100 trees. 
-However, increasing this tuning parameter could improve the performance
-of the distributional forest without the problem of overfitting.}
+\hl{Following this advice we chose to build forests consisting of 100 trees.}
 
-%% TO DOs:
-%% East Tyrol
+
 \subsubsection*{East Tyrol}
-Figure~\ref{fig:all-map} shows that, contrary to the rest of Tyrol, 
+Figure~\ref{fig:all-map} \hl{shows that, contrary to the rest of Tyrol, 
 for the majority of stations in East Tyrol the prespecified GAMLSS performs
 best in this particular setting (learning data: 1985--2008, testing data:
 2009--2012). East Tyrol is located south of the main Alpine Ridge and 
@@ -1631,49 +1627,63 @@ we made for the prespecified GAMLSS method is particularly adequate for the
 region of East Tyrol for this specific analysis. However, the advantages of 
 the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
 validation: 2009--2012) even out in a cross-validation framework for most of 
-the stations in East Tyrol. These results are presented in the online supplement 
-which comes along with our manuscript. There, more extensive evaluations
-are carried out for 15 observation stations, including a cross-validation
-as presented for station Axams in this paper.
+the stations in East Tyrol. These results are presented in Supplement 2 
+(Stationwise Evaluation). There, the exact same evaluations as in} 
+Section~\ref{sec:axams} \hl{for station Axams have been carried out 
+for 14 other stations.}
 
 \subsubsection*{Choice of station Axams}
 %% choice of station Axams mit Verweis auf Supplement stationwise
-Axams was chosen for the more extensive evaluations presented
+\hl{Axams was chosen for the more extensive evaluations presented
 in this paper as it is the observation station being closest 
 to Innsbruck, the capital of Tyrol and the work place of 
 three of the authors, but not based on any other particular 
 features. Furthermore, it has been checked, whether it 
 is an adequate representative of all stations regarding 
-the results of our evaluations. This is now also 
-confirmed by further analysis in the online supplement which
-comes along with our manuscript.
-There, the same evaluations as for station Axams have been carried out for 14 other
-stations, including some of those where the forest does not perform better than
-the other models in the setting as presented in Figure~\ref{fig:all-map}.  
-It shows that the differences in performance even out in the cross-validation 
-framework. There, the forest performs at least equally well compared to the 
-best of the other models at most stations.
+the results of our evaluations. This is also confirmed by 
+the extended analysis in Supplement 2 (Stationwise Evaluation)
+where the 15 considered stations also include some of those where 
+the forest does not perform better than the other models in the setting 
+presented in} Figure~\ref{fig:all-map}. \hl{It shows that the differences in 
+performance even out in the cross-validation framework where the forest 
+performs at least equally well compared to the best of the other models 
+at most stations.}
 
 
 \subsubsection{Distributional specifications}
 %% choice of distribution mit Verweis auf Supplement distributions
-Moreover, as mentioned before we have tested robustness against 
-distributional misspecification. The results show that applying a 
-left-censored at zero logistic distribution or a Gaussian hurdle model 
-instead of the left-censored at zero Gaussian distribution, as presented 
-in the paper, does not lead to any significant improvements in goodness of 
-fit of the applied models. The exact results are provided in an online 
-supplement which comes with our manuscript.
+\hl{Choosing an adequate distributional family is a crucial step and forms
+the basis required to build a well fitting model. Therefore, this
+decision should be made thoughtfuly. 
+In the presented application we applied a Gaussian left-censored at
+zero distribution as this has proven to be a well working choice in
+earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
+\hl{But to test for robustness against distributional misspecifation 
+different distributional assumptions have been considered as well. 
+In Supplement 1 (Different Response Distributions) the exact
+same evaluations as in} Section~\ref{sec:all} \hl{are carried out for 15
+observation stations, once employing a Gaussian hurdle model and once
+with a left-censored at zero logistic distribution in order to account
+for heavier tails. Under both assumptions the obtained results 
+are similar to those presented in the paper applying a left-censored
+at zero Gaussian distribution. However, comparing the two censored distributions,
+at many stations the models perform not as well under the logisctic distribution 
+as under the Gaussian distribution. The hurdle model leads to slight improvements 
+in some settings, but this comes with more variablity (especially for EMOS and the 
+boosted GAMLSS).
+Alltogether, the distributional forest has proven to be very robust against
+distributional misspecifications.}
 
 \subsubsection*{Computational difficulties}
 %% GAMLSS errors with references gamboostLSS Hofner et al.
-As stated by \cite{Hofner+Mayr+Schmid:2016} the AIC-based variable selection 
-methods implemented in the \textsf{R} package \textbf{gamlss} ``can be unstable, 
+As stated by \cite{Hofner+Mayr+Schmid:2016} \hl{the AIC-based variable selection 
+methods implemented in the} \textsf{R} package \textbf{gamlss} \hl{``can be unstable, 
 especially when it comes to selecting possibly different sets of variables for 
 multiple distribution parameters.'' We have noticed computational problems when
-applying the function \textbf{gamlss} in certain settings within the cross-validation
+applying the function} \textbf{gamlss} \hl{in certain settings within the cross-validation
 framework as it did not succeed in fitting a model. In this cases the method
-was not taken into consideration in the comparison of all applied models.
+was not taken into consideration in the comparison of all applied models.}
+
 
 \section*{Computational details}
 
