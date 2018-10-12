@@ -852,12 +852,13 @@ not to choose such a selection method.
 Second, what does a basic EMOS exactly mean? 
 \end{review}
 
-We have adapted the introduction of a basic EMOS in the main manuscript
-in Section~ ...
-% By a `basic EMOS' we are referring to the linear distributional 
-% regression model based on the idea presented by Gneiting et al. (2005) 
-% where only the ensemble mean is included for the location parameter 
-% and the ensemble standard deviation for the scale parameter.
+By a `basic EMOS' we are referring to the linear distributional 
+regression model based on the idea presented by Gneiting et al. (2005) 
+applying a left-censored at zero Gaussian distribution where only the 
+ensemble mean is included for the location parameter and the ensemble 
+standard deviation for the scale parameter.
+We have introduced the model which we are referring to as a basic EMOS 
+in detail in the main manuscript in the first paragraph of Section~3. 
 
 
 \begin{review}
@@ -921,30 +922,9 @@ forecasting (Chen et al.; 2014)?
 We used ``EMOS'' as an expression for a standard post-processing
 model output statistics (MOS, Gneiting et al. (2005)) with a censored 
 distribution. We have revised the introduction of the EMOS model in 
-the main manuscript and hope this now explains the model better.
+the main manuscript in Section~3 and hope this now explains the model better.
 
-\textit{FIX ME: add formula for EMOS?}
-
-\begin{reto}
-Chen ist auf jeden Fall non-sense. Es gibt viele Papers die
-sowas machen, die Frage ist, ob es 10 Referenzen braucht (unter
-anderem macht das Jakob, Manu, ich, die Gneiting-Gruppe bzw.
-Hamill-Gruppe hat auch was in die Richtung aber mit Gamma \dots).
-
-Effizienter waere es wohl kurz das hier EMOS genannte Modell (was
-eigentlich einfach ein non-homogeneous regression Modell ist)
-im Appendix kurz hinzuschreiben?
-
-    \begin{equation}
-        \begin{split}
-            y^{1/p} = \mathcal{N}_0(\mu, \sigma) \\
-            \mu = \beta_0 + \beta_1 \cdot \bar{\mbox{tp}^{1/p}} + \mbox{split?} \\
-            \log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{1/p}) + \mbox{split?}
-        \end{split}
-    \end{equation}
-
-\dots damit k\"onnte man auch auf Kommentar 8 von Reviewer 2 reagieren.
-\end{reto}
+\textit{FIX ME: refer to better explanation in the paper}
 
 \begin{review}
 3. Looking at the PIT in the appendix, they seem to provide a 
