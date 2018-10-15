@@ -113,9 +113,10 @@ over the last decade there has been increasing interest in distributional
 regression approaches modeling all parameters including location, scale, and
 shape. Notably, so-called non-homogenous Gaussian regression (NGR) models both
 mean and variance of a Gaussian response and is particularly
-popular in weather forecasting. More generally, the GAMLSS framework
-allows to establish generalized additive models for location, scale, and shape
-with smooth linear or nonlinear effects.
+popular in weather forecasting. 
+% More generally, the GAMLSS framework allows to establish generalized additive 
+% models for location, scale, and shape with smooth linear or nonlinear effects.
+Less specifically, generalized additive models for location, scale, and shape (GAMLSS) provide a framework where each distribution parameter is modeled separately capturing smooth linear or nonlinear effects.
 %
 However, when variable selection is required and/or there are
 non-smooth dependencies or interactions (especially unknown or of high-order),
@@ -681,7 +682,7 @@ text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 \caption{\label{fig:axams-dist}\hlc{Total precipitation predictions by a 
 distributional forest at station Axams for July 24 in 2009, 2010, 2011 and 
 2012 learned on data from 1985--2008. Observations are non-negative and 
-modeled by a Gaussian distribution, left-censored at 0.
+modeled by a Gaussian distribution left-censored at zero.
 The observations are depicted by crosses and the predicted point mass
 from the model by filled circles.}}
 \end{figure}
@@ -695,7 +696,7 @@ To illustrate this in practice,
 precipitation forecasts are obtained with distributional forests at 95
 meteorological stations in a mountainous region in the Alps, covering mainly
 Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{fig:all-map}).
-More specifically, a Gaussian distribution, left-censored at zero, is employed to model 24-hour total precipitation so that the
+More specifically, a Gaussian distribution left-censored at zero, is employed to model 24-hour total precipitation so that the
 zero-censored point mass describes the probability of observing no precipitation 
 on a given day (see Figure~\ref{fig:axams-dist}). Forecasts for July are
 established based on data from the same month over the years 1985--2012 including
@@ -731,7 +732,7 @@ trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
 employed to establish distributional forests in Section~\ref{sec:distforest}.
 
 The general distributional notation is exemplified in all three steps for the
-Gaussian distribution, left-censored at zero. The latter is employed in the empirical 
+Gaussian distribution left-censored at zero. The latter is employed in the empirical 
 case study in Section~\ref{sec:precipitation} to model power-transformed daily 
 precipitation amounts.
 
@@ -965,17 +966,17 @@ specific quantities and sites.
 ``total precipitation'' (\emph{tp}) forecasts as predictor for the location 
 parameter $\mu$ and the corresponding ensemble standard deviation for the 
 scale parameter $\sigma$ of the statistical model based on the assumption
-of the response following a left-censored at zero Gaussian distribution.
+of the response following a Gaussian distribution left-censored at zero.
 This distributional approach of modeling both parameters allows to correct 
-for possible errors of the ensemble in both, the expectation but also the 
+for possible errors of the NWP ensemble in both, the expectation but also the 
 uncertainty of a specific forecast. In order to assure positivity of the 
 scale parameter a log-link is applied. Hence, the two distribution parameters 
 are modeled by the linear functions} 
 $\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
 $\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
 with power transformation parameter $\frac{1}{p}$ and 
-regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$.  
-\hlc{(Hereafter, this model is going to be referred to as a basic EMOS model.)}
+regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
+\hlc{hereafter referred to as a basic EMOS model.}
 
 \hlc{\textit{FIXME: notation with or withoug power transformation parameter?}}
 
@@ -1002,7 +1003,7 @@ the relevant variables, interactions, and potentially nonlinear effects are
 determined automatically in a data-driven way. Here, we employ a zero-censored
 Gaussian distribution and 80~predictor variables computed from ensemble means
 and spreads of various NWP outputs. The predictive performance of the forest is
-compared to three other zero-censored Gaussian models: (a)~a standard basic
+compared to three other zero-censored Gaussian models: (a)~a basic
 EMOS, (b)~a GAMLSS with prespecified effects and interactions based on
 meteorological knowledge/experience, and (c)~a boosted GAMLSS with automatic
 selection of smooth additive terms based on all 80~predictor variables.
@@ -1157,7 +1158,7 @@ further details:
   % minsplit = 20L, minbucket = 7L,
   % minprob = 0.01
 
-\item \emph{EMOS:} Standard ensemble model output statistics
+\item \emph{EMOS:} The basic ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
   submodel and the corresponding ensemble standard deviation in the scale submodel.
   The parameters are estimated by maximum likelihood, using an identity
@@ -1641,7 +1642,7 @@ region of East Tyrol for this specific analysis. However, the advantages of
 the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
 validation: 2009--2012) even out in a cross-validation framework for most of 
 the stations in East Tyrol. These results are presented in Supplement 2 
-(Stationwise Evaluation). There, the exact same evaluations as in} 
+(Stationwise Evaluation) where the exact same evaluations as in} 
 Section~\ref{sec:axams} \hlc{for station Axams have been carried out 
 for 14 other stations.}
 
@@ -1668,18 +1669,18 @@ at most stations.}
 \hlc{Choosing an adequate distributional family is a crucial step and forms
 the basis required to build a well fitting model. Therefore, this
 decision should be made thoughtfuly. 
-In the presented application we applied a Gaussian left-censored at
-zero distribution as this has proven to be a well working choice in
+In the presented application we applied a Gaussian distribution left-censored 
+at zero as this has proven to be a well working choice in
 earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
-\hlc{But to test for robustness against distributional misspecifation 
+\hlc{To test for robustness against distributional misspecifation 
 different distributional assumptions have been considered as well. 
 In Supplement 1 (Different Response Distributions) the exact
 same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
 observation stations, once employing a Gaussian hurdle model and once
-with a left-censored at zero logistic distribution in order to account
+with a logistic distribution left-censored at zero in order to account
 for heavier tails. Under both assumptions the obtained results 
-are similar to those presented in the paper applying a left-censored
-at zero Gaussian distribution. However, comparing the two censored distributions,
+are similar to those presented in the paper applying a Gaussian distribution
+left-censored at zero. However, comparing the two censored distributions,
 at many stations the models perform not as well under the logisctic distribution 
 as under the Gaussian distribution. The hurdle model leads to slight improvements 
 in some settings, but this comes with more variablity (especially for EMOS and the 
@@ -1690,11 +1691,11 @@ distributional misspecifications.}
 \subsubsection*{Computational difficulties}
 %% GAMLSS errors with references gamboostLSS Hofner et al.
 As stated by \cite{Hofner+Mayr+Schmid:2016} \hlc{the AIC-based variable selection 
-methods implemented in the} \textsf{R} package \textbf{gamlss} \hlc{``can be unstable, 
-especially when it comes to selecting possibly different sets of variables for 
+methods implemented in the} \textsf{R} package \textbf{gamlss} \hlc{``[...] can be 
+unstable, especially when it comes to selecting possibly different sets of variables for 
 multiple distribution parameters.'' We have noticed computational problems when
 applying the function} \textbf{gamlss} \hlc{in certain settings within the cross-validation
-framework as it did not succeed in fitting a model. In this cases the method
+framework as it did not succeed in fitting the model. In these cases the method
 was not taken into consideration in the comparison of all applied models.}
 
 
@@ -1850,13 +1851,13 @@ A different framework to build a tree is provided by the MOB algorithm
 which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
 
 
-\section{PIT histograms}
-\label{app:pit}
+%\section{PIT histograms}
+%\label{app:pit}
 
-\begin{figure}[b!]
-\centering
-%\begin{subfigure}{0.8\textwidth}
-<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE, width = 7>>=
+%\begin{figure}[b!]
+%\centering
+%%\begin{subfigure}{0.8\textwidth}
+<<rain_axams_pit_oosample, fig=TRUE, echo=FALSE, width = 7, eval=FALSE>>=
     
 # out of sample
 set.seed(4)
@@ -1868,16 +1869,16 @@ pithist(pit_g, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespeci
 pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0,1.5))
       
 @
-%\end{subfigure}
-\caption{\label{fig:axams-pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
-\end{figure}
+%%\end{subfigure}
+%\caption{\label{fig:axams-pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
+%\end{figure}
 
-As an alternative to QQ~plots based on randomized quantile residuals,
-probability integral transform (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) 
-histograms are a commonly used tool to assess how well-calibrated distributional 
-fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
-probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite
-some deviations the overall calibration of all models is acceptable.
+%As an alternative to QQ~plots based on randomized quantile residuals,
+%probability integral transform (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) 
+%histograms are a commonly used tool to assess how well-calibrated distributional 
+%fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
+%probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite
+%some deviations the overall calibration of all models is acceptable.
 
 \end{appendix}
 
