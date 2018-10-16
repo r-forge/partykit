@@ -28,7 +28,10 @@
 \usepackage{amsmath}
 
 
+
+
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 \begin{letter}{
 Nicoleta Serban\\
 Area Editor\\
@@ -442,7 +445,62 @@ and the model topography of the GEFS reforecast model
 the extent of simplification needed in such global weather forecast models.
 
 \begin{center}
-\includegraphics[width = .8\textwidth]{topo-GFS.pdf}
+\setkeys{Gin}{width=0.8\textwidth}
+<<topography, fig=TRUE, echo=FALSE, height=3.5, width=8>>=
+
+# Preamble
+library("sp")
+library("raster")
+library("ncdf4")
+data(StationsTyrol, package = "RainTyrol")
+data(MapTyrol, package = "RainTyrol")
+# data(MapTyrol_border, package = "RainTyrol")
+# Create SpatialPointsDataFrame from station list
+sp <- SpatialPointsDataFrame(subset(StationsTyrol,
+                                    select=c(lon,lat)),
+                             data = subset(StationsTyrol,
+                                           select = -c(lon,lat)),
+                             proj4string = crs(MapTyrol$RasterLayer))
+
+
+## plot map of Tyrol with all 95 observations
+par(mfrow = c(1, 2), mar = rep(0.1, 4), oma = rep(3, 4))
+
+# limits and axis config
+zlim <- c(400, 3900)
+xat  <- pretty(coordinates(MapTyrol$RasterLayer)[,1], 5)
+yat  <- pretty(coordinates(MapTyrol$RasterLayer)[,2], 5)
+cols <- gray.colors(100, start = 0.95, end = 0.05)
+
+# Plotting "real" topography
+raster::image(MapTyrol$RasterLayer, col = cols,
+              main=NA, ylab = "Latitude", xlab = "Longitude",
+              xlim = c(9.8,13.2), ylim = c(46.6, 47.87), zlim = zlim,
+              xaxt = "n", yaxt = "n")
+box()
+plot(MapTyrol$SpatialPolygons, add = TRUE)
+points(sp, pch = 19, cex = .5)
+axis(side = 1, at = xat); axis(side = 2, at = yat)
+mtext(side = 2, line = 2, cex = .8, "Latitude")
+
+# Loading and plotting regular_ll GFS topography
+##gfs <- raster("gfs_topo.nc")
+##gfs_resampled <- raster::resample(gfs, MapTyrol$RasterLayer)
+raster::image(raster("gfs_topo.nc"), col = cols,
+              main=NA, ylab = "Latitude", xlab = "Longitude",
+              xlim = c(9.8,13.2), ylim = c(46.6, 47.87), zlim = zlim,
+              xaxt = "n", yaxt = "n")
+box()
+plot(MapTyrol$SpatialPolygons, add = TRUE)
+points(sp, pch = 19, cex = .5)
+axis(side = 1, at = xat); axis(side = 4, at = yat)
+mtext(side = 4, line = 2, cex = .8, "Latitude")
+
+mtext(side = 1, line = 2, cex = .8, outer = TRUE, "Longitude")
+# Title
+mtext(side = 3, line = 1, cex = 1.2, font = 2, outer = TRUE,
+      "Comparison of Real Topography and GFS Model Topography")
+@
 \end{center}
 
 
@@ -954,7 +1012,75 @@ the exact same setting (station Axams, learned on 1985--2008). The resulting
 top 10 variables are listed in the following barplot.
 
 \begin{center}
-\includegraphics[width = .7\textwidth]{varimp_gb.pdf}
+\setkeys{Gin}{width=0.6\textwidth}
+<<varimp_gb, fig=TRUE, echo=FALSE, height=4, width=6>>=
+if(file.exists("vimp_crps_gb.rda")){
+  load("vimp_crps_gb.rda")
+} else {
+  
+  nperm <- 50
+  library("gamboostLSS")
+  library("crch")
+  library("scoringRules")
+  library("RainTyrol")
+  
+  # set function for parallelization
+  applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
+  
+  # model
+  load("Axams_24to4.rda")
+  gb <- Axams_24to4$gb
+  
+  # data
+  data("RainTyrol")
+  RainData <- RainTyrol[RainTyrol$station == "Axams", ]
+  rownames(RainData) <- c(1:NROW(RainData))
+  
+  # learning data: 24 years (1985 - 2008, both inlcuded)
+  # testing data: 4 successive years (2009, 2010, 2011, 2012)
+  # learndata <- RainData[RainData$year < 2009,]
+  testdata <- RainData[RainData$year %in% c(2009, 2010, 2011, 2012),]
+  
+  ## compute variable importance for the gamboostLSS object 'gb'
+  
+  meancrps <- function(permute = NULL, newdata = testdata) {
+    if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
+    m <- predict(gb, newdata = newdata, parameter = "mu", type = "response")
+    s <- predict(gb, newdata = newdata, parameter = "sigma", type = "response")
+    mean(crps_cnorm(newdata$robs, location = m, scale = s, lower = 0))
+  }
+  
+  
+  # apply for all covariates except for dswrf_mean_min and 
+  # dswrf_sprd_min (columns 30 and 33) as they are always 0
+  
+  risklist <- applyfun(1:nperm, 
+                       function(i){
+                         set.seed(i)
+                         sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
+                       })
+  risk <- Reduce("+", risklist) / length(risklist)
+  
+  names(risk) <- names(testdata)[c(5:29, 31, 32, 34: ncol(testdata))]
+  vimp_crps_gb <- risk - meancrps(newdata = testdata)
+  vimp_crps_gb <- sort(vimp_crps_gb, decreasing = TRUE)
+  
+  save(vimp_crps_gb, file = "vimp_crps_gb.rda")
+  
+}
+
+top10_gb <- vimp_crps_gb[1:10]
+
+par(mar = c(4,10,1,2))
+barplot(rev(top10_gb), 
+        horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Variable importance: mean decrease in CRPS",
+        font.axis = 3, #list(family="HersheySerif", face=3),
+        # xlim = c(0,1.1),
+        xlim = c(0,0.4),
+        names.arg = gsub("pow", "", names(rev(top10_gb))))
+axis(1, at = seq(0,1.6,0.1), las = 1, mgp=c(0,1,0))
+@
 \end{center}
 
 Overall it can be stated that the most important covariates of the boosted 
