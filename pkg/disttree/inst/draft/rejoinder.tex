@@ -62,11 +62,12 @@ which comes with our revised manuscript.
 
 \item The more extensive evaluations for station Axams have been 
 carried out for 14 other observation stations. Results are 
-provided in an online supplement 
-(Supplement 2: Stationwise Evaluation)
-which comes with our revised manuscript.
+provided in an online supplement (Supplement 2: Stationwise Evaluation)
+which comes with our revised manuscript. As this also contains
+the results that were presented in Appendix B we have removed this
+section of the appendix.
 
-\item The mathematical notation in the Appendix is now more precise.
+\item The mathematical notation in Appendix A is now more precise.
 
 \item In the calculation of variable importance we have detected some inconsistencies.
 Thus, we have revised the applied method to evaluate this measurement and recalculated
@@ -181,6 +182,9 @@ abstract: the acronym 'GAMLSS' should be spelled out the first
 time it is used
 \end{review}
 
+We have rephrased this part of the abstract now spelling out 'GAMLSS' at 
+its first appearance.
+
 \begin{review}
 p3: I'm not sure if people outside the weather forecasting 
 community is familiar with the notion of an 'ensemble', so 
@@ -234,8 +238,8 @@ This seems to result from the one specific training and validation period
 (training: 1985--2008, validation: 2009-2012).
 The advantages of the GAMLSS model even out at most of the stations when looking 
 on the results of a cross-validation. We have extended Section~4 to discuss this 
-issue. The results of a the extended cross-validation for a set of $15$ stations 
-can be found in Supplement 2 (Stationwise Evaluation).
+issue. The results of an extended evaluation including a cross-validation for a 
+set of $15$ stations can be found in Supplement 2 (Stationwise Evaluation).
 
 \newpage
 
@@ -284,7 +288,7 @@ minor revisions have been taken into account.
 \end{review}
 
 Thank you very much for the positive and constructive 
-comments regarding the manuscript. These helped to 
+comments regarding the paper. These helped to 
 substantially improve the manuscript.
 
 \bigskip
@@ -297,10 +301,14 @@ This spelling is not wrong, but less common than ``exceedance''.
 Please change into \textit{exceedance}
 \end{review}
 
+This has been changed in the manuscript.
+
 \begin{review}
 2. {\color{quotecolor}\textit{page 2:} 10$\%$ to 90\% quantile}\\
 Please change into \textit{10\% to 90\% quantiles}
 \end{review}
+
+This has been changed in the manuscript.
 
 \begin{review}
 3. {\color{quotecolor}\textit{page 5:} Fig 3, caption: Observations 
@@ -313,7 +321,7 @@ Please change into \textit{Observations are truncated at 0}
 You are right, our explanation was incorrect, thank you for pointing
 this out! We have now clarified that the model employs a censored
 distribution but the observations are not censored, just non-negative
-with a point mass at 0.
+with a point mass at zero.
 
 
 \begin{review}
@@ -322,7 +330,7 @@ Please change into \textit{truncation point}
 \end{review}
 
 We have rephrased this part of the caption to ``Observations are non-negative 
-and modeled by a Gaussian distribution, left-censored at 0.
+and modeled by a Gaussian distribution left-censored at zero.
 The observations are depicted by crosses and the predicted point mass
 from the model by filled circles.'' to clearly distinguish between the model
 and the observations.
@@ -372,7 +380,7 @@ the given formula. But you are right, one can also just evaluate
 the predicted terminal node for $z$ if the predicted parameter
 vector for this node is already known as there is one unique 
 parameter vector for all observations in the same terminal node.
-This is now also explained at the end of Section~2.2..
+This is now also explained at the end of Section~2.2.
 
 
 \begin{review}
@@ -464,6 +472,7 @@ the extent of simplification needed in such global weather forecast models.
 Please move the caption above the table.
 \end{review}
 
+This has been changed in the manuscript.
 
 \begin{review}
 13. {\color{quotecolor}\textit{page 12:} Parameters are estimated 
@@ -477,8 +486,8 @@ a split (\texttt{minsplit}) is set to 50, the minimal number of
 observations in a terminal node (\texttt{minbucket}) is set to 20 
 and the significance level for variable selection (\texttt{alpha}) 
 is kept at the default value 1. We have added this information in 
-the manuscript in Section~3.2., 'Distributional forest' and
-also discussed the choice of these tuning parameter in Section~4. and
+the manuscript in Section~3.2, 'Distributional forest', and
+also discussed the choice of these tuning parameter in Section~4 and
 in the answer to the second point of the associate editor.
 
 
@@ -487,6 +496,7 @@ in the answer to the second point of the associate editor.
 Please move the caption above the table.
 \end{review}
 
+This has been changed in the manuscript.
 
 \begin{review}
 15. {\color{quotecolor}\textit{page 17:} Thus, while the covariates 
@@ -508,11 +518,6 @@ Moreover, in the distributional forest for each node only a randomly
 drawn subset of covariates is considered. Hence, if for example the most 
 influential covariate is not included in this subset for a specific node 
 a similar covariate is very likely to be selected instead.
-Compared to the prespecified GAMLSS the forest seems to depict some
-features via differences among the different variations of a specific
-covariate (e.g., use \code{tp\_max}, \code{tp\_mean}, and \code{tp\_min}).
-Unfortunately the analysis does not allow to get more insights
-of (the importance of) interactions between different covariates.
 
 
 \begin{review}
@@ -544,7 +549,7 @@ Please clarify.
 
 Here we are actually referring to the linear statistic $t_l$ (instead of $t$) 
 which is the observed value of $T_l$, the test statistic for the $l$-th split 
-variable $Z_l$. This has been adjusted in the Appendix of the manuscript.
+variable $Z_l$. This has been adjusted in the appendix of the manuscript.
 
 \begin{review}
 18. {\color{quotecolor}\textit{page 20:} $c_{quad}(t, \mu, \Sigma)$}\\
@@ -556,7 +561,7 @@ As in the foregoing point this was just a general notation, but
 actually the variables corresponding to the $l$-th split variable 
 are considered, i.e. $t_l$, $\mu_l$ and $\sigma_l$. Thank you for
 pointing this out, the missing indices have been added in the
-Appendix of the manuscript.
+appendix of the manuscript.
 
 \begin{review}
 19. {\color{quotecolor}\textit{page 21:} it has to be assessed 
@@ -584,7 +589,7 @@ subgroups are ordered.
 
 The two subgroups are not ordered which is also not necessary as only 
 the sum of scores over the two subgroups is considered for the linear 
-statistic $T_{l^{\ast}}^{qr}$. We have adjusted the Appendix of
+statistic $T_{l^{\ast}}^{qr}$. We have adjusted the appendix of
 the manuscript to clarify this issue.
 
 \newpage
@@ -629,7 +634,7 @@ assumption on the error density is a crucial step which in
 my opinion should not be ignored or assumed not to be a problem.
 \end{review}
 
-We have applied the left-censored at zero Gaussian distribution
+We have applied a Gaussian distribution left-censored at zero
 as it has proven to be an adequate choice for this type of 
 application in earlier publications.
 Moreover, the residual QQ plots and PIT histograms illustrate
@@ -637,8 +642,8 @@ that the models are well calibrated employing this distribution.
 But thank you very much for the advice to consider a hurdle model!
 This is definitely a good idea and therefore we have carried out the
 same evaluations as presented in the paper but employing a
-Gaussian hurdle model. Additionally, a left-censored at zero logistic
-distribution has been applied as well in the same setting in
+Gaussian hurdle model. Additionally, a logistic distribution 
+left-censored at zero has been applied as well in the same setting in
 order to account for heavier tails. The results of these evaluation
 can be found in Supplement 1 (Different Response Distributions). 
 Overall, the distributional forest is proven to be very robust against 
@@ -673,10 +678,9 @@ skewness. Another frequently used approach is to transform the
 data to remove large parts of the skewness. The latter has the 
 advantage that the model assumptions get simpler as no estimate 
 for the skewness parameter is required. 
-Moreover, applying a transformation together with a censored 
-at zero Gaussian distribution allows for a better comparison 
-to the other models as they can all be built under the same 
-settings.
+Moreover, applying a transformation together with a Gaussian distribution
+censored at zero allows for a better comparison to the other models as 
+they can all be built under the same settings.
 In this study we are thus following Stauffer et al. (2017) 
 using the power transformation which turned out to be optimal 
 for a similar application for the very same study area.
@@ -913,7 +917,7 @@ The EMOS as originally suggested by Gneiting et al. (2005) can be seen
 as one of the standard ensemble model output statistics (or post-processing)
 approaches. This concept is well known within the post-processing community.
 We have revised the introduction of our manuscript and introduce the `basic EMOS'
-in more explicitly and in more detail (cf., Section~3).
+more explicitly and in more detail (cf., Section~3).
 
 
 \begin{review}
@@ -945,7 +949,7 @@ of the forest model in one particular setting (station Axams, learned
 on 1985--2008). However, this top 10 list is not considered for any specification 
 of the boosted GAMLSS for which all available covariates are included. As 
 for the distributional forest, we have also calculated variable importance 
-based on mean increase of out-of-bag CRPS for the gamboostLSS model for 
+based on mean increase of out-of-bag CRPS for the boosted GAMLSS model for 
 the exact same setting (station Axams, learned on 1985--2008). The resulting 
 top 10 variables are listed in the following barplot.
 
