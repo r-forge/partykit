@@ -981,14 +981,16 @@ $\mu = \beta_0 + \beta_1 \cdot \emph{mean}(\emph{tp})$ and
 $\log(\sigma) = \gamma_0 + \gamma_1 \cdot \emph{sd}(\emph{tp})$
 with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
 \hlc{hereafter referred to as a basic EMOS model} \citep{Gebetsberger+Messner+Mayr:2017}.
+
+% FIXME: notation with or without power transformation parameter?
+
+% with:
 %$\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
 %$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
 %with power transformation parameter $\frac{1}{p}$ and 
 %regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
 %\hlc{hereafter referred to as a basic EMOS model \citep{Gebetsberger+Messner+Mayr:2017}.}
 
-
-\hlc{\textit{FIXME: notation with or without power transformation parameter?}}
 
 While this approach alone is already highly effective in the plains,
 it typically does not perform as well in complex terrain due to unresolved
