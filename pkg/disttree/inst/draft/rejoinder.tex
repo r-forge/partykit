@@ -187,9 +187,8 @@ community is familiar with the notion of an 'ensemble', so
 this should be explained briefly
 \end{review}
 
-\begin{reto}
-Wo baut man das am besten ein?
-\end{reto}
+Ensemble models are now introduced in more detail in the
+first paragraph of Section~3.
 
 
 \begin{review}
@@ -419,62 +418,45 @@ Do you have references about this lack of performance of NWP
 in complex terrains? If so, please add them.
 \end{review}
 
-\textit{TO DO}
 
-\begin{reto}
-Es gibt da ein klassisches MOS-Paper in welchem Postprocessing
-mit einem Globalmodell und einem Lokalmodell gemacht werden.
-Das ist nicht die Referenz die der Reviewer will.
-Das Problem ist, dass es explizit dazu nix gibt. Das ist einfach
-jedem von uns klar. M\"uller zeigt aber in seinen Figures (f\"ur
-Wind und Temperatur), dass ein Modell mit h\"oherer Aufl\"osung
-einen geringeren Fehler aufweist und sagt folgendes:
+This is itself a complex topic with an own scientific community
+focusing on the development and improvement of numerical weather
+forecasts. Bauer, Thorphe, and Brunet (2015) give a good overview
+of the history and open scientific challenges of NWP ensemble forecast
+models including a discussion about unresolved processes and possible
+solutions beyond the current state of NWP models.
+We have added this reference next to the statement you are referring to.
 
-``\textit{The largest differences are found in the raw
-model forecast for stations in complex terrain. For wind
-speed, the increase in resolution is more beneficial than
-for temperature but is again negligible for MOS forecasts.
-[\dots]
-A higher resolution will
-further reduce the model bias, especially in complex
-terrain, but this can also be achieved with statistical
-postprocessing if observations are available. Furthermore,
-a postprocessed temperature forecast at 12-km
-resolution outperforms a raw forecast at 3-km, regardless
-of the complexity of the terrain}''.
+The following figure shows a comparison of the true local topography
+(Robinson et~al. 2014; left)
+and the model topography of the GEFS reforecast model
+($0.5^\circ \times 0.5^\circ$, approx. $50 \times 50~km^2$; right) to illustrate
+the extent of simplification needed in such global weather forecast models.
 
-\begin{verbatim}
-@article{mueller2011,
-    author = {M{\"u}ller, M. D.},
-    title = {Effects of Model Resolution and Statistical Postprocessing on Shelter Temperature and Wind Forecasts},
-    journal = {Journal of Applied Meteorology and Climatology},
-    volume = {50},
-    number = {8},
-    pages = {1627--1636},
-    year = {2011},
-    doi = {10.1175/2011JAMC2615.1},
-}
-\end{verbatim}
+\begin{center}
+\includegraphics[width = .8\textwidth]{topo-GFS.pdf}
+\end{center}
 
-Oder Meyers and Steenburgh (2013) der aufzeigt, dass auch der Mensch sich mit
-der Wettervorhersage im Gebirge schwer tut bzw. dort die groessten Challenges
-zu finden sind mit all den lokalen und kleinraeumigen Eigenschaften und Einfluessen.
-Habe das Buch grad nicht rumliegen, ist wohl aber auch nicht zwingend notwendig.
 
-\begin{verbatim}
-@Inbook{meyers2013,
-    author = {Meyers, Michael P. and Steenburgh, W. James},
-    editor = {Chow, Fotini K. and De Wekker, Stephan F.J. and Snyder, Bradley J.},
-    title = {Mountain Weather Prediction: Phenomenological Challenges and Forecast Methodology},
-    bookTitle = {Mountain Weather Research and Forecasting: Recent Progress and Current Challenges},
-    year = {2013},
-    publisher = {Springer Netherlands},
-    pages = {1--34},
-    isbn = {978-94-007-4098-3},
-    doi = {10.1007/978-94-007-4098-3_1},
-}
-\end{verbatim}
-\end{reto}
+%\begin{verbatim}
+%@Article{Bauer2015,
+%    author   = {Bauer, Peter and Thorpe, Alan and Brunet, Gilbert},
+%    title    = {The Quiet Revolution of Numerical Weather Prediction},
+%    journal  = {Nature},
+%    year     = {2015},
+%    month    = {Sep},
+%    day      = {02},
+%    volume   = {525},
+%    pages    = {47--55},
+%    doi      = {10.1038/nature14956}
+%}
+%\end{verbatim}
+%Bauer and Thorpe (2015, p.~52): ``\textit{The scientific challenges:
+%[\dots] the uncertainties inherent to physical parameterizations, either
+%from incomplete process understanding or the dilemma of representing
+%the impact of unresolved processes on the resolved scales, may require a
+%fundamentally different approach.''
+
 
 
 \begin{review}
@@ -968,7 +950,7 @@ the exact same setting (station Axams, learned on 1985--2008). The resulting
 top 10 variables are listed in the following barplot.
 
 \begin{center}
-\includegraphics[width = 0.7\textwidth]{varimp_gb.jpeg}
+\includegraphics[width = .7\textwidth]{varimp_gb.pdf}
 \end{center}
 
 Overall it can be stated that the most important covariates of the boosted 
@@ -1115,6 +1097,17 @@ Probabilistic Forecasting of Precipitation, PhD thesis,
 \item[] Rasp, S., Lerch, S. (2018). Neural Networks for Post-Processing Ensemble
 Weather Forecasts, \textit{Montly Weather Review}, NA.
 %doi:\href{https://doi.org/10.1175/MWR-D-18-0187.1}{10.1175/MWR-D-18-0187.1}.
+
+\item[] M{\"u}ller, M. D. (2011): Effects of Model Resolution and Statistical
+Postprocessing on Shelter Temperature and Wind Forecasts,
+\textit{Journal of Applied Meteorology and Climatology} 
+\textbf{50 8}: 1627--1636.
+%doi:10.1175/2011JAMC2615.1
+
+\item[] Bauer, P. and Thorpe, A. (2015). The Quiet Revolution of Numerical 
+Weather Prediction,
+\textit{Nature} \textbf{525}: 47--55.
+%doi:10.1038/nature14956
 
 \end{itemize}
 

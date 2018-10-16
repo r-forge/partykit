@@ -709,7 +709,7 @@ the predictions. In Section~\ref{sec:precipitation} we investigate the
 performance of distributional forests in this forecasting task in more detail.
 Compared to three alternative zero-censored Gaussian models distributional forests
 perform at least on par and sometimes clearly better while requiring no meteorological
-knowledge about the athmospheric processes which drive formation of precipitation
+knowledge about the atmospheric processes which drive formation of precipitation
 for the model specification. The three alternatives are: a standard ensemble model
 output statistics approach \citep[EMOS,][]{Gneiting+Raftery+Westveld:2005} based
 on an NGR, a GAMLSS with regressors prespecified based on meteorological expertise
@@ -957,13 +957,18 @@ may depend on external variables in a quite general way.
 \label{sec:precipitation}
 
 Many statistical weather forecasting models leverage the strengths of modern
-numerical weather prediction (NWP) systems \citep[see][]{Bauer+Thorpe+Brunet:2015}.  
+numerical ensemble prediction systems (EPSs; see \cite{Bauer+Thorpe+Brunet:2015}).
+\hlc{EPSs not only predict the most likely future state of the atmosphere but provide
+information about the uncertainty for a specific quantity and weather situation.
+This is done by running the NWP model several times using slightly perturbed 
+initial conditions and model specifications to account for uncertainties in both,
+the initial state and the model and its parametrizations.
 One frequently used method based on distributional regression models is the 
-ensemble model output statistics (EMOS) approach first proposed by
-\cite{Gneiting+Raftery+Westveld:2005} to produce high-quality forecasts for
+ensemble model output statistics (EMOS) approach first proposed by}
+\cite{Gneiting+Raftery+Westveld:2005} \hlc{to produce high-quality forecasts for
 specific quantities and sites.  
-\hlc{In case of precipitation forecasting EMOS typically uses the ensemble mean of 
-``total precipitation'' (\emph{tp}) forecasts as predictor for the location 
+In case of precipitation forecasting EMOS typically uses the ensemble mean of 
+``total precipitation''} (\emph{tp}) \hlc{forecasts as predictor for the location 
 parameter $\mu$ and the corresponding ensemble standard deviation for the 
 scale parameter $\sigma$ of the statistical model based on the assumption
 of the response following a Gaussian distribution left-censored at zero.
@@ -972,17 +977,23 @@ for possible errors of the NWP ensemble in both, the expectation but also the
 uncertainty of a specific forecast. In order to assure positivity of the 
 scale parameter a log-link is applied. Hence, the two distribution parameters 
 are modeled by the linear functions} 
-$\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
-$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
-with power transformation parameter $\frac{1}{p}$ and 
-regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
-\hlc{hereafter referred to as a basic EMOS model.}
+$\mu = \beta_0 + \beta_1 \cdot \emph{mean}(\emph{tp})$ and  
+$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \emph{sd}(\emph{tp})$
+with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
+\hlc{hereafter referred to as a basic EMOS model} \citep{Gebetsberger+Messner+Mayr:2017}.
+%$\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
+%$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
+%with power transformation parameter $\frac{1}{p}$ and 
+%regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
+%\hlc{hereafter referred to as a basic EMOS model \citep{Gebetsberger+Messner+Mayr:2017}.}
 
-\hlc{\textit{FIXME: notation with or withoug power transformation parameter?}}
+
+\hlc{\textit{FIXME: notation with or without power transformation parameter?}}
 
 While this approach alone is already highly effective in the plains,
 it typically does not perform as well in complex terrain due to unresolved
-effects in the NWP system. For example, in the Tyrolean Alps -- considered
+effects in the NWP system \citep{Bauer+Thorpe+Brunet:2015}. 
+For example, in the Tyrolean Alps -- considered
 in the following case study -- the NWP grid cells of $50 \times 50$
 km$^2$ are too coarse to capture single mountains, narrow valleys, etc. 
 Therefore, it is often possible to substantially improve the predictive 
@@ -1593,7 +1604,7 @@ main effects and interaction effects can be considered allowing for easier
 interpretations} (see for example \cite{Wood+Scheipl+Faraway:2013}, 
 \cite{Goicoa+Adin+Ugarte:2018}, \cite{Ugarte+Adin+Goicoa:2017}).
 \hlc{However, in the application presented in} Section~\ref{sec:precipitation}
-\hlc{alltogether 80 variables are available. Even if only paired interactions were
+\hlc{altogether 80 variables are available. Even if only paired interactions were
 considered this would already lead to 3160 additional covariates in the model
 making it very difficult to keep the model manageable regarding computational
 costs but also interpretability. Therefore, only main effects are considered
@@ -1668,7 +1679,7 @@ at most stations.}
 %% choice of distribution mit Verweis auf Supplement distributions
 \hlc{Choosing an adequate distributional family is a crucial step and forms
 the basis required to build a well fitting model. Therefore, this
-decision should be made thoughtfuly. 
+decision should be made thoughtfully. 
 In the presented application we applied a Gaussian distribution left-censored 
 at zero as this has proven to be a well working choice in
 earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
@@ -1681,11 +1692,11 @@ with a logistic distribution left-censored at zero in order to account
 for heavier tails. Under both assumptions the obtained results 
 are similar to those presented in the paper applying a Gaussian distribution
 left-censored at zero. However, comparing the two censored distributions,
-at many stations the models perform not as well under the logisctic distribution 
+at many stations the models perform not as well under the logistic distribution 
 as under the Gaussian distribution. The hurdle model leads to slight improvements 
-in some settings, but this comes with more variablity (especially for EMOS and the 
+in some settings, but this comes with more variability (especially for EMOS and the 
 boosted GAMLSS).
-Alltogether, the distributional forest has proven to be very robust against
+Altogether, the distributional forest has proven to be very robust against
 distributional misspecifications.}
 
 \subsubsection*{Computational difficulties}
@@ -1727,8 +1738,7 @@ is reproducible using
 \code{demo("RainAxams", package = "disttree")}.
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
-QQ~plots (Figure~\ref{fig:axams-qq}) and
-PIT histograms (Figure~\ref{fig:axams-pit}).
+QQ~plots (Figure~\ref{fig:axams-qq}).
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),

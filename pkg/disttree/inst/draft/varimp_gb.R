@@ -61,12 +61,15 @@ vimp_crps_gb <- sort(vimp_crps_gb, decreasing = TRUE)
 
 save(vimp_crps_gb, file = "~/svn/partykit/pkg/disttree/inst/draft/reviews/vimp_crps_gb.rda")
 
+
+## plot
+load("~/svn/partykit/pkg/disttree/inst/draft/reviews/vimp_crps_gb.rda")
 top10_gb <- vimp_crps_gb[1:10]
 
-par(mar = c(2.5,10,1,2))
+par(mar = c(4,10,1,2))
 barplot(rev(top10_gb), 
         horiz = TRUE, las = 1, axes = FALSE,
-        # xlab = "Variable importance: mean decrease in CRPS",
+        xlab = "Variable importance: mean decrease in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
         # xlim = c(0,1.1),
         xlim = c(0,0.4),
