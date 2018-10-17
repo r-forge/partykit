@@ -25,6 +25,10 @@
 }{
     \end{color}
 }
+
+\definecolor{fixmecol}{rgb}{1,1,0.7}
+\newcommand{\fixme}[1]{{\sethlcolor{fixmecol}\hl{#1}}}
+
 \usepackage{amsmath}
 
 
@@ -730,16 +734,20 @@ specific sites. This is often also depict by the ensemble prediction
 system where a subset of all members predicts rather large amounts 
 (compared to the overall ensemble mean or median). This yields strongly 
 skewed ensemble forecasts which has to be addressed in some sort.\\
-As you mention one way would be to directly apply a
-distributional family with an additional parameter to capture
-skewness. Another frequently used approach is to transform the 
-data to remove large parts of the skewness. The latter has the 
-advantage that the model assumptions get simpler as no estimate 
-for the skewness parameter is required. 
-Moreover, applying a transformation together with a Gaussian distribution
-censored at zero allows for a better comparison to the other models as 
-they can all be built under the same settings.
-In this study we are thus following Stauffer et al. (2017) 
+\fixme{\textit{FIXME: Should this explanation why there is skewness be included?}}
+
+As you mention one way how to deal with skewness would be to 
+apply a distributional family with an additional parameter to capture
+skewness. However, this can be very complex and thus lead to less well 
+fitting estimators of the location and scale parameter.
+Moreover, the focus of this paper is on the features of the presented 
+distributional forest regarding variable selection and the capability 
+to also model non-linear effects rather than optimizing the model 
+specification for this particular application.
+Transforming the data to remove large parts of the skewness is
+a frequently used approach. Therefore, employing such a transformation 
+allows for a better way of comparing our results to those presented in 
+literature. In this study we are thus following Stauffer et al. (2017) 
 using the power transformation which turned out to be optimal 
 for a similar application for the very same study area.
 
@@ -753,15 +761,21 @@ I think, the reason that focusing on predictions should
 be made clearer and well justified.
 \end{review}
 
-This is the trade-off between interpretability and predictive 
-skill. Regression-type models might be easier to interpret, 
-however, if one is mainly interested in predictive skill and
-a good performing fully automated weather forecasting tool the 
-interpretability is not implicitly needed in some cases 
-(machine learning performance vs. interpretability).
-We adapted our manuscript as we definitely want to emphasize that 
-in our application the focus is mainly on prediction but not on 
-interpretation. We hope we could point this out clearly.
+We completely agree with you as that other models such as
+GAMLSS are clearly advantageous regarding interpretability. 
+These models provide a very powerful framework that works
+well in a wide range of applications and research fields, 
+including meteorology. Therefore, our intention is not to present 
+distributional forests as a replacement of these commonly used methods 
+but rather as a well working alternative. Especially if one is mainly 
+interested in predictive skill and a good performing fully automated 
+weather forecasting tool the interpretability is not implicitly needed 
+in some cases (machine learning performance vs. interpretability).
+We adapted our manuscript as we definitely want to emphasize that in our 
+application the focus is mainly on prediction but not on interpretation. 
+We hope we could point this out clearly. \\
+\fixme{\textit{FIXME: Where should this be pointed out in the manuscript? Discussion?}}
+
 
 \begin{review}
 4. The method itself is hard to follow in particular since 
@@ -1212,7 +1226,7 @@ A Random Forest Guided Tour,
 \textbf{25}: 197--227.
 
 \item[] Hastie, T., Tibshirani, R. and Friedman, J. (2001).
-The Elements of Statistical Learning, Second Edition,
+The Elements of Statistical Learning, %Second Edition,
 \textit{Springer New York Inc.}.
 
 \item[] Breiman, L. (2001).
