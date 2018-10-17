@@ -116,7 +116,7 @@ mean and variance of a Gaussian response and is particularly
 popular in weather forecasting. 
 % More generally, the GAMLSS framework allows to establish generalized additive 
 % models for location, scale, and shape with smooth linear or nonlinear effects.
-Less specifically, generalized additive models for location, scale, and shape (GAMLSS) provide a framework where each distribution parameter is modeled separately capturing smooth linear or nonlinear effects.
+\hlc{Less specifically, generalized additive models for location, scale, and shape (GAMLSS) provide a framework where each distribution parameter is modeled separately capturing smooth linear or nonlinear effects.}
 %
 However, when variable selection is required and/or there are
 non-smooth dependencies or interactions (especially unknown or of high-order),
@@ -680,7 +680,7 @@ text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
 \caption{\label{fig:axams-dist}\hlc{Total precipitation predictions by a 
-distributional forest at station Axams for July 24 in 2009, 2010, 2011 and 
+distributional forest at station Axams for July~24 in 2009, 2010, 2011 and 
 2012 learned on data from 1985--2008. Observations are non-negative and 
 modeled by a Gaussian distribution left-censored at zero.
 The observations are depicted by crosses and the predicted point mass
@@ -880,9 +880,9 @@ $\bm{\hat \theta}(\bold{z})$ where
 $$
 \bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 $$
-\hlc{Even though this parameter depends on the given $z$ it has to be noted that
+\hlc{Even though this parameter depends on the given $\bold{z}$ it has to be noted that
 it is the same for all other observations that are in the same terminal node of 
-the tree as $z$ and therefore does not necessarily have to be recalculated for
+the tree as $\bold{z}$ and therefore does not necessarily have to be recalculated for
 each of them.}
 
 \subsection{Distributional forest}
@@ -897,7 +897,7 @@ applied to smooth the effects, stabilize the model, and improve predictive perfo
 \hlc{The idea of random forests is to learn an ensemble of trees, each on a different
 learning data obtained through resampling (bootstrap or subsampling). In each node 
 only a random subset of the covariates $\bold{Z}$ is considered to reduce the 
-correlation among the trees and to stabilizes the variance of the model.
+correlation among the trees and to stabilize the variance of the model.
 For a simple regression random forest the mean of predictions over
 all trees is considered. In that way changes in the location  of the response 
 across the covariates are detected} (e.g. in Breiman and Cutler's random forests, 
@@ -994,15 +994,15 @@ with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,
 
 While this approach alone is already highly effective in the plains,
 it typically does not perform as well in complex terrain due to unresolved
-effects in the NWP system \citep{Bauer+Thorpe+Brunet:2015}. 
+effects in the \hlc{NWP system} \citep{Bauer+Thorpe+Brunet:2015}. 
 For example, in the Tyrolean Alps -- considered
 in the following case study -- the NWP grid cells of $50 \times 50$
 km$^2$ are too coarse to capture single mountains, narrow valleys, etc. 
 Therefore, it is often possible to substantially improve the predictive 
 performance of the EMOS by including additional predictor variables, either 
-from local meteorological observations or an NWP model. Unfortunately, it is typically unknown 
-which variables are relevant for improving the predictions. Simply including
-all available variables may be computationally burdensome and
+from local meteorological observations or an NWP model. Unfortunately, it is 
+typically unknown which variables are relevant for improving the predictions. 
+Simply including all available variables may be computationally burdensome and
 can lead to overfitting but, on the other hand, excluding too many variables
 may result in a loss of valuable information. Therefore, selecting
 the relevant variables and interactions among all possible covariates is 
@@ -1171,7 +1171,7 @@ further details:
   % minsplit = 20L, minbucket = 7L,
   % minprob = 0.01
 
-\item \emph{EMOS:} The basic ensemble model output statistics
+\item \emph{EMOS:} \hcl{The basic} ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
   submodel and the corresponding ensemble standard deviation in the scale submodel.
   The parameters are estimated by maximum likelihood, using an identity
@@ -1639,7 +1639,7 @@ trees} (\code{ntree}). \hlc{Hence, it is recommended to build forests consisting
 of a large number of trees as this generally leads to an increase 
 in accuracy. However, it also comes along with increasing computational costs. 
 Therefore, ``a good choice results from a trade-off between computational 
-complexity and accuracy''} \citep{Biau+Scornet:2016}.
+complexity and accuracy''} (\cite{Biau+Scornet:2016}, p.~205).
 \hlc{Following this advice we chose to build forests consisting of 100 trees.}
 
 
@@ -1740,7 +1740,8 @@ is reproducible using
 \code{demo("RainAxams", package = "disttree")}.
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
-QQ~plots (Figure~\ref{fig:axams-qq}).
+QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
+(Supplement 2: Stationwise Evaluation).
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),
