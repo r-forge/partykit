@@ -894,8 +894,7 @@ Supplement~2 (Stationwise Evaluation).
 
 \begin{review}
 8. I found the competing models to be chosen pretty unfair. 
-First, for the prespecified GAMLSS, the authors use 
-”relevant effects based on expert knowledge”. Why not all? 
+First, for the prespecified GAMLSS, the authors use ``relevant effects based on expert knowledge''. Why not all? 
 Why not making a decision on some information criteria such as AIC/BIC? 
 The latter would be done if the analyst decided to use a prespecified 
 GAMLSS. I guess, the GAMLSS could improve a lot by this . 
