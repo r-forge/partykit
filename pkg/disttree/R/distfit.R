@@ -493,7 +493,12 @@ get_expectedvalue <- function(object, par) {
   
   # integrate over function f = x * density function with estimated parameters plugged in (already in the object for class 'distfit')
   if(inherits(object, "distfit")) {
-    f <- function(x){x * object$ddist(x, log = FALSE)}
+    f <- function(x) {
+      dens <- try(object$ddist(x, log = FALSE), silent = TRUE)
+      # if function is only defined on a limited range
+      if(inherits(dens, "try-error")) dens <- 0
+      x * dens
+    }
     expv <- try(integrate(f,-Inf, Inf), silent = TRUE)
     if(inherits(expv, "try-error")) {
       expv <- try(integrate(f,-Inf, Inf, rel.tol = 1e-03))

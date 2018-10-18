@@ -369,7 +369,7 @@ predict.distforest <- function (object, newdata = NULL,
   
   # for type = "prob" the argument scale has to set to FALSE
   if(type == "prob" & scale) {
-    warning("for type 'prob' the weights have to be integeres, i.e. the argument 'scale' has to be set to FALSE")
+    warning("for type 'prob' the weights have to be integers, i.e. the argument 'scale' has to be set to FALSE")
     scale <- FALSE
   }
   
