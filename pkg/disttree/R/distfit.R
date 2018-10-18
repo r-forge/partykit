@@ -518,7 +518,12 @@ get_expectedvalue <- function(object, par) {
     expv <- numeric(length = NROW(par))
     for(i in 1:NROW(par)){
       eta <- unlist(object$info$family$linkfun(par[i,]))
-      f <- function(x){x * object$info$family$ddist(x, eta = eta, log = FALSE)}
+      f <- function(x) {
+        dens <- try(object$info$family$ddist(x, eta = eta, log = FALSE), silent = TRUE)
+        # if function is only defined on a limited range
+        if(inherits(dens, "try-error")) dens <- 0
+        x * dens
+      }
       val <- try(integrate(f,-Inf, Inf), silent = TRUE)
       if(inherits(expv, "try-error")) {
         val <- try(integrate(f,-Inf, Inf, rel.tol = 1e-03))
