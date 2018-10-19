@@ -28,7 +28,9 @@ library("RainTyrol")
 
 # if gamlss.cens family object should be used as family
 library("gamlss.cens")
+gen.cens(NO, type = "left")
 gen.cens(LO, type = "left")
+
 
 # if gamlss.tr family object should be used as family
 library("gamlss.tr")
@@ -45,16 +47,22 @@ assign("dNOlc", dNOlc, pos = ".GlobalEnv")
 assign("pNOlc", pNOlc, pos = ".GlobalEnv")
 assign("qNOlc", qNOlc, pos = ".GlobalEnv")
 
-assign("LO",  gamlss.dist::NO,  pos = ".GlobalEnv")
-assign("dLO", gamlss.dist::dNO, pos = ".GlobalEnv")
-assign("pLO", gamlss.dist::pNO, pos = ".GlobalEnv")
-assign("qLO", gamlss.dist::qNO, pos = ".GlobalEnv")
-assign("rLO", gamlss.dist::rNO, pos = ".GlobalEnv")
-gamlss.cens::gen.cens(NO, type = "left")
-assign("LOlc",  NOlc,  pos = ".GlobalEnv")
-assign("dLOlc", dNOlc, pos = ".GlobalEnv")
-assign("pLOlc", pNOlc, pos = ".GlobalEnv")
-assign("qLOlc", qNOlc, pos = ".GlobalEnv")
+assign("LO",  gamlss.dist::LO,  pos = ".GlobalEnv")
+assign("dLO", gamlss.dist::dLO, pos = ".GlobalEnv")
+assign("pLO", gamlss.dist::pLO, pos = ".GlobalEnv")
+assign("qLO", gamlss.dist::qLO, pos = ".GlobalEnv")
+assign("rLO", gamlss.dist::rLO, pos = ".GlobalEnv")
+gamlss.cens::gen.cens(LO, type = "left")
+assign("LOlc",  LOlc,  pos = ".GlobalEnv")
+assign("dLOlc", dLOlc, pos = ".GlobalEnv")
+assign("pLOlc", pLOlc, pos = ".GlobalEnv")
+assign("qLOlc", qLOlc, pos = ".GlobalEnv")
+
+gamlss.tr::gen.trun(0, "NO", type = "left")
+assign("NOtr",  NOtr,  pos = ".GlobalEnv")
+assign("dNOtr", dNOtr, pos = ".GlobalEnv")
+assign("pNOtr", pNOtr, pos = ".GlobalEnv")
+assign("qNOtr", qNOtr, pos = ".GlobalEnv")
 
 # distribution list for left-censored at zero logistic distribution
 dist_list_cens_log <- dist_crch(dist = "logistic", type = "left", censpoint = 0)
