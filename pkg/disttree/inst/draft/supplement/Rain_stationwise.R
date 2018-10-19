@@ -2,13 +2,15 @@
 ### Probabilistic Forecasting on Precipitation Data ###
 #######################################################
 
-## Replication material for supplement of: 
+## Replication material for Supplement 2 (Stationwise Evaluation) of the paper 
 ## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
 ## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
 ## URL: http://arxiv.org/abs/1804.02921
 
-## This demo includes the application on selected stations
-## Full replication of all other results can be obtained with
+## This demo includes the application on selected observation stations
+## Full replication for station Axams can be obtained with
+## demo("RainAxams", package = "disttree")
+## Full replication of all other results presented in the paper can be obtained with
 ## demo("RainTyrol", package = "disttree")
 
 ## Computation time: approximately .. minutes (on our machines, using .. kernels)
@@ -27,7 +29,7 @@ library("RainTyrol")
 
 # if gamlss.cens family object should be used as family
 library("gamlss.cens")
-gen.cens(LO, type = "left")
+gen.cens(NO, type = "left")
 
 assign("NO",  gamlss.dist::NO,  pos = ".GlobalEnv")
 assign("dNO", gamlss.dist::dNO, pos = ".GlobalEnv")
