@@ -28,6 +28,11 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 
 #####
+# define function for parallelization
+applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, detectCores() - 1))
+
+
+#####
 # formula
 {
   
@@ -367,7 +372,7 @@ results
 
 
 #####
-# PIT histograms and QQR plots
+# PIT histograms and residual QQ plots
 
 # prepare data
 {
@@ -425,36 +430,46 @@ qqrplot(pit_gb, nsim = 100, main = "Boosted GAMLSS",        ylim = c(-5, 5), col
 # Variable importance
   
 set.seed(7)
-  
-# locally redefine logLik.distforest to use crps in varimp()
-logLik.distforest <- function(object, newdata = NULL, ...) {
-  if(is.null(newdata)) {
-    newdata <- object$data
-  } 
-  
-  # predict parameter
-  pdf <- predict(object, newdata = newdata, type = "parameter")
-  df_mu <- pdf$mu
-  df_sigma <- pdf$sigma
-  
-  # calculate CRPS
-  crps <- mean(crps_cnorm(newdata$robs, location = df_mu, scale = df_sigma, lower = 0, upper = Inf), na.rm = TRUE)
-  
-  return(structure(crps, df = NA, class = "logLik"))
+nperm <- 50
+
+# function to permutate chosen variable and then calculate mean crps
+meancrps <- function(permute = NULL, newdata = testdata) {
+  if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
+  p <- predict(df, newdata = newdata, type = "parameter")
+  mean(crps_cnorm(newdata$robs, location = p$mu, scale = p$sigma, lower = 0))
 }
 
-vimp_crps <- varimp(df, nperm = 1L)
+# apply for all covariates except for dswrf_mean_min and 
+# dswrf_sprd_min (columns 30 and 33) as they are always 0
 
-rm(logLik.distforest) 
+# using only one core
+# risk_all <- replicate(nperm, sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps))
+# risk <- rowMeans(risk_all)
+
+# or parallel
+risklist <- applyfun(1:nperm, 
+                     function(i){
+                       set.seed(i)
+                       sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps)
+                     })
+risk <- Reduce("+", risklist) / length(risklist)
+
+names(risk) <- names(testdata)[c(5:29, 31, 32, 34: ncol(testdata))]
+vimp_crps <- risk - meancrps(newdata = testdata)
+vimp_crps <- sort(vimp_crps, decreasing = TRUE)
+
+
+
 
 # plot top 10 in terms of variable importance
-par(mfrow = c(1, 1), mar = c(5, 10, 2, 4))
+par(mfrow = c(1, 1), mar = c(4, 10, 1, 2))
 barplot(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)], 
         horiz = TRUE, las = 1, axes = FALSE,
-        xlab = "Variable importance: mean decrease in CRPS",
+        xlab = "Variable importance: mean increase in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
+        xlim = c(0,0.08),
         names.arg = gsub("pow", "", names(sort(vimp_crps, decreasing = FALSE)[(length(vimp_crps)-9):length(vimp_crps)])))
-axis(1, at = seq(0,1.6,0.2), las = 1, mgp=c(0,1,0))
+axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
 
 
 
