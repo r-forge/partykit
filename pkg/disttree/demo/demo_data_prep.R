@@ -1,6 +1,3 @@
-setwd("~/svn/partykit/pkg/disttree/inst/draft")
-#setwd("~/disttree/demo")
-
 ########################################
 # prepare dataset for demo
 
@@ -8,7 +5,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   # load observations
   #load("~/svn/partykit/pkg/disttree/inst/draft/rainData/rain.rda")
   #load("~/disttree/inst/draft/rainData/rain.rda")
-  load("rainData/rain.rda")
+  load("../inst/draft/rainData/rain.rda")
   #head(data)
   Sys.setenv("TZ" = "UTC")
   rain  <- data
@@ -26,7 +23,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   # load station list
   #load("~/svn/partykit/pkg/disttree/inst/draft/rainData/ehyd.statlist.rda")
   #load("~/disttree/inst/draft/rainData/ehyd.statlist.rda")
-  load("rainData/ehyd.statlist.rda")
+  load("../inst/draft/rainData/ehyd.statlist.rda")
   stations <- data.frame(ehyd.statlist$station, ehyd.statlist$stationname, 
                          ehyd.statlist$lon, ehyd.statlist$lat, ehyd.statlist$height)
   colnames(stations) <- c("stationnr", "stationname",
@@ -48,7 +45,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
       stationnr <- stations[i, "stationnr"]
       
       # load predictions
-      load(paste0("rainData/prepared/GEFSV2_prepared_", stationnr, ".rda", sep = ""))
+      load(paste0("../inst/draft/rainData/prepared/GEFSV2_prepared_", stationnr, ".rda", sep = ""))
       prediction <- prepared
       Sys.setenv("TZ" = "UTC")
       prediction$day <-as.POSIXlt(prediction$init)$yday
@@ -107,7 +104,7 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
     # load predictions
     #load(paste0("~/svn/partykit/pkg/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_", stationnr, ".rda"))
     #load(paste0("~/disttree/inst/draft/rainData/prepared/GEFSV2_prepared_", stationnr, ".rda"))
-    load(paste0("rainData/prepared/GEFSV2_prepared_", stationnr, ".rda", sep = ""))
+    load(paste0("../inst/draft/rainData/prepared/GEFSV2_prepared_", stationnr, ".rda", sep = ""))
     prediction <- prepared
     Sys.setenv("TZ" = "UTC")
     #prediction$day <-as.POSIXlt(prediction$init)$yday
@@ -266,113 +263,6 @@ setwd("~/svn/partykit/pkg/disttree/inst/draft")
   rownames(RainAxams) <- c(1:NROW(RainAxams))
   save(RainAxams, file = "~/svn/partykit/pkg/disttree/data/RainAxams.rda")
   
-  RainLech <- RainTyrol[RainTyrol$station == "Lech",]
-  rownames(RainLech) <- c(1:NROW(RainLech))
-  save(RainLech, file = "~/svn/partykit/pkg/disttree/data/RainLech.rda")
-  
-  RainZuers <- RainTyrol[RainTyrol$station == "Zuers",]
-  rownames(RainZuers) <- c(1:NROW(RainZuers))
-  save(RainZuers, file = "~/svn/partykit/pkg/disttree/data/RainZuers.rda")
-  
-  RainMatreiinOsttirol <- RainTyrol[RainTyrol$station == "Matrei in Osttirol",]
-  rownames(RainMatreiinOsttirol) <- c(1:NROW(RainMatreiinOsttirol))
-  save(RainMatreiinOsttirol, file = "~/svn/partykit/pkg/disttree/data/RainMatreiinOsttirol.rda")
-  
-  RainKoessen <- RainTyrol[RainTyrol$station == "Koessen",]
-  rownames(RainKoessen) <- c(1:NROW(RainKoessen))
-  save(RainKoessen, file = "~/svn/partykit/pkg/disttree/data/RainKoessen.rda")
-  
-  RainWalchsee <- RainTyrol[RainTyrol$station == "Walchsee",]
-  rownames(RainWalchsee) <- c(1:NROW(RainWalchsee))
-  save(RainWalchsee, file = "~/svn/partykit/pkg/disttree/data/RainWalchsee.rda")
-  
-  RainHoefenWaengle <- RainTyrol[RainTyrol$station == "Hoefen-Waengle",]
-  rownames(RainHoefenWaengle) <- c(1:NROW(RainHoefenWaengle))
-  save(RainHoefenWaengle, file = "~/svn/partykit/pkg/disttree/data/RainHoefen-Waengle.rda")
-  
-  RainTannheimKienzen <- RainTyrol[RainTyrol$station == "Tannheim-Kienzen",]
-  rownames(RainTannheimKienzen) <- c(1:NROW(RainTannheimKienzen))
-  save(RainTannheimKienzen, file = "~/svn/partykit/pkg/disttree/data/RainTannheim-Kienzen.rda")
-  
-  RainVils <- RainTyrol[RainTyrol$station == "Vils",]
-  rownames(RainVils) <- c(1:NROW(RainVils))
-  save(RainVils, file = "~/svn/partykit/pkg/disttree/data/RainVils.rda")
-  
-  RainJungholz <- RainTyrol[RainTyrol$station == "Jungholz",]
-  rownames(RainJungholz) <- c(1:NROW(RainJungholz))
-  save(RainJungholz, file = "~/svn/partykit/pkg/disttree/data/RainJungholz.rda")
-  
-  RainImstOberstadt <- RainTyrol[RainTyrol$station == "Imst (Oberstadt)",]
-  rownames(RainImstOberstadt) <- c(1:NROW(RainImstOberstadt))
-  save(RainImstOberstadt, file = "~/svn/partykit/pkg/disttree/data/RainImstOberstadt.rda")
-  
-  RainSeeimPaznaun <- RainTyrol[RainTyrol$station == "See im Paznaun",]
-  rownames(RainSeeimPaznaun) <- c(1:NROW(RainSeeimPaznaun))
-  save(RainSeeimPaznaun, file = "~/svn/partykit/pkg/disttree/data/RainSeeimPaznaun.rda")
-  
-  RainLadisNeuegg <- RainTyrol[RainTyrol$station == "Ladis-Neuegg",]
-  rownames(RainLadisNeuegg) <- c(1:NROW(RainLadisNeuegg))
-  save(RainLadisNeuegg, file = "~/svn/partykit/pkg/disttree/data/RainLadisNeuegg.rda")
-  
-  RainLaengenfeld <- RainTyrol[RainTyrol$station == "Laengenfeld",]
-  rownames(RainLaengenfeld) <- c(1:NROW(RainLaengenfeld))
-  save(RainLaengenfeld, file = "~/svn/partykit/pkg/disttree/data/RainLaengenfeld.rda")
-  
-  RainOetz <- RainTyrol[RainTyrol$station == "Oetz",]
-  rownames(RainOetz) <- c(1:NROW(RainOetz))
-  save(RainOetz, file = "~/svn/partykit/pkg/disttree/data/RainOetz.rda")
-  
-  RainInnervillgraten <- RainTyrol[RainTyrol$station == "Innervillgraten",]
-  rownames(RainInnervillgraten) <- c(1:NROW(RainInnervillgraten))
-  save(RainInnervillgraten, file = "~/svn/partykit/pkg/disttree/data/RainInnervillgraten.rda")
-  
-  RainPassThurn <- RainTyrol[RainTyrol$station == "Pass Thurn",]
-  rownames(RainPassThurn) <- c(1:NROW(RainPassThurn))
-  save(RainPassThurn, file = "~/svn/partykit/pkg/disttree/data/RainPassThurn.rda")
-  
-  RainRotholz <- RainTyrol[RainTyrol$station == "Rotholz",]
-  rownames(RainRotholz) <- c(1:NROW(RainRotholz))
-  save(RainRotholz, file = "~/svn/partykit/pkg/disttree/data/RainRotholz.rda")
-  
-  RainOchsengartenObergut <- RainTyrol[RainTyrol$station == "Ochsengarten-Obergut",]
-  rownames(RainOchsengartenObergut) <- c(1:NROW(RainOchsengartenObergut))
-  save(RainOchsengartenObergut, file = "~/svn/partykit/pkg/disttree/data/RainOchsengartenObergut.rda")
-  
-  RainStJohannimWalde <- RainTyrol[RainTyrol$station == "St.Johann im Walde",]
-  rownames(RainStJohannimWalde) <- c(1:NROW(RainStJohannimWalde))
-  save(RainStJohannimWalde, file = "~/svn/partykit/pkg/disttree/data/RainStJohannimWalde.rda")
-  
-  RainHinterriss <- RainTyrol[RainTyrol$station == "Hinterriss",]
-  rownames(RainHinterriss) <- c(1:NROW(RainHinterriss))
-  save(RainHinterriss, file = "~/svn/partykit/pkg/disttree/data/RainHinterriss.rda")
-  
-  RainKaunertalVergoetschen <- RainTyrol[RainTyrol$station == "Kaunertal-Vergoetschen",]
-  rownames(RainKaunertalVergoetschen) <- c(1:NROW(RainKaunertalVergoetschen))
-  save(RainKaunertalVergoetschen, file = "~/svn/partykit/pkg/disttree/data/RainKaunertalVergoetschen.rda")
-  
-  RainObsteig <- RainTyrol[RainTyrol$station == "Obsteig",]
-  rownames(RainObsteig) <- c(1:NROW(RainObsteig))
-  save(RainObsteig, file = "~/svn/partykit/pkg/disttree/data/RainObsteig.rda")
-  
-  RainHuetten <- RainTyrol[RainTyrol$station == "Huetten",]
-  rownames(RainHuetten) <- c(1:NROW(RainHuetten))
-  save(RainHuetten, file = "~/svn/partykit/pkg/disttree/data/RainHuetten.rda")
-  
-  RainLanersbach <- RainTyrol[RainTyrol$station == "Lanersbach",]
-  rownames(RainLanersbach) <- c(1:NROW(RainLanersbach))
-  save(RainLanersbach, file = "~/svn/partykit/pkg/disttree/data/RainLanersbach.rda")
-  
-  RainHopfgarteniBrt <- RainTyrol[RainTyrol$station == "Hopfgarten i.Brt.",]
-  rownames(RainHopfgarteniBrt) <- c(1:NROW(RainHopfgarteniBrt))
-  save(RainHopfgarteniBrt, file = "~/svn/partykit/pkg/disttree/data/RainHopfgarteniBrt.rda")
-  
-  RainObertilliach <- RainTyrol[RainTyrol$station == "Obertilliach",]
-  rownames(RainObertilliach) <- c(1:NROW(RainObertilliach))
-  save(RainObertilliach, file = "~/svn/partykit/pkg/disttree/data/RainObertilliach.rda")
-  
-  RainMariaLuggau <- RainTyrol[RainTyrol$station == "Maria Luggau",]
-  rownames(RainMariaLuggau) <- c(1:NROW(RainMariaLuggau))
-  save(RainMariaLuggau, file = "~/svn/partykit/pkg/disttree/data/RainMariaLuggau.rda")
 }
 
 
