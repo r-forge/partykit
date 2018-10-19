@@ -455,7 +455,7 @@ the extent of simplification needed in such global weather forecast models.
 # Preamble
 library("sp")
 library("raster")
-library("ncdf4")
+#library("ncdf4")
 data(StationsTyrol, package = "RainTyrol")
 data(MapTyrol, package = "RainTyrol")
 # data(MapTyrol_border, package = "RainTyrol")
@@ -490,7 +490,7 @@ mtext(side = 2, line = 2, cex = .8, "Latitude")
 # Loading and plotting regular_ll GFS topography
 ##gfs <- raster("gfs_topo.nc")
 ##gfs_resampled <- raster::resample(gfs, MapTyrol$RasterLayer)
-raster::image(raster("gfs_topo.nc"), col = cols,
+raster::image(MapTyrol$RasterLayerGFS, col = cols,
               main=NA, ylab = "Latitude", xlab = "Longitude",
               xlim = c(9.8,13.2), ylim = c(46.6, 47.87), zlim = zlim,
               xaxt = "n", yaxt = "n")
