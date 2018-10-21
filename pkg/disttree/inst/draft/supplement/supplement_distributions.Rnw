@@ -470,7 +470,8 @@ abline(h = 0, col = pal[5], lwd = 2)
 @
 \caption{\label{fig:box_crpss_gaussian} CRPS skill score (higher = better)
 for hurdle Gaussian and censored logistic distributions in reference to the
-censored Gaussian distribution (orange horizontal line). Gray lines correspond to the 15~stations and are aggregated in the boxplot.}
+censored Gaussian distribution (orange horizontal line). Gray lines
+correspond to the 15~stations that are aggregated in the boxplot.}
 \end{figure}
 
 \subsubsection*{FIXME: FURTHER GRAPHICS?}
