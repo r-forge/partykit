@@ -1158,8 +1158,10 @@ further details:
   in Section~\ref{sec:methods}. 
   \hlc{As stopping criteria the minimal number of observations to perform a split} 
   (\code{minsplit}) \hlc{is set to $50$, the minimal number of observations in a 
-  terminal node} (\code{minbucket})\hlc{is set to $20$ and the significance level 
-  for variable selection} (\code{alpha}) \hlc{is kept at the default value $1$.}
+  terminal node} (\code{minbucket}) \hlc{is set to $20$ and the significance level 
+  for variable selection} (\code{alpha}) \hlc{is kept at the default value $1$ such 
+  that no early-stopping (sometimes also refered to as ``pre-pruning'') is applied
+  based on results of the statistical tests.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
   
@@ -1693,13 +1695,21 @@ observation stations, once employing a Gaussian hurdle model and once
 with a logistic distribution left-censored at zero in order to account
 for heavier tails. Under both assumptions the obtained results 
 are similar to those presented in the paper applying a Gaussian distribution
-left-censored at zero. However, comparing the two censored distributions,
-at many stations the models perform not as well under the logistic distribution 
-as under the Gaussian distribution. The hurdle model leads to slight improvements 
-in some settings, but this comes with more variability (especially for EMOS and the 
-boosted GAMLSS).
-Altogether, the distributional forest has proven to be very robust against
-distributional misspecifications.}
+left-censored at zero. In some settings the hurdle model leads to slight 
+improvements, but this comes with more variability (especially for EMOS and the 
+boosted GAMLSS). For the boosted GAMLSS the left-censored logistic distribution
+shows slightly better results, however, only within a range of less than $2\%$
+and not for all stations. Altogether, the distributional forest has proven to be 
+very robust against distributional misspecifications.
+
+Alternatively, a distribution including an addidtional parameter capturing skewness
+\citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016} could be applied. For example, 
+in transformation forests} \citep{Hothorn+Zeileis:2017} \hlc{a very flexible 
+five-parametric distribution family is employed such that skewness can be modeled 
+explicitly.
+Evaluating further distributions might be of interest but this would go beyond the
+scope of this manuscript.
+}
 
 \subsubsection*{Computational difficulties}
 %% GAMLSS errors with references gamboostLSS Hofner et al.
@@ -1836,7 +1846,9 @@ any of the resulting $p$-values is beneath the selected significance level.
 If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
 is chosen as splitting variable. \hlc{Otherwise no further split is made 
 in this node as the stopping criterion of no $p$-values being below the 
-significance level is fulfilled.}
+significance level is fulfilled. This type of early-stopping in building
+a tree is sometimes also referred to as ``pre-pruning''. For forest models
+pre-pruning is often switched off by setting the significance level to $1$.}
 
 The breakpoint that leads to the highest discrepancy between score functions 
 in the two resulting subgroups is selected as split point. 
