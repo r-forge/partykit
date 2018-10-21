@@ -1160,7 +1160,7 @@ further details:
   (\code{minsplit}) \hlc{is set to $50$, the minimal number of observations in a 
   terminal node} (\code{minbucket}) \hlc{is set to $20$ and the significance level 
   for variable selection} (\code{alpha}) \hlc{is kept at the default value $1$ such 
-  that no early-stopping (sometimes also refered to as ``pre-pruning'') is applied
+  that no early-stopping (sometimes also referred to as ``pre-pruning'') is applied
   based on results of the statistical tests.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
@@ -1702,7 +1702,7 @@ shows slightly better results, however, only within a range of less than $2\%$
 and not for all stations. Altogether, the distributional forest has proven to be 
 very robust against distributional misspecifications.
 
-Alternatively, a distribution including an addidtional parameter capturing skewness
+Alternatively, a distribution including an additional parameter capturing skewness
 \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016} could be applied. For example, 
 in transformation forests} \citep{Hothorn+Zeileis:2017} \hlc{a very flexible 
 five-parametric distribution family is employed such that skewness can be modeled 
