@@ -385,7 +385,7 @@ if(FALSE){
   names(crps_ss_forest_2p) <- "Three-parametric forest"
   boxplot(crps_ss_forest_2p, ylab = "CRPS skill score", names = c("Three-parametric forest"))
   abline(h = 0, col = pal[5], lwd = 2)
-  axis(1, 0:2, c("","Three-parametric forest", ""), las=1)
+  axis(1, 0:2, c("","One-part vs. two-part hurdle forest", ""), las=1)
   
 
   sum(crps_forests[,"forest_h"] > crps_forests[,"forest_2p"])

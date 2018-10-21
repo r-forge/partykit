@@ -274,13 +274,12 @@ substantially by station, separate panels are employed for each station.
 \item For the distributional forest all three distributions perform very similarly for all
 stations. Thus, it appears to be very robust against missspecifications of the distribution.
 
-\item Similarly, for the EMOS model all distributions lead to comparable CRPS for all
-stations. However, there is some more variation in CRPS across distributions compared to
-the distributional forest.
+\item Also for the prespecified GAMLSS all three distributions lead to almost the same 
+results and no clear advantage of one or the other distribution can be detected.
 
-\item In contrast, the two GAMLSS models typically perform better (i.e., have lower CRPS) for
-the Gaussian distributions compared to the logistic distribution. The preference of
-censored vs.\ hurdle specification is not unanimous across stations.
+\item Similarly, for the EMOS model and the boosted GAMLSS all distributions 
+lead to comparable CRPS for all stations. However, there is some more variation 
+in CRPS across distributions compared to the distributional forest.
 
 \end{itemize}
 %
@@ -300,7 +299,7 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 load("Rain_distributions.rda")
 levels(results$means$distribution) <- c("cgaussian", "hgaussian", "clogistic")
-levels(results$means$station)[16] <- "St. Johann im Walde"
+levels(results$means$station)[15] <- "St. Johann im Walde"
 
 stations <- c("Axams", "Lech", "Zuers", "See im Paznaun", "Jungholz", 
               "Ladis-Neuegg", "Oetz", "Ochsengarten-Obergut",
@@ -364,14 +363,20 @@ scores for each station are also included in the graphic by gray lines.
   Gaussian hurdle model is slightly better than for the simpler zero-censored Gaussian
   model, this advantage is very small and not systematic across stations.
   
-\item For EMOS, the median skill score for both Gaussian hurdle and zero-censored logistic
-  are very close to the zero-censored Gaussian reference. However, the variation for the
-  hurdle model is much higher than for the censored model.
+\item Again, for the prespecified GAMLSS the results are very similar as for the 
+  distributional forest showing only a slight advantage of the Gaussian hurdle model, 
+  however, not for all stations. 
+  %The zero-censored logistic distribution performs on average equally
+  %well as the the zero-censored Gaussian distribution.
   
-\item For the two GAMLSS models the Gaussian hurdle is quite close to the zero-censored
-  Gaussian reference, while the zero-censored logistic clearly performs worse (especially
-  in the prespecified GAMLSS).
+\item For the boosted GAMLSS, the Gaussian hurdle is quite close to the zero-censored
+  Gaussian reference but shows a high variation, while the zero-censored logistic 
+  performs slightly better.
 
+\item For EMOS, the median skill score for both Gaussian hurdle and zero-censored logistic
+  are very close to the zero-censored Gaussian reference. However, as for the boosted GAMLSS
+  the variation for the hurdle model is much higher than for the censored model.
+  
 \end{itemize}
 
 \begin{figure}[t!]
@@ -419,7 +424,7 @@ matplot(t(s_df[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE,  main = "Distributional forest",
         xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_df, add = TRUE, col = "transparent")
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -431,7 +436,7 @@ matplot(t(s_g[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, main = "Prespecified GAMLSS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_g, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -443,7 +448,7 @@ matplot(t(s_gb[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, main = "Boosted GAMLSS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_gb, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -455,7 +460,7 @@ matplot(t(s_emos[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE,  main = "EMOS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_emos, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -465,26 +470,23 @@ abline(h = 0, col = pal[5], lwd = 2)
 @
 \caption{\label{fig:box_crpss_gaussian} CRPS skill score (higher = better)
 for hurdle Gaussian and censored logistic distributions in reference to the
-censored Gaussian distribution (orange horizontal line). Gray lines correspond to the 15~stations and are
-aggregated in the boxplot. The y-axis range is limited
-to $-10$\%, lower values for the two GAMLSS models are not displayed.}
+censored Gaussian distribution (orange horizontal line). Gray lines correspond to the 15~stations and are aggregated in the boxplot.}
 \end{figure}
 
 \subsubsection*{FIXME: FURTHER GRAPHICS?}
 
-\emph{The same data already shown in Figures~\ref{fig:lattice} and~\ref{fig:box_crpss_gaussian}
-can be displayed in further ways. However, these do not really add much and hence should probably
-be omitted.}
+\emph{The same data already shown in Figures~\ref{fig:lattice} 
+and~\ref{fig:box_crpss_gaussian} can be displayed in further ways. However, these do 
+not really add much and hence should probably be omitted.}
 
 Figures~\ref{fig:box_crpss_EMOS} and \ref{fig:box_crps} compare the methods separately 
 for each distribution, once based on CRPS skill score values with reference model EMOS 
-and once based on CRPS values. Both confirm the conclusion that the censored Gaussian 
-model and the hurdle model lead to almost the same results for all methods while only 
-the logistic model shows small variations.
+and once based on CRPS values. Both confirm the conclusion that all three distributions
+lead to almost the same results for all methods.
 
-Altogether it can be stated that for this application the left-censored at zero Gaussian distribution seems 
-to be an appropriate choice while the other two distributions, especially the hurdle model, 
-are also reasonable alternatives. However, they do not lead to an overall improvement in 
+Altogether it can be stated that for this application the left-censored at zero Gaussian
+distribution seems to be an appropriate choice while the other two distributions are also
+reasonable alternatives. However, they do not lead to an overall improvement in 
 performance for this application.
 
 
@@ -702,7 +704,10 @@ manuscript and the alternative distributional specifications in this
 supplement perform at least similarly. For some combinations of models and
 stations, the Gaussian hurdle leads to small improvements on average but
 typically with more variability (especially for EMOS and the boosted
-GAMLSS). Therefore, the main manuscript focuses on the zero-censored
+GAMLSS). Furthermore, for the boosted GAMLSS the zero-censored logistic
+distribution shows slightly better results, however, only within a range of
+less than $2\%$ and not for all stations.
+Therefore, the main manuscript focuses on the zero-censored
 Gaussian model which is well-established in the probabilistic
 precipitation forecasting literature. Moreover, the distributional forest
 can be shown to be rather robust against distributional

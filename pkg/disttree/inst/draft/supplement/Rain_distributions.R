@@ -631,11 +631,16 @@ if(FALSE){
   pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
   
   load("Rain_distributions.rda")
+  levels(results$means$distribution) <- c("cgaussian", "hgaussian", "clogistic")
+  levels(results$means$station)[15] <- "St. Johann im Walde"
+  
+  
   stations <- c("Axams", "Lech", "Zuers", "See im Paznaun", "Jungholz", 
                 "Ladis-Neuegg", "Oetz", "Ochsengarten-Obergut",
                 "Ginzling", "Rotholz", "Walchsee", "Koessen", 
                 "Innervillgraten", "Matrei in Osttirol", 
-                "St.Johann im Walde")
+                "St. Johann im Walde")
+  
   
   
   means <- results$means[(results$means$method != "disttree") & 
@@ -681,38 +686,38 @@ if(FALSE){
   
   ## CRPS skill score by distribution (reference: gaussian)
   means$crps_ss_dist <- means$crps
-  means$crps_ss_dist[means$distribution == "gaussian"] <- 
-    1 - means$crps[means$distribution == "gaussian"] / means$crps[means$distribution == "gaussian"]
-  means$crps_ss_dist[means$distribution == "logistic"] <- 
-    1 - means$crps[means$distribution == "logistic"] / means$crps[means$distribution == "gaussian"]
+  means$crps_ss_dist[means$distribution == "cgaussian"] <- 
+    1 - means$crps[means$distribution == "cgaussian"] / means$crps[means$distribution == "cgaussian"]
+  means$crps_ss_dist[means$distribution == "clogistic"] <- 
+    1 - means$crps[means$distribution == "clogistic"] / means$crps[means$distribution == "cgaussian"]
   means$crps_ss_dist[means$distribution == "hgaussian"] <- 
-    1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "gaussian"]
+    1 - means$crps[means$distribution == "hgaussian"] / means$crps[means$distribution == "cgaussian"]
   
-  means_sel <- means[means$distribution %in% c("logistic", "hgaussian"),]
+  means_sel <- means[means$distribution %in% c("clogistic", "hgaussian"),]
   means_sel$distribution <- factor(means_sel$distribution, 
                                    levels(means_sel$distribution)[c(2:3)])
   
   # CRPS skill score for distributional forest
   s_df <- matrix(ncol = 2, nrow = 15)
   s_df[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-  s_df[,2] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "logistic", "crps_ss_dist"]
+  s_df[,2] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "clogistic", "crps_ss_dist"]
   
   # CRPS skill score for prespecified GAMLSS
   s_g <- matrix(ncol = 2, nrow = 15)
   s_g[,1] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-  s_g[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+  s_g[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
   
   # CRPS skill score for boosted GAMLSS
   s_gb <- matrix(ncol = 2, nrow = 15)
   s_gb[,1] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-  s_gb[,2] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+  s_gb[,2] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
   
   # CRPS skill score for EMOS
   s_emos <- matrix(ncol = 2, nrow = 15)
   s_emos[,1] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "hgaussian", "crps_ss_dist"]
-  s_emos[,2] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "logistic", "crps_ss_dist"]
+  s_emos[,2] <- means_sel[means_sel$method == "EMOS" & means_sel$distribution == "clogistic", "crps_ss_dist"]
   
-  colnames(s_df) <- colnames(s_g) <- colnames(s_gb) <- colnames(s_emos) <- c("hgaussian", "logistic")
+  colnames(s_df) <- colnames(s_g) <- colnames(s_gb) <- colnames(s_emos) <- c("hgaussian", "clogistic")
   
   # boxplots with matplot
   par(mfrow = c(1,4), mar = c(4,4,3,0.7))
@@ -720,7 +725,7 @@ if(FALSE){
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE,  main = "Distributional forest",
           xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 2.5),
-          ylim = c(-0.10, 0.05))
+          ylim = c(-0.05, 0.05))
   boxplot(s_df, add = TRUE, col = "transparent")
   abline(h = 0, col = pal[5], lwd = 2)
   
@@ -729,7 +734,7 @@ if(FALSE){
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE, main = "Prespecified GAMLSS",
           xlab = "", ylab = "", xlim = c(0.5, 2.5),
-          ylim = c(-0.10, 0.05))
+          ylim = c(-0.05, 0.05))
   boxplot(s_g, add = TRUE, col = "transparent", yaxt = 'n')
   abline(h = 0, col = pal[5], lwd = 2)
   
@@ -738,7 +743,7 @@ if(FALSE){
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE, main = "Boosted GAMLSS",
           xlab = "", ylab = "", xlim = c(0.5, 2.5),
-          ylim = c(-0.10, 0.05))
+          ylim = c(-0.05, 0.05))
   boxplot(s_gb, add = TRUE, col = "transparent", yaxt = 'n')
   abline(h = 0, col = pal[5], lwd = 2)
   
@@ -747,7 +752,7 @@ if(FALSE){
           col = gray(0.5, alpha = 0.2),
           lty = 1, axes = FALSE,  main = "EMOS",
           xlab = "", ylab = "", xlim = c(0.5, 2.5),
-          ylim = c(-0.10, 0.05))
+          ylim = c(-0.05, 0.05))
   boxplot(s_emos, add = TRUE, col = "transparent", yaxt = 'n')
   abline(h = 0, col = pal[5], lwd = 2)
   
@@ -769,9 +774,9 @@ if(FALSE){
   
   # CRPS skill score for gaussian
   s_gaussian <- matrix(ncol = 3, nrow = 15)
-  s_gaussian[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "gaussian", "crps_ss_method"]
-  s_gaussian[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "gaussian", "crps_ss_method"]
-  s_gaussian[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "gaussian", "crps_ss_method"]
+  s_gaussian[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "cgaussian", "crps_ss_method"]
+  s_gaussian[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "cgaussian", "crps_ss_method"]
+  s_gaussian[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "cgaussian", "crps_ss_method"]
   
   # CRPS skill score for boosted hgaussian
   s_hgaussian <- matrix(ncol = 3, nrow = 15)
@@ -781,9 +786,9 @@ if(FALSE){
   
   # CRPS skill score for prespecified logistic
   s_logistic <- matrix(ncol = 3, nrow = 15)
-  s_logistic[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "logistic", "crps_ss_method"]
-  s_logistic[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "logistic", "crps_ss_method"]
-  s_logistic[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "logistic", "crps_ss_method"]
+  s_logistic[,1] <- means_sel[means_sel$method == "Distributional forest" & means_sel$distribution == "clogistic", "crps_ss_method"]
+  s_logistic[,2] <- means_sel[means_sel$method == "Prespecified GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_method"]
+  s_logistic[,3] <- means_sel[means_sel$method == "Boosted GAMLSS" & means_sel$distribution == "clogistic", "crps_ss_method"]
   
   colnames(s_gaussian) <- colnames(s_hgaussian) <- colnames(s_logistic) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS")
   
@@ -791,7 +796,7 @@ if(FALSE){
   par(mfrow = c(1,3), mar = c(5,4,3,0))
   matplot(t(s_gaussian[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
-          lty = 1, axes = FALSE,  main = "gaussian", ylim = c(-0.12,0.23), 
+          lty = 1, axes = FALSE,  main = "cgaussian", ylim = c(-0.12,0.23), 
           xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 3.5))
   boxplot(s_gaussian, add = TRUE, col = "transparent", axes = FALSE)
   abline(h = 0, col = pal[5], lwd = 2)
@@ -827,7 +832,7 @@ if(FALSE){
   par(mar = c(5,0,3,4))
   matplot(t(s_logistic[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
-          lty = 1, axes = FALSE,  main = "logistic", ylim = c(-0.12,0.23), 
+          lty = 1, axes = FALSE,  main = "clogistic", ylim = c(-0.12,0.23), 
           xlab = "", ylab = "", xlim = c(0.5, 3.5))
   boxplot(s_logistic, add = TRUE, col = "transparent", axes = FALSE)
   abline(h = 0, col = pal[5], lwd = 2)
@@ -849,10 +854,10 @@ if(FALSE){
   
   # CRPS for gaussian
   c_gaussian <- matrix(ncol = 4, nrow = 15)
-  c_gaussian[,1] <- means[means$method == "Distributional forest" & means$distribution == "gaussian", "crps"]
-  c_gaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "gaussian", "crps"]
-  c_gaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "gaussian", "crps"]
-  c_gaussian[,4] <- means[means$method == "EMOS" & means$distribution == "gaussian", "crps"]
+  c_gaussian[,1] <- means[means$method == "Distributional forest" & means$distribution == "cgaussian", "crps"]
+  c_gaussian[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "cgaussian", "crps"]
+  c_gaussian[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "cgaussian", "crps"]
+  c_gaussian[,4] <- means[means$method == "EMOS" & means$distribution == "cgaussian", "crps"]
   
   # CRPS for hgaussian
   c_hgaussian <- matrix(ncol = 4, nrow = 15)
@@ -863,10 +868,10 @@ if(FALSE){
   
   # CRPS for logistic
   c_logistic <- matrix(ncol = 4, nrow = 15)
-  c_logistic[,1] <- means[means$method == "Distributional forest" & means$distribution == "logistic", "crps"]
-  c_logistic[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "logistic", "crps"]
-  c_logistic[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "logistic", "crps"]
-  c_logistic[,4] <- means[means$method == "EMOS" & means$distribution == "logistic", "crps"]
+  c_logistic[,1] <- means[means$method == "Distributional forest" & means$distribution == "clogistic", "crps"]
+  c_logistic[,2] <- means[means$method == "Prespecified GAMLSS" & means$distribution == "clogistic", "crps"]
+  c_logistic[,3] <- means[means$method == "Boosted GAMLSS" & means$distribution == "clogistic", "crps"]
+  c_logistic[,4] <- means[means$method == "EMOS" & means$distribution == "clogistic", "crps"]
   
   colnames(c_gaussian) <- colnames(c_hgaussian) <- colnames(c_logistic) <- c("Distributional forest", "Prespecified GAMLSS", "Boosted GAMLSS", "EMOS")
   
@@ -874,7 +879,7 @@ if(FALSE){
   par(mfrow = c(1,3), mar = c(5,4,3,0))
   matplot(t(c_gaussian[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
-          lty = 1, axes = FALSE,  main = "gaussian", 
+          lty = 1, axes = FALSE,  main = "cgaussian", 
           xlab = "", ylab = "CRPS", xlim = c(0.5, 4.5),
           ylim = c(0.65,1.15))
   boxplot(c_gaussian, add = TRUE, col = "transparent", axes = FALSE)
@@ -912,7 +917,7 @@ if(FALSE){
   par(mar = c(5,0,3,4))
   matplot(t(c_logistic[,]), type = "l", lwd = 2, 
           col = gray(0.5, alpha = 0.2),
-          lty = 1, axes = FALSE,  main = "logistic", 
+          lty = 1, axes = FALSE,  main = "clogistic", 
           xlab = "", ylab = "CRPS", xlim = c(0.5, 4.5),
           ylim = c(0.65,1.15))
   boxplot(c_logistic, add = TRUE, col = "transparent", axes = FALSE)
