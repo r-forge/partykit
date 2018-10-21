@@ -20,6 +20,7 @@
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \begin{letter}{
 Nicoleta Serban\\
@@ -55,7 +56,7 @@ in the main manuscript using all three response distributions
 for a subset of 15 stations.
 
 \item \emph{Supplement 2: Stationwise evaluation.}\\
-The show that the more extensive cross-validation results -- obtained only
+To show that the more extensive cross-validation results -- obtained only
 for one station (Axams) in the main manuscript -- are fairly typical,
 they are extended to 14 other observation stations. This also incorporates
 results that were previously presented in Appendix B which has consequently
@@ -650,9 +651,7 @@ of the tests. This is sometimes also called ``pre-pruning'' in
 the tree literature.
 
 However, in our applications pre-pruning is disabled which
-is explained in \dots \fixme{Improve Appendix~A to better
-reflect this. Also align with the other comments about
-alpha.}
+is explained in Section~3.2 and in the appendix.
 
 
 \begin{review}
@@ -723,20 +722,19 @@ Therefore, we followed your advice and considered both a different
 distribution for the continuous part and a two-part hurdle model.
 For the former, the logistic distribution (also left-censored at zero)
 is used as it has heavier tails and was previously used in the
-precipitation forecasting literature \fixme{add reference}.
+precipitation forecasting literature (Stauffer et al.\ 2017b).
 For the latter, a two-part model is used combining a binary
 zero hurdle ($y = 0$ vs.\ $y > 0$) and an adjusted Gaussian distribution
 (left-truncated at zero).
 
-We have carried out the
-same evaluations as presented in the main manuscript and present
-the full results in Supplement 1 (Different Response Distributions). 
+We have carried out the same evaluations as presented in the main manuscript and 
+present the full results in Supplement 1 (Different Response Distributions). 
 The main insights from this are also discussed in Section~4:
-At most stations the censored Gaussian manuscript from the main
+At most stations the censored Gaussian distribution from the main
 manuscript performs at least as well as the two alternative
-distributions, if not better. Moreover, the distributional forest
-proves to be rather robust against distributional misspecifications.
-Therefore, the discussion in the main manuscript is still based
+distributions. %, if not better. 
+Moreover, the distributional forest proves to be rather robust against distributional
+misspecifications. Therefore, the discussion in the main manuscript is still based
 on the censored Gaussian distribution.
 
 
@@ -753,7 +751,7 @@ is assumed to be not existing and simply ignored.
 \end{review}
 
 Our manuscript follows the frequently-used approach of applying a
-power-transformation (Stidd 1973, Hutchinson 1998, Stauffer et al.\ 2017)
+power-transformation (Stidd 1973, Hutchinson 1998, Stauffer et al.\ 2017a)
 to be more easily comparable to previous publications in the field.
 These focus on predicting location and scale based on mean and
 variance from the NWP ensemble. Hence, we also follow that approach
@@ -1230,9 +1228,14 @@ Calibrated Probabilistic Forecasting Using Ensemble Model Output Statistics and
 Minimum CRPS Estimation,
 \textit{Monthly Weather Review} \textbf{133, 5}: 1098--1118.
 
-\item[] Stauffer, R., Mayr, G. J., Messner, J. W., Umlauf, N. and Zeileis, A. (2017). 
+\item[] Stauffer, R., Mayr, G. J., Messner, J. W., Umlauf, N. and Zeileis, A. (2017a). 
 Spatio-Temporal Precipitation Climatology over Complex Terrain Using a Censored Additive Regression Model,
 \textit{International Journal of Climatology} \textbf{37, 7}: 3264--3275.
+
+\item[] Stauffer, R., Umlauf, N., Messner, J. W., Mayr, G. J. and Zeileis, A. (2017b). 
+Ensemble Post-Processing of Daily Precipitation Sums over Complex Terrain Using Censored High-Resolution Standardized Anomalies,
+\textit{Monthly Weather Review} \textbf{45, 3}: 955--969.
+%doi = 10.1175/mwr-d-16-0260.1
 
 \item[] Hofner, B., Mayr, A. and Schmid, M. (2016). 
 \textbf{gamboostLSS}: An \textsf{R} Package for Model Building and 
@@ -1313,6 +1316,8 @@ Decision Analysis} \textbf{2, 2}: 152--167.
 \textit{Water Resources Research}, \textbf{9, 5}: 1235--1241.
 %doi:10.1029/wr009i005p01235
 \end{itemize}
+
+
 
 
 \end{document}
