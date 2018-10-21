@@ -460,12 +460,18 @@ yielding two novel techniques:
     for obtaining stabilized and smoothed parametric predictions (Figure~\ref{fig:tree},
     top right).
 \end{itemize}
-In the following, particular focus is given to distributional forests as a method for obtaining
-probabilistic forecasts by leveraging the strengths of random forests: the ability to
-capture both smooth and abruptly changing functions along with simultaneous selection of
-variables and possibly complex interactions. Thus, these properties make the method particularly
-appealing in case of many covariates with unknown effects and interactions where it would be 
-challenging to specify a distributional regression model like GAMLSS.
+
+\hlc{However, distributional forests should not be considered as a 
+replacement of GAMLSS but rather as a complementing method in the field of
+distributional models, similar to the way how GAM and random forests are complements 
+in the conditional mean regression toolbox.}
+
+In the following, particular focus is given to distributional forests as a method for
+obtaining probabilistic forecasts by leveraging the strengths of random forests: the 
+ability to capture both smooth and abruptly changing functions along with simultaneous selection of variables and possibly complex interactions. Thus, these properties make the method particularly appealing in case of many covariates with unknown effects and 
+interactions where it would be challenging to specify a distributional regression model 
+like GAMLSS.
+
 
 
 <<echo=FALSE, results=hide>>=
@@ -1614,7 +1620,18 @@ making it very difficult to keep the model manageable regarding computational
 costs but also interpretability. Therefore, only main effects are considered
 for the distributional forest and the boosted GAMLSS which both automatically
 select covariates while meteorological expert knowledge was applied to 
-select covariates and specify interactions for the prespecified GAMLSS.}
+select covariates and specify interactions for the prespecified GAMLSS.
+
+As mentioned before, distributional forests should not be seen as a replacement
+for GAMLSS but rather as a complementary method. GAMLSS provide a powerful framework
+in the field of distributional modeling as they allow for the combination of 
+interpretability and a high goodnes-of-fit. For distributional forests, the focus
+is mainly on forecasting skill, automatic variable selection and capturing also 
+non-additive effects rather than on interpretability. Therefore, both approaches
+provide valuable features and advantages that can complement each other in many 
+applications as it can not be expected that one of them is in general better than 
+the other. 
+}
 
 \subsubsection*{Tuning parameters}
 \hlc{Setting tuning parameters of a forest model can have a major influence
@@ -1702,8 +1719,8 @@ shows slightly better results, however, only within a range of less than $2\%$
 and not for all stations. Altogether, the distributional forest has proven to be 
 very robust against distributional misspecifications.
 
-Alternatively, a distribution including an additional parameter capturing skewness
-\citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016} could be applied. For example, 
+Alternatively, a distribution including an additional parameter capturing skewness}
+\citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016} \hlc{could be applied. For example, 
 in transformation forests} \citep{Hothorn+Zeileis:2017} \hlc{a very flexible 
 five-parametric distribution family is employed such that skewness can be modeled 
 explicitly.
