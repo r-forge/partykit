@@ -888,6 +888,8 @@ forests are \emph{``generally better''}. As for (boosted) GAMs and
 random forests we would expect that sometimes (boosted) GAMLSS and
 sometimes distributional forests perform better. As already argued
 above we see the methods as complements not substitutes.
+This is now also mentioned in Section~1 and discussed in Section~4,
+\textit{Variable Selection}.
 
 \fixme{Refer again to the corresponding point in the manuscript.}
 
