@@ -388,7 +388,7 @@ Please make this clear in the text.
 For each new observation $z$ the corresponding 
 parameter vector $\hat{\Theta}(z)$ can be calculated following 
 the given formula. But you are right, this is equivalent to simply
-obtaining the paramter vector that has been estimated in the 
+obtaining the parameter vector that has been estimated in the 
 corresponding node when learning the tree. This is now also
 explained at the end of Section~2.2.
 
@@ -646,7 +646,7 @@ Is it a stopping criterion? Please clarify.
 \end{review}
 
 Yes, significance can be used as one of the stopping criteria,
-so that partitioning is stopped early upon non-signifcance
+so that partitioning is stopped early upon non-significance
 of the tests. This is sometimes also called ``pre-pruning'' in
 the tree literature.
 
