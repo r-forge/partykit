@@ -12,7 +12,8 @@
 ## Full replication of all other results can be obtained with
 ## demo("RainTyrol", package = "disttree")
 
-## Computation time: approximately .. minutes (on our machines, using .. kernels)
+## Computation time: approximately 20.5 hours (without comparison of the two hurdle versions) 
+# (on our machines, using 15 kernels)
 
 
 library("disttree")
@@ -633,7 +634,8 @@ pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
 
 load("Rain_distributions.rda")
 levels(results$means$distribution) <- c("cgaussian", "hgaussian", "clogistic")
-levels(results$means$station)[16] <- "St. Johann im Walde"
+levels(results$means$station)[15] <- "St. Johann im Walde"
+
 
 stations <- c("Axams", "Lech", "Zuers", "See im Paznaun", "Jungholz", 
               "Ladis-Neuegg", "Oetz", "Ochsengarten-Obergut",
@@ -723,7 +725,7 @@ matplot(t(s_df[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE,  main = "Distributional forest",
         xlab = "", ylab = "CRPS skill score", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_df, add = TRUE, col = "transparent")
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -735,7 +737,7 @@ matplot(t(s_g[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, main = "Prespecified GAMLSS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_g, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -747,7 +749,7 @@ matplot(t(s_gb[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE, main = "Boosted GAMLSS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_gb, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -759,7 +761,7 @@ matplot(t(s_emos[,]), type = "l", lwd = 2,
         col = gray(0.5, alpha = 0.2),
         lty = 1, axes = FALSE,  main = "EMOS",
         xlab = "", ylab = "", xlim = c(0.5, 2.5),
-        ylim = c(-0.10, 0.05))
+        ylim = c(-0.05, 0.05))
 boxplot(s_emos, add = TRUE, col = "transparent", yaxt = 'n')
 abline(h = 0, col = pal[5], lwd = 2)
 #boxplot(crps_ss_dist~distribution, data = means_sel, 
@@ -1306,6 +1308,7 @@ for(station in stationlist){
 
 save(results_hurdle, file = "Rain_hurdleversions_forest.rda")
 
+load("Rain_hurdleversions_forest.rda")
 crps_forests <- matrix(ncol = 2, nrow = length(names(results_hurdle)))
 rownames(crps_forests) <- names(results_hurdle)
 colnames(crps_forests) <- c("forest_h", "forest_2p")
@@ -1321,6 +1324,7 @@ save(crps_forests, file = "crps_forests.rda")
 load("crps_forests.rda")
 crps_ss_forest_2p <- data.frame(1 - crps_forests[,"forest_2p"] / crps_forests[,"forest_h"])
 names(crps_ss_forest_2p) <- "Three-parametric forest"
+par(mfrow = c(1,1), mar = c(5,4,2,2))
 boxplot(crps_ss_forest_2p, ylab = "CRPS skill score", names = c("Three-parametric forest"))
 abline(h = 0, col = pal[5], lwd = 2)
 axis(1, 0:2, c("","One-part vs. two-part hurdle forest", ""), las=1)
