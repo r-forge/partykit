@@ -554,7 +554,7 @@ observations in a terminal node (\texttt{minbucket}) is set to 20
 and early stopping (or ``pre-pruning'') based on the significance level is disabled
 (by setting \texttt{alpha} to 1). We have added this information in 
 the manuscript in Section~3.2, `Distributional forest', and
-also discussed the choice of these tuning parameter in Section~4 and
+also discussed the choice of these tuning parameters in Section~4 and
 in the answer to the second point of the associate editor.
 
 
@@ -764,8 +764,9 @@ Baran and Nemoda 2016). This increases the complexity of the statistical
 models and makes the comparison to publications based on power transformations
 more difficult. Therefore, we feel that this exceeds the scope of this
 contribution but we do discuss it in Section~4 as being of interest for
-future research. \fixme{Include one or two sentences about this as an
-outlook in the discussion of distributional specifications.}
+future research. 
+%\fixme{Include one or two sentences about this as an
+%outlook in the discussion of distributional specifications.}
 
 
 
@@ -790,15 +791,16 @@ In this sense, distributional forests are appealing for weather
 forecasting tasks because the focus is not so much on interpretation
 but often much more on: (a)~forecasting skill and (b)~(semi-)automatic
 application of models on a larger domain. See also the discussion
-in, e.g., Rasp and Lerch 2018).
+in, e.g., Rasp and Lerch (2018).
 
-We have adapted our manuscript to reflect that we focus on forecasting
-skill in a large number of models -- and not so much on interpretation.
+We have adapted our manuscript in Section~1 and Section~4, \textit{Variable Selection}, 
+to reflect that we focus on forecasting skill in a large number of 
+models -- and not so much on interpretation.
 
-\fixme{Where should this be pointed out in the manuscript? 
-Z: Both in the introduction when the ``zoo'' of regression techniques
-is introduced -- and again in the discussion (possibly along with
-variable selection?).}
+%\fixme{Where should this be pointed out in the manuscript? 
+%Z: Both in the introduction when the ``zoo'' of regression techniques
+%is introduced -- and again in the discussion (possibly along with
+%variable selection?).}
 
 
 \begin{review}
@@ -869,8 +871,8 @@ better job on a relative scale of precipitation.
 In order to investigate these questions we have carried out the full
 analysis as presented for station Axams in the main manuscript for 14
 further observation stations. It shows that the distributional
-forest is very robust against distributional (mis)specifications
-and almost always competitive with the best among the other methods 
+forest is %very robust against distributional (mis)specifications and (FIXME: this is shown in Supplement 1)
+almost always competitive with the best among the other methods 
 or even better. The exact results are provided in 
 Supplement 2 (Stationwise Evaluation) and discussed in Section~4. 
 Especially for meteorologists intending to apply model output 
@@ -891,7 +893,7 @@ above we see the methods as complements not substitutes.
 This is now also mentioned in Section~1 and discussed in Section~4,
 \textit{Variable Selection}.
 
-\fixme{Refer again to the corresponding point in the manuscript.}
+%\fixme{Refer again to the corresponding point in the manuscript.}
 
 
 \begin{review}
