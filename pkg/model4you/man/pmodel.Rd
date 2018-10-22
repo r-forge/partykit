@@ -4,8 +4,8 @@
 \alias{pmodel}
 \title{Personalised model}
 \usage{
-pmodel(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coef,
-  return_attr = c("modelcall", "data", "similarity"))
+pmodel(x = NULL, model = NULL, newdata = NULL, OOB = TRUE,
+  fun = coef, return_attr = c("modelcall", "data", "similarity"))
 }
 \arguments{
 \item{x}{cforest object or matrix of weights.}

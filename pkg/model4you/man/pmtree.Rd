@@ -8,7 +8,7 @@ pmtree(model, data = NULL, zformula = ~., control = ctree_control(),
   coeffun = coef, ...)
 }
 \arguments{
-\item{model}{a model object.}
+\item{model}{a model object. The model can be a parametric model with a binary covariate.}
 
 \item{data}{data. If NULL (default) the data from the model object are used.}
 
@@ -26,7 +26,7 @@ Useful when \code{coef()} does not return all coefficients (e.g. \code{survreg})
 ctree object
 }
 \description{
-Input a parametric model and get a forest.
+Input a parametric model and get a model-based tree.
 }
 \examples{
 if(require("TH.data") & require("survival")) {

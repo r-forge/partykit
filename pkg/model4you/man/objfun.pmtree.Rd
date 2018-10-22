@@ -4,8 +4,8 @@
 \alias{objfun.pmtree}
 \title{Objective function of a given pmtree}
 \usage{
-\method{objfun}{pmtree}(x, newdata = NULL, weights = NULL, perm = NULL,
-  sum = FALSE, ...)
+\method{objfun}{pmtree}(x, newdata = NULL, weights = NULL,
+  perm = NULL, sum = FALSE, ...)
 }
 \arguments{
 \item{x}{pmtree object.}

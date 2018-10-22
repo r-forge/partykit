@@ -2,6 +2,9 @@
 
 \documentclass{josr}
 
+%% revised text
+\newcommand{\new}[1]{{\color{blue} #1}}
+
 %% packages
 \usepackage{natbib}
 
@@ -108,7 +111,8 @@ characteristics of the individuals.  Model-based random forests allow for a
 similarity estimation between individuals in terms of model parameters (e.g.\
 intercept and treatment effect). The similarity measure can then be used to
 estimate personalised models.  The R package \emph{model4you} implements these
-stratified and personalised models with a focus on ease of use and
+stratified and personalised models \new{in the setting with two randomly
+assigned treatments} with a focus on ease of use and
 interpretability so that clinicians and other users can take the model they
 usually use for the estimation of the average treatment effect and with a few
 lines of code get a visualisation that is easy to understand and interpret.
@@ -135,6 +139,8 @@ and received slightly different exam tasks. In the following we will refer to
 the two groups as \emph{treatment groups} and to the group indicator as
 \emph{treatment indicator}, which always takes values $0$
 (individual in first group) and $1$ (individual in second group).
+
+Currently the R package \emph{model4you} can handle only
 
 Treatment effect estimation is often done using simple models with the binary
 treatment indicator as only covariate. In the example of a clinical trial the
@@ -318,9 +324,19 @@ compelling visualisations that can be used to communicate theses models.
 
 \section*{Implementation and architecture}
 The R package \emph{model4you} is focused on ease of use and interpretability.
-Users can take a simple model that they know and understand as basis and simply
-plug it into \Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether
-they want subgroup wise or personalised models. The basis for these
+Users can take a simple model that they know and understand as basis.
+\new{
+Models currently available for use are linear models (function \Sexpr{'lm()'}
+in R), generalised
+linear models (\Sexpr{'glm()'}) and survival models (\Sexpr{'survreg()'} and
+\Sexpr{'coxph()'} from the R package \emph{survival}). Models are restricted
+to those with a single binary covariate (e.g. two treatment options).
+The user can simply plug the model object into \Sexpr{'pmtree()'} or
+\Sexpr{'pmforest()'} depending on whether they want subgroup wise or
+personalised models.
+}
+
+The basis for these
 functionalities is provided by the \emph{partykit}
 package which is a widely
 used R package for trees and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}.
