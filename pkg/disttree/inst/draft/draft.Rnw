@@ -1717,13 +1717,13 @@ improvements, but this comes with more variability (especially for EMOS and the
 boosted GAMLSS). For the boosted GAMLSS the left-censored logistic distribution
 shows slightly better results, however, only within a range of less than $2\%$
 and not for all stations. Altogether, the distributional forest has proven to be 
-very robust against distributional misspecifications.
+very robust against distributional misspecifications.}
 
-Alternatively, a distribution including an additional parameter capturing skewness}
-\citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016} \hlc{could be applied. For example, 
-in transformation forests} \citep{Hothorn+Zeileis:2017} \hlc{a very flexible 
-five-parametric distribution family is employed such that skewness can be modeled 
-explicitly.
+\hlc{Alternatively, a distribution including an additional parameter capturing 
+skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
+\hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
+\hlc{a very flexible five-parametric distribution family is employed such 
+that skewness can be modeled explicitly.
 Evaluating further distributions might be of interest but this would go beyond the
 scope of this manuscript.
 }
@@ -1773,6 +1773,10 @@ Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),
 also available within the \textsf{R}-Forge~project.
+The results presented in Supplement 1 (Different Response Distributions) and 
+Supplement 2 (Stationwise Evaluation) can be reproduced using
+\code{demo("RainDistributions", package = "disttree")} and 
+\code{demo("RainStationwise", package = "disttree")} respectively.
 
 
 
