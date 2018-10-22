@@ -80,15 +80,15 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
   probs <- predict(mod, type = "response", newdata = uxdat)
   linv <- mod$family$linkinv
   pdat <- data.frame(py = linv(prd$fit),
-                     lwr = linv(prd$fit - q * prd$se.fit),
-                     upr = linv(prd$fit + q * prd$se.fit),
-                     uxdat)
+    lwr = linv(prd$fit - q * prd$se.fit),
+    upr = linv(prd$fit + q * prd$se.fit),
+    uxdat)
 
   ## points plot info
   pts <- geom_point(data = pdat, aes_string(x = colnames(xdat), y = "py"))
   ci <- geom_errorbar(data = pdat, width = 0.1,
-                      aes_string(x = colnames(xdat),
-                                 ymin = "lwr", ymax = "upr"))
+    aes_string(x = colnames(xdat),
+      ymin = "lwr", ymax = "upr"))
 
   if(plot_data) {
     ## get mosaic plot data
@@ -101,9 +101,9 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 
     ## add mosaic plot info
     p <- ggplot() + geom_bar(data = plotData,
-                             aes_string("x", "var2Height", fill = "x",
-                                        alpha = "y", width = "marginVar1"),
-                             stat = "identity") + pts + ci
+      aes_string("x", "var2Height", fill = "x",
+        alpha = "y", width = "marginVar1"),
+      stat = "identity") + pts + ci
   } else {
     p <- ggplot() + ci + pts
   }
@@ -148,7 +148,7 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
 #' @export
 lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
-                    yrange = NULL) {
+  yrange = NULL) {
 
   cl <- class(mod)
   if(!("lm" %in% cl) & length(cl) != 1) stop("model should be of class lm, is of class ", cl)
@@ -179,27 +179,27 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   ## get density functions for each treatment group
   k <- 100
   means <- cbind(mean = predict(mod, newdata = xdat, type = "response"),
-                 xdat)
+    xdat)
   sigma <- sigma(mod)
   ygrid <- seq(from = yrange[1], to = yrange[2], length.out = k)
   rows <- rep(seq_len(NROW(means)), each = k)
 
   dens <- cbind(ygrid, means[rows, ],
-                density = dnorm(ygrid, mean = means$mean[rows], sd = sigma))
+    density = dnorm(ygrid, mean = means$mean[rows], sd = sigma))
 
   if(densest) {
     des <- factor(c("model", "kernel"), levels = c("model", "kernel"))
     p <- ggplot() +
       geom_line(data = cbind(dens, estimate = des[1]),
-                aes_string(x = "ygrid", y = "density", color = trtnam, linetype = "estimate")) +
+        aes_string(x = "ygrid", y = "density", color = trtnam, linetype = "estimate")) +
       geom_line(data = cbind(data, estimate = des[2]),
-                aes_string(x = ynam, color = trtnam, linetype = "estimate"),
-                stat = "density") +
+        aes_string(x = ynam, color = trtnam, linetype = "estimate"),
+        stat = "density") +
       scale_linetype_discrete(drop = FALSE)
   } else {
     p <- ggplot() +
       geom_line(data = dens,
-                aes_string(x = "ygrid", y = "density", color = trtnam))
+        aes_string(x = "ygrid", y = "density", color = trtnam))
   }
   p + theme + xlim(yrange) + xlab(ynam)
 }
@@ -228,7 +228,7 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 #' @importFrom Formula as.Formula
 #' @export
 survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
-                         yrange = NULL) {
+  yrange = NULL) {
   cl <- class(mod)
   if(!("survreg" %in% cl)) stop("model should be of class survreg, but is of class ", cl)
 
@@ -251,17 +251,17 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
   ## get survivor functions for each treatment group
   p <- seq(.01, .99, by=.02)
   pr_raw <- predict(mod, newdata = xdat,
-                    type = "quantile", p = p)
+    type = "quantile", p = p)
   pr <- do.call("rbind",
-                lapply(1:NROW(xdat),
-                       function(i) data.frame(xdat[i, , drop = FALSE],
-                                              pr = pr_raw[i, ], probability = rev(p),
-                                              row.names = NULL)))
+    lapply(1:NROW(xdat),
+      function(i) data.frame(xdat[i, , drop = FALSE],
+        pr = pr_raw[i, ], probability = rev(p),
+        row.names = NULL)))
 
   ## plot
   xnam <- attr(terms(xformula), "term.labels")
   ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam,
-                               color = xnam)) +
+    color = xnam)) +
     geom_line() + coord_cartesian(xlim = yrange) +
     xlab(as.character(yformula[[2]])[2]) +
     theme
@@ -291,7 +291,7 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
 #' @importFrom Formula as.Formula
 #' @export
 coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
-                       yrange = NULL) {
+  yrange = NULL) {
   cl <- class(mod)
   if(!("coxph" %in% cl)) stop("model should be of class coxph, but is of class ", cl)
 
@@ -315,19 +315,19 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
   p <- seq(.01, .99, by=.02)
   s_raw <- survival::survfit(mod, newdata = xdat)
   pr <- do.call("rbind",
-                lapply(1:NROW(xdat),
-                       function(i) data.frame(xdat[i, , drop = FALSE],
-                                              pr = s_raw$time,
-                                              probability = s_raw$surv[ , i],
-                                              row.names = NULL)))
+    lapply(1:NROW(xdat),
+      function(i) data.frame(xdat[i, , drop = FALSE],
+        pr = s_raw$time,
+        probability = s_raw$surv[ , i],
+        row.names = NULL)))
   pr <- rbind(pr,
-              data.frame(xdat, pr = c(0, 0), probability = c(1, 1)))
+    data.frame(xdat, pr = c(0, 0), probability = c(1, 1)))
   pr[[1]] <- as.factor(pr[[1]])
 
   ## plot
   xnam <- names(xdat)
   ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam,
-                               color = xnam)) +
+    color = xnam)) +
     geom_step() + coord_cartesian(xlim = yrange, ylim = 0:1) +
     xlab(as.character(yformula[[2]])[2]) +
     theme
@@ -368,9 +368,9 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
 #' pushViewport grid.rect grid.draw gpar grid.text upViewport
 #' @importFrom gridExtra tableGrob ttheme_minimal
 #' @importFrom partykit id_node
-node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
-                            nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs),
-                            ...)
+node_pmterminal <- function(obj, coeftable = TRUE, digits = 2, confint = TRUE, plotfun,
+  nid = function(node) paste0(nam[id_node(node)], ", n = ", node$info$nobs),
+  ...)
 {
 
   dots <- list(...)
@@ -398,55 +398,88 @@ node_pmterminal <- function(obj, digits = 2, confint = TRUE, plotfun,
 
     ## model
     nmod <- update(mod, data = dat, subset = (wterminals == id_node(node)))
-    coefs <- as.matrix(node$info$coefficients)
-    if(confint) {
-      ci <- confint(nmod)
-      coefs <- cbind(coefs, ci)
+
+    top_vp <- viewport(layout = grid.layout(nrow = 2,
+      heights = unit(c(0.1, 1), "null")))
+    pushViewport(top_vp)
+
+    ## if table should be printed
+    if(coeftable) {
+      coefs <- as.matrix(node$info$coefficients)
+      if(confint) {
+        ci <- confint(nmod)
+        coefs <- cbind(coefs, ci)
+      }
+      cf <- format(round(coefs, digits), nsmall = digits)
+      colnams <- colnames(cf)
+      colnams[1] <- "theta"
+      cftab <- tableGrob(cf, cols = colnams,
+        theme = ttheme_minimal(colhead = list(fg_params = list(parse=TRUE))))
+      tabwid <- sum(cftab$widths)
+
+      ## viewport enclosing all
+      node_vp <- viewport(
+        layout.pos.row = 2,
+        layout = grid.layout(2, 1),
+        width = max(tabwid, unit(0.95, "npc")),
+        height = unit(0.95, "npc"),
+        y = unit(0.25, "npc"),
+        just = "bottom"
+      )
+      pushViewport(node_vp)
+
+      grid.rect(gp = gpar(fill = "white"))
+
+      ## table (and viewport table)
+      tablevp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
+      pushViewport(tablevp)
+      grid.draw(cftab)
+      popViewport()
+
+      ## viewport plot
+      plotvp <- viewport(layout.pos.row = 2, layout.pos.col = 1,
+        width = unit(0.95, "npc"),
+        height = unit(0.95, "npc"))
+      pushViewport(plotvp)
+
+    } else {
+      ### no table should be printed
+      ## viewport enclosing all
+      node_vp <- viewport(
+        layout.pos.row = 2,
+        width = unit(0.95, "npc"),
+        height = unit(0.95, "npc")
+      )
+      pushViewport(node_vp)
+
+      grid.rect(gp = gpar(fill = "white"))
+
+      ## viewport plot
+      plotvp <- viewport(
+        width = unit(0.95, "npc"),
+        height = unit(0.95, "npc")
+      )
+      pushViewport(plotvp)
     }
-    cf <- format(round(coefs, digits), nsmall = digits)
-    colnams <- colnames(cf)
-    colnams[1] <- "theta"
-    cftab <- tableGrob(cf, cols = colnams,
-                       theme = ttheme_minimal(colhead = list(fg_params = list(parse=TRUE))))
-    tabwid <- sum(cftab$widths)
-
-    node_vp <- viewport(
-      layout = grid.layout(2, 1),
-      width = max(tabwid, unit(0.95, "npc")),
-      height = unit(0.95, "npc")
-    )
-    pushViewport(node_vp)
-
-    grid.rect(gp = gpar(fill = "white"))
-
-    ## table
-    tablevp <- viewport(layout.pos.row = 1, layout.pos.col = 1)
-    pushViewport(tablevp)
-    grid.draw(cftab)
-    popViewport()
 
     ## plot
-    plotvp <- viewport(layout.pos.row = 2, layout.pos.col = 1,
-                       width = unit(0.95, "npc"),
-                       height = unit(0.95, "npc"))
-    pushViewport(plotvp)
     pl <- do.call("plotfun",
-                  args = c(list(mod = nmod,
-                                data = subset(dat, (wterminals == id_node(node)))),
-                           dots))
+      args = c(list(mod = nmod,
+        data = subset(dat, (wterminals == id_node(node)))),
+        dots))
     print(pl, vp = plotvp)
     popViewport()
 
 
     nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, "npc"),
-                         width = max(unit(1, "lines"), unit(1.3, "strwidth", nid)),
-                         height = max(unit(1, "lines"), unit(1.3, "strheight", nid)))
+      width = max(unit(1, "lines"), unit(1.3, "strwidth", nid)),
+      height = max(unit(1, "lines"), unit(1.3, "strheight", nid)))
     pushViewport(nodeIDvp)
     grid.rect(gp = gpar(fill = "white"))
     grid.text(nid)
     popViewport()
 
-    upViewport()
+    upViewport(n = 2)
   }
 
   return(rval)

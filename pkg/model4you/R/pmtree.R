@@ -1,8 +1,8 @@
 #' Compute model-based tree from model.
 #'
-#' Input a parametric model and get a forest.
+#' Input a parametric model and get a model-based tree.
 #'
-#' @param model a model object.
+#' @param model a model object. The model can be a parametric model with a binary covariate. 
 #' @param data data. If NULL (default) the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
 #' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).

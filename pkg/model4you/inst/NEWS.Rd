@@ -1,5 +1,13 @@
 \name{NEWS}
+
 \title{NEWS file for the \pkg{model4you} package}
+
+\section{Changes in Version 0.9-2}{
+  \itemize{
+    \item allow plot to have no table
+    \item improve viewport settings for plot
+  }
+}
 
 \section{Changes in Version 0.9-1 (2018-02-02)}{
   \subsection{Bugfixes}{
