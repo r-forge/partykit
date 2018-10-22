@@ -12,7 +12,7 @@
 ## Full replication of all other results can be obtained with
 ## demo("RainTyrol", package = "disttree")
 
-## Computation time: approximately 20.5 hours (without comparison of the two hurdle versions) 
+## Computation time: approximately 21 + ... hours  
 # (on our machines, using 15 kernels)
 
 
@@ -1185,16 +1185,20 @@ for(station in stationlist){
   # CPRS
   {
     crps_dt_h <- crps_dt_2p <- crps_df_h <- crps_df_2p <- numeric(length = NROW(testdata))
+    crps_dt_h_error <- logical(length = NROW(testdata))
     
     int_upper <- ceiling(max(RainData$robs))  # alternative: quantile(RainData$robs, probs = 0.999)
     
     for(j in 1:(NROW(testdata))){
-      crps_dt_h <- try(integrate(function(z){(1 - dt_h_nu[j] + dt_h_nu[j] * ptnorm(z, mean = dt_h_mu[j], sd = dt_h_sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
+      crps_dt_h_try <- try(integrate(function(z){(1 - dt_h_nu[j] + dt_h_nu[j] * ptnorm(z, mean = dt_h_mu[j], sd = dt_h_sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
                                  lower = 0, upper = int_upper)$value, silent = TRUE)
-      if(inherits(crps_dt_h, "try-error")) {
+      if(inherits(crps_dt_h_try, "try-error")) {
         crps_dt_h[j] <- NA 
-        crps_dt_h_error <- TRUE
-      } else crps_dt_h[j] <- crps_dt_h
+        crps_dt_h_error[j] <- TRUE
+      } else {
+        crps_dt_h[j] <- crps_dt_h_try
+        crps_dt_h_error[j] <- FALSE
+      }
       crps_dt_2p[j] <- integrate(function(z){(1 - dt_2p_nu[j] + dt_2p_nu[j] * ptnorm(z, mean = dt_2p_mu[j], sd = dt_2p_sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
                                  lower = 0, upper = int_upper)$value
       crps_df_h[j] <- integrate(function(z){(1 - df_h_nu[j] + df_h_nu[j] * ptnorm(z, mean = df_h_mu[j], sd = df_h_sigma[j], left = 0) - (testdata$robs[j] <= z))^2},
@@ -1203,7 +1207,7 @@ for(station in stationlist){
                                  lower = 0, upper = int_upper)$value
     }
     
-    crps_dt_h <- if(crps_dt_h_error) NA else mean(crps_dt_h, na.rm = TRUE)
+    crps_dt_h <- if(all(crps_dt_h_error)) NA else mean(crps_dt_h, na.rm = TRUE)
     crps_dt_2p <- mean(crps_dt_2p, na.rm = TRUE)
     crps_df_h <- mean(crps_df_h, na.rm = TRUE)
     crps_df_2p <- mean(crps_df_2p, na.rm = TRUE)
