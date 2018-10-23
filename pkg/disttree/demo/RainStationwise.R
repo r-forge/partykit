@@ -15,7 +15,7 @@
 ## Full replication of Supplement 1 (Different Response Distributions) can be obtained with
 ## demo("RainDistributions", package = "disttree")
 
-## Computation time: approximately .. minutes (on our machines, using .. kernels)
+## Computation time: approximately .. hours per station (on our machines, using 15 kernels)
 
 
 library("disttree")
