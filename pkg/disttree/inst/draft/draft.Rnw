@@ -1625,12 +1625,46 @@ select covariates and specify interactions for the prespecified GAMLSS.
 As mentioned before, distributional forests should not be seen as a replacement
 for GAMLSS but rather as a complementary method. GAMLSS provide a powerful framework
 in the field of distributional modeling as they allow for the combination of 
-interpretability and a high goodnes-of-fit. For distributional forests, the focus
+interpretability and a high goodness-of-fit. For distributional forests, the focus
 is mainly on forecasting skill, automatic variable selection and capturing also 
 non-additive effects rather than on interpretability. Therefore, both approaches
 provide valuable features and advantages that can complement each other in many 
 applications as it can not be expected that one of them is in general better than 
 the other. 
+}
+
+
+\subsubsection{Distributional specifications}
+%% choice of distribution mit Verweis auf Supplement distributions
+\hlc{Choosing an adequate distributional family is a crucial step and forms
+the basis required to build a well fitting model. Therefore, this
+decision should be made thoughtfully. 
+In the presented application we applied a Gaussian distribution left-censored 
+at zero as this has proven to be a well working choice in
+earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
+\hlc{To test for robustness against distributional misspecifation 
+different distributional assumptions have been considered as well. 
+In Supplement 1 (Different Response Distributions) the exact
+same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
+observation stations, once employing a Gaussian hurdle model and once
+with a logistic distribution left-censored at zero in order to account
+for heavier tails. Under both assumptions the obtained results 
+are similar to those presented in the paper applying a Gaussian distribution
+left-censored at zero. In some settings the hurdle model leads to slight 
+improvements, but this comes with more variability (especially for EMOS and the 
+boosted GAMLSS). For the boosted GAMLSS the left-censored logistic distribution
+shows slightly better results regarding CRPS skill score, however, only within 
+a range of less than $2\%$ and not for all stations. 
+Altogether, the distributional forest has proven to be 
+very robust against distributional misspecifications.}
+
+\hlc{Alternatively, a distribution including an additional parameter capturing 
+skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
+\hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
+\hlc{a very flexible five-parametric distribution family is employed such 
+that skewness can be modeled explicitly.
+Evaluating further distributions might be of interest but this would go beyond the
+scope of this manuscript.
 }
 
 \subsubsection*{Tuning parameters}
@@ -1643,10 +1677,11 @@ based on advice from literature and our own experience.
 
 \cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} \hlc{recommend to 
 build full-grown trees. Therefore, low values should be chosen for the stopping 
-criteria} \code{minsplit}, \code{minbucket} and \code{alpha}.
+criteria} \code{minsplit} and \code{minbucket} \hcl{together with a high significance 
+level} \code{alpha}.
 \hlc{However, in a distributional model it also has to be considered that a 
 minimal number of observations is required to allow for a reasonable 
-estimation of parameters in each node. For that reason the minimal number
+estimation of parameters in each node. For that reason, the minimal number
 of observations for which statistical tests are performed in the 
 distributional forest in} Section~\ref{sec:precipitation} is set to
 50 (\code{minbucket}) \hlc{and the minimal number of observations on which
@@ -1659,7 +1694,8 @@ of a large number of trees as this generally leads to an increase
 in accuracy. However, it also comes along with increasing computational costs. 
 Therefore, ``a good choice results from a trade-off between computational 
 complexity and accuracy''} (\cite{Biau+Scornet:2016}, p.~205).
-\hlc{Following this advice we chose to build forests consisting of 100 trees.}
+\hlc{Following this advice we chose to build forests consisting of 100 trees which
+is a commonly used value.}
 
 
 \subsubsection*{East Tyrol}
@@ -1696,37 +1732,6 @@ performs at least equally well compared to the best of the other models
 at most stations.}
 
 
-\subsubsection{Distributional specifications}
-%% choice of distribution mit Verweis auf Supplement distributions
-\hlc{Choosing an adequate distributional family is a crucial step and forms
-the basis required to build a well fitting model. Therefore, this
-decision should be made thoughtfully. 
-In the presented application we applied a Gaussian distribution left-censored 
-at zero as this has proven to be a well working choice in
-earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
-\hlc{To test for robustness against distributional misspecifation 
-different distributional assumptions have been considered as well. 
-In Supplement 1 (Different Response Distributions) the exact
-same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
-observation stations, once employing a Gaussian hurdle model and once
-with a logistic distribution left-censored at zero in order to account
-for heavier tails. Under both assumptions the obtained results 
-are similar to those presented in the paper applying a Gaussian distribution
-left-censored at zero. In some settings the hurdle model leads to slight 
-improvements, but this comes with more variability (especially for EMOS and the 
-boosted GAMLSS). For the boosted GAMLSS the left-censored logistic distribution
-shows slightly better results, however, only within a range of less than $2\%$
-and not for all stations. Altogether, the distributional forest has proven to be 
-very robust against distributional misspecifications.}
-
-\hlc{Alternatively, a distribution including an additional parameter capturing 
-skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
-\hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
-\hlc{a very flexible five-parametric distribution family is employed such 
-that skewness can be modeled explicitly.
-Evaluating further distributions might be of interest but this would go beyond the
-scope of this manuscript.
-}
 
 \subsubsection*{Computational difficulties}
 %% GAMLSS errors with references gamboostLSS Hofner et al.
