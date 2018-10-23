@@ -870,10 +870,9 @@ better job on a relative scale of precipitation.
 
 In order to investigate these questions we have carried out the full
 analysis as presented for station Axams in the main manuscript for 14
-further observation stations. It shows that the distributional
-forest is %very robust against distributional (mis)specifications and (FIXME: this is shown in Supplement 1)
-almost always competitive with the best among the other methods 
-or even better. The exact results are provided in 
+further observation stations. It shows that at most stations the 
+distributional forest is competitive with the best among the other 
+methods or even better. The exact results are provided in 
 Supplement 2 (Stationwise Evaluation) and discussed in Section~4. 
 Especially for meteorologists intending to apply model output 
 statistics (MOS) for dozens or hundreds of observation stations 
