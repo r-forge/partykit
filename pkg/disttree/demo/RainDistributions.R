@@ -2,17 +2,23 @@
 ### Probabilistic Forecasting on Precipitation Data ###
 #######################################################
 
-## Replication material for supplement of: 
+## Replication material for Supplement 1 (Different Response Distributions) of the paper 
 ## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
 ## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
 ## URL: http://arxiv.org/abs/1804.02921
 
-## This demo includes the application on selected stations
+## This demo includes the application on selected stations emplying different distributions
 ## (models learned on 24 years and evaluated on 4 years)
-## Full replication of all other results can be obtained with
+## Full replication for station Axams can be obtained with
+## demo("RainAxams", package = "disttree")
+## Full replication of all other results presented in the paper can be obtained with
 ## demo("RainTyrol", package = "disttree")
+## Full replication of Supplement 2 (Stationwise Evaluation) can be obtained with
+## demo("RainStationwise", package = "disttree")
 
-## Computation time: approximately 21 + ... hours  
+
+
+## Computation time: approximately 22 hours  
 # (on our machines, using 15 kernels)
 
 
