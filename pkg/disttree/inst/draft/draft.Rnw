@@ -685,7 +685,7 @@ text(x = -1.7, y = lh2, labels = "2010", col = pal[3], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
 text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 @
-\caption{\label{fig:axams-dist}\hlc{Total precipitation predictions by a 
+\caption{\label{fig:axams-dist}\protect\hlc{Total precipitation predictions by a 
 distributional forest at station Axams for July~24 in 2009, 2010, 2011 and 
 2012 learned on data from 1985--2008. Observations are non-negative and 
 modeled by a Gaussian distribution left-censored at zero.
@@ -1179,7 +1179,7 @@ further details:
   % minsplit = 20L, minbucket = 7L,
   % minprob = 0.01
 
-\item \emph{EMOS:} \hcl{The basic} ensemble model output statistics
+\item \emph{EMOS:} \hlc{The basic} ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
   submodel and the corresponding ensemble standard deviation in the scale submodel.
   The parameters are estimated by maximum likelihood, using an identity
@@ -1276,8 +1276,8 @@ theoretical standard normal quantile (i.e., form a straight line close to the
 diagonal), indicating that all four models are sufficiently well calibrated. 
 \hlc{This is also supported by the corresponding probability integral transform}
 (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) \hlc{histograms for station
-Axams in Supplement 2 (Stationwise Evaluation) which contains a more 
-detailed explanation of residual QQ plots and PIT histograms.}
+Axams in Supplement 2} \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{which 
+contains a more detailed explanation of residual QQ plots and PIT histograms.}
 
 <<echo=FALSE, results=hide>>=
 #### cross validation rain
@@ -1635,7 +1635,6 @@ the other.
 
 
 \subsubsection{Distributional specifications}
-%% choice of distribution mit Verweis auf Supplement distributions
 \hlc{Choosing an adequate distributional family is a crucial step and forms
 the basis required to build a well fitting model. Therefore, this
 decision should be made thoughtfully. 
@@ -1644,7 +1643,7 @@ at zero as this has proven to be a well working choice in
 earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
 \hlc{To test for robustness against distributional misspecifation 
 different distributional assumptions have been considered as well. 
-In Supplement 1 (Different Response Distributions) the exact
+In Supplement 1} \citep{Schlosser+Hothorn+Stauffer:2018a} \hlc{the exact
 same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
 observation stations, once employing a Gaussian hurdle model and once
 with a logistic distribution left-censored at zero in order to account
@@ -1677,7 +1676,7 @@ based on advice from literature and our own experience.
 
 \cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} \hlc{recommend to 
 build full-grown trees. Therefore, low values should be chosen for the stopping 
-criteria} \code{minsplit} and \code{minbucket} \hcl{together with a high significance 
+criteria} \code{minsplit} and \code{minbucket} \hlc{together with a high significance 
 level} \code{alpha}.
 \hlc{However, in a distributional model it also has to be considered that a 
 minimal number of observations is required to allow for a reasonable 
@@ -1709,8 +1708,8 @@ we made for the prespecified GAMLSS method is particularly adequate for the
 region of East Tyrol for this specific analysis. However, the advantages of 
 the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
 validation: 2009--2012) even out in a cross-validation framework for most of 
-the stations in East Tyrol. These results are presented in Supplement 2 
-(Stationwise Evaluation) where the exact same evaluations as in} 
+the stations in East Tyrol. These results are presented in Supplement 2} 
+\citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{where the exact same evaluations as in} 
 Section~\ref{sec:axams} \hlc{for station Axams have been carried out 
 for 14 other stations.}
 
@@ -1723,8 +1722,8 @@ three of the authors, but not based on any other particular
 features. Furthermore, it has been checked, whether it 
 is an adequate representative of all stations regarding 
 the results of our evaluations. This is also confirmed by 
-the extended analysis in Supplement 2 (Stationwise Evaluation)
-where the 15 considered stations also include some of those where 
+the extended analysis in Supplement 2} \citep{Schlosser+Hothorn+Stauffer:2018b}
+\hlc{where the 15 considered stations also include some of those where 
 the forest does not perform better than the other models in the setting 
 presented in} Figure~\ref{fig:all-map}. \hlc{It shows that the differences in 
 performance even out in the cross-validation framework where the forest 
@@ -1773,13 +1772,13 @@ is reproducible using
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
 QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
-(Supplement 2: Stationwise Evaluation).
+\citep[Supplement 2]{Schlosser+Hothorn+Stauffer:2018b}.
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),
 also available within the \textsf{R}-Forge~project.
-The results presented in Supplement 1 (Different Response Distributions) and 
-Supplement 2 (Stationwise Evaluation) can be reproduced using
+\hlc{The results presented in Supplement 1} \citep{Schlosser+Hothorn+Stauffer:2018a} and 
+Supplement 2 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced using}
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")} respectively.
 
