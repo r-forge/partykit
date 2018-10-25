@@ -574,23 +574,19 @@ with the ones in preselected GAMLSS? If so, is there some insightful
 information you could add?
 \end{review}
 
-\fixme{This reply needs to be rewritten. It should be listed first
-which variables correspond to each other between the models. Then
-you can explain that the greater variation in the forest is not
-surprising. Finally, it should be pointed out where in the manuscript
-this is also discussed.}
 
-Figure 6 shows the variable importance of the distributional forest
-for one specific case (similar for other sites and cross-folds) 
-using a CRPS based variable importance measure. The subset of 
-most important covariates is similar to the set of covariates 
-used for the prespecified GAMLSS but not equivalent.
-The selection of different variations of the same covariate (cf., Table 2)
-is not surprising as the covariates are often highly correlated.
-Moreover, in the distributional forest for each node only a randomly
-drawn subset of covariates is considered. Hence, if for example the most 
-influential covariate is not included in this subset for a specific node 
-a similar covariate is very likely to be selected instead.
+The distributional forest selects very similar covariates as included in the
+prespecified GAMLSS model. For both models, total precipitation (\texttt{tp})
+and total column-integrated condensate (\texttt{tcolc}) are the two most important
+covariates. Due to the randomization within the nodes, the distributional forest selects different variations of the same covariate (e.g., \texttt{tp\_max}, \texttt{tp\_mean},
+\texttt{tp\_min}; see Figure~6 in the main manuscript and Supplement 2) while
+the prespecified GAMLSS mainly only uses one specific variation (\texttt{tp\_max}).
+The same is true for variations of \texttt{tcolc\_mean\_*}, \texttt{tcolc\_sprd\_*}
+and \texttt{tcolc\_sprd\_*}.
+
+Overall, the covariates selected by the distributional forest do not provide too 
+much insights but show that the prespecified GAMLSS model contains an appropriate 
+subset of all available covariates.
 
 
 \begin{review}
@@ -765,8 +761,6 @@ models and makes the comparison to publications based on power transformations
 more difficult. Therefore, we feel that this exceeds the scope of this
 contribution but we do discuss it in Section~4 as being of interest for
 future research. 
-%\fixme{Include one or two sentences about this as an
-%outlook in the discussion of distributional specifications.}
 
 
 
@@ -797,10 +791,6 @@ We have adapted our manuscript in Section~1 and Section~4, \textit{Variable Sele
 to reflect that we focus on forecasting skill in a large number of 
 models -- and not so much on interpretation.
 
-%\fixme{Where should this be pointed out in the manuscript? 
-%Z: Both in the introduction when the ``zoo'' of regression techniques
-%is introduced -- and again in the discussion (possibly along with
-%variable selection?).}
 
 
 \begin{review}
@@ -892,7 +882,6 @@ above we see the methods as complements not substitutes.
 This is now also mentioned in Section~1 and discussed in Section~4,
 \textit{Variable Selection}.
 
-%\fixme{Refer again to the corresponding point in the manuscript.}
 
 
 \begin{review}
@@ -1051,19 +1040,17 @@ behavior in the upper tail compared to the PIT histogram.
 boosting algorithm? Why are the 10 most important covariates chosen?
 \end{review}
 
-\fixme{This also needs to be rewritten (probably best by Reto).
-It is a bit frustrating to start the response with comments how instable
-all of this is. Instead focus on the insights that are quite
-stable across stations.}
 
-Figure 6 is only a visualization of the 10 most important covariates 
-of the distributional forest in one particular setting (station Axams, learned 
-on 1985--2008). However, this top 10 list is not considered for any specification 
-of the boosted GAMLSS for which all available covariates are included. As 
-for the distributional forest, we have also calculated variable importance 
-based on mean increase of out-of-bag CRPS for the boosted GAMLSS model for 
-the exact same setting (station Axams, learned on 1985--2008). The resulting 
-top 10 variables are listed in the following barplot.
+The covariates selected in the distributional forest strongly overlap with the 
+ones selected in the boosted GAMLSS. Both methods select variations of the 
+forecasted total precipitation (\texttt{tp}) and the total column-integrated 
+condensate (\texttt{tcolc}). Due to the randomization in the nodes of the 
+trees, different variations of the same covariate (e.g., \texttt{tp\_max}, 
+\texttt{tp\_mean}, \texttt{tp\_min}) are selected by the distributional 
+forest while the boosted GAMLSS only uses one specific variation (\texttt{tp\_max}). 
+The following figure show the CRPS variable importance of the boosted GAMLSS 
+model for the very same training and validation period as in Figure~6 in the
+manuscript.
 
 \begin{center}
 \setkeys{Gin}{width=0.6\textwidth}
@@ -1128,7 +1115,7 @@ top10_gb <- vimp_crps_gb[1:10]
 par(mar = c(4,10,1,2))
 barplot(rev(top10_gb), 
         horiz = TRUE, las = 1, axes = FALSE,
-        xlab = "Variable importance: mean decrease in CRPS",
+        xlab = "Variable importance: mean increase in CRPS",
         font.axis = 3, #list(family="HersheySerif", face=3),
         # xlim = c(0,1.1),
         xlim = c(0,0.4),
@@ -1137,54 +1124,11 @@ axis(1, at = seq(0,1.6,0.1), las = 1, mgp=c(0,1,0))
 @
 \end{center}
 
-Overall it can be stated that the most important covariates of the boosted 
-GAMLSS are similar to the ones of the distributional forest even though they
-are not exactly the same ones and the influence of \texttt{tp\_max} is clearly
-stronger in the boosted GAMLSS. This can be explained by the random selection
-of possible split variables in each node of the distributional forest. Thus,
-if \texttt{tp\_max} is not available, a similar covariate such as \texttt{tp\_min}
-or \texttt{tp\_mean} are very likely to be selected instead while in the boosting
-algorithm \texttt{tp\_max} is always a possible choice.
+Due to graphical reasons, the plots only show the 10 \textit{most important}
+covariates based on mean increase in CRPS, however, the models (distributional
+forest and boosted GAMLSS) are allowed to use as many covariates as required.
 
 
-% Out of them, in the exact same setting (Axams, 1985--2008), 
-% the boosting algorithm selects 28 covariates 
-% for the location parameter, mainly related to precipitation (7) 
-% and temperature (11), and 46 covariates for the scale parameter, 
-% mainly related to precipitation (10), convective available potential 
-% energy (8) and temperature (15).
-% mu: 7 tppow, 1 cape, 2 dswrf, 2 msl, 2 pwat, 3 tcolc, 11 temperature
-% sigma: 10 tppow, 8 cape, 1 dswrf, 5 msl, 5 pwat, 2 tcolc, 15 temperature
-
-% R> names(coef(gb, parameter = "mu"))
-% [1] "bbs(tppow_min)"        "bbs(tppow_max)"        "bbs(tppow_mean1218)"  
-% [4] "bbs(tppow_mean1824)"   "bbs(tppow_mean2430)"   "bbs(tppow_sprd0612)"  
-% [7] "bbs(tppow_sprd2430)"   "bbs(capepow_sprd0612)" "bbs(dswrf_mean_mean)" 
-%[10] "bbs(dswrf_sprd_mean)"  "bbs(msl_sprd_min)"     "bbs(msl_sprd_max)"    
-%[13] "bbs(pwat_sprd_min)"    "bbs(pwat_sprd_max)"    "bbs(tcolc_mean_mean)" 
-%[16] "bbs(tcolc_mean_max)"   "bbs(tcolc_sprd_mean)"  "bbs(t500_mean_min)"   
-%[19] "bbs(t850_mean_min)"    "bbs(t500_sprd_mean)"   "bbs(t500_sprd_max)"   
-%[22] "bbs(t700_sprd_mean)"   "bbs(t700_sprd_min)"    "bbs(t700_sprd_max)"   
-%[25] "bbs(t850_sprd_min)"    "bbs(t850_sprd_max)"    "bbs(tdiff700850_min)" 
-%[28] "bbs(tdiff500700_max)"
-
-% R> names(coef(gb, parameter = "sigma"))
-% [1] "bbs(tppow_mean)"       "bbs(tppow_sprd)"       "bbs(tppow_min)"       
-% [4] "bbs(tppow_max)"        "bbs(tppow_mean1824)"   "bbs(tppow_mean2430)"  
-% [7] "bbs(tppow_sprd0612)"   "bbs(tppow_sprd1218)"   "bbs(tppow_sprd1824)"  
-%[10] "bbs(tppow_sprd2430)"   "bbs(capepow_sprd)"     "bbs(capepow_min)"     
-%[13] "bbs(capepow_max)"      "bbs(capepow_mean1218)" "bbs(capepow_mean1224)"
-%[16] "bbs(capepow_mean1230)" "bbs(capepow_sprd0612)" "bbs(capepow_sprd1218)"
-%[19] "bbs(dswrf_sprd_mean)"  "bbs(msl_mean_mean)"    "bbs(msl_mean_max)"    
-%[22] "bbs(msl_sprd_mean)"    "bbs(msl_sprd_min)"     "bbs(pwat_mean_mean)"  
-%[25] "bbs(pwat_mean_min)"    "bbs(pwat_mean_max)"    "bbs(pwat_sprd_min)"   
-%[28] "bbs(pwat_sprd_max)"    "bbs(tmax_mean_mean)"   "bbs(tmax_mean_min)"   
-%[31] "bbs(tcolc_mean_min)"   "bbs(tcolc_sprd_max)"   "bbs(t500_mean_mean)"  
-%[34] "bbs(t700_mean_mean)"   "bbs(t700_mean_max)"    "bbs(t850_mean_min)"   
-%[37] "bbs(t850_mean_max)"    "bbs(t500_sprd_max)"    "bbs(t850_sprd_min)"   
-%[40] "bbs(t850_sprd_max)"    "bbs(tdiff700850_min)"  "bbs(tdiff700850_max)" 
-%[43] "bbs(tdiff500700_mean)" "bbs(tdiff500700_min)"  "bbs(tdiff500700_max)" 
-%[46] "bbs(msl_diff)" 
 
 \bigskip
 
