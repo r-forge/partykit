@@ -89,8 +89,7 @@ model4you: An R package for personalised treatment effect estimation
 
 
 \section*{Paper Author Roles and Affiliations}
-1. PhD student; Biostatistics Department, Epidemiology, Biostatistics \&
-Prevention Institute, University of Zurich; \new{Postdoc; Institute for Medical
+1. \new{Postdoc; Institute for Medical
 Information Processing, Biometry, and Epidemiology, LMU Munich}
 
 2. Professor; Department of Statistics, Faculty of Economics and Statistics,
@@ -109,7 +108,7 @@ trees) or even personalised treatment effects (model-based forests).  With
 model-based trees one can compute treatment effects for different strata of
 individuals. The strata are found in a data driven fashion and depend on
 characteristics of the individuals.  Model-based random forests allow for a
-similarity estimation between individuals in terms of model parameters (e.g.\
+similarity estimation between individuals in terms of model parameters (e.g.~
 intercept and treatment effect). The similarity measure can then be used to
 estimate personalised models.  The R package \emph{model4you} implements these
 stratified and personalised models \new{in the setting with two randomly
@@ -141,8 +140,6 @@ the two groups as \emph{treatment groups} and to the group indicator as
 \emph{treatment indicator}, which always takes values $0$ (individual in first
 group) and $1$ (individual in second group).
 
-Currently the R package \emph{model4you} can handle only
-
 Treatment effect estimation is often done using simple models with the binary
 treatment indicator as only covariate. In the example of a clinical trial the
 treatment indicator would be $1$ if the patient receives the new treatment and
@@ -169,7 +166,7 @@ the model parameters are similar and between groups the model parameters are
 different. This is achieved by finding instabilities in the model parameters
 with respect to a variable (characteristic) and recursively partitioning the
 data into groups. If, for example the algorithm finds that men and women have
-differing treatment effects, the data is partitioned into two subgroups.
+differing treatment effects, the data are partitioned into two subgroups.
 Details on model-based trees in general can be found in
 \citep{zeileis_model-based_2008} and for the special use case for stratified
 treatment effect estimation in \citep{seibold_model-based_2016}.  Just a single
@@ -349,37 +346,41 @@ ggplot(dpdat_math, aes(x = attempt, y = group2, color = gender)) +
   ylab("estimated individual\nexam group effect")
 @
 
-With the tools provided by the \emph{model4you} package it is very simple to
-create understandable stratified and personalised models and compelling
-visualisations that can be used to communicate these models.
+With the tools provided by the \emph{model4you} package it is very
+simple to create understandable stratified and personalised models
+and compelling visualisations that can be used to communicate these
+models.
 
 
 
 \section*{Implementation and architecture}
-The R package \emph{model4you} is focused on ease of use and interpretability.
-Users can take a simple model that they know and understand as basis.
+The R package \emph{model4you} is focused on ease of use and
+interpretability.  Users can take a simple model that they know and
+understand as basis.
 \new{
-Models currently available for use are linear models (function \Sexpr{'lm()'}
-in R), generalised linear models (\Sexpr{'glm()'}) and survival models
-(\Sexpr{'survreg()'} and \Sexpr{'coxph()'} from the R package \emph{survival}).
-Models are restricted to those with a single binary covariate (e.g. two
-treatment options).  The user can simply plug the model object into
-\Sexpr{'pmtree()'} or \Sexpr{'pmforest()'} depending on whether they want
-subgroup wise or personalised models.
+Models currently available for use are linear models (function
+\Sexpr{'lm()'} in R), generalised linear models (\Sexpr{'glm()'}) and
+survival models (\Sexpr{'survreg()'} and \Sexpr{'coxph()'} from the R
+package \emph{survival}).  Models are restricted to those with a
+single binary covariate (e.g.~ two treatment options).  The user can
+simply plug the model object into \Sexpr{'pmtree()'} or
+\Sexpr{'pmforest()'} depending on whether they want subgroup wise or
+personalised models.
 }
 
-The basis for these functionalities is provided by the \emph{partykit} package
-which is a widely used R package for trees and forests
-\citep{hothorn_partykit_2015, hothorn_partykit_2017}.  The \emph{model4you}
-package provides wrappers for the well implemented and tested functions
-\Sexpr{'partykit::ctree()'} and \Sexpr{'partykit::cforest()'} and extends the
-functionalities to allow for the computation of personalised models and to
-improve usability and interpretability.
+The basis for these functionalities is provided by the
+\emph{partykit} package which is a widely used R package for trees
+and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}.
+The \emph{model4you} package provides wrappers for the well
+implemented and tested functions \Sexpr{'partykit::ctree()'} and
+\Sexpr{'partykit::cforest()'} and extends the functionalities to
+allow for the computation of personalised models and to improve
+usability and interpretability.
 
-The \emph{partykit} package provides the basis for functionalities in other
-packages namely \emph{glmertree}, \emph{psychotree}, \emph{betareg} (all on
-CRAN), \emph{trtf}, \emph{disttree}, \emph{lagsarlmtree} and \emph{palmtree}
-(all available on R-Forge, publishing on CRAN planned).
+The \emph{partykit} package provides the basis for functionalities in
+other packages namely \emph{glmertree}, \emph{psychotree},
+\emph{betareg}, \emph{disttree}, \emph{lagsarlmtree}, \emph{palmtree}
+(all on CRAN), and \emph{trtf} (currently avilable on R-Forge).
 
 %\textcolor{blue}{How the software was implemented, with details of the architecture where relevant. Use of relevant diagrams is appropriate. Please also describe any variants and associated implementation differences.}
 
@@ -449,7 +450,7 @@ English
 The software is intentionally written to make usage as simple as possible. The
 most prominent use case are clinical trials where the assumption of an average
 treatment effect for all patients is too strict and the efficacy of the
-treatment depends on patient characteristics (e.g. gender, biomarkers, etc.).
+treatment depends on patient characteristics (e.g.~ gender, biomarkers, etc.).
 For subgroup analyses (stratified treatment effects) model-based trees
 (\Sexpr{'pmtree()'}) can be used; For personalised treatment effects
 model-based forests (\Sexpr{'pmforest()'}) provide a way of estimating
