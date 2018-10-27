@@ -1617,10 +1617,12 @@ interpretations} (see for example \cite{Wood+Scheipl+Faraway:2013},
 \hlc{altogether 80 variables are available. Even if only paired interactions were
 considered this would already lead to 3160 additional covariates in the model
 making it very difficult to keep the model manageable regarding computational
-costs but also interpretability. Therefore, only main effects are considered
-for the distributional forest and the boosted GAMLSS which both automatically
-select covariates while meteorological expert knowledge was applied to 
-select covariates and specify interactions for the prespecified GAMLSS.
+costs but also interpretability. 
+Therefore, only additive effects are considered for the boosted GAMLSS which
+automatically selects covariates while meteorological expert knowledge was 
+applied to select covariates and specify interactions for the prespecified 
+GAMLSS. For the distributional forest no prespecification is required as it
+automatically selects covariates and also detects interaction effects.
 
 As mentioned before, distributional forests should not be seen as a replacement
 for GAMLSS but rather as a complementary method. GAMLSS provide a powerful framework
@@ -1660,11 +1662,10 @@ very robust against distributional misspecifications.}
 \hlc{Alternatively, a distribution including an additional parameter capturing 
 skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
 \hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
-\hlc{a very flexible five-parametric distribution family is employed such 
-that skewness can be modeled explicitly.
+\hlc{a very flexible parametric distribution characterised by the transformation 
+function is employed such that higher moments can be modeled implicitly.
 Evaluating further distributions might be of interest but this would go beyond the
-scope of this manuscript.
-}
+scope of this manuscript.}
 
 \subsubsection*{Tuning parameters}
 \hlc{Setting tuning parameters of a forest model can have a major influence
@@ -1785,6 +1786,49 @@ Supplement 2 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced usi
 
 
 \bibliography{ref.bib}
+
+
+%\begin{supplement}[id=supp1]
+%  \sname{Supplement 1}
+%  \stitle{Different Response Distributions}
+%  \slink[doi]{10.1214/00-AOASXXXXSUPP}
+%  \sdatatype{.pdf}" 
+%  \sdescription{
+%  In the case study presented in the main manuscript ``Distributional Regression
+%  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+%  the novel distributional regression forests are based on a Gaussian response distribution,
+%  left-censored at zero to accomodate both the non-negativity of precipitation and
+%  the point mass at zero. To assess the goodness of fit of this response distribution
+%  this supplement employs the same evaluations as in the main manuscript but based on
+%  two other distributional assumptions: A logistic distribution, left-censored at zero,
+%  is employed to potentially better capture heavy tails -- and a two-part hurdle model
+%  combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
+%  truncated at zero, for the positive precipitation observations. The latter could
+%  potentially better discriminate determinants of the occurrence of precipitation
+%  vs.\ the amount of precipitation given that it occurs.
+%}
+%\end{supplement}
+
+
+
+%\begin{supplement}[id=supp2]
+%  \sname{Supplement 2}
+%  \stitle{Stationwise Evaluation}
+%  \slink[doi]{10.1214/00-AOASXXXXSUPP}
+%  \sdatatype{.pdf}" 
+%  \sdescription{
+%  In the case study presented in the main manuscript ``Distributional Regression
+%  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+%  the novel distributional regression forests are evaluated and compared with
+%  other distributional regression approaches on 95 meteorological stations.
+%  Moreover, further details -- including a cross-validation analysis -- are
+%  preformed for only one station, Axams. To show that Axams is a fairly typical
+%  station and similar insights can be obtained for other stations as well,
+%  this supplements presents the same analysis as in Section~3.3 of the main
+%  manuscript for 14~further meteorological stations.
+%}
+%\end{supplement}
+
 
 
 \newpage
