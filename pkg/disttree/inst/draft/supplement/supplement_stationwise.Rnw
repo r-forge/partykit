@@ -55,6 +55,7 @@
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 
 \section{Setup}
@@ -261,7 +262,7 @@ distributional forest generally performs well on all stations and is typically
 close to (e.g., \hyperlink{sumLech.1}{Lech}) or somewhat better than
 the (next-)best method (e.g., \hyperlink{sumSeeimPaznaun.1}{See im Paznaun} and
 \hyperlink{sumGinzling.1}{Ginzling}). Naturally, there is more variation
-in the single-split results with another models performing better than the
+in the single-split results with another model performing better than the
 distributional forest. However, in the cross-validation such differences
 often even out, showing that distributional forests are on par. Examples for
 this include \hyperlink{sumRotholz.1}{Rotholz},
