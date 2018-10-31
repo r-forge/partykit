@@ -65,8 +65,8 @@ been omitted from the main manuscript.
 \item \emph{Section~4: Discussion.}\\
 The concluding section of the main manuscript has been rewritten and
 extended to regarding discussion of: variable selection, tuning parameters,
-distributional specifications (referring to Supplement~1), and regional
-differences (referring to Supplement~2).
+distributional specifications (referring to Supplement~A), and regional
+differences (referring to Supplement~B).
 
 \item \emph{Appendix~A: Tree algorithm.}\\
 The exposition has been extended and embellished, in particular regarding
@@ -872,7 +872,7 @@ the distributional forest provides a good and robust alternative.
 Computational costs are clearly higher than for a basic EMOS model, 
 but similar to a prespecified GAMLSS and lower than for GAMLSS
 using variable selection by cross-validation. Fitting and forecasting
-times are reported now in Supplement~2 (Stationwise Evaluation).
+times are reported now in Supplement~B (Stationwise Evaluation).
 
 Regarding forecasting tasks other than the one presented in
 the manuscript, we would \emph{not} expect that distributional
@@ -899,7 +899,7 @@ are not necessarily successive. This is now also explained in the
 description of the cross-validation setup in the third paragraph of 
 Section~3.3. As already argued previously, the same cross-validation
 approach is not only applied to Axams but also 14 further stations
-in Supplement~2 to check for robustness across stations.
+in Supplement~B to check for robustness across stations.
 
 In addition to the cross-validation setup there is also the setup
 where models are learned on the first 24 years and evaluated on the

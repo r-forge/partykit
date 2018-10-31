@@ -18,7 +18,7 @@
   In the case study presented in the main manuscript ``Distributional Regression
   Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
   the novel distributional regression forests are based on a Gaussian response distribution,
-  left-censored at zero to accomodate both the non-negativity of precipitation and
+  left-censored at zero to accommodate both the non-negativity of precipitation and
   the point mass at zero. To assess the goodness of fit of this response distribution
   this supplement employs the same evaluations as in the main manuscript but based on
   two other distributional assumptions: A logistic distribution, left-censored at zero,
@@ -113,7 +113,7 @@ a (computationally intensive) out-of-bag bootstrap estimate of the log-likelihoo
 
 \section{Alternative response distributions}
 
-The main manuscript employes a Gaussian distribution with probability
+The main manuscript employs a Gaussian distribution with probability
 density function $f$ (PDF) and cumulative distribution function $F$ (CDF)
 given by
 %
@@ -137,7 +137,7 @@ F_{\mathrm{logistic}}(Y; \mu, \sigma) &=
 \frac{1}{1+ \exp{\left(-\frac{Y - \mu}{\sigma}\right)}}.
 \end{align}
 %
-Both distributions have to be adapted in our case study to accomodate that
+Both distributions have to be adapted in our case study to accommodate that
 precipitation is non-negative with a point mass at zero (= no rain).
 Two common strategies for this are to employ either \emph{left-censoring at zero}
 or a \emph{hurdle} (or two-part) approach, combining a binary (zero vs.\ greater) and
@@ -474,16 +474,16 @@ censored Gaussian distribution (orange horizontal line). Gray lines
 correspond to the 15~stations that are aggregated in the boxplot.}
 \end{figure}
 
-\subsubsection*{FIXME: FURTHER GRAPHICS?}
+%\subsubsection*{FIXME: FURTHER GRAPHICS?}
 
-\emph{The same data already shown in Figures~\ref{fig:lattice} 
-and~\ref{fig:box_crpss_gaussian} can be displayed in further ways. However, these do 
-not really add much and hence should probably be omitted.}
+%\emph{The same data already shown in Figures~\ref{fig:lattice} 
+%and~\ref{fig:box_crpss_gaussian} can be displayed in further ways. However, these do 
+%not really add much and hence should probably be omitted.}
 
-Figures~\ref{fig:box_crpss_EMOS} and \ref{fig:box_crps} compare the methods separately 
-for each distribution, once based on CRPS skill score values with reference model EMOS 
-and once based on CRPS values. Both confirm the conclusion that all three distributions
-lead to almost the same results for all methods.
+%Figures~\ref{fig:box_crpss_EMOS} and \ref{fig:box_crps} compare the methods separately 
+%for each distribution, once based on CRPS skill score values with reference model EMOS 
+%and once based on CRPS values. Both confirm the conclusion that all three distributions
+%lead to almost the same results for all methods.
 
 Altogether it can be stated that for this application the left-censored at zero Gaussian
 distribution seems to be an appropriate choice while the other two distributions are also
@@ -491,9 +491,9 @@ reasonable alternatives. However, they do not lead to an overall improvement in
 performance for this application.
 
 
-\begin{figure}[t!]
-\setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crpss_EMOS, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
+%\begin{figure}[t!]
+%\setkeys{Gin}{width=0.99\textwidth}
+<<results_box_crpss_EMOS, fig=TRUE, echo=FALSE, height=3, width=7.2, eval=FALSE>>=
 # crps skill score by method (reference: EMOS)
 means$crps_ss_method <- means$crps
 means$crps_ss_method[means$method == "Distributional forest"] <- 
@@ -595,15 +595,15 @@ axis(3, 0:4, lwd.ticks = 0, labels = FALSE)
 axis(4, seq(-0.15, 0.25, 0.05), lwd.ticks = 0, labels = FALSE)
 
 @
-\caption{\label{fig:box_crpss_EMOS}CRPS skill score values of each of 
-the 15 observation stations, separated by method and distribution. 
-EMOS is chosen as reference model.}
-\end{figure}
+%\caption{\label{fig:box_crpss_EMOS}CRPS skill score values of each of 
+%the 15 observation stations, separated by method and distribution. 
+%EMOS is chosen as reference model.}
+%\end{figure}
 
 
-\begin{figure}[t!]
-\setkeys{Gin}{width=0.99\textwidth}
-<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7.2>>=
+%\begin{figure}[t!]
+%\setkeys{Gin}{width=0.99\textwidth}
+<<results_box_crps, fig=TRUE, echo=FALSE, height=3, width=7.2, eval=FALSE>>=
 
 # CRPS for gaussian
 c_gaussian <- matrix(ncol = 4, nrow = 15)
@@ -693,9 +693,9 @@ axis(3, 0:5, lwd.ticks = 0, labels = FALSE)
 axis(4, seq(0.6, 1.2, 0.1), lwd.ticks = 0, labels = FALSE)
 
 @
-\caption{\label{fig:box_crps}CRPS values of each of the 15 observation stations, 
-separated by method and distribution.}
-\end{figure}
+%\caption{\label{fig:box_crps}CRPS values of each of the 15 observation stations, 
+%separated by method and distribution.}
+%\end{figure}
 
 
 \section{Discussion}

@@ -186,7 +186,7 @@ can either be plotted in a histogram (PIT histogram) or be plotted against
 the corresponding quantiles of a standard normal distribution (residual QQ plot)
 for a continuous variable $Y$. To account for the point mass at 0, for each 
 observation equal to 0 the corresponding PIT value is multiplied with a randomized
-value following a uniform distribution on \[0,1\]. In that way these values
+value following a uniform distribution on $[0,1]$. In that way these values
 are apportioned on those bins of the histogram that would not contain any
 values because no observation is beneath 0.
 

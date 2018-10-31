@@ -7,7 +7,7 @@
 %\VignettePackage{disttree}
 
 %% packages
-\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
+\usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,hyperref}
 
 %% tikz
 \usepackage{array,makecell,tikz,color,soul}
@@ -877,15 +877,15 @@ be ``sent down'' the tree and the corresponding segment-specific MLE has to be
 obtained. This can also be understood as a weighted MLE where the weights
 select those observations from the learning sample that fall into the same
 segment:
-$$
+\begin{equation}
 w^{\text{tree}}_i(\bold{z}) = \sum_{b=1}^B \mathbf{1}((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z} \in \mathcal{B}_b)),
-$$
+\end{equation}
 where $\mathbf{1}(\cdot)$ is the indicator function. The predicted distribution
 for a given $\bold{z}$ is then fully specified by the estimated parameter
 $\bm{\hat \theta}(\bold{z})$ where
-$$
+\begin{equation}
 \bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
-$$
+\end{equation}
 \hlc{Even though this parameter depends on the given $\bold{z}$ it has to be noted that
 it is the same for all other observations that are in the same terminal node of 
 the tree as $\bold{z}$ and therefore does not necessarily have to be recalculated for
@@ -906,8 +906,8 @@ only a random subset of the covariates $\bold{Z}$ is considered to reduce the
 correlation among the trees and to stabilize the variance of the model.
 For a simple regression random forest the mean of predictions over
 all trees is considered. In that way changes in the location  of the response 
-across the covariates are detected} (e.g. in Breiman and Cutler's random forests, 
-\cite{Breiman:2001}).
+across the covariates are detected} (e.g., in Breiman and Cutler's random forests, 
+\citealp{Breiman:2001}).
 \hlc{This idea is now taken one step further by embedding it in a distributional 
 framework based on loglikelihood estimation. \emph{Distributional forests} 
 employ an ensemble of $T$~\emph{distributional trees} which pick up changes in 
@@ -920,10 +920,10 @@ $\bm{\hat \theta}(\bold{z})$ for a (potentially new) set of covariates $\bold{z}
 Following \cite{Hothorn+Zeileis:2017} we interpret random forests as adaptive
 local likelihood estimators using the averaged ``nearest neighbor weights''
 \citep{Lin+Jeon:2006} from the $T$~trees in the forest
-$$
+\begin{equation}
 w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t}
 \frac{\mathbf{1}((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))}{|\mathcal{B}^t_b|},
-$$
+\end{equation}
 where $|\mathcal{B}^t_b|$ denotes the number of observations in the $b$-th
 segment of the $t$-th tree.
 Thus, these $w^{\text{forest}}_i(\bold{z}) \in [0, 1]$ whereas
@@ -933,9 +933,9 @@ from the learning sample that co-occur in the same segment $\mathcal{B}_b^t$
 as the new observation $\bold{z}$ for many of the trees $t = 1, \dots, T$.
 Consequently, the parameter estimates may, in principle, change for every
 observation and can be obtained by
-$$
+\begin{equation}
 \bm{\hat \theta}(\bold{z}) =  \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
-$$
+\end{equation}
 In summary, this yields a parametric distributional regression model 
 (through the score-based approach) that can capture both abrupt effects and
 high-order interactions (through the trees) and smooth effects (through
@@ -963,7 +963,7 @@ may depend on external variables in a quite general way.
 \label{sec:precipitation}
 
 Many statistical weather forecasting models leverage the strengths of modern
-numerical ensemble prediction systems (EPSs; see \cite{Bauer+Thorpe+Brunet:2015}).
+numerical ensemble prediction systems (EPSs; see \citealp{Bauer+Thorpe+Brunet:2015}).
 \hlc{EPSs not only predict the most likely future state of the atmosphere but provide
 information about the uncertainty for a specific quantity and weather situation.
 This is done by running the NWP model several times using slightly perturbed 
@@ -1212,9 +1212,9 @@ The predictive performance in terms of full probabilistic forecasts is
 assessed using the continuous ranked probability score (CRPS, \citealp{Hersbach:2000}).
 For each of the models this assesses the discrepancy of the
 predicted distribution function $F$ from the observation $y$ by
-$$
+\begin{equation}
 \text{CRPS}(y, F) = \int_{-\infty}^\infty (F(z) - \mathbf{1}(y \leq z))^2 dz
-$$
+\end{equation}
 where \(\mathbf{1}(\cdot)\) is the indicator function. In the subsequent
 applications, the mean CRPS is always evaluated out of sample, 
 either using cross-validation or a hold-out data set (2009--2012)
@@ -1225,9 +1225,9 @@ Lower values indicate better performance.
 To assess differences in the improvement of the forests and GAMLSS
 models over the basic EMOS, a CRPS-based skill score with EMOS as
 the reference method is computed:
-$$
+\begin{equation}
 \text{CRPSS}_{\text{method}} = 1 - \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{EMOS}}}.
-$$
+\end{equation}
 
 
 
@@ -1611,8 +1611,8 @@ for disciplines such as meteorology.
 to be included in a model. Especially for a low number of variables all types
 of interactions can be employed and mixed effect models and separations into 
 main effects and interaction effects can be considered allowing for easier 
-interpretations} (see for example \cite{Wood+Scheipl+Faraway:2013}, 
-\cite{Goicoa+Adin+Ugarte:2018}, \cite{Ugarte+Adin+Goicoa:2017}).
+interpretations} (see for example \citealp{Wood+Scheipl+Faraway:2013}; 
+\citealp{Goicoa+Adin+Ugarte:2018}; \citealp{Ugarte+Adin+Goicoa:2017}).
 \hlc{However, in the application presented in} Section~\ref{sec:precipitation}
 \hlc{altogether 80 variables are available. Even if only paired interactions were
 considered this would already lead to 3160 additional covariates in the model
@@ -1662,7 +1662,7 @@ very robust against distributional misspecifications.}
 \hlc{Alternatively, a distribution including an additional parameter capturing 
 skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
 \hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
-\hlc{a very flexible parametric distribution characterised by the transformation 
+\hlc{a very flexible parametric distribution characterized by the transformation 
 function is employed such that higher moments can be modeled implicitly.
 Evaluating further distributions might be of interest but this would go beyond the
 scope of this manuscript.}
@@ -1693,7 +1693,7 @@ trees} (\code{ntree}). \hlc{Hence, it is recommended to build forests consisting
 of a large number of trees as this generally leads to an increase 
 in accuracy. However, it also comes along with increasing computational costs. 
 Therefore, ``a good choice results from a trade-off between computational 
-complexity and accuracy''} (\cite{Biau+Scornet:2016}, p.~205).
+complexity and accuracy''} (\citealp{Biau+Scornet:2016}, p.~205).
 \hlc{Following this advice we chose to build forests consisting of 100 trees which
 is a commonly used value.}
 
@@ -1784,54 +1784,7 @@ Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced usi
 \code{demo("RainStationwise", package = "disttree")} respectively.
 
 
-
-\bibliography{ref.bib}
-
-
-%\begin{supplement}[id=supp1]
-%  \sname{Supplement A}
-%  \stitle{Different Response Distributions}
-%  \slink[doi]{10.1214/00-AOASXXXXSUPP}
-%  \sdatatype{.pdf}" 
-%  \sdescription{
-%  In the case study presented in the main manuscript ``Distributional Regression
-%  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-%  the novel distributional regression forests are based on a Gaussian response distribution,
-%  left-censored at zero to accomodate both the non-negativity of precipitation and
-%  the point mass at zero. To assess the goodness of fit of this response distribution
-%  this supplement employs the same evaluations as in the main manuscript but based on
-%  two other distributional assumptions: A logistic distribution, left-censored at zero,
-%  is employed to potentially better capture heavy tails -- and a two-part hurdle model
-%  combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
-%  truncated at zero, for the positive precipitation observations. The latter could
-%  potentially better discriminate determinants of the occurrence of precipitation
-%  vs.\ the amount of precipitation given that it occurs.
-%}
-%\end{supplement}
-
-
-
-%\begin{supplement}[id=supp2]
-%  \sname{Supplement B}
-%  \stitle{Stationwise Evaluation}
-%  \slink[doi]{10.1214/00-AOASXXXXSUPP}
-%  \sdatatype{.pdf}" 
-%  \sdescription{
-%  In the case study presented in the main manuscript ``Distributional Regression
-%  Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-%  the novel distributional regression forests are evaluated and compared with
-%  other distributional regression approaches on 95 meteorological stations.
-%  Moreover, further details -- including a cross-validation analysis -- are
-%  preformed for only one station, Axams. To show that Axams is a fairly typical
-%  station and similar insights can be obtained for other stations as well,
-%  this supplements presents the same analysis as in Section~3.3 of the main
-%  manuscript for 14~further meteorological stations.
-%}
-%\end{supplement}
-
-
-
-\newpage
+\section*{Appendix}
 \begin{appendix}
 
 \section{Tree algorithm}
@@ -1855,7 +1808,7 @@ In that way a goodness-of-fit measurement is obtained for each
 parameter $\theta_j$ and each observation $y_i$.
 To use this information, statistical tests are employed to detect
 dependencies between the score values
-$$
+\begin{equation}
 s(\bm{\hat{\theta}}, y) = 
 %\begin{pmatrix} 
 %s(\bm{\hat{\theta}}, y_1) \\
@@ -1868,17 +1821,17 @@ s(\bm{\hat{\theta}}, y_1)_1 & s(\bm{\hat{\theta}}, y_1)_2 & \ldots & s(\bm{\hat{
 \vdots & \vdots & \ddots & \vdots \\
 s(\bm{\hat{\theta}}, y_n)_1 & s(\bm{\hat{\theta}}, y_n)_2 & \ldots & s(\bm{\hat{\theta}}, y_n)_k
 \end{pmatrix}
-$$
+\end{equation}
 and each variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
-\begin{align*}
+\begin{align}
 H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l 
-\end{align*}
+\end{align}
 
 These hypotheses are assessed with permutation tests based on
 the multivariate linear statistic
-$$
+\begin{equation}
 T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\bm{\hat{\theta}}, Y_i)\right)
-$$
+\end{equation}
 \hlc{where $s(\bm{\hat{\theta}}, Y_i) \in \mathbb{R}^{1\times k}$ and the 
 type of the transformation function $v_l$ depends on the type of the split 
 variable $Z_l$. If $Z_l$ is numeric then $v_l$ is simply the identity 
@@ -1898,9 +1851,9 @@ $\Sigma_l$ of $T_l$ as derived by
 $k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of $Z_l$,
 is mapped onto the real line by a univariate test statistic $c$.
 In the application of this paper a quadratic form is chosen, such that}
-$$
+\begin{equation}
 c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
-$$
+\end{equation}
 \hlc{where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$.} Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered.
@@ -1922,16 +1875,16 @@ pre-pruning is often switched off by setting the significance level to $1$.}
 The breakpoint that leads to the highest discrepancy between score functions 
 in the two resulting subgroups is selected as split point. 
 This is measured by the linear statistic
-$$
+\begin{equation}
 T_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\bm{\hat{\theta}}, Y_i)
-$$
+\end{equation}
 \hlc{for $q \in \{1,2\}$ where $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ are the 
 two new subgroups, without any particular ordering, that are defined by 
 splitting in split point $r$ of variable $Z_{l^{\ast}}$.
 The split point is then chosen as follows:}
-$$
+\begin{equation}
 r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Sigma_{l^{\ast}}^{qr})).
-$$
+\end{equation}
 One repeats the testing and splitting procedure in each of the resulting 
 subgroups until some stopping criterion is reached. This criterion 
 can for example be a minimal number of observations in a node or a 
@@ -1975,6 +1928,43 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 %some deviations the overall calibration of all models is acceptable.
 
 \end{appendix}
+
+
+
+
+\section*{Supplementary material}
+\subsection*{Supplement A: Different Response Distributions}
+(doi: \href{http://dx.doi.org/10.1214/00-AOASXXXXSUPPA}{10.1214/00-AOASXXXXSUPPA}).
+  %In the case study presented in the main manuscript ``Distributional Regression
+  %Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+  %the novel distributional regression forests are based on a Gaussian response distribution,
+  %left-censored at zero to accomodate both the non-negativity of precipitation and
+  %the point mass at zero. 
+  To assess the goodness of fit of the Gaussian distribution, left-censored at zero,
+  this supplement employs the same evaluations as in the main manuscript but based on
+  two other distributional assumptions: A logistic distribution, left-censored at zero,
+  is employed to potentially better capture heavy tails -- and a two-part hurdle model
+  combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
+  truncated at zero, for the positive precipitation observations. 
+  %The latter could
+  %potentially better discriminate determinants of the occurrence of precipitation
+  %vs.\ the amount of precipitation given that it occurs.
+
+\subsection*{Supplement B: Stationwise Evaluation}
+(doi: \href{http://dx.doi.org/10.1214/00-AOASXXXXSUPPB}{10.1214/00-AOASXXXXSUPPB}).
+  %In the case study presented in the main manuscript ``Distributional Regression
+  %Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
+  %the novel distributional regression forests are evaluated and compared with
+  %other distributional regression approaches on 95 meteorological stations.
+  %Moreover, further details -- including a cross-validation analysis -- are
+  %preformed for only one station, Axams. 
+  To show that Axams is a fairly typical
+  station and similar insights can be obtained for other stations as well,
+  this supplement presents the same analysis as in Section~3.3 of the main
+  manuscript for 14~further meteorological stations.
+
+
+\bibliography{ref.bib}
 
 
 \end{document}
