@@ -181,7 +181,7 @@ this has been extended in various directions including:
     allowing for smooth nonlinear effects in the covariates
     (Figure~\ref{fig:gam}, middle).
   \item \emph{Generalized additive models for location, scale, and shape}
-    (GAMLSS, \citealt{Rigby+Stasinopoulos:2005}) adopting a probabilistic modeling
+    (GAMLSS, \citealp{Rigby+Stasinopoulos:2005}) adopting a probabilistic modeling
     approach. In GAMLSS, each parameter of a statistical distribution can depend
     on an additive predictor of the covariates comprising linear and/or
     smooth nonlinear terms (Figure~\ref{fig:gam}, right).
@@ -438,12 +438,12 @@ parametric distributional fits depending on a specified set of additive linear o
 smooth nonlinear terms. A rather different approach to capturing the dependence on
 covariates are tree-based models.
 \begin{itemize}
-  \item \emph{Regression trees} (\citealt{Breiman+Friedman+Stone:1984}) recursively
+  \item \emph{Regression trees} (\citealp{Breiman+Friedman+Stone:1984}) recursively
     split the data into more homogeneous subgroups and can thus capture abrupt shifts
     (Figure~\ref{fig:tree}, top left) and approximate nonlinear functions.
     Furthermore, trees automatically carry out a forward selection of covariates and
     their interactions. 
-  \item \emph{Random forests} (\citealt{Breiman:2001}) average the predictions of
+  \item \emph{Random forests} (\citealp{Breiman:2001}) average the predictions of
     an ensemble of trees fitted to resampled versions of the learning data. This
     stabilizes the recursive partitions from individual trees and hence better
     approximates smooth functions (Figure~\ref{fig:tree}, top middle).
@@ -1085,7 +1085,7 @@ Basic covariates & {\#} & Variations\\
 
 Learning and validation data consist of observed 
 daily precipitation sums provided by the National Hydrographical Service 
-(\citealt{ehyd}) and numerical weather forecasts from the U.S.~National
+(\citealp{ehyd}) and numerical weather forecasts from the U.S.~National
 Oceanic and Atmospheric Administration (NOAA).
 Both, observations and forecasts are available for 1985--2012 and
 the analysis is exemplified using July, the month with the most precipitation
@@ -1209,7 +1209,7 @@ further details:
 \end{itemize}
 
 The predictive performance in terms of full probabilistic forecasts is
-assessed using the continuous ranked probability score (CRPS, \citealt{Hersbach:2000}).
+assessed using the continuous ranked probability score (CRPS, \citealp{Hersbach:2000}).
 For each of the models this assesses the discrepancy of the
 predicted distribution function $F$ from the observation $y$ by
 $$
@@ -1275,8 +1275,8 @@ gray. Overall, the randomized quantile residuals conform quite well with the
 theoretical standard normal quantile (i.e., form a straight line close to the 
 diagonal), indicating that all four models are sufficiently well calibrated. 
 \hlc{This is also supported by the corresponding probability integral transform}
-(PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) \hlc{histograms for station
-Axams in Supplement 2} \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{which 
+(PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) \hlc{histograms for station
+Axams in Supplement B} \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{which 
 contains a more detailed explanation of residual QQ plots and PIT histograms.}
 
 <<echo=FALSE, results=hide>>=
@@ -1645,7 +1645,7 @@ at zero as this has proven to be a well working choice in
 earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
 \hlc{To test for robustness against distributional misspecifation 
 different distributional assumptions have been considered as well. 
-In Supplement 1} \citep{Schlosser+Hothorn+Stauffer:2018a} \hlc{the exact
+In Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a} \hlc{the exact
 same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
 observation stations, once employing a Gaussian hurdle model and once
 with a logistic distribution left-censored at zero in order to account
@@ -1709,7 +1709,7 @@ we made for the prespecified GAMLSS method is particularly adequate for the
 region of East Tyrol for this specific analysis. However, the advantages of 
 the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
 validation: 2009--2012) even out in a cross-validation framework for most of 
-the stations in East Tyrol. These results are presented in Supplement 2} 
+the stations in East Tyrol. These results are presented in Supplement B} 
 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{where the exact same evaluations as in} 
 Section~\ref{sec:axams} \hlc{for station Axams have been carried out 
 for 14 other stations.}
@@ -1723,7 +1723,7 @@ three of the authors, but not based on any other particular
 features. Furthermore, it has been checked, whether it 
 is an adequate representative of all stations regarding 
 the results of our evaluations. This is also confirmed by 
-the extended analysis in Supplement 2} \citep{Schlosser+Hothorn+Stauffer:2018b}
+the extended analysis in Supplement B} \citep{Schlosser+Hothorn+Stauffer:2018b}
 \hlc{where the 15 considered stations also include some of those where 
 the forest does not perform better than the other models in the setting 
 presented in} Figure~\ref{fig:all-map}. \hlc{It shows that the differences in 
@@ -1755,7 +1755,7 @@ on \textsf{R}-Forge at
 used as the basis for the tree-building function \code{disttree}, upon which
 the \code{distforest} is built. All functions can either be used with
 GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
-(\citealt{Stasinopoulos+Rigby:2007}, version~\Sexpr{packageVersion("gamlss.dist")})
+(\citealp{Stasinopoulos+Rigby:2007}, version~\Sexpr{packageVersion("gamlss.dist")})
 or with custom lists containing all required information about the distribution family.
 
 In addition to \textbf{disttree}, Section~\ref{sec:precipitation} employs
@@ -1773,13 +1773,13 @@ is reproducible using
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
 QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
-\citep[Supplement 2]{Schlosser+Hothorn+Stauffer:2018b}.
+\citep[Supplement B]{Schlosser+Hothorn+Stauffer:2018b}.
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} (version~\Sexpr{packageVersion("RainTyrol")}),
 also available within the \textsf{R}-Forge~project.
-\hlc{The results presented in Supplement 1} \citep{Schlosser+Hothorn+Stauffer:2018a} and 
-Supplement 2 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced using}
+\hlc{The results presented in Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a} and 
+Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced using}
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")} respectively.
 
@@ -1789,7 +1789,7 @@ Supplement 2 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced usi
 
 
 %\begin{supplement}[id=supp1]
-%  \sname{Supplement 1}
+%  \sname{Supplement A}
 %  \stitle{Different Response Distributions}
 %  \slink[doi]{10.1214/00-AOASXXXXSUPP}
 %  \sdatatype{.pdf}" 
@@ -1812,7 +1812,7 @@ Supplement 2 \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced usi
 
 
 %\begin{supplement}[id=supp2]
-%  \sname{Supplement 2}
+%  \sname{Supplement B}
 %  \stitle{Stationwise Evaluation}
 %  \slink[doi]{10.1214/00-AOASXXXXSUPP}
 %  \sdatatype{.pdf}" 
@@ -1942,7 +1942,7 @@ avoid overfitting.
 This permutation test based tree algorithm is presented in 
 \cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
 A different framework to build a tree is provided by the MOB algorithm 
-which is based on M-fluctuation tests (\citealt{Zeileis+Hothorn+Hornik:2008}).
+which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
 
 
 %\section{PIT histograms}
@@ -1968,7 +1968,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 %\end{figure}
 
 %As an alternative to QQ~plots based on randomized quantile residuals,
-%probability integral transform (PIT, \citealt{Gneiting+Balabdaoui+Raftery:2007}) 
+%probability integral transform (PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) 
 %histograms are a commonly used tool to assess how well-calibrated distributional 
 %fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
 %probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite

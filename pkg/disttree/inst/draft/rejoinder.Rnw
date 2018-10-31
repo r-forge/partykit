@@ -45,7 +45,7 @@ contribution.
 The most important changes are:
 \begin{itemize}
 
-\item \emph{Supplement 1: Different response distributions.}\\
+\item \emph{Supplement A: Different response distributions.}\\
 To assess the appropriateness and robustness of the distributional
 assumption (censored Gaussian) made in the main manuscript, further
 response distributions (two-part Gaussian hurdle; censored
@@ -55,7 +55,7 @@ evaluations performed for all 95 observation stations
 in the main manuscript using all three response distributions
 for a subset of 15 stations.
 
-\item \emph{Supplement 2: Stationwise evaluation.}\\
+\item \emph{Supplement B: Stationwise evaluation.}\\
 To show that the more extensive cross-validation results -- obtained only
 for one station (Axams) in the main manuscript -- are fairly typical,
 they are extended to 14 other observation stations. This also incorporates
@@ -85,8 +85,9 @@ point-to-point reply on the next pages.
 \vspace*{1cm}
 }
 
-% \vspace*{-2.8cm}
-% \hspace*{-0.3cm} %\includegraphics{zeileis-signature}
+\vspace*{-2.8cm}
+\hspace*{-0.3cm} 
+\includegraphics[width = 0.23\textwidth]{signature-Schlosser}
 
 \end{letter}
 
@@ -181,7 +182,7 @@ additive terms. However, when predicting a set of observations
 the costs for the GAMLSS are lower (due to leveraging matrix
 operations) and for the distributional forest higher (as it
 still operates observation-wise) but not prohibitively so.
-The exact results and times can be found in Supplement 2
+The exact results and times can be found in Supplement B
 (Stationwise Evaluation).
 
 
@@ -222,7 +223,7 @@ three of the authors, but not based on any other particular
 features. Furthermore, it has been checked whether it 
 is an adequate representative of all stations regarding 
 the results of our evaluations. This is now also 
-confirmed by further analysis in Supplement 2 (Stationwise Evaluation) 
+confirmed by further analysis in Supplement B (Stationwise Evaluation) 
 and discussed in Section~4.
 
 \begin{review}
@@ -234,7 +235,7 @@ The residual QQ plots (Dunn et al.\ 1996) are built on top of
 the probability integral transform (PIT, Gneiting et al.\ 2007).
 Therefore they are invariant to transformations that preserve
 the PIT, as is the case here. A more detailed 
-explanation can be found in Supplement 2 (Stationwise Evaluation).
+explanation can be found in Supplement B (Stationwise Evaluation).
 
 \begin{review}
 p17: Is there any explanation why the prespecified GAMLSS 
@@ -250,7 +251,7 @@ somewhat different weather than the rest of Tyrol.
 The advantages of the GAMLSS model even out at most of the stations when looking 
 on the results of a cross-validation. We have extended Section~4 to discuss this 
 issue. The results of an extended evaluation including a cross-validation for a 
-set of $15$ stations can be found in Supplement 2 (Stationwise Evaluation).
+set of $15$ stations can be found in Supplement B (Stationwise Evaluation).
 
 \newpage
 
@@ -423,7 +424,7 @@ can be leveraged). However, when making predictions observation
 by observation -- as done in real-time -- the time required is
 comparable for the forest and GAMLSS. The exact results 
 regarding fitting and prediction times can now be found in
-Supplement 2 (Stationwise Evaluation).
+Supplement B (Stationwise Evaluation).
 
 
 \begin{review}
@@ -579,7 +580,7 @@ The distributional forest selects very similar covariates as included in the
 prespecified GAMLSS model. For both models, total precipitation (\texttt{tp})
 and total column-integrated condensate (\texttt{tcolc}) are the two most important
 covariates. Due to the randomization within the nodes, the distributional forest selects different variations of the same covariate (e.g., \texttt{tp\_max}, \texttt{tp\_mean},
-\texttt{tp\_min}; see Figure~6 in the main manuscript and Supplement 2) while
+\texttt{tp\_min}; see Figure~6 in the main manuscript and Supplement B) while
 the prespecified GAMLSS mainly only uses one specific variation (\texttt{tp\_max}).
 The same is true for variations of \texttt{tcolc\_mean\_*}, \texttt{tcolc\_sprd\_*}
 and \texttt{tcolc\_sprd\_*}.
@@ -724,7 +725,7 @@ zero hurdle ($y = 0$ vs.\ $y > 0$) and an adjusted Gaussian distribution
 (left-truncated at zero).
 
 We have carried out the same evaluations as presented in the main manuscript and 
-present the full results in Supplement 1 (Different Response Distributions). 
+present the full results in Supplement A (Different Response Distributions). 
 The main insights from this are also discussed in Section~4:
 At most stations the censored Gaussian distribution from the main
 manuscript performs at least as well as the two alternative
@@ -863,7 +864,7 @@ analysis as presented for station Axams in the main manuscript for 14
 further observation stations. It shows that at most stations the 
 distributional forest is competitive with the best among the other 
 methods or even better. The exact results are provided in 
-Supplement 2 (Stationwise Evaluation) and discussed in Section~4. 
+Supplement B (Stationwise Evaluation) and discussed in Section~4. 
 Especially for meteorologists intending to apply model output 
 statistics (MOS) for dozens or hundreds of observation stations 
 (e.g., Wahl 2014, Rasp and Lerch 2018)
@@ -1001,7 +1002,7 @@ appendix to an online supplement.
 Thank you for your advice. We have kept only the details regarding
 the presented methodology in the appendix of the main manuscript
 (Appendix A) and extended Appendix B to an online supplement
-(Supplement 2: Stationwise Evaluation).
+(Supplement B: Stationwise Evaluation).
 
 \begin{review}
 2. Does the EMOS method employ ensemble post-processing 
@@ -1028,7 +1029,7 @@ The PIT histograms and the residual QQ plots visualize the same
 results on different scales. The out-of-sample PIT values are 
 either plotted in a histogram or plotted against the corresponding
 quantiles of the standard normal distribution. A more detailed 
-explanation can be found in Supplement 2 (Stationwise Evaluation) 
+explanation can be found in Supplement B (Stationwise Evaluation) 
 which contains both, PIT histograms and residual QQ plots, 
 for 15 stations. In the manuscript we decided to only show the 
 residual QQ plot as it allows for a better analysis of the 

@@ -5,7 +5,7 @@
 \usepackage{Sweave}
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,pdfpages,hyperref,bookmark}
 
-\title{Supplement 2: Stationwise Evaluation}
+\title{Supplement B: Stationwise Evaluation}
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
    \And Torsten Hothorn\\Universit\"at Z\"urich
@@ -22,7 +22,7 @@
   Moreover, further details -- including a cross-validation analysis -- are
   preformed for only one station, Axams. To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
-  this supplements presents the same analysis as in Section~3.3 of the main
+  this supplement presents the same analysis as in Section~3.3 of the main
   manuscript for 14~further meteorological stations.
 }
 
