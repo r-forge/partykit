@@ -5,7 +5,7 @@
 \usepackage{Sweave}
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
 
-\title{Supplement 1: Different Response Distributions}
+\title{Supplement A: Different Response Distributions}
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
 \And Torsten Hothorn\\Universit\"at Z\"urich
