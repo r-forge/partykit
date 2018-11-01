@@ -114,9 +114,9 @@ regression approaches modeling all parameters including location, scale, and
 shape. Notably, so-called non-homogenous Gaussian regression (NGR) models both
 mean and variance of a Gaussian response and is particularly
 popular in weather forecasting. 
-% More generally, the GAMLSS framework allows to establish generalized additive 
-% models for location, scale, and shape with smooth linear or nonlinear effects.
-\hlc{Less specifically, generalized additive models for location, scale, and shape (GAMLSS) provide a framework where each distribution parameter is modeled separately capturing smooth linear or nonlinear effects.}
+\hlc{Moreover, generalized additive models for location, scale, and shape (GAMLSS)
+provide a framework where each distribution parameter is modeled separately
+capturing smooth linear or nonlinear effects.}
 %
 However, when variable selection is required and/or there are
 non-smooth dependencies or interactions (especially unknown or of high-order),
@@ -461,16 +461,18 @@ yielding two novel techniques:
     top right).
 \end{itemize}
 
-\hlc{However, distributional forests should not be considered as a 
-replacement of GAMLSS but rather as a complementing method in the field of
-distributional models, similar to the way how GAM and random forests are complements 
-in the conditional mean regression toolbox.}
-
-In the following, particular focus is given to distributional forests as a method for
-obtaining probabilistic forecasts by leveraging the strengths of random forests: the 
-ability to capture both smooth and abruptly changing functions along with simultaneous selection of variables and possibly complex interactions. Thus, these properties make the method particularly appealing in case of many covariates with unknown effects and 
-interactions where it would be challenging to specify a distributional regression model 
-like GAMLSS.
+In the following, particular focus is given to distributional forests as a
+method for obtaining probabilistic forecasts by leveraging the strengths of
+random forests: the  ability to capture both smooth and abruptly changing
+functions along with simultaneous selection of variables and possibly complex
+interactions. Thus, these properties make the method particularly appealing in
+case of many covariates with unknown effects and  interactions where it would be
+challenging to specify a distributional regression model  like GAMLSS.
+%
+\hlc{However, distributional forests should not be considered as a replacement
+of GAMLSS but rather as a complementing technique for flexible distributional
+regression -- much like GAMs and random forests are complements for conditional
+mean regression.}
 
 
 
@@ -693,7 +695,7 @@ The observations are depicted by crosses and the predicted point mass
 from the model by filled circles.}}
 \end{figure}
 
-In weather forecasting, these properties are especially appealing in 
+In weather forecasting, the flexibility of distributional forests is especially appealing in 
 mountainous regions and complex terrain where a wide range of local-scale
 effects are not yet resolved by the NWP models. 
 Thus, effects with abrupt changes and possibly nonlinear interactions 
