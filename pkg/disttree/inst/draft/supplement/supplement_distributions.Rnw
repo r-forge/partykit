@@ -141,7 +141,9 @@ Both distributions have to be adapted in our case study to accommodate that
 precipitation is non-negative with a point mass at zero (= no rain).
 Two common strategies for this are to employ either \emph{left-censoring at zero}
 or a \emph{hurdle} (or two-part) approach, combining a binary (zero vs.\ greater) and
-a truncated (positive) part \citep[see][for an overview of both techniques]{Winkelmann:2006}.
+a truncated (positive) part (see \citealp{Long:1997} or \citealp{Winkelmann:2006}
+for an overview of both techniques).
+%
 \begin{itemize}
 \item \emph{Censored distribution:}
 For a chosen distribution with PDF $f$ and CDF $F$ the log-likelihood function of the corresponding 
@@ -485,9 +487,9 @@ correspond to the 15~stations that are aggregated in the boxplot.}
 %and once based on CRPS values. Both confirm the conclusion that all three distributions
 %lead to almost the same results for all methods.
 
-Altogether it can be stated that for this application the left-censored at zero Gaussian
+Altogether it can be stated that for this application the zero-censored Gaussian
 distribution seems to be an appropriate choice while the other two distributions are also
-reasonable alternatives. However, they do not lead to an overall improvement in 
+reasonable alternatives. However, they do not lead to a pronounced overall improvement in 
 performance for this application.
 
 
@@ -731,7 +733,7 @@ for the distributional forests. However, an additional alternative is to fit a s
 distributional forest based on the three-parameter log-likelihood from Equation~\ref{eq:hurdle}.
 When all three parameters change simultaneously across the covariates, then this specification
 can be expected to perform somewhat better. Whereas when different variables/effects drive
-the parameters of the model, then the two-part approach implemented in this supplement
+the different model parameters, then the two-part approach implemented in this supplement
 should perform somewhat better. In this particular case study, though, neither approach
 performs clearly better as Figure~\ref{fig:box_crpss_forests} reveals. The figure depicts
 CRPS skill scores for the 15~stations of the one-part hurdle models with the two-part
