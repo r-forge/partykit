@@ -106,7 +106,7 @@ the same for all individuals.  Model-based recursive partitioning allows to
 relax this assumption and to estimate stratified treatment effects (model-based
 trees) or even personalised treatment effects (model-based forests).  With
 model-based trees one can compute treatment effects for different strata of
-individuals. The strata are found in a data driven fashion and depend on
+individuals. The strata are found in a data-driven fashion and depend on
 characteristics of the individuals.  Model-based random forests allow for a
 similarity estimation between individuals in terms of model parameters (e.g.~
 intercept and treatment effect). The similarity measure can then be used to
@@ -262,7 +262,7 @@ plot(tr_math, terminal_panel = node_pmterminal(tr_math,
 We restrict the depth of the tree to two (\texttt{\Sexpr{'maxdepth = 2'}}) for
 illustration purposes. If this setting is not used a more complex tree would be
 estimated. Also the cutpoints and effect estimates are rounded in the plot.  To
-view the tree in the R console, the command \texttt{\Sexpr{'print()'}} function can be
+view the tree in the R console, the \texttt{\Sexpr{'print()'}} function can be
 used.
 }
 <<math_printtree>>=
@@ -278,7 +278,8 @@ simple linear model, which is that it does not seem to be fair for students who
 did very well throughout the semester (at this point we should state that the
 students self selected into the two exam groups which might also be the reason
 for differences in exam performance).
-\new{Note that confidence intervals shown in the tree are not adjusted and
+\new{Note that confidence intervals shown in the tree are not adjusted for
+selection of the cutpoints in the tree and
 should hence be interpreted as a measure for variablity and not be used for
 inference.}
 
