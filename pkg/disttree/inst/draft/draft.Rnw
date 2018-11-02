@@ -739,10 +739,10 @@ gradients) is introduced in Section~\ref{sec:disttree}, leading to distributiona
 trees. (3)~Ensembles of distributional trees fitted to randomized subsamples are
 employed to establish distributional forests in Section~\ref{sec:distforest}.
 
-The general distributional notation is exemplified in all three steps for the
-Gaussian distribution left-censored at zero. The latter is employed in the empirical 
-case study in Section~\ref{sec:precipitation} to model power-transformed daily 
-precipitation amounts.
+The general distributional notation is exemplified in all three steps using the
+Gaussian distribution left-censored at zero (for short: zero-censored Gaussian).
+The latter is employed in the empirical case study in Section~\ref{sec:precipitation}
+to model power-transformed daily precipitation amounts.
 
 
 \subsection{Distributional fit}
@@ -760,7 +760,7 @@ can be incorporated in the usual straightforward way
 
 To capture both location and scale of the probabilistic precipitation forecasts
 while accounting for a point mass at zero (i.e., dry days without
-rain), a Gaussian distribution left-censored at zero (for short: zero-censored Gaussian)
+rain), a zero-censored Gaussian distribution
 with location parameter $\mu$ and scale parameter $\sigma$ is employed. Therefore,
 the corresponding log-likelihood function with parameter vector 
 $\bm{\theta} = (\mu, \sigma)$ is
@@ -772,7 +772,7 @@ $\bm{\theta} = (\mu, \sigma)$ is
 \end{cases}
 \end{equation}
 
-where $\phi$ and $\Phi$ are the probability density function and the 
+where $\phi$ and $\Phi$ are the probability density function and the cumulative
 distribution function of the standard normal distribution $\mathcal{N}(0,1)$. 
 Other distributions $\mathcal{D}$ and corresponding log-likelihoods
 $\ell(\mu, \sigma; Y)$ could be set up in the same way, e.g., for
@@ -809,7 +809,7 @@ one individual observation $y_i$.
 \label{sec:disttree}
 
 Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
-for reasonably representing the response distribution and covariates
+for reasonably representing the response distribution. Therefore, covariates
 $\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
 employed to capture differences in the distribution parameters $\bm{\theta}$.
 In weather forecasting, these covariates typically include the output
@@ -832,7 +832,7 @@ including covariates in a data-driven way and allowing for abrupt
 changes, nonlinear and non-additive effects, and interactions. In the context of
 distributional models the goal is to partition the covariate space
 $\mathcal{Z}$ recursively into disjoint segments so that a homogenous
-distributional model for the response $Y$ can be found with segment-specific
+distributional model for the response $Y$ can be found for each segment with segment-specific
 parameters. More specifically, the $B$ disjoint segments $\mathcal{B}_b$
 ($b = 1, \dots, B$) partition the covariate space
 \begin{equation}
@@ -854,7 +854,7 @@ To sum up, distributional trees are fitted recursively via:
 \begin{enumerate}
 \item Estimate $\bm{\hat \theta}$ via maximum likelihood for the observations
   in the current subsample.
-\item Test for associations or instabilities of the scores $s(\bm{\hat \theta}, y_i)$ 
+\item Test for associations (or instabilities) of the scores $s(\bm{\hat \theta}, y_i)$ 
   and $Z_{l,i}$ for each partitioning variable~$Z_l$ ($l = 1, \dots, m$).
 \item Split the sample along the partitioning variable $Z_l^*$ with the
   strongest association or instability. Choose the breakpoint with the highest
@@ -876,7 +876,11 @@ Appendix~\ref{app:tree}.
 For obtaining probabilistic predictions from the tree for a (possibly new) set
 of covariates $\bold{z} = (z_1, \ldots, z_m)$, the observation simply has to
 be ``sent down'' the tree and the corresponding segment-specific MLE has to be
-obtained. This can also be understood as a weighted MLE where the weights
+obtained. \hlc{Thus, in practice $\bm{\hat \theta}(\bold{z})$ does not have to be recalculated
+for each new $\bold{z}$ but one can simply extract the parameter estimates for
+the corresponding segment which have been computed already while
+learning the tree. However, to understand this estimator conceptually it is useful
+to denote it as a weighted MLE} where the weights
 select those observations from the learning sample that fall into the same
 segment:
 \begin{equation}
@@ -888,10 +892,7 @@ $\bm{\hat \theta}(\bold{z})$ where
 \begin{equation}
 \bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
 \end{equation}
-\hlc{Even though this parameter depends on the given $\bold{z}$ it has to be noted that
-it is the same for all other observations that are in the same terminal node of 
-the tree as $\bold{z}$ and therefore does not necessarily have to be recalculated for
-each of them.}
+
 
 \subsection{Distributional forest}
 \label{sec:distforest}
@@ -904,17 +905,17 @@ applied to smooth the effects, stabilize the model, and improve predictive perfo
 
 \hlc{The idea of random forests is to learn an ensemble of trees, each on a different
 learning data obtained through resampling (bootstrap or subsampling). In each node 
-only a random subset of the covariates $\bold{Z}$ is considered to reduce the 
+only a random subset of the covariates $\bold{Z}$ is considered for splitting to reduce the 
 correlation among the trees and to stabilize the variance of the model.
 For a simple regression random forest the mean of predictions over
 all trees is considered. In that way changes in the location  of the response 
 across the covariates are detected} (e.g., in Breiman and Cutler's random forests, 
 \citealp{Breiman:2001}).
 \hlc{This idea is now taken one step further by embedding it in a distributional 
-framework based on loglikelihood estimation. \emph{Distributional forests} 
+framework based on maximum-likelihood estimation. \emph{Distributional forests} 
 employ an ensemble of $T$~\emph{distributional trees} which pick up changes in 
-the ``direction'' of any distribution parameter by considering the full score 
-vector for choosing splitting variables and split points.}
+the ``direction'' of any distribution parameter by considering the full likelihood
+and corresponding score function for choosing splitting variables and split points.}
 
 To obtain probabilistic predictions from a distributional forest, it still
 needs to be specified how to compute the parameter estimates
@@ -953,7 +954,7 @@ and generalized random forests for causal inferences
 \citep{Athey+Tibshirani+Wager:2017}.
 These procedures aggregate over trees fitted to specific score functions 
 (e.g., log rank scores in survival trees, model residuals in transformation 
-or generalized forests). Distributional forests, in contrast to these 
+or generalized forests). Distributional forests, in contrast to 
 nonparametric approaches, provide a compromise between model flexibility 
 and interpretability: The parameters of a problem-specific distribution 
 (zero-censored Gaussian for precipitation) have a clear meaning but 
@@ -970,34 +971,30 @@ numerical ensemble prediction systems (EPSs; see \citealp{Bauer+Thorpe+Brunet:20
 information about the uncertainty for a specific quantity and weather situation.
 This is done by running the NWP model several times using slightly perturbed 
 initial conditions and model specifications to account for uncertainties in both,
-the initial state and the model and its parametrizations.
-One frequently used method based on distributional regression models is the 
+the initial atmospheric state and the NWP model (and its parametrizations).
+One frequently-used method based on distributional regression models is the 
 ensemble model output statistics (EMOS) approach first proposed by}
 \cite{Gneiting+Raftery+Westveld:2005} \hlc{to produce high-quality forecasts for
 specific quantities and sites.  
-In case of precipitation forecasting EMOS typically uses the ensemble mean of 
-``total precipitation''} (\emph{tp}) \hlc{forecasts as predictor for the location 
+In case of precipitation forecasting, EMOS typically uses the ensemble mean of 
+``total precipitation'' (\emph{tp}) forecasts as the predictor for the location 
 parameter $\mu$ and the corresponding ensemble standard deviation for the 
-scale parameter $\sigma$ of the statistical model based on the assumption
-of the response following a Gaussian distribution left-censored at zero.
+scale parameter $\sigma$, e.g., assuming the observations to follow a zero-censored
+Gaussian distribution.
 This distributional approach of modeling both parameters allows to correct 
 for possible errors of the NWP ensemble in both, the expectation but also the 
-uncertainty of a specific forecast. In order to assure positivity of the 
-scale parameter a log-link is applied. Hence, the two distribution parameters 
-are modeled by the linear functions} 
-$\mu = \beta_0 + \beta_1 \cdot \emph{mean}(\emph{tp})$ and  
-$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \emph{sd}(\emph{tp})$
-with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
-\hlc{hereafter referred to as a basic EMOS model} \citep{Gebetsberger+Messner+Mayr:2017}.
+uncertainty of a specific forecast. Thus, a basic EMOS specification typically
+models the two distribution parameters by two linear predictors, e.g.,} 
+$\mu = \beta_0 + \beta_1 \cdot \mathrm{mean}(\emph{tp})$ and  
+$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \log(\mathrm{sd}(\emph{tp}))$
+with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$, and $\gamma_1$
+\citep[where the log link assures positivity of the scale parameter, following][]{Gebetsberger+Messner+Mayr:2017}.
 
 % FIXME: notation with or without power transformation parameter?
-
-% with:
+%
 %$\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
 %$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
-%with power transformation parameter $\frac{1}{p}$ and 
-%regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$ and $\gamma_1$,  
-%\hlc{hereafter referred to as a basic EMOS model \citep{Gebetsberger+Messner+Mayr:2017}.}
+%with power transformation parameter $\frac{1}{p}$
 
 
 While this approach alone is already highly effective in the plains,
@@ -1007,7 +1004,7 @@ For example, in the Tyrolean Alps -- considered
 in the following case study -- the NWP grid cells of $50 \times 50$
 km$^2$ are too coarse to capture single mountains, narrow valleys, etc. 
 Therefore, it is often possible to substantially improve the predictive 
-performance of the EMOS by including additional predictor variables, either 
+performance of a basic EMOS by including additional predictor variables, either 
 from local meteorological observations or an NWP model. Unfortunately, it is 
 typically unknown which variables are relevant for improving the predictions. 
 Simply including all available variables may be computationally burdensome and
@@ -1017,8 +1014,8 @@ the relevant variables and interactions among all possible covariates is
 crucial for improving the statistical forecasting model.
 
 In the following, it is illustrated how distributional forests can
-solve this problem without requiring prior expert knowledge.  For fitting the
-forest only the response distribution and the list of potential predictor
+solve this problem without requiring prior expert knowledge about the meteorological covariates.
+For fitting the forest only the response distribution and the list of potential predictor
 variables need to be specified (along with a few algorithmic details) and then
 the relevant variables, interactions, and potentially nonlinear effects are
 determined automatically in a data-driven way. Here, we employ a zero-censored
@@ -1038,7 +1035,7 @@ selection of smooth additive terms based on all 80~predictor variables.
 \caption[Table caption text]{Basic covariates together with the number ({\#}) and the type of variations.
 Time periods indicate aggregation time periods in hours after NWP model
 initialization (e.g., 6--30 corresponds to +6\,h to +30\,h ahead forecasts,
-0600\,UTC to 0600\,UTC of the next day). $^*$Minimum values of \emph{dswrf}
+0600\,UTC to 0600\,UTC of the next day). Note: $^*$Minimum values of \emph{dswrf}
 over 24\,h are always zero and thus neglected.}
 \label{tab:covariates}
 \begin{tabular}{ l  c  l }
@@ -1046,21 +1043,21 @@ over 24\,h are always zero and thus neglected.}
 Basic covariates & {\#} & Variations\\
 \hline
 \emph{tp}: total precipitation,           & 12  & ensemble mean of sums over 24h, \\
-\hspace*{0.5cm} power transformed (by $1.6^{-1}$) &    & ensemble std. deviation of sums over 24h, \\ 
+\hspace*{0.5cm} power transformed (by $1.6^{-1}$) &    & ensemble std.\ deviation of sums over 24h, \\ 
 \emph{cape}: convective available     &    & ensemble minimum of sums over 24h, \\
 \hspace*{0.9cm} potential energy, &    & ensemble maximum of sums over 24h\\
 \hspace*{0.9cm} power transformed (by $1.6^{-1}$)&    & \qquad all for 6--30 \\
 \hspace*{\fill}                            &    & ensemble mean of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 \\
-\hspace*{\fill}                            &    & ensemble std. deviation of sums over 6h\\
+\hspace*{\fill}                            &    & ensemble std.\ deviation of sums over 6h\\
 \hspace*{\fill}                            &    & \qquad for 6--12, 12--18, 18--24, 24--30 \\
 \hline
 \emph{dswrf}: downwards short wave      & 6 & ensemble mean of mean values, \\
 \hspace*{1.13cm} radiation flux (``sunshine'') &   & ensemble mean of minimum values$^*$,\\
 \emph{msl}: mean sea level pressure     &   &  ensemble mean of maximal values,\\
-\emph{pwat}: precipitable water         &   & ensemble std. deviation of mean values,\\
-\emph{tmax}: 2m maximum temperature     &   & ensemble std. deviation of minimum values$^*$,\\
-\hspace*{1.15cm}                          &   & ensemble std. deviation of maximal values,\\
+\emph{pwat}: precipitable water         &   & ensemble std.\ deviation of mean values,\\
+\emph{tmax}: 2m maximum temperature     &   & ensemble std.\ deviation of minimum values$^*$,\\
+\hspace*{1.15cm}                          &   & ensemble std.\ deviation of maximal values,\\
 \emph{tcolc}: total column-integrated   &   & \qquad all over 6--30 \\
 \hspace*{0.95cm} condensate               &   & \\
 \emph{t500}: temperature on 500 hPa     &   & \\
@@ -1096,7 +1093,7 @@ in Tyrol.
 Observations are obtained for 95~stations all over Tyrol and surroundings,
 providing 24-hour precipitation sums measured at 0600\,UTC and rigorously
 quality-checked by the National Hydrographical Service. NWP outputs
-are obtained from the second generation reforecast data set of the
+are obtained from the second-generation reforecast data set of the
 global ensemble forecast system \citep[GEFS,][]{Hamill+Bates+Whitaker:2013}. 
 This data set consists of an 11-member ensemble based on a fixed version of the 
 numerical model and a horizontal grid spacing of about {$50 \times 50$ km$^2$}
@@ -1116,8 +1113,8 @@ a power transformation \citep{Box+Cox:1964} is often applied, e.g., using
 cubic \citep{Stidd:1973} or square root \citep{Hutchinson:1998} transformations.
 However, the power parameter may vary for different climatic zones or temporal 
 aggregation periods and hence we follow \cite{Stauffer+Mayr+Messner:2017} 
-in their choice of $1.6^{-1}$ as a suitable power parameter for the
-region of Tyrol. The same power transformation is applied to both the
+in their choice of $1.6^{-1}$ as a suitable power parameter for precipitation
+in the region of Tyrol. The same power transformation is applied to both the
 observed precipitation sums and the NWP outputs ``total precipitation'' (\emph{tp}) and
 ``convective available potential energy'' (\emph{cape}).
 
@@ -1164,11 +1161,11 @@ further details:
   in each split of the tree (\code{mtry}). Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
-  \hlc{As stopping criteria the minimal number of observations to perform a split} 
-  (\code{minsplit}) \hlc{is set to $50$, the minimal number of observations in a 
-  terminal node} (\code{minbucket}) \hlc{is set to $20$ and the significance level 
-  for variable selection} (\code{alpha}) \hlc{is kept at the default value $1$ such 
-  that no early-stopping (sometimes also referred to as ``pre-pruning'') is applied
+  \hlc{The stopping criteria are the minimal number of observations to perform a split 
+  (\texttt{minsplit} $= 50$), the minimal number of observations in a 
+  segment (\texttt{minbucket} $= 20$), and the significance level 
+  for variable selection (\texttt{alpha} $= 1$). The latter means
+  that no early stopping (or ``pre-pruning'') is applied
   based on results of the statistical tests.}
   % stopping criteria:
   % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
@@ -1267,9 +1264,11 @@ The four sample forecasts differ considerably in location $\mu$, scale $\sigma$,
 censoring while conforming quite well with the actual observations
 from these days. While this is a nice illustrative example we are  
 interested in the overall predictive performance and calibration of the
-distributional fits.
+distributional fits. \hlc{More details of this assessment as well as
+an application to 14~further meteorological stations is provided in
+Supplement~B} \citep{Schlosser+Hothorn+Stauffer:2018b}.
 
-To assess calibration Figure~\ref{fig:axams-qq} shows residual QQ~plots for
+To assess calibration, Figure~\ref{fig:axams-qq} shows residual QQ~plots for
 out-of-sample predictions (2009--2012) from the different models trained on
 1985--2008. Due to the point masses at zero 100 draws from the randomized
 quantile residuals \citep{Dunn+Smyth:1996} are plotted in semi-transparent
@@ -1357,20 +1356,6 @@ abline(h = 0, col = pal[5], lwd = 2)
 line pertains to the reference model EMOS.}
 \end{figure}
 
-To assess the predictive performance, a full cross-validation is carried out
-rather than relying on just the one fixed test set for the years 2009--2012.
-\hlc{For each setting in the considered 10 times 7-fold cross-validation the 
-available 28~years are split into 7~subsets of 4~randomly selected and 
-therefore mostly not subsequent years.}
-The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
-(= 4~years) using the average CRPS across all observations.
-The resulting 10~CRPS skill scores are displayed by boxplots in
-Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
-line at a CRPSS of 0). Both GAMLSS models and the distributional forest 
-perform distinctly better than the EMOS model. While the two GAMLSS lead to an improvement 
-of around 4~percent, the distributional forest has a slightly higher improvement
-of around 5.5~percent in median.
-
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.7\textwidth}
@@ -1388,6 +1373,20 @@ axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
 in the distributional forest. Based on data for station Axams, learning period 
 1985--2008 and assessed in 2009--2012.}
 \end{figure}
+
+To assess the predictive performance, a full cross-validation is carried out
+rather than relying on just the one fixed test set for the years 2009--2012.
+To do so, a 10 times 7-fold cross-validation is carried out where each repetition
+splits the available 28~years into 7~subsets of 4~randomly-selected 
+\hlc{(and thus not necessarily consecutive)} years.
+The models are learned on 6~folds (= 24~years) and evaluated on the 7-th fold
+(= 4~years) using the average CRPS across all observations.
+The resulting 10~CRPS skill scores are displayed by boxplots in
+Figure~\ref{fig:axams-crps} using EMOS as the reference model (horizontal
+line at a CRPSS of 0). Both GAMLSS models and the distributional forest 
+perform distinctly better than the EMOS model. While the two GAMLSS lead to an improvement 
+of around 4~percent, the distributional forest has a slightly higher improvement
+of around 5.5~percent in median.
 
 Finally, it is of interest how this improvement in predictive performance
 by the distributional forest is accomplished, i.e., which of the 80~covariates
@@ -1476,7 +1475,7 @@ brk <- c(-0.1, -0.05, -0.005, 0.005, 0.05, 0.1)
 grp <- cut(dst, breaks = brk)
 
 # HCL colors (relatively flashy, essentially CARTO Tropic)
-clr <- colorspace::diverge_hcl(5, h = c(195, 325), c = 80, l = c(50, 90), power = 1.3)
+clr <- colorspace::diverge_hcl(5, h = c(130, 320), c = 70, l = c(50, 90), power = 1.3)
 
 
 library("raster") # dem (digital elevation model)
@@ -1498,7 +1497,7 @@ sp <- SpatialPointsDataFrame(subset(StationsTyrol,
 
 
 
-\begin{figure}[p!]
+\begin{figure}[t!]
 \centering
 <<rain_all_crps_skill_score, fig=TRUE, echo=FALSE, height = 4.5, width = 7>>=
 par(mar = c(3.1, 4.1, 1.1, 2.1))
@@ -1516,9 +1515,10 @@ lines(s[70,], col = pal[2], type = "o", pch = 19, lwd = 2)
 with boxplots superimposed). Station Axams is highlighted in green 
 and the horizontal orange line pertains to the reference model EMOS. The models are 
 learned on 1985--2008 and validated for 2009--2012.}
+\end{figure}
 
-\vspace*{0.4cm}
-
+\begin{figure}[t!]
+\centering
 \setkeys{Gin}{width=0.99\textwidth}
 <<map, fig=TRUE, echo=FALSE, height=6.1, width=9>>=
   
@@ -1544,7 +1544,8 @@ learned on 1985--2008 and validated for 2009--2012.}
 
 @
 \caption{\label{fig:all-map}Map of Tyrol coding the best-performing model
-for each station (type of symbol). The color codes whether the distributional 
+for each station (type of symbol) when learned on 1985--2008 and validated for 2009--2012.
+The color codes whether the distributional 
 forest had higher (green) or lower (red) CRPS compared to the best of the 
 other three models. The background shows the local topography \citep{Robinson:2014}.
 Station Axams is highlighted in bold.}
@@ -1583,7 +1584,8 @@ the distributional forest performs better than the other models whereas red
 signals that another model performs better. Overall the distributional forest
 performs on par (gray) or better (green) for the majority of stations. Only
 for a few stations in the north-east EMOS performs best, and in East Tyrol
-the prespecified GAMLSS performs particularly well.
+the prespecified GAMLSS performs particularly well in the validation period
+(2009--2012).
 
 
 \section{Discussion}
@@ -1608,131 +1610,114 @@ perform on par or even better than their GAMLSS counterparts. Hence, they form
 a useful addition to the already available toolbox of probabilistic forecasts
 for disciplines such as meteorology.
 
-\subsubsection*{Variable Selection}
-\hlc{Generally, there are many possibilities how to specify the variables that are
-to be included in a model. Especially for a low number of variables all types
-of interactions can be employed and mixed effect models and separations into 
-main effects and interaction effects can be considered allowing for easier 
-interpretations} (see for example \citealp{Wood+Scheipl+Faraway:2013}; 
-\citealp{Goicoa+Adin+Ugarte:2018}; \citealp{Ugarte+Adin+Goicoa:2017}).
-\hlc{However, in the application presented in} Section~\ref{sec:precipitation}
-\hlc{altogether 80 variables are available. Even if only paired interactions were
-considered this would already lead to 3160 additional covariates in the model
-making it very difficult to keep the model manageable regarding computational
-costs but also interpretability. 
-Therefore, only additive effects are considered for the boosted GAMLSS which
-automatically selects covariates while meteorological expert knowledge was 
-applied to select covariates and specify interactions for the prespecified 
-GAMLSS. For the distributional forest no prespecification is required as it
-automatically selects covariates and also detects interaction effects.
+\subsubsection*{Variable selection}
 
-As mentioned before, distributional forests should not be seen as a replacement
-for GAMLSS but rather as a complementary method. GAMLSS provide a powerful framework
-in the field of distributional modeling as they allow for the combination of 
-interpretability and a high goodness-of-fit. For distributional forests, the focus
-is mainly on forecasting skill, automatic variable selection and capturing also 
-non-additive effects rather than on interpretability. Therefore, both approaches
-provide valuable features and advantages that can complement each other in many 
-applications as it can not be expected that one of them is in general better than 
-the other. 
-}
+\hlc{Generally, there are many possibilities how to specify the variables that are
+to be included in a distributional regression model. Especially for a low number
+of covariates, the GAMLSS approach offers a powerful framework in which
+penalized estimation of both smooth main effects and corresponding interaction surfaces
+yields models that often balance good predictive performance with high
+interpretability} (see for example \citealp{Wood+Scheipl+Faraway:2013}; 
+\citealp{Goicoa+Adin+Ugarte:2018}; \citealp{Ugarte+Adin+Goicoa:2017}).
+\hlc{However, if the number of covariates is high, including all (or many)
+main effects and interactions in a GAMLSS typically becomes challenging both in terms
+of interpretability and computational complexity/stability}
+\citep[see also][]{Hofner+Mayr+Schmid:2016}.
+
+\hlc{In the precipitation forecasting application, as presented in} Section~\ref{sec:precipitation},
+\hlc{80~covariates are considered which corresponds to 3160~potential pairwise
+interactions (and even more higher-order interactions). 
+Therefore, only main effects are considered for the boosted GAMLSS while
+the prespecified GAMLSS also includes selected interactions chosen based on
+meteorological expert knowledge. In contrast, the distributional forest requires no
+prespecification as covariates and corresponding interactions are selected automatically.
+Thus, distributional forests are an appealing alternative to (boosted) GAMLSS
+in weather forecasting tasks as the main concern is typically not so much
+interpretability but forecasting skill and (semi-)automatic application on a
+larger domain} \citep[see also the discussion in][]{Rasp+Lerch:2018}.
 
 
 \subsubsection{Distributional specifications}
-\hlc{Choosing an adequate distributional family is a crucial step and forms
-the basis required to build a well fitting model. Therefore, this
-decision should be made thoughtfully. 
-In the presented application we applied a Gaussian distribution left-censored 
-at zero as this has proven to be a well working choice in
-earlier literature} \citep{Stauffer+Mayr+Messner:2017}. 
-\hlc{To test for robustness against distributional misspecifation 
-different distributional assumptions have been considered as well. 
-In Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a} \hlc{the exact
-same evaluations as in} Section~\ref{sec:all} \hlc{are carried out for 15
-observation stations, once employing a Gaussian hurdle model and once
-with a logistic distribution left-censored at zero in order to account
-for heavier tails. Under both assumptions the obtained results 
-are similar to those presented in the paper applying a Gaussian distribution
-left-censored at zero. In some settings the hurdle model leads to slight 
-improvements, but this comes with more variability (especially for EMOS and the 
-boosted GAMLSS). For the boosted GAMLSS the left-censored logistic distribution
-shows slightly better results regarding CRPS skill score, however, only within 
-a range of less than $2\%$ and not for all stations. 
-Altogether, the distributional forest has proven to be 
-very robust against distributional misspecifications.}
 
-\hlc{Alternatively, a distribution including an additional parameter capturing 
-skewness could be applied} \citep{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
-\hlc{For example, in transformation forests} \citep{Hothorn+Zeileis:2017} 
-\hlc{a very flexible parametric distribution characterized by the transformation 
-function is employed such that higher moments can be modeled implicitly.
-Evaluating further distributions might be of interest but this would go beyond the
-scope of this manuscript.}
+\hlc{Choosing an adequate distributional family is an important step for
+establishing a well-fitting model. A zero-censored Gaussian distribution is
+employed in this manuscript as this has been found to be an appropriate choice
+for precipitation modeling in earlier literature} \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
+\hlc{To test for robustness against distributional misspecifation, 
+two alternative distributional specifications have been considered
+in Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a}: \hlc{Using the
+same evaluations as in} Section~\ref{sec:all}, \hlc{all models are
+additionally fitted for 15~meteorological stations using a zero-censored
+logistic distribution in order to account for heavier tails and a two-part
+Gaussian hurdle model combining a binary model for zero vs.~positive
+precipitation and a separate Gaussian model, truncated at zero, for the
+positive precipitation observations. Both specifications yield qualitatively 
+similar results as for the zero-censored Gaussian distribution. For some statons
+the two-part hurdle model leads to small improvements, however at the expense
+of increased variability across stations (especially for EMOS and the 
+boosted GAMLSS). Overall, the results from this manuscript are quite
+robust across these distributional specifications, especially for the
+distributional forests.}
+
+\hlc{Moreover, one could consider a distribution including an additional parameter
+for capturing skewness} \citep[as in][]{Scheuerer+Hamill:2015, Baran+Nemoda:2016}. 
+\hlc{However, this would go beyond the mean/variance specification of the NGR
+that is widely used in ensemble post-processing. Therefore, this contribution
+investigates the effects of using the same distributional family with a novel
+strategy for specifying dependence on covariates. Considering more flexible
+parametric specifications as well as transformation model specifications that
+allow to capture dependence of higher moments} \citep[see e.g.,][]{Hothorn+Zeileis:2017}
+\hlc{are extensions of interest for future research.}
+
+
+\subsubsection*{Axams vs.~other meteorological stations}
+
+\hlc{Axams was chosen as the meteorological station for the more extensive evaluations
+in} Section~\ref{sec:axams} \hlc{as it yields fairly typical results
+and is geographically in the center of the study area and closest to
+Innsbruck, the capital of Tyrol and the work place of three of the authors.
+To show that qualitatively similar results are obtained for other
+meteorological stations, Supplement B} \citep{Schlosser+Hothorn+Stauffer:2018b}
+\hlc{carries out the same evaluation for 14~further stations. These
+cover a wide range of geographical locations/altitudes and a mix of
+different best-performing models in the single-split setting reported in}
+Section~\ref{sec:all}.
+
+\hlc{The supplement shows that some of the differences in forecast skill from}
+Figure~\ref{fig:all-map} \hlc{even out in the cross-validation with distributional
+forests typically performing at least as well as the best of the other models at most
+stations. In particular, this also includes three stations in East Tyrol
+where the prespecified GAMLSS performs best in the single-split setting
+(learning based on 1985--2008 and validation for 2009--2012). While part of
+the performance difference can also be attributed to different
+climatological characteristics in East Tyrol (that, unlike North Tyrol, is located
+south of the main Alpine Ridge), the differences are greatly reduced for several
+stations in East Tyrol by considering more splits in the full cross-validation.}
+
+
 
 \subsubsection*{Tuning parameters}
-\hlc{Setting tuning parameters of a forest model can have a major influence
-not only on the accuracy of the model but also on the computational 
-complexity. 
-For the application in} Section~\ref{sec:precipitation} \hlc{we have 
-selected the values of these parameters} (listed in Section~\ref{sec:evaluation}) 
-based on advice from literature and our own experience.
 
-\cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} \hlc{recommend to 
-build full-grown trees. Therefore, low values should be chosen for the stopping 
-criteria} \code{minsplit} and \code{minbucket} \hlc{together with a high significance 
-level} \code{alpha}.
-\hlc{However, in a distributional model it also has to be considered that a 
-minimal number of observations is required to allow for a reasonable 
-estimation of parameters in each node. For that reason, the minimal number
-of observations for which statistical tests are performed in the 
-distributional forest in} Section~\ref{sec:precipitation} is set to
-50 (\code{minbucket}) \hlc{and the minimal number of observations on which
-parameters are estimated is set to 20} (\code{minsplit}).
+\hlc{Selecting tuning parameters for flexible regression models is important
+not only in terms of predictive accuracy but also computational complexity. 
+For the application in} Section~\ref{sec:precipitation} \hlc{tuning parameters
+are selected based on advice from the literature as well as our own experiences.}
+As \cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} \hlc{recommend to 
+build full-grown trees, early stopping upon non-significance is disabled
+(\texttt{alpha} $= 1$) and low values are used for \texttt{minsplit} ($ = 50$)
+and \texttt{minbucket} ($ = 20$), while assuring that \texttt{minsplit}
+is sufficiently large for reasonably obtaining MLEs of all parameters in each
+segment of the tree.}
 
-As stated by \cite{Breiman:2001} and \cite{Hastie+Tibshirani+Friedman:2001} 
-\hlc{random forests do not overfit, not even for an increasing number of 
-trees} (\code{ntree}). \hlc{Hence, it is recommended to build forests consisting 
-of a large number of trees as this generally leads to an increase 
-in accuracy. However, it also comes along with increasing computational costs. 
-Therefore, ``a good choice results from a trade-off between computational 
-complexity and accuracy''} (\citealp{Biau+Scornet:2016}, p.~205).
-\hlc{Following this advice we chose to build forests consisting of 100 trees which
-is a commonly used value.}
-
-
-\subsubsection*{East Tyrol}
-Figure~\ref{fig:all-map} \hlc{shows that, contrary to the rest of Tyrol, 
-for the majority of stations in East Tyrol the prespecified GAMLSS performs
-best in this particular setting (learning data: 1985--2008, testing data:
-2009--2012). East Tyrol is located south of the main Alpine Ridge and 
-exhibits different climatological characteristics than the part north of 
-the Alpine Ridge. It seems that the choice of covariates and their interactions 
-we made for the prespecified GAMLSS method is particularly adequate for the 
-region of East Tyrol for this specific analysis. However, the advantages of 
-the prespecified GAMLSS models in this particular setting (training: 1985--2008, 
-validation: 2009--2012) even out in a cross-validation framework for most of 
-the stations in East Tyrol. These results are presented in Supplement B} 
-\citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{where the exact same evaluations as in} 
-Section~\ref{sec:axams} \hlc{for station Axams have been carried out 
-for 14 other stations.}
-
-\subsubsection*{Choice of station Axams}
-%% choice of station Axams mit Verweis auf Supplement stationwise
-\hlc{Axams was chosen for the more extensive evaluations presented
-in this paper as it is the observation station being closest 
-to Innsbruck, the capital of Tyrol and the work place of 
-three of the authors, but not based on any other particular 
-features. Furthermore, it has been checked, whether it 
-is an adequate representative of all stations regarding 
-the results of our evaluations. This is also confirmed by 
-the extended analysis in Supplement B} \citep{Schlosser+Hothorn+Stauffer:2018b}
-\hlc{where the 15 considered stations also include some of those where 
-the forest does not perform better than the other models in the setting 
-presented in} Figure~\ref{fig:all-map}. \hlc{It shows that the differences in 
-performance even out in the cross-validation framework where the forest 
-performs at least equally well compared to the best of the other models 
-at most stations.}
-
+\hlc{Applying the Law of Large Numbers it can be shown that random forests do not overfit 
+as the number of trees increases}
+\citep{Breiman:2001,Hastie+Tibshirani+Friedman:2001,Biau+Scornet:2016}.
+\hlc{Therefore, in principle, forests can be built with a very large number of trees
+(\texttt{ntree}) as this cannot deteriorate the predictions. However, ``[\dots] the
+computational cost for inducing a forest increases linearly with the number of trees,
+so a good choice results from a trade-off between computational complexity and accuracy''}
+\citep[][p.~205]{Biau+Scornet:2016}.
+\hlc{Following this advice, we decided to build forests consisting of 100 trees.}
 
 
 \subsubsection*{Computational difficulties}
@@ -1741,9 +1726,9 @@ As stated by \cite{Hofner+Mayr+Schmid:2016} \hlc{the AIC-based variable selectio
 methods implemented in the} \textsf{R} package \textbf{gamlss} \hlc{``[...] can be 
 unstable, especially when it comes to selecting possibly different sets of variables for 
 multiple distribution parameters.'' We have noticed computational problems when
-applying the function} \textbf{gamlss} \hlc{in certain settings within the cross-validation
-framework as it did not succeed in fitting the model. In these cases the method
-was not taken into consideration in the comparison of all applied models.}
+applying} \textbf{gamlss} \hlc{in certain settings within the cross-validation
+framework as it did not succeed in fitting the model. In these cases the prespecified
+GAMLSS was not taken into consideration in the comparison of all applied models.}
 
 
 \section*{Computational details}
@@ -1783,7 +1768,7 @@ also available within the \textsf{R}-Forge~project.
 \hlc{The results presented in Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a} and 
 Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} \hlc{can be reproduced using}
 \code{demo("RainDistributions", package = "disttree")} and 
-\code{demo("RainStationwise", package = "disttree")} respectively.
+\code{demo("RainStationwise", package = "disttree")}, respectively.
 
 
 \section*{Appendix}
@@ -1812,12 +1797,6 @@ To use this information, statistical tests are employed to detect
 dependencies between the score values
 \begin{equation}
 s(\bm{\hat{\theta}}, y) = 
-%\begin{pmatrix} 
-%s(\bm{\hat{\theta}}, y_1) \\
-%s(\bm{\hat{\theta}}, y_2) \\
-%\vdots \\
-%s(\bm{\hat{\theta}}, y_n)
-%\end{pmatrix} =
 \begin{pmatrix} 
 s(\bm{\hat{\theta}}, y_1)_1 & s(\bm{\hat{\theta}}, y_1)_2 & \ldots & s(\bm{\hat{\theta}}, y_1)_k\\
 \vdots & \vdots & \ddots & \vdots \\
@@ -1825,12 +1804,12 @@ s(\bm{\hat{\theta}}, y_n)_1 & s(\bm{\hat{\theta}}, y_n)_2 & \ldots & s(\bm{\hat{
 \end{pmatrix}
 \end{equation}
 and each variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
+More formally, the following hypotheses are assessed with permutation tests:
 \begin{align}
-H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l 
+H_0^l:  s(\bm{\hat{\theta}}, Y) \qquad \bot \qquad Z_l.
 \end{align}
-
-These hypotheses are assessed with permutation tests based on
-the multivariate linear statistic
+%
+The permutation tests are based on the multivariate linear statistic
 \begin{equation}
 T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\bm{\hat{\theta}}, Y_i)\right)
 \end{equation}
@@ -1840,7 +1819,7 @@ variable $Z_l$. If $Z_l$ is numeric then $v_l$ is simply the identity
 function $v_l(Z_{li}) = Z_{li}$ and therefore $T_l \in \mathbb{R}^k$ as 
 the ``vec'' operator converts the $1 \times k$ matrix into a $k$ column vector. 
 If $Z_l$ is a categorical variable with $H$ categories then 
-$v_l(Z_{li}) = e_H(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$ 
+$v_l(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$ 
 such that $v_l$ is a $H$-dimensional unit vector where the element corresponding to 
 the value of $Z_{li}$ is $1$. In this case the statistic $T_l \in \mathbb{R}^{H \cdot k}$
 as the ``vec'' operator converts the $H \times k$ matrix into a $H \cdot k$ column vector 
@@ -1871,7 +1850,7 @@ If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value
 is chosen as splitting variable. \hlc{Otherwise no further split is made 
 in this node as the stopping criterion of no $p$-values being below the 
 significance level is fulfilled. This type of early-stopping in building
-a tree is sometimes also referred to as ``pre-pruning''. For forest models
+a tree is sometimes also referred to as ``pre-pruning''. For random forests
 pre-pruning is often switched off by setting the significance level to $1$.}
 
 The breakpoint that leads to the highest discrepancy between score functions 
@@ -1894,9 +1873,9 @@ minimal $p$-value for the statistical tests. In that way pre-pruning
 is applied in order to find right-sized trees and hence 
 avoid overfitting.
 
-This permutation test based tree algorithm is presented in 
+This permutation-test-based tree algorithm is presented in 
 \cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
-A different framework to build a tree is provided by the MOB algorithm 
+A different framework to build a likelihood-based tree is provided by the MOB algorithm 
 which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
 
 
@@ -1936,30 +1915,14 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 
 \section*{Supplementary material}
 \subsection*{Supplement A: Different Response Distributions}
-(doi: \href{http://dx.doi.org/10.1214/00-AOASXXXXSUPPA}{10.1214/00-AOASXXXXSUPPA}).
-  %In the case study presented in the main manuscript ``Distributional Regression
-  %Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-  %the novel distributional regression forests are based on a Gaussian response distribution,
-  %left-censored at zero to accomodate both the non-negativity of precipitation and
-  %the point mass at zero. 
   To assess the goodness of fit of the Gaussian distribution, left-censored at zero,
   this supplement employs the same evaluations as in the main manuscript but based on
   two other distributional assumptions: A logistic distribution, left-censored at zero,
   is employed to potentially better capture heavy tails -- and a two-part hurdle model
   combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
   truncated at zero, for the positive precipitation observations. 
-  %The latter could
-  %potentially better discriminate determinants of the occurrence of precipitation
-  %vs.\ the amount of precipitation given that it occurs.
 
 \subsection*{Supplement B: Stationwise Evaluation}
-(doi: \href{http://dx.doi.org/10.1214/00-AOASXXXXSUPPB}{10.1214/00-AOASXXXXSUPPB}).
-  %In the case study presented in the main manuscript ``Distributional Regression
-  %Forests for Probabilistic Precipitation Forecasting in Complex Terrain''
-  %the novel distributional regression forests are evaluated and compared with
-  %other distributional regression approaches on 95 meteorological stations.
-  %Moreover, further details -- including a cross-validation analysis -- are
-  %preformed for only one station, Axams. 
   To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
   this supplement presents the same analysis as in Section~3.3 of the main

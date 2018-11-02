@@ -64,7 +64,7 @@ been omitted from the main manuscript.
 
 \item \emph{Section~4: Discussion.}\\
 The concluding section of the main manuscript has been rewritten and
-extended to regarding discussion of: variable selection, tuning parameters,
+extended regarding discussion of: variable selection, tuning parameters,
 distributional specifications (referring to Supplement~A), and regional
 differences (referring to Supplement~B).
 
@@ -131,11 +131,11 @@ distributional forest performed quite well starting from about 50--100 observati
 
 Applying the Law of Large Numbers it can be shown that random forests do not overfit 
 as the number of trees increases (Breiman 2001, Hastie et al.\ 2001, 
-Biau et al.\ 2016). Therefore, in principle, forests can be built with a very
+Biau and Scornet 2016). Therefore, in principle, forests can be built with a very
 large number of trees as this cannot deteriorate the predictions.
 However, ``[\dots] the computational cost for inducing a forest increases linearly 
 with the number of trees, so a good choice results from a trade-off between 
-computational complexity and accuracy'' (Biau et al.\ 2016, p.~205). Following this 
+computational complexity and accuracy'' (Biau and Scornet 2016, p.~205). Following this 
 advice, we decided to build forests consisting of 100 trees. Increasing this number
 further would not change the results much.
 
@@ -147,7 +147,7 @@ determining the minimal number of observations in a node) should be kept low
 -- but in our context large enough for estimating the distribution parameters
 reasonably well. Thus, in our application we have set \texttt{minsplit} to 50 and
 \texttt{minbucket} to 20. The significance level \texttt{alpha} (for early stopping
-upon non-significance) is set to 1, thus disabling any early stopping.
+upon non-significance) is set to 1, thus disabling such early stopping.
 These tuning parameters are now also listed in the main manuscript in Sections~3.2.
 and discussed in Section~4.
 
@@ -390,8 +390,8 @@ For each new observation $z$ the corresponding
 parameter vector $\hat{\Theta}(z)$ can be calculated following 
 the given formula. But you are right, this is equivalent to simply
 obtaining the parameter vector that has been estimated in the 
-corresponding node when learning the tree. This is now also
-explained at the end of Section~2.2.
+corresponding node when learning the tree. This is now emphasized
+in the last paragraph of Section~2.2.
 
 
 \begin{review}
@@ -585,8 +585,8 @@ the prespecified GAMLSS mainly only uses one specific variation (\texttt{tp\_max
 The same is true for variations of \texttt{tcolc\_mean\_*}, \texttt{tcolc\_sprd\_*}
 and \texttt{tcolc\_sprd\_*}.
 
-Overall, the covariates selected by the distributional forest do not provide too 
-much insights but show that the prespecified GAMLSS model contains an appropriate 
+Overall, the covariates selected by the distributional forest do not provide 
+new meteorological insights but show that the prespecified GAMLSS model contains an appropriate 
 subset of all available covariates.
 
 
@@ -779,8 +779,8 @@ especially in situations where an interpretable but still
 well-performing model is needed. The intention of our work is not
 to present distributional forests as a replacement of GAMLSS but
 rather as a complementing technique for the distributional regression
-toolbox. Much like random forests and GAMs are complements in
-the conditional mean regression toolbox.
+toolbox. Much like random forests and GAMs are complements for
+conditional mean regression.
 
 In this sense, distributional forests are appealing for weather
 forecasting tasks because the focus is not so much on interpretation
@@ -788,9 +788,8 @@ but often much more on: (a)~forecasting skill and (b)~(semi-)automatic
 application of models on a larger domain. See also the discussion
 in, e.g., Rasp and Lerch (2018).
 
-We have adapted our manuscript in Section~1 and Section~4, \textit{Variable Selection}, 
-to reflect that we focus on forecasting skill in a large number of 
-models -- and not so much on interpretation.
+We have adapted our introduction (Section~1) and discussion (Section~4)
+to better reflect these aspects.
 
 
 
@@ -977,7 +976,7 @@ the forest a lot.
 
 As pointed out by Breiman (2001), random forests are very robust and do not overfit, 
 not even for a high number of trees. However, computational costs increase 
-linearly with the number of trees (Biau et al.\ 2016).
+linearly with the number of trees (Biau and Scornet, 2016).
 Therefore, we followed their recommendations of choosing a high number of
 trees, but still small enough to keep the computation time at
 a reasonable level. For this, 100 is a commonly-used number of trees.
@@ -1141,64 +1140,29 @@ forest and boosted GAMLSS) are allowed to use as many covariates as required.
 
 \begin{itemize}[leftmargin=*]
 
+\item[] Baran, S., and Nemoda, D. (2016). Censored and Shifted Gamma Distribution Based EMOS
+Model for Probabilistic Quantitative Precipitation Forecasting,
+\textit{Environmetrics}, \textbf{27}: 280--292.
+%doi: 10.1002/env.2391.
+
+\item[] Bauer, P. and Thorpe, A. (2015). The Quiet Revolution of Numerical 
+Weather Prediction,
+\textit{Nature} \textbf{525}: 47--55.
+%doi:10.1038/nature14956
+
+\item[] Biau, G. and Scornet, E. (2016).
+A Random Forest Guided Tour,
+\textit{TEST}
+\textbf{25}: 197--227.
+
+\item[] Breiman, L. (2001).
+Random Forests,
+\textit{Machine Learning}
+\textbf{45, 1}: 5--32.
+
 \item[] Chen, J., Brissette, F. P. and Lhi, Z. (2014). Postprocessing 
 of Ensemble Weather Forecasts Using a Stochastic Weather Generator, 
 \textit{Monthly Weather Review}.
-
-%\item[] Goicoa, T., Adin, A., Ugarte, M. D. and Hodges, J. S. (2017). 
-%In Spatio-Temporal Disease Mapping Models, Identifiability Constraints 
-%Affet PQL and INLA Results, \textit{Stochastic Environmental Research 
-%and Risk Assessment} p. to appear.
-
-%\item[] Ugarte, M. D., Adin, A. and Goicoa, T. (2017). One-Dimensional, 
-%Two-Dimensional, and Three-Dimensional B-Splines to Specify Space-Time 
-%Interactions in Bayesian Disease Mapping: Model Fitting and Model 
-%Identifiability, \textit{Spatial Statistics} p. to appear.
-
-\item[] Goicoa, T., Adin, A., Ugarte, M. D. and Hodges, J. S. (2018). 
-In Spatio-Temporal Disease Mapping Models, Identifiability Constraints 
-Affet PQL and INLA Results, \textit{Stochastic Environmental Research 
-and Risk Assessment} \textbf{32, 3}: 749--770.
-
-\item[] Ugarte, M. D., Adin, A. and Goicoa, T. (2017). One-Dimensional, 
-Two-Dimensional, and Three-Dimensional B-Splines to Specify Space-Time 
-Interactions in Bayesian Disease Mapping: Model Fitting and Model 
-Identifiability, \textit{Spatial Statistics} \textbf{22}: 451--468.
-
-\item[] Wood, S. N., Scheipl, F. and Faraway, J. J. (2013). 
-Straightforward Intermediate Rank Tensor Product Smoothing in Mixed Models, 
-\textit{Statistics and Computing} \textbf{23}: 341--360.
-
-%%%%%%%%%
-% references used in answers
-\item[] Gneiting, T., Raftery, A. E., Westveld III, A. H. and Goldman, T. (2005). 
-Calibrated Probabilistic Forecasting Using Ensemble Model Output Statistics and 
-Minimum CRPS Estimation,
-\textit{Monthly Weather Review} \textbf{133, 5}: 1098--1118.
-
-\item[] Stauffer, R., Mayr, G. J., Messner, J. W., Umlauf, N. and Zeileis, A. (2017a). 
-Spatio-Temporal Precipitation Climatology over Complex Terrain Using a Censored Additive Regression Model,
-\textit{International Journal of Climatology} \textbf{37, 7}: 3264--3275.
-
-\item[] Stauffer, R., Umlauf, N., Messner, J. W., Mayr, G. J. and Zeileis, A. (2017b). 
-Ensemble Post-Processing of Daily Precipitation Sums over Complex Terrain Using Censored High-Resolution Standardized Anomalies,
-\textit{Monthly Weather Review} \textbf{45, 3}: 955--969.
-%doi = 10.1175/mwr-d-16-0260.1
-
-\item[] Hofner, B., Mayr, A. and Schmid, M. (2016). 
-\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and 
-Variable Selection in the {GAMLSS} Framework,
-\textit{Journal of Statistical Software} \textbf{74, 1}: 1--31.
-
-%\item[] Hofner, B., Boccuto, L. and Goeker, M. (2015). 
-%Controlling false discoveries in high-dimensional situations: Boosting 
-%with stability selection,
-%\textit{BMC Bioinformatics} \textbf{16:144}.
-
-\item[] Meinshausen, N. and Buehlmann, P. (2010). 
-Stability selection,
-\textit{Journal of the Royal Statistical Society, Series B} 
-\textbf{72}: 417--473.
 
 \item[] Dunn, P. K. and Smyth, G. K. (1996).
 Randomized Quantile Residuals,
@@ -1210,49 +1174,24 @@ Probabilistic Forecasts, Calibration and Sharpness,
 \textit{Journal of the Royal Statistical Society B}
 \textbf{69, 2}: 243--268.
 
-\item[] Biau, G. and Scornet, E. (2016).
-A Random Forest Guided Tour,
-\textit{TEST}
-\textbf{25}: 197--227.
+\item[] Gneiting, T., Raftery, A. E., Westveld III, A. H. and Goldman, T. (2005). 
+Calibrated Probabilistic Forecasting Using Ensemble Model Output Statistics and 
+Minimum CRPS Estimation,
+\textit{Monthly Weather Review} \textbf{133, 5}: 1098--1118.
+
+\item[] Goicoa, T., Adin, A., Ugarte, M. D. and Hodges, J. S. (2018). 
+In Spatio-Temporal Disease Mapping Models, Identifiability Constraints 
+Affet PQL and INLA Results, \textit{Stochastic Environmental Research 
+and Risk Assessment} \textbf{32, 3}: 749--770.
 
 \item[] Hastie, T., Tibshirani, R. and Friedman, J. (2001).
 The Elements of Statistical Learning, %Second Edition,
 \textit{Springer New York Inc.}.
 
-\item[] Breiman, L. (2001).
-Random Forests,
-\textit{Machine Learning}
-\textbf{45, 1}: 5--32.
-
-\item[] Wahl, S. (2015). Uncertainty in Mesoscale Numerical Weather Prediction:
-Probabilistic Forecasting of Precipitation, PhD thesis, 
-\textit{University of Bonn}, p. 1--120.% \url{http://hss.ulb.uni-bonn.de/2015/4190/4190.pdf}.
-
-\item[] Rasp, S., Lerch, S. (2018). Neural Networks for Post-Processing Ensemble
-Weather Forecasts, \textit{Montly Weather Review}, NA.
-%doi:\href{https://doi.org/10.1175/MWR-D-18-0187.1}{10.1175/MWR-D-18-0187.1}.
-
-\item[] M{\"u}ller, M. D. (2011): Effects of Model Resolution and Statistical
-Postprocessing on Shelter Temperature and Wind Forecasts,
-\textit{Journal of Applied Meteorology and Climatology} 
-\textbf{50 8}: 1627--1636.
-%doi:10.1175/2011JAMC2615.1
-
-\item[] Bauer, P. and Thorpe, A. (2015). The Quiet Revolution of Numerical 
-Weather Prediction,
-\textit{Nature} \textbf{525}: 47--55.
-%doi:10.1038/nature14956
-
-\item[] Scheuerer, M. and Hamill T. M. (2015). Statistical Postprocessing of
-Ensemble Precipitation Forecasts by Fitting Censored, Shifted Gamma
-Distributions,
-\textit{Monthly Weather Review} \textbf{143, 11}: 4578--4596.
-%doi:10.1175/MWR-D-15-0061.1
-
-\item[] Baran, S., and Nemoda, D. (2016). Censored and Shifted Gamma Distribution Based EMOS
-Model for Probabilistic Quantitative Precipitation Forecasting,
-\textit{Environmetrics}, \textbf{27}: 280--292.
-%doi: 10.1002/env.2391.
+\item[] Hofner, B., Mayr, A. and Schmid, M. (2016). 
+\textbf{gamboostLSS}: An \textsf{R} Package for Model Building and 
+Variable Selection in the {GAMLSS} Framework,
+\textit{Journal of Statistical Software} \textbf{74, 1}: 1--31.
 
 \item[] Hutchinson M. F. (1998). Interpolation of Rainfall Data with Thin
 Plate Smoothing Splines -- Part II: Analysis of Topographic Dependence,
@@ -1260,11 +1199,54 @@ Plate Smoothing Splines -- Part II: Analysis of Topographic Dependence,
 Decision Analysis} \textbf{2, 2}: 152--167.
 %doi:10.1080/02693799508902045
 
+\item[] Meinshausen, N. and Buehlmann, P. (2010). 
+Stability selection,
+\textit{Journal of the Royal Statistical Society, Series B} 
+\textbf{72}: 417--473.
+
+\item[] M{\"u}ller, M. D. (2011): Effects of Model Resolution and Statistical
+Postprocessing on Shelter Temperature and Wind Forecasts,
+\textit{Journal of Applied Meteorology and Climatology} 
+\textbf{50, 8}: 1627--1636.
+%doi:10.1175/2011JAMC2615.1
+
+\item[] Rasp, S., Lerch, S. (2018). Neural Networks for Post-Processing Ensemble
+Weather Forecasts, \textit{Montly Weather Review}, \textbf{146, 11}:, 3885--3900.
+%doi:\href{https://doi.org/10.1175/MWR-D-18-0187.1}{10.1175/MWR-D-18-0187.1}.
+
+\item[] Scheuerer, M. and Hamill T. M. (2015). Statistical Postprocessing of
+Ensemble Precipitation Forecasts by Fitting Censored, Shifted Gamma
+Distributions,
+\textit{Monthly Weather Review} \textbf{143, 11}: 4578--4596.
+%doi:10.1175/MWR-D-15-0061.1
+
+\item[] Stauffer, R., Mayr, G. J., Messner, J. W., Umlauf, N. and Zeileis, A. (2017a). 
+Spatio-Temporal Precipitation Climatology over Complex Terrain Using a Censored Additive Regression Model,
+\textit{International Journal of Climatology} \textbf{37, 7}: 3264--3275.
+
+\item[] Stauffer, R., Umlauf, N., Messner, J. W., Mayr, G. J. and Zeileis, A. (2017b). 
+Ensemble Post-Processing of Daily Precipitation Sums over Complex Terrain Using Censored High-Resolution Standardized Anomalies,
+\textit{Monthly Weather Review} \textbf{45, 3}: 955--969.
+%doi = 10.1175/mwr-d-16-0260.1
+
 \item[] Stidd, C. K. (1973). Estimating the Precipitation Climate,
 \textit{Water Resources Research}, \textbf{9, 5}: 1235--1241.
 %doi:10.1029/wr009i005p01235
-\end{itemize}
 
+\item[] Ugarte, M. D., Adin, A. and Goicoa, T. (2017). One-Dimensional, 
+Two-Dimensional, and Three-Dimensional B-Splines to Specify Space-Time 
+Interactions in Bayesian Disease Mapping: Model Fitting and Model 
+Identifiability, \textit{Spatial Statistics} \textbf{22}: 451--468.
+
+\item[] Wahl, S. (2015). Uncertainty in Mesoscale Numerical Weather Prediction:
+Probabilistic Forecasting of Precipitation, PhD thesis, 
+\textit{University of Bonn}, p. 1--120.% \url{http://hss.ulb.uni-bonn.de/2015/4190/4190.pdf}.
+
+\item[] Wood, S. N., Scheipl, F. and Faraway, J. J. (2013). 
+Straightforward Intermediate Rank Tensor Product Smoothing in Mixed Models, 
+\textit{Statistics and Computing} \textbf{23}: 341--360.
+
+\end{itemize}
 
 
 
