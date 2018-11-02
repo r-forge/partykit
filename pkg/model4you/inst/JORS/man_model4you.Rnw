@@ -148,13 +148,13 @@ estimated as follows:
 <<eval=FALSE>>=
 base_model <- model(response ~ treatment, data)
 @
-with \Sexpr{'response'} being the response measured, \Sexpr{'treatment'} being
-the treatment indicator and \Sexpr{'data'} being the data set containing these
-variables.  The function \Sexpr{'model()'} can be replaced for example by
-\Sexpr{'lm()'} to estimate a linear model, \Sexpr{'glm()'} to estimate a
-generalised linear model or \Sexpr{'survreg()'} to estimate a parametric
+with \texttt{\Sexpr{'response'}} being the response measured, \texttt{\Sexpr{'treatment'}} being
+the treatment indicator and \texttt{\Sexpr{'data'}} being the data set containing these
+variables.  The function \texttt{\Sexpr{'model()'}} can be replaced for example by
+\texttt{\Sexpr{'lm()'}} to estimate a linear model, \texttt{\Sexpr{'glm()'}} to estimate a
+generalised linear model or \texttt{\Sexpr{'survreg()'}} to estimate a parametric
 survival model.  These models estimate intercept and treatment effect for all
-individuals in the \Sexpr{'data'} and allow for predicting the response of
+individuals in the \texttt{\Sexpr{'data'}} and allow for predicting the response of
 other individuals given they do or do not receive the treatment of interest.
 
 For cases where the assumption that all individuals have the same intercept and
@@ -174,10 +174,10 @@ line of code lets the user compute a model-based tree in R:
 <<eval=FALSE>>=
 strat_models <- pmtree(base_model)
 @
-Note that \Sexpr{'pmtree()'} uses the data given in the call of the base model.
+Note that \texttt{\Sexpr{'pmtree()'}} uses the data given in the call of the base model.
 It automatically uses variables not used in the model formula (in the example
-above \Sexpr{'response ~ treatment'}) as potential subgroup defining variables.
-This can be edited using the \Sexpr{'zformula'} argument.
+above \texttt{\Sexpr{'response ~ treatment'}}) as potential subgroup defining variables.
+This can be edited using the \texttt{\Sexpr{'zformula'}} argument.
 
 \paragraph{2. Personalised models} use model-based random forests to estimate
 similarity of individuals in terms of model parameters. For each individual a
@@ -191,7 +191,7 @@ pers_models <- pmodel(pm_forest)
 @
 Again here the potential effect-modifying variables are taken by default as all
 variables not given in the model formula and can be defined using the
-\Sexpr{'zformula'} argument in \Sexpr{'pmforest()'}.
+\texttt{\Sexpr{'zformula'}} argument in \texttt{\Sexpr{'pmforest()'}}.
 
 
 
@@ -259,20 +259,20 @@ plot(tr_math, terminal_panel = node_pmterminal(tr_math,
                                                plotfun = lm_plot))
 @
 \new{
-We restrict the depth of the tree to two (\Sexpr{'maxdepth = 2'}) for
+We restrict the depth of the tree to two (\texttt{\Sexpr{'maxdepth = 2'}}) for
 illustration purposes. If this setting is not used a more complex tree would be
 estimated. Also the cutpoints and effect estimates are rounded in the plot.  To
-view the tree in the R console, the command \Sexpr{'print()'} function can be
+view the tree in the R console, the command \texttt{\Sexpr{'print()'}} function can be
 used.
 }
 <<math_printtree>>=
 print(tr_math)
 @
 The tree (see Figure~\ref{fig:math_tree}) divides students based on the
-percentage of successful online \Sexpr{'tests'}. These online tests were
+percentage of successful online \texttt{\Sexpr{'tests'}}. These online tests were
 conducted biweekly throughout the semester.  The largest difference between the
 two exam groups is in the students who did very well in the online tests (more
-than \Sexpr{round(tr_math[[5]]$node$split$breaks, 1)} percent correct). The
+than \texttt{\Sexpr{round(tr_math[[5]]$node$split$breaks, 1)}} percent correct). The
 tree thus gives us much more information on the fairness of the exam than the
 simple linear model, which is that it does not seem to be fair for students who
 did very well throughout the semester (at this point we should state that the
@@ -305,7 +305,7 @@ Since the percentage of successful online tests is measured on a grid, a
 scatter plot (both shown in Figure~\ref{fig:math_dp1},
 \new{
 Figure~\ref{fig:math_dp11} includes a loess curve). We see a nonlinear relation
-between the percentage of successful online \Sexpr{'tests'} and the exam group
+between the percentage of successful online \texttt{\Sexpr{'tests'}} and the exam group
 effect. Students with great performance during the semenster are estimated to
 have the strongest effect.
 }
@@ -326,7 +326,7 @@ ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
 
 \new{
 For categorical variables such as the number of previous attempts to pass the
-exam (\Sexpr{'attempt'}) and \Sexpr{'gender'} we can use box plots,
+exam (\texttt{\Sexpr{'attempt'}}) and \texttt{\Sexpr{'gender'}} we can use box plots,
 \new{beeswarm} plots or a combination thereof can be used (as in
 Figure~\ref{fig:math_dp21}). Figure~\ref{fig:math_dp22} shows the number of
 previous attempts on the x-axis and the color indicates the gender of each
@@ -359,12 +359,12 @@ interpretability.  Users can take a simple model that they know and
 understand as basis.
 \new{
 Models currently available for use are linear models (function
-\Sexpr{'lm()'} in R), generalised linear models (\Sexpr{'glm()'}) and
-survival models (\Sexpr{'survreg()'} and \Sexpr{'coxph()'} from the R
+\texttt{\Sexpr{'lm()'}} in R), generalised linear models (\texttt{\Sexpr{'glm()'}}) and
+survival models (\texttt{\Sexpr{'survreg()'}} and \texttt{\Sexpr{'coxph()'}} from the R
 package \emph{survival}).  Models are restricted to those with a
 single binary covariate (e.g.~ two treatment options).  The user can
-simply plug the model object into \Sexpr{'pmtree()'} or
-\Sexpr{'pmforest()'} depending on whether they want subgroup wise or
+simply plug the model object into \texttt{\Sexpr{'pmtree()'}} or
+\texttt{\Sexpr{'pmforest()'}} depending on whether they want subgroup wise or
 personalised models.
 }
 
@@ -372,8 +372,8 @@ The basis for these functionalities is provided by the
 \emph{partykit} package which is a widely used R package for trees
 and forests \citep{hothorn_partykit_2015, hothorn_partykit_2017}.
 The \emph{model4you} package provides wrappers for the well
-implemented and tested functions \Sexpr{'partykit::ctree()'} and
-\Sexpr{'partykit::cforest()'} and extends the functionalities to
+implemented and tested functions \texttt{\Sexpr{'partykit::ctree()'}} and
+\texttt{\Sexpr{'partykit::cforest()'}} and extends the functionalities to
 allow for the computation of personalised models and to improve
 usability and interpretability.
 
@@ -452,10 +452,10 @@ most prominent use case are clinical trials where the assumption of an average
 treatment effect for all patients is too strict and the efficacy of the
 treatment depends on patient characteristics (e.g.~ gender, biomarkers, etc.).
 For subgroup analyses (stratified treatment effects) model-based trees
-(\Sexpr{'pmtree()'}) can be used; For personalised treatment effects
-model-based forests (\Sexpr{'pmforest()'}) provide a way of estimating
+(\texttt{\Sexpr{'pmtree()'}}) can be used; For personalised treatment effects
+model-based forests (\texttt{\Sexpr{'pmforest()'}}) provide a way of estimating
 similarity between patients and using this similarity measure to estimate
-personalised models (\Sexpr{'pmodel()'}).  The target audience are people who
+personalised models (\texttt{\Sexpr{'pmodel()'}}).  The target audience are people who
 deal with heterogeneous treatment effects, such as medical researchers,
 pharmaceutical companies or analysts in marketing (A-B testing).  In general
 the software is useful to researchers dealing with scenarios where two
