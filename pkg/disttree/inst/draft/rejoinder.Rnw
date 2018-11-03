@@ -87,7 +87,7 @@ point-to-point reply on the next pages.
 
 \vspace*{-2.8cm}
 \hspace*{-0.3cm} 
-%\includegraphics[width = 0.23\textwidth]{signature-Schlosser}
+\includegraphics[width = 0.23\textwidth]{signature-Schlosser}
 
 \end{letter}
 
