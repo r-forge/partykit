@@ -195,7 +195,7 @@ par(mfrow = c(2, 2))
 pithist(results$pit_df, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Distributional forest", ylim = c(0, 1.9))
 pithist(results$pit_ml, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "EMOS", ylim = c(0, 1.9))
 if(!all(is.na(results$pit_g))) pithist(results$pit_g,  nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Prespecified GAMLSS", ylim = c(0, 1.9))
-pithist(results$pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "boosted GAMLSS", ylim = c(0, 1.9))
+pithist(results$pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted GAMLSS", ylim = c(0, 1.9))
 @
 
 \end{document}

@@ -4,6 +4,7 @@
 \pagestyle{empty}
 \usepackage{Sweave}
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,pdfpages,hyperref,bookmark}
+\usepackage[all]{hypcap}
 
 \title{Supplement B: Stationwise Evaluation}
 

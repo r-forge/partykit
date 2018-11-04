@@ -1773,7 +1773,7 @@ Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")}, respectively.
 
-
+\newpage
 \section*{Appendix}
 \begin{appendix}
 
@@ -1928,10 +1928,10 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 \subsection*{Supplement B: Stationwise Evaluation}
   To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
-  this supplement presents the same analysis as in Section~3.3 of the main
+  this supplement presents the same analysis as in Section~\ref{sec:axams} of the main
   manuscript for 14~further meteorological stations.
 
-
+\newpage
 \bibliography{ref.bib}
 
 

@@ -45,7 +45,7 @@ contribution.
 The most important changes are:
 \begin{itemize}
 
-\item \emph{Supplement A: Different response distributions.}\\
+\item \emph{Supplement A: Different Response Distributions.}\\
 To assess the appropriateness and robustness of the distributional
 assumption (censored Gaussian) made in the main manuscript, further
 response distributions (two-part Gaussian hurdle; censored
@@ -55,7 +55,7 @@ evaluations performed for all 95 observation stations
 in the main manuscript using all three response distributions
 for a subset of 15 stations.
 
-\item \emph{Supplement B: Stationwise evaluation.}\\
+\item \emph{Supplement B: Stationwise Evaluation.}\\
 To show that the more extensive cross-validation results -- obtained only
 for one station (Axams) in the main manuscript -- are fairly typical,
 they are extended to 14 other observation stations. This also incorporates

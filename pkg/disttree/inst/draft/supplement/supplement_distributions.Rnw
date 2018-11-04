@@ -4,6 +4,7 @@
 \pagestyle{empty}
 \usepackage{Sweave}
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
+\usepackage[all]{hypcap}
 
 \title{Supplement A: Different Response Distributions}
 
@@ -216,7 +217,7 @@ best in the single-split setting reported in Section~3.4 of the main manuscript.
 
 Selected stations: Axams, Lech, Zuers, See im Paznaun, Jungholz, Ladis-Neuegg, 
 Oetz, Ochsengarten-Obergut, Ginzling, Rotholz, Walchsee, Koessen, 
-Innervillgraten, Matrei in Osttirol, St.~Johann im Walde. See also Supplement~2
+Innervillgraten, Matrei in Osttirol, St.~Johann im Walde. See also Supplement~B
 (``Stationwise Evaluation'') for more details.
 
 \begin{figure}[t!]
