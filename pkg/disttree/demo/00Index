@@ -1,4 +1,4 @@
-RainAxams Distributional forecasting of precipitation sums on data from complex terrain (application for one station: Axams),
-RainTyrol Distributional forecasting of precipitation sums on data from complex terrain (application for 95 stations in Tyrol),
-RainDistributions Distributional forecasting of precipitation sums on data from complex terrain (comparing different distributions at 15 stations),
-RainStationwise Distributional forecasting of precipitation sums on data from complex terrain (extended evaluation for 15 stations)
+RainAxams	Distributional forecasting of precipitation sums on data from complex terrain (application for one station: Axams),
+RainTyrol	Distributional forecasting of precipitation sums on data from complex terrain (application for 95 stations in Tyrol),
+RainDistributions	Distributional forecasting of precipitation sums on data from complex terrain (comparing different distributions at 15 stations),
+RainStationwise		Distributional forecasting of precipitation sums on data from complex terrain (extended evaluation for 15 stations)
