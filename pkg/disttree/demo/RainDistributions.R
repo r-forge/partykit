@@ -7,7 +7,7 @@
 ## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
 ## URL: http://arxiv.org/abs/1804.02921
 
-## This demo includes the application on selected stations emplying different distributions
+## This demo includes the application on selected stations employing different distributions
 ## (models learned on 24 years and evaluated on 4 years)
 ## Full replication for station Axams can be obtained with
 ## demo("RainAxams", package = "disttree")
