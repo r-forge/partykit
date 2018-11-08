@@ -2,6 +2,8 @@
 
 \documentclass{josr}
 
+
+
 %% revised text
 \newcommand{\new}[1]{{\color{blue} #1}}
 
@@ -45,7 +47,7 @@
 \rhead{\textcolor{gray}{UP JORS software Latex paper template version 0.1}}
 
 \begin{document}
-
+\hypersetup{pageanchor=false}
 
 <<setup, echo=FALSE, message=FALSE>>=
 library("knitr")
@@ -295,20 +297,17 @@ head(pmods_math)
 Dependence plots with the group effect (treatment effect) on the y-axis and
 the student characteristics on the x-axis are a good way of visualising the
 personalised models and for getting knowledge about the interactions between
-student characteristics and the treatment.
+student characteristics and the exam group.
 \new{
 Note that the plot is related to but not the same as the classical partial
 dependence plot \citep{friedman2001greedy}, as each point in the figure is one
-patient in the given data set.
-}
-Since the percentage of successful online tests is measured on a grid, a
-\new{beeswarm} plot possibly shows the relationships even better than the
-scatter plot (both shown in Figure~\ref{fig:math_dp1},
-\new{
-Figure~\ref{fig:math_dp11} includes a loess curve). We see a nonlinear relation
-between the percentage of successful online \texttt{\Sexpr{'tests'}} and the exam group
-effect. Students with great performance during the semenster are estimated to
-have the strongest effect.
+patient in the given data set.  Since the percentage of successful online tests
+is measured on a grid, a beeswarm plot (a variant of jittered scatter plot)
+possibly shows the relationships even better than the scatter plot (both shown
+in Figure~\ref{fig:math_dp1}, Figure~\ref{fig:math_dp11} includes a loess
+curve). We see a nonlinear relation between the percentage of successful online
+\texttt{\Sexpr{'tests'}} and the exam group effect. Students with great
+performance during the semenster are estimated to have the strongest effect.
 }
 <<math_dp1, fig.width=4, fig.height=3, out.width='.48\\linewidth', fig.cap="Dependence plot for percentage of tests successfully solved.", fig.subcap=c("Scatter plot with loess curve.", "Beeswarm plot.")>>=
 dpdat_math <- cbind(pmods_math, MathExam)
@@ -328,7 +327,7 @@ ggplot(dpdat_math, aes(x = tests, y = group2, color = tests)) +
 \new{
 For categorical variables such as the number of previous attempts to pass the
 exam (\texttt{\Sexpr{'attempt'}}) and \texttt{\Sexpr{'gender'}} we can use box plots,
-\new{beeswarm} plots or a combination thereof can be used (as in
+\new{beeswarm} plots or a combination thereof (as in
 Figure~\ref{fig:math_dp21}). Figure~\ref{fig:math_dp22} shows the number of
 previous attempts on the x-axis and the color indicates the gender of each
 student.  This way we can see that for students writing the exam for the first
@@ -462,6 +461,10 @@ pharmaceutical companies or analysts in marketing (A-B testing).  In general
 the software is useful to researchers dealing with scenarios where two
 exposures are compared and responses of subjects possibly depend on other
 variables.
+\new{
+Currently the packages supports a limited set of model types (linear and generalised
+linear models and survival models). Further models can be added. 
+}
 
 We encourage users to use the party tag on Stackoverflow
 (\url{http://stackoverflow.com/questions/tagged/party}) in case of questions or
