@@ -14,7 +14,9 @@ Changes in Version 0.1-2
   o Bugs fixed: Argument dfsplit is now passed correctly to tree fitting functions,
     additional arguments are now passed correctly to (g)lmer().	.
 
-  
+  o Arguments "lmer.control" in lmertree() and "glmer.control" in glmertree()
+    are now actually passed to lmer() and glmer() internally.
+ 
   
 Changes in Version 0.1-1
 
