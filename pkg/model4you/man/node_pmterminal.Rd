@@ -11,6 +11,8 @@ node_pmterminal(obj, coeftable = TRUE, digits = 2, confint = TRUE,
 \arguments{
 \item{obj}{an object of class party.}
 
+\item{coeftable}{should a table with coefficients be added to the plot?}
+
 \item{digits}{integer, used for formating numbers.}
 
 \item{confint}{Should a confidence interval be computed.}

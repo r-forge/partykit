@@ -4,12 +4,12 @@
 #' Use update function to refit model and extract info such as coef, logLik and
 #' estfun.
 #'
-#' @param formula ignored but required by \code{.ctreetrafo}.
 #' @param model model object.
 #' @param data data.
+#' @param coeffun function that takes the model object and returns the coefficients.
+#' Useful when coef() does not return all coefficients (e.g. survreg).
 #' @param weights weights.
-#' @param cluster cluster.
-#' @param ctrl control options from \code{ctree_control}.
+#' @param control control options from \code{ctree_control}.
 #' @param parm which parameters should be used for instability test?
 #'
 #' @return A function returning a list of
