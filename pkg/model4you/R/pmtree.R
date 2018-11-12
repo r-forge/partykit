@@ -2,7 +2,7 @@
 #'
 #' Input a parametric model and get a model-based tree.
 #'
-#' @param model a model object. The model can be a parametric model with a binary covariate. 
+#' @param model a model object. The model can be a parametric model with a binary covariate.
 #' @param data data. If NULL (default) the data from the model object are used.
 #' @param zformula formula describing which variable should be used for partitioning.
 #' Default is to use all variables in data that are not in the model (i.e. \code{~ .}).
@@ -66,6 +66,10 @@ pmtree <- function(model, data = NULL, zformula = ~.,
 #'
 #' @param x constparty object.
 #' @param nodeids node ids, usually the terminal ids.
+#' @param data data.
+#' @param model model.
+#' @param coeffun function that takes the model object and returns the coefficients.
+#' Useful when coef() does not return all coefficients (e.g. survreg).
 #'
 #' @return tree with added info. Class still to be added.
 .add_modelinfo <- function(x, nodeids, data, model, coeffun) {

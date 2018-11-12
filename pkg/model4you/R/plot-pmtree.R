@@ -342,6 +342,7 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
 #' class grapcon_generator for pmtrees is documented here.
 #'
 #' @param obj an object of class party.
+#' @param coeftable should a table with coefficients be added to the plot?
 #' @param digits integer, used for formating numbers.
 #' @param confint Should a confidence interval be computed.
 #' @param plotfun Plotting function to be used. Needs to be of format
