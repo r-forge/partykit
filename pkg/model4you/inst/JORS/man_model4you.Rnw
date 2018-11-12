@@ -196,7 +196,6 @@ variables not given in the model formula and can be defined using the
 \texttt{\Sexpr{'zformula'}} argument in \texttt{\Sexpr{'pmforest()'}}.
 
 
-
 In the following we will present an example application for model-based trees
 and personalised models. For this we need to load the package and -- to ensure
 reproducibility -- set a random seed.
@@ -463,7 +462,7 @@ exposures are compared and responses of subjects possibly depend on other
 variables.
 \new{
 Currently the packages supports a limited set of model types (linear and generalised
-linear models and survival models). Further models can be added. 
+linear models and survival models). Further models can be added.
 }
 
 We encourage users to use the party tag on Stackoverflow
