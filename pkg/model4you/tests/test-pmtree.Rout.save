@@ -30,7 +30,7 @@ Loading required package: mvtnorm
 > bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
 > survreg_plot(bmod)
 > grid.newpage()
-> coeftable_survreg(bmod)
+> coeftable.survreg(bmod)
 > 
 > 
 > ## partitioned model
@@ -92,7 +92,7 @@ Objective function:
 > 
 > ## alternative table in plot
 > plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
-+   confint = TRUE, coeftable = coeftable_survreg))
++   confint = TRUE, coeftable = coeftable.survreg))
 > 
 > 
 > ### glm binomial
@@ -628,4 +628,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
- 12.102   0.104  12.273 
+ 10.857   0.095  11.112 
