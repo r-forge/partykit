@@ -1,5 +1,5 @@
 
-R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
+R version 3.5.1 (2018-07-02) -- "Feather Spray"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -29,6 +29,9 @@ Loading required package: mvtnorm
 > ## base model
 > bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
 > survreg_plot(bmod)
+> grid.newpage()
+> coeftable_survreg(bmod)
+> 
 > 
 > ## partitioned model
 > tr <- pmtree(bmod)
@@ -86,6 +89,10 @@ Objective function:
 'log Lik.' -2632.096 (df=3)
 > logLik(tr)
 'log Lik.' -2588.953 (df=9)
+> 
+> ## alternative table in plot
+> plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
++   confint = TRUE, coeftable = coeftable_survreg))
 > 
 > 
 > ### glm binomial
@@ -621,4 +628,4 @@ Warning messages:
 > 
 > proc.time()
    user  system elapsed 
- 13.246   0.084  13.325 
+ 12.102   0.104  12.273 

@@ -8,6 +8,9 @@ data(GBSG2, package = "TH.data")
 ## base model
 bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
 survreg_plot(bmod)
+grid.newpage()
+coeftable_survreg(bmod)
+
 
 ## partitioned model
 tr <- pmtree(bmod)
@@ -22,6 +25,10 @@ coef(bmod)
 
 logLik(bmod)
 logLik(tr)
+
+## alternative table in plot
+plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
+  confint = TRUE, coeftable = coeftable_survreg))
 
 
 ### glm binomial
