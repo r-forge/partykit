@@ -45,7 +45,7 @@ plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survreg_plot,
                                                confint = TRUE))
 }
 
-#' if(require("survival") & require("TH.data")) {
+if(require("survival") & require("TH.data")) {
   ## Load data
   data(GBSG2, package = "TH.data")
 

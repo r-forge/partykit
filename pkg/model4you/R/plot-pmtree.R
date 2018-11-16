@@ -366,7 +366,7 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
 #'                                                confint = TRUE))
 #' }
 #'
-#'#' if(require("survival") & require("TH.data")) {
+#' if(require("survival") & require("TH.data")) {
 #'   ## Load data
 #'   data(GBSG2, package = "TH.data")
 #'
