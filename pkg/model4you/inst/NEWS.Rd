@@ -2,6 +2,14 @@
 
 \title{NEWS file for the \pkg{model4you} package}
 
+\section{Changes in Version 0.9-4}{
+  \itemize{
+    \item allow for custom coefficient tables in node_pmterminal()
+    \item custom coefficient table for survreg models.
+  }
+}
+
+
 \section{Changes in Version 0.9-2}{
   \itemize{
     \item allow plot to have no table
