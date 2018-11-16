@@ -11,7 +11,9 @@ node_pmterminal(obj, coeftable = TRUE, digits = 2, confint = TRUE,
 \arguments{
 \item{obj}{an object of class party.}
 
-\item{coeftable}{should a table with coefficients be added to the plot?}
+\item{coeftable}{logical or function. If logical: should a table with
+coefficients be added to the plot (TRUE/FALSE)? If function: A function
+comparable to \code{\link{coeftable.survreg}}.}
 
 \item{digits}{integer, used for formating numbers.}
 
@@ -33,13 +35,33 @@ class grapcon_generator for pmtrees is documented here.
 \examples{
 if(require("survival")) {
 ## compute survreg model
-mod_surv <- survreg(Surv(futime, fustat) ~ factor(rx), ovarian, dist='weibull')
+mod_surv <- survreg(Surv(futime, fustat) ~ factor(rx), ovarian,
+  dist = 'weibull')
 survreg_plot(mod_surv)
 
 ## partition model and plot
 tr_surv <- pmtree(mod_surv)
 plot(tr_surv, terminal_panel = node_pmterminal(tr_surv, plotfun = survreg_plot,
                                                confint = TRUE))
+}
+
+#' if(require("survival") & require("TH.data")) {
+  ## Load data
+  data(GBSG2, package = "TH.data")
+
+  ## Weibull model
+  bmod <- survreg(Surv(time, cens) ~ horTh, data = GBSG2, model = TRUE)
+
+  ## Coefficient table
+  grid.newpage()
+  coeftable.survreg(bmod)
+
+  ## partitioned model
+  tr <- pmtree(bmod)
+
+  ## plot with specific coeftable
+  plot(tr, terminal_panel = node_pmterminal(tr, plotfun = survreg_plot,
+    confint = TRUE, coeftable = coeftable.survreg))
 }
 
 }
