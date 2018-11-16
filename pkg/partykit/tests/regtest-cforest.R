@@ -36,6 +36,7 @@ summary(v_partykit)
 party::varimp(cf_party, conditional = TRUE)
 partykit::varimp(cf_partykit, conditional = TRUE)
 
+
 ### classification
 set.seed(29)
 mtry <- ncol(iris) - 1L
@@ -105,3 +106,8 @@ for (i in 1:length(lw)) {
 
 stopifnot(isTRUE(all.equal(mean(m), sum(w * cars$dist) / sum(w))))
 
+### check parallel variable importance (make this reproducible)
+RNGkind("L'Ecuyer-CMRG")
+(v1 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2))
+v2 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2)
+stopifnot(all.equal(v1, v2))
