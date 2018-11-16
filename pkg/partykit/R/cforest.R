@@ -119,12 +119,13 @@ cforest <- function
     }
 
     ## apply infrastructure for determining split points
+    ## use RNGkind("L'Ecuyer-CMRG") to make this reproducible
     if (is.null(applyfun)) {
         applyfun <- if(is.null(cores)) {
             lapply  
         } else {
             function(X, FUN, ...)
-                parallel::mclapply(X, FUN, ..., mc.cores = cores)
+                parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
         }
     }
 
