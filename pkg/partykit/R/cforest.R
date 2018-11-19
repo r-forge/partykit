@@ -73,10 +73,15 @@ cforest <- function
    
     ### get the call and the calling environment for .urp_tree
     call <- match.call(expand.dots = FALSE)
-    m <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", 
+    oweights <- NULL
+    if (!missing(weights))
+        oweights <- weights
+    m <- match(c("formula", "data", "subset", "na.action", "offset", "cluster", 
                  "scores", "ytrafo", "control"), names(call), 0L)
     ctreecall <- call[c(1L, m)]
     ctreecall$doFit <- FALSE
+    if (!is.null(oweights))
+        ctreecall$weights <- 1:NROW(oweights)
     ctreecall$control <- control ### put ... into ctree_control()
     ctreecall[[1L]] <- quote(partykit::ctree)
     tree <- eval(ctreecall, parent.frame())
@@ -97,25 +102,48 @@ cforest <- function
     }
     
     probw <- NULL
-    weights <- model.weights(model.frame(d))
+    iweights <- model.weights(model.frame(d))
+    if (!is.null(oweights)) {
+        weights <- oweights[iweights,,drop = FALSE]
+    } else {
+        weights <- NULL
+    }
+    N <- nrow(model.frame(d))
+    rw <- NULL
     if (!is.null(weights)) {
-        probw <- weights / sum(weights)
+        if (is.matrix(weights)) {
+            if (ncol(weights) == ntree && nrow(weights) == N) {
+                rw <- unclass(as.data.frame(weights))
+                rw <- lapply(rw, function(w) 
+                    rep(1:length(w), w))
+                weights <- integer(0)
+            } else {
+                stop(sQuote("weights"), "argument incorrect")
+            }
+        } else {
+            probw <- weights / sum(weights)
+        }
     } else {
         weights <- integer(0)
     }
 
-    N <- nrow(model.frame(d))
     idx <- .start_subset(d)
-    if (is.null(strata)) {
-        size <- N
-        if (!perturb$replace) size <- floor(size * perturb$fraction)
-        rw <- replicate(ntree, sample(idx, size = size, replace = perturb$replace, prob = probw),
-                        simplify = FALSE)
-    } else {
-        frac <- if (!perturb$replace) perturb$fraction else 1
-        rw <- replicate(ntree, function() 
-            do.call("c", tapply(idx, strata, function(i) sample(i, size = length(i) * frac, 
-                   replace = perturb$replace, prob = probw[i]))))
+    if (is.null(rw)) {
+        if (is.null(strata)) {
+            size <- N
+            if (!perturb$replace) size <- floor(size * perturb$fraction)
+            rw <- replicate(ntree, 
+                            sample(idx, size = size, 
+                                   replace = perturb$replace, prob = probw),
+                            simplify = FALSE)
+        } else {
+            frac <- if (!perturb$replace) perturb$fraction else 1
+            rw <- replicate(ntree, function() 
+                  do.call("c", tapply(idx, strata, 
+                          function(i) 
+                              sample(i, size = length(i) * frac, 
+                                     replace = perturb$replace, prob = probw[i]))))
+        }
     }
 
     ## apply infrastructure for determining split points

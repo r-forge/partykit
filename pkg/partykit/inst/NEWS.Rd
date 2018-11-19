@@ -6,6 +6,11 @@
  \subsection{New Features}{
     \itemize{
       \item{\code{varimp} runs in parallel mode, optionally.}
+      \item{\code{weights} in \code{cforest} can now be used
+            to specify a matrix of weights (number of observations
+            times number of trees) to be used for tree induction (this was
+            always possible in \code{party::cforest}. This was advertised in
+            the documentation but actually not implemented so far.}
     }
   }
   \subsection{Bugfixes}{
