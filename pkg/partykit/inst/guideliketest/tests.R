@@ -33,7 +33,7 @@ adj_rand_index <- function(x, y) {
 dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,  
                       # xi can also be a vector with 2 elements for nrsteps = 2
                       sigma = 1, seed = 7, only_intercept = FALSE, 
-                      binary_regressor = TRUE, binary_beta = TRUE,
+                      binary_regressor = FALSE, binary_beta = TRUE,
                       vary_beta = c("all", "beta0", "beta1"),
                       beta0 = NULL, beta1 = NULL,
                       nrsteps = 1, nrlevels = 2, shift = 0,
@@ -57,7 +57,7 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,
   set.seed(seed)
   
   # beta0 and/or beta1 symmetric around 0? (otherwise two split points are handed over)
-  sym <- !(length(xi)>1)
+  sym <- length(xi)==1 & nrsteps>1
   
   if(z1dist == "norm") {
     z1 <- rnorm(nobs, 0, 1) 
@@ -204,48 +204,50 @@ dgp_stump <- function(nobs = 100, delta = 1, xi = 0.3,
 
 
 
-
-
 dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),  
                      sigma = 1, seed = 7, only_intercept = FALSE, 
-                     binary_regressor = TRUE, binary_beta = TRUE,
-                     vary_beta = c("all", "beta0", "beta1"),
+                     binary_regressor = FALSE, binary_beta = TRUE,
+                     vary_beta = "all",
                      beta0 = NULL, beta1 = NULL,
-                     nrsplitvar = 1,
+                     nrsplitvar = 2,
                      z1dist = c("unif", "norm"),
-                     nrsteps = NULL, nrlevels = NULL, shift = NULL # not needed but to match form of dgp_stump
-                     )
+                     nrsteps = 1, nrlevels = 2, shift = NULL # not needed but to match form of dgp_stump
+)
 {
   
   # check input values
-  if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
-  if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
-  if(vary_beta == "beta0" & is.null(beta1)) stop("if only beta0 varies, a fixed value has to set for beta1")
-  if(vary_beta == "beta1" & is.null(beta0)) stop("if only beta1 varies, a fixed value has to set for beta0")
+  if(vary_beta != "all") stop("vary_beta can only be set to 'all' in dgp_tree")
+  if(!binary_beta) stop("coefficients can only be binary in dgp_tree")
+  if(!is.null(beta0) | !is.null(beta1)) warning("values for beta0 or beta1 are ignored since vary_beta='all' for dgp_tree")
   if(length(z1dist) > 1) z1dist <- z1dist[1]
   if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
   if(nrsplitvar > 2) stop("not more than two splitvariables can be selected")
   #if(nrsplitvar == 2 & length(xi) < 2) stop("for two splitvariables two splitpoints need to be set in argument 'xi'")
   if(nrsplitvar == 1 & length(xi) == 2) if(xi[2]<xi[1]) stop("for one splitvariable with two splitpoints the first splitpoint
                                                              has to be smaller than or equal to the second")
- 
-  
   
   set.seed(seed)
   
   # beta0 and/or beta1 symmetric around 0? (otherwise two split points are handed over)
-  # (only for one splitvariable, because for two splitvariables xi has to have two elements)
-  sym <- (nrsplitvar == 1 & !(length(xi)>1))
-  if(sym) {
-    xi1 <- -xi
-    xi2 <- xi
-  } else {
-    xi1 <- xi[1]
-    xi2 <- xi[2]
-  }
+  if(nrsplitvar == 1 & nrsteps == 2){
+    sym <- (length(xi)==1)
+    if(sym) {
+      xi1 <- -xi
+      xi2 <- xi
+    } else {
+      xi1 <- xi[1]
+      xi2 <- xi[2]
+    }
+  }  
   
-  equalxi <- (nrsplitvar == 2 & !(length(xi)>1))
-  if(equalxi) xi1 <- xi2 <- xi
+  if(nrsplitvar == 2){
+    if(length(xi)==1){
+      xi1 <- xi2 <- xi
+    } else {
+      xi1 <- xi[1]
+      xi2 <- xi[2]
+    }
+  }
   
   if(z1dist == "norm") {
     z1 <- rnorm(nobs, 0, 1) 
@@ -271,93 +273,42 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
   
   
   if(nrsplitvar == 1) {
-    # for binary beta: one step in each parameter at break point xi1 or xi2, 
-    # for continuous beta: plogis function
-    if(vary_beta == "all"){
-      if(binary_beta){
-        beta0 <- delta * (-1)^(z1<xi1)
-        beta1 <- delta * (-1)^(z1<xi2) * (-1)   # opposite signs for beta0 and beta1 
-      } else {
-        beta0 <- delta * plogis(z1, xi1, 1/5) * 2 - 1
-        beta1 <- delta * (plogis(z1, xi2, 1/5) * 2 - 1) * (-1)   # opposite signs for beta0 and beta1
-      }
-    }
-    
-    
-    if(vary_beta == "beta0"){
-      beta0 <- if(binary_beta) {
-        delta * (-1)^(z1<xi1) * 0^(z1>=xi2) 
-      } else {
-        delta * ((1-plogis(z1, xi1, abs(xi2-xi1)/8))^(z1<(xi1+xi2)/2) * (1/2 * plogis(z1, xi2, abs(xi2-xi1)/8))^(z1>(xi1+xi2)/2) * 2 - 1)
-      }
-      beta1 <- beta1
-    }
-    
-    if(vary_beta == "beta1"){
-      beta0 <- beta0
-      beta1 <- if(binary_beta) {
-        delta * (-1)^(z1<xi1) * 0^(z1>=xi2) 
-      } else {
-        delta * ((1-plogis(z1, xi1, abs(xi2-xi1)/8))^(z1<(xi1+xi2)/2) * (1/2 * plogis(z1, xi2, abs(xi2-xi1)/8))^(z1>(xi1+xi2)/2) * 2 - 1)
-      }
-    }
-    
-    if(binary_beta) id <- 1+(z1>=xi1)+(z1>=xi2) 
+
+    beta0 <- delta * (-1)^(z1<xi1)
+    beta1 <- delta * (-1)^(z1<xi2) * (-1)   # opposite signs for beta0 and beta1 
+
+    id <- 1+(z1>=xi1)+(z1>=xi2) 
   }
   
   
   
   if(nrsplitvar == 2) {
     
-    # for binary beta: one step in each parameter at break point xi1 or xi2, 
-    # for continuous beta: plogis function
-    if(vary_beta == "all"){
-      if(binary_beta){
-        #if(z2<xi2){
-        #  beta0 <- -delta 
-        #  beta1 <- -delta
-        #} else {
-        #  if(z1<xi1){
-        #    beta0 <- -delta 
-        #    beta1 <- delta
-        #  } else {
-        #    beta0 <- delta 
-        #    beta1 <- delta
-        #  }
-        #}
-        
-        beta0 <- (z2<xi2) * (-delta) + (z2>=xi2) * ((-delta) * (z1<xi1) + delta * (z1>=xi1))
-        beta1 <- (z2<xi2) * (-delta) + (z2>=xi2) * delta
-        
-      } else {
-        beta0 <- delta * ((plogis(z2, xi2, 1/5) * (plogis(z1, xi1, 1/5))) * 2 - 1)
-        beta1 <- delta * (plogis(z2, xi2, 1/5) * 2 - 1)
-      }
-    }
+    ## first a split in z2 at split point xi2 => beta1 changes
+    ## then a split in z1 at split point xi1 => beta0 changes
+    # resulting subgroups:
+    # group1 (z2<xi2):           beta0 = 0,      beta1 = delta
+    # group2 (z2<xi2 & z1<xi1):  beta0 = -delta, beta1 = -delta
+    # group3 (z2<xi2 & z1=>xi1): beta0 = +delta, beta1 = -delta
     
+    #if(z2<xi2){
+    #  beta0 <- 0 
+    #  beta1 <- +delta
+    #} else {
+    #  if(z1<xi1){
+    #    beta0 <- -delta 
+    #    beta1 <- -delta
+    #  } else {
+    #    beta0 <- +delta 
+    #    beta1 <- +delta
+    #  }
+    #}
     
-    if(vary_beta == "beta0"){
-      beta0 <- if(binary_beta) {
-        (z2<xi2) * (-delta) + (z2>=xi2) * (delta) * (z1<xi1)
-      } else {
-        ## TO DO: check for 2 splitvariables
-        delta * (plogis(z2, xi2, 1/5) * (2-plogis(z1, xi1, 1/5)) - 1)
-      }
-      beta1 <- beta1
-    }
+    beta0 <- delta * (-1)^(z1<xi1) * 0^(z2<xi2)
+    #beta0 <- delta * (-1)^(z1<xi1) * (z2>=xi2) + delta * (z2<xi2)
+    beta1 <- delta * (-1)^(z2>=xi2)
     
-    
-    if(vary_beta == "beta1"){
-      beta0 <- beta0
-      beta1 <- if(binary_beta) {
-        (z2<xi2) * (-delta) + (z2>=xi2) * (delta) * (z1<xi1) 
-      } else {
-        ## TO DO: check for 2 splitvariables
-        delta * (plogis(z2, xi2, 1/5) * (2-plogis(z1, xi1, 1/5)) - 1)
-      }
-    }
-    
-    if(binary_beta) id <- 1 + (z2>=xi2) + (z2>=xi2)*(z1>=xi1)
+    id <- 1 + (z2>=xi2) + (z2>=xi2)*(z1>=xi1)
   }
   
   
@@ -372,6 +323,197 @@ dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),
   return(d)
 }
 
+## illustration of data set
+if(FALSE){
+  d <- dgp_tree(nobs = 400, delta = 1, xi = c(-0.1, 0.2),  
+                sigma = 1, seed = 7, only_intercept = FALSE, 
+                binary_regressor = FALSE, binary_beta = TRUE,
+                vary_beta = "all",
+                beta0 = NULL, beta1 = NULL,
+                nrsplitvar = 2,
+                z1dist = "unif")
+  
+  plot(d[d$z2>=0.2 & d$z1 >= -0.1,]$x, d[d$z2>=0.2 & d$z1 >= -0.1,]$y, col = "red")
+  points(d[d$z2>=0.2 & d$z1< -0.1,]$x, d[d$z2>=0.2 & d$z1< -0.1,]$y, col = "blue")
+  points(d[d$z2<0.2,]$x, d[d$z2<0.2,]$y, col = "green")
+  l <-  lm(d[d$z2<0.2,]$y ~ d[d$z2<0.2,]$x)
+  abline(l)
+  l2 <- lm(d[d$z2>=0.2 & d$z1< -0.1,]$y ~ d[d$z2>=0.2 & d$z1< -0.1,]$x)
+  abline(l2)
+  l3 <- lm(d[d$z2>=0.2 & d$z1 >= -0.1,]$y ~ d[d$z2>=0.2 & d$z1 >= -0.1,]$x)
+  abline(l3)
+}
+
+
+
+# more complex version of dgp_tree allowing for more variations
+if(FALSE){
+  dgp_tree <- function(nobs = 100, delta = 1, xi = c(-0.3, 0.3),  
+                       sigma = 1, seed = 7, only_intercept = FALSE, 
+                       binary_regressor = TRUE, binary_beta = TRUE,
+                       vary_beta = c("all", "beta0", "beta1"),
+                       beta0 = NULL, beta1 = NULL,
+                       nrsplitvar = 1,
+                       z1dist = c("unif", "norm"),
+                       nrsteps = NULL, nrlevels = NULL, shift = NULL # not needed but to match form of dgp_stump
+  )
+  {
+    
+    # check input values
+    if(length(vary_beta) > 1) vary_beta <- vary_beta[1]
+    if(!vary_beta %in% c("all", "beta0", "beta1")) stop("vary_beta has to be one of the following options: 'all', 'beta0', 'beta1'")
+    if(vary_beta == "beta0" & is.null(beta1)) stop("if only beta0 varies, a fixed value has to set for beta1")
+    if(vary_beta == "beta1" & is.null(beta0)) stop("if only beta1 varies, a fixed value has to set for beta0")
+    if(length(z1dist) > 1) z1dist <- z1dist[1]
+    if(!z1dist %in% c("norm", "unif")) stop("z1dist has to be one of the following options: 'norm', 'unif'")
+    if(nrsplitvar > 2) stop("not more than two splitvariables can be selected")
+    #if(nrsplitvar == 2 & length(xi) < 2) stop("for two splitvariables two splitpoints need to be set in argument 'xi'")
+    if(nrsplitvar == 1 & length(xi) == 2) if(xi[2]<xi[1]) stop("for one splitvariable with two splitpoints the first splitpoint
+                                                             has to be smaller than or equal to the second")
+    
+    
+    
+    set.seed(seed)
+    
+    # beta0 and/or beta1 symmetric around 0? (otherwise two split points are handed over)
+    # (only for one splitvariable, because for two splitvariables xi has to have two elements)
+    sym <- (nrsplitvar == 1 & length(xi)==1 & nrsteps>1)
+    if(sym) {
+      xi1 <- -xi
+      xi2 <- xi
+    } else {
+      xi1 <- xi[1]
+      xi2 <- xi[2]
+    }
+    
+    equalxi <- (nrsplitvar == 2 & length(xi)==1)
+    if(equalxi) xi1 <- xi2 <- xi
+    
+    if(z1dist == "norm") {
+      z1 <- rnorm(nobs, 0, 1) 
+      z2 <- rnorm(nobs, 0, 1)
+      z3 <- runif(nobs,-1,1)
+      z4 <- runif(nobs,-1,1)
+    } else {
+      z1 <- runif(nobs,-1,1)
+      z2 <- runif(nobs,-1,1) 
+      z3 <- rnorm(nobs, 0, 1)
+      z4 <- rnorm(nobs, 0, 1)
+    }
+    z5 <- rnorm(nobs, 0, 1)
+    z6 <- rnorm(nobs, 0, 1)
+    z7 <- rnorm(nobs, 0, 1)
+    z8 <- runif(nobs, -1, 1)
+    z9 <- runif(nobs, -1, 1)
+    z10 <- runif(nobs, -1, 1)
+    
+    id <- numeric(length(z1))
+    
+    x <- if(binary_regressor) (-1)^rbinom(nobs, 1, 0.5) else runif(nobs, min = -1, max = 1)
+    
+    
+    if(nrsplitvar == 1) {
+      # for binary beta: one step in each parameter at break point xi1 or xi2, 
+      # for continuous beta: plogis function
+      if(vary_beta == "all"){
+        if(binary_beta){
+          beta0 <- delta * (-1)^(z1<xi1)
+          beta1 <- delta * (-1)^(z1<xi2) * (-1)   # opposite signs for beta0 and beta1 
+        } else {
+          beta0 <- delta * plogis(z1, xi1, 1/5) * 2 - 1
+          beta1 <- delta * (plogis(z1, xi2, 1/5) * 2 - 1) * (-1)   # opposite signs for beta0 and beta1
+        }
+      }
+      
+      
+      if(vary_beta == "beta0"){
+        beta0 <- if(binary_beta) {
+          delta * (-1)^(z1<xi1) * 0^(z1>=xi2) 
+        } else {
+          delta * ((1-plogis(z1, xi1, abs(xi2-xi1)/8))^(z1<(xi1+xi2)/2) * (1/2 * plogis(z1, xi2, abs(xi2-xi1)/8))^(z1>(xi1+xi2)/2) * 2 - 1)
+        }
+        beta1 <- beta1
+      }
+      
+      if(vary_beta == "beta1"){
+        beta0 <- beta0
+        beta1 <- if(binary_beta) {
+          delta * (-1)^(z1<xi1) * 0^(z1>=xi2) 
+        } else {
+          delta * ((1-plogis(z1, xi1, abs(xi2-xi1)/8))^(z1<(xi1+xi2)/2) * (1/2 * plogis(z1, xi2, abs(xi2-xi1)/8))^(z1>(xi1+xi2)/2) * 2 - 1)
+        }
+      }
+      
+      if(binary_beta) id <- 1+(z1>=xi1)+(z1>=xi2) 
+    }
+    
+    
+    
+    if(nrsplitvar == 2) {
+      
+      # for binary beta: one step in each parameter at break point xi1 or xi2, 
+      # for continuous beta: plogis function
+      if(vary_beta == "all"){
+        if(binary_beta){
+          #if(z2<xi2){
+          #  beta0 <- -delta 
+          #  beta1 <- -delta
+          #} else {
+          #  if(z1<xi1){
+          #    beta0 <- -delta 
+          #    beta1 <- delta
+          #  } else {
+          #    beta0 <- delta 
+          #    beta1 <- delta
+          #  }
+          #}
+          
+          beta0 <- (z2<xi2) * (-delta) + (z2>=xi2) * ((-delta) * (z1<xi1) + delta * (z1>=xi1))
+          beta1 <- (z2<xi2) * (-delta) + (z2>=xi2) * delta
+          
+        } else {
+          beta0 <- delta * ((plogis(z2, xi2, 1/5) * (plogis(z1, xi1, 1/5))) * 2 - 1)
+          beta1 <- delta * (plogis(z2, xi2, 1/5) * 2 - 1)
+        }
+      }
+      
+      
+      if(vary_beta == "beta0"){
+        beta0 <- if(binary_beta) {
+          (z2<xi2) * (-delta) + (z2>=xi2) * (delta) * (z1<xi1)
+        } else {
+          ## TO DO: check for 2 splitvariables
+          delta * (plogis(z2, xi2, 1/5) * (2-plogis(z1, xi1, 1/5)) - 1)
+        }
+        beta1 <- beta1
+      }
+      
+      
+      if(vary_beta == "beta1"){
+        beta0 <- beta0
+        beta1 <- if(binary_beta) {
+          (z2<xi2) * (-delta) + (z2>=xi2) * (delta) * (z1<xi1) 
+        } else {
+          ## TO DO: check for 2 splitvariables
+          delta * (plogis(z2, xi2, 1/5) * (2-plogis(z1, xi1, 1/5)) - 1)
+        }
+      }
+      
+      if(binary_beta) id <- 1 + (z2>=xi2) + (z2>=xi2)*(z1>=xi1)
+    }
+    
+    
+    mu <- if(only_intercept) beta0 else beta0 + beta1 * x
+    
+    y <- rnorm(nobs, mu, sigma)
+    
+    d <- data.frame(y = y, x = x, 
+                    z1 = z1, z2 = z2, z3 = z3, z4 = z4, z5 = z5, z6 = z6, z7 = z7, z8 = z8, z9 = z9, z10 = z10,
+                    beta0 = beta0, beta1 = beta1, mu = mu, sigma = rep.int(sigma, times = length(y)), id = id)
+    
+    return(d)
+  }
+}
 
 
 if(FALSE){
@@ -887,6 +1029,8 @@ if(FALSE){
                  binary_beta = TRUE, nrsplitvar = 2)
   d <- dgp_tree(nobs = 400, xi = c(0,-0.4), binary_regressor = FALSE, vary_beta = "all", 
                 binary_beta = TRUE, nrsplitvar = 2, sigma = 0.1)
+  d <- dgp_tree(nobs = 400, xi = c(0), binary_regressor = FALSE, vary_beta = "all", 
+                binary_beta = TRUE, nrsplitvar = 2, sigma = 0.1)
   
   plot(d$x[d$id==1], d$y[d$id==1], ylim = c(min(d$y), max(d$y)))
   points(d$x[d$id==2], d$y[d$id==2], col = "red")
@@ -894,35 +1038,35 @@ if(FALSE){
   l <- lm(y~x, data = d)
   abline(l)
   
-  ctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree", stump = FALSE)
-  mtest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "mfluc", stump = FALSE)
-  cctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "ctree_cat", stump = FALSE)
-  mctest <- evaltests(y~x|z1+z2+z3, data = d, testfun = "mfluc_cat", stump = FALSE)
-  gstest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  ctest <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "ctree", stump = FALSE)
+  mtest <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "mfluc", stump = FALSE)
+  cctest <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "ctree_cat", stump = FALSE)
+  mctest <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "mfluc_cat", stump = FALSE)
+  gstest12 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                         guide_testtype = "sum", guide_parm = c(1,2),
                         xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gmtest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gmtest12 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                         guide_testtype = "max", guide_parm = c(1,2),
                         xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gctest12 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gctest12 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                         guide_testtype = "coin", guide_parm = c(1,2),
                         xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gstest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gstest1 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "sum", guide_parm = c(1),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gmtest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gmtest1 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "max", guide_parm = c(1),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gctest1 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gctest1 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "coin", guide_parm = c(1),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gstest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gstest2 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "sum", guide_parm = c(2),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gmtest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gmtest2 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "max", guide_parm = c(2),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
-  gctest2 <- evaltests(y~x|z1+z2+z3, data = d, testfun = "guide", 
+  gctest2 <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "guide", 
                        guide_testtype = "coin", guide_parm = c(2),
                        xgroups = NULL, ygroups = NULL, stump = FALSE)
   
@@ -1338,7 +1482,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
                                   "guide_sum_2", "guide_max_2", "guide_coin_2",
                                   "guide_sum_1_cor", "guide_max_1_cor", "guide_coin_1_cor",
                                   "guide_sum_2_cor", "guide_max_2_cor", "guide_coin_2_cor"),
-                         beta0=0, beta1 = 1,
+                         beta0 = 0, beta1 = 1,
                          stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05,
                          nrsplitvar = 1)
 {
@@ -1350,7 +1494,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
                      binary_beta = binary_beta,
                      only_intercept = only_intercept)
   
-  rmid <- which((prs$only_intercept == TRUE & prs$vary_beta != "beta0"))
+  rmid <- which(prs$only_intercept == TRUE & prs$vary_beta != "beta0")
   if(length(rmid) > 0) prs <- prs[-rmid,]
   rmid <- which(prs$binary_beta == FALSE & prs$xi != 0)
   if(length(rmid) > 0) prs <- prs[-rmid,]
@@ -1362,7 +1506,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
   nprs <- nrow(prs)
   ntest <- length(test)
   
-  res <- mclapply(1:nprs, 
+  simres <- mclapply(1:nprs, 
                   function(i) {
                     reslist <- sim(nobs = nobs, nrep = nrep, stump = stump, seed = seed,
                                    formula = y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10,
@@ -1389,6 +1533,7 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
                   mc.cores = detectCores() - 1
   )
   
+  
   if(stump){
     
     prop_nosplit <- matrix(rep(NA, ntest * nprs), ncol = ntest)
@@ -1400,18 +1545,18 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
     pval_true <- matrix(rep(NA, ntest * nprs), ncol = ntest)
     
     for(i in 1:nprs){
-      prop_nosplit[i,] <- res[[i]]$prop_nosplit
-      prop_split[i,] <- res[[i]]$prop_split
-      prop_Fsplit[i,] <- res[[i]]$prop_Fsplit
-      prop_Tsplit[i,] <- res[[i]]$prop_Tsplit
-      prop_z1[i,] <- res[[i]]$prop_z1
-      pval_min[i,] <- res[[i]]$pval_min
-      pval_true[i,] <- res[[i]]$pval_true
+      prop_nosplit[i,] <- simres[[i]]$prop_nosplit
+      prop_split[i,] <- simres[[i]]$prop_split
+      prop_Fsplit[i,] <- simres[[i]]$prop_Fsplit
+      prop_Tsplit[i,] <- simres[[i]]$prop_Tsplit
+      prop_z1[i,] <- simres[[i]]$prop_z1
+      pval_min[i,] <- simres[[i]]$pval_min
+      pval_true[i,] <- simres[[i]]$pval_true
     }
     
   } else {
     nrsubgr <- matrix(rep(NA, ntest * nprs), ncol = ntest)
-    for(i in 1:nprs) nrsubgr[i,] <- res[[i]]$nrsubgr
+    for(i in 1:nprs) nrsubgr[i,] <- simres[[i]]$nrsubgr
   }
   
   err_coef <- matrix(rep(NA, ntest * nprs), ncol = ntest)
@@ -1419,49 +1564,51 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
   ari <- matrix(rep(NA, ntest * nprs), ncol = ntest)
   
   for(i in 1:nprs){
-    err_coef[i,] <- res[[i]]$err_coef
-    err_total[i,] <- res[[i]]$err_total
-    ari[i,] <- res[[i]]$ari
+    err_coef[i,] <- simres[[i]]$err_coef
+    err_total[i,] <- simres[[i]]$err_total
+    ari[i,] <- simres[[i]]$ari
   }
   
-  rval <- data.frame()
-  for(i in 1:ntest) rval <- rbind(rval, prs)
-  rval$test <- gl(ntest, nprs, labels = test)
+  
+  res <- data.frame()
+  for(i in 1:ntest) res <- rbind(res, prs)
+  res$test <- gl(ntest, nprs, labels = test)
+  
   
   if(stump){
-    rval$prop_nosplit <- as.vector(prop_nosplit)
-    rval$prop_split <- as.vector(prop_split)
-    rval$prop_Fsplit <- as.vector(prop_Fsplit)
-    rval$prop_Tsplit <- as.vector(prop_Tsplit)
-    rval$prop_z1 <- as.vector(prop_z1)
-    rval$pval_min <- as.vector(pval_min)
-    rval$pval_true <- as.vector(pval_true)
+    res$prop_nosplit <- as.vector(prop_nosplit)
+    res$prop_split <- as.vector(prop_split)
+    res$prop_Fsplit <- as.vector(prop_Fsplit)
+    res$prop_Tsplit <- as.vector(prop_Tsplit)
+    res$prop_z1 <- as.vector(prop_z1)
+    res$pval_min <- as.vector(pval_min)
+    res$pval_true <- as.vector(pval_true)
   } else {
-    rval$nrsubgr <- as.vector(nrsubgr)
+    res$nrsubgr <- as.vector(nrsubgr)
   }
   
-  rval$err_coef <- as.vector(err_coef)
-  rval$err_total <- as.vector(err_total)
-  rval$ari <- as.vector(ari)
+  res$err_coef <- as.vector(err_coef)
+  res$err_total <- as.vector(err_total)
+  res$ari <- as.vector(ari)
   
-  rval$delta <- factor(rval$delta)
-  rval$vary_beta <- factor(rval$vary_beta)
-  rval$binary_regressor <- factor(rval$binary_regressor)
-  rval$binary_beta <- factor(rval$binary_beta)
-  rval$xi <- factor(rval$xi)
-  rval$only_intercept <- factor(rval$only_intercept)
-  rval$call <- cl
+  res$delta <- factor(res$delta)
+  res$vary_beta <- factor(res$vary_beta)
+  res$binary_regressor <- factor(res$binary_regressor)
+  res$binary_beta <- factor(res$binary_beta)
+  res$xi <- factor(res$xi)
+  res$only_intercept <- factor(res$only_intercept)
   
-  return(rval)
+  return(list(res = res,
+              call = cl))
 }
 
 
 
-
+### simulate stump
 if(FALSE){
   simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
-                         nrsplitvar = 2,
-                         delta = seq(from = 0, to = 4, by = 1),
+                         nrsplitvar = 1,
+                         delta = seq(from = 0, to = 1, by = 0.25),
                          xi = c(0, 0.2, 0.5, 0.8), 
                          vary_beta = c("all", "beta0", "beta1"),
                          binary_regressor = c(TRUE, FALSE),
@@ -1477,10 +1624,37 @@ if(FALSE){
                                   "guide_coin_12",
                                   "guide_sum_1_cor"),
                          beta0 = 0, beta1 = 1,
-                         stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05)
+                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
   
   
-  save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20180501_tree.rda")
+  save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20181120_stump.rda")
+  # save(simres, file = "~/partykit/inst/guideliketest/sim/simres20180501_tree.rda")
+}
+
+### simulate tree
+if(FALSE){
+  
+  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7, 
+                         nrsteps = 1, nrlevels = 2,
+                         delta = seq(from = 0, to = 1, by = 0.25),
+                         xi = c(0, 0.2, 0.5, 0.8), 
+                         vary_beta = "all",
+                         #vary_beta = c("all", "beta0", "beta1"),
+                         binary_regressor = FALSE,
+                         binary_beta = TRUE,
+                         only_intercept = FALSE,
+                         test = c("ctree", "mfluc", "ctree_max",
+                                  "ctree_cat", "mfluc_cat", "ctree_max_cat",
+                                  "ctree_bin", "mfluc_bin", "ctree_max_bin",
+                                  "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
+                                  "guide_sum_12", 
+                                  "guide_coin_12",
+                                  "guide_sum_1_cor"),
+                         beta0 = NULL, beta1 = NULL,
+                         stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05,
+                         nrsplitvar = 2)
+  
+  save(simres, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/sim/simres20181120_tree.rda")
   # save(simres, file = "~/partykit/inst/guideliketest/sim/simres20180501_tree.rda")
 }
 
@@ -1789,3 +1963,4 @@ if(FALSE){
   
   
 }
+
