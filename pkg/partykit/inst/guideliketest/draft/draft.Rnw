@@ -69,13 +69,47 @@ library("scales")
 # setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/draft/")
 source("../guidelike.R")
 source("../tests_guideprune.R")
-#load("../sim/simres20180422_1step.rda")
-load("../sim/simres20181223_stump.rda")
+
+if(file.exists("stump.rda")){
+  load("stump.rda")
+} else {
+  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7,
+                         nrsplitvar = 1, nrsteps = 1, nrlevels = 2,
+                         delta = seq(from = 0, to = 1, by = 0.1),
+                         xi = c(0, 0.2, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
+                         binary_regressor = FALSE, binary_beta = TRUE, only_intercept = FALSE,
+                         test = c("ctree", "mfluc", "ctree_max",
+                                  "ctree_cat", "mfluc_cat", "ctree_max_cat",
+                                  "ctree_bin", "mfluc_bin", "ctree_max_bin",
+                                  "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
+                                  "guide_sum_12", "guide_coin_12", "guide_sum_1_cor"),
+                         beta0 = 0, beta1 = 1,
+                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+  
+  save(simres, file = "stump.rda")
+}
 sim_stump <- simres$res
-#load("../sim/simres20180422_2step.rda")
-#sim2step <- simres
 rm(simres)
-load("../sim/simres20181223_tree.rda")
+
+if(file.exists("tree.rda")){
+  load("tree.rda")
+} else {
+  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7,
+                       nrsplitvar = 2, nrsteps = 1, nrlevels = 2,
+                       delta = seq(from = 0, to = 1, by = 0.1),
+                       xi = c(0, 0.2, 0.5, 0.8), vary_beta = "all",
+                       binary_regressor = FALSE, binary_beta = TRUE,
+                       only_intercept = FALSE,
+                       test = c("ctree", "mfluc", "ctree_max",
+                                "ctree_cat", "mfluc_cat", "ctree_max_cat",
+                                "ctree_bin", "mfluc_bin", "ctree_max_bin",
+                                "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
+                                "guide_sum_12", "guide_coin_12", "guide_sum_1_cor"),
+                       beta0 = NULL, beta1 = NULL,
+                       stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05)
+
+  save(simres, file = "tree.rda")
+}
 sim_tree <- simres$res
 rm(simres)
 
@@ -1301,7 +1335,26 @@ with a post-pruning approach. The results are compared based on the Adjusted Ran
 Figure~\ref{fig:pruning_ari}.
 
 <<pruning_data, echo=FALSE, results=hide>>=
-load("../sim/simres20181227_pruning.rda")
+if(file.exists("pruning.rda")){
+  load("pruning.rda")
+} else {
+  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7, 
+                         nrsteps = 1, nrlevels = 2,
+                         delta = seq(from = 0, to = 1, by = 0.1),
+                         xi = c(0, 0.2, 0.5, 0.8), 
+                         vary_beta = "all", binary_regressor = FALSE,
+                         binary_beta = TRUE, only_intercept = FALSE,
+                         compare_pruning = TRUE,
+                         test = c("ctree", "mfluc",
+                                  "guide_sum_12", 
+                                  "guide_sum_1_cor"),
+                         beta0 = NULL, beta1 = NULL,
+                         stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05,
+                         nrsplitvar = 2)
+  
+  save(simres, file = "pruning.rda")  
+}
+
 pr <- simres$res
 ## extract data for xyplot comparing ARI and ARI_p
 pr <- pr[,c(1,2,7,8,9,12,15)]
