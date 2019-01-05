@@ -1504,7 +1504,8 @@ sim <- function(nobs = 100, nrep = 100, seed = 7, stump = TRUE, nrsteps = 1,
   }
   
   if(return_matrices) returnlist <- c(returnlist, list(sv = sv,
-                                                       pval = pval))
+                                                       pval = pval,
+                                                       pval_z1 = pval_z1))
   
   
   if(compare_pruning){
