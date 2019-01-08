@@ -162,7 +162,7 @@ cforest <- function
     forest <- applyfun(1:ntree, function(b) {
         if (trace) setTxtProgressBar(pb, b/ntree)
         ret <- updatefun(sort(rw[[b]]), integer(0), control)
-        trafo <<- ret$trafo
+        # trafo <<- ret$trafo
         ret$nodes
     })
     if (trace) close(pb)
