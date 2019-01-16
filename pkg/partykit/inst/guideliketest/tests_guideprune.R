@@ -1866,6 +1866,211 @@ simwrapper_p <- function(nobs = 200, nrep = 100, seed = 7, nrsteps = 1, nrlevels
 
 
 
+### function to prepare data set for 3-way factorial analysis
+prep_3way <- function(simres)
+{
+  pval<- simres$pval
+  # prepare data.frame
+  {
+    pval_T <- pval
+    pval_T[which(simres$sv !="z1")] <- 1
+    
+    head(pval_T)
+    
+    d <- rep(colnames(pval)[1], NROW(pval))                 
+    for(i in 2:NCOL(pval)){
+      d <- c(d, rep(colnames(pval)[i], NROW(pval)))
+    }
+    
+    d <- cbind(d, 
+               rep(0, length(d)), 
+               rep(0, length(d)), 
+               rep(0, length(d)))    
+    
+    colnames(d) <- c("strategy", "res_scores", "bin", "cat")
+    
+    ## set values for factor variables representing the three switches
+    {
+      d[d[,"strategy"] == "ctree", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree", "cat"] <- "lin"
+      
+      d[d[,"strategy"] == "ctree_max", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_max", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_max", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "mfluc", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "mfluc", "bin"] <- "lin"
+      d[d[,"strategy"] == "mfluc", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "ctree_cat", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_max_cat", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_max_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_max_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "mfluc_cat", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "mfluc_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "mfluc_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_bin", "cat"] <- "lin"
+      
+      d[d[,"strategy"] == "ctree_max_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_max_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_max_bin", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "mfluc_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "mfluc_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "mfluc_bin", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "ctree_cat_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_cat_bin", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_max_cat_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "ctree_max_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_max_cat_bin", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "mfluc_cat_bin", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "mfluc_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "mfluc_cat_bin", "cat"] <- "cat"
+      
+      
+      
+      d[d[,"strategy"] == "ctree_resid", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_resid", "cat"] <- "lin"
+      
+      d[d[,"strategy"] == "ctree_resid_max", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_max", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_resid_max", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "mfluc_resid", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "mfluc_resid", "bin"] <- "lin"
+      d[d[,"strategy"] == "mfluc_resid", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "ctree_resid_cat", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_resid_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_resid_max_cat", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_max_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "ctree_resid_max_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "mfluc_resid_cat", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "mfluc_resid_cat", "bin"] <- "lin"
+      d[d[,"strategy"] == "mfluc_resid_cat", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_resid_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_resid_bin", "cat"] <- "lin"
+      
+      d[d[,"strategy"] == "ctree_resid_max_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_max_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_resid_max_bin", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "mfluc_resid_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "mfluc_resid_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "mfluc_resid_bin", "cat"] <- "max"
+      
+      d[d[,"strategy"] == "ctree_resid_cat_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_resid_cat_bin", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "ctree_resid_max_cat_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "ctree_resid_max_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "ctree_resid_max_cat_bin", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "mfluc_resid_cat_bin", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "mfluc_resid_cat_bin", "bin"] <- "bin"
+      d[d[,"strategy"] == "mfluc_resid_cat_bin", "cat"] <- "cat"
+      
+      
+      ## GUIDE
+      
+      d[d[,"strategy"] == "guide_sum_1", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_sum_1", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_sum_1", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_coin_1", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_coin_1", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_coin_1", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_max_1", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_max_1", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_max_1", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_sum_1_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_sum_1_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_sum_1_cor", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_coin_1_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_coin_1_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_coin_1_cor", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_max_1_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_max_1_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_max_1_cor", "cat"] <- "cat"
+      
+      
+      d[d[,"strategy"] == "guide_sum_2", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_sum_2", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_sum_2", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_coin_2", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_coin_2", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_coin_2", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_max_2", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_max_2", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_max_2", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_sum_2_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_sum_2_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_sum_2_cor", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_coin_2_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_coin_2_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_coin_2_cor", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_max_2_cor", "res_scores"] <- "residuals"
+      d[d[,"strategy"] == "guide_max_2_cor", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_max_2_cor", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_sum_12", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "guide_sum_12", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_sum_12", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_max_12", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "guide_max_12", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_max_12", "cat"] <- "cat"
+      
+      d[d[,"strategy"] == "guide_coin_12", "res_scores"] <- "scores"
+      d[d[,"strategy"] == "guide_coin_12", "bin"] <- "bin"
+      d[d[,"strategy"] == "guide_coin_12", "cat"] <- "cat"
+    }
+    
+    
+    d <- data.frame(strategy = factor(d[,"strategy"]),
+                    res_scores = factor(d[,"res_scores"]),
+                    bin = factor(d[,"bin"]),
+                    cat = factor(d[,"cat"]))
+    
+    d$pval <- as.vector(pval)
+    d$pvalT <- as.vector(pval_T)
+    d$pval_z1 <- as.vector(simres$pval_z1)
+  }
+  
+  return(d)
+}
+
+
+
+
 ### simulate stump
 if(FALSE){
   simres <- simwrapper_p(nobs = 250, nrep = 100, nrsteps = 1,
@@ -2225,4 +2430,6 @@ if(FALSE){
   
   
 }
+
+
 
