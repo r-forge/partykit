@@ -103,10 +103,14 @@ one_factor <- function(object) {
   f <- attr(terms(object), "factors")
   if(length(f) == 0L || NCOL(f) != 1L) return(FALSE)
   d <- attr(terms(object), "dataClasses")
-  if(d[colnames(f)] %in% c("ordered", "factor")) {
-    return(TRUE)
+  if(!is.null(d)) {
+    if(d[colnames(f)] %in% c("ordered", "factor")) {
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
   } else {
-    return(FALSE)
+    return(TRUE)  ## TODO: make a better check here!
   }
 }
 
