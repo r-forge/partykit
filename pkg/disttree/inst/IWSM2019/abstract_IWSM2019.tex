@@ -1,0 +1,272 @@
+
+%***********************************************************************
+
+% This is a template to be used for the preparation of
+% papers submitted to the 34th International Workshop on
+% Statistical Modelling, to be held in Guimar?es, Portugal,
+% July 7-12, 2019.
+
+% Please follow the following general guidelines:
+%
+% (1) Do not specify any definitions, commands or style parameters.
+%     Upon submission, your file will be checked for presence of
+%     \newcommand or \def statements and if found, error message will be reported
+%     by the submission form.
+%
+% (2) Follow the template below very tightly.
+%
+% (3) Include .pdf figures using the \includegraphics
+%      command, an example of which are given below.
+%
+% (4) Use file names which begin with the surname of the first author.
+%
+% (5) When creating labels for cross-references, please start always
+%     by surname of the first author, e.g., \label{smith:likelihood}
+%
+% (6) The template below contains some example materials
+%      to guide you through the preparation of your paper.  However,
+%      remove all the redundant material from your final document
+%      before submitting.
+
+% The guidelines above are needed in order to be able to combine all
+% the papers into a single proceedings book of acceptable quality.
+% Please follow the guidelines as strictly as possible. Deviations may
+% result in papers being either refused by the registration form
+% or sent back to the authors with the request to change
+% their documents according to the guidelines.
+
+% Special characters:
+% Please do not use special characters (e.g., accents).
+% Use TeX composition instead, such as \~n, \'a, \`e, \v{s}, \r{u} etc.
+
+% Changes as of IWSM 2013:
+%  * \usepackage{booktabs} added which allows \toprule et al. in the tabular environment
+%    (\hline\hline is not longer used)
+%  * '^\T' added in iwsm.sty to denote transposed vectors and matrices within math (see example below)
+%  * \usepackage{amsmath, amssymb} introduced since IWSM 2012 is allowed (allowing usage of boldsymbols
+%    and other handy constructions (align, pmatrix etc.) within math)
+%  * \usepackage{psfrag} introduced since IWSM 2012 is NOT allowed
+%
+%
+
+%***********************************************************************
+% PLEASE LEAVE THIS PART UNCHANGED
+%***********************************************************************
+
+\documentclass[twoside]{report}
+\usepackage{iwsm}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+
+% Please do not specify any new definitions, any new commands,
+% and do not specify any style parameters.
+% The preamble of the document should be left unchanged.
+
+\begin{document}
+
+%***********************************************************************
+% PLEASE INSERT YOUR CONTENT FROM HERE
+%***********************************************************************
+
+% Title and running title to be used as left header:
+\title{Distributional Trees for Circular Data}
+\titlerunning{Distributional Trees for Circular Data}
+
+% Authors and running list of authors to be used as right header:
+\author{Lisa Schlosser\inst{1}, Moritz N. Lang\inst{1}, Achim Zeileis\inst{1}}
+\authorrunning{Schlosser et al.}    %% use \authorrunning{Surname 1} if only 1 author
+                                    %% use \authorrunning{Surname 1 and Surname2} if two authors
+                                    %% use \authorrunning{Surname 1 et al.} if more than two authors
+
+% Institutes of all authors
+% Include city and country of each institute, do not include the full address.
+\institute{University of Innsbruck, Austria}
+
+% E-mail of presenting author for correspondence
+\email{Lisa.Schlosser@uibk.ac.at}
+
+% Brief abstract of the paper:
+\abstract{\textit{TO DO}}
+
+% Keywords (at most 5):
+\keywords{Distributional trees; Circular response; von Mises distribution.}
+
+% Produce the title:
+\maketitle
+
+%***********************************************************************
+
+% Sections and subsections (do not use lower levels):
+
+\section{Motivation}
+Circular response variables occur in a variety of applications and subject areas. E.g., gun crime
+data on a $24$-hour scale is analysed in the social-economics, animal orientation or gene-structure
+analysis are often subject of examination in biology, and wind data is one of the most important weather variables in meteorology.
+
+
+\section{Methodology}
+
+\subsection{von Mises Distribution}
+A commonly chosen distribution to model circular data is the von Misis distribution
+which is also known as the circular normal distribution. Its density function is given by
+\begin{equation}
+  f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
+\end{equation}
+with a location parameter $\mu$, a dispersion parameter $\kappa$, and $I_0(\kappa)$ being the 
+modified Bessel function of the first kind and order $0$.
+For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
+a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
+to the variance $\sigma^2$ of the normal distribution.
+
+
+\subsection{Distributional Trees}
+Distributional trees (Schlosser et. al, 2018) embed distributional modeling such as
+provided by generalized additive models for location, scale, and shape 
+(GAMLSS, Rigby et. al, 2005) into the framework of regression trees (Breiman et. al, 1984)
+by applying one of the unbiased recursive partitioning algorithms MOB (Hothorn et. al, 2006) 
+and CTree (Zeileis et. al, 2008). 
+
+In the here discussed application the prespecified distribution family is the von Mises distribution. Starting at the root of the tree, i.e. the first node containing the complete data, the corresponding distribution parameter vector $\theta = (\mu,\kappa)$ is estimated via maximum likelihood, i.e. by maximizing $l(y, \theta) = log(f_{vM}(y;\theta))$. To evaluate the goodness of fit model scores are calculated by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
+In that way a tree model is provided specifying a distributional model in each of its nodes.
+
+
+\section{Data}
+
+\textit{TO DO}
+
+\bigskip
+
+\section{Application}
+
+\textit{TO DO}
+
+\bigskip
+
+%***********************************************************************
+
+% Tables can be included at any place in the text.
+% As general format, use tables with horizontal lines only
+% (i.e., no vertical lines separating columns).
+% Start and end each table with a double horizontal line.
+% Tables are incorporated using a table environment:
+
+%\begin{table}[!ht]\centering
+% A caption is put above the table and a label is defined
+% to be used for reference to this specific table.
+% Use labels which are very unlikely to be used by
+% other contributors; for example, use labels starting
+% with the surname of the first author.
+%\caption{\label{smith:tab1} Caption text \textbf{ABOVE} the table.}
+% A table with three columns, where the first is left aligned,
+% the second has centred entries, and the third is right aligned,
+% is generated as follows (note: if requested, use \cmidrule{} instead of \cline{})
+%\medskip
+%\begin{tabular}{lcr}
+% First line:
+%\toprule[0.09 em]
+% The body of the table:
+%Title col1 & Title col2 & Title col3 \\
+%\midrule
+%row1 col1  & row1 col2  & row1 col3  \\
+%row2 col1  & row2 col2  & row2 col3  \\ %
+%row3 col1  & row3 col2  & row3 col3  \\
+% last line:
+%\bottomrule[0.09 em]
+%\end{tabular}
+%\end{table}
+
+% In the text, reference to the Table can be made as follows:
+%We refer to Table~\ref{smith:tab1} for a summary of our main results. Have a look to Table~\ref{smith:tab2} for
+%an additional example.
+
+%\begin{table}[!ht]\centering
+%\caption{\label{smith:tab2} Caption text \textbf{ABOVE} the table.}
+%\medskip
+%\begin{tabular}{lcr}
+% First line:
+%\toprule[0.09 em]
+% The body of the table:
+%  &\multicolumn{2}{c}{Title  for cols 2 -3} \\
+%\cmidrule{2-3} %
+%Title1 & Title2 & Title3 \\
+%\midrule
+%& $a$  & $c$ \\
+%& $b$  & $d$ \\ %
+%\midrule[0 em]
+%Total  & $a+b$  & $n$  \\
+% last line:
+%\bottomrule[0.09 em]
+%\end{tabular}
+%\end{table}
+
+
+
+%***********************************************************************
+
+% Figures can be included at any place in the text.
+% The only allowed formats for figures are pdf files.
+%
+% Please, do not include figures in any other format.
+%
+% Use file names which are very unlikely to be used by
+% other contributors; for example, use file names starting
+% with the surname of the first author.
+% Figures are incorporated using a figure environment:
+% Make sure you specify the extension of the file (pdf)
+
+%Finally a figure (in \verb|.pdf|!)
+
+%\begin{figure}[!ht]\centering
+% You can pre-specify the width of the graph:
+%\includegraphics[width=8cm]{circmax-004.pdf}
+% Below the figure, a caption is put, and a label is defined
+% to be used for reference to this specific figure.
+% Use labels which are very unlikely to be used by
+% other contributors; for example, use labels starting
+% with the surname of the first author.
+%\caption{\label{fig:circtree} Fitted distribution tree for a circular response employing the von Mises distribution.}
+%\end{figure}
+
+
+% In the text, reference to the Figure can be made as follows:
+%We refer to Figure~\ref{smith:fig1} for a~graphical representation.
+
+
+%***********************************************************************
+
+% Acknowledgments, if needed:
+%\acknowledgments{Special Thanks to ... }
+
+%***********************************************************************
+
+% References should be placed in the text in author (year) form.
+% The list of references should be placed below IN ALPHABETICAL ORDER.
+% (Please follow the format of the examples very tightly).
+
+\references
+\begin{description}
+\item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
+     Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
+     {\it working paper}.
+\item[Hothorn, T., Hornik, K., and Zeileis, A.] (2006).
+     Unbiased Recursive Partitioning: A Conditional Inference Framework.
+     {\it Journal of Computational and Graphical Statistics}, {\bf 15}, 3,
+     651\,--\,674. 
+\item[Zeileis, A., Hothorn, T., and Hornik, K.] (2008).
+     Model-Based Recursive Partitioning.
+     {\it Journal of Computational and Graphical Statistics}, {\bf 17}, 2,
+     492\,--\,514. 
+     
+\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
+     Classification and Regression Trees.
+     {\it Wadsworth}.
+
+\item[Rigby, R. A., and Stasinopoulos, D. M.] (2005).
+     Generalized Additive Models for Location Scale and Shape (with Discussion).
+     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
+     507\,--\,554. 
+     
+\end{description}
+
+\end{document}
