@@ -100,10 +100,22 @@
 % Sections and subsections (do not use lower levels):
 
 \section{Motivation}
-Circular response variables occur in a variety of applications and subject areas. E.g., gun crime
-data on a $24$-hour scale is analysed in the social-economics, animal orientation or gene-structure
-analysis are often subject of examination in biology, and wind data is one of the most important weather variables in meteorology.
+Circular response variables occur in a variety of applications and subject areas. 
+For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
+animal orientation or gene-structure analysis are often subject of examination in biology, 
+and wind direction is one of the most important weather variables in meteorology.
 
+One way to represent such a two-dimensional direction is by considering angles in a
+unity circle. This requires specifying a starting point (angle 0) and defining
+either a clockwise or anti-clockwise rotation. However, these settings can vary
+and hence should not influence statistical inference from a fitted model.
+For that reason circular data demands for purpose-built statistical methods. 
+One common way of modelling circular data is to apply the von Mises distribution 
+which is often regarded as the circular analog of the normal distribution. 
+Estimating its two distribution parameter by linear functions of regressors is
+a possible approach, however, might not be able to detect abrupt effects.
+As an alternative  we propose the application of distributional trees to
+model wind directions based on a set of regression variables.
 
 \section{Methodology}
 
@@ -123,25 +135,41 @@ to the variance $\sigma^2$ of the normal distribution.
 \subsection{Distributional Trees}
 Distributional trees (Schlosser et. al, 2018) embed distributional modeling such as
 provided by generalized additive models for location, scale, and shape 
-(GAMLSS, Rigby et. al, 2005) into the framework of regression trees (Breiman et. al, 1984)
-by applying one of the unbiased recursive partitioning algorithms MOB (Hothorn et. al, 2006) 
-and CTree (Zeileis et. al, 2008). 
+(GAMLSS, Rigby et. al, 2005) into the framework of regression trees (Breiman et. al, 1984).
+In particular one of the unbiased recursive partitioning algorithms MOB (Hothorn et. al, 2006) 
+and CTree (Zeileis et. al, 2008) is applied and a distributional model is fitted in each node 
+by estimating the parameters of a specified distribution family via maximum likeklihood.
+For each split the split variable is selected based on $p$-values from permutation or M-fluctuation 
+tests applied on model scores and each possible split variable. After choosing the split variable 
+showing the highest association to the goodness of fit of the model the corresponding split point 
+which optimizes an objective function is selected in a separate step.
 
-In the here discussed application the prespecified distribution family is the von Mises distribution. Starting at the root of the tree, i.e. the first node containing the complete data, the corresponding distribution parameter vector $\theta = (\mu,\kappa)$ is estimated via maximum likelihood, i.e. by maximizing $l(y, \theta) = log(f_{vM}(y;\theta))$. To evaluate the goodness of fit model scores are calculated by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
-In that way a tree model is provided specifying a distributional model in each of its nodes.
+In the here discussed application the prespecified distribution family is the von Mises distribution. 
+The corresponding distribution parameter vector $\theta = (\mu,\kappa)$ is estimated 
+by maximizing $l(y, \theta) = log(f_{vM}(y;\theta))$ and model scores are calculated 
+by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
+
+%For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
 
 
-\section{Data}
-
-\textit{TO DO}
-
-\bigskip
 
 \section{Application}
 
 \textit{TO DO}
 
 \bigskip
+
+\section{Outlook}
+
+While the application of the von Mises distribution allows for modelling a circular response variable,
+additional adaptions have to made when including circular regressor variables in a distributional tree
+model. In particular, if the selected split variable is a circular variable this demands for finding
+not only one split point but a ``split intervall''. This extension is of interest for many applications,
+for example in order to include day time as a regressor variable when modelling wind directions.
+
+
+\bigskip
+
 
 %***********************************************************************
 
@@ -246,27 +274,39 @@ In that way a tree model is provided specifying a distributional model in each o
 
 \references
 \begin{description}
-\item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
-     Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
-     {\it working paper}.
+
+\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
+     Classification and Regression Trees.
+     {\it Wadsworth}.
+
 \item[Hothorn, T., Hornik, K., and Zeileis, A.] (2006).
      Unbiased Recursive Partitioning: A Conditional Inference Framework.
      {\it Journal of Computational and Graphical Statistics}, {\bf 15}, 3,
      651\,--\,674. 
+
+\item[Jammalamadaka, S. R., and Sengupta, A.] (2001).
+     Topics in Circular Statistics.
+     {\it World Scientific}, {\bf 5}. 
+
+\item[Mardia, K. V., and Jupp, P. E.] (2009).
+     Directional Statistics.
+     {\it John Wiley \& Sons}, {\bf 494}. 
+
+\item[Rigby, R. A., and Stasinopoulos, D. M.] (2005).
+     Generalized Additive Models for Location Scale and Shape (with Discussion).
+     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
+     507\,--\,554.
+
+\item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
+     Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
+     {\it working paper}.
+
 \item[Zeileis, A., Hothorn, T., and Hornik, K.] (2008).
      Model-Based Recursive Partitioning.
      {\it Journal of Computational and Graphical Statistics}, {\bf 17}, 2,
      492\,--\,514. 
      
-\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
-     Classification and Regression Trees.
-     {\it Wadsworth}.
 
-\item[Rigby, R. A., and Stasinopoulos, D. M.] (2005).
-     Generalized Additive Models for Location Scale and Shape (with Discussion).
-     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
-     507\,--\,554. 
-     
 \end{description}
 
 \end{document}
