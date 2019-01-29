@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-3 (2018-11-16)}{
+\section{Changes in Version 1.2-3 (2019-01-28)}{
  \subsection{New Features}{
     \itemize{
       \item{\code{varimp} runs in parallel mode, optionally.}
