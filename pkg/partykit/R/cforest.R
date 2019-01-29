@@ -108,6 +108,8 @@ cforest <- function
     } else {
         weights <- NULL
     }
+    rm(oweights)
+    rm(iweights)
     N <- nrow(model.frame(d))
     rw <- NULL
     if (!is.null(weights)) {
