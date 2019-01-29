@@ -104,16 +104,15 @@ Circular response variables occur in a variety of applications and subject areas
 For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
 animal orientation or gene-structure analysis are often subject of examination in biology, 
 and wind direction is one of the most important weather variables in meteorology.
-
-One way to represent such a two-dimensional direction is by considering angles in a
-unity circle. This requires specifying a starting point (angle 0) and defining
-either a clockwise or anti-clockwise rotation. However, these settings can vary
-and hence should not influence statistical inference from a fitted model.
+Representing such a two-dimensional direction by an angle in a unity circle requires 
+the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
+rotation. However, these settings can vary but should not influence statistical 
+inference from a fitted model.
 For that reason circular data demands for purpose-built statistical methods. 
 One common way of modelling circular data is to apply the von Mises distribution 
 which is often regarded as the circular analog of the normal distribution. 
-Estimating its two distribution parameter by linear functions of regressors is
-a possible approach, however, might not be able to detect abrupt effects.
+Estimating its two distribution parameter by linear functions of regressor variables 
+is a possible approach, however, might not be able to detect abrupt effects.
 As an alternative  we propose the application of distributional trees to
 model wind directions based on a set of regression variables.
 
