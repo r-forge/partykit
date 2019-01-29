@@ -1,5 +1,5 @@
 
-R version 3.5.1 (2018-07-02) -- "Feather Spray"
+R version 3.5.2 (2018-12-20) -- "Eggshell Igloo"
 Copyright (C) 2018 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -253,12 +253,12 @@ Sepal.Length  Sepal.Width Petal.Length  Petal.Width
 > stopifnot(isTRUE(all.equal(mean(m), sum(w * cars$dist) / sum(w))))
 > 
 > ### check parallel variable importance (make this reproducible)
-> RNGkind("L'Ecuyer-CMRG")
-> (v1 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2))
- Sepal.Width Petal.Length  Petal.Width 
-   0.0000000    0.2864583    0.1214286 
-> v2 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2)
-> stopifnot(all.equal(v1, v2))
+> if(.Platform$OS.type == "unix") {
++     RNGkind("L'Ecuyer-CMRG")
++     v1 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2)
++     v2 <- partykit::varimp(cf_partykit, risk = "misclass", conditional = TRUE, cores = 2)
++     stopifnot(all.equal(v1, v2))
++ }
 > 
 > ### check weights argument
 > cf_partykit <- partykit::cforest(Species ~ ., data = iris,
@@ -272,4 +272,4 @@ Sepal.Length  Sepal.Width Petal.Length  Petal.Width
 > 
 > proc.time()
    user  system elapsed 
-  6.468   0.296   6.316 
+  5.245   0.192   5.095 
