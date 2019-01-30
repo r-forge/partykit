@@ -74,14 +74,20 @@
 \titlerunning{Distributional Trees for Circular Data}
 
 % Authors and running list of authors to be used as right header:
-\author{Lisa Schlosser\inst{1}, Moritz N. Lang\inst{1}, Achim Zeileis\inst{1}}
+\author{Lisa Schlosser\inst{1}, 
+Moritz N. Lang\inst{1},
+Torsten Hothorn\inst{2},
+Georg J. Mayr\inst{1},
+Reto Stauffer\inst{1},
+Achim Zeileis\inst{1}}
 \authorrunning{Schlosser et al.}    %% use \authorrunning{Surname 1} if only 1 author
                                     %% use \authorrunning{Surname 1 and Surname2} if two authors
                                     %% use \authorrunning{Surname 1 et al.} if more than two authors
 
 % Institutes of all authors
 % Include city and country of each institute, do not include the full address.
-\institute{University of Innsbruck, Austria}
+\institute{University of Innsbruck, Austria
+\and University of Zurich, Switzerland}
 
 % E-mail of presenting author for correspondence
 \email{Lisa.Schlosser@uibk.ac.at}
@@ -90,7 +96,7 @@
 \abstract{\textit{TO DO}}
 
 % Keywords (at most 5):
-\keywords{Distributional trees; Circular response; von Mises distribution.}
+\keywords{Distributional trees; Circular response; Von Mises distribution.}
 
 % Produce the title:
 \maketitle
@@ -108,19 +114,25 @@ Representing such a two-dimensional direction by an angle in a unity circle requ
 the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
 rotation. However, these settings can vary but should not influence statistical 
 inference from a fitted model.
-For that reason circular data demands for purpose-built statistical methods. 
+For that reason circular data demand for purpose-built statistical methods. 
 One common way of modelling circular data is to apply the von Mises distribution 
 which is often regarded as the circular analog of the normal distribution. 
-Estimating its two distribution parameter by linear functions of regressor variables 
-is a possible approach, however, might not be able to detect abrupt effects.
-As an alternative  we propose the application of distributional trees to
-model wind directions based on a set of regression variables.
+Estimating its two distribution parameters by generalized additive models 
+using a set of regressor variables is one possible approach that can be successful 
+in various settings.
+As an alternative we propose the application of distributional trees 
+which are capable of detecting also non-additive effects and provide easily interpretable 
+models allowing for a wide range of inference procedures.
+Moreover, covariates and their possible interactions are selected automatically
+such that no expert knowledge is required to specify the model in advance.
 
 \section{Methodology}
 
-\subsection{von Mises Distribution}
-A commonly chosen distribution to model circular data is the von Misis distribution
-which is also known as the circular normal distribution. Its density function is given by
+\subsection{Von Mises Distribution}
+A commonly chosen distribution to model circular data is the von Mises distribution
+which is also known as the circular normal distribution 
+(Jammalamadaka and Sengupta, 2001; Mardia an dJupp, 2009). 
+Its density function is given by
 \begin{equation}
   f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 \end{equation}
@@ -134,19 +146,24 @@ to the variance $\sigma^2$ of the normal distribution.
 \subsection{Distributional Trees}
 Distributional trees (Schlosser et. al, 2018) embed distributional modeling such as
 provided by generalized additive models for location, scale, and shape 
-(GAMLSS, Rigby et. al, 2005) into the framework of regression trees (Breiman et. al, 1984).
-In particular one of the unbiased recursive partitioning algorithms MOB (Hothorn et. al, 2006) 
-and CTree (Zeileis et. al, 2008) is applied and a distributional model is fitted in each node 
-by estimating the parameters of a specified distribution family via maximum likeklihood.
+(GAMLSS, Rigby and Stasinopoulos, 2005) into the framework of regression trees (Breiman et. al, 1984).
+In particular one of the unbiased recursive partitioning algorithms MOB (Zeileis et. al, 2008) 
+and CTree (Hothorn et. al, 2006) is applied and a distributional model is fitted in each node 
+by estimating the parameters of a specified distribution family via maximum likelihood.
 For each split the split variable is selected based on $p$-values from permutation or M-fluctuation 
 tests applied on model scores and each possible split variable. After choosing the split variable 
 showing the highest association to the goodness of fit of the model the corresponding split point 
 which optimizes an objective function is selected in a separate step.
 
-In the here discussed application the prespecified distribution family is the von Mises distribution. 
+In the here discussed application the MOB algorithm is applied and the prespecified 
+distribution family is the von Mises distribution. 
 The corresponding distribution parameter vector $\theta = (\mu,\kappa)$ is estimated 
 by maximizing $l(y, \theta) = log(f_{vM}(y;\theta))$ and model scores are calculated 
-by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
+by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. In that way
+a value indicating the goodness of fit is provided for each parameter and observation
+such that changes can be detected not only in the location parameter $\mu$ but also in the 
+dispersion parameter $\kappa$.
+
 
 %For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
 
@@ -161,10 +178,16 @@ by $s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$.
 \section{Outlook}
 
 While the application of the von Mises distribution allows for modelling a circular response variable,
-additional adaptions have to made when including circular regressor variables in a distributional tree
+additional adaptions have to be made when including circular regressor variables in a distributional tree
 model. In particular, if the selected split variable is a circular variable this demands for finding
-not only one split point but a ``split intervall''. This extension is of interest for many applications,
-for example in order to include day time as a regressor variable when modelling wind directions.
+not only one split point but a ``split interval''. This consideration is of interest for many applications,
+for example when modelling wind directions it might be desirable to include day time or earlier 
+observations of wind directions as regressor variables.
+
+Another possible extension of the here presented methodology is to build not just one tree model but
+an ensemble of trees to regularize and stabilize the model 
+(see e.g. distributional forests, Schlosser et. al, 2018).
+
 
 
 \bigskip
