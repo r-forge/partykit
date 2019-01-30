@@ -171,9 +171,55 @@ dispersion parameter $\kappa$.
 
 \section{Application}
 
-\textit{TO DO}
+%\begin{figure}[!ht]\centering
+%\includegraphics[width = 1.\textwidth]{circtree_plot_small.pdf}
+%\caption{\label{fig:circtree} Fitted distribution tree for a circular response employing the von Mises distribution.}\label{fig:tree}
+%\end{figure}
 
-\bigskip
+Wind is a classical circular quantity and accurate forecasts of wind direction
+are of great importance for decision making processes and risk management,
+e.g., in air traffic management and renewable energy production. As a suitable
+and useful application of circular regression trees, we therefore forecast the
+wind direction at the airport of Innsbruck. As potential split variables we
+employ several 1-hourly lagged observed weather variables (e.g., wind speed,
+relative humidity, pressure) and derived spatial and temporal difference of
+these lagged observations.
+
+%Innsbruck lies with the west-east oriented Inn Valley with an approx. 2300\,m
+%high mountain ridge on the northern side and with the south-north oriented Wipp
+%Valley between the approx. 2300\,m high mountains on the southern side.
+%Therefore, skill full covariates are pressure differences along the Inn Valley
+%as indices for up- or down-valley winds. For the typical dry gap wind coming
+%from the south, indices are, e.g. low relative humidity or temperature
+%differences between Innsbruck and stations up the Wipp Valley.
+
+The weather station of interest, Innsbruck Airport, lies at the bottom of the
+Inn Valley, a deep mountain valley in the Eastern European Alps orientated
+parallel to the Alpine crest. At Innsbruck, the Inn Valley is bordered in the
+North with a approx. 2300\,m high mountain ridge and opens in the South into
+the crest-perpendicular Wipp Valley. Therefore, mainly three different wind
+regimes exist: Up-valley winds blowing from the valley mouth towards the upper
+valley (from east to west), down-valley winds blowing in the direction of the
+valley mouth (from west to east), and dry and warm downslope winds blowing
+across the Alpine crest along the Wipp Valley towards Innsbruck (from
+south-east to north-west).
+
+As an illustration of tree based forecasts of wind direction for Innsbruck Airport, a
+model based regression tree of depth two is shown in Fig.~\ref{fig:tree}.
+Winds typically blow from areas of high pressure to areas of low pressure. The
+first chosen split variable is therefore the pressure difference between
+Innsbruck and a station located near the valley mouth. In the left branch of
+the tree, with lower pressure in Innsbruck than at the valley mouth, the second
+split is performed on the pressure difference between Innsbruck a station
+further up the valley. This leads to the final \emph{Node~3} with low pressure
+gradients within the Inn Valley and, therefore, no clear partition in the wind
+direction. The final \emph{Node~4} contains measurements with a strong pressure
+gradient towards the upper Inn Valley leading to up-valley winds from east to
+west. The right branch of the tree is split in relative humidity as an index
+for the dry downslope winds. Therefore, for a low relative humidity winds from
+south-east to north-west are predominant in the final \emph{Node~6}. Whereas,
+the final \emph{Node~7} contains the cases with down-valley winds towards the
+valley mouth in the East.
 
 \section{Outlook}
 
