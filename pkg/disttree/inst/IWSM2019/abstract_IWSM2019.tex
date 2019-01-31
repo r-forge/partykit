@@ -207,38 +207,38 @@ Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
 e.g., in air traffic management and renewable energy production. As a suitable
 and useful application of circular regression trees, we therefore forecast the
-wind direction at the airport of Innsbruck. As potential split variables we
-employ several 1-hourly lagged observed weather variables (e.g., wind
-direction, wind speed, relative humidity, pressure) and derived spatial and
-temporal difference of these lagged observations.
-
-The weather station of interest, Innsbruck Airport, lies at the bottom of the
+wind direction at the airport of Innsbruck. Innsbruck lies at the bottom of the
 Inn Valley, a deep mountain valley in the Eastern European Alps orientated
-parallel to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered in the
-North with a approx. 2300\,m high mountain ridge and opens in the South into
-the crest-perpendicular Wipp Valley. Therefore, mainly three different wind
-regimes exist: Up-valley winds blowing from the valley mouth towards the upper
-valley (from east to west), down-valley winds blowing in the direction of the
-valley mouth (from west to east), and dry and warm downslope winds blowing
-across the Alpine crest along the Wipp Valley towards Innsbruck (from
-south-east to north-west).
+parallel to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is
+bordered in the North with a approx. 2300\,m high mountain ridge and opens in
+the South into the crest-perpendicular Wipp Valley. As potential split
+variables we employ several 1-hourly lagged observed weather variables (e.g.,
+wind direction, wind speed, relative humidity, pressure gradients along the
+valley) and derived spatial and temporal difference of these lagged
+observations. 
 
-As an illustration of tree based forecasts of wind direction for Innsbruck Airport, a
-model based regression tree of depth two is shown in Fig.~\ref{fig:tree}.
-Winds typically blow from areas of high pressure to areas of low pressure. The
-first chosen split variable is therefore the pressure difference between
-Innsbruck and a station located near the valley mouth. In the left branch of
-the tree, with lower pressure in Innsbruck than at the valley mouth, the second
-split is performed on the pressure difference between Innsbruck a station
-further up the valley. This leads to the final \emph{Node~3} with low pressure
-gradients within the Inn Valley and, therefore, no clear partition in the wind
-direction. The final \emph{Node~4} contains measurements with a strong pressure
-gradient towards the upper Inn Valley leading to up-valley winds from east to
-west. The right branch of the tree is split in relative humidity as an index
-for the dry downslope winds. Therefore, for a low relative humidity winds from
-south-east to north-west are predominant in the final \emph{Node~6}. Whereas,
-the final \emph{Node~7} contains the cases with down-valley winds towards the
-valley mouth in the East.
+As an illustration for the tree based forecast performance of predicting wind
+directions at Innsbruck airport, a BIC based post-pruned regression tree of
+depth three is shown in Fig.~\ref{fig:tree}. According to the fitted von Mises
+distributions three distinct wind regimes: Firstly, up-valley winds blowing
+from the valley mouth towards the upper valley (from east to west) as shown in
+the final nodes 4 and 5. Secondly, downslope winds blowing across the Alpine
+crest along the Wipp Valley towards Innsbruck (from south-east to north-west)
+as predicted in nodes 7 and 8. Thirdly, down-valley winds blowing in the
+direction of the valley mouth (from west to east) present in nodes 12, 14, and
+15. The final node 11 with a density parameter $\kappa$ of $0.84$ captures the
+cases with rather low wind speeds and therefore no clear wind direction.
+Generally, the splits in the lagged wind direction perform a clustering into
+the different wind regimes. As winds typically blow from areas of high pressure
+to areas of low pressure and have larger wind speeds in case of stronger
+pressure gradients, these respective splits in pressure gradients and wind
+speed divide the predictions according to the stability of the lagged wind
+direction. As an example node 3 differentiates in the pressure difference along
+the valley, and the cases with a stronger pressure gradient have a higher
+fitted $\kappa$ as indicator for the stability of the forecast. In other words,
+in final nodes with a higher $\kappa$ most training cases are classified
+correctly and therefore the density parameter is an indicator for the
+uncertainty of the forecast. 
 
 \section{Outlook}
 
