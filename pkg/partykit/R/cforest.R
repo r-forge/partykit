@@ -104,7 +104,11 @@ cforest <- function
     probw <- NULL
     iweights <- model.weights(model.frame(d))
     if (!is.null(oweights)) {
-        weights <- oweights[iweights,,drop = FALSE]
+        if (is.matrix(oweights)) {
+            weights <- oweights[iweights,,drop = FALSE]
+        } else {
+            weights <- oweights[iweights]
+        }
     } else {
         weights <- NULL
     }
