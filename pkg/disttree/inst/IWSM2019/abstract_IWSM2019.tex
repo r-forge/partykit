@@ -93,7 +93,21 @@ Achim Zeileis\inst{1}}
 \email{Lisa.Schlosser@uibk.ac.at}
 
 % Brief abstract of the paper:
-\abstract{\textit{TO DO}}
+\abstract{Circular response variables occur in a variety of applications, e.g., when
+geographical directions are considered or measurements are taken on a $24$-hour scale. 
+A commonly chosen distribution for modeling circular data is the von Mises distribution.
+As an alternative to estimating its distribution parameters by generalized additive models 
+we propose the application of distributional trees which are capable of detecting also 
+non-additive effects, select covariates and their possible interactions automatically and 
+provide easily interpretable models allowing for a wide range of inference procedures. 
+This approach is illustrated in an application to wind directions with a set of meteorological
+covariates, all measured at the airport of Innsbruck, Austria.}
+
+
+%which are capable of detecting also non-additive effects and provide easily interpretable 
+%models allowing for a wide range of inference procedures.
+%Moreover, covariates and their possible interactions are selected automatically
+%such that no expert knowledge is required to specify the model in advance.
 
 % Keywords (at most 5):
 \keywords{Distributional trees; Circular response; Von Mises distribution.}
@@ -105,24 +119,24 @@ Achim Zeileis\inst{1}}
 
 % Sections and subsections (do not use lower levels):
 
-\section{Motivation}
-Circular response variables occur in a variety of applications and subject areas. 
-For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
-animal orientation or gene-structure analysis are often subject of examination in biology, 
-and wind direction is one of the most important weather variables in meteorology.
-Representing such a two-dimensional direction by an angle in a unity circle requires 
-the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
-rotation. However, these settings can vary but should not influence statistical 
-inference from a fitted model.
-For that reason circular data demand for purpose-built statistical methods. 
-A commonly chosen distribution for modeling circular data is the von Mises distribution.
-Estimating its two distribution parameters by generalized additive models using a set of 
-regressor variables is one possible approach that can be successful in various settings.
-As an alternative we propose the application of distributional trees 
-which are capable of detecting also non-additive effects and provide easily interpretable 
-models allowing for a wide range of inference procedures.
-Moreover, covariates and their possible interactions are selected automatically
-such that no expert knowledge is required to specify the model in advance.
+%\section{Motivation}
+%Circular response variables occur in a variety of applications and subject areas. 
+%For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
+%animal orientation or gene-structure analysis are often subject of examination in biology, 
+%and wind direction is one of the most important weather variables in meteorology.
+%Representing such a two-dimensional direction by an angle in a unity circle requires 
+%the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
+%rotation. However, these settings can vary but should not influence statistical 
+%inference from a fitted model.
+%For that reason circular data demand for purpose-built statistical methods. 
+%A commonly chosen distribution for modeling circular data is the von Mises distribution.
+%Estimating its two distribution parameters by generalized additive models using a set of 
+%regressor variables is one possible approach that can be successful in various settings.
+%As an alternative we propose the application of distributional trees 
+%which are capable of detecting also non-additive effects and provide easily interpretable 
+%models allowing for a wide range of inference procedures.
+%Moreover, covariates and their possible interactions are selected automatically
+%such that no expert knowledge is required to specify the model in advance.
 
 \section{Methodology}
 
@@ -141,11 +155,11 @@ such that no expert knowledge is required to specify the model in advance.
 
 
 %\subsection{Distributional Trees}
-%Distributional trees~(Schlosser et. al, 2018) embed distributional modeling into the framework 
-%of regression trees.
-Distributional trees~(Schlosser et. al, 2018) embed distributional modeling such as
-provided by generalized additive models for location, scale, and shape~(GAMLSS, 
-Rigby and Stasinopoulos, 2005) into the framework of regression trees~(Breiman et. al, 1984).
+Distributional trees~(Schlosser et. al, 2018) embed distributional modeling into the framework 
+of regression trees.
+%Distributional trees~(Schlosser et. al, 2018) embed distributional modeling such as
+%provided by generalized additive models for location, scale, and shape~(GAMLSS, 
+%Rigby and Stasinopoulos, 2005) into the framework of regression trees~(Breiman et. al, 1984).
 In particular one of the unbiased recursive partitioning algorithms MOB~(Zeileis et. al, 2008) 
 and CTree~(Hothorn et. al, 2006) is applied and a distributional model is fitted in each node 
 by estimating the parameters of a specified distribution family via maximum likelihood.
@@ -159,20 +173,20 @@ normal distribution. Its density function is given by
 \begin{equation}
   f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 \end{equation}
-with a location parameter $\mu$, a dispersion parameter $\kappa$, and $I_0(\kappa)$ being the 
+with location parameter $\mu$, dispersion parameter $\kappa$, and $I_0(\kappa)$ being the 
 modified Bessel function of the first kind and order $0$.
-For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
-a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
-to the variance $\sigma^2$ of the normal distribution. 
-(See e.g., Jammalamadaka and Sengupta (2001) or Mardia and Jupp (2009) for a more detailed overview.)
-The distribution parameter vector $\theta = (\mu,\kappa)$ is estimated 
-by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$ and model scores are calculated 
-by 
-$s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa}}{\partial \mu},
-\frac{\partial l(y, \hat{\mu}, \hat{\kappa}}{\partial \kappa}\right)$. 
+%For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
+%a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
+%to the variance $\sigma^2$ of the normal distribution. 
+(See e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview.)
+
+In each node the distribution parameters $\mu$ and $\kappa$ are 
+%vector $\theta = (\mu,\kappa)$ is 
+estimated by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$ and model scores are calculated by 
+$s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \mu},
+\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$. 
 %$s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
-In that way
-a value indicating the goodness of fit is provided for each parameter and observation
+In that way a value indicating the goodness of fit is provided for each parameter and observation
 such that changes can be detected not only in the location parameter $\mu$ but also in the 
 dispersion parameter $\kappa$.
 
@@ -183,10 +197,10 @@ dispersion parameter $\kappa$.
 
 \section{Application}
 
-\begin{figure}[!ht]\centering
-\includegraphics[width = 1.\textwidth]{circtree_plot_small.pdf}
-\caption{\label{fig:circtree} Fitted distribution tree for a circular response employing the von Mises distribution.}\label{fig:tree}
-\end{figure}
+%\begin{figure}
+%\includegraphics[height = 0.5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
+%\caption{\label{fig:circtree} Fitted distribution tree for a circular response employing the von Mises %distribution.}\label{fig:tree}
+%\end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
@@ -197,13 +211,13 @@ employ several 1-hourly lagged observed weather variables (e.g., wind speed,
 relative humidity, pressure) and derived spatial and temporal difference of
 these lagged observations.
 
-%Innsbruck lies with the west-east oriented Inn Valley with an approx. 2300\,m
-%high mountain ridge on the northern side and with the south-north oriented Wipp
-%Valley between the approx. 2300\,m high mountains on the southern side.
-%Therefore, skill full covariates are pressure differences along the Inn Valley
-%as indices for up- or down-valley winds. For the typical dry gap wind coming
-%from the south, indices are, e.g. low relative humidity or temperature
-%differences between Innsbruck and stations up the Wipp Valley.
+Innsbruck lies with the west-east oriented Inn Valley with an approx. 2300\,m
+high mountain ridge on the northern side and with the south-north oriented Wipp
+Valley between the approx. 2300\,m high mountains on the southern side.
+Therefore, skill full covariates are pressure differences along the Inn Valley
+as indices for up- or down-valley winds. For the typical dry gap wind coming
+from the south, indices are, e.g. low relative humidity or temperature
+differences between Innsbruck and stations up the Wipp Valley.
 
 The weather station of interest, Innsbruck Airport, lies at the bottom of the
 Inn Valley, a deep mountain valley in the Eastern European Alps orientated
@@ -236,15 +250,21 @@ valley mouth in the East.
 %\bigskip
 \section{Outlook}
 
-While the application of the von Mises distribution allows for modeling a circular response variable,
-additional adaptions have to be made when including circular regressor variables in a distributional tree
-model. In particular, if the selected split variable is a circular variable this demands for finding
-not only one split point but a ``split interval''. This consideration is of interest for many applications,
-for example when modeling wind directions it might be desirable to include day time or earlier 
-observations of wind directions as regressor variables.
+This application shows that including covariates such as day time or earlier observations 
+of wind directions as (unordered) factors provides valuable information. However, in order 
+to properly account not only for the circularity of the response but also of regressors, 
+additional adaptions of distributional trees are required. 
+In particular, if the selected split variable is a circular variable this demands for 
+finding a ``split interval'' instead of a split point.
+%While the application of the von Mises distribution allows for modeling a circular response variable,
+%additional adaptions have to be made when including circular regressor variables in a distributional tree
+%model. In particular, if the selected split variable is a circular variable this demands for finding
+%not only one split point but a ``split interval''. This consideration is of interest for many applications,
+%for example when modeling wind directions it might be desirable to include day time or earlier 
+%observations of wind directions as regressor variables.
 
-Another possible extension of the here presented methodology is to build not just one tree model but
-an ensemble of trees to regularize and stabilize the model 
+Another possible extension of the here presented methodology is to build not just one tree 
+model but an ensemble of trees to regularize and stabilize the model 
 (see e.g. distributional forests, Schlosser et. al, 2018).
 
 
@@ -356,9 +376,9 @@ an ensemble of trees to regularize and stabilize the model
 \references
 \begin{description}
 
-\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
-     Classification and Regression Trees.
-     {\it Wadsworth}.
+%\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
+%     Classification and Regression Trees.
+%     {\it Wadsworth}.
 
 \item[Hothorn, T., Hornik, K., and Zeileis, A.] (2006).
      Unbiased Recursive Partitioning: A Conditional Inference Framework.
@@ -369,18 +389,18 @@ an ensemble of trees to regularize and stabilize the model
      Topics in Circular Statistics.
      {\it World Scientific}, {\bf 5}. 
 
-\item[Mardia, K. V., and Jupp, P. E.] (2009).
-     Directional Statistics.
-     {\it John Wiley \& Sons}, {\bf 494}. 
+%\item[Mardia, K. V., and Jupp, P. E.] (2009).
+%     Directional Statistics.
+%     {\it John Wiley \& Sons}, {\bf 494}. 
 
-\item[Rigby, R. A., and Stasinopoulos, D. M.] (2005).
-     Generalized Additive Models for Location Scale and Shape (with Discussion).
-     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
-     507\,--\,554.
+%\item[Rigby, R. A., and Stasinopoulos, D. M.] (2005).
+%     Generalized Additive Models for Location Scale and Shape (with Discussion).
+%     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
+%     507\,--\,554.
 
 \item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
      Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
-     {\it arXiv.org E-Print Archive}, arXiv 1804.02921, \url{http://arxiv.org/abs/1804.02921}
+     {\it arXiv.org E-Print Archive}, https://arxiv.org/abs/1804.02921v2.
 
 \item[Zeileis, A., Hothorn, T., and Hornik, K.] (2008).
      Model-Based Recursive Partitioning.
