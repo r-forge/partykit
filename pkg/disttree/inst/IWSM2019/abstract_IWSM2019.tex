@@ -86,24 +86,21 @@ Achim Zeileis\inst{1}}
 
 % Institutes of all authors
 % Include city and country of each institute, do not include the full address.
-\institute{University of Innsbruck, Austria
-\and University of Zurich, Switzerland}
+\institute{Universit\"at Innsbruck, Austria
+\and Universit\"at Z\"urich, Switzerland}
 
 % E-mail of presenting author for correspondence
 \email{Lisa.Schlosser@uibk.ac.at}
 
 % Brief abstract of the paper:
 \abstract{
-%Circular response variables occur in a variety of applications, e.g., when
-%geographical directions are considered or measurements are taken on a $24$-hour scale.
-A commonly chosen distribution for modeling circular data is the von Mises distribution.
-As an alternative to estimating its distribution parameters by generalized additive models 
-we propose the application of distributional trees which are capable of detecting also 
-non-additive effects, select covariates and their possible interactions automatically and 
-provide easily interpretable models allowing for a wide range of inference procedures. 
-This approach is illustrated by an application of distributional trees on hourly wind 
-direction forecasts with a set of meteorological covariates, all measured at the airport 
-of Innsbruck, Austria.
+For probabilistic modeling of circular data the von Mises distribution is widely used.
+To capture how its parameters change with covariates, a regression tree model
+is proposed as an alternative to more commonly-used additive models. The resulting
+distributional trees are easy to interpret, can detect non-additive effects, and select
+covariates along with interactions automatically. For illustration, hourly wind 
+direction forecasts are obtained at Innsbruck Airport based on a set of meteorological
+measurements.
 }
 
 
@@ -142,7 +139,7 @@ of Innsbruck, Austria.
 %The von Mises distribution is also known as the circular normal distribution 
 %and its density function is given by
 %\begin{equation}
-%  f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
+%  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 %\end{equation}
 %with a location parameter $\mu$, a conentration parameter $\kappa$, and $I_0(\kappa)$ being the 
 %modified Bessel function of the first kind and order $0$.
@@ -152,52 +149,39 @@ of Innsbruck, Austria.
 %See e.g., Jammalamadaka and Sengupta (2001) or Mardia and Jupp (2009) for a more detailed overview.
 
 
-%\subsection{Distributional Trees}
-Distributional trees~(Schlosser et. al, 2018) embed distributional modeling into the framework 
-of regression trees.
-%Distributional trees~(Schlosser et. al, 2018) embed distributional modeling such as
-%provided by generalized additive models for location, scale, and shape~(GAMLSS, 
-%Rigby and Stasinopoulos, 2005) into the framework of regression trees~(Breiman et. al, 1984).
-The basic idea is to partition the covariate space recursively into subgroups 
-such that a homogeneous distributional model can be fit to the response in each resulting subgroup.
-In particular, one of the unbiased recursive partitioning algorithms MOB~(Zeileis et. al, 2008) 
-and CTree~(Hothorn et. al, 2006) is applied and in each node the parameters of a specified 
-distribution family are estimated via maximum likelihood.
-For each split the split variable is selected based on $p$-values from permutation or M-fluctuation 
-tests evaluating associations between model scores and each possible split variable. After choosing 
-the split variable showing the highest association to the goodness of fit of the model the corresponding split point is selected in a separate step, either by optimizing the log-likelihood function (MOB)
-or by evaluating a linear two-sample statistic (CTree) over all possible partitions.
+Distributional trees~(Schlosser et.~al, 2018) fuse distributional regression modeling with
+regression trees based on the unbiased recursive partitioning algorithms MOB~(Zeileis et.~al, 2008)
+or CTree~(Hothorn et.~al, 2006). The basic idea is to partition the covariate space recursively into subgroups 
+such that an (approximately) homogeneous distributional model can be fitted to the response in each resulting subgroup.
+To capture dependence on covariates, the association between the model's scores and each available
+covariate is assessed using either a parameter instability test (MOB) or a permutation test (CTree).
+In each partitioning step, the covariate with the highest significant association (i.e., lowest
+significant $p$-value, if any) is selected for splitting the data. The corresponding split point
+is chosen either by optimizing the log-likelihood (MOB) or a two-sample test statistic (CTree)
+over all possible partitions.
 
-In this study distributional trees are applied to circular response data employing the MOB algorithm
-and the von Mises distribution which is also known as the circular 
-normal distribution. Its density function is given by
+In this study distributional trees are adapted to circular responses by employing the von Mises
+distribution, also known as ``the circular normal distribution''. Based on a location parameter
+$\mu \in \mathbb{R}$ and a concentration parameter $\kappa > 0$ the density for $y \in [0, 2 \pi]$
+is given by:
 \begin{equation}
-  f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
+  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 \end{equation}
-with location parameter $\mu$, conentration parameter $\kappa$, and $I_0(\kappa)$ being the 
-modified Bessel function of the first kind and order $0$
-%For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
-%a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
-%to the variance $\sigma^2$ of the normal distribution. 
+where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$
 (see, e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview).
 
-In each node of the tree the distribution parameters $\mu$ and $\kappa$ are 
-%vector $\theta = (\mu,\kappa)$ is 
-estimated by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$. 
-For the resulting estimators $\hat{\mu}$ and $\hat{\kappa}$ model scores are calculated by  
-%$s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \mu},
-%\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$
-$s(y,\hat{\mu}, \hat{\kappa}) = (\partial_{\mu} l(y, \hat{\mu}, \hat{\kappa}),
-\partial_{\kappa}l(y, \hat{\mu}, \hat{\kappa}))$
-yielding a $n \times 2$-matrix for a data set of $n$ observations.
-%$s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
-In that way for each parameter a value indicating the goodness of fit with respect to one single 
-observation is provided such that changes can be detected not only in the location parameter $\mu$ 
-but also in the concentration parameter $\kappa$.
-
-
-%For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
-
+In each subgroup maximum likelihood estimators $\hat \mu$ and $\hat \kappa$ are obtained
+by maximizing the corresponding log-likelihood $\ell(\mu, \kappa; y) = \log(f_\mathrm{vM}(y;\mu, \kappa))$. 
+The model scores are calculated by  $s(y; \mu, \kappa) = (\partial_{\mu} \ell(\mu, \kappa; y),
+\partial_{\kappa} \ell(\mu, \kappa; y))$. In a subgroup of size $n$, evaluating the scores
+at the individual observations and parameter estimates $s(y_i; \hat{\mu}, \hat{\kappa})$
+yields an $n \times 2$ matrix that can be employed as a kind of residual, capturing how well
+a given observation conforms with the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, respectively.
+Hence MOB can test for parameter instabilities in the model by assessing whether the scores
+change along with the available covariates. If so, by maximimizing a partitioned likelihood
+the parameter instabilities are incorporated into the model. This procedure is repeated recursively
+until there are no significant parameter instabilities or until a another stopping criterion
+is met (e.g., concerning subgroup sizes or depth of the tree).
 
 
 \section{Application}
@@ -212,7 +196,7 @@ Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
 e.g., in air traffic management or renewable energy production. This study
 presents an application of circular regression trees  on hourly direction
-forecasts at Innsbruck airport.  Innsbruck lies at the bottom of the Inn
+forecasts at Innsbruck Airport.  Innsbruck lies at the bottom of the Inn
 Valley, a deep mountain valley in the Eastern European Alps orientated parallel
 to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
 in the North with a approx. 2300\,m high mountain ridge and opens to the South
@@ -269,7 +253,7 @@ cluster the training data in corresponding wind directions.
 
 Another possible extension of the method as presented is to build an ensemble of 
 distributional trees to regularize and stabilize the model 
-(see, e.g., distributional forests, Schlosser et. al, 2018). 
+(see, e.g., distributional forests, Schlosser et.~al, 2018). 
 %In that way, it should not have a 
 %significant impact on the results whether circular covariates are included as linear regressors
 %yielding a larger number of splits or as circular regressors with ``intervall splits''.
