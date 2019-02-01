@@ -197,11 +197,11 @@ dispersion parameter $\kappa$.
 
 \section{Application}
 
-%\begin{figure}
-%\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
-%\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
-%\label{fig:tree}
-%\end{figure}
+\begin{figure}
+\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
+\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
+\label{fig:tree}
+\end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
@@ -217,28 +217,26 @@ wind direction, wind speed, relative humidity, pressure gradients along the
 valley) and derived spatial and temporal difference of these lagged
 observations. 
 
-As an illustration for the tree based forecast performance of predicting wind
-directions at Innsbruck airport, a BIC based post-pruned regression tree of
-depth three is shown in Fig.~\ref{fig:tree}. According to the fitted von Mises
-distributions three distinct wind regimes: Firstly, up-valley winds blowing
-from the valley mouth towards the upper valley (from east to west) as shown in
-the final nodes 4 and 5. Secondly, downslope winds blowing across the Alpine
-crest along the Wipp Valley towards Innsbruck (from south-east to north-west)
-as predicted in nodes 7 and 8. Thirdly, down-valley winds blowing in the
-direction of the valley mouth (from west to east) present in nodes 12, 14, and
-15. The final node 11 with a density parameter $\kappa$ of $0.84$ captures the
-cases with rather low wind speeds and therefore no clear wind direction.
-Generally, the splits in the lagged wind direction perform a clustering into
-the different wind regimes. As winds typically blow from areas of high pressure
-to areas of low pressure and have larger wind speeds in case of stronger
-pressure gradients, these respective splits in pressure gradients and wind
-speed divide the predictions according to the stability of the lagged wind
-direction. As an example node 3 differentiates in the pressure difference along
-the valley, and the cases with a stronger pressure gradient have a higher
-fitted $\kappa$ as indicator for the stability of the forecast. In other words,
-in final nodes with a higher $\kappa$ most training cases are classified
-correctly and therefore the density parameter is an indicator for the
-uncertainty of the forecast. 
+As an illustration of the tree based wind direction forecasts at Innsbruck airport, a
+BIC based post-pruned regression tree of depth three is shown in
+Fig.~\ref{fig:tree}. Three distinct wind regimes are fitted within the final
+nodes: Firstly, up-valley winds blowing from the valley mouth towards the upper
+valley (from east to west, as predicted in the final nodes 4 and 5). Secondly,
+downslope winds blowing across the Alpine crest along the Wipp Valley towards
+Innsbruck (from south-east to north-west, as predicted in nodes 7 and 8).
+Thirdly, down-valley winds blowing in the direction of the valley mouth (from
+west to east, as predicted in nodes 12, 14, and 15). The final node 11 with a
+concentration parameter $\kappa$ of only $0.84$ captures the cases with rather low
+wind speeds and typically no clear wind direction or distinct wind regime.
+In general, winds typically blow from areas of high pressure to areas of low
+pressure, and a strong pressure gradient leads to large wind speeds and a stable
+wind direction. Therefore, the splits in the lagged wind direction perform a
+clustering into the different wind regimes and the further splits in pressure
+gradients or wind speed divide the predictions according to the consistency of
+the lagged wind direction. This can be seen in the final nodes with strong
+pressure gradients or high wind speeds where most training cases are classified
+correctly and therefore the concentration parameter as an indicator of the
+certainty of the forecast is rather large. 
 
 \section{Outlook}
 
