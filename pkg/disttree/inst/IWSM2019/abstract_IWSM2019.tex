@@ -95,14 +95,16 @@ Achim Zeileis\inst{1}}
 % Brief abstract of the paper:
 \abstract{
 %Circular response variables occur in a variety of applications, e.g., when
-%geographical directions are considered or measurements are taken on a $24$-hour scale. 
+%geographical directions are considered or measurements are taken on a $24$-hour scale.
 A commonly chosen distribution for modeling circular data is the von Mises distribution.
 As an alternative to estimating its distribution parameters by generalized additive models 
 we propose the application of distributional trees which are capable of detecting also 
 non-additive effects, select covariates and their possible interactions automatically and 
 provide easily interpretable models allowing for a wide range of inference procedures. 
-This approach is illustrated in an application to wind directions with a set of meteorological
-covariates, all measured at the airport of Innsbruck, Austria.}
+This approach is illustrated by an application of distributional trees on hourly wind 
+direction forecasts with a set of meteorological covariates, all measured at the airport 
+of Innsbruck, Austria.
+}
 
 
 % Keywords (at most 5):
@@ -142,7 +144,7 @@ covariates, all measured at the airport of Innsbruck, Austria.}
 %\begin{equation}
 %  f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 %\end{equation}
-%with a location parameter $\mu$, a dispersion parameter $\kappa$, and $I_0(\kappa)$ being the 
+%with a location parameter $\mu$, a conentration parameter $\kappa$, and $I_0(\kappa)$ being the 
 %modified Bessel function of the first kind and order $0$.
 %For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
 %a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
@@ -166,30 +168,32 @@ tests evaluating associations between model scores and each possible split varia
 the split variable showing the highest association to the goodness of fit of the model the corresponding split point is selected in a separate step, either by optimizing the log-likelihood function (MOB)
 or by evaluating a linear two-sample statistic (CTree) over all possible partitions.
 
-In the here discussed application the MOB algorithm is applied and the prespecified 
-distribution family is the von Mises distribution which is also known as the circular 
+In this study distributional trees are applied to circular response data employing the MOB algorithm
+and the von Mises distribution which is also known as the circular 
 normal distribution. Its density function is given by
 \begin{equation}
   f_{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
 \end{equation}
-with location parameter $\mu$, dispersion parameter $\kappa$, and $I_0(\kappa)$ being the 
-modified Bessel function of the first kind and order $0$.
+with location parameter $\mu$, conentration parameter $\kappa$, and $I_0(\kappa)$ being the 
+modified Bessel function of the first kind and order $0$
 %For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
 %a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
 %to the variance $\sigma^2$ of the normal distribution. 
-(See e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview.)
+(see, e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview).
 
 In each node of the tree the distribution parameters $\mu$ and $\kappa$ are 
 %vector $\theta = (\mu,\kappa)$ is 
 estimated by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$. 
-For the resulting estimators $\hat{\mu}$ and $\hat{\kappa}$ model scores are calculated by 
-$s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \mu},
-\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$
+For the resulting estimators $\hat{\mu}$ and $\hat{\kappa}$ model scores are calculated by  
+%$s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \mu},
+%\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$
+$s(y,\hat{\mu}, \hat{\kappa}) = (\partial_{\mu} l(y, \hat{\mu}, \hat{\kappa}),
+\partial_{\kappa}l(y, \hat{\mu}, \hat{\kappa}))$
 yielding a $n \times 2$-matrix for a data set of $n$ observations.
 %$s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
-In that way a value indicating the goodness of fit is provided for each parameter and observation
-such that changes can be detected not only in the location parameter $\mu$ but also in the 
-dispersion parameter $\kappa$.
+In that way for each parameter a value indicating the goodness of fit with respect to one single 
+observation is provided such that changes can be detected not only in the location parameter $\mu$ 
+but also in the concentration parameter $\kappa$.
 
 
 %For each possible split variable $Z$ the association between the scores and $Z$ is evaluated by a permutation or M-fluctuation test such that the resulting $p$-values allow for an unbiased split variable selection on a unified scale. The variable showing the highest association to the scores is chosen as a split variable. The corresponding split point is then selected based on a greedy search over all possible split points. After splitting the data into subgroups the procedure is repeated in each of the resulting child nodes until eather a stopping criteria is reached or only equal observations are left in a node. 
@@ -219,7 +223,7 @@ and derived spatial and temporal difference of these lagged observations.
 
 As an illustration of the tree based wind direction forecasts at Innsbruck
 airport, a BIC based post-pruned regression tree of depth three is shown in
-Fig.~\ref{fig:tree}. Three distinct wind regimes are fitted within the final
+Figure~\ref{fig:tree}. Three distinct wind regimes are fitted within the final
 nodes: Firstly, up-valley winds blowing from the valley mouth towards the upper
 valley (from east to west, nodes 4 and 5). Secondly, downslope winds blowing
 across the Alpine crest along the Wipp Valley towards Innsbruck (from
@@ -239,20 +243,22 @@ therefore the concentration parameter as an indicator of the certainty of the
 forecast is rather large. 
 
 \section{Discussion / Summary and Outlook}
-Applying distributional trees on circular data provides easily interpretable models clearly
-illustrating the impact of given covariates and their possible interactions on the distribution
-of the dependent variable. Moreover, covariates are selected automatically such that no 
-prespecification of the model is required which can be a challenging task, particularly for a 
-meteorlogical quantity such as wind direction with high variation and many possible influencing 
-factors.
+This study shows that applying distributional trees on circular data provides easily 
+interpretable models clearly illustrating the impact of given covariates and their possible 
+interactions on the distribution of the dependent variable. Moreover, covariates are selected
+automatically such that no prespecification of the model is required which can be a challenging 
+task, particularly for a meteorlogical quantity such as wind direction with high variation and 
+many possible influencing factors.
 
-This application shows that including covariates such as lagged observations of wind direction
-as linear regressors provides valuable information. However, in order to properly account not 
-only for the circularity of the response but also of regressors, additional adaptions of 
-distributional trees are required. In particular, if the selected split variable is a circular 
-variable this demands for finding a ``split interval'' instead of a split point.
+Based on the results it can be assumed that including covariates such as lagged observations of 
+wind direction as linear regressors provides valuable information. 
+However, in order to properly account not only for the circular properties of the response but 
+also of regressors, additional adaptions of distributional trees are required. In particular, 
+if the selected split variable is a circular variable, e.g. wind direction, this demands for finding
+two split point defining a ``split interval'' instead of a single split point.
 This is also supported by the results illustrated in Figure~\ref{fig:tree} as mutliple splits in 
-the linear regressor \textit{dd} (lagged wind direction) are required in order to represent its effect.  
+the linearly employed regressor \textit{dd} (lagged wind direction) are required in order to 
+cluster the training data in corresponding wind directions.  
 
 %While the application of the von Mises distribution allows for modeling a circular response variable,
 %additional adaptions have to be made when including circular regressor variables in a distributional tree
@@ -261,11 +267,12 @@ the linear regressor \textit{dd} (lagged wind direction) are required in order t
 %for example when modeling wind directions it might be desirable to include day time or earlier 
 %observations of wind directions as regressor variables.
 
-Another possible extension of the here presented methodology is to build not just one tree 
-model but an ensemble of trees to regularize and stabilize the model 
-(see e.g. distributional forests, Schlosser et. al, 2018). In that way, it should not have a 
-significant impact on the results whether circular covariates are included as linear regressors
-yielding a larger number of splits or as circular regressors with ``intervall splits''.
+Another possible extension of the method as presented is to build an ensemble of 
+distributional trees to regularize and stabilize the model 
+(see, e.g., distributional forests, Schlosser et. al, 2018). 
+%In that way, it should not have a 
+%significant impact on the results whether circular covariates are included as linear regressors
+%yielding a larger number of splits or as circular regressors with ``intervall splits''.
 
 
 
