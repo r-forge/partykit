@@ -197,46 +197,45 @@ dispersion parameter $\kappa$.
 
 \section{Application}
 
-\begin{figure}
-\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
-\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
-\label{fig:tree}
-\end{figure}
+%\begin{figure}
+%\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
+%\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
+%\label{fig:tree}
+%\end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
-e.g., in air traffic management and renewable energy production. As a suitable
-and useful application of circular regression trees, we therefore forecast the
-wind direction at the airport of Innsbruck. Innsbruck lies at the bottom of the
-Inn Valley, a deep mountain valley in the Eastern European Alps orientated
-parallel to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is
-bordered in the North with a approx. 2300\,m high mountain ridge and opens in
-the South into the crest-perpendicular Wipp Valley. As potential split
-variables we employ several 1-hourly lagged observed weather variables (e.g.,
-wind direction, wind speed, relative humidity, pressure gradients along the
-valley) and derived spatial and temporal difference of these lagged
-observations. 
+e.g., in air traffic management or renewable energy production. This study
+presents an application of circular regression trees  on hourly direction
+forecasts at Innsbruck airport.  Innsbruck lies at the bottom of the Inn
+Valley, a deep mountain valley in the Eastern European Alps orientated parallel
+to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
+in the North with a approx. 2300\,m high mountain ridge and opens to the South
+into the crest-perpendicular Wipp Valley. As potential split variables we
+employ several 1-hourly lagged observed weather variables (e.g., wind
+direction, wind speed, relative humidity, pressure gradients along the valley)
+and derived spatial and temporal difference of these lagged observations. 
 
-As an illustration of the tree based wind direction forecasts at Innsbruck airport, a
-BIC based post-pruned regression tree of depth three is shown in
+As an illustration of the tree based wind direction forecasts at Innsbruck
+airport, a BIC based post-pruned regression tree of depth three is shown in
 Fig.~\ref{fig:tree}. Three distinct wind regimes are fitted within the final
 nodes: Firstly, up-valley winds blowing from the valley mouth towards the upper
-valley (from east to west, as predicted in the final nodes 4 and 5). Secondly,
-downslope winds blowing across the Alpine crest along the Wipp Valley towards
-Innsbruck (from south-east to north-west, as predicted in nodes 7 and 8).
-Thirdly, down-valley winds blowing in the direction of the valley mouth (from
-west to east, as predicted in nodes 12, 14, and 15). The final node 11 with a
-concentration parameter $\kappa$ of only $0.84$ captures the cases with rather low
-wind speeds and typically no clear wind direction or distinct wind regime.
-In general, winds typically blow from areas of high pressure to areas of low
-pressure, and a strong pressure gradient leads to large wind speeds and a stable
-wind direction. Therefore, the splits in the lagged wind direction perform a
-clustering into the different wind regimes and the further splits in pressure
-gradients or wind speed divide the predictions according to the consistency of
-the lagged wind direction. This can be seen in the final nodes with strong
-pressure gradients or high wind speeds where most training cases are classified
-correctly and therefore the concentration parameter as an indicator of the
-certainty of the forecast is rather large. 
+valley (from east to west, nodes 4 and 5). Secondly, downslope winds blowing
+across the Alpine crest along the Wipp Valley towards Innsbruck (from
+south-east to north-west, nodes 7 and 8). Thirdly, down-valley winds blowing
+in the direction of the valley mouth (from west to east, nodes 12, 14, and 15).
+The final node 11 with a concentration parameter $\kappa$ of only $0.84$
+captures the cases with rather low wind speeds which typically don't show a
+clear wind direction or distinct wind regime. In general, winds typically blow
+from areas of high pressure to areas of low pressure where strong pressure
+gradients yield high wind speeds and a rather well-defined wind direction.
+Thus, the splits in the lagged wind direction perform a clustering into the
+different wind regimes and the additional splits in pressure gradients or wind
+speed divide the predictions according to the expected consistency of the wind
+direction. This can be seen in the final nodes with strong pressure gradients
+or high wind speeds where most training cases are classified correctly and
+therefore the concentration parameter as an indicator of the certainty of the
+forecast is rather large. 
 
 \section{Outlook}
 
