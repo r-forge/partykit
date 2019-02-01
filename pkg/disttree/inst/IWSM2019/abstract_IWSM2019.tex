@@ -93,8 +93,9 @@ Achim Zeileis\inst{1}}
 \email{Lisa.Schlosser@uibk.ac.at}
 
 % Brief abstract of the paper:
-\abstract{Circular response variables occur in a variety of applications, e.g., when
-geographical directions are considered or measurements are taken on a $24$-hour scale. 
+\abstract{
+%Circular response variables occur in a variety of applications, e.g., when
+%geographical directions are considered or measurements are taken on a $24$-hour scale. 
 A commonly chosen distribution for modeling circular data is the von Mises distribution.
 As an alternative to estimating its distribution parameters by generalized additive models 
 we propose the application of distributional trees which are capable of detecting also 
@@ -103,11 +104,6 @@ provide easily interpretable models allowing for a wide range of inference proce
 This approach is illustrated in an application to wind directions with a set of meteorological
 covariates, all measured at the airport of Innsbruck, Austria.}
 
-
-%which are capable of detecting also non-additive effects and provide easily interpretable 
-%models allowing for a wide range of inference procedures.
-%Moreover, covariates and their possible interactions are selected automatically
-%such that no expert knowledge is required to specify the model in advance.
 
 % Keywords (at most 5):
 \keywords{Distributional trees; Circular response; Von Mises distribution.}
@@ -160,12 +156,15 @@ of regression trees.
 %Distributional trees~(Schlosser et. al, 2018) embed distributional modeling such as
 %provided by generalized additive models for location, scale, and shape~(GAMLSS, 
 %Rigby and Stasinopoulos, 2005) into the framework of regression trees~(Breiman et. al, 1984).
-In particular one of the unbiased recursive partitioning algorithms MOB~(Zeileis et. al, 2008) 
-and CTree~(Hothorn et. al, 2006) is applied and a distributional model is fitted in each node 
-by estimating the parameters of a specified distribution family via maximum likelihood.
+The basic idea is to partition the covariate space recursively into subgroups 
+such that a homogeneous distributional model can be fit to the response in each resulting subgroup.
+In particular, one of the unbiased recursive partitioning algorithms MOB~(Zeileis et. al, 2008) 
+and CTree~(Hothorn et. al, 2006) is applied and in each node the parameters of a specified 
+distribution family are estimated via maximum likelihood.
 For each split the split variable is selected based on $p$-values from permutation or M-fluctuation 
 tests evaluating associations between model scores and each possible split variable. After choosing 
-the split variable showing the highest association to the goodness of fit of the model the corresponding split point is selected in a separate step by optimizing an objective function.
+the split variable showing the highest association to the goodness of fit of the model the corresponding split point is selected in a separate step, either by optimizing the log-likelihood function (MOB)
+or by evaluating a linear two-sample statistic (CTree) over all possible partitions.
 
 In the here discussed application the MOB algorithm is applied and the prespecified 
 distribution family is the von Mises distribution which is also known as the circular 
@@ -180,11 +179,13 @@ modified Bessel function of the first kind and order $0$.
 %to the variance $\sigma^2$ of the normal distribution. 
 (See e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview.)
 
-In each node the distribution parameters $\mu$ and $\kappa$ are 
+In each node of the tree the distribution parameters $\mu$ and $\kappa$ are 
 %vector $\theta = (\mu,\kappa)$ is 
-estimated by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$ and model scores are calculated by 
+estimated by maximizing $l(y, \mu, \kappa) = log(f_{vM}(y;\mu, \kappa))$. 
+For the resulting estimators $\hat{\mu}$ and $\hat{\kappa}$ model scores are calculated by 
 $s(y,\hat{\mu}, \hat{\kappa}) = \left(\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \mu},
-\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$. 
+\frac{\partial l(y, \hat{\mu}, \hat{\kappa})}{\partial \kappa}\right)$
+yielding a $n \times 2$-matrix for a data set of $n$ observations.
 %$s(y,\hat{\theta}) = \frac{\partial l(y, \hat{\theta})}{\partial \theta}$. 
 In that way a value indicating the goodness of fit is provided for each parameter and observation
 such that changes can be detected not only in the location parameter $\mu$ but also in the 
@@ -197,11 +198,11 @@ dispersion parameter $\kappa$.
 
 \section{Application}
 
-%\begin{figure}
-%\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
-%\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
-%\label{fig:tree}
-%\end{figure}
+\begin{figure}[!ht]\centering
+\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
+\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
+\label{fig:tree}
+\end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
@@ -237,14 +238,22 @@ or high wind speeds where most training cases are classified correctly and
 therefore the concentration parameter as an indicator of the certainty of the
 forecast is rather large. 
 
-\section{Outlook}
+\section{Discussion / Summary and Outlook}
+Applying distributional trees on circular data provides easily interpretable models clearly
+illustrating the impact of given covariates and their possible interactions on the distribution
+of the dependent variable. Moreover, covariates are selected automatically such that no 
+prespecification of the model is required which can be a challenging task, particularly for a 
+meteorlogical quantity such as wind direction with high variation and many possible influencing 
+factors.
 
-This application shows that including covariates such as day time or earlier observations 
-of wind directions as (unordered) factors provides valuable information. However, in order 
-to properly account not only for the circularity of the response but also of regressors, 
-additional adaptions of distributional trees are required. 
-In particular, if the selected split variable is a circular variable this demands for 
-finding a ``split interval'' instead of a split point.
+This application shows that including covariates such as lagged observations of wind direction
+as linear regressors provides valuable information. However, in order to properly account not 
+only for the circularity of the response but also of regressors, additional adaptions of 
+distributional trees are required. In particular, if the selected split variable is a circular 
+variable this demands for finding a ``split interval'' instead of a split point.
+This is also supported by the results illustrated in Figure~\ref{fig:tree} as mutliple splits in 
+the linear regressor \textit{dd} (lagged wind direction) are required in order to represent its effect.  
+
 %While the application of the von Mises distribution allows for modeling a circular response variable,
 %additional adaptions have to be made when including circular regressor variables in a distributional tree
 %model. In particular, if the selected split variable is a circular variable this demands for finding
@@ -254,7 +263,9 @@ finding a ``split interval'' instead of a split point.
 
 Another possible extension of the here presented methodology is to build not just one tree 
 model but an ensemble of trees to regularize and stabilize the model 
-(see e.g. distributional forests, Schlosser et. al, 2018).
+(see e.g. distributional forests, Schlosser et. al, 2018). In that way, it should not have a 
+significant impact on the results whether circular covariates are included as linear regressors
+yielding a larger number of splits or as circular regressors with ``intervall splits''.
 
 
 
