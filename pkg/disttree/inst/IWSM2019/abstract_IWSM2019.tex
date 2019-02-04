@@ -180,7 +180,7 @@ yields an $n \times 2$ matrix that can be employed as a kind of residual, captur
 a given observation conforms with the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, 
 respectively.
 Hence MOB can test for parameter instabilities in the model by assessing whether the scores
-change along with the available covariates. If so, by maximimizing a partitioned likelihood
+change along with the available covariates. If so, by maximizing a partitioned likelihood
 the parameter instabilities are incorporated into the model. This procedure is repeated recursively
 until there are no significant parameter instabilities or until another stopping criterion
 is met (e.g., concerning subgroup sizes or depth of the tree).
@@ -191,9 +191,9 @@ is met (e.g., concerning subgroup sizes or depth of the tree).
 \begin{figure}[!ht]\centering
 \includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
 \caption{Fitted distributional tree for a circular response employing the von
-Mises distribution. For each terminal node, the empirical histogram and the
+Mises distribution. For each terminal node, the empirical density and the 
 fitted density distribution is displayed in gray and red, respectively. The
-location parameters are depicted as red hands and convey the direction from
+estimated location parameter is depicted as red hand and conveys the direction from
 which the wind is blowing. The chosen split variables are wind direction
 (dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$), and pressure gradients
 along the upper (pdiff\_up; $\text{hPa}$) and lower
@@ -214,100 +214,77 @@ employ several 1-hourly lagged observed weather variables, amongst others, the
 pressure gradient along the upper and lower Inn Valley, and the wind direction and
 wind speed at Innsbruck airport.
 
-As an illustration of the tree based wind direction forecasts at Innsbruck
-airport, a regression tree of depth three is depicted in Figure~\ref{fig:tree}
-showing the empirical histogram and fitted response distribution for each terminal node.
-According to the fitted location parameters $\mu$ the following wind regimes can be summarized:
+As an illustration of the tree-based wind direction forecasts at Innsbruck
+airport, a distributional tree of depth three is depicted in Figure~\ref{fig:tree}
+showing the circular histogram and fitted response distribution for each terminal node.
+According to the fitted location parameter $\mu$ the following wind regimes can be summarized:
 Firstly, up-valley winds blowing from the valley mouth towards the upper valley
 (from east to west, nodes 4 and 5). Secondly, downslope winds blowing across
 the Alpine crest along the Wipp Valley towards Innsbruck (from south-east to
 north-west, nodes 7 and 8). Thirdly, down-valley winds blowing in the direction
 of the valley mouth (from west to east, nodes 12, 14, and 15). The terminal node
-11 with a concentration parameter $\kappa$ of only $0.84$ captures the cases
-with rather low wind speeds which typically do not show a clear wind direction
-or distinct wind regime. In general, winds typically blow from areas of high
+11 captures the cases with rather low wind speeds which typically do not show a clear 
+wind direction or distinct wind regime as implied by a rather low concentration 
+parameter $\kappa$.
+In general, winds typically blow from areas of high
 pressure to areas of low pressure where strong pressure gradients yield high
 wind speeds and a rather well-defined wind direction. Thus, the splits in the
 lagged wind direction perform a clustering into the different wind regimes
-identified by the fitted location parameters, and the additional splits in
+identified by the fitted location parameter, and the additional splits in
 pressure gradients or wind speed divide the predictions according to the
 expected consistency of the wind direction expressed by the fitted
-concentration parameters. This can be seen in the terminal nodes with strong
+concentration parameter. This can be seen in the terminal nodes with strong
 pressure gradients or high wind speeds where most training cases are classified
 correctly and therefore the concentration parameter as an indicator of the
 certainty of the forecast is rather large.
 
 \section{Discussion and Outlook}
-This study shows that applying distributional trees on circular data provides easily 
-interpretable models clearly illustrating the impact of given covariates and their possible 
-interactions on the distribution of the dependent variable. 
-Moreover, covariates are selected automatically such that no prespecification of the model is 
-required which can be a challenging task, particularly for a meteorlogical quantity such as wind 
-direction with high variation and many possible influencing factors.
-Additionally, abrupt changes are captured, e.g., when the impact of a covariate such as 
-\textit{air pressure difference} determines either up- or down-valley wind directions.
 
-A possible extension of the method as presented is to build an ensemble of 
-distributional trees to regularize and stabilize the model 
-(see, e.g., distributional forests, Schlosser et.~al, 2018). 
-% In that way the impact of the chosen scale on which circular regressors are considered should be reduced.
+This study shows that applying distributional trees on circular data provides
+easily interpretable models clearly illustrating the impact of given covariates
+and their possible interactions on the distribution of the dependent variable.
+Moreover, covariates are selected automatically such that no prespecification
+of the model is required which can be a challenging task, particularly for a
+meteorological quantity such as wind direction with high variation and many
+possible influencing factors. Additionally, the employed distributional trees
+allow for abrupt changes in the response variable, such as e.g., a wind shift due to
+a turn of the the pressure gradient within the Inn Valley.
 
-Note that circular variables are employed as linear regressors which leads to multiple splits
-in these variables in order to properly cluster the training data.
-%Therefore, considering them on a circular scale could reduce the complexity of the model and
-%possibly improve the results.
-%Note that the circular variable $dd$ (lagged observations of wind) is employed as a linear
-%regressor. Therefore, several splits are performed in $dd$ in order to properly cluster the training 
-%data in corresponding wind directions (see Figure~\ref{fig:tree}). 
-In this case searching for two split points defining a split interval on the circular scale instead 
-of a single split point on the linear scale could reduce the complexity of the model and possibly 
-improve the results.
-%Alternatively, in the case of a circular covariate 
-%the tree building algorithm could search for two split points defining a split interval instead of 
-%a single split point. This would reduce the complexity of the model and possibly improve the results.
-%Based on the results it can be assumed that including covariates such as lagged observations of 
-%wind direction as linear regressors provides valuable information. 
-%However, in order to properly account not only for the circular properties of the response but 
-%also of regressors, additional adaptions of distributional trees are required. In particular, 
-%if the selected split variable is a circular variable, e.g. wind direction, this demands for finding
-%two split point defining a ``split interval'' instead of a single split point.
-%This is also supported by the results illustrated in Figure~\ref{fig:tree} as mutliple splits in 
-%the linearly employed regressor \textit{dd} (lagged wind direction) are required in order to 
-%cluster the training data in corresponding wind directions.  
-
-%%% SUGGESTION MORITZ START
-%This study shows that applying distributional trees on circular data provides
-%easily interpretable models clearly illustrating the impact of given covariates
-%and their possible interactions on the distribution of the dependent variable.
-%Moreover, covariates are selected automatically such that no prespecification
-%of the model is required which can be a challenging task, particularly for a
-%meteorlogical quantity such as wind direction with high variation and many
-%possible influencing factors. Additionally, the employed distributional trees
-%allow for abrupt changes in the response variable, such as e.g., a wind shift due to
-%a turn of the the pressure gradient within the Inn Valley.
-%
-%A possible extension of the method as presented is to build an ensemble of
-%distributional trees to regularize and stabilize the model (see, e.g.,
-%distributional forests, Schlosser et.~al, 2018). Additionally, in order to
-%properly account not only for the ciruclar properties of the response but also
-%of the regressors, some extension in searching the split points would be
-%feasible. In that case two split points define a split interval on the circular
-%scale instead of a single split point on the linear scale which would reduce
-%the complexity of the model and possibly further improve the results.
-%%% SUGGESTION MORITZ END
+A possible extension of the method as presented is to build an ensemble of
+distributional trees to regularize and stabilize the model (see, e.g.,
+distributional forests, Schlosser et.~al, 2018). 
+Furthermore, in order to properly account not only for the circular properties of 
+the response but also of the regressors, extensions in the search of split points 
+would be feasible. For example, searching for two split points defining a split 
+interval on the circular scale instead of a single split point on the linear scale 
+could reduce the complexity of the model and possibly improve the results.
 
 \medskip
 
 \textit{Computational Details:} The employed \textsf{R} packages are available on \textsf{R}-Forge at
 https://R-Forge.R-project.org/projects/partykit/.
 
+%% alternative version:
+%This study shows that applying distributional trees on circular data provides easily 
+%interpretable models clearly illustrating the impact of given covariates and their possible 
+%interactions on the distribution of the dependent variable. 
+%Moreover, covariates are selected automatically such that no prespecification of the model is 
+%required which can be a challenging task, particularly for a meteorological quantity such as wind 
+%direction with high variation and many possible influencing factors.
+%Additionally, abrupt changes are captured, e.g., when the impact of a covariate such as 
+%\textit{air pressure difference} determines either up- or down-valley wind directions.
 
-%While the application of the von Mises distribution allows for modeling a circular response variable,
-%additional adaptions have to be made when including circular regressor variables in a distributional tree
-%model. In particular, if the selected split variable is a circular variable this demands for finding
-%not only one split point but a ``split interval''. This consideration is of interest for many applications,
-%for example when modeling wind directions it might be desirable to include day time or earlier 
-%observations of wind directions as regressor variables.
+%A possible extension of the method as presented is to build an ensemble of 
+%distributional trees to regularize and stabilize the model 
+%(see, e.g., distributional forests, Schlosser et.~al, 2018). 
+%% In that way the impact of the chosen scale on which circular regressors are considered should be reduced.
+
+%Note that circular variables are employed as linear regressors which leads to multiple splits
+%in these variables in order to properly cluster the training data.
+%In this case searching for two split points defining a split interval on the circular scale instead 
+%of a single split point on the linear scale could reduce the complexity of the model and possibly 
+%improve the results.
+
 
 
 \bigskip
