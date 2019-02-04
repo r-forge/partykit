@@ -204,28 +204,28 @@ direction of Innsbruck.}
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
 e.g., in air traffic management or renewable energy production. This study
-presents an application of circular regression trees  on hourly direction
+presents an application of circular regression trees  on hourly wind direction
 forecasts at Innsbruck Airport. Innsbruck lies at the bottom of the Inn
 Valley, a deep mountain valley in the Eastern European Alps orientated parallel
 to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
-in the North with a approx. 2300\,m high mountain ridge and opens to the South
+in the North with an approx. 2300\,m high mountain ridge and opens to the South
 into the crest-perpendicular Wipp Valley. As potential split variables we
 employ several 1-hourly lagged observed weather variables, amongst others, the
 pressure gradient along the upper and lower Inn Valley, and the wind direction and
-wind speed at Innsbruck airport.
+wind speed at Innsbruck Airport.
 
 As an illustration of the tree-based wind direction forecasts at Innsbruck
-airport, a distributional tree of depth three is depicted in Figure~\ref{fig:tree}
+Airport, a distributional tree of depth three is depicted in Figure~\ref{fig:tree}
 showing the circular histogram and fitted response distribution for each terminal node.
-According to the fitted location parameter $\mu$ the following wind regimes can be summarized:
+According to the fitted location parameter the following wind regimes can be summarized:
 Firstly, up-valley winds blowing from the valley mouth towards the upper valley
 (from east to west, nodes 4 and 5). Secondly, downslope winds blowing across
 the Alpine crest along the Wipp Valley towards Innsbruck (from south-east to
 north-west, nodes 7 and 8). Thirdly, down-valley winds blowing in the direction
 of the valley mouth (from west to east, nodes 12, 14, and 15). The terminal node
 11 captures the cases with rather low wind speeds which typically do not show a clear 
-wind direction or distinct wind regime as implied by a rather low concentration 
-parameter $\kappa$.
+wind direction or distinct wind regime as implied by a small concentration 
+parameter.
 In general, winds typically blow from areas of high
 pressure to areas of low pressure where strong pressure gradients yield high
 wind speeds and a rather well-defined wind direction. Thus, the splits in the
