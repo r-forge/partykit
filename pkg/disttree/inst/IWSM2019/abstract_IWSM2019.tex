@@ -190,53 +190,43 @@ is met (e.g., concerning subgroup sizes or depth of the tree).
 
 \begin{figure}[!ht]\centering
 \includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
-
-\caption{Fitted distributional tree for a circular response employing the von
-Mises distribution. For each terminal node, the empirical histogram and the
-fitted density distribution is displayed in gray and red, respectively. The
-location parameters are depicted as red hands and convey the direction from
-which the wind is blowing. The chosen split variables are wind direction
-(dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$), and pressure gradients
-along the upper (pdiff\_up; $\text{hPa}$) and lower
-(pdiff\_low; $\text{hPa}$) Inn Valley where positive values point in the
-direction of Innsbruck.}
-\label{fig:tree} \end{figure}
+\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
+\label{fig:tree}
+\end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision making processes and risk management,
 e.g., in air traffic management or renewable energy production. This study
 presents an application of circular regression trees  on hourly direction
-forecasts at Innsbruck Airport. Innsbruck lies at the bottom of the Inn
+forecasts at Innsbruck Airport.  Innsbruck lies at the bottom of the Inn
 Valley, a deep mountain valley in the Eastern European Alps orientated parallel
 to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
 in the North with a approx. 2300\,m high mountain ridge and opens to the South
 into the crest-perpendicular Wipp Valley. As potential split variables we
-employ several 1-hourly lagged observed weather variables, amongst others, the
-pressure gradient along the upper and lower Inn Valley, and the wind direction and
-wind speed at Innsbruck airport.
+employ several 1-hourly lagged observed weather variables (e.g., wind
+direction, wind speed, relative humidity, pressure gradients along the valley)
+and derived spatial and temporal difference of these lagged observations. 
 
 As an illustration of the tree based wind direction forecasts at Innsbruck
-airport, a regression tree of depth three is depicted in Figure~\ref{fig:tree}
-showing the empirical histogram and fitted response distribution for each terminal node.
-According to the fitted location parameters $\mu$ the following wind regimes can be summarized:
-Firstly, up-valley winds blowing from the valley mouth towards the upper valley
-(from east to west, nodes 4 and 5). Secondly, downslope winds blowing across
-the Alpine crest along the Wipp Valley towards Innsbruck (from south-east to
-north-west, nodes 7 and 8). Thirdly, down-valley winds blowing in the direction
-of the valley mouth (from west to east, nodes 12, 14, and 15). The terminal node
-11 with a concentration parameter $\kappa$ of only $0.84$ captures the cases
-with rather low wind speeds which typically do not show a clear wind direction
-or distinct wind regime. In general, winds typically blow from areas of high
-pressure to areas of low pressure where strong pressure gradients yield high
-wind speeds and a rather well-defined wind direction. Thus, the splits in the
-lagged wind direction perform a clustering into the different wind regimes
-identified by the fitted location parameters, and the additional splits in
-pressure gradients or wind speed divide the predictions according to the
-expected consistency of the wind direction expressed by the fitted
-concentration parameters. This can be seen in the terminal nodes with strong
-pressure gradients or high wind speeds where most training cases are classified
-correctly and therefore the concentration parameter as an indicator of the
-certainty of the forecast is rather large. 
+airport, a BIC based post-pruned regression tree of depth three is shown in
+Figure~\ref{fig:tree}. Three distinct wind regimes are fitted within the final
+nodes: Firstly, up-valley winds blowing from the valley mouth towards the upper
+valley (from east to west, nodes 4 and 5). Secondly, downslope winds blowing
+across the Alpine crest along the Wipp Valley towards Innsbruck (from
+south-east to north-west, nodes 7 and 8). Thirdly, down-valley winds blowing
+in the direction of the valley mouth (from west to east, nodes 12, 14, and 15).
+The final node 11 with a concentration parameter $\kappa$ of only $0.84$
+captures the cases with rather low wind speeds which typically don't show a
+clear wind direction or distinct wind regime. In general, winds typically blow
+from areas of high pressure to areas of low pressure where strong pressure
+gradients yield high wind speeds and a rather well-defined wind direction.
+Thus, the splits in the lagged wind direction perform a clustering into the
+different wind regimes and the additional splits in pressure gradients or wind
+speed divide the predictions according to the expected consistency of the wind
+direction. This can be seen in the final nodes with strong pressure gradients
+or high wind speeds where most training cases are classified correctly and
+therefore the concentration parameter as an indicator of the certainty of the
+forecast is rather large. 
 
 \section{Discussion and Outlook}
 This study shows that applying distributional trees on circular data provides easily 
@@ -245,20 +235,21 @@ interactions on the distribution of the dependent variable.
 Moreover, covariates are selected automatically such that no prespecification of the model is 
 required which can be a challenging task, particularly for a meteorlogical quantity such as wind 
 direction with high variation and many possible influencing factors.
-%Another valuable feature is the capability of capturing also non-additive and abrupt changes, 
 Additionally, abrupt changes are captured, e.g., when the impact of a covariate such as 
 \textit{air pressure difference} determines either up- or down-valley wind directions.
 
 A possible extension of the method as presented is to build an ensemble of 
 distributional trees to regularize and stabilize the model 
 (see, e.g., distributional forests, Schlosser et.~al, 2018). 
-%In that way, it should not have a 
-%significant impact on the results whether circular covariates are included as linear regressors
-%yielding a larger number of splits or as circular regressors with ``intervall splits''.
+% In that way the impact of the chosen scale on which circular regressors are considered should be reduced.
 
-Note that the circular variable $dd$ (lagged observations of wind) is employed as a linear
-regressor. Therefore, several splits are performed in $dd$ in order to properly cluster the training 
-data in corresponding wind directions (see Figure~\ref{fig:tree}). 
+Note that circular variables are employed as linear regressors which leads to multiple splits
+in these variables in order to properly cluster the training data.
+%Therefore, considering them on a circular scale could reduce the complexity of the model and
+%possibly improve the results.
+%Note that the circular variable $dd$ (lagged observations of wind) is employed as a linear
+%regressor. Therefore, several splits are performed in $dd$ in order to properly cluster the training 
+%data in corresponding wind directions (see Figure~\ref{fig:tree}). 
 In this case searching for two split points defining a split interval on the circular scale instead 
 of a single split point on the linear scale could reduce the complexity of the model and possibly 
 improve the results.
@@ -274,6 +265,9 @@ improve the results.
 %This is also supported by the results illustrated in Figure~\ref{fig:tree} as mutliple splits in 
 %the linearly employed regressor \textit{dd} (lagged wind direction) are required in order to 
 %cluster the training data in corresponding wind directions.  
+
+\medskip
+
 \textit{Computational Details:} The employed \textsf{R} packages are available on \textsf{R}-Forge at
 https://R-Forge.R-project.org/projects/partykit/.
 
