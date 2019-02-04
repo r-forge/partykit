@@ -275,6 +275,27 @@ improve the results.
 %the linearly employed regressor \textit{dd} (lagged wind direction) are required in order to 
 %cluster the training data in corresponding wind directions.  
 
+%%% SUGGESTION MORITZ START
+%This study shows that applying distributional trees on circular data provides
+%easily interpretable models clearly illustrating the impact of given covariates
+%and their possible interactions on the distribution of the dependent variable.
+%Moreover, covariates are selected automatically such that no prespecification
+%of the model is required which can be a challenging task, particularly for a
+%meteorlogical quantity such as wind direction with high variation and many
+%possible influencing factors. Additionally, the employed distributional trees
+%allow for abrupt changes in the response variable, such as e.g., a wind shift due to
+%a turn of the the pressure gradient within the Inn Valley.
+%
+%A possible extension of the method as presented is to build an ensemble of
+%distributional trees to regularize and stabilize the model (see, e.g.,
+%distributional forests, Schlosser et.~al, 2018). Additionally, in order to
+%properly account not only for the ciruclar properties of the response but also
+%of the regressors, some extension in searching the split points would be
+%feasible. In that case two split points define a split interval on the circular
+%scale instead of a single split point on the linear scale which would reduce
+%the complexity of the model and possibly further improve the results.
+%%% SUGGESTION MORITZ END
+
 \medskip
 
 \textit{Computational Details:} The employed \textsf{R} packages are available on \textsf{R}-Forge at
