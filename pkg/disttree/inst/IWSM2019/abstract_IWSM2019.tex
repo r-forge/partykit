@@ -163,7 +163,7 @@ over all possible partitions.
 
 In this study distributional trees are adapted to circular responses by employing the von Mises
 distribution, also known as ``the circular normal distribution''. Based on a location parameter
-$\mu \in [0, 2 \pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [0, 2 \pi]$
+$\mu \in [-\pi, \pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [-\pi, \pi]$
 is given by:
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
@@ -232,9 +232,9 @@ speed separate between subgroups with high vs.\ low precision.
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
 The resulting trees can capture nonlinear changes, shifts, and potential interactions
-in covariates without prespecification of such effects. This allows to model
-wind direction in mountainous terrain where wind shifts can occur due to turns
-of the pressure gradients along a valley.
+in covariates without prespecification of such effects. This is particularly
+useful for modeling wind direction in mountainous terrain where wind shifts
+can occur due to turns of the pressure gradients along a valley.
 
 A natural extension are ensembles (or forests) of such circular trees
 that can improve forecasts by regularizing and stabilizing the model
