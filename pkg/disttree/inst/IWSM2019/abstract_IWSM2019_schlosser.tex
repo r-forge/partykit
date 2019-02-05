@@ -105,7 +105,7 @@ measurements.
 
 
 % Keywords (at most 5):
-\keywords{Distributional trees; Circular response; Von Mises distribution.}
+\keywords{Distributional Trees; Circular Response; Von Mises Distribution.}
 
 % Produce the title:
 \maketitle
@@ -166,7 +166,7 @@ distribution, also known as ``the circular normal distribution''. Based on a loc
 $\mu \in [-\pi, \pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [-\pi, \pi]$
 is given by:
 \begin{equation}
-  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
+  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
 \end{equation}
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$
 (see, e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview).
@@ -189,14 +189,14 @@ is met (e.g., subgroup size or tree depth).
 \section{Application}
 
 \begin{figure}[p!]\centering
-\includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
+\includegraphics[height = .5\textheight,angle=90,origin=c]{schlosser-circtree_plot.pdf}
 \caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
 In each terminal node the empirical histogram (gray) and fitted density (red line)
 are depicted along with the estimated location parameter (red hand). The covariates employed are
 wind direction (dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$),
 and pressure gradients along the upper (pdiff\_up; $\text{hPa}$) and lower
 (pdiff\_low; $\text{hPa}$) Inn Valley.}
-\label{fig:tree} \end{figure}
+\label{schlosser:fig_tree} \end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision-making processes and risk management,
@@ -211,7 +211,7 @@ upper and lower Inn Valley are considered as covariates along with other
 meteorological measurements (lagged by one hour) such as wind direction and
 wind speed at Innsbruck Airport.
 
-Figure~\ref{fig:tree} depicts the resulting distributional tree, including
+Figure~\ref{schlosser:fig_tree} depicts the resulting distributional tree, including
 both the empirical (gray) and fitted von Mises (red) distribution of wind direction
 in each terminal node. Based on the fitted location parameters $\hat \mu$, the subgroups
 can be distinguished into the following wind regimes:
@@ -238,12 +238,12 @@ can occur due to turns of the pressure gradients along a valley.
 
 A natural extension are ensembles (or forests) of such circular trees
 that can improve forecasts by regularizing and stabilizing the model
-(see Schlosser et.~al, 2018 for a general discussion of distributional forests). 
+(see Schlosser et.~al~(2018) for a general discussion of distributional forests). 
 
 Another possible improvement for obtaining more parsimonious and more stable trees is to
 consider splitting circular covariates into two circle segments by searching two
 split points simultaneously (rather than sequentially at different depths as
-for variable ``dd'' in Figure~\ref{fig:tree}).
+for variable ``dd'' in Figure~\ref{schlosser:fig_tree}).
 
 \textsf{R} packages implementing the proposed methods are under development at
 \texttt{https://R-Forge.R-project.org/projects/partykit/}.
@@ -387,9 +387,9 @@ for variable ``dd'' in Figure~\ref{fig:tree}).
      {\it Journal of Computational and Graphical Statistics}, {\bf 15}, 3,
      651\,--\,674. 
 
-\item[Jammalamadaka, S. R., and Sengupta, A.] (2001).
-     Topics in Circular Statistics.
-     {\it World Scientific}. 
+\item[Jammalamadaka, S. R. and Sengupta, A.] (2001).
+     {\it Topics in Circular Statistics}.
+     World Scientific. 
 
 %\item[Mardia, K. V., and Jupp, P. E.] (2009).
 %     Directional Statistics.
