@@ -98,7 +98,7 @@ For probabilistic modeling of circular data the von Mises distribution is widely
 To capture how its parameters change with covariates, a regression tree model
 is proposed as an alternative to more commonly-used additive models. The resulting
 distributional trees are easy to interpret, can detect non-additive effects, and select
-covariates along with interactions automatically. For illustration, hourly wind 
+covariates and their interactions automatically. For illustration, hourly wind 
 direction forecasts are obtained at Innsbruck Airport based on a set of meteorological
 measurements.
 }
@@ -173,96 +173,83 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 
 In each subgroup maximum likelihood estimators $\hat \mu$ and $\hat \kappa$ are obtained
 by maximizing the corresponding log-likelihood $\ell(\mu, \kappa; y) = \log(f_\mathrm{vM}(y;\mu, \kappa))$. 
-The model scores are calculated by  $s(y; \mu, \kappa) = (\partial_{\mu} \ell(\mu, \kappa; y),
+The model scores are given by  $s(y; \mu, \kappa) = (\partial_{\mu} \ell(\mu, \kappa; y),
 \partial_{\kappa} \ell(\mu, \kappa; y))$. In a subgroup of size $n$, evaluating the scores
 at the individual observations and parameter estimates $s(y_i; \hat{\mu}, \hat{\kappa})$
 yields an $n \times 2$ matrix that can be employed as a kind of residual, capturing how well
 a given observation conforms with the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, 
 respectively.
-Hence MOB can test for parameter instabilities in the model by assessing whether the scores
-change along with the available covariates. If so, by maximizing a partitioned likelihood
+Hence MOB or CTree can assess whether the scores change along with the available covariates.
+If so, by maximizing a partitioned likelihood
 the parameter instabilities are incorporated into the model. This procedure is repeated recursively
 until there are no significant parameter instabilities or until another stopping criterion
-is met (e.g., concerning subgroup sizes or depth of the tree).
+is met (e.g., subgroup size or tree depth).
 
 
 \section{Application}
 
 \begin{figure}[!ht]\centering
 \includegraphics[height = .5\textheight,angle=90,origin=c]{circtree_plot_big.pdf}
-\caption{Fitted distributional tree for a circular response employing the von
-Mises distribution. For each terminal node, the empirical density and the 
-fitted density distribution is displayed in gray and red, respectively. The
-estimated location parameter is depicted as red hand and conveys the direction from
-which the wind is blowing. The chosen split variables are wind direction
-(dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$), and pressure gradients
-along the upper (pdiff\_up; $\text{hPa}$) and lower
-(pdiff\_low; $\text{hPa}$) Inn Valley where positive values point in the
-direction of Innsbruck.}
+\caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
+In each terminal node the empirical histogram (gray) and fitted density (red line)
+are depicted along with the estimated location parameter (red hand). The covariates employed are
+wind direction (dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$),
+and pressure gradients along the upper (pdiff\_up; $\text{hPa}$) and lower
+(pdiff\_low; $\text{hPa}$) Inn Valley.}
 \label{fig:tree} \end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
-are of great importance for decision making processes and risk management,
+are of great importance for decision-making processes and risk management,
 e.g., in air traffic management or renewable energy production. This study
-presents an application of circular regression trees  on hourly wind direction
+employs circular regression trees to obtain hourly wind direction
 forecasts at Innsbruck Airport. Innsbruck lies at the bottom of the Inn
 Valley, a deep mountain valley in the Eastern European Alps orientated parallel
 to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
-in the North with an approx. 2300\,m high mountain ridge and opens to the South
-into the crest-perpendicular Wipp Valley. As potential split variables we
-employ several 1-hourly lagged observed weather variables, amongst others, the
-pressure gradient along the upper and lower Inn Valley, and the wind direction and
+in the North by an approx.~2300\,m high mountain ridge and opens to the South
+into the crest-perpendicular Wipp Valley. Hence, pressure gradients along the
+upper and lower Inn Valley are considered as covariates along with other
+meteorological measurements (lagged by one hour) such as wind direction and
 wind speed at Innsbruck Airport.
 
 As an illustration of the tree-based wind direction forecasts at Innsbruck
-Airport, a distributional tree of depth three is depicted in Figure~\ref{fig:tree}
-showing the circular histogram and fitted response distribution for each terminal node.
-According to the fitted location parameter the following wind regimes can be summarized:
-Firstly, up-valley winds blowing from the valley mouth towards the upper valley
-(from east to west, nodes 4 and 5). Secondly, downslope winds blowing across
+Airport, a distributional tree of depth three is depicted in 
+
+Figure~\ref{fig:tree} depicts the resulting distributional tree, including
+both the empirical (gray) and fitted von Mises (red) distribution of wind direction
+in each terminal node. Based on the fitted location parameters $\hat \mu$, the subgroups
+can be distinguished into the following wind regimes:
+(1)~Up-valley winds blowing from the valley mouth towards the upper valley
+(from east to west, nodes 4 and 5). (2) Downslope winds blowing across
 the Alpine crest along the Wipp Valley towards Innsbruck (from south-east to
-north-west, nodes 7 and 8). Thirdly, down-valley winds blowing in the direction
-of the valley mouth (from west to east, nodes 12, 14, and 15). The terminal node
-11 captures the cases with rather low wind speeds which typically do not show a clear 
-wind direction or distinct wind regime as implied by a small concentration 
-parameter.
-In general, winds typically blow from areas of high
-pressure to areas of low pressure where strong pressure gradients yield high
-wind speeds and a rather well-defined wind direction. Thus, the splits in the
-lagged wind direction perform a clustering into the different wind regimes
-identified by the fitted location parameter, and the additional splits in
-pressure gradients or wind speed divide the predictions according to the
-expected consistency of the wind direction expressed by the fitted
-concentration parameter. This can be seen in the terminal nodes with strong
-pressure gradients or high wind speeds where most training cases are classified
-correctly and therefore the concentration parameter as an indicator of the
-certainty of the forecast is rather large.
+north-west, nodes 7 and 8). (3) Down-valley winds blowing in the direction
+of the valley mouth (from west to east, nodes 12, 14, and 15). Node~11
+captures observations with rather low wind speeds that cannot be distinguished
+clearly into wind regimes and consequently are associated with a very low
+estimated concentration $\hat \kappa$. In terms of covariates, the lagged
+wind direction (``persistence'') is mostly responsible for distinguishing
+the broad wind regimes listed above while the pressure gradients and wind
+speed separate between subgroups with high vs.\ low precision.
 
 \section{Discussion and Outlook}
 
-This study shows that applying distributional trees on circular data provides
-easily interpretable models clearly illustrating the impact of given covariates
-and their possible interactions on the distribution of the dependent variable.
-Moreover, covariates are selected automatically such that no prespecification
-of the model is required which can be a challenging task, particularly for a
-meteorological quantity such as wind direction with high variation and many
-possible influencing factors. Additionally, the employed distributional trees
-allow for abrupt changes in the response variable, such as e.g., a wind shift due to
-a turn of the the pressure gradient within the Inn Valley.
+Distributional trees for circular responses are established by coupling
+model-based recursive partitioning with the von Mises distribution.
+The resulting trees can capture nonlinear changes, shifts, and potential interactions
+in covariates without prespecification of such effects. This is modeling
+wind direction in mountainous terrain where wind shifts can occur due to turns
+a turn of the pressure gradient along a valley.
 
-A possible extension of the method as presented is to build an ensemble of
-distributional trees to regularize and stabilize the model (see, e.g.,
-distributional forests, Schlosser et.~al, 2018). 
-Furthermore, in order to properly account not only for the circular properties of 
-the response but also of the regressors, extensions in the search of split points 
-would be feasible. For example, searching for two split points defining a split 
-interval on the circular scale instead of a single split point on the linear scale 
-could reduce the complexity of the model and possibly improve the results.
+A natural extension are ensembles (or forests) of such circular trees
+that can improve forecasts by regularizing and stabilizing the model
+(see Schlosser et.~al, 2018 for a general discussion of distributional forests). 
 
-\medskip
+Another possible improvement for obtaining more parsimonious and more stable trees is to
+consider splitting circular covariates into two circle segments by searching two
+split points simultaneously (rather than sequentially at different depths as
+for variable ``dd'' in Figure~\ref{fig:tree}).
 
-\textit{Computational Details:} The employed \textsf{R} packages are available on \textsf{R}-Forge at
-https://R-Forge.R-project.org/projects/partykit/.
+\textsf{R} packages implementing the proposed methods are under development at
+\texttt{https://R-Forge.R-project.org/projects/partykit/}.
 
 %% alternative version:
 %This study shows that applying distributional trees on circular data provides easily 
@@ -405,7 +392,7 @@ https://R-Forge.R-project.org/projects/partykit/.
 
 \item[Jammalamadaka, S. R., and Sengupta, A.] (2001).
      Topics in Circular Statistics.
-     {\it World Scientific}, {\bf 5}. 
+     {\it World Scientific}. 
 
 %\item[Mardia, K. V., and Jupp, P. E.] (2009).
 %     Directional Statistics.
@@ -418,7 +405,7 @@ https://R-Forge.R-project.org/projects/partykit/.
 
 \item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
      Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
-     {\it arXiv.org E-Print Archive}, https://arxiv.org/abs/1804.02921v2.
+     arXiv:1804.02921, {\it arXiv.org E-Print Archive}.
 
 \item[Zeileis, A., Hothorn, T., and Hornik, K.] (2008).
      Model-Based Recursive Partitioning.
