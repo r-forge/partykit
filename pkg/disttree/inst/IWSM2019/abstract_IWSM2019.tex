@@ -163,7 +163,7 @@ over all possible partitions.
 
 In this study distributional trees are adapted to circular responses by employing the von Mises
 distribution, also known as ``the circular normal distribution''. Based on a location parameter
-$\mu \in \mathbb{R}$ and a concentration parameter $\kappa > 0$ the density for $y \in [0, 2 \pi]$
+$\mu \in [0, 2 \pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [0, 2 \pi]$
 is given by:
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
@@ -211,9 +211,6 @@ upper and lower Inn Valley are considered as covariates along with other
 meteorological measurements (lagged by one hour) such as wind direction and
 wind speed at Innsbruck Airport.
 
-As an illustration of the tree-based wind direction forecasts at Innsbruck
-Airport, a distributional tree of depth three is depicted in 
-
 Figure~\ref{fig:tree} depicts the resulting distributional tree, including
 both the empirical (gray) and fitted von Mises (red) distribution of wind direction
 in each terminal node. Based on the fitted location parameters $\hat \mu$, the subgroups
@@ -235,9 +232,9 @@ speed separate between subgroups with high vs.\ low precision.
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
 The resulting trees can capture nonlinear changes, shifts, and potential interactions
-in covariates without prespecification of such effects. This is modeling
+in covariates without prespecification of such effects. This allows to model
 wind direction in mountainous terrain where wind shifts can occur due to turns
-a turn of the pressure gradient along a valley.
+of the pressure gradients along a valley.
 
 A natural extension are ensembles (or forests) of such circular trees
 that can improve forecasts by regularizing and stabilizing the model
