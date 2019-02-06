@@ -97,7 +97,7 @@ The function returns a list with the following objects:
     Heterogeneity and Spatial Dependence of Regional Growth in the EU: A Recursive Partitioning Approach.
     German Economic Review, Forthcoming.
     \doi{10.1111/geer.12146}
-    \url{https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2017.pdf}
+    \url{https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2019.pdf}
 }
 
 \examples{
