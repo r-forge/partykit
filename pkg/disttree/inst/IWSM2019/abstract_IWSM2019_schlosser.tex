@@ -135,20 +135,6 @@ measurements.
 
 \section{Methodology}
 
-%\subsection{Von Mises Distribution}
-%The von Mises distribution is also known as the circular normal distribution 
-%and its density function is given by
-%\begin{equation}
-%  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{equ:vm}
-%\end{equation}
-%with a location parameter $\mu$, a conentration parameter $\kappa$, and $I_0(\kappa)$ being the 
-%modified Bessel function of the first kind and order $0$.
-%For $\kappa=0$ a uniform distribution is obtained. Otherwise, a large value of $\kappa$ indicates
-%a high concentration of the distribution around $\mu$. Hence, $\frac{1}{\kappa}$ is analogous
-%to the variance $\sigma^2$ of the normal distribution. 
-%See e.g., Jammalamadaka and Sengupta (2001) or Mardia and Jupp (2009) for a more detailed overview.
-
-
 Distributional trees~(Schlosser et.~al, 2018) fuse distributional regression modeling with
 regression trees based on the unbiased recursive partitioning algorithms MOB~(Zeileis et.~al, 2008)
 or CTree~(Hothorn et.~al, 2006). The basic idea is to partition the covariate space recursively into 
@@ -192,24 +178,23 @@ is met (e.g., subgroup size or tree depth).
 \includegraphics[height = .5\textheight,angle=90,origin=c]{schlosser-circtree_plot.pdf}
 \caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
 In each terminal node the empirical histogram (gray) and fitted density (red line)
-are depicted along with the estimated location parameter (red hand). The covariates employed are
-wind direction (dd; $\text{rad}$), wind speed (ff; $\text{ms}^{-1}$),
-and pressure gradients along the upper (pdiff\_up; $\text{hPa}$) and lower
-(pdiff\_low; $\text{hPa}$) Inn Valley.}
+are depicted along with the estimated location parameter (red hand). The covariates
+employed are wind direction ($\text{rad}$), wind speed ($\text{ms}^{-1}$),
+and pressure gradients ($\text{hPa}$) west and east of the airport,
+all lagged by one hour.}
 \label{schlosser:fig_tree} \end{figure}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision-making processes and risk management,
 e.g., in air traffic management or renewable energy production. This study
 employs circular regression trees to obtain hourly wind direction
-forecasts at Innsbruck Airport. Innsbruck lies at the bottom of the Inn
-Valley, a deep mountain valley in the Eastern European Alps orientated parallel
-to the Alpine crest. At Innsbruck, the west-east aligned Inn Valley is bordered
-in the North by an approx.~2300\,m high mountain ridge and opens to the South
-into the crest-perpendicular Wipp Valley. Hence, pressure gradients along the
-upper and lower Inn Valley are considered as covariates along with other
-meteorological measurements (lagged by one hour) such as wind direction and
-wind speed at Innsbruck Airport.
+forecasts at Innsbruck Airport.
+Innsbruck lies at the bottom of a deep valley in the Alps. Topography
+channels wind along the west-east valley axis or along a tributary valley
+intersecting from the south. Hence, pressure gradients to which valley wind
+regimes react both west and east of the airport are considered as covariates
+along with other meteorological measurements at the airport (lagged by one hour),
+such as wind direction and wind speed at Innsbruck Airport.
 
 Figure~\ref{schlosser:fig_tree} depicts the resulting distributional tree, including
 both the empirical (gray) and fitted von Mises (red) distribution of wind direction
@@ -243,137 +228,14 @@ that can improve forecasts by regularizing and stabilizing the model
 Another possible improvement for obtaining more parsimonious and more stable trees is to
 consider splitting circular covariates into two circle segments by searching two
 split points simultaneously (rather than sequentially at different depths as
-for variable ``dd'' in Figure~\ref{schlosser:fig_tree}).
+for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
 
 \textsf{R} packages implementing the proposed methods are under development at
 \texttt{https://R-Forge.R-project.org/projects/partykit/}.
 
-%% alternative version:
-%This study shows that applying distributional trees on circular data provides easily 
-%interpretable models clearly illustrating the impact of given covariates and their possible 
-%interactions on the distribution of the dependent variable. 
-%Moreover, covariates are selected automatically such that no prespecification of the model is 
-%required which can be a challenging task, particularly for a meteorological quantity such as wind 
-%direction with high variation and many possible influencing factors.
-%Additionally, abrupt changes are captured, e.g., when the impact of a covariate such as 
-%\textit{air pressure difference} determines either up- or down-valley wind directions.
-
-%A possible extension of the method as presented is to build an ensemble of 
-%distributional trees to regularize and stabilize the model 
-%(see, e.g., distributional forests, Schlosser et.~al, 2018). 
-%% In that way the impact of the chosen scale on which circular regressors are considered should be reduced.
-
-%Note that circular variables are employed as linear regressors which leads to multiple splits
-%in these variables in order to properly cluster the training data.
-%In this case searching for two split points defining a split interval on the circular scale instead 
-%of a single split point on the linear scale could reduce the complexity of the model and possibly 
-%improve the results.
-
-
 
 \bigskip
 
-
-%***********************************************************************
-
-% Tables can be included at any place in the text.
-% As general format, use tables with horizontal lines only
-% (i.e., no vertical lines separating columns).
-% Start and end each table with a double horizontal line.
-% Tables are incorporated using a table environment:
-
-%\begin{table}[!ht]\centering
-% A caption is put above the table and a label is defined
-% to be used for reference to this specific table.
-% Use labels which are very unlikely to be used by
-% other contributors; for example, use labels starting
-% with the surname of the first author.
-%\caption{\label{smith:tab1} Caption text \textbf{ABOVE} the table.}
-% A table with three columns, where the first is left aligned,
-% the second has centred entries, and the third is right aligned,
-% is generated as follows (note: if requested, use \cmidrule{} instead of \cline{})
-%\medskip
-%\begin{tabular}{lcr}
-% First line:
-%\toprule[0.09 em]
-% The body of the table:
-%Title col1 & Title col2 & Title col3 \\
-%\midrule
-%row1 col1  & row1 col2  & row1 col3  \\
-%row2 col1  & row2 col2  & row2 col3  \\ %
-%row3 col1  & row3 col2  & row3 col3  \\
-% last line:
-%\bottomrule[0.09 em]
-%\end{tabular}
-%\end{table}
-
-% In the text, reference to the Table can be made as follows:
-%We refer to Table~\ref{smith:tab1} for a summary of our main results. Have a look to Table~\ref{smith:tab2} for
-%an additional example.
-
-%\begin{table}[!ht]\centering
-%\caption{\label{smith:tab2} Caption text \textbf{ABOVE} the table.}
-%\medskip
-%\begin{tabular}{lcr}
-% First line:
-%\toprule[0.09 em]
-% The body of the table:
-%  &\multicolumn{2}{c}{Title  for cols 2 -3} \\
-%\cmidrule{2-3} %
-%Title1 & Title2 & Title3 \\
-%\midrule
-%& $a$  & $c$ \\
-%& $b$  & $d$ \\ %
-%\midrule[0 em]
-%Total  & $a+b$  & $n$  \\
-% last line:
-%\bottomrule[0.09 em]
-%\end{tabular}
-%\end{table}
-
-
-
-%***********************************************************************
-
-% Figures can be included at any place in the text.
-% The only allowed formats for figures are pdf files.
-%
-% Please, do not include figures in any other format.
-%
-% Use file names which are very unlikely to be used by
-% other contributors; for example, use file names starting
-% with the surname of the first author.
-% Figures are incorporated using a figure environment:
-% Make sure you specify the extension of the file (pdf)
-
-%Finally a figure (in \verb|.pdf|!)
-
-%\begin{figure}[!ht]\centering
-% You can pre-specify the width of the graph:
-%\includegraphics[width=8cm]{circmax-004.pdf}
-% Below the figure, a caption is put, and a label is defined
-% to be used for reference to this specific figure.
-% Use labels which are very unlikely to be used by
-% other contributors; for example, use labels starting
-% with the surname of the first author.
-%\caption{\label{fig:circtree} Fitted distribution tree for a circular response employing the von Mises distribution.}
-%\end{figure}
-
-
-% In the text, reference to the Figure can be made as follows:
-%We refer to Figure~\ref{smith:fig1} for a~graphical representation.
-
-
-%***********************************************************************
-
-% Acknowledgments, if needed:
-%\acknowledgments{Special Thanks to ... }
-
-%***********************************************************************
-
-% References should be placed in the text in author (year) form.
-% The list of references should be placed below IN ALPHABETICAL ORDER.
-% (Please follow the format of the examples very tightly).
 
 \references
 \begin{description}
