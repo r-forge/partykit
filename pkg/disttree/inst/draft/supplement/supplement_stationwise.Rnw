@@ -21,7 +21,7 @@
   the novel distributional regression forests are evaluated and compared with
   other distributional regression approaches on 95 meteorological stations.
   Moreover, further details -- including a cross-validation analysis -- are
-  preformed for only one station, Axams. To show that Axams is a fairly typical
+  performed for only one station, Axams. To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
   this supplement presents the same analysis as in Section~3.3 of the main
   manuscript for 14~further meteorological stations.
@@ -178,7 +178,7 @@ goodness-of-fit visualization.
 
 \end{itemize}
 
-The Resiudal QQ plots and the PIT histograms visualize the same values,
+The Residual QQ plots and the PIT histograms visualize the same values,
 however, on different scales. For each observation $y$ of the test sample 
 the corresponding PIT value is calculated by applying the probability function 
 $F(y; \hat{\mu}, \hat{\sigma})$

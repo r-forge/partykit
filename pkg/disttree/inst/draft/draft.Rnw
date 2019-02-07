@@ -1160,7 +1160,11 @@ further details:
 \item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Subsampling is employed 
   for each tree using a third of the predictors
-  in each split of the tree (\code{mtry}). Parameters are estimated by
+  in each split of the tree (\hlc{specified by the argument} \code{mtry} 
+  \hlc{in the applied function} \code{distforest}; 
+  \hlc{more information on the employed software is provided in Section}
+  ``Computational Details''). 
+  Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
   The stopping criteria are the minimal number of observations to perform a split 
@@ -1259,12 +1263,13 @@ observations and numerical weather predictions are available for the month of Ju
 from 1985 through 2012. In Figure~\ref{fig:axams-dist} in the introduction the 
 probabilistic forecasts from the distributional forest, trained on 1985--2008, 
 for July 24 in 2009--2012 have already been shown as a motivational example. 
-The figure shows that the model properly depicts the point masses at zero 
-(i.e., the probability of a dry day) and the forecasted probability density 
-function for the total amount of precipitation. The four sample forecasts differ 
-considerably in location $\mu$, scale $\sigma$, and the amount of
-censoring while conforming quite well with the actual observations
-from these days. While this is a nice illustrative example we are  
+\hlc{In particular, the figure displays the point mass at zero (i.e., the probability 
+of a dry day) depicted by the model together with the forecasted probability 
+density function for the total amount of precipitation. Based on this illustration 
+it can be observed that} the four sample forecasts differ considerably in 
+location $\mu$, scale $\sigma$, and the amount of censoring while conforming quite 
+well with the actual observations from these days. 
+While this is a nice illustrative example we are  
 interested in the overall predictive performance and calibration of the
 distributional fits. More details of this assessment as well as
 an application to 14~further meteorological stations is provided in
@@ -1639,7 +1644,7 @@ interpretability but forecasting skill and (semi-)automatic application on a
 larger domain \citep[see also the discussion in][]{Rasp+Lerch:2018}.
 
 
-\subsubsection{Distributional specifications}
+\subsubsection*{Distributional specifications}
 
 Choosing an adequate distributional family is an important step for
 establishing a well-fitting model. A zero-censored Gaussian distribution is
@@ -1735,6 +1740,7 @@ GAMLSS was not taken into consideration in the comparison of all applied models.
 
 
 \section*{Computational details}
+\label{sec:comp}
 
 The proposed methods are in the \textsf{R} package \textbf{disttree}
 (version~\Sexpr{packageVersion("disttree")}) based on the \textbf{partykit}
@@ -1772,6 +1778,12 @@ The results presented in Supplement A \citep{Schlosser+Hothorn+Stauffer:2018a} a
 Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")}, respectively.
+
+
+\section*{Acknowledgements}
+\hlc{An extended research stay of Torsten Hothorn in Innsbruck (August
+2017 to January 2018) was financially supported by the Swiss National
+Science Foundation, grant number SNF IZSEZ0 177091.}
 
 \newpage
 \section*{Appendix}
@@ -1840,7 +1852,19 @@ c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 \end{equation}
 where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
-can be considered.
+can be considered ($c_{\text{max}}$).
+
+\hlc{Since} \cite{Strasser+Weber:1999} \hlc{showed that the asymptotic conditional 
+distribution of a linear statistics with conditional expectation} $\mu$ 
+\hlc{and covariance} $\Sigma$ 
+\hlc{is a multivariate normal distribution with parameters}
+$\mu$ and $\Sigma$ 
+\hlc{the asymptotic conditional distribution of the standardized test statistic}
+$c(t_{l},\mu_{l},\Sigma_{l})$ 
+\hlc{is either normal}
+($c_{\text{max}}$) 
+\hlc{or follows a} 
+$\chi^2$ distribution ($c_{\text{quad}}$).
 
 The smaller the $p$-value corresponding to the standardized test 
 statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
