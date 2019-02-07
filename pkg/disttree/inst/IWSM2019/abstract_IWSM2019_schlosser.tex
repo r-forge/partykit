@@ -155,7 +155,7 @@ over all possible partitions.
 
 In this study distributional trees are adapted to circular responses by employing the von Mises
 distribution, also known as ``the circular normal distribution''. Based on a location parameter
-$\mu \in [-\pi, \pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [-\pi, \pi]$
+$\mu \in [0, 2\pi]$ and a concentration parameter $\kappa > 0$ the density for $y \in [0, 2\pi]$
 is given by:
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
@@ -185,7 +185,7 @@ is met (e.g., subgroup size or tree depth).
 \caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
 In each terminal node the empirical histogram (gray) and fitted density (red line)
 are depicted along with the estimated location parameter (red hand). The covariates
-employed are wind direction ($degree$), wind speed ($\text{ms}^{-1}$),
+employed are wind direction ($\text{degree}$), wind speed ($\text{ms}^{-1}$),
 and pressure gradients ($\text{hPa}$) west and east of the airport,
 all lagged by one hour.}
 \label{schlosser:fig_tree} \end{figure}
@@ -243,7 +243,8 @@ for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
 \bigskip
 
 % Acknowledgments, if needed:
-\acknowledgments{Special Thanks to ... }
+\acknowledgments{This project was partially funded by the Austrian Research Promotion 
+Agency~(FFG) grant no.~$858537$.}
 
 \bigskip
 
