@@ -93,9 +93,9 @@ The function returns a list with the following objects:
 \seealso{\code{\link[stats]{lm}}, \code{\link[spdep]{lagsarlm}}, \code{\link[partykit]{lmtree}}}
 
 \references{ 
-  Wagner M, Zeileis A (2017).
+  Wagner M, Zeileis A (2019).
     Heterogeneity and Spatial Dependence of Regional Growth in the EU: A Recursive Partitioning Approach.
-    German Economic Review, Forthcoming.
+    German Economic Review, \bold{20}(1), 67--82.
     \doi{10.1111/geer.12146}
     \url{https://eeecon.uibk.ac.at/~zeileis/papers/Wagner+Zeileis-2019.pdf}
 }
