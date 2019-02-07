@@ -75,19 +75,25 @@
 
 % Authors and running list of authors to be used as right header:
 \author{Lisa Schlosser\inst{1}, 
-Moritz N. Lang\inst{1},
-Torsten Hothorn\inst{2},
-Georg J. Mayr\inst{1},
+Moritz N. Lang\inst{{1,2}},
+Torsten Hothorn\inst{3},
+Georg~J.~Mayr\inst{2},
 Reto Stauffer\inst{1},
 Achim Zeileis\inst{1}}
 \authorrunning{Schlosser et al.}    %% use \authorrunning{Surname 1} if only 1 author
                                     %% use \authorrunning{Surname 1 and Surname2} if two authors
                                     %% use \authorrunning{Surname 1 et al.} if more than two authors
 
-% Institutes of all authors
-% Include city and country of each institute, do not include the full address.
-\institute{Universit\"at Innsbruck, Austria
-\and Universit\"at Z\"urich, Switzerland}
+%% Institutes of all authors
+%% Include city and country of each institute, do not include the full address.
+%\institute{Universit\"at Innsbruck, Austria
+%\and Universit\"at Z\"urich, Switzerland}
+
+%%%%%%%% IF DEPARTMENTS ARE LISTED AS WELL CHANGE NUMBERING!!!  %%%%%%%%%%%%%%
+\institute{Department of Statistics, Universit\"at Innsbruck, Innsbruck, Austria
+\and Department of Atmospheric and Cryospheric Science, Universit\"at Innsbruck, Innsbruck, Austria
+\and Epidemiology, Biostatistics and Prevention Institute, Universit\"at Z\"urich, Zurich, Switzerland}
+
 
 % E-mail of presenting author for correspondence
 \email{Lisa.Schlosser@uibk.ac.at}
@@ -179,7 +185,7 @@ is met (e.g., subgroup size or tree depth).
 \caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
 In each terminal node the empirical histogram (gray) and fitted density (red line)
 are depicted along with the estimated location parameter (red hand). The covariates
-employed are wind direction ($\text{rad}$), wind speed ($\text{ms}^{-1}$),
+employed are wind direction ($degree$), wind speed ($\text{ms}^{-1}$),
 and pressure gradients ($\text{hPa}$) west and east of the airport,
 all lagged by one hour.}
 \label{schlosser:fig_tree} \end{figure}
@@ -202,7 +208,7 @@ in each terminal node. Based on the fitted location parameters $\hat \mu$, the s
 can be distinguished into the following wind regimes:
 (1)~Up-valley winds blowing from the valley mouth towards the upper valley
 (from east to west, nodes 4 and 5). (2) Downslope winds blowing across
-the Alpine crest along the Wipp Valley towards Innsbruck (from south-east to
+the Alpine crest along the intersecting valley towards Innsbruck (from south-east to
 north-west, nodes 7 and 8). (3) Down-valley winds blowing in the direction
 of the valley mouth (from west to east, nodes 12, 14, and 15). Node~11
 captures observations with rather low wind speeds that cannot be distinguished
@@ -236,6 +242,10 @@ for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
 
 \bigskip
 
+% Acknowledgments, if needed:
+\acknowledgments{Special Thanks to ... }
+
+\bigskip
 
 \references
 \begin{description}
