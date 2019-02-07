@@ -7,7 +7,8 @@ Authors@R: c(person(given = "Martin", family = "Wagner", role = "aut", email = "
                     comment = c(ORCID = "0000-0003-0918-3766")),
              person("Roger", "Bivand", role = "ctb", email = "Roger.Bivand@nhh.no", comment=c(ORCID="0000-0003-2392-6140")))
 Description: Model-based linear model trees adjusting for spatial correlation using a
-             simultaneous autoregressive spatial lag.
+             simultaneous autoregressive spatial lag, Wagner and Zeileis (2019)
+	     <doi:10.1111/geer.12146>.
 Depends: R (>= 3.1.0), partykit, spdep
 Imports: Formula (>= 1.2-1)
 License: GPL-2 | GPL-3
