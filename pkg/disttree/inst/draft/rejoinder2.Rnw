@@ -28,7 +28,7 @@ Area Editor\\
 The Annals of Applied Statistics}
 
 
-\setkomavar{subject}{Revision of AOAS1804-015}
+\setkomavar{subject}{Revision of AOAS1811-010}
 
 \opening{Dear Professor Serban,}
 
@@ -38,34 +38,24 @@ forecasting in complex terrain'' (AOAS1804-015).
 
 Thank you very much for the positive and constructive feedback from you, 
 the associate editor, and the two referees. Based on your comments, the
-manuscript has been revised and we feel that this substantially improved our
-contribution.
-%
-The most important changes are:
-\begin{itemize}
-
-\item \emph{Discussion.}\\
-TO DO
-
-\item \emph{\ldots}\\
-
-
-% \item In the calculation of variable importance we have detected some inconsistencies.
-% Thus, we have revised the applied method to evaluate this measurement and recalculated
-% variable importance for the distributional forest.
-
-\end{itemize}
-
-All changes and additions are explained in much more detail in the
+manuscript has been revised. In particular, an additional subsection
+has been added to the discussion commenting on the complexity of the
+applied distributions.
+%The most important changes are:
+%\begin{itemize}
+%\item \emph{Discussion.}\\
+%\item \emph{\ldots}\\
+%\end{itemize}
+All changes and extensions are explained in much more detail in the
 point-to-point reply on the next pages. 
 
 \closing{Best regards,
 \vspace*{1cm}
 }
 
-\vspace*{-2.8cm}
-\hspace*{-0.3cm} 
-\includegraphics[width = 0.23\textwidth]{signature-Schlosser}
+%\vspace*{-2.8cm}
+%\hspace*{-0.3cm} 
+%\includegraphics[width = 0.23\textwidth]{signature-Schlosser}
 
 \end{letter}
 
@@ -89,7 +79,7 @@ methods compared here? Is it possible that the patterns in this figure are due t
 
 TO DO: adaption in the manuscript
 
-Thank you very much for your comment! East Tyrol lies in a different climat zone than the 
+Thank you very much for your comment! East Tyrol lies in a different climate zone than the 
 rest of Tyrol indicating different meteorological characteristics. For example, a covariate
 might have a linear effect on the expected amount of rain in East Tyrol while it has a
 non-additive effect in Northern Tyrol. In this case, in East Tyrol an additive model such as 
@@ -97,7 +87,7 @@ GAMLSS will capture this influence better than a tree model, particularly if thi
 is correctly specified in the model (which might be the case in the prespecified GAMLSS).
 Of course, these are just assumptions and there could be many other reasons. However,
 looking at the results of the cross-validation in Supplement~B it can be observed that
-the difference in performance between the GAMLSS and the distributional tree models as
+the difference in performance between the GAMLSS and the distributional forest models as
 seen in the single evaluation evens out, hence the specific choice of learning years seems
 to have an impact as well.
 
@@ -114,12 +104,12 @@ to have an impact as well.
 \textbf{General Comments:}
 
 \begin{review}
-The authors have well addressed the reviewers’ comments. The two added supplementary 
+The authors have well addressed the reviewers' comments. The two added supplementary 
 materials give a more solid ground to the proposed post-processing method by showing 
 it is robustness to some choice of forecast distribution and that the results presented 
 in the main manuscript does not hold only for the specific station.
 I recommend the paper to be accepted after the minor revisions proposed
-hereafter have been adressed.
+hereafter have been addressed.
 \end{review}
 
 Thank you very much for the positive feedback and the helpful comments regarding the paper. 
@@ -220,10 +210,17 @@ Overall I found the paper interesting but not innovative and general enough to m
 contribution qualified for AOAS but rather for instance JRSSC.
 \end{review}
 
-TO DO 
-
-Thank you very much for the positive and constructive 
-comments regarding the paper. 
+Thank you very much for your feedback and the constructive comments regarding the paper. 
+You are right that it still has to be tested how distributional trees and forests perform when
+employing very complex distributions such as the Dagum distribution. 
+However, contrary to the uncensored Gaussian distribution the parameters of the here applied 
+censored Gaussian distribution are not orthogonal as changing the mean also influences the variance,
+especially close-by the censoring point. Moreover, the three-parametric two-part hurdle model
+employed in Supplement A is almost equivalent to the zero-inflated model you suggested. 
+Hence, the distributional trees and forests have been tested for distributions with dependencies
+among their parameters and have shown to perform well. But of course further investigation is
+required in order to confirm these findings in general. This is now also mentioned in an additional 
+subsection of the discussion in the manuscript.
 
 
 \end{document}
