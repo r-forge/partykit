@@ -6,6 +6,7 @@
 \alias{logLik.lagsarlmtree}
 \alias{predict.lagsarlmtree}
 \alias{sctest.lagsarlmtree}
+\alias{impacts.lagsarlmtree}
 
 \title{Spatial Lag Model Trees}
 
