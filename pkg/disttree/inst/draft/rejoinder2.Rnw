@@ -37,17 +37,11 @@ please find attached the revised version of our manuscript
 forecasting in complex terrain'' (AOAS1804-015).
 
 Thank you very much for the positive and constructive feedback from you, 
-the associate editor, and the two referees. Based on your comments, the
-manuscript has been revised. In particular, an additional subsection
-has been added to the discussion commenting on the complexity of the
-applied distributions.
-%The most important changes are:
-%\begin{itemize}
-%\item \emph{Discussion.}\\
-%\item \emph{\ldots}\\
-%\end{itemize}
-All changes and extensions are explained in much more detail in the
-point-to-point reply on the next pages. 
+the associate editor, and the two referees. We have incorporated all
+the remaining comments and, in particular, added a new subsection
+discussing more complex distributions with non-orthogonal parameters.
+All changes are explained in more detail in the point-to-point reply
+on the next pages. 
 
 \closing{Best regards,
 \vspace*{1cm}
@@ -127,13 +121,13 @@ Please refer here to the ``computational~details'' section at the end of article
 Also, please indicate to which function these parameters pertain to (ctree?).
 \end{review}
 
-The missing information and reference have been added in the 
-manuscript in Section~3.2 \textit{Models and evaluation: Distributional forest}.
-The described parameters pertain to the forest-building
-function \code{distforest}. But you are right, within the function \code{distforest} 
-the arguments \code{minsplit}, \code{minbucket} and \code{alpha} are handed over to the 
-tree-building function \code{disttree} which in this case applies the function \code{ctree}.
- 
+We now point out that the arguments pertain to our function \code{distforest}
+and include a forward reference to the ``computational details''.
+
+You are also correct, though, that \code{ctree} takes these arguments. Internally,
+\code{distforest}/\code{disttree} pass the arguments on to \code{cforest}/\code{ctree}.
+This is now pointed out more clearly in the ``computational details''.
+
 
 \begin{review}
 2. {\color{quotecolor}\textit{page 15:} The figure shows that the model properly 
@@ -143,7 +137,9 @@ It is not possible to assess a probabilistic forecast with only one example.
 Please erase or rephrase this sentence.
 \end{review}
 
-Thank you for pointing this out. We have rephrased this sentence in Section 3.3. of the manuscript. 
+We have rephrased this sentence, emphasizing that the \emph{forecasted} distributions
+are depicted and avoiding an assessment.
+
 
 \begin{review}
 3. {\color{quotecolor}\textit{page 25:} 
@@ -152,10 +148,9 @@ $\boldsymbol{c(t_l, \mu_l, \Sigma_l)}$}\\
 Please specify the distribution of the test statistic under the null hypothesis.
 \end{review}
 
-Depending on the whether a maximum or a quadratic form of the test statistic is considered
-for the standardized test statistic its asymptotic conditional distribution is either a 
-normal ($c_{max}$) or a $\chi^2$ distribution ($c_{quad}$). 
-We have added this information to the addressed section of Appendix~A.
+Depending on whether a maximum or a quadratic form of the test statistic is considered,
+the asymptotic conditional distribution is either normal ($c_{max}$) or $\chi^2$ ($c_{quad}$). 
+We have added this information in Appendix~A.
 
 
 \textbf{Supplement B:}
