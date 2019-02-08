@@ -128,3 +128,9 @@ predict.lagsarlmtree <- function(object, newdata = NULL, type = "response", ...)
     predict(object$lagsarlm, newdata = newdata, type = type, ...)
   }
 }
+
+impacts.lagsarlmtree <- function(obj, ...) {
+  impacts(obj$lagsarlm, ...)
+}
+
+

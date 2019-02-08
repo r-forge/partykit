@@ -16,4 +16,5 @@ S3method("logLik", "lagsarlmtree")
 S3method("plot", "lagsarlmtree")
 S3method("predict", "lagsarlmtree")
 S3method("print", "lagsarlmtree")
+S3method("impacts", "lagsarlmtree")
 
