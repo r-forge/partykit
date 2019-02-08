@@ -1159,11 +1159,9 @@ further details:
 
 \item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Subsampling is employed 
-  for each tree using a third of the predictors
-  in each split of the tree (\hlc{specified by the argument} \code{mtry} 
-  \hlc{in the applied function} \code{distforest}; 
-  \hlc{more information on the employed software is provided in Section}
-  ``Computational Details''). 
+  for each tree using a third of the predictors in each split of the tree
+  (\hlc{argument} \code{mtry} \hlc{in our implementation} \code{distforest},
+  \hlc{with more ``computational details'' provided at the end of the manuscript}).
   Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
@@ -1263,8 +1261,8 @@ observations and numerical weather predictions are available for the month of Ju
 from 1985 through 2012. In Figure~\ref{fig:axams-dist} in the introduction the 
 probabilistic forecasts from the distributional forest, trained on 1985--2008, 
 for July 24 in 2009--2012 have already been shown as a motivational example. 
-\hlc{In particular, the figure displays the point mass at zero (i.e., the probability 
-of a dry day) depicted by the model together with the forecasted probability 
+\hlc{In particular, the figure depicts the forecasted point mass at zero
+(i.e., the probability of a dry day) along with the forecasted probability 
 density function for the total amount of precipitation. Based on this illustration 
 it can be observed that} the four sample forecasts differ considerably in 
 location $\mu$, scale $\sigma$, and the amount of censoring while conforming quite 
@@ -1763,11 +1761,13 @@ The proposed methods are in the \textsf{R} package \textbf{disttree}
 (version~\Sexpr{packageVersion("disttree")}) based on the \textbf{partykit}
 package (version~\Sexpr{packageVersion("partykit")}), both available 
 on \textsf{R}-Forge at
-(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
-\code{distfit} fits distributional models by maximum likelihood, which is
-used as the basis for the tree-building function \code{disttree}, upon which
-the \code{distforest} is built. All functions can either be used with
-GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
+(\url{https://R-Forge.R-project.org/projects/partykit/}). 
+The function \code{distforest} learns the distributional forests proposed
+in this manuscript by combining the general \code{cforest} function from
+\textbf{partykit} with the function \code{distfit} for fitting distributional
+models by maximum likelihood. Analogously, \code{disttree} can learn a single
+distributional tree by combining \code{ctree} with \code{distfit}.
+All functions can either be used with GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
 (\citealp{Stasinopoulos+Rigby:2007}, version~\Sexpr{packageVersion("gamlss.dist")})
 or with custom lists containing all required information about the distribution family.
 
@@ -1860,8 +1860,8 @@ by column-wise combination. Observations with missing values are excluded from t
 With the conditional expectation $\mu_l$ and the covariance 
 $\Sigma_l$ of $T_l$ as derived by 
 \cite{Strasser+Weber:1999} the test statistic can be standardized. 
-The observed multivariate linear statistic $t_l$ which is either an
-$k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of $Z_l$,
+The observed multivariate linear statistic $t_l$ which is either a
+$k$- or $k \cdot H$-dimensional vector, depending on the scale of $Z_l$,
 is mapped onto the real line by a univariate test statistic $c$.
 In the application of this paper a quadratic form is chosen, such that
 \begin{equation}
@@ -1871,17 +1871,14 @@ where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered ($c_{\text{max}}$).
 
-\hlc{Since} \cite{Strasser+Weber:1999} \hlc{showed that the asymptotic conditional 
-distribution of a linear statistics with conditional expectation} $\mu$ 
-\hlc{and covariance} $\Sigma$ 
-\hlc{is a multivariate normal distribution with parameters}
-$\mu$ and $\Sigma$ 
-\hlc{the asymptotic conditional distribution of the standardized test statistic}
+\cite{Strasser+Weber:1999} \hlc{showed that the asymptotic conditional 
+distribution of the linear statistic} $t_l$ \hlc{is a multivariate normal with parameters}
+$\mu$ and $\Sigma$. \hlc{Hence, the asymptotic conditional distribution of}
 $c(t_{l},\mu_{l},\Sigma_{l})$ 
 \hlc{is either normal}
-($c_{\text{max}}$) 
-\hlc{or follows a} 
-$\chi^2$ distribution ($c_{\text{quad}}$).
+(for $c_{\text{max}}$) 
+\hlc{or} 
+$\chi^2$ (for $c_{\text{quad}}$).
 
 The smaller the $p$-value corresponding to the standardized test 
 statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
