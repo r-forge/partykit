@@ -1678,6 +1678,23 @@ allow to capture dependence of higher moments \citep[see e.g.,][]{Hothorn+Zeilei
 are extensions of interest for future research.
 
 
+\subsubsection*{Distributional complexity / Orthogonality of distribution parameters}
+\hlc{Allowing for splits in each distribution parameter rather than only in the location parameter
+is particularly advantageous if the parameters are orthogonal, i.e. do not depend on each other,
+as changes in parameters other than the location parameter would be overlooked otherwise.
+If there is a dependency among parameters it can be sufficient considering only one parameter 
+in order to detect all changes, but this depends on the type of dependency.
+
+In the case of the here applied censored Gaussian distribution a shift in the mean also influences 
+the variance, hence the parameters are not orthogonal. The same holds for the 
+distributions employed in Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a}. 
+\hlc{Therefore, distributional trees and forests have shown to perform reasonably well also for  
+distributions with non-orthogonal parameters. However, testing a broader variety of 
+distributions, particularly very complex distributions such as the Dagum distribution}
+(see, e.g., \cite{Klein+Kneib+Lang:2015}) 
+\hlc{are required in order to confirm these findings in general.}
+
+
 \subsubsection*{Axams vs.~other meteorological stations}
 
 Axams was chosen as the meteorological station for the more extensive evaluations
