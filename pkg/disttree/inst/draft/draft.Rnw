@@ -1591,6 +1591,11 @@ performs on par (gray) or better (green) for the majority of stations. Only
 for a few stations in the north-east EMOS performs best, and in East Tyrol
 the prespecified GAMLSS performs particularly well in the validation period
 (2009--2012).
+\hlc{Note that differences in the results of East Tyrol compared to the rest of 
+Tyrol could be (partly) due to East Tyrol lying in a different climate zone but 
+could also be caused by the specific selection of learning and validation period
+as only one single time split is considered. This will be discussed more
+in detail in the following section.}
 
 
 \section{Discussion}
@@ -1692,7 +1697,7 @@ is employed for the final predictions} \citep[see][Section~7]{Hothorn+Zeileis:20
 proved to be quite robust to the different distributional specifications considered.
 While all specifications focus on capturing mean-variance effects note that these
 parameters are never fully orthogonal but can actually become quite closely correlated
-due to the censoring (or trunctation and/or zero-inflation considered in Supplement~A).
+due to the censoring (or truncation and/or zero-inflation considered in Supplement~A).
 
 However, exploring extensions to more flexible parametric distributions}
 \citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
@@ -1718,11 +1723,13 @@ Figure~\ref{fig:all-map} even out in the cross-validation with distributional
 forests typically performing at least as well as the best of the other models at most
 stations. In particular, this also includes three stations in East Tyrol
 where the prespecified GAMLSS performs best in the single-split setting
-(learning based on 1985--2008 and validation for 2009--2012). While part of
-the performance difference can also be attributed to different
-climatological characteristics in East Tyrol (that, unlike North Tyrol, is located
-south of the main Alpine Ridge), the differences are greatly reduced for several
-stations in East Tyrol by considering more splits in the full cross-validation.
+(learning based on 1985--2008 and validation for 2009--2012). 
+\hlc{The differences are greatly reduced for several stations in East Tyrol by considering 
+more splits in the full cross-validation. However, part of the performance difference can also 
+be attributed to varying climatological characteristics in East Tyrol that, unlike North Tyrol,
+is located south of the main Alpine Ridge. Therefore, effects could be more additive
+and with less interactions than in North Tyrol and thus be captured more precisely by
+an additive model such as GAMLSS, particularly with an appropriate prespecification of covariates.}
 
 
 
