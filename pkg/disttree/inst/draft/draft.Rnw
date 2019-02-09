@@ -951,7 +951,7 @@ neighbor weights are employed for aggregation in survival forests
 quantile regression forests \citep{Meinshausen:2006},
 transformation forests \citep{Hothorn+Zeileis:2017},
 and generalized random forests for causal inferences 
-\citep{Athey+Tibshirani+Wager:2017}.
+\citep{Athey+Tibshirani+Wager:2019}.
 These procedures aggregate over trees fitted to specific score functions 
 (e.g., log rank scores in survival trees, model residuals in transformation 
 or generalized forests). Distributional forests, in contrast to 
@@ -1282,7 +1282,7 @@ theoretical standard normal quantile (i.e., form a straight line close to the
 diagonal), indicating that all four models are sufficiently well calibrated. 
 This is also supported by the corresponding probability integral transform
 (PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) histograms for station
-Axams in Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} which 
+Axams in Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b} which 
 contains a more detailed explanation of residual QQ plots and PIT histograms.
 
 <<echo=FALSE, results=hide>>=
@@ -1642,7 +1642,7 @@ interpretability but forecasting skill and (semi-)automatic application on a
 larger domain \citep[see also the discussion in][]{Rasp+Lerch:2018}.
 
 
-\subsubsection*{Distributional specifications}
+\subsubsection*{Distributional specifications for precipitation modeling}
 
 Choosing an adequate distributional family is an important step for
 establishing a well-fitting model. A zero-censored Gaussian distribution is
@@ -1651,7 +1651,7 @@ for precipitation modeling in earlier literature
 \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
 To test for robustness against distributional misspecifation, 
 two alternative distributional specifications have been considered
-in Supplement A \citep{Schlosser+Hothorn+Stauffer:2018a}: Using the
+in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2018a}: Using the
 same evaluations as in Section~\ref{sec:all}, all models are
 additionally fitted for 15~meteorological stations using a zero-censored
 logistic distribution in order to account for heavier tails and a two-part
@@ -1670,27 +1670,34 @@ for capturing skewness \citep[as in][]{Scheuerer+Hamill:2015, Baran+Nemoda:2016}
 However, this would go beyond the mean/variance specification of the NGR
 that is widely used in ensemble post-processing. Therefore, this contribution
 investigates the effects of using the same distributional family with a novel
-strategy for specifying dependence on covariates. Considering more flexible
-parametric specifications as well as transformation model specifications that
-allow to capture dependence of higher moments \citep[see e.g.,][]{Hothorn+Zeileis:2017}
-are extensions of interest for future research.
+strategy for specifying dependence on covariates.
 
 
-\subsubsection*{Distributional complexity / Orthogonality of distribution parameters}
-\hlc{Allowing for splits in each distribution parameter rather than only in the location parameter
-is particularly advantageous if the parameters are orthogonal, i.e. do not depend on each other,
-as changes in parameters other than the location parameter would be overlooked otherwise.
-If there is a dependency among parameters it can be sufficient considering only one parameter 
-in order to detect all changes, but this depends on the type of dependency.
+\subsubsection*{More general distributional specifications}
 
-In the case of the here applied censored Gaussian distribution a shift in the mean also influences 
-the variance, hence the parameters are not orthogonal. The same holds for the 
-distributions employed in Supplement A} \citep{Schlosser+Hothorn+Stauffer:2018a}. 
-\hlc{Therefore, distributional trees and forests have shown to perform reasonably well also for  
-distributions with non-orthogonal parameters. However, testing a broader variety of 
-distributions, particularly very complex distributions such as the Dagum distribution}
-(see, e.g., \cite{Klein+Kneib+Lang:2015}) 
-\hlc{are required in order to confirm these findings in general.}
+\hlc{Beyond the task of modeling precipitation it is of interest how well distributional
+forests perform in combination with other more general distributional specifications.
+It has been shown previously in the literature that using a score- or gradient-based
+selection of splitting variables outperforms a mean-based selection with subsequent
+flexible distributional modeling: For example, both} \citet[][Figure~2]{Athey+Tibshirani+Wager:2019}
+\hlc{and} \citet[][Figure~1]{Hothorn+Zeileis:2017} \hlc{demonstrated (independently) that their
+respective score-based random forest algorithms outperform the mean-based quantile
+regression forests of} \cite{Meinshausen:2006} \hlc{in a setup where only the variance of a normal
+response variable changes across the considered covariates. However, if all distribution
+parameters are closely correlated with the distribution mean the forests with different
+splitting strategies all perform similarly, provided a sufficiently flexible distribution
+is employed for the final predictions} \citep[see][Section~7]{Hothorn+Zeileis:2017}.
+
+\hlc{Similarly, the score-based distributional forests introduced in this manuscript
+proved to be quite robust to the different distributional specifications considered.
+While all specifications focus on capturing mean-variance effects note that these
+parameters are never fully orthogonal but can actually become quite closely correlated
+due to the censoring (or trunctation and/or zero-inflation considered in Supplement~A).
+
+However, exploring extensions to more flexible parametric distributions}
+\citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
+\hlc{as well as transformation model specifications} \citep[e.g., as in][]{Hothorn+Zeileis:2017}
+\hlc{are of interest for future research.}
 
 
 \subsubsection*{Axams vs.~other meteorological stations}
@@ -1700,7 +1707,7 @@ in Section~\ref{sec:axams} as it yields fairly typical results
 and is geographically in the center of the study area and closest to
 Innsbruck, the capital of Tyrol and the work place of three of the authors.
 To show that qualitatively similar results are obtained for other
-meteorological stations, Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b}
+meteorological stations, Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b}
 carries out the same evaluation for 14~further stations. These
 cover a wide range of geographical locations/altitudes and a mix of
 different best-performing models in the single-split setting reported in
@@ -1785,14 +1792,14 @@ is reproducible using \code{demo("RainAxams", package = "disttree")}.
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
 QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
-\citep[Supplement B]{Schlosser+Hothorn+Stauffer:2018b}.
+\citep[Supplement~B]{Schlosser+Hothorn+Stauffer:2018b}.
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} 
 (version~\Sexpr{packageVersion("RainTyrol")}),
 also available within the \textsf{R}-Forge~project.
-The results presented in Supplement A \citep{Schlosser+Hothorn+Stauffer:2018a} and 
-Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
+The results presented in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2018a} and 
+Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")}, respectively.
 
@@ -1955,7 +1962,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 
 
 \section*{Supplementary material}
-\subsection*{Supplement A: Different Response Distributions}
+\subsection*{Supplement~A: Different Response Distributions}
   To assess the goodness of fit of the Gaussian distribution, left-censored at zero,
   this supplement employs the same evaluations as in the main manuscript but based on
   two other distributional assumptions: A logistic distribution, left-censored at zero,
@@ -1963,7 +1970,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
   combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
   truncated at zero, for the positive precipitation observations. 
 
-\subsection*{Supplement B: Stationwise Evaluation}
+\subsection*{Supplement~B: Stationwise Evaluation}
   To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
   this supplement presents the same analysis as in Section~\ref{sec:axams} of the main

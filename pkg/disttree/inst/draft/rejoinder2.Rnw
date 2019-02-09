@@ -71,7 +71,14 @@ methods compared here? Is it possible that the patterns in this figure are due t
 (spatially correlated) sampling variability, i.e. not statistically significant? 
 \end{review}
 
-TO DO: adaption in the manuscript
+FIXME: adaption in the manuscript
+
+FIXME: I think we should present the two arguments more side by side, i.e., mention both
+early on and subsequently discuss both in more detail. (1) One factor is that only a single
+split into 28 years of training and 4 years of test data is considered in the main manuscript.
+When doing the full cross-validation the pronounced differences between the methods are much
+diminished. (2) East Tyrol is in a different climate zone and hence effects could be more
+additive and with less interactions than in North Tyrol.
 
 Thank you very much for your comment! East Tyrol lies in a different climate zone than the 
 rest of Tyrol indicating different meteorological characteristics. For example, a covariate
@@ -188,15 +195,36 @@ I think the authors tried to address my comments and invested considerable addit
 on simulations and predictions on more stations. I appreciate this but am still no completely 
 convinced that the models can provide benefits in distributional regression problems in 
 particular when the distribution is more complex. The reason is that in all models considered, 
-the distribution parameters are "orthogonal" in the sense that the mean and the variance 
+the distribution parameters are ``orthogonal'' in the sense that the mean and the variance 
 parameter separate well.
+\end{review}
+
+Thank you for emphasizing this issue. We have now included some explicit pointers in Section~4
+to the previous random forest literature where it is indeed shown that the advantages of score-based
+split selection are particularly pronounced when the parameters are orthogonal. In contrast,
+when parameters are closely correlated with the distribution mean then the advantages are
+diminished and different random forest flavors typically perform similarly.
+
+Our results confirm these findings in the context of parametric distributional modeling,
+showing that results are quite robust to the distributional specification. Note also that
+in our models mean and variance are typically quite closely correlated due to the substantial
+censoring at zero (or truncation/zero-inflation in Supplement~A).
+
+\begin{review}
 This is not the case for many other distributions like the Dagum, Zero-inflated models, etc. 
 I am wondering how well the distributional forest in these cases works with respect to the 
 splits in the different distribution parameters. For instance, the expectation of the response 
 for a Dagum distribution is a function of all distribution parameters and I have doubts that 
 splitting the forests works without identification issues such that the forests may get very 
 sensitive with respect to the test and training data.
+\end{review}
 
+We do not expect identification issues but agree that the advantages over a method like
+Meinshausen's quantile regression forests will likely decrease or even disappear. However,
+we do not speculate about these properties in the manuscript but do point out that this
+deserves exploration in future research.
+
+\begin{review}
 In addition, overall I would say the method performs as well as the competitors but loses 
 interpretation and for the prespecified GAMLSS also uncertainty estimates. With uncertainty 
 I mean uncertainty of the estimates no the variance of the response.
@@ -205,17 +233,8 @@ Overall I found the paper interesting but not innovative and general enough to m
 contribution qualified for AOAS but rather for instance JRSSC.
 \end{review}
 
-Thank you very much for your feedback and the constructive comments regarding the paper. 
-You are right that it still has to be tested how distributional trees and forests perform when
-employing very complex distributions such as the Dagum distribution. 
-However, contrary to the uncensored Gaussian distribution the parameters of the here applied 
-censored Gaussian distribution are not orthogonal as changing the mean also influences the variance,
-especially close-by the censoring point. Moreover, the three-parametric two-part hurdle model
-employed in Supplement A is almost equivalent to the zero-inflated model you suggested. 
-Hence, the distributional trees and forests have been tested for distributions with dependencies
-among their parameters and have shown to perform well. But of course further investigation is
-required in order to confirm these findings in general. This is now also mentioned in an additional 
-subsection of the discussion in the manuscript.
-
+FIXME: Torsten, should we comment on this? In a predictive setup like the precipitation
+forecasting the uncertainty of the estimates is not of so much concern. Also, the 
+uncertainty due to variation in the response is typically much larger.
 
 \end{document}
