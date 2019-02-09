@@ -71,26 +71,28 @@ methods compared here? Is it possible that the patterns in this figure are due t
 (spatially correlated) sampling variability, i.e. not statistically significant? 
 \end{review}
 
-FIXME: adaption in the manuscript
+% FIXME: adaption in the manuscript
 
-FIXME: I think we should present the two arguments more side by side, i.e., mention both
-early on and subsequently discuss both in more detail. (1) One factor is that only a single
-split into 28 years of training and 4 years of test data is considered in the main manuscript.
-When doing the full cross-validation the pronounced differences between the methods are much
-diminished. (2) East Tyrol is in a different climate zone and hence effects could be more
-additive and with less interactions than in North Tyrol.
+% FIXME: I think we should present the two arguments more side by side, i.e., mention both
+% early on and subsequently discuss both in more detail. (1) One factor is that only a single
+% split into 28 years of training and 4 years of test data is considered in the main manuscript.
+% When doing the full cross-validation the pronounced differences between the methods are much
+% diminished. (2) East Tyrol is in a different climate zone and hence effects could be more
+% additive and with less interactions than in North Tyrol.
 
-Thank you very much for your comment! East Tyrol lies in a different climate zone than the 
-rest of Tyrol indicating different meteorological characteristics. For example, a covariate
+Thank you very much for your comment! One important fact that could be a reason for the
+different results is that East Tyrol does not lie in the same climate zone as the rest of Tyrol 
+indicating different meteorological characteristics. For example, a covariate
 might have a linear effect on the expected amount of rain in East Tyrol while it has a
 non-additive effect in Northern Tyrol. In this case, in East Tyrol an additive model such as 
 GAMLSS will capture this influence better than a tree model, particularly if this covariate
 is correctly specified in the model (which might be the case in the prespecified GAMLSS).
-Of course, these are just assumptions and there could be many other reasons. However,
-looking at the results of the cross-validation in Supplement~B it can be observed that
-the difference in performance between the GAMLSS and the distributional forest models as
-seen in the single evaluation evens out, hence the specific choice of learning years seems
-to have an impact as well.
+Of course, this is just an assumption and there could be other reasons for the performance
+difference between the GAMLSS and the distributional forest models in East Tyrol. However, 
+looking at the results of the cross-validation in Supplement~B it can be observed that this 
+difference as seen in the single evaluation evens out for several stations in East Tyrol, 
+hence the specific choice of learning and validation period seems to have an impact as well.
+These two aspects are now also discussed more in detail in the main manuscript.
 
 
 
