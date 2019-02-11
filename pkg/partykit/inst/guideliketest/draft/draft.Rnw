@@ -4,6 +4,7 @@
 \usepackage{amstext,amsfonts,amsmath,amssymb,bm,thumbpdf,lmodern,hyperref}
 \usepackage[all]{hypcap}
 \usepackage{enumitem}
+\usepackage{color,soul}
 
 %% need no \usepackage{Sweave} ?
 %\usepackage{Sweave}
@@ -58,6 +59,9 @@
 \newcommand{\eplus}{\widehat{\text{Err}}^{(.632+)}}
 \newcommand{\eoob}{\widehat{\text{Err}}^{(oob)}}
 \newcommand{\bft}{\mathbf{t}}
+
+\definecolor{changes}{rgb}{1,1,0.7}
+\newcommand{\hlc}[1]{{\sethlcolor{changes}\hl{#1}}}
 
 <<preliminaries, echo=FALSE, results=hide>>=
 # setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/draft/")
@@ -181,15 +185,15 @@ URL: \url{http://user.math.uzh.ch/hothorn/}\\
 \begin{document}
 
 \section{Introduction}\label{sec:introduction}
-In many situations fitting one global model to a data set can be very challenging, 
-especially if this data contains lots of different features with a strong variation 
+In many situations fitting one global model to a given data set can be very challenging, 
+especially if the data contains lots of different features with a strong variation 
 or complex interactions. Therefore, separating the data into more homogeneous subgroups 
 based on a set of covariates first can simplify the task and fitting a local model to 
-each of the resulting subgroups often leads to better results. This separation of the 
-data can be done by applying a tree algorithm. Many different algorithms have been developed
-in this research field. While they all follow the general idea of splitting the data such 
-that some objective function is optimized, they differ in their 
-specific approaches to selecting a split variable and the corresponding split point. 
+each of the resulting subgroups often leads to better results. This separation can be 
+done by applying a tree algorithm. While all of the many developed algorithms 
+follow the general idea of splitting the data such that some objective function is optimized, 
+they differ in their specific approaches to selecting a split variable and the corresponding 
+split point. 
 Some of the first tree algorithms (e.g., AID, \citealp{Morgan+Sonquist:1963}; 
 CART, \citealp{Breiman+Friedman+Stone:1984}) rely on exhaustive search procedures to find both, 
 the best split point and split variable in one step by directly comparing all possible split
@@ -203,36 +207,42 @@ CHAID \citep{Kass:1980}, GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zei
 and MOB \citep{Zeileis+Hothorn+Hornik:2008}.
 For the first step of selecting a split variable they all share the same basic concept of 
 choosing the covariate which shows the highest association to the response variable 
-based on a statistical test. While QUEST, CHAID and GUIDE employ statistical significance
-tests for contingency tables, CTree applies permutation tests in a conditional inference
-framework and MOB uses fluctuation tests based on asymptotic theory. All these approaches
-have shown to work well for various situations, however, the specific advantages and
-disadvantages of each of the testing strategies have not yet been investigated and compared
-in detail.
+based on $p$-values provided by a statistical test. While QUEST, CHAID and GUIDE employ 
+statistical significance tests for contingency tables, CTree applies permutation tests in 
+a conditional inference framework and MOB uses fluctuation tests based on asymptotic theory. 
+All these approaches have shown to work well for various situations, however, the specific 
+advantages and disadvantages of each of the testing strategies have not yet been 
+investigated and compared in detail.
 
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
 i.e. the task of selecting the best split variable. In particular, the approach of the 
-GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm. 
+GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
+by investigating the building blocks of their testing strategies in which they differ:
+(1)~Transformations of the response: using residuals or full model scores
+(2)~Binarization of residuals/scores
+(3)~Categorization of covariates.
 For this purpose, a unifying framework for testing strategies in unbiased model-based tree 
-algorithms is presented such that each of the three strategies can be obtained by a specific 
-combination of the available building blocks. In that way, the effects of each of these 
-features can be investigated separately by varying the building blocks in the tool box 
-provided by this general framework. 
+algorithms is presented such that each of the three strategies GUIDE, CTree, and MOB can be 
+obtained by a specific combination of the available building blocks. In that way, the 
+effects of each of these features can be investigated separately by varying the building 
+blocks in the tool box provided by this general framework. 
+Additionally, the impact of applying either a pre- or postpruning strategy is analyzed.
 
 Depending on the setup different effects can be observed for the investigated building blocks.
 However, none of the results contradicts the conclusion that in general using all available 
 model scores is at least as efficient but mostly clearly advantageous over considering only 
-residuals. Moreover, the effects of binarizing residuals or scores at $0$ or categorizing
-the values of possible split variables are investigated.
-Additionaly, the impact of applying either a pre- or postpruning strategy is analyzed.
+residuals. Also regarding the effects of binarizing residuals or scores at $0$ or categorizing
+the values of possible split variables clear recommendations can be made based on the presented 
+results.
 
 In the first part of Section~\ref{sec:urp} a basic scheme on how to build a tree model is given. 
-Then, after explaining the investigated algorithms CTree, MOB, and GUIDE more in detail in 
-Sections~\ref{sec:ctree}, \ref{sec:mob} and \ref{sec:guide}, the unifying framework for 
-testing strategies in model-based unbiased recursive partitioning algorithms is presented in 
-Section~\ref{sec:unify}.
+After explaining the investigated algorithms CTree (Section~\ref{sec:ctree}), 
+MOB (\ref{sec:mob}), and GUIDE (\ref{sec:guide}) more in detail the applied pruning strategies 
+(\ref{sec:pruning}) are discussed.
+In Section~\ref{sec:unify} the unifying framework for testing strategies in model-based unbiased 
+recursive partitioning algorithms is presented.
 The setting for the simulation study is introduced in Section~\ref{sec:simulation}
-and the results are discussed in Section~\ref{sec:results}.
+and the results are illustrated and discussed in Section~\ref{sec:results}.
 
 
 
@@ -240,10 +250,11 @@ and the results are discussed in Section~\ref{sec:results}.
 \label{sec:urp}
 
 \subsection{Generic Algorithm}
-The basic idea of building a regression tree model is to partition the data into smaller and 
-more homogeneous subgroups based on a set of covariates. Various different tree algorithms 
-have been developed, all following the same general structure starting at the root of the tree
-which is simply the first node containing all available data:
+\label{sec:generic_alg}
+The basic idea of building a regression tree model is to partition the data into smaller 
+and more homogeneous subgroups based on a set of covariates. Various different tree 
+algorithms have been developed, all following the same general structure starting at 
+the root of the tree which is simply the first node containing all available data:
 \begin{enumerate}
 \item For the whole underlying data set in the current node some form of discrepancy 
 measure is calculated. 
@@ -257,23 +268,24 @@ is reached or the data in the node consists of only one or all equal observation
 
 
 The employed discrepancy measure can for example be the sum of deviations from a typical 
-or average value, but it can also be constructed based on a parametric model. For instance,
-different types of residuals or their signs can be applied \citep[see e.g.,][]{Loh:2002} as 
-well as rank sums or logrank scores as in \cite{Hothorn+Hornik+Wiel:2006}.
+or average value, but it can also be constructed based on a parametric model fitted in each 
+node. For instance, different types of residuals or their signs can be applied 
+\citep[see e.g.,][]{Loh:2002} as well as rank sums or logrank scores as 
+in \cite{Hothorn+Hornik+Wiel:2006}.
 %(In the simulation study of this paper trees with linear models fitted in each node are 
 %investigated with the residual sum of squares (RSS) employed as discrepancy measure.)
 
 As explained in Section~\ref{sec:introduction} the considered tree algorithms CTree, MOB, and 
-GUIDE first select the split variable and then the split point in a separate step. 
+GUIDE first select the split variable and then, in a separate step, the split point. 
 For the first step of selecting a split variable they all apply statistical tests
 following the same general strategy: 
 \begin{enumerate}
 \item Based on the discrepancy measure an $n \times k$-matrix $D$ is obtained giving information
 on the goodness of fit of the model for a data set of $n \in \mathbb{N}$ observations in the 
-current node and $k \in \mathbb{N}$.
-\item Using this matrix, the algorithm-specific test statistic is evaluated for each possible 
+current node and the parameter $k \in \mathbb{N}$ defined by the algorithm.
+\item Using this matrix the algorithm-specific test statistic is evaluated for each possible 
 split variable $Z_j$, $j \in \{1,\ldots,m\}$ for $m \in \mathbb{N}$, assessing the dependency
-of $Z_j$ on $D$.
+of $D$ on $Z_j$.
 \item For the resulting values of the test statistics the corresponding $p$-values are calculated
 in order to allow for their comparison on a standardized/unified scale and in that way for
 an unbiased variable selection.
@@ -302,29 +314,28 @@ response $h(Y)$ and $g(Z)$ for a so-called influence function $g$ and each possi
 variable~$Z$.
 The function $h$ has to depend on $Y$ in a permutation-symmetric way but can be of various forms
 and may also be multidimensional. For a numeric response the identity function $h(Y) = Y$ is a common 
-choice, while a categorical response can be mapped to a unity vector by an indicator function 
+choice while a categorical response can be mapped to a unity vector by an indicator function 
 $h(Y) = (0,\ldots,1,\ldots,0)^{\top}$.
 Alternatively, the function $h$ can return a location and scale parameter of $Y$, 
 e.g. $h(Y) = (Y, (Y-\bar{Y})^2)^{\top}$. 
 If a parametric model is fit to the values of the response variable~$Y$ and regressor 
 variable(s)~$X$ the function $h$ can be a model-based transformation returning the 
-corresponding model scores by setting $h(Y) = s(Y,X,\hat{\beta})$
-where $\hat{\beta}$ is the estimated model parameter and $s$ is the score function
+corresponding model scores. This is done by setting $h(Y) = s(Y,X,\hat{\beta})$
+where $\beta$ is the possibly multidimensional model parameter and $s$ is the score function
 $$
-s(Y, X, \hat{\beta}) = \frac{\partial \psi(Y, X, \hat{\beta})}{\partial \beta}
+s(Y, X, \beta) = \frac{\partial \psi(Y, X, \beta)}{\partial \beta}
 $$
 with the sum of $\psi$ over all observations being the objective function that is optimized 
-to estimate the model parameter $\beta$. For this purpose many different M-type estimators can 
-be applied including maximum likelihood or ordinary least squares. Therefore, these objective 
-functions are also possible options to obtain a model-based discrepancy measure for the tree 
-algorithm.
-
-Applying the score function $s$ on a data set of $n$ observations containing the 
-response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$ and 
-regressor(s) $\boldsymbol{x} = (x_1,\ldots,x_n)^\top$ and 
-on a $k$-dimensional estimated parameter vector 
-$\hat{\boldsymbol{\beta}} = (\hat{\beta_1},\ldots,\hat{\beta_k})^\top$ 
-yields a $n \times k$-matrix $S$.
+to obtain the estimated model parameter $\hat{\beta}$. For this purpose many different M-type 
+estimators can be applied including maximum likelihood or ordinary least squares such that the 
+corresponding objective function can be employed as model-based discrepancy measure for the 
+tree algorithm. Evaluationg the score function $s$ on a data set of $n$ observations 
+%containing the 
+%response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$ and 
+%regressor(s) $\boldsymbol{x} = (x_1,\ldots,x_n)^\top$ and on
+and a $k$-dimensional estimated parameter vector 
+%$\hat{\boldsymbol{\beta}} = (\hat{\beta_1},\ldots,\hat{\beta_k})^\top$ 
+yields a $n \times k$-matrix.
 In that way a score value indicating how well the model fits the data is given separately
 for each tuple of observation and estimated parameter element 
 $(y_i, x_i, \hat{\beta_l})$ with $i \in \{1,\dots,n\}$
@@ -369,17 +380,17 @@ application of the central limit theorem.
 The fitted model can be of a very basic and simple form such as an average value of the response 
 vector but can also be a more complex parametric model.
 In \cite{Zeileis+Hothorn+Hornik:2008} generalized linear models (GLMs) and survival regression models 
-are used to exemplify the algorithm. Subsequently various other types of models have been applied as well,
+are used to exemplify the algorithm. Subsequently, various other types of models have been applied as well,
 for example beta regression models \citep{Gruen+Kosmidis+Zeileis:2012}, 
 psychometric models such as Rasch trees \citep{Strobl+Kopf+Zeileis:2015} and
 mixed effects models \citep{Fokkema+Smits+Zeileis:2018}.
 
 Regardless of the applied model type the algorithm only requires the corresponding model 
-score matrix $S$ in order to test for any instability in the model parameters over each 
+score matrix in order to test for any instability in the model parameters over each 
 particular ordering induced by each of the possible partitioning variables $Z$.
-If a variable $Z$ has no specific influence on the parameters the scores would always 
-fluctuate randomly around their mean 0. Therefore, these deviations are investigated by 
-measuring them using an empirical fluctuation process. Applying a scalar function which 
+If a variable $Z$ has no specific influence on the parameters the ordered scores would 
+always fluctuate randomly around their mean 0. Therefore, these deviations are investigated 
+by measuring them using an empirical fluctuation process. Applying a scalar function which 
 captures the fluctuation in this process yields the test statistic of this so called 
 generalized M-fluctuation test \citep{Zeileis+Hornik:2007}. 
 To obtain the distribution of the resulting test statistic asymptotic theory, in particular 
@@ -394,11 +405,12 @@ the number of possible breakpoints is not fixed unlike in the CTree algorithm.
 \subsection{GUIDE}\label{sec:guide}
 Similar to the MOB algorithm, parametric models are fit to the nodes of a tree in 
 the GUIDE algorithm \citep{Loh:2002}. Again, simple models such as 
-a constant fit where the parameter $\beta$ is the mean of the response, hence 
-$\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$ for a response vector 
-$\boldsymbol{y} = (y_1,\ldots,y_n)^\top$, can be employed as well as more complex models.
+a constant fit whith the parameter $\beta$ being the mean of the response, hence 
+$\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$ 
+%for a response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$, 
+can be employed as well as more complex models.
 For the statistical test applied to select a split variable some type of model-based
-residuals is required. In \cite{Loh:2002} linear models are used as an example where the
+residual is required. In \cite{Loh:2002} linear models are used as an example where the
 residuals are defined by
 $$
 r(Y,X,\hat{\beta}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X.
@@ -498,14 +510,13 @@ GUIDE & parametric      & residual-based $\chi^2$  & post (cost-complexity pruni
 
 Even though CTree, MOB, and GUIDE differ in the specific tests they apply (see second column of
 Table~\ref{tab:combinations}) their approaches on how to select a split variable follow the same
-basic structure. Thus they can be presented together in a unifying framework for testing strategies
+basic structure as explained in Section~\ref{sec:generic_alg}. 
+Thus they can be presented together in a unifying framework for testing strategies
 in model-based unbiased recursive partitioning. 
 In this framework each specific testing strategy can be obtained by combining the provided 
-building blocks accordingly. 
-This general toolbox covers all features of the here discussed testing strategies CTree, MOB, and
-GUIDE. Furthermore, it allows for all possible combinations of these features and in that way also
-for variations of the commonly known testing strategies. Moreover, by exchanging only one building
-block its impact can be investigated in detail.
+building blocks accordingly. But apart from that, variations of the commonly known testing 
+strategies can be obtained as this general toolbox allows for all possible combinations of the 
+building blocks. Moreover, by exchanging only one of them its impact can be investigated in detail.
 These building blocks are explained in Section~\ref{sec:buildingblocks} and their setting
 for CTree, MOB, and GUIDE are listed in Table~\ref{tab:buildingblocks} which gives a more 
 detailed overview of the differences in the second column of Table~\ref{tab:combinations}.
@@ -522,9 +533,8 @@ as in the GUIDE algorithm or scores $s(Y,X,\hat{\beta})$ as in the MOB algorithm
 more generally, a function $h(Y,X)$ as in the CTree algorithm including both of the foregoing 
 cases.
 By including all available scores rather than just residuals the goodness of fit of the model is 
-investigated regarding each parameter instead of just the mean/location parameter. 
-Therefore, this facilitates the detection of changes in parameters other than the mean/location
-parameter.
+investigated regarding each parameter instead of just the mean. 
+%Therefore, this facilitates the detection of changes in parameters other than the mean/location parameter.
 
 \item Binarization of residuals/scores:\\
 Rather than applying the independence test directly on the residuals/scores a
@@ -568,57 +578,48 @@ GUIDE & residuals         & \checkmark  & \checkmark    & unconditional\\
 %\newpage
 
 \subsection{Linear Model Tree}\label{sec:lmtrees}
-As an example a linear model tree is considered as this allows 
-for an easy and well structured description of the investigated subjects/issues. 
-For that reason, this model is also considered for the simulation study in 
-Section~\ref{sec:simulation}.
-However, the conclusions drawn from this example also apply for a wide range of other model
-types. The models fitted in the nodes of the considered linear model tree are of the form
+As an example a linear model tree is considered as this allows for an easy and well structured 
+description of the investigated subjects. However, the conclusions drawn from this example also 
+apply for a wide range of other model types. 
+The models fitted in the nodes of the linear model tree as considered for the simulation 
+study in Section~\ref{sec:simulation} are of the form
 $$
 Y = \beta_0 + \beta_1 \cdot X + \epsilon
 $$
 for a response variable $Y$, a regressor variable $X$ and an error $\epsilon$. 
-As for each node the type of the fitted model is the same no node-specific features are considered
-and the observations of the current (arbitrarily chosen) node are denoted by 
+For each node the type of the fitted model is the same such that no node-specific features are 
+considered and the observations of the current (arbitrarily chosen) node are denoted by 
 $\{(y_i,x_i)\}_{i=1,\ldots,n}$ for $n \in \mathbb{N}$.
 
 A very basic form of a discrepancy measure can be obtained for each observation by simply 
 calculating deviations of the response values from the mean value within the node, for example 
 by $(\bar{y} - y_i)$.
-However, this includes only the response variable $Y$ but not the fitted model.
+However, this includes only the response variable $Y$ but not the fitted linear model.
 For a model-based approach residuals can be considered defined by
 $$
 r(y_i,x_i,\beta_0,\beta_1) = y_i - \beta_0 - \beta_1 \cdot x_i.
 $$
 The appropriate choice of the function $\psi$ is then
 $$
-\psi(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2.
+\psi(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2
 $$
 such that $\sum_{i=1}^n \psi(y_i,x_i,\beta_0,\beta_1)$ is the objective function
-which is minimized for the estimation of the coefficient vector
-$\boldsymbol{\beta} = (\beta_0, \beta_1)^\top$, 
-i.e. to obtain $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
+which is minimized to obtain the estimated coefficient vector
+$\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
 The corresponding score function is defined by
 $$
 s(y_i, x_i, \hat{\beta_0},\hat{\beta_1}) = 
 \frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \hat{\beta_0},\hat{\beta_1}) = 
 2 \cdot r(y_i,x_i,\hat{\beta_0},\hat{\beta_1}) \cdot (1,x_i)^\top
 $$
-where the factor $2$ is often omitted such that the first column of the score matrix $S$ 
-corresponds to the residuals. $S$ is in this case a $n \times 2$-matrix
-as $\boldsymbol{\beta}$ is two dimensional. In that way a score value indicating how well the model
-fits the data is given separately for each tuple of observation and coefficient $(y_i,x_i,\beta_j)$
-with $i \in \{1,\dots,n\}$ and $j \in \{1,2\}$.
-
-In this example considering only residuals, i.e. only the first column of the score matrix $S$,
+where the factor $2$ is often omitted such that the first column of the $n \times 2$-dimensional
+score matrix corresponds to the residuals. 
+Therefore, including only residuals (i.e. only the first column of the score matrix)
 corresponds to including the derivatives of $\psi$ only regarding the intercept 
 parameter~$\beta_0$.
-On the contrary, using full model scores means including the whole $n \times 2$ matrix $S$, hence,
-the derivatives of $\psi$ regarding the intercept $\beta_0$ (first column) and the slope parameter 
-$\beta_1$ (second column).
-
-
-
+On the contrary, by using full model scores (i.e. the whole $n \times 2$ matrix) 
+the derivatives of $\psi$ regarding the intercept $\beta_0$ (first column) and the slope 
+parameter $\beta_1$ (second column) are considered.
 
 
 \section{Simulation Setting and Evaluation}
@@ -642,9 +643,8 @@ as illustrated in Figure~\ref{fig:dgp_tree}.
 
 \subsection{Data Generating Process}
 Each generated data set consists of a response variable, one regressor, one split 
-variable and nine noise variables. In particular, the variables listed in 
-Table~\ref{tab:variables} together with the corresponding distributions are 
-included in the data generating process.
+variable and nine noise variables as listed in Table~\ref{tab:variables} 
+together with the corresponding distributions.
 
 \begin{table}
 \begin{center}
@@ -943,25 +943,22 @@ is considered for the first scenario (stump).
 For the second scenario (tree with 2 splits) the Adjusted Rand Index~(ARI) is calculated 
 as a measure of similarity between the true tree structure and the fitted model tree.
 
-By applying the unifying framework presented in Section~\ref{sec:unify} the effect of
-each building block can be investigated on its own. In Table~\ref{tab:buildingblocks} the setting
-of these building blocks is listed for CTree, MOB and GUIDE in their original form.
-However, in order to be able to focus on particular features rather than the whole testing
-strategies other combinations as presented in Table~\ref{tab:buildingblocks}, hence variations of
-the original testing strategies, are evaluated as well. 
-
-Moreover, as prepruning is employed all of the considered statistical tests are applied as significance tests answering two questions at once: 
+As explained before, the aim of this simulation study is to investigate the effects
+of each particular building block of the unifying framework presented in Section~\ref{sec:unify} 
+rather than the whole testing strategies. Therefore, other combinations as presented in 
+Table~\ref{tab:buildingblocks}, hence variations of GUIDE, CTREE, and MOB are evaluated as well
+as their original versions. Moreover, as prepruning is employed all of the considered statistical 
+tests are applied as significance tests answering two questions at once: 
 (1)~Should a split be performed at all? 
 (2)~If so, in which variable?
 For the first question the $p$-values regarding all available covariates are compared 
 to a predefined level of significance $\alpha = 0.05$. Only if the smallest $p$-value is smaller
-than $\alpha$ a split is performed and the covariate corresponding to this $p$-value is 
-selected. 
+than $\alpha$ a split is performed and the covariate corresponding to this $p$-value is selected. 
 
 
 
 
-\newpage
+%\newpage
 \section{Results}
 \label{sec:results}
 
@@ -1225,8 +1222,8 @@ Right panel: true split point $\xi=0.8$ and effect size $\delta = 1$.}
 The results presented in Figure~\ref{fig:3way} clearly show that binarizing scores/residuals
 reduces the power of the testing strategy as it leads to higher $p$-values corresponding
 to the true split variable $Z_1$. 
-This effect can be observed for a central split point (left panel, $xi=0$) as well as for a
-a split point closer to upper end of the considered interval (right panel, $xi=0.8$).
+This effect can be observed for a central split point (left panel, $\xi=0$) as well as for a
+a split point closer to upper end of the considered interval (right panel, $\xi=0.8$).
 However, the effect of the building block \textit{Categorization} varies over these two settings.
 For a central split point all three levels perform similarly. The linear selection of split variables
 is slightly ahead even though the true parameter function is a step function. 
@@ -1414,7 +1411,6 @@ and the continuous lines the results from applying prepruning.}
 \section{Discussion}
 \label{sec:discussion}
 
-\fixme
 From comparing the effects of the building blocks three main conclusions can be drawn: 
 (1)~In most cases including all available score values rather than just residuals leads to 
 clearly better results and performs in general at least equally well.
@@ -1422,8 +1418,43 @@ clearly better results and performs in general at least equally well.
 (3)~Categorizing possible split variables also doesn't improve the performance 
 unless the breakpoints used for the categorization are very close to the true split points.
 However, even then the results are very similar to those achieved without any categorization.
+But it has to be noted that a categorization of possible split variables can facilitate
+evaluations. Moreover, depending on the focus of interest, the results can be more
+straightforward, for example in case of clearly separated subgroups being defined by the values 
+of a continuous split variable. Therefore, categorizing possible split variable can have
+advantages in practice, however, it has to be considered that in general
+important effects might be neglected.
 
-%FIX ME: results without loss of generalization
+Linear models as presented in this study have been selected as they allow for a simple illustration
+of the investigated subjects. However, the obtained results also hold for a variety of other models
+as the introduced building blocks can be applied in the same way for all model types.
+Furthermore, with only two parameters determining a linear model the importance of including scores 
+regarding each parameter could already be pointed out clearly. But for an increasing number of 
+parameters in a model this aspect becomes even more important as it allows for the detection of changes 
+in each parameter.
+
+
+\section*{Computational Details}
+\label{sec:comp}
+The applied implementation is based on the \textsf{R} package \textbf{partykit}
+(version~\Sexpr{packageVersion("partykit")}) which is available 
+on \textsf{R}-Forge at (\url{https://R-Forge.R-project.org/projects/partykit/}).
+The code to reproduce the simulation study can also be found on \textsf{R}-Forge
+at (\url{https://R-Forge.R-project.org/projects/partykit/inst/guideliketests}).
+
+The functions \code{ctree} and \code{mob} provide an implementation of the
+two tree algorithms in their original form. For their adapted versions additional
+modifications have been applied within these functions allowing for a categorization
+of possible split variables and a binarization of scores.
+To evaluate the GUIDE algorithm a reimplementation of this algorithm has been 
+established/constructed using the basic framework of \code{ctree} and \code{mob}.
+
+
+
+\section*{Acknowledgements}
+\hlc{An extended research stay of Torsten Hothorn in Innsbruck (August
+2017 to January 2018) was financially supported by the Swiss National
+Science Foundation, grant number SNF IZSEZ0 177091.}
 
 
 
