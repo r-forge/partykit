@@ -186,8 +186,8 @@ URL: \url{http://user.math.uzh.ch/hothorn/}\\
 
 \section{Introduction}\label{sec:introduction}
 In many situations fitting one global model to a given data set can be very challenging, 
-especially if the data contains lots of different features with a strong variation 
-or complex interactions. Therefore, separating the data into more homogeneous subgroups 
+especially if the data contains lots of different features with strong variation 
+and complex interactions. Therefore, separating the data into more homogeneous subgroups 
 based on a set of covariates first can simplify the task and fitting a local model to 
 each of the resulting subgroups often leads to better results. This separation can be 
 done by applying a tree algorithm. While all of the many developed algorithms 
@@ -232,7 +232,7 @@ Depending on the setup different effects can be observed for the investigated bu
 However, none of the results contradicts the conclusion that in general using all available 
 model scores is at least as efficient but mostly clearly advantageous over considering only 
 residuals. Also regarding the effects of binarizing residuals or scores at $0$ or categorizing
-the values of possible split variables clear recommendations can be made based on the presented 
+the values of possible split variables clear recommendations can be given based on the presented 
 results.
 
 In the first part of Section~\ref{sec:urp} a basic scheme on how to build a tree model is given. 
@@ -329,7 +329,7 @@ with the sum of $\psi$ over all observations being the objective function that i
 to obtain the estimated model parameter $\hat{\beta}$. For this purpose many different M-type 
 estimators can be applied including maximum likelihood or ordinary least squares such that the 
 corresponding objective function can be employed as model-based discrepancy measure for the 
-tree algorithm. Evaluationg the score function $s$ on a data set of $n$ observations 
+tree algorithm. Evaluating the score function $s$ on a data set of $n$ observations 
 %containing the 
 %response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$ and 
 %regressor(s) $\boldsymbol{x} = (x_1,\ldots,x_n)^\top$ and on
@@ -347,17 +347,17 @@ the identity function $g(Z) = Z$. For categorical variables $g$ can also map its
 corresponding unity vectors by an indicator function $g(Z) = (0,\ldots,1,\ldots,0)$.
 
 To test for independence of $h(Y)$ and $g(Z)$ a linear test statistic is calculated.
-Following \cite{Strasser+Weber:1999} the conditional expectation and covariance of the test 
-statistic given all permutations of the response variable can be calculated and used to 
+Following \cite{Strasser+Weber:1999} the conditional expectation and covariance of the linear
+test statistic given all permutations of the response variable can be calculated and used to 
 standardize the test statistic. In order to map multivariate test statistics into the real 
 line two options are given: either the maximum of the absolute values of the standardized 
 statistic or a quadratic form. The resulting values can then be transformed to 
-the scale of $p$-values where they can be compared in an unbiased way to select a split variable.
+the scale of $p$-values allowing for an unbiased comparison in order to select a split variable.
 
 If both variables $Y$ and $Z$ are numeric the applied independence test corresponds to a Pearson 
 correlation test. For one of the variables being categorical and the other numeric a 1-way ANOVA
-is employed while for two categorical variables a $\chi^2$-test is performed. Hence, the CTree algorithm
-provides a very general framework where the choice of the type of variables and the corresponding 
+is employed while for two categorical variables a $\chi^2$-test is performed. Hence, the CTree 
+algorithm provides a very general framework where the type of variables and the corresponding 
 functions $g$ and $h$ determine the type of the applied statistical test.
 (See \cite{Hothorn+Hornik+VanDeWiel:2006} for examples on how to use the different options of this toolbox.)
 
@@ -405,8 +405,8 @@ the number of possible breakpoints is not fixed unlike in the CTree algorithm.
 \subsection{GUIDE}\label{sec:guide}
 Similar to the MOB algorithm, parametric models are fit to the nodes of a tree in 
 the GUIDE algorithm \citep{Loh:2002}. Again, simple models such as 
-a constant fit whith the parameter $\beta$ being the mean of the response, hence 
-$\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$ 
+a constant fit with the parameter $\beta$ being the mean of the response, hence 
+$\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$, 
 %for a response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$, 
 can be employed as well as more complex models.
 For the statistical test applied to select a split variable some type of model-based
@@ -447,15 +447,15 @@ algorithms, such as finding the best split point by optimizing an objective func
 
 In subsequent approaches as in \cite{Hothorn+Hornik+Zeileis:2006}
 it is shown that these $p$-values can also be used as a basis for a
-pruning strategy namely prepruning: Only if the $p$-value corresponding to the selected split
+pruning strategy namely \textit{prepruning}: Only if the $p$-value corresponding to the selected split
 variable (hence the smallest $p$-value) is smaller than a given significance level a split is
 performed while otherwise no further splits are made in the current node.
 In that way the information provided by the significance test is exploited in a more profound way.
 However, prepruning requires the applied test to perform reasonably well as a significance test, 
 i.e. it has to have power but also avoid overfitting.
 
-For postpruning no significance level is included leading to very large trees which are then 
-pruned afterwards, for example by employing cost-complexity pruning as in the 
+On the contrary, when employing postpruning no significance level is included leading to very large 
+trees which are then pruned afterwards, for example by applying cost-complexity pruning as in the 
 CART algorithm \citep{Breiman+Friedman+Stone:1984}. 
 Thus, for postpruning the test only needs to be able to select the best split variable but does 
 not have to be effective as a significance test.
@@ -467,11 +467,13 @@ information criteria such as AIC or BIC \citep[see for example][]{Su+Wang+Fan:20
 However, all testing strategies can be combined with each of these pruning strategies.
 If a test performs well the choice of a pruning strategy has hardly any impact on the results, 
 but as prepruning only requires already provided information it is usually less computationally
-expensive than the additional calculations needed for postpruning.
+expensive than postpruning needing additional calculations. 
 However, if the test performs poorly in terms of power and overfitting, prepruning suffers from 
 this deficiency while postpruning can compensate it at least partly and improve the results.
-For this reason we are focusing on the testing strategies applied in tree algorithms and 
-investigate how effective they are as significance tests.
+Therefore, being aware of the power of the selected testing strategy is essential for choosing 
+an appropriate pruning strategy.
+For that reason we are focusing on the testing strategies applied in tree algorithms 
+and investigate how effective they are as significance tests.
 
 
 
@@ -485,7 +487,7 @@ original form. However, in principle all other combinations of the listed featur
 as well. As explained in Section~\ref{sec:pruning} the focus of this paper is on the testing 
 strategies (second column of Table~\ref{tab:combinations}). They are here discussed for the case 
 of parametric models together with prepruning as the properties of this pruning strategy
-are already explained/determined by the testing strategy. Subsequently combinations
+are already determined by the testing strategy. Subsequently combinations
 with postpruning are evaluated as well to show the impact of the choice of pruning strategy.
 From here on the names CTree, MOB, and GUIDE are used to refer to the algorithm-specific
 testing strategies rather than the complete algorithms.
@@ -543,7 +545,7 @@ at $0$ such that only their signs are considered.
 
 \item Categorization of covariates:\\
 Similarly, the covariates can also be categorized. For this purpose, the corresponding 1st, 2nd 
-and 3rd quartile are used to bin each possible split variable into four categories. In that way,
+and 3rd quartile are considered to bin each possible split variable into four categories. In that way,
 depending on whether the scores are binarized or not, a $\chi^2$-test or 1-way ANOVA can be applied
 where the quartiles are the only possible split points while otherwise maximally selected splits 
 over $Z$ are considered. 
@@ -580,7 +582,7 @@ GUIDE & residuals         & \checkmark  & \checkmark    & unconditional\\
 \subsection{Linear Model Tree}\label{sec:lmtrees}
 As an example a linear model tree is considered as this allows for an easy and well structured 
 description of the investigated subjects. However, the conclusions drawn from this example also 
-apply for a wide range of other model types. 
+hold for a wide range of other model types. 
 The models fitted in the nodes of the linear model tree as considered for the simulation 
 study in Section~\ref{sec:simulation} are of the form
 $$
@@ -608,9 +610,9 @@ which is minimized to obtain the estimated coefficient vector
 $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
 The corresponding score function is defined by
 $$
-s(y_i, x_i, \hat{\beta_0},\hat{\beta_1}) = 
-\frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \hat{\beta_0},\hat{\beta_1}) = 
-2 \cdot r(y_i,x_i,\hat{\beta_0},\hat{\beta_1}) \cdot (1,x_i)^\top
+s(y_i, x_i, \beta_0, \beta_1) = 
+\frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
+2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
 where the factor $2$ is often omitted such that the first column of the $n \times 2$-dimensional
 score matrix corresponds to the residuals. 
@@ -621,6 +623,8 @@ On the contrary, by using full model scores (i.e. the whole $n \times 2$ matrix)
 the derivatives of $\psi$ regarding the intercept $\beta_0$ (first column) and the slope 
 parameter $\beta_1$ (second column) are considered.
 
+
+\newpage
 
 \section{Simulation Setting and Evaluation}
 \label{sec:simulation}
@@ -946,7 +950,7 @@ as a measure of similarity between the true tree structure and the fitted model 
 As explained before, the aim of this simulation study is to investigate the effects
 of each particular building block of the unifying framework presented in Section~\ref{sec:unify} 
 rather than the whole testing strategies. Therefore, other combinations as presented in 
-Table~\ref{tab:buildingblocks}, hence variations of GUIDE, CTREE, and MOB are evaluated as well
+Table~\ref{tab:buildingblocks}, hence adapted versions of GUIDE, CTREE, and MOB are evaluated as well
 as their original versions. Moreover, as prepruning is employed all of the considered statistical 
 tests are applied as significance tests answering two questions at once: 
 (1)~Should a split be performed at all? 
@@ -1044,8 +1048,8 @@ CTree, MOB, GUIDE, GUIDE\_scores.}
 
 
 Figure~\ref{fig:scores_stump} shows the evaluation results for the three different
-scenarios of varying only the intercept $\beta_0$ or only the slope parameter $\beta_1$
-or both of them, once for a true split point $\xi=0$ and once for $\xi=0.8$. 
+scenarios (varying only the intercept $\beta_0$, only the slope parameter $\beta_1$
+or both of them) once for a true split point $\xi=0$ and once for $\xi=0.8$. 
 As explained before, the tests are applied as significance tests with significance 
 level $\alpha=0.05$. Therefore, the proportion of cases in which the true split variable $Z_1$
 is detected with a $p$-value smaller than $\alpha$ is compared.
@@ -1084,15 +1088,15 @@ building blocks are discussed in a full factorial 3-way analysis.
 In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for the most general
 case where the intercept and slope parameter are both varying and the true split point is in the
 center, i.e. $\xi=0$. Based on the results shown in Figure~\ref{fig:scores_stump} the effect size 
-$\delta = 0.3$ is considered making the differences particularly well observable. 
-(Additional results over increasing $\delta$ as in Section~\ref{sec:scores} 
-can be found in Appendix~\ref{app:increasingdelta}.)
+$\delta = 0.3$ is considered making the differences particularly well observable 
+(additional results over increasing $\delta$ as in Section~\ref{sec:scores} 
+can be found in Appendix~\ref{app:increasingdelta}).
 The power of the different combinations is measured by the mean $p$-value for the true split 
 variable~$Z_1$.
-The possible values for each of the three building blocks are listed in Table~\ref{tab:levels}.
-In order to evaluate all 12 combinations the original testing strategies CTree, MOB, and GUIDE
-are applied together with variations of them. For each combination the corresponding employed
-strategy can be found in Appendix~\ref{app:combinations}, Table~\ref{tab:combinations_appendix}.
+The possible levels for each of the three building blocks are listed in Table~\ref{tab:levels}.
+In total 12 combinations are applied including the original testing strategies CTree, MOB, and GUIDE
+and variations of them. A more detailed overview of all 12 combinations can be found in 
+Appendix~\ref{app:combinations}, Table~\ref{tab:combinations_appendix}.
 
 \begin{table}[h!]
 \centering
@@ -1237,7 +1241,7 @@ to a break point used for the binarization.
 
 
 
-\newpage
+%\newpage
 \subsection{Tree}
 \label{sec:tree}
 To compare the performance of testing strategies in a more complex scenario they have
@@ -1406,7 +1410,7 @@ and the continuous lines the results from applying prepruning.}
 
 
 
-\newpage
+%\newpage
 
 \section{Discussion}
 \label{sec:discussion}
@@ -1438,9 +1442,8 @@ in each parameter.
 \label{sec:comp}
 The applied implementation is based on the \textsf{R} package \textbf{partykit}
 (version~\Sexpr{packageVersion("partykit")}) which is available 
-on \textsf{R}-Forge at (\url{https://R-Forge.R-project.org/projects/partykit/}).
-The code to reproduce the simulation study can also be found on \textsf{R}-Forge
-at (\url{https://R-Forge.R-project.org/projects/partykit/inst/guideliketests}).
+on \textsf{R}-Forge at (\url{https://R-Forge.R-project.org/projects/partykit/})
+where the code to reproduce the simulation study can be found as well.
 
 The functions \code{ctree} and \code{mob} provide an implementation of the
 two tree algorithms in their original form. For their adapted versions additional
