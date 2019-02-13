@@ -1435,8 +1435,17 @@ as the introduced building blocks can be applied in the same way for all model t
 Furthermore, with only two parameters determining a linear model the importance of including scores 
 regarding each parameter could already be pointed out clearly. But for an increasing number of 
 parameters in a model this aspect becomes even more important as it allows for the detection of changes 
-in each parameter.
+in each parameter. 
 
+Note that considering full model scores is particularly advantageous if the model parameters do not
+depend on each other, hence are orthogonal, as it is the case for the intercept and slope parameter
+of a linear model. On the other hand, if all parameters are closely correlated with the location parameter
+a residual-based approach might be able to detect changes in other parameters than the mean as well,
+however, the performance of a score-based search for split variables is not negatively effected.
+
+
+
+\newpage
 
 \section*{Computational Details}
 \label{sec:comp}

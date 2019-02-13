@@ -1,12 +1,12 @@
 library("partykit")
 library("Formula")
 library("parallel")
-source("~/svn/partykit/pkg/partykit/inst/guideliketest/guidelike.R")
+# source("~/svn/partykit/pkg/partykit/inst/guideliketest/guidelike.R")
 # source("~/partykit/inst/guideliketest/guidelike.R")
-# source("guidelike.R")
-source("~/svn/partykit/pkg/partykit/inst/guideliketest/ccprune.R")
+source("guidelike.R")
+# source("~/svn/partykit/pkg/partykit/inst/guideliketest/ccprune.R")
 # source("~/partykit/inst/guideliketest/ccprune.R")
-# source("ccprune.R")
+source("ccprune.R")
 
 # function to compute adjusted Rand Index
 adj_rand_index <- function(x, y) {
