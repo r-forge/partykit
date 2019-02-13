@@ -6,8 +6,7 @@
 \usepackage{enumitem}
 \usepackage{color,soul}
 
-%% need no \usepackage{Sweave} ?
-%\usepackage{Sweave}
+%% need no \usepackage{Sweave} 
 \SweaveOpts{engine = R, concordance = FALSE, eps = FALSE, keep.source = TRUE, eval = TRUE}
 
 %% commands
@@ -66,14 +65,16 @@
 <<preliminaries, echo=FALSE, results=hide>>=
 # setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/draft/")
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+
 library("partykit")
 library("Formula")
 library("parallel")
 library("lattice")
 library("scales")
-# setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/draft/")
+
 source("../guidelike.R")
 source("../tests_guideprune.R")
+source("../ccprune.R")
 
 if(file.exists("stump.rda")){
   load("stump.rda")
@@ -289,10 +290,6 @@ of $D$ on $Z_j$.
 \item For the resulting values of the test statistics the corresponding $p$-values are calculated
 in order to allow for their comparison on a standardized/unified scale and in that way for
 an unbiased variable selection.
-%As the variables are usually not all measured at the same scale the resulting
-%values of the test statistics can not be compared directly in an unbiased way. Therefore, it is
-%necessary to calculate the corresponding $p$-values in order to allow for an unbiased
-%variable selection on this standardized/unified scale. 
 \item The variable corresponding to the smallest $p$-value is selected as split variable as 
 it has shown to be the variable with the strongest influence on the goodness of fit of the model.
 \end{enumerate}
@@ -567,7 +564,7 @@ underlying null distribution.}
 \label{tab:buildingblocks}
 \begin{tabular}{ l c c c c }
 \hline 
-& Scores            & Binarization  & Categorization  & Null distribution \\ 
+      & Scores            & Binarization  & Categorization  & Null distribution \\ 
 \hline
 CTree & full model scores & --          & --            & conditional\\
 MOB   & full model scores & --          & --            & unconditional\\
@@ -715,7 +712,6 @@ An illustration of the three different cases
 %for binary coefficients and a continuous regressor 
 can be found in Figure~\ref{fig:dgp_stump}.
 
-%\newpage
 <<dgp, echo=FALSE>>=
 set.seed(7)
 
