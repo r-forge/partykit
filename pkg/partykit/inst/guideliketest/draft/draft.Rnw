@@ -1412,7 +1412,7 @@ and the continuous lines the results from applying prepruning.}
 \label{sec:discussion}
 
 From comparing the effects of the building blocks three main conclusions can be drawn: 
-(1)~In most cases including all available score values rather than just residuals leads to 
+(1)~In many cases including all available score values rather than just residuals leads to 
 clearly better results and performs in general at least equally well.
 (2)~Binarizing scores/residuals does not lead to any improvement in performance.
 (3)~Categorizing possible split variables also doesn't improve the performance 
@@ -1428,20 +1428,38 @@ important effects might be neglected.
 Linear models as presented in this study have been selected as they allow for a simple illustration
 of the investigated subjects. However, the obtained results also hold for a variety of other models
 as the introduced building blocks can be applied in the same way for all model types.
+One specific feature of linear models is the orthogonality of the conditional expectation
+$\mathbb{E}(Y|X)$ and the regressor $X$ which affects the capability of tests using only residuals
+to capture shifts in the parameters. In particular, \cite{Ploberger+Kramer:1992} have shown that
+residual-based tests are insensitive to parameter changes orthogonal to the mean regressor.
+For that reason GUIDE breaks down when the slope parameter $\beta_1$ changes while the intercept
+$\beta_0$ is fixed as seen in the middle panel of Figure~\ref{fig:scores_stump}.
+Testing procedures purely based on residuals perform best in situations with shifts only in the
+intercept, however, the costs in terms of power that come with including all scores are 
+negligibly small. 
 Furthermore, with only two parameters determining a linear model the importance of including scores 
-regarding each parameter could already be pointed out clearly. But for an increasing number of 
-parameters in a model this aspect becomes even more important as it allows for the detection of changes 
-in each parameter. 
+regarding each parameter could already be pointed out clearly while for an increasing number of 
+parameters in a model this aspect becomes even more important. 
 
-Note that considering full model scores is particularly advantageous if the model parameters do not
-depend on each other, hence are orthogonal, as it is the case for the intercept and slope parameter
-of a linear model. On the other hand, if all parameters are closely correlated with the location parameter
-a residual-based approach might be able to detect changes in other parameters than the mean as well,
-however, the performance of a score-based search for split variables is not negatively effected.
+In general residual-based and score-based procedures are expected to perform equally well if all
+parameters are highly correlated. On the other hand, if parameters are orthogonal changes that are 
+not connected to the mean might be missed when only considering residuals. This can be avoided by
+including scores which are a standard measurement of goodness of fit that can be easily employed.
+Even though it also depends on the type of the applied residuals 
+(see, e.g., \cite{Loh+Zheng:2013}, \cite{Chaudhuri+Loh:2002} 
+and \cite{Loh+He+Man:2015})
+whether parameter changes can be detected successfully, a one-dimensional measurement of goodness of 
+fit such as residuals provides less power than full model scores. 
+Whether this difference affects the performance of a testing strategy and if so, to what extent, is 
+determined by the way how residuals are connected to parameter shifts as well as the type of parameter
+shift and the type of model. Therefore, a general statement for all types of models and residuals can 
+hardly be made.
 
 
 
-\newpage
+
+
+%\newpage
 
 \section*{Computational Details}
 \label{sec:comp}
