@@ -34,7 +34,7 @@ The Annals of Applied Statistics}
 
 please find attached the revised version of our manuscript 
 ``Distributional regression forests for probabilistic precipitation 
-forecasting in complex terrain'' (AOAS1804-015).
+forecasting in complex terrain'' (AOAS1811-010).
 
 Thank you very much for the positive and constructive feedback from you, 
 the associate editor, and the two referees. We have incorporated all
@@ -74,7 +74,7 @@ methods compared here? Is it possible that the patterns in this figure are due t
 East Tyrol differs from North Tyrol as it is located south of the main Alpine Ridge and thus
 in a different climate zone. Consequently, both long-term climatological characteristics
 and precipitation patterns in 2009--2012 differ. This is not visible from Figure~8 directly,
-though, and hence we added a short explanation at the end of Section~3.4
+though, and hence we added a short explanation at the end of Section~3.4.
 
 Moreover, sampling variability clearly also plays a role as the differences from Figure~8
 are somewhat evened out in the cross-validation, specifically for some of the East Tyrolian 
@@ -236,8 +236,5 @@ Overall I found the paper interesting but not innovative and general enough to m
 contribution qualified for AOAS but rather for instance JRSSC.
 \end{review}
 
-FIXME: Torsten, should we comment on this? In a predictive setup like the precipitation
-forecasting the uncertainty of the estimates is not of so much concern. Also, the 
-uncertainty due to variation in the response is typically much larger.
 
 \end{document}

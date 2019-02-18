@@ -696,8 +696,8 @@ The observations are depicted by crosses and the predicted point mass
 from the model by filled circles.}
 \end{figure}
 
-In weather forecasting, the flexibility of distributional forests is especially appealing in 
-mountainous regions and complex terrain where a wide range of local-scale
+In weather forecasting, the flexibility of distributional forests is especially 
+appealing in mountainous regions and complex terrain where a wide range of local-scale
 effects are not yet resolved by the NWP models. 
 Thus, effects with abrupt changes and possibly nonlinear interactions 
 might be required to account for site-specific unresolved features.
@@ -705,7 +705,8 @@ To illustrate this in practice,
 precipitation forecasts are obtained with distributional forests at 95
 meteorological stations in a mountainous region in the Alps, covering mainly
 Tyrol, Austria, and adjacent areas (see the map in Figure~\ref{fig:all-map}).
-More specifically, a Gaussian distribution left-censored at zero, is employed to model 24-hour total precipitation so that the
+More specifically, a Gaussian distribution left-censored at zero, is employed 
+to model 24-hour total precipitation so that the
 zero-censored point mass describes the probability of observing no precipitation 
 on a given day (see Figure~\ref{fig:axams-dist}). Forecasts for July are
 established based on data from the same month over the years 1985--2012 including
@@ -751,7 +752,7 @@ to model power-transformed daily precipitation amounts.
 
 A distributional model $\mathcal{D}(Y, \bm{\theta})$ is considered for the response
 variable $Y \in \mathcal{Y}$ using the distributional family $\mathcal{D}$ with
-\textit{k}-dimensional parameter vector $\bm{\theta} \in \bold{\Theta}$ and
+\textit{k}-dimensional parameter vector $\bm{\theta} \in \bm{\Theta}$ and
 corresponding log-likelihood function $\ell(\bm{\theta}; Y)$. The GAMLSS
 framework \citep{Rigby+Stasinopoulos:2005} provides a wide range of such
 distributional families with parameterizations corresponding to location, scale,
@@ -788,7 +789,7 @@ $\{y_i\}_{i = 1, \dots, n}$ of the response variable $Y$. The maximum
 likelihood estimator (MLE) $\bm{\hat \theta}$ is given by
 \begin{equation}
 \label{eq:mle}
-\bm{\hat \theta} = \argmax_{\bm{\theta} \in \bold{\Theta}} \sum_{i=1}^n \ell(\bm{\theta}; y_i).
+\bm{\hat \theta} = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n \ell(\bm{\theta}; y_i).
 \end{equation}
 Equivalently, this can be defined based on the corresponding first-order
 conditions
@@ -811,14 +812,14 @@ one individual observation $y_i$.
 
 Typically, a single global model $\mathcal{D}(Y, \bm{\theta})$ is not sufficient
 for reasonably representing the response distribution. Therefore, covariates
-$\bold{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
+$\bm{Z} = Z_1, \dots, Z_m \in \mathcal{Z}$ are
 employed to capture differences in the distribution parameters $\bm{\theta}$.
 In weather forecasting, these covariates typically include the output
 from numerical weather prediction systems and/or lagged meteorological observations.
 
 To incorporate the covariates into the distributional model, 
 they are considered as regressors in additive predictors
-$g_j(\theta_j) = f_{j,1}(\bold{Z}) + f_{j,2}(\bold{Z}) + \dots$
+$g_j(\theta_j) = f_{j,1}(\bm{Z}) + f_{j,2}(\bm{Z}) + \dots$
 in GAMLSS.
 Link functions $g_j(\cdot)$ are used for every parameter $\theta_j$
 ($j = 1, \dots, k$) based on smooth terms $f_{j,k}$ such as
@@ -875,22 +876,22 @@ instability \citep{Zeileis+Hornik:2007} as in model-based recursive partitioning
 Appendix~\ref{app:tree}.
 
 For obtaining probabilistic predictions from the tree for a (possibly new) set
-of covariates $\bold{z} = (z_1, \ldots, z_m)$, the observation simply has to
+of covariates $\bm{z} = (z_1, \ldots, z_m)$, the observation simply has to
 be ``sent down'' the tree and the corresponding segment-specific MLE has to be
-obtained. Thus, in practice $\bm{\hat \theta}(\bold{z})$ does not have to be 
-recalculated for each new $\bold{z}$ but one can simply extract the parameter estimates 
+obtained. Thus, in practice $\bm{\hat \theta}(\bm{z})$ does not have to be 
+recalculated for each new $\bm{z}$ but one can simply extract the parameter estimates 
 for the corresponding segment which have been computed already while
 learning the tree. However, to understand this estimator conceptually it is useful
 to denote it as a weighted MLE where the weights select those observations from 
 the learning sample that fall into the same segment:
 \begin{equation}
-w^{\text{tree}}_i(\bold{z}) = \sum_{b=1}^B \mathbf{1}((\bold{z}_i \in \mathcal{B}_b) \land (\bold{z} \in \mathcal{B}_b)),
+w^{\text{tree}}_i(\bm{z}) = \sum_{b=1}^B \mathbf{1}((\bm{z}_i \in \mathcal{B}_b) \land (\bm{z} \in \mathcal{B}_b)),
 \end{equation}
 where $\mathbf{1}(\cdot)$ is the indicator function. The predicted distribution
-for a given $\bold{z}$ is then fully specified by the estimated parameter
-$\bm{\hat \theta}(\bold{z})$ where
+for a given $\bm{z}$ is then fully specified by the estimated parameter
+$\bm{\hat \theta}(\bm{z})$ where
 \begin{equation}
-\bm{\hat \theta}(\bold{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
+\bm{\hat \theta}(\bm{z}) = \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{tree}}_i(\bm{z}) \cdot \ell(\bm{\theta}; y_i).
 \end{equation}
 
 
@@ -905,7 +906,7 @@ applied to smooth the effects, stabilize the model, and improve predictive perfo
 
 The idea of random forests is to learn an ensemble of trees, each on a different
 learning data obtained through resampling (bootstrap or subsampling). In each node 
-only a random subset of the covariates $\bold{Z}$ is considered for splitting to reduce the 
+only a random subset of the covariates $\bm{Z}$ is considered for splitting to reduce the 
 correlation among the trees and to stabilize the variance of the model.
 For a simple regression random forest the mean of predictions over
 all trees is considered. In that way changes in the location  of the response 
@@ -919,25 +920,25 @@ and corresponding score function for choosing splitting variables and split poin
 
 To obtain probabilistic predictions from a distributional forest, it still
 needs to be specified how to compute the parameter estimates
-$\bm{\hat \theta}(\bold{z})$ for a (potentially new) set of covariates $\bold{z}$.
+$\bm{\hat \theta}(\bm{z})$ for a (potentially new) set of covariates $\bm{z}$.
 Following \cite{Hothorn+Zeileis:2017} we interpret random forests as adaptive
 local likelihood estimators using the averaged ``nearest neighbor weights''
 \citep{Lin+Jeon:2006} from the $T$~trees in the forest
 \begin{equation}
-w^{\text{forest}}_i(\bold{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t}
-\frac{\mathbf{1}((\bold{z}_i \in \mathcal{B}^t_b) \land (\bold{z} \in \mathcal{B}^t_b))}{|\mathcal{B}^t_b|},
+w^{\text{forest}}_i(\bm{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t}
+\frac{\mathbf{1}((\bm{z}_i \in \mathcal{B}^t_b) \land (\bm{z} \in \mathcal{B}^t_b))}{|\mathcal{B}^t_b|},
 \end{equation}
 where $|\mathcal{B}^t_b|$ denotes the number of observations in the $b$-th
 segment of the $t$-th tree.
-Thus, these $w^{\text{forest}}_i(\bold{z}) \in [0, 1]$ whereas
-$w^{\text{tree}}_i(\bold{z}) \in \{0, 1\}$. Hence, weights cannot only be $0$
+Thus, these $w^{\text{forest}}_i(\bm{z}) \in [0, 1]$ whereas
+$w^{\text{tree}}_i(\bm{z}) \in \{0, 1\}$. Hence, weights cannot only be $0$
 or $1$ but change more smoothly, giving high weight to those observations $i$
 from the learning sample that co-occur in the same segment $\mathcal{B}_b^t$
-as the new observation $\bold{z}$ for many of the trees $t = 1, \dots, T$.
+as the new observation $\bm{z}$ for many of the trees $t = 1, \dots, T$.
 Consequently, the parameter estimates may, in principle, change for every
 observation and can be obtained by
 \begin{equation}
-\bm{\hat \theta}(\bold{z}) =  \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{forest}}_i(\bold{z}) \cdot \ell(\bm{\theta}; y_i).
+\bm{\hat \theta}(\bm{z}) =  \argmax_{\bm{\theta} \in \bm{\Theta}} \sum_{i=1}^n w^{\text{forest}}_i(\bm{z}) \cdot \ell(\bm{\theta}; y_i).
 \end{equation}
 In summary, this yields a parametric distributional regression model 
 (through the score-based approach) that can capture both abrupt effects and
@@ -1271,7 +1272,7 @@ While this is a nice illustrative example we are
 interested in the overall predictive performance and calibration of the
 distributional fits. More details of this assessment as well as
 an application to 14~further meteorological stations is provided in
-Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b}.
+Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b}.
 
 To assess calibration, Figure~\ref{fig:axams-qq} shows residual QQ~plots for
 out-of-sample predictions (2009--2012) from the different models trained on
@@ -1282,7 +1283,7 @@ theoretical standard normal quantile (i.e., form a straight line close to the
 diagonal), indicating that all four models are sufficiently well calibrated. 
 This is also supported by the corresponding probability integral transform
 (PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) histograms for station
-Axams in Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b} which 
+Axams in Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} which 
 contains a more detailed explanation of residual QQ plots and PIT histograms.
 
 <<echo=FALSE, results=hide>>=
@@ -1593,7 +1594,7 @@ the prespecified GAMLSS performs particularly well in the validation period
 (2009--2012). \hlc{Partially, this can be attributed to random variation as
 the differences at several stations are mitigated when considering a full
 cross-validation rather than a single split into learning and validation period}
-\citep[see Supplement~A,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2018a}.
+\citep[see Supplement~A,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019a}.
 \hlc{Further differences are possibly due to East Tyrol lying in a different
 climate zone, south of the main Alpine Ridge. Hence, long-term climatological
 characteristics as well as the precipitation patterns in 2009--2012 differ
@@ -1660,7 +1661,7 @@ for precipitation modeling in earlier literature
 \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
 To test for robustness against distributional misspecifation, 
 two alternative distributional specifications have been considered
-in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2018a}: Using the
+in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}: Using the
 same evaluations as in Section~\ref{sec:all}, all models are
 additionally fitted for 15~meteorological stations using a zero-censored
 logistic distribution in order to account for heavier tails and a two-part
@@ -1716,7 +1717,7 @@ in Section~\ref{sec:axams} as it yields fairly typical results
 and is geographically in the center of the study area and closest to
 Innsbruck, the capital of Tyrol and the work place of three of the authors.
 To show that qualitatively similar results are obtained for other
-meteorological stations, Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b}
+meteorological stations, Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b}
 carries out the same evaluation for 14~further stations. These
 cover a wide range of geographical locations/altitudes and a mix of
 different best-performing models in the single-split setting reported in
@@ -1766,7 +1767,6 @@ GAMLSS was not taken into consideration in the comparison of all applied models.
 
 
 \section*{Computational details}
-\label{sec:comp}
 
 The proposed methods are in the \textsf{R} package \textbf{disttree}
 (version~\Sexpr{packageVersion("disttree")}) based on the \textbf{partykit}
@@ -1796,14 +1796,14 @@ is reproducible using \code{demo("RainAxams", package = "disttree")}.
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
 QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
-\citep[Supplement~B]{Schlosser+Hothorn+Stauffer:2018b}.
+\citep[Supplement~B]{Schlosser+Hothorn+Stauffer:2019b}.
 Full replication of all results can be obtained with
 \code{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} 
 (version~\Sexpr{packageVersion("RainTyrol")}),
 also available within the \textsf{R}-Forge~project.
-The results presented in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2018a} and 
-Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
+The results presented in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a} and 
+Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} can be reproduced using
 \code{demo("RainDistributions", package = "disttree")} and 
 \code{demo("RainStationwise", package = "disttree")}, respectively.
 
@@ -1977,8 +1977,8 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 \subsection*{Supplement~B: Stationwise Evaluation}
   To show that Axams is a fairly typical
   station and similar insights can be obtained for other stations as well,
-  this supplement presents the same analysis as in Section~\ref{sec:axams} of the main
-  manuscript for 14~further meteorological stations.
+  this supplement presents the same analysis as in Section~\ref{sec:axams} 
+  of the main manuscript for 14~further meteorological stations.
 
 \newpage
 \bibliography{ref.bib}
