@@ -137,6 +137,7 @@ prediction quantities. It is shown that the novel distributional regression fore
 automatically select variables and interactions, performing on par or often even
 better than GAMLSS specified either through prior meteorological knowledge or a
 computationally more demanding boosting approach.
+
 \end{abstract}
 
 
@@ -328,12 +329,12 @@ parametric distributional fits depending on a specified set of additive linear o
 smooth nonlinear terms. A rather different approach to capturing the dependence on
 covariates are tree-based models.
 \begin{itemize}
-  \item \emph{Regression trees} \citep{Breiman+Friedman+Stone:1984} recursively
+  \item \emph{Regression trees} (\citealp{Breiman+Friedman+Stone:1984}) recursively
     split the data into more homogeneous subgroups and can thus capture abrupt shifts
     (Figure~\ref{fig:tree}, top left) and approximate nonlinear functions.
     Furthermore, trees automatically carry out a forward selection of covariates and
     their interactions. 
-  \item \emph{Random forests} \citep{Breiman:2001} average the predictions of
+  \item \emph{Random forests} (\citealp{Breiman:2001}) average the predictions of
     an ensemble of trees fitted to resampled versions of the learning data. This
     stabilizes the recursive partitions from individual trees and hence better
     approximates smooth functions (Figure~\ref{fig:tree}, top middle).
@@ -844,8 +845,10 @@ further details:
 
 \item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Subsampling is employed 
-  for each tree using a third of the predictors
-  in each split of the tree (\texttt{mtry}). Parameters are estimated by
+  for each tree using a third of the predictors in each split of the tree
+  (argument \texttt{mtry} in our implementation \texttt{distforest},
+  with more ``computational details'' provided at the end of the manuscript).
+  Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
   The stopping criteria are the minimal number of observations to perform a split 
@@ -936,16 +939,17 @@ observations and numerical weather predictions are available for the month of Ju
 from 1985 through 2012. In Figure~\ref{fig:axams-dist} in the introduction the 
 probabilistic forecasts from the distributional forest, trained on 1985--2008, 
 for July 24 in 2009--2012 have already been shown as a motivational example. 
-The figure shows that the model properly depicts the point masses at zero 
-(i.e., the probability of a dry day) and the forecasted probability density 
-function for the total amount of precipitation. The four sample forecasts differ 
-considerably in location $\mu$, scale $\sigma$, and the amount of
-censoring while conforming quite well with the actual observations
-from these days. While this is a nice illustrative example we are  
+In particular, the figure depicts the forecasted point mass at zero
+(i.e., the probability of a dry day) along with the forecasted probability 
+density function for the total amount of precipitation. Based on this illustration 
+it can be observed that the four sample forecasts differ considerably in 
+location $\mu$, scale $\sigma$, and the amount of censoring while conforming quite 
+well with the actual observations from these days. 
+While this is a nice illustrative example we are  
 interested in the overall predictive performance and calibration of the
 distributional fits. More details of this assessment as well as
 an application to 14~further meteorological stations is provided in
-Supplement~B \citep{Schlosser+Hothorn+Stauffer:2018b}.
+Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b}.
 
 To assess calibration, Figure~\ref{fig:axams-qq} shows residual QQ~plots for
 out-of-sample predictions (2009--2012) from the different models trained on
@@ -956,7 +960,7 @@ theoretical standard normal quantile (i.e., form a straight line close to the
 diagonal), indicating that all four models are sufficiently well calibrated. 
 This is also supported by the corresponding probability integral transform
 (PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) histograms for station
-Axams in Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} which 
+Axams in Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} which 
 contains a more detailed explanation of residual QQ plots and PIT histograms.
 
 
@@ -1035,7 +1039,7 @@ learned on 1985--2008 and validated for 2009--2012.}
 for each station (type of symbol) when learned on 1985--2008 and validated for 2009--2012.
 The color codes whether the distributional 
 forest had higher (green) or lower (red) CRPS compared to the best of the 
-other three models. The background shows the local topography \citep{Robinson:2014}.
+other three models. The gray background shows the local topography \citep{Robinson:2014}.
 Station Axams is highlighted in bold.}
 \end{figure}
 
@@ -1073,7 +1077,15 @@ signals that another model performs better. Overall the distributional forest
 performs on par (gray) or better (green) for the majority of stations. Only
 for a few stations in the north-east EMOS performs best, and in East Tyrol
 the prespecified GAMLSS performs particularly well in the validation period
-(2009--2012).
+(2009--2012). Partially, this can be attributed to random variation as
+the differences at several stations are mitigated when considering a full
+cross-validation rather than a single split into learning and validation period
+\citep[see Supplement~A,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019a}.
+Further differences are possibly due to East Tyrol lying in a different
+climate zone, south of the main Alpine Ridge. Hence, long-term climatological
+characteristics as well as the precipitation patterns in 2009--2012 differ
+from North Tyrol, conforming particularly well with the additive effects from
+the prespecified GAMLSS.
 
 
 \section{Discussion}
@@ -1125,7 +1137,7 @@ interpretability but forecasting skill and (semi-)automatic application on a
 larger domain \citep[see also the discussion in][]{Rasp+Lerch:2018}.
 
 
-\subsubsection*{Distributional specifications}
+\subsubsection*{Distributional specifications for precipitation modeling}
 
 Choosing an adequate distributional family is an important step for
 establishing a well-fitting model. A zero-censored Gaussian distribution is
@@ -1134,7 +1146,7 @@ for precipitation modeling in earlier literature
 \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
 To test for robustness against distributional misspecifation, 
 two alternative distributional specifications have been considered
-in Supplement A \citep{Schlosser+Hothorn+Stauffer:2018a}: Using the
+in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}: Using the
 same evaluations as in Section~\ref{sec:all}, all models are
 additionally fitted for 15~meteorological stations using a zero-censored
 logistic distribution in order to account for heavier tails and a two-part
@@ -1153,10 +1165,34 @@ for capturing skewness \citep[as in][]{Scheuerer+Hamill:2015, Baran+Nemoda:2016}
 However, this would go beyond the mean/variance specification of the NGR
 that is widely used in ensemble post-processing. Therefore, this contribution
 investigates the effects of using the same distributional family with a novel
-strategy for specifying dependence on covariates. Considering more flexible
-parametric specifications as well as transformation model specifications that
-allow to capture dependence of higher moments \citep[see e.g.,][]{Hothorn+Zeileis:2017}
-are extensions of interest for future research.
+strategy for specifying dependence on covariates.
+
+
+\subsubsection*{More general distributional specifications}
+
+Beyond the task of modeling precipitation it is of interest how well distributional
+forests perform in combination with other more general distributional specifications.
+It has been shown previously in the literature that using a score- or gradient-based
+selection of splitting variables outperforms a mean-based selection with subsequent
+flexible distributional modeling: For example, both \citet[][Figure~2]{Athey+Tibshirani+Wager:2019}
+and \citet[][Figure~1]{Hothorn+Zeileis:2017} demonstrated (independently) that their
+respective score-based random forest algorithms outperform the mean-based quantile
+regression forests of \cite{Meinshausen:2006} in a setup where only the variance of a normal
+response variable changes across the considered covariates. However, if all distribution
+parameters are closely correlated with the distribution mean the forests with different
+splitting strategies all perform similarly, provided a sufficiently flexible distribution
+is employed for the final predictions \citep[see][Section~7]{Hothorn+Zeileis:2017}.
+
+Similarly, the score-based distributional forests introduced in this manuscript
+proved to be quite robust to the different distributional specifications considered.
+While all specifications focus on capturing mean-variance effects note that these
+parameters are never fully orthogonal but can actually become quite closely correlated
+due to the censoring (or truncation and/or zero-inflation considered in Supplement~A).
+
+However, exploring extensions to more flexible parametric distributions
+\citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
+as well as transformation model specifications \citep[e.g., as in][]{Hothorn+Zeileis:2017}
+are of interest for future research.
 
 
 \subsubsection*{Axams vs.~other meteorological stations}
@@ -1166,7 +1202,7 @@ in Section~\ref{sec:axams} as it yields fairly typical results
 and is geographically in the center of the study area and closest to
 Innsbruck, the capital of Tyrol and the work place of three of the authors.
 To show that qualitatively similar results are obtained for other
-meteorological stations, Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b}
+meteorological stations, Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b}
 carries out the same evaluation for 14~further stations. These
 cover a wide range of geographical locations/altitudes and a mix of
 different best-performing models in the single-split setting reported in
@@ -1177,12 +1213,7 @@ Figure~\ref{fig:all-map} even out in the cross-validation with distributional
 forests typically performing at least as well as the best of the other models at most
 stations. In particular, this also includes three stations in East Tyrol
 where the prespecified GAMLSS performs best in the single-split setting
-(learning based on 1985--2008 and validation for 2009--2012). While part of
-the performance difference can also be attributed to different
-climatological characteristics in East Tyrol (that, unlike North Tyrol, is located
-south of the main Alpine Ridge), the differences are greatly reduced for several
-stations in East Tyrol by considering more splits in the full cross-validation.
-
+(learning based on 1985--2008 and validation for 2009--2012). 
 
 
 \subsubsection*{Tuning parameters}
@@ -1208,7 +1239,7 @@ so a good choice results from a trade-off between computational complexity and a
 \citep[][p.~205]{Biau+Scornet:2016}.
 Following this advice, we decided to build forests consisting of 100 trees.
 
-%\pagebreak
+
 \subsubsection*{Computational difficulties}
 %% GAMLSS errors with references gamboostLSS Hofner et al.
 As stated by \cite{Hofner+Mayr+Schmid:2016} the AIC-based variable selection 
@@ -1226,16 +1257,18 @@ The proposed methods are in the \textsf{R} package \textbf{disttree}
 (version~0.1.0) based on the \textbf{partykit}
 package (version~1.2.3), both available 
 on \textsf{R}-Forge at
-(\url{https://R-Forge.R-project.org/projects/partykit/}). The function
-\texttt{distfit} fits distributional models by maximum likelihood, which is
-used as the basis for the tree-building function \texttt{disttree}, upon which
-the \texttt{distforest} is built. All functions can either be used with
-GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
+(\url{https://R-Forge.R-project.org/projects/partykit/}). 
+The function \texttt{distforest} learns the distributional forests proposed
+in this manuscript by combining the general \texttt{cforest} function from
+\textbf{partykit} with the function \texttt{distfit} for fitting distributional
+models by maximum likelihood. Analogously, \texttt{disttree} can learn a single
+distributional tree by combining \texttt{ctree} with \texttt{distfit}.
+All functions can either be used with GAMLSS family objects from the \textsf{R} package \textbf{gamlss.dist} 
 (\citealp{Stasinopoulos+Rigby:2007}, version~5.0.6)
 or with custom lists containing all required information about the distribution family.
 
 In addition to \textbf{disttree}, Section~\ref{sec:precipitation} employs
-\textsf{R} package \textbf{crch} 
+\textsf{R} package \textbf{crch}  
 \citep[version~1.0.1]{Messner+Mayr+Zeileis:2016} for the EMOS 
 models, \textbf{gamlss}
 \citep[version~5.1.0]{Stasinopoulos+Rigby:2007} for the 
@@ -1248,18 +1281,22 @@ is reproducible using \texttt{demo("RainAxams", package = "disttree")}.
 This also includes fitting the other zero-censored
 Gaussian models considered in this paper and generating the corresponding 
 QQ~plots (Figure~\ref{fig:axams-qq}) and PIT histograms 
-\citep[Supplement B]{Schlosser+Hothorn+Stauffer:2018b}.
+\citep[Supplement~B]{Schlosser+Hothorn+Stauffer:2019b}.
 Full replication of all results can be obtained with
 \texttt{demo("RainTyrol", package = "disttree")}
 requiring the companion \textsf{R} package \textbf{RainTyrol} 
 (version~0.1.0),
 also available within the \textsf{R}-Forge~project.
-The results presented in Supplement A \citep{Schlosser+Hothorn+Stauffer:2018a} and 
-Supplement B \citep{Schlosser+Hothorn+Stauffer:2018b} can be reproduced using
+The results presented in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a} and 
+Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} can be reproduced using
 \texttt{demo("RainDistributions", package = "disttree")} and 
 \texttt{demo("RainStationwise", package = "disttree")}, respectively.
 
 
+\section*{Acknowledgements}
+An extended research stay of Torsten Hothorn in Innsbruck (August
+2017 to January 2018) was financially supported by the Swiss National
+Science Foundation, grant number SNF IZSEZ0 177091.
 
 \pagebreak
 \begin{appendix}
@@ -1278,7 +1315,7 @@ After fitting a distributional model $\mathcal{D}(Y, \bm{\theta})$ to
 the learning sample with observations $\{y_i\}_{i = 1,\ldots,n}$ as explained in 
 Section~\ref{sec:distfit} the resulting estimated parameter 
 $\bm{\hat{\theta}} = 
-(\hat{\theta}_1, \ldots, \hat{\theta}_k)$, $k \in \mathbb{N}$, 
+(\hat{\theta}_1, \ldots, \hat{\theta}_k)$, $k \in \mathbb{N}$ 
 can be plugged in the score function $s(\bm{\theta}, Y)$.
 In that way a goodness-of-fit measurement is obtained for each
 parameter $\theta_j$ and each observation $y_i$.
@@ -1317,8 +1354,8 @@ by column-wise combination. Observations with missing values are excluded from t
 With the conditional expectation $\mu_l$ and the covariance 
 $\Sigma_l$ of $T_l$ as derived by 
 \cite{Strasser+Weber:1999} the test statistic can be standardized. 
-The observed multivariate linear statistic $t_l$ which is either an
-$k$~-~or~$k \cdot H$~-~dimensional vector, depending on the scale of $Z_l$,
+The observed multivariate linear statistic $t_l$ which is either a
+$k$- or $k \cdot H$-dimensional vector, depending on the scale of $Z_l$,
 is mapped onto the real line by a univariate test statistic $c$.
 In the application of this paper a quadratic form is chosen, such that
 \begin{equation}
@@ -1326,7 +1363,16 @@ c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 \end{equation}
 where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
-can be considered.
+can be considered ($c_{\text{max}}$).
+
+\cite{Strasser+Weber:1999} showed that the asymptotic conditional 
+distribution of the linear statistic $t_l$ is a multivariate normal with parameters
+$\mu$ and $\Sigma$. Hence, the asymptotic conditional distribution of
+$c(t_{l},\mu_{l},\Sigma_{l})$ 
+is either normal
+(for $c_{\text{max}}$) 
+or 
+$\chi^2$ (for $c_{\text{quad}}$).
 
 The smaller the $p$-value corresponding to the standardized test 
 statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
@@ -1402,7 +1448,7 @@ which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
   two other distributional assumptions: A logistic distribution, left-censored at zero,
   is employed to potentially better capture heavy tails -- and a two-part hurdle model
   combining a binary model for zero vs.\ positive precipitation and a Gaussian model,
-  truncated at zero, for the positive precipitation observations. 
+  truncated at zero, for the positive precipitation observations.
 }
 \end{supplement}
 
