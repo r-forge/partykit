@@ -1080,7 +1080,7 @@ the prespecified GAMLSS performs particularly well in the validation period
 (2009--2012). Partially, this can be attributed to random variation as
 the differences at several stations are mitigated when considering a full
 cross-validation rather than a single split into learning and validation period
-\citep[see Supplement~A,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019a}.
+\citep[see Supplement~B,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019b}.
 Further differences are possibly due to East Tyrol lying in a different
 climate zone, south of the main Alpine Ridge. Hence, long-term climatological
 characteristics as well as the precipitation patterns in 2009--2012 differ
@@ -1144,7 +1144,7 @@ establishing a well-fitting model. A zero-censored Gaussian distribution is
 employed in this manuscript as this has been found to be an appropriate choice
 for precipitation modeling in earlier literature
 \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
-To test for robustness against distributional misspecifation, 
+To test for robustness against distributional misspecification, 
 two alternative distributional specifications have been considered
 in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}: Using the
 same evaluations as in Section~\ref{sec:all}, all models are
@@ -1187,7 +1187,8 @@ Similarly, the score-based distributional forests introduced in this manuscript
 proved to be quite robust to the different distributional specifications considered.
 While all specifications focus on capturing mean-variance effects note that these
 parameters are never fully orthogonal but can actually become quite closely correlated
-due to the censoring (or truncation and/or zero-inflation considered in Supplement~A).
+due to the censoring (or truncation and/or zero-inflation considered in 
+Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}).
 
 However, exploring extensions to more flexible parametric distributions
 \citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
@@ -1293,10 +1294,6 @@ Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} can be reproduced using
 \texttt{demo("RainStationwise", package = "disttree")}, respectively.
 
 
-\section*{Acknowledgements}
-An extended research stay of Torsten Hothorn in Innsbruck (August
-2017 to January 2018) was financially supported by the Swiss National
-Science Foundation, grant number SNF IZSEZ0 177091.
 
 \pagebreak
 \begin{appendix}
@@ -1363,7 +1360,7 @@ c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 \end{equation}
 where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
-can be considered ($c_{\text{max}}$).
+can be considered~($c_{\text{max}}$).
 
 \cite{Strasser+Weber:1999} showed that the asymptotic conditional 
 distribution of the linear statistic $t_l$ is a multivariate normal with parameters
@@ -1434,6 +1431,13 @@ which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
 \end{appendix}
 
 \pagebreak
+
+\section*{Acknowledgments}
+An extended research stay of Torsten Hothorn in Innsbruck (August
+2017 to January 2018) was financially supported by the Swiss National
+Science Foundation, grant number SNF IZSEZ0 177091.
+
+
 % AOS,AOAS: If there are supplements please fill:
 \begin{supplement}[id=suppA]
   \sname{Supplement A}

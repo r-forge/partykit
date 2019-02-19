@@ -1594,7 +1594,7 @@ the prespecified GAMLSS performs particularly well in the validation period
 (2009--2012). \hlc{Partially, this can be attributed to random variation as
 the differences at several stations are mitigated when considering a full
 cross-validation rather than a single split into learning and validation period}
-\citep[see Supplement~A,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019a}.
+\citep[see Supplement~B,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019b}.
 \hlc{Further differences are possibly due to East Tyrol lying in a different
 climate zone, south of the main Alpine Ridge. Hence, long-term climatological
 characteristics as well as the precipitation patterns in 2009--2012 differ
@@ -1659,7 +1659,7 @@ establishing a well-fitting model. A zero-censored Gaussian distribution is
 employed in this manuscript as this has been found to be an appropriate choice
 for precipitation modeling in earlier literature
 \citep[e.g.,][]{Stauffer+Mayr+Messner:2017}. 
-To test for robustness against distributional misspecifation, 
+To test for robustness against distributional misspecification, 
 two alternative distributional specifications have been considered
 in Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}: Using the
 same evaluations as in Section~\ref{sec:all}, all models are
@@ -1702,9 +1702,10 @@ is employed for the final predictions} \citep[see][Section~7]{Hothorn+Zeileis:20
 proved to be quite robust to the different distributional specifications considered.
 While all specifications focus on capturing mean-variance effects note that these
 parameters are never fully orthogonal but can actually become quite closely correlated
-due to the censoring (or truncation and/or zero-inflation considered in Supplement~A).
+due to the censoring (or truncation and/or zero-inflation considered in} 
+Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}).
 
-However, exploring extensions to more flexible parametric distributions}
+\hlc{However, exploring extensions to more flexible parametric distributions}
 \citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
 \hlc{as well as transformation model specifications} \citep[e.g., as in][]{Hothorn+Zeileis:2017}
 \hlc{are of interest for future research.}
