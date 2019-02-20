@@ -1242,12 +1242,12 @@ to a break point used for the binarization.
 \label{sec:tree}
 To compare the performance of testing strategies in a more complex scenario they have
 been evaluated on data sets based on the tree structure with two different split variables 
-($Z_1$ and $Z_2$), both with the same split point $\xi$ as illustrated in 
+($Z_1$ and $Z_2$) both with the same split point $\xi$ as illustrated in 
 Figure~\ref{fig:dgp_tree}.
 
 Figure~\ref{fig:tree_ari} shows that based on the resulting ARI values CTree and MOB perform 
 almost equally well for the true split points $0$, $0.2$ and $0.5$. GUIDE\_scores performs
-a bit worse but it still achieves an ARI above $0.5$ for the highest considered effect size
+slightly worse but it still achieves an ARI above $0.5$ for the highest considered effect size
 of $\delta = 1$. However, the original version of GUIDE is clearly behind which is mainly
 due to the fact that it doesn't detect the first split in $Z_2$ corresponding to a changing
 slope parameter as it only considers residuals in its testing strategy.
@@ -1256,7 +1256,7 @@ methods and both GUIDE versions fail to find the correct tree structure.
 Based on these results it can be concluded once again that including all available scores in the
 testing strategy leads to a better performance while binarizing scores and categorizing
 split variables both do not cause any improvement but in many situations even have a negative
-effect on the power of a testing strategies. 
+effect on the power of a testing strategy. 
 
 \begin{figure}%[t]
 \setkeys{Gin}{width=\linewidth}
@@ -1307,7 +1307,7 @@ MOB, GUIDE, GUIDE\_scores.}
 To elaborate the impact of the choice of a pruning strategy
 the tree models presented in Figure~\ref{fig:tree_ari} are built again, but this time
 applying postpruning (building very large trees without any significance level and employing 
-cost-complexity pruning as in the CART algorithm). 
+cost-complexity pruning as in the CART algorithm \citep{Breiman+Friedman+Stone:1984}). 
 In Figure~\ref{fig:pruning_ari} the results are compared to those obtained with prepruning,
 again based on the Adjusted Rand Index.
 
@@ -1428,23 +1428,30 @@ important effects might be neglected.
 Linear models as presented in this study have been selected as they allow for a simple illustration
 of the investigated subjects. However, the obtained results also hold for a variety of other models
 as the introduced building blocks can be applied in the same way for all model types.
-One specific feature of linear models is the orthogonality of the conditional expectation
-$\mathbb{E}(Y|X)$ and the regressor $X$ which affects the capability of tests using only residuals
-to capture shifts in the parameters. In particular, \cite{Ploberger+Kramer:1992} have shown that
-residual-based tests are insensitive to parameter changes orthogonal to the mean regressor.
+Specific characteristics of linear models regarding structural changes have been investigated
+in detail in previous literature.
+\cite{Ploberger+Kramer:1992} have shown that residual-based tests can detect a change in the parameters
+only if it also causes a shift in the expected value $\mathbb{E}(Y)$. 
+This is not the case if changes are orthogonal to the mean regressor $(1,0)^{\top}$, hence, if
+the parameter vector $\bm{\beta}$ is shifted 
+%to $\bm{\beta} + \bm{\Delta}$ 
+by $\bm{\Delta} = (0, \Delta_1)^{\top}$.
 For that reason GUIDE breaks down when the slope parameter $\beta_1$ changes while the intercept
 $\beta_0$ is fixed as seen in the middle panel of Figure~\ref{fig:scores_stump}.
-Testing procedures purely based on residuals perform best in situations with shifts only in the
-intercept, however, the costs in terms of power that come with including all scores are 
-negligibly small. 
-Furthermore, with only two parameters determining a linear model the importance of including scores 
-regarding each parameter could already be pointed out clearly while for an increasing number of 
-parameters in a model this aspect becomes even more important. 
+While this might be an extreme example similar scenarios can appear in many applications, see, e.g., 
+Figure~2 in \cite{Loh+He+Man:2015} where an additional separation of the data in each node is
+required in order to fit a reasonable model. This can be avoided by including model scores
+allowing for the detection of changes not only in the location parameter but also in all other 
+parameters, i.e., not only in the expected value but also in the variance.
+In situations where shifts appear only in the intercept testing procedures purely based on residuals 
+perform best. However, the cost in terms of power that comes with including all scores, in particular
+with testing more than one parameter, is negligibly small. 
 
-In general residual-based and score-based procedures are expected to perform equally well if all
-parameters are highly correlated. On the other hand, if parameters are orthogonal changes that are 
-not connected to the mean might be missed when only considering residuals. This can be avoided by
-including scores which are a standard measurement of goodness of fit that can be easily employed.
+Also in more general models residual-based and score-based procedures are expected to perform equally 
+well if all parameters are highly correlated. On the other hand, if parameters are orthogonal changes 
+that are not connected to the mean might be missed when only considering residuals. This can be prevented 
+by including scores which are a standard measurement of goodness of fit that can be easily employed for 
+all model types.
 Even though it also depends on the type of the applied residuals 
 (see, e.g., \cite{Loh+Zheng:2013}, \cite{Chaudhuri+Loh:2002} 
 and \cite{Loh+He+Man:2015})
@@ -1453,8 +1460,15 @@ fit such as residuals provides less power than full model scores.
 Whether this difference affects the performance of a testing strategy and if so, to what extent, is 
 determined by the way how residuals are connected to parameter shifts as well as the type of parameter
 shift and the type of model. Therefore, a general statement for all types of models and residuals can 
-hardly be made.
+hardly be made. However, the results from previous literature such as \cite{Ploberger+Kramer:1992} and
+the here presented simulation show that considering only residuals provides small gains in certain 
+situations but remarkable deficits in general. On the contrary, the benefits of including full model 
+scores clearly outweigh the price of of testing all parameters.
 
+
+%Furthermore, with only two parameters determining a linear model the importance of including scores 
+%regarding each parameter could already be pointed out clearly while for an increasing number of 
+%parameters in a model this aspect becomes even more important. 
 
 
 
