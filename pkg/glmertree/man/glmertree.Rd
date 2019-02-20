@@ -13,6 +13,7 @@
 \alias{as.party.lmertree}
 \alias{residuals.lmertree}
 \alias{resid.lmertree}
+\alias{VarCorr.lmertree}
 
 \alias{print.glmertree}
 \alias{plot.glmertree}
@@ -25,6 +26,7 @@
 \alias{as.party.glmertree}
 \alias{residuals.glmertree}
 \alias{resid.glmertree}
+\alias{VarCorr.glmertree}
 
 \encoding{latin1}
 
@@ -55,15 +57,16 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   \item{family}{family specification for \code{glmtree} and \code{glmer}.
     See \code{\link[stats]{glm}} documentation for families.}
   \item{weights}{numeric. An optional numeric vector of weights. Can be a 
-    name of a column in data or a vector of length \code{nrow(data)}}.
+    name of a column in data or a vector of length \code{nrow(data)}.}
   \item{cluster}{optional vector of cluster IDs to be employed for clustered 
     covariances in the parameter stability tests. Can be a name of a column 
     in \code{data} or a vector of length \code{nrow(data)}. If 
-    \code{cluster = NULL} (the default), observation- instead of cluster-level 
-    covariances are employed in the parameter stability tests. If 
+    \code{cluster = NULL} (the default), observation-level covariances 
+    are employed in the parameter stability tests. If 
     partitioning variables are measured on the cluster level, this will
     likely yield spurious splits, which can be mitigated by specification 
-    of the cluster argument.}
+    of the cluster argument, which results in cluster-level covariances
+    being employed in the parameter stability tests.}
   \item{ranefstart}{\code{NULL} (the default), \code{TRUE}, or a numeric 
     vector of length \code{nrow(data)}. Specifies the offset to be used in 
     estimation of the first tree. \code{NULL} by default, yielding a zero offset 
@@ -97,23 +100,25 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   
 \details{
   (G)LMM trees learn a tree where each terminal node is associated with
-  different regression coefficients while adjusting for global random effects
-  (such as a random intercept). This allows for detection of subgroup-specific
-  fixed effects, keeping the random effects constant throughout the tree.
-  The estimation algorithm iterates between (1) estimation of the tree given
-  an offset of random effects, and (2) estimation of a random-effects model
-  given the tree structure. See Fokkema et al. (2015) for a detailed introduction.
+  different fixed-effects regression coefficients while adjusting for global 
+  random effects (such as a random intercept). This allows for detection of 
+  subgroups with different fixed-effects parameter estimates, keeping the 
+  random effects constant throughout the tree (i.e., random effects are
+  estimated globally). The estimation algorithm iterates between (1) estimation 
+  of the tree given an offset of random effects, and (2) estimation of the 
+  random effects given the tree structure. See Fokkema et al. (2018) for 
+  a detailed introduction.
   
   To specify all variables in the model a \code{formula} such as
   \code{y ~ x1 + x2 | random | z1 + z2 + z3} is used, where \code{y} is the
   response, \code{x1} and \code{x2} are the regressors in every node of the
-  tree, \code{random} is the random effect, and \code{z1} to \code{z3} are
+  tree, \code{random} is the random effects, and \code{z1} to \code{z3} are
   the partitioning variables considered for growing the tree. If \code{random}
   is only a single variable such as \code{id} a random intercept with respect
   to \code{id} is used. Alternatively, it may be an explicit random-effects
-  formula such as \code{(1 | id)} or a more complicated formula. (Note that
-  in the latter case, the brackets are necessary to protect the pipes in the
-  random effects formulation.)
+  formula such as \code{(1 | id)} or a more complicated formula such as
+  \code{((1+time) | id)}. (Note that in the latter two formulas, the brackets 
+  are necessary to protect the pipes in the random-effects formulation.)
 
   In the random-effects model from step (2), two strategies are available:
   Either the fitted values from the tree can be supplied as an offset
@@ -121,7 +126,7 @@ glmertree(formula, data, family = "binomial", weights = NULL,
   Or the fixed effects are (re-)estimated along with the random effects
   using a nesting factor with nodes from the tree (\code{joint = TRUE}).
   In the former case, the estimation of each random-effects model is typically
-  faster but more iterations are required.
+  faster, but more iterations are required.
 
   The code is still under development and might change in future versions.
 }
@@ -154,10 +159,10 @@ The function returns a list with the following objects:
 }
 
 \references{
-Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (in press).
+Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
-  Methods. \url{https://doi.org/10.3758/s13428-017-0971-x}
+  Methods, 50(5), 2016-2034. \url{https://doi.org/10.3758/s13428-017-0971-x}
 }
 
 \seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
@@ -170,26 +175,32 @@ data("DepressionDemo", package = "glmertree")
 ## fit normal linear regression LMM tree for continuous outcome
 lt <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
   data = DepressionDemo)
-print(lt)
-plot(lt, which = "all") # default behavior, which may also be "tree" or "ranef" 
+\donttest{print(lt)}
+plot(lt, which = "all") # default behavior, may also be "tree" or "ranef" 
 coef(lt)
-ranef(lt)
-predict(lt, type = "response") # default behavior, type may also be "node"
+\donttest{ranef(lt)}
+\donttest{predict(lt, type = "response") # default behavior, may also be "node"}
 predict(lt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
-residuals(lt)
+\donttest{residuals(lt)}
+\donttest{VarCorr(lt) # see lme4::VarCorr}
 
 \donttest{
 ## fit logistic regression GLMM tree for binary outcome
 gt <- glmertree(depression_bin ~ treatment | cluster | age + anxiety + duration,
   data = DepressionDemo)
 print(gt)
-plot(gt, which = "all") # default behavior, which may also be "tree" or "ranef" 
+plot(gt, which = "all") # default behavior, may also be "tree" or "ranef" 
 coef(gt)
 ranef(gt)
-predict(gt, type = "response") # default behavior, type may also be "node" or "link"
+predict(gt, type = "response") # default behavior, may also be "node" or "link"
 predict(gt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
 residuals(gt)
+VarCorr(gt) # see lme4::VarCorr
 }
 }
+
+% \donttest{} statements for lmertree added in order to fix noLD warning on 
+% CRAN since new lme4 version of Feb. 6 2019. All other tests pass.
+% TODO: fix this in a better way.
 
 \keyword{tree}

@@ -19,7 +19,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   if (!is.null(q_offset)) {
     offset <- eval(q_offset, data)
   }
-
+  
   ## process cluster:
   q_cluster <- substitute(cluster)
   if (!is.null(q_cluster)) {
@@ -68,8 +68,8 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   } else if (ranefstart && length(ranefstart) == 1L) {
     ## generate ranefstart from lme null model: 
     predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
-                data = data, weights = .weights, 
-                offset = offset, control = lmer.control),
+                 data = data, weights = .weights, 
+                 offset = offset, control = lmer.control),
             newdata = data)
   } else {
     ranefstart  
@@ -84,7 +84,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     if (!is.null(offset)) {
       data$.ranef <- data$.ranef + offset
     }
-        
+    
     iteration <- iteration + 1L
     
     ## fit tree
@@ -113,7 +113,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
         ## If tree of depth 1 was grown, (g)lmer model should not include interactions:
         rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
         rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
-                      lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+                          lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
         if (is.null(offset)) {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
                       control = lmer.control)          
@@ -188,7 +188,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   if (nrow(data) != sum(stats::complete.cases(data))) {
     warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
   }
-
+  
   ## process offset:
   q_offset <- substitute(offset)
   if (!is.null(q_offset)) {
@@ -242,8 +242,8 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   } else if (ranefstart && length(ranefstart) == 1) {
     ## generate ranefstart from lme null model: 
     predict(glmer(formula(ff, lhs = 1L, rhs = 2L),
-                data = data, weights = .weights,
-                offset = offset, family = family, control = glmer.control),
+                  data = data, weights = .weights,
+                  offset = offset, family = family, control = glmer.control),
             newdata = data, type = "link")
   } else {
     ranefstart  
@@ -260,7 +260,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     if (!is.null(offset)) {
       data$.ranef <- data$.ranef + offset
     }
-
+    
     ## fit tree
     if (is.null(q_cluster)) {
       tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
@@ -300,7 +300,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
       } else {
         if (is.null(offset)) {
           glme <- glmer(rf, data = data, family = family, weights = .weights,
-                      control = glmer.control)
+                        control = glmer.control)
         } else {
           glme <- glmer(rf, data = data, family = family, weights = .weights,
                         offset = offset, control = glmer.control)
@@ -353,6 +353,14 @@ coef.lmertree <- coef.glmertree <- function(object, ...) {
   coef(object$tree, ...)
 }
 
+VarCorr.glmertree <- function(object, ...) {
+  VarCorr(object$glmer)
+}
+
+VarCorr.lmertree <- function(object, ...) {
+  VarCorr(object$lmer)
+}
+
 plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, ...) {    
   if (which != "ranef") {
     plot(x$tree, ...)
@@ -394,7 +402,7 @@ residuals.lmertree <- resid.lmertree <- function(object, type = NULL, scaled = F
     }
   } else {
     resids <- object$data[, all.vars(object$formula[[2]])] - predict(
-        object, newdata = NULL)
+      object, newdata = NULL)
     if(scaled) {
       resids <- scale(resids, center = FALSE, scale = TRUE)
     }
@@ -514,4 +522,3 @@ predict.glmertree <- function(object, newdata = NULL, type = "response",
     }
   }
 }
-
