@@ -1,28 +1,4 @@
-% Template for the submission to:
-%   The Annals of Probability           [aop]
-%   The Annals of Applied Probability   [aap]
-%   The Annals of Statistics            [aos] 
-%   The Annals of Applied Statistics    [aoas]
-%   Stochastic Systems                  [ssy]
-%
-%Author: In this template, the places where you need to add information
-%        (or delete line) are indicated by {???}.  Mostly the information
-%        required is obvious, but some explanations are given in lines starting
-%Author:
-%All other lines should be ignored.  After editing, there should be
-%no instances of ??? after this line.
-
-% use option [preprint] to remove info line at bottom
-% journal options: aop,aap,aos,aoas,ssy
-% natbib option: authoryear
-
 \documentclass[aoas, preprint]{imsart}
-%\shortcites{Hamill+Bates+Whitaker:2013}
-
-%\VignetteIndexEntry{disttree: Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
-%\VignetteDepends{disttree, crch, countreg, gamlss, gamlss.cens}
-%\VignetteKeywords{parametric models, regression trees, random forests, recursive partitioning, probabilistic forecasting, GAMLSS}
-%\VignettePackage{disttree}
 
 %% packages
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern}
@@ -35,10 +11,6 @@
 
 %% tikz
 \usetikzlibrary{arrows.meta,positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
-
-%% colors
-\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
-\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
 
 % provide arXiv number if available:
 \arxiv{arXiv:1804.02921}
@@ -60,12 +32,7 @@
 \title{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain}
 \runtitle{Distributional Regression Forests}
 
-% indicate corresponding author with \corref{}
-% \author{\fnms{John} \snm{Smith}\corref{}\ead[label=e1]{smith@foo.com}\thanksref{t1}}
-% \thankstext{t1}{Thanks to somebody} 
-% \address{line 1\\ line 2\\ printead{e1}}
-% \affiliation{Some University}
-
+% authors:
 \begin{aug}
 \author{\fnms{Lisa} \snm{Schlosser}\thanksref{m1}\corref{}\ead[label=e1]{Lisa.Schlosser@uibk.ac.at}
 \ead[label=u1,url]{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/}},
@@ -90,9 +57,6 @@
 \printead{e1}\\
 \phantom{E-mail:\ }\printead*{e3}\\
 \phantom{E-mail:\ }\printead*{e4}}
-%\printead{u1}\\
-%\phantom{URL:\ }\printead*{u3}\\
-%\phantom{URL:\ }\printead*{u4}}
 
 
 \address{Universit\"at Z\"urich \\
@@ -141,12 +105,6 @@ computationally more demanding boosting approach.
 \end{abstract}
 
 
-%\begin{keyword}[class=MSC]
-%\kwd[Primary ]{60K35}
-%\kwd{60K35}
-%\kwd[; secondary ]{60K35}
-%\end{keyword}
-
 \begin{keyword}
 \kwd{parametric models}
 \kwd{regression trees}
@@ -168,7 +126,6 @@ is modeled through a linear function of the covariates (see the left panel of
 Figure~\ref{fig:gam} for a schematic illustration). Over the last decades
 this has been extended in various directions including:
 
-%\pagebreak
 
 \begin{itemize}
   \item \emph{Generalized linear models} (GLMs, \citealp{Nelder+Wedderburn:1972})
@@ -675,12 +632,6 @@ $\log(\sigma) = \gamma_0 + \gamma_1 \cdot \log(\mathrm{sd}(\emph{tp}))$
 with regression coefficients $\beta_0$, $\beta_1$, $\gamma_0$, and $\gamma_1$
 \citep[where the log link assures positivity of the scale parameter, following][]{Gebetsberger+Messner+Mayr:2017}.
 
-% FIXME: notation with or without power transformation parameter?
-%
-%$\mu = \beta_0 + \beta_1 \cdot \mbox{mean}(\mbox{tp}^{\frac{1}{p}})$ and  
-%$\log(\sigma) = \gamma_0 + \gamma_1 \cdot \mbox{sd}(\mbox{tp}^{\frac{1}{p}})$
-%with power transformation parameter $\frac{1}{p}$
-
 
 While this approach alone is already highly effective in the plains,
 it typically does not perform as well in complex terrain due to unresolved
@@ -717,7 +668,6 @@ selection of smooth additive terms based on all 80~predictor variables.
 \label{sec:data}
 
 \begin{table}[t!]
-%\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
 \caption[Table caption text]{Basic covariates together with the number ({\#}) 
 and the type of variations.
@@ -767,7 +717,6 @@ Basic covariates & {\#} & Variations\\
 \hline
 \end{tabular}
 \end{minipage} 
-%}
 \end{table}
 
 Learning and validation data consist of observed 
@@ -857,16 +806,6 @@ further details:
   for variable selection (\texttt{alpha} $= 1$). The latter means
   that no early stopping (or ``pre-pruning'') is applied
   based on results of the statistical tests.
-  % stopping criteria:
-  % forest_minsplit = 50, forest_minbucket = 20, forest_mincrit = 0
-  
-  % default in ctree_control within distforest:
-  % mincriterion = 0
-  
-  % default values in ctree_control:
-  % alpha = 0.05, mincriterion = 1 - alpha,
-  % minsplit = 20L, minbucket = 7L,
-  % minprob = 0.01
 
 \item \emph{EMOS:} The basic ensemble model output statistics
   models use the ensemble mean of total precipitation as regressor in the location
@@ -1015,11 +954,9 @@ of the afternoon), spreads, or minima/maxima. Thus, while the covariates
 themselves are not surprising, selecting a GAMLSS with a particular combination
 of all the transformations would be much more challenging.
 
-%\pagebreak
 
 \subsection{Application for all stations}
 \label{sec:all}
-
 
 \begin{figure}[t!]
 \centering
@@ -1058,13 +995,6 @@ bring out that the prespecified GAMLSS sometimes performs rather differently
 (sometimes better, sometimes worse) compared to the two data-driven models.
 Values below zero show that, for some stations, EMOS performs better
 than the more complex statistical methods.
-%NAs in gamlss in 13 stations!!!\\
-%for example in 13th station in complete{\_}stations\\
-%\text{Error in glim.fit(f = mu.object, X = mu.X, y = y, w = w, fv = mu, os = mu.offset,  :}\\ 
-%\text{NA's in the working vector or weights for parameter mu}
-%\\
-% sum(is.na(crps[,3]))
-
 
 To assess whether these differences in predictive performance are due to differences
 in the topography, Figure~\ref{fig:all-map} shows a brief spatial summary of all
@@ -1242,7 +1172,7 @@ Following this advice, we decided to build forests consisting of 100 trees.
 
 
 \subsubsection*{Computational difficulties}
-%% GAMLSS errors with references gamboostLSS Hofner et al.
+
 As stated by \cite{Hofner+Mayr+Schmid:2016} the AIC-based variable selection 
 methods implemented in the \textsf{R} package \textbf{gamlss} ``[...] can be 
 unstable, especially when it comes to selecting possibly different sets of variables for 
@@ -1299,7 +1229,6 @@ Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} can be reproduced using
 \begin{appendix}
 \section{Tree algorithm}
 \label{app:tree}
-
 
 In the following, the tree algorithm applied in the empirical case study 
 discussed in this paper is explained. For notational simplicity, 
@@ -1410,24 +1339,6 @@ This permutation-test-based tree algorithm is presented in
 A different framework to build a likelihood-based tree is provided by the MOB algorithm 
 which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
 
-
-%\section{PIT histograms}
-%\label{app:pit}
-
-%\begin{figure}[b!]
-%\centering
-%%\begin{subfigure}{0.8\textwidth}
-%%\end{subfigure}
-%\caption{\label{fig:axams-pit}Out-of-sample PIT histograms (2009--2012) for station Axams and models learned on data from 1985--2008.}
-%\end{figure}
-
-%As an alternative to QQ~plots based on randomized quantile residuals,
-%probability integral transform (PIT, \citealp{Gneiting+Balabdaoui+Raftery:2007}) 
-%histograms are a commonly used tool to assess how well-calibrated distributional 
-%fits are. Figure~\ref{fig:axams-pit} shows out-of-sample PIT histograms for the same
-%probabilistic forecasts as Figure~\ref{fig:axams-qq}, confirming that despite
-%some deviations the overall calibration of all models is acceptable.
-
 \end{appendix}
 
 \pagebreak
@@ -1442,9 +1353,7 @@ Science Foundation, grant number SNF IZSEZ0 177091.
 \begin{supplement}[id=suppA]
   \sname{Supplement A}
   \stitle{Different Response Distributions}
-  %\slink[doi]{...}
   \slink[doi]{(to be completed by the typesetter)}
-  %\slink[doi]{10.1214/00-AOASXXXXSUPP}
   \sdatatype{.pdf} 
   \sdescription{
   To assess the goodness of fit of the Gaussian distribution, left-censored at zero,
@@ -1459,9 +1368,7 @@ Science Foundation, grant number SNF IZSEZ0 177091.
 \begin{supplement}[id=suppB]
   \sname{Supplement B}
   \stitle{Stationwise Evaluation}
-  %\slink[doi]{...}
   \slink[doi]{(to be completed by the typesetter)}
-  %\slink[doi]{10.1214/00-AOASXXXXSUPP}
   \sdatatype{.pdf} 
   \sdescription{
   To show that Axams is a fairly typical
@@ -1470,7 +1377,6 @@ Science Foundation, grant number SNF IZSEZ0 177091.
   of the main manuscript for 14~further meteorological stations.
 }
 \end{supplement}
-
 
 
 
