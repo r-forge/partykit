@@ -1161,15 +1161,15 @@ further details:
 \item \emph{Distributional forest:} All 80~predictor variables are
   considered for learning a forest of 100 trees. Subsampling is employed 
   for each tree using a third of the predictors in each split of the tree
-  (\hlc{argument} \code{mtry} \hlc{in our implementation} \code{distforest},
-  \hlc{with more ``computational details'' provided at the end of the manuscript}).
+  (argument \code{mtry} in our implementation \code{distforest},
+  with more ``computational details'' provided at the end of the manuscript).
   Parameters are estimated by
   adaptive local likelihood based on the forest weights as described
   in Section~\ref{sec:methods}. 
   The stopping criteria are the minimal number of observations to perform a split 
-  (\texttt{minsplit} $= 50$), the minimal number of observations in a 
-  segment (\texttt{minbucket} $= 20$), and the significance level 
-  for variable selection (\texttt{alpha} $= 1$). The latter means
+  (\texttt{minsplit}~$= 50$), the minimal number of observations in a 
+  segment (\texttt{minbucket}~$= 20$), and the significance level 
+  for variable selection (\texttt{alpha}~$= 1$). The latter means
   that no early stopping (or ``pre-pruning'') is applied
   based on results of the statistical tests.
   % stopping criteria:
@@ -1262,10 +1262,10 @@ observations and numerical weather predictions are available for the month of Ju
 from 1985 through 2012. In Figure~\ref{fig:axams-dist} in the introduction the 
 probabilistic forecasts from the distributional forest, trained on 1985--2008, 
 for July 24 in 2009--2012 have already been shown as a motivational example. 
-\hlc{In particular, the figure depicts the forecasted point mass at zero
+In particular, the figure depicts the forecasted point mass at zero
 (i.e., the probability of a dry day) along with the forecasted probability 
 density function for the total amount of precipitation. Based on this illustration 
-it can be observed that} the four sample forecasts differ considerably in 
+it can be observed that the four sample forecasts differ considerably in 
 location $\mu$, scale $\sigma$, and the amount of censoring while conforming quite 
 well with the actual observations from these days. 
 While this is a nice illustrative example we are  
@@ -1591,15 +1591,15 @@ signals that another model performs better. Overall the distributional forest
 performs on par (gray) or better (green) for the majority of stations. Only
 for a few stations in the north-east EMOS performs best, and in East Tyrol
 the prespecified GAMLSS performs particularly well in the validation period
-(2009--2012). \hlc{Partially, this can be attributed to random variation as
+(2009--2012). Partially, this can be attributed to random variation as
 the differences at several stations are mitigated when considering a full
-cross-validation rather than a single split into learning and validation period}
+cross-validation rather than a single split into learning and validation period
 \citep[see Supplement~B,][and the corresponding discussion in the next section]{Schlosser+Hothorn+Stauffer:2019b}.
-\hlc{Further differences are possibly due to East Tyrol lying in a different
+Further differences are possibly due to East Tyrol lying in a different
 climate zone, south of the main Alpine Ridge. Hence, long-term climatological
 characteristics as well as the precipitation patterns in 2009--2012 differ
 from North Tyrol, conforming particularly well with the additive effects from
-the prespecified GAMLSS.}
+the prespecified GAMLSS.
 
 
 
@@ -1685,30 +1685,30 @@ strategy for specifying dependence on covariates.
 
 \subsubsection*{More general distributional specifications}
 
-\hlc{Beyond the task of modeling precipitation it is of interest how well distributional
+Beyond the task of modeling precipitation it is of interest how well distributional
 forests perform in combination with other more general distributional specifications.
 It has been shown previously in the literature that using a score- or gradient-based
 selection of splitting variables outperforms a mean-based selection with subsequent
-flexible distributional modeling: For example, both} \citet[][Figure~2]{Athey+Tibshirani+Wager:2019}
-\hlc{and} \citet[][Figure~1]{Hothorn+Zeileis:2017} \hlc{demonstrated (independently) that their
+flexible distributional modeling: For example, both \citet[][Figure~2]{Athey+Tibshirani+Wager:2019}
+and \citet[][Figure~1]{Hothorn+Zeileis:2017} demonstrated (independently) that their
 respective score-based random forest algorithms outperform the mean-based quantile
-regression forests of} \cite{Meinshausen:2006} \hlc{in a setup where only the variance of a normal
+regression forests of \cite{Meinshausen:2006} in a setup where only the variance of a normal
 response variable changes across the considered covariates. However, if all distribution
 parameters are closely correlated with the distribution mean the forests with different
 splitting strategies all perform similarly, provided a sufficiently flexible distribution
-is employed for the final predictions} \citep[see][Section~7]{Hothorn+Zeileis:2017}.
+is employed for the final predictions \citep[see][Section~7]{Hothorn+Zeileis:2017}.
 
-\hlc{Similarly, the score-based distributional forests introduced in this manuscript
+Similarly, the score-based distributional forests introduced in this manuscript
 proved to be quite robust to the different distributional specifications considered.
 While all specifications focus on capturing mean-variance effects note that these
 parameters are never fully orthogonal but can actually become quite closely correlated
-due to the censoring (or truncation and/or zero-inflation considered in} 
+due to the censoring (or truncation and/or zero-inflation considered in
 Supplement~A \citep{Schlosser+Hothorn+Stauffer:2019a}).
 
-\hlc{However, exploring extensions to more flexible parametric distributions}
+However, exploring extensions to more flexible parametric distributions
 \citep[e.g., such as the Dagum distribution considered by][in GAMLSS-type models]{Klein+Kneib+Lang:2015}
-\hlc{as well as transformation model specifications} \citep[e.g., as in][]{Hothorn+Zeileis:2017}
-\hlc{are of interest for future research.}
+as well as transformation model specifications \citep[e.g., as in][]{Hothorn+Zeileis:2017}
+are of interest for future research.
 
 
 \subsubsection*{Axams vs.~other meteorological stations}
@@ -1740,8 +1740,8 @@ For the application in Section~\ref{sec:precipitation} tuning parameters
 are selected based on advice from the literature as well as our own experiences.
 As \cite{Hastie+Tibshirani+Friedman:2001} and \cite{Breiman:2001} recommend to 
 build full-grown trees, early stopping upon non-significance is disabled
-(\texttt{alpha} $= 1$) and low values are used for \texttt{minsplit} ($ = 50$)
-and \texttt{minbucket} ($ = 20$), while assuring that \texttt{minsplit}
+(\texttt{alpha}~$= 1$) and low values are used for \texttt{minsplit}~($ = 50$)
+and \texttt{minbucket}~($ = 20$), while assuring that \texttt{minsplit}
 is sufficiently large for reasonably obtaining MLEs of all parameters in each
 segment of the tree.
 
@@ -1809,12 +1809,7 @@ Supplement~B \citep{Schlosser+Hothorn+Stauffer:2019b} can be reproduced using
 \code{demo("RainStationwise", package = "disttree")}, respectively.
 
 
-\section*{Acknowledgements}
-\hlc{An extended research stay of Torsten Hothorn in Innsbruck (August
-2017 to January 2018) was financially supported by the Swiss National
-Science Foundation, grant number SNF IZSEZ0 177091.}
-
-\newpage
+%\newpage
 \section*{Appendix}
 \begin{appendix}
 
@@ -1883,13 +1878,13 @@ where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
 the maximum of the absolute values of the standardized linear statistic
 can be considered ($c_{\text{max}}$).
 
-\cite{Strasser+Weber:1999} \hlc{showed that the asymptotic conditional 
-distribution of the linear statistic} $t_l$ \hlc{is a multivariate normal with parameters}
-$\mu$ and $\Sigma$. \hlc{Hence, the asymptotic conditional distribution of}
+\cite{Strasser+Weber:1999} showed that the asymptotic conditional 
+distribution of the linear statistic $t_l$ is a multivariate normal with parameters
+$\mu$ and $\Sigma$. Hence, the asymptotic conditional distribution of
 $c(t_{l},\mu_{l},\Sigma_{l})$ 
-\hlc{is either normal}
+is either normal
 (for $c_{\text{max}}$) 
-\hlc{or} 
+or 
 $\chi^2$ (for $c_{\text{quad}}$).
 
 The smaller the $p$-value corresponding to the standardized test 
@@ -1963,7 +1958,10 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
 
 \end{appendix}
 
-
+\section*{Acknowledgments}
+An extended research stay of Torsten Hothorn in Innsbruck (August
+2017 to January 2018) was financially supported by the Swiss National
+Science Foundation, grant number SNF IZSEZ0 177091.
 
 
 \section*{Supplementary material}
@@ -1981,7 +1979,7 @@ pithist(pit_gb, nsim = 1000, breaks = seq(0, 1, length.out = 9), main = "Boosted
   this supplement presents the same analysis as in Section~\ref{sec:axams} 
   of the main manuscript for 14~further meteorological stations.
 
-\newpage
+%\newpage
 \bibliography{ref.bib}
 
 
