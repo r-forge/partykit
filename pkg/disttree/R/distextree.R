@@ -99,7 +99,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   #############################################
   # INSERT HERE: ytrafo
-  ## wrapper function to apply distfit in extree
+  ## wrapper function to apply distexfit in extree
   
   Y <- d$yx[[1]]
   if(NCOL(Y) > 1) stop("response variable has to be univariate") 
@@ -113,12 +113,12 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
     start <- info$coefficients
     
-    model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
+    model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
                                vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
     
     if(estfun) {
-      ef <- as.matrix(model$estfun) # distfit returns weighted scores!
+      ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
       
       if(decorrelate != "none") {
         n <- NROW(ef)
@@ -156,7 +156,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
                 coefficients = coef(model, type = "parameter"),
                 objfun = -logLik(model),  # optional function to be minimized 
                 object = object,
-                converged = model$converged  # FIX ME: warnings if distfit does not converge
+                converged = model$converged  # FIX ME: warnings if distexfit does not converge
     )
     return(ret)
   }
@@ -229,7 +229,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
 
   ################################################
   ## INSERTED HERE:
-  # distributional fit: calculate coefficients for terminal nodes using distfit()
+  # distributional fit: calculate coefficients for terminal nodes using distexfit()
   
   ## FIX ME: first check whether there is already a fitted model in each of the nodes, 
   # if so, extract coefficients instead of calculating them again in the following lines
@@ -246,7 +246,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   ## get coefficients for terminal nodes:
   Y <- ret$fitted$`(response)`
   # first iteration out of loop:
-  model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+  model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                               vcov = FALSE, type.hessian = type.hessian, 
                               estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
   coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
@@ -263,7 +263,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   if(n_tn>1){
     for(i in (2:n_tn)){
-      model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+      model <- disttree::distexfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                                  vcov = FALSE, type.hessian = type.hessian, 
                                  estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
       coefficients_par[i,] <- model$par
@@ -575,7 +575,7 @@ if(FALSE) {
   ## TO DO: include SPLITONLY, MIA, ... ?
   ix <- data$zindex[[j]] ### data[[j, type = "index"]]
   iy <- data$yxindex ### data[["yx", type = "index"]]
-  Y <- model$estfun  ## model from distfit, returns wheigthed scores
+  Y <- model$estfun  ## model from distexfit, returns wheigthed scores
   if(ctrl$guide_unweighted) Y <- Y/weights  ## FIX ME: influence of weights only on categorization
   x <- data[[j]]
   if(!is.null(subset)) {

@@ -27,6 +27,7 @@ importFrom("Hmisc",
 export(
   ## core distribution fitting function
   "distfit",
+  "distexfit",
 
   ## distributional tree
   "disttree",
