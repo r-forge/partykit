@@ -1,0 +1,948 @@
+\documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
+\usetheme[nototalframenumber, noslidenumber]{uibk}
+
+\title{The Power of Unbiased Recursive Partitioning:\\
+A Unifying View of CTree, MOB, and GUIDE}
+\author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
+\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+%\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
+\URL{https://R-Forge.R-project.org/projects/partykit/} 
+%\\
+%https://partykit.org}
+\headerimage{3}
+
+
+\setbeamertemplate{caption}{\insertcaption} 
+%% includes a replacement for \usepackage{Sweave}
+\usepackage{Sweave}
+\usepackage{changepage}
+\usepackage{amsmath,tikz}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
+%\graphicspath{{plots/}}
+
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+
+ 
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+set.seed(7)
+# setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/DAGStat2019/")
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+library("partykit")
+library("Formula")
+library("parallel")
+library("lattice")
+library("scales")
+#source("../guidelike.R")
+source("../tests_guideprune.R")
+#source("../ccprune.R")
+
+load("../draft/stump.rda")
+sim_stump <- simres$res
+rm(simres)
+
+load("../draft/tree.rda")
+sim_tree <- simres$res
+rm(simres)
+
+load("../draft/pruning.rda")
+pr <- simres$res
+## extract data for xyplot comparing ARI and ARI_p
+pr <- pr[,c(1,2,7,8,9,12,15)]
+## extended data set with postpruning results being represented as separated tests
+prex <- pr[,c(1,2,3,4,6)]
+prex <- rbind(prex,prex)
+
+prex$test <- factor(prex$test,
+                    levels = c("ctree","mfluc",
+                               "guide_sum_12", "guide_sum_1_cor",
+                               "ctree_p","mfluc_p",
+                               "guide_sum_12_p", "guide_sum_1_cor_p"),
+                    labels = c("CTree","MOB",
+                               "GUIDE_scores", "GUIDE",
+                               "CTree_p","MOB_p",
+                               "GUIDE_scores_p", "GUIDE_p"))
+
+for(i in c((length(pr$test)+1) : (2*length(pr$test)))){
+  if(prex$test[i] == "CTree") prex$test[i] <- "CTree_p"
+  if(prex$test[i] == "MOB") prex$test[i] <- "MOB_p"
+  if(prex$test[i] == "GUIDE_scores") prex$test[i] <- "GUIDE_scores_p"
+  if(prex$test[i] == "GUIDE") prex$test[i] <- "GUIDE_p"
+}
+
+prex$nrsubgr[(length(pr$nrsubgr)+1) : (2*length(pr$nrsubgr))] <- pr$nrsubgr_p
+prex$ari[(length(pr$ari)+1) : (2*length(pr$ari))] <- pr$ari_p
+
+load("../draft/3way_xi00_delta03.rda")
+load("../draft/3way_xi08_delta1.rda")
+d00$xi <- 0
+d08$xi <- 0.8
+d3way <- rbind(d00, d08)
+d3way$xi <- factor(d3way$xi, levels = c(0,0.8), labels = c(0,0.8))
+
+
+## HCL palette
+pal <- hcl(c(140, 80, 260, 70, 10), 300, 60)
+names(pal) <- c("CTree", "CTree_max", "MOB", "GUIDE", "GUIDE_scores")
+
+## HCL palette (light)
+pallight <- hcl(c(140, 80, 260, 70, 10), 300, 60, alpha = 0.25)
+names(pallight) <- c("CTree", "CTree_max", "MOB", "GUIDE", "GUIDE_scores")
+
+
+#produce plots
+set.seed(7)
+x <- runif(50,-1,1)
+e1 <- rnorm(50,0,1)
+e2 <- rnorm(50,0,1)
+y1 <- x*6 + e1 
+y2 <- x*1 + e2
+y <- c(y1,y2)
+
+jpeg("lm1.jpeg")
+plot(x,y1, ylab = "", xlab = "", xaxt="n", yaxt="n", ylim = c(-7,7))
+points(x, y2)
+abline(lm(y~c(x,x)), col = "red", lwd = 2)
+dev.off()
+
+jpeg("lm2.jpeg")
+plot(x,y1, ylab = "", xlab = "", xaxt="n", yaxt="n", ylim = c(-7,7))
+abline(lm(y1~x), col = "red", lwd = 2)
+dev.off()
+
+jpeg("lm3.jpeg")
+plot(x,y2, ylab = "", xlab = "", xaxt="n", yaxt="n", ylim = c(-7,7))
+abline(lm(y2~x), col = "red", lwd = 2)
+dev.off()
+
+
+@
+
+
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+\section{Unbiased Recursive Partitioning}
+
+\begin{frame}%[fragile]
+\frametitle{Motivation}
+\center
+\begin{tikzpicture}
+\visible<1>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 1, minimum width=90pt, minimum height = 30pt] (n0) at (4, 5) {$Y,X,Z$};
+}
+\visible<2>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 1, minimum width=90pt, minimum height = 30pt] (n0) at (4, 5) {$\mathcal{M}(Y,X;\hat{\beta}$)};
+}
+\visible<3->{
+\node[inner sep=0pt] (lm1) at (4, 4.5)
+    {\includegraphics[width=0.25\textwidth]{lm1.jpeg}};
+}
+\visible<4>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n1) at (2, 1) {?};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n2) at (6, 1) {?};
+\draw[-, line width=0.4pt] (3.5, 3.5) -- (2.3,1.6);
+\draw[-, line width=0.4pt] (4.5, 3.5) -- (5.7,1.6);
+}
+\visible<5-6>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n1) at (2, 1) {$Y_1,X_1$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n2) at (6, 1) {$Y_2,X_2$};
+\draw[-, line width=0.4pt] (3.5, 3.5) -- (2.3,1.6) node [midway, left] {\scriptsize $Z \leq \xi$};
+\draw[-, line width=0.4pt] (4.5, 3.5) -- (5.7,1.6) node [midway, right] {\scriptsize $Z > \xi$};
+}
+\visible<6>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n1) at (2, 1) {$\mathcal{M}(Y_1,X_1;\hat{\beta_1}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (n2) at (6, 1) {$\mathcal{M}(Y_2,X_2;\hat{\beta_2}$)};
+}
+\visible<7->{
+\node[inner sep=0pt] (lm2) at (2,0.5)
+    {\includegraphics[width=0.25\textwidth]{lm2.jpeg}};
+\node[inner sep=0pt] (lm3) at (6,0.5)
+    {\includegraphics[width=0.25\textwidth]{lm3.jpeg}};
+\draw[-, line width=0.4pt] (3.5, 3.5) -- (2.3,1.6) node [midway, left] {\scriptsize $Z \leq \xi$};
+\draw[-, line width=0.4pt] (4.5, 3.5) -- (5.7,1.6) node [midway, right] {\scriptsize $Z > \xi$};
+}
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Unbiased Recursive Partitioning}
+{\bf Basic tree algorithm:}
+\medskip
+\begin{enumerate}
+\item Fit a model to the response $Y$ (and possible covariates $X$).
+\item Assess association of $Y$ (or a model-based transformation)
+and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}$ showing the strongest association.
+\item Choose the corresponding split point leading to the highest improvement of model fit and split the data.
+\item Repeat steps 1--3 recursively in each of the resulting subgroups until some stopping criterion is met.
+\end{enumerate}
+
+\vspace{1.2cm}
+
+{\bf Here:} Focus on split variable selection (step 2).
+
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Split Variable Selection}
+
+{\bf General strategy:}
+\begin{enumerate}
+\item Evaluate a discrepancy measure giving information on the goodness of fit of the model for each observation and each model parameter (transformation of $Y$).
+\item Apply a statistical test assessing dependency of the discrepancy measure on each possible split variable $Z_j$.
+\item Select the split variable $Z_j^\ast$ showing the smallest $p$-value.
+\end{enumerate}
+
+\bigskip
+
+{\bf Possible discrepancy measures:}
+\begin{itemize}
+\item Absolute deviations from an average value
+\item Residuals
+\item Model scores
+\item \ldots
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Discrepancy Measures}
+As an example linear models $\mathcal{LM}(Y,X;\beta_0, \beta_1)$
+fitted via ordinary least squares (OLS)
+are considered with the following discrepancy measures:
+
+\bigskip
+
+{\bf Residuals:}
+\begin{flalign*}
+\hspace{0.7cm}
+r(Y,X,\hat{\beta_0},\hat{\beta_1}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X &&
+\end{flalign*}
+
+\bigskip
+
+{\bf Model scores:}
+\begin{flalign*}
+\hspace{0.7cm}
+s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
+\left(\frac{\partial r^2(Y, X, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_0} \quad , \quad  
+\frac{\partial r^2(Y, X, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_1}\right) 
+&&
+\end{flalign*}
+
+\pause
+
+$${\color{red}\Downarrow}$$
+$$
+{\color{red} 2 \cdot r(Y,X,\hat{\beta_0},\hat{\beta_1})}
+$$
+
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{General Framework}
+
+{\bf{Building blocks:}}
+
+\begin{itemize}
+\item {\only<4->{\color{lightgray}} Residuals vs.\ full model scores}
+\item {\only<1-3,7->{\color{lightgray}} Binarization of residuals/scores}
+\item {\only<1-6>{\color{lightgray}} Categorization of possible split variables}
+\end{itemize}
+
+\bigskip
+
+
+\only<2>{
+\small
+$$
+s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
+\begin{pmatrix} 
+\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})}\\
+\partial_{\beta_0} r^2(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} \partial_{\beta_1} r^2(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})}\\
+\vdots & {\color{lightgray} \vdots} \\
+\partial_{\beta_0} r^2(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} \partial_{\beta_1} r^2(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})}
+\end{pmatrix}
+$$
+}
+\only<3>{
+\small
+$$
+s(Y, X, \beta_0, \beta_1) = 
+\begin{pmatrix} 
+\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
+\partial_{\beta_0} r^2(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & \partial_{\beta_1} r^2(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})\\
+\vdots & \vdots \\
+\partial_{\beta_0} r^2(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & \partial_{\beta_1} r^2(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
+\end{pmatrix}
+$$
+}
+\only<5-6>{
+\small
+$$
+r(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
+\begin{pmatrix}
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})\\
+\vdots \\
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
+\end{pmatrix}
+%
+\visible<6>{
+\quad \Rightarrow \quad
+\small
+\begin{pmatrix}
+1\\
+0\\
+\vdots \\
+1
+\end{pmatrix}
+}
+$$
+}
+\only<7-8>{
+\small
+$$
+Z_j = 
+\begin{pmatrix}
+Z_{j1}\\
+Z_{j2}\\
+\vdots \\
+Z_{jn}\\
+\end{pmatrix}
+%
+\visible<8>{
+\quad \Rightarrow \quad
+\small
+\begin{pmatrix}
+3\\
+1\\
+\vdots \\
+2
+\end{pmatrix}
+}
+$$
+}
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Pruning}
+
+{\bf Goal:} Avoid overfitting.
+
+\bigskip
+
+{\bf Two Strategies:}
+
+\begin{itemize}
+\item Pre-pruning: \\
+Internal stopping criterion based on Bonferroni-corrected $p$-values of the applied tests. Stop splitting when there is no significant association. 
+\item Post-pruning: \\
+First grow a very large tree and afterwards prune splits that do not improve the model fit, 
+either via cross-validation (e.g.,~cost-complexity pruning as in CART) or 
+based on information criteria (e.g.,~AIC or BIC). 
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Simulation Setting}
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{l l l}
+\hline
+Name                    & Notation                   & Specification \\
+\hline
+\textit{Variables:}     &                            & \\ 
+Response                & $Y$                        & $=\beta_0(Z_1) + \beta_1(Z_1) \cdot X + \epsilon$ \\
+Regressor               & $X$                        & $\mathcal{U}([-1,1])$ \\
+Error                   & $\epsilon$                 & $\mathcal{N}(0,1)$ \\
+True split variable     & $Z_1$                      & $\mathcal{U}([-1,1])$  or $\mathcal{N}(0, 1)$ \\
+Noise split variables   & $Z_2, Z_3, \dots, Z_{10}$  & $\mathcal{U}([-1,1])$  or $\mathcal{N}(0, 1)$ \\
+\hline
+\textit{Parameters/functions:} &            & \\ 
+Intercept                      & $\beta_0$  & $0$ or $\pm \delta$\\
+Slope                          & $\beta_1$  & $1$ or $\pm \delta$\\
+True split point               & $\xi$      & $\in \{0, 0.2, 0.5, 0.8\}$ \\
+Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Simulation Setting (Scenario 1)}
+True tree structure:
+
+<<dgp, echo=FALSE>>=
+set.seed(7)
+
+nobs <- 250
+sigma <- 0.5
+xi <- 0
+delta <- 1
+beta0 <- 0
+beta1 <- 1
+
+d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
+               vary_beta = "beta0", beta1 = beta1, delta = delta, xi = xi, sigma = sigma)
+
+sp_xi1 <- partysplit(3L, breaks = 0)
+
+pn <- partynode(1L, split = sp_xi1, 
+                kids = list(
+                  partynode(2L, info = c("true parameters:", 
+                                         expression(beta[0] ==~" "~0~" or "~-delta), 
+                                         expression(beta[1] ==~" "~1~" or "~+delta))),
+                  partynode(3L, info = c("true parameters:", 
+                                         expression(beta[0] ==~" "~0~" or "~+delta), 
+                                         expression(beta[1] ==~" "~1~" or "~-delta)))))
+
+p <- party(pn, d)
+
+paltrees <- rgb(c(1, 0.9, 1), c(1, 0.9, 1), c(1, 0.9, 1))
+
+ep <- function (obj, digits = 3, abbreviate = FALSE, justmin = Inf, 
+                just = c("alternate", "increasing", "decreasing", "equal"), 
+                fill = "white") 
+{
+  meta <- obj$data
+  justfun <- function(i, split) {
+    myjust <- if (mean(nchar(split)) > justmin) {
+      match.arg(just, c("alternate", "increasing", "decreasing", "equal"))
+    } else {
+      "equal"
+    }
+    k <- length(split)
+    rval <- switch(myjust, equal = rep.int(0, k), 
+                   alternate = rep(c(0.5, -0.5), length.out = k), 
+                   increasing = seq(from = -k/2, to = k/2, by = 1), 
+                   decreasing = seq(from = k/2, to = -k/2, by = -1))
+    unit(0.5, "npc") + unit(rval[i], "lines")
+  }
+  function(node, i) {
+    split <-  c("<= xi", "> xi")
+    y <- justfun(i, split)
+    split <- split[i]
+    if (any(grep(">", split) > 0) | any(grep("<", split) > 0)) {
+      tr <- suppressWarnings(try(parse(text = paste("phantom(0)", split)), silent = TRUE))
+      if (!inherits(tr, "try-error")) split <- tr
+    }
+    grid.rect(y = y, gp = gpar(fill = fill, col = 0), width = unit(1, "strwidth", split))
+    grid.text(split, y = y, just = "center")
+  }
+}
+class(ep) <- "grapcon_generator"
+
+
+tp <- function (obj, digits = 3, abbreviate = FALSE, 
+                fill = c("lightgray", "white"), id = TRUE, 
+                just = c("center", "top"), top = 0.85, 
+                align = c("center", "left", "right"), gp = NULL, FUN = NULL, 
+                height = NULL, width = NULL) 
+{
+  nam <- names(obj)
+  extract_label <- function(node) formatinfo_node(node, FUN = FUN, 
+                                                  default = c("terminal", "node"))
+  maxstr <- function(node) {
+    lab <- extract_label(node)
+    klab <- if (is.terminal(node)) 
+      ""
+    else unlist(lapply(kids_node(node), maxstr))
+    lab <- c(lab, klab)
+    lab <- try(unlist(lapply(lab, function(x) strsplit(x, 
+                                                       "\n"))), silent = TRUE)
+    if (inherits(lab, "try-error")) {
+      paste(rep("a", 9L), collapse = "")
+    }
+    else {
+      return(lab[which.max(nchar(lab))])
+    }
+  }
+  nstr <- if (is.null(width)) 
+    maxstr(node_party(obj))
+  else paste(rep("a", width), collapse = "")
+  just <- match.arg(just[1L], c("center", "centre", "top"))
+  if (just == "centre") 
+    just <- "center"
+  align <- match.arg(align[1L], c("center", "centre", "left", 
+                                  "right"))
+  if (align == "centre") 
+    align <- "center"
+  rval <- function(node) {
+    if(node$id == 2) fill <- c("white", "blue")
+    if(node$id == 3 | node$id == 4) fill <- c("white", "red")
+    if(node$id == 5) fill <- c("white", "darkgreen")
+    fill <- rep(fill, length.out = 2)
+    lab <- extract_label(node)
+    if (!is.null(gp)) {
+      outer_vp <- viewport(gp = gp)
+      pushViewport(outer_vp)
+    }
+    if (is.null(height)) 
+      height <- length(lab) + 1L
+    node_vp <- viewport(x = unit(0.5, "npc"), y = unit(if (just == 
+                                                           "top") 
+      top
+      else 0.5, "npc"), just = c("center", just), width = unit(1, 
+                                                               "strwidth", nstr) * 1.1, height = unit(height, "lines"), 
+      name = paste("node_terminal", id_node(node), sep = ""), 
+      gp = if (is.null(gp)) 
+        gpar()
+      else gp)
+    pushViewport(node_vp)
+    grid.rect(gp = gpar(fill = fill[1]))
+    for (i in seq_along(lab)) grid.text(x = switch(align, 
+                                                   center = unit(0.5, "npc"), left = unit(1, "strwidth", 
+                                                                                          "a"), right = unit(1, "npc") - unit(1, "strwidth", 
+                                                                                                                              "a")), y = unit(length(lab) - i + 1, "lines"), 
+                                        lab[i], just = align)
+    if (id) {
+      nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, 
+                                                          "npc"), width = max(unit(1, "lines"), unit(1.3, 
+                                                                                                     "strwidth", nam[id_node(node)])), height = max(unit(1, 
+                                                                                                                                                         "lines"), unit(1.3, "strheight", nam[id_node(node)])))
+      pushViewport(nodeIDvp)
+      grid.rect(gp = gpar(fill = fill[2], lty = "solid"))
+      grid.text(nam[id_node(node)])
+      popViewport()
+    }
+    if (is.null(gp)) 
+      upViewport()
+    else upViewport(2)
+  }
+  return(rval)
+}
+
+class(tp) <- "grapcon_generator"
+@
+
+\begin{figure}%[t]
+\setkeys{Gin}{width=1\linewidth}
+\minipage{0.45\textwidth}
+<<dgp_stump1, fig=TRUE, echo=FALSE, width=4, height=3>>=
+#par(mar=c(3,3,0,0), oma = c(3,3,0,0))
+plot(p, 
+     tp_args = list(FUN = identity, width = 15), 
+     ip_args = list(fill = paltrees[c(2, 3)]),
+     drop_terminal = TRUE, tnex = 1, edge_panel = ep, terminal_panel = tp)
+@
+\endminipage
+\minipage{0.45\textwidth}
+<<dgp_stump2, fig=TRUE, echo=FALSE, width=4, height=3>>=
+par(mar = c(4,4,2,4))
+plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x", 
+     main = expression("varying"~beta[0]),
+     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
+abline(coef = c(-1,1), col = "blue", lwd = 2)
+abline(coef = c(1,1), col = "red", lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha("red", 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==+delta), side = 4, col = "red", las = 1, line = 0.5, at = 3.2)
+mtext(expression(beta[1]== 1), side = 4, col = "red", las = 1, line = 0.5, at = 2.2)
+mtext(expression(beta[0]==-delta), side = 4, col = "blue", las = 1, line = 0.5, at = 0.2)
+mtext(expression(beta[1]== 1), side = 4, col = "blue", las = 1, line = 0.5, at = -0.8)
+@
+\endminipage
+
+\minipage{0.45\textwidth}
+<<dgp_stump3, fig=TRUE, echo=FALSE, width=4, height=3>>=
+d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
+               vary_beta = "beta1", beta0 = beta0, delta = delta, xi = xi, sigma = sigma)
+
+par(mar = c(4,4,2,4))
+plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x", main = expression("varying"~beta[1]),
+     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
+abline(coef = c(0,1), col = "blue", lwd = 2)
+abline(coef = c(0,-1), col = "red", lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha("red", 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==0), side = 4, col = "red", las = 1, line = 0.5, at = -1)
+mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2)
+mtext(expression(beta[0]==0), side = 4, col = "blue", las = 1, line = 0.5, at = 2)
+mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1)
+@
+\endminipage
+\minipage{0.45\textwidth}
+<<dgp_stump4, fig=TRUE, echo=FALSE, width=4, height=3>>=
+d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
+               vary_beta = "all", delta = delta, xi = xi, sigma = sigma)
+par(mar = c(4,4,2,4))
+plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x",
+     main = expression("varying"~beta[0]~"and"~beta[1]),
+     xlim = c(-1,1.1),
+     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
+abline(coef = c(-1,1), col = "blue", lwd = 2)
+abline(coef = c(1,-1), col = "red", lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>=xi], pch = 19, col = alpha("red", 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==-delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1.7)
+mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 0.7)
+mtext(expression(beta[0]==+delta), side = 4, col = "red", las = 1, line = 0.5, at = -0.7)
+mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -1.7)
+@
+\endminipage
+\end{figure}
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Results}
+Residuals vs.\ full model scores:
+
+\begin{figure}
+\setkeys{Gin}{width=\linewidth}
+<<scores_stump, fig=TRUE, echo=FALSE, height=5, width=8>>=
+subdata <- subset(sim_stump, test %in% c("ctree","mfluc",
+                                         "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree","mfluc",
+                                  "guide_sum_12", "guide_sum_1_cor"),
+                       labels = c("CTree","MOB",
+                                  "GUIDE_scores", "GUIDE"))
+
+subdataxi <- subset(subdata, xi %in% c(0,0.8))
+
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+
+library("latticeExtra")
+useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test, 
+                      data = subdataxi, 
+                      subset = binary_beta == TRUE & binary_regressor == FALSE & 
+                        only_intercept == FALSE,# & xi == 0, 
+                      type = "l", lty = c(1,1,1,1),
+                      scales=list(x=list(at=seq(1,11,2))),
+                      key =  list(text = list(levels(subdataxi$test)),
+                                  lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+                      layout= c(3,2),
+                      index.cond = list(c(2,3,1),c(2,1)),
+                      xlab = expression(delta),
+                      ylab = expression("Proportion of selecting"~Z[1]),
+                      par.settings = par.settings),
+               
+               strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
+                                                     expression("vary"~beta[0]), 
+                                                     expression("vary"~beta[1]))),
+               strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8))))
+
+
+@
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Results}
+Full factorial analysis (with both parameters varying):
+\begin{figure}%[t]
+\setkeys{Gin}{width=1\linewidth}
+<<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
+xyplot(pval_z1 ~ cat | xi, 
+       groups = interaction(bin, res_scores), 
+       data = d3way, 
+       ylim = c(0,0.5),
+       type = c("a"), 
+       col = c("red", "blue", "red", "blue"),
+       lty = c(1,1,2,2),
+       xlab = "Categorization",
+       ylab = expression("p-value of"~Z[1]),
+       #index.cond = list(c(1,2,3,4)),
+       strip = strip.custom(factor.levels = c(expression(xi==0~"and"~delta==0.3), 
+                                              expression(xi==0.8~"and"~delta==1))),
+       key = list(text = list(levels(interaction(d3way$bin, d3way$res_scores))),
+                  lines = list(lty = c(1,1,2,2), 
+                               type = "l",
+                               col = c("red", "blue", "red", "blue"))))
+@
+\end{figure}
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Simulation Setting (Scenario 2)}
+True tree structure:
+
+<<true_tree_dgp, eval = TRUE, echo=FALSE, results=hide>>=
+
+# d <- dgp_tree(nobs = 250)
+set.seed(7)
+d <- dgp_tree(nobs = 250, xi = 0, binary_regressor = FALSE, vary_beta = "all", 
+              binary_beta = TRUE, nrsplitvar = 2, sigma = 0.5)
+
+sp_xi2 <- partysplit(4L, breaks = 0)
+sp_xi1 <- partysplit(3L, breaks = 0)
+
+pn <- partynode(1L, split = sp_xi2, 
+                kids = list(
+                  partynode(2L, info = c("true parameters:", 
+                                         expression(beta[0] == 0), 
+                                         expression(beta[1] == +delta))),
+                  partynode(3L, split = sp_xi1, 
+                            kids = list(
+                              partynode(4L, info = c("true parameters:", 
+                                                     expression(beta[0] == -delta), 
+                                                     expression(beta[1] == -delta))),
+                              partynode(5L, info = c("true parameters:", 
+                                                     expression(beta[0] == +delta), 
+                                                     expression(beta[1] == -delta)))))))
+
+p <- party(pn, d)
+
+#ctest <- evaltests(y~x|z1+z2+z3+z4+z5+z6+z7+z8+z9+z10, data = d, testfun = "ctree", stump = FALSE)
+@
+
+
+\begin{figure}%[t]
+\begin{center}
+\setkeys{Gin}{width=1\linewidth}
+\minipage{0.5\textwidth}
+<<dgp_tree1, fig=TRUE, echo=FALSE, width=5, height=4.5>>=
+par(mar=c(0,0,0,0), oma=c(0,0,0.4,0))
+#paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+paltrees <- rgb(c(1, 0.9, 1), c(1, 0.9, 1), c(1, 0.9, 1))
+plot(p, edge_panel = ep, terminal_panel = tp,
+     tp_args = list(FUN = identity, width = 15), 
+     ip_args = list(fill = paltrees[c(2, 3)]),
+     drop_terminal = TRUE, tnex = 1)
+@
+\endminipage
+\minipage{0.45\textwidth}
+<<dgp_tree2, fig=TRUE, echo=FALSE, width=4, height=4>>=
+par(mar = c(4,4,2,4))
+plot(x = d$x[d$z2<=xi], y = d$y[d$z2<=xi], ylim = c(-5,5), ylab = "y", xlab = "x",
+     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
+abline(coef = c(0,1), col = "blue", lwd = 2)
+abline(coef = c(-1,-1), col = "red", lwd = 2)
+abline(coef = c(1,-1), col = "darkgreen", lwd = 2)
+points(x = d$x[d$z2>xi & d$z1<=xi], y = d$y[d$z2>xi & d$z1<=xi], pch = 19, 
+       col = alpha("red", 0.4), cex = 0.7)
+points(x = d$x[d$z2>xi & d$z1>xi], y = d$y[d$z2>xi & d$z1>xi], pch = 19, 
+       col = alpha("darkgreen", 0.4), cex = 0.7)
+legend("top", c(expression(z[2]<=xi), 
+                expression(z[2]>xi~" and "~z[1]<=xi),
+                expression(z[2]>xi~" and "~z[1]>xi)), 
+       col = c("blue", "red", "darkgreen"), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==0), side = 4, col = "blue", las = 1, line = 0.5, at = 2)
+mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1.3)
+mtext(expression(beta[0]==+delta), side = 4, col = "darkgreen", las = 1, line = 0.5, at = 0.1)
+mtext(expression(beta[1]==-delta), side = 4, col = "darkgreen", las = 1, line = 0.5, at = -0.6)
+mtext(expression(beta[0]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2)
+mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2.7)
+@
+\endminipage
+\end{center}
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Results}
+
+Residuals vs.\ full model scores:
+
+\begin{figure}%[t]
+\setkeys{Gin}{width=\linewidth}
+<<tree_ari, fig=TRUE, echo=FALSE, height=4, width=8>>=
+subdata <- subset(sim_tree, test %in% c("ctree","mfluc",
+                                        "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree", "mfluc",
+                                  "guide_sum_12", "guide_sum_1_cor"),
+                       labels = c("CTree","MOB",
+                                  "GUIDE_scores", "GUIDE"))
+
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+
+
+xyplot(ari ~ delta | xi, groups = ~ test, 
+       data = subdata, 
+       type = "l",
+       lty = c(1,1,1,1),
+       key =  list(text = list(levels(subdata$test)),
+                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+       layout= c(4,1),
+       scales=list(x=list(at=seq(1,11,2))),
+       xlab = expression(delta),
+       ylab = "Adjusted Rand Index",
+       strip = strip.custom(factor.levels = c(expression(xi==0), 
+                                              expression(xi==0.2), 
+                                              expression(xi==0.5), 
+                                              expression(xi==0.8))),
+       par.settings = par.settings)
+
+@
+
+\end{figure}
+\end{frame}
+
+\begin{frame}%[fragile]
+\frametitle{Results}
+Pre-pruning vs.\ post-pruning:
+
+\begin{figure}%[t]
+\setkeys{Gin}{width=\linewidth}
+<<prune_ari, fig=TRUE, echo=FALSE, height=4, width=8>>=
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+
+xyplot(ari ~ delta | xi, groups = ~ test, 
+       data = prex, 
+       type = "l", lty = c(1,1,1,1,2,2,2,2),
+       key =  list(text = list(levels(prex$test)[1:4]),
+                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+       layout= c(4,1),
+       scales=list(x=list(at=seq(1,11,2))),
+       xlab = expression(delta),
+       ylab = "Adjusted Rand Index",
+       strip = strip.custom(factor.levels = c(expression(xi==0), 
+                                              expression(xi==0.2), 
+                                              expression(xi==0.5), 
+                                              expression(xi==0.8))),
+       par.settings = par.settings
+)
+@
+\end{figure}
+
+\end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Recommendations}
+Based on the simulation results the following general conclusions can be drawn:
+\begin{itemize}
+\item Including full model scores is advantageous over using only residuals.
+\item Binarizing scores/residuals does not lead to any improvements in performance.
+\item Categorizing split variables can facilitate calculations, however, important
+effects might be missed unless a binning point is close to the true split point.
+\item If the applied statistical test performs well as significance test pre-pruning
+is preferable. Otherwise post-pruning can compensate this deficiency at least partly.
+\end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Software}
+\vspace{0.4cm}
+\textbf{Package:} \emph{partykit} available on CRAN\\
+
+\bigskip
+
+\textbf{Reproduction code:} available on R-Forge at\\
+
+\url{https://R-Forge.R-project.org/projects/partykit/}\\
+
+\bigskip
+
+\textbf{Applied functions:}
+
+\begin{itemize}
+\item \texttt{ctree}
+\item \texttt{mob}
+\item Adaptions of both of them
+\item Reimplementation of GUIDE
+\end{itemize}
+\end{frame}
+
+
+
+
+
+\subsection{References}
+
+\begin{frame}
+\frametitle{References}
+
+\vspace{-0.2cm}
+
+\footnotesize
+Schlosser L, Hothorn T, Zeileis A (2019).
+ \dquote{The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE.}
+ \emph{arXiv ...}, arXiv.org E-Print Archive.
+ \doi{...}
+  
+\medskip
+
+Breiman L, Friedman J H, Olshen R A, Stone C J (1984).
+ \textit{Classification and Regression Trees.}
+ Wadsworth,
+ California.
+
+\medskip
+
+Hothorn T, Hornik K, Zeileis A (2006).
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+ \textit{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
+ 
+\medskip
+
+Hothorn T, Zeileis A (2015).
+ \dquote{\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
+ \textit{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
+
+\medskip
+
+Loh W-Y (2002).
+ \dquote{Regression Trees with Unbiased Variable Selection and Interaction Detection.}
+ \textit{Statistica Sinica},
+ \textbf{12}(2), 361--386.
+ \url{http://www.jstor.org/stable/24306967}
+
+\medskip
+
+Zeileis A, Hothorn T, Hornik K (2008).
+ \dquote{Model-Based Recursive Partitioning.}
+  \textit{Journal of Computational and Graphical Statistics},
+  \textbf{17}(2), 492--514.
+  \doi{10.1198/106186008X319331}
+
+\end{frame}
+
+
+%\begin{frame}
+%\frametitle{References (2)}
+
+%\footnotesize
+
+%\end{frame}
+
+\end{document}
+
+
+
+

@@ -1,0 +1,8 @@
+The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE
+
+A core step of every algorithm for learning regression trees is the decision if, how, and where to split the underlying data - or, in other words, the selection of the best splitting variable from the available covariates and the corresponding split point. Early tree algorithms (e.g., AID, CART) employ greedy search strategies that directly compare all possible split points in all available covariates. However, subsequent research showed that this is biased towards selection of covariates with more potential split points. Therefore, unbiased recursive partitioning algorithms have been suggested (e.g., QUEST, GUIDE, CTree, MOB) that first select the covariate based on statistical inference using p-values that are appropriately adjusted for the possible split points. In a second step a split point optimizing some objective function is selected in the chosen split variable. However, different unbiased tree algorithms employ different inference frameworks for computing these p-values and their relative advantages or disadvantages are not well understood, yet.
+
+Therefore, three different approaches are considered here and embedded into a common modeling framework with special emphasis to linear model trees: classical categorical association tests (GUIDE), conditional inference (CTree), parameter instability tests (MOB). It is assessed how different building blocks affect the power of the tree algorithms to select the appropriate covariates for splitting: residuals vs. full model scores, binarization of residuals/scores at zero, binning of covariates, conditional vs. unconditional approximations of the null distribution.
+
+
+
