@@ -1,20 +1,17 @@
-\documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber]{uibk}
+\documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
+\usetheme[license, url]{uibk}
 
 \title{The Power of Unbiased Recursive Partitioning:\\
 A Unifying View of CTree, MOB, and GUIDE}
 \author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 %\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
-\URL{https://R-Forge.R-project.org/projects/partykit/} 
-%\\
-%https://partykit.org}
+\URL{http://www.partykit.org/} 
 \headerimage{3}
 
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
-\usepackage{Sweave}
 \usepackage{changepage}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
@@ -126,7 +123,6 @@ dev.off()
 
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 \section{Unbiased Recursive Partitioning}
 
@@ -359,7 +355,7 @@ based on information criteria (e.g.,~AIC or BIC).
 
 
 \begin{frame}%[fragile]
-\frametitle{Simulation Setting}
+\frametitle{Simulation}
 
 
 \begin{table}
@@ -390,8 +386,7 @@ Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ 
 
 
 \begin{frame}%[fragile]
-\frametitle{Simulation Setting (Scenario 1)}
-True tree structure:
+\frametitle{Simulation 1: True tree structure}
 
 <<dgp, echo=FALSE>>=
 set.seed(7)
@@ -607,8 +602,7 @@ mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, a
 
 
 \begin{frame}%[fragile]
-\frametitle{Results}
-Residuals vs.\ full model scores:
+\frametitle{Simulation 1: Residuals vs.\ full model scores}
 
 \begin{figure}
 \setkeys{Gin}{width=\linewidth}
@@ -656,8 +650,8 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
 
 
 \begin{frame}%[fragile]
-\frametitle{Results}
-Full factorial analysis (with both parameters varying):
+\frametitle{Simulation 1: Full factorial analysis (vary both)}
+
 \begin{figure}%[t]
 \setkeys{Gin}{width=1\linewidth}
 <<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
@@ -684,8 +678,7 @@ xyplot(pval_z1 ~ cat | xi,
 
 
 \begin{frame}%[fragile]
-\frametitle{Simulation Setting (Scenario 2)}
-True tree structure:
+\frametitle{Simulation 2: True tree structure}
 
 <<true_tree_dgp, eval = TRUE, echo=FALSE, results=hide>>=
 
@@ -762,9 +755,7 @@ mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, a
 
 
 \begin{frame}%[fragile]
-\frametitle{Results}
-
-Residuals vs.\ full model scores:
+\frametitle{Simulation 2: Residuals vs.\ full model scores}
 
 \begin{figure}%[t]
 \setkeys{Gin}{width=\linewidth}
@@ -805,8 +796,7 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 \end{frame}
 
 \begin{frame}%[fragile]
-\frametitle{Results}
-Pre-pruning vs.\ post-pruning:
+\frametitle{Simulation 2: Pre-pruning vs.\ post-pruning}
 
 \begin{figure}%[t]
 \setkeys{Gin}{width=\linewidth}
@@ -839,6 +829,7 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 
 \begin{frame}%[fragile]
 \frametitle{Recommendations}
+
 Based on the simulation results the following general conclusions can be drawn:
 \begin{itemize}
 \item Including full model scores is advantageous over using only residuals.
@@ -855,11 +846,13 @@ is preferable. Otherwise post-pruning can compensate this deficiency at least pa
 \begin{frame}
 \frametitle{Software}
 \vspace{0.4cm}
-\textbf{Package:} \emph{partykit} available on CRAN\\
+\textbf{Package:} Available on CRAN at\\
+
+\url{https://CRAN.R-project.org/package=partykit}\\
 
 \bigskip
 
-\textbf{Reproduction code:} available on R-Forge at\\
+\textbf{Replication code:} Available on R-Forge at\\
 
 \url{https://R-Forge.R-project.org/projects/partykit/}\\
 
