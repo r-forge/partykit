@@ -115,7 +115,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
                                vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                               estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+                               estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -248,7 +248,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   # first iteration out of loop:
   model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                               vcov = FALSE, type.hessian = type.hessian, 
-                              estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+                              estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
   coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
   # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
   colnames(coefficients_par) <- names(model1$par)
@@ -265,7 +265,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     for(i in (2:n_tn)){
       model <- disttree::distexfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
                                  vcov = FALSE, type.hessian = type.hessian, 
-                                 estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
+                                 estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
       coefficients_par[i,] <- model$par
       # coefficients_eta[i,] <- model$eta
       loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
@@ -471,7 +471,8 @@ distextree_control <- function(type.tree = NULL,
                           terminal = terminal,
                           model = model,
                           inner = inner,
-                          trim = trim))
+                          trim = trim,
+                          intersplit = intersplit))                  # FIX ME 
   }
   
   if(testflavour == "guide") {
@@ -703,7 +704,7 @@ if(FALSE) {
   ret <- c(p.min = p.min, p.curv = p.curv)
   
   return(ret)
-  
+
 }
 
 }
