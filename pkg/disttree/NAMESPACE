@@ -28,6 +28,7 @@ export(
   ## core distribution fitting function
   "distfit",
   "distexfit",
+  "distfamily",
 
   ## distributional tree
   "disttree",

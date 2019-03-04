@@ -37,7 +37,9 @@ The function \code{make_dist_list} is applied in distfit in case the family obje
   \item{linkinv}{linkinv,}
   \item{linkinvdr}{linkinvdr,}
   \item{startfun}{startfun,}	
-  \item{mle}{mle,}	
+  \item{mle}{mle,}		
+  \item{gamlssobj}{gamlssobj,}	
+  \item{censored}{censored}
 }
 
 \references{

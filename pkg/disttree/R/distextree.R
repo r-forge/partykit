@@ -59,7 +59,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   
   #############################################
   # INSERTED HERE:
-  ## prepare family:
+  ## prepare family (done within distfamily())
   # check format of the family input and if necessary transform it to the required familiy list
   # family input can be of one of the following formats:
   # - gamlss.family object
@@ -69,29 +69,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   # - character string with the name of a function generating a list with the required information about the distribution
   # - list with the required information about the distribution
   # - character string with the name of a distribution for which a list generating function is provided in disttree
-  {
-    if(is.character(family)) {
-      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
-      if(length(getfamily$objs) == 0L) {
-        stop("unknown 'family' specification")
-      } else {
-        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
-        family <- getfamily[[2]][[1]]() #first found is chosen 
-        family$gamlssobj <- gamlssobj
-      }
-      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
-      # FIX ME: better selection of dist function
-    }
-    
-    # if family is a gamlss family object or gamlss family function
-    if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
-    
-    if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
-    # linkinvdr only used in the method vcov for type = "parameter"
-  }
+
+  family <- distfamily(family)
   
   np <- length(family$link)
   #############################################
@@ -101,21 +80,24 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   # INSERT HERE: ytrafo
   ## wrapper function to apply distexfit in extree
   
-  Y <- d$yx[[1]]
-  if(NCOL(Y) > 1) stop("response variable has to be univariate") 
-  if(inherits(Y, "interval")) stop("can not deal with binned intervals yet") 
+  #Y <- d$yx[[1]]
+  # check whether d$yx really contains only the response (and no covariates)
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables")
   
-  ytrafo <- function(subset, weights, estfun = TRUE, object = TRUE, info = NULL) {
+  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") 
+  if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
+  
+  ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
-    ys <- Y[subset]
+    ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     ## FIX ME: scores with or without weights?
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
     start <- info$coefficients
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
-                               vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                               estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
+                                 vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
+                                 estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -501,6 +483,9 @@ distextree_control <- function(type.tree = NULL,
   
   svselectfun = partykit:::.ctree_select()
   svsplitfun = partykit:::.ctree_split(minbucket = 0)
+  
+  ## FIX ME: argumets numsplit in mob and intersplit in ctree/extree
+  # intersplit <- numsplit == "center"
   
   control <- c(partykit:::extree_control(criterion = criterion, 
                                          logmincriterion = logmincriterion, 

@@ -1,11 +1,52 @@
+distfamily <- function(family){
+  
+  ## prepare family:
+  # check format of the family input and if necessary transform it to the required familiy list
+  # family input can be of one of the following formats:
+  # - gamlss.family object
+  # - gamlss.family function
+  # - character string with the name of a gamlss.family object
+  # - function generating a list with the required information about the distribution
+  # - character string with the name of a function generating a list with the required information about the distribution
+  # - list with the required information about the distribution
+  # - character string with the name of a distribution for which a list generating function is provided in disttree
+  
+  if(is.character(family)) {
+    getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
+    if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
+    if(length(getfamily$objs) == 0L) {
+      stop("unknown 'family' specification")
+    } else {
+      gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
+      family <- getfamily[[2]][[1]]() #first found is chosen 
+      family$gamlssobj <- gamlssobj
+    }
+    #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
+    # FIX ME: better selection of dist function
+  }
+  
+  # if family is a gamlss family object or gamlss family function
+  if(is.function(family)) family <- family()
+  if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
+  
+  if(!is.list(family)) stop ("unknown family specification")
+  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
+    stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
+  # linkinvdr only used in the method vcov for type = "parameter"
+  
+  return(family)
+}
+
+
+
 distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), 
-                    estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL,   
-                    censtype = "none", censpoint = NULL, 
-                    ocontrol = list(), ...)
-                    #ocontrol = list(method = "L-BFGS-B", 
-                    #                type.hessian = c("checklist", "analytic", "numeric")),
-                    #...)
+                      vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), 
+                      estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL,   
+                      censtype = "none", censpoint = NULL, 
+                      ocontrol = list(), ...)
+  #ocontrol = list(method = "L-BFGS-B", 
+  #                type.hessian = c("checklist", "analytic", "numeric")),
+  #...)
 {
   
   ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
@@ -70,7 +111,7 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     return(rval)
   }    
   
-  ## prepare family:
+  ## prepare family (done within distfamily()):
   # check format of the family input and if necessary transform it to the required familiy list
   # family input can be of one of the following formats:
   # - gamlss.family object
@@ -80,31 +121,8 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # - character string with the name of a function generating a list with the required information about the distribution
   # - list with the required information about the distribution
   # - character string with the name of a distribution for which a list generating function is provided in disttree
-  {
-    if(is.character(family)) {
-      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
-      if(length(getfamily$objs) == 0L) {
-        stop("unknown 'family' specification")
-      } else {
-        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
-        family <- getfamily[[2]][[1]]() #first found is chosen 
-        family$gamlssobj <- gamlssobj
-      }
-      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
-      # FIX ME: better selection of dist function
-    }
-    
-    # if family is a gamlss family object or gamlss family function
-    if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
-    
-    if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
-      stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
-    # linkinvdr only used in the method vcov for type = "parameter"
-
-  }
+  
+  family <- distfamily(family)
 
   if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) 
     stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
