@@ -193,7 +193,7 @@ and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}
 \begin{frame}%[fragile]
 \frametitle{Split Variable Selection}
 
-{\bf General strategy:}
+{\bf General testing strategy:}
 \begin{enumerate}
 \item Evaluate a discrepancy measure giving information on the goodness of fit of the model for each observation and each model parameter (transformation~of~$Y$).
 \item Apply a statistical test assessing dependency of the discrepancy measure to each possible split variable $Z_j$.
@@ -225,7 +225,7 @@ are considered with the following discrepancy measures:
 {\bf Residuals:}
 \begin{flalign*}
 \hspace{0.7cm}
-r(y,x,\hat{\beta_0},\hat{\beta_1}) = y - \hat{\beta_0} - \hat{\beta_1} \cdot x &&
+r(Y,X,\hat{\beta_0},\hat{\beta_1}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X &&
 \end{flalign*}
 
 \bigskip
@@ -233,9 +233,9 @@ r(y,x,\hat{\beta_0},\hat{\beta_1}) = y - \hat{\beta_0} - \hat{\beta_1} \cdot x &
 {\bf Model scores} (based on least squares):
 \begin{flalign*}
 \hspace{0.7cm}
-s(y, x, \hat{\beta_0}, \hat{\beta_1}) = 
-\left(\frac{\partial r^2(y, x, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_0} \quad , \quad  
-\frac{\partial r^2(y, x, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_1}\right) 
+s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
+\left(\frac{\partial r^2(Y, X, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_0} \quad , \quad  
+\frac{\partial r^2(Y, X, \hat{\beta_0}, \hat{\beta_1})}{\partial \beta_1}\right) 
 &&
 \end{flalign*}
 
@@ -247,7 +247,7 @@ Alternatively: Based on log-likelihood.
 \vspace{-1cm}
 $$\hspace{-0.3cm}{\color{red}\Downarrow} \hspace{3.4cm} {\color{red}\Downarrow} $$
 $$
-{\color{red} -2 \cdot r(y,x,\hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{red} -2 \cdot x \cdot r(y,x,\hat{\beta_0},\hat{\beta_1})}
+{\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{red} -2 \cdot X \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}
 $$
 }
 \end{frame}
@@ -270,12 +270,12 @@ $$
 \only<2>{
 \small
 $$
-s(y, x, \hat{\beta_0}, \hat{\beta_1}) = 
+s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
 -2 \cdot \begin{pmatrix} 
-r(y_1, x_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} x \cdot r(y_1, x_1, \hat{\beta_0}, \hat{\beta_1})}\\
-r(y_2, x_2, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} x \cdot r(y_2, x_2, \hat{\beta_0}, \hat{\beta_1})}\\
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})}\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})}\\
 \vdots & {\color{lightgray} \vdots} \\
-r(y_n, x_n, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} x \cdot r(y_n, x_n, \hat{\beta_0}, \hat{\beta_1})}
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})}
 \end{pmatrix}
 %\begin{pmatrix}
 %\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})}\\
@@ -288,12 +288,12 @@ $$
 \only<3>{
 \small
 $$
-s(y, x, \hat{\beta_0}, \hat{\beta_1}) = 
+s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
 -2 \cdot \begin{pmatrix} 
-r(y_1, x_1, \hat{\beta_0}, \hat{\beta_1}) & x \cdot r(y_1, x_1, \hat{\beta_0}, \hat{\beta_1})\\
-r(y_2, x_2, \hat{\beta_0}, \hat{\beta_1}) & x \cdot r(y_2, x_2, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})\\
 \vdots & \vdots \\
-r(y_n, x_n, \hat{\beta_0}, \hat{\beta_1}) & x \cdot r(y_n, x_n, \hat{\beta_0}, \hat{\beta_1})
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
 \end{pmatrix}
 %\begin{pmatrix} 
 %\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
@@ -306,12 +306,12 @@ $$
 \only<4-5>{
 \small
 $$
-r(y, x, \hat{\beta_0}, \hat{\beta_1}) = 
+r(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
 \begin{pmatrix}
-r(y_1, x_1, \hat{\beta_0}, \hat{\beta_1})\\
-r(y_2, x_2, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})\\
 \vdots \\
-r(y_n, x_n, \hat{\beta_0}, \hat{\beta_1})
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
 \end{pmatrix}
 %
 \visible<5>{
@@ -329,12 +329,12 @@ $$
 \only<6-7>{
 \small
 $$
-z_j = 
+Z_j = 
 \begin{pmatrix}
-z_{j1}\\
-z_{j2}\\
+Z_{j1}\\
+Z_{j2}\\
 \vdots \\
-z_{jn}\\
+Z_{jn}\\
 \end{pmatrix}
 %
 \visible<7>{
@@ -591,8 +591,8 @@ par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "", xlab = "", 
      main = expression("varying"~beta[0]),
      pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
-mtext("y", side = 2, line = 3)
-mtext("x", side = 1, line = 2.5)
+mtext("Y", side = 2, line = 2.5)
+mtext("X", side = 1, line = 2.5)
 abline(coef = c(-1,1), col = pal_dgp[1], lwd = 2)
 abline(coef = c(1,1), col = pal_dgp[2], lwd = 2)
 points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
@@ -612,8 +612,8 @@ d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_i
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "", xlab = "", main = expression("varying"~beta[1]),
      pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
-mtext("y", side = 2, line = 3)
-mtext("x", side = 1, line = 2.5)
+mtext("Y", side = 2, line = 2.5)
+mtext("X", side = 1, line = 2.5)
 abline(coef = c(0,1), col = pal_dgp[1], lwd = 2)
 abline(coef = c(0,-1), col = pal_dgp[2], lwd = 2)
 points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
@@ -633,8 +633,8 @@ plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "", xlab = "",
      main = expression("varying"~beta[0]~"and"~beta[1]),
      xlim = c(-1,1.1),
      pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
-mtext("y", side = 2, line = 3)
-mtext("x", side = 1, line = 2.5)
+mtext("Y", side = 2, line = 2.5)
+mtext("X", side = 1, line = 2.5)
 abline(coef = c(-1,1), col = pal_dgp[1], lwd = 2)
 abline(coef = c(1,-1), col = pal_dgp[2], lwd = 2)
 points(x = d$x[d$z1>xi], y = d$y[d$z1>=xi], pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
@@ -778,7 +778,7 @@ plot(p, edge_panel = ep, terminal_panel = tp,
 \minipage{0.4\textwidth}
 <<dgp_tree2, fig=TRUE, echo=FALSE, width=4, height=4>>=
 par(mar = c(4,4,2,4))
-plot(x = d$x[d$z2<=xi], y = d$y[d$z2<=xi], ylim = c(-5,5), ylab = "y", xlab = "x",
+plot(x = d$x[d$z2<=xi], y = d$y[d$z2<=xi], ylim = c(-5,5), ylab = "Y", xlab = "X",
      pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
 abline(coef = c(0,1), col = pal_dgp[1], lwd = 2)
 abline(coef = c(-1,-1), col = pal_dgp[2], lwd = 2)
@@ -885,7 +885,7 @@ Based on the simulation results the following general conclusions can be drawn:
 \begin{itemize}
 \item Including full model scores is advantageous over using only residuals.
 \item Binarizing scores/residuals does not lead to any improvements in performance.
-\item Categorizing split variables can facilitate calculations, however, important
+\item Categorizing split variables can simplify calculations, however, important
 effects might be missed unless a binning point is close to the true split point.
 \item If the applied statistical test performs well as significance test pre-pruning
 is preferable. Otherwise post-pruning can compensate this deficiency at least partly.
