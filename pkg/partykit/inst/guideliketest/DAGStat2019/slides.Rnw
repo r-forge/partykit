@@ -146,7 +146,7 @@ dev.off()
     {\includegraphics[width=0.2\textwidth]{lm1.jpeg}};
 }
 \visible<2>{
-\node[scale=1] at (4.15, 3.7) {other covariates $Z_1, \ldots, Z_p$?};
+\node[scale=1] at (4.15, 3.7) {Other covariates $Z_1, \ldots, Z_p$?};
 }
 \visible<3>{
 \node[inner sep=0pt] (lm2) at (2,1.7)
@@ -175,8 +175,8 @@ dev.off()
 {\bf Basic tree algorithm:}
 \medskip
 \begin{enumerate}
-\item Fit a model $\mathcal{M}(Y,X;\hat{\beta})$ to the response $Y$ (and possible covariates $X$).
-\item Assess association of $Y$ (or a model-based transformation)
+\item Fit a model $\mathcal{M}(Y,X;\hat{\beta})$ to the response $Y$ and possible covariates $X$.
+\item Assess association of $\mathcal{M}(Y,X;\hat{\beta})$
 and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}$ showing the strongest association.
 \item Choose the corresponding split point leading to the highest improvement of model fit and split the data.
 \item Repeat steps 1--3 recursively in each of the resulting subgroups until some stopping criterion is met.
@@ -195,19 +195,19 @@ and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}
 
 {\bf General testing strategy:}
 \begin{enumerate}
-\item Evaluate a discrepancy measure giving information on the goodness of fit of the model for each observation and each model parameter (transformation~of~$Y$).
+\item Evaluate a discrepancy measure capturing the obervation-wise goodness of fit of $\mathcal{M}(Y,X;\hat{\beta})$.
 \item Apply a statistical test assessing dependency of the discrepancy measure to each possible split variable $Z_j$.
 \item Select the split variable $Z_j^\ast$ showing the smallest $p$-value.
 \end{enumerate}
 
 \bigskip
 
-{\bf Possible discrepancy measures:}
+{\bf Discrepancy measures:} (Model-based) transformations of $Y$ (and $X$, if any), possibly for each model parameter.
 \begin{itemize}
-\item (Ranks of) Y
-\item Residuals
-\item Model scores
-\item Absolute deviations from an average value
+\item (Ranks of) $Y$.
+\item (Absolute) deviations $Y - \bar Y$.
+\item Residuals of $\mathcal{M}(Y,X;\hat{\beta})$.
+\item Score matrix of $\mathcal{M}(Y,X;\hat{\beta})$.
 \item \ldots
 \end{itemize}
 \end{frame}
@@ -216,9 +216,9 @@ and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}
 
 \begin{frame}%[fragile]
 \frametitle{Discrepancy Measures}
-As an example linear models $\mathcal{M}(Y,X;\beta_0, \beta_1)$
-fitted via ordinary least squares~(OLS)
-are considered with the following discrepancy measures:
+
+\textbf{Example:} Simple linear regression $\mathcal{M}(Y,X;\beta_0, \beta_1)$,
+fitted via ordinary least squares~(OLS).
 
 \bigskip
 
@@ -230,7 +230,7 @@ r(Y,X,\hat{\beta_0},\hat{\beta_1}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X &
 
 \bigskip
 
-{\bf Model scores} (based on least squares):
+{\bf Model scores:} Based on log-likelihood or residual sum of squares.
 \begin{flalign*}
 \hspace{0.7cm}
 s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
@@ -239,17 +239,35 @@ s(Y, X, \hat{\beta_0}, \hat{\beta_1}) =
 &&
 \end{flalign*}
 
-\visible<1>{
-\medskip
-Alternatively: Based on log-likelihood.
-}
 \visible<2>{
-\vspace{-1cm}
+\vspace{-0.3cm}
 $$\hspace{-0.3cm}{\color{red}\Downarrow} \hspace{3.4cm} {\color{red}\Downarrow} $$
 $$
-{\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{red} -2 \cdot X \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}
+{\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1}) \cdot X}
 $$
 }
+\end{frame}
+
+\begin{frame}
+\frametitle{A Unifying view}
+
+The testing strategies of CTree, MOB, and GUIDE can be obtained from the general 
+framework by specific combinations of the building blocks together with the 
+corresponding approximation type of the underlying null distribution.
+
+\bigskip
+
+\begin{table}[t]
+\begin{tabular}{lllll}
+\hline 
+      & Scores       & Binarization  & Categorization  & Statistic \\ 
+\hline
+CTree & Model scores & --	   & -- 	   & Sum of squares\\
+MOB   & Model scores & --	   & -- 	   & Maximally selected\\
+GUIDE & Residuals    & \checkmark  & \checkmark    & Sum of squares\\
+\hline
+\end{tabular}
+\end{table}
 \end{frame}
 
 
@@ -272,10 +290,10 @@ $$
 $$
 s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
 -2 \cdot \begin{pmatrix} 
-r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})}\\
-r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})}\\
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) \cdot X}\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) \cdot X}\\
 \vdots & {\color{lightgray} \vdots} \\
-r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} X \cdot r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})}
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) \cdot X}
 \end{pmatrix}
 %\begin{pmatrix}
 %\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & {\color{lightgray} \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})}\\
@@ -290,10 +308,10 @@ $$
 $$
 s(Y, X, \hat{\beta_0}, \hat{\beta_1}) = 
 -2 \cdot \begin{pmatrix} 
-r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
-r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1})\\
+r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & r(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) \cdot X\\
+r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) & r(Y_2, X_2, \hat{\beta_0}, \hat{\beta_1}) \cdot X\\
 \vdots & \vdots \\
-r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & X \cdot r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
+r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) & r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1}) \cdot X
 \end{pmatrix}
 %\begin{pmatrix} 
 %\partial_{\beta_0} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1}) & \partial_{\beta_1} r^2(Y_1, X_1, \hat{\beta_0}, \hat{\beta_1})\\
@@ -318,10 +336,10 @@ r(Y_n, X_n, \hat{\beta_0}, \hat{\beta_1})
 \quad \Rightarrow \quad
 \small
 \begin{pmatrix}
-\text{pos}\\
-\text{non-pos}\\
+> 0\\
+\le 0\\
 \vdots \\
-\text{pos}
+> 0
 \end{pmatrix}
 }
 $$
@@ -351,29 +369,6 @@ $$
 }
 \end{frame}
 
-
-
-\begin{frame}
-\frametitle{Combinations}
-
-The testing strategies of CTree, MOB, and GUIDE can be obtained from the general 
-framework by specific combinations of the building blocks together with the 
-corresponding approximation type of the underlying null distribution.
-
-\bigskip
-
-\begin{table}[t]
-\begin{tabular}{ l c c c c }
-\hline 
-      & Scores            & Binarization  & Categorization  & Null distribution \\ 
-\hline
-CTree & full model scores & --          & --            & conditional\\
-MOB   & full model scores & --          & --            & unconditional\\
-GUIDE & residuals         & \checkmark  & \checkmark    & unconditional\\
-\hline
-\end{tabular}
-\end{table}
-\end{frame}
 
 
 \begin{frame}%[fragile]
