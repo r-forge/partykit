@@ -159,8 +159,8 @@ dev.off()
 }
 \visible<4->{
 \node[ellipse, fill=HighlightBlue!70, align=center, scale = 1, minimum width=90pt, minimum height = 30pt] (model1) at (4.15, 5.35) {$\mathcal{M}(Y,X;\hat{\beta}$)};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (model2) at (2.15, 2.55) {$\mathcal{M}(Y_1,X_1;\hat{\beta}$)};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (model3) at (6.15, 2.55) {$\mathcal{M}(Y_2,X_2;\hat{\beta}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (model2) at (2.15, 2.55) {$\mathcal{M}(Y_1,X_1;\hat{\beta_1}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 1, minimum width=80pt, minimum height = 30pt] (model3) at (6.15, 2.55) {$\mathcal{M}(Y_2,X_2;\hat{\beta_2}$)};
 \draw[-, line width=0.2pt] (3.5,4.85) -- (2.5,3.1) node [midway, left] {\scriptsize $Z_j \leq \xi$};
 \draw[-, line width=0.2pt] (4.7,4.85) -- (5.7,3.1) node [midway, right] {\scriptsize $Z_j > \xi$};
 }
@@ -252,12 +252,14 @@ $$
 \begin{frame}
 \frametitle{A Unifying View}
 
-The testing strategies of CTree, MOB, and GUIDE can be obtained from a\\
-general framework by combining building blocks as follows:
+\textbf{Algorithms:} CTree, MOB, GUIDE are all `flavors' of the general framework.
 
 \bigskip
 
-\begin{table}[t]
+\textbf{Building blocks:} For standard setup.
+
+\bigskip
+
 \begin{tabular}{lllll}
 \hline 
       & Scores       & Binarization  & Categorization  & Statistic \\ 
@@ -267,15 +269,16 @@ MOB   & Model scores & --	           & -- 	           & Maximally selected\\
 GUIDE & Residuals    & \checkmark    & \checkmark      & Sum of squares\\
 \hline
 \end{tabular}
-\end{table}
 
-\vspace{0.5cm}
-\textit{Note:}\\
-\begin{itemize}\item Adaptions of standard versions are provided.\\
-\item Further differences (e.g., approximation of null distribution) remain.
+\bigskip
+
+\textbf{Remarks:}
+\begin{itemize}
+  \item All three algorithms allow for certain modifications of standard setup.
+  \item Further differences, e.g., null distribution, pruning strategy, etc.
 \end{itemize}
-\end{frame}
 
+\end{frame}
 
 \begin{frame}%[fragile]
 \frametitle{General Framework}
@@ -384,12 +387,12 @@ $$
 
 \bigskip
 
-{\bf Two Strategies:}
+{\bf Two strategies:}
 
 \begin{itemize}
-\item Pre-pruning: \\
+\item \emph{Pre-pruning:}
 Internal stopping criterion based on Bonferroni-corrected $p$-values of the applied tests. Stop splitting when there is no significant association. 
-\item Post-pruning: \\
+\item \emph{Post-pruning:}
 First grow a very large tree and afterwards prune splits that do not improve the model fit, 
 either via cross-validation (e.g.,~cost-complexity pruning as in CART) or 
 based on information criteria (e.g.,~AIC or BIC). 
@@ -887,16 +890,12 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 \begin{frame}%[fragile]
 \frametitle{Recommendations}
 
-\vspace{0.4cm}
-
-In this setting:
-
-\vspace{0.2cm}
+\textbf{In this setting:}
 
 \begin{itemize}
 \setlength\itemsep{0.2cm}
-\item Include full model scores better than residuals only.
-\item Use original values of scores/residuals better than binarized values.
+\item Full model scores better than residuals only.
+\item Original values of scores/residuals better than binarized values.
 \item Categorization is simpler, but less powerful in margins.
 \item If the significance test performs well pre-pruning works well,\\
 otherwise post-pruning might be needed.
@@ -912,14 +911,14 @@ otherwise post-pruning might be needed.
 
 \begin{frame}
 \frametitle{Software}
-\vspace{0.4cm}
-\textbf{Package:} Available on CRAN at\\
+
+\textbf{Package:} Available on CRAN at
 
 \url{https://CRAN.R-project.org/package=partykit}\\
 
 \bigskip
 
-\textbf{Replication code:} Available on R-Forge at\\
+\textbf{Replication code:} Available on R-Forge at
 
 \url{https://R-Forge.R-project.org/projects/partykit/}\\
 
@@ -949,7 +948,7 @@ otherwise post-pruning might be needed.
 \footnotesize
 Schlosser L, Hothorn T, Zeileis A (2019).
  \dquote{The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE.}
- \emph{paper in preparation}.
+ \emph{Working paper in preparation}.
   
 \medskip
 
