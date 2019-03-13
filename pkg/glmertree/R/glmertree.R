@@ -54,7 +54,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   }
   if(joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
-    rf <- update(rf, . ~ .tree / .)
+    rf <- update(rf, . ~ .tree / . + 0)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
@@ -71,6 +71,8 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                  data = data, weights = .weights, 
                  offset = offset, control = lmer.control),
             newdata = data)
+    ## TODO: with formula(ff, lhs = 1L, rhs = 2L), the fixed-effects predictor
+    ## is not included in the ranef estimation. But perhaps it should it be?
   } else {
     ranefstart  
   }
@@ -146,6 +148,19 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
     if (verbose) print(newloglik)
+  }
+  
+  
+  if (joint) {
+    ## replace tree coefs with lmer fixef coefs
+    tree_node <- as.list(tree$node)
+    for (i in as.numeric(levels(data$.tree))) {
+      tree_node[[i]]$info$coefficients <- replace(
+        x = tree[[i]]$node$info$coefficients,
+        list = 1:length(tree[[i]]$node$info$coefficients),
+        values = fixef(lme)[grep(paste0("tree", i), names(fixef(lme)))])
+    }
+    tree$node <- as.partynode(tree_node)
   }
   
   ## collect results
@@ -228,7 +243,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   }
   if (joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
-    rf <- update(rf, . ~ .tree / .)
+    rf <- update(rf, . ~ .tree / . + 0)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
@@ -323,6 +338,18 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     if (verbose) print(newloglik)
   }
   
+  if (joint) {
+    ## replace tree coefs with lmer fixef coefs
+    tree_node <- as.list(tree$node)
+    for (i in as.numeric(levels(data$.tree))) {
+      tree_node[[i]]$info$coefficients <- replace(
+        x = tree[[i]]$node$info$coefficients,
+        list = 1:length(tree[[i]]$node$info$coefficients),
+        values = fixef(glme)[grep(paste0("tree", i), names(fixef(glme)))])
+    }
+    tree$node <- as.partynode(tree_node)
+  }
+  
   ## collect results
   result <- list(
     formula = formula,
@@ -361,9 +388,15 @@ VarCorr.lmertree <- function(object, ...) {
   VarCorr(object$lmer)
 }
 
-plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, ...) {    
+plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
+                                            type = "extended", ...) {    
   if (which != "ranef") {
-    plot(x$tree, ...)
+    if (type == "extended") {
+      plot(x$tree, ...)
+    } else if (type == "simple") {
+      plot(x$tree, terminal_panel = node_terminal, tp_args = list(
+        FUN = simple_terminal_func, align = "right"))
+    }
   }
   if (which != "tree") {
     if (which == "all" && ask == TRUE) {
@@ -377,9 +410,22 @@ plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, ...) {
   }
 }
 
-plot.glmertree <- function(x, plotranef = FALSE, which = "all", ask = TRUE, ...) {
+
+simple_terminal_func <- function(node, minlength = 12, digits = 3) {
+  paste(abbreviate(names(node$coefficient), minlength = minlength), " ",
+          format(node$coefficient, digits = digits + 1))
+}
+
+
+plot.glmertree <- function(x, plotranef = FALSE, which = "all", ask = TRUE, 
+                           type = "extended", ...) {
   if (which != "ranef") {
-    plot(x$tree, ...)
+    if (type == "extended") {
+      plot(x$tree, ...)
+    } else if (type == "simple") {
+      plot(x$tree, terminal_panel = node_terminal, tp_args = list(
+        FUN = simple_terminal_func, align = "right"))
+    }
   }
   if (which != "tree") {
     if (which == "all" && ask == TRUE) {
