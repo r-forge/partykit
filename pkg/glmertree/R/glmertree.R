@@ -71,8 +71,6 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                  data = data, weights = .weights, 
                  offset = offset, control = lmer.control),
             newdata = data)
-    ## TODO: with formula(ff, lhs = 1L, rhs = 2L), the fixed-effects predictor
-    ## is not included in the ranef estimation. But perhaps it should it be?
   } else {
     ranefstart  
   }
@@ -152,15 +150,14 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   
   
   if (joint) {
-    ## replace tree coefs with lmer fixef coefs
-    tree_node <- as.list(tree$node)
-    for (i in as.numeric(levels(data$.tree))) {
-      tree_node[[i]]$info$coefficients <- replace(
-        x = tree[[i]]$node$info$coefficients,
-        list = 1:length(tree[[i]]$node$info$coefficients),
-        values = fixef(lme)[grep(paste0("tree", i), names(fixef(lme)))])
+    # ## refit tree to eplace tree coefs with lmer fixef coefs
+    if (is.null(q_cluster)) {
+      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                     dfsplit = dfsplit, ...)
+    } else {
+      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                     cluster = .cluster, dfsplit = dfsplit, ...)
     }
-    tree$node <- as.partynode(tree_node)
   }
   
   ## collect results
@@ -339,15 +336,15 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   }
   
   if (joint) {
-    ## replace tree coefs with lmer fixef coefs
-    tree_node <- as.list(tree$node)
-    for (i in as.numeric(levels(data$.tree))) {
-      tree_node[[i]]$info$coefficients <- replace(
-        x = tree[[i]]$node$info$coefficients,
-        list = 1:length(tree[[i]]$node$info$coefficients),
-        values = fixef(glme)[grep(paste0("tree", i), names(fixef(glme)))])
+    ## refit tree to have same fixed-effects coefficients in glmtree and glmer
+    if (is.null(q_cluster)) {
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
+                      weights = .weights, dfsplit = dfsplit, ...)
+    } else {
+      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
+                      weights = .weights, cluster = .cluster, 
+                      dfsplit = dfsplit, ...)
     }
-    tree$node <- as.partynode(tree_node)
   }
   
   ## collect results
