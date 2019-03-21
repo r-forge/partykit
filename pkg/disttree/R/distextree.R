@@ -1,25 +1,33 @@
-############
-# new version of disttree using extree directly without applying ctree
+########################################################################
+# new version of disttree using extree directly without applying ctree #
+########################################################################
 
-distextree <- function(formula, data, subset, weights, family = NO(), na.action = na.pass, offset, cluster,
-                       control = distextree_control(...), type.hessian = c("checklist", "analytic", "numeric"),
-                       converged = NULL, scores = NULL, 
-                       doFit = TRUE, bd = NULL, # terminal_objects = FALSE,
+distextree <- function(formula, 
+                       data, 
+                       subset, 
+                       weights, 
+                       family = NO(), 
+                       na.action = na.pass, 
+                       offset, cluster,
+                       control = distextree_control(...), 
+                       type.hessian = c("checklist", "analytic", "numeric"),
+                       converged = NULL, 
+                       scores = NULL, 
+                       doFit = TRUE, 
+                       bd = NULL, # terminal_objects = FALSE,
                        decorrelate = "none", 
-                       censtype = "none", censpoint = NULL,
-                       ocontrol = list(), ...) {
+                       censtype = "none", 
+                       censpoint = NULL,
+                       ocontrol = list(), 
+                       ...) {
   
-  ## keep call
+  decorrelate <- match.arg(decorrelate)
+
+  ## Keep call
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
   
-  # check input arguments
-  ## FIX ME: not necessary to set type of tree, but tests etc.
-  # type.tree <- match.arg(type.tree, c("mob", "ctree"))
-  # if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
-  
-  if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
-  # check formula
+  # Check formula
   oformula <- as.formula(formula)
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
@@ -28,57 +36,29 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
-  ## set up model.frame() call
+  ## Set up model.frame() call
   mf <- match.call(expand.dots = FALSE)
   m <- match(c("formula", "data", "subset", "na.action", "weights", 
                "offset", "cluster", "scores"), names(mf), 0L)
+
   mf <- mf[c(1L, m)]
   mf$yx <- "matrix"      # FIX ME: in ctree "none" ?
+  mf$nmax <- control$nmax
   mf$ytype <- "vector"
   
-  # function ytrafo is fixed within distextree (does not depend on x)
-  #if (is.function(ytrafo)) {
-  #  if (all(c("y", "x") %in% names(formals(ytrafo))))
-  #    mf$yx <- "matrix"
-  #}
-  
-  mf$nmax <- control$nmax
-  ## evaluate model.frame
+  ## Evaluate model.frame
   mf[[1L]] <- quote(partykit::extree_data)
   
   d <- eval(mf, parent.frame())
-  #subset <- partykit:::.start_subset(d)  ## FIX ME: export function?
-  # for now: function .start_subset copied directly into this code
-  subset <- 1:NROW(model.frame(d))
-  if (length(d$yxmissings) > 0) subset <- subset[!(subset %in% d$yxmissings)]
+
+  subset <- partykit:::.start_subset(d)
+  weights <- model.weights(model.frame(d))
   
   if(is.null(control$partyvars)) control$partyvars <- d$variables$z
   
-  weights <- model.weights(model.frame(d))
-  
-  
-  #############################################
-  # INSERTED HERE:
-  ## prepare family (done within distfamily())
-  # check format of the family input and if necessary transform it to the required familiy list
-  # family input can be of one of the following formats:
-  # - gamlss.family object
-  # - gamlss.family function
-  # - character string with the name of a gamlss.family object
-  # - function generating a list with the required information about the distribution
-  # - character string with the name of a function generating a list with the required information about the distribution
-  # - list with the required information about the distribution
-  # - character string with the name of a distribution for which a list generating function is provided in disttree
-
+  # Set up family 
   family <- distfamily(family)
-  
   np <- length(family$link)
-  #############################################
-  
-  
-  #############################################
-  # INSERT HERE: ytrafo
-  ## wrapper function to apply distexfit in extree
   
   #Y <- d$yx[[1]]
   # check whether d$yx really contains only the response (and no covariates)
@@ -87,6 +67,7 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") 
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
+  ## Set up wrapper function for distexfit
   ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
@@ -97,7 +78,8 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                                 estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
+                                 estfun = estfun, censtype = censtype, censpoint = censpoint, 
+                                 ocontrol = ocontrol)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -127,28 +109,20 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
       estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(d$data)) 
       estfun[subset,] <- ef
       ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
-    } else estfun <- NULL
+    } else {
+      estfun <- NULL
+    }
     
-    
-    
-    object <- if(object) model else NULL
-    
-    ret <- list(estfun = estfun,
+    rval <- list(estfun = estfun,
                 unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
                 coefficients = coef(model, type = "parameter"),
                 objfun = -logLik(model),  # optional function to be minimized 
-                object = object,
+                object = if(object) model else NULL,
                 converged = model$converged  # FIX ME: warnings if distexfit does not converge
     )
-    return(ret)
+    return(rval)
   }
 
- 
-  
-  #############################################
-  
-  
-  #############################################
   # adaption to new version of extree (different structure of ytrafo, compare to ctree)
   if (is.null(control$update))
     control$update <- TRUE
@@ -185,28 +159,33 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   } else {
     converged <- TRUE
   }            
-  
-  update <- function(subset, weights, control, doFit = TRUE)
+
+  ## Set up wrapper for extree_fit with predefined fit function
+  update <- function(subset, weights, control, doFit = TRUE) {
     partykit::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = control$partyvars, 
                          subset = subset, weights = weights, ctrl = control, doFit = doFit)
+  }
+
   if (!doFit) return(list(d = d, update = update))
+
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
-  tree <- tree$nodes
   
   mf <- model.frame(d)
   if (is.null(weights)) weights <- rep(1, nrow(mf))
   
-  fitted <- data.frame("(fitted)" = fitted_node(tree, mf), 
+  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf), 
                        "(weights)" = weights,
                        check.names = FALSE)
+
   fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
   names(fitted)[3] <- "(response)"
-  ret <- partykit::party(tree, data = mf, fitted = fitted, 
+
+  rval <- partykit::party(tree$nodes, data = mf, fitted = fitted, 
                info = list(call = match.call(), control = control))
-  ret$update <- update
-  ret$trafo <- trafo
-  class(ret) <- c("constparty", class(ret))
+  rval$update <- update
+  rval$trafo <- trafo
+  class(rval) <- c("constparty", class(rval))
   
 
   ################################################
@@ -217,16 +196,16 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
   # if so, extract coefficients instead of calculating them again in the following lines
   
   # number of terminal nodes
-  n_tn <- width(ret)
+  n_tn <- width(rval)
   # predicted terminal nodes for the given data
-  pred_tn <- predict(ret, type = "node")
+  pred_tn <- predict(rval, type = "node")
   # ids of terminal nodes
   id_tn <- as.vector(unique(pred_tn))
   
   if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
   
   ## get coefficients for terminal nodes:
-  Y <- ret$fitted$`(response)`
+  Y <- rval$fitted$`(response)`
   # first iteration out of loop:
   model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
                               vcov = FALSE, type.hessian = type.hessian, 
@@ -254,41 +233,41 @@ distextree <- function(formula, data, subset, weights, family = NO(), na.action 
     }
   }
   
-  ret$coefficients <- coefficients_par
-  # ret$fitted$`(fitted.response)` <- predict(ret, type = "response")
-  ret$loglik <- loglik
+  rval$coefficients <- coefficients_par
+  # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
+  rval$loglik <- loglik
 
   ## extend class and keep original call/family/control
-  ret$info$call <- cl
-  ret$info$family <- family   
-  ret$info$ocontrol <- ocontrol
-  ret$info$formula <- formula
-  ret$info$censpoint <- censpoint
-  ret$info$censtype <- censtype
+  rval$info$call <- cl
+  rval$info$family <- family   
+  rval$info$ocontrol <- ocontrol
+  rval$info$formula <- formula
+  rval$info$censpoint <- censpoint
+  rval$info$censtype <- censtype
   
-  groupcoef <- ret$coefficients
+  groupcoef <- rval$coefficients
   if(!(is.null(groupcoef))){
     if(is.vector(groupcoef)) {
       groupcoef <- t(as.matrix(groupcoef))
       rownames(groupcoef) <- 1
     }
-    ret$fitted.par <- groupcoef[paste(ret$fitted[,1]),]
-    rownames(ret$fitted.par) <- c(1: (length(ret$fitted.par[,1])))
-    ret$fitted.par <- as.data.frame(ret$fitted.par)
+    rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
+    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
+    rval$fitted.par <- as.data.frame(rval$fitted.par)
   }
   
 ###################################################
   
   
-  class(ret) <- c("disttree", class(ret))
+  class(rval) <- c("disttree", class(rval))
   
   ### doesn't work for Surv objects
-  # ret$terms <- terms(formula, data = mf)
-  ret$terms <- d$terms$all
+  # rval$terms <- terms(formula, data = mf)
+  rval$terms <- d$terms$all
   ### need to adjust print and plot methods
   ### for multivariate responses
-  ### if (length(response) > 1) class(ret) <- "party"
-  return(ret)
+  ### if (length(response) > 1) class(rval) <- "party"
+  return(rval)
 }
 
 
