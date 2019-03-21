@@ -16,7 +16,7 @@ distextree <- function(formula,
                        scores = NULL, 
                        doFit = TRUE, 
                        bd = NULL, # terminal_objects = FALSE,
-                       decorrelate = "none", 
+                       decorrelate = c("none", "opg", "vcov"), 
                        censtype = "none", 
                        censpoint = NULL,
                        ocontrol = list(), 
@@ -43,9 +43,9 @@ distextree <- function(formula,
                "offset", "cluster", "scores"), names(mf), 0L)
 
   mf <- mf[c(1L, m)]
-  mf$yx <- "matrix"      # FIX ME: in ctree "none" ?
+  mf$yx <- "matrix"      # FIXME: in ctree "none" ?
   mf$nmax <- control$nmax
-  mf$ytype <- "vector"
+  mf$ytype <- control$ytype #FIXME: Lisa hatte hier "vector" 
   
   ## Evaluate model.frame
   mf[[1L]] <- quote(partykit::extree_data)
@@ -61,13 +61,13 @@ distextree <- function(formula,
   
   # Set up family 
   family <- distfamily(family)
-  np <- length(family$link)
+  #np <- length(family$link) #FIXME: Not used anywhere else??! 
   
   #Y <- d$yx[[1]]
   # check whether d$yx really contains only the response (and no covariates)
-  if(length(d$yx) > 1) stop("covariates can only be used as split variables")
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables") #FIXME: Can this be after formula creation?
   
-  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") 
+  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # FIXME: Multidimensional Responses
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distexfit
@@ -77,7 +77,7 @@ distextree <- function(formula,
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     ## FIX ME: scores with or without weights?
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-    start <- info$coefficients
+    start <- info$coefficients # FIXME: Needed?
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
@@ -161,9 +161,11 @@ distextree <- function(formula,
 
   if (!doFit) return(list(d = d, update = update))
 
+  ## Call the actual workhorse
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
-  
+
+  ### Prepare as modelparty/constpary
   mf <- model.frame(d)
   if (is.null(weights)) weights <- rep(1, nrow(mf))
   
@@ -174,6 +176,9 @@ distextree <- function(formula,
   fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
   names(fitted)[3] <- "(response)"
 
+  control$ytype <- ifelse(is.vector(y), "vector", class(y)) #FIXME: Needed? (from mob)
+  control$xtype <- "matrix" # TODO: find out when to use data.frame FIXME: Needed (from mob)
+
   rval <- partykit::party(tree$nodes, 
                 data = if(control$model) mf else mf[0,],
                 fitted = fitted,
@@ -182,10 +187,10 @@ distextree <- function(formula,
                   call = cl,
                   formula = formula,
                   family = family,
-                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: Braucht man?
+                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: Needed? 
                   fit = distexfit,
                   control = control#,
-                  #dots = list(...) #FIXME: Braucht man?!
+                  #dots = list(...) #FIXME: Needed? (from mob)
               )
   )
 
