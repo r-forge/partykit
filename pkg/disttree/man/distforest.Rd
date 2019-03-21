@@ -16,9 +16,11 @@
 distforest(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL,
            type.tree = "ctree", decorrelate = "none", offset,
            censtype = "none", censpoint = NULL, weights = NULL,
-           control = partykit::ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, ...),
+           control = partykit::ctree_control(teststat = "quad", testtype = "Univ", 
+           mincriterion = 0, ...),
            ocontrol = list(), type.hessian = c("checklist", "analytic", "numeric"),
-           ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), fitted.OOB = TRUE,
+           ntree = 500L, fit = TRUE, perturb = list(replace = FALSE, fraction = 0.632), 
+           fitted.OOB = TRUE,
            cores = NULL, applyfun = NULL,
            mtry = ceiling(sqrt(nvar)),
            ...)        
@@ -36,7 +38,8 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL
     cluster ID to be employed for clustered covariances in the parameter
     stability tests.}
   \item{family}{specification of the response distribution.
-    Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
+    Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function
+    or a family list.}
   \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
   \item{type.tree}{Specification of the type of tree learner, either
     \code{"mob"} or \code{"ctree"}.}
@@ -46,7 +49,8 @@ distforest(formula, data, na.action = na.pass, cluster, family = NO(), bd = NULL
     (for the variance-covariance matrix, assuming this is an estimate
     of the Fisher information).}
   \item{offset}{FIX ME.}
-  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
+  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for 
+    censored response.}
   \item{censpoint}{numeric value. Censoring point can be set for censored response.}
   \item{weights}{optional numeric vector of case weights.}
   \item{control}{Control arguments passed to \code{\link[partykit]{mob}} or \code{\link[partykit]{ctree}}.}
