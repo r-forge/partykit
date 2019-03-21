@@ -161,6 +161,26 @@ distextree <- function(formula,
 
   if (!doFit) return(list(d = d, update = update))
 
+  ## Set minsize to 10 * number of parameters, if NULL
+  if (is.null(control$minbucket) | is.null(control$minsplit)) {
+      ctrl <- control
+      N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
+      ctrl$minbucket <- ctrl$minsplit <- N
+      ctrl$logmincriterion <- Inf
+      ctrl$stump <- TRUE
+
+      tree <- update(subset = subset, weights = weights, control = ctrl)
+      cf <- tree$trafo(subset = subset, weights = weights, info = NULL)$coefficient
+      if (is.null(cf)) {
+          n_coef <- 1
+      } else {
+          n_coef <- length(cf)
+      }
+      minsize <- as.integer(ceiling(10L * n_coef / NCOL(d$yx$y)))
+      if (is.null(control$minbucket)) control$minbucket <- minsize
+      if (is.null(control$minsplit)) control$minsplit <- minsize
+  }
+
   ## Call the actual workhorse
   tree <- update(subset = subset, weights = weights, control = control)
   trafo <- tree$trafo
