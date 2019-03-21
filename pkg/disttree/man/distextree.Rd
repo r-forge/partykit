@@ -19,7 +19,7 @@ distextree(formula, data, subset, weights, family = NO(),
            type.hessian = c("checklist", "analytic", "numeric"),
            converged = NULL, scores = NULL, 
            doFit = TRUE, bd = NULL,
-           decorrelate = "none",
+           decorrelate = c("none", "opg", "vcov"),
            censtype = "none", censpoint = NULL,
            ocontrol = list(), ...)
 }

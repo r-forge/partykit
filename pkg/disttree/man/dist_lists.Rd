@@ -7,6 +7,10 @@
 \alias{dist_crch}
 \alias{dist_list_normal}
 \alias{dist_list_cens_normal}
+\alias{dist_binomial}
+\alias{dist_list_hurdle_normal}
+\alias{dist_list_trunc_normal}
+\alias{dist_ztnbinom}
 
 \title{Family List Generating Functions}
 
