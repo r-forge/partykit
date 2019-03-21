@@ -126,21 +126,22 @@ distextree <- function(formula,
     return(rval)
   }
 
+  ## Set up 'converged' function
   ## FIX ME: implement function checking whether all response values are equal in one node
   # if so, return FALSE
   # still to do: which control arguments should be used here? (now not used)
   # allow to hand over additional conditions in further 'converged' functions?
-  converged <- function(data, weights, control){
+  converged_default <- function(data, weights, control){
     #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
     convfun <- function(subset, weights){
       ys <- data$yx[[1]][subset]
       ws <- if(is.null(weights)) rep.int(1, NROW(ys)) else weights[subset]
-      conv <- length(unique(ys[ws > 0]))>1
+      conv <- length(unique(ys[ws > 0])) > 1
       return(conv)
     }
     return(convfun)
   }
-  
+
   # not necessary since converged is fixed here (defined above), 
   # but has to be checked if further 'converged' functions are handed over
   # FIX ME: various 'converged' functions?
@@ -149,8 +150,8 @@ distextree <- function(formula,
     stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
     converged <- converged(d, weights, control = control)
   } else {
-    converged <- TRUE
-  }            
+    converged <- converged_default(d, weights, control = control)
+  }
 
   ## Set up wrapper for extree_fit with predefined fit function
   update <- function(subset, weights, control, doFit = TRUE) {
