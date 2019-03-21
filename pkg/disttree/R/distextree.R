@@ -8,7 +8,8 @@ distextree <- function(formula,
                        weights, 
                        family = NO(), 
                        na.action = na.pass, 
-                       offset, cluster,
+                       offset, 
+                       cluster,
                        control = distextree_control(...), 
                        type.hessian = c("checklist", "analytic", "numeric"),
                        converged = NULL, 
@@ -53,8 +54,10 @@ distextree <- function(formula,
 
   subset <- partykit:::.start_subset(d)
   weights <- model.weights(model.frame(d))
+
+  if (is.null(control$update)) control$update <- TRUE
   
-  if(is.null(control$partyvars)) control$partyvars <- d$variables$z
+  if(is.null(control$partyvars)) control$partyvars <- d$variables$z #FIXME: Do we need this (only for guide) ?!
   
   # Set up family 
   family <- distfamily(family)
@@ -123,17 +126,6 @@ distextree <- function(formula,
     return(rval)
   }
 
-  # adaption to new version of extree (different structure of ytrafo, compare to ctree)
-  if (is.null(control$update))
-    control$update <- TRUE
-  nf <- names(formals(ytrafo))
-  #if (all(c("data", "weights", "control") %in% nf))     
-  #  ytrafo <- ytrafo(data = d, weights = weights, control = control)
-  #nf <- names(formals(ytrafo))
-  stopifnot(all(c("subset", "weights", "info", "estfun", "object") %in% nf) ||
-              all(c("y", "x", "weights", "offset", "start") %in% nf))
-  #############################################
-   
   ## FIX ME: implement function checking whether all response values are equal in one node
   # if so, return FALSE
   # still to do: which control arguments should be used here? (now not used)
