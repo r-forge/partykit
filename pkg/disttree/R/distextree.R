@@ -181,93 +181,147 @@ distextree <- function(formula,
   fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
   names(fitted)[3] <- "(response)"
 
-  rval <- partykit::party(tree$nodes, data = mf, fitted = fitted, 
-               info = list(call = match.call(), control = control))
-  rval$update <- update
-  rval$trafo <- trafo
-  class(rval) <- c("constparty", class(rval))
-  
+  rval <- partykit::party(tree$nodes, 
+                data = if(control$model) mf else mf[0,],
+                fitted = fitted,
+                terms = d$terms$all,
+                info = list(
+                  call = cl,
+                  formula = formula,
+                  family = family,
+                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: Braucht man?
+                  fit = distexfit,
+                  control = control#,
+                  #dots = list(...) #FIXME: Braucht man?!
+              )
+  )
 
-  ################################################
-  ## INSERTED HERE:
-  # distributional fit: calculate coefficients for terminal nodes using distexfit()
-  
-  ## FIX ME: first check whether there is already a fitted model in each of the nodes, 
-  # if so, extract coefficients instead of calculating them again in the following lines
-  
-  # number of terminal nodes
-  n_tn <- width(rval)
-  # predicted terminal nodes for the given data
-  pred_tn <- predict(rval, type = "node")
-  # ids of terminal nodes
-  id_tn <- as.vector(unique(pred_tn))
-  
-  if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
-  
-  ## get coefficients for terminal nodes:
-  Y <- rval$fitted$`(response)`
-  # first iteration out of loop:
-  model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                              vcov = FALSE, type.hessian = type.hessian, 
-                              estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
-  coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
-  # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
-  colnames(coefficients_par) <- names(model1$par)
-  # colnames(coefficients_eta) <- names(model1$eta)
-  rownames(coefficients_par) <- as.character(id_tn)
-  # rownames(coefficients_eta) <- as.character(id_tn)
-  
-  coefficients_par[1,] <- model1$par
-  # coefficients_eta[1,] <- model1$eta
-  
-  loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
-  
-  if(n_tn>1){
-    for(i in (2:n_tn)){
-      model <- disttree::distexfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                                 vcov = FALSE, type.hessian = type.hessian, 
-                                 estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
-      coefficients_par[i,] <- model$par
-      # coefficients_eta[i,] <- model$eta
-      loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
-    }
-  }
-  
-  rval$coefficients <- coefficients_par
-  # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
-  rval$loglik <- loglik
+  ## COMMENT LISA's VERSION (begin)
+  #rval <- partykit::party(tree$nodes, data = mf, fitted = fitted, 
+  #             info = list(call = match.call(), control = control))
 
-  ## extend class and keep original call/family/control
-  rval$info$call <- cl
-  rval$info$family <- family   
-  rval$info$ocontrol <- ocontrol
-  rval$info$formula <- formula
-  rval$info$censpoint <- censpoint
-  rval$info$censtype <- censtype
-  
-  groupcoef <- rval$coefficients
-  if(!(is.null(groupcoef))){
-    if(is.vector(groupcoef)) {
-      groupcoef <- t(as.matrix(groupcoef))
-      rownames(groupcoef) <- 1
+  #rval$update <- update #FIXME: Auch hier, braucht man das?!
+  #rval$trafo <- trafo #FIXME: Will man das noch haben?
+  #class(rval) <- c("constparty", class(rval))
+  #
+  ### INSERTED HERE:
+  ## distributional fit: calculate coefficients for terminal nodes using distexfit()
+  #
+  ### FIX ME: first check whether there is already a fitted model in each of the nodes, 
+  ## if so, extract coefficients instead of calculating them again in the following lines
+  #
+  ## number of terminal nodes
+  #n_tn <- width(rval)
+  ## predicted terminal nodes for the given data
+  #pred_tn <- predict(rval, type = "node")
+  ## ids of terminal nodes
+  #id_tn <- as.vector(unique(pred_tn))
+  #
+  #if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
+  #
+  ### get coefficients for terminal nodes:
+  #Y <- rval$fitted$`(response)`
+  ## first iteration out of loop:
+  #model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
+  #                            vcov = FALSE, type.hessian = type.hessian, 
+  #                            estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
+  #coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
+  ## coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
+  #colnames(coefficients_par) <- names(model1$par)
+  ## colnames(coefficients_eta) <- names(model1$eta)
+  #rownames(coefficients_par) <- as.character(id_tn)
+  ## rownames(coefficients_eta) <- as.character(id_tn)
+  #
+  #coefficients_par[1,] <- model1$par
+  ## coefficients_eta[1,] <- model1$eta
+  #
+  #loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
+  #
+  #if(n_tn>1){
+  #  for(i in (2:n_tn)){
+  #    model <- disttree::distexfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
+  #                               vcov = FALSE, type.hessian = type.hessian, 
+  #                               estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
+  #    coefficients_par[i,] <- model$par
+  #    # coefficients_eta[i,] <- model$eta
+  #    loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
+  #  }
+  #}
+  #
+  #rval$coefficients <- coefficients_par
+  ## rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
+  #rval$loglik <- loglik
+
+  ### extend class and keep original call/family/control
+  #rval$info$call <- cl
+  #rval$info$family <- family  
+  #rval$info$ocontrol <- ocontrol #TODO: Muss man anders loesen
+  #rval$info$formula <- formula
+  #rval$info$censpoint <- censpoint #TODO: Muss man anders loesen
+  #rval$info$censtype <- censtype #TODO: Muss man anders loesen
+  #
+  #groupcoef <- rval$coefficients #TODO: Was sind groupcoef?!
+  #if(!(is.null(groupcoef))){
+  #  if(is.vector(groupcoef)) {
+  #    groupcoef <- t(as.matrix(groupcoef))
+  #    rownames(groupcoef) <- 1
+  #  }
+  #  rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
+  #  rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
+  #  rval$fitted.par <- as.data.frame(rval$fitted.par)
+  #}
+  # 
+  # class(rval) <- c("disttree", class(rval))
+  # 
+  # ### doesn't work for Surv objects #TODO: Das heisst?!
+  # # rval$terms <- terms(formula, data = mf)
+  # rval$terms <- d$terms$all  
+  # ### need to adjust print and plot methods
+  # ### for multivariate responses   
+  # ### if (length(response) > 1) class(rval) <- "party"
+  # return(rval)
+
+  ## COMMENT LISA's VERSION (end)
+
+  class(rval) <- c("modelparty", class(rval))  # TODO: Either model or constparty object!
+
+  ### Add modelinfo (object) and estfun if not there yet, but wanted
+  # TODO: check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+
+  idx <- lapply(which_all, partykit:::.get_path, obj = tree$nodes)
+  names(idx) <- which_all
+  tree_ret <- unclass(rval)
+  subset_term <- predict(rval, type = "node")
+
+  for (i in which_all) {
+
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+
+    if (i %in% which_terminals) winfo <- control$terminal else
+      winfo <- control$inner
+
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) |
+          any(! winfo %in% names(iinfo))) {
+        iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
+                       estfun = ("estfun" %in% winfo),
+                       object = ("object" %in% winfo))
+      }
     }
-    rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
-    rval$fitted.par <- as.data.frame(rval$fitted.par)
+
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
   }
-  
-###################################################
-  
-  
-  class(rval) <- c("disttree", class(rval))
-  
-  ### doesn't work for Surv objects
-  # rval$terms <- terms(formula, data = mf)
-  rval$terms <- d$terms$all
-  ### need to adjust print and plot methods
-  ### for multivariate responses
-  ### if (length(response) > 1) class(rval) <- "party"
-  return(rval)
+
+  class(tree_ret) <- class(rval)
+
+  return(tree_ret)
+
 }
 
 
@@ -409,7 +463,10 @@ distextree_control <- function(type.tree = NULL,
                         MIA = MIA,
                         nresample = nresample,     # FIX ME
                         tol = tol,                 # FIX ME
-                        intersplit = intersplit)                  # FIX ME
+                        intersplit = intersplit,                  # FIX ME
+                        terminal = terminal,
+                        model = model,
+                        inner = inner)
     
     criterion2 = ifelse("Teststatistic" %in% testtype, "statistic", "p.value")
     if(criterion != criterion2) stop("'criterion' does not match 'testtype'")
