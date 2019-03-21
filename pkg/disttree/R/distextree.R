@@ -193,7 +193,7 @@ distextree <- function(formula,
                        "(weights)" = weights,
                        check.names = FALSE)
 
-  fitted[[3]] <- mf[, d$variables$y, drop = TRUE]
+  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # FIXME: y added
   names(fitted)[3] <- "(response)"
 
   control$ytype <- ifelse(is.vector(y), "vector", class(y)) #FIXME: Needed? (from mob)
@@ -383,7 +383,7 @@ distextree_control <- function(type.tree = NULL,
                                splittest = FALSE,
                                testtype = c("Bonferroni", "MonteCarlo", 
                                             "Univariate", "Teststatistic"),
-                               pargs = GenzBretz(),
+                               pargs = mvtnorm::GenzBretz(),
                                ## FIX ME: additional arguments for exhaustive
                                restart = TRUE,
                                breakties = FALSE,
