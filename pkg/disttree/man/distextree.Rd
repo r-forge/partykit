@@ -13,15 +13,10 @@
 }
 
 \usage{
-distextree(formula, data, subset, weights, family = NO(), 
-           na.action = na.pass, offset, cluster,
-           control = distextree_control(...), 
-           type.hessian = c("checklist", "analytic", "numeric"),
-           converged = NULL, scores = NULL, 
-           doFit = TRUE, bd = NULL,
-           decorrelate = c("none", "opg", "vcov"),
-           censtype = "none", censpoint = NULL,
-           ocontrol = list(), ...)
+distextree(formula, data, subset, na.action = na.pass, weights, offset,
+           cluster, family = NO(), control =
+           distextree_control(...), converged = NULL, scores =
+           NULL, doFit = TRUE, ...)
 }
 
 \arguments{
@@ -41,20 +36,20 @@ distextree(formula, data, subset, weights, family = NO(),
     cluster ID to be employed for clustered covariances in the parameter
     stability tests.}
   \item{control}{Control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
- \item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+  %\item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
   \item{converged}{An optional function for checking user-defined criteria before splits are implemented.}
   \item{scores}{An optional named list of scores to be attached to ordered factors.}
   \item{doFit}{A logical indicating if the tree shall be grown (TRUE) or not FALSE}
-  \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
-  \item{decorrelate}{Specification of the type of decorrelation for the
-    empirical estimating functions (or scores) either \code{"none"} or
-    \code{"opg"} (for the outer product of gradients) or \code{"vcov"}
-    (for the variance-covariance matrix, assuming this is an estimate
-    of the Fisher information).}
-  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
-  \item{censpoint}{numeric value. Censoring point can be set for censored response.}
-  \item{ocontrol}{List with control parameters passed to
-    \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
+  %\item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
+  %\item{decorrelate}{Specification of the type of decorrelation for the
+  %  empirical estimating functions (or scores) either \code{"none"} or
+  %  \code{"opg"} (for the outer product of gradients) or \code{"vcov"}
+  %  (for the variance-covariance matrix, assuming this is an estimate
+  %  of the Fisher information).}
+  %\item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
+  %\item{censpoint}{numeric value. Censoring point can be set for censored response.}
+  %\item{ocontrol}{List with control parameters passed to
+  %  \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
   \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
 }
 
