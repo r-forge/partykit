@@ -11,17 +11,12 @@ distextree <- function(formula,
                        cluster,
                        family = NO(),
                        control = distextree_control(...), 
-                       #type.hessian = c("checklist", "analytic", "numeric"),
                        converged = NULL, 
                        scores = NULL, 
                        doFit = TRUE, 
-                       #bd = NULL, # terminal_objects = FALSE,
-                       #decorrelate = c("none", "opg", "vcov"), 
-                       #censtype = "none", 
-                       #censpoint = NULL,
-                       #ocontrol = list(), 
                        ...) {
- 
+
+  ## Clean up control  
   type.hessian <- control$type.hessian
   decorrelate <- control$decorrelate
   ocontrol <- control$ocontrol 
@@ -41,7 +36,7 @@ distextree <- function(formula,
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
-    ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    # FIXME: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
@@ -51,9 +46,9 @@ distextree <- function(formula,
                "offset", "cluster", "scores"), names(mf), 0L)
 
   mf <- mf[c(1L, m)]
-  mf$yx <- "matrix"      # FIXME: in ctree "none" ?
+  mf$yx <- "matrix"          # FIXME: (LS) in ctree "none"?
   mf$nmax <- control$nmax
-  mf$ytype <- control$ytype #FIXME: Lisa hatte hier "vector" 
+  mf$ytype <- control$ytype  # FIXME: (ML) original hard-coded "vector"?
   
   ## Evaluate model.frame
   mf[[1L]] <- quote(partykit::extree_data)
@@ -65,17 +60,17 @@ distextree <- function(formula,
 
   if (is.null(control$update)) control$update <- TRUE
   
-  if(is.null(control$partyvars)) control$partyvars <- d$variables$z #FIXME: Do we need this (only for guide) ?!
+  if(is.null(control$partyvars)) control$partyvars <- d$variables$z # FIXME: (ML) do we need this (only for guide)?!
   
   # Set up family 
   family <- distfamily(family)
-  #np <- length(family$link) #FIXME: Not used anywhere else??! 
+  #np <- length(family$link) #FIXME: (ML) not used anywhere else?! 
   
   #Y <- d$yx[[1]]
-  # check whether d$yx really contains only the response (and no covariates)
-  if(length(d$yx) > 1) stop("covariates can only be used as split variables") #FIXME: Can this be after formula creation?
+  # (LS) check whether d$yx really contains only the response (and no covariates)
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # FIXME: (ML) can this happen after formula creation?
   
-  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # FIXME: Multidimensional Responses
+  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # FIXME: (ML) adapt for multidimensional responses
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distexfit
@@ -83,9 +78,9 @@ distextree <- function(formula,
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
-    ## FIX ME: scores with or without weights?
+    # FIXME: (LS) scores with or without weights?
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-    start <- info$coefficients # FIXME: Needed?
+    start <- info$coefficients # FIXME: (ML) needed?
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
@@ -125,19 +120,19 @@ distextree <- function(formula,
     }
     
     rval <- list(estfun = estfun,
-                unweighted = FALSE, # unweighted = TRUE would prevent estfun / w in extree_fit
+                unweighted = FALSE, # (LS) unweighted = TRUE would prevent estfun / w in extree_fit
                 coefficients = coef(model, type = "parameter"),
-                objfun = -logLik(model),  # optional function to be minimized 
+                objfun = -logLik(model),  # (LS) optional function to be minimized 
                 object = if(object) model else NULL,
-                converged = model$converged  # FIX ME: warnings if distexfit does not converge
+                converged = model$converged  # FIXME: (LS) warnings if distexfit does not converge
     )
     return(rval)
   }
 
   ## Set up 'converged' function
-  ## FIX ME: implement function checking whether all response values are equal in one node
+  # FIXME: (LS) implement function checking whether all response values are equal in one node
   # if so, return FALSE
-  # still to do: which control arguments should be used here? (now not used)
+  # TODO: (LS) which control arguments should be used here? (now not used)
   # allow to hand over additional conditions in further 'converged' functions?
   converged_default <- function(data, weights, control){
     #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
@@ -150,10 +145,10 @@ distextree <- function(formula,
     return(convfun)
   }
 
-  # not necessary since converged is fixed here (defined above), 
-  # but has to be checked if further 'converged' functions are handed over
-  # FIX ME: various 'converged' functions?
-  # FIX ME: how is this function applied on single nodes? 
+  # (LS) not necessary since converged is fixed here (defined above), 
+  # (LS) but has to be checked if further 'converged' functions are handed over
+  # FIXME: (LS) various 'converged' functions?
+  # FIXME: (LS) how is this function applied on single nodes? 
   if (is.function(converged)) {
     stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
     converged <- converged(d, weights, control = control)
@@ -169,7 +164,7 @@ distextree <- function(formula,
 
   if (!doFit) return(list(d = d, update = update))
 
-  ## Set minsize to 10 * number of parameters, if NULL
+  ## Set minsize to 10 * number of parameters, if NULL  # FIXME: (ML) do we want that also for ctree?
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
       ctrl <- control
       N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
@@ -201,11 +196,11 @@ distextree <- function(formula,
                        "(weights)" = weights,
                        check.names = FALSE)
 
-  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # FIXME: y added
+  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # FIXME: (ML) y added
   names(fitted)[3] <- "(response)"
 
-  control$ytype <- ifelse(is.vector(y), "vector", class(y)) #FIXME: Needed? (from mob)
-  control$xtype <- "matrix" # TODO: find out when to use data.frame FIXME: Needed (from mob)
+  control$ytype <- ifelse(is.vector(y), "vector", class(y)) # FIXME: (ML) needed? (from mob)
+  control$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame FIXME: (ML) needed (from mob)
 
   rval <- partykit::party(tree$nodes, 
                 data = if(control$model) mf else mf[0,],
@@ -215,10 +210,10 @@ distextree <- function(formula,
                   call = cl,
                   formula = formula,
                   family = family,
-                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: Needed? 
+                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: (ML) needed? 
                   fit = distexfit,
-                  control = control#,
-                  #dots = list(...) #FIXME: Needed? (from mob)
+                  control = control
+                  #dots = list(...)  #FIXME: (ML) needed? (from mob)
               )
   )
 
@@ -226,8 +221,8 @@ distextree <- function(formula,
   #rval <- partykit::party(tree$nodes, data = mf, fitted = fitted, 
   #             info = list(call = match.call(), control = control))
 
-  #rval$update <- update #FIXME: Auch hier, braucht man das?!
-  #rval$trafo <- trafo #FIXME: Will man das noch haben?
+  #rval$update <- update  # FIXME: (ML) do we still want to keep the update?
+  #rval$trafo <- trafo  # FIXME: (ML) keep the trafo rather the distexfit?
   #class(rval) <- c("constparty", class(rval))
   #
   ### INSERTED HERE:
@@ -281,12 +276,12 @@ distextree <- function(formula,
   ### extend class and keep original call/family/control
   #rval$info$call <- cl
   #rval$info$family <- family  
-  #rval$info$ocontrol <- ocontrol #TODO: Muss man anders loesen
+  #rval$info$ocontrol <- ocontrol # TODO: (ML) needs to be included again
   #rval$info$formula <- formula
-  #rval$info$censpoint <- censpoint #TODO: Muss man anders loesen
-  #rval$info$censtype <- censtype #TODO: Muss man anders loesen
+  #rval$info$censpoint <- censpoint # TODO: (ML) needs to be included again
+  #rval$info$censtype <- censtype # TODO: (ML) needs to be included again
   #
-  #groupcoef <- rval$coefficients #TODO: Was sind groupcoef?!
+  #groupcoef <- rval$coefficients # FIXME: (ML) what are groupcoef?
   #if(!(is.null(groupcoef))){
   #  if(is.vector(groupcoef)) {
   #    groupcoef <- t(as.matrix(groupcoef))
@@ -299,20 +294,19 @@ distextree <- function(formula,
   # 
   # class(rval) <- c("disttree", class(rval))
   # 
-  # ### doesn't work for Surv objects #TODO: Das heisst?!
+  # ### doesn't work for Surv objects # FIXME: (ML) comment of Lisa still relevant?
   # # rval$terms <- terms(formula, data = mf)
   # rval$terms <- d$terms$all  
   # ### need to adjust print and plot methods
   # ### for multivariate responses   
   # ### if (length(response) > 1) class(rval) <- "party"
   # return(rval)
-
   ## COMMENT LISA's VERSION (end)
 
-  class(rval) <- c("modelparty", class(rval))  # TODO: Either model or constparty object!
+  class(rval) <- c("modelparty", class(rval))  # FIXME: either model or constparty object!
 
   ### Add modelinfo (object) and estfun if not there yet, but wanted
-  # TODO: check if this can be done prettier
+  # TODO: (AZ) check if this can be done prettier
   which_terminals <- nodeids(rval, terminal = TRUE)
   which_all <- nodeids(rval)
 
