@@ -5,24 +5,32 @@
 distextree <- function(formula, 
                        data, 
                        subset, 
-                       weights, 
-                       family = NO(), 
                        na.action = na.pass, 
+                       weights, 
                        offset, 
                        cluster,
+                       family = NO(),
                        control = distextree_control(...), 
-                       type.hessian = c("checklist", "analytic", "numeric"),
+                       #type.hessian = c("checklist", "analytic", "numeric"),
                        converged = NULL, 
                        scores = NULL, 
                        doFit = TRUE, 
-                       bd = NULL, # terminal_objects = FALSE,
-                       decorrelate = c("none", "opg", "vcov"), 
-                       censtype = "none", 
-                       censpoint = NULL,
-                       ocontrol = list(), 
+                       #bd = NULL, # terminal_objects = FALSE,
+                       #decorrelate = c("none", "opg", "vcov"), 
+                       #censtype = "none", 
+                       #censpoint = NULL,
+                       #ocontrol = list(), 
                        ...) {
-  
-  decorrelate <- match.arg(decorrelate)
+ 
+  type.hessian <- control$type.hessian
+  decorrelate <- control$decorrelate
+  ocontrol <- control$ocontrol 
+  bd <- control$bd
+  censtype <- control$censtype
+  censpoint <- control$censpoint
+
+  control$type.hessian <- control$decorrelate <- control$bd <- control$censtype <-
+    control$censpoint <- control$ocontrol <- NULL
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
@@ -343,9 +351,145 @@ distextree <- function(formula,
 }
 
 
+distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"), 
+                               type.hessian = c("checklist", "analytic", "numeric"),
+                               decorrelate = c("none", "opg", "vcov"),
+                               bd = NULL,           # FIXME: (ML) to be included in family fun
+                               censtype = "none",   # FIXME: (ML) to be included in family fun
+                               censpoint = NULL,    # FIXME: (ML) to be included in family fun
+                               ocontrol = list(),   # FIXME: (ML) why an empty list? 
+                               minsplit = NULL,     # FIXME: (ML) currently use mob default
+                               minbucket = NULL,    # FIXME: (ML) currently use mob default
+                               splittry = 1L,       # FIXME: (ML) currently use mob default
+                               
+                               ## Arguments need for disttree
+                               splitflavour = c("ctree", "exhaustive"),  
+                               testflavour = c("ctree", "mfluc", "guide"),   # FIXME: (LS) "exhaustive"
+                               terminal = "object",
+                               model = TRUE,
+                               inner = "object",
+
+                               ## Additional arguments for exhaustive/mobster
+                               restart = TRUE,
+                               breakties = FALSE,
+                               parm = NULL,          # FIXME: (LS) match with partyvars above
+                               dfsplit = TRUE,
+                               vcov = c("opg", "info", "sandwich"),
+                               ordinal = c("chisq", "max", "L2"),
+                               ytype = c("vector", "data.frame", "matrix"),
+                               trim = 0.1,
+                               #nrep = 10000L,       #FIXME: (ML) Is in mob included, needed for dt?
+                               #catsplit = "binary", #FIXME: (ML) Is in mob included, needed for dt?
+                               #numsplit = "left",   #FIXME: (ML) Is in mob included, needed for dt?
+                               #minsize = NULL,      #FIXME: (ML) Is in mob included, needed for dt?
+                               #minprob = 0.01,      #FIXME: (ML) Is in mob included, needed for dt?
+                               #nmax = Inf,          #FIXME: (ML) Is in mob included, needed for dt?
+ 
+                               ## Additonal arguments for GUIDE
+                               guide_interaction = FALSE,
+                               interaction = FALSE,
+                               #guide_unweighted = FALSE,
+                               partyvars = NULL,   # per default it will be set to partyvars = data$variables$z after applying extree_data
+                               guide_parm = NULL,  # a vector of indices of the parameters (incl. intercept) for which estfun should be considered
+                               guide_testtype = c("max", "sum", "coin"),
+                               guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
+                               xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
+                               ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
+                               weighted.scores = FALSE,   # logical, should scores be weighted in GUIDE 
+                               ...) {
+
+  ctrl <- partykit::ctree_control(minsplit = minsplit, minbucket = minbucket, splittry = splittry, ...)
+
+  ## Add parameters needed to return coefficient, etc.
+  ctrl$terminal <- terminal
+  ctrl$model <- model
+  ctrl$inner <- inner
+
+  ## Add additional parameters needed within distextree
+  ctrl$type.hessian <- match.arg(type.hessian)
+  ctrl$decorrelate <- match.arg(decorrelate)
+  ctrl$ocontrol <- ocontrol
+  ctrl$bd <- bd
+  ctrl$censtype <- censtype
+  ctrl$censpoint <- censpoint
+
+  ## Check the kind of tree
+  if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
+  if (length(splitflavour) == 2 & is.null(type.tree)) splitflavour <- splitflavour[1]
+  
+  if(!is.null(type.tree)) {
+    
+    if(!type.tree %in% c("ctree", "mob")) {
+      stop("type.tree can only be set to 'ctree' or 'mob'")
+    } else {
+      
+      if(type.tree == "ctree"){
+        if(!("ctree" %in% splitflavour & "ctree" %in% testflavour)){
+          stop("for type.tree = 'ctree' testflavour and splitflavour can not be set to other than 'ctree'")
+        } else {
+          
+          testflavour <- "ctree"
+          splitflavour <- "ctree"
+
+        }
+      }
+      
+      if(type.tree == "mob"){        
+        if(!("exhaustive" %in% splitflavour & "mfluc" %in% testflavour)){
+          stop("for type.tree = 'mob' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
+        } else {
+          
+          testflavour <- "mfluc"
+          splitflavour <- "exhaustive"  
+          
+        }
+      }
+    }
+  }
+  
+  if(testflavour == "mfluc" | splitflavour == "exhaustive") {
+    ctrl <- c(ctrl, list(restart = restart,
+                         breakties = breakties,
+                         parm = parm,
+                         dfsplit = dfsplit,
+                         vcov = vcov,
+                         ordinal = ordinal,
+                         ytype = ytype,
+                         trim = trim))
+  }
+  
+  if(testflavour == "guide") {
+    
+    if(!(ctrl$criterion == "p.value") && guide_interaction){
+      stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
+    }
+    add_control <- c(ctrl, list(guide_parm = guide_parm,                  # LS: a vector of indices of parameters for which estfun should be considered
+                                guide_testtype = guide_testtype,
+                                interaction = interaction,
+                                guide_decorrelate = guide_decorrelate,    # (LS) needs to be set to other than "none" for testtype max and sum 
+                                                                          # (LS) unless ytrafo returns decorrelated scores
+                                                                          # FIXME: (LS) c("none","vcov","opg")
+                                xgroups = xgroups,                        # (LS) number of categories for split variables (optionally breaks can be handed over)
+                                ygroups = ygroups,                        # (LS) number of categories for scores (optionally breaks can be handed over)
+                                weighted.scores = weighted.scores))       # (LS) logical, should scores be weighted
+  }
+
+  ## Overwrite the split- and selectfun according to the split- and testflavour 
+  if (splitflavour == "ctree") ctrl$splitfun <- partykit:::.ctree_split() 
+  if (splitflavour == "exhaustive") ctrl$splitfun <- partykit:::.objfun_split()   
+  
+  if (testflavour == "ctree") ctrl$selectfun <- partykit:::.ctree_select()
+  if (testflavour == "mfluc") ctrl$selectfun <- partykit:::.mfluc_select()
+  if (testflavour == "guide") ctrl$selectfun <- partykit:::.guide_select()
+  
+  # FIXME: (LS) argumets numsplit in mob and intersplit in ctree/extree
+  # intersplit <- numsplit == "center"
+
+  return(ctrl)
+}
 
 
-distextree_control <- function(type.tree = NULL,
+distextree_control_old <- function(type.tree = NULL,
                                criterion = c("p.value", "statistic"),
                                logmincriterion = log(0.95), 
                                minsplit = 20L,
