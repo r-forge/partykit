@@ -2,15 +2,15 @@
 \alias{distfamily}
 
 
-\title{Preparation of family list as required in distfit}
+\title{Preparation of family list as required in distexfit}
 
 \description{
-  The function \code{distfamily} prepares the required family list in \code{distfit} from
+  The function \code{distfamily} prepares the required family list in \code{distexfit} from
   the handed over family object (which can already be a list as well).
 }
 
 \usage{
-  distfamily(family) 
+  distfamily(family, bd = NULL, censpoint = NULL) 
 } 
 
 \arguments{
@@ -23,11 +23,14 @@
   list with the required information about the distribution,
   character string with the name of a distribution for which a list generating function is provided in \code{\link[disttree]{disttree}}
 }
+  \item{bd}{binomial denominator}
+  \item{censpoint}{censoring point for a censored \code{\link[gamlss.dist]{gamlss.family}} object}
 }
 
 \details{
-The function \code{distfamily} is applied in \code{distfit}.
-Depending on the type (character, list, or a \code{\link[gamlss.dist]{gamlss.family}} object).
+The function \code{distfamily} is applied in \code{distexfit} and generates a list of class
+\code{distfamily}.
+If \code{family} is a \code{\link[gamlss.dist]{gamlss.family}} object the function \code{distfamily_gamlss} is calles within \code{distfamily}.
 }
 
 \value{
@@ -47,7 +50,9 @@ Depending on the type (character, list, or a \code{\link[gamlss.dist]{gamlss.fam
   \item{startfun}{startfun,}	
   \item{mle}{mle,}	
   \item{gamlssobj}{gamlssobj,}	
-  \item{censored}{censored}	
+  \item{censored}{censored,}	
+  \item{censpoint}{censpoint (only if censored and gamlssobj),}
+  \item{censtype}{censtype (only if censored and gamlssobj)}
 }
 
 \references{
