@@ -14,6 +14,9 @@ inst/MIP-Seminar
 inst/replication
 inst/StatistischeWoche2018
 inst/eeecon_workshop
+inst/IWSM2019
 demo/demo_data_prep.R
 demo/timeAxams.R
+demo/error_gamlss
+demo/tpfactorAxams
 TODO
