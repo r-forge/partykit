@@ -1,69 +1,32 @@
-distfamily <- function(family){
-  
-  ## prepare family:
-  # check format of the family input and if necessary transform it to the required familiy list
-  # family input can be of one of the following formats:
-  # - gamlss.family object
-  # - gamlss.family function
-  # - character string with the name of a gamlss.family object
-  # - function generating a list with the required information about the distribution
-  # - character string with the name of a function generating a list with the required information about the distribution
-  # - list with the required information about the distribution
-  # - character string with the name of a distribution for which a list generating function is provided in disttree
-  
-  if(is.character(family)) {
-    getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-    if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
-    if(length(getfamily$objs) == 0L) {
-      stop("unknown 'family' specification")
-    } else {
-      gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
-      family <- getfamily[[2]][[1]]() #first found is chosen 
-      family$gamlssobj <- gamlssobj
-    }
-    #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
-    # FIX ME: better selection of dist function
-  }
-  
-  # if family is a gamlss family object or gamlss family function
-  if(is.function(family)) family <- family()
-  if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
-  
-  if(!is.list(family)) stop ("unknown family specification")
-  if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
-    stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
-  # linkinvdr only used in the method vcov for type = "parameter"
-  
-  return(family)
-}
-
-
+###################################################################
+# new version of distfit used as a fitting function in distextree #
+###################################################################
 
 distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                      vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), 
-                      estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL,   
-                      censtype = "none", censpoint = NULL, 
-                      ocontrol = list(), ...)
-  #ocontrol = list(method = "L-BFGS-B", 
-  #                type.hessian = c("checklist", "analytic", "numeric")),
-  #...)
+                      vcov = TRUE, 
+                      control = distextree_control(...),
+                      fixed = NULL, fixed.values = NULL,   
+                      estfun = TRUE, ...)
 {
   
   ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
-  ## type.hessian = c("checklist", "analytic", "numeric")
   ## start on par scale
   ## start.eta on link scale
   
   
   ## FIX ME: what to do if weights consists of zeros only
   
+  
+  ## Clean up control  
+  type.hessian <- control$type.hessian
+  decorrelate <- control$decorrelate
+  ocontrol <- control$ocontrol 
+  
+  control$type.hessian <- control$decorrelate <- control$ocontrol <- NULL
+  
+  
   ## match call
   cl <- match.call()
-  
-  ## FIX ME: add type.hessian and method to ocontrol? (see above)
-  # type.hessian <- ocontrol$type.hessian
-  # method <- ocontrol$method
-  # ocontrol$type.hessian <- ocontrol$method <- NULL
   
   ## check if 'method' is an additional argument (for optim, handed over via '...')
   method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
@@ -122,7 +85,8 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # - list with the required information about the distribution
   # - character string with the name of a distribution for which a list generating function is provided in disttree
   
-  family <- distfamily(family)
+  if(!inherits(family, "distfamily")) 
+    family <- distfamily(family)
 
   if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) 
     stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
@@ -136,15 +100,15 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   
   # if family was handed over as a gamlss.dist family object and the distribution is censored:
-  # data has to be converted to a Survival object (necessary input arguments: censtype and censpoint)
+  # data has to be converted to a Survival object (necessary family arguments: censtype and censpoint)
   if(family$censored) {
     if(family$gamlssobj) {
-      if(censtype == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments censtype and censpoint)")
+      if(family$censtype == "none" || is.null(family$censpoint)) stop("for censored gamlss.dist family objects the censoring point(s) has/have to be set (family argument censpoint)")
       if(!survival::is.Surv(y)){
-        if(censtype == "left") y <- survival::Surv(y, y > censpoint, type = "left")
-        if(censtype == "right") y <- survival::Surv(y, y < censpoint, type = "right")
+        if(family$censtype == "left") y <- survival::Surv(y, y > family$censpoint, type = "left")
+        if(family$censtype == "right") y <- survival::Surv(y, y < family$censpoint, type = "right")
         ## FIX ME: interval censored
-        #if(censtype == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+        #if(family$censtype == "interval") y <- survival::Surv(y, ((y > family$censpoint[1]) * (y < family$censpoint[2])), type = "interval")
       }
     } else {
       if(survival::is.Surv(y)) {
@@ -395,8 +359,8 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(family$gamlssobj && family$censored){
     ddist <- function(x, log = FALSE) {
       if(!survival::is.Surv(x)){
-        if(censtype == "left") eval <- family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
-        if(censtype == "right") eval <- family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
+        if(family$censtype == "left") eval <- family$ddist(survival::Surv(x, x > family$censpoint, type = "left"), eta = eta, log = log)
+        if(family$censtype == "right") eval <- family$ddist(survival::Surv(x, x < family$censpoint, type = "right"), eta = eta, log = log)
         ## FIX ME: interval censored
       } else eval <- family$ddist(x, eta = eta,  log=log)
       return(eval)
@@ -467,7 +431,7 @@ get_expectedvalue <- function(object, par) {
     }
   }
   
-  if(inherits(object, "distexfit")) {
+  if(inherits(object, "distfit")) {
     censored <- object$family$censored
     family.name <- object$family$family.name
   }
