@@ -28,9 +28,10 @@
 
 \usage{
 distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-        vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), estfun = TRUE, 
-        bd = NULL, fixed = NULL, fixed.values = NULL, 
-        censtype = "none", censpoint = NULL, ocontrol = list(), ...)
+          vcov = TRUE, 
+          control = distextree_control(...),
+          fixed = NULL, fixed.values = NULL,   
+          estfun = TRUE, ...)
 }
 
 \arguments{
@@ -41,17 +42,10 @@ distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
   \item{start.eta}{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}.}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
-\item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distexfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
-  \item{estfun}{logical. Should the matrix of observation-wise
-    score contributions (or empirical estimating functions) be
-    returned?}
-  \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
-  \item{fixed}{FIXME}
+  \item{control}{a list with control parameters.}
+    \item{fixed}{FIXME}
   \item{fixed.values}{FIXME}
-  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
-  \item{censpoint}{numeric value. Censoring point can be set for censored response.}
-  \item{ocontrol}{List with control parameters passed to
-    \code{\link[stats]{optim}}.}
+  \item{estfun}{logical. Should the matrix of observation-wise score contributions (or empirical estimating functions) be returned?}
   \item{\dots}{further arguments passed to \code{\link[stats]{optim}}.}
 }
 
@@ -68,7 +62,7 @@ distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 }
 
 \value{
-  \code{distexfit} returns an object of class \code{distexfit} which is a list with
+  \code{distexfit} returns an object of class \code{distfit} which is a list with
   the following components:
   \item{npar}{number of parameter}
   \item{y}{numeric vector of the response}
