@@ -145,18 +145,14 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     newloglik <- logLik(lme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
-    if (verbose) print(newloglik)
-  }
-  
-  
-  if (joint) {
-    # ## refit tree to eplace tree coefs with lmer fixef coefs
-    if (is.null(q_cluster)) {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     dfsplit = dfsplit, ...)
-    } else {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     cluster = .cluster, dfsplit = dfsplit, ...)
+    if (verbose) {
+      print(c("iteration", iteration))
+      print("log likelihood")
+      print(newloglik)
+      print("fixef tree")
+      print(coef(tree))
+      print("fixef lme")
+      print(fixef(lme))
     }
   }
   
@@ -332,18 +328,14 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
     newloglik <- logLik(glme)    
     continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
-    if (verbose) print(newloglik)
-  }
-  
-  if (joint) {
-    ## refit tree to have same fixed-effects coefficients in glmtree and glmer
-    if (is.null(q_cluster)) {
-      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
-                      weights = .weights, dfsplit = dfsplit, ...)
-    } else {
-      tree <- glmtree(tf, data = data, family = family, offset = .ranef, 
-                      weights = .weights, cluster = .cluster, 
-                      dfsplit = dfsplit, ...)
+    if (verbose) {
+      print(c("iteration", iteration))
+      print("log likelihood")
+      print(newloglik)
+      print("fixef tree")
+      print(coef(tree))
+      print("fixef glme")
+      print(fixef(glme))
     }
   }
   
@@ -373,9 +365,25 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   return(result)
 }
 
-coef.lmertree <- coef.glmertree <- function(object, ...) {
-  coef(object$tree, ...)
+fixef.lmertree <- coef.lmertree <- function(object, ...) {
+  coefs <- coef(object$tree, ...)
+  for (i in rownames(coef(object$tree))) {
+    coefs[i, ] <- fixef(object$lmer)[
+      grepl(paste0("tree", i), names(fixef(object$lmer)))]
+  }
+  return(coefs)
 }
+
+
+fixef.glmertree <- coef.glmertree <- function(object, ...) {
+  coefs <- coef(object$tree, ...)
+  for (i in rownames(coef(object$tree))) {
+    coefs[i, ] <- fixef(object$glmer)[
+      grepl(paste0("tree", i), names(fixef(object$glmer)))]
+  }
+  return(coefs)
+}
+
 
 VarCorr.glmertree <- function(object, ...) {
   VarCorr(object$glmer)

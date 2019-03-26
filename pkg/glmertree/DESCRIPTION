@@ -15,4 +15,4 @@ Imports: graphics, stats, utils, Formula
 Suggests: vcd, lattice
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
