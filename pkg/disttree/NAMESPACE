@@ -41,8 +41,11 @@ export(
   ## distributional forest
   "distforest",
 
-  ## family list generating function (input: GAMLSS family object)
+  ## family list generating function (input: GAMLSS family object) used in distfit, disttree, distforest
   "make_dist_list",
+
+  ## family list generating functions used in distexfit, distextree
+  "distfamily",
 
   ## family list generating functions
   "dist_gaussian",
