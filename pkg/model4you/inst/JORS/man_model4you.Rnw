@@ -5,7 +5,8 @@
 
 
 %% revised text
-\newcommand{\new}[1]{{\color{blue} #1}}
+\newcommand{\new}[1]{{%\color{blue}
+#1}}
 
 %% packages
 \usepackage{natbib}
@@ -91,13 +92,13 @@ model4you: An R package for personalised treatment effect estimation
 
 
 \section*{Paper Author Roles and Affiliations}
-1. \new{Postdoc; Institute for Medical
-Information Processing, Biometry, and Epidemiology, LMU Munich}
+1. Software, Conceptualization, Writing – original draft; Institute for Medical
+Information Processing, Biometry, and Epidemiology, LMU Munich
 
-2. Professor; Department of Statistics, Faculty of Economics and Statistics,
+2. Conceptualization, Writing – review and editing; Department of Statistics, Faculty of Economics and Statistics,
 University of Innsbruck
 
-3. Professor; Biostatistics Department, Epidemiology, Biostatistics \&
+3. Conceptualization, Writing – review and editing; Biostatistics Department, Epidemiology, Biostatistics \&
 Prevention Institute, University of Zurich
 
 
@@ -423,8 +424,8 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 \item[Persistent identifier:] \url{https://cran.r-project.org/package=model4you} %TODO upload to CRAN
 \item[Licence:] GPL-2 $\vert$ GPL-3
 \item[Publisher:] Heidi Seibold
-\item[Version published:] \textcolor{blue}{The version number of the software archived.}
-\item[Date published:] \textcolor{blue}{dd/mm/yy}
+\item[Version published:] 0.9-3
+\item[Date published:] 12/11/18
 \end{description}
 
 
@@ -435,7 +436,7 @@ Heidi Seibold, Achim Zeileis and Torsten Hothorn
 \item[Name:] R-forge
 \item[Persistent identifier:] \url{https://r-forge.r-project.org/projects/partykit/}
 \item[Licence:] GPL-2 $\vert$ GPL-3
-\item[Date published:] \textcolor{blue}{dd/mm/yy} %TODO
+\item[Date published:] 18/01/19
 \end{description}
 
 
