@@ -148,14 +148,14 @@ if(FALSE){
   
   # categorize scores
   if(is.null(ctrl$ygroups)){
-    # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
+    # split Y into 2 parts based on whether residuals (here: scores) are positive or non-positive
     # separately for each parameter
-    Ybin <- data.frame(factor(Y[,ctrl$guide_parm[1]]>0))
+    Ybin <- data.frame((-1)^((Y[,ctrl$guide_parm[1]]>0)+1))   # -1 or +1
     colnames(Ybin)[NCOL(Ybin)] <- paste0("rp", ctrl$guide_parm[1])
     
     if(length(ctrl$guide_parm)>1){
       for(k in ctrl$guide_parm[-1]){
-        respos <- factor(Y[,k]>0)
+        respos <- (-1)^((Y[,k]>0)+1)
         Ybin <- cbind(Ybin, respos)
         colnames(Ybin)[NCOL(Ybin)] <- paste0("rp",k)
       }
@@ -168,12 +168,14 @@ if(FALSE){
     
     # split Y according to ybreaks
     # separately for each parameter
-    Ybin <- data.frame(cut(Y[,1], breaks = ybreaks, labels = c(1:ctrl$ygroups), include.lowest = TRUE))
+    Ybin <- data.frame(cut(Y[,1], breaks = ybreaks, labels = c(1:ctrl$ygroups), 
+                           include.lowest = TRUE))
     colnames(Ybin)[NCOL(Ybin)] <- paste0("res", ctrl$guide_parm[1])
     
     if(length(ctrl$guide_parm)>1){
       for(k in ctrl$guide_parm[-1]){
-        respos <- cut(Y[,k], breaks = ybreaks, labels = c(1:ctrl$ygroups), include.lowest = TRUE)
+        respos <- cut(Y[,k], breaks = ybreaks, labels = c(1:ctrl$ygroups), 
+                      include.lowest = TRUE)
         Ybin <- cbind(Ybin, respos)
         colnames(Ybin)[NCOL(Ybin)] <- paste0("res",k)
       }
@@ -190,7 +192,8 @@ if(FALSE){
   }
   
   if(is.numeric(x)){
-    x_cat <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+    x_cat <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), 
+                 include.lowest = TRUE)
   } else {
     x_cat <- x
   }
@@ -201,6 +204,8 @@ if(FALSE){
   
   if(ctrl$guide_testtype == "coin"){
     require("coin")
+    #tab <- table(x = x_cat, y = Ybin)
+    #tst_curv <- independence_test(tab, teststat = "quadratic")    # coin:::independence_test(ip, teststat = "quadratic")
     ip <- new("IndependenceProblem", x=data.frame(x_cat = x_cat), y=Ybin)
     tst_curv <- independence_test(ip, teststat = "quadratic")    # coin:::independence_test(ip, teststat = "quadratic")
     ret <- list(p.value = log(1 - as.numeric(pvalue(tst_curv))), statistic = log(as.numeric(statistic(tst_curv)))) 
@@ -297,7 +302,8 @@ if(FALSE){
     } else {
       xbreaks <- quantile(x, c(0:ctrl$xgroups)/ctrl$xgroups)
     }
-    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), 
+             include.lowest = TRUE)
   }
   
   MIA <- FALSE
@@ -365,7 +371,8 @@ if(FALSE){
     } else {
       xbreaks <- quantile(x, c(0:ctrl$xgroups)/ctrl$xgroups)
     }
-    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+    x <- cut(x, breaks = xbreaks, labels = c(1:ctrl$xgroups), 
+             include.lowest = TRUE)
   }
   
   ix <- inum::enum(x)     ## FIX ME: split variable has been categorized before, apply enum here (in extree_data inum is applied)
@@ -438,7 +445,8 @@ if(FALSE){
     } else {
       xbreaks <- quantile(z, c(0:ctrl$xgroups)/ctrl$xgroups)
     }
-    z <- cut(z, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+    z <- cut(z, breaks = xbreaks, labels = c(1:ctrl$xgroups), 
+             include.lowest = TRUE)
   }
   
   estfun <- model$estfun[subset,,drop = FALSE]
@@ -651,9 +659,8 @@ if(FALSE){
   # categorize scores
   if(is.null(ctrl$ygroups)){
     
-    # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
-    #Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
-    Y <- sign(Y)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values    
+    # split Y into 2 parts based on whether residuals (here: scores) are positive or non-positive
+    Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
     #if(NCOL(Y) == 1) Y <- data.frame(factor(Y>0))
     #if(NCOL(Y) > 1){
     #  Ybin <- data.frame(factor(Y[,1]))
@@ -666,7 +673,8 @@ if(FALSE){
     if(length(ctrl$ygroups)==1) ybreaks <- quantile(Y, c(0:ctrl$ygroups)/ctrl$ygroups)
     
     # split Y according to ybreaks
-    Y <- matrix(cut(Y, breaks = ybreaks, include.lowest = TRUE), ncol = NCOL(Y), dimnames = list(rownames(Y), colnames(Y)))
+    Y <- matrix(cut(Y, breaks = ybreaks, include.lowest = TRUE), 
+                ncol = NCOL(Y), dimnames = list(rownames(Y), colnames(Y)))
 
   }    
   
@@ -719,9 +727,8 @@ if(FALSE){
   # categorize scores
   if(is.null(ctrl$ygroups)){
     
-    # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
-    estfun <- sign(estfun)            # FIX ME: Y should be a factor
+    # split estfun into 2 parts based on whether residuals (here: scores) are positive or non-positive
+    estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
     
     ## scale estfun such that each column sums up to 1
     for(i in 1:NCOL(estfun)){
@@ -959,9 +966,8 @@ if(FALSE){
   # categorize scores
   if(is.null(ctrl$ygroups)){
     
-    # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
-    #Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
-    Y <- sign(Y)            # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
+    # split Y into 2 parts based on whether residuals (here: scores) are positive or non-positive
+    Y <- (-1)^((Y>0)+1)    # FIX ME: Y should be a factor, but linear tests in ctree only work for numeric values
     #if(NCOL(Y) == 1) Y <- data.frame(factor(Y>0))
     #if(NCOL(Y) > 1){
     #  Ybin <- data.frame(factor(Y[,1]))
@@ -974,7 +980,8 @@ if(FALSE){
     if(length(ctrl$ygroups)==1) ybreaks <- quantile(Y, c(0:ctrl$ygroups)/ctrl$ygroups)
     
     # split Y according to ybreaks
-    Y <- matrix(cut(Y, breaks = ybreaks, include.lowest = TRUE), ncol = NCOL(Y), dimnames = list(rownames(Y), colnames(Y)))
+    Y <- matrix(cut(Y, breaks = ybreaks, include.lowest = TRUE),
+                ncol = NCOL(Y), dimnames = list(rownames(Y), colnames(Y)))
     
   }    
   
@@ -1030,7 +1037,8 @@ if(FALSE){
     } else {
       xbreaks <- quantile(z, c(0:ctrl$xgroups)/ctrl$xgroups)
     }
-    z <- cut(z, breaks = xbreaks, labels = c(1:ctrl$xgroups), include.lowest = TRUE)
+    z <- cut(z, breaks = xbreaks, labels = c(1:ctrl$xgroups), 
+             include.lowest = TRUE)
   }
   
   estfun <- model$estfun[subset,,drop = FALSE]
@@ -1038,9 +1046,8 @@ if(FALSE){
   # categorize scores
   if(is.null(ctrl$ygroups)){
     
-    # split estfun into 2 parts based on whether residuals (here: scores) are positive or negative
-    #estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
-    estfun <- sign(estfun)            # FIX ME: Y should be a factor
+    # split estfun into 2 parts based on whether residuals (here: scores) are positive or non-positive
+    estfun <- (-1)^((estfun>0)+1)    # FIX ME: Y should be a factor
     
     ## scale estfun such that each column sums up to 1
     for(i in 1:NCOL(estfun)){
@@ -1274,7 +1281,7 @@ if(FALSE){
       # the min is stored as 'p.value' in the returned matrix
       # if this min is from an interaction test, two covariates will have the same p.value
       # in this case the one with the lower p.value from the curvature test should be chosen
-      # in extree: among the two covariates with the lowest p.value (highest negativ p.value) the one with the higher test statistic is chosen (ranked)
+      # in extree: among the two covariates with the lowest p.value (highest negative p.value) the one with the higher test statistic is chosen (ranked)
       # -> the negative p.value from the curvature test is stored as "statistic"
     }
     ret
@@ -1301,20 +1308,21 @@ if(FALSE){
     # if all values of the selected covariate are equal return highest possible p.value
     if(length(unique(x))<2) return(c(p.min = 1, p.curv = 1))
     
-    # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
+    # split Y into 2 parts based on whether residuals (here: scores) are positive or non-positive
     # separately for each parameter
-    Ybin <- data.frame(factor(Y[,ctrl$guide_parm[1]]>0))
+    Ybin <- data.frame((-1)^((Y[,ctrl$guide_parm[1]]>0)+1))   # -1 or +1
     colnames(Ybin)[NCOL(Ybin)] <- paste0("rp", ctrl$guide_parm[1])
     if(length(ctrl$guide_parm)>1){
       for(k in ctrl$guide_parm[-1]){
-        respos <- (Y[,k]>0)
+        respos <- (-1)^((Y[,k]>0)+1)
         Ybin <- cbind(Ybin, respos)
         colnames(Ybin)[NCOL(Ybin)] <- paste0("rp",k)
       }
     }  
     
     if(is.numeric(x)){
-      x_cat <- cut(x, breaks = quantile(x, c(0:4/4)), labels = c(1:4), include.lowest = TRUE)
+      x_cat <- cut(x, breaks = quantile(x, c(0:4/4)), labels = c(1:4), 
+                   include.lowest = TRUE)
     } else {
       x_cat <- x
     }
