@@ -71,6 +71,7 @@ library("Formula")
 library("parallel")
 library("lattice")
 library("scales")
+library("colorspace")
 
 source("../guidelike.R")
 source("../tests_guideprune.R")
@@ -120,8 +121,15 @@ sim_tree <- simres$res
 rm(simres)
 
 ## HCL palette
-pal <- hcl(c(140, 80, 260, 70, 10), 300, 60)
-names(pal) <- c("CTree", "CTree_max", "MOB", "GUIDE", "GUIDE_scores")
+pal <- qualitative_hcl(5, "Dark 3")
+names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE_scores", "CTree_max")
+
+## HCL palette for illustrations of data generating process
+pal_dgp_light <- qualitative_hcl(3, "Set 2")
+pal_dgp <- qualitative_hcl(3, "Dark 3")
+
+## HCL palette for tree panels
+paltrees <- rgb(c(0.9, 1), c(0.9, 1), c(0.9, 1))
 
 @
 
@@ -281,7 +289,7 @@ GUIDE first select the split variable and then, in a separate step, the split po
 For the first step of selecting a split variable they all apply statistical tests
 following the same general strategy: 
 \begin{enumerate}
-\item Based on the discrepancy measure an $n \times k$-matrix $D$ is obtained giving information
+\item A discrepancy measure is obtained in the form of an $n \times k$-matrix $D$ giving information
 on the goodness of fit of the model for a data set of $n \in \mathbb{N}$ observations in the 
 current node and the parameter $k \in \mathbb{N}$ defined by the algorithm.
 \item Using this matrix the algorithm-specific test statistic is evaluated for each possible 
@@ -517,8 +525,8 @@ building blocks accordingly. But apart from that, variations of the commonly kno
 strategies can be obtained as this general toolbox allows for all possible combinations of the 
 building blocks. Moreover, by exchanging only one of them its impact can be investigated in detail.
 These building blocks are explained in Section~\ref{sec:buildingblocks} and their setting
-for CTree, MOB, and GUIDE are listed in Table~\ref{tab:buildingblocks} which gives a more 
-detailed overview of the differences in the second column of Table~\ref{tab:combinations}.
+for the standard setup of CTree, MOB, and GUIDE are listed in Table~\ref{tab:buildingblocks} which 
+gives a more detailed overview of the differences in the second column of Table~\ref{tab:combinations}.
 
 
 \subsection{Building Blocks of Testing Strategies}\label{sec:buildingblocks}
@@ -550,25 +558,28 @@ over $Z$ are considered.
 \end{itemize}
 
 \textit{Note:}
-Apart from these three building blocks, the algorithms differ in their approximation of the 
-underlying null distribution of the test statistic. While the permutation tests in the CTree 
-algorithm work in a conditional framework the MOB and GUIDE algorithms both apply an unconditional 
-approach. 
+Apart from these three building blocks, the algorithms CTree, MOB, and GUIDE differ in the type of test 
+statistic they apply and their approximation of the underlying null distribution of the corresponding 
+test statistic. While the permutation tests in CTree work in a conditional framework both MOB (M-fluctuation tests) 
+and GUIDE ($\chi^2$-tests) apply an unconditional approach. Furthermore, the algorithms CTree and MOB were 
+introduced employing prepruning while GUIDE originally applies a postpruning strategy.
+However, these differences refer to the standard versions of the three algorithms and all of them
+allow for certain modifications of this standard setup. For example, a different form of test statistic
+can be selected in CTree considering a maximum value as in MOB.
 
 
 \begin{table}[t]
 \centering
 \caption[Table caption text]{Testing strategies of CTree, MOB, and GUIDE with the corresponding
-setting of the building blocks in the unifying framework and the approximation type of the
-underlying null distribution.}
+setting of the building blocks in the unifying framework and the type of test statistic.}
 \label{tab:buildingblocks}
 \begin{tabular}{ l c c c c }
 \hline 
-      & Scores            & Binarization  & Categorization  & Null distribution \\ 
+      & Scores       & Binarization  & Categorization  & Statistic\\
 \hline
-CTree & full model scores & --          & --            & conditional\\
-MOB   & full model scores & --          & --            & unconditional\\
-GUIDE & residuals         & \checkmark  & \checkmark    & unconditional\\
+CTree & Model scores & --	           & -- 	           & Sum of squares\\
+MOB   & Model scores & --	           & -- 	           & Maximally selected\\
+GUIDE & Residuals    & \checkmark    & \checkmark      & Sum of squares\\
 \hline
 \end{tabular}
 \end{table}
@@ -587,7 +598,7 @@ Y = \beta_0 + \beta_1 \cdot X + \epsilon
 $$
 for a response variable $Y$, a regressor variable $X$ and an error $\epsilon$. 
 For each node the type of the fitted model is the same such that no node-specific features are 
-considered and the observations of the current (arbitrarily chosen) node are denoted by 
+considered and the observations of the (arbitrarily chosen) current node are denoted by 
 $\{(y_i,x_i)\}_{i=1,\ldots,n}$ for $n \in \mathbb{N}$.
 
 A very basic form of a discrepancy measure can be obtained for each observation by simply 
@@ -609,9 +620,9 @@ The corresponding score function is defined by
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
 \frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
-2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
+-2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
-where the factor $2$ is often omitted such that the first column of the $n \times 2$-dimensional
+where the factor $-2$ is often omitted such that the first column of the $n \times 2$-dimensional
 score matrix corresponds to the residuals. 
 Therefore, including only residuals (i.e. only the first column of the score matrix)
 corresponds to including the derivatives of $\psi$ only regarding the intercept 
@@ -738,8 +749,6 @@ pn <- partynode(1L, split = sp_xi1,
 
 p <- party(pn, d)
 
-paltrees <- rgb(c(1, 0.9, 1), c(1, 0.9, 1), c(1, 0.9, 1))
-
 ep <- function (obj, digits = 3, abbreviate = FALSE, justmin = Inf, 
                 just = c("alternate", "increasing", "decreasing", "equal"), 
                 fill = "white") 
@@ -808,9 +817,9 @@ tp <- function (obj, digits = 3, abbreviate = FALSE,
   if (align == "centre") 
     align <- "center"
   rval <- function(node) {
-    if(node$id == 2) fill <- c("white", "blue")
-    if(node$id == 3 | node$id == 4) fill <- c("white", "red")
-    if(node$id == 5) fill <- c("white", "darkgreen")
+    if(node$id == 2) fill <- c("white", pal_dgp_light[1])
+    if(node$id == 3 | node$id == 4) fill <- c("white", pal_dgp_light[2])
+    if(node$id == 5) fill <- c("white", pal_dgp_light[3])
     fill <- rep(fill, length.out = 2)
     lab <- extract_label(node)
     if (!is.null(gp)) {
@@ -863,7 +872,7 @@ class(tp) <- "grapcon_generator"
 #par(mar=c(3,3,0,0), oma = c(3,3,0,0))
 plot(p, 
      tp_args = list(FUN = identity, width = 15), 
-     ip_args = list(fill = paltrees[c(2, 3)]),
+     ip_args = list(fill = paltrees[c(1, 2)]),
      drop_terminal = TRUE, tnex = 1, edge_panel = ep, terminal_panel = tp)
 @
 \endminipage
@@ -872,15 +881,15 @@ plot(p,
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x", 
      main = expression("varying"~beta[0]),
-     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
-abline(coef = c(-1,1), col = "blue", lwd = 2)
-abline(coef = c(1,1), col = "red", lwd = 2)
-points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha("red", 0.4), cex = 0.7)
-legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
-mtext(expression(beta[0]==+delta), side = 4, col = "red", las = 1, line = 0.5, at = 3.2)
-mtext(expression(beta[1]== 1), side = 4, col = "red", las = 1, line = 0.5, at = 2.2)
-mtext(expression(beta[0]==-delta), side = 4, col = "blue", las = 1, line = 0.5, at = 0.2)
-mtext(expression(beta[1]== 1), side = 4, col = "blue", las = 1, line = 0.5, at = -0.8)
+     pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
+abline(coef = c(-1,1), col = pal_dgp[1], lwd = 2)
+abline(coef = c(1,1), col = pal_dgp[2], lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c(pal_dgp[1], pal_dgp[2]), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==+delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = 3.2)
+mtext(expression(beta[1]== 1), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = 2.2)
+mtext(expression(beta[0]==-delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 0.2)
+mtext(expression(beta[1]== 1), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = -0.8)
 @
 \endminipage
 
@@ -891,15 +900,15 @@ d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_i
 
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x", main = expression("varying"~beta[1]),
-     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
-abline(coef = c(0,1), col = "blue", lwd = 2)
-abline(coef = c(0,-1), col = "red", lwd = 2)
-points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha("red", 0.4), cex = 0.7)
-legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
-mtext(expression(beta[0]==0), side = 4, col = "red", las = 1, line = 0.5, at = -1)
-mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2)
-mtext(expression(beta[0]==0), side = 4, col = "blue", las = 1, line = 0.5, at = 2)
-mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1)
+     pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
+abline(coef = c(0,1), col = pal_dgp[1], lwd = 2)
+abline(coef = c(0,-1), col = pal_dgp[2], lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>xi], ylim = c(-5,5), pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c(pal_dgp[1], pal_dgp[2]), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==0), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -1)
+mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -2)
+mtext(expression(beta[0]==0), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 2)
+mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 1)
 @
 \endminipage
 \minipage{0.45\textwidth}
@@ -910,15 +919,15 @@ par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x",
      main = expression("varying"~beta[0]~"and"~beta[1]),
      xlim = c(-1,1.1),
-     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
-abline(coef = c(-1,1), col = "blue", lwd = 2)
-abline(coef = c(1,-1), col = "red", lwd = 2)
-points(x = d$x[d$z1>xi], y = d$y[d$z1>=xi], pch = 19, col = alpha("red", 0.4), cex = 0.7)
-legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c("blue", "red"), pch = c(19), bty = "n", cex = 0.9)
-mtext(expression(beta[0]==-delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1.7)
-mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 0.7)
-mtext(expression(beta[0]==+delta), side = 4, col = "red", las = 1, line = 0.5, at = -0.7)
-mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -1.7)
+     pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
+abline(coef = c(-1,1), col = pal_dgp[1], lwd = 2)
+abline(coef = c(1,-1), col = pal_dgp[2], lwd = 2)
+points(x = d$x[d$z1>xi], y = d$y[d$z1>=xi], pch = 19, col = alpha(pal_dgp[2], 0.4), cex = 0.7)
+legend("top", c(expression(z[1]<=xi), expression(z[1]>xi)), col = c(pal_dgp[1], pal_dgp[2]), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==-delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 1.7)
+mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 0.7)
+mtext(expression(beta[0]==+delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -0.7)
+mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -1.7)
 @
 \endminipage
 \caption{\label{fig:dgp_stump}{Top left panel: True stump structure with the true model parameters $\beta_0$ and $\beta_1$, either varying or being fixed at $0$ or $1$ respectively.
@@ -972,11 +981,9 @@ p <- party(pn, d)
 \minipage{0.5\textwidth}
 <<dgp_tree1, fig=TRUE, echo=FALSE, width=5, height=4.5>>=
 par(mar=c(0,0,0,0), oma=c(0,0,0.4,0))
-#paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
-paltrees <- rgb(c(1, 0.9, 1), c(1, 0.9, 1), c(1, 0.9, 1))
 plot(p, edge_panel = ep, terminal_panel = tp,
      tp_args = list(FUN = identity, width = 15), 
-     ip_args = list(fill = paltrees[c(2, 3)]),
+     ip_args = list(fill = paltrees[c(1, 2)]),
      drop_terminal = TRUE, tnex = 1)
 @
 \endminipage
@@ -984,28 +991,28 @@ plot(p, edge_panel = ep, terminal_panel = tp,
 <<dgp_tree2, fig=TRUE, echo=FALSE, width=4, height=4>>=
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z2<=xi], y = d$y[d$z2<=xi], ylim = c(-5,5), ylab = "y", xlab = "x",
-     pch = 19, col = alpha("blue", 0.4), cex = 0.7)
-abline(coef = c(0,1), col = "blue", lwd = 2)
-abline(coef = c(-1,-1), col = "red", lwd = 2)
-abline(coef = c(1,-1), col = "darkgreen", lwd = 2)
+     pch = 19, col = alpha(pal_dgp[1], 0.4), cex = 0.7)
+abline(coef = c(0,1), col = pal_dgp[1], lwd = 2)
+abline(coef = c(-1,-1), col = pal_dgp[2], lwd = 2)
+abline(coef = c(1,-1), col = pal_dgp[3], lwd = 2)
 points(x = d$x[d$z2>xi & d$z1<=xi], y = d$y[d$z2>xi & d$z1<=xi], pch = 19, 
-       col = alpha("red", 0.4), cex = 0.7)
+       col = alpha(pal_dgp[2], 0.4), cex = 0.7)
 points(x = d$x[d$z2>xi & d$z1>xi], y = d$y[d$z2>xi & d$z1>xi], pch = 19, 
-       col = alpha("darkgreen", 0.4), cex = 0.7)
+       col = alpha(pal_dgp[3], 0.4), cex = 0.7)
 legend("top", c(expression(z[2]<=xi), 
                 expression(z[2]>xi~" and "~z[1]<=xi),
                 expression(z[2]>xi~" and "~z[1]>xi)), 
-       col = c("blue", "red", "darkgreen"), pch = c(19), bty = "n", cex = 0.9)
-mtext(expression(beta[0]==0), side = 4, col = "blue", las = 1, line = 0.5, at = 2)
-mtext(expression(beta[1]==+delta), side = 4, col = "blue", las = 1, line = 0.5, at = 1.3)
-mtext(expression(beta[0]==+delta), side = 4, col = "darkgreen", las = 1, line = 0.5, at = 0.1)
-mtext(expression(beta[1]==-delta), side = 4, col = "darkgreen", las = 1, line = 0.5, at = -0.6)
-mtext(expression(beta[0]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2)
-mtext(expression(beta[1]==-delta), side = 4, col = "red", las = 1, line = 0.5, at = -2.7)
+       col = c(pal[1], pal[2], pal_dgp[3]), pch = c(19), bty = "n", cex = 0.9)
+mtext(expression(beta[0]==0), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 2)
+mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 1.3)
+mtext(expression(beta[0]==+delta), side = 4, col = pal_dgp[3], las = 1, line = 0.5, at = 0.1)
+mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[3], las = 1, line = 0.5, at = -0.6)
+mtext(expression(beta[0]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -2)
+mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -2.7)
 @
 \endminipage
-\caption{\label{fig:dgp_tree}Left panel: True tree structure for the second scenario with the 
-true model parameters $\beta_0$ and $\beta_1$ for each terminal panel.
+\caption{\label{fig:dgp_tree}Left panel: True tree structure for the second simulation scenario 
+with the true model parameters $\beta_0$ and $\beta_1$ for each terminal panel.
 Right panel: Bivariate plot of the response $Y$ on regressor $X$ 
 with effect size $\delta = 1$.}
 \end{center}
@@ -1100,10 +1107,11 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
                       subset = binary_beta == TRUE & binary_regressor == FALSE & 
                         only_intercept == FALSE,# & xi == 0, 
                       type = "l", lty = c(1,1,1,1),
+                      lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
                       key =  list(text = list(levels(subdataxi$test)),
                                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
                       xlab = expression(delta),
@@ -1112,16 +1120,19 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
                
                strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
                                                      expression("vary"~beta[0]), 
-                                                     expression("vary"~beta[1]))),
-               strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8))))
+                                                     expression("vary"~beta[1])),
+                                   bg = "gray90"),
+               strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8)),
+                                   bg = "gray90"))
 
 
 @
 \caption{\label{fig:scores_stump}Proportion of cases where the true split variable $Z_1$ is
-selected over increasing effect size $\delta$ for $\sigma = 1$, $\xi=0$, 250 observations and 
-100 data sets per step. Each panel represents one scenario for the coefficients: 
-varying intercept $\beta_0$ (left panel), varying slope parameter $\beta_1$ (middle panel) and 
-both coefficients varying (right panel). The performances of four testing strategies are compared: 
+selected over increasing effect size $\delta$ (100 data sets of 250 observations per step),
+once for a true split point $\xi = 0$ (top row) and once for $\xi = 0.8$ (bottom row). 
+Each column represents one scenario for the coefficients: 
+varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
+both coefficients varying (right). The performances of four testing strategies are compared: 
 CTree, MOB, GUIDE, GUIDE\_scores.}
 \end{figure}
 
@@ -1151,7 +1162,10 @@ Looking at the results for the split point being close to the upper edge of the 
 interval ($\xi=0.8$, lower panels) all of the applied strategies perform worse than for the
 central split point. In this case MOB is clearly ahead leading to the best results. CTree 
 performs second best while both GUIDE versions struggle to detect the correct split variable 
-even for a high effect size.
+even for a high effect size. 
+(In order to show that the here observed advantage of MOB over CTree is mainly due to the 
+abrupt shift in the model parameters $\beta_0$ and $\beta_1$ an additional evaluation is 
+presented in Appendix~\ref{app:contbeta} where these parameters change continuously.)
 
 Altogether these results clearly illustrate that overall the decision to include all available
 scores when testing for dependencies in order to select split variables is advantageous over
@@ -1168,7 +1182,7 @@ In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for 
 case where the intercept and slope parameter are both varying and the true split point is in the
 center, i.e. $\xi=0$. Based on the results shown in Figure~\ref{fig:scores_stump} the effect size 
 $\delta = 0.3$ is considered making the differences particularly well observable 
-(additional results over increasing $\delta$ as in Section~\ref{sec:scores} 
+(additional easing $\delta$ as in Section~\ref{sec:scores} 
 can be found in Appendix~\ref{app:increasingdelta}).
 The power of the different combinations is measured by the mean $p$-value for the true split 
 variable~$Z_1$.
@@ -1271,17 +1285,19 @@ xyplot(pval_z1 ~ cat | xi,
        data = d3way, 
        ylim = c(0,0.5),
        type = c("a"), 
-       col = c("red", "blue", "red", "blue"),
+       col = c(pal[1], pal[3], pal[1], pal[3]),
        lty = c(1,1,2,2),
+       lwd = 2,
        xlab = "Categorization",
        ylab = expression("p-value of"~Z[1]),
        #index.cond = list(c(1,2,3,4)),
        strip = strip.custom(factor.levels = c(expression(xi==0~"and"~delta==0.3), 
-                                              expression(xi==0.8~"and"~delta==1))),
+                                              expression(xi==0.8~"and"~delta==1)),
+                                   bg = "gray90"),
        key = list(text = list(levels(interaction(d3way$bin, d3way$res_scores))),
                   lines = list(lty = c(1,1,2,2), 
-                               type = "l",
-                               col = c("red", "blue", "red", "blue"))))
+                               type = "l", lwd = 2,
+                               col = c(pal[1], pal[3], pal[1], pal[3]))))
        
 
 #par(mar = c(3,5,1,5.7))
@@ -1361,9 +1377,10 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        data = subdata, 
        type = "l",
        lty = c(1,1,1,1),
+       lwd = 2,
        key =  list(text = list(levels(subdata$test)),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        #index.cond = list(c(1,2,3,4)),
        scales=list(x=list(at=seq(1,11,2))),
@@ -1372,13 +1389,14 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        strip = strip.custom(factor.levels = c(expression(xi==0), 
                                               expression(xi==0.2), 
                                               expression(xi==0.5), 
-                                              expression(xi==0.8))),
+                                              expression(xi==0.8)),
+                                   bg = "gray90"),
        par.settings = par.settings)
 
 @
-\caption{\label{fig:tree_ari}Adjusted Rand Index over increasing effect size $\delta$ for
-250 observations and 100 data sets per step.
-Each panel represents a different value of the split point $\xi$ ($0$, $0.2$, $0.5$ and 
+\caption{\label{fig:tree_ari}Adjusted Rand Index over increasing effect size $\delta$ 
+(100 data sets of 250 observations per step).
+Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
 $0.8$ from left to right). The performances of four testing strategies are compared: CTree,
 MOB, GUIDE, GUIDE\_scores.}
 \end{figure}
@@ -1463,10 +1481,11 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_
 <<prune_ari, fig=TRUE, echo=FALSE, height=4, width=8>>=
 xyplot(ari ~ delta | xi, groups = ~ test, 
        data = prex, 
-       type = "l", lty = c(1,1,1,1,2,2,2,2),
+       type = "l", lty = c(2,2,2,2,1,1,1,1),
+       lwd = 2,
        key =  list(text = list(levels(prex$test)[1:4]),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
+                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        scales=list(x=list(at=seq(1,11,2))),
        xlab = expression(delta),
@@ -1474,16 +1493,18 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        strip = strip.custom(factor.levels = c(expression(xi==0), 
                                               expression(xi==0.2), 
                                               expression(xi==0.5), 
-                                              expression(xi==0.8))),
+                                              expression(xi==0.8)),
+                                   bg = "gray90"),
        par.settings = par.settings
 )
 @
-\caption{\label{fig:pruning_ari}Adjusted Rand Index over increasing effect size $\delta$ for
-250 observations and 100 data sets per step.
-Each panel represents a different value of the split point $\xi$ ($0$, $0.2$, $0.5$ and 
-$0.8$ from left to right). The performances of four testing strategies are compared: CTree,
-MOB, GUIDE, GUIDE\_scores. The dashed lines represent the results from applying postpruning
-and the continuous lines the results from applying prepruning.}
+\caption{\label{fig:pruning_ari}Adjusted Rand Index over increasing effect size $\delta$ 
+(100 data sets of 250 observations per step).
+Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
+$0.8$ from left to right). 
+The performances of four testing strategies are compared: CTree, MOB, GUIDE, GUIDE\_scores. 
+The dashed lines represent the results from applying prepruning and the continuous lines 
+the results from applying postpruning.}
 \end{figure}
 
 
@@ -1501,7 +1522,7 @@ clearly better results and performs in general at least equally well.
 (3)~Categorizing possible split variables also doesn't improve the performance 
 unless the breakpoints used for the categorization are very close to the true split points.
 However, even then the results are very similar to those achieved without any categorization.
-But it has to be noted that a categorization of possible split variables can facilitate
+But it has to be noted that a categorization of possible split variables can simplify
 evaluations. Moreover, depending on the focus of interest, the results can be more
 straightforward, for example in case of clearly separated subgroups being defined by the values 
 of a continuous split variable. Therefore, categorizing possible split variable can have
@@ -1601,7 +1622,7 @@ test as represented by the different building blocks. In that way,
 \begin{table}%[t]
 \centering
 \caption[Table caption text]{Applied testing strategies representing the 12 combinations
-of building blocks}
+of building blocks.}
 \label{tab:combinations_appendix}
 \begin{tabular}{ l c c c }
 \hline 
@@ -1638,9 +1659,9 @@ smaller than the significance level, is illustrated. In Figure~\ref{fig:scores_s
 the exact same simulation setting is applied with a significance level.
 
 
-\begin{figure}
+\begin{figure}[t]
 \setkeys{Gin}{width=\linewidth}
-<<scores_stump_wosign, fig=TRUE, echo=FALSE, height=4, width=8>>=
+<<scores_stump_wosign, fig=TRUE, echo=FALSE, height=5, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree","mfluc",
                                          "guide_sum_12", "guide_sum_1_cor"))
 subdata$test <- factor(subdata$test, 
@@ -1649,38 +1670,124 @@ subdata$test <- factor(subdata$test,
                        labels = c("CTree","MOB",
                                   "GUIDE_scores", "GUIDE"))
 
+subdataxi <- subset(subdata, xi %in% c(0,0.8))
+
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
                                              fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
                      superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
 
-xyplot(prop_z1 ~ delta | vary_beta, groups = ~ test, 
-       data = subdata, 
-       subset = binary_beta == TRUE & binary_regressor == FALSE & 
-         only_intercept == FALSE & xi == 0, 
-       type = "l", lty = c(1,1,1,1),
-       key =  list(text = list(levels(subdata$test)),
-                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 1)),
-       layout= c(3,1),
-       index.cond = list(c(2,3,1)),
-       scales=list(x=list(at=seq(1,11,2))),
-       xlab = expression(delta),
-       ylab = expression("Prop. of"~Z[1]~"having lowest p-value"),
-       strip = strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
-                                              expression("vary"~beta[0]), 
-                                              expression("vary"~beta[1]))),
-       par.settings = par.settings)
+library("latticeExtra")
+useOuterStrips(xyplot(prop_z1 ~ delta | vary_beta + xi, groups = ~ test, 
+                      data = subdataxi, 
+                      subset = binary_beta == TRUE & binary_regressor == FALSE & 
+                        only_intercept == FALSE,# & xi == 0, 
+                      type = "l", lty = c(1,1,1,1),
+                      lwd = 2,
+                      scales=list(x=list(at=seq(1,11,2))),
+                      key =  list(text = list(levels(subdataxi$test)),
+                                  lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
+                      layout= c(3,2),
+                      index.cond = list(c(2,3,1),c(2,1)),
+                      xlab = expression(delta),
+                      ylab = expression("Prop. of"~Z[1]~"having lowest p-value"),
+                      par.settings = par.settings),
+               
+               strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
+                                                     expression("vary"~beta[0]), 
+                                                     expression("vary"~beta[1])),
+                                   bg = "gray90"),
+               strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8)),
+                                   bg = "gray90"))
+
 @
 \caption{\label{fig:scores_stump_wosign}Proportion of cases where the true split variable $Z_1$ 
-is selected over increasing effect size $\delta$ for $\xi=0$, 250 observations and 
-100 data sets per step without any significance level. 
-Each panel represents one scenario for the coefficients: 
-varying intercept $\beta_0$ (left panel), varying slope parameter $\beta_1$ (middle panel) and 
-both coefficients varying (right panel). The performances of four testing strategies are compared: 
+shows the smallest $p$-value, hence, where $Z_1$ is selected without any significance level, 
+over increasing effect size $\delta$ (100 data sets of 250 observations per step), once for a 
+true split point $\xi = 0$ (top row) and once for $\xi = 0.8$ (bottom row).
+Each column represents one scenario for the coefficients: 
+varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
+both coefficients varying (right). The performances of four testing strategies are compared: 
 CTree, MOB, GUIDE, GUIDE\_scores.}
 \end{figure}
 
-\newpage
+
+
+
+\section{Simulation Results for Continuous Model Parameters}
+\label{app:contbeta}
+In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
+and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
+either the positive or the negative value of the effect size $\delta$. Therefore, these parameters
+are step functions for which MOB has shown to perform better than CTree. However, in case of
+monotonous functions CTree is advantageous as it is constructed to detect monotonous effects.
+To point out that the difference in performance of CTree and MOB depends on the type of effect
+the same setting of which the results are presented in Figure~\ref{fig:scores_stump} is
+evaluated again but this time with the varying parameter(s) changing continuously.
+In particular, the parameters $\beta_0$ and $\beta_1$ are linear functions of the true
+split variable $Z_1$:
+\begin{align*}
+\beta_{i}(Z_1) = \begin{cases}
+-\delta \cdot (-1)^{i} \cdot Z_1\\
++\delta \cdot (-1)^{i} \cdot Z_1.
+\end{cases}
+\end{align*}
+Moreover, a modified version of CTree considering maximum values in the test statistic is evaluated
+(denoted by CTree\_max). 
+Looking at the results presented in Figure~\ref{fig:stump_contbeta} it can be observed that in this setting the 
+original version of CTree is ahead while CTree\_max and MOB perform almost equally well. Hence, the comparison of 
+Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} points out that it clearly depends on the type of 
+effect whether the maximal selection (MOB, CTree\_max) or the linear selection (CTree) is advantageous.
+
+
+\begin{figure}%%[t]
+\setkeys{Gin}{width=\linewidth}
+<<contbeta, fig=TRUE, echo=FALSE, height=4, width=8>>=
+load("../sim/simres20181122_stump.rda")
+sim_stump_cont <- simres$res
+subdata <- subset(sim_stump_cont, test %in% c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"))
+#subdata <- subset(subdata, delta %in% c(0, 0.1, 0.2, 0.3, 0.4, 0.5))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"),
+                       labels = c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores"))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")], 
+                                             fill = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")]), 
+                     superpose.line = list(col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")]))
+
+xyplot(prop_Tsplit ~ delta | vary_beta, groups = ~ test, 
+       data = subdata, 
+       subset = binary_beta == FALSE & binary_regressor == FALSE & 
+         only_intercept == FALSE, 
+       #xlim = c(0,0.1,0.5),
+       type = "l", 
+       layout= c(3,1),
+       lwd = 2,
+       key =  list(text = list(levels(subdata$test)),
+                   lines = list(lty = c(1,1,1,1,1), 
+                                type = "l", 
+                                col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")], 
+                                lwd = 2)), 
+       xlab = expression(delta),
+       ylab = expression("Proportion of selecting"~Z[1]),
+       index.cond = list(c(2,3,1)),
+       strip = strip.custom(factor.levels = c(expression("vary "~beta[0]~" and "~beta[1]),
+                                              expression("vary "~beta[0]), 
+                                              expression("vary "~beta[1])),
+                                    bg = "gray90"),
+       par.settings = par.settings)
+@
+\caption{\label{fig:stump_contbeta}
+Proportion of cases where the true split variable $Z_1$ is
+selected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+with the varying coefficient(s) being continuous. 
+Each panel represents one scenario for the coefficients: 
+varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
+both coefficients varying (right). The performances of five testing strategies are compared: 
+CTree, CTree\_max, MOB, GUIDE, GUIDE\_scores.}
+\end{figure}
+
+
+
 \section{Results Over Increasing Effect Size}
 \label{app:increasingdelta}
 
@@ -1755,31 +1862,33 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
        data = subdata, 
        subset = binary_beta == TRUE & binary_regressor == FALSE & 
          only_intercept == FALSE & vary_beta == "all", 
-       type = "b",
+       type = "l",
        lty = c(1,2,#1,2,
                1,2,1),
+       lwd = 2,
        layout= c(4,1),
        key =  list(text = list(levels(subdata$test)),
                    lines = list(lty = c(1,2,#1,2,
                                         1,2,1), 
-                                type = "b", pch = 1, cex = 0.8,
+                                type = "l", pch = 1, cex = 0.8,
                                 col = pal[c("CTree", "CTree", 
                                             #"CTree_max", "CTree_max", 
                                             "MOB", "MOB",
-                                            "GUIDE_scores")], lwd = 1)), 
+                                            "GUIDE_scores")], lwd = 2)), 
        #index.cond = list(c(1,2,3,4)),
        xlab = expression(delta),
        ylab = expression("Proportion of selecting"~Z[1]),
        strip = strip.custom(factor.levels = c(expression(xi==0), 
                                               expression(xi==0.2), 
                                               expression(xi==0.5), 
-                                              expression(xi==0.8))),
+                                              expression(xi==0.8)),
+                                   bg = "gray90"),
        par.settings = par.settings)
 
 @
 \caption{\label{fig:bin_stump}Proportion of cases where the true split variable $Z_1$ is
-detected over increasing effect size $\delta$ for both parameter varying, 
-250 observations and 100 data sets per step. Each panel represents a different value of the 
+detected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+with both parameter varying. Each panel represents a different value of the true 
 split point $\xi$ (0, 0.2, 0.5 and 0.8 from left to right). The performances of five testing 
 strategies are compared: CTree, CTree\_bin, MOB, MOB\_bin, GUIDE\_scores.}
 \end{figure}
@@ -1864,40 +1973,42 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
        subset = binary_beta == TRUE & binary_regressor == FALSE & 
          only_intercept == FALSE & vary_beta == "all", 
        #xlim = c(0,0.1,0.5),
-       type = "b", 
+       type = "l", 
        lty = c(1,2,#1,2,
                1,2,1),
+       lwd = 2,
        layout= c(4,1),
        key =  list(text = list(levels(subdata$test)),
                    lines = list(lty = c(1,2,#1,2,
                                         1,2,1), 
-                                type = "b", pch = 1, cex = 0.8,
+                                type = "l", pch = 1, cex = 0.8,
                                 col = pal[c("CTree", "CTree", 
                                             #"CTree_max", "CTree_max", 
                                             "MOB", "MOB",
-                                            "GUIDE_scores")], lwd = 1)), 
+                                            "GUIDE_scores")], lwd = 2)), 
        #index.cond = list(c(1,2,3,4)),
        xlab = expression(delta),
        ylab = expression("Proportion of selecting"~Z[1]),
        strip = strip.custom(factor.levels = c(expression(xi==0), 
                                               expression(xi==0.2), 
                                               expression(xi==0.5), 
-                                              expression(xi==0.8))),
+                                              expression(xi==0.8)),
+                                   bg = "gray90"),
        par.settings = par.settings)
 
 @
 \caption{\label{fig:cat_stump}Proportion of cases where the true split variable $Z_1$ is
-selected over increasing effect size $\delta$ for both parameters varying, $\sigma = 1$, 
-250 observations and 100 data sets per step. Each panel represents a different value of the 
-split point $\xi$ ($0$, $0.2$, $0.5$ and $0.8$ from left to right). The performances of five 
-testing strategies are compared: CTree, CTree\_cat, MOB, MOB\_cat, GUIDE\_scores.}
+detected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+with both parameter varying. Each panel represents a different value of the true 
+split point $\xi$ (0, 0.2, 0.5 and 0.8 from left to right). The performances of five testing 
+strategies are compared: CTree, CTree\_cat, MOB, MOB\_cat, GUIDE\_scores.}
 \end{figure}
 
 
 \end{appendix}
 
 
-\newpage
+%\newpage
 \bibliography{ref.bib}
 
 \end{document}
