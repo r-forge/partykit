@@ -20,12 +20,8 @@ distextree <- function(formula,
   type.hessian <- control$type.hessian
   decorrelate <- control$decorrelate
   ocontrol <- control$ocontrol 
-  bd <- control$bd
-  censtype <- control$censtype
-  censpoint <- control$censpoint
 
-  control$type.hessian <- control$decorrelate <- control$bd <- control$censtype <-
-    control$censpoint <- control$ocontrol <- NULL
+  control$type.hessian <- control$decorrelate <- control$ocontrol <- NULL
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
@@ -348,9 +344,6 @@ distextree <- function(formula,
 distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"), 
                                type.hessian = c("checklist", "analytic", "numeric"),
                                decorrelate = c("none", "opg", "vcov"),
-                               bd = NULL,           # FIXME: (ML) to be included in family fun
-                               censtype = "none",   # FIXME: (ML) to be included in family fun
-                               censpoint = NULL,    # FIXME: (ML) to be included in family fun
                                ocontrol = list(),   # FIXME: (ML) why an empty list? 
                                minsplit = NULL,     # FIXME: (ML) currently use mob default
                                minbucket = NULL,    # FIXME: (ML) currently use mob default
@@ -403,9 +396,6 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$type.hessian <- match.arg(type.hessian)
   ctrl$decorrelate <- match.arg(decorrelate)
   ctrl$ocontrol <- ocontrol
-  ctrl$bd <- bd
-  ctrl$censtype <- censtype
-  ctrl$censpoint <- censpoint
 
   ## Check the kind of tree
   if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
