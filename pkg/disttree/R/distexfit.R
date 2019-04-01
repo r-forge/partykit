@@ -3,34 +3,21 @@
 ###################################################################
 
 distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                      vcov = TRUE, 
-                      control = distextree_control(...),
-                      fixed = NULL, fixed.values = NULL,   
-                      estfun = TRUE, ...)
+                      vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"), 
+                      method = "L-BFGS-B", estfun = TRUE, ocontrol = list(), ...)
 {
   
   ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
   ## start on par scale
   ## start.eta on link scale
-  
-  
+
   ## FIX ME: what to do if weights consists of zeros only
   
-  
-  ## Clean up control  
-  type.hessian <- control$type.hessian
-  decorrelate <- control$decorrelate
-  ocontrol <- control$ocontrol 
-  
-  control$type.hessian <- control$decorrelate <- control$ocontrol <- NULL
-  
+  type.hessian <- match.arg(type.hessian)
   
   ## match call
   cl <- match.call()
   
-  ## check if 'method' is an additional argument (for optim, handed over via '...')
-  method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
-
   ## number of observations
   ny <- NROW(y)
   
@@ -88,9 +75,6 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(!inherits(family, "distfamily")) 
     family <- distfamily(family)
 
-  if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) 
-    stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
-  if(length(type.hessian) > 1) type.hessian <- type.hessian[1]
   if(type.hessian == "checklist") {
     type.hessian <- if(is.null(family$hdist)) "numeric" else "analytic"
   }
