@@ -19,9 +19,10 @@ distextree <- function(formula,
   ## Clean up control  
   type.hessian <- control$type.hessian
   decorrelate <- control$decorrelate
+  method <- control$method
   ocontrol <- control$ocontrol 
 
-  control$type.hessian <- control$decorrelate <- control$ocontrol <- NULL
+  control$type.hessian <- control$decorrelate <- control$method <- control$ocontrol <- NULL
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
@@ -78,10 +79,9 @@ distextree <- function(formula,
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
     start <- info$coefficients # FIXME: (ML) needed?
     
-    model <- disttree::distexfit(ys, family = family, weights = subweights, start = start,
+    model <- disttree::distexfit(ys, family = family, weights = subweights, start = start, start.eta = NULL,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                                 estfun = estfun, censtype = censtype, censpoint = censpoint, 
-                                 ocontrol = ocontrol)
+                                 method = method, estfun = estfun, ocontrol = ocontrol)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -344,6 +344,7 @@ distextree <- function(formula,
 distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"), 
                                type.hessian = c("checklist", "analytic", "numeric"),
                                decorrelate = c("none", "opg", "vcov"),
+                               method = "L-BFGS-B",
                                ocontrol = list(),   # FIXME: (ML) why an empty list? 
                                minsplit = NULL,     # FIXME: (ML) currently use mob default
                                minbucket = NULL,    # FIXME: (ML) currently use mob default
@@ -395,6 +396,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ## Add additional parameters needed within distextree
   ctrl$type.hessian <- match.arg(type.hessian)
   ctrl$decorrelate <- match.arg(decorrelate)
+  ctrl$method <- method
   ctrl$ocontrol <- ocontrol
 
   ## Check the kind of tree
