@@ -27,11 +27,9 @@
 }
 
 \usage{
-distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-          vcov = TRUE, 
-          control = distextree_control(...),
-          fixed = NULL, fixed.values = NULL,   
-          estfun = TRUE, ...)
+distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
+          vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"),
+          method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 }
 
 \arguments{
@@ -42,10 +40,12 @@ distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
   \item{start.eta}{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}.}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
-  \item{control}{a list with control parameters.}
-    \item{fixed}{FIXME}
-  \item{fixed.values}{FIXME}
+  \item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be 
+    calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' 
+    is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+  \item{method}{Optimization which should be applied in \code{\link[stats]{optim}}}
   \item{estfun}{logical. Should the matrix of observation-wise score contributions (or empirical estimating functions) be returned?}
+  \item{optim.control}{A list with \code{\link[stats]{optim}} control parameters.}
   \item{\dots}{further arguments passed to \code{\link[stats]{optim}}.}
 }
 
