@@ -4,7 +4,7 @@
 
 distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
                       vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"), 
-                      method = "L-BFGS-B", estfun = TRUE, ocontrol = list(), ...)
+                      method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 {
   
   ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
@@ -224,13 +224,13 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(!family$mle) {
     ## optimize negative log-likelihood
     opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                     hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
+                     hessian = (type.hessian == "numeric"), control = optim.control, ...), silent = TRUE)
     if(inherits(opt, "try-error")) {
       if(method != "L-BFGS-B") method <- "L-BFGS-B"
       warning("Error in 'optim()' for given method and additional arguments in '...', 
               optimization restarted with 'L-BFGS-B' and additional arguments ignored")
       opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
+                       hessian = (type.hessian == "numeric"), control = optim.control), silent = TRUE)
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'BFGS' and additional arguments ignored")
@@ -238,14 +238,14 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
         ## FIX ME: order of steps?
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                         hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
+                         hessian = (type.hessian == "numeric"), control = optim.control), silent = TRUE)
         if(inherits(opt, "try-error")) {
           warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'Nelder-Mead' and additional arguments ignored")
           #print(starteta)
           method <- "Nelder-Mead"
           opt <- optim(par = starteta, fn = nll, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol)
+                       hessian = (type.hessian == "numeric"), control = optim.control)
         }
       }
     }    
@@ -273,15 +273,15 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(is.null(family$hdist)) {
       if(family$mle) {
         nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "L-BFGS-B",
-                         hessian = TRUE, control = ocontrol, ...)$hessian)
+                         hessian = TRUE, control = optim.control, ...)$hessian)
         if(inherits(nhess, "try-error")) {
           #print("opt try-error in hess with gr=grad, L-BFGS-B")
           nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "BFGS",
-                       hessian = TRUE, control = ocontrol, ...)$hessian)
+                       hessian = TRUE, control = optim.control, ...)$hessian)
           if(inherits(nhess, "try-error")) {
             #print("opt try-error in hess with gr=grad, BFGS")
             nhess <- optim(par = eta, fn = nll, method = "BFGS",
-                               hessian = TRUE, control = ocontrol, ...)$hessian
+                               hessian = TRUE, control = optim.control, ...)$hessian
           }
         }
         hess <- -nhess

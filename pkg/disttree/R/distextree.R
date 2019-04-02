@@ -20,9 +20,10 @@ distextree <- function(formula,
   type.hessian <- control$type.hessian
   decorrelate <- control$decorrelate
   method <- control$method
-  ocontrol <- control$ocontrol 
+  optim.control <- control$optim.control 
 
-  control$type.hessian <- control$decorrelate <- control$method <- control$ocontrol <- NULL
+  ocontrol <- control
+  control$type.hessian <- control$decorrelate <- control$method <- control$optim.control <- NULL
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
@@ -81,7 +82,7 @@ distextree <- function(formula,
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start, start.eta = NULL,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                                 method = method, estfun = estfun, ocontrol = ocontrol)
+                                 method = method, estfun = estfun, optim.control = optim.control)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -208,7 +209,7 @@ distextree <- function(formula,
                   family = family,
                   #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: (ML) needed? 
                   fit = distexfit,
-                  control = control
+                  control = ocontrol
                   #dots = list(...)  #FIXME: (ML) needed? (from mob)
               )
   )
@@ -345,7 +346,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                type.hessian = c("checklist", "analytic", "numeric"),
                                decorrelate = c("none", "opg", "vcov"),
                                method = "L-BFGS-B",
-                               ocontrol = list(),   # FIXME: (ML) why an empty list? 
+                               optim.control = list(),   # FIXME: (ML) why an empty list? 
                                minsplit = NULL,     # FIXME: (ML) currently use mob default
                                minbucket = NULL,    # FIXME: (ML) currently use mob default
                                splittry = 1L,       # FIXME: (ML) currently use mob default
@@ -397,7 +398,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$type.hessian <- match.arg(type.hessian)
   ctrl$decorrelate <- match.arg(decorrelate)
   ctrl$method <- method
-  ctrl$ocontrol <- ocontrol
+  ctrl$optim.control <- optim.control
 
   ## Check the kind of tree
   if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
