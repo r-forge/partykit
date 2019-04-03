@@ -6,6 +6,8 @@ lagsarlmtree <- function(formula, data, listw = NULL, method = "eigen",
   dfsplit = TRUE, verbose = FALSE, plot = FALSE, ...)
 {
   ## remember call
+  if (!requireNamespace("spatialreg", quietly=TRUE))
+    warning("spdep model functions deprecated, install spatialreg")
   cl <- match.call()
 
   ## process listw
@@ -26,7 +28,7 @@ lagsarlmtree <- function(formula, data, listw = NULL, method = "eigen",
   ## initialization
   iteration <- 0L
   if (is.null(rhowystart)) {
-    rhowystart <- lagsarlm(rf0, data = data, listw = listw, method = method,
+    rhowystart <- spatialreg::lagsarlm(rf0, data = data, listw = listw, method = method,
       zero.policy = zero.policy, interval = interval, control = control)
     rhowystart <- rhowystart$rho * lag(listw, rhowystart$y)
   }
@@ -47,10 +49,10 @@ lagsarlmtree <- function(formula, data, listw = NULL, method = "eigen",
     ## estimate full lm model but force all coefficients from the
     ## .tree (and the overall intercept) to zero for the prediction
     lagsarlm <- if(length(levels(data$.tree)) > 1L) {
-      lagsarlm(rf, data = data, listw = listw, method = method,
+      spatialreg::lagsarlm(rf, data = data, listw = listw, method = method,
       zero.policy = zero.policy, interval = interval, control = control)
     } else {
-      lagsarlm(rf0, data = data, listw = listw, method = method,
+      spatialreg::lagsarlm(rf0, data = data, listw = listw, method = method,
       zero.policy = zero.policy, interval = interval, control = control)
     }
     data$.rhowy <- lagsarlm$rho * lag(listw, lagsarlm$y)
