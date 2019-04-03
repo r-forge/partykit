@@ -1,4 +1,4 @@
-## Replication material for Wagner & Zeileis (2017):
+## Replication material for Wagner & Zeileis (2019, German Economic Review):
 ## Heterogeneity and Spatial Dependence of Regional Growth in the EU:
 ## A Recursive Partitioning Approach
 
