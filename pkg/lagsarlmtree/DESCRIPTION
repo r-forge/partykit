@@ -9,7 +9,6 @@ Authors@R: c(person(given = "Martin", family = "Wagner", role = "aut", email = "
 Description: Model-based linear model trees adjusting for spatial correlation using a
              simultaneous autoregressive spatial lag, Wagner and Zeileis (2019)
 	     <doi:10.1111/geer.12146>.
-Depends: R (>= 3.1.0), partykit, spdep
+Depends: R (>= 3.1.0), partykit, spatialreg
 Imports: Formula (>= 1.2-1)
-Suggests: spatialreg
 License: GPL-2 | GPL-3
