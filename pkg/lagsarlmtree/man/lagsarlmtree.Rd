@@ -118,16 +118,14 @@ plot(tr, tp_args = list(which = 1))
 coef(tr, model = "tree")
 coef(tr, model = "rho")
 coef(tr, model = "all")
-if (requireNamespace("spatialreg", quietly=TRUE)) {
 system.time({
-ev <- spatialreg::eigenw(WeightsNUTS2$invw)
+ev <- eigenw(WeightsNUTS2$invw)
 tr1 <- lagsarlmtree(ggdpcap ~ gdpcap0 + shgfcf + shsh + shsm |
     gdpcap0 + accessrail + accessroad + capital + regboarder + regcoast + regobj1 + cee + piigs,
   data = GrowthNUTS2, listw = WeightsNUTS2$invw, method = "eigen",
   control = list(pre_eig = ev), minsize = 12, alpha = 0.05)
 })
 coef(tr1, model = "rho")
-}
 }
 
 \keyword{tree}

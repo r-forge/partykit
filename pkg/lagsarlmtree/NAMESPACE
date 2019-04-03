@@ -3,7 +3,7 @@ import("stats")
 import("graphics")
 import("grid")
 import("Formula")
-import("spdep")
+import("spatialreg")
 
 export(
   "lagsarlmtree",
