@@ -1,0 +1,92 @@
+---
+title: "Logistic Regression Tree: Titanic Survival Data"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+bibliography: party.bib
+vignette: >
+  %\VignetteIndexEntry{Logistic Regression Tree: Titanic Survival Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteDepends{partykit}
+  %\VignetteKeywords{GLM, tree, recursive partitioning, logit, Titanic}
+  %\VignettePackage{partykit}
+---
+
+```{r preliminaries, echo = FALSE, message = FALSE}
+library("partykit")
+knitr::opts_chunk$set(message = FALSE, warning = FALSE,
+  dev = "png", dpi = 100, out.width = "100%",
+  fig.height = 6, fig.width = 6, fig.align = "center", fig.show = "hold")
+```
+
+
+## Motivation: Women and children first?
+
+
+To illustrate how differences in treatment effects can be captured by MOB [@Zeileis+Hothorn+Hornik:2008],
+the Titanic survival data [see @Friendly+Symanzik+Onder:2019 for an overview]
+is considered: The question is whether "women and children first"
+is applied in the same way for all subgroups of the
+passengers of the Titanic. Or, in other words, whether the effectiveness of
+preferential treatment for women/children differed across subgroups.
+
+The `Titanic` data is provided in base R as a contingency
+table and transformed here to a `data.frame` for use with `glmtree()`:
+
+```{r Titanic-data}
+data("Titanic", package = "datasets")
+ttnc <- as.data.frame(Titanic)
+ttnc <- ttnc[rep(1:nrow(ttnc), ttnc$Freq), 1:4]
+names(ttnc)[2] <- "Gender"
+ttnc <- transform(ttnc, Treatment = factor(
+  Gender == "Female" | Age == "Child", levels = c(FALSE, TRUE),
+  labels = c("Male&Adult", "Female|Child")))
+```
+
+The resulting `ttnc` data provides factors `Survived` (yes/no), `Class` (1st,
+2nd, 3rd, crew), `Gender` (male, female), and `Age` (child, adult).
+Additionally, a factor `Treatment` is added that distinguishes women/children
+from male adults.
+
+
+## Treatment-subgroup interactions
+
+To investigate how the preferential treatment effect (`Survived ~ Treatment`)
+differs across the remaining explanatory variables, the following
+logistic-regression-based tree is considered. The significance
+level of `alpha = 0.01` is employed here to avoid overfitting and separation
+problems in the logistic regression.
+
+```{r Titanic-tree}
+ttnc_tree <- glmtree(Survived ~ Treatment | Class + Gender + Age,
+  data = ttnc, family = binomial, alpha = 0.01)
+ttnc_tree
+```
+
+The corresponding tree can be visualized with `plot(ttnc_tree)` where
+spinograms in the leaves show survival status versus preferential treatment
+(women or children). This shows that the treatment differs strongly across passengers
+classes. The plot with some small tweaks in the layout is given by:
+
+```{r Titanic-plot, fig = TRUE, fig.height = 6, fig.width = 10}
+plot(ttnc_tree, tp_args = list(ylines = 1, margins = c(1.5, 1.5, 1.5, 2.5)))
+```
+
+The treatment effect is much lower in the 3rd class where women/children still have
+higher survival rates than adult men but the odds ratio is much lower compared to
+all remaining classes. The split between the 2nd and the remaining two classes (1st, crew)
+is due to a lower overall survival rate (intercepts of `r round(coef(ttnc_tree)[2, 1], digits = 2)` and 
+`r round(coef(ttnc_tree)[3, 1], digits = 2)`, respectively) while the odds ratios
+associated with the preferential treatment are rather similar
+(`r round(coef(ttnc_tree)[2, 2], digits = 2)` and `r round(coef(ttnc_tree)[3, 2], digits = 2)`,
+respectively).
+
+Another option for assessing the class effect would be to immediately split into
+all four classes rather than using recursive binary splits. This can be obtained
+by setting `catsplit = "multiway"` in the `glmtree()` call above. This
+yields a tree with just a single split but four kid nodes.
+
+
+## References

@@ -25,4 +25,4 @@ Suggests: XML, pmml, rJava, sandwich, strucchange, vcd,
 LazyData: yes
 License: GPL-2 | GPL-3
 URL: http://partykit.R-Forge.R-project.org/partykit
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
