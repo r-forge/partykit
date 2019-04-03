@@ -9,6 +9,7 @@ inst/ERCIM-2011
 inst/Psychoco-2014
 inst/NUS-2014
 inst/guideliketest
+inst/pkgdown
 R/asymptote.R
 R/meanvartree.R
 R/mtree.R
