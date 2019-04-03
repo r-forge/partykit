@@ -126,8 +126,9 @@ pplot(treep, 3)
 GrowthNUTS2$.tree <- factor(predict(m_stree, type = "node"))
 models <- Filter(x = WeightsNUTS2,
   f = function(w) all(rowSums(listw2mat(w)) > 0))
-models <- sapply(models, function(w) coef(
-  lagsarlm(ggdpcap ~ 0 + .tree / (gdpcap0 + shgfcf + shsh + shsm), data = GrowthNUTS2, listw = w)
+if (requireNamespace("spatialreg", quietly=TRUE)) {
+models <- sapply(models, function(w) spatialreg::coef.sarlm(
+  spatialreg::lagsarlm(ggdpcap ~ 0 + .tree / (gdpcap0 + shgfcf + shsh + shsm), data = GrowthNUTS2, listw = w)
 ))
 rho <- models[1,]
 models <- t(models[-1, ])
@@ -152,4 +153,5 @@ for(i in 1:k) {
     legend("topright", c("all W", "inv W", "OLS"),
       pch = c(NA, 1, 2), col = c("gray", "black", "black"), lty = c(1, 1, NA), lwd = 2, bty = "n")
   }
+}
 }
