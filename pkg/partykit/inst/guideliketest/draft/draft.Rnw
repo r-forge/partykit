@@ -1283,7 +1283,7 @@ d3way$xi <- factor(d3way$xi, levels = c(0,0.8), labels = c(0,0.8))
 xyplot(pval_z1 ~ cat | xi, 
        groups = interaction(bin, res_scores), 
        data = d3way, 
-       ylim = c(0,0.5),
+       ylim = c(0,0.65),
        type = c("a"), 
        col = c(pal[1], pal[3], pal[1], pal[3]),
        lty = c(1,1,2,2),
