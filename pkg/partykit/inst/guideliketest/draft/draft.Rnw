@@ -1743,9 +1743,7 @@ effect whether the maximal selection (MOB, CTree\_max) or the linear selection (
 \begin{figure}%%[t]
 \setkeys{Gin}{width=\linewidth}
 <<contbeta, fig=TRUE, echo=FALSE, height=4, width=8>>=
-load("../sim/simres20181122_stump.rda")
-sim_stump_cont <- simres$res
-subdata <- subset(sim_stump_cont, test %in% c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"))
+subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"))
 #subdata <- subset(subdata, delta %in% c(0, 0.1, 0.2, 0.3, 0.4, 0.5))
 subdata$test <- factor(subdata$test, 
                        levels = c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"),
@@ -1758,7 +1756,7 @@ xyplot(prop_Tsplit ~ delta | vary_beta, groups = ~ test,
        data = subdata, 
        subset = binary_beta == FALSE & binary_regressor == FALSE & 
          only_intercept == FALSE, 
-       #xlim = c(0,0.1,0.5),
+       scales=list(x=list(at=seq(1,11,2))),
        type = "l", 
        layout= c(3,1),
        lwd = 2,
