@@ -120,16 +120,18 @@ measurements.
 
 % Sections and subsections (do not use lower levels):
 
-%\section{Motivation}
-%Circular response variables occur in a variety of applications and subject areas. 
-%For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
-%animal orientation or gene-structure analysis are often subject of examination in biology, 
-%and wind direction is one of the most important weather variables in meteorology.
-%Representing such a two-dimensional direction by an angle in a unity circle requires 
-%the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
-%rotation. However, these settings can vary but should not influence statistical 
-%inference from a fitted model.
-%For that reason circular data demand for purpose-built statistical methods. 
+\section{Motivation}
+\textit{FIXME: should we include this section 'Motivation'?}
+
+Circular response variables occur in a variety of applications and subject areas. 
+For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
+animal orientation or gene-structure analysis are often subject of examination in biology, 
+and wind direction is one of the most important weather variables in meteorology.
+Representing such a two-dimensional direction by an angle in a unity circle requires 
+the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
+rotation. However, these settings can vary but should not influence statistical 
+inference from a fitted model.
+For that reason circular data demand for purpose-built statistical methods. 
 %A commonly chosen distribution for modeling circular data is the von Mises distribution.
 %Estimating its two distribution parameters by generalized additive models using a set of 
 %regressor variables is one possible approach that can be successful in various settings.
@@ -141,7 +143,7 @@ measurements.
 
 \section{Methodology}
 
-Distributional trees~(Schlosser et.~al, 2018) fuse distributional regression modeling with
+Distributional trees~(Schlosser et.~al, 2019) fuse distributional regression modeling with
 regression trees based on the unbiased recursive partitioning algorithms MOB~(Zeileis et.~al, 2008)
 or CTree~(Hothorn et.~al, 2006). The basic idea is to partition the covariate space recursively into 
 subgroups such that an (approximately) homogeneous distributional model can be fitted to the response 
@@ -180,6 +182,7 @@ is met (e.g., subgroup size or tree depth).
 
 \section{Application}
 
+%% exchange file name of figure: schlosser-circtree_plot.pdf -> schlosserfig1.pdf
 \begin{figure}[p!]\centering
 \includegraphics[height = .5\textheight,angle=90,origin=c]{schlosser-circtree_plot.pdf}
 \caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
@@ -227,17 +230,51 @@ in covariates without prespecification of such effects. This is particularly
 useful for modeling wind direction in mountainous terrain where wind shifts
 can occur due to turns of the pressure gradients along a valley.
 
-A natural extension are ensembles (or forests) of such circular trees
-that can improve forecasts by regularizing and stabilizing the model
-(see Schlosser et.~al~(2018) for a general discussion of distributional forests). 
-
-Another possible improvement for obtaining more parsimonious and more stable trees is to
-consider splitting circular covariates into two circle segments by searching two
-split points simultaneously (rather than sequentially at different depths as
-for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
-
 \textsf{R} packages implementing the proposed methods are under development at
 \texttt{https://R-Forge.R-project.org/projects/partykit/}.
+
+\subsection{Ensembles/Random Forests}
+A natural extension are ensembles (or forests) of such circular trees
+that can improve forecasts by regularizing and stabilizing the model.
+Random forests introduced by Breiman~et.~al~(1984) average the
+predictions of an ensemble of trees, each built on a subsample 
+or bootstrap of the original data. 
+A different strategy of combining trees is employed in distributional forests 
+(Schlosser~et.~al, 2019) which can also be seen as adaptive local likelihood models. 
+For a possibly new observation $x$ weights $w_i(x)$ are obtained by counting the 
+number of trees in which it is assigned to the same terminal node as a learning
+observation $y_i, i \in \{1,\ldots,n\}$.
+The parameters $\mu$ and $\kappa$ can then be estimated specifically for the (new) 
+observation $x$ by applying the weighted maximum likelihood estimator
+$$
+\operatorname{argmax}\displaylimits_{\mu, \kappa} \sum_{i=1}^n w_i(x) \cdot \ell(\mu, \kappa; y_i). 
+$$
+In that way predictions are made mainly based on similar observations rather than the 
+complete learning data.
+
+\subsection{Splits in Circular Variables}
+Another possible improvement for obtaining more parsimonious and more stable trees is to
+consider splitting circular covariates into two circle segments by searching two split 
+points simultaneously (rather than sequentially at different depths as for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
+In particular, the search for the best separation of the data space into two intervals is based on the optimization problem
+$$
+\max \sum_{y \in \mathit{left}} \ell(\hat{\mu_1}, \hat{\kappa_1}; y) + \sum_{y \in \mathit{right}} \ell(\hat{\mu_2}, \hat{\kappa_2}; y)
+$$
+where $\hat{\mu_1}$, $\hat{\kappa_1}$, $\hat{\mu_2}$, $\hat{\kappa_2}$ are the estimated parameters for the corresponding subsets of the response as defined by the intervals, here generally denoted by \textit{``left''} and \textit{``right''}.
+In case of a linear split variable these intervals can be defined by a single split point. 
+By treating a circular variable such as wind direction linearly as done in the presented 
+application the considered space~$[0,2\pi)$ is then split by a split point $\nu$ into
+$\mathit{left}=[0,\nu]$ and $\mathit{right}=(\nu,2\pi)$ enforcing an unnatural separation at $0$. 
+Moreover, further splits are often required to obtain properly fitting subintervals of~$[0,2\pi)$.
+This can be avoided by searching for two split points $\nu$ and $\tau$ within the maximization
+process such that $\mathit{left}=[\nu,\tau]$ and $\mathit{right}=[0,\nu) \cup (\tau,2\pi]$.
+The required test statistic to maximally select two split points simultaneously is readily 
+available in the \textsf{R} package \texttt{coin} and could be enhanced as proposed by Hothorn 
+and Zeileis~(2008). For a score-based approach the general strategy of double maximum tests 
+introduced by Bai and Perron~(2003) can be considered. 
+Hence, the splitting idea can be extended naturally to a two point-search, however, for 
+an unbiased and inference based selection the corresponding tests employing a proper
+asymptotic null distribution still need to be implemented.
 
 
 \bigskip
@@ -251,14 +288,24 @@ Agency~(FFG) grant no.~$858537$.}
 \references
 \begin{description}
 
-%\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
-%     Classification and Regression Trees.
-%     {\it Wadsworth}.
+\item[Bai, J., and Perron, P.] (2003).
+     Computation and Analysis of Multiple Structural Change Models.
+     {\it Journal of Applied Econometrics}, {\bf 18},
+     1\,--\,22.     
+     
+\item[Breiman, L., Friedman, J. H., Olshen, R. A., and Stone, C. J.] (1984).
+     Classification and Regression Trees.
+     {\it Wadsworth}.
 
 \item[Hothorn, T., Hornik, K., and Zeileis, A.] (2006).
      Unbiased Recursive Partitioning: A Conditional Inference Framework.
      {\it Journal of Computational and Graphical Statistics}, {\bf 15}, 3,
      651\,--\,674. 
+     
+\item[Hothorn, T., and Zeileis, A.] (2008).
+     Generalized Maximally Selected Statistics.
+     {\it Biometrics}, {\bf 64}, 4,
+     1263\,--\,1269. 
 
 \item[Jammalamadaka, S. R. and Sengupta, A.] (2001).
      {\it Topics in Circular Statistics}.
@@ -273,7 +320,7 @@ Agency~(FFG) grant no.~$858537$.}
 %     {\it Journal of the Royal Statistical Society C}, {\bf 54}, 3,
 %     507\,--\,554.
 
-\item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2018).
+\item[Schlosser, L., Hothorn, T., and Zeileis, A.] (2019).
      Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.
      arXiv:1804.02921, {\it arXiv.org E-Print Archive}.
 
