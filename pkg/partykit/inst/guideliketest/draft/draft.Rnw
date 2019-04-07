@@ -148,7 +148,7 @@ A Unifying View of CTree, MOB, and GUIDE}
 A core step of every algorithm for learning regression trees is the decision if, 
 how, and where to split the underlying data - or, in other words, the selection 
 of the best splitting variable from the available covariates and the corresponding 
-split point. Early tree algorithms (e.g., AID, CART) employ greedy search strategies 
+split point. Early tree algorithms (e.g., AID, CART) employed greedy search strategies 
 that directly compare all possible split points in all available covariates. However, 
 subsequent research showed that this is biased towards selection of covariates with 
 more potential split points. Therefore, unbiased recursive partitioning algorithms 
@@ -159,13 +159,17 @@ function is selected in the chosen split variable. However, different unbiased t
 algorithms employ different inference frameworks for computing these $p$-values and 
 their relative advantages or disadvantages are not well understood, yet.
 
-Therefore, three different approaches are considered here and embedded into a common 
-modeling framework with special emphasis to linear model trees: classical categorical 
-association tests (GUIDE), conditional inference (CTree), parameter instability 
-tests (MOB). It is assessed how different building blocks affect the power of the 
-tree algorithms to select the appropriate covariates for splitting: residuals vs.\ full 
-model scores, binarization of residuals/scores at zero, binning of covariates, 
-conditional vs.\ unconditional approximations of the null distribution.
+Therefore, three different popular approaches are considered here: classical categorical 
+association tests (GUIDE), conditional inference (CTree), and parameter instability 
+tests (MOB). First, these are embedded into a common inference framework encompassing
+parametric model trees, in particular linear model trees. Second, it is assessed how
+different building blocks from this common framework affect the power of the 
+tree algorithms to select the appropriate covariates for splitting: observation-wise
+goodness-of-fit measure (residuals vs.\ model scores), binarization of residuals/scores
+at zero, binning of covariates, conditional vs.\ unconditional approximations of the
+null distribution. This shows that specifically the goodness-of-fit measure is crucial
+for the power of the procedures, with model scores without binarization performing
+much better in many scenarios.
 }
 \Keywords{classification and regression trees, independence tests, recursive partitioning}
 
@@ -199,7 +203,7 @@ especially if the data contains lots of different features with strong variation
 and complex interactions. Therefore, separating the data into more homogeneous subgroups 
 based on a set of covariates first can simplify the task and fitting a local model to 
 each of the resulting subgroups often leads to better results. This separation can be 
-done by applying a tree algorithm. While all of the many developed algorithms 
+done by applying a tree algorithm. While almost all algorithms proposed in the literature
 follow the general idea of splitting the data such that some objective function is optimized, 
 they differ in their specific approaches to selecting a split variable and the corresponding 
 split point. 
@@ -216,26 +220,27 @@ CHAID \citep{Kass:1980}, GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zei
 and MOB \citep{Zeileis+Hothorn+Hornik:2008}.
 For the first step of selecting a split variable they all share the same basic concept of 
 choosing the covariate which shows the highest association to the response variable 
-based on $p$-values provided by a statistical test. While QUEST, CHAID and GUIDE employ 
+based on $p$-values provided by a statistical test. While QUEST, CHAID, and GUIDE employ 
 statistical significance tests for contingency tables, CTree applies permutation tests in 
-a conditional inference framework and MOB uses fluctuation tests based on asymptotic theory. 
-All these approaches have shown to work well for various situations, however, the specific 
-advantages and disadvantages of each of the testing strategies have not yet been 
-investigated and compared in detail.
+a conditional inference framework and MOB uses fluctuation tests based on central limit theorems
+for the parameter estimators. 
+All these approaches have shown to work well for various situations, however, the relative
+(dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
 i.e. the task of selecting the best split variable. In particular, the approach of the 
 GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
 by investigating the building blocks of their testing strategies in which they differ:
-(1)~Transformations of the response: using residuals or full model scores
-(2)~Binarization of residuals/scores
+(1)~Transformations of a goodness-of-fit measure for the response: using residuals or full model scores.
+(2)~Binarization of these residuals or scores.
 (3)~Categorization of covariates.
+(4)~Approximations of the null distribution: conditional vs.\ unconditional.
 For this purpose, a unifying framework for testing strategies in unbiased model-based tree 
-algorithms is presented such that each of the three strategies GUIDE, CTree, and MOB can be 
-obtained by a specific combination of the available building blocks. In that way, the 
-effects of each of these features can be investigated separately by varying the building 
-blocks in the tool box provided by this general framework. 
-Additionally, the impact of applying either a pre- or postpruning strategy is analyzed.
+algorithms is presented such that each of the three strategies in GUIDE, CTree, and MOB can be 
+obtained by a specific combination of the available building blocks. This allows to systematically
+vary the building blocks and assess the power of the resulting inference procedure. Moreover,
+it is investigated whether the performance of the inference impacts the performance of the
+trees differently under pre- vs.\ post-pruning.
 
 Depending on the setup different effects can be observed for the investigated building blocks.
 However, none of the results contradicts the conclusion that in general using all available 
@@ -244,9 +249,10 @@ residuals. Also regarding the effects of binarizing residuals or scores at $0$ o
 the values of possible split variables clear recommendations can be given based on the presented 
 results.
 
-In the first part of Section~\ref{sec:urp} a basic scheme on how to build a tree model is given. 
-After explaining the investigated algorithms CTree (Section~\ref{sec:ctree}), 
-MOB (\ref{sec:mob}), and GUIDE (\ref{sec:guide}) more in detail the applied pruning strategies 
+The remainder of this manuscript is structured as follows:
+Section~\ref{sec:urp} reviews unbiased tree models, starting with the general algorithmic idea
+(Section~\ref{sec:generic_alg}) followed by the specific algorithms CTree (Section~\ref{sec:ctree}), 
+MOB (\ref{sec:mob}), and GUIDE (\ref{sec:guide}), before possible pruning strategies 
 (\ref{sec:pruning}) are discussed.
 In Section~\ref{sec:unify} the unifying framework for testing strategies in model-based unbiased 
 recursive partitioning algorithms is presented.
@@ -255,24 +261,24 @@ and the results are illustrated and discussed in Section~\ref{sec:results}.
 
 
 
-\section{Unbiased Recursive Partitioning}
+\section{Unbiased recursive partitioning}
 \label{sec:urp}
 
-\subsection{Generic Algorithm}
+\subsection{Generic algorithm}
 \label{sec:generic_alg}
 The basic idea of building a regression tree model is to partition the data into smaller 
 and more homogeneous subgroups based on a set of covariates. Various different tree 
 algorithms have been developed, all following the same general structure starting at 
 the root of the tree which is simply the first node containing all available data:
 \begin{enumerate}
-\item For the whole underlying data set in the current node some form of discrepancy 
+\item For the data set in the current node some form of discrepancy 
 measure is calculated. 
 \item Among all available covariates one is selected as split variable and a value 
 within the range/measurable space of this variable is chosen as split point such that 
 after splitting the data into subgroups the discrepancy measure is minimal within the 
 resulting nodes.
 \item Steps 1 and 2 are repeated within each new node until either a stopping criterion
-is reached or the data in the node consists of only one or all equal observations. 
+is reached. 
 \end{enumerate}
 
 
@@ -484,7 +490,7 @@ and investigate how effective they are as significance tests.
 
 
 
-\section{Unifying Framework}\label{sec:unify}
+\section{Unifying framework}\label{sec:unify}
 Each of the algorithms CTree, GUIDE, and MOB can be characterized by its combination
 of the type of fitted models, the type of applied tests and the employed pruning strategy
 as listed in Table~\ref{tab:combinations}. These settings represent the algorithms in their
@@ -497,23 +503,23 @@ with postpruning are evaluated as well to show the impact of the choice of pruni
 From here on the names CTree, MOB, and GUIDE are used to refer to the algorithm-specific
 testing strategies rather than the complete algorithms.
 
-\begin{table}[t]
+\begin{table}[t!]
 \centering
-\caption[Table caption text]{Combinations of fitted model type, test type and pruning strategy
-for the algorithms CTree, MOB, and GUIDE.}
-\label{tab:combinations}
 \begin{tabular}{ l l l l }
 \hline 
       & Fit             & Test                     & Pruning \\ 
 \hline
-CTree & non-parametric  & conditional inference    & pre\\
-MOB   & parametric      & score-based fluctuation  & pre (or post with AIC/BIC)\\
-GUIDE & parametric      & residual-based $\chi^2$  & post (cost-complexity pruning)\\
+CTree & Non-parametric  & Conditional inference    & Pre\\
+MOB   & Parametric      & Score-based fluctuation  & Pre (or post with AIC/BIC)\\
+GUIDE & Parametric      & Residual-based $\chi^2$  & Post (cost-complexity pruning)\\
 \hline
 \end{tabular}
+\caption{Combinations of fitted model type, test type and pruning strategy
+for the algorithms CTree, MOB, and GUIDE.
+\label{tab:combinations}}
 \end{table}
 
-\subsection{Unification of Testing Strategies}
+\subsection{Unification of testing strategies}
 
 Even though CTree, MOB, and GUIDE differ in the specific tests they apply (see second column of
 Table~\ref{tab:combinations}) their approaches on how to select a split variable follow the same
@@ -529,7 +535,7 @@ for the standard setup of CTree, MOB, and GUIDE are listed in Table~\ref{tab:bui
 gives a more detailed overview of the differences in the second column of Table~\ref{tab:combinations}.
 
 
-\subsection{Building Blocks of Testing Strategies}\label{sec:buildingblocks}
+\subsection{Building blocks of testing strategies}\label{sec:buildingblocks}
 The three following building blocks all refer to the way how the given data is prepared/transformed
 before employing a statistical test to select a split variable.
 \begin{itemize}
@@ -568,26 +574,26 @@ allow for certain modifications of this standard setup. For example, a different
 can be selected in CTree considering a maximum value as in MOB.
 
 
-\begin{table}[t]
+\begin{table}[t!]
 \centering
-\caption[Table caption text]{Testing strategies of CTree, MOB, and GUIDE with the corresponding
-setting of the building blocks in the unifying framework and the type of test statistic.}
-\label{tab:buildingblocks}
-\begin{tabular}{ l c c c c }
+\begin{tabular}{ l l l l l }
 \hline 
       & Scores       & Binarization  & Categorization  & Statistic\\
 \hline
-CTree & Model scores & --	           & -- 	           & Sum of squares\\
-MOB   & Model scores & --	           & -- 	           & Maximally selected\\
+CTree & Model scores & --	     & -- 	       & Sum of squares\\
+MOB   & Model scores & --	     & -- 	       & Maximally selected\\
 GUIDE & Residuals    & \checkmark    & \checkmark      & Sum of squares\\
 \hline
 \end{tabular}
+\caption{Testing strategies of CTree, MOB, and GUIDE with the corresponding
+setting of the building blocks in the unifying framework and the type of test statistic.
+\label{tab:buildingblocks}}
 \end{table}
 
 
 %\newpage
 
-\subsection{Linear Model Tree}\label{sec:lmtrees}
+\subsection{Linear model tree}\label{sec:lmtrees}
 As an example a linear model tree is considered as this allows for an easy and well structured 
 description of the investigated subjects. However, the conclusions drawn from this example also 
 hold for a wide range of other model types. 
@@ -634,7 +640,7 @@ parameter $\beta_1$ (second column) are considered.
 
 \newpage
 
-\section{Simulation Setting and Evaluation}
+\section{Simulation setting and evaluation}
 \label{sec:simulation}
 
 In this simulation study two different scenarios are considered for the linear model trees
@@ -653,16 +659,13 @@ In the following the data generating process is explained in detail for the firs
 The second, more complex scenario employs the same basic structure simply adding another split
 as illustrated in Figure~\ref{fig:dgp_tree}.
 
-\subsection{Data Generating Process}
+\subsection{Data generating process}
 Each generated data set consists of a response variable, one regressor, one split 
 variable and nine noise variables as listed in Table~\ref{tab:variables} 
 together with the corresponding distributions.
 
 \begin{table}
-\begin{center}
-\caption[Table caption text]{Variables included in the data generating process of 
-the first scenario (stump).}
-\label{tab:variables}
+\centering
 \begin{tabular}{l l l}
 \hline
 Name                    & Notation                   & Specification \\
@@ -681,7 +684,9 @@ True split point               & $\xi$      & $\in \{0, 0.2, 0.5, 0.8\}$ \\
 Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ \\
 \hline
 \end{tabular}
-\end{center}
+\caption{Variables included in the data generating process of 
+the first scenario (stump).
+\label{tab:variables}}
 \end{table}
 
 The location parameter $\mu$ of the normally distributed response variable $Y$ depends
@@ -1046,9 +1051,6 @@ to a predefined level of significance $\alpha = 0.05$. Only if the smallest $p$-
 than $\alpha$ a split is performed and the covariate corresponding to this $p$-value is selected. 
 
 
-
-
-%\newpage
 \section{Results}
 \label{sec:results}
 
@@ -1059,29 +1061,11 @@ Then the testing strategies are evaluated on the more
 complex tree structure of the second scenario in Section~\ref{sec:tree}. 
 The corresponding results are shown in the following plots.
 
-\subsection{Residuals vs. Full Model Scores}
+\subsection[Residuals vs. full model scores]{Residuals vs.\ full model scores}
 \label{sec:scores}
 To assess the impact of using only residuals or the full score matrix four testing
 strategies are compared: CTree, GUIDE, MOB (all three in their original form),
 and additionally the GUIDE strategy using the full score matrix (denoted by GUIDE\_scores).
-%Thus, the four strategies are obtained from the unifying framework by setting the switches 
-%as listed in Table~\ref{tab:buildingblocks_scores}.
-
-%\begin{table}%[t]
-%\centering
-%\caption[Table caption text]{CTree, MOB, GUIDE, and GUIDE\_scores with the corresponding setting of
-%the switches in the unifying framework and the approximation type of the underlying null 
-%distribution.}
-%\label{tab:buildingblocks_scores}
-%\begin{tabular}{ l c c c c }
-%\hline 
-%            & Scores            & Binarization  & Categorization  & Null distribution \\ \hline
-%CTree       & full model scores & --          & --              & conditional\\
-%MOB         & full model scores & --          & --              & unconditional\\
-%GUIDE       & residuals         & \checkmark  & \checkmark      & unconditional\\
-%GUIDE\_scores & full model scores & \checkmark  & \checkmark      & unconditional\\ \hline
-%\end{tabular}
-%\end{table}
 
 
 \begin{figure}
@@ -1177,7 +1161,7 @@ binarizing scores has a negative effect on the ability to detect the right split
 To elaborate these effects more in detail the results for all possible combinations of the 
 building blocks are discussed in a full factorial 3-way analysis.
 
-\subsection{Full Factorial Analysis}\label{sec:3way}
+\subsection{Full factorial analysis}\label{sec:3way}
 In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for the most general
 case where the intercept and slope parameter are both varying and the true split point is in the
 center, i.e. $\xi=0$. Based on the results shown in Figure~\ref{fig:scores_stump} the effect size 
@@ -1193,21 +1177,21 @@ Appendix~\ref{app:combinations}, Table~\ref{tab:combinations_appendix}.
 
 \begin{table}[h!]
 \centering
-\caption[Table caption text]{Available levels of the building blocks.}
-\label{tab:levels}
 \begin{tabular}{ l l l }
 \hline
 Building Block         & Levels              & Effect \\
 \hline
-Residuals vs.\ Scores  & \textit{residuals}  & use only residuals\\
-                       & \textit{scores}     & use full score matrix\\
-Categorization         & \textit{cat}        & categorize split variables\\
-                       & \textit{max}        & selected split variables maximally w.o. categorization\\
-                       & \textit{lin}        & selected split variables linearly w.o. categorization\\
-Binarization           & \textit{bin}        & binarize scores\\
-                       & \textit{lin}        & use residuals/score values without binarization\\
+Residuals vs.\ scores  & \textit{residuals}  & Use only residuals\\
+                       & \textit{scores}     & Use full score matrix\\
+Categorization         & \textit{cat}        & Categorize split variables\\
+                       & \textit{max}        & Selected split variables maximally w.o. categorization\\
+                       & \textit{lin}        & Selected split variables linearly w.o. categorization\\
+Binarization           & \textit{bin}        & Binarize scores\\
+                       & \textit{lin}        & Use residuals/score values without binarization\\
 \hline
 \end{tabular}
+\caption{Available levels of the building blocks.
+\label{tab:levels}}
 \end{table}
 
 
@@ -1403,7 +1387,7 @@ MOB, GUIDE, GUIDE\_scores.}
 
 
 
-\subsection{Prepruning vs. Postpruning}
+\subsection[Pre-pruning vs. post-pruning]{Pre-pruning vs.\ post-pruning}
 
 To elaborate the impact of the choice of a pruning strategy
 the tree models presented in Figure~\ref{fig:tree_ari} are built again, but this time
@@ -1579,7 +1563,7 @@ scores clearly outweigh the price of of testing all parameters.
 
 %\newpage
 
-\section*{Computational Details}
+\section*{Computational details}
 \label{sec:comp}
 The applied implementation is based on the \textsf{R} package \textbf{partykit}
 (version~\Sexpr{packageVersion("partykit")}) which is available 
@@ -1595,7 +1579,7 @@ established/constructed using the basic framework of \code{ctree} and \code{mob}
 
 
 
-\section*{Acknowledgements}
+\section*{Acknowledgments}
 \hlc{An extended research stay of Torsten Hothorn in Innsbruck (August
 2017 to January 2018) was financially supported by the Swiss National
 Science Foundation, grant number SNF IZSEZ0 177091.}
@@ -1606,7 +1590,7 @@ Science Foundation, grant number SNF IZSEZ0 177091.}
 \section*{Appendix}
 \begin{appendix}
 
-\section{Applied Combinations of Building Blocks}\label{app:combinations}
+\section{Combinations of building blocks applied}\label{app:combinations}
 For the evaluation of all 12 possible combinations of the presented building blocks
 the original testing strategies CTree, MOB, and GUIDE have been applied together
 with modified versions of them. The employed versions and the corresponding combination
@@ -1619,12 +1603,9 @@ test as represented by the different building blocks. In that way,
 ``\_cat'' to applying a categorization of split variables,
 ``\_bin'' to applying a binarization of scores/residuals.
 
-\begin{table}%[t]
+\begin{table}[t!]
 \centering
-\caption[Table caption text]{Applied testing strategies representing the 12 combinations
-of building blocks.}
-\label{tab:combinations_appendix}
-\begin{tabular}{ l c c c }
+\begin{tabular}{ l l l l }
 \hline 
 Testing Strategy  & Residuals/Scores   & Binarization & Categorization \\
 \hline
@@ -1642,10 +1623,13 @@ MOB               & scores             & lin          & max \\
 CTree             & scores             & lin          & lin \\
 \hline
 \end{tabular}
+\caption{Testing strategies applied (representing the 12 combinations
+of building blocks).
+\label{tab:combinations_appendix}}
 \end{table}
 
 
-\section{Significance Level}\label{app:significance}
+\section{Significance level}\label{app:significance}
 In Section~\ref{sec:scores} the investigated testing strategies are compared based
 on the number of cases in which the true split variable $Z_1$ is detected with a $p$-value
 smaller than the predefined significance level $\alpha = 0.05$. This choice of measurement
@@ -1714,7 +1698,7 @@ CTree, MOB, GUIDE, GUIDE\_scores.}
 
 
 
-\section{Simulation Results for Continuous Model Parameters}
+\section{Simulation results for continuous model parameters}
 \label{app:contbeta}
 In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
 and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
@@ -1786,10 +1770,10 @@ CTree, CTree\_max, MOB, GUIDE, GUIDE\_scores.}
 
 
 
-\section{Results Over Increasing Effect Size}
+\section{Results for increasing effect size}
 \label{app:increasingdelta}
 
-\subsection{Binarization of Residuals/Scores}
+\subsection{Binarization of residuals/scores}
 \label{app:binarization}
 To elaborate over an increasing effect size whether a binarization of the residuals/scores at $0$ 
 leads to an improvement or a deterioration of performance CTree and MOB are applied, once in their 
@@ -1798,25 +1782,6 @@ scores at $0$ (CTree\_bin, MOB\_bin). Moreover, they are compared to the adapted
 which includes all available scores (GUIDE\_scores).
 %Hence, the five strategies are obtained from the unifying framework by setting the switches 
 %as listed in Table~\ref{tab:buildingblocks_appendix}.
-
-%\begin{table}%[t]
-%\centering
-%\caption[Table caption text]{CTree, CTree\_bin, MOB, MOB\_bin, and GUIDE\_scores with the 
-%corresponding setting of the switches in the unifying framework and the approximation type 
-%of the underlying null distribution.}
-%\label{tab:buildingblocks_appendix}
-%\begin{tabular}{ l c c c c }
-%\hline 
-%& Scores            & Binarization  & Categorization  & Null distribution \\ 
-%\hline
-%CTree       & full model scores & --          & --            & conditional\\
-%CTree\_bin  & full model scores & \checkmark  & --            & conditional\\
-%MOB         & full model scores & --          & --            & unconditional\\
-%MOB\_bin    & full model scores & \checkmark  & --            & unconditional\\
-%GUIDE\_scores & full model scores & \checkmark  & \checkmark    & unconditional\\
-%\hline
-%\end{tabular}
-%\end{table}
 
 Figure~\ref{fig:bin_stump} shows the effect of binarizing the score values over
 different values for the true split point $\xi$, however, all four situations
@@ -1894,33 +1859,12 @@ strategies are compared: CTree, CTree\_bin, MOB, MOB\_bin, GUIDE\_scores.}
 
 
 
-\subsection{Categorization of Splitting Variables}
+\subsection{Categorization of splitting variables}
 \label{app:categorization}
 To investigate the effect of categorizing the possible splitting variables CTree and MOB are
 applied, once in their original version without a categorization and once in an adapted version
 with a categorization of the possible split variables (CTree\_cat and MOB\_cat). 
 Moreover, they are also compared to GUIDE\_scores which includes all available scores.
-%The corresponding setting of the switches in the unifying framework is listed in 
-%Table~\ref{tab:buildingblocks_cat}.
-
-%\begin{table}%[t]
-%\centering
-%\caption[Table caption text]{CTree, CTree\_cat, MOB, MOB\_cat, and GUIDE\_scores with the 
-%corresponding setting of the switches in the unifying framework and the approximation type 
-%of the underlying null distribution.}
-%\label{tab:buildingblocks_cat}
-%\begin{tabular}{ l c c c c }
-%\hline 
-%& Scores            & Binarization  & Categorization  & Null distribution \\ 
-%\hline
-%CTree       & full model scores & --          & --              & conditional\\
-%CTree\_cat  & full model scores & --          & \checkmark      & conditional\\
-%MOB         & full model scores & --          &                 & unconditional\\
-%MOB\_cat    & full model scores & --          & \checkmark      & unconditional\\
-%GUIDE\_scores & full model scores & \checkmark  & \checkmark      & unconditional\\
-%\hline
-%\end{tabular}
-%\end{table}
 
 In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the performance 
 is illustrated over increasing effect size for four different values of the true split 
