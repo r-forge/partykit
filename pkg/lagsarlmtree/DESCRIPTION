@@ -1,6 +1,6 @@
 Package: lagsarlmtree
 Title: Spatial Lag Model Trees
-Date: 2019-04-03
+Date: 2019-04-06
 Version: 1.0-1
 Authors@R: c(person(given = "Martin", family = "Wagner", role = "aut",
                     email = "mwagner@statistik.tu-dortmund.de"),
