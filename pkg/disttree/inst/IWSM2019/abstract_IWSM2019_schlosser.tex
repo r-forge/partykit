@@ -121,17 +121,24 @@ measurements.
 % Sections and subsections (do not use lower levels):
 
 \section{Motivation}
-\textit{FIXME: should we include this section 'Motivation'?}
+%\textit{FIXME: should we include this section 'Motivation'?}
 
-Circular response variables occur in a variety of applications and subject areas. 
-For example, gun crime data on a $24$-hour scale is analysed in the social-economics, 
-animal orientation or gene-structure analysis are often subject of examination in biology, 
-and wind direction is one of the most important weather variables in meteorology.
-Representing such a two-dimensional direction by an angle in a unity circle requires 
-the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
-rotation. However, these settings can vary but should not influence statistical 
-inference from a fitted model.
-For that reason circular data demand for purpose-built statistical methods. 
+Circular data can be found in a variety of applications and subject areas, 
+e.g., hourly crime rate in the social-economics, 
+animal movement direction or gene-structure in biology, 
+and wind direction as one of the most important weather variables in meteorology.
+Circular regression models were first introduced by Fisher and Lee (1992) and 
+further extended by Jammalamadaka and Sengupta (2001) and 
+Mulder and Klugkist (2017) among others.
+While most of these approaches are built on additive regression models, 
+we propose an adaption/extension of regression trees to circular data by employing 
+distributional trees.
+
+%Representing such a two-dimensional direction by an angle in a unity circle requires 
+%the specification of a starting point (angle 0) and either a clockwise or anti-clockwise 
+%rotation. However, these settings can vary but should not influence statistical 
+%inference from a fitted model.
+%For that reason circular data demand for purpose-built statistical methods. 
 %A commonly chosen distribution for modeling circular data is the von Mises distribution.
 %Estimating its two distribution parameters by generalized additive models using a set of 
 %regressor variables is one possible approach that can be successful in various settings.
@@ -230,9 +237,6 @@ in covariates without prespecification of such effects. This is particularly
 useful for modeling wind direction in mountainous terrain where wind shifts
 can occur due to turns of the pressure gradients along a valley.
 
-\textsf{R} packages implementing the proposed methods are under development at
-\texttt{https://R-Forge.R-project.org/projects/partykit/}.
-
 \subsection{Ensembles/Random Forests}
 A natural extension are ensembles (or forests) of such circular trees
 that can improve forecasts by regularizing and stabilizing the model.
@@ -244,40 +248,48 @@ A different strategy of combining trees is employed in distributional forests
 For a possibly new observation $x$ weights $w_i(x)$ are obtained by counting the 
 number of trees in which it is assigned to the same terminal node as a learning
 observation $y_i, i \in \{1,\ldots,n\}$.
-The parameters $\mu$ and $\kappa$ can then be estimated specifically for the (new) 
+The parameters $\mu$ and $\kappa$ are then estimated specifically for the (new) 
 observation $x$ by applying the weighted maximum likelihood estimator
 $$
 \operatorname{argmax}\displaylimits_{\mu, \kappa} \sum_{i=1}^n w_i(x) \cdot \ell(\mu, \kappa; y_i). 
 $$
-In that way predictions are made mainly based on similar observations rather than the 
+In that way predictions are mainly based on similar observations rather than the 
 complete learning data.
 
 \subsection{Splits in Circular Variables}
-Another possible improvement for obtaining more parsimonious and more stable trees is to
-consider splitting circular covariates into two circle segments by searching two split 
-points simultaneously (rather than sequentially at different depths as for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
-In particular, the search for the best separation of the data space into two intervals is based on the optimization problem
+Another planned extension of the introduced circular distributional trees 
+for obtaining more parsimonious and more stable trees is to
+consider splitting circular covariates into two flexible circle segments by searching two split 
+points simultaneously.
+In general, the search for the best separation of the data space into two intervals is based on the optimization problem
 $$
-\max \sum_{y \in \mathit{left}} \ell(\hat{\mu_1}, \hat{\kappa_1}; y) + \sum_{y \in \mathit{right}} \ell(\hat{\mu_2}, \hat{\kappa_2}; y)
+\max \left(\sum_{y \in \mathit{left}} \ell(\hat{\mu_1}, \hat{\kappa_1}; y) + \sum_{y \in \mathit{right}} \ell(\hat{\mu_2}, \hat{\kappa_2}; y)\right)
 $$
 where $\hat{\mu_1}$, $\hat{\kappa_1}$, $\hat{\mu_2}$, $\hat{\kappa_2}$ are the estimated parameters for the corresponding subsets of the response as defined by the intervals, here generally denoted by \textit{``left''} and \textit{``right''}.
-In case of a linear split variable these intervals can be defined by a single split point. 
-By treating a circular variable such as wind direction linearly as done in the presented 
-application the considered space~$[0,2\pi)$ is then split by a split point $\nu$ into
-$\mathit{left}=[0,\nu]$ and $\mathit{right}=(\nu,2\pi)$ enforcing an unnatural separation at $0$. 
-Moreover, further splits are often required to obtain properly fitting subintervals of~$[0,2\pi)$.
+For a linear split variable these intervals are defined by a single split point.
+By treating a circular variable such as wind direction linearly
+this single split point $\nu$ devides the considered space~$[0,2\pi)$ into
+$\mathit{left}=[0,\nu]$ and $\mathit{right}=(\nu,2\pi)$ enforcing a potentially unnatural 
+separation at zero. 
+Moreover, further sequential splits in the circular variable are often required to obtain 
+data driven subintervals of~$[0,2\pi)$ (as seen for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
 This can be avoided by searching for two split points $\nu$ and $\tau$ within the maximization
-process such that $\mathit{left}=[\nu,\tau]$ and $\mathit{right}=[0,\nu) \cup (\tau,2\pi]$.
+process such that $\mathit{left}=[\nu,\tau]$ and $\mathit{right}=[0,\nu) \cup (\tau,2\pi]$
+where both interval borders are determined purely by the data.
+
 The required test statistic to maximally select two split points simultaneously is readily 
-available in the \textsf{R} package \texttt{coin} and could be enhanced as proposed by Hothorn 
-and Zeileis~(2008). For a score-based approach the general strategy of double maximum tests 
-introduced by Bai and Perron~(2003) can be considered. 
-Hence, the splitting idea can be extended naturally to a two point-search, however, for 
+available in the \textsf{R} package \texttt{coin} but would need to be further enhanced as proposed 
+by Hothorn and Zeileis~(2008). For a score-based approach the general strategy of double maximum tests introduced by Bai and Perron~(2003) can be considered. 
+Hence, the splitting idea can be naturally extended to a two-point search, however, for 
 an unbiased and inference based selection the corresponding tests employing a proper
 asymptotic null distribution still need to be implemented.
 
-
 \bigskip
+
+\subsubsection*{Computational Details:}
+\textsf{R} packages implementing the proposed methods are currently under development at
+\texttt{https://R-Forge.R-project.org/} \texttt{projects/partykit/}.
+
 
 % Acknowledgments, if needed:
 \acknowledgments{This project was partially funded by the Austrian Research Promotion 
@@ -297,6 +309,11 @@ Agency~(FFG) grant no.~$858537$.}
      Classification and Regression Trees.
      {\it Wadsworth}.
 
+\item[Fisher, N. I., and Lee, A. J.] (1992).
+     Regression Models for an Angular Response.
+     {\it Biometrics}, {\bf 48}, 3,
+     665\,--\,677.  
+
 \item[Hothorn, T., Hornik, K., and Zeileis, A.] (2006).
      Unbiased Recursive Partitioning: A Conditional Inference Framework.
      {\it Journal of Computational and Graphical Statistics}, {\bf 15}, 3,
@@ -310,6 +327,11 @@ Agency~(FFG) grant no.~$858537$.}
 \item[Jammalamadaka, S. R. and Sengupta, A.] (2001).
      {\it Topics in Circular Statistics}.
      World Scientific. 
+
+\item[Mulder, K., and Klugkist, I.] (2017).
+     Bayesian Estimation and Hypothesis Tests for a Circular Generalized Linear Model.
+     {\it Journal of Mathematical Psychology}, {\bf 80},
+     4\,--\,14. 
 
 %\item[Mardia, K. V., and Jupp, P. E.] (2009).
 %     Directional Statistics.
@@ -329,7 +351,6 @@ Agency~(FFG) grant no.~$858537$.}
      {\it Journal of Computational and Graphical Statistics}, {\bf 17}, 2,
      492\,--\,514. 
      
-
 \end{description}
 
 \end{document}
