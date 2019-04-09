@@ -90,9 +90,9 @@ Achim Zeileis\inst{1}}
 %\and Universit\"at Z\"urich, Switzerland}
 
 %%%%%%%% IF DEPARTMENTS ARE LISTED AS WELL CHANGE NUMBERING!!!  %%%%%%%%%%%%%%
-\institute{Department of Statistics, University of Innsbruck, Innsbruck, Austria
-\and Department of Atmospheric and Cryospheric Science, University of Innsbruck, Innsbruck, Austria
-\and Epidemiology, Biostatistics and Prevention Institute, University of Zurich, Zurich, Switzerland}
+\institute{Department of Statistics, Universit\"at Innsbruck, Innsbruck, Austria
+\and Department of Atmospheric and Cryospheric Science, Universit\"at Innsbruck, Innsbruck, Austria
+\and Epidemiology, Biostatistics and Prevention Institute, Universit\"at Z\"urich, Z\"urich, Switzerland}
 
 
 % E-mail of presenting author for correspondence
@@ -170,7 +170,7 @@ is given by:
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
 \end{equation}
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$
-(see, e.g., Jammalamadaka and Sengupta (2001) for a more detailed overview).
+(see, e.g., Jammalamadaka and Sengupta 2001, for a more detailed overview).
 
 In each subgroup maximum likelihood estimators $\hat \mu$ and $\hat \kappa$ are obtained
 by maximizing the corresponding log-likelihood $\ell(\mu, \kappa; y) = \log(f_\mathrm{vM}(y;\mu, \kappa))$. 
@@ -237,54 +237,66 @@ in covariates without prespecification of such effects. This is particularly
 useful for modeling wind direction in mountainous terrain where wind shifts
 can occur due to turns of the pressure gradients along a valley.
 
-\subsection{Ensembles/Random forests}
-A natural extension are ensembles (or forests) of such circular trees
+\subsection{Ensembles and random forests}
+A natural extension are ensembles or forests of such circular trees
 that can improve forecasts by regularizing and stabilizing the model.
 Random forests introduced by Breiman~et.~al~(1984) average the
 predictions of an ensemble of trees, each built on a subsample 
 or bootstrap of the original data. 
-A different strategy of combining trees is employed in distributional forests 
-(Schlosser~et.~al, 2019) which can also be interpreted as adaptive local likelihood models. 
-For a possibly new observation $x$ averaged nearest neighbor weights $w_i(x)$ are obtained 
-by counting the number of trees in which it is assigned to the same terminal node as a 
-learning observation $y_i, i \in \{1,\ldots,n\}$ divided by the total number of trees.
-The parameters $\mu$ and $\kappa$ are then estimated specifically for the (new) 
-observation $x$ by applying the weighted maximum likelihood estimator
+A generalization of this strategy is to obtain weighted predictions
+by adaptive local likelihood estimation of the distributional parameters
+(Schlosser~et.~al, 2019). More specificially, for each possibly new
+observation $x$ a set of ``nearest neighbor'' weights $w_i(x)$ is obtained 
+that is based on how often $x$ is assigned to the same terminal node as
+each learning observation $y_i, i \in \{1,\ldots,n\}$.
+
+The parameters $\mu$ and $\kappa$ are then estimated for each (new) 
+observation $x$ by weighted maximum likelihood estimator based on the
+adaptive nearest neighbor weights:
 \begin{equation}
 \operatorname{argmax}\displaylimits_{\mu, \kappa} \sum_{i=1}^n w_i(x) \cdot \ell(\mu, \kappa; y_i). 
 \end{equation}
-In that way predictions are mainly based on similar observations rather than the 
-complete learning data.
+Therefore, the resulting parameter estimates can smoothly adapt to the given
+covariates $x$ whereas $w_i(x) = 1$ would correspond to the unweighted
+full-sample estimates and $w_i(x) \in \{0, 1\}$ corresponds to the abrupt
+splits from the tree.
 
-\subsection{Splits in circular variables}
-In order to obtain more parsimonious and more stable trees another possible extension of the 
-introduced circular distributional trees is to split circular covariates into two 
-flexible circle segments by searching two split points simultaneously.
-In general, the search for the best separation of the data space into two intervals is based 
-on the optimization problem
+\subsection{Splits in circular covariates}
+
+In order to obtain more parsimonious and more stable trees another possible
+extension for \emph{circular covariates} (with or without a \emph{circular response})
+is to consider their circular nature when searching the best split into two segments.
+In general, searching the best separation of a covariate into a ``left'' and ``right''
+daugther node tries to maximize the segmented log-likelihood:
 \begin{equation}
 \max \left(\sum_{y \in \mathit{left}} \ell(\hat{\mu_1}, \hat{\kappa_1}; y) + \sum_{y \in \mathit{right}} \ell(\hat{\mu_2}, \hat{\kappa_2}; y)\right)
 \end{equation}
 where $\hat{\mu_1}$, $\hat{\kappa_1}$, $\hat{\mu_2}$, $\hat{\kappa_2}$ are the estimated parameters
-of the von Mises distribution for the corresponding subsets of the response as defined by the
-intervals, here generally denoted by \textit{``left''} and \textit{``right''}.
-For a linear split variable these intervals are defined by a single split point.
-By treating a circular variable such as wind direction linearly
-this single split point $\nu$ divides the considered space~$[0,2\pi)$ into
-$\mathit{left}=[0,\nu]$ and $\mathit{right}=(\nu,2\pi)$ enforcing a potentially unnatural 
-separation at zero. 
-Moreover, further sequential splits in the circular variable are often required to obtain 
-data driven subintervals of~$[0,2\pi)$ (as seen for the lagged wind direction in Figure~\ref{schlosser:fig_tree}).
-This can be avoided by searching for two split points $\nu$ and $\tau$ within the maximization
-process such that $\mathit{left}=[\nu,\tau]$ and $\mathit{right}=[0,\nu) \cup (\tau,2\pi]$
-where both interval borders are determined purely by the data.
+of the von Mises distribution in the two daughter nodes. Searching a single split point $\nu$ in a circular covariate $\in [0, 2 \pi)$
+only considers linear splits into the intervals $\mathit{left}=[0,\nu]$ and $\mathit{right}=(\nu,2\pi)$,
+thus enforcing a potentially unnatural separation at zero. This can be avoided by searching
+for two split points $\nu$ and $\tau$ considering a split into one interval $\mathit{left}=[\nu,\tau]$
+and its complement $\mathit{right}=[0,\nu) \cup (\tau,2\pi]$, encompassing zero. The latter
+strategy is invariant to the (often arbitrary) definition of the direction at zero.
 
-The required test statistic to maximally select two split points simultaneously is readily 
-available in the \textsf{R} package \texttt{coin} but would need to be further enhanced as proposed 
-by Hothorn and Zeileis~(2008). For a score-based approach the general strategy of double maximum tests introduced by Bai and Perron~(2003) can be considered. 
+When one split point $\nu$ is sufficiently close to zero and the other $\tau$ sufficiently
+far away, a simple linear split typically suffices to capture such a split (as seen for the
+lagged wind direction in Figure~\ref{schlosser:fig_tree}). If both $\nu$ and $\tau$ differ
+clearly from zero, two linear splits should also lead to a reasonable (but less parsimonious)
+fit. However, if both $\nu$ and $\tau$ are rather close to zero, a linear split strategy
+might miss such a pattern.
+
+The required test statistic to maximally select two split points simultaneously is straightforward
+to accomodate in the CTree framework by providing all binary indicators corresponding
+to the splints into $\mathit{left}$/$\mathit{right}$ intervals. However, this will become
+increasingly slow for larger sample sizes but it might be possible to speed up computations by
+exploiting the particular covariance structure similar to Hothorn and Zeileis~(2008). In the
+MOB framework the extension is not quite as straightforward but one strategy could be to
+adapt double maximum tests \`a la Bai and Perron~(2003).
+
 Hence, the splitting idea can be naturally extended to a two-point search, however, for 
-an unbiased and inference based selection the corresponding tests employing a proper
-asymptotic null distribution still need to be implemented.
+an unbiased and inference-based selection the corresponding testing strategies might need
+further adaption.
 
 \bigskip
 
