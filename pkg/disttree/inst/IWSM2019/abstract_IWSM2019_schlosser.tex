@@ -131,7 +131,7 @@ Circular regression models were first introduced by Fisher and Lee (1992) and
 further extended by Jammalamadaka and Sengupta (2001) and 
 Mulder and Klugkist (2017) among others.
 While most of the already existing approaches are built on additive regression models, 
-we propose an adaption/extension of regression trees to circular data by employing 
+we propose an adaption of regression trees to circular data by employing 
 distributional trees.
 
 %Representing such a two-dimensional direction by an angle in a unity circle requires 
@@ -211,6 +211,7 @@ intersecting from the south. Hence, pressure gradients to which valley wind
 regimes react both west and east of the airport are considered as covariates
 along with other meteorological measurements at the airport (lagged by one hour),
 such as wind direction and wind speed at Innsbruck Airport.
+Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and increases clockwise from North ($0$ degree).
 
 Figure~\ref{schlosser:fig_tree} depicts the resulting distributional tree, including
 both the empirical (gray) and fitted von Mises (red) distribution of wind direction
@@ -228,7 +229,7 @@ wind direction (``persistence'') is mostly responsible for distinguishing
 the broad wind regimes listed above while the pressure gradients and wind
 speed separate between subgroups with high vs.\ low precision.
 
-\section{Discussion and Outlook}
+\section{Discussion and outlook}
 
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
@@ -245,13 +246,13 @@ predictions of an ensemble of trees, each built on a subsample
 or bootstrap of the original data. 
 A generalization of this strategy is to obtain weighted predictions
 by adaptive local likelihood estimation of the distributional parameters
-(Schlosser~et.~al, 2019). More specificially, for each possibly new
-observation $x$ a set of ``nearest neighbor'' weights $w_i(x)$ is obtained 
+(Schlosser~et.~al, 2019). More specifically, for each possibly new
+observation~$x$ a set of ``nearest neighbor'' weights $w_i(x)$ is obtained 
 that is based on how often $x$ is assigned to the same terminal node as
 each learning observation $y_i, i \in \{1,\ldots,n\}$.
 
 The parameters $\mu$ and $\kappa$ are then estimated for each (new) 
-observation $x$ by weighted maximum likelihood estimator based on the
+observation $x$ by weighted maximum likelihood based on the
 adaptive nearest neighbor weights:
 \begin{equation}
 \operatorname{argmax}\displaylimits_{\mu, \kappa} \sum_{i=1}^n w_i(x) \cdot \ell(\mu, \kappa; y_i). 
@@ -267,7 +268,7 @@ In order to obtain more parsimonious and more stable trees another possible
 extension for \emph{circular covariates} (with or without a \emph{circular response})
 is to consider their circular nature when searching the best split into two segments.
 In general, searching the best separation of a covariate into a ``left'' and ``right''
-daugther node tries to maximize the segmented log-likelihood:
+daughter node tries to maximize the segmented log-likelihood:
 \begin{equation}
 \max \left(\sum_{y \in \mathit{left}} \ell(\hat{\mu_1}, \hat{\kappa_1}; y) + \sum_{y \in \mathit{right}} \ell(\hat{\mu_2}, \hat{\kappa_2}; y)\right)
 \end{equation}
@@ -287,8 +288,8 @@ fit. However, if both $\nu$ and $\tau$ are rather close to zero, a linear split 
 might miss such a pattern.
 
 The required test statistic to maximally select two split points simultaneously is straightforward
-to accomodate in the CTree framework by providing all binary indicators corresponding
-to the splints into $\mathit{left}$/$\mathit{right}$ intervals. However, this will become
+to accommodate in the CTree framework by providing all binary indicators corresponding
+to the splits into $\mathit{left}$/$\mathit{right}$ intervals. However, this will become
 increasingly slow for larger sample sizes but it might be possible to speed up computations by
 exploiting the particular covariance structure similar to Hothorn and Zeileis~(2008). In the
 MOB framework the extension is not quite as straightforward but one strategy could be to
@@ -300,7 +301,7 @@ further adaption.
 
 \bigskip
 
-\subsubsection*{Computational Details:}
+\subsubsection*{Computational details:}
 \textsf{R} packages implementing the proposed methods are currently under development at
 \texttt{https://R-Forge.R-project.org/} \texttt{projects/partykit/}.
 
