@@ -81,17 +81,21 @@ if(file.exists("stump.rda")){
   load("stump.rda")
 } else {
   simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7,
-                         nrsplitvar = 1, nrsteps = 1, nrlevels = 2,
+                         nrsplitvar = 1, 
+                         nrsteps = 1, nrlevels = 2,
                          delta = seq(from = 0, to = 1, by = 0.1),
-                         xi = c(0, 0.2, 0.5, 0.8), vary_beta = c("all", "beta0", "beta1"),
-                         binary_regressor = FALSE, binary_beta = TRUE, only_intercept = FALSE,
+                         xi = c(0, 0.2, 0.5, 0.8), 
+                         vary_beta = c("all", "beta0", "beta1"),
+                         binary_regressor = FALSE,
+                         binary_beta = c(TRUE, FALSE),
+                         only_intercept = FALSE,
                          test = c("ctree", "mfluc", "ctree_max",
                                   "ctree_cat", "mfluc_cat", "ctree_max_cat",
                                   "ctree_bin", "mfluc_bin", "ctree_max_bin",
                                   "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
                                   "guide_sum_12", "guide_coin_12", "guide_sum_1_cor"),
-                         beta0 = 0, beta1 = 1,
-                         stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
+                       beta0 = 0, beta1 = 1,
+                       stump = TRUE, z1dist = "unif", sigma = 1, alpha = 0.05)
   
   save(simres, file = "stump.rda")
 }
@@ -166,9 +170,8 @@ parametric model trees, in particular linear model trees. Second, it is assessed
 different building blocks from this common framework affect the power of the 
 tree algorithms to select the appropriate covariates for splitting: observation-wise
 goodness-of-fit measure (residuals vs.\ model scores), binarization of residuals/scores
-at zero, binning of covariates, conditional vs.\ unconditional approximations of the
-null distribution. This shows that specifically the goodness-of-fit measure is crucial
-for the power of the procedures, with model scores without binarization performing
+at zero, binning of covariates. This shows that specifically the goodness-of-fit measure 
+is crucial for the power of the procedures, with model scores without binarization performing
 much better in many scenarios.
 }
 \Keywords{classification and regression trees, independence tests, recursive partitioning}
@@ -231,10 +234,12 @@ Therefore, in this paper the focus will be put on that first step of tree algori
 i.e. the task of selecting the best split variable. In particular, the approach of the 
 GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
 by investigating the building blocks of their testing strategies in which they differ:
-(1)~Transformations of a goodness-of-fit measure for the response: using residuals or full model scores.
+(1)~Variations of a goodness-of-fit measure for the response: using residuals or full model scores.
 (2)~Binarization of these residuals or scores.
 (3)~Categorization of covariates.
-(4)~Approximations of the null distribution: conditional vs.\ unconditional.
+Apart from these three main factors further aspects such as the approximation of the null
+distribution (conditional vs.\ unconditional) or the type of test statistic (maximally 
+selected vs.\ sum of squares) will be considered as well.
 For this purpose, a unifying framework for testing strategies in unbiased model-based tree 
 algorithms is presented such that each of the three strategies in GUIDE, CTree, and MOB can be 
 obtained by a specific combination of the available building blocks. This allows to systematically
@@ -242,12 +247,12 @@ vary the building blocks and assess the power of the resulting inference procedu
 it is investigated whether the performance of the inference impacts the performance of the
 trees differently under pre- vs.\ post-pruning.
 
-Depending on the setup different effects can be observed for the investigated building blocks.
-However, none of the results contradicts the conclusion that in general using all available 
-model scores is at least as efficient but mostly clearly advantageous over considering only 
-residuals. Also regarding the effects of binarizing residuals or scores at $0$ or categorizing
-the values of possible split variables clear recommendations can be given based on the presented 
-results.
+In many of the considered scenarios it can be observed that the choice of goodness-of-fit
+measure heavily influences the performance of testing strategies as overall using model 
+scores leads to clearly better results than employing residuals only. Moreover, the original
+values of the goodness-of-fit measure are to be preferred over binarized versions of them.
+Also regarding the effects of categorizing possible split variables and the selection
+of a pruning strategy clear recommendations can be given based on the presented results.
 
 The remainder of this manuscript is structured as follows:
 Section~\ref{sec:urp} reviews unbiased tree models, starting with the general algorithmic idea
@@ -271,47 +276,55 @@ and more homogeneous subgroups based on a set of covariates. Various different t
 algorithms have been developed, all following the same general structure starting at 
 the root of the tree which is simply the first node containing all available data:
 \begin{enumerate}
-\item For the data set in the current node some form of discrepancy 
-measure is calculated. 
-\item Among all available covariates one is selected as split variable and a value 
-within the range/measurable space of this variable is chosen as split point such that 
-after splitting the data into subgroups the discrepancy measure is minimal within the 
-resulting nodes.
-\item Steps 1 and 2 are repeated within each new node until either a stopping criterion
-is reached. 
+\item For the data set in the current node a model is fitted by optimizing
+some objective function that reflects the goodness of fit.
+\item Among all available covariates one is selected as the split variable,
+choosing the split point such that goodness of fit is maximized in the
+resulting subgroups.
+\item Steps 1 and 2 are repeated within each subgroup until some stopping
+criterion is attained.
 \end{enumerate}
 
+The term ``model'' is used here in a very broad sense and encompasses not
+only least-squares or maximum-likelihood models but also simple constant
+fits such as means or average proportions.
+Therefore, depending on the type of model, the employed objective function can 
+for example be the sum of deviations from a typical or average value, but it can 
+also be constructed based on the model fitted in each node and depend not only on 
+the response but also on possible covariates. For instance, different 
+types of residuals or their signs can be applied \citep[see e.g.,][]{Loh:2002} as 
+well as rank sums or logrank scores as in \cite{Hothorn+Hornik+VanDeWiel:2006}.
 
-The employed discrepancy measure can for example be the sum of deviations from a typical 
-or average value, but it can also be constructed based on a parametric model fitted in each 
-node. For instance, different types of residuals or their signs can be applied 
-\citep[see e.g.,][]{Loh:2002} as well as rank sums or logrank scores as 
-in \cite{Hothorn+Hornik+Wiel:2006}.
-%(In the simulation study of this paper trees with linear models fitted in each node are 
-%investigated with the residual sum of squares (RSS) employed as discrepancy measure.)
-
-As explained in Section~\ref{sec:introduction} the considered tree algorithms CTree, MOB, and 
-GUIDE first select the split variable and then, in a separate step, the split point. 
-For the first step of selecting a split variable they all apply statistical tests
-following the same general strategy: 
+As explained in Section~\ref{sec:introduction} the considered tree algorithms CTree, 
+MOB, and GUIDE first select the split variable and then, in a separate step, the 
+split point. For the first step of selecting a split variable they all apply statistical 
+tests following the same general strategy: 
 \begin{enumerate}
-\item A discrepancy measure is obtained in the form of an $n \times k$-matrix $D$ giving information
-on the goodness of fit of the model for a data set of $n \in \mathbb{N}$ observations in the 
-current node and the parameter $k \in \mathbb{N}$ defined by the algorithm.
-\item Using this matrix the algorithm-specific test statistic is evaluated for each possible 
-split variable $Z_j$, $j \in \{1,\ldots,m\}$ for $m \in \mathbb{N}$, assessing the dependency
-of $D$ on $Z_j$.
-\item For the resulting values of the test statistics the corresponding $p$-values are calculated
-in order to allow for their comparison on a standardized/unified scale and in that way for
-an unbiased variable selection.
-\item The variable corresponding to the smallest $p$-value is selected as split variable as 
-it has shown to be the variable with the strongest influence on the goodness of fit of the model.
+\item To capture how the objective function changes with the observations in
+the current subgroup, a disaggregated, observation-wise goodness-of-fit
+measure is obtained. More formally, this is an $n \times k$ matrix $G$
+where $n \in \mathbb{N}$ is the number of observations and $k \in \mathbb{N}$ 
+the number of measures per observation.
+\item The dependency or association of this goodness-of-fit matrix $G$ with
+each possible split variable $Z_j$, $j \in \{1, \dots, m\}$, is assessed
+using some suitable test statistic. The corresponding $p$-values allow for
+a comparison of all $m$ covariates on a standardized or unified scale and in
+that way for an unbiased split variable selection.
+\item The covariate corresponding to the smallest $p$-value -- and thus the
+highest influence on the goodness of fit of the model -- is selected for 
+splitting the data into subgroups.
 \end{enumerate}
+
+As explained in more detail below, the aggregated overall objective
+function in the linear regression model would be the residual sum of
+squares and the corresponding observation-wise goodness-of-fit measure is
+given by the residuals or scores (gradient contributions). Analogously,
+the log-likelihood and corresponding score function could be used.
 
 While this basic approach is the same for the GUIDE, the CTree and the MOB algorithm they differ 
 in their strategies on how to calculate test statistics. In order to point out these specific 
 characteristics in Section~\ref{sec:unify} the strategies of the three tree algorithms are first 
-explained in detail in Sections~\ref{sec:ctree}, \ref{sec:mob}, and \ref{sec:guide} . 
+explained in detail in Sections~\ref{sec:ctree}, \ref{sec:mob}, and \ref{sec:guide}. 
 
 
 
@@ -336,11 +349,12 @@ where $\beta$ is the possibly multidimensional model parameter and $s$ is the sc
 $$
 s(Y, X, \beta) = \frac{\partial \psi(Y, X, \beta)}{\partial \beta}
 $$
-with the sum of $\psi$ over all observations being the objective function that is optimized 
-to obtain the estimated model parameter $\hat{\beta}$. For this purpose many different M-type 
-estimators can be applied including maximum likelihood or ordinary least squares such that the 
-corresponding objective function can be employed as model-based discrepancy measure for the 
-tree algorithm. Evaluating the score function $s$ on a data set of $n$ observations 
+with the sum of $\psi$ over all observations being the aggregated overall objective 
+function that is optimized to obtain the estimated model parameter $\hat{\beta}$. 
+For this purpose many different M-type estimators can be applied including maximum 
+likelihood or ordinary least squares such that the corresponding objective functions 
+can also be employed for the tree algorithm. Evaluating the score function $s$ on a 
+data set of $n$ observations 
 %containing the 
 %response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$ and 
 %regressor(s) $\boldsymbol{x} = (x_1,\ldots,x_n)^\top$ and on
@@ -380,7 +394,7 @@ are evaluated for all possible subsets of the sample space of the selected split
 
 \subsection{MOB}\label{sec:mob}
 
-While CTree offers to apply model-based discrepancy measures as one possible choice, the 
+While CTree offers to apply model-based goodness-of-fit measures as one possible choice, the 
 MOB algorithm \citep{Zeileis+Hothorn+Hornik:2008} was developed with the aim of embedding 
 parametric models into the framework of regression trees and is hence purely intended for 
 a model-based approach. 
@@ -442,11 +456,12 @@ separated by the corresponding 1st, 2nd and 3rd quartile unless the split variab
 categorical.
 Then, a $\chi^2$-test of independence is performed for the binarized residuals and
 each categorized/categorical split variable.
-After choosing the split variable showing the highest dependency by yielding the lowest $p$-value,
-the split point minimizing the discrepancy measure is selected. The possible number of breakpoints
-is determined by the categorization of the possible split variables and is in that way fixed.
+After choosing the split variable showing the highest dependency by yielding the lowest 
+$p$-value, the split point minimizing the overall goodness-of-fit measure is selected. 
+The possible number of breakpoints is determined by the categorization of the possible 
+split variables and is in that way fixed.
 
-\newpage
+%\newpage
 \subsection{Pruning}
 \label{sec:pruning}
 In early developed methods of unbiased recursive partitioning such as 
@@ -454,7 +469,7 @@ FACT \citep{Loh+Vanichsetakul:1988}, QUEST \citep{Loh+Shih:1997},
 CRUISE \citep{Kim+Loh:2001} or GUIDE \citep{Loh:2002}
 the $p$-values of applied significance tests are used purely for the selection of a split variable 
 based on a unified scale. All other steps are performed in the same way as in classic tree 
-algorithms, such as finding the best split point by optimizing an objective function.
+algorithms, such as finding the best split point by optimizing an overall goodness-of-fit measure.
 
 In subsequent approaches as in \cite{Hothorn+Hornik+Zeileis:2006}
 it is shown that these $p$-values can also be used as a basis for a
@@ -539,14 +554,14 @@ gives a more detailed overview of the differences in the second column of Table~
 The three following building blocks all refer to the way how the given data is prepared/transformed
 before employing a statistical test to select a split variable.
 \begin{itemize}
-\item  Transformations of Y:\\
-A model-based transformation of $Y$ is applied to obtain a discrepancy measure giving 
-information about the goodness of fit of the model. This can be residuals $r(Y,X,\hat{\beta})$
-as in the GUIDE algorithm or scores $s(Y,X,\hat{\beta})$ as in the MOB algorithm or, 
-more generally, a function $h(Y,X)$ as in the CTree algorithm including both of the foregoing 
-cases.
-By including all available scores rather than just residuals the goodness of fit of the model is 
-investigated regarding each parameter instead of just the mean. 
+\item Variations of the goodness-of-fit measure:\\
+Different variations of the disaggregated, observation-wise goodness-of-fit measure of the 
+model that is obtained for the response $Y$ and possible covariates $X$ can be 
+considered. This can be residuals $r(Y,X,\hat{\beta})$ as in the GUIDE algorithm or 
+scores $s(Y,X,\hat{\beta})$ as in the MOB algorithm or, more generally, a 
+transformation function $h$ as in the CTree algorithm including both of the foregoing cases.
+By including all available scores rather than just residuals the goodness of fit of the 
+model is investigated regarding each parameter instead of just the mean. 
 %Therefore, this facilitates the detection of changes in parameters other than the mean/location parameter.
 
 \item Binarization of residuals/scores:\\
@@ -607,11 +622,11 @@ For each node the type of the fitted model is the same such that no node-specifi
 considered and the observations of the (arbitrarily chosen) current node are denoted by 
 $\{(y_i,x_i)\}_{i=1,\ldots,n}$ for $n \in \mathbb{N}$.
 
-A very basic form of a discrepancy measure can be obtained for each observation by simply 
+A very basic form of goodness-of-fit measure can be obtained for each observation by simply 
 calculating deviations of the response values from the mean value within the node, for example 
 by $(\bar{y} - y_i)$.
 However, this includes only the response variable $Y$ but not the fitted linear model.
-For a model-based approach residuals can be considered defined by
+For a model-based approach one can consider residuals defined by
 $$
 r(y_i,x_i,\beta_0,\beta_1) = y_i - \beta_0 - \beta_1 \cdot x_i.
 $$
@@ -622,7 +637,8 @@ $$
 such that $\sum_{i=1}^n \psi(y_i,x_i,\beta_0,\beta_1)$ is the objective function
 which is minimized to obtain the estimated coefficient vector
 $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
-The corresponding score function is defined by
+The corresponding disaggregated, observation-wise goodness-of-fit measure is defined by
+the score function 
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
 \frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
@@ -638,7 +654,7 @@ the derivatives of $\psi$ regarding the intercept $\beta_0$ (first column) and t
 parameter $\beta_1$ (second column) are considered.
 
 
-\newpage
+%\newpage
 
 \section{Simulation setting and evaluation}
 \label{sec:simulation}
@@ -1139,8 +1155,9 @@ in $\beta_1$.
 This is due to the fact that GUIDE only includes residuals, i.e. only the scores 
 regarding the intercept, such that changes in the slope parameter are not detected unless the 
 corresponding scores are also included as in GUIDE\_scores. This disadvantage of using 
-only scores has already been discussed and elaborated in the literature of structural change
-analysis \citep[see e.g.][]{Ploberger+Kramer:1992}.
+only scores has already been elaborated in the literature of structural change
+analysis \citep[see e.g.][]{Ploberger+Kramer:1992} and is also discussed 
+in Section~\ref{sec:discussion}.
 
 Looking at the results for the split point being close to the upper edge of the considered
 interval ($\xi=0.8$, lower panels) all of the applied strategies perform worse than for the
@@ -1163,10 +1180,12 @@ building blocks are discussed in a full factorial 3-way analysis.
 
 \subsection{Full factorial analysis}\label{sec:3way}
 In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for the most general
-case where the intercept and slope parameter are both varying and the true split point is in the
-center, i.e. $\xi=0$. Based on the results shown in Figure~\ref{fig:scores_stump} the effect size 
-$\delta = 0.3$ is considered making the differences particularly well observable 
-(additional easing $\delta$ as in Section~\ref{sec:scores} 
+case where the intercept and slope parameter are both varying. In the left panel the true split point is in the center, i.e. $\xi=0$ and an effect size of $\delta = 0.3$ is considered. 
+This choice has been made based on the results shown in Figure~\ref{fig:scores_stump} 
+in order to make the differences particularly well observable.
+In the right panel the true split point is close to the upper end of the considered interval
+($\xi=0.8$) requiring a higher effect size $\delta = 1$ in order to visualize results properly.
+(Additional evaluations for increasing $\delta$ as in Section~\ref{sec:scores} 
 can be found in Appendix~\ref{app:increasingdelta}).
 The power of the different combinations is measured by the mean $p$-value for the true split 
 variable~$Z_1$.
@@ -1267,7 +1286,7 @@ d3way$xi <- factor(d3way$xi, levels = c(0,0.8), labels = c(0,0.8))
 xyplot(pval_z1 ~ cat | xi, 
        groups = interaction(bin, res_scores), 
        data = d3way, 
-       ylim = c(0,0.65),
+       ylim = c(0,0.5),
        type = c("a"), 
        col = c(pal[1], pal[3], pal[1], pal[3]),
        lty = c(1,1,2,2),
