@@ -8,7 +8,7 @@ Description: Infrastructure for fitting distributional regression trees and fore
   based on gamlss.dist families.
 Depends: R (>= 3.1.0), partykit (>= 1.2-0), gamlss.dist
 Imports: graphics, stats, utils, Formula, sandwich, survival
-Suggests: crch, gamlss.cens, lmtest, mvtnorm, countreg
+Suggests: crch, gamlss.cens, lmtest, mvtnorm, countreg, testthat
 LazyData: yes
 License: GPL-2 | GPL-3
 RoxygenNote: 6.1.1
