@@ -220,7 +220,7 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       #print(start)
     }
   }
-  
+
   if(!family$mle) {
     ## optimize negative log-likelihood
     opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
