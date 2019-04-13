@@ -61,11 +61,8 @@ distextree <- function(formula,
 
   if (is.null(control$update)) control$update <- TRUE
   
-  if(is.null(control$partyvars)) control$partyvars <- d$variables$z # FIXME: (ML) do we need this (only for guide)?!
-  
   # Set up family 
   family <- distfamily(family)
-  #np <- length(family$link) #FIXME: (ML) not used anywhere else?! 
   
   #Y <- d$yx[[1]]
   # (LS) check whether d$yx really contains only the response (and no covariates)
@@ -158,7 +155,7 @@ distextree <- function(formula,
 
   ## Set up wrapper for extree_fit with predefined fit function
   update <- function(subset, weights, control, doFit = TRUE) {
-    partykit::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = control$partyvars, 
+    partykit::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
                          subset = subset, weights = weights, ctrl = control, doFit = doFit)
   }
 
@@ -381,7 +378,6 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                guide_interaction = FALSE,
                                interaction = FALSE,
                                #guide_unweighted = FALSE,
-                               partyvars = NULL,   # per default it will be set to partyvars = data$variables$z after applying extree_data
                                guide_parm = NULL,  # a vector of indices of the parameters (incl. intercept) for which estfun should be considered
                                guide_testtype = c("max", "sum", "coin"),
                                guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
