@@ -37,7 +37,7 @@ distextree <- function(formula,
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
-    # TODO: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    # NOTE: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
@@ -67,9 +67,9 @@ distextree <- function(formula,
   
   #Y <- d$yx[[1]]
   # (LS) check whether d$yx really contains only the response (and no covariates)
-  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # FIXME: (ML) can this happen after formula creation?
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # NOTE: (ML) can this happen after formula creation?
   
-  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # FIXME: (ML) adapt for multidimensional responses
+  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # TODO: (ML) adapt for multidimensional responses
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distexfit
@@ -154,7 +154,7 @@ distextree <- function(formula,
 
   if (!doFit) return(list(d = d, update = update))
 
-  ## Set minsize to 10 * number of parameters, if NULL  # FIXME: (ML) do we want that also for ctree?
+  ## Set minsize to 10 * number of parameters, if NULL
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
       ctrl <- control
       N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
@@ -186,11 +186,11 @@ distextree <- function(formula,
                        "(weights)" = weights,
                        check.names = FALSE)
 
-  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # FIXME: (ML) y added
+  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # NOTE: (ML) y added, necessary?
   names(fitted)[3] <- "(response)"
 
-  control$ytype <- ifelse(is.vector(y), "vector", class(y)) # FIXME: (ML) needed? (from mob)
-  control$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame FIXME: (ML) needed (from mob)
+  control$ytype <- ifelse(is.vector(y), "vector", class(y)) # NOTE: (ML) needed? (from mob)
+  control$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame NOTE: (ML) needed (from mob)
 
   rval <- partykit::party(tree$nodes, 
                 data = if(control$model) mf else mf[0,],
@@ -200,100 +200,14 @@ distextree <- function(formula,
                   call = cl,
                   formula = formula,
                   family = family,
-                  fit = distexfit, # FIXME: (ML) not needed?
+                  fit = distexfit,
                   control = ocontrol
               )
   )
 
-  ## COMMENT LISA's VERSION (begin)
-  #rval <- partykit::party(tree$nodes, data = mf, fitted = fitted, 
-  #             info = list(call = match.call(), control = control))
-
-  #rval$update <- update  # FIXME: (ML) do we still want to keep the update?
-  #rval$trafo <- trafo  # FIXME: (ML) keep the trafo rather the distexfit?
-  #class(rval) <- c("constparty", class(rval))
-  #
-  ### INSERTED HERE:
-  ## distributional fit: calculate coefficients for terminal nodes using distexfit()
-  #
-  ### FIXME: (LS) first check whether there is already a fitted model in each of the nodes, 
-  ## if so, extract coefficients instead of calculating them again in the following lines
-  #
-  ## number of terminal nodes
-  #n_tn <- width(rval)
-  ## predicted terminal nodes for the given data
-  #pred_tn <- predict(rval, type = "node")
-  ## ids of terminal nodes
-  #id_tn <- as.vector(unique(pred_tn))
-  #
-  #if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
-  #
-  ### get coefficients for terminal nodes:
-  #Y <- rval$fitted$`(response)`
-  ## first iteration out of loop:
-  #model1 <- disttree::distexfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-  #                            vcov = FALSE, type.hessian = type.hessian, 
-  #                            estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
-  #coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
-  ## coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
-  #colnames(coefficients_par) <- names(model1$par)
-  ## colnames(coefficients_eta) <- names(model1$eta)
-  #rownames(coefficients_par) <- as.character(id_tn)
-  ## rownames(coefficients_eta) <- as.character(id_tn)
-  #
-  #coefficients_par[1,] <- model1$par
-  ## coefficients_eta[1,] <- model1$eta
-  #
-  #loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
-  #
-  #if(n_tn>1){
-  #  for(i in (2:n_tn)){
-  #    model <- disttree::distexfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-  #                               vcov = FALSE, type.hessian = type.hessian, 
-  #                               estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol)
-  #    coefficients_par[i,] <- model$par
-  #    # coefficients_eta[i,] <- model$eta
-  #    loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
-  #  }
-  #}
-  #
-  #rval$coefficients <- coefficients_par
-  ## rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
-  #rval$loglik <- loglik
-
-  ### extend class and keep original call/family/control
-  #rval$info$call <- cl
-  #rval$info$family <- family  
-  #rval$info$ocontrol <- ocontrol # TODO: (ML) needs to be included again
-  #rval$info$formula <- formula
-  #rval$info$censpoint <- censpoint # TODO: (ML) needs to be included again
-  #rval$info$censtype <- censtype # TODO: (ML) needs to be included again
-  #
-  #groupcoef <- rval$coefficients # FIXME: (ML) what are groupcoef?
-  #if(!(is.null(groupcoef))){
-  #  if(is.vector(groupcoef)) {
-  #    groupcoef <- t(as.matrix(groupcoef))
-  #    rownames(groupcoef) <- 1
-  #  }
-  #  rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-  #  rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
-  #  rval$fitted.par <- as.data.frame(rval$fitted.par)
-  #}
-  # 
-  # class(rval) <- c("disttree", class(rval))
-  # 
-  # ### doesn't work for Surv objects # FIXME: (ML) comment of Lisa still relevant?
-  # # rval$terms <- terms(formula, data = mf)
-  # rval$terms <- d$terms$all  
-  # ### need to adjust print and plot methods
-  # ### for multivariate responses   
-  # ### if (length(response) > 1) class(rval) <- "party"
-  # return(rval)
-  ## COMMENT LISA's VERSION (end)
-
   class(rval) <- c("modelparty", class(rval))  # FIXME: either model or constparty object!
 
-  ### Add modelinfo (object) and estfun if not there yet, but wanted
+  ## Add modelinfo (object) and estfun if not there yet, but wanted
   # TODO: (AZ) check if this can be done prettier
   which_terminals <- nodeids(rval, terminal = TRUE)
   which_all <- nodeids(rval)
@@ -337,12 +251,12 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                type.hessian = c("checklist", "analytic", "numeric"),
                                decorrelate = c("none", "opg", "vcov"),
                                method = "L-BFGS-B",
-                               optim.control = list(),   # FIXME: (ML) why an empty list? 
+                               optim.control = list(),
                                lower = -Inf,
                                upper = Inf,
-                               minsplit = NULL,     # FIXME: (ML) currently use mob default
-                               minbucket = NULL,    # FIXME: (ML) currently use mob default
-                               splittry = 1L,       # FIXME: (ML) currently use mob default
+                               minsplit = NULL,     # NOTE: (ML) currently use mob default
+                               minbucket = NULL,    # NOTE: (ML) currently use mob default
+                               splittry = 1L,       # NOTE: (ML) currently use mob default
                                
                                ## Arguments need for disttree
                                splitflavour = c("ctree", "exhaustive"),  
@@ -354,7 +268,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                ## Additional arguments for exhaustive/mobster
                                restart = TRUE,
                                breakties = FALSE,
-                               parm = NULL,          # FIXME: (LS) match with partyvars above
+                               parm = NULL,
                                dfsplit = TRUE,
                                vcov = c("opg", "info", "sandwich"),
                                ordinal = c("chisq", "max", "L2"),
