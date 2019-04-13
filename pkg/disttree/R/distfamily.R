@@ -38,7 +38,7 @@ distfamily <- function(family, bd = NULL, censpoint = NULL){
     stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
   # linkinvdr only used in the method vcov for type = "parameter"
   
-  class(family) <- "distfamily"
+  class(family) <- "disttree.family"
   return(family)
 }
 

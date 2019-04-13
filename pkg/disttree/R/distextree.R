@@ -62,7 +62,7 @@ distextree <- function(formula,
   if (is.null(control$update)) control$update <- TRUE
   
   # Set up family 
-  if(!inherits(family, "distfamily")) 
+  if(!inherits(family, "disttree.family")) 
     family <- distfamily(family)
   
   #Y <- d$yx[[1]]
