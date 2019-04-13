@@ -62,7 +62,8 @@ distextree <- function(formula,
   if (is.null(control$update)) control$update <- TRUE
   
   # Set up family 
-  family <- distfamily(family)
+  if(!inherits(family, "distfamily")) 
+    family <- distfamily(family)
   
   #Y <- d$yx[[1]]
   # (LS) check whether d$yx really contains only the response (and no covariates)
@@ -76,10 +77,8 @@ distextree <- function(formula,
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
-    # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-    start <- info$coefficients # FIXME: (ML) needed?
     
-    model <- disttree::distexfit(ys, family = family, weights = subweights, start = start, start.eta = NULL,
+    model <- disttree::distexfit(ys, family = family, weights = subweights, start = info$coefficients, start.eta = NULL,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                  method = method, estfun = estfun, optim.control = optim.control,
                                  lower = lower, upper = upper)
@@ -126,11 +125,8 @@ distextree <- function(formula,
     return(rval)
   }
 
-  ## Set up 'converged' function
-  # FIXME: (LS) implement function checking whether all response values are equal in one node
-  # if so, return FALSE
-  # TODO: (LS) which control arguments should be used here? (now not used)
-  # allow to hand over additional conditions in further 'converged' functions?
+  ## Set up default 'converged' function
+  # checking whether all response values are equal in one node, if so return FALSE
   converged_default <- function(data, weights, control){
     #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
     convfun <- function(subset, weights){
@@ -142,13 +138,10 @@ distextree <- function(formula,
     return(convfun)
   }
 
-  # (LS) not necessary since converged is fixed here (defined above), 
-  # (LS) but has to be checked if further 'converged' functions are handed over
-  # FIXME: (LS) various 'converged' functions?
-  # FIXME: (LS) how is this function applied on single nodes? 
   if (is.function(converged)) {
     stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
-    converged <- converged(d, weights, control = control)
+    converged <- converged(d, weights, control = control) & 
+      converged_default(d, weights, control = control)
   } else {
     converged <- converged_default(d, weights, control = control)
   }
