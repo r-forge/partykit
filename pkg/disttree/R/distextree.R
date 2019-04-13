@@ -21,9 +21,12 @@ distextree <- function(formula,
   decorrelate <- control$decorrelate
   method <- control$method
   optim.control <- control$optim.control 
+  lower <- control$lower 
+  upper <- control$upper
 
   ocontrol <- control
   control$type.hessian <- control$decorrelate <- control$method <- control$optim.control <- NULL
+  control$lower <- control$upper <- NULL
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
@@ -34,7 +37,7 @@ distextree <- function(formula,
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
-    # FIXME: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    # TODO: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
@@ -44,9 +47,9 @@ distextree <- function(formula,
                "offset", "cluster", "scores"), names(mf), 0L)
 
   mf <- mf[c(1L, m)]
-  mf$yx <- "matrix"          # FIXME: (LS) in ctree "none"?
+  mf$yx <- "matrix"          
   mf$nmax <- control$nmax
-  mf$ytype <- control$ytype  # FIXME: (ML) original hard-coded "vector"?
+  mf$ytype <- control$ytype
   
   ## Evaluate model.frame
   mf[[1L]] <- quote(partykit::extree_data)
@@ -76,13 +79,13 @@ distextree <- function(formula,
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
-    # FIXME: (LS) scores with or without weights?
     # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
     start <- info$coefficients # FIXME: (ML) needed?
     
     model <- disttree::distexfit(ys, family = family, weights = subweights, start = start, start.eta = NULL,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                                 method = method, estfun = estfun, optim.control = optim.control)
+                                 method = method, estfun = estfun, optim.control = optim.control,
+                                 lower = lower, upper = upper)
     
     if(estfun) {
       ef <- as.matrix(model$estfun) # distexfit returns weighted scores!
@@ -121,7 +124,7 @@ distextree <- function(formula,
                 coefficients = coef(model, type = "parameter"),
                 objfun = -logLik(model),  # (LS) optional function to be minimized 
                 object = if(object) model else NULL,
-                converged = model$converged  # FIXME: (LS) warnings if distexfit does not converge
+                converged = model$converged  # TODO: (LS) warnings if distexfit does not converge
     )
     return(rval)
   }
@@ -207,10 +210,8 @@ distextree <- function(formula,
                   call = cl,
                   formula = formula,
                   family = family,
-                  #terms = list(response = d$terms$yx, partitioning = d$terms$z), #FIXME: (ML) needed? 
-                  fit = distexfit,
+                  fit = distexfit, # FIXME: (ML) not needed?
                   control = ocontrol
-                  #dots = list(...)  #FIXME: (ML) needed? (from mob)
               )
   )
 
@@ -225,7 +226,7 @@ distextree <- function(formula,
   ### INSERTED HERE:
   ## distributional fit: calculate coefficients for terminal nodes using distexfit()
   #
-  ### FIX ME: first check whether there is already a fitted model in each of the nodes, 
+  ### FIXME: (LS) first check whether there is already a fitted model in each of the nodes, 
   ## if so, extract coefficients instead of calculating them again in the following lines
   #
   ## number of terminal nodes
@@ -347,13 +348,15 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                decorrelate = c("none", "opg", "vcov"),
                                method = "L-BFGS-B",
                                optim.control = list(),   # FIXME: (ML) why an empty list? 
+                               lower = -Inf,
+                               upper = Inf,
                                minsplit = NULL,     # FIXME: (ML) currently use mob default
                                minbucket = NULL,    # FIXME: (ML) currently use mob default
                                splittry = 1L,       # FIXME: (ML) currently use mob default
                                
                                ## Arguments need for disttree
                                splitflavour = c("ctree", "exhaustive"),  
-                               testflavour = c("ctree", "mfluc", "guide"),   # FIXME: (LS) "exhaustive"
+                               testflavour = c("ctree", "mfluc", "guide"),
                                terminal = "object",
                                model = TRUE,
                                inner = "object",
@@ -399,6 +402,8 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$decorrelate <- match.arg(decorrelate)
   ctrl$method <- method
   ctrl$optim.control <- optim.control
+  ctrl$lower <- lower
+  ctrl$upper <- upper
 
   ## Check the kind of tree
   if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
