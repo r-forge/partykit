@@ -1027,6 +1027,42 @@ dist_exponential <- function() {
 
 ###### Gamma distribution
 dist_gamma <- function() {
+
+  ## auxilary function wtd.var from the R-package Hmisc
+  ## link: https://cran.r-project.org/web/packages/Hmisc/ 
+  ## license: published under GPL-3 License
+  ## authors: Frank E Harrell Jr, with contributions from Charles Dupont and many others.
+  wtd.var <- function(x, weights=NULL, normwt=FALSE, na.rm=TRUE,
+                      method = c('unbiased', 'ML'))
+    ## By Benjamin Tyner <btyner@gmail.com> 2017-0-12
+  {
+    method <- match.arg(method)
+    if(! length(weights)) {
+      if(na.rm) x <- x[!is.na(x)]
+      return(var(x))
+    }
+  
+    if(na.rm) {
+      s       <- !is.na(x + weights)
+      x       <- x[s]
+      weights <- weights[s]
+    }
+  
+    if(normwt)
+      weights <- weights * length(x) / sum(weights)
+  
+    if(normwt || method == 'ML')
+      return(as.numeric(stats::cov.wt(cbind(x), weights, method = method)$cov))
+  
+    # the remainder is for the special case of unbiased frequency weights
+    sw  <- sum(weights)
+    if(sw <= 1)
+        warning("only one effective observation; variance estimate undefined")
+  
+    xbar <- sum(weights * x) / sw
+    sum(weights*((x - xbar)^2)) / (sw - 1)
+  }
+
   
   # parnames <- c("shape", "scale")
   # etanames <- c("log(shape)", "log(scale)")
@@ -1113,7 +1149,7 @@ dist_gamma <- function() {
   
   startfun <- function(y, weights = NULL){
     y.m <- if(is.null(weights) || (length(weights)==0L)) mean(y) else weighted.mean(y, weights)
-    y.sd <- if(is.null(weights) || (length(weights)==0L)) sd(y) else sqrt(Hmisc::wtd.var(y, weights))
+    y.sd <- if(is.null(weights) || (length(weights)==0L)) sd(y) else sqrt(wtd.var(y, weights))
     shape <- (y.m/y.sd)^2
     scale <- y.m/shape     # <- y.sd^2/y.m
     starteta <- c(log(shape), log(scale))
