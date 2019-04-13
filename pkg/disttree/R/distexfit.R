@@ -72,7 +72,7 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # - list with the required information about the distribution
   # - character string with the name of a distribution for which a list generating function is provided in disttree
   
-  if(!inherits(family, "distfamily")) 
+  if(!inherits(family, "disttree.family")) 
     family <- distfamily(family)
 
   if(type.hessian == "checklist") {

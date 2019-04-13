@@ -108,7 +108,7 @@ dist_gaussian <- function() {
   
   mle <- TRUE
 
-  list(family.name = "Normal Distribution",
+  rval <- list(family.name = "Normal Distribution",
        ddist = ddist, 
        sdist = sdist, 
        hdist = hdist,
@@ -125,6 +125,9 @@ dist_gaussian <- function() {
        censored = FALSE
   )
 
+   # Return family object
+   class(rval) <- "disttree.family"
+   return(rval)
 }
 
 
@@ -585,7 +588,7 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   #mle <- FALSE
   mle <- TRUE
   
-  dist_list <- list(family.name = family.name,
+  rval <- list(family.name = family.name,
                     list.name = list.name,
                     type = type,
                     dist = dist,
@@ -606,8 +609,10 @@ dist_crch <- function(dist = c("gaussian","logistic"),
                     censored = !truncated,
                     truncated = truncated
   )
-  
-  return(dist_list)
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -767,7 +772,7 @@ dist_weibull <- function() {
   
   mle <- FALSE
   
-  list(family.name = "Weibull Distribution",
+  rval <- list(family.name = "Weibull Distribution",
        ddist = ddist, 
        sdist = sdist, 
        hdist = hdist,
@@ -783,6 +788,10 @@ dist_weibull <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -877,7 +886,7 @@ dist_poisson <- function() {
   mle <- TRUE
   
   
-  list(family.name = "Poisson Distribution",
+  rval <- list(family.name = "Poisson Distribution",
        ddist = ddist, 
        sdist = sdist, 
        hdist = hdist, 
@@ -893,6 +902,10 @@ dist_poisson <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -986,7 +999,7 @@ dist_exponential <- function() {
   mle <- TRUE
   
   
-  list(family.name = "Exponential Distribution",
+  rval <- list(family.name = "Exponential Distribution",
        ddist = ddist, 
        sdist = sdist, 
        hdist = hdist,
@@ -1002,6 +1015,10 @@ dist_exponential <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1106,7 +1123,7 @@ dist_gamma <- function() {
   
   mle <- FALSE
   
-  list(family.name = "Gamma Distribution",
+  rval <- list(family.name = "Gamma Distribution",
        ddist = ddist, 
        sdist = sdist, 
        hdist = hdist,
@@ -1122,6 +1139,10 @@ dist_gamma <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1231,7 +1252,7 @@ dist_ztnbinom <- function() {
     return(starteta)
   }
   
-  list(family.name = "ztnbinom",
+  rval <- list(family.name = "ztnbinom",
        ddist = ddist,
        sdist = sdist,
        hdist = hdist,
@@ -1247,6 +1268,10 @@ dist_ztnbinom <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1347,7 +1372,7 @@ dist_binomial <- function() {
     return(starteta)
   }
   
-  list(family.name = "Binomial",
+  rval <- list(family.name = "Binomial",
        ddist = ddist,
        sdist = sdist,
        hdist = hdist,
@@ -1363,6 +1388,10 @@ dist_binomial <- function() {
        gamlssobj = FALSE,
        censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1376,8 +1405,7 @@ dist_binomial <- function() {
 
 
 #### dist_list_normal
-{
-  dist_list_normal <- list()
+dist_list_normal <- function(){
   
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
@@ -1487,22 +1515,26 @@ dist_binomial <- function() {
   
   mle <- TRUE
   
-  dist_list_normal <- list(family.name = "Normal Distribution",
-                           ddist = ddist, 
-                           sdist = sdist, 
-                           hdist = hdist,
-                           pdist = pdist,
-                           qdist = qdist,
-                           rdist = rdist,
-                           link = link, 
-                           linkfun = linkfun, 
-                           linkinv = linkinv, 
-                           linkinvdr = linkinvdr,
-                           startfun = startfun,
-                           mle = mle,
-                           gamlssobj = FALSE,
-                           censored = FALSE
+  rval <- list(family.name = "Normal Distribution",
+               ddist = ddist, 
+               sdist = sdist, 
+               hdist = hdist,
+               pdist = pdist,
+               qdist = qdist,
+               rdist = rdist,
+               link = link, 
+               linkfun = linkfun, 
+               linkinv = linkinv, 
+               linkinvdr = linkinvdr,
+               startfun = startfun,
+               mle = mle,
+               gamlssobj = FALSE,
+               censored = FALSE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1510,8 +1542,7 @@ dist_binomial <- function() {
 
 
 #### dist_list_cens_normal
-{
-  dist_list_cens_normal <- list()
+dist_list_cens_normal <- function(){
   
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
@@ -1710,6 +1741,10 @@ dist_binomial <- function() {
                                 gamlssobj = FALSE,
                                 censored = TRUE
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1718,8 +1753,7 @@ dist_binomial <- function() {
 
 
 #### dist_list_trunc_normal
-{
-  dist_list_trunc_normal <- list()
+dist_list_trunc_normal <- function(){
   
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
@@ -1888,22 +1922,26 @@ dist_binomial <- function() {
   
   mle <- TRUE
   
-  dist_list_trunc_normal <- list(family.name = "truncated Normal Distribution",
-                                 ddist = ddist, 
-                                 sdist = sdist, 
-                                 hdist = hdist,
-                                 pdist = pdist,
-                                 qdist = qdist,
-                                 rdist = rdist,
-                                 link = link, 
-                                 linkfun = linkfun, 
-                                 linkinv = linkinv, 
-                                 linkinvdr = linkinvdr,
-                                 startfun = startfun,
-                                 mle = mle,
-                                 gamlssobj = FALSE,
-                                 censored = FALSE   ## FIX ME: new argument 'truncated'?
+  rval <- list(family.name = "truncated Normal Distribution",
+               ddist = ddist, 
+               sdist = sdist, 
+               hdist = hdist,
+               pdist = pdist,
+               qdist = qdist,
+               rdist = rdist,
+               link = link, 
+               linkfun = linkfun, 
+               linkinv = linkinv, 
+               linkinvdr = linkinvdr,
+               startfun = startfun,
+               mle = mle,
+               gamlssobj = FALSE,
+               censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
+
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
@@ -1912,8 +1950,7 @@ dist_binomial <- function() {
 
 
 #### dist_list_hurdle_normal
-{
-  dist_list_hurdle_normal <- list()
+dist_list_hurdle_normal <- function(){
   
   # parnames <- c("mu", "sigma", "nu")
   # etanames <- c("mu", "log(sigma)", "log(nu/(1-nu))")
@@ -2109,7 +2146,7 @@ dist_binomial <- function() {
   
   mle <- TRUE
     
-  dist_list_hurdle_normal <- list(family.name = "hurdle Normal Distribution",
+  rval <- list(family.name = "hurdle Normal Distribution",
                                   ddist = ddist, 
                                   sdist = sdist, 
                                   hdist = hdist,
@@ -2125,6 +2162,10 @@ dist_binomial <- function() {
                                   gamlssobj = FALSE,
                                   censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
+ 
+  # Return family object
+  class(rval) <- "disttree.family"
+  return(rval)
 }
 
 
