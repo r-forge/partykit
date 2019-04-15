@@ -1,6 +1,6 @@
 ###### Gaussian distribution
 dist_gaussian <- function() {
-
+  
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
   
@@ -22,7 +22,7 @@ dist_gaussian <- function() {
   
   
   sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-      
+    
     score <- cbind(exp(-2*eta[2]) * (y-eta[1]), 
                    -1 + exp(-2*eta[2] + log((y-eta[1])^2)))
     
@@ -64,9 +64,9 @@ dist_gaussian <- function() {
   
   ## additional functions pdist, qdist, rdist on link scale
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = exp(eta[2]), 
-                                                                            lower.tail = lower.tail, log.p = log.p)
+                                                                    lower.tail = lower.tail, log.p = log.p)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = exp(eta[2]), 
-                                                                            lower.tail = lower.tail, log.p = log.p)
+                                                                    lower.tail = lower.tail, log.p = log.p)
   rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = exp(eta[2]))
   
   
@@ -92,7 +92,7 @@ dist_gaussian <- function() {
     return(dpardeta)
   }
   
-
+  
   startfun <- function(y, weights = NULL){
     if(is.null(weights) || (length(weights)==0L)) {
       mu <- mean(y)
@@ -107,27 +107,27 @@ dist_gaussian <- function() {
   }
   
   mle <- TRUE
-
-  rval <- list(family.name = "Normal Distribution",
-       ddist = ddist, 
-       sdist = sdist, 
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link, 
-       linkfun = linkfun, 
-       linkinv = linkinv, 
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = mle,
-       gamlssobj = FALSE,
-       censored = FALSE
+  
+  dist_list_gaussian <- list(family.name = "Normal Distribution",
+                             ddist = ddist, 
+                             sdist = sdist, 
+                             hdist = hdist,
+                             pdist = pdist,
+                             qdist = qdist,
+                             rdist = rdist,
+                             link = link, 
+                             linkfun = linkfun, 
+                             linkinv = linkinv, 
+                             linkinvdr = linkinvdr,
+                             startfun = startfun,
+                             mle = mle,
+                             gamlssobj = FALSE,
+                             censored = FALSE
   )
-
-   # Return family object
-   class(rval) <- "disttree.family"
-   return(rval)
+  
+  # Return family object
+  class(dist_list_gaussian) <- "disttree.family"
+  return(dist_list_gaussian)
 }
 
 
@@ -170,8 +170,6 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   }
   
   
-  dist_list <- list()
-  
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
   
@@ -179,7 +177,7 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   
   
   
-
+  
   if(truncated) {
     if(dist == "gaussian") {
       
@@ -396,7 +394,7 @@ dist_crch <- function(dist = c("gaussian","logistic"),
     
     
     
-  
+    
     if(dist == "logistic") {
       
       ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {     
@@ -466,8 +464,8 @@ dist_crch <- function(dist = c("gaussian","logistic"),
     }
     
   }
-    
-    
+  
+  
   link <- c("identity", "log")
   
   linkfun <- function(par) {
@@ -514,40 +512,40 @@ dist_crch <- function(dist = c("gaussian","logistic"),
         colnames(x) <- "(Intercept)"
         
         starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                        truncated = truncated, weights = weights, dist = dist, 
-                                        control = crch::crch.control(method = "L-BFGS-B", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = truncated, weights = weights, dist = dist, 
+                                              control = crch::crch.control(method = "L-BFGS-B", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         silent = TRUE)
         if(inherits(starteta, "try-error")){
           warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch::crch.control(method = "BFGS", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = truncated, weights = weights, dist = dist, 
+                                                control = crch::crch.control(method = "BFGS", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch::crch.control(method = "Nelder-Mead", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = truncated, weights = weights, dist = dist, 
+                                                control = crch::crch.control(method = "Nelder-Mead", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method Nelder-Mead in optim, applied method SANN instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = truncated, weights = weights, dist = dist, 
-                                          control = crch::crch.control(method = "SANN", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = truncated, weights = weights, dist = dist, 
+                                                control = crch::crch.control(method = "SANN", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")) {
@@ -588,31 +586,31 @@ dist_crch <- function(dist = c("gaussian","logistic"),
   #mle <- FALSE
   mle <- TRUE
   
-  rval <- list(family.name = family.name,
-                    list.name = list.name,
-                    type = type,
-                    dist = dist,
-                    censpoint = censpoint,
-                    ddist = ddist, 
-                    sdist = sdist, 
-                    hdist = hdist,
-                    pdist = pdist,
-                    qdist = qdist,
-                    rdist = rdist,
-                    link = link, 
-                    linkfun = linkfun, 
-                    linkinv = linkinv, 
-                    linkinvdr = linkinvdr,
-                    startfun = startfun,
-                    mle = mle,
-                    gamlssobj = FALSE,
-                    censored = !truncated,
-                    truncated = truncated
+  dist_list_crch <- list(family.name = family.name,
+                         list.name = list.name,
+                         type = type,
+                         dist = dist,
+                         censpoint = censpoint,
+                         ddist = ddist, 
+                         sdist = sdist, 
+                         hdist = hdist,
+                         pdist = pdist,
+                         qdist = qdist,
+                         rdist = rdist,
+                         link = link, 
+                         linkfun = linkfun, 
+                         linkinv = linkinv, 
+                         linkinvdr = linkinvdr,
+                         startfun = startfun,
+                         mle = mle,
+                         gamlssobj = FALSE,
+                         censored = !truncated,
+                         truncated = truncated
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_crch) <- "disttree.family"
+  return(dist_list_crch)
 }
 
 
@@ -772,26 +770,26 @@ dist_weibull <- function() {
   
   mle <- FALSE
   
-  rval <- list(family.name = "Weibull Distribution",
-       ddist = ddist, 
-       sdist = sdist, 
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link, 
-       linkfun = linkfun, 
-       linkinv = linkinv, 
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = mle,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_weibull <- list(family.name = "Weibull Distribution",
+                            ddist = ddist, 
+                            sdist = sdist, 
+                            hdist = hdist,
+                            pdist = pdist,
+                            qdist = qdist,
+                            rdist = rdist,
+                            link = link, 
+                            linkfun = linkfun, 
+                            linkinv = linkinv, 
+                            linkinvdr = linkinvdr,
+                            startfun = startfun,
+                            mle = mle,
+                            gamlssobj = FALSE,
+                            censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_weibull) <- "disttree.family"
+  return(dist_list_weibull)
 }
 
 
@@ -886,26 +884,26 @@ dist_poisson <- function() {
   mle <- TRUE
   
   
-  rval <- list(family.name = "Poisson Distribution",
-       ddist = ddist, 
-       sdist = sdist, 
-       hdist = hdist, 
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link, 
-       linkfun = linkfun, 
-       linkinv = linkinv, 
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = mle,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_poisson <- list(family.name = "Poisson Distribution",
+                            ddist = ddist, 
+                            sdist = sdist, 
+                            hdist = hdist, 
+                            pdist = pdist,
+                            qdist = qdist,
+                            rdist = rdist,
+                            link = link, 
+                            linkfun = linkfun, 
+                            linkinv = linkinv, 
+                            linkinvdr = linkinvdr,
+                            startfun = startfun,
+                            mle = mle,
+                            gamlssobj = FALSE,
+                            censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_poisson) <- "disttree.family"
+  return(dist_list_poisson)
 }
 
 
@@ -999,26 +997,26 @@ dist_exponential <- function() {
   mle <- TRUE
   
   
-  rval <- list(family.name = "Exponential Distribution",
-       ddist = ddist, 
-       sdist = sdist, 
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link, 
-       linkfun = linkfun, 
-       linkinv = linkinv, 
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = mle,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_exponential <- list(family.name = "Exponential Distribution",
+                                ddist = ddist, 
+                                sdist = sdist, 
+                                hdist = hdist,
+                                pdist = pdist,
+                                qdist = qdist,
+                                rdist = rdist,
+                                link = link, 
+                                linkfun = linkfun, 
+                                linkinv = linkinv, 
+                                linkinvdr = linkinvdr,
+                                startfun = startfun,
+                                mle = mle,
+                                gamlssobj = FALSE,
+                                censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_exponential) <- "disttree.family"
+  return(dist_list_exponential)
 }
 
 
@@ -1027,7 +1025,7 @@ dist_exponential <- function() {
 
 ###### Gamma distribution
 dist_gamma <- function() {
-
+  
   ## auxilary function wtd.var from the R-package Hmisc
   ## link: https://cran.r-project.org/web/packages/Hmisc/ 
   ## license: published under GPL-3 License
@@ -1041,28 +1039,28 @@ dist_gamma <- function() {
       if(na.rm) x <- x[!is.na(x)]
       return(var(x))
     }
-  
+    
     if(na.rm) {
       s       <- !is.na(x + weights)
       x       <- x[s]
       weights <- weights[s]
     }
-  
+    
     if(normwt)
       weights <- weights * length(x) / sum(weights)
-  
+    
     if(normwt || method == 'ML')
       return(as.numeric(stats::cov.wt(cbind(x), weights, method = method)$cov))
-  
+    
     # the remainder is for the special case of unbiased frequency weights
     sw  <- sum(weights)
     if(sw <= 1)
-        warning("only one effective observation; variance estimate undefined")
-  
+      warning("only one effective observation; variance estimate undefined")
+    
     xbar <- sum(weights * x) / sw
     sum(weights*((x - xbar)^2)) / (sw - 1)
   }
-
+  
   
   # parnames <- c("shape", "scale")
   # etanames <- c("log(shape)", "log(scale)")
@@ -1159,26 +1157,26 @@ dist_gamma <- function() {
   
   mle <- FALSE
   
-  rval <- list(family.name = "Gamma Distribution",
-       ddist = ddist, 
-       sdist = sdist, 
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link, 
-       linkfun = linkfun, 
-       linkinv = linkinv, 
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = mle,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_gamma <- list(family.name = "Gamma Distribution",
+                          ddist = ddist, 
+                          sdist = sdist, 
+                          hdist = hdist,
+                          pdist = pdist,
+                          qdist = qdist,
+                          rdist = rdist,
+                          link = link, 
+                          linkfun = linkfun, 
+                          linkinv = linkinv, 
+                          linkinvdr = linkinvdr,
+                          startfun = startfun,
+                          mle = mle,
+                          gamlssobj = FALSE,
+                          censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_gamma) <- "disttree.family"
+  return(dist_list_gamma)
 }
 
 
@@ -1288,26 +1286,26 @@ dist_ztnbinom <- function() {
     return(starteta)
   }
   
-  rval <- list(family.name = "ztnbinom",
-       ddist = ddist,
-       sdist = sdist,
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link,
-       linkfun = linkfun,
-       linkinv = linkinv,
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = FALSE,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_ztnbinom <- list(family.name = "ztnbinom",
+                             ddist = ddist,
+                             sdist = sdist,
+                             hdist = hdist,
+                             pdist = pdist,
+                             qdist = qdist,
+                             rdist = rdist,
+                             link = link,
+                             linkfun = linkfun,
+                             linkinv = linkinv,
+                             linkinvdr = linkinvdr,
+                             startfun = startfun,
+                             mle = FALSE,
+                             gamlssobj = FALSE,
+                             censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_ztnbinom) <- "disttree.family"
+  return(dist_list_ztnbinom)
 }
 
 
@@ -1408,26 +1406,26 @@ dist_binomial <- function() {
     return(starteta)
   }
   
-  rval <- list(family.name = "Binomial",
-       ddist = ddist,
-       sdist = sdist,
-       hdist = hdist,
-       pdist = pdist,
-       qdist = qdist,
-       rdist = rdist,
-       link = link,
-       linkfun = linkfun,
-       linkinv = linkinv,
-       linkinvdr = linkinvdr,
-       startfun = startfun,
-       mle = TRUE,
-       gamlssobj = FALSE,
-       censored = FALSE
+  dist_list_binomial <- list(family.name = "Binomial",
+                             ddist = ddist,
+                             sdist = sdist,
+                             hdist = hdist,
+                             pdist = pdist,
+                             qdist = qdist,
+                             rdist = rdist,
+                             link = link,
+                             linkfun = linkfun,
+                             linkinv = linkinv,
+                             linkinvdr = linkinvdr,
+                             startfun = startfun,
+                             mle = TRUE,
+                             gamlssobj = FALSE,
+                             censored = FALSE
   )
-
+  
   # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  class(dist_list_binomial) <- "disttree.family"
+  return(dist_list_binomial)
 }
 
 
@@ -1441,8 +1439,8 @@ dist_binomial <- function() {
 
 
 #### dist_list_normal
-dist_list_normal <- function(){
-  
+{
+  dist_list_normal <- list()
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
   
@@ -1551,26 +1549,25 @@ dist_list_normal <- function(){
   
   mle <- TRUE
   
-  rval <- list(family.name = "Normal Distribution",
-               ddist = ddist, 
-               sdist = sdist, 
-               hdist = hdist,
-               pdist = pdist,
-               qdist = qdist,
-               rdist = rdist,
-               link = link, 
-               linkfun = linkfun, 
-               linkinv = linkinv, 
-               linkinvdr = linkinvdr,
-               startfun = startfun,
-               mle = mle,
-               gamlssobj = FALSE,
-               censored = FALSE
+  dist_list_normal <- list(family.name = "Normal Distribution",
+                           ddist = ddist, 
+                           sdist = sdist, 
+                           hdist = hdist,
+                           pdist = pdist,
+                           qdist = qdist,
+                           rdist = rdist,
+                           link = link, 
+                           linkfun = linkfun, 
+                           linkinv = linkinv, 
+                           linkinvdr = linkinvdr,
+                           startfun = startfun,
+                           mle = mle,
+                           gamlssobj = FALSE,
+                           censored = FALSE
   )
-
-  # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  
+  # Turn into family object
+  class(dist_list_normal) <- "disttree.family"
 }
 
 
@@ -1578,7 +1575,8 @@ dist_list_normal <- function(){
 
 
 #### dist_list_cens_normal
-dist_list_cens_normal <- function(){
+{
+  dist_list_cens_normal <- list()
   
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
@@ -1642,11 +1640,11 @@ dist_list_cens_normal <- function(){
   ## additional functions pdist, qdist, rdist on link-scale
   # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
-                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                            left = left, right = right)
+                                                                           lower.tail = lower.tail, log.p = log.p, 
+                                                                           left = left, right = right)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
-                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                            left = left, right = right)
+                                                                           lower.tail = lower.tail, log.p = log.p, 
+                                                                           left = left, right = right)
   rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
   
   
@@ -1695,40 +1693,40 @@ dist_list_cens_normal <- function(){
         colnames(x) <- "(Intercept)"
         
         starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                        truncated = FALSE, weights = weights, 
-                                        control = crch::crch.control(method = "L-BFGS-B", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = FALSE, weights = weights, 
+                                              control = crch::crch.control(method = "L-BFGS-B", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         silent = TRUE)
         if(inherits(starteta, "try-error")){
           warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = FALSE, weights = weights, 
-                                          control = crch::crch.control(method = "BFGS", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = FALSE, weights = weights, 
+                                                control = crch::crch.control(method = "BFGS", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = FALSE, weights = weights, 
-                                          control = crch::crch.control(method = "Nelder-Mead", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = FALSE, weights = weights, 
+                                                control = crch::crch.control(method = "Nelder-Mead", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")){
           warning("Error for method Nelder-Mead in optim, applied method SANN instead")
           starteta <- try(unlist(crch::crch.fit(x = x, z = x, y = y, left = 0, right = Inf,
-                                          truncated = FALSE, weights = weights, 
-                                          control = crch::crch.control(method = "SANN", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = FALSE, weights = weights, 
+                                                control = crch::crch.control(method = "SANN", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           silent = TRUE)
         }
         if(inherits(starteta, "try-error")) {
@@ -1777,10 +1775,9 @@ dist_list_cens_normal <- function(){
                                 gamlssobj = FALSE,
                                 censored = TRUE
   )
-
-  # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  
+  # Turn into family object
+  class(dist_list_cens_normal) <- "disttree.family"
 }
 
 
@@ -1789,7 +1786,8 @@ dist_list_cens_normal <- function(){
 
 
 #### dist_list_trunc_normal
-dist_list_trunc_normal <- function(){
+{
+  dist_list_trunc_normal <- list()
   
   # parnames <- c("mu", "sigma")
   # etanames <- c("mu", "log(sigma)")
@@ -1905,40 +1903,40 @@ dist_list_trunc_normal <- function(){
       
       # calculate starteta using crch::crch.fit
       starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                      truncated = TRUE, weights = wpos, 
-                                      control = crch::crch.control(method = "L-BFGS-B", 
-                                                             reltol = 1e-8, factr = 1e7,
-                                                             maxit = 100,
-                                                             hessian = FALSE))$coefficients), 
+                                            truncated = TRUE, weights = wpos, 
+                                            control = crch::crch.control(method = "L-BFGS-B", 
+                                                                         reltol = 1e-8, factr = 1e7,
+                                                                         maxit = 100,
+                                                                         hessian = FALSE))$coefficients), 
                       silent = TRUE)
       if(inherits(starteta, "try-error")){
         warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
         starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                        truncated = TRUE, weights = wpos, 
-                                        control = crch::crch.control(method = "BFGS", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = TRUE, weights = wpos, 
+                                              control = crch::crch.control(method = "BFGS", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         silent = TRUE)
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
         starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                        truncated = TRUE, weights = wpos, 
-                                        control = crch::crch.control(method = "Nelder-Mead", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               #maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = TRUE, weights = wpos, 
+                                              control = crch::crch.control(method = "Nelder-Mead", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           #maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         silent = TRUE)
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method Nelder-Mead in optim, applied method SANN instead")
         starteta <- try(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                        truncated = TRUE, weights = wpos, 
-                                        control = crch::crch.control(method = "SANN", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               #maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = TRUE, weights = wpos, 
+                                              control = crch::crch.control(method = "SANN", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           #maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         silent = TRUE)
       }
       if(inherits(starteta, "try-error")) {
@@ -1958,26 +1956,25 @@ dist_list_trunc_normal <- function(){
   
   mle <- TRUE
   
-  rval <- list(family.name = "truncated Normal Distribution",
-               ddist = ddist, 
-               sdist = sdist, 
-               hdist = hdist,
-               pdist = pdist,
-               qdist = qdist,
-               rdist = rdist,
-               link = link, 
-               linkfun = linkfun, 
-               linkinv = linkinv, 
-               linkinvdr = linkinvdr,
-               startfun = startfun,
-               mle = mle,
-               gamlssobj = FALSE,
-               censored = FALSE   ## FIX ME: new argument 'truncated'?
+  dist_list_trunc_normal <- list(family.name = "truncated Normal Distribution",
+                                 ddist = ddist, 
+                                 sdist = sdist, 
+                                 hdist = hdist,
+                                 pdist = pdist,
+                                 qdist = qdist,
+                                 rdist = rdist,
+                                 link = link, 
+                                 linkfun = linkfun, 
+                                 linkinv = linkinv, 
+                                 linkinvdr = linkinvdr,
+                                 startfun = startfun,
+                                 mle = mle,
+                                 gamlssobj = FALSE,
+                                 censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
-
-  # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  
+  # Turn into family object
+  class(dist_list_trunc_normal) <- "disttree.family"
 }
 
 
@@ -1986,7 +1983,8 @@ dist_list_trunc_normal <- function(){
 
 
 #### dist_list_hurdle_normal
-dist_list_hurdle_normal <- function(){
+{
+dist_list_hurdle_normal <- list()
   
   # parnames <- c("mu", "sigma", "nu")
   # etanames <- c("mu", "log(sigma)", "log(nu/(1-nu))")
@@ -2123,46 +2121,46 @@ dist_list_hurdle_normal <- function(){
       xpos <- cbind(rep(1, length(ypos)))
       colnames(xpos) <- "(Intercept)"
       wpos <- weights[y>0]
-
+      
       # calculate starteta using crch::crch.fit
       starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                        truncated = TRUE, weights = wpos, 
-                                        control = crch::crch.control(method = "L-BFGS-B", 
-                                                               reltol = 1e-8, factr = 1e7,
-                                                               maxit = 100,
-                                                               hessian = FALSE))$coefficients), 
+                                              truncated = TRUE, weights = wpos, 
+                                              control = crch::crch.control(method = "L-BFGS-B", 
+                                                                           reltol = 1e-8, factr = 1e7,
+                                                                           maxit = 100,
+                                                                           hessian = FALSE))$coefficients), 
                         if(any(y[weights>0]==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
                       silent = TRUE)
       if(inherits(starteta, "try-error")){
         warning("Error for method L-BFGS-B in optim, applied method BFGS instead")
         starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                          truncated = TRUE, weights = wpos, 
-                                          control = crch::crch.control(method = "BFGS", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = TRUE, weights = wpos, 
+                                                control = crch::crch.control(method = "BFGS", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           if(any(y[weights>0]==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)), 
                         silent = TRUE)
       }
       if(inherits(starteta, "try-error")){
         warning("Error for method BFGS in optim, applied method Nelder-Mead instead")
         starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                          truncated = TRUE, weights = wpos, 
-                                          control = crch::crch.control(method = "Nelder-Mead", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = TRUE, weights = wpos, 
+                                                control = crch::crch.control(method = "Nelder-Mead", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           if(any(y[weights>0]==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)),
                         silent = TRUE)
       }
       if(inherits(starteta, "try-error")) {
         warning("Error for method Nelder-Mead in optim, applied method SANN instead")
         starteta <- try(c(unlist(crch::crch.fit(x = xpos, z = xpos, y = ypos, left = 0, right = Inf,
-                                          truncated = TRUE, weights = wpos, 
-                                          control = crch::crch.control(method = "SANN", 
-                                                                 reltol = 1e-8, factr = 1e7,
-                                                                 #maxit = 100,
-                                                                 hessian = FALSE))$coefficients), 
+                                                truncated = TRUE, weights = wpos, 
+                                                control = crch::crch.control(method = "SANN", 
+                                                                             reltol = 1e-8, factr = 1e7,
+                                                                             #maxit = 100,
+                                                                             hessian = FALSE))$coefficients), 
                           if(any(y[weights>0]==0)) qlogis(weighted.mean(y > 0, w = weights)) else qlogis(1-1e-16)),
                         silent = TRUE)
       }
@@ -2181,8 +2179,8 @@ dist_list_hurdle_normal <- function(){
   }
   
   mle <- TRUE
-    
-  rval <- list(family.name = "hurdle Normal Distribution",
+  
+  dist_list_hurdle_normal <- list(family.name = "hurdle Normal Distribution",
                                   ddist = ddist, 
                                   sdist = sdist, 
                                   hdist = hdist,
@@ -2198,10 +2196,9 @@ dist_list_hurdle_normal <- function(){
                                   gamlssobj = FALSE,
                                   censored = FALSE   ## FIX ME: new argument 'truncated'?
   )
- 
-  # Return family object
-  class(rval) <- "disttree.family"
-  return(rval)
+  
+  # Turn into family object
+  class(dist_list_hurdle_normal) <- "disttree.family"
 }
 
 
