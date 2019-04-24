@@ -1,4 +1,14 @@
 
+Changes in Version 0.1-3
+
+  o New plotting method for (g)lmertrees.
+
+  o Two new sections added to vignette, illustrating how mixed-effects 
+    regression trees with constant fits in the terminal nodes can be
+    fitted, and how longitudinal data / growth curve models can be 
+    partitioned.
+
+
 Changes in Version 0.1-2
 
   o Functions glmertree() and lmertree() now take offset arguments.
