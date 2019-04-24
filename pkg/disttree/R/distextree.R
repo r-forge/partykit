@@ -114,12 +114,12 @@ distextree <- function(formula,
     } else {
       estfun <- NULL
     }
-    
     rval <- list(estfun = estfun,
                 unweighted = FALSE, # (LS) unweighted = TRUE would prevent estfun / w in extree_fit
                 coefficients = coef(model, type = "parameter"),
                 objfun = -logLik(model),  # (LS) optional function to be minimized 
                 object = if(object) model else NULL,
+                nobs = nobs(model), # TODO: (ML) check if ok, added to get nobs right
                 converged = model$converged  # TODO: (LS) warnings if distexfit does not converge
     )
     return(rval)
@@ -201,6 +201,7 @@ distextree <- function(formula,
                   formula = formula,
                   family = family,
                   fit = distexfit,
+                  #nobs = nrow(fitted),
                   control = ocontrol
               )
   )
@@ -307,6 +308,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$optim.control <- optim.control
   ctrl$lower <- lower
   ctrl$upper <- upper
+  ctrl$dfsplit <- dfsplit  # FIXME: (ML) Added to all types of tree, to get df within logLik.modelparty
 
   ## Check the kind of tree
   if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
@@ -346,7 +348,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
     ctrl <- c(ctrl, list(restart = restart,
                          breakties = breakties,
                          parm = parm,
-                         dfsplit = dfsplit,
+                         #dfsplit = dfsplit,  FIXME: (ML) Added to all tree types, see comment above   
                          vcov = vcov,
                          ordinal = ordinal,
                          ytype = ytype,
@@ -358,15 +360,15 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
     if(!(ctrl$criterion == "p.value") && guide_interaction){
       stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
     }
-    add_control <- c(ctrl, list(guide_parm = guide_parm,                  # LS: a vector of indices of parameters for which estfun should be considered
-                                guide_testtype = guide_testtype,
-                                interaction = interaction,
-                                guide_decorrelate = guide_decorrelate,    # (LS) needs to be set to other than "none" for testtype max and sum 
-                                                                          # (LS) unless ytrafo returns decorrelated scores
-                                                                          # FIXME: (LS) c("none","vcov","opg")
-                                xgroups = xgroups,                        # (LS) number of categories for split variables (optionally breaks can be handed over)
-                                ygroups = ygroups,                        # (LS) number of categories for scores (optionally breaks can be handed over)
-                                weighted.scores = weighted.scores))       # (LS) logical, should scores be weighted
+    ctrl <- c(ctrl, list(guide_parm = guide_parm,    # LS: a vector of indices of parameters for which estfun should be considered
+              guide_testtype = guide_testtype,
+              interaction = interaction,
+              guide_decorrelate = guide_decorrelate, # (LS) needs to be set to other than "none" for testtype max and sum 
+                                                     # (LS) unless ytrafo returns decorrelated scores
+                                                     # FIXME: (LS) c("none","vcov","opg")
+              xgroups = xgroups,                     # (LS) number of categories for split variables (optionally breaks can be handed over)
+              ygroups = ygroups,                     # (LS) number of categories for scores (optionally breaks can be handed over)
+              weighted.scores = weighted.scores))    # (LS) logical, should scores be weighted
   }
 
   ## Overwrite the split- and selectfun according to the split- and testflavour 
