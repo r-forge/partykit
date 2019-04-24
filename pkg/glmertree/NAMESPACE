@@ -1,15 +1,19 @@
 import("lme4")
 import("partykit")
 import("Formula")
+import("grid")
 
 importFrom("utils", "globalVariables", "installed.packages")
 importFrom("graphics", "plot")
-importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals")
+importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula")
 importFrom("grDevices", "devAskNewPage")
+importFrom("graphics", "boxplot", "hist")
 
 export(
   "lmertree",
-  "glmertree"
+  "glmertree",
+  "plot.lmertree2",
+  "plot.glmertree2"
 )
 
 S3method("print", "lmertree")

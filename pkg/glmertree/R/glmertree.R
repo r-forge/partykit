@@ -3,7 +3,7 @@ utils::globalVariables(c(".tree", ".ranef", ".weights", ".cluster"))
 lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                      ranefstart = NULL, offset = NULL, joint = TRUE,
                      abstol = 0.001, maxit = 100L, dfsplit = TRUE, 
-                     verbose = FALSE, plot = FALSE, 
+                     verbose = FALSE, plot = FALSE, REML = TRUE,
                      lmer.control = lmerControl(), ...)
 {
   ## remember call
@@ -43,7 +43,6 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     data$.weights <- rep(1L, times = nrow(data))
   }
   
-  
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
   tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
@@ -68,7 +67,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   } else if (ranefstart && length(ranefstart) == 1L) {
     ## generate ranefstart from lme null model: 
     predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
-                 data = data, weights = .weights, 
+                 data = data, weights = .weights, REML = REML,
                  offset = offset, control = lmer.control),
             newdata = data)
   } else {
@@ -96,7 +95,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                      cluster = .cluster, dfsplit = dfsplit, ...)
     }
     
-    if (plot) plot(tree)
+    if (plot) plot(tree, main = paste("Iteration", iteration))
     
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
@@ -116,43 +115,39 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
         if (is.null(offset)) {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
-                      control = lmer.control)          
+                      REML = REML, control = lmer.control)          
         } else {
           lme <- lmer(rf.alt, data = data, weights = .weights, 
-                      offset = offset, control = lmer.control)
+                      REML = REML, offset = offset, control = lmer.control)
         }
       } else { # a tree was grown
         if (is.null(offset)) {
           lme <- lmer(rf, data = data, weights = .weights,
-                      control = lmer.control)
+                      REML = REML, control = lmer.control)
         } else {
           lme <- lmer(rf, data = data, weights = .weights, 
-                      offset = offset, control = lmer.control)          
+                      REML = REML, offset = offset, control = lmer.control)          
         }
       }
       b <- structure(lme@beta, .Names = names(fixef(lme)))
       b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
-      data$.ranef <- suppressWarnings(suppressMessages(predict(lme, newdata = data, newparams = list(beta = b))))
+      data$.ranef <- suppressWarnings(suppressMessages(
+        predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
       ## estimate only a partial lmer model using the .tree fitted
       ## values as an offset
-      lme <- lmer(rf, data = data, offset = .tree, weights = .weights, control = lmer.control)
+      lme <- lmer(rf, data = data, offset = .tree, weights = .weights, 
+                  REML = REML, control = lmer.control)
       data$.ranef <- predict(lme, newdata = data)
       ## note that because newdata is specified, predict.merMod will not include offset in predictions
     }
     
     ## iteration information
     newloglik <- logLik(lme)    
-    continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
+    continue <- (abs(newloglik - oldloglik) > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
     if (verbose) {
-      print(c("iteration", iteration))
-      print("log likelihood")
       print(newloglik)
-      print("fixef tree")
-      print(coef(tree))
-      print("fixef lme")
-      print(fixef(lme))
     }
   }
   
@@ -187,7 +182,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
                       cluster = NULL, ranefstart = NULL, offset = NULL,
                       joint = TRUE, abstol = 0.001, maxit = 100L,  
                       dfsplit = TRUE, verbose = FALSE, plot = FALSE, 
-                      glmer.control = glmerControl(), ...)
+                      nAGQ = 1L, glmer.control = glmerControl(), ...)
 {
   ## remember call
   cl <- match.call()
@@ -250,7 +245,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   } else if (ranefstart && length(ranefstart) == 1) {
     ## generate ranefstart from lme null model: 
     predict(glmer(formula(ff, lhs = 1L, rhs = 2L),
-                  data = data, weights = .weights,
+                  data = data, weights = .weights, nAGQ = nAGQ,
                   offset = offset, family = family, control = glmer.control),
             newdata = data, type = "link")
   } else {
@@ -279,7 +274,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
                       dfsplit = dfsplit, ...)
     }
     
-    if (plot) plot(tree)
+    if (plot) plot(tree, main = paste("Iteration", iteration))
     
     data$.tree <- if (joint) {
       factor(predict(tree, newdata = data, type = "node"))
@@ -298,20 +293,20 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
         rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
                           lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
         if (is.null(offset)) {
-          glme <- glmer(rf.alt, data = data, family = family, 
+          glme <- glmer(rf.alt, data = data, family = family, nAGQ = nAGQ,
                         weights = .weights, control = glmer.control)
         } else {
-          glme <- glmer(rf.alt, data = data, family = family, 
+          glme <- glmer(rf.alt, data = data, family = family, nAGQ = nAGQ,
                         weights = .weights, offset = offset, 
                         control = glmer.control)          
         }
       } else {
         if (is.null(offset)) {
           glme <- glmer(rf, data = data, family = family, weights = .weights,
-                        control = glmer.control)
+                        nAGQ = nAGQ, control = glmer.control)
         } else {
           glme <- glmer(rf, data = data, family = family, weights = .weights,
-                        offset = offset, control = glmer.control)
+                        nAGQ = nAGQ, offset = offset, control = glmer.control)
         }
       }       
       b <- structure(glme@beta, .Names = names(fixef(glme)))
@@ -320,22 +315,16 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
         predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
       glme <- glmer(rf, data = data, family = family, offset = .tree, 
-                    weights = .weights, control = glmer.control)
+                    nAGQ = nAGQ, weights = .weights, control = glmer.control)
       data$.ranef <- predict(glme, newdata = data, type = "link")
       ## note that because newdata is specified, predict.merMod will not include offset in predictions
     }
     ## iteration information
     newloglik <- logLik(glme)    
-    continue <- (newloglik - oldloglik > abstol) & (iteration < maxit) 
+    continue <- (abs(newloglik - oldloglik) > abstol) & (iteration < maxit) 
     oldloglik <- newloglik
     if (verbose) {
-      print(c("iteration", iteration))
-      print("log likelihood")
       print(newloglik)
-      print("fixef tree")
-      print(coef(tree))
-      print("fixef glme")
-      print(fixef(glme))
     }
   }
   
@@ -365,21 +354,27 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   return(result)
 }
 
+
 fixef.lmertree <- coef.lmertree <- function(object, ...) {
   coefs <- coef(object$tree, ...)
-  for (i in rownames(coef(object$tree))) {
-    coefs[i, ] <- fixef(object$lmer)[
-      grepl(paste0("tree", i), names(fixef(object$lmer)))]
+  if (object$joint) {
+    for (i in rownames(coef(object$tree))) {
+      coefs[i, ] <- fixef(object$lmer)[
+        grepl(paste0("tree", i), names(fixef(object$lmer)))]
+    }
   }
   return(coefs)
 }
 
 
+
 fixef.glmertree <- coef.glmertree <- function(object, ...) {
   coefs <- coef(object$tree, ...)
-  for (i in rownames(coef(object$tree))) {
-    coefs[i, ] <- fixef(object$glmer)[
-      grepl(paste0("tree", i), names(fixef(object$glmer)))]
+  if (object$joint) {
+    for (i in rownames(coef(object$tree))) {
+      coefs[i, ] <- fixef(object$glmer)[
+        grepl(paste0("tree", i), names(fixef(object$glmer)))]
+    }
   }
   return(coefs)
 }
@@ -393,8 +388,11 @@ VarCorr.lmertree <- function(object, ...) {
   VarCorr(object$lmer)
 }
 
+
+
 plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
                                             type = "extended", ...) {    
+  
   if (which != "ranef") {
     if (type == "extended") {
       plot(x$tree, ...)
@@ -409,44 +407,152 @@ plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE,
       devAskNewPage(ask = TRUE)
     }
     if (requireNamespace("lattice")) {
-      print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), main = TRUE))
+      if (inherits(x, "lmertree")) {
+        print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), main = TRUE))
+      } else if (inherits(x, "glmertree")) {
+        print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), main = TRUE))        
+      }
     }
-    if (which == "all" && ask == TRUE) {grDevices::devAskNewPage(ask = orig_devAsk)}
+    if (which == "all" && ask == TRUE) grDevices::devAskNewPage(ask = orig_devAsk)
   }
 }
 
 
 simple_terminal_func <- function(node, minlength = 12, digits = 3) {
   paste(abbreviate(names(node$coefficient), minlength = minlength), " ",
-          format(node$coefficient, digits = digits + 1))
+        format(node$coefficient, digits = digits + 1))
 }
 
 
-plot.glmertree <- function(x, plotranef = FALSE, which = "all", ask = TRUE, 
-                           type = "extended", ...) {
-  if (which != "ranef") {
-    if (type == "extended") {
-      plot(x$tree, ...)
-    } else if (type == "simple") {
-      plot(x$tree, terminal_panel = node_terminal, tp_args = list(
-        FUN = simple_terminal_func, align = "right"))
+
+
+plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
+                                            type = "extended", 
+                                            observed = TRUE, fitmean = TRUE, 
+                                            fit.ranef = "constant", 
+                                            fit.fixef = "constant",
+                                            tp_args = list(), 
+                                            drop_terminal = TRUE, ...) {
+  if (type == "simple") {
+    
+    if (which != "tree") {
+      ## save ranef variances in tree:
+      varcorr <- VarCorr(x)
+      Res_var <- attr(varcorr, which = "sc")
+      Groups <- names(varcorr)
+      Names <- c()
+      Ranef_vars <- c()
+      for (i in Groups) {
+        Names <- c(Names, paste0(colnames(varcorr[[i]]), " | ", i))
+        Ranef_vars <- c(Ranef_vars, diag(varcorr[[i]]))
+      }
+      Names <- abbreviate(c(Names, "Residual"), minlength = 15)
+      Vars <- c(Ranef_vars, Res_var)
+      Ranefs <- paste(Names, " ", formatC(Vars, digits = 3, format = "f"))
+      tree_node <- as.list(x$tree$node)
+      for(i in 1:length(tree_node)) {
+        tree_node[[i]]$info$ranef_vars <- Ranefs
+      }
+      x$tree$node <- as.partynode(tree_node)
     }
-  }
-  if (which != "tree") {
-    if (which == "all" && ask == TRUE) {
-      orig_devAsk <- devAskNewPage()
-      devAskNewPage(ask = TRUE)
+    ## TODO: allow for specifying other values for align arg
+    if (which == "all") FUN <- node_simple_all
+    if (which == "tree") FUN <- node_simple_tree
+    if (which == "ranef") FUN <- node_simple_ranef
+    plot(x$tree, drop_terminal = drop_terminal,
+         terminal_panel = node_terminal, 
+         tp_args = list(FUN = FUN, align = "right"))
+    
+  } else {
+    
+    if (which != "ranef") {
+      if (length(attr(x$tree$info$terms$response, "term.labels")) == 0) {
+        ## If node-specific model is intercept-only, use default MOB plotting:
+        plot(x$tree, drop_terminal = drop_terminal, tp_args = tp_args)
+      } else {
+        mf <- model.frame(x)  
+        lm_vars <- names(Formula::model.part(x$tree$info$Formula, mf, lhs = 0L, rhs = 1L))
+        if (is.null(tp_args$which)) {
+          vars_to_plot <- 1L:length(lm_vars)
+        } else {
+          vars_to_plot <- tp_args$which
+        }
+        vars_to_plot <- lm_vars[vars_to_plot]
+        node_ids <- x$tree$fitted[["(fitted)"]]
+        re.form <- if(fit.ranef == "constant") NA else NULL
+        if (fit.fixef == "constant") {
+          fitted_values <- matrix(nrow = length(node_ids), 
+                                  ncol = length(vars_to_plot),
+                                  dimnames = list(rownames(mf), vars_to_plot))
+          for (varname in vars_to_plot) {
+            newdata <- x$data
+            remaining_lm_vars <- lm_vars[which(lm_vars != varname)]
+            if (length(lm_vars > 1)) {
+              for (i in remaining_lm_vars) {
+                if (class(mf[, i]) == "numeric") {
+                  ## set all values to mean:
+                  newdata[, i] <- mean(mf[, i])
+                } else if (class(mf[, i]) == "factor") {
+                  ## set all values to most common class:
+                  ux <- unique(mf[, i])
+                  newdata[, i] <- ux[which.max(tabulate(match(mf[, i], ux)))]
+                }
+              }
+            }
+            fitted_values[, varname] <- predict(x, newdata = newdata, 
+                                                re.form = re.form)
+          }
+        } else {
+          fitted_values <- predict(x, re.form = re.form, newdata = x$data)
+        }
+        lt_node <- as.list(x$tree$node)
+        for (i in unique(node_ids)) {
+          if (fit.fixef == "constant") {
+            lt_node[[i]]$info$fitted <- fitted_values[node_ids == i, ]  
+          } else {
+            lt_node[[i]]$info$fitted <- fitted_values[node_ids == i]          
+          }
+        }
+        x$tree$node <- as.partynode(lt_node)
+        terminal_panel <- node_glmertree
+        tp_args <- append(tp_args, values = list(ranef = fit.ranef, 
+                                                 fixef = fit.fixef, 
+                                                 observed = observed, 
+                                                 fitmean = fitmean))
+        plot(x$tree, terminal_panel = terminal_panel, 
+             drop_terminal = drop_terminal, tp_args = tp_args, ...)
+      }
     }
-    if (requireNamespace("lattice")) {
-      print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), main = TRUE))
+    
+    if (which != "tree") {
+      if (which == "all" && ask == TRUE) {
+        orig_devAsk <- devAskNewPage()
+        devAskNewPage(ask = TRUE)
+      }
+      if (requireNamespace("lattice")) {
+        if (inherits(x, "lmertree")) {
+          ## TODO: allow additional arguments to be passed to lattice dotplot?
+          print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), 
+                                 main = TRUE))
+        } else {
+          ## TODO: allow additional arguments to be passed to lattice dotplot?
+          print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), 
+                                 main = TRUE))
+        }
+      }
+      if (which == "all" && ask == TRUE) {
+        grDevices::devAskNewPage(ask = orig_devAsk)
+      }
     }
-    if (which == "all" && ask == TRUE) {grDevices::devAskNewPage(ask = orig_devAsk)}
   }
 }
 
-residuals.lmertree <- resid.lmertree <- function(object, type = NULL, scaled = FALSE, ...) {    
-  if(object$joint) {
-    if(is.null(type)) {
+
+
+residuals.lmertree <- resid.lmertree <- function(object, type = NULL, 
+                                                 scaled = FALSE, ...) {    
+  if (object$joint) {
+    if (is.null(type)) {
       resids <- residuals(object$lmer, scaled = scaled)
     } else {
       resids <- residuals(object$lmer, type = type, scaled = scaled)      
@@ -461,9 +567,10 @@ residuals.lmertree <- resid.lmertree <- function(object, type = NULL, scaled = F
   return(resids)
 }
 
-residuals.glmertree <- resid.glmertree <- function(object, type = NULL, scaled = FALSE, ...) {    
-  if(object$joint) {
-    if(is.null(type)) {
+residuals.glmertree <- resid.glmertree <- function(object, type = NULL, 
+                                                   scaled = FALSE, ...) {    
+  if (object$joint) {
+    if (is.null(type)) {
       resids <- residuals(object$glmer, scaled = scaled)
     } else {
       resids <- residuals(object$glmer, type = type, scaled = scaled)      
@@ -478,12 +585,14 @@ ranef.lmertree <- ranef.glmertree <- function(object, ...) {
   object$ranef
 }
 
-logLik.lmertree <- logLik.glmertree <- function(object, dfsplit = NULL, ...)
-{
-  if(is.null(dfsplit)) dfsplit <- object$dfsplit
-  dfsplit <- as.integer(dfsplit) * (length(object$tree) - length(nodeids(object$tree, terminal = TRUE)))
-  structure(object$loglik, df = object$df + dfsplit, nobs = object$nobs, class = "logLik")
+logLik.lmertree <- logLik.glmertree <- function(object, dfsplit = NULL, ...) {
+  if (is.null(dfsplit)) dfsplit <- object$dfsplit
+  dfsplit <- as.integer(dfsplit) * 
+    (length(object$tree) - length(nodeids(object$tree, terminal = TRUE)))
+  structure(object$loglik, df = object$df + dfsplit, nobs = object$nobs, 
+            class = "logLik")
 }
+
 
 model.frame.lmertree <- model.frame.glmertree <- function(formula, ...) {
   mf <- model.frame(formula$tree, ...)
@@ -494,13 +603,16 @@ model.frame.lmertree <- model.frame.glmertree <- function(formula, ...) {
   return(mf)
 }
 
+
 terms.lmertree <- terms.glmertree <- function(x, ...) {
   terms(x$tree, ...)
 }
 
+
 as.party.lmertree <- as.party.glmertree <- function(obj, ...) {
   obj$tree
 }
+
 
 print.lmertree <- function(x, title = "Linear mixed model tree", ...) {
   print(x$tree, title = title, ...)
@@ -517,7 +629,9 @@ print.lmertree <- function(x, title = "Linear mixed model tree", ...) {
   invisible(x)
 }
 
-print.glmertree <- function(x, title = "Generalized linear mixed model tree", ...) {
+
+print.glmertree <- function(x, title = "Generalized linear mixed model tree", 
+                            ...) {
   print(x$tree, title = title, ...)
   cat("\nRandom effects:\n")
   print(x$ranef)
@@ -532,15 +646,16 @@ print.glmertree <- function(x, title = "Generalized linear mixed model tree", ..
   invisible(x)
 }
 
+
 predict.lmertree <- function(object, newdata = NULL, type = "response", 
                              re.form = NULL, ...) { 
-  if(is.null(newdata)) {
+  if (is.null(newdata)) {
     newdata <- object$data
   }
-  if(type == "node") {
+  if (type == "node") {
     predict(object$tree, newdata = newdata, type = "node")
   } else {
-    if(object$joint) {
+    if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
       levels(newdata$.tree) <- levels(object$data$.tree)
@@ -552,15 +667,16 @@ predict.lmertree <- function(object, newdata = NULL, type = "response",
   }
 }
 
+
 predict.glmertree <- function(object, newdata = NULL, type = "response", 
                               re.form = NULL, ...) { 
-  if(is.null(newdata)) {
+  if (is.null(newdata)) {
     newdata <- object$data
   }
-  if(type == "node") {
+  if (type == "node") {
     predict(object$tree, newdata = newdata, type = "node")
   } else {
-    if(object$joint) {
+    if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
       levels(newdata$.tree) <- levels(object$data$.tree)
