@@ -9,7 +9,7 @@ m.old <- disttree(dist ~ speed, data = cars, type.tree = "mob")
 m.new <- distextree(dist ~ speed, data = cars, type.tree = "mob")
 
 expect_equal(coef(m.old), coef(m.new))
-expect_equal(logLik(m.old), logLik(m.new))
+expect_equal(as.numeric(logLik(m.old)), as.numeric(logLik(m.new))) # attr(logLik(c.old), 'nobs') missing
 
 ## Compare new with old disttree for tree type equal to 'ctree'
 ## with old control arguments
@@ -19,11 +19,12 @@ c.new <- distextree(dist ~ speed, data = cars, type.tree = "ctree",
 
 #expect_equal(coef(c.old), coef(c.new)) # FIXME: (ML) mismatches, average diff: 1.89e-06
 expect_equal(coef(c.old), coef(c.new), tolerance = 1e-6)
-#expect_equal(logLik(c.old), logLik(c.new)) # FIXME: (ML) df not return for ctree
-expect_equal(as.numeric(logLik(c.old)), as.numeric(logLik(c.new)))
+expect_equal(as.numeric(logLik(c.old)), as.numeric(logLik(c.new))) # attr(logLik(c.old), 'nobs') missing
 
-
-
+expect_equal(nrow(cars), attr(logLik(m.new), "nobs"))
+expect_equal(nrow(cars), attr(logLik(c.new), "nobs"))
+expect_equal(nrow(cars), nobs(m.new))
+expect_equal(nrow(cars), nobs(c.new))
 
 
 
@@ -32,12 +33,18 @@ if(FALSE){
   ## FIXME: (LS) different order of terminal nodes returned by coef()
   
   # further packages
-  library("crch")
-  library("scoringRules")
-  library("RainTyrol")
+  foo_package <- function(x, repos = getOption("repos")) {
+    if (!require(x, character.only = TRUE)) {
+       install.packages(x, dependencies = TRUE, repos = repos)
+       library(x, character.only = TRUE)
+    }
+  }
+
+  invisible(lapply(c("crch", "scoringRules", "gamlss.cens"), function(x) foo_package(x)))
+
+  invisible(foo_package("RainTyrol", repos = "http://r-forge.r-project.org"))
   
   # if gamlss.cens family object should be used as family
-  library("gamlss.cens")
   gen.cens(NO, type = "left")
   
   assign("NO",  gamlss.dist::NO,  pos = ".GlobalEnv")
@@ -51,10 +58,7 @@ if(FALSE){
   assign("pNOlc", pNOlc, pos = ".GlobalEnv")
   assign("qNOlc", qNOlc, pos = ".GlobalEnv")
   
-  
-  #####
-  
-  # formula 
+  ## formula 
   {  # tree and forest formula
     dt.formula <- df.formula <- 
       robs ~ tppow_mean + tppow_sprd + tppow_min + tppow_max + 
@@ -131,7 +135,6 @@ if(FALSE){
     
     # expect_equal(coef(dt), coef(det)) ## FIXME: (LS) different order returned by coef()
     expect_equal(coef(dt)[rownames(coef(det)),], coef(det))
-    # expect_equal(logLik(dt), logLik(det))
     expect_equal(as.numeric(logLik(dt)), as.numeric(logLik(det)))
     
     
@@ -141,6 +144,8 @@ if(FALSE){
     
     pred_time <- matrix(ncol = 2, nrow = NROW(testdata))
     colnames(pred_time) <- c("disttree", "distextree")
+
+    expect_equal(fit_time["disttree","elapsed"], fit_time["distextree","elapsed"], tolerance = 0.1)
     
     # disttree
     pdt <- data.frame()
@@ -161,17 +166,21 @@ if(FALSE){
     rownames(pdet) <- c(1:NROW(pdet))
     det_mu <- pdet$mu
     det_sigma <- pdet$sigma
+
+    expect_equal(sum(pred_time[, "disttree"]), sum(pred_time[, "distextree"]), tolerance = 0.3)
     
     
     # store parameter
     par <- list(pdt = pdt,
                 pdet = pdet)
+    expect_equal(pdt, pdet)
     
     # CPRS
     crps_dt <- crps_cnorm(testdata$robs, location = dt_mu, scale = dt_sigma, lower = 0, upper = Inf)
     crps_det <- crps_cnorm(testdata$robs, location = det_mu, scale = det_sigma, lower = 0, upper = Inf)
-    
+
     crps <- cbind(crps_dt, crps_det)
+    expect_equal(crps_dt, crps_det)
     
     # loglikelihood
     dtll <- detll <- numeric(length = NROW(testdata))
@@ -185,6 +194,7 @@ if(FALSE){
     }
     
     ll <- cbind(dtll, detll) 
+    expect_equal(dtll, detll)
     
     colnames(ll) <- colnames(crps) <- c("disttree", "distextree")
     
@@ -195,7 +205,5 @@ if(FALSE){
                     crps = crps,
                     fit_time = fit_time,
                     pred_time = pred_time)
-    
-    #return(results)
-  #}
+
 }
