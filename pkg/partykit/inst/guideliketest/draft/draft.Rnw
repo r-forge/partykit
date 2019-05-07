@@ -451,45 +451,39 @@ not just the four bins that were constructed for the $\chi^2$~test.
 %\newpage
 \subsection{Pruning}
 \label{sec:pruning}
-In early developed methods of unbiased recursive partitioning such as 
-FACT \citep{Loh+Vanichsetakul:1988}, QUEST \citep{Loh+Shih:1997}, 
-CRUISE \citep{Kim+Loh:2001} or GUIDE \citep{Loh:2002}
-the $p$-values of applied significance tests are used purely for the selection of a split variable 
-based on a unified scale. All other steps are performed in the same way as in classic tree 
-algorithms, such as finding the best split point by optimizing an overall goodness-of-fit measure.
 
-In subsequent approaches as in \cite{Hothorn+Hornik+Zeileis:2006}
-it is shown that these $p$-values can also be used as a basis for a
-pruning strategy namely \textit{prepruning}: Only if the $p$-value corresponding to the selected split
-variable (hence the smallest $p$-value) is smaller than a given significance level a split is
-performed while otherwise no further splits are made in the current node.
-In that way the information provided by the significance test is exploited in a more profound way.
-However, prepruning requires the applied test to perform reasonably well as a significance test, 
-i.e. it has to have power but also avoid overfitting.
+To avoid overfitting recursive partitioning algorithms need to assure that trees do not grow
+too large. Apart from certain minimal subgroup size or maximal tree depth constraints this is
+classically accomplished by so-called ``pruning'' approaches. As the three tree algorithms
+considered here (CTree, MOB, and GUIDE) differ in their default choice of pruning approach,
+we briefly discuss these here. However, as all three algorithms can in principle be combined
+with any of the pruning approaches this is done only relatively briefly.
 
-On the contrary, when employing postpruning no significance level is included leading to very large 
-trees which are then pruned afterwards, for example by applying cost-complexity pruning as in the 
-CART algorithm \citep{Breiman+Friedman+Stone:1984}. 
-Thus, for postpruning the test only needs to be able to select the best split variable but does 
-not have to be effective as a significance test.
+The classical CART algorithm \citep{Breiman+Friedman+Stone:1984} proposed to first grow a large
+tree and then prune those splits in the tree that did not increase predictive performance in a
+cross-validation. This is also know as \emph{postpruning} (after growing the initial tree) and
+more specifically cost-complexity pruning.
 
-Originally the GUIDE algorithm was introduced applying postpruning while CTree and MOB
-were both presented employing prepruning (see Table~\ref{tab:combinations} for a more detailed
-overview). Alternatively, for model-based partitioning a pruning strategy can also use model-based 
-information criteria such as AIC or BIC \citep[see for example][]{Su+Wang+Fan:2004}.
-However, all testing strategies can be combined with each of these pruning strategies.
-If a test performs well the choice of a pruning strategy has hardly any impact on the results, 
-but as prepruning only requires already provided information it is usually less computationally
-expensive than postpruning needing additional calculations. 
-However, if the test performs poorly in terms of power and overfitting, prepruning suffers from 
-this deficiency while postpruning can compensate it at least partly and improve the results.
-Therefore, being aware of the power of the selected testing strategy is essential for choosing 
-an appropriate pruning strategy.
-For that reason we are focusing on the testing strategies applied in tree algorithms 
-and investigate how effective they are as significance tests.
+In the unbiased recursive partitioning literature this postpruning approach is also usef frequently
+\citep[e.g., in][]{Loh+Vanichsetakul:1988,Loh+Shih:1997,Kim+Loh:2001,Loh:2002} and the $p$-values
+from the association tests are only employed for selecting the split variable on a unified scale.
+However, \cite{Hothorn+Hornik+Zeileis:2006} proposed to also use these $p$-values for a 
+so-called \emph{prepruning} strategy which stops growing the tree as soon as no significant association
+can be found in a given subgroup. This approach is the default in CTree and also in
+MOB. However, \cite{Zeileis+Hothorn+Hornik:2008} also pointed out that a natural strategy for
+postpruning in model-based partitioning is to use information criteria such as AIC (Akaike information
+criterion) or BIC (Bayes information criterion), following the ideas of \cite{Su+Wang+Fan:2004}.
 
+Clearly, for inference-based prepruning it is crucial that the association tests employed for
+split selection work well as statistical significance test, i.e., conform with their nominal size
+and have high power. In contrast, when using postpruning (either based on cross-validation or
+information criteria) it might not be as crucial that the significance test works well and has
+high power.
 
-
+Due to these considerations we first evaluate the significance tests underlying CTree, MOB,
+and GUIDE by themselves, i.e., without growing an actual tree in combination with a pruning strategy.
+Subsequently we combine the tests with a cost-complexity postpruning approach in order to assess
+whether shortcomings of the tests are mitigated by pruning.
 
 
 \section{Unifying framework}\label{sec:unify}
