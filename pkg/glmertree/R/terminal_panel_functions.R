@@ -243,21 +243,95 @@ model.frame.modelparty <- function (formula, ...) {
 }
 
 
-
-node_simple_all <- function(node, minlength = 15) {
-  c("Fixed effects:", 
-    paste(abbreviate(names(node$coefficients), minlength = minlength), " ",
-          formatC(node$coefficient, digits = 3, format = "f")),
-    " ", "Random effects:", " ",
-    paste(node$ranef_vars))
-}
-
-node_simple_ranef <- function(node, minlength = 15) {
-  c("Random effects:", paste(node$ranef_vars))    
-}
-
-node_simple_tree <- function(node, minlength = 15) {
+simple_terminal_func <- function(node, minlength = 15) {
   c("Fixed effects:", 
     paste(abbreviate(names(node$coefficients), minlength = minlength), " ",
           formatC(node$coefficient, digits = 3, format = "f")))
 }
+
+
+
+
+
+
+node_terminal_glmertree <- function(obj, digits = 3, abbreviate = FALSE,
+                                    fill = c("lightgray", "white"), id = TRUE,
+                                    just = c("center", "top"),
+                                    top = 0.85, align = c("center", "left", "right"),
+                                    gp = NULL, FUN = NULL, height = NULL, width = NULL)
+{
+  nam <- names(obj)
+  extract_label <- function(node) formatinfo_node(node, FUN = FUN,
+                                                  default = c("terminal", "node"))
+  maxstr <- function(node) {
+    lab <- extract_label(node)
+    klab <- if (is.terminal(node)) {
+        ""
+      } else {
+        unlist(lapply(kids_node(node), maxstr))
+      }
+    lab <- c(lab, klab)
+    lab <- try(unlist(lapply(lab, function(x) strsplit(x, "\n"))), silent = TRUE)
+    if (inherits(lab, "try-error")) {
+      paste(rep("a", 9L), collapse = "")
+    } else {
+      return(lab[which.max(nchar(lab))])
+    }
+  }
+  nstr <- if (is.null(width)) {
+    maxstr(node_party(obj))
+  } else {
+    paste(rep("a", width), collapse = "")
+  }
+  just <- match.arg(just[1L], c("center", "centre", "top"))
+  if (just == "centre") {
+    just <- "center"
+  }
+  align <- match.arg(align[1L], c("center", "centre", "left", "right"))
+  if (align == "centre") {
+    align <- "center"
+  }
+  rval <- function(node) {
+    fill <- rep(fill, length.out = 2)
+    lab <- extract_label(node)
+    if (!is.null(gp)) {
+      outer_vp <- viewport(gp = gp)
+      pushViewport(outer_vp)
+    }
+    if (is.null(height)) {
+      height <- length(lab) + 1L
+    }
+    node_vp <- viewport(x = unit(0.5, "npc"),
+                        y = unit(if (just == "top") top else 0.5, "npc"),
+                        just = c("center", just),
+                        width = unit(1, "strwidth", nstr) * 1.1,
+                        height = unit(height, "lines"),
+                        name = paste("node_terminal", id_node(node), sep = ""),
+                        gp = if (is.null(gp)) gpar() else gp)
+    pushViewport(node_vp)
+    grid.rect(gp = gpar(fill = fill[1]))
+    for (i in seq_along(lab)) {
+      grid.text(x = switch(
+      align, center = unit(0.5, "npc"), left = unit(1, "strwidth", "a"),
+      right = unit(1, "npc") - unit(1, "strwidth", "a")),
+      y = unit(length(lab) - i + 1, "lines"), lab[i], just = align)
+    }
+    if (id) {
+      nodeIDvp <- viewport(x = unit(0.5, "npc"),
+                           y = unit(1.25, "npc"),
+                           width = max(unit(1, "lines"),
+                                       unit(1.3, "strwidth", nam[id_node(node)])),
+                           height = max(unit(1, "lines"),
+                                        unit(1.3, "strheight", nam[id_node(node)])))
+      pushViewport(nodeIDvp)
+      nid <- id_node(node)
+      mainlab <- function(id, nobs) sprintf("Node %s (n = %s)", id, nobs)
+      mainlab <- mainlab(nid, info_node(node)$nobs)
+      grid.text(mainlab, y = unit(1, "npc") - unit(0.75, "lines"))
+      popViewport()
+    }
+    if (is.null(gp)) upViewport() else upViewport(2)
+  }
+  return(rval)
+}
+class(node_terminal_glmertree) <- "grapcon_generator"

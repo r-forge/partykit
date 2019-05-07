@@ -13,12 +13,12 @@
 \usage{
 %\method{plot}{lmertree2}
 plot.lmertree2(x, which = "all", ask = TRUE, type = "extended", 
-    observed = TRUE, fitmean = TRUE, fit.ranef = "constant", fit.fixef = "constant", 
-    tp_args = list(), drop_terminal = TRUE, \dots)
+    observed = TRUE, fitmean = "marginal", tp_args = list(), 
+    drop_terminal = TRUE, terminal_panel = NULL, \dots)
 %\method{plot}{glmertree2}
 plot.glmertree2(x, which = "all", ask = TRUE, type = "extended", 
-    observed = TRUE, fitmean = TRUE, fit.ranef = "constant", fit.fixef = "constant",
-    tp_args = list(), drop_terminal = TRUE, \dots)
+    observed = TRUE, fitmean = "marginal", tp_args = list(), 
+    drop_terminal = TRUE, terminal_panel = NULL, \dots)
 }
 
 \arguments{
@@ -34,24 +34,22 @@ plot.glmertree2(x, which = "all", ask = TRUE, type = "extended",
       tree with fixed and/or random effects coefficients presented in the
       terminal nodes.}
   \item{observed}{logical. Should observed datapoint be plotted?}
-  \item{fitmean}{logical. Should the fitted mean function be visualized? Only
-      used when predictor variables for the node-specific (G)LMs are specified.}
-  \item{fit.ranef}{character; \code{"fixed"} (default) or \code{"varying"}.
-      Only used when \code{fitmean = TRUE}. If \code{"constant"}, fitted values 
-      will be calculated, with random effects fixed at their population 
-      mean (0). If \code{"varying"}, fitted values will also be based on the
-      fitted random effects.}
-  \item{fit.fixef}{character, \code{"constant"} (default) or \code{"varying"}. 
-      Only used when \code{fitmean = TRUE}. If \code{"constant"}, fitted values
-      will be calculated, keeping the values of the other predictors in the 
-      (G)LM constant at their sample mean or majority value. If 
-      \code{"varying"}, fitted values will also be based on the fitted effects 
-      of the remaining predictor variables.} 
+  \item{fitmean}{character. \code{"marginal"} (default), \code{"combined"} 
+      or \code{"none"}. Specifies whether and how fitted means should be 
+      visualized. Only used when predictor variables for the node-specific 
+      (G)LMs are specified. If \code{"marginal"}, fitted values 
+      will be calculated, with all remaining (random and fixed effects) fixed 
+      at their (population and sample) means. If \code{"combined"}, fitted 
+      values will calculated, based on observed values of the remaining 
+      (random and fixed-effects) predictor variables.} 
   \item{tp_args}{list of arguments to be passed to panel generating function
       \code{node_glmertree}. See arguments \code{node_bivplot} in 
       \code{\link[partykit]{panelfunctions}}.}
   \item{drop_terminal}{logical. Should all terminal nodes be plotted at the 
       bottom?}
+  \item{terminal_panel}{an optional panel function to be passed to 
+      \code{plot.party()}. See \code{\link[partykit]{party-plot}} 
+      documentation for details.}
   \item{\dots}{Additional arguments to be passed to \code{plot.party()}.
       See \code{\link[partykit]{party-plot}} documentation for details.}
 }
@@ -106,18 +104,18 @@ lt <- lmertree(depression ~ treatment + age | cluster | anxiety + duration,
   data = DepressionDemo)
 plot.lmertree2(lt)
 plot.lmertree2(lt, type = "simple")
-plot.lmertree2(lt, which = "tree", fit.ranef = "constant", fit.fixef = "varying")
-plot.lmertree2(lt, which = "tree", fit.ranef = "varying", fit.fixef = "constant")
-plot.lmertree2(lt, which = "tree", fit.ranef = "varying", fit.fixef = "varying")
+plot.lmertree2(lt, which = "tree", fitmean = "combined")
+plot.lmertree2(lt, which = "tree", fitmean = "none")
+plot.lmertree2(lt, which = "tree", observed = FALSE)
 
 ## fit logistic regression GLMM tree for binary outcome
 gt <- glmertree(depression_bin ~ treatment | cluster | 
   age + anxiety + duration, data = DepressionDemo)
 plot.glmertree2(gt)
 plot.glmertree2(gt, type = "simple")
-plot.glmertree2(gt, which = "tree", fit.ranef = "constant", fit.fixef = "varying")
-plot.glmertree2(gt, which = "tree", fit.ranef = "varying", fit.fixef = "constant")
-plot.glmertree2(gt, which = "tree", fit.ranef = "varying", fit.fixef = "varying")
+plot.glmertree2(gt, which = "tree", fitmean = "combined")
+plot.glmertree2(gt, which = "tree", fitmean = "none")
+plot.glmertree2(gt, which = "tree", observed = FALSE)
 }
 }
 

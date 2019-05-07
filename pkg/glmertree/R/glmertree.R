@@ -53,7 +53,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   }
   if(joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
-    rf <- update(rf, . ~ .tree / . + 0)
+    rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
@@ -74,7 +74,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     ranefstart  
   }
   continue <- TRUE
-  oldloglik <- -Inf
+  oldloglik <- list(-Inf, - Inf) # last element is the oldest
   
   ## iterate between lmer and lmtree estimation
   while (continue) {
@@ -139,16 +139,19 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
       lme <- lmer(rf, data = data, offset = .tree, weights = .weights, 
                   REML = REML, control = lmer.control)
       data$.ranef <- predict(lme, newdata = data)
-      ## note that because newdata is specified, predict.merMod will not include offset in predictions
+      ## note that because newdata is specified, predict.merMod will 
+      ## not include offset in predictions
     }
     
     ## iteration information
     newloglik <- logLik(lme)    
-    continue <- (abs(newloglik - oldloglik) > abstol) & (iteration < maxit) 
-    oldloglik <- newloglik
-    if (verbose) {
-      print(newloglik)
+    continue <- (abs(newloglik - oldloglik[[1]]) > abstol) & (iteration < maxit) 
+    if (continue & (abs(newloglik - oldloglik[[2]]) < abstol)) {
+      if (newloglik > oldloglik[[1]]) continue <- FALSE
     }
+    oldloglik[[2]] <- oldloglik[[1]]
+    oldloglik[[1]] <- newloglik
+    if (verbose) print(newloglik)
   }
   
   ## collect results
@@ -231,7 +234,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   }
   if (joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
-    rf <- update(rf, . ~ .tree / . + 0)
+    rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
@@ -358,9 +361,12 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
 fixef.lmertree <- coef.lmertree <- function(object, ...) {
   coefs <- coef(object$tree, ...)
   if (object$joint) {
-    for (i in rownames(coef(object$tree))) {
-      coefs[i, ] <- fixef(object$lmer)[
-        grepl(paste0("tree", i), names(fixef(object$lmer)))]
+    lmer_fixef <- fixef(object$lmer)
+    lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
+      lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef[1L]
+    names(lmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
+    for (i in rownames(coefs)) {
+      coefs[i, ] <- lmer_fixef[grepl(paste0(".tree", i), names(lmer_fixef))]
     }
   }
   return(coefs)
@@ -371,9 +377,12 @@ fixef.lmertree <- coef.lmertree <- function(object, ...) {
 fixef.glmertree <- coef.glmertree <- function(object, ...) {
   coefs <- coef(object$tree, ...)
   if (object$joint) {
-    for (i in rownames(coef(object$tree))) {
-      coefs[i, ] <- fixef(object$glmer)[
-        grepl(paste0("tree", i), names(fixef(object$glmer)))]
+    glmer_fixef <- fixef(object$glmer)
+    glmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
+      glmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + glmer_fixef[1L]
+    names(glmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
+    for (i in rownames(coefs)) {
+      coefs[i,] <- glmer_fixef[grepl(paste0(".tree", i), names(glmer_fixef))]
     }
   }
   return(coefs)
@@ -418,76 +427,43 @@ plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE,
 }
 
 
-simple_terminal_func <- function(node, minlength = 12, digits = 3) {
-  paste(abbreviate(names(node$coefficient), minlength = minlength), " ",
-        format(node$coefficient, digits = digits + 1))
-}
-
-
 
 
 plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
-                                            type = "extended", 
-                                            observed = TRUE, fitmean = TRUE, 
-                                            fit.ranef = "constant", 
-                                            fit.fixef = "constant",
-                                            tp_args = list(), 
-                                            drop_terminal = TRUE, ...) {
+                                              type = "extended", 
+                                              observed = TRUE, 
+                                              fitmean = "marginal", 
+                                              tp_args = list(), 
+                                              drop_terminal = TRUE, 
+                                              terminal_panel = NULL,
+                                              ...) {
   if (type == "simple") {
-    
-    if (which != "tree") {
-      ## save ranef variances in tree:
-      varcorr <- VarCorr(x)
-      Res_var <- attr(varcorr, which = "sc")
-      Groups <- names(varcorr)
-      Names <- c()
-      Ranef_vars <- c()
-      for (i in Groups) {
-        Names <- c(Names, paste0(colnames(varcorr[[i]]), " | ", i))
-        Ranef_vars <- c(Ranef_vars, diag(varcorr[[i]]))
-      }
-      Names <- abbreviate(c(Names, "Residual"), minlength = 15)
-      Vars <- c(Ranef_vars, Res_var)
-      Ranefs <- paste(Names, " ", formatC(Vars, digits = 3, format = "f"))
-      tree_node <- as.list(x$tree$node)
-      for(i in 1:length(tree_node)) {
-        tree_node[[i]]$info$ranef_vars <- Ranefs
-      }
-      x$tree$node <- as.partynode(tree_node)
-    }
     ## TODO: allow for specifying other values for align arg
-    if (which == "all") FUN <- node_simple_all
-    if (which == "tree") FUN <- node_simple_tree
-    if (which == "ranef") FUN <- node_simple_ranef
+    FUN <- simple_terminal_func
     plot(x$tree, drop_terminal = drop_terminal,
-         terminal_panel = node_terminal, 
+         terminal_panel = node_terminal_glmertree, 
          tp_args = list(FUN = FUN, align = "right"))
-    
   } else {
-    
     if (which != "ranef") {
-      if (length(attr(x$tree$info$terms$response, "term.labels")) == 0) {
-        ## If node-specific model is intercept-only, use default MOB plotting:
-        plot(x$tree, drop_terminal = drop_terminal, tp_args = tp_args)
-      } else {
-        mf <- model.frame(x)  
-        lm_vars <- names(Formula::model.part(x$tree$info$Formula, mf, lhs = 0L, rhs = 1L))
+      mf <- model.frame(x)  
+      lm_vars <- names(Formula::model.part(x$tree$info$Formula, mf, lhs = 0L, rhs = 1L))
+      if (length(lm_vars > 0L)) {
         if (is.null(tp_args$which)) {
           vars_to_plot <- 1L:length(lm_vars)
         } else {
           vars_to_plot <- tp_args$which
         }
-        vars_to_plot <- lm_vars[vars_to_plot]
+        if (is.numeric(vars_to_plot)) vars_to_plot <- lm_vars[vars_to_plot]
         node_ids <- x$tree$fitted[["(fitted)"]]
-        re.form <- if(fit.ranef == "constant") NA else NULL
-        if (fit.fixef == "constant") {
+        re.form <- if (fitmean == "marginal") NA else NULL
+        if (fitmean == "marginal") {
           fitted_values <- matrix(nrow = length(node_ids), 
                                   ncol = length(vars_to_plot),
                                   dimnames = list(rownames(mf), vars_to_plot))
           for (varname in vars_to_plot) {
             newdata <- x$data
             remaining_lm_vars <- lm_vars[which(lm_vars != varname)]
-            if (length(lm_vars > 1)) {
+            if (length(lm_vars > 1L)) {
               for (i in remaining_lm_vars) {
                 if (class(mf[, i]) == "numeric") {
                   ## set all values to mean:
@@ -503,27 +479,27 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
                                                 re.form = re.form)
           }
         } else {
-          fitted_values <- predict(x, re.form = re.form, newdata = x$data)
+          fitted_values <- predict(x, newdata = x$data, re.form = re.form)
         }
         lt_node <- as.list(x$tree$node)
         for (i in unique(node_ids)) {
-          if (fit.fixef == "constant") {
+          if (fitmean == "marginal") {
             lt_node[[i]]$info$fitted <- fitted_values[node_ids == i, ]  
           } else {
             lt_node[[i]]$info$fitted <- fitted_values[node_ids == i]          
           }
         }
         x$tree$node <- as.partynode(lt_node)
-        terminal_panel <- node_glmertree
-        tp_args <- append(tp_args, values = list(ranef = fit.ranef, 
-                                                 fixef = fit.fixef, 
-                                                 observed = observed, 
-                                                 fitmean = fitmean))
-        plot(x$tree, terminal_panel = terminal_panel, 
-             drop_terminal = drop_terminal, tp_args = tp_args, ...)
       }
+      tp_args <- append(tp_args, values = list(
+        ranef = ifelse(fitmean == "marginal", "constant", "varying"), 
+        fixef = ifelse(fitmean == "marginal", "constant", "varying"), 
+        fitmean = ifelse(fitmean == "none", FALSE, TRUE),
+        observed = observed))
+      if (is.null(terminal_panel)) terminal_panel <- node_glmertree
+      plot(x$tree, terminal_panel = terminal_panel, 
+           drop_terminal = drop_terminal, tp_args = tp_args, ...)
     }
-    
     if (which != "tree") {
       if (which == "all" && ask == TRUE) {
         orig_devAsk <- devAskNewPage()
@@ -546,6 +522,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
     }
   }
 }
+
 
 
 
