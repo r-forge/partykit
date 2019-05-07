@@ -275,59 +275,62 @@ and the results are illustrated and discussed in Section~\ref{sec:results}.
 \subsection{Generic algorithm}
 \label{sec:generic_alg}
 The basic idea of building a regression tree model is to partition the data into smaller 
-and more homogeneous subgroups based on a set of covariates. Various different tree 
-algorithms have been developed, all following the same general structure starting at 
-the root of the tree which is simply the first node containing all available data:
+and more homogeneous subgroups based on a set of covariates. Various tree 
+algorithms have been developed, following essentially the same general structure.
+Starting at the root of the tree, pertaining to the full available data sample, the
+algorithms proceed in the following steps:
+%
 \begin{enumerate}
-\item For the data set in the current node a model is fitted by optimizing
-some objective function that reflects the goodness of fit.
-\item Among all available covariates one is selected as the split variable,
-choosing the split point such that goodness of fit is maximized in the
-resulting subgroups.
-\item Steps 1 and 2 are repeated within each subgroup until some stopping
-criterion is attained.
+  \item For the current sample a (possibly simple) model is fitted by optimizing
+        some objective function (or loss function) that reflects the goodness of fit.
+  \item Among all available covariates one is selected as the split variable,
+        choosing the split point such that goodness of fit is maximized in the
+        resulting subgroups.
+  \item Steps 1 and 2 are repeated within each subgroup until some stopping
+        criterion is attained.
 \end{enumerate}
-
+%
 The term ``model'' is used here in a very broad sense and encompasses not
 only least-squares or maximum-likelihood models but also simple constant
 fits such as means or average proportions.
 Therefore, depending on the type of model, the employed objective function can 
-for example be the sum of deviations from a typical or average value, but it can 
-also be constructed based on the model fitted in each node and depend not only on 
-the response but also on possible covariates. For instance, different 
-types of residuals or their signs can be applied \citep[see e.g.,][]{Loh:2002} as 
-well as rank sums or logrank scores as in \cite{Hothorn+Hornik+VanDeWiel:2006}.
+for example be the sum of deviations from a typical/average value, but it can 
+also be based on a model fro a response along with potential covariates.
+For instance, different types of residuals (or the signs thereof) can be employd
+\citep[see e.g.,][]{Loh:2002} as well as rank sums or logrank scores
+\citep[as in][]{Hothorn+Hornik+VanDeWiel:2006}.
 
 As explained in Section~\ref{sec:introduction} the considered tree algorithms CTree, 
 MOB, and GUIDE first select the split variable and then, in a separate step, the 
 split point. For the first step of selecting a split variable they all apply statistical 
-tests following the same general strategy: 
+tests following the same basic strategy: 
+%
 \begin{enumerate}
-\item To capture how the objective function changes with the observations in
-the current subgroup, a disaggregated, observation-wise goodness-of-fit
-measure is obtained. More formally, this is an $n \times k$ matrix $G$
-where $n \in \mathbb{N}$ is the number of observations and $k \in \mathbb{N}$ 
-the number of measures per observation.
-\item The dependency or association of this goodness-of-fit matrix $G$ with
-each possible split variable $Z_j$, $j \in \{1, \dots, m\}$, is assessed
-using some suitable test statistic. The corresponding $p$-values allow for
-a comparison of all $m$ covariates on a standardized or unified scale and in
-that way for an unbiased split variable selection.
-\item The covariate corresponding to the smallest $p$-value -- and thus the
-highest influence on the goodness of fit of the model -- is selected for 
-splitting the data into subgroups.
+  \item To capture how the objective function changes with the observations in
+        the current subgroup, a disaggregated, observation-wise goodness-of-fit
+        measure is obtained. More formally, this is an $n \times k$ matrix
+        where $n \in \mathbb{N}$ is the number of observations and $k \in \mathbb{N}$ 
+        the number of goodness-of-fit measures per observation.
+  \item The dependency or association of this goodness-of-fit matrix with
+        each possible split variable $Z_j$, $j \in \{1, \dots, m\}$, is assessed
+        using some suitable test statistic. The corresponding $p$-values allow for
+        a comparison of all $m$ covariates on a standardized or unified scale and in
+        that way for an unbiased split variable selection.
+  \item The covariate corresponding to the smallest $p$-value -- and thus the
+        highest influence on the goodness of fit of the model -- is selected for 
+        splitting the data into subgroups.
 \end{enumerate}
+%
+As an example -- and explained in more detail below -- consider a linear regression tree.
+Thus, a linear regression model is fitted in each subgroup, minimizing the
+residual sum of squares as the aggregated goodness-of-fit measure. The corresponding
+observation-wise goodness-of-fit measure can be given by the residuals or the scores
+(gradient contributions). Analogously, the log-likelihood and corresponding score function could be used.
 
-As explained in more detail below, the aggregated overall objective
-function in the linear regression model would be the residual sum of
-squares and the corresponding observation-wise goodness-of-fit measure is
-given by the residuals or scores (gradient contributions). Analogously,
-the log-likelihood and corresponding score function could be used.
-
-While this basic approach is the same for the GUIDE, the CTree and the MOB algorithm they differ 
+While this basic approach is the same for the GUIDE, CTree, and MOB algorithms, they differ 
 in their strategies on how to calculate test statistics. In order to point out these specific 
 characteristics in Section~\ref{sec:unify} the strategies of the three tree algorithms are first 
-explained in detail in Sections~\ref{sec:ctree}, \ref{sec:mob}, and \ref{sec:guide}. 
+explained in more detail in Sections~\ref{sec:ctree}, \ref{sec:mob}, and \ref{sec:guide}. 
 
 
 
@@ -337,132 +340,113 @@ The CTree algorithm \citep{Hothorn+Hornik+Zeileis:2006} is based on the idea of 
 non-parametric regression tree models in a conditional inference framework by applying 
 permutation tests. 
 To select a split variable it is tested whether there is any association between the transformed 
-response $h(Y)$ and $g(Z)$ for a so-called influence function $g$ and each possible split 
-variable~$Z$.
-The function $h$ has to depend on $Y$ in a permutation-symmetric way but can be of various forms
-and may also be multidimensional. For a numeric response the identity function $h(Y) = Y$ is a common 
+response $h(Y)$ and each possible transformed split variable $g(Z_j)$ ($j = 1, \dots, m$).
+The only requirement for the function $h$ is to depend on $Y$ in a permutation-symmetric way but
+this encompasses ranks, scores, indicator functions, etc.\ and can also be multidimensional.
+For a numeric response the identity function $h(Y) = Y$ is a common 
 choice while a categorical response can be mapped to a unity vector by an indicator function 
 $h(Y) = (0,\ldots,1,\ldots,0)^{\top}$.
-Alternatively, the function $h$ can return a location and scale parameter of $Y$, 
-e.g. $h(Y) = (Y, (Y-\bar{Y})^2)^{\top}$. 
-If a parametric model is fit to the values of the response variable~$Y$ and regressor 
-variable(s)~$X$ the function $h$ can be a model-based transformation returning the 
-corresponding model scores. This is done by setting $h(Y) = s(Y,X,\hat{\beta})$
-where $\beta$ is the possibly multidimensional model parameter and $s$ is the score function
+Alternatively, the function $h$ can capture location and scale of $Y$ via
+$h(Y) = (Y, (Y-\bar{Y})^2)^{\top}$. 
+If a parametric model is fitted to the response $Y$ with regressor variable(s)~$X$,
+then a model-based transformation $h(Y) = s(Y,X,\hat{\beta})$ can be used, e.g.,
+the residuals in a linear model with regression coefficients $\beta$. Moreover,
+$s$ can be the score function pertaining to the objective function (or loss function)
+$\ell$:
 $$
-s(Y, X, \beta) = \frac{\partial \psi(Y, X, \beta)}{\partial \beta}
+s(Y, X, \beta) = \frac{\partial \ell(Y, X, \beta)}{\partial \beta}
 $$
-with the sum of $\psi$ over all observations being the aggregated overall objective 
-function that is optimized to obtain the estimated model parameter $\hat{\beta}$. 
-For this purpose many different M-type estimators can be applied including maximum 
-likelihood or ordinary least squares such that the corresponding objective functions 
-can also be employed for the tree algorithm. Evaluating the score function $s$ on a 
-data set of $n$ observations 
-%containing the 
-%response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$ and 
-%regressor(s) $\boldsymbol{x} = (x_1,\ldots,x_n)^\top$ and on
-and a $k$-dimensional estimated parameter vector 
-%$\hat{\boldsymbol{\beta}} = (\hat{\beta_1},\ldots,\hat{\beta_k})^\top$ 
-yields a $n \times k$-matrix.
-In that way a score value indicating how well the model fits the data is given separately
-for each tuple of observation and estimated parameter element 
-$(y_i, x_i, \hat{\beta_l})$ with $i \in \{1,\dots,n\}$
-and $l \in \{1,\ldots,k\}$. 
+The estimate of the model parameters $\hat{\beta}$ is obtained by optimizing
+the sum of the objective function $\ell$, aggregated over all observations.
+This framework includes many different M-type estimators as special cases, including maximum 
+likelihood and ordinary least squares estimation. For a $k$-dimensional parameter
+$\beta$ the score function evaluated for the $i$-th observation $s(y_i, x_i, \beta)$
+is also a $k$dimensional vector, i.e., the gradient contribution of the $i$-th observation.
+Thus, the $n \times k$-matrix consisting of these scores or gradient contributions for all 
+$i = 1, \dots, n$ observations is a natural candidate for the observation-wise goodness-of-fit
+measure as described in the previous Section~\ref{sec:generic_alg}.
 
 Similarly, different types of functions can be chosen for the influence function $g$ depending
 on a possible split variable $Z$. A simple choice in case of $Z$ being a numeric variable is again
 the identity function $g(Z) = Z$. For categorical variables $g$ can also map its values to the 
 corresponding unity vectors by an indicator function $g(Z) = (0,\ldots,1,\ldots,0)$.
 
-To test for independence of $h(Y)$ and $g(Z)$ a linear test statistic is calculated.
-Following \cite{Strasser+Weber:1999} the conditional expectation and covariance of the linear
-test statistic given all permutations of the response variable can be calculated and used to 
-standardize the test statistic. In order to map multivariate test statistics into the real 
-line two options are given: either the maximum of the absolute values of the standardized 
-statistic or a quadratic form. The resulting values can then be transformed to 
-the scale of $p$-values allowing for an unbiased comparison in order to select a split variable.
+To test for independence of $h(Y)$ and $g(Z)$ CTree calculates a linear association test statistic,
+following the framework of \cite{Strasser+Weber:1999}. The corresponding conditional expectation and
+covariance given all permutations of the response variable can be calculated and used to 
+standardize the test statistic. This standardized statistic has an asymptotic normal distribution
+which is in fact multivariate if either of the transformation $h(Y)$ and/or $g(Z)$ is
+multivariate. The actual test is carried out be mapping this standardized statistic to
+the real line either by taking the absolute maximum or using a quadratic form -- with $p$-values
+being computed from the analogous transformation of the normal distribution
+\citep[see][for a hands-on introduction]{Hothorn+Hornik+VanDeWiel:2006}.
 
-If both variables $Y$ and $Z$ are numeric the applied independence test corresponds to a Pearson 
-correlation test. For one of the variables being categorical and the other numeric a 1-way ANOVA
-is employed while for two categorical variables a $\chi^2$-test is performed. Hence, the CTree 
-algorithm provides a very general framework where the type of variables and the corresponding 
-functions $g$ and $h$ determine the type of the applied statistical test.
-(See \cite{Hothorn+Hornik+VanDeWiel:2006} for examples on how to use the different options of this toolbox.)
+If both variables $Y$ and $Z$ are numeric the default independence test corresponds to a Pearson 
+correlation test. For one numeric and one categorical variable essentially a 1-way ANOVA
+(analysis of variance) is employed while for two categorical variables a $\chi^2$~test is performed.
+Thus, in the general CTree framework many types of tests can be specified by selecting suitable
+transformations $g$ and $h$. While originally
+conceived for nonparametric models, it is easy to adapt CTree to model-based testing and 
+recursive partitioning by choosing a model-based $h$ transformation as argued above
+\citep[see the concrete examples in][]{Zeileis+Hothorn:2013,Seibold+Zeileis+Hothorn:2016}.
 
-In the CTree algorithm the number of possible breakpoints is fixed as splits can only be made at
-observed values or optionally at an average value lying between two observations. To select the
-best split point two-sample linear statistics of the same structure as in the independence test 
-are evaluated for all possible subsets of the sample space of the selected split variable.
+% In the CTree algorithm the number of possible breakpoints is fixed as splits can only be made at
+% observed values or optionally at an average value lying between two observations. To select the
+% best split point two-sample linear statistics of the same structure as in the independence test 
+% are evaluated for all possible subsets of the sample space of the selected split variable.
 
 
 \subsection{MOB}\label{sec:mob}
 
-While CTree offers to apply model-based goodness-of-fit measures as one possible choice, the 
-MOB algorithm \citep{Zeileis+Hothorn+Hornik:2008} was developed with the aim of embedding 
-parametric models into the framework of regression trees and is hence purely intended for 
-a model-based approach. 
+In contrast to CTree the MOB algorithm \citep{Zeileis+Hothorn+Hornik:2008} was explicitly
+designed for a model-based goodness-of-fit measure in order to embed parametric models
+into a regression tree framework. Thus, MOB is based on an objective/loss function $\ell$
+and corresponding score function $s$. The original paper considered generalized linear models
+(GLMs) and survival regression models but subsequently various other models have been applied as well,
+including beta regression \citep{Gruen+Kosmidis+Zeileis:2012}, psychometric item response theory
+models \citep{Strobl+Kopf+Zeileis:2015}, or mixed effects models \citep{Fokkema+Smits+Zeileis:2018}.
+But just like CTree can be applied to parametric models, MOB conversely also encompasses
+simple regression and classification trees, e.g., by choosing an intercept-only model.
 
-The testing strategy for selecting a split variable is based on a fitted model, i.e. on 
-an estimated parameter (vector) $\hat{\beta}$ for each node of the tree, and on the 
-application of the central limit theorem. 
-The fitted model can be of a very basic and simple form such as an average value of the response 
-vector but can also be a more complex parametric model.
-In \cite{Zeileis+Hothorn+Hornik:2008} generalized linear models (GLMs) and survival regression models 
-are used to exemplify the algorithm. Subsequently, various other types of models have been applied as well,
-for example beta regression models \citep{Gruen+Kosmidis+Zeileis:2012}, 
-psychometric models such as Rasch trees \citep{Strobl+Kopf+Zeileis:2015} and
-mixed effects models \citep{Fokkema+Smits+Zeileis:2018}.
-
-Regardless of the applied model type the algorithm only requires the corresponding model 
-score matrix in order to test for any instability in the model parameters over each 
-particular ordering induced by each of the possible partitioning variables $Z$.
-If a variable $Z$ has no specific influence on the parameters the ordered scores would 
-always fluctuate randomly around their mean 0. Therefore, these deviations are investigated 
-by measuring them using an empirical fluctuation process. Applying a scalar function which 
-captures the fluctuation in this process yields the test statistic of this so called 
-generalized M-fluctuation test \citep{Zeileis+Hornik:2007}. 
-To obtain the distribution of the resulting test statistic asymptotic theory, in particular 
-the central limit theorem is applied. In this parametric unconditional framework $p$-values 
-can be calculated and the covariate with the smallest $p$-value is selected as split variable. 
-
-For a categorical split variable all possible splits are evaluated to find the best one while 
-for numeric split variable a maximally selected split point search is employed. Hence, 
-the number of possible breakpoints is not fixed unlike in the CTree algorithm.
-
+For selecting a split variable MOB employs a score-based test that relies on the central limit
+theorem for the parameter estimate $\hat{\beta}$. The test assesses whether the scores
+-- when ordered by the potential split variable $Z$ -- fluctuate randomly around their
+zero mean or differ systematically in certain subgroups. The latter would indicate a
+parameter instability that could be captured by fitting separate models (optimizing $\ell$)
+in the resulting subgroups. In case of a numeric split variable $Z$ both the score-based statistic
+and the partitioned objective function $\ell$ are maximized over all possible splits in $Z$
+(subject to certain minimal subgroup size constraints). Unlike the CTree framework, MOB
+relies on classical unconditional inference. For more details see \cite{Zeileis+Hornik:2007}.
 
 \subsection{GUIDE}\label{sec:guide}
-Similar to the MOB algorithm, parametric models are fit to the nodes of a tree in 
-the GUIDE algorithm \citep{Loh:2002}. Again, simple models such as 
-a constant fit with the parameter $\beta$ being the mean of the response, hence 
-$\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$, 
-%for a response vector $\boldsymbol{y} = (y_1,\ldots,y_n)^\top$, 
-can be employed as well as more complex models.
-For the statistical test applied to select a split variable some type of model-based
-residual is required. In \cite{Loh:2002} linear models are used as an example where the
-residuals are defined by
+
+Building on earlier work for the QUEST algorithm \citep{Loh+Shih:1997}, \citep{Loh:2002}
+proposed the GUIDE algorithm blending trees with parametric regression models and
+encompassing simpler classification and regression trees as special cases. Thus,
+linear regression models could be fitted in the nodes of tree as well as
+constant fits such as simple mean response $\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$,.
+The tests for selecting the split variable are then based on the corresponding residuals,
+e.g., for a simple linear regression \citep[as used in][]{Loh:2002}:
 $$
 r(Y,X,\hat{\beta}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X.
 $$
-In related literature other models together with an appropriate choice of residuals
+In subsequent work other models together with an appropriate choice of residuals
 have been applied such as in
 regression trees for longitudinal and multiresponse data \citep{Loh+Zheng:2013}, 
 %(http://www.stat.rice.edu/~jrojo/4th-Lehmann/slides/Loh.pdf)
-quantile regression models \citep{Chaudhuri+Loh:2002} 
-and proportional hazards modeling via Poisson regression \citep{Loh+He+Man:2015} among many others.
-%Poisson regression trees \citep{Chaudhuri+Lo+Loh:1995}, %(adjusted Anscombe residual (Pierce and Schafer 1986))
+quantile regression models \citep{Chaudhuri+Loh:2002}, 
+and proportional hazards modeling via Poisson regression \citep{Loh+He+Man:2015}, among others.
 
-Before applying a statistical test two additional steps are performed:
-(1)~The residuals are binarized, i.e. depending on whether the sign of a residual is 
-positive or not it is replaced by $1$ or $2$.  % FIX ME: +1 and -1 in the implementation? 
-(2)~For each possible split variable the observed values are categorized into four groups 
-separated by the corresponding 1st, 2nd and 3rd quartile unless the split variable is already
-categorical.
-Then, a $\chi^2$-test of independence is performed for the binarized residuals and
+To construct a statistical test two additional transformation are carried out:
+(1)~The residuals $r(Y,X,\hat{\beta})$ are binarized at zero, yielding an indicator for positive vs.\ negative residuals.
+(2)~All possible split variable $Z$ are categorized, i.e., unless $Z$ is already categorical
+it is split at its quartiles into four bins.
+Subsequently, a $\chi^2$~test of independence is performed for the binarized residuals and
 each categorized/categorical split variable.
 After choosing the split variable showing the highest dependency by yielding the lowest 
 $p$-value, the split point minimizing the overall goodness-of-fit measure is selected. 
-The possible number of breakpoints is determined by the categorization of the possible 
-split variables and is in that way fixed.
+Note that the split point in numeric variables $Z$ is searched over all possible splits,
+not just the four bins that were constructed for the $\chi^2$~test.
 
 %\newpage
 \subsection{Pruning}
@@ -575,7 +559,7 @@ at $0$ such that only their signs are considered.
 \item Categorization of covariates:\\
 Similarly, the covariates can also be categorized. For this purpose, the corresponding 1st, 2nd 
 and 3rd quartile are considered to bin each possible split variable into four categories. In that way,
-depending on whether the scores are binarized or not, a $\chi^2$-test or 1-way ANOVA can be applied
+depending on whether the scores are binarized or not, a $\chi^2$~test or 1-way ANOVA can be applied
 where the quartiles are the only possible split points while otherwise maximally selected splits 
 over $Z$ are considered. 
 
@@ -585,7 +569,7 @@ over $Z$ are considered.
 Apart from these three building blocks, the algorithms CTree, MOB, and GUIDE differ in the type of test 
 statistic they apply and their approximation of the underlying null distribution of the corresponding 
 test statistic. While the permutation tests in CTree work in a conditional framework both MOB (M-fluctuation tests) 
-and GUIDE ($\chi^2$-tests) apply an unconditional approach. Furthermore, the algorithms CTree and MOB were 
+and GUIDE ($\chi^2$~tests) apply an unconditional approach. Furthermore, the algorithms CTree and MOB were 
 introduced employing prepruning while GUIDE originally applies a postpruning strategy.
 However, these differences refer to the standard versions of the three algorithms and all of them
 allow for certain modifications of this standard setup. For example, a different form of test statistic
@@ -633,27 +617,27 @@ For a model-based approach one can consider residuals defined by
 $$
 r(y_i,x_i,\beta_0,\beta_1) = y_i - \beta_0 - \beta_1 \cdot x_i.
 $$
-The appropriate choice of the function $\psi$ is then
+The appropriate choice of the function $\ell$ is then
 $$
-\psi(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2
+\ell(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2
 $$
-such that $\sum_{i=1}^n \psi(y_i,x_i,\beta_0,\beta_1)$ is the objective function
+such that $\sum_{i=1}^n \ell(y_i,x_i,\beta_0,\beta_1)$ is the objective function
 which is minimized to obtain the estimated coefficient vector
 $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
 The corresponding disaggregated, observation-wise goodness-of-fit measure is defined by
 the score function 
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
-\frac{\partial \psi}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
+\frac{\partial \ell}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
 -2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
 where the factor $-2$ is often omitted such that the first column of the $n \times 2$-dimensional
 score matrix corresponds to the residuals. 
 Therefore, including only residuals (i.e. only the first column of the score matrix)
-corresponds to including the derivatives of $\psi$ only regarding the intercept 
+corresponds to including the derivatives of $\ell$ only regarding the intercept 
 parameter~$\beta_0$.
 On the contrary, by using full model scores (i.e. the whole $n \times 2$ matrix) 
-the derivatives of $\psi$ regarding the intercept $\beta_0$ (first column) and the slope 
+the derivatives of $\ell$ regarding the intercept $\beta_0$ (first column) and the slope 
 parameter $\beta_1$ (second column) are considered.
 
 
