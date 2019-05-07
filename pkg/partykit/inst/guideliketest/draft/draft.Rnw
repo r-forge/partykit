@@ -150,7 +150,7 @@ A Unifying View of CTree, MOB, and GUIDE}
 
 \Abstract{
 A core step of every algorithm for learning regression trees is the decision if, 
-how, and where to split the underlying data - or, in other words, the selection 
+how, and where to split the underlying data -- or, in other words, the selection 
 of the best splitting variable from the available covariates and the corresponding 
 split point. Early tree algorithms (e.g., AID, CART) employed greedy search strategies 
 that directly compare all possible split points in all available covariates. However, 
@@ -164,8 +164,8 @@ algorithms employ different inference frameworks for computing these $p$-values 
 their relative advantages or disadvantages are not well understood, yet.
 
 Therefore, three different popular approaches are considered here: classical categorical 
-association tests (GUIDE), conditional inference (CTree), and parameter instability 
-tests (MOB). First, these are embedded into a common inference framework encompassing
+association tests (as in GUIDE), conditional inference (as in CTree), and parameter instability 
+tests (as in MOB). First, these are embedded into a common inference framework encompassing
 parametric model trees, in particular linear model trees. Second, it is assessed how
 different building blocks from this common framework affect the power of the 
 tree algorithms to select the appropriate covariates for splitting: observation-wise
@@ -219,11 +219,14 @@ points \citep{Doyle:1973, Kim+Loh:2001}.
 Therefore, selecting a split variable in a first step and then searching for the 
 best split point only within this variable in a separated second step is a more 
 promising strategy as applied for example by the algorithms QUEST \citep{Loh+Shih:1997},
-CHAID \citep{Kass:1980}, GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zeileis:2006} 
+%% CHAID \citep{Kass:1980},
+GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zeileis:2006} 
 and MOB \citep{Zeileis+Hothorn+Hornik:2008}.
 For the first step of selecting a split variable they all share the same basic concept of 
 choosing the covariate which shows the highest association to the response variable 
-based on $p$-values provided by a statistical test. While QUEST, CHAID, and GUIDE employ 
+based on $p$-values provided by a statistical test. While QUEST
+%%, CHAID,
+and GUIDE employ 
 statistical significance tests for contingency tables, CTree applies permutation tests in 
 a conditional inference framework and MOB uses fluctuation tests based on central limit theorems
 for the parameter estimators. 
@@ -231,10 +234,10 @@ All these approaches have shown to work well for various situations, however, th
 (dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
-i.e. the task of selecting the best split variable. In particular, the approach of the 
+i.e. the task of selecting the best split variable in a given (sub)sample. In particular, the approach of the 
 GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
 by investigating the building blocks of their testing strategies in which they differ:
-(1)~Variations of a goodness-of-fit measure for the response: using residuals or full model scores.
+(1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
 (2)~Binarization of these residuals or scores.
 (3)~Categorization of covariates.
 Apart from these three main factors further aspects such as the approximation of the null
@@ -247,10 +250,10 @@ vary the building blocks and assess the power of the resulting inference procedu
 it is investigated whether the performance of the inference impacts the performance of the
 trees differently under pre- vs.\ post-pruning.
 
-In many of the considered scenarios it can be observed that the choice of goodness-of-fit
-measure heavily influences the performance of testing strategies as overall using model 
-scores leads to clearly better results than employing residuals only. Moreover, the original
-values of the goodness-of-fit measure are to be preferred over binarized versions of them.
+In many of the considered scenarios the choice of goodness-of-fit measure heavily influences
+the performance of testing strategies with overall using model scores leading to clearly better
+results than employing residuals only. Moreover, the original
+values of the goodness-of-fit measure are preferred over binarized versions of them.
 Also regarding the effects of categorizing possible split variables and the selection
 of a pruning strategy clear recommendations can be given based on the presented results.
 
@@ -259,7 +262,7 @@ Section~\ref{sec:urp} reviews unbiased tree models, starting with the general al
 (Section~\ref{sec:generic_alg}) followed by the specific algorithms CTree (Section~\ref{sec:ctree}), 
 MOB (\ref{sec:mob}), and GUIDE (\ref{sec:guide}), before possible pruning strategies 
 (\ref{sec:pruning}) are discussed.
-In Section~\ref{sec:unify} the unifying framework for testing strategies in model-based unbiased 
+In Section~\ref{sec:unify} the unifying framework for testing strategies in unbiased model-based
 recursive partitioning algorithms is presented.
 The setting for the simulation study is introduced in Section~\ref{sec:simulation}
 and the results are illustrated and discussed in Section~\ref{sec:results}.
