@@ -295,8 +295,8 @@ only least-squares or maximum-likelihood models but also simple constant
 fits such as means or average proportions.
 Therefore, depending on the type of model, the employed objective function can 
 for example be the sum of deviations from a typical/average value, but it can 
-also be based on a model fro a response along with potential covariates.
-For instance, different types of residuals (or the signs thereof) can be employd
+also be based on a model for a response along with potential covariates.
+For instance, different types of residuals (or the signs thereof) can be employed
 \citep[see e.g.,][]{Loh:2002} as well as rank sums or logrank scores
 \citep[as in][]{Hothorn+Hornik+VanDeWiel:2006}.
 
@@ -361,7 +361,7 @@ the sum of the objective function $\ell$, aggregated over all observations.
 This framework includes many different M-type estimators as special cases, including maximum 
 likelihood and ordinary least squares estimation. For a $k$-dimensional parameter
 $\beta$ the score function evaluated for the $i$-th observation $s(y_i, x_i, \beta)$
-is also a $k$dimensional vector, i.e., the gradient contribution of the $i$-th observation.
+is also a $k$-dimensional vector, i.e., the gradient contribution of the $i$-th observation.
 Thus, the $n \times k$-matrix consisting of these scores or gradient contributions for all 
 $i = 1, \dots, n$ observations is a natural candidate for the observation-wise goodness-of-fit
 measure as described in the previous Section~\ref{sec:generic_alg}.
@@ -376,7 +376,7 @@ following the framework of \cite{Strasser+Weber:1999}. The corresponding conditi
 covariance given all permutations of the response variable can be calculated and used to 
 standardize the test statistic. This standardized statistic has an asymptotic normal distribution
 which is in fact multivariate if either of the transformation $h(Y)$ and/or $g(Z)$ is
-multivariate. The actual test is carried out be mapping this standardized statistic to
+multivariate. The actual test is carried out by mapping this standardized statistic to
 the real line either by taking the absolute maximum or using a quadratic form -- with $p$-values
 being computed from the analogous transformation of the normal distribution
 \citep[see][for a hands-on introduction]{Hothorn+Hornik+VanDeWiel:2006}.
@@ -420,11 +420,11 @@ relies on classical unconditional inference. For more details see \cite{Zeileis+
 
 \subsection{GUIDE}\label{sec:guide}
 
-Building on earlier work for the QUEST algorithm \citep{Loh+Shih:1997}, \citep{Loh:2002}
+Building on earlier work for the QUEST algorithm \citep{Loh+Shih:1997}, \cite{Loh:2002}
 proposed the GUIDE algorithm blending trees with parametric regression models and
 encompassing simpler classification and regression trees as special cases. Thus,
-linear regression models could be fitted in the nodes of tree as well as
-constant fits such as simple mean response $\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$,.
+linear regression models could be fitted in the nodes of a tree as well as
+constant fits such as simple mean response $\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$.
 The tests for selecting the split variable are then based on the corresponding residuals,
 e.g., for a simple linear regression \citep[as used in][]{Loh:2002}:
 $$
@@ -437,9 +437,9 @@ regression trees for longitudinal and multiresponse data \citep{Loh+Zheng:2013},
 quantile regression models \citep{Chaudhuri+Loh:2002}, 
 and proportional hazards modeling via Poisson regression \citep{Loh+He+Man:2015}, among others.
 
-To construct a statistical test two additional transformation are carried out:
+To construct a statistical test two additional transformations are carried out:
 (1)~The residuals $r(Y,X,\hat{\beta})$ are binarized at zero, yielding an indicator for positive vs.\ negative residuals.
-(2)~All possible split variable $Z$ are categorized, i.e., unless $Z$ is already categorical
+(2)~Each possible split variable $Z$ is categorized, i.e., unless $Z$ is already categorical
 it is split at its quartiles into four bins.
 Subsequently, a $\chi^2$~test of independence is performed for the binarized residuals and
 each categorized/categorical split variable.
@@ -464,7 +464,7 @@ tree and then prune those splits in the tree that did not increase predictive pe
 cross-validation. This is also know as \emph{postpruning} (after growing the initial tree) and
 more specifically cost-complexity pruning.
 
-In the unbiased recursive partitioning literature this postpruning approach is also usef frequently
+In the unbiased recursive partitioning literature this postpruning approach is also used frequently
 \citep[e.g., in][]{Loh+Vanichsetakul:1988,Loh+Shih:1997,Kim+Loh:2001,Loh:2002} and the $p$-values
 from the association tests are only employed for selecting the split variable on a unified scale.
 However, \cite{Hothorn+Hornik+Zeileis:2006} proposed to also use these $p$-values for a 
@@ -494,7 +494,7 @@ original form. However, in principle all other combinations of the listed featur
 as well. As explained in Section~\ref{sec:pruning} the focus of this paper is on the testing 
 strategies (second column of Table~\ref{tab:combinations}). They are here discussed for the case 
 of parametric models together with prepruning as the properties of this pruning strategy
-are already determined by the testing strategy. Subsequently combinations
+are already determined by the testing strategy. Subsequently, combinations
 with postpruning are evaluated as well to show the impact of the choice of pruning strategy.
 From here on the names CTree, MOB, and GUIDE are used to refer to the algorithm-specific
 testing strategies rather than the complete algorithms.
@@ -520,7 +520,7 @@ for the algorithms CTree, MOB, and GUIDE.
 Even though CTree, MOB, and GUIDE differ in the specific tests they apply (see second column of
 Table~\ref{tab:combinations}) their approaches on how to select a split variable follow the same
 basic structure as explained in Section~\ref{sec:generic_alg}. 
-Thus they can be presented together in a unifying framework for testing strategies
+Thus, they can be presented together in a unifying framework for testing strategies
 in model-based unbiased recursive partitioning. 
 In this framework each specific testing strategy can be obtained by combining the provided 
 building blocks accordingly. But apart from that, variations of the commonly known testing 
@@ -540,7 +540,7 @@ Different variations of the disaggregated, observation-wise goodness-of-fit meas
 model that is obtained for the response $Y$ and possible covariates $X$ can be 
 considered. This can be residuals $r(Y,X,\hat{\beta})$ as in the GUIDE algorithm or 
 scores $s(Y,X,\hat{\beta})$ as in the MOB algorithm or, more generally, a 
-transformation function $h$ as in the CTree algorithm including both of the foregoing cases.
+transformation function $h(Y)$ as in the CTree algorithm including both of the foregoing cases.
 By including all available scores rather than just residuals the goodness of fit of the 
 model is investigated regarding each parameter instead of just the mean. 
 %Therefore, this facilitates the detection of changes in parameters other than the mean/location parameter.
@@ -551,7 +551,7 @@ binarized version of them can be used as well. In particular, the values are bin
 at $0$ such that only their signs are considered.
 
 \item Categorization of covariates:\\
-Similarly, the covariates can also be categorized. For this purpose, the corresponding 1st, 2nd 
+Similarly, the covariates can also be categorized. For this purpose, the corresponding 1st, 2nd, 
 and 3rd quartile are considered to bin each possible split variable into four categories. In that way,
 depending on whether the scores are binarized or not, a $\chi^2$~test or 1-way ANOVA can be applied
 where the quartiles are the only possible split points while otherwise maximally selected splits 
