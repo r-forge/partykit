@@ -438,7 +438,6 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
                                               terminal_panel = NULL,
                                               ...) {
   if (type == "simple") {
-    ## TODO: allow for specifying other values for align arg
     FUN <- simple_terminal_func
     plot(x$tree, drop_terminal = drop_terminal,
          terminal_panel = node_terminal_glmertree, 
@@ -446,14 +445,18 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
   } else {
     if (which != "ranef") {
       mf <- model.frame(x)  
-      lm_vars <- names(Formula::model.part(x$tree$info$Formula, mf, lhs = 0L, rhs = 1L))
-      if (length(lm_vars > 0L)) {
+      #local_lm_vars <- names(Formula::model.part(x$tree$info$Formula, mf, 
+      #                                           lhs = 0L, rhs = 1L))
+      global_lm_vars <- all.vars(nobars(x$formula[[3]][[2]][[3]]))
+      local_lm_vars <- all.vars(x$formula[[3]][[2]][[2]])
+      lm_vars <- unique(c(global_lm_vars, local_lm_vars))
+      if (length(local_lm_vars > 0L)) {
         if (is.null(tp_args$which)) {
-          vars_to_plot <- 1L:length(lm_vars)
+          vars_to_plot <- 1L:length(local_lm_vars)
         } else {
           vars_to_plot <- tp_args$which
         }
-        if (is.numeric(vars_to_plot)) vars_to_plot <- lm_vars[vars_to_plot]
+        if (is.numeric(vars_to_plot)) vars_to_plot <- local_lm_vars[vars_to_plot]
         node_ids <- x$tree$fitted[["(fitted)"]]
         re.form <- if (fitmean == "marginal") NA else NULL
         if (fitmean == "marginal") {
@@ -465,13 +468,13 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
             remaining_lm_vars <- lm_vars[which(lm_vars != varname)]
             if (length(lm_vars > 1L)) {
               for (i in remaining_lm_vars) {
-                if (class(mf[, i]) == "numeric") {
+                if (class(x$data[, i]) == "numeric") {
                   ## set all values to mean:
-                  newdata[, i] <- mean(mf[, i])
-                } else if (class(mf[, i]) == "factor") {
+                  newdata[, i] <- mean(x$data[, i])
+                } else if (class(x$data[, i]) == "factor") {
                   ## set all values to most common class:
-                  ux <- unique(mf[, i])
-                  newdata[, i] <- ux[which.max(tabulate(match(mf[, i], ux)))]
+                  ux <- unique(x$data[, i])
+                  newdata[, i] <- ux[which.max(tabulate(match(x$data[, i], ux)))]
                 }
               }
             }
