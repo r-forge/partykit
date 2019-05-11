@@ -129,7 +129,7 @@ pal <- qualitative_hcl(5, "Dark 3")
 names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE_scores", "CTree_max")
 
 ## HCL palette for illustrations of data generating process
-pal_dgp_light <- qualitative_hcl(3, "Set 2")
+pal_dgp_light <- qualitative_hcl(3, "Dark 3", c1 = 50, l1 = 75)
 pal_dgp <- qualitative_hcl(3, "Dark 3")
 
 ## HCL palette for tree panels
@@ -637,21 +637,19 @@ derivatives with respect to the slope parameter~$\beta_1$ and thus captures chan
 
 In this simulation study two different scenarios are considered for the linear model trees
 presented in Section~\ref{sec:lmtrees}. First, the underlying tree structure based on which the
-data is generated is a stump, i.e., a tree with only one split. 
-By keeping the complexity of the model as low as possible the advantages and
-disadvantages of the different testing strategies can be elaborated in more detail and 
-focus can be given to their power in terms of selecting the correct split variable.
+data is generated is a stump, i.e., a tree with only one split (see Figure~\ref{fig:dgp_stump}). 
+By keeping the tree so simple we can focus on the testing strategy only giving focus to their
+power in terms of selecting the correct split variable.
 
 In the second scenario the true tree structure contains two splits in two different variables
-yielding a tree with three terminal nodes. After having investigated the characteristics of 
-the employed algorithms in detail for the stump scenario this additional evaluation aims at
-showing that the same conclusions can be drawn for more complex structures.
+yielding a tree with three terminal nodes (see Figure~\ref{fig:dgp_tree}). It employs the same
+basic structure as the first scenario but simply adds another split. This allows to evaluate
+the power of the three testing strategies in a more complex setting, in combination with using
+a post-pruning strategy.
 
-In the following the data generating process is explained in detail for the first scenario.
-The second, more complex scenario employs the same basic structure simply adding another split
-as illustrated in Figure~\ref{fig:dgp_tree}.
 
 \subsection{Data generating process}
+
 Each generated data set consists of the response and regressor variables, one true split 
 variable and nine noise split variables as listed in Table~\ref{tab:variables} 
 together with the corresponding distributions.
@@ -686,8 +684,8 @@ linearly on the regressor variable $X$.
 % which is a uniformly distributed variable taking values between $-1$ and $1$.
 % can either be a binary variable (taking either $0$ or $1$) or a uniformly distributed 
 % variable (taking values between $-1$ and $1$).
-Moreover, the intercept $\beta_0$ and/or the slope parameter $\beta_1$ of this linear equation
-(can) depend on the true split variable $Z_1$. More specifically, three different scenarios
+Moreover, the intercept $\beta_0$ and/or the slope parameter $\beta_1$
+can depend on the true split variable $Z_1$. More specifically, three different scenarios
 are considered for the coefficients $\beta_0$ and $\beta_1$:
 %
 \begin{enumerate}
@@ -697,23 +695,20 @@ are considered for the coefficients $\beta_0$ and $\beta_1$:
   \item Both coefficients $\beta_0$ and $\beta_1$ vary depending on $Z_1$.
 \end{enumerate}
 %
-The varying coefficient(s) $\beta_j$, $j\in\{0,1\}$, are binary taking either the positive or
-the negative value of the effect size, i.e., $\delta$ or $-\delta$.
-% can either be binary (taking either $\delta$ or $-\delta$), or a continuous function. 
-% In the binary case the following definition is applied for the true split point $\xi$
+See Figure~\ref{fig:dgp_stump} for an illustration. More precisely, the coefficient that
+changes ($\beta_j$ with $j\in\{0,1\}$) switches between two values at the split point $\xi$:
+%
 \begin{align*}
 \beta_{i}(Z_1) = \begin{cases}
 -\delta \cdot (-1)^{j}  \quad \text{if } Z_1 < \xi \\
 +\delta \cdot (-1)^{j}  \quad \text{if } Z_1 \geq \xi
 \end{cases}
 \end{align*}
+%
 %while in the continuous case a simple linear function is considered in the form of
 %$$\beta_{i}(Z_1) = Z_1 \cdot \delta \cdot (-1)^{i}.$$
 In that way, the type of variation is the same for $\beta_0$ and $\beta_1$, however, in 
 opposite directions.
-An illustration of the three different cases 
-%for binary coefficients and a continuous regressor 
-can be found in Figure~\ref{fig:dgp_stump}.
 
 <<dgp, echo=FALSE>>=
 set.seed(7)
@@ -995,7 +990,7 @@ points(x = d$x[d$z2>xi & d$z1>xi], y = d$y[d$z2>xi & d$z1>xi], pch = 19,
 legend("top", c(expression(z[2]<=xi), 
                 expression(z[2]>xi~" and "~z[1]<=xi),
                 expression(z[2]>xi~" and "~z[1]>xi)), 
-       col = c(pal[1], pal[2], pal_dgp[3]), pch = c(19), bty = "n", cex = 0.9)
+       col = c(pal_dgp[1], pal_dgp[2], pal_dgp[3]), pch = c(19), bty = "n", cex = 0.9)
 mtext(expression(beta[0]==0), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 2)
 mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0.5, at = 1.3)
 mtext(expression(beta[0]==+delta), side = 4, col = pal_dgp[3], las = 1, line = 0.5, at = 0.1)
