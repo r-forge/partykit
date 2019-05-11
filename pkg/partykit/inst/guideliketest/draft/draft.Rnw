@@ -126,7 +126,7 @@ rm(simres)
 
 ## HCL palette
 pal <- qualitative_hcl(5, "Dark 3")
-names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE_scores", "CTree_max")
+names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE+scores", "CTree+max")
 
 ## HCL palette for illustrations of data generating process
 pal_dgp_light <- qualitative_hcl(3, "Dark 3", c1 = 50, l1 = 75)
@@ -199,6 +199,8 @@ URL: \url{http://user.math.uzh.ch/hothorn/}\\
 
 
 \begin{document}
+
+\vspace*{0.4cm}
 
 \section{Introduction}\label{sec:introduction}
 In many situations fitting one global model to a given data set can be very challenging, 
@@ -1016,7 +1018,7 @@ on 100 replications per step each consisting of 250 observations.
 To compare the performance of the evaluated testing strategies for each step 
 in the first scenario (stump with 1 split) the following criteria are considered:
 the $p$-values pertaining only to the true split variable $Z_1$;
-and the proportion of data sets for which the $p$-value of $Z_1$
+and the proportion of replications for which the $p$-value of $Z_1$
 is the lowest and significant at 5\% level (i.e., where $Z_1$ would be
 selected for splitting in a pre-pruning approach).
 For the second scenario (tree with 2 splits) the adjusted Rand index~(ARI) is calculated 
@@ -1038,18 +1040,20 @@ than $\alpha$ a split is performed and the covariate corresponding to this $p$-v
 \section{Results}
 \label{sec:results}
 
-To illustrate the effects of the building blocks in the unifying framework presented in 
-Section~\ref{sec:unify} different combinations of them are investigated for the first
-simulation scenario (stump) in Sections ~\ref{sec:scores} and \ref{sec:3way}. 
-Then the testing strategies are evaluated on the more
-complex tree structure of the second scenario in Section~\ref{sec:tree}. 
-The corresponding results are shown in the following plots.
+% To illustrate the effects of the building blocks in the unifying framework presented in 
+% Section~\ref{sec:unify} different combinations of them are investigated for the first
+% simulation scenario (stump) in Sections~\ref{sec:scores} and~\ref{sec:3way}. 
+% Then the testing strategies are evaluated on the more
+% complex tree structure of the second scenario in Section~\ref{sec:tree}. 
+% The corresponding results are shown in the following plots.
 
 \subsection[Residuals vs. full model scores]{Residuals vs.\ full model scores}
 \label{sec:scores}
+
 To assess the impact of using only residuals or the full score matrix four testing
-strategies are compared: CTree, GUIDE, MOB (all three in their original form),
-and additionally the GUIDE strategy using the full score matrix (denoted by GUIDE\_scores).
+strategies are compared: CTree, GUIDE, MOB -- all three using the default specification
+as shown in Table~\ref{tab:buildingblocks} -- and additionally the GUIDE strategy using
+the full scores instead (denoted by GUIDE+scores).
 
 
 \begin{figure}
@@ -1061,13 +1065,13 @@ subdata$test <- factor(subdata$test,
                        levels = c("ctree","mfluc",
                                   "guide_sum_12", "guide_sum_1_cor"),
                        labels = c("CTree","MOB",
-                                  "GUIDE_scores", "GUIDE"))
+                                  "GUIDE+scores", "GUIDE"))
 
 subdataxi <- subset(subdata, xi %in% c(0,0.8))
 
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
-                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
-                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
 library("latticeExtra")
 useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test, 
@@ -1079,29 +1083,29 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
                       scales=list(x=list(at=seq(1,11,2))),
                       key =  list(text = list(levels(subdataxi$test)),
                                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
+                                               col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
                       xlab = expression(delta),
                       ylab = expression("Proportion of selecting"~Z[1]),
                       par.settings = par.settings),
                
-               strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
-                                                     expression("vary"~beta[0]), 
-                                                     expression("vary"~beta[1])),
+               strip =strip.custom(factor.levels = c(expression("varying"~beta[0]~"and"~beta[1]), 
+                                                     expression("varying"~beta[0]), 
+                                                     expression("varying"~beta[1])),
                                    bg = "gray90"),
                strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8)),
                                    bg = "gray90"))
 
 
 @
-\caption{\label{fig:scores_stump}Proportion of cases where the true split variable $Z_1$ is
-selected over increasing effect size $\delta$ (100 data sets of 250 observations per step),
+\caption{\label{fig:scores_stump}Proportion of replications where the true split variable $Z_1$ is
+selected over increasing effect size $\delta$ (100 replications of 250 observations per step),
 once for a true split point $\xi = 0$ (top row) and once for $\xi = 0.8$ (bottom row). 
 Each column represents one scenario for the coefficients: 
 varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
 both coefficients varying (right). The performances of four testing strategies are compared: 
-CTree, MOB, GUIDE, GUIDE\_scores.}
+CTree, MOB, GUIDE, GUIDE+scores.}
 \end{figure}
 
 
@@ -1109,7 +1113,7 @@ Figure~\ref{fig:scores_stump} shows the evaluation results for the three differe
 scenarios (varying only the intercept $\beta_0$, only the slope parameter $\beta_1$
 or both of them) once for a true split point $\xi=0$ and once for $\xi=0.8$. 
 As explained before, the tests are applied as significance tests with significance 
-level $\alpha=0.05$. Therefore, the proportion of cases in which the true split variable $Z_1$
+level $\alpha=0.05$. Therefore, the proportion of replications in which the true split variable $Z_1$
 is detected with a $p$-value smaller than $\alpha$ is compared.
 (To show that in general the drawn conclusions do not change if no significance level is included 
 the same setting is evaluated again without any significance level and the results are presented
@@ -1122,7 +1126,7 @@ this advantage increases if the slope parameter varies and the intercept is kept
 in $\beta_1$. 
 This is due to the fact that GUIDE only includes residuals, i.e., only the scores 
 regarding the intercept, such that changes in the slope parameter are not detected unless the 
-corresponding scores are also included as in GUIDE\_scores. This disadvantage of using 
+corresponding scores are also included as in GUIDE+scores. This disadvantage of using 
 only scores has already been elaborated in the literature of structural change
 analysis \citep[see e.g.][]{Ploberger+Kramer:1992} and is also discussed 
 in Section~\ref{sec:discussion}.
@@ -1140,7 +1144,7 @@ Altogether these results clearly illustrate that overall the decision to include
 scores when testing for dependencies in order to select split variables is advantageous over
 considering only residuals, i.e., the scores regarding only the intercept, as changes not only in
 the mean but also in all other parameters can be detected in that way. This is particularly obvious
-when comparing GUIDE and GUIDE\_scores. Moreover, from the fact that these two version are both
+when comparing GUIDE and GUIDE+scores. Moreover, from the fact that these two version are both
 performing worse than MOB and CTree it can be deduced that categorizing split variables and
 binarizing scores has a negative effect on the ability to detect the right split variable. 
 To elaborate these effects more in detail the results for all possible combinations of the 
@@ -1166,7 +1170,7 @@ Appendix~\ref{app:combinations}, Table~\ref{tab:combinations_appendix}.
 \centering
 \begin{tabular}{ l l l }
 \hline
-Building Block         & Levels              & Effect \\
+Building block         & Levels              & Effect \\
 \hline
 Residuals vs.\ scores  & \textit{residuals}  & Use only residuals\\
                        & \textit{scores}     & Use full score matrix\\
@@ -1316,7 +1320,7 @@ been evaluated on data sets based on the tree structure with two different split
 Figure~\ref{fig:dgp_tree}.
 
 Figure~\ref{fig:tree_ari} shows that based on the resulting ARI values CTree and MOB perform 
-almost equally well for the true split points $0$, $0.2$ and $0.5$. GUIDE\_scores performs
+almost equally well for the true split points $0$, $0.2$ and $0.5$. GUIDE+scores performs
 slightly worse but it still achieves an ARI above $0.5$ for the highest considered effect size
 of $\delta = 1$. However, the original version of GUIDE is clearly behind which is mainly
 due to the fact that it doesn't detect the first split in $Z_2$ corresponding to a changing
@@ -1337,11 +1341,11 @@ subdata$test <- factor(subdata$test,
                        levels = c("ctree", "mfluc",
                                   "guide_sum_12", "guide_sum_1_cor"),
                        labels = c("CTree","MOB",
-                                  "GUIDE_scores", "GUIDE"))
+                                  "GUIDE+scores", "GUIDE"))
 
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
-                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
-                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
 
 xyplot(ari ~ delta | xi, groups = ~ test, 
@@ -1351,7 +1355,7 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        lwd = 2,
        key =  list(text = list(levels(subdata$test)),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
+                                col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        #index.cond = list(c(1,2,3,4)),
        scales=list(x=list(at=seq(1,11,2))),
@@ -1366,10 +1370,10 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 
 @
 \caption{\label{fig:tree_ari}Adjusted Rand Index over increasing effect size $\delta$ 
-(100 data sets of 250 observations per step).
+(100 replications of 250 observations per step).
 Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
 $0.8$ from left to right). The performances of four testing strategies are compared: CTree,
-MOB, GUIDE, GUIDE\_scores.}
+MOB, GUIDE, GUIDE+scores.}
 \end{figure}
 
 
@@ -1427,23 +1431,23 @@ prex$test <- factor(prex$test,
                                "ctree_p","mfluc_p",
                                "guide_sum_12_p", "guide_sum_1_cor_p"),
                     labels = c("CTree","MOB",
-                               "GUIDE_scores", "GUIDE",
+                               "GUIDE+scores", "GUIDE",
                                "CTree_p","MOB_p",
-                               "GUIDE_scores_p", "GUIDE_p"))
+                               "GUIDE+scores_p", "GUIDE_p"))
 
 for(i in c((length(pr$test)+1) : (2*length(pr$test)))){
   if(prex$test[i] == "CTree") prex$test[i] <- "CTree_p"
   if(prex$test[i] == "MOB") prex$test[i] <- "MOB_p"
-  if(prex$test[i] == "GUIDE_scores") prex$test[i] <- "GUIDE_scores_p"
+  if(prex$test[i] == "GUIDE+scores") prex$test[i] <- "GUIDE+scores_p"
   if(prex$test[i] == "GUIDE") prex$test[i] <- "GUIDE_p"
 }
 
 prex$nrsubgr[(length(pr$nrsubgr)+1) : (2*length(pr$nrsubgr))] <- pr$nrsubgr_p
 prex$ari[(length(pr$ari)+1) : (2*length(pr$ari))] <- pr$ari_p
 
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
-                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
-                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
 @
 
@@ -1456,7 +1460,7 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        lwd = 2,
        key =  list(text = list(levels(prex$test)[1:4]),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
+                                col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        scales=list(x=list(at=seq(1,11,2))),
        xlab = expression(delta),
@@ -1470,11 +1474,11 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 )
 @
 \caption{\label{fig:pruning_ari}Adjusted Rand Index over increasing effect size $\delta$ 
-(100 data sets of 250 observations per step).
+(100 replications of 250 observations per step).
 Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
 $0.8$ from left to right). 
-The performances of four testing strategies are compared: CTree, MOB, GUIDE, GUIDE\_scores. 
-The dashed lines represent the results from applying pre-pruning and the continuous lines 
+The performances of four testing strategies are compared: CTree, MOB, GUIDE, GUIDE+scores. 
+The dashed lines represent the results from applying pre-pruning and the solid lines 
 the results from applying post-pruning.}
 \end{figure}
 
@@ -1528,8 +1532,8 @@ that are not connected to the mean might be missed when only considering residua
 by including scores which are a standard measurement of goodness of fit that can be easily employed for 
 all model types.
 Even though it also depends on the type of the applied residuals 
-(see, e.g., \cite{Loh+Zheng:2013}, \cite{Chaudhuri+Loh:2002} 
-and \cite{Loh+He+Man:2015})
+(see, e.g., \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002} 
+and \citealp{Loh+He+Man:2015})
 whether parameter changes can be detected successfully, a one-dimensional measurement of goodness of 
 fit such as residuals provides less power than full model scores. 
 Whether this difference affects the performance of a testing strategy and if so, to what extent, is 
@@ -1572,12 +1576,14 @@ established/constructed using the basic framework of \code{ctree} and \code{mob}
 Science Foundation, grant number SNF IZSEZ0 177091.}
 
 
+\bibliography{ref.bib}
 
 \newpage
-\section*{Appendix}
+
 \begin{appendix}
 
 \section{Combinations of building blocks applied}\label{app:combinations}
+
 For the evaluation of all 12 possible combinations of the presented building blocks
 the original testing strategies CTree, MOB, and GUIDE have been applied together
 with modified versions of them. The employed versions and the corresponding combination
@@ -1585,27 +1591,27 @@ of building blocks is listed in Table~\ref{tab:combinations_appendix}.
 Each suffix indicates a change of the original form of the considered testing strategy.
 In particular, it relates to the transformations of the data before applying a statistical
 test as represented by the different building blocks. In that way,
-``\_res'' refers to using only residuals (instead of all scores),
-``\_scores'' to using all scores (instead of only residuals),
-``\_cat'' to applying a categorization of split variables,
-``\_bin'' to applying a binarization of scores/residuals.
+``+res'' refers to using only residuals (instead of all scores),
+``+scores'' to using all scores (instead of only residuals),
+``+cat'' to applying a categorization of split variables,
+``+bin'' to applying a binarization of scores/residuals.
 
-\begin{table}[t!]
+\begin{table}[h!]
 \centering
 \begin{tabular}{ l l l l }
 \hline 
 Testing Strategy  & Residuals/Scores   & Binarization & Categorization \\
 \hline
 GUIDE             & residuals          & bin          & cat \\
-MOB\_bin\_res     & residuals          & bin          & max \\
-CTree\_bin\_res   & residuals          & bin          & lin \\
-MOB\_cat\_res    & residuals          & lin          & cat \\
-MOB\_res          & residuals          & lin          & max \\
-CTree\_res        & residuals          & lin          & lin \\
-GUIDE\_scores     & scores             & bin          & cat \\
-MOB\_bin          & scores             & bin          & max \\
-CTree\_bin        & scores             & bin          & lin \\
-MOB\_cat          & scores             & lin          & cat \\
+MOB+bin+res     & residuals          & bin          & max \\
+CTree+bin+res   & residuals          & bin          & lin \\
+MOB+cat+res    & residuals          & lin          & cat \\
+MOB+res          & residuals          & lin          & max \\
+CTree+res        & residuals          & lin          & lin \\
+GUIDE+scores     & scores             & bin          & cat \\
+MOB+bin          & scores             & bin          & max \\
+CTree+bin        & scores             & bin          & lin \\
+MOB+cat          & scores             & lin          & cat \\
 MOB               & scores             & lin          & max \\
 CTree             & scores             & lin          & lin \\
 \hline
@@ -1617,76 +1623,76 @@ of building blocks).
 
 
 \section{Significance level}\label{app:significance}
-In Section~\ref{sec:scores} the investigated testing strategies are compared based
-on the number of cases in which the true split variable $Z_1$ is detected with a $p$-value
-smaller than the predefined significance level $\alpha = 0.05$. This choice of measurement
-is due to the aim of investigating how well the tests perform as significance test.
-However, ignoring this significance level yields the same conclusions 
-which can be seen when comparing Figures~\ref{fig:scores_stump_wosign}
-and \ref{fig:scores_stump}.
-In Figure~\ref{fig:scores_stump_wosign} the proportion of cases 
-in which the true splitting variable $Z_1$ is detected, but not necessarily with a $p$-value 
-smaller than the significance level, is illustrated. In Figure~\ref{fig:scores_stump} 
-the exact same simulation setting is applied with a significance level.
-
 
 \begin{figure}[t]
 \setkeys{Gin}{width=\linewidth}
 <<scores_stump_wosign, fig=TRUE, echo=FALSE, height=5, width=8>>=
-subdata <- subset(sim_stump, test %in% c("ctree","mfluc",
-                                         "guide_sum_12", "guide_sum_1_cor"))
+subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max", "mfluc", "guide_sum_12", "guide_sum_1_cor"))
 subdata$test <- factor(subdata$test, 
-                       levels = c("ctree","mfluc",
+                       levels = c("ctree", "ctree_max", "mfluc",
                                   "guide_sum_12", "guide_sum_1_cor"),
-                       labels = c("CTree","MOB",
-                                  "GUIDE_scores", "GUIDE"))
+                       labels = c("CTree", "CTree+max", "MOB",
+                                  "GUIDE+scores", "GUIDE"))
 
 subdataxi <- subset(subdata, xi %in% c(0,0.8))
 
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], 
-                                             fill = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]), 
-                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")]))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")]))
 
 library("latticeExtra")
 useOuterStrips(xyplot(prop_z1 ~ delta | vary_beta + xi, groups = ~ test, 
                       data = subdataxi, 
                       subset = binary_beta == TRUE & binary_regressor == FALSE & 
                         only_intercept == FALSE,# & xi == 0, 
-                      type = "l", lty = c(1,1,1,1),
+                      type = "l", lty = c(1,1,1,1,1),
                       lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
                       key =  list(text = list(levels(subdataxi$test)),
-                                  lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                               col = pal[c("CTree", "MOB", "GUIDE_scores", "GUIDE")], lwd = 2)),
+                                  lines = list(lty = c(1,1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                               col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
                       xlab = expression(delta),
                       ylab = expression("Prop. of"~Z[1]~"having lowest p-value"),
                       par.settings = par.settings),
                
-               strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
-                                                     expression("vary"~beta[0]), 
-                                                     expression("vary"~beta[1])),
+               strip =strip.custom(factor.levels = c(expression("varying"~beta[0]~"and"~beta[1]), 
+                                                     expression("varying"~beta[0]), 
+                                                     expression("varying"~beta[1])),
                                    bg = "gray90"),
                strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8)),
                                    bg = "gray90"))
 
 @
-\caption{\label{fig:scores_stump_wosign}Proportion of cases where the true split variable $Z_1$ 
+\caption{\label{fig:scores_stump_wosign}Proportion of replications where the true split variable $Z_1$ 
 shows the smallest $p$-value, hence, where $Z_1$ is selected without any significance level, 
-over increasing effect size $\delta$ (100 data sets of 250 observations per step), once for a 
+over increasing effect size $\delta$ (100 replications of 250 observations per step), once for a 
 true split point $\xi = 0$ (top row) and once for $\xi = 0.8$ (bottom row).
 Each column represents one scenario for the coefficients: 
 varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
 both coefficients varying (right). The performances of four testing strategies are compared: 
-CTree, MOB, GUIDE, GUIDE\_scores.}
+CTree, MOB, GUIDE, GUIDE+scores.}
 \end{figure}
+
+In Section~\ref{sec:scores} the investigated testing strategies are compared based
+on the number of replications in which the true split variable $Z_1$ is detected with a $p$-value
+smaller than the predefined significance level $\alpha = 0.05$. This choice of measurement
+is due to the aim of investigating how well the tests perform as significance test.
+However, ignoring this significance level yields the same conclusions 
+which can be seen when comparing Figures~\ref{fig:scores_stump_wosign}
+and \ref{fig:scores_stump}.
+In Figure~\ref{fig:scores_stump_wosign} the proportion of replications 
+in which the true splitting variable $Z_1$ is detected, but not necessarily with a $p$-value 
+smaller than the significance level, is illustrated. In Figure~\ref{fig:scores_stump} 
+the exact same simulation setting is applied with a significance level.
 
 
 
 
 \section{Simulation results for continuous model parameters}
 \label{app:contbeta}
+
 In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
 and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
 either the positive or the negative value of the effect size $\delta$. Therefore, these parameters
@@ -1704,11 +1710,11 @@ split variable $Z_1$:
 \end{cases}
 \end{align*}
 Moreover, a modified version of CTree considering maximum values in the test statistic is evaluated
-(denoted by CTree\_max). 
+(denoted by CTree+max). 
 Looking at the results presented in Figure~\ref{fig:stump_contbeta} it can be observed that in this setting the 
-original version of CTree is ahead while CTree\_max and MOB perform almost equally well. Hence, the comparison of 
+original version of CTree is ahead while CTree+max and MOB perform almost equally well. Hence, the comparison of 
 Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} points out that it clearly depends on the type of 
-effect whether the maximal selection (MOB, CTree\_max) or the linear selection (CTree) is advantageous.
+effect whether the maximal selection (MOB, CTree+max) or the linear selection (CTree) is advantageous.
 
 
 \begin{figure}%%[t]
@@ -1718,10 +1724,10 @@ subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max","mfluc", "guide_su
 #subdata <- subset(subdata, delta %in% c(0, 0.1, 0.2, 0.3, 0.4, 0.5))
 subdata$test <- factor(subdata$test, 
                        levels = c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"),
-                       labels = c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores"))
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")], 
-                                             fill = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")]), 
-                     superpose.line = list(col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")]))
+                       labels = c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores"))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")], 
+                                             fill = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")]), 
+                     superpose.line = list(col = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")]))
 
 xyplot(prop_Tsplit ~ delta | vary_beta, groups = ~ test, 
        data = subdata, 
@@ -1734,25 +1740,25 @@ xyplot(prop_Tsplit ~ delta | vary_beta, groups = ~ test,
        key =  list(text = list(levels(subdata$test)),
                    lines = list(lty = c(1,1,1,1,1), 
                                 type = "l", 
-                                col = pal[c("CTree","CTree_max","MOB", "GUIDE","GUIDE_scores")], 
+                                col = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")], 
                                 lwd = 2)), 
        xlab = expression(delta),
        ylab = expression("Proportion of selecting"~Z[1]),
        index.cond = list(c(2,3,1)),
-       strip = strip.custom(factor.levels = c(expression("vary "~beta[0]~" and "~beta[1]),
-                                              expression("vary "~beta[0]), 
-                                              expression("vary "~beta[1])),
+       strip = strip.custom(factor.levels = c(expression("varying"~beta[0]~" and "~beta[1]),
+                                              expression("varying"~beta[0]), 
+                                              expression("varying"~beta[1])),
                                     bg = "gray90"),
        par.settings = par.settings)
 @
 \caption{\label{fig:stump_contbeta}
-Proportion of cases where the true split variable $Z_1$ is
-selected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+Proportion of replications where the true split variable $Z_1$ is
+selected over increasing effect size $\delta$ (100 replications of 250 observations per step)
 with the varying coefficient(s) being continuous. 
 Each panel represents one scenario for the coefficients: 
 varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
 both coefficients varying (right). The performances of five testing strategies are compared: 
-CTree, CTree\_max, MOB, GUIDE, GUIDE\_scores.}
+CTree, CTree+max, MOB, GUIDE, GUIDE+scores.}
 \end{figure}
 
 
@@ -1765,15 +1771,15 @@ CTree, CTree\_max, MOB, GUIDE, GUIDE\_scores.}
 To elaborate over an increasing effect size whether a binarization of the residuals/scores at $0$ 
 leads to an improvement or a deterioration of performance CTree and MOB are applied, once in their 
 original version without a binarization and once in an adapted version with a binarization of 
-scores at $0$ (CTree\_bin, MOB\_bin). Moreover, they are compared to the adapted GUIDE version 
-which includes all available scores (GUIDE\_scores).
+scores at $0$ (CTree+bin, MOB+bin). Moreover, they are compared to the adapted GUIDE version 
+which includes all available scores (GUIDE+scores).
 %Hence, the five strategies are obtained from the unifying framework by setting the switches 
 %as listed in Table~\ref{tab:buildingblocks_appendix}.
 
 Figure~\ref{fig:bin_stump} shows the effect of binarizing the score values over
 different values for the true split point $\xi$, however, all four situations
 lead to the same conclusions. Binarizing the score values decreases the proportion
-of cases where the split variable was selected correctly.
+of replications where the split variable was selected correctly.
 
 
 \begin{figure}%[t]
@@ -1791,22 +1797,22 @@ subdata$test <- factor(subdata$test,
                                   "mfluc", "mfluc_bin",
                                   "guide_sum_12"),
                        labels = c("CTree","CTree_bin",
-                                  #"CTree_max","CTree_max_bin",
+                                  #"CTree+max","CTree+max_bin",
                                   "MOB", "MOB_bin",
-                                  "GUIDE_scores"))
+                                  "GUIDE+scores"))
 
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree", 
-                                                         #"CTree_max", "CTree_max", 
+                                                         #"CTree+max", "CTree+max", 
                                                          "MOB", "MOB",
-                                                         "GUIDE_scores")], 
+                                                         "GUIDE+scores")], 
                                              fill = pal[c("CTree", "CTree", 
-                                                          #"CTree_max", "CTree_max", 
+                                                          #"CTree+max", "CTree+max", 
                                                           "MOB", "MOB",
-                                                          "GUIDE_scores")]), 
+                                                          "GUIDE+scores")]), 
                      superpose.line = list(col = pal[c("CTree", "CTree", 
-                                                       #"CTree_max", "CTree_max", 
+                                                       #"CTree+max", "CTree+max", 
                                                        "MOB", "MOB",
-                                                       "GUIDE_scores")]))
+                                                       "GUIDE+scores")]))
 
 xyplot(prop_Tsplit ~ delta | xi, groups = ~ test, 
        data = subdata, 
@@ -1822,9 +1828,9 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
                                         1,2,1), 
                                 type = "l", pch = 1, cex = 0.8,
                                 col = pal[c("CTree", "CTree", 
-                                            #"CTree_max", "CTree_max", 
+                                            #"CTree+max", "CTree+max", 
                                             "MOB", "MOB",
-                                            "GUIDE_scores")], lwd = 2)), 
+                                            "GUIDE+scores")], lwd = 2)), 
        #index.cond = list(c(1,2,3,4)),
        xlab = expression(delta),
        ylab = expression("Proportion of selecting"~Z[1]),
@@ -1836,11 +1842,11 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
        par.settings = par.settings)
 
 @
-\caption{\label{fig:bin_stump}Proportion of cases where the true split variable $Z_1$ is
-detected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+\caption{\label{fig:bin_stump}Proportion of replications where the true split variable $Z_1$ is
+detected over increasing effect size $\delta$ (100 replications of 250 observations per step)
 with both parameter varying. Each panel represents a different value of the true 
 split point $\xi$ (0, 0.2, 0.5 and 0.8 from left to right). The performances of five testing 
-strategies are compared: CTree, CTree\_bin, MOB, MOB\_bin, GUIDE\_scores.}
+strategies are compared: CTree, CTree+bin, MOB, MOB+bin, GUIDE+scores.}
 \end{figure}
 
 
@@ -1850,15 +1856,15 @@ strategies are compared: CTree, CTree\_bin, MOB, MOB\_bin, GUIDE\_scores.}
 \label{app:categorization}
 To investigate the effect of categorizing the possible splitting variables CTree and MOB are
 applied, once in their original version without a categorization and once in an adapted version
-with a categorization of the possible split variables (CTree\_cat and MOB\_cat). 
-Moreover, they are also compared to GUIDE\_scores which includes all available scores.
+with a categorization of the possible split variables (CTree+cat and MOB+cat). 
+Moreover, they are also compared to GUIDE+scores which includes all available scores.
 
 In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the performance 
 is illustrated over increasing effect size for four different values of the true split 
 point $\xi$. For both, CTree and MOB, it can be stated that overall they perform better in their
 original form without any categorization. Only if the true split point $\xi$
 is close to the quartiles used as breakpoints for the categorizations both versions
-lead to a similar proportion of cases where the true splitting variable is detected
+lead to a similar proportion of replications where the true splitting variable is detected
 (e.g., for CTree and $\xi=0.5$)
 
 Therefore, it can be summarized that a categorization of the values of the split variable
@@ -1880,22 +1886,22 @@ subdata$test <- factor(subdata$test,
                                   "mfluc", "mfluc_cat",
                                   "guide_sum_12"),
                        labels = c("CTree","CTree_cat",
-                                  #"CTree_max","CTree_max_cat",
+                                  #"CTree+max","CTree+max_cat",
                                   "MOB", "MOB_cat",
-                                  "GUIDE_scores"))
+                                  "GUIDE+scores"))
 
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree", 
-                                                         #"CTree_max", "CTree_max", 
+                                                         #"CTree+max", "CTree+max", 
                                                          "MOB", "MOB",
-                                                         "GUIDE_scores")], 
+                                                         "GUIDE+scores")], 
                                              fill = pal[c("CTree", "CTree", 
-                                                          #"CTree_max", "CTree_max", 
+                                                          #"CTree+max", "CTree+max", 
                                                           "MOB", "MOB",
-                                                          "GUIDE_scores")]), 
+                                                          "GUIDE+scores")]), 
                      superpose.line = list(col = pal[c("CTree", "CTree", 
-                                                       #"CTree_max", "CTree_max", 
+                                                       #"CTree+max", "CTree+max", 
                                                        "MOB", "MOB",
-                                                       "GUIDE_scores")]))
+                                                       "GUIDE+scores")]))
 
 xyplot(prop_Tsplit ~ delta | xi, groups = ~ test, 
        data = subdata, 
@@ -1912,9 +1918,9 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
                                         1,2,1), 
                                 type = "l", pch = 1, cex = 0.8,
                                 col = pal[c("CTree", "CTree", 
-                                            #"CTree_max", "CTree_max", 
+                                            #"CTree+max", "CTree+max", 
                                             "MOB", "MOB",
-                                            "GUIDE_scores")], lwd = 2)), 
+                                            "GUIDE+scores")], lwd = 2)), 
        #index.cond = list(c(1,2,3,4)),
        xlab = expression(delta),
        ylab = expression("Proportion of selecting"~Z[1]),
@@ -1926,18 +1932,15 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
        par.settings = par.settings)
 
 @
-\caption{\label{fig:cat_stump}Proportion of cases where the true split variable $Z_1$ is
-detected over increasing effect size $\delta$ (100 data sets of 250 observations per step)
+\caption{\label{fig:cat_stump}Proportion of replications where the true split variable $Z_1$ is
+detected over increasing effect size $\delta$ (100 replications of 250 observations per step)
 with both parameter varying. Each panel represents a different value of the true 
 split point $\xi$ (0, 0.2, 0.5 and 0.8 from left to right). The performances of five testing 
-strategies are compared: CTree, CTree\_cat, MOB, MOB\_cat, GUIDE\_scores.}
+strategies are compared: CTree, CTree+cat, MOB, MOB+cat, GUIDE+scores.}
 \end{figure}
 
 
 \end{appendix}
 
-
-%\newpage
-\bibliography{ref.bib}
 
 \end{document}
