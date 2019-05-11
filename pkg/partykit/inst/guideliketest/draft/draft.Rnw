@@ -1012,13 +1012,14 @@ with effect size $\delta = 1$.}
 \subsection{Evaluation}
 \label{sec:evaluation}
 The testing strategies are evaluated over a stepwise increasing effect size $\delta$, 
-on 100 data sets per step each consisting of 250 observations. 
+on 100 replications per step each consisting of 250 observations. 
 To compare the performance of the evaluated testing strategies for each step 
-the $p$-values corresponding to the true split variable $Z_1$ and the proportion
-of data sets for which $Z_1$ is detected and also selected 
-%(for a given significance level $\alpha = 0.05$) 
-is considered for the first scenario (stump).
-For the second scenario (tree with 2 splits) the Adjusted Rand Index~(ARI) is calculated 
+in the first scenario (stump with 1 split) the following criteria are considered:
+the $p$-values pertaining only to the true split variable $Z_1$;
+and the proportion of data sets for which the $p$-value of $Z_1$
+is the lowest and significant at 5\% level (i.e., where $Z_1$ would be
+selected for splitting in a pre-pruning approach).
+For the second scenario (tree with 2 splits) the adjusted Rand index~(ARI) is calculated 
 as a measure of similarity between the true tree structure and the fitted model tree.
 
 As explained before, the aim of this simulation study is to investigate the effects
