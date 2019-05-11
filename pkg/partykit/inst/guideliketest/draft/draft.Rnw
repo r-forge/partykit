@@ -234,7 +234,7 @@ All these approaches have shown to work well for various situations, however, th
 (dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
-i.e. the task of selecting the best split variable in a given (sub)sample. In particular, the approach of the 
+i.e., the task of selecting the best split variable in a given (sub)sample. In particular, the approach of the 
 GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
 by investigating the building blocks of their testing strategies in which they differ:
 (1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
@@ -461,43 +461,48 @@ with any of the pruning approaches this is done only relatively briefly.
 
 The classical CART algorithm \citep{Breiman+Friedman+Stone:1984} proposed to first grow a large
 tree and then prune those splits in the tree that did not increase predictive performance in a
-cross-validation. This is also know as \emph{postpruning} (after growing the initial tree) and
+cross-validation. This is also know as \emph{post-pruning} (after growing the initial tree) and
 more specifically cost-complexity pruning.
 
-In the unbiased recursive partitioning literature this postpruning approach is also used frequently
+In the unbiased recursive partitioning literature this post-pruning approach is also used frequently
 \citep[e.g., in][]{Loh+Vanichsetakul:1988,Loh+Shih:1997,Kim+Loh:2001,Loh:2002} and the $p$-values
 from the association tests are only employed for selecting the split variable on a unified scale.
 However, \cite{Hothorn+Hornik+Zeileis:2006} proposed to also use these $p$-values for a 
-so-called \emph{prepruning} strategy which stops growing the tree as soon as no significant association
+so-called \emph{pre-pruning} strategy which stops growing the tree as soon as no significant association
 can be found in a given subgroup. This approach is the default in CTree and also in
 MOB. However, \cite{Zeileis+Hothorn+Hornik:2008} also pointed out that a natural strategy for
-postpruning in model-based partitioning is to use information criteria such as AIC (Akaike information
+post-pruning in model-based partitioning is to use information criteria such as AIC (Akaike information
 criterion) or BIC (Bayes information criterion), following the ideas of \cite{Su+Wang+Fan:2004}.
 
-Clearly, for inference-based prepruning it is crucial that the association tests employed for
+Clearly, for inference-based pre-pruning it is crucial that the association tests employed for
 split selection work well as statistical significance test, i.e., conform with their nominal size
-and have high power. In contrast, when using postpruning (either based on cross-validation or
+and have high power. In contrast, when using post-pruning (either based on cross-validation or
 information criteria) it might not be as crucial that the significance test works well and has
 high power.
 
 Due to these considerations we first evaluate the significance tests underlying CTree, MOB,
 and GUIDE by themselves, i.e., without growing an actual tree in combination with a pruning strategy.
-Subsequently we combine the tests with a cost-complexity postpruning approach in order to assess
+Subsequently we combine the tests with a cost-complexity post-pruning approach in order to assess
 whether shortcomings of the tests are mitigated by pruning.
 
 
 \section{Unifying framework}\label{sec:unify}
+
 Each of the algorithms CTree, GUIDE, and MOB can be characterized by its combination
-of the type of fitted models, the type of applied tests and the employed pruning strategy
-as listed in Table~\ref{tab:combinations}. These settings represent the algorithms in their
-original form. However, in principle all other combinations of the listed features are possible 
-as well. As explained in Section~\ref{sec:pruning} the focus of this paper is on the testing 
-strategies (second column of Table~\ref{tab:combinations}). They are here discussed for the case 
-of parametric models together with prepruning as the properties of this pruning strategy
-are already determined by the testing strategy. Subsequently, combinations
-with postpruning are evaluated as well to show the impact of the choice of pruning strategy.
-From here on the names CTree, MOB, and GUIDE are used to refer to the algorithm-specific
-testing strategies rather than the complete algorithms.
+of the type of model fits, tests, and pruning strategy employed to
+grow the tree. Table~\ref{tab:combinations} provides an overview of the default
+combinations.
+However, as discussed above, subsequent publications have emphasized that all three
+algorithms can be combined with different model fitting approaches and to some degree
+different pruning strategies have been explored as well. Thus, the class of tests
+employed for the unbiased splitting variable selection forms the core of each of the
+algorithms: conditional inference (CTree) vs.\ score-based fluctuation tests (MOB)
+vs.\ residual-based $\chi^2$ tests (GUIDE). Therefore, we consider a standard class
+of model fits (namely, linear regression trees) and investigate the relative
+advantages and disadvantages of the tests themselves (which are essential to pre-pruning)
+as well as the combination with post-pruning. Thus, subsequently
+the names CTree, MOB, and GUIDE distinguish the test-based variable and split selection
+rather than the entire algorithm with all default settings.
 
 \begin{table}[t!]
 \centering
@@ -510,65 +515,57 @@ MOB   & Parametric      & Score-based fluctuation  & Pre (or post with AIC/BIC)\
 GUIDE & Parametric      & Residual-based $\chi^2$  & Post (cost-complexity pruning)\\
 \hline
 \end{tabular}
-\caption{Combinations of fitted model type, test type and pruning strategy
+\caption{Default combinations of fitted model type, test type and pruning strategy
 for the algorithms CTree, MOB, and GUIDE.
 \label{tab:combinations}}
 \end{table}
 
-\subsection{Unification of testing strategies}
-
-Even though CTree, MOB, and GUIDE differ in the specific tests they apply (see second column of
-Table~\ref{tab:combinations}) their approaches on how to select a split variable follow the same
-basic structure as explained in Section~\ref{sec:generic_alg}. 
-Thus, they can be presented together in a unifying framework for testing strategies
-in model-based unbiased recursive partitioning. 
-In this framework each specific testing strategy can be obtained by combining the provided 
-building blocks accordingly. But apart from that, variations of the commonly known testing 
-strategies can be obtained as this general toolbox allows for all possible combinations of the 
-building blocks. Moreover, by exchanging only one of them its impact can be investigated in detail.
-These building blocks are explained in Section~\ref{sec:buildingblocks} and their setting
-for the standard setup of CTree, MOB, and GUIDE are listed in Table~\ref{tab:buildingblocks} which 
-gives a more detailed overview of the differences in the second column of Table~\ref{tab:combinations}.
-
-
 \subsection{Building blocks of testing strategies}\label{sec:buildingblocks}
-The three following building blocks all refer to the way how the given data is prepared/transformed
-before employing a statistical test to select a split variable.
+
+Even though CTree, MOB, and GUIDE differ in the specific tests they apply, their approaches for split
+variable selection follow the same basic structure as explained in Section~\ref{sec:generic_alg}. 
+In fact, the tests can be embedded in a unifying conceptual framework that yields the
+different tests by combining various building blocks.
+These mostly differ in the way the model for the dependent variable on the one hand and
+the splitting variables on the other are prepared or transformed:
+%
 \begin{itemize}
-\item Variations of the goodness-of-fit measure:\\
-Different variations of the disaggregated, observation-wise goodness-of-fit measure of the 
-model that is obtained for the response $Y$ and possible covariates $X$ can be 
-considered. This can be residuals $r(Y,X,\hat{\beta})$ as in the GUIDE algorithm or 
-scores $s(Y,X,\hat{\beta})$ as in the MOB algorithm or, more generally, a 
-transformation function $h(Y)$ as in the CTree algorithm including both of the foregoing cases.
-By including all available scores rather than just residuals the goodness of fit of the 
-model is investigated regarding each parameter instead of just the mean. 
-%Therefore, this facilitates the detection of changes in parameters other than the mean/location parameter.
-
-\item Binarization of residuals/scores:\\
-Rather than applying the independence test directly on the residuals/scores a
-binarized version of them can be used as well. In particular, the values are binarized
-at $0$ such that only their signs are considered.
-
-\item Categorization of covariates:\\
-Similarly, the covariates can also be categorized. For this purpose, the corresponding 1st, 2nd, 
-and 3rd quartile are considered to bin each possible split variable into four categories. In that way,
-depending on whether the scores are binarized or not, a $\chi^2$~test or 1-way ANOVA can be applied
-where the quartiles are the only possible split points while otherwise maximally selected splits 
-over $Z$ are considered. 
-
+  \item \emph{Goodness-of-fit measure:}\\
+        Different variations of the disaggregated, observation-wise goodness-of-fit measure of the 
+        model for the response $Y$ and possible covariates $X$ can be considered. Either residuals
+	$r(Y,X,\hat{\beta})$ can be used as proposed for GUIDE or model scores $s(Y,X,\hat{\beta})$
+        as proposed for MOB. All three algorithms can, in principle, use both goodness-of-fit
+	measures though, which is probably brought out most clearly in the CTree algorithm that
+        explicitly allowed for different transformations $h(Y)$ in its original description already.
+  \item \emph{Binarization of residuals/scores:}\\
+        Rather than testing independence between the split variables and the residuals/scores
+	tmeselves, it is possible	
+	to binarize residuals/scores at $0$ so that only their signs are assessed (as proposed for GUIDE).
+  \item \emph{Categorization of split variables:}\\
+        Similarly, the split variables can also be categorized (for testing only). This was proposed for
+	GUIDE, employing binning at the quartiles yielding four categories of approximately
+	equal size.
 \end{itemize}
+%
+The three algorithms combine these building blocks in different ways as shown in Table~\ref{tab:buildingblocks}:
+When applying CTree for unbiased model-based recursive partitioning it has been suggested to use
+the model scores without binarization and assess their association with the untransformed split
+variables using a conditional inference test. This is similar to a squared correlation test statistic.
+MOB also employs the scores without
+binarization and maximally selects a score statistic over all potential split points in the
+split variable. GUIDE employs the binarized residuals and assesses their association with
+the categorized split variable in a classical (unconditional) $\chi^2$ test.
 
-\textit{Note:}
-Apart from these three building blocks, the algorithms CTree, MOB, and GUIDE differ in the type of test 
-statistic they apply and their approximation of the underlying null distribution of the corresponding 
-test statistic. While the permutation tests in CTree work in a conditional framework both MOB (M-fluctuation tests) 
-and GUIDE ($\chi^2$~tests) apply an unconditional approach. Furthermore, the algorithms CTree and MOB were 
-introduced employing prepruning while GUIDE originally applies a postpruning strategy.
-However, these differences refer to the standard versions of the three algorithms and all of them
-allow for certain modifications of this standard setup. For example, a different form of test statistic
-can be selected in CTree considering a maximum value as in MOB.
+But the building blocks could be easily re-combined to yield new types of tests. For example,
+in the GUIDE approach, a 1-way ANOVA can be used for assessing the association of the residuals
+(without binarization) with the categorized split variable. Or alternatively, a multivariate
+1-way ANOVA can be used for the non-binarized scores as opposed to the residuals etc.
 
+Note that there are further differences in the testing strategies between the three algorithms, e.g.,
+using conditional vs.\ unconditional approximations of the null distributions. However, this difference
+has relatively little influence compared to the other building blocks considered in detail here.
+Moreover, both similarities and relative differences between these approaches have been previously
+discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
 
 \begin{table}[t!]
 \centering
@@ -590,62 +587,60 @@ setting of the building blocks in the unifying framework and the type of test st
 %\newpage
 
 \subsection{Linear model tree}\label{sec:lmtrees}
-As an example a linear model tree is considered as this allows for an easy and well structured 
-description of the investigated subjects. However, the conclusions drawn from this example also 
-hold for a wide range of other model types. 
-The models fitted in the nodes of the linear model tree as considered for the simulation 
-study in Section~\ref{sec:simulation} are of the form
+
+To focus on the unified testing framework, as described in the previous section, we employ
+the same model fits for all three algorithms. To do so, we employ linear regression models
+because it is such a basic and widely used model and linear model trees were the leading
+illustrations in both the original MOB \citep{Zeileis+Hothorn+Hornik:2008} and GUIDE \citep{Loh:2002} papers.
+However, the conclusions drawn from this example also hold for many other model types.
+
+To fix notation, we consider the following models for the simulation 
+study in Section~\ref{sec:simulation}:
 $$
 Y = \beta_0 + \beta_1 \cdot X + \epsilon
 $$
-for a response variable $Y$, a regressor variable $X$ and an error $\epsilon$. 
-For each node the type of the fitted model is the same such that no node-specific features are 
-considered and the observations of the (arbitrarily chosen) current node are denoted by 
-$\{(y_i,x_i)\}_{i=1,\ldots,n}$ for $n \in \mathbb{N}$.
+with response variable $Y$, regressor variable $X$, and error term $\epsilon$. This model is
+fitted, as usual, by ordinary least squares (OLS) to the observations in each notation,
+yielding the parameter estimates $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
+To keep notation simple we present the following equations for the root node with all observations
+$\{(y_i,x_i)\}_{i=1,\ldots,n}$ and $n \in \mathbb{N}$. In subsequent nodes the same equations
+are used but just for a smaller subgroup.
 
-A very basic form of goodness-of-fit measure can be obtained for each observation by simply 
-calculating deviations of the response values from the mean value within the node, for example 
-by $(\bar{y} - y_i)$.
-However, this includes only the response variable $Y$ but not the fitted linear model.
-For a model-based approach one can consider residuals defined by
-$$
-r(y_i,x_i,\beta_0,\beta_1) = y_i - \beta_0 - \beta_1 \cdot x_i.
-$$
-The appropriate choice of the function $\ell$ is then
+The aggregated goodness-of-fit measure (or objective or loss function) in OLS estimation
+is the sum of squared residuals: $\sum_{i=1}^n \ell(y_i,x_i,\beta_0,\beta_1)$ where
 $$
 \ell(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2
 $$
-such that $\sum_{i=1}^n \ell(y_i,x_i,\beta_0,\beta_1)$ is the objective function
-which is minimized to obtain the estimated coefficient vector
-$\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
-The corresponding disaggregated, observation-wise goodness-of-fit measure is defined by
-the score function 
+is the squared residual which is defined as
+$$
+r(y_i,x_i,\beta_0,\beta_1) = y_i - \beta_0 - \beta_1 \cdot x_i.
+$$
+These residuals can also intuitively be used as the corresponding disaggregated
+observation-wise goodness-of-fit measure. Another natural candidate for this is the
+score function for the $i$-th observation:
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
 \frac{\partial \ell}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
 -2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
-where the factor $-2$ is often omitted such that the first column of the $n \times 2$-dimensional
-score matrix corresponds to the residuals. 
-Therefore, including only residuals (i.e. only the first column of the score matrix)
-corresponds to including the derivatives of $\ell$ only regarding the intercept 
-parameter~$\beta_0$.
-On the contrary, by using full model scores (i.e. the whole $n \times 2$ matrix) 
-the derivatives of $\ell$ regarding the intercept $\beta_0$ (first column) and the slope 
-parameter $\beta_1$ (second column) are considered.
+Thus, up to a constant scaling factor of $-2$ (that could also be omitted) the first component
+of the scores is in fact the residual. However, it is complemented by a second component
+that captures the slope effect of $x_i$. Therefore, when computing the score for all $n$ observations
+this yields an $n \times 2$ score matrix whose first column corresponds to the $n$ residuals.
+As this is the derivative with respect to the intercept parameter~$\beta_0$, it
+captures changes in the intercept. Moreover, the second column of the score matrix contains
+derivatives with respect to the slope parameter~$\beta_1$ and thus captures changes in this.
 
-
-%\newpage
 
 \section{Simulation setting and evaluation}
 \label{sec:simulation}
 
 In this simulation study two different scenarios are considered for the linear model trees
 presented in Section~\ref{sec:lmtrees}. First, the underlying tree structure based on which the
-data is generated is a stump, i.e. a tree with only one split. 
+data is generated is a stump, i.e., a tree with only one split. 
 By keeping the complexity of the model as low as possible the advantages and
-disadvantages of the different testing strategies can be elaborated more precisely and 
-the focus can be put on their power in terms of selecting the correct split variable.
+disadvantages of the different testing strategies can be elaborated in more detail and 
+focus can be given to their power in terms of selecting the correct split variable.
 
 In the second scenario the true tree structure contains two splits in two different variables
 yielding a tree with three terminal nodes. After having investigated the characteristics of 
@@ -657,8 +652,8 @@ The second, more complex scenario employs the same basic structure simply adding
 as illustrated in Figure~\ref{fig:dgp_tree}.
 
 \subsection{Data generating process}
-Each generated data set consists of a response variable, one regressor, one split 
-variable and nine noise variables as listed in Table~\ref{tab:variables} 
+Each generated data set consists of the response and regressor variables, one true split 
+variable and nine noise split variables as listed in Table~\ref{tab:variables} 
 together with the corresponding distributions.
 
 \begin{table}
@@ -691,30 +686,25 @@ linearly on the regressor variable $X$.
 % which is a uniformly distributed variable taking values between $-1$ and $1$.
 % can either be a binary variable (taking either $0$ or $1$) or a uniformly distributed 
 % variable (taking values between $-1$ and $1$).
-Moreover, the intercept $\beta_0$ and the slope parameter $\beta_1$ of this linear equation
-(can) depend on the true split variable $Z_1$. 
-%in the following way:
-%\begin{center}
-%$\mu(X, Z_1) = \beta_0(Z_1) + \beta_1(Z_1) \cdot X$.
-%\end{center}
+Moreover, the intercept $\beta_0$ and/or the slope parameter $\beta_1$ of this linear equation
+(can) depend on the true split variable $Z_1$. More specifically, three different scenarios
+are considered for the coefficients $\beta_0$ and $\beta_1$:
 %
-In particular, three different cases are considered for the coefficients $\beta_0$ 
-and $\beta_1$:
 \begin{enumerate}
-\item The intercept $\beta_0$ varies depending on $Z_1$ while $\beta_1$ is fixed (at $1$).
-\item The slope coefficient $\beta_1$ varies depending on $Z_1$ while $\beta_0$ is fixed 
-(at $0$).
-\item Both coefficients $\beta_0$ and $\beta_1$ vary depending on $Z_1$.
+  \item The intercept $\beta_0$ varies depending on $Z_1$ while $\beta_1$ is fixed (at $1$).
+  \item The slope coefficient $\beta_1$ varies depending on $Z_1$ while $\beta_0$ is fixed 
+        (at $0$).
+  \item Both coefficients $\beta_0$ and $\beta_1$ vary depending on $Z_1$.
 \end{enumerate}
-
-The varying coefficient(s) $\beta_i$, $i\in\{0,1\}$, are binary taking either the positive or
-the negative value of the effect size, i.e. $\delta$ or $-\delta$.
+%
+The varying coefficient(s) $\beta_j$, $j\in\{0,1\}$, are binary taking either the positive or
+the negative value of the effect size, i.e., $\delta$ or $-\delta$.
 % can either be binary (taking either $\delta$ or $-\delta$), or a continuous function. 
 % In the binary case the following definition is applied for the true split point $\xi$
 \begin{align*}
 \beta_{i}(Z_1) = \begin{cases}
--\delta \cdot (-1)^{i}  \quad \text{if } Z_1 < \xi \\
-+\delta \cdot (-1)^{i}  \quad \text{if } Z_1 \geq \xi
+-\delta \cdot (-1)^{j}  \quad \text{if } Z_1 < \xi \\
++\delta \cdot (-1)^{j}  \quad \text{if } Z_1 \geq \xi
 \end{cases}
 \end{align*}
 %while in the continuous case a simple linear function is considered in the form of
@@ -932,7 +922,8 @@ mtext(expression(beta[0]==+delta), side = 4, col = pal_dgp[2], las = 1, line = 0
 mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0.5, at = -1.7)
 @
 \endminipage
-\caption{\label{fig:dgp_stump}{Top left panel: True stump structure with the true model parameters $\beta_0$ and $\beta_1$, either varying or being fixed at $0$ or $1$ respectively.
+\caption{\label{fig:dgp_stump}{Top left panel: True stump structure with the true model parameters $\beta_0$
+and $\beta_1$, either varying or being fixed at $0$ or $1$ respectively.
 Top right and bottom panels: Bivariate plot of the response $Y$ on regressor $X$ 
 with effect size $\delta = 1$ and for three cases: 
 varying $\beta_0$ and fixed $\beta_1$ (top right),
@@ -1039,7 +1030,7 @@ As explained before, the aim of this simulation study is to investigate the effe
 of each particular building block of the unifying framework presented in Section~\ref{sec:unify} 
 rather than the whole testing strategies. Therefore, other combinations as presented in 
 Table~\ref{tab:buildingblocks}, hence adapted versions of GUIDE, CTREE, and MOB are evaluated as well
-as their original versions. Moreover, as prepruning is employed all of the considered statistical 
+as their original versions. Moreover, as pre-pruning is employed all of the considered statistical 
 tests are applied as significance tests answering two questions at once: 
 (1)~Should a split be performed at all? 
 (2)~If so, in which variable?
@@ -1133,7 +1124,7 @@ intercept varies (left and right panels) where CTree and MOB are only slightly a
 this advantage increases if the slope parameter varies and the intercept is kept at a fixed value 
 (middle panel). In particular, the original strategy of GUIDE fails to detect any changes 
 in $\beta_1$. 
-This is due to the fact that GUIDE only includes residuals, i.e. only the scores 
+This is due to the fact that GUIDE only includes residuals, i.e., only the scores 
 regarding the intercept, such that changes in the slope parameter are not detected unless the 
 corresponding scores are also included as in GUIDE\_scores. This disadvantage of using 
 only scores has already been elaborated in the literature of structural change
@@ -1151,7 +1142,7 @@ presented in Appendix~\ref{app:contbeta} where these parameters change continuou
 
 Altogether these results clearly illustrate that overall the decision to include all available
 scores when testing for dependencies in order to select split variables is advantageous over
-considering only residuals, i.e. the scores regarding only the intercept, as changes not only in
+considering only residuals, i.e., the scores regarding only the intercept, as changes not only in
 the mean but also in all other parameters can be detected in that way. This is particularly obvious
 when comparing GUIDE and GUIDE\_scores. Moreover, from the fact that these two version are both
 performing worse than MOB and CTree it can be deduced that categorizing split variables and
@@ -1161,7 +1152,7 @@ building blocks are discussed in a full factorial 3-way analysis.
 
 \subsection{Full factorial analysis}\label{sec:3way}
 In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for the most general
-case where the intercept and slope parameter are both varying. In the left panel the true split point is in the center, i.e. $\xi=0$ and an effect size of $\delta = 0.3$ is considered. 
+case where the intercept and slope parameter are both varying. In the left panel the true split point is in the center, i.e., $\xi=0$ and an effect size of $\delta = 0.3$ is considered. 
 This choice has been made based on the results shown in Figure~\ref{fig:scores_stump} 
 in order to make the differences particularly well observable.
 In the right panel the true split point is close to the upper end of the considered interval
@@ -1391,19 +1382,19 @@ MOB, GUIDE, GUIDE\_scores.}
 
 To elaborate the impact of the choice of a pruning strategy
 the tree models presented in Figure~\ref{fig:tree_ari} are built again, but this time
-applying postpruning (building very large trees without any significance level and employing 
+applying post-pruning (building very large trees without any significance level and employing 
 cost-complexity pruning as in the CART algorithm \citep{Breiman+Friedman+Stone:1984}). 
-In Figure~\ref{fig:pruning_ari} the results are compared to those obtained with prepruning,
+In Figure~\ref{fig:pruning_ari} the results are compared to those obtained with pre-pruning,
 again based on the Adjusted Rand Index.
 
 For MOB and CTree it has been shown that the tests work very well as significance tests.
 Therefore, it can be recommended to take advantage of this power and use the information
-given by the tests for prepruning. As it can be seen in Figure~\ref{fig:pruning_ari}
+given by the tests for pre-pruning. As it can be seen in Figure~\ref{fig:pruning_ari}
 in most cases the results of these two testing strategies do not vary significantly over 
 changing the applied pruning strategy.
 On the contrary, overall the tests in GUIDE have less power. For that reason, the pruning
-strategy should not be based on their results which argues for the application of postpruning.
-This can also be observed in Figure~\ref{fig:pruning_ari} showing that postpruning improves
+strategy should not be based on their results which argues for the application of post-pruning.
+This can also be observed in Figure~\ref{fig:pruning_ari} showing that post-pruning improves
 the results for both GUIDE versions.
 
 <<pruning_data, echo=FALSE, results=hide>>=
@@ -1430,7 +1421,7 @@ if(file.exists("pruning.rda")){
 pr <- simres$res
 ## extract data for xyplot comparing ARI and ARI_p
 pr <- pr[,c(1,2,7,8,9,12,15)]
-## extended data set with postpruning results being represented as separated tests
+## extended data set with post-pruning results being represented as separated tests
 prex <- pr[,c(1,2,3,4,6)]
 prex <- rbind(prex,prex)
 
@@ -1487,8 +1478,8 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
 $0.8$ from left to right). 
 The performances of four testing strategies are compared: CTree, MOB, GUIDE, GUIDE\_scores. 
-The dashed lines represent the results from applying prepruning and the continuous lines 
-the results from applying postpruning.}
+The dashed lines represent the results from applying pre-pruning and the continuous lines 
+the results from applying post-pruning.}
 \end{figure}
 
 
