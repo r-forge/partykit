@@ -541,7 +541,7 @@ the splitting variables on the other are prepared or transformed:
         explicitly allowed for different transformations $h(Y)$ in its original description already.
   \item \emph{Binarization of residuals/scores:}\\
         Rather than testing independence between the split variables and the residuals/scores
-	tmeselves, it is possible	
+	themselves, it is possible	
 	to binarize residuals/scores at $0$ so that only their signs are assessed (as proposed for GUIDE).
   \item \emph{Categorization of split variables:}\\
         Similarly, the split variables can also be categorized (for testing only). This was proposed for
@@ -1016,12 +1016,12 @@ with effect size $\delta = 1$.}
 The testing strategies are evaluated over a stepwise increasing effect size $\delta$, 
 on 100 replications per step each consisting of 250 observations. 
 To compare the performance of the evaluated testing strategies for each step 
-in the first scenario (stump with 1 split) the following criteria are considered:
+in the first scenario (stump with one split) the following criteria are considered:
 the $p$-values pertaining only to the true split variable $Z_1$;
 and the proportion of replications for which the $p$-value of $Z_1$
 is the lowest and significant at 5\% level (i.e., where $Z_1$ would be
 selected for splitting in a pre-pruning approach).
-For the second scenario (tree with 2 splits) the adjusted Rand index~(ARI) is calculated 
+For the second scenario (tree with two splits) the adjusted Rand index~(ARI) is calculated 
 as a measure of similarity between the true tree structure and the fitted model tree.
 
 As explained before, the aim of this simulation study is to investigate the effects
@@ -1099,72 +1099,60 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
 
 
 @
-\caption{\label{fig:scores_stump}Proportion of replications where the true split variable $Z_1$ is
-selected over increasing effect size $\delta$ (100 replications of 250 observations per step),
-once for a true split point $\xi = 0$ (top row) and once for $\xi = 0.8$ (bottom row). 
-Each column represents one scenario for the coefficients: 
-varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) and 
-both coefficients varying (right). The performances of four testing strategies are compared: 
-CTree, MOB, GUIDE, GUIDE+scores.}
+\caption{\label{fig:scores_stump}
+CTree, MOB, GUIDE, and GUIDE+scores evaluated on the first simulation scenario (stump with one split). 
+Their performances are compared based on the proportion of replications where the true split 
+variable $Z_1$ is selected over increasing effect size $\delta$ (100 replications of 
+250 observations per step), once for a true split point $\xi = 0$ (top row) and once 
+for $\xi = 0.8$ (bottom row). 
+Left: varying intercept $\beta_0$. Middle: varying slope parameter $\beta_1$.
+Right: both coefficients varying.}
 \end{figure}
 
+Figure~\ref{fig:scores_stump} shows that overall CTree and MOB (both using full 
+model scores) perform clearly better than the original GUIDE version (using residuals 
+only) as they accomplish to select the true split variable $Z_1$ in a higher proportion
+of replications. Even though the advantage of CTree and MOB evens out in certain situations
+such as for a high effect size (see, e.g., for $\xi=0$ and varying $\beta_0$), GUIDE is 
+never ahead of them in any of the considered settings. Moreover, the positive effect of 
+including all available scores can be observed particularly well in the top middle panel 
+where GUIDE+scores detects a shift in the slope parameter $\beta_1$ as opposed to 
+GUIDE. The fact that residual-based methods fail to detect changes that do not effect the
+expected value has already been elaborated in the literature of structural change
+analysis \citep[see, e.g.,][]{Ploberger+Kramer:1992} and is also discussed in 
+Section~\ref{sec:discussion}. Moreover, the advantage of including full models scores 
+clearly outweighs the cost involved which is displayed by the small gain of GUIDE compared 
+to GUIDE+scores in case of a fixed slope parameter (left panels).
 
-Figure~\ref{fig:scores_stump} shows the evaluation results for the three different
-scenarios (varying only the intercept $\beta_0$, only the slope parameter $\beta_1$
-or both of them) once for a true split point $\xi=0$ and once for $\xi=0.8$. 
-As explained before, the tests are applied as significance tests with significance 
-level $\alpha=0.05$. Therefore, the proportion of replications in which the true split variable $Z_1$
-is detected with a $p$-value smaller than $\alpha$ is compared.
-(To show that in general the drawn conclusions do not change if no significance level is included 
-the same setting is evaluated again without any significance level and the results are presented
-in Appendix~\ref{app:significance}.)
-
-For a central split point ($\xi=0$, upper panels) all strategies perform similarly if the 
-intercept varies (left and right panels) where CTree and MOB are only slightly ahead. However, 
-this advantage increases if the slope parameter varies and the intercept is kept at a fixed value 
-(middle panel). In particular, the original strategy of GUIDE fails to detect any changes 
-in $\beta_1$. 
-This is due to the fact that GUIDE only includes residuals, i.e., only the scores 
-regarding the intercept, such that changes in the slope parameter are not detected unless the 
-corresponding scores are also included as in GUIDE+scores. This disadvantage of using 
-only scores has already been elaborated in the literature of structural change
-analysis \citep[see e.g.][]{Ploberger+Kramer:1992} and is also discussed 
-in Section~\ref{sec:discussion}.
-
-Looking at the results for the split point being close to the upper edge of the considered
-interval ($\xi=0.8$, lower panels) all of the applied strategies perform worse than for the
-central split point. In this case MOB is clearly ahead leading to the best results. CTree 
-performs second best while both GUIDE versions struggle to detect the correct split variable 
-even for a high effect size. 
+For a central split point ($\xi=0$, upper panels) all strategies perform similarly
+well as long as the intercept varies (left and right panel) with CTree and MOB 
+being only slightly ahead. However, for the split point being close to the upper 
+edge of the considered interval ($\xi=0.8$, lower panels) the performance of all of 
+the applied strategies decreases. 
+While both GUIDE versions struggle to detect the correct split variable even for a 
+high effect size, MOB is clearly ahead with CTree leading to the second best results.
 (In order to show that the here observed advantage of MOB over CTree is mainly due to the 
 abrupt shift in the model parameters $\beta_0$ and $\beta_1$ an additional evaluation is 
 presented in Appendix~\ref{app:contbeta} where these parameters change continuously.)
+From the fact that GUIDE and GUIDE+scores are both performing worse than MOB and CTree it 
+can be deduced that categorizing split variables and binarizing scores has a negative effect 
+on the ability to detect the right split variable. To elaborate these effects more in detail the results for all possible combinations of the building blocks are discussed in a full factorial 3-way analysis in the following section.
 
-Altogether these results clearly illustrate that overall the decision to include all available
-scores when testing for dependencies in order to select split variables is advantageous over
-considering only residuals, i.e., the scores regarding only the intercept, as changes not only in
-the mean but also in all other parameters can be detected in that way. This is particularly obvious
-when comparing GUIDE and GUIDE+scores. Moreover, from the fact that these two version are both
-performing worse than MOB and CTree it can be deduced that categorizing split variables and
-binarizing scores has a negative effect on the ability to detect the right split variable. 
-To elaborate these effects more in detail the results for all possible combinations of the 
-building blocks are discussed in a full factorial 3-way analysis.
+\textit{Note:} As explained before, the tests are applied as significance tests with 
+significance level $\alpha=0.05$. To show that in general the drawn conclusions do not 
+change if no significance level is included the same setting is evaluated again without 
+any significance level and the results are presented in Appendix~\ref{app:significance}.
+
 
 \subsection{Full factorial analysis}\label{sec:3way}
-In Figure~\ref{fig:3way} the effects of the building blocks are illustrated for the most general
-case where the intercept and slope parameter are both varying. In the left panel the true split point is in the center, i.e., $\xi=0$ and an effect size of $\delta = 0.3$ is considered. 
-This choice has been made based on the results shown in Figure~\ref{fig:scores_stump} 
-in order to make the differences particularly well observable.
-In the right panel the true split point is close to the upper end of the considered interval
-($\xi=0.8$) requiring a higher effect size $\delta = 1$ in order to visualize results properly.
-(Additional evaluations for increasing $\delta$ as in Section~\ref{sec:scores} 
-can be found in Appendix~\ref{app:increasingdelta}).
-The power of the different combinations is measured by the mean $p$-value for the true split 
-variable~$Z_1$.
-The possible levels for each of the three building blocks are listed in Table~\ref{tab:levels}.
-In total 12 combinations are applied including the original testing strategies CTree, MOB, and GUIDE
-and variations of them. A more detailed overview of all 12 combinations can be found in 
-Appendix~\ref{app:combinations}, Table~\ref{tab:combinations_appendix}.
+To investigate the effects of each of the building blocks separately the most general 
+case of the first simulation scenario (stump with one split) where the intercept and 
+slope parameter are both varying is considered. In the underlying evaluation all 
+possible combinations of the building blocks have been included. The different levels of 
+each of the three building blocks are listed in Table~\ref{tab:levels}. A more detailed
+overview of all 12 combinations can be found in Appendix~\ref{app:combinations}, 
+Table~\ref{tab:combinations_appendix}.
+
 
 \begin{table}[h!]
 \centering
@@ -1184,6 +1172,35 @@ Binarization           & \textit{bin}        & Binarize scores\\
 \caption{Available levels of the building blocks.
 \label{tab:levels}}
 \end{table}
+
+Based on the results displayed in Figure~\ref{fig:3way} it can be stated that binarizing residuals/scores decreases the performance 
+as it leads to higher $p$-values corresponding to the true split variable $Z_1$ 
+and thus to lower power in the presented settings. 
+For a central true split point (left panel) this effect remains at an almost constant level 
+regardless of whether possible split variables are categorized or not. However, in case 
+of the true split point being closer to the upper margin ($\xi=0.8$, right panel), categorizing
+split variables increases the $p$-value of $Z_1$ even more. 
+Here, the maximal selection performs best while the linear selection shows its disadvantage in 
+detecting abrupt changes. Overall, it depends on the situation whether a linear or a maximal
+selection of a split variable is advantageous. But unless one of the breakpoints used for binning possible split variables is close to the true split point (as for $\xi=0$, left panel),
+this categorization weakens the performance of a testing strategy. 
+
+While the effect of both of these transformations of the data (binarization of 
+residuals/scores and categorization of split variables) can be observed
+separately in Figure~\ref{fig:3way}, combining them increases the negative impact 
+remarkably.
+As already shown in Section~\ref{sec:scores} the use of scores vs.\ residuals has a minor 
+effect if there is a change in the intercept which is
+supported by the small differences between the dashed lines (scores) and the solid
+lines (residuals) in Figure~\ref{fig:3way}.
+
+Note that the choice of the two specific settings 
+(left panel: true split point $\xi=0$,  effect size $\delta = 0.3$; 
+right panel: $\xi=0.8$ requiring a higher effect size $\delta = 1$)
+has been made based on the results shown in Figure~\ref{fig:scores_stump} in order to make 
+the differences particularly well observable. (Additional evaluations for increasing $\delta$ 
+as in Section~\ref{sec:scores} can be found in Appendix~\ref{app:increasingdelta}.)
+
 
 
 <<3way_data, results=hide, echo=FALSE>>=
@@ -1284,30 +1301,14 @@ xyplot(pval_z1 ~ cat | xi,
 #with(d08, interaction.plot(interaction(cat, bin), res_scores, pval_z1))
 #with(d08, interaction.plot(cat, interaction(bin, res_scores), pval_z1))
 @
-\caption{\label{fig:3way} Mean $p$-values corresponding to the true split variable $Z_1$
-over different levels of the building block \textit{Categorization}. 
-Each line represents
-a combination of the levels of the other two building blocks \textit{Binarization} and 
-\textit{Residuals vs.\ Scores}.
+\caption{\label{fig:3way} Effects of the three building blocks \textit{residuals vs.\ scores},
+\textit{binarization}, and \textit{categorization}. All possible combinations have been 
+evaluated in two different settings of the first simulation study (stump with one split) 
+and their performances are compared based on the mean $p$-values corresponding to the 
+true split variable $Z_1$. 
 Left panel: true split point $\xi=0$ and effect size $\delta = 0.3$.
 Right panel: true split point $\xi=0.8$ and effect size $\delta = 1$.}
 \end{figure}
-
-The results presented in Figure~\ref{fig:3way} clearly show that binarizing scores/residuals
-reduces the power of the testing strategy as it leads to higher $p$-values corresponding
-to the true split variable $Z_1$. 
-This effect can be observed for a central split point (left panel, $\xi=0$) as well as for a
-a split point closer to upper end of the considered interval (right panel, $\xi=0.8$).
-However, the effect of the building block \textit{Categorization} varies over these two settings.
-For a central split point all three levels perform similarly. The linear selection of split variables
-is slightly ahead even though the true parameter function is a step function. 
-On the contrary, clear differences can be seen for the outward split point. Here, the maximal selection
-performs best while the linear selection shows its disadvantage in detecting abrupt changes
-and the categorized split variables lead to even higher $p$-values and thus lower power.
-Overall, it depends on the situation whether a linear or a maximal selection of a split variable
-is advantageous. However, categorizing possible split variables does not lead to any improvements
-but even declines the performance of a testing strategy unless the true split point is close
-to a break point used for the binarization.
 
 
 
@@ -1369,11 +1370,12 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        par.settings = par.settings)
 
 @
-\caption{\label{fig:tree_ari}Adjusted Rand Index over increasing effect size $\delta$ 
-(100 replications of 250 observations per step).
+\caption{\label{fig:tree_ari}
+CTree, MOB, GUIDE, and GUIDE+scores evaluated on the second simulation scenario (tree with two splits), all
+applying pre-pruning. Their performances are compared based on the Adjusted Rand Index over
+increasing effect size $\delta$ (100 replications of 250 observations per step).
 Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
-$0.8$ from left to right). The performances of four testing strategies are compared: CTree,
-MOB, GUIDE, GUIDE+scores.}
+$0.8$ from left to right).}
 \end{figure}
 
 
@@ -1473,13 +1475,13 @@ xyplot(ari ~ delta | xi, groups = ~ test,
        par.settings = par.settings
 )
 @
-\caption{\label{fig:pruning_ari}Adjusted Rand Index over increasing effect size $\delta$ 
-(100 replications of 250 observations per step).
+\caption{\label{fig:pruning_ari}
+CTree, MOB, GUIDE, and GUIDE+scores evaluated on the second simulation scenario (tree), 
+once applying pre-pruning (dashed lines) and once post-pruning (solid lines). 
+Their performances are compared based on the Adjusted Rand Index over increasing effect 
+size $\delta$ (100 replications of 250 observations per step).
 Each panel represents a different value of the true split point $\xi$ ($0$, $0.2$, $0.5$ and 
-$0.8$ from left to right). 
-The performances of four testing strategies are compared: CTree, MOB, GUIDE, GUIDE+scores. 
-The dashed lines represent the results from applying pre-pruning and the solid lines 
-the results from applying post-pruning.}
+$0.8$ from left to right).}
 \end{figure}
 
 
@@ -1587,7 +1589,7 @@ Science Foundation, grant number SNF IZSEZ0 177091.}
 For the evaluation of all 12 possible combinations of the presented building blocks
 the original testing strategies CTree, MOB, and GUIDE have been applied together
 with modified versions of them. The employed versions and the corresponding combination
-of building blocks is listed in Table~\ref{tab:combinations_appendix}.
+of building blocks are listed in Table~\ref{tab:combinations_appendix}.
 Each suffix indicates a change of the original form of the considered testing strategy.
 In particular, it relates to the transformations of the data before applying a statistical
 test as represented by the different building blocks. In that way,
