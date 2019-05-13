@@ -131,7 +131,7 @@ distextree <- function(formula,
     #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
     convfun <- function(subset, weights){
       ys <- data$yx[[1]][subset]
-      ws <- if(is.null(weights)) rep.int(1, NROW(ys)) else weights[subset]
+      ws <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
       conv <- length(unique(ys[ws > 0])) > 1
       return(conv)
     }
@@ -180,7 +180,7 @@ distextree <- function(formula,
 
   ### Prepare as modelparty/constpary
   mf <- model.frame(d)
-  if (is.null(weights)) weights <- rep(1, nrow(mf))
+  if(is.null(weights) || (length(weights)==0L)) weights <- rep(1, nrow(mf))
   
   fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf), 
                        "(weights)" = weights,
