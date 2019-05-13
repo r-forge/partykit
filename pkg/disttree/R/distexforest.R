@@ -60,7 +60,6 @@ distexforest <- function
     control = distextree_control(
         teststat = "quad", testtype = "Univ", mincriterion = 0,
         saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
-    ytrafo = NULL, 
     scores = NULL, 
     ntree = 500L, 
     perturb = list(replace = FALSE, fraction = 0.632),
@@ -86,8 +85,6 @@ distexforest <- function
     ctreecall[[1L]] <- quote(disttree::distextree)
     tree <- eval(ctreecall, parent.frame())
 
-    #if (is.null(control$update))
-    #    control$update <- is.function(ytrafo)
     control$update <- TRUE
 
     d <- tree$d
