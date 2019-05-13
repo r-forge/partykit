@@ -190,12 +190,12 @@ distexforest <- function
                         info = list(call = match.call(), control = control))
     ret$trafo <- trafo
     ret$predictf <- d$terms$z
-    class(ret) <- c("cforest", class(ret))
+    class(ret) <- c("distexforest", class(ret))
 
     return(ret)
 }
 
-predict.cforest <- function(object, newdata = NULL, type = c("response", "prob", "weights", "node"), 
+predict.distexforest <- function(object, newdata = NULL, type = c("response", "prob", "weights", "node"), 
                             OOB = FALSE, FUN = NULL, simplify = TRUE, scale = TRUE, ...) {
 
     responses <- object$fitted[["(response)"]]
@@ -237,7 +237,7 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    w <- .rfweights(fdata, fnewdata, rw, scale)
+    w <- partykit:::.rfweights(fdata, fnewdata, rw, scale)
 
 #    for (b in 1:length(forest)) {
 #        ids <- nodeids(forest[[b]], terminal = TRUE)
@@ -270,9 +270,9 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
             if (rtype == "integer") rtype <- "numeric"
 
             FUN <- switch(rtype,
-                "Surv" = if (type == "response") .pred_Surv_response else .pred_Surv,
-                "factor" = if (type == "response") .pred_factor_response else .pred_factor,
-                "numeric" = if (type == "response") .pred_numeric_response else .pred_ecdf)
+                "Surv" = if (type == "response") partykit:::.pred_Surv_response else partykit:::.pred_Surv,
+                "factor" = if (type == "response") partykit:::.pred_factor_response else partykit:::.pred_factor,
+                "numeric" = if (type == "response") partykit:::.pred_numeric_response else partykit:::.pred_ecdf)
         }
 
         ret <- vector(mode = "list", length = ncol(w))
@@ -283,7 +283,7 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         names(ret) <- nam
          
         if (simplify)
-            ret <- .simplify_pred(ret, names(ret), names(ret))
+            ret <- partykit:::.simplify_pred(ret, names(ret), names(ret))
         ret
     }
     if (!is.data.frame(responses)) {
@@ -297,7 +297,60 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
     ret
 }
 
-model.frame.cforest <- function(formula, ...) {
+model.frame.distexforest <- function(formula, ...) {
     class(formula) <- "party"
     model.frame(formula, ...)
 }
+
+gettree.distexforest <- function(object, tree = 1L, ...) {
+    ft <- object$fitted
+    ft[["(weights)"]] <- object$weights[[tree]]
+    ret <- party(object$nodes[[tree]], data = object$data, fitted = ft)
+    ret$terms <- object$terms
+    class(ret) <- c("constparty", class(ret))
+    ret
+}
+
+varimp.distexforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
+                           conditional = FALSE, threshold = .2,
+                           applyfun = NULL, cores = NULL, ...) {
+
+    ret <- matrix(NA, nrow = length(object$nodes), ncol = ncol(object$data))
+    colnames(ret) <- names(object$data)
+
+    if (conditional) {
+        conditions <- partykit:::.create_cond_list(object, threshold)
+    } else {
+        conditions <- NULL
+    }
+
+    ## apply infrastructure 
+    if (is.null(applyfun)) {
+        applyfun <- if(is.null(cores)) {
+            lapply
+        } else {
+            function(X, FUN, ...)
+                parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
+        }
+    }
+
+    vi <- applyfun(1:length(object$nodes), function(b) {
+        tree <- gettree(object, b)
+        if (OOB) {
+            oobw <- as.integer(object$weights[[b]] == 0)
+            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
+                         weights = oobw, ...)
+        } else {
+            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
+                         ...)
+        }
+        return(vi)
+    })
+
+    for (b in 1:length(object$nodes))
+        ret[b, match(names(vi[[b]]), colnames(ret))] <- vi[[b]]
+
+    ret <- colMeans(ret, na.rm = TRUE)
+    ret[!sapply(ret, is.na)]
+}
+
