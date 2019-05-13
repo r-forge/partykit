@@ -20,7 +20,10 @@ importFrom("survival",
   "Surv",
   "is.Surv"
 )
-
+importFrom("utils", 
+  "setTxtProgressBar", 
+  "txtProgressBar"
+)
 
 export(
   ## core distribution fitting function
@@ -37,6 +40,7 @@ export(
 
   ## distributional forest
   "distforest",
+  "distexforest",
 
   ## family list generating function (input: GAMLSS family object) used in distfit, disttree, distforest
   "make_dist_list",
@@ -90,3 +94,9 @@ S3method("logLik", "distforest")
 
 S3method("predict", "distforest")
 S3method("logLik", "distforest")
+
+S3method("predict", "distexforest")
+S3method("varimp", "distexforest")
+S3method("gettree", "distexforest")
+S3method("model.frame", "distexforest")
+
