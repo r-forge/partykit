@@ -1119,7 +1119,7 @@ including all available scores can be observed particularly well in the top midd
 where GUIDE+scores detects a shift in the slope parameter $\beta_1$ as opposed to 
 GUIDE. The fact that residual-based methods fail to detect changes that do not effect the
 expected value has already been elaborated in the literature of structural change
-analysis \citep[see, e.g.,][]{Ploberger+Kramer:1992} and is also discussed in 
+analysis \citep[see, e.g.,][]{Ploberger+Kraemer:1992} and is also discussed in 
 Section~\ref{sec:discussion}. Moreover, the advantage of including full models scores 
 clearly outweighs the cost involved which is displayed by the small gain of GUIDE compared 
 to GUIDE+scores in case of a fixed slope parameter (left panels).
@@ -1511,7 +1511,7 @@ of the investigated subjects. However, the obtained results also hold for a vari
 as the introduced building blocks can be applied in the same way for all model types.
 Specific characteristics of linear models regarding structural changes have been investigated
 in detail in previous literature.
-\cite{Ploberger+Kramer:1992} have shown that residual-based tests can detect a change in the parameters
+\cite{Ploberger+Kraemer:1992} have shown that residual-based tests can detect a change in the parameters
 only if it also causes a shift in the expected value $\mathbb{E}(Y)$. 
 This is not the case if changes are orthogonal to the mean regressor $(1,0)^{\top}$, hence, if
 the parameter vector $\bm{\beta}$ is shifted 
@@ -1541,7 +1541,7 @@ fit such as residuals provides less power than full model scores.
 Whether this difference affects the performance of a testing strategy and if so, to what extent, is 
 determined by the way how residuals are connected to parameter shifts as well as the type of parameter
 shift and the type of model. Therefore, a general statement for all types of models and residuals can 
-hardly be made. However, the results from previous literature such as \cite{Ploberger+Kramer:1992} and
+hardly be made. However, the results from previous literature such as \cite{Ploberger+Kraemer:1992} and
 the here presented simulation show that considering only residuals provides small gains in certain 
 situations but remarkable deficits in general. On the contrary, the benefits of including full model 
 scores clearly outweigh the price of of testing all parameters.
