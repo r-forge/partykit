@@ -86,8 +86,9 @@ distexforest <- function
     ctreecall[[1L]] <- quote(disttree::distextree)
     tree <- eval(ctreecall, parent.frame())
 
-    if (is.null(control$update))
-        control$update <- is.function(ytrafo)
+    #if (is.null(control$update))
+    #    control$update <- is.function(ytrafo)
+    control$update <- TRUE
 
     d <- tree$d
     updatefun <- tree$update

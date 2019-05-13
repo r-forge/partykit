@@ -73,7 +73,7 @@ distextree <- function(formula,
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distexfit
-  ytrafo <- function(subset, weights, estfun = TRUE, object = FALSE, info = NULL) {
+  ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
