@@ -73,7 +73,7 @@ distextree <- function(formula,
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distexfit
-  ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
+  ytrafo <- function(subset, weights, estfun = TRUE, object = FALSE, info = NULL) {
     
     ys <- d$yx[[1]][subset]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
@@ -207,8 +207,6 @@ distextree <- function(formula,
   )
 
   class(rval) <- c("modelparty", class(rval))  # FIXME: either model or constparty object!
-
-  ## Add modelinfo (object) and estfun if not there yet, but wanted
   # TODO: (AZ) check if this can be done prettier
   which_terminals <- nodeids(rval, terminal = TRUE)
   which_all <- nodeids(rval)
@@ -240,6 +238,8 @@ distextree <- function(formula,
 
     tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
   }
+
+  tree_ret$update <- update
 
   class(tree_ret) <- class(rval)
 
