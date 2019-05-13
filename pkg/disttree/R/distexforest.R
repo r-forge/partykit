@@ -47,7 +47,7 @@ constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info
     ret
 }
 
-cforest <- function
+distexforest <- function
 (
     formula,
     data,   
@@ -57,9 +57,9 @@ cforest <- function
     cluster,
     strata,
     na.action = na.pass,
-    control = ctree_control(
+    control = distextree_control(
         teststat = "quad", testtype = "Univ", mincriterion = 0,
-        saveinfo = FALSE, ...),
+        saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
     ytrafo = NULL, 
     scores = NULL, 
     ntree = 500L, 
@@ -83,7 +83,7 @@ cforest <- function
     if (!is.null(oweights))
         ctreecall$weights <- 1:NROW(oweights)
     ctreecall$control <- control ### put ... into ctree_control()
-    ctreecall[[1L]] <- quote(partykit::ctree)
+    ctreecall[[1L]] <- quote(disttree::distextree)
     tree <- eval(ctreecall, parent.frame())
 
     if (is.null(control$update))
@@ -133,7 +133,7 @@ cforest <- function
         weights <- integer(0)
     }
 
-    idx <- .start_subset(d)
+    idx <- partykit:::.start_subset(d)
     if (is.null(rw)) {
         if (is.null(strata)) {
             size <- N
