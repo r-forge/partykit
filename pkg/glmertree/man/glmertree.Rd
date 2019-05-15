@@ -4,7 +4,6 @@
 
 \alias{plot.lmertree}
 \alias{print.lmertree}
-\alias{coef.lmertree}
 \alias{ranef.lmertree}
 \alias{logLik.lmertree}
 \alias{model.frame.lmertree}
@@ -17,7 +16,6 @@
 
 \alias{plot.glmertree}
 \alias{print.glmertree}
-\alias{coef.glmertree}
 \alias{ranef.glmertree}
 \alias{logLik.glmertree}
 \alias{model.frame.glmertree}

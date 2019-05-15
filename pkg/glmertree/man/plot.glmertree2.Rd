@@ -13,19 +13,22 @@
 \usage{
 %\method{plot}{lmertree2}
 plot.lmertree2(x, which = "all", ask = TRUE, type = "extended", 
-    observed = TRUE, fitmean = "marginal", tp_args = list(), 
+    observed = TRUE, fitted = "marginal", tp_args = list(), 
     drop_terminal = TRUE, terminal_panel = NULL, \dots)
 %\method{plot}{glmertree2}
 plot.glmertree2(x, which = "all", ask = TRUE, type = "extended", 
-    observed = TRUE, fitmean = "marginal", tp_args = list(), 
+    observed = TRUE, fitted = "marginal", tp_args = list(), 
     drop_terminal = TRUE, terminal_panel = NULL, \dots)
 }
 
 \arguments{
   \item{x}{an object of class \code{lmertree} or \code{glmertree}.}
-  \item{which}{character; \code{"all"} (default), \code{"tree"} or 
-      \code{"random"}. Specifies whether, tree, random effects or both should
-      be plotted.}
+  \item{which}{character; \code{"all"} (default), \code{"tree"}, 
+      \code{"random"} or \code{"tree.coef"}. Specifies whether, tree, random          
+      effects, or both should be plotted. Alternatively, \code{"tree.coef"}           
+      yields caterpillar plots of the estimated fixed-effects coefficients
+      in every terminal node of the tree, but omits the tree structure 
+      (see Details).}
   \item{ask}{logical. Should user be asked for input, before a new figure
       is drawn?}
   \item{type}{character; \code{"extended"} (default) or \code{"simple"}.
@@ -33,9 +36,11 @@ plot.glmertree2(x, which = "all", ask = TRUE, type = "extended",
       fitted means in the terminal nodes; \code{"simple"} yields a plotted
       tree with fixed and/or random effects coefficients presented in the
       terminal nodes.}
-  \item{observed}{logical. Should observed datapoint be plotted?}
-  \item{fitmean}{character. \code{"marginal"} (default), \code{"combined"} 
-      or \code{"none"}. Specifies whether and how fitted means should be 
+  \item{observed}{logical. Should observed datapoints be plotted in the tree?
+      Defaults to \code{TRUE}, \code{FALSE} only supported for objects of class 
+      \code{lmertree}, not of class\code{glmertree}.}
+  \item{fitted}{character. \code{"marginal"} (default), \code{"combined"} 
+      or \code{"none"}. Specifies whether and how fitted values should be 
       visualized. Only used when predictor variables for the node-specific 
       (G)LMs are specified. If \code{"marginal"}, fitted values 
       will be calculated, with all remaining (random and fixed effects) fixed 
@@ -56,35 +61,21 @@ plot.glmertree2(x, which = "all", ask = TRUE, type = "extended",
 
   
 \details{
+  The caterpillar plot(s) for the local (node-specific) fixed effects (created 
+  when \code{which = "tree.coef"}) depict the estimated fixed-effects 
+  coefficients with 95\% confidence intervals, but these CIs DO NOT ACCOUNT FOR
+  THE SEARCHING OF THE TREE STRUCTURE and are therefore likely too narrow. 
+  There is currently no way to adjust CIs for searching the tree structure,
+  thus the CIs can only be used to obtain an indication of the variability 
+  of the coefficient estimates, not for statistical significance testing. 
+  
+  The caterpillar plot(s) for the random effect (created if \code{which = "ranef"} 
+  or \code{"all"}) depict the predicted random effects with 95\% confidence 
+  intervals. See also \code{\link[lme4]{ranef}}.
+  
   The code is still under development and might change in future versions.
 }
 
-\value{
-The function returns a list with the following objects:
-  \item{tree}{The final \code{lmtree}/\code{glmtree}.}
-  \item{lmer}{The final \code{lmer} random-effects model.}
-  \item{ranef}{The corresponding random effects of \code{lmer}.} 
-  \item{varcorr}{The corresponding \code{VarCorr(lmer)}.}
-  \item{variance}{The corresponding \code{attr(VarCorr(lmer), "sc")^2}.}
-  \item{data}{The dataset specified with the \code{data} argument
-    including added auxiliary variables \code{.ranef} and \code{.tree}
-    from the last iteration.}
-  \item{loglik}{The log-likelihood value of the last iteration.}
-  \item{iterations}{The number of iterations used to estimate the \code{lmertree}.} 
-  \item{maxit}{The maximum number of iterations specified with the \code{maxit} argument.}
-  \item{ranefstart}{The random effects used as an offset, as specified with
-    the \code{ranefstart} argument.}
-  \item{formula}{The formula as specified with the \code{formula} argument.}
-  \item{randomformula}{The formula as specified with the \code{randomformula} argument.}
-  \item{abstol}{The prespecified value for the change in log-likelihood to evaluate
-    convergence, as specified with the \code{abstol} argument.} 
-  \item{mob.control}{A list containing control parameters passed to
-    \code{lmtree()}, as specified with \dots.}
-  \item{lmer.control}{A list containing control parameters passed to
-    \code{lmer()}, as specified in the \code{lmer.control} argument.}
-  \item{joint}{Whether the fixed effects from the tree were (re-)estimated jointly along 
-    with the random effects, specified with the \code{joint} argument.}  
-}
 
 \references{
 Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
@@ -99,23 +90,26 @@ Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
 ## load artificial example data
 data("DepressionDemo", package = "glmertree")
 
-## fit normal linear regression LMM tree for continuous outcome
+## fit linear regression LMM tree for continuous outcome
 lt <- lmertree(depression ~ treatment + age | cluster | anxiety + duration,
   data = DepressionDemo)
 plot.lmertree2(lt)
 plot.lmertree2(lt, type = "simple")
-plot.lmertree2(lt, which = "tree", fitmean = "combined")
-plot.lmertree2(lt, which = "tree", fitmean = "none")
+plot.lmertree2(lt, which = "tree", fitted = "combined")
+plot.lmertree2(lt, which = "tree", fitted = "none")
 plot.lmertree2(lt, which = "tree", observed = FALSE)
+plot.lmertree2(lt, which = "tree.coef")
+plot.lmertree2(lt, which = "ranef")
 
 ## fit logistic regression GLMM tree for binary outcome
-gt <- glmertree(depression_bin ~ treatment | cluster | 
-  age + anxiety + duration, data = DepressionDemo)
-plot.glmertree2(gt)
+gt <- glmertree(depression_bin ~ treatment + age | cluster | 
+  anxiety + duration, data = DepressionDemo)
+plot.glmertree2(gt)  
 plot.glmertree2(gt, type = "simple")
-plot.glmertree2(gt, which = "tree", fitmean = "combined")
-plot.glmertree2(gt, which = "tree", fitmean = "none")
-plot.glmertree2(gt, which = "tree", observed = FALSE)
+plot.glmertree2(gt, which = "tree", fitted = "combined")
+plot.glmertree2(gt, which = "tree", fitted = "none")
+plot.glmertree2(gt, which = "tree.coef")
+plot.glmertree2(gt, which = "ranef")
 }
 }
 

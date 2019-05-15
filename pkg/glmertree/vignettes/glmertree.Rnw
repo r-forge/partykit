@@ -99,11 +99,11 @@ The first argument specified the model formula. The left hand side (preceding th
 A more complex random-effects structures could also be specified. For example, specifying the model formula as:
 %
 <<echo = TRUE, eval = FALSE>>=
-outcome ~ 1 | (1 + age | cluster_id) | age + gender + emotional + 
+outcome ~ 1 | (age + (1 + age | cluster_id)) | age + gender + emotional + 
   autism + impact + conduct
 @
 %
-would yield a model in which a random intercept and slope for \code{age} would be estimated with respect to \code{cluster_id}. Note that the parentheses are necessary to protect the vertical bars, which separate the random effects from the other parts of the model.
+would yield a model in which a random intercept and slope for \code{age} would be estimated with respect to \code{cluster_id}. Note that the parentheses are necessary to protect the vertical bars, which separate the (global) random-effects from the other parts of the model. Note also, that when we specify a random slope (for \code{age}), we also specify a fixed slope (for \code{age}) in the global model, as is customary in specifying mixed-effects models. 
 
 Alternatively, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for a dichotomized response could be obained by:
 %
@@ -220,10 +220,10 @@ lmm_tree <- lmertree(depression ~ treatment | cluster |
 The left hand side of the model formula (preceding the tilde symbol) specifies the response variable (\code{depression}). The right hand side of the model formula consists of three parts, separated by vertical bars: The first part specifies the predictor variable(s) of the (generalized) linear model (\code{treatment}, in this example). The second part specifies the random effects and the third part specifies the potential partitioning variables. All partitioning variables are continuous in this example, but note that (ordered) categorical partitioning variables may also be specified. Also, we specified a single variable in the random-effects part, resulting in estimation of a random intercept with respect to \code{cluster}. More complex random effects can also be specified; for example, specifying the model formula as 
 %
 <<eval = FALSE, echo = TRUE>>=
-depression ~ treatment | ( 1 + age | cluster) | age + duration + anxiety
+depression ~ treatment | (age + (1 + age | cluster)) | age + duration + anxiety
 @
 %
-would yield a model with a random intercept and slope for \code{age} estimated with respect to \code{cluster}. The brackets are necessary to protect the vertical bars in the formulation of the random effects.
+would yield a model with a random intercept and slope for \code{age} estimated with respect to \code{cluster}. The brackets are necessary to protect the vertical bars in the formulation of the (global) random effects. Note also, that when we specify a random slope (for \code{age}), we also specify a fixed slope (for \code{age}) in the global model, as is customary in specifying mixed-effects models. 
 
 Alternatively, using the \code{glmertree()} function, a tree may be fitted to binary (\code{family = binomial}, default) or count response variables (\code{family = poisson}). Therefore, a binomial GLMM tree for the dichotomized response \code{depression\_bin} could be obained by:
 %
