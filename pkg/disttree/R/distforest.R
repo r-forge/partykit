@@ -304,8 +304,6 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
     class(rval) <- c("distforest", class(rval))
   }
   
-  
-  
   if(fit) {
     ### calculate (fitted value,) fitted distribution parameters, loglikelihood (and log scores) for every observation
     # fitted <- data.frame(idx = 1:nrow(data))
@@ -327,7 +325,7 @@ distforest <- function(formula, data, na.action = na.pass, cluster, family = NO(
       loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
       # logscore[i,] <- pm$family$sdist(Y[i], eta = coef(pm, type = "link"), sum = FALSE)
     }
-    
+
     if(is.null(weights) || (length(weights)==0L || is.function(weights))) weights <- numeric(nrow(data)) + 1
     rval$fitted$`(weights)` <- weights
     # rval$fitted$`(fitted.response)` <- fitted
