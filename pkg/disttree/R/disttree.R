@@ -44,7 +44,8 @@ disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL
     if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
+      stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
     # linkinvdr only used in the method vcov for type = "parameter"
 
   }
