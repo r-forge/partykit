@@ -77,13 +77,13 @@ distexforest <- function
         oweights <- weights
     m <- match(c("formula", "data", "subset", "na.action", "offset", "cluster", 
                  "family", "control"), names(call), 0L)
-    ctreecall <- call[c(1L, m)]
-    ctreecall$doFit <- FALSE
+    distextreecall <- call[c(1L, m)]
+    distextreecall$doFit <- FALSE
     if (!is.null(oweights))
-        ctreecall$weights <- 1:NROW(oweights)
-    ctreecall$control <- control ### put ... into ctree_control()
-    ctreecall[[1L]] <- quote(disttree::distextree)
-    tree <- eval(ctreecall, parent.frame())
+        distextreecall$weights <- 1:NROW(oweights)
+    distextreecall$control <- control ### put ... into ctree_control()
+    distextreecall[[1L]] <- quote(disttree::distextree)
+    tree <- eval(distextreecall, parent.frame())
 
     control$update <- TRUE
 
@@ -183,19 +183,22 @@ distexforest <- function
 
     control$applyfun <- applyfun
 
+    if(!inherits(family, "disttree.family"))  #FIXME: (LS) Better way to extract prepared family?
+      family <- distfamily(family)
+    
     ret <- constparties(nodes = forest, data = mf, weights = rw,
                         fitted = fitted, terms = d$terms$all,
-                        info = list(call = match.call(), control = control))
+                        info = list(call = match.call(), 
+                                    control = control,
+                                    family = family))
     ret$trafo <- trafo
     ret$predictf <- d$terms$z
     class(ret) <- c("distexforest", class(ret))
 
     ## adaptive local log-likelihood
-    ## calculate (fitted value,) fitted distribution parameters, 
-    ##   loglikelihood (and log scores) for every observation
+    ## calculate fitted values, fitted distribution parameters, 
+    ##   loglikelihood for every observation
 
-    if(!inherits(family, "disttree.family"))  #FIXME: (ML) Can we get family from ret above?
-      family <- distfamily(family)
     np <- length(family$link)
 
     fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
@@ -228,8 +231,9 @@ distexforest <- function
     return(ret)
 }
 
-predict.distexforest <- function(object, newdata = NULL, type = c("response", "prob", "weights", "node"), 
-                            OOB = FALSE, FUN = NULL, simplify = TRUE, scale = TRUE, ...) {
+predict.distexforest <- function(object, newdata = NULL, 
+                                 type = c("response", "parameters", "weights", "node"), 
+                                 OOB = TRUE, FUN = NULL, simplify = TRUE, scale = TRUE, ...) {
 
     responses <- object$fitted[["(response)"]]
     forest <- object$nodes
@@ -294,6 +298,41 @@ predict.distexforest <- function(object, newdata = NULL, type = c("response", "p
         return(ret)
     }
     
+    if(type == "parameters") {
+      
+      colnames(w) <- nam
+      rownames(w) <- rownames(responses)
+      
+      family <- object$info$family
+      # if(!inherits(family, "disttree.family"))  
+      #   family <- distfamily(family)
+      np <- length(family$link)
+      
+      pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = np))
+      # loglik <- data.frame(idx = 1:nrow(data))
+      
+      # extract weights
+      # w <- partykit::predict.cforest(object, type = "weights", OOB = OOB) 
+      
+      # Y <- object$fitted$`(response)`
+      
+      for(i in 1:nrow(nd)){
+        wi <- w[,i]
+        # personalized model for observation nd[i,]
+        pm <-  disttree::distexfit(responses, family = family, weights = wi, vcov = FALSE, 
+                                   optim.control = control$optim.control, ...)
+        pred.par[i,] <- coef(pm, type = "parameter")
+        # loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(responses[i], log = TRUE) else NA
+      }
+      
+      # if(is.null(weights) || (length(weights)==0L || is.function(weights))) 
+      #   weights <- numeric(nrow(nd)) + 1
+      
+      names(pred.par) <- names(coef(pm, type = "parameter"))
+      return(pred.par)
+    }
+    
+    ## FIX ME: allow for type = "prob" ?
     pfun <- function(response) {
 
         if (is.null(FUN)) {

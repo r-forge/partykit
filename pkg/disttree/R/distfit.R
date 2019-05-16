@@ -100,18 +100,21 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
     
     if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) stop("family needs to specify a list with ...")
+    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
+      stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
     # linkinvdr only used in the method vcov for type = "parameter"
 
   }
 
-  if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
+  if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) 
+    stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
   if(length(type.hessian) > 1) type.hessian <- type.hessian[1]
   if(type.hessian == "checklist") {
     type.hessian <- if(is.null(family$hdist)) "numeric" else "analytic"
   }
   if(type.hessian == "numeric") family$hdist <- NULL
-  if(type.hessian == "analytic" && is.null(family$hdist)) stop("analytic calculation of hessian matrix not possible without list element hdist ...")
+  if(type.hessian == "analytic" && is.null(family$hdist)) 
+    stop("analytic calculation of hessian matrix not possible without list element hdist")
   
   
   # if family was handed over as a gamlss.dist family object and the distribution is censored:
