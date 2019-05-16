@@ -58,6 +58,11 @@ De'ath G (2002).
 }
 
 \examples{
+
+\dontshow{
+suppressWarnings(RNGversion("3.5.2"))
+}
+
 ## load data
 data("HuntingSpiders", package = "partykit")
 
