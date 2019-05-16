@@ -680,21 +680,21 @@ $`7`
 
 > predict(bt2, tm, type = "node")
 1 2 3 
-7 3 5 
+7 6 3 
 
 > predict(bt2, tm, type = function(object) t(worth(object)))
   Barbara    Anni   Hana  Fiona   Mandy    Anja
 1  0.2585 0.05573 0.1531 0.1605 0.16427 0.20792
-2  0.1889 0.16993 0.3851 0.1142 0.09232 0.04958
-3  0.1746 0.12305 0.2625 0.2254 0.10188 0.11259
+2  0.2659 0.21278 0.1609 0.1945 0.06275 0.10310
+3  0.1889 0.16993 0.3851 0.1142 0.09232 0.04958
 
 > predict(bt2, tm, type = function(object) t(rank(-worth(object))))
   Barbara Anni Hana Fiona Mandy Anja
 1       1    6    5     4     3    2
-2       2    3    1     4     5    6
-3       3    4    1     2     6    5
+2       1    2    4     3     6    5
+3       2    3    1     4     5    6
 
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
-  8.054   0.111   8.160 
+ 11.464   0.136  11.598 
