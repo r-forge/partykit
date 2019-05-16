@@ -300,6 +300,8 @@ predict.distexforest <- function(object, newdata = NULL,
     
     if(type == "parameters") {
       
+      if(NOnewdata) return(object$fitted.par)
+        
       colnames(w) <- nam
       rownames(w) <- rownames(responses)
       
