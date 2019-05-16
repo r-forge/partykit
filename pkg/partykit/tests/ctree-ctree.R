@@ -1,3 +1,4 @@
+suppressWarnings(RNGversion("3.5.2"))
 
 ### compare partykit::ctree and party::ctree wrt predictions
 ### and computing time. But not during R CMD check
