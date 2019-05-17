@@ -1,5 +1,5 @@
 
-R Under development (unstable) (2019-05-15 r76506) -- "Unsuffered Consequences"
+R version 3.6.0 (2019-04-26) -- "Planting of a Tree"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -45,30 +45,11 @@ Loading required package: mvtnorm
 > data("HuntingSpiders", package = "partykit")
 > 
 > ## fit multivariate tree for 12-dimensional species abundance
-> sptree <- ctree(arct.lute + pard.lugu + zora.spin + pard.nigr + pard.pull +
+> ## (warnings by mvtnorm are suppressed)
+> suppressWarnings(sptree <- ctree(arct.lute + pard.lugu + zora.spin + pard.nigr + pard.pull +
 +   aulo.albi + troc.terr + alop.cune + pard.mont + alop.acce + alop.fabr +
 +   arct.peri ~ herbs + reft + moss + sand + twigs + water, data = HuntingSpiders,
-+   teststat = "max", minsplit = 5)
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
-Warning in doTest(lev, teststat = teststat, pvalue = pvalue, lower = TRUE,  :
-  cmvnorm: completion with ERROR > EPS
++   teststat = "max", minsplit = 5))
 > plot(sptree, terminal_panel = node_barplot)
 > 
 > 
@@ -695,7 +676,7 @@ attr(,"assign")
 [1] 0 1 2
 attr(,"formula")
 Species ~ Sepal.Width + Sepal.Length
-<environment: 0x54428d0>
+<environment: 0x563beb6f5178>
 attr(,"terms")
 Species ~ Sepal.Width + Sepal.Length
 attr(,"variables")
@@ -714,7 +695,7 @@ attr(,"intercept")
 attr(,"response")
 [1] 1
 attr(,".Environment")
-<environment: 0x54428d0>
+<environment: 0x563beb6f5178>
 > 
 > 
 > 
@@ -2427,7 +2408,7 @@ nativeSpeaker           age      shoeSize
 > cleanEx()
 > options(digits = 7L)
 > base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
-Time elapsed:  18.524 0.192 18.726 0 0 
+Time elapsed:  9.355 0.127 9.543 0 0 
 > grDevices::dev.off()
 null device 
           1 
