@@ -62,6 +62,7 @@ distexforest <- function
         teststat = "quad", testtype = "Univ", mincriterion = 0,
         saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
     ntree = 500L, 
+    fit = TRUE,
     perturb = list(replace = FALSE, fraction = 0.632),
     mtry = ceiling(sqrt(nvar)), 
     applyfun = NULL,
@@ -195,39 +196,40 @@ distexforest <- function
     ret$predictf <- d$terms$z
     class(ret) <- c("distexforest", class(ret))
 
-    ## adaptive local log-likelihood
-    ## calculate fitted values, fitted distribution parameters, 
-    ##   loglikelihood for every observation
+    if(fit) {
+      ## adaptive local log-likelihood
+      ## calculate fitted values, fitted distribution parameters, 
+      ##   loglikelihood for every observation
 
-    np <- length(family$link)
+      np <- length(family$link)
 
-    fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
-    loglik <- data.frame(idx = 1:nrow(data))
+      fitted.par <- data.frame(matrix(0, nrow = nrow(data), ncol = np))
+      loglik <- data.frame(idx = 1:nrow(data))
 
-    # extract weights
-    w <- partykit::predict.cforest(ret, type = "weights", OOB = TRUE)  #FIXME: (LS) always, compare cforest?!
+      # extract weights
+      w <- partykit::predict.cforest(ret, type = "weights", OOB = TRUE)  #FIXME: (LS) always, compare cforest?!
 
-    Y <- ret$fitted$`(response)`
+      Y <- ret$fitted$`(response)`
 
-    for(i in 1:nrow(data)){
-      wi <- w[,i]
-      # personalized model for observation data[i,]
-      pm <-  disttree::distexfit(Y, family = family, weights = wi, vcov = FALSE, 
-        optim.control = control$optim.control, ...)
-      fitted.par[i,] <- coef(pm, type = "parameter")
-      loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
+      for(i in 1:nrow(data)){
+        wi <- w[,i]
+        # personalized model for observation data[i,]
+        pm <-  disttree::distexfit(Y, family = family, weights = wi, vcov = FALSE, 
+          optim.control = control$optim.control, ...)
+        fitted.par[i,] <- coef(pm, type = "parameter")
+        loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(Y[i], log = TRUE) else NA
+      }
+
+      if(is.null(weights) || (length(weights)==0L || is.function(weights))) 
+        weights <- numeric(nrow(data)) + 1
+
+      ret$fitted$`(weights)` <- weights
+
+      names(fitted.par) <- names(coef(pm, type = "parameter"))
+      ret$fitted.par <- fitted.par
+
+      ret$loglik <- sum(loglik)
     }
-
-    if(is.null(weights) || (length(weights)==0L || is.function(weights))) 
-      weights <- numeric(nrow(data)) + 1
-
-    ret$fitted$`(weights)` <- weights
-
-    names(fitted.par) <- names(coef(pm, type = "parameter"))
-    ret$fitted.par <- fitted.par
-
-    ret$loglik <- sum(loglik)
-
     return(ret)
 }
 
