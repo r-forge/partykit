@@ -1584,6 +1584,65 @@ Science Foundation, grant number SNF IZSEZ0 177091.}
 
 \begin{appendix}
 
+
+\section{Test statistics}
+This section provides further information on the test statistics applied in CTree, MOB, 
+and GUIDE. The presented details have been extracted from the original papers 
+\cite{Hothorn+Hornik+Zeileis:2006}, \cite{Zeileis+Hothorn+Hornik:2008}, 
+and \cite{Loh:2002}, however, notation is adapted to the main manuscript
+in order to allow for better comparison.
+
+\subsection{CTree}
+To measure the association of a response $Y$ and each possible split variable $Z$ the
+CTree algorithm applies a linear test statistic $T$ which is excerpted from Section~3.1.
+(``Variable selection and stopping criteria'') of the original paper and is of the following form:
+$$
+T(Y, Z, w) = \text{vec}\left( \sum_{i=1}^n w_i g(Z_{i})h(Y_i, (Y_1,\ldots,Y_n))^{\top}\right)
+$$
+where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom transformation of the split variable $Z$ and the influence function $h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the responses $(Y_1, \ldots, Y_n)$ in a permutation symmetric way. Moreover, by applying the ``vec'' operator the resulting $p~\times~q$ matrix is converted into a $p q$ column vector.
+Following \cite{Strasser+Weber:1999}
+the conditional expectation $\mu$ and covariance $\Sigma$ of a linear test statistic can 
+be calculated and used to standardize an observed linear test statistic $t$ within a 
+function $c$ mapping into the real line.
+For example, the maximum of the absolute values of the standardized linear statistic
+$$
+c_{\max}(t,\mu,\Sigma) = \max_{k=1,\ldots,pq} \left| \frac{(t-\mu)}{\sqrt{(\Sigma)_{kk}}} \right|
+$$
+or a quadratic form
+$$
+c_{\text{quad}}(t, \mu, \Sigma) = (t - \mu)\Sigma^{+} (t - \mu)^{\top}
+$$
+can be considered where $\Sigma^{+}$ is the Moore-Penrose inverse of $\Sigma$.
+Since the asymptotic conditional distribution of a linear test statistic $T$ is a 
+multivariate normal with parameters $\mu$ and $\Sigma$ \citep{Strasser+Weber:1999}, 
+the asymptotic distribution of $c_{\text{max}}$ is normal while the quadratic form 
+$c_{\text{quad}}$ follows an asymptotic $\chi^2$~distribution. Based on this knowledge 
+the corresponding $p$-values can be calculated easily.
+
+% FIXME: adapt notation from here on (split variable Z and response Y, scores s)
+\subsection{MOB}
+The MOB algorithm employs an empirical fluctuation process $W$ to measure deviations of
+the model scores $s$ from zero. As described in detail in Section~3.2. (``Testing for 
+parameter instability'') of the original paper this process is of the following form:
+$$
+W(t) = \hat{J}^{-1/2} n^{-1/2} \sum_{i=1}^{\lfloor nt \rfloor} s_{\sigma(Z_{i})} \qquad (0 \leq t \leq 1)
+$$
+where the model scores $s$ are sorted by the split variable Z by including the ordering permutation $\sigma(Z_{i})$. 
+To scale this partial sum process an estimate $\hat{J}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
+Following \cite{Zeileis+Hornik:2007} $W(t)$ converges to a Brownian bridge under the null
+hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied.
+For more details, particularly on calculating the corresponding $p$-values see Section~3.2. of the original paper.
+
+\subsection{GUIDE}
+The test statistic of the $\chi^2$~test as applied in the GUIDE algorithm is
+$$
+X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{11} - E_{11})^2}{E_{11}}
+$$
+where $O_{ij}$ are the observed frequencies of observations in a certain combination of binarized residuals ($i=1,2$) and categorized split variables ($j = 1,\ldots,4$). $E_{ij}$ are the corresponding expected frequencies under independence $E_{ij} = \frac{O_{i \cdot} \cdot O_{\cdot j}}{n}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
+If full model scores are used instead of residuals a sum of the test statistic over the number of distribution parameters is considered such that each 
+summand corresponds to one column of the score matrix.
+
+
 \section{Combinations of building blocks applied}\label{app:combinations}
 
 For the evaluation of all 12 possible combinations of the presented building blocks
