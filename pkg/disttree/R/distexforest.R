@@ -232,8 +232,10 @@ distexforest <- function
 }
 
 predict.distexforest <- function(object, newdata = NULL, 
-                                 type = c("response", "parameters", "weights", "node"), 
-                                 OOB = TRUE, FUN = NULL, simplify = TRUE, scale = TRUE, ...) {
+                                 type = c("response", "parameter", "weights", "node"), 
+                                 OOB = TRUE, 
+                                 FUN = NULL, simplify = TRUE, 
+                                 scale = TRUE, ...) {
 
     responses <- object$fitted[["(response)"]]
     forest <- object$nodes
@@ -291,32 +293,25 @@ predict.distexforest <- function(object, newdata = NULL,
 #    #w <- Reduce("+", bw)
 #    if (!is.matrix(w)) w <- matrix(w, ncol = 1)
 
+    colnames(w) <- nam
+    rownames(w) <- rownames(responses)
+    
     if (type == "weights") {
         ret <- w
-        colnames(ret) <- nam
-        rownames(ret) <- rownames(responses)
         return(ret)
     }
     
-    if(type == "parameters") {
+    if(type == "parameter") {
       
       if(NOnewdata) return(object$fitted.par)
         
-      colnames(w) <- nam
-      rownames(w) <- rownames(responses)
-      
       family <- object$info$family
       # if(!inherits(family, "disttree.family"))  
       #   family <- distfamily(family)
       np <- length(family$link)
       
       pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = np))
-      # loglik <- data.frame(idx = 1:nrow(data))
-      
-      # extract weights
-      # w <- partykit::predict.cforest(object, type = "weights", OOB = OOB) 
-      
-      # Y <- object$fitted$`(response)`
+      # loglik <- data.frame(idx = 1:nrow(data))  ## FIXME: should we provide loglik for newdata?
       
       for(i in 1:nrow(nd)){
         wi <- w[,i]
@@ -327,50 +322,13 @@ predict.distexforest <- function(object, newdata = NULL,
         # loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(responses[i], log = TRUE) else NA
       }
       
-      # if(is.null(weights) || (length(weights)==0L || is.function(weights))) 
-      #   weights <- numeric(nrow(nd)) + 1
-      
       names(pred.par) <- names(coef(pm, type = "parameter"))
       return(pred.par)
     }
-    
-    ## FIX ME: allow for type = "prob" ?
-    pfun <- function(response) {
-
-        if (is.null(FUN)) {
-
-            rtype <- class(response)[1]
-            if (rtype == "ordered") rtype <- "factor"
-            if (rtype == "integer") rtype <- "numeric"
-
-            FUN <- switch(rtype,
-                "Surv" = if (type == "response") partykit:::.pred_Surv_response else partykit:::.pred_Surv,
-                "factor" = if (type == "response") partykit:::.pred_factor_response else partykit:::.pred_factor,
-                "numeric" = if (type == "response") partykit:::.pred_numeric_response else partykit:::.pred_ecdf)
-        }
-
-        ret <- vector(mode = "list", length = ncol(w))
-        for (j in 1:ncol(w))
-            ret[[j]] <- FUN(response, w[,j])
-        ret <- as.array(ret)
-        dim(ret) <- NULL
-        names(ret) <- nam
-         
-        if (simplify)
-            ret <- partykit:::.simplify_pred(ret, names(ret), names(ret))
-        ret
-    }
-    if (!is.data.frame(responses)) {
-        ret <- pfun(responses)
-    } else {
-        ret <- lapply(responses, pfun)
-        if (all(sapply(ret, is.atomic)))
-            ret <- as.data.frame(ret)
-        names(ret) <- colnames(responses)
-    }
-    ret
 }
 
+
+## copied methods from cforest
 model.frame.distexforest <- function(formula, ...) {
     class(formula) <- "party"
     model.frame(formula, ...)
