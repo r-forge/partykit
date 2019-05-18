@@ -207,7 +207,7 @@ distexforest <- function
       loglik <- data.frame(idx = 1:nrow(data))
 
       # extract weights
-      w <- partykit::predict.cforest(ret, type = "weights", OOB = TRUE)  #FIXME: (LS) always, compare cforest?!
+      w <- partykit::predict.cforest(ret, type = "weights", OOB = TRUE)  #FIXME: (LS) allow for additional argument OOB in distexforest
 
       Y <- ret$fitted$`(response)`
 
@@ -232,6 +232,8 @@ distexforest <- function
     }
     return(ret)
 }
+
+
 
 predict.distexforest <- function(object, newdata = NULL, 
                                  type = c("response", "parameter", "weights", "node"), 
@@ -303,29 +305,31 @@ predict.distexforest <- function(object, newdata = NULL,
         return(ret)
     }
     
-    if(type == "parameter") {
+    if(type == "parameter" | type == "response") {
       
-      if(NOnewdata) return(object$fitted.par)
+      if(NOnewdata & type == "parameter") return(object$fitted.par)
         
       family <- object$info$family
       # if(!inherits(family, "disttree.family"))  
       #   family <- distfamily(family)
       np <- length(family$link)
       
-      pred.par <- data.frame(matrix(0, nrow = nrow(nd), ncol = np))
+      if(type == "parameter") pred <- data.frame(matrix(0, nrow = nrow(nd), ncol = np))
+      if(type == "response") pred <- data.frame(matrix(0, nrow = nrow(nd), ncol = 1))
       # loglik <- data.frame(idx = 1:nrow(data))  ## FIXME: should we provide loglik for newdata?
       
       for(i in 1:nrow(nd)){
         wi <- w[,i]
         # personalized model for observation nd[i,]
         pm <-  disttree::distexfit(responses, family = family, weights = wi, vcov = FALSE, 
-                                   optim.control = control$optim.control, ...)
-        pred.par[i,] <- coef(pm, type = "parameter")
+                                   optim.control = object$info$control$optim.control, ...)
+        pred[i,] <- disttree:::predict.distexfit(pm, type = type)
         # loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(responses[i], log = TRUE) else NA
       }
       
-      names(pred.par) <- names(coef(pm, type = "parameter"))
-      return(pred.par)
+      if(type == "parameter") names(pred) <- names(disttree:::coef.distexfit(pm, type = "parameter"))
+      if(type == "response") names(pred) <- "predicted response"
+      return(pred)
     }
 }
 

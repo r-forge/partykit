@@ -387,7 +387,7 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     rdist = rdist
   )
   
-  class(rval) <- "distfit"
+  class(rval) <- "distexfit"
   return(rval)
 }
 
@@ -396,14 +396,14 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
 
 ## methods
-nobs.distexfit <- function(object, ...) return(object$ny)
+nobs.distexfit <- function(object) return(object$ny)
 
-coef.distexfit <- function(object, type = "parameter" , ...) {
+coef.distexfit <- function(object, type = "parameter") {
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
 }
 
-get_expectedvalue <- function(object, par) {
+get_expectedvalue_distex <- function(object, par) {
   
   if(is.vector(par)) {
     # 1-parametric distribution
@@ -415,11 +415,11 @@ get_expectedvalue <- function(object, par) {
     }
   }
   
-  if(inherits(object, "distfit")) {
+  if(inherits(object, "distexfit")) {
     censored <- object$family$censored
     family.name <- object$family$family.name
   }
-  if(inherits(object, "disttree")) {
+  if(inherits(object, "distextree")) {
     censored <- object$info$family$censored
     family.name <- object$info$family$family.name
   }
@@ -483,7 +483,7 @@ get_expectedvalue <- function(object, par) {
     expv <- expv[[1]]
   }
   
-  if(inherits(object, "disttree")){
+  if(inherits(object, "distextree")){
     expv <- numeric(length = NROW(par))
     for(i in 1:NROW(par)){
       eta <- unlist(object$info$family$linkfun(par[i,]))
@@ -513,7 +513,7 @@ get_expectedvalue <- function(object, par) {
 }
 
 
-predict.distexfit <- function(object, type = c("parameter", "response"), ...) {
+predict.distexfit <- function(object, type = c("parameter", "response")) {
   # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
   
@@ -522,10 +522,10 @@ predict.distexfit <- function(object, type = c("parameter", "response"), ...) {
   
   if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
   
-  if(type == "response") return(get_expectedvalue(object, object$par)) else return(object$par)
+  if(type == "response") return(get_expectedvalue_distex(object, object$par)) else return(object$par)
 }
 
-vcov.distexfit <- function(object, type = "link", ...) {
+vcov.distexfit <- function(object, type = c("link", "parameter")) {
   if(type == "link") return(object$vcov)
   if(type == "parameter"){
     ## delta method
@@ -535,16 +535,16 @@ vcov.distexfit <- function(object, type = "link", ...) {
   }
 }
   
-estfun.distexfit <- function(object, ...) return(object$estfun)
+estfun.distexfit <- function(object) return(object$estfun)
 
-logLik.distexfit <- function(object, ...) structure(object$loglik, df = object$npar, class = "logLik")
+logLik.distexfit <- function(object) structure(object$loglik, df = object$npar, class = "logLik")
 
-bread.distexfit <- function(object, type = c("parameter", "link"), ...) {
+bread.distexfit <- function(object, type = c("parameter", "link")) {
   if(type == "parameter") return(vcov(object, type = "parameter") * object$ny)
   if(type == "link") return(object$vcov * object$ny)
 }
 
-confint.distexfit <- function(object, parm, level = 0.95, type = "link", ...) {
+confint.distexfit <- function(object, parm, level = 0.95, type = c("link","parameter")) {
   np <- object$npar
   
   if(type == "link"){ 
@@ -606,30 +606,30 @@ confint.distexfit <- function(object, parm, level = 0.95, type = "link", ...) {
   confint
 }
 
-print.distexfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+print.distexfit <- function(object, digits = max(3, getOption("digits") - 3))
 {
-  cat("Fitted distributional model (", x$family$family.name, ")\n\n")
-  if(!(x$family$mle) && !x$converged) {
+  cat("Fitted distributional model (", object$family$family.name, ")\n\n")
+  if(!(object$family$mle) && !object$converged) {
     cat("Model did not converge\n")
   } else {
-    if(length(x$par)) {
+    if(length(object$par)) {
       cat("Distribution parameter(s):\n")
-      print.default(format(x$par, digits = digits), print.gap = 2, quote = FALSE)
+      print.default(format(object$par, digits = digits), print.gap = 2, quote = FALSE)
       cat("\n")
     } else {
       cat("No parameters \n\n")
     }
-    cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
-    if(length(x$npar)) {
-      cat(paste("Df: ", format(x$npar, digits = digits), "\n", sep = ""))
+    cat(paste("Log-likelihood: ", format(object$loglik, digits = digits), "\n", sep = ""))
+    if(length(object$npar)) {
+      cat(paste("Df: ", format(object$npar, digits = digits), "\n", sep = ""))
     }
     cat("\n")
   }
   
-  invisible(x)
+  invisible(object)
 }
 
-summary.distexfit <- function(object, ...)
+summary.distexfit <- function(object)
 {
   ## residuals
   object$residuals <- object$y - predict.distexfit(object, type = "response")
@@ -651,7 +651,7 @@ summary.distexfit <- function(object, ...)
 }
 
 
-print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
+print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3))
 {
   cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
   
@@ -680,9 +680,9 @@ print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3),
 }
 
 
-getSummary.distexfit <- function(obj, alpha = 0.05, ...) {
+getSummary.distexfit <- function(object, alpha = 0.05) {
   ## extract coefficient summary
-  s <- summary(obj)
+  s <- summary(object)
   cf <- s$coefficients
   ## augment with confidence intervals
   cval <- qnorm(1 - alpha/2)
@@ -694,20 +694,20 @@ getSummary.distexfit <- function(obj, alpha = 0.05, ...) {
   
   ## return everything
   return(list(
-    family = obj$family$family.name,
+    family = object$family$family.name,
     coef = cf,
     sumstat = c(
-      "N" = obj$nobs,
-      "logLik" = as.vector(logLik(obj)),
-      "AIC" = AIC(obj),
-      "BIC" = AIC(obj, k = log(obj$ny))
+      "N" = object$nobs,
+      "logLik" = as.vector(logLik(object)),
+      "AIC" = AIC(object),
+      "BIC" = AIC(object, k = log(object$ny))
     ),
-    call = obj$call
+    call = object$call
   ))
 }
 
 
-residuals.distexfit <- function(object, type = c("standardized", "pearson", "response"), ...) {
+residuals.distexfit <- function(object, type = c("standardized", "pearson", "response")) {
   if(match.arg(type) == "response") {
     object$y - predict.distexfit(object, type = "response")
   } else {

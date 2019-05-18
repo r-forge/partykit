@@ -614,6 +614,302 @@ distextree_control_old <- function(type.tree = NULL,
 
 
 
+
+
+
+
+## FIXME: adapt methods (class distextree?)
+print.distextree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
+{
+  familyname <- if(inherits(x$info$family, "gamlss.family")) {
+    paste(x$info$family[[1]][2], "Distribution")
+  } else {x$info$family$family.name}
+  if(is.null(title)) title <- sprintf("Distributional regression tree (%s)", familyname)
+  partykit::print.modelparty(x, title = title, objfun = objfun, ...)
+}
+
+
+
+predict.distextree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
+{
+  
+  # per default 'type' is set to 'parameter'
+  if(length(type)>1) type <- type[1]
+  
+  ## get nodes
+  # if ctree was applied
+  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
+                                                                           type = "node", OOB = OOB, ...)
+  # if mob was applied
+  if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, 
+                                                                                type = "node", OOB = OOB, ...)
+  
+  if(type == "node") return(pred.nodes)
+  
+  ## get parameters
+  groupcoef <- coef(object)
+  
+  # only 1 subgroup or 1-parametric family
+  if(is.vector(groupcoef)) {
+    # 1-parametric family
+    if(length(family$link) == 1){
+      groupcoef <- as.matrix(groupcoef)
+      colnames(groupcoef) <- "mu"
+    } else {
+      # only 1 subgroup
+      groupcoef <- t(as.matrix(groupcoef))
+      rownames(groupcoef) <- "1"
+    }
+  }
+  
+  pred.par <- groupcoef[paste(pred.nodes),]
+  
+  if(is.vector(pred.par)){
+    # 1-parametric family
+    if(length(object$info$family$link) == 1) {
+      pred.par <- as.matrix(pred.par)
+      colnames(pred.par) <- "mu"
+    } else {
+      # only 1 new observation
+      pred.par <- t(as.matrix(pred.par))
+    }
+  }
+  
+  rownames(pred.par) <- c(1: (NROW(pred.par)))
+  pred.par <- as.data.frame(pred.par)
+  
+  if(type == "parameter") return(pred.par)
+  
+  if(type == "response") return(get_expectedvalue_distex(object, pred.par))
+}
+
+
+
+
+
+coef.distextree <- function(object, ...){
+  object$coefficients
+}
+
+
+logLik.distextree <- function(object, newdata = NULL, weights = NULL, ...) {
+  if(is.null(newdata)) {
+    if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")
+    if(!is.null(object$loglik)) return(structure(object$loglik, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
+    newdata <- object$data
+  }    
+  
+  if(!is.null(weights)) stopifnot(NROW(newdata) == nrow(weights))
+  ll <- 0
+  # predicted nodes for the new dataset
+  pred.node <- predict(object, newdata = newdata, type = "node")
+  # coefficients in the terminal nodes
+  coef_tn <- coef(object)
+  # number of terminal nodes
+  n_tn <- width(object) # <- nrow(coef_tn)
+  # id of terminal nodes
+  id_tn <- rownames(coef_tn)
+  # get link fun and ddist from distribution list
+  linkfun <- object$info$family$linkfun
+  ddist <- object$info$family$ddist
+  
+  
+  if(object$info$family$gamlssobj && object$info$family$censored) {
+    censtype <- object$info$censtype
+    censpoint <- object$info$censpoint
+    for(i in 1:n_tn){
+      par <- coef_tn[i,]
+      eta <-  as.numeric(linkfun(par))
+      # response variable and weights of the observations that end up in this terminal node
+      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      if(length(nobs_tn) > 0L){
+        if(!survival::is.Surv(nobs_tn)) {
+          if(censtype == "left") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn > censpoint, type = "left"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
+          if(censtype == "right") ll <- ll + ddist(survival::Surv(nobs_tn, nobs_tn < censpoint, type = "right"), eta = eta, log = TRUE, sum = TRUE, weights = weights_tn)
+          ## FIX ME: interval censored
+        } else ll <- ll + ddist(nobs_tn, eta = eta, log=TRUE, sum = TRUE)
+      }
+    }
+  } else {
+    for(i in 1:n_tn){
+      par <- coef_tn[i,]
+      eta <-  as.numeric(linkfun(par))
+      # response variable and weights of the observations that end up in this terminal node
+      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      if(length(nobs_tn) > 0L) ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE, weights = weights_tn)
+    }
+  }
+  return(structure(ll, df = ncol(coef(object))*width(object) + width(object)-1 , class = "logLik"))
+}
+
+
+
+
+## predict.distextree <- function(object, newdata = NULL,
+##   type = c("worth", "rank", "best", "node"), ...)
+## {
+##   ## type of prediction
+##   type <- match.arg(type)
+##   
+##   ## nodes can be handled directly
+##   if(type == "node") return(partykit::predict.modelparty(object, newdata = newdata, type = "node", ...))
+##   
+##   ## get default newdata otherwise
+##   if(is.null(newdata)) newdata <- model.frame(object)
+##   
+##   pred <- switch(type,
+##     "worth" = worth,
+##     "rank" = function(obj, ...) rank(-worth(obj)),
+##     "best" = function(obj, ...) {
+##       wrth <- worth(obj)
+##       factor(names(wrth)[which.max(wrth)], levels = names(wrth))
+##     }
+##   )
+##   partykit::predict.modelparty(object, newdata = newdata, type = pred, ...)
+## }
+
+
+## FIX: adapt for distextree_mob
+# argument 'type' can be "density" (FIX), "coef" and "hist" (FIX)
+#plot.distextree <- function(x, type = "coef",
+#   tp_args = list(...), tnex = NULL, drop_terminal = NULL, ...)
+# {
+#  if(type == "density"){
+#    node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
+#                              main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
+#                              fill = "lightgrey", col = "black", lwd = 0.5, ...) {
+#      yobs <- tree$data[,as.character(tree$info$formula[[2]])]
+#      ylines <- 1.5
+#      if (is.null(xscale)) xscale <- c(-5.1,50)
+#      if (is.null(yscale)) yscale <- c(-0.05,0.25)
+#      xr <- xscale
+#      yr <- yscale
+#      
+#      if (horizontal) {
+#        yyy <- xscale
+#        xscale <- yscale
+#        yscale <- yyy
+#      }
+#      
+#      rval <- function(node) {
+#        yrange <- seq(from = -20, to = 200)/4
+#        ydens <- node$info$object$ddist(yrange)
+#        
+#        top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
+#                                                widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
+#                                                heights = unit(c(1, 1), c("lines", "null"))), 
+#                           width = unit(1, "npc"), 
+#                           height = unit(1, "npc") - unit(2, "lines"), 
+#                           name = paste("node_density",node$id, sep = ""))
+#        pushViewport(top_vp)
+#        grid.rect(gp = gpar(fill = "white", col = 0))
+#        top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+#        pushViewport(top)
+#        mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
+#        
+#        grid.text(mainlab)
+#        popViewport()
+#        plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
+#                         xscale = xscale, yscale = yscale, 
+#                         name = paste("node_density",  node$id, "plot", sep = ""))
+#        pushViewport(plot)
+#        yd <- ydens
+#        xd <- yrange
+#        if (horizontal) {
+#          yyy <- xd
+#          xd <- yd
+#          yd <- yyy
+#          yyy <- xr
+#          xr <- yr
+#          yr <- yyy
+#          rxd <- rep(0, length(xd))
+#          ryd <- rev(yd)
+#        } else {
+#          rxd <- rev(xd)
+#          ryd <- rep(0, length(yd))
+#        }
+#        
+#        if (rug) {
+#          nodeobs <- node$info$object$y
+#          if (horizontal) {
+#            grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
+#                      default.units = "native", just = c("right", "bottom"),
+#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+#          } else {
+#            grid.rect(x = nodeobs, y = yscale[1], 
+#                      width = 0, height = abs(yscale[1]), default.units = "native", 
+#                      just = c("center", "bottom"),
+#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+#          }
+#        }
+#        
+#        
+#        grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
+#                     gp = gpar(col = "black", fill = fill, lwd = lwd))
+#        grid.xaxis()
+#        grid.yaxis()
+#        grid.rect(gp = gpar(fill = "transparent"))
+#        upViewport(2)
+#      }
+#      return(rval)
+#    }
+#    class(node_density) <- "grapcon_generator"
+#    
+#    plot.modelparty(x, tnex = 1.7, drop = TRUE,
+#         terminal_panel = node_density)
+#  }
+#  
+#  if(type == "coef") plot.modelparty(x)
+#  
+#  #if(type == "hist"){
+#  #  terminal_panel = node_histogram
+#  #  if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L
+#  #  if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
+#  #  partykit::plot.modelparty(x, terminal_panel = terminal_panel,
+#  #                            tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
+#  #}
+#   
+#}
+
+
+if(FALSE){
+  tr <- distextree(dist ~ speed, data = cars)
+  # trc <- distextree(dist ~ speed, data = cars, type.tree = "ctree")
+  print(tr)
+  
+  plot(tr)
+  plot(as.constparty(tr))
+}
+
+
+if(FALSE){
+  y1 <- rNO(200,1,0.5)
+  y2 <- rNO(200,5,2)
+  y3 <- rNO(200,50,4)
+  y4 <- rNO(200,100,7)
+  x1 <- vector(mode = "numeric",length = length(y1)) + 1
+  x2 <- vector(mode = "numeric",length = length(y2)) + 2
+  x3 <- vector(mode = "numeric",length = length(y3)) + 3
+  x4 <- vector(mode = "numeric",length = length(y4)) + 4
+  d <- as.data.frame(cbind(c(y1,y2,y3,y4),c(x1,x2,x3,x4)))
+  colnames(d) <- c("y","x")
+  
+  test_mob <- distextree(y~x, data = d, family = dist_list_normal, type.tree = "mob")
+  test_ctree <- distextree(y~x, data = d, family = dist_list_normal, type.tree = "ctree", control = ctree_control())
+  print(test_mob)
+  plot(test_mob)
+  plot(as.constparty(test_mob))
+  print(test_ctree)
+  plot(test_ctree)
+}
+
+
+
+
+
+
 if(FALSE) {
 # use different version of .select than partykit:::select for GUIDE as selectfun 
 # (returns p.values from curvature and interaction tests instead of p.value and teststatistic)
