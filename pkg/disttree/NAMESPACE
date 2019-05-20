@@ -115,9 +115,5 @@ S3method("logLik", "distforest")
 S3method("predict", "distexforest")
 S3method("logLik", "distexforest")
 S3method("varimp", "distexforest")
-
-S3method("predict", "distexforest")
-S3method("varimp", "distexforest")
-S3method("gettree", "distexforest")
 S3method("model.frame", "distexforest")
 
