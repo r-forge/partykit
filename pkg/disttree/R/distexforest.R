@@ -236,7 +236,7 @@ distexforest <- function
 
 
 predict.distexforest <- function(object, newdata = NULL, 
-                                 type = c("response", "parameter", "weights", "node"), 
+                                 type = c("parameter", "response", "weights", "node"), 
                                  OOB = TRUE, 
                                  FUN = NULL, simplify = TRUE, 
                                  scale = TRUE, ...) {

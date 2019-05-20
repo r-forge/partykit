@@ -612,7 +612,7 @@ confint.distexfit <- function(object, parm, level = 0.95, type = c("parameter", 
 
 print.distexfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("Fitted distributional model (", x$family$family.name, ")\n\n")
+  cat("Fitted distributional model (",x$family$family.name,")\n\n", sep = "")
   if(!(x$family$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {

@@ -122,6 +122,7 @@ distextree <- function(formula,
                 nobs = nobs(model), # TODO: (ML) check if ok, added to get nobs right
                 converged = model$converged  # TODO: (LS) warnings if distexfit does not converge
     )
+    
     return(rval)
   }
 
@@ -241,7 +242,7 @@ distextree <- function(formula,
 
   tree_ret$update <- update
 
-  class(tree_ret) <- class(rval)
+  class(tree_ret) <- c("distextree", class(rval))
 
   return(tree_ret)
 
@@ -630,16 +631,16 @@ print.distextree <- function(x, title = NULL, objfun = "negative log-likelihood"
 
 
 
-predict.distextree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
+predict.distextree <- function (object, newdata = NULL, type = c("parameter", "response", "node"), OOB = FALSE, ...) 
 {
   
   # per default 'type' is set to 'parameter'
-  if(length(type)>1) type <- type[1]
+  type <- match.arg(type)
   
   ## get nodes
-  # if ctree was applied
-  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
-                                                                           type = "node", OOB = OOB, ...)
+  ## if ctree was applied   # FIXME: currently class constparty can not be obtained from distextree
+  #if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
+  #                                                                         type = "node", OOB = OOB, ...)
   # if mob was applied
   if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, 
                                                                                 type = "node", OOB = OOB, ...)
@@ -652,7 +653,7 @@ predict.distextree <- function (object, newdata = NULL, type = c("parameter", "n
   # only 1 subgroup or 1-parametric family
   if(is.vector(groupcoef)) {
     # 1-parametric family
-    if(length(family$link) == 1){
+    if(length(object$family$link) == 1){
       groupcoef <- as.matrix(groupcoef)
       colnames(groupcoef) <- "mu"
     } else {
@@ -666,7 +667,7 @@ predict.distextree <- function (object, newdata = NULL, type = c("parameter", "n
   
   if(is.vector(pred.par)){
     # 1-parametric family
-    if(length(object$info$family$link) == 1) {
+    if(length(object$family$link) == 1) {
       pred.par <- as.matrix(pred.par)
       colnames(pred.par) <- "mu"
     } else {
@@ -685,13 +686,11 @@ predict.distextree <- function (object, newdata = NULL, type = c("parameter", "n
 
 
 
-
-
 coef.distextree <- function(object, ...){
-  object$coefficients
+  partykit:::coef.modelparty(object)
 }
 
-
+## FIXME: Should we allow for newdata in logLik ?
 logLik.distextree <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
     if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")
