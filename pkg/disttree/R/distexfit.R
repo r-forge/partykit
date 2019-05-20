@@ -2,7 +2,7 @@
 # new version of distfit used as a fitting function in distextree #
 ###################################################################
 
-distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
+distexfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = NULL, 
                       vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"), 
                       method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 {
@@ -57,7 +57,7 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       rdist = NA
     )
     
-    class(rval) <- "distfit"
+    class(rval) <- "distexfit"
     return(rval)
   }    
   
@@ -396,9 +396,10 @@ distexfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 
 
 ## methods
-nobs.distexfit <- function(object) return(object$ny)
+nobs.distexfit <- function(object, ...) return(object$ny)
 
-coef.distexfit <- function(object, type = "parameter") {
+coef.distexfit <- function(object, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
 }
@@ -424,8 +425,10 @@ get_expectedvalue_distex <- function(object, par) {
     family.name <- object$info$family$family.name
   }
   
-  ## FIX ME: expected value for censored distributions
-  ## here only for left censored at 0 -> TO DO: general form
+  ## FIXME: replace censored/truncated case with crch implementation 
+  ## (here only for left censored at 0 -> TO DO: general form)
+  ## other censored distributions currently not possible (other than normal or logistic)
+  ## (general implementation for closed form solutions available?)
   if(censored) {
     if("Normal" %in% strsplit(family.name, " ")[[1]]){
       mu <- par[,1]
@@ -513,19 +516,18 @@ get_expectedvalue_distex <- function(object, par) {
 }
 
 
-predict.distexfit <- function(object, type = c("parameter", "response")) {
+predict.distexfit <- function(object, type = c("parameter", "response"), ...) {
   # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
   
   # per default 'type' is set to 'parameter'
-  if(length(type)>1) type <- type[1]
-  
-  if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
+  type <- match.arg(type)
   
   if(type == "response") return(get_expectedvalue_distex(object, object$par)) else return(object$par)
 }
 
-vcov.distexfit <- function(object, type = c("link", "parameter")) {
+vcov.distexfit <- function(object, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   if(type == "link") return(object$vcov)
   if(type == "parameter"){
     ## delta method
@@ -535,16 +537,18 @@ vcov.distexfit <- function(object, type = c("link", "parameter")) {
   }
 }
   
-estfun.distexfit <- function(object) return(object$estfun)
+estfun.distexfit <- function(x) return(x$estfun, ...)
 
-logLik.distexfit <- function(object) structure(object$loglik, df = object$npar, class = "logLik")
+logLik.distexfit <- function(object, ...) structure(object$loglik, df = object$npar, class = "logLik")
 
-bread.distexfit <- function(object, type = c("parameter", "link")) {
-  if(type == "parameter") return(vcov(object, type = "parameter") * object$ny)
-  if(type == "link") return(object$vcov * object$ny)
+bread.distexfit <- function(x, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
+  if(type == "parameter") return(vcov(x, type = "parameter") * x$ny)
+  if(type == "link") return(x$vcov * x$ny)
 }
 
-confint.distexfit <- function(object, parm, level = 0.95, type = c("link","parameter")) {
+confint.distexfit <- function(object, parm, level = 0.95, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   np <- object$npar
   
   if(type == "link"){ 
@@ -606,30 +610,30 @@ confint.distexfit <- function(object, parm, level = 0.95, type = c("link","param
   confint
 }
 
-print.distexfit <- function(object, digits = max(3, getOption("digits") - 3))
+print.distexfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("Fitted distributional model (", object$family$family.name, ")\n\n")
-  if(!(object$family$mle) && !object$converged) {
+  cat("Fitted distributional model (", x$family$family.name, ")\n\n")
+  if(!(x$family$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {
-    if(length(object$par)) {
+    if(length(x$par)) {
       cat("Distribution parameter(s):\n")
-      print.default(format(object$par, digits = digits), print.gap = 2, quote = FALSE)
+      print.default(format(x$par, digits = digits), print.gap = 2, quote = FALSE)
       cat("\n")
     } else {
       cat("No parameters \n\n")
     }
-    cat(paste("Log-likelihood: ", format(object$loglik, digits = digits), "\n", sep = ""))
-    if(length(object$npar)) {
-      cat(paste("Df: ", format(object$npar, digits = digits), "\n", sep = ""))
+    cat(paste("Log-likelihood: ", format(x$loglik, digits = digits), "\n", sep = ""))
+    if(length(x$npar)) {
+      cat(paste("Df: ", format(x$npar, digits = digits), "\n", sep = ""))
     }
     cat("\n")
   }
   
-  invisible(object)
+  invisible(x)
 }
 
-summary.distexfit <- function(object)
+summary.distexfit <- function(object, ...)
 {
   ## residuals
   object$residuals <- object$y - predict.distexfit(object, type = "response")
@@ -651,7 +655,7 @@ summary.distexfit <- function(object)
 }
 
 
-print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3))
+print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
   cat("\nCall:", deparse(x$call, width.cutoff = floor(getOption("width") * 0.85)), "", sep = "\n")
   
@@ -680,7 +684,7 @@ print.summary.distexfit <- function(x, digits = max(3, getOption("digits") - 3))
 }
 
 
-getSummary.distexfit <- function(object, alpha = 0.05) {
+getSummary.distexfit <- function(object, alpha = 0.05, ...) {
   ## extract coefficient summary
   s <- summary(object)
   cf <- s$coefficients
@@ -707,6 +711,7 @@ getSummary.distexfit <- function(object, alpha = 0.05) {
 }
 
 
+# FIXME: check correct calculations for each available type
 residuals.distexfit <- function(object, type = c("standardized", "pearson", "response")) {
   if(match.arg(type) == "response") {
     object$y - predict.distexfit(object, type = "response")
@@ -719,7 +724,7 @@ residuals.distexfit <- function(object, type = c("standardized", "pearson", "res
 
 
 
-## FIX ME:
+## FIXME: revise plotting options
 plot.distexfit <- function(x,
                          main = "", xlab = "", ylab = "Density",
                          fill = "lightgray", col = "darkred", lwd = 1.5,
