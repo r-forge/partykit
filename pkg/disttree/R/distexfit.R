@@ -643,9 +643,14 @@ summary.distexfit <- function(object, ...)
   
   ## extend coefficient table
   cf <- as.vector(object$par)
-  se <- sqrt(diag(vcov(object, type = "parameter")))
-  cf <- cbind(cf, se)
-  colnames(cf) <- c("Estimate", "Std. Error")
+  if (!is.null(object$vcov)){
+    se <- sqrt(diag(vcov(object, type = "parameter")))
+    cf <- cbind(cf, se)
+    colnames(cf) <- c("Estimate", "Std. Error")
+  } else{
+    cf <- matrix(cf, ncol = 1)
+    colnames(cf) <- c("Estimate")
+  }
   rownames(cf) <- names(object$par)
   object$coefficients <- cf
   

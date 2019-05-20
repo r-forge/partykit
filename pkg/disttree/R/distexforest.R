@@ -62,7 +62,7 @@ distexforest <- function
         teststat = "quad", testtype = "Univ", mincriterion = 0,
         saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
     ntree = 500L, 
-    fit = TRUE,
+    fit.par = FALSE,
     perturb = list(replace = FALSE, fraction = 0.632),
     mtry = ceiling(sqrt(nvar)), 
     applyfun = NULL,
@@ -196,7 +196,7 @@ distexforest <- function
     ret$predictf <- d$terms$z
     class(ret) <- c("distexforest", class(ret))
 
-    if(fit) {
+    if(fit.par) {
       ## adaptive local log-likelihood
       ## calculate fitted values, fitted distribution parameters, 
       ##   loglikelihood for every observation
@@ -307,15 +307,15 @@ predict.distexforest <- function(object, newdata = NULL,
     
     if(type == "parameter" | type == "response") {
       
-      if(NOnewdata & type == "parameter") return(object$fitted.par)
+      if(NOnewdata & type == "parameter" & !is.null(object$fitted.par)) return(object$fitted.par)
         
       family <- object$info$family
       # if(!inherits(family, "disttree.family"))  
       #   family <- distfamily(family)
       np <- length(family$link)
       
-      if(type == "parameter") pred <- data.frame(matrix(0, nrow = nrow(nd), ncol = np))
-      if(type == "response") pred <- data.frame(matrix(0, nrow = nrow(nd), ncol = 1))
+      if(type == "parameter") pred <- matrix(0, nrow = nrow(nd), ncol = np)
+      if(type == "response") pred <- matrix(0, nrow = nrow(nd), ncol = 1)
       # loglik <- data.frame(idx = 1:nrow(data))  ## FIXME: should we provide loglik for newdata?
       
       for(i in 1:nrow(nd)){
@@ -327,8 +327,11 @@ predict.distexforest <- function(object, newdata = NULL,
         # loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(responses[i], log = TRUE) else NA
       }
       
-      if(type == "parameter") names(pred) <- names(disttree:::coef.distexfit(pm, type = "parameter"))
-      if(type == "response") names(pred) <- "predicted response"
+      if(type == "parameter") {
+        pred <- data.frame(pred)
+        names(pred) <- names(disttree:::coef.distexfit(pm, type = "parameter"))
+      }
+      if(type == "response") pred <- as.vector(pred)
       return(pred)
     }
 }
@@ -340,55 +343,56 @@ model.frame.distexforest <- function(formula, ...) {
     model.frame(formula, ...)
 }
 
-gettree.distexforest <- function(object, tree = 1L, ...) {
-    ft <- object$fitted
-    ft[["(weights)"]] <- object$weights[[tree]]
-    ret <- party(object$nodes[[tree]], data = object$data, fitted = ft)
-    ret$terms <- object$terms
-    class(ret) <- c("constparty", class(ret))
-    ret
-}
+### FIXME: (ML) does not get a full distextree object
+#gettree.distexforest <- function(object, tree = 1L, ...) {
+#    ft <- object$fitted
+#    ft[["(weights)"]] <- object$weights[[tree]]
+#    ret <- party(object$nodes[[tree]], data = object$data, fitted = ft)
+#    ret$terms <- object$terms
+#    class(ret) <- c("distextree", class(ret))
+#    ret
+#}
 
-varimp.distexforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
-                           conditional = FALSE, threshold = .2,
-                           applyfun = NULL, cores = NULL, ...) {
-
-    ret <- matrix(NA, nrow = length(object$nodes), ncol = ncol(object$data))
-    colnames(ret) <- names(object$data)
-
-    if (conditional) {
-        conditions <- partykit:::.create_cond_list(object, threshold)
-    } else {
-        conditions <- NULL
-    }
-
-    ## apply infrastructure 
-    if (is.null(applyfun)) {
-        applyfun <- if(is.null(cores)) {
-            lapply
-        } else {
-            function(X, FUN, ...)
-                parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
-        }
-    }
-
-    vi <- applyfun(1:length(object$nodes), function(b) {
-        tree <- gettree(object, b)
-        if (OOB) {
-            oobw <- as.integer(object$weights[[b]] == 0)
-            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
-                         weights = oobw, ...)
-        } else {
-            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
-                         ...)
-        }
-        return(vi)
-    })
-
-    for (b in 1:length(object$nodes))
-        ret[b, match(names(vi[[b]]), colnames(ret))] <- vi[[b]]
-
-    ret <- colMeans(ret, na.rm = TRUE)
-    ret[!sapply(ret, is.na)]
-}
+#varimp.distexforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
+#                           conditional = FALSE, threshold = .2,
+#                           applyfun = NULL, cores = NULL, ...) {
+#
+#    ret <- matrix(NA, nrow = length(object$nodes), ncol = ncol(object$data))
+#    colnames(ret) <- names(object$data)
+#
+#    if (conditional) {
+#        conditions <- partykit:::.create_cond_list(object, threshold)
+#    } else {
+#        conditions <- NULL
+#    }
+#
+#    ## apply infrastructure 
+#    if (is.null(applyfun)) {
+#        applyfun <- if(is.null(cores)) {
+#            lapply
+#        } else {
+#            function(X, FUN, ...)
+#                parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
+#        }
+#    }
+#
+#    vi <- applyfun(1:length(object$nodes), function(b) {
+#        tree <- gettree(object, b)
+#        if (OOB) {
+#            oobw <- as.integer(object$weights[[b]] == 0)
+#            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
+#                         weights = oobw, ...)
+#        } else {
+#            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
+#                         ...)
+#        }
+#        return(vi)
+#    })
+#
+#    for (b in 1:length(object$nodes))
+#        ret[b, match(names(vi[[b]]), colnames(ret))] <- vi[[b]]
+#
+#    ret <- colMeans(ret, na.rm = TRUE)
+#    ret[!sapply(ret, is.na)]
+#}
 
