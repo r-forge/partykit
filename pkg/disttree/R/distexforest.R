@@ -385,9 +385,9 @@ varimp.distexforest <- function(object, nperm = 1L, ...){
   # using only one core
   # risk_all <- replicate(nperm, sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps))
   # risk <- rowMeans(risk_all)
-  
+
   ## FIXME: better way to get dataset without response
-  splitvar <- names(object$data) %in% as.character(object$predictf)[-1]
+  splitvar <- names(object$data) %in% attr(object$predictf, "term.labels")
   splitid <- c(1:NCOL(object$data))[splitvar]
   
   # or parallel
@@ -401,7 +401,8 @@ varimp.distexforest <- function(object, nperm = 1L, ...){
   names(risk) <- names(object$data)[splitid]
   vimp <- risk - riskfun(newdata = object$data)
   vimp <- sort(vimp, decreasing = TRUE)
-  
+
+  return(vimp)
 }
 
 
