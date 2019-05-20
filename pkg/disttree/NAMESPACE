@@ -66,7 +66,8 @@ export(
   "dist_list_hurdle_normal",
   
   ## additional summary function
-  "getSummary.distfit"
+  "getSummary.distfit",
+  "getSummary.distexfit"
 )
 
 ## methods
@@ -84,10 +85,29 @@ S3method("summary", "distfit")
 S3method("print", "summary.distfit")
 S3method("plot", "distfit") # FIXME
 
+S3method("bread", "distexfit")
+S3method("coef", "distexfit")
+S3method("confint", "distexfit")
+S3method("estfun", "distexfit")
+S3method("logLik", "distexfit")
+S3method("nobs", "distexfit")
+S3method("vcov", "distexfit")
+S3method("predict", "distexfit")
+S3method("print", "distexfit")
+S3method("residuals", "distexfit")
+S3method("summary", "distexfit")
+S3method("print", "summary.distexfit")
+S3method("plot", "distexfit") # FIXME
+
 S3method("print", "disttree")
 S3method("coef", "disttree")
 S3method("predict", "disttree")
 S3method("logLik", "disttree")
+
+S3method("print", "distextree")
+S3method("coef", "distextree")
+S3method("predict", "distextree")
+S3method("logLik", "distextree")
 
 S3method("predict", "distforest")
 S3method("logLik", "distforest")
