@@ -337,6 +337,77 @@ predict.distexforest <- function(object, newdata = NULL,
 }
 
 
+logLik.distexforest <- function(object, newdata = NULL, weights = NULL, ...){
+  
+  pred.par <- predict.distexforest(object = object, newdata = newdata, type = "parameter")
+  
+  if(is.null(newdata)) {
+    responses <- object$fitted[["(response)"]]
+  } else {
+    ## FIXME: can we extract the response without building the whole data.frame?
+    nd <- object$data
+    vmatch <- 1:ncol(nd)
+    factors <- which(sapply(nd, is.factor))
+    xlev <- lapply(factors, function(x) levels(nd[[x]]))
+    names(xlev) <- names(nd)[factors]
+    nd <- model.frame(object$info$call$formula, ## FIXME: use formula with response only
+                      data = newdata, na.action = na.pass, xlev = xlev)
+    responses <- nd[,as.character(object$info$call$formula[[2]])]
+  }
+
+  if(is.null(weights)) weights <- rep.int(1, NROW(responses))
+  
+  ## FIXME: check format returned by linkfun / linkinv (in case of multidimensional data)
+  ll <- object$info$family$ddist(responses, 
+                                 eta = data.frame(object$info$family$linkfun(pred.par)),
+                                 log = TRUE, weights = weights, sum = TRUE)
+  
+  return(ll)
+}
+
+
+
+## varimp
+varimp.distexforest <- function(object, nperm = 1L, ...){
+
+  # define function for parallelization
+  applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, parallel::detectCores() - 1))
+  
+  # function to permutate chosen variable and then calculate mean loglikelihood
+  riskfun <- function(permute = NULL, newdata = object$data) {
+    if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
+    logLik(object, newdata = newdata)
+  }
+
+  # apply for all covariates except for dswrf_mean_min and 
+  # dswrf_sprd_min (columns 30 and 33) as they are always 0
+  
+  # using only one core
+  # risk_all <- replicate(nperm, sapply(c(5:29, 31, 32, 34: ncol(testdata)), meancrps))
+  # risk <- rowMeans(risk_all)
+  
+  ## FIXME: better way to get dataset without response
+  splitvar <- names(object$data) %in% as.character(object$predictf)[-1]
+  splitid <- c(1:NCOL(object$data))[splitvar]
+  
+  # or parallel
+  risklist <- applyfun(1:nperm, 
+                       function(i){
+                         set.seed(i)
+                         sapply(splitid, riskfun)
+                       })
+  risk <- Reduce("+", risklist) / length(risklist)
+  
+  names(risk) <- names(object$data)[splitid]
+  vimp <- risk - riskfun(newdata = object$data)
+  vimp <- sort(vimp, decreasing = TRUE)
+  
+}
+
+
+
+
+
 ## copied methods from cforest
 model.frame.distexforest <- function(formula, ...) {
     class(formula) <- "party"
