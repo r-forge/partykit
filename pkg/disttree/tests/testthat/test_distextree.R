@@ -2,7 +2,7 @@ context("comparison of new implementation 'distextree()' with older version 'dis
 
 ## Check classes
 tr <- distextree(dist ~ speed, data = cars)
-expect_true(all(class(tr) %in% c("modelparty", "party")))
+expect_true(all(class(tr) %in% c("distextree", "modelparty", "party")))
 
 ## Compare new with old disttree for tree type equal to 'mob'
 m.old <- disttree(dist ~ speed, data = cars, type.tree = "mob")
@@ -21,12 +21,12 @@ c.new <- distextree(dist ~ speed, data = cars, type.tree = "ctree",
 expect_equal(coef(c.old), coef(c.new), tolerance = 1e-6)
 expect_equal(as.numeric(logLik(c.old)), as.numeric(logLik(c.new))) # attr(logLik(c.old), 'nobs') missing
 
-expect_equal(nrow(cars), attr(logLik(m.new), "nobs"))
-expect_equal(nrow(cars), attr(logLik(c.new), "nobs"))
+expect_equal(attr(logLik(m.new), "df"), attr(logLik(m.old), "df"))
+expect_equal(attr(logLik(c.new), "df"), attr(logLik(c.new), "df"))
+expect_equal(as.numeric(logLik(m.new)), as.numeric(logLik(m.old)))
+expect_equal(as.numeric(logLik(c.new)), as.numeric(logLik(c.old)))
 expect_equal(nrow(cars), nobs(m.new))
 expect_equal(nrow(cars), nobs(c.new))
-
-
 
 if(FALSE){ 
   ## application to precipitation data

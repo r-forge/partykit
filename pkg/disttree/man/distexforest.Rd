@@ -1,7 +1,5 @@
 \name{distexforest}
 \alias{distexforest}
-\alias{gettree}
-\alias{gettree.distexforest}
 \alias{predict.distexforest}
 \encoding{latin1}
 
@@ -13,19 +11,17 @@
 }
 
 \usage{
-distexforest(formula, data, weights, subset, offset, cluster, strata,
-        na.action = na.pass,
-	control = distextree_control(teststat = "quad", testtype = "Univ",
-            mincriterion = 0, saveinfo = FALSE, minsplit = 20, 
-            minbucket = 7, splittry = 2, \dots),
-        scores = NULL, ntree = 500L,
-        perturb = list(replace = FALSE, fraction = 0.632),
-        mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL,
-        trace = FALSE, \dots)
+distexforest(formula, data, subset, na.action = na.pass, weights,
+             offset, cluster, family = NO(), strata, control =
+             distextree_control(teststat = "quad", testtype =
+             "Univ", mincriterion = 0, saveinfo = FALSE, minsplit =
+             20, minbucket = 7, splittry = 2, ...), ntree = 500L,
+             fit.par = FALSE, perturb = list(replace = FALSE,
+             fraction = 0.632), mtry = ceiling(sqrt(nvar)),
+             applyfun = NULL, cores = NULL, trace = FALSE, ...)
 \method{predict}{distexforest}(object, newdata = NULL,
-        type = c("response", "prob", "weights", "node"),
-        OOB = FALSE, FUN = NULL, simplify = TRUE, scale = TRUE, \dots)
-\method{gettree}{distexforest}(object, tree = 1L, \dots)
+        type = c("parameter", "response", "weights", "node"),
+        OOB = TRUE, scale = TRUE, \dots)
 }
 
 \arguments{
@@ -33,6 +29,8 @@ distexforest(formula, data, weights, subset, offset, cluster, strata,
   \item{data}{ a data frame containing the variables in the model. }
   \item{subset}{ an optional vector specifying a subset of observations to be
                  used in the fitting process.}
+  \item{na.action}{a function which indicates what should happen when the data
+                   contain missing value.}
   \item{weights}{
     an optional vector of weights to be used in the fitting
     process. Non-negative integer valued weights are
@@ -48,9 +46,10 @@ distexforest(formula, data, weights, subset, offset, cluster, strata,
   \item{offset}{ an optional vector of offset values.}
   \item{cluster}{ an optional factor indicating independent clusters.
                   Highly experimental, use at your own risk.}
+  \item{family}{specification of the response distribution.
+    Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family 
+    list.}
   \item{strata}{ an optional factor for stratified sampling.}
-  \item{na.action}{a function which indicates what should happen when the data
-                   contain missing value.}
   \item{control}{a list with control parameters, see
                  \code{\link{distextree_control}}. The default values correspond to those
                  of the default values used by \code{\link[disttree]{distexforest}} from the
@@ -59,15 +58,15 @@ distexforest(formula, data, weights, subset, offset, cluster, strata,
                  \code{mtry}, \code{cores} and \code{applyfun} in
                  \code{\link{distextree_control}} are ignored for \code{\link{distexforest}},
                  because they are already set.}
-  \item{scores}{an optional named list of scores to be attached to ordered
-                factors.}
   \item{ntree}{
     Number of trees to grow for the forest.}
+  \item{fit.par}{logical. if TRUE, fitted and predicted values and predicted parameters are calculated 
+    for the learning data (together with loglikelihood)}
   \item{perturb}{
     a list with arguments \code{replace} and \code{fraction} determining which type of
     resampling with \code{replace = TRUE} referring to the n-out-of-n bootstrap and
-    \code{replace = FALSE} to sample splitting. \code{fraction} is the number of observations to draw without
-    replacement. }
+    \code{replace = FALSE} to sample splitting. \code{fraction} is the number of observations to 
+    draw without replacement. }
   \item{mtry}{
     number of input variables randomly sampled as candidates
     at each node for random forest like algorithms. Bagging, as special case
@@ -89,35 +88,17 @@ distexforest(formula, data, weights, subset, offset, cluster, strata,
     An optional data frame containing test data.}
   \item{type}{
     a character string denoting the type of predicted value
-          returned, ignored when argument \code{FUN} is given.  For
-          \code{"response"}, the mean of a numeric response, the predicted
-          class for a categorical response or the median survival time for a
-          censored response is returned.  For \code{"prob"} the matrix of
-          conditional class probabilities (\code{simplify = TRUE}) or a list
-          with the conditional class probabilities for each observation
-          (\code{simplify = FALSE}) is returned for a categorical response.
-          For numeric and censored responses, a list with the empirical
-          cumulative distribution functions and empirical survivor functions
-          (Kaplan-Meier estimate) is returned when \code{type = "prob"}.
-          \code{"weights"} returns an integer vector of prediction weights.
-          For \code{type = "where"}, a list of terminal node ids for each of the
-          trees in the forest ist returned.}
+    returned. For \code{"parameter"} the predicted distributional parameters
+    are returned and for \code{"response"} the expectation is returned. \code{"weights"} returns an 
+    integer vector of prediction weights. For \code{type = "node"}, a list of terminal node ids for 
+    each of the trees in the forest ist returned.}
   \item{OOB}{
     a logical defining out-of-bag predictions (only if \code{newdata = NULL}).}
-  \item{FUN}{
-    a function to compute summary statistics. Predictions for each node have to be
-    computed based on arguments \code{(y, w)} where \code{y} is the response and
-    \code{w} are case weights.}
-  \item{simplify}{
-    a logical indicating whether the resulting list
-                   of predictions should be converted to a suitable
-                   vector or matrix (if possible).}
   \item{scale}{a logical indicating scaling of the nearest neighbor weights
                by the sum of weights in the corresponding terminal node of
                each tree. In the simple regression forest, predicting
                the conditional mean by nearest neighbor weights will be
                equivalent to (but slower!) the aggregation of means.}
-  \item{tree}{ an integer, the number of the tree to extract from the forest.}
   \item{\dots}{ additional arguments. }
 }
 
@@ -226,57 +207,6 @@ nd$mean  <- predict(cf, newdata = nd, type = "response")
 plot(dist ~ speed, data = cars)
 lines(mean ~ speed, data = nd)
 
-## predict quantiles (aka quantile regression forest)
-myquantile <- function(y, w) quantile(rep(y, w), probs = c(0.1, 0.5, 0.9))
-p <- predict(cf, newdata = nd, type = "response", FUN = myquantile)
-colnames(p) <- c("lower", "median", "upper")
-nd <- cbind(nd, p)
-
-## visualization with conditional (on speed) prediction intervals
-plot(dist ~ speed, data = cars, type = "n")
-with(nd, polygon(c(speed, rev(speed)), c(lower, rev(upper)),
-  col = "lightgray", border = "transparent"))
-points(dist ~ speed, data = cars)
-lines(mean ~ speed, data = nd, lwd = 1.5)
-lines(median ~ speed, data = nd, lty = 2, lwd = 1.5)
-legend("topleft", c("mean", "median", "10\% - 90\% quantile"),
-  lwd = c(1.5, 1.5, 10), lty = c(1, 2, 1),
-  col = c("black", "black", "lightgray"), bty = "n")
-
-### we may also use predicted conditional (on speed) densities
-mydensity <- function (y, w) approxfun(density(y, weights = w/sum(w))[1:2], rule = 2)
-pd <- predict(cf, newdata = nd, type = "response", FUN = mydensity)
-
-## visualization in heatmap (instead of scatterplot)
-## with fitted curves as above
-dist <- -10:150
-dens <- t(sapply(seq_along(pd), function(i) pd[[i]](dist)))
-image(nd$speed, dist, dens, xlab = "speed", col = rev(gray.colors(9)))
-lines(mean ~ speed, data = nd, lwd = 1.5)
-lines(median ~ speed, data = nd, lty = 2, lwd = 1.5)
-lines(lower ~ speed, data = nd, lty = 2)
-lines(upper ~ speed, data = nd, lty = 2)
-
-\dontrun{
-
-### honest (i.e., out-of-bag) cross-classification of
-### true vs. predicted classes
-data("mammoexp", package = "TH.data")
-table(mammoexp$ME, predict(distexforest(ME ~ ., data = mammoexp, ntree = 50),
-                           OOB = TRUE, type = "response"))
-
-### fit forest to censored response
-if (require("TH.data") && require("survival")) {
-
-    data("GBSG2", package = "TH.data")
-    bst <- distexforest(Surv(time, cens) ~ ., data = GBSG2, ntree = 50)
-
-    ### estimate conditional Kaplan-Meier curves
-    print(predict(bst, newdata = GBSG2[1:2,], OOB = TRUE, type = "prob"))
-
-    print(gettree(bst))
-}
-}
 }
 
 \keyword{tree}

@@ -238,7 +238,6 @@ distexforest <- function
 predict.distexforest <- function(object, newdata = NULL, 
                                  type = c("parameter", "response", "weights", "node"), 
                                  OOB = TRUE, 
-                                 FUN = NULL, simplify = TRUE, 
                                  scale = TRUE, ...) {
 
     responses <- object$fitted[["(response)"]]
@@ -323,13 +322,13 @@ predict.distexforest <- function(object, newdata = NULL,
         # personalized model for observation nd[i,]
         pm <-  disttree::distexfit(responses, family = family, weights = wi, vcov = FALSE, 
                                    optim.control = object$info$control$optim.control, ...)
-        pred[i,] <- disttree:::predict.distexfit(pm, type = type)
+        pred[i,] <- predict.distexfit(pm, type = type)
         # loglik[i,] <- if(is.function(pm$ddist)) pm$ddist(responses[i], log = TRUE) else NA
       }
       
       if(type == "parameter") {
         pred <- data.frame(pred)
-        names(pred) <- names(disttree:::coef.distexfit(pm, type = "parameter"))
+        names(pred) <- names(coef.distexfit(pm, type = "parameter"))
       }
       if(type == "response") pred <- as.vector(pred)
       return(pred)

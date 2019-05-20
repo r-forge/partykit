@@ -537,7 +537,7 @@ vcov.distexfit <- function(object, type = c("parameter", "link"), ...) {
   }
 }
   
-estfun.distexfit <- function(x) return(x$estfun, ...)
+estfun.distexfit <- function(x, ...) return(x$estfun)
 
 logLik.distexfit <- function(object, ...) structure(object$loglik, df = object$npar, class = "logLik")
 
@@ -717,7 +717,7 @@ getSummary.distexfit <- function(object, alpha = 0.05, ...) {
 
 
 # FIXME: check correct calculations for each available type
-residuals.distexfit <- function(object, type = c("standardized", "pearson", "response")) {
+residuals.distexfit <- function(object, type = c("standardized", "pearson", "response"), ...) {
   if(match.arg(type) == "response") {
     object$y - predict.distexfit(object, type = "response")
   } else {

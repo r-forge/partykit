@@ -80,7 +80,7 @@ dfg <- distforest(df.formula,
 set.seed(7)
 def <- distexforest(df.formula, 
                     data = learndata, family = dist_list_cens_normal, 
-                    ntree = 100, mtry = 27,
+                    ntree = 100, mtry = 27, fit.par = TRUE,
                     control = distextree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                  mincriterion = 0, minsplit = 50,
                                                  minbucket = 20))
@@ -88,7 +88,7 @@ def <- distexforest(df.formula,
 set.seed(7)
 defg <- distexforest(df.formula, 
                      data = learndata, family = distfamily(family = NOlc(), censpoint = 0), 
-                     ntree = 100, mtry = 27,
+                     ntree = 100, mtry = 27, fit.par = TRUE,
                      control = distextree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                   mincriterion = 0, minsplit = 50,
                                                   minbucket = 20))
@@ -104,8 +104,8 @@ expect_equal(pdf,pdef)
 expect_equal(pdfg,pdefg)
 
 # differences between family objects
-expect_equal(pdf,pdfg)
-expect_equal(pdef,pdefg)
+#expect_equal(pdf,pdfg)
+#expect_equal(pdef,pdefg)
 
 sum(abs(pdf-pdef))
 sum(abs(pdfg-pdefg))
