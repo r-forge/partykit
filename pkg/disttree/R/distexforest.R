@@ -168,7 +168,7 @@ distexforest <- function
         if (trace) setTxtProgressBar(pb, b/ntree)
         ret <- updatefun(sort(rw[[b]]), integer(0), control)
         # trafo <<- ret$trafo
-        ret$nodes
+        ret$nodes  #FIXME: (ML) If control$saveinfo = TRUE, should we really return all in node$info? 
     })
     if (trace) close(pb)
 
