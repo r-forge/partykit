@@ -680,7 +680,7 @@ Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ 
 \end{tabular}
 \caption{\label{tab:variables}Variables included in the data generating process 
 as used for the ``stump'' scenario. In the ``tree'' scenario $Z_2$ is also a true split variable, 
-not only $Z_1$, and hence $\beta_0$ and $\beta_1$ are functions $\beta_i(Z_1,Z_2)$, $i=1,2$.}
+not only $Z_1$, and hence $\beta_0$ and $\beta_1$ are functions $\beta_j(Z_1,Z_2)$, $j=0,1$.}
 \end{table}
 
 The location parameter $\mu$ of the normally distributed response variable $Y$ depends
@@ -703,7 +703,7 @@ See Figure~\ref{fig:dgp_stump} for an illustration. More precisely, the coeffici
 changes ($\beta_j$ with $j\in\{0,1\}$) switches between two values at the split point $\xi$:
 %
 \begin{align*}
-\beta_{i}(Z_1) = \begin{cases}
+\beta_{j}(Z_1) = \begin{cases}
 -\delta \cdot (-1)^{j}  \quad \text{if } Z_1 \leq \xi \\
 +\delta \cdot (-1)^{j}  \quad \text{if } Z_1 > \xi
 \end{cases}
@@ -934,7 +934,8 @@ varying $\beta_0$ and varying $\beta_1$ (bottom right).}}
 \subsubsection{``Tree'' scenario}
 For the second simulation scenario (``tree'' scenario) the same basic setting with the same 
 variables as in the ``stump'' scenario is applied (see Table~\ref{tab:variables}).
-However, not only $Z_1$ but also $Z_2$ is used as a true split variable. Therefore, an additional split
+However, not only $Z_1$ but also $Z_2$ is used as a true split variable following a uniform distribution
+on $[-1,1]$. Therefore, an additional split
 is preformed yielding a tree with three terminal nodes. The first split (in $Z_2$, at~$\xi$) induces a 
 change in the slope parameter $\beta_1$ while the second split (in $Z_1$, also at~$\xi$) corresponds 
 to a change in the intercept $\beta_0$.
@@ -1109,7 +1110,7 @@ is provided in Appendix~\ref{app:significance} where the performances are compar
 on the smallest $p$-values, regardless of whether they are beneath any significance level.
 
 Moreover, as defined by the true tree structure used in the data generating process, the
-parameter functions $\beta_i(Z_1)$, $i=1,2$, are step functions which is particularly 
+parameter functions $\beta_j(Z_1)$, $j=0,1$, are step functions which is particularly 
 advantageous for the maximum selection in the test statistic applied by MOB while the linear 
 selection in CTree is preferable for detecting monotonous dependencies. To show that employing 
 a continuous parameter function instead of a step function only has an impact on whether CTree or
@@ -1197,28 +1198,27 @@ As discussed before, this advantage of MOB over CTree is mainly due to the abrup
 model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
 continuously changing parameters (see Appendix~\ref{app:contbeta}).
 From the fact that GUIDE and GUIDE+scores are both performing worse than MOB and CTree it 
-can be deduced that categorizing split variables and binarizing scores has a negative effect 
-on the ability to detect the right split variable. To elaborate these effects more in detail 
+can be deduced that categorizing split variables and binarizing scores also decreases the
+ability to detect the right split variable. To elaborate these effects more in detail 
 the results for all possible combinations of the building blocks are discussed in a full 
 factorial 3-way analysis in the following section.
 
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
-To investigate the effects of each of the building blocks separately the most general 
-case of the ``stump'' scenario where the intercept and 
-slope parameter are both varying is considered. In the underlying evaluation all 
-possible combinations of the building blocks have been included. The different levels of 
-each of the three building blocks are listed in Table~\ref{tab:levels} where 
-$h$ and $g$ refer to the transformation functions applied to the response $Y$ or
-a split variable $Z$ respectively, both as described in Section~\ref{sec:ctree}. 
-(See Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
-for a more detailed overview of all 12 combinations.)
+To investigate the impact of each of the building blocks separately the most general 
+case of the ``stump'' scenario where the intercept and slope parameter are both varying is 
+considered. In the underlying evaluation all possible combinations of the building blocks 
+have been included. The different levels of each of the three building blocks are listed in 
+Table~\ref{tab:levels} where $h$ and $g$ refer to the transformation functions applied to the 
+response $Y$ or a split variable $Z$ respectively, both as described in Section~\ref{sec:ctree}. 
 If quartiles are used as breakpoints to categorize a split variable the employed
 function $g$ maps to a four-dimensional vector of zeros except for one value $1$
-indication the bin to which an observation is assigned to. For a maximum selection
+indication the bin to which an observation is assigned. For a maximum selection
 of a split variable $g$ maps to a vector containing only zeros until a certain
-changepoint from which on the values are replace by $1$. This breakpoint indicates
-for example a crossed quantile. In linear selection $g$ is simply the identity function.
+changepoint from which on the values are replaced by $1$. This breakpoint indicates
+for example a crossed quantile. In a linear selection strategy $g$ is simply the identity function.
+(See Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
+for a more detailed overview of all 12 combinations.)
 
 
 \begin{table}[h!]
@@ -1252,11 +1252,12 @@ level regardless of whether possible split variables are categorized or not. How
 of the true split point at the $90$\% quantile $0.8$ (right panel), categorizing split 
 variables increases the $p$-value of $Z_1$ even more. 
 Here, the maximum selection performs best while the linear selection shows its disadvantage in 
-detecting abrupt changes. Overall, it depends on the situation whether a linear or a maximum
-selection of a split variable is advantageous. But unless one of the breakpoints used for binning 
-possible split variables is close to the true split point (as for the median $0$, left panel),
-this categorization weakens the performance of a testing strategy. 
-While the effect of both of these transformations of the data (binarization of 
+detecting abrupt changes, but overall it depends on the situation whether a linear or a maximum
+selection of a split variable is advantageous. 
+Comparing the two panels suggests that unless one of the breakpoints used for binning 
+possible split variables is close to the true split point (as for the median $0$, left panel), 
+a categorization weakens the performance of a testing strategy. 
+Moreover, while the effect of both of these transformations of the data (binarization of 
 residuals/scores and categorization of split variables) can be observed
 separately in Figure~\ref{fig:3way}, combining them increases the negative impact 
 remarkably.
@@ -1500,9 +1501,9 @@ algorithm \citep{Breiman+Friedman+Stone:1984}).
 The corresponding ARI values are illustrated in the bottom row of Figure~\ref{fig:tree_all}
 allowing for a comparison to those obtained with pre-pruning (top row).
 
-For MOB and CTree it has been shown that the tests work very well as significance tests.
+For MOB and CTree it has been shown that their tests work very well as significance tests.
 Therefore, it can be recommended to take advantage of this power and use the information
-given by the tests for pre-pruning. As it can be seen in Figure~\ref{fig:tree_all}
+provided by the tests for pre-pruning. As it can be seen in Figure~\ref{fig:tree_all}
 in most cases the results of these two testing strategies do not vary significantly over 
 a change of the applied pruning strategy.
 On the contrary, overall the tests in GUIDE have less power. For that reason, the pruning
@@ -1578,7 +1579,7 @@ shift and the type of model. Therefore, a general statement for all types of mod
 hardly be made. However, the results from previous literature such as \cite{Ploberger+Kraemer:1992} and
 the here presented simulation show that considering only residuals provides small gains in certain 
 situations but remarkable deficits in general. On the contrary, the benefits of including full model 
-scores clearly outweigh the price of of testing all parameters.
+scores clearly outweigh the price of testing all parameters.
 
 
 %Furthermore, with only two parameters determining a linear model the importance of including scores 
@@ -1602,7 +1603,7 @@ two tree algorithms in their original form. For their adapted versions additiona
 modifications have been applied within these functions allowing for a categorization
 of possible split variables and a binarization of scores.
 To evaluate the GUIDE algorithm a reimplementation of this algorithm has been 
-established/constructed using the basic framework of \code{ctree} and \code{mob}.
+built using the basic framework of \code{ctree} and \code{mob}.
 
 
 
@@ -1621,7 +1622,7 @@ Science Foundation, grant number SNF IZSEZ0 177091.}
 
 \section{Test statistics}
 This section provides further information on the test statistics applied in CTree, MOB, 
-and GUIDE. The presented details have been extracted from the original papers 
+and GUIDE. Most of the presented details have been extracted from the original papers 
 \cite{Hothorn+Hornik+Zeileis:2006}, \cite{Zeileis+Hothorn+Hornik:2008}, 
 and \cite{Loh:2002}, however, notation is adapted to the main manuscript
 in order to allow for better comparison.
@@ -1633,7 +1634,7 @@ CTree algorithm applies a linear test statistic $T$ which is excerpted from Sect
 $$
 T(Y, Z, w) = \text{vec}\left( \sum_{i=1}^n w_i g(Z_{i})h(Y_i, (Y_1,\ldots,Y_n))^{\top}\right)
 $$
-where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom transformation of the split variable $Z$ and the influence function $h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the responses $(Y_1, \ldots, Y_n)$ in a permutation symmetric way. Moreover, by applying the ``vec'' operator the resulting $p~\times~q$ matrix is converted into a $p q$ column vector.
+where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom transformation of the split variable $Z$ and the influence function $h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the response $Y = (Y_1, \ldots, Y_n)$ in a permutation symmetric way. Moreover, by applying the ``vec'' operator the resulting $p~\times~q$ matrix is converted into a $p q$ column vector.
 Following \cite{Strasser+Weber:1999}
 the conditional expectation $\mu$ and covariance $\Sigma$ of a linear test statistic can 
 be calculated and used to standardize an observed linear test statistic $t$ within a 
@@ -1687,8 +1688,8 @@ of building blocks are listed in Table~\ref{tab:combinations_appendix}.
 Each suffix indicates a change of the original form of the considered testing strategy.
 In particular, it relates to the transformations of the data before applying a statistical
 test as represented by the different building blocks. In that way,
-``+res'' refers to using only residuals (instead of all scores),
-``+scores'' to using all scores (instead of only residuals),
+``+res'' refers to using only residuals (instead of all model scores),
+``+scores'' to using all model scores (instead of only residuals),
 ``+cat'' to applying a categorization of split variables,
 ``+bin'' to applying a binarization of scores/residuals.
 
@@ -1698,18 +1699,18 @@ test as represented by the different building blocks. In that way,
 \hline 
 Testing Strategy  & Residuals/Scores   & Binarization & Categorization \\
 \hline
-GUIDE             & residuals          & bin          & cat \\
-MOB+bin+res     & residuals          & bin          & max \\
-CTree+bin+res   & residuals          & bin          & lin \\
-MOB+cat+res    & residuals          & lin          & cat \\
-MOB+res          & residuals          & lin          & max \\
-CTree+res        & residuals          & lin          & lin \\
-GUIDE+scores     & scores             & bin          & cat \\
-MOB+bin          & scores             & bin          & max \\
-CTree+bin        & scores             & bin          & lin \\
-MOB+cat          & scores             & lin          & cat \\
-MOB               & scores             & lin          & max \\
-CTree             & scores             & lin          & lin \\
+GUIDE             & residuals          & yes          & cat \\
+MOB+bin+res       & residuals          & yes          & max \\
+CTree+bin+res     & residuals          & yes          & lin \\
+MOB+cat+res       & residuals          & no           & cat \\
+MOB+res           & residuals          & no           & max \\
+CTree+res         & residuals          & no           & lin \\
+GUIDE+scores      & scores             & yes          & cat \\
+MOB+bin           & scores             & yes          & max \\
+CTree+bin         & scores             & yes          & lin \\
+MOB+cat           & scores             & no           & cat \\
+MOB               & scores             & no           & max \\
+CTree             & scores             & no           & lin \\
 \hline
 \end{tabular}
 \caption{Testing strategies applied (representing the 12 combinations
@@ -1723,30 +1724,30 @@ of building blocks).
 \begin{figure}[t]
 \setkeys{Gin}{width=\linewidth}
 <<scores_stump_wosign, fig=TRUE, echo=FALSE, height=5, width=8>>=
-subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max", "mfluc", "guide_sum_12", "guide_sum_1_cor"))
+subdata <- subset(sim_stump, test %in% c("ctree", "mfluc", "guide_sum_12", "guide_sum_1_cor"))
 subdata$test <- factor(subdata$test, 
-                       levels = c("ctree", "ctree_max", "mfluc",
+                       levels = c("ctree", "mfluc",
                                   "guide_sum_12", "guide_sum_1_cor"),
-                       labels = c("CTree", "CTree+max", "MOB",
+                       labels = c("CTree", "MOB",
                                   "GUIDE+scores", "GUIDE"))
 
 subdataxi <- subset(subdata, xi %in% c(0,0.8))
 
-par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")], 
-                                             fill = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")]), 
-                     superpose.line = list(col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")]))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
 library("latticeExtra")
 useOuterStrips(xyplot(prop_z1 ~ delta | vary_beta + xi, groups = ~ test, 
                       data = subdataxi, 
                       subset = binary_beta == TRUE & binary_regressor == FALSE & 
                         only_intercept == FALSE,# & xi == 0, 
-                      type = "l", lty = c(1,1,1,1,1),
+                      type = "l", lty = c(1,1,1,1),
                       lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
                       key =  list(text = list(levels(subdataxi$test)),
-                                  lines = list(lty = c(1,1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                               col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
+                                  lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                               col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
                       xlab = expression(delta),
@@ -1764,7 +1765,7 @@ useOuterStrips(xyplot(prop_z1 ~ delta | vary_beta + xi, groups = ~ test,
 \caption{\label{fig:scores_stump_wosign}
 Proportion of replications where the true split variable $Z_1$ shows the smallest $p$-value, 
 hence, where $Z_1$ is selected without any significance level in the ``stump'' scenario.
-The testing strategies CTree, CTree+max, MOB, GUIDE, and GUIDE+scores are evaluated 
+The testing strategies CTree, MOB, GUIDE, and GUIDE+scores are evaluated 
 over increasing effect size $\delta$ with 100 replications of 250 observations per step. 
 The true split point in $Z_1$ is either the median 0 (top) or the 90\% quantile 0.8 (bottom)
 for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
@@ -1772,45 +1773,47 @@ for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
 \end{figure}
 
 In Section~\ref{sec:scores} the investigated testing strategies are compared based
-on the number of replications in which the true split variable $Z_1$ is detected with a $p$-value
-smaller than the predefined significance level $\alpha = 0.05$. This choice of measurement
-is due to the aim of investigating how well the tests perform as significance test.
-However, ignoring this significance level yields the same conclusions 
-which can be seen when comparing Figures~\ref{fig:scores_stump_wosign}
-and \ref{fig:scores_stump}.
-In Figure~\ref{fig:scores_stump_wosign} the proportion of replications 
-in which the true splitting variable $Z_1$ is detected, but not necessarily with a $p$-value 
-smaller than the significance level, is illustrated. In Figure~\ref{fig:scores_stump} 
-the exact same simulation setting is applied with a significance level.
+on the selection probability of $Z_1$, hence, the number of replications in which the true split 
+variable $Z_1$ is detected with a $p$-value smaller than the predefined significance level 
+$\alpha = 0.05$. This choice of measurement is due to the aim of investigating how well the 
+tests perform as significance test.
+However, ignoring this significance level yields the same conclusions which can be seen when 
+comparing Figures~\ref{fig:scores_stump_wosign} and \ref{fig:scores_stump}, both being based 
+on the exact same evaluation, but in Figure~\ref{fig:scores_stump_wosign} the proportion of 
+replications in which the true splitting variable $Z_1$ is detected by showing the smallest $p$-value, 
+but not necessarily smaller than the significance level, is illustrated.
 
 
 
 
-\section{Simulation results for continuous model parameters}
+
+\section{Continuous ``stump'' scenario}
 \label{app:contbeta}
 
 In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
 and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
 either the positive or the negative value of the effect size $\delta$. Therefore, these parameters
-are step functions for which MOB has shown to perform better than CTree. However, in case of
-monotonous functions CTree is advantageous as it is constructed to detect monotonous effects.
+are step functions for which the maximum selection employed in the testing strategy of MOB has shown 
+to perform better than the linear selection in CTree. However, this changes in case of
+monotonous functions where CTree is advantageous as it is constructed to detect monotonous effects.
 To point out that the difference in performance of CTree and MOB depends on the type of effect
-the same setting of which the results are presented in Figure~\ref{fig:scores_stump} is
+the same setting for which the results are presented in Figure~\ref{fig:scores_stump} is
 evaluated again but this time with the varying parameter(s) changing continuously.
 In particular, the parameters $\beta_0$ and $\beta_1$ are linear functions of the true
 split variable $Z_1$:
 \begin{align*}
-\beta_{i}(Z_1) = \begin{cases}
--\delta \cdot (-1)^{i} \cdot Z_1\\
-+\delta \cdot (-1)^{i} \cdot Z_1.
+\beta_{j}(Z_1) = \begin{cases}
+-\delta \cdot (-1)^{j} \cdot Z_1\\
++\delta \cdot (-1)^{j} \cdot Z_1
 \end{cases}
 \end{align*}
-Moreover, a modified version of CTree considering maximum values in the test statistic is evaluated
-(denoted by CTree+max). 
-Looking at the results presented in Figure~\ref{fig:stump_contbeta} it can be observed that in this setting the 
-original version of CTree is ahead while CTree+max and MOB perform almost equally well. Hence, the comparison of 
-Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} points out that it clearly depends on the type of 
-effect whether the maximal selection (MOB, CTree+max) or the linear selection (CTree) is advantageous.
+for $j = 0,1$.
+Additionally, a modified version of CTree employing a maximum selection, such as MOB, is evaluated 
+(denoted by CTree+max). Looking at the selection probability illustrated in Figure~\ref{fig:stump_contbeta} 
+it can be observed that in this setting the original version of CTree is ahead while CTree+max and MOB perform 
+almost equally well. Hence, the comparison of Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} 
+points out that it clearly depends on the type of effect whether the maximum selection (MOB, CTree+max) 
+or the linear selection (CTree) is to be preferred.
 
 
 \begin{figure}%%[t]
@@ -1859,23 +1862,23 @@ both coefficients varying (right).}
 
 
 
-\section{Results for increasing effect size}
+\section{Results over increasing effect size}
 \label{app:increasingdelta}
 
 \subsection{Binarization of residuals/scores}
 \label{app:binarization}
-To elaborate over an increasing effect size whether a binarization of the residuals/scores at $0$ 
-leads to an improvement or a deterioration of performance CTree and MOB are applied, once in their 
-original version without a binarization and once in an adapted version with a binarization of 
-scores at $0$ (CTree+bin, MOB+bin). Moreover, they are compared to the adapted GUIDE version 
+To elaborate over an increasing effect size whether a binarization of the residuals/scores at zero 
+leads to an improvement or a deterioration of performance, CTree and MOB are applied, once in their 
+original version without binarization and once in an adapted version with a binarization of 
+scores at zero (CTree+bin, MOB+bin). Moreover, they are compared to the adapted GUIDE version 
 which includes all available scores (GUIDE+scores).
 %Hence, the five strategies are obtained from the unifying framework by setting the switches 
 %as listed in Table~\ref{tab:buildingblocks_appendix}.
 
 Figure~\ref{fig:bin_stump} shows the effect of binarizing the score values over
 different values for the true split point $\xi$, however, all four situations
-lead to the same conclusions. Binarizing the score values decreases the proportion
-of replications where the split variable was selected correctly.
+lead to the same conclusions: Binarizing the score values decreases the selection probability
+of the true split variable $Z_1$, and hence reduces the power of the testing strategy.
 
 
 \begin{figure}%[t]
@@ -1892,9 +1895,9 @@ subdata$test <- factor(subdata$test,
                                   #"ctree_max", "ctree_max_bin",
                                   "mfluc", "mfluc_bin",
                                   "guide_sum_12"),
-                       labels = c("CTree","CTree_bin",
+                       labels = c("CTree","CTree+bin",
                                   #"CTree+max","CTree+max_bin",
-                                  "MOB", "MOB_bin",
+                                  "MOB", "MOB+bin",
                                   "GUIDE+scores"))
 
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree", 
@@ -1941,7 +1944,7 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
 \caption{\label{fig:bin_stump}
 Selection probability of the true split variable $Z_1$ for
 testing strategies CTree, CTree+bin, MOB, MOB+bin, and GUIDE+scores in the ``stump''
-scenario with both parameter varying. 
+scenario with both parameters varying. 
 Probabilities are estimated over increasing effect size $\delta$
 with 100 replications of 250 observations per step. 
 Each panel represents a different value of the true split point $\xi$ (0, 0.2, 0.5 
@@ -1960,17 +1963,16 @@ with a categorization of the possible split variables (CTree+cat and MOB+cat).
 Moreover, they are also compared to GUIDE+scores which includes all available scores.
 
 In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the performance 
-is illustrated over increasing effect size for four different values of the true split 
-point $\xi$. For both, CTree and MOB, it can be stated that overall they perform better in their
-original form without any categorization. Only if the true split point $\xi$
-is close to the quartiles used as breakpoints for the categorizations both versions
-lead to a similar proportion of replications where the true splitting variable is detected
-(e.g., for CTree and $\xi=0.5$)
+is illustrated by the selection probability of $Z_1$ over increasing effect size and for four 
+different values of the true split point $\xi$. For both, CTree and MOB, it can be stated that 
+overall they perform better in their original form without categorization. Only if the true 
+split point $\xi$ is close to the quartiles used as breakpoints for the categorizations both 
+versions lead to a selection probability of $Z_1$ (e.g., for CTree and $\xi=0.5$)
 
-Therefore, it can be summarized that a categorization of the values of the split variable
-does not lead to any advantages unless the true split point corresponds to one of the 
-quartiles used for the categorization. In most situations it even causes the performance to 
-get worse.
+Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values 
+of the split variable does not lead to any advantages unless the true split point corresponds (or is at
+least close) to one of the quartiles used for the categorization. In most situations it even causes the 
+power of the testing strategy to decrease.
 
 \begin{figure}%%[t]
 \setkeys{Gin}{width=\linewidth}
@@ -1985,9 +1987,9 @@ subdata$test <- factor(subdata$test,
                                   #"ctree_max","ctree_max_cat",
                                   "mfluc", "mfluc_cat",
                                   "guide_sum_12"),
-                       labels = c("CTree","CTree_cat",
+                       labels = c("CTree","CTree+cat",
                                   #"CTree+max","CTree+max_cat",
-                                  "MOB", "MOB_cat",
+                                  "MOB", "MOB+cat",
                                   "GUIDE+scores"))
 
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree", 
@@ -2035,7 +2037,7 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
 \caption{\label{fig:cat_stump}
 Selection probability of the true split variable $Z_1$ for
 testing strategies CTree, CTree+cat, MOB, MOB+cat, and GUIDE+scores in the ``stump''
-scenario with both parameter varying. 
+scenario with both parameters varying. 
 Probabilities are estimated over increasing effect size $\delta$
 with 100 replications of 250 observations per step. 
 Each panel represents a different value of the true split point $\xi$ (0, 0.2, 0.5 
