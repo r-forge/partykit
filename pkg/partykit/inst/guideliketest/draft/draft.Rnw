@@ -381,7 +381,7 @@ which is in fact multivariate if either of the transformation $h(Y)$ and/or $g(Z
 multivariate. The actual test is carried out by mapping this standardized statistic to
 the real line either by taking the absolute maximum or using a quadratic form -- with $p$-values
 being computed from the analogous transformation of the normal distribution
-\citep[see][for a hands-on introduction]{Hothorn+Hornik+VanDeWiel:2006}.
+\citep[see][for a hands-on introduction and Appendix~\ref{app:teststat_ctree} for more details on the linear test statistic]{Hothorn+Hornik+VanDeWiel:2006}.
 
 If both variables $Y$ and $Z$ are numeric the default independence test corresponds to a Pearson 
 correlation test. For one numeric and one categorical variable essentially a 1-way ANOVA
@@ -418,7 +418,8 @@ parameter instability that could be captured by fitting separate models (optimiz
 in the resulting subgroups. In case of a numeric split variable $Z$ both the score-based statistic
 and the partitioned objective function $\ell$ are maximized over all possible splits in $Z$
 (subject to certain minimal subgroup size constraints). Unlike the CTree framework, MOB
-relies on classical unconditional inference. For more details see \cite{Zeileis+Hornik:2007}.
+relies on classical unconditional inference. For more details see \cite{Zeileis+Hornik:2007} and 
+Appendix~\ref{app:teststat_mob}.
 
 \subsection{GUIDE}\label{sec:guide}
 
@@ -448,7 +449,8 @@ each categorized/categorical split variable.
 After choosing the split variable showing the highest dependency by yielding the lowest 
 $p$-value, the split point minimizing the overall goodness-of-fit measure is selected. 
 Note that the split point in numeric variables $Z$ is searched over all possible splits,
-not just the four bins that were constructed for the $\chi^2$~test.
+not just the four bins that were constructed for the $\chi^2$~test. More details on the
+applied test statistic can be found in Appendix~\ref{app:teststat_guide}.
 
 %\newpage
 \subsection{Pruning}
@@ -1227,8 +1229,8 @@ for a more detailed overview of all 12 combinations.)
 \hline
 Building block               & Levels              & Transformation \\
 \hline
-Residuals vs.\ scores        & \textit{residuals}  & $r(Y,X,\hat{\beta})$\\
-\quad ($h$ transformation)   & \textit{scores}     & $s(Y,X,\hat{\beta})$\\
+Residuals vs.\ scores        & \textit{residuals}  & $h(Y) = r(Y,X,\hat{\beta})$\\
+\quad ($h$ transformation)   & \textit{scores}     & $h(Y) = s(Y,X,\hat{\beta})$\\
 \hline
 Binarization                 & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)$\\
 \quad (of $h$)               & \textit{no}         & $h$ without binarization\\
@@ -1608,9 +1610,9 @@ built using the basic framework of \code{ctree} and \code{mob}.
 
 
 \section*{Acknowledgments}
-\hlc{An extended research stay of Torsten Hothorn in Innsbruck (August
+An extended research stay of Torsten Hothorn in Innsbruck (August
 2017 to January 2018) was financially supported by the Swiss National
-Science Foundation, grant number SNF IZSEZ0 177091.}
+Science Foundation, grant number SNF IZSEZ0 177091.
 
 
 \bibliography{ref.bib}
@@ -1620,21 +1622,27 @@ Science Foundation, grant number SNF IZSEZ0 177091.}
 \begin{appendix}
 
 
-\section{Test statistics}
+\section{Test statistics}\label{app:teststat}
 This section provides further information on the test statistics applied in CTree, MOB, 
 and GUIDE. Most of the presented details have been extracted from the original papers 
 \cite{Hothorn+Hornik+Zeileis:2006}, \cite{Zeileis+Hothorn+Hornik:2008}, 
 and \cite{Loh:2002}, however, notation is adapted to the main manuscript
 in order to allow for better comparison.
 
-\subsection{CTree}
+\subsection{CTree}\label{app:teststat_ctree}
 To measure the association of a response $Y$ and each possible split variable $Z$ the
 CTree algorithm applies a linear test statistic $T$ which is excerpted from Section~3.1.
 (``Variable selection and stopping criteria'') of the original paper \citep{Hothorn+Hornik+Zeileis:2006} and is of the following form:
 $$
-T(Y, Z, w) = \text{vec}\left( \sum_{i=1}^n w_i g(Z_{i})h(Y_i, (Y_1,\ldots,Y_n))^{\top}\right)
+T(Y, Z, w) = \text{vec}\left( \sum_{i=1}^n w_i g(Z_{i})h(Y_i)^{\top}\right)
 $$
-where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom transformation of the split variable $Z$ and the influence function $h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the response $Y = (Y_1, \ldots, Y_n)$ in a permutation symmetric way. Moreover, by applying the ``vec'' operator the resulting $p~\times~q$ matrix is converted into a $p q$ column vector.
+where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom 
+transformation of the split variable $Z$ and the influence function 
+$h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the response 
+$Y = (Y_1, \ldots, Y_n)$ in a permutation symmetric way and is set to 
+$h(Y_i) = s(Y_i, X_i, \hat{\beta})$ for a score-based approach. 
+Moreover, by applying the ``vec'' operator the resulting
+$p~\times~q$ matrix is converted into a $p q$ column vector.
 Following \cite{Strasser+Weber:1999}
 the conditional expectation $\mu$ and covariance $\Sigma$ of a linear test statistic can 
 be calculated and used to standardize an observed linear test statistic $t$ within a 
@@ -1655,7 +1663,7 @@ $c_{\text{quad}}$ follows an asymptotic $\chi^2$~distribution. Based on this kno
 the corresponding $p$-values can be calculated easily.
 
 
-\subsection{MOB}
+\subsection{MOB}\label{app:teststat_mob}
 The MOB algorithm employs an empirical fluctuation process $W$ to measure deviations of
 the model scores $s$ from zero. As described in detail in Section~3.2. (``Testing for 
 parameter instability'') of the original paper \citep{Zeileis+Hothorn+Hornik:2008}
@@ -1663,18 +1671,27 @@ this process is of the following form:
 $$
 W(t) = \hat{J}^{-1/2} n^{-1/2} \sum_{i=1}^{\lfloor nt \rfloor} s_{\sigma(Z_{i})} \qquad (0 \leq t \leq 1)
 $$
-where the model scores $s$ are sorted by the split variable Z by including the ordering permutation $\sigma(Z_{i})$. 
+with the model scores $s_i = s(Y_i, X_i, \hat{\beta}$ being sorted by the split variable Z by including the ordering permutation $\sigma(Z_{i})$. 
 To scale this partial sum process an estimate $\hat{J}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
 Following \cite{Zeileis+Hornik:2007} $W(t)$ converges to a Brownian bridge $W^0$ under the null
 hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied and the corresponding asymptotic distribution of $\lambda(W(t))$ can be obtained by employing the same functional to the limit process, i.e., $\lambda(W^0)$. 
-For more details, particularly on calculating the corresponding $p$-values see Section~3.2. of the original paper \citep{Zeileis+Hothorn+Hornik:2008}.
 
-\subsection{GUIDE}
+One possible and intuitive choice for a functional in order to asses instabilities over a numerical 
+split variable is the following:
+$$\lambda_{supLM}(W) = \max_{i = \underline{i},\ldots,\overline{i}}\left(\frac{i}{n}\cdot \frac{n-i}{n}\right)^{-1} \left|\left|W\left(\frac{i}{n}\right)\right|\right|_2^2
+$$
+where a minimal segment size $\underline{i}$ and then $\overline{i} = n - \underline{i}$ are used to 
+define the interval $[\underline{i},\overline{i}]$. Other possible functionals, for example also
+for categorical split variables, and more details,
+particularly on calculating the corresponding $p$-values can be found in Section~3.2. of the 
+original paper \citep{Zeileis+Hothorn+Hornik:2008}.
+
+\subsection{GUIDE}\label{app:teststat_guide}
 The test statistic of the $\chi^2$~test as applied in the GUIDE algorithm is
 $$
-X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{11} - E_{11})^2}{E_{11}}
+X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{24} - E_{24})^2}{E_{24}}
 $$
-where $O_{ij}$ are the observed frequencies of observations in a certain combination of binarized residuals ($i=1,2$) and categorized split variables ($j = 1,\ldots,4$). $E_{ij}$ are the corresponding expected frequencies under independence $E_{ij} = \frac{O_{i \cdot} \cdot O_{\cdot j}}{n}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
+where $O_{kl}$ are the observed frequencies of observations in a certain combination of binarized residuals ($k=1,2$) and categorized split variables ($l = 1,\ldots,4$). $E_{kl}$ are the corresponding expected frequencies under independence $E_{kl} = \frac{O_{k \cdot} \cdot O_{\cdot l}}{n}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
 If full model scores are used instead of residuals a sum of the test statistic over the number of distribution parameters is considered such that each 
 summand corresponds to one column of the score matrix.
 
