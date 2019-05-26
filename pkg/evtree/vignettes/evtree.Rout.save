@@ -96,7 +96,7 @@ Number of terminal nodes: 4
 +     `evaluation function` = evalfun(obj))), digits = 3)
                      evtree   rpart   ctree  rpart2  ctree2
 misclassification     0.243   0.238   0.248   0.262   0.255
-evaluation function 660.680 655.851 694.191 701.510 692.680
+evaluation function 660.680 655.851 701.361 701.510 692.680
 
 > ftable(tab <- table(evtree = predict(ev), rpart = predict(rp), 
 +     ctree = predict(ct), observed = BBBClub$choice))
