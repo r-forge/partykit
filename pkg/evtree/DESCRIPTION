@@ -1,7 +1,7 @@
 Package: evtree
 Title: Evolutionary Learning of Globally Optimal Trees
-Version: 1.0-7
-Date: 2018-05-22
+Version: 1.0-8
+Date: 2019-05-19
 Authors@R: c(person(given = "Thomas", family = "Grubinger", role = c("aut", "cre"), email = "ThomasGrubinger@gmail.com"),
              person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org",
                     comment = c(ORCID = "0000-0003-0918-3766")),
@@ -16,7 +16,7 @@ Description: Commonly used classification and regression tree methods like the C
 	     regression trees in R. CPU and memory-intensive tasks are fully computed in C++ while
 	     the 'partykit' package is leveraged to represent the resulting trees in R, providing
 	     unified infrastructure for summaries, visualizations, and predictions.
-Depends: R (>= 3.1.0), partykit
+Depends: R (>= 3.6.0), partykit
 Suggests: Formula, kernlab, lattice, mlbench, multcomp, party, rpart, xtable
 LazyData: yes
 License: GPL-2 | GPL-3
