@@ -1,8 +1,7 @@
-
 > options(prompt = "R> ", continue = "+  ", width = 70, 
 +     useFancyQuotes = FALSE)
 
-suppressWarnings(RNGversion("3.5.2"))
+> suppressWarnings(RNGversion("3.5.2"))
 
 > library("rpart")
 
