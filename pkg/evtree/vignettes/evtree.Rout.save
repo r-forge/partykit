@@ -1,3 +1,4 @@
+
 > options(prompt = "R> ", continue = "+  ", width = 70, 
 +     useFancyQuotes = FALSE)
 
@@ -8,6 +9,8 @@
 > library("evtree")
 Loading required package: partykit
 Loading required package: grid
+Loading required package: libcoin
+Loading required package: mvtnorm
 
 > library("lattice")
 
@@ -57,7 +60,6 @@ Number of terminal nodes: 4
 + } else {
 +     data("BBBClub", package = "evtree")
 +     library(" ..." ... [TRUNCATED] 
-Loading required package: Formula
 
 > plot(rp)
 
@@ -141,9 +143,16 @@ rel  72.581  70.833  66.387
 > r$dssamp <- r$ds:r$samp
 
 > library("multcomp")
-Loading required package: mvtnorm
 Loading required package: survival
-Loading required package: splines
+Loading required package: TH.data
+Loading required package: MASS
+
+Attaching package: 'TH.data'
+
+The following object is masked from 'package:MASS':
+
+    geyser
+
 
 > cstats <- function(alg = "evtree", value = "accuracy", 
 +     data = r) {
@@ -428,5 +437,4 @@ Loading required package: splines
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
- 48.704   0.140  48.860
- 
+  23.28    0.57   24.04 
