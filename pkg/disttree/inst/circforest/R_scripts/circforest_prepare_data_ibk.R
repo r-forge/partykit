@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for IBK with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-05-27 on thinkmoritz
+# - L@ST MODIFIED: 2019-05-28 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -55,7 +55,7 @@ calc_anglediff <- function(ff1, dd1, ff2, dd2) {
 # -------------------------------------------------------------------
 cat("\nPrepare data ...\n")
 
-datafile <- sprintf("%s/circforest_prepared_data_ibk_lag%s.rda", data_out, mylag)
+datafile <- sprintf("%s/circforest_prepared_data_ibk_lag%s.rds", data_out, mylag)
 
 ## Load or create (and save) data set
 if(file.exists(datafile)) {
