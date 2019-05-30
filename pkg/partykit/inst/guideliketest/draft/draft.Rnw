@@ -170,7 +170,7 @@ parametric model trees, in particular linear model trees. Second, it is assessed
 different building blocks from this common framework affect the power of the 
 tree algorithms to select the appropriate covariates for splitting: observation-wise
 goodness-of-fit measure (residuals vs.\ model scores), binarization of residuals/scores
-at zero, binning of covariates. This shows that specifically the goodness-of-fit measure 
+at zero, and binning of covariates. This shows that specifically the goodness-of-fit measure 
 is crucial for the power of the procedures, with model scores without binarization performing
 much better in many scenarios.
 }
@@ -209,9 +209,9 @@ and complex interactions. Therefore, separating the data into more homogeneous s
 based on a set of covariates first can simplify the task and fitting a local model to 
 each of the resulting subgroups often leads to better results. This separation can be 
 done by applying a tree algorithm. While almost all algorithms proposed in the literature
-follow the general idea of splitting the data such that some objective function is optimized, 
-they differ in their specific approaches to selecting a split variable and the corresponding 
-split point. 
+follow the general idea of splitting the data such that some objective function is optimized
+locally, they differ in their specific approaches to selecting a split variable and the 
+corresponding split point. 
 Some of the first tree algorithms (e.g., AID, \citealp{Morgan+Sonquist:1963}; 
 CART, \citealp{Breiman+Friedman+Stone:1984}) rely on exhaustive search procedures to find both, 
 the best split point and split variable in one step by directly comparing all possible split
@@ -253,8 +253,8 @@ it is investigated whether the performance of the inference impacts the performa
 trees differently under pre- vs.\ post-pruning.
 
 In many of the considered scenarios the choice of goodness-of-fit measure heavily influences
-the performance of testing strategies with overall using model scores leading to clearly better
-results than employing residuals only. Moreover, the original
+the performance of testing strategies. In particular, using model scores leads to
+overall clearly better results than employing residuals only. Moreover, the original
 values of the goodness-of-fit measure are preferred over binarized versions of them.
 Also regarding the effects of categorizing possible split variables and the selection
 of a pruning strategy clear recommendations can be given based on the presented results.
@@ -310,13 +310,13 @@ tests following the same basic strategy:
 \begin{enumerate}
   \item To capture how the objective function changes with the observations in
         the current subgroup, a disaggregated, observation-wise goodness-of-fit
-        measure is obtained. More formally, this is an $n \times k$ matrix
-        where $n \in \mathbb{N}$ is the number of observations and $k \in \mathbb{N}$ 
+        measure is obtained. More formally, this is an $N \times K$ matrix
+        where $N \in \mathbb{N}$ is the number of observations and $K \in \mathbb{N}$ 
         the number of goodness-of-fit measures per observation.
   \item The dependency or association of this goodness-of-fit matrix with
-        each possible split variable $Z_j$, $j \in \{1, \dots, m\}$, is assessed
+        each possible split variable $Z_j$, $j \in \{1, \dots, J\}$, is assessed
         using some suitable test statistic. The corresponding $p$-values allow for
-        a comparison of all $m$ covariates on a standardized or unified scale and in
+        a comparison of all $J$ covariates on a standardized or unified scale and in
         that way for an unbiased split variable selection.
   \item The covariate corresponding to the smallest $p$-value -- and thus the
         highest influence on the goodness of fit of the model -- is selected for 
@@ -327,7 +327,8 @@ As an example -- and explained in more detail below -- consider a linear regress
 Thus, a linear regression model is fitted in each subgroup, minimizing the
 residual sum of squares as the aggregated goodness-of-fit measure. The corresponding
 observation-wise goodness-of-fit measure can be given by the residuals or the scores
-(gradient contributions). Analogously, the log-likelihood and corresponding score function could be used.
+(gradient contributions). Analogously, the log-likelihood and corresponding score function 
+could be used.
 
 While this basic approach is the same for the GUIDE, CTree, and MOB algorithms, they differ 
 in their strategies on how to calculate test statistics. In order to point out these specific 
@@ -342,7 +343,7 @@ The CTree algorithm \citep{Hothorn+Hornik+Zeileis:2006} is based on the idea of 
 non-parametric regression tree models in a conditional inference framework by applying 
 permutation tests. 
 To select a split variable it is tested whether there is any association between the transformed 
-response $h(Y)$ and each possible transformed split variable $g(Z_j)$ ($j = 1, \dots, m$).
+response $h(Y)$ and each possible transformed split variable $g(Z_j)$ ($j = 1, \dots, J$).
 The only requirement for the function $h$ is to depend on $Y$ in a permutation-symmetric way but
 this encompasses ranks, scores, indicator functions, etc.\ and can also be multidimensional.
 For a numeric response the identity function $h(Y) = Y$ is a common 
@@ -361,17 +362,17 @@ $$
 The estimate of the model parameters $\hat{\beta}$ is obtained by optimizing
 the sum of the objective function $\ell$, aggregated over all observations.
 This framework includes many different M-type estimators as special cases, including maximum 
-likelihood and ordinary least squares estimation. For a $k$-dimensional parameter
+likelihood and ordinary least squares estimation. For a $K$-dimensional parameter
 $\beta$ the score function evaluated for the $i$-th observation $s(y_i, x_i, \beta)$
-is also a $k$-dimensional vector, i.e., the gradient contribution of the $i$-th observation.
-Thus, the $n \times k$-matrix consisting of these scores or gradient contributions for all 
-$i = 1, \dots, n$ observations is a natural candidate for the observation-wise goodness-of-fit
+is also a $K$-dimensional vector, i.e., the gradient contribution of the $i$-th observation.
+Thus, the $N \times K$-matrix consisting of these scores or gradient contributions for all 
+$i = 1, \dots, N$ observations is a natural candidate for the observation-wise goodness-of-fit
 measure as described in the previous Section~\ref{sec:generic_alg}.
 
 Similarly, different types of functions can be chosen for the influence function $g$ depending
 on a possible split variable $Z$. A simple choice in case of $Z$ being a numeric variable is again
 the identity function $g(Z) = Z$. For categorical variables $g$ can also map its values to the 
-corresponding unity vectors by an indicator function $g(Z) = (0,\ldots,1,\ldots,0)$.
+corresponding unity vectors by an indicator function $g(Z) = (0,\ldots,1,\ldots,0)^{\top}$.
 
 To test for independence of $h(Y)$ and $g(Z)$ CTree calculates a linear association test statistic,
 following the framework of \cite{Strasser+Weber:1999}. The corresponding conditional expectation and
@@ -384,7 +385,7 @@ being computed from the analogous transformation of the normal distribution
 \citep[see][for a hands-on introduction and Appendix~\ref{app:teststat_ctree} for more details on the linear test statistic]{Hothorn+Hornik+VanDeWiel:2006}.
 
 If both variables $Y$ and $Z$ are numeric the default independence test corresponds to a Pearson 
-correlation test. For one numeric and one categorical variable essentially a 1-way ANOVA
+correlation test. For one numeric and one categorical variable essentially a one-way ANOVA
 (analysis of variance) is employed while for two categorical variables a $\chi^2$~test is performed.
 Thus, in the general CTree framework many types of tests can be specified by selecting suitable
 transformations $g$ and $h$. While originally
@@ -427,7 +428,7 @@ Building on earlier work for the QUEST algorithm \citep{Loh+Shih:1997}, \cite{Lo
 proposed the GUIDE algorithm blending trees with parametric regression models and
 encompassing simpler classification and regression trees as special cases. Thus,
 linear regression models could be fitted in the nodes of a tree as well as
-constant fits such as simple mean response $\hat{\beta} = \bar{y} = \frac{1}{n}\sum_{i=1,\ldots,n}^n y_i$.
+constant fits such as simple mean response~\mbox{$\hat{\beta} = \bar{y} = \frac{1}{N}\sum_{i=1}^N y_i$}.
 The tests for selecting the split variable are then based on the corresponding residuals,
 e.g., for a simple linear regression \citep[as used in][]{Loh:2002}:
 $$
@@ -561,9 +562,9 @@ split variable. GUIDE employs the binarized residuals and assesses their associa
 the categorized split variable in a classical (unconditional) $\chi^2$ test.
 
 But the building blocks could be easily re-combined to yield new types of tests. For example,
-in the GUIDE approach, a 1-way ANOVA can be used for assessing the association of the residuals
+in the GUIDE approach, a one-way ANOVA can be used for assessing the association of the residuals
 (without binarization) with the categorized split variable. Or alternatively, a multivariate
-1-way ANOVA can be used for the non-binarized scores as opposed to the residuals etc.
+one-way ANOVA can be used for the non-binarized scores as opposed to the residuals etc.
 
 Note that there are further differences in the testing strategies between the three algorithms, e.g.,
 using conditional vs.\ unconditional approximations of the null distributions. However, this difference
@@ -603,15 +604,20 @@ study in Section~\ref{sec:simulation}:
 $$
 Y = \beta_0 + \beta_1 \cdot X + \epsilon
 $$
-with response variable $Y$, regressor variable $X$, and error term $\epsilon$. This model is
-fitted, as usual, by ordinary least squares (OLS) to the observations in each notation,
+with response variable $Y$, regressor variable $X$, and error term $\epsilon$.
+In particular, in the investigated tree models the coefficients $\beta_0$ and $\beta_1$
+can depend on the possible split variables $Z_j$, $j=1,\ldots,J$, such that
+$$
+Y = \beta_0(Z_1, \ldots, Z_J) + \beta_1(Z_1, \ldots, Z_J) \cdot X + \epsilon.
+$$
+This model is fitted, as usual, by ordinary least squares (OLS) to the observations in each notation,
 yielding the parameter estimates $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
 To keep notation simple we present the following equations for the root node with all observations
-$\{(y_i,x_i)\}_{i=1,\ldots,n}$ and $n \in \mathbb{N}$. In subsequent nodes the same equations
+$\{(y_i,x_i)\}_{i=1,\ldots,N}$ and $N \in \mathbb{N}$. In subsequent nodes the same equations
 are used but just for a smaller subgroup.
 
 The aggregated goodness-of-fit measure (or objective or loss function) in OLS estimation
-is the sum of squared residuals: $\sum_{i=1}^n \ell(y_i,x_i,\beta_0,\beta_1)$ where
+is the sum of squared residuals: $\sum_{i=1}^N \ell(y_i,x_i,\beta_0,\beta_1)$ where
 $$
 \ell(y_i,x_i,\beta_0,\beta_1) = r(y_i,x_i,\beta_0,\beta_1)^2
 $$
@@ -624,13 +630,13 @@ observation-wise goodness-of-fit measure. Another natural candidate for this is 
 score function for the $i$-th observation:
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
-\frac{\partial \ell}{\partial \boldsymbol{\beta}}(y_i, x_i, \beta_0, \beta_1) = 
+\frac{\partial \ell}{\partial (\beta_0, \beta_1)^{f\top}}(y_i, x_i, \beta_0, \beta_1) = 
 -2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
 Thus, up to a constant scaling factor of $-2$ (that could also be omitted) the first component
 of the scores is in fact the residual. However, it is complemented by a second component
-that captures the slope effect of $x_i$. Therefore, when computing the score for all $n$ observations
-this yields an $n \times 2$ score matrix whose first column corresponds to the $n$ residuals.
+that captures the slope effect of $x_i$. Therefore, when computing the score for all $N$ observations
+this yields an $N \times 2$ score matrix whose first column corresponds to the $N$ residuals.
 As this is the derivative with respect to the intercept parameter~$\beta_0$, it
 captures changes in the intercept. Moreover, the second column of the score matrix contains
 derivatives with respect to the slope parameter~$\beta_1$ and thus captures changes in this.
@@ -682,7 +688,7 @@ Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ 
 \end{tabular}
 \caption{\label{tab:variables}Variables included in the data generating process 
 as used for the ``stump'' scenario. In the ``tree'' scenario $Z_2$ is also a true split variable, 
-not only $Z_1$, and hence $\beta_0$ and $\beta_1$ are functions $\beta_j(Z_1,Z_2)$, $j=0,1$.}
+not only $Z_1$, and hence $\beta_0$ and $\beta_1$ are functions $\beta_{k-1}(Z_1,Z_2)$, $k=1,2=K$.}
 \end{table}
 
 The location parameter $\mu$ of the normally distributed response variable $Y$ depends
@@ -702,17 +708,14 @@ are considered for the coefficients $\beta_0$ and $\beta_1$:
 \end{enumerate}
 %
 See Figure~\ref{fig:dgp_stump} for an illustration. More precisely, the coefficient that
-changes ($\beta_j$ with $j\in\{0,1\}$) switches between two values at the split point $\xi$:
+changes~($\beta_{k-1}$ with $k=1,2=K$) switches between two values at the split point $\xi$:
 %
 \begin{align*}
-\beta_{j}(Z_1) = \begin{cases}
--\delta \cdot (-1)^{j}  \quad \text{if } Z_1 \leq \xi \\
-+\delta \cdot (-1)^{j}  \quad \text{if } Z_1 > \xi
+\beta_{k-1}(Z_1) = \begin{cases}
+-\delta \cdot (-1)^{k-1}  \quad \text{if } Z_1 \leq \xi \\
++\delta \cdot (-1)^{k-1}  \quad \text{if } Z_1 > \xi
 \end{cases}
 \end{align*}
-%
-%while in the continuous case a simple linear function is considered in the form of
-%$$\beta_{i}(Z_1) = Z_1 \cdot \delta \cdot (-1)^{i}.$$
 In that way, the type of variation is the same for $\beta_0$ and $\beta_1$, however, in 
 opposite directions.
 
@@ -1073,9 +1076,9 @@ as their original versions.
 In the following we first investigate the properties of the testing
 strategies in the ``stump'' scenario, focusing on the tests' $p$-values
 for the true split variable $Z_1$ and its corresponding selection
-probability (i.e., $Z_1$ being significant at 5\% level and having the
-lowest $p$-value among all split variables). Section~\ref{sec:scores} begins by
-highlighting the importance of using full model scores vs.\ residuals only
+probability (i.e., the association of $Y$ and $Z_1$ being significant at 5\% level 
+and having the lowest $p$-value among all split variables). Section~\ref{sec:scores} 
+begins by highlighting the importance of using full model scores vs.\ residuals only
 before Section~\ref{sec:3way} considers all building blocks (scores vs.\ residuals,
 binarization of these, and categorization of the split variable).
 Subsequently, the ``tree'' scenario is employed to investigate how the
@@ -1112,7 +1115,7 @@ is provided in Appendix~\ref{app:significance} where the performances are compar
 on the smallest $p$-values, regardless of whether they are beneath any significance level.
 
 Moreover, as defined by the true tree structure used in the data generating process, the
-parameter functions $\beta_j(Z_1)$, $j=0,1$, are step functions which is particularly 
+parameter functions $\beta_{k-1}(Z_1)$, $k=1,2=K$, are step functions which is particularly 
 advantageous for the maximum selection in the test statistic applied by MOB while the linear 
 selection in CTree is preferable for detecting monotonous dependencies. To show that employing 
 a continuous parameter function instead of a step function only has an impact on whether CTree or
@@ -1203,7 +1206,7 @@ From the fact that GUIDE and GUIDE+scores are both performing worse than MOB and
 can be deduced that categorizing split variables and binarizing scores also decreases the
 ability to detect the right split variable. To elaborate these effects more in detail 
 the results for all possible combinations of the building blocks are discussed in a full 
-factorial 3-way analysis in the following section.
+factorial three-way analysis in the following section.
 
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
@@ -1235,9 +1238,9 @@ Residuals vs.\ scores        & \textit{residuals}  & $h(Y) = r(Y,X,\hat{\beta})$
 Binarization                 & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)$\\
 \quad (of $h$)               & \textit{no}         & $h$ without binarization\\
 \hline
-Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)$\\
+Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
 \quad ($g$ transformation)   &                     & \quad indicating the assigned bin\\
-                             & \textit{max}        & $g(Z)=(0,\ldots,0,1,\ldots,1)$\\
+                             & \textit{max}        & $g(Z)=(0,\ldots,0,1,\ldots,1)^{\top}$\\
                              &                     & \quad indicating the crossed quantile\\
                              & \textit{lin}        & $g(Z)=Z$\\
 \hline
@@ -1513,12 +1516,12 @@ strategy should not be based on their results which argues for the application o
 This is also supported by the results in Figure~\ref{fig:tree_all} showing that post-pruning improves
 the performance of both GUIDE versions. Particularly if the true split point is close to a binning 
 point (such that categorizing split variables has no negative effect) the post-pruning strategy 
-compensates the lack of power of GUIDE+scores compared to CTree and MOB almost completely (bottom 
-row, first and third panel).
+compensates the lack of power of GUIDE+scores compared to CTree and MOB almost completely 
+(bottom row, first and third panel).
 In conclusion, the choice of a pruning strategy should be based on knowledge about the 
 power of the applied testing strategy. With a well working significance test additional expensive
 calculations such as needed for post-pruning may be avoided being one of the main advantages of 
-pre-pruning. However, deficiencies of a testing strategy in terms of power can be at least partly 
+pre-pruning. However, deficiencies of a testing strategy in terms of power can be at least partly
 evened out by employing a post-pruning strategy.
 
 
@@ -1543,9 +1546,9 @@ of a continuous split variable. Therefore, categorizing possible split variable 
 advantages in practice, however, it has to be considered that in general
 important effects might be neglected.
 
-Linear models as presented in this study have been selected as they allow for a simple illustration
-of the investigated subjects. However, the obtained results also hold for a variety of other models
-as the introduced building blocks can be applied in the same way for all model types.
+Linear models as presented in this study have been selected as they allow for a simple illustration 
+of the investigated subjects. However, the obtained results also hold for a variety of other 
+models as the introduced building blocks can be applied in the same way for all model types.
 Specific characteristics of linear models regarding structural changes have been investigated
 in detail in previous literature.
 \cite{Ploberger+Kraemer:1992} have shown that residual-based tests can detect a change in the parameters
@@ -1610,9 +1613,8 @@ built using the basic framework of \code{ctree} and \code{mob}.
 
 
 \section*{Acknowledgments}
-An extended research stay of Torsten Hothorn in Innsbruck (August
-2017 to January 2018) was financially supported by the Swiss National
-Science Foundation, grant number SNF IZSEZ0 177091.
+Torsten Hothorn received funding from the Swiss National Science
+Foundation, grant number 200021\_184603.
 
 
 \bibliography{ref.bib}
@@ -1630,57 +1632,59 @@ and \cite{Loh:2002}, however, notation is adapted to the main manuscript
 in order to allow for better comparison.
 
 \subsection{CTree}\label{app:teststat_ctree}
-To measure the association of a response $Y$ and each possible split variable $Z$ the
-CTree algorithm applies a linear test statistic $T$ which is excerpted from Section~3.1.
-(``Variable selection and stopping criteria'') of the original paper \citep{Hothorn+Hornik+Zeileis:2006} and is of the following form:
+To measure the association of a response $Y$ and each possible split variable $Z_j$, $j=1,\ldots,J$,
+the CTree algorithm applies a linear test statistic $T_j$ which is excerpted from Section~3.1.
+(``Variable selection and stopping criteria'') of the original paper 
+\citep{Hothorn+Hornik+Zeileis:2006} and is of the following form:
 $$
-T(Y, Z, w) = \text{vec}\left( \sum_{i=1}^n w_i g(Z_{i})h(Y_i)^{\top}\right)
+T_j(Y, Z_j, w) = \text{vec}\left( \sum_{i=1}^N w_i g_j(Z_{ji})h(Y_i)^{\top}\right)
 $$
-where $w$ are optional weights, $g: \mathcal{Z} \rightarrow \mathbb{R}^{p}$ is a nonrandom 
-transformation of the split variable $Z$ and the influence function 
-$h: \mathcal{Y} \times \mathcal{Y}^n \rightarrow \mathbb{R}^q$ depends on the response 
-$Y = (Y_1, \ldots, Y_n)$ in a permutation symmetric way and is set to 
+where $w$ are optional weights, $g_j: \mathcal{Z}_j \rightarrow \mathbb{R}^{P}$ is a nonrandom 
+transformation of the split variable $Z_j$ and the influence function 
+$h: \mathcal{Y} \times \mathcal{Y}^N \rightarrow \mathbb{R}^Q$ depends on the response 
+$Y = (Y_1, \ldots, Y_N)$ in a permutation symmetric way and is set to 
 $h(Y_i) = s(Y_i, X_i, \hat{\beta})$ for a score-based approach. 
 Moreover, by applying the ``vec'' operator the resulting
-$p~\times~q$ matrix is converted into a $p q$ column vector.
+$P~\times~Q$ matrix is converted into a $PQ$ column vector.
 Following \cite{Strasser+Weber:1999}
-the conditional expectation $\mu$ and covariance $\Sigma$ of a linear test statistic can 
-be calculated and used to standardize an observed linear test statistic $t$ within a 
+the conditional expectation $\mu_j$ and covariance $\Sigma_j$ of a linear test statistic
+$T_j$ can be calculated and used to standardize an observed linear test statistic $t_j$ within a 
 function $c$ mapping into the real line.
 For example, the maximum of the absolute values of the standardized linear statistic
 $$
-c_{\max}(t,\mu,\Sigma) = \max_{k=1,\ldots,pq} \left| \frac{(t-\mu)}{\sqrt{(\Sigma)_{kk}}} \right|
+c_{\max}(t_j,\mu_j,\Sigma_j) = \max \left| \frac{(t_j-\mu_j)}{\text{diag}(\Sigma_j)} \right|
 $$
 or a quadratic form
 $$
-c_{\text{quad}}(t, \mu, \Sigma) = (t - \mu)\Sigma^{+} (t - \mu)^{\top}
+c_{\text{quad}}(t_j, \mu_j, \Sigma_j) = (t_j - \mu_j)\Sigma_j^{+} (t_j - \mu_j)^{\top}
 $$
-can be considered where $\Sigma^{+}$ is the Moore-Penrose inverse of $\Sigma$.
-Since the asymptotic conditional distribution of a linear test statistic $T$ is a 
-multivariate normal with parameters $\mu$ and $\Sigma$ \citep{Strasser+Weber:1999}, 
+can be considered where $\Sigma_j^{+}$ is the Moore-Penrose inverse of $\Sigma_j$.
+Since the asymptotic conditional distribution of a linear test statistic $T_j$ is a 
+multivariate normal with parameters $\mu_j$ and $\Sigma_j$ \citep{Strasser+Weber:1999}, 
 the asymptotic distribution of $c_{\text{max}}$ is normal while the quadratic form 
 $c_{\text{quad}}$ follows an asymptotic $\chi^2$~distribution. Based on this knowledge 
 the corresponding $p$-values can be calculated easily.
 
 
 \subsection{MOB}\label{app:teststat_mob}
-The MOB algorithm employs an empirical fluctuation process $W$ to measure deviations of
-the model scores $s$ from zero. As described in detail in Section~3.2. (``Testing for 
+The MOB algorithm employs an empirical fluctuation process $W_j$ to measure deviations of
+the model scores $s$ from zero with respect to an ordering induced by the possible split variable
+$Z_j$, $j = 1,\ldots,J$. As described in detail in Section~3.2. (``Testing for 
 parameter instability'') of the original paper \citep{Zeileis+Hothorn+Hornik:2008}
 this process is of the following form:
 $$
-W(t) = \hat{J}^{-1/2} n^{-1/2} \sum_{i=1}^{\lfloor nt \rfloor} s_{\sigma(Z_{i})} \qquad (0 \leq t \leq 1)
+W_j(t) = \hat{\Sigma}^{-1/2} N^{-1/2} \sum_{i=1}^{\lfloor Nt \rfloor} s_{\pi(Z_{ji})} \qquad (0 \leq t \leq 1)
 $$
-with the model scores $s_i = s(Y_i, X_i, \hat{\beta}$ being sorted by the split variable Z by including the ordering permutation $\sigma(Z_{i})$. 
-To scale this partial sum process an estimate $\hat{J}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
-Following \cite{Zeileis+Hornik:2007} $W(t)$ converges to a Brownian bridge $W^0$ under the null
-hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied and the corresponding asymptotic distribution of $\lambda(W(t))$ can be obtained by employing the same functional to the limit process, i.e., $\lambda(W^0)$. 
+with the model scores $s_i = s(Y_i, X_i, \hat{\beta})$ being sorted by the possible split variable $Z_j$ by including the ordering permutation $\pi(Z_{ji})$. 
+To scale this partial sum process an estimate $\hat{\Sigma}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
+Following \cite{Zeileis+Hornik:2007} $W_j(t)$ converges to a Brownian bridge $W^0$ under the null
+hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied and the corresponding asymptotic distribution of $\lambda(W_j(t))$ can be obtained by employing the same functional to the limit process, i.e., $\lambda(W^0)$. 
 
 One possible and intuitive choice for a functional in order to asses instabilities over a numerical 
 split variable is the following:
-$$\lambda_{supLM}(W) = \max_{i = \underline{i},\ldots,\overline{i}}\left(\frac{i}{n}\cdot \frac{n-i}{n}\right)^{-1} \left|\left|W\left(\frac{i}{n}\right)\right|\right|_2^2
+$$\lambda_\text{supLM}(W_j) = \max_{i = \underline{i},\ldots,\overline{i}}\left(\frac{i}{N}\cdot \frac{N-i}{N}\right)^{-1} \left|\left|W_j\left(\frac{i}{N}\right)\right|\right|_2^2
 $$
-where a minimal segment size $\underline{i}$ and then $\overline{i} = n - \underline{i}$ are used to 
+where a minimal segment size $\underline{i}$ and then $\overline{i} = N - \underline{i}$ are used to 
 define the interval $[\underline{i},\overline{i}]$. Other possible functionals, for example also
 for categorical split variables, and more details,
 particularly on calculating the corresponding $p$-values can be found in Section~3.2. of the 
@@ -1691,7 +1695,7 @@ The test statistic of the $\chi^2$~test as applied in the GUIDE algorithm is
 $$
 X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{24} - E_{24})^2}{E_{24}}
 $$
-where $O_{kl}$ are the observed frequencies of observations in a certain combination of binarized residuals ($k=1,2$) and categorized split variables ($l = 1,\ldots,4$). $E_{kl}$ are the corresponding expected frequencies under independence $E_{kl} = \frac{O_{k \cdot} \cdot O_{\cdot l}}{n}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
+where $O_{lm}$ are the observed frequencies of observations in a certain combination of binarized residuals ($l=1,2$) and categorized split variables ($m = 1,\ldots,4$). $E_{lm}$ are the corresponding expected frequencies under independence $E_{lm} = \frac{O_{l \cdot} \cdot O_{\cdot m}}{N}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
 If full model scores are used instead of residuals a sum of the test statistic over the number of distribution parameters is considered such that each 
 summand corresponds to one column of the score matrix.
 
@@ -1797,7 +1801,7 @@ tests perform as significance test.
 However, ignoring this significance level yields the same conclusions which can be seen when 
 comparing Figures~\ref{fig:scores_stump_wosign} and \ref{fig:scores_stump}, both being based 
 on the exact same evaluation, but in Figure~\ref{fig:scores_stump_wosign} the proportion of 
-replications in which the true splitting variable $Z_1$ is detected by showing the smallest $p$-value, 
+replications in which the true splitting variable $Z_1$ is detected by showing the smallest $p$-value,
 but not necessarily smaller than the significance level, is illustrated.
 
 
@@ -1819,12 +1823,12 @@ evaluated again but this time with the varying parameter(s) changing continuousl
 In particular, the parameters $\beta_0$ and $\beta_1$ are linear functions of the true
 split variable $Z_1$:
 \begin{align*}
-\beta_{j}(Z_1) = \begin{cases}
--\delta \cdot (-1)^{j} \cdot Z_1\\
-+\delta \cdot (-1)^{j} \cdot Z_1
+\beta_{k-1}(Z_1) = \begin{cases}
+-\delta \cdot (-1)^{k-1} \cdot Z_1\\
++\delta \cdot (-1)^{k-1} \cdot Z_1
 \end{cases}
 \end{align*}
-for $j = 0,1$.
+for $k = 1,2=K$.
 Additionally, a modified version of CTree employing a maximum selection, such as MOB, is evaluated 
 (denoted by CTree+max). Looking at the selection probability illustrated in Figure~\ref{fig:stump_contbeta} 
 it can be observed that in this setting the original version of CTree is ahead while CTree+max and MOB perform 
@@ -1986,10 +1990,10 @@ overall they perform better in their original form without categorization. Only 
 split point $\xi$ is close to the quartiles used as breakpoints for the categorizations both 
 versions lead to a selection probability of $Z_1$ (e.g., for CTree and $\xi=0.5$)
 
-Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values 
-of the split variable does not lead to any advantages unless the true split point corresponds (or is at
-least close) to one of the quartiles used for the categorization. In most situations it even causes the 
-power of the testing strategy to decrease.
+Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values
+of the split variable does not lead to any advantages unless the true split point corresponds (or is 
+at least close) to one of the quartiles used for the categorization. In most situations it even causes
+the power of the testing strategy to decrease.
 
 \begin{figure}%%[t]
 \setkeys{Gin}{width=\linewidth}
