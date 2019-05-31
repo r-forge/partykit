@@ -1716,26 +1716,27 @@ test as represented by the different building blocks. In that way,
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{ l l l l }
-\hline 
-Testing Strategy  & Residuals/Scores   & Binarization & Categorization \\
-\hline
-GUIDE             & residuals          & yes          & cat \\
-MOB+bin+res       & residuals          & yes          & max \\
-CTree+bin+res     & residuals          & yes          & lin \\
-MOB+cat+res       & residuals          & no           & cat \\
-MOB+res           & residuals          & no           & max \\
-CTree+res         & residuals          & no           & lin \\
-GUIDE+scores      & scores             & yes          & cat \\
-MOB+bin           & scores             & yes          & max \\
-CTree+bin         & scores             & yes          & lin \\
-MOB+cat           & scores             & no           & cat \\
-MOB               & scores             & no           & max \\
-CTree             & scores             & no           & lin \\
-\hline
+\begin{tabular}{ l l l l l}
+\hline\noalign{\smallskip} 
+Residuals/Scores   & Dichotomization & Categorization & \multicolumn{2}{l}{Via testing strategy}\\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+residuals	   & yes	     & cat            & GUIDE & {(default)}\\
+residuals	   & yes	     & max            & MOB   & {(with modifications)}\\
+residuals	   & yes	     & lin            & CTree & {(with modifications)}\\
+residuals	   & no 	     & cat            & MOB   & {(with modifications)}\\
+residuals	   & no 	     & max            & MOB   & {(with modifications)}\\
+residuals	   & no 	     & lin            & CTree & {(with modifications)}\\
+scores  	   & yes	     & cat            & GUIDE & {(with modifications)}\\
+scores  	   & yes	     & max            & MOB   & {(with modifications)}\\
+scores  	   & yes	     & lin            & CTree & {(with modifications)}\\
+scores  	   & no 	     & cat            & MOB   & {(with modifications)}\\
+scores  	   & no 	     & max            & MOB   & {(default)}\\
+scores  	   & no 	     & lin            & CTree & {(default)}\\
+\noalign{\smallskip}\hline
 \end{tabular}
-\caption{Testing strategies applied (representing the 12 combinations
-of building blocks).
+\caption{Testing strategies applied for all 12 factorial combinations of the building blocks.
+For each combination one of the three testing strategies CTree/MOB/GUIDE is applied,
+possibly after modifying the assessed variables as indicated (i.e., dichotomized or categorized).
 \label{tab:combinations_appendix}}
 \end{table}
 
