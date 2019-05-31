@@ -232,7 +232,7 @@ and GUIDE employ
 statistical significance tests for contingency tables, CTree applies permutation tests in 
 a conditional inference framework and MOB uses fluctuation tests based on central limit theorems
 for the parameter estimators. 
-All these approaches have shown to work well for various situations, however, the relative
+All these approaches have been shown to work well for various situations, however, the relative
 (dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
@@ -395,7 +395,7 @@ conceived for nonparametric models, it is easy to adapt CTree to model-based tes
 recursive partitioning by choosing a model-based $h$ transformation as argued above
 \citep[see the concrete examples in][]{Zeileis+Hothorn:2013,Seibold+Zeileis+Hothorn:2016}.
 
-% In the CTree algorithm the number of possible breakpoints is fixed as splits can only be made at
+% In the CTree algorithm the number of possible breaks is fixed as splits can only be made at
 % observed values or optionally at an average value lying between two observations. To select the
 % best split point two-sample linear statistics of the same structure as in the independence test 
 % are evaluated for all possible subsets of the sample space of the selected split variable.
@@ -643,8 +643,12 @@ this yields an $N \times 2$ score matrix whose first column corresponds to the $
 As this is the derivative with respect to the intercept parameter~$\beta_0$, it
 captures changes in the intercept. Moreover, the second column of the score matrix contains
 derivatives with respect to the slope parameter~$\beta_1$ and thus captures changes in this.
-Hence, GUIDE can be seen as a special case of CTree in which only a subset of the full model
-scores, in particular the derivatives only with respect to the intercept parameter, is used.
+
+Hence, tests based on the full scores (as in CTree and MOB) include residual-based tests (as 
+in GUIDE) as a special case. Therefore, score-based tests can in principle capture all changes 
+in the objective function that residual-based tests can capture -- but the reverse is not
+necessarily true. In the next sections we will investigate how relevant this is in practice 
+and how much it depends on the concrete test statistics employed.
 
 
 \section{Simulation setting and evaluation}
@@ -1221,12 +1225,13 @@ considered. In the underlying evaluation all possible combinations of the buildi
 have been included. The different levels of each of the three building blocks are listed in 
 Table~\ref{tab:levels} where $h$ and $g$ refer to the transformation functions applied to the 
 response $Y$ or a split variable $Z$ respectively, both as described in Section~\ref{sec:ctree}. 
-If quartiles are used as breakpoints to categorize a split variable the employed
-function $g$ maps to a four-dimensional vector of zeros except for one value $1$
-indication the bin to which an observation is assigned. For a maximum selection
-of a split variable $g$ maps to a vector containing only zeros until a certain
-changepoint from which on the values are replaced by $1$. This breakpoint indicates
-for example a crossed quantile. In a linear selection strategy $g$ is simply the identity function.
+In the case of categorization, the split variable $Z$ is binned at the
+quartiles. This corresponds to a four-dimensional 0/1 transformation
+function $g(Z)$ that indicates into which of the bins each observation falls.
+Maximum selection across potential split points in a variable $Z$ also
+corresponds to a multivariate 0/1 transformation function $g(Z)$. However,
+in this case for each potential split point an indicator is used that is 0
+before and 1 after the respective split point.
 (See Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
 for a more detailed overview of all 12 combinations.)
 
@@ -1246,7 +1251,7 @@ Dichotomization              & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)
 Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
 \quad ($g$ transformation)   &                     & \quad indicating the assigned bin\\
                              & \textit{max}        & $g(Z)=(0,\ldots,0,1,\ldots,1)^{\top}$\\
-                             &                     & \quad indicating the crossed quantile\\
+                             &                     & \quad indicating the potential split point\\
                              & \textit{lin}        & $g(Z)=Z$\\
 \hline
 \end{tabular}
@@ -1264,7 +1269,7 @@ variables increases the $p$-value of $Z_1$ even more.
 Here, the maximum selection performs best while the linear selection shows its disadvantage in 
 detecting abrupt changes, but overall it depends on the situation whether a linear or a maximum
 selection of a split variable is advantageous. 
-Comparing the two panels suggests that unless one of the breakpoints used for binning 
+Comparing the two panels suggests that unless one of the breaks used for binning 
 possible split variables is close to the true split point (as for the median $0$, left panel), 
 a categorization weakens the performance of a testing strategy. 
 Moreover, while the effect of both of these transformations of the data (dichotomization of 
@@ -1536,20 +1541,25 @@ evened out by employing a post-pruning strategy.
 
 \section{Discussion}
 \label{sec:discussion}
-
 From comparing the effects of the building blocks three main conclusions can be drawn: 
 (1)~In many cases including all available score values rather than just residuals leads to 
 clearly better results and performs in general at least equally well.
 (2)~Dichotomizing scores/residuals does not lead to any improvement in performance.
 (3)~Categorizing possible split variables also doesn't improve the performance 
-unless the breakpoints used for the categorization are very close to the true split points.
+unless the breaks used for the categorization are very close to the true split points.
 However, even then the results are very similar to those achieved without any categorization.
 But it has to be noted that a categorization of possible split variables can simplify
 evaluations. Moreover, depending on the focus of interest, the results can be more
 straightforward, for example in case of clearly separated subgroups being defined by the values 
-of a continuous split variable. Therefore, categorizing possible split variable can have
+of a continuous split variable. Therefore, categorizing possible split variables can have
 advantages in practice, however, it has to be considered that in general
 important effects might be neglected.
+
+Both of the transformation functions $h$ and $g$ (applied to the response~$Y$ or a split 
+variable~$Z$ respectively) can also be multivariate. For this case, the corresponding
+statistical tests are available, in particular the \textsf{R} package \textbf{coin}
+which is employed for the implementation of MOB and CTree provides 
+the required toolbox for multivariate dependency tests, including a $\chi^2$~test. 
 
 Linear models as presented in this study have been selected as they allow for a simple illustration 
 of the investigated subjects. However, the obtained results also hold for a variety of other 
@@ -1559,9 +1569,9 @@ in detail in previous literature.
 \cite{Ploberger+Kraemer:1992} have shown that residual-based tests can detect a change in the parameters
 only if it also causes a shift in the expected value $\mathbb{E}(Y)$. 
 This is not the case if changes are orthogonal to the mean regressor $(1,0)^{\top}$, hence, if
-the parameter vector $\bm{\beta}$ is shifted 
-%to $\bm{\beta} + \bm{\Delta}$ 
-by $\bm{\Delta} = (0, \Delta_1)^{\top}$.
+the parameter vector $\beta$ is shifted 
+%to $\beta + \Delta$ 
+by $\Delta = (0, \Delta_1)^{\top}$.
 For that reason GUIDE breaks down when the slope parameter $\beta_1$ changes while the intercept
 $\beta_0$ is fixed as seen in the middle panel of Figure~\ref{fig:scores_stump}.
 While this might be an extreme example similar scenarios can appear in many applications, see, e.g., 
@@ -1570,21 +1580,25 @@ required in order to fit a reasonable model. This can be avoided by including mo
 allowing for the detection of changes not only in the location parameter but also in all other 
 parameters, i.e., not only in the expected value but also in the variance.
 In situations where shifts appear only in the intercept testing procedures purely based on residuals 
-perform best. However, the cost in terms of power that comes with including all scores, in particular
-with testing more than one parameter, is negligibly small. 
+perform best. However, the cost in terms of power that comes with including all scores, in 
+particular with testing more than one parameter, is negligibly small. 
 
-Also in more general models residual-based and score-based procedures are expected to perform equally 
-well if all parameters are highly correlated. On the other hand, if parameters are orthogonal changes 
-that are not connected to the mean might be missed when only considering residuals. This can be prevented 
-by including scores which are a standard measurement of goodness of fit that can be easily employed 
-for all model types. Moreover, the scores function $s$ can simply be seen as a  transformation to 
-a different space in order to allow for a well structured analysis of dependencies, regardless
-of the type of model.
-Even though it also depends on the type of the applied residuals 
-(see, e.g., \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002} 
-and \citealp{Loh+He+Man:2015})
-whether parameter changes can be detected successfully, a one-dimensional measurement of goodness of 
-fit such as residuals provides less power than full model scores. 
+Also in more general models residual-based and score-based procedures are expected to perform
+equally well if all parameters are highly correlated. On the other hand, if parameters are 
+orthogonal changes that are not connected to the mean might be missed when only considering
+residuals. This can be prevented by including scores which are a standard measurement of goodness 
+of fit that can be easily employed for all model types. Moreover, the score function $s$ can 
+simply be seen as a  transformation to a different space in order to allow for a well structured
+analysis of dependencies, regardless of the type of model and therefore applicable in a
+wide variety of situations.
+In order to benefit from the advantages of using scores 
+some already existing models have been adapted, e.g., in \cite{Hothorn+Zeileis:2017} 
+and \cite{Schlosser+Hothorn+Stauffer:2019}. Similarly, variations of the GUIDE algorithm
+using different types of residuals are provided, e.g., in \citealp{Loh+Zheng:2013}, 
+\citealp{Chaudhuri+Loh:2002} and \citealp{Loh+He+Man:2015}.
+But even though it also depends on the type of the applied residuals whether parameter changes 
+can be detected successfully, a one-dimensional measurement of goodness of fit such as residuals
+provides less power than full model scores. 
 Whether this difference affects the performance of a testing strategy and if so, to what extent, is 
 determined by the way how residuals are connected to parameter shifts as well as the type of parameter
 shift and the type of model. Therefore, a general statement for all types of models and residuals can 
@@ -1680,10 +1694,10 @@ $Z_j$, $j = 1,\ldots,J$. As described in detail in Section~3.2. (``Testing for
 parameter instability'') of the original paper \citep{Zeileis+Hothorn+Hornik:2008}
 this process is of the following form:
 $$
-W_j(t) = \hat{\Sigma}^{-1/2} N^{-1/2} \sum_{i=1}^{\lfloor Nt \rfloor} s_{\pi(Z_{ji})} \qquad (0 \leq t \leq 1)
+W_j(t) = \hat{V}^{-1/2} N^{-1/2} \sum_{i=1}^{\lfloor Nt \rfloor} s_{\pi(Z_{ji})} \qquad (0 \leq t \leq 1)
 $$
 with the model scores $s_i = s(Y_i, X_i, \hat{\beta})$ being sorted by the possible split variable $Z_j$ by including the ordering permutation $\pi(Z_{ji})$. 
-To scale this partial sum process an estimate $\hat{\Sigma}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
+To scale this partial sum process an estimate $\hat{V}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
 Following \cite{Zeileis+Hornik:2007} $W_j(t)$ converges to a Brownian bridge $W^0$ under the null
 hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied and the corresponding asymptotic distribution of $\lambda(W_j(t))$ can be obtained by employing the same functional to the limit process, i.e., $\lambda(W^0)$. 
 
@@ -1702,9 +1716,17 @@ The test statistic of the $\chi^2$~test as applied in the GUIDE algorithm is
 $$
 X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{24} - E_{24})^2}{E_{24}}
 $$
-where $O_{lm}$ are the observed frequencies of observations in a certain combination of dichotomized residuals ($l=1,2$) and categorized split variables ($m = 1,\ldots,4$). $E_{lm}$ are the corresponding expected frequencies under independence $E_{lm} = \frac{O_{l \cdot} \cdot O_{\cdot m}}{N}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
-If full model scores are used instead of residuals a sum of the test statistic over the number of distribution parameters is considered such that each 
-summand corresponds to one column of the score matrix.
+where $O_{lm}$ are the observed frequencies of observations in a certain combination of 
+dichotomized residuals ($l=1,2$) and categorized split variables ($m = 1,\ldots,4$). $E_{lm}$ 
+are the corresponding expected frequencies under independence 
+$E_{lm} = \frac{O_{l \cdot} \cdot O_{\cdot m}}{N}$. 
+Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a 
+$\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
+If full model scores are used instead of residuals a sum of the test statistic over the 
+number of distribution parameters is considered such that each summand corresponds to one 
+column of the score matrix. For this case the degrees of freedom of the resulting 
+$\chi^2$~distribution is then also the corresponding sum of degrees of freedom over the 
+number of distribution parameters.
 
 
 \section{Combinations of building blocks applied}\label{app:combinations}
@@ -1996,7 +2018,7 @@ In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the 
 is illustrated by the selection probability of $Z_1$ over increasing effect size and for four 
 different values of the true split point $\xi$. For both, CTree and MOB, it can be stated that 
 overall they perform better in their original form without categorization. Only if the true 
-split point $\xi$ is close to the quartiles used as breakpoints for the categorizations both 
+split point $\xi$ is close to the quartiles used as breaks for the categorizations both 
 versions lead to a selection probability of $Z_1$ (e.g., for CTree and $\xi=0.5$)
 
 Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values
