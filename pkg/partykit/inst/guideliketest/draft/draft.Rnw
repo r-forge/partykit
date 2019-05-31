@@ -169,9 +169,9 @@ tests (as in MOB). First, these are embedded into a common inference framework e
 parametric model trees, in particular linear model trees. Second, it is assessed how
 different building blocks from this common framework affect the power of the 
 tree algorithms to select the appropriate covariates for splitting: observation-wise
-goodness-of-fit measure (residuals vs.\ model scores), binarization of residuals/scores
-at zero, and binning of covariates. This shows that specifically the goodness-of-fit measure 
-is crucial for the power of the procedures, with model scores without binarization performing
+goodness-of-fit measure (residuals vs.\ model scores), dichotomization of residuals/scores
+at zero, and binning of possible split variables. This shows that specifically the goodness-of-fit 
+measure is crucial for the power of the procedures, with model scores without dichotomization performing
 much better in many scenarios.
 }
 \Keywords{classification and regression trees, independence tests, recursive partitioning}
@@ -240,8 +240,8 @@ i.e., the task of selecting the best split variable in a given (sub)sample. In p
 GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
 by investigating the building blocks of their testing strategies in which they differ:
 (1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
-(2)~Binarization of these residuals or scores.
-(3)~Categorization of covariates.
+(2)~Dichotomization of these residuals or scores.
+(3)~Categorization of possible split variables.
 Apart from these three main factors further aspects such as the approximation of the null
 distribution (conditional vs.\ unconditional) or the type of test statistic (maximally 
 selected vs.\ sum of squares) will be considered as well.
@@ -255,7 +255,7 @@ trees differently under pre- vs.\ post-pruning.
 In many of the considered scenarios the choice of goodness-of-fit measure heavily influences
 the performance of testing strategies. In particular, using model scores leads to
 overall clearly better results than employing residuals only. Moreover, the original
-values of the goodness-of-fit measure are preferred over binarized versions of them.
+values of the goodness-of-fit measure are preferred over dichotomized versions of them.
 Also regarding the effects of categorizing possible split variables and the selection
 of a pruning strategy clear recommendations can be given based on the presented results.
 
@@ -344,7 +344,7 @@ The CTree algorithm \citep{Hothorn+Hornik+Zeileis:2006} is based on the idea of 
 non-parametric regression tree models in a conditional inference framework by applying 
 permutation tests. 
 To select a split variable it is tested whether there is any association between the transformed 
-response $h(Y)$ and each possible transformed split variable $g(Z_j)$ ($j = 1, \dots, J$).
+response $h(Y)$ and each possible transformed split variable $g(Z_j)$, $j = 1, \dots, J$.
 The only requirement for the function $h$ is to depend on $Y$ in a permutation-symmetric way but
 this encompasses ranks, scores, indicator functions, etc.\ and can also be multidimensional.
 For a numeric response the identity function $h(Y) = Y$ is a common 
@@ -352,7 +352,8 @@ choice while a categorical response can be mapped to a unity vector by an indica
 $h(Y) = (0,\ldots,1,\ldots,0)^{\top}$.
 Alternatively, the function $h$ can capture location and scale of $Y$ via
 $h(Y) = (Y, (Y-\bar{Y})^2)^{\top}$. 
-If a parametric model is fitted to the response $Y$ with some covariate(s)~$X$ employed as regressor variable(s),
+If a parametric model is fitted to the response $Y$ with some covariate(s)~$X$ employed as 
+\textit{regressor} variable(s),
 then a model-based transformation $h(Y) = s(Y,X,\hat{\beta})$ can be used, e.g.,
 the residuals in a linear model with regression coefficients $\beta$. Moreover,
 $s$ can be the score function pertaining to the objective function (or loss function)
@@ -443,10 +444,10 @@ quantile regression models \citep{Chaudhuri+Loh:2002},
 and proportional hazards modeling via Poisson regression \citep{Loh+He+Man:2015}, among others.
 
 To construct a statistical test two additional transformations are carried out:
-(1)~The residuals $r(Y,X,\hat{\beta})$ are binarized at zero, yielding an indicator for positive vs.\ negative residuals.
+(1)~The residuals $r(Y,X,\hat{\beta})$ are dichotomized at zero, yielding an indicator for positive vs.\ negative residuals.
 (2)~Each possible split variable $Z$ is categorized, i.e., unless $Z$ is already categorical
 it is split at its quartiles into four bins.
-Subsequently, a $\chi^2$~test of independence is performed for the binarized residuals and
+Subsequently, a $\chi^2$~test of independence is performed for the dichotomized residuals and
 each categorized/categorical split variable.
 After choosing the split variable showing the highest dependency by yielding the lowest 
 $p$-value, the split point minimizing the overall goodness-of-fit measure is selected. 
@@ -543,10 +544,10 @@ the splitting variables on the other are prepared or transformed:
         as proposed for MOB. All three algorithms can, in principle, use both goodness-of-fit
 	measures though, which is probably brought out most clearly in the CTree algorithm that
         explicitly allowed for different transformations $h(Y)$ in its original description already.
-  \item \emph{Binarization of residuals/scores:}\\
+  \item \emph{Dichotomization of residuals/scores:}\\
         Rather than testing independence between the split variables and the residuals/scores
 	themselves, it is possible	
-	to binarize residuals/scores at $0$ so that only their signs are assessed (as proposed for GUIDE).
+	to dichotomize residuals/scores at $0$ so that only their signs are assessed (as proposed for GUIDE).
   \item \emph{Categorization of split variables:}\\
         Similarly, the split variables can also be categorized (for testing only). This was proposed for
 	GUIDE, employing binning at the quartiles yielding four categories of approximately
@@ -555,17 +556,17 @@ the splitting variables on the other are prepared or transformed:
 %
 The three algorithms combine these building blocks in different ways as shown in Table~\ref{tab:buildingblocks}:
 When applying CTree for unbiased model-based recursive partitioning it has been suggested to use
-the model scores without binarization and assess their association with the untransformed split
+the model scores without dichotomization and assess their association with the untransformed split
 variables using a conditional inference test. This is similar to a squared correlation test statistic.
 MOB also employs the scores without
-binarization and maximally selects a score statistic over all potential split points in the
-split variable. GUIDE employs the binarized residuals and assesses their association with
+dichotomization and maximally selects a score statistic over all potential split points in the
+split variable. GUIDE employs the dichotomized residuals and assesses their association with
 the categorized split variable in a classical (unconditional) $\chi^2$ test.
 
 But the building blocks could be easily re-combined to yield new types of tests. For example,
 in the GUIDE approach, a one-way ANOVA can be used for assessing the association of the residuals
-(without binarization) with the categorized split variable. Or alternatively, a multivariate
-one-way ANOVA can be used for the non-binarized scores as opposed to the residuals etc.
+(without dichotomization) with the categorized split variable. Or alternatively, a multivariate
+one-way ANOVA can be used for the non-dichotomized scores as opposed to the residuals etc.
 
 Note that there are further differences in the testing strategies between the three algorithms, e.g.,
 using conditional vs.\ unconditional approximations of the null distributions. However, this difference
@@ -577,7 +578,7 @@ discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
 \centering
 \begin{tabular}{ l l l l l }
 \hline 
-      & Scores       & Binarization  & Categorization  & Statistic\\
+      & Scores       & Dichotomization  & Categorization  & Statistic\\
 \hline
 CTree & Model scores & --	     & -- 	       & Sum of squares\\
 MOB   & Model scores & --	     & -- 	       & Maximally selected\\
@@ -612,7 +613,7 @@ $$
 Y = \beta_0(Z_1, \ldots, Z_J) + \beta_1(Z_1, \ldots, Z_J) \cdot X + \epsilon.
 $$
 This model is fitted, as usual, by ordinary least squares (OLS) to the observations in each notation,
-yielding the parameter estimates $\boldsymbol{\hat{\beta}} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
+yielding the parameter estimates $\hat{\beta} = (\hat{\beta_0}, \hat{\beta_1})^\top$.
 To keep notation simple we present the following equations for the root node with all observations
 $\{(y_i,x_i)\}_{i=1,\ldots,N}$ and $N \in \mathbb{N}$. In subsequent nodes the same equations
 are used but just for a smaller subgroup.
@@ -634,13 +635,16 @@ s(y_i, x_i, \beta_0, \beta_1) =
 \frac{\partial \ell}{\partial (\beta_0, \beta_1)^{f\top}}(y_i, x_i, \beta_0, \beta_1) = 
 -2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
-Thus, up to a constant scaling factor of $-2$ (that could also be omitted) the first component
-of the scores is in fact the residual. However, it is complemented by a second component
+Thus, up to a constant scaling factor of $-2$ (that could also be omitted) the first 
+component of the scores is in fact the residual. 
+However, it is complemented by a second component
 that captures the slope effect of $x_i$. Therefore, when computing the score for all $N$ observations
 this yields an $N \times 2$ score matrix whose first column corresponds to the $N$ residuals.
 As this is the derivative with respect to the intercept parameter~$\beta_0$, it
 captures changes in the intercept. Moreover, the second column of the score matrix contains
 derivatives with respect to the slope parameter~$\beta_1$ and thus captures changes in this.
+Hence, GUIDE can be seen as a special case of CTree in which only a subset of the full model
+scores, in particular the derivatives only with respect to the intercept parameter, is used.
 
 
 \section{Simulation setting and evaluation}
@@ -1081,7 +1085,7 @@ probability (i.e., the association of $Y$ and $Z_1$ being significant at 5\% lev
 and having the lowest $p$-value among all split variables). Section~\ref{sec:scores} 
 begins by highlighting the importance of using full model scores vs.\ residuals only
 before Section~\ref{sec:3way} considers all building blocks (scores vs.\ residuals,
-binarization of these, and categorization of the split variable).
+dichotomization of these, and categorization of the split variable).
 Subsequently, the ``tree'' scenario is employed to investigate how the
 performance of the tests affects growing the trees overall. This is
 evaluated using the adjusted Rand index for trees grown by pre-pruning and 
@@ -1106,7 +1110,7 @@ Section~\ref{sec:discussion}]{Ploberger+Kraemer:1992}.
 Hence we compare the CTree, MOB, and GUIDE algorithms  -- all three using the 
 default specification as shown in Table~\ref{tab:buildingblocks} -- and 
 additionally consider a new GUIDE flavor, denoted GUIDE+scores, that uses
-binarized scores rather than residuals.
+dichotomized scores rather than residuals.
 
 In Figure~\ref{fig:scores_stump} the performances of the testing strategies are 
 represented by the corresponding selection probability, hence, a significance level 
@@ -1204,7 +1208,7 @@ As discussed before, this advantage of MOB over CTree is mainly due to the abrup
 model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
 continuously changing parameters (see Appendix~\ref{app:contbeta}).
 From the fact that GUIDE and GUIDE+scores are both performing worse than MOB and CTree it 
-can be deduced that categorizing split variables and binarizing scores also decreases the
+can be deduced that categorizing split variables and dichotomizing scores also decreases the
 ability to detect the right split variable. To elaborate these effects more in detail 
 the results for all possible combinations of the building blocks are discussed in a full 
 factorial three-way analysis in the following section.
@@ -1236,8 +1240,8 @@ Building block               & Levels              & Transformation \\
 Residuals vs.\ scores        & \textit{residuals}  & $h(Y) = r(Y,X,\hat{\beta})$\\
 \quad ($h$ transformation)   & \textit{scores}     & $h(Y) = s(Y,X,\hat{\beta})$\\
 \hline
-Binarization                 & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)$\\
-\quad (of $h$)               & \textit{no}         & $h$ without binarization\\
+Dichotomization              & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)$\\
+\quad (of $h$)               & \textit{no}         & $h$ without dichotomization\\
 \hline
 Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
 \quad ($g$ transformation)   &                     & \quad indicating the assigned bin\\
@@ -1250,7 +1254,7 @@ Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
 \label{tab:levels}}
 \end{table}
 
-Based on the results displayed in Figure~\ref{fig:3way} it can be stated that binarizing 
+Based on the results displayed in Figure~\ref{fig:3way} it can be stated that dichotomizing 
 residuals/scores decreases the performance as it leads to higher $p$-values corresponding 
 to the true split variable $Z_1$ and thus to lower power in the presented settings. 
 For a central true split point ($\xi=0$, left panel) this effect remains at an almost constant 
@@ -1263,7 +1267,7 @@ selection of a split variable is advantageous.
 Comparing the two panels suggests that unless one of the breakpoints used for binning 
 possible split variables is close to the true split point (as for the median $0$, left panel), 
 a categorization weakens the performance of a testing strategy. 
-Moreover, while the effect of both of these transformations of the data (binarization of 
+Moreover, while the effect of both of these transformations of the data (dichotomization of 
 residuals/scores and categorization of split variables) can be observed
 separately in Figure~\ref{fig:3way}, combining them increases the negative impact 
 remarkably.
@@ -1367,7 +1371,7 @@ xyplot(pval_z1 ~ cat | xi,
        strip = strip.custom(factor.levels = c(expression(xi==0~"(50%)"~" and"~delta==0.3), 
                                               expression(xi==0.8~"(90%)"~" and"~delta==1)),
                                    bg = "gray90"),
-       key = list(text = list(c("Goodness of fit:", "  residuals", "  scores", "Binarization:", "  yes", "  no")),
+       key = list(text = list(c("Goodness of fit:", "  residuals", "  scores", "Dichotomization:", "  yes", "  no")),
                   columns = 2,
                   lines = list(lty = c(0,1,2,0,1,1), 
                                type = "l", lwd = 2,
@@ -1384,7 +1388,7 @@ xyplot(pval_z1 ~ cat | xi,
 #with(d08, interaction.plot(cat, interaction(bin, res_scores), pval_z1))
 @
 \caption{\label{fig:3way} Effects of the three building blocks \textit{residuals vs.\ scores},
-\textit{binarization}, and \textit{categorization} in the ``stump'' scenario with the intercept
+\textit{dichotomization}, and \textit{categorization} in the ``stump'' scenario with the intercept
 and the slope parameter both varying. All possible combinations have been 
 evaluated in two different settings and their performances are compared based on the 
 mean $p$-values corresponding to the true split variable $Z_1$. 
@@ -1415,7 +1419,7 @@ For a split point farther away from the center such as the $90$\% quantile $0.8$
 outperforms all other methods and both GUIDE versions fail to find the correct tree structure.
 Hence, the insights provided by the top row of Figure~\ref{fig:tree_all} conform with the conclusions
 drawn from the ``stump'' scenario: Including all available scores in the testing strategy leads to a better performance 
-while binarizing scores and categorizing split variables both do not cause any improvement but in many situations even 
+while dichotomizing scores and categorizing split variables both do not cause any improvement but in many situations even 
 have a negative effect on the power of a testing strategy. 
 
 
@@ -1536,7 +1540,7 @@ evened out by employing a post-pruning strategy.
 From comparing the effects of the building blocks three main conclusions can be drawn: 
 (1)~In many cases including all available score values rather than just residuals leads to 
 clearly better results and performs in general at least equally well.
-(2)~Binarizing scores/residuals does not lead to any improvement in performance.
+(2)~Dichotomizing scores/residuals does not lead to any improvement in performance.
 (3)~Categorizing possible split variables also doesn't improve the performance 
 unless the breakpoints used for the categorization are very close to the true split points.
 However, even then the results are very similar to those achieved without any categorization.
@@ -1572,8 +1576,10 @@ with testing more than one parameter, is negligibly small.
 Also in more general models residual-based and score-based procedures are expected to perform equally 
 well if all parameters are highly correlated. On the other hand, if parameters are orthogonal changes 
 that are not connected to the mean might be missed when only considering residuals. This can be prevented 
-by including scores which are a standard measurement of goodness of fit that can be easily employed for 
-all model types.
+by including scores which are a standard measurement of goodness of fit that can be easily employed 
+for all model types. Moreover, the scores function $s$ can simply be seen as a  transformation to 
+a different space in order to allow for a well structured analysis of dependencies, regardless
+of the type of model.
 Even though it also depends on the type of the applied residuals 
 (see, e.g., \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002} 
 and \citealp{Loh+He+Man:2015})
@@ -1607,7 +1613,7 @@ where the code to reproduce the simulation study can be found as well.
 The functions \code{ctree} and \code{mob} provide an implementation of the
 two tree algorithms in their original form. For their adapted versions additional
 modifications have been applied within these functions allowing for a categorization
-of possible split variables and a binarization of scores.
+of possible split variables and a dichotomization of scores.
 To evaluate the GUIDE algorithm a reimplementation of this algorithm has been 
 built using the basic framework of \code{ctree} and \code{mob}.
 
@@ -1696,7 +1702,7 @@ The test statistic of the $\chi^2$~test as applied in the GUIDE algorithm is
 $$
 X^2 = \frac{(O_{11} - E_{11})^2}{E_{11}} + \ldots + \frac{(O_{24} - E_{24})^2}{E_{24}}
 $$
-where $O_{lm}$ are the observed frequencies of observations in a certain combination of binarized residuals ($l=1,2$) and categorized split variables ($m = 1,\ldots,4$). $E_{lm}$ are the corresponding expected frequencies under independence $E_{lm} = \frac{O_{l \cdot} \cdot O_{\cdot m}}{N}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
+where $O_{lm}$ are the observed frequencies of observations in a certain combination of dichotomized residuals ($l=1,2$) and categorized split variables ($m = 1,\ldots,4$). $E_{lm}$ are the corresponding expected frequencies under independence $E_{lm} = \frac{O_{l \cdot} \cdot O_{\cdot m}}{N}$. Under the null hypothesis of independence the asymptotic distribution of $X^2$ is a $\chi^2$~distribution allowing for a straight-forward calculation of $p$-values.
 If full model scores are used instead of residuals a sum of the test statistic over the number of distribution parameters is considered such that each 
 summand corresponds to one column of the score matrix.
 
@@ -1707,13 +1713,13 @@ For the evaluation of all 12 possible combinations of the presented building blo
 the original testing strategies CTree, MOB, and GUIDE have been applied together
 with modified versions of them. The employed versions and the corresponding combination
 of building blocks are listed in Table~\ref{tab:combinations_appendix}.
-Each suffix indicates a change of the original form of the considered testing strategy.
-In particular, it relates to the transformations of the data before applying a statistical
-test as represented by the different building blocks. In that way,
-``+res'' refers to using only residuals (instead of all model scores),
-``+scores'' to using all model scores (instead of only residuals),
-``+cat'' to applying a categorization of split variables,
-``+bin'' to applying a binarization of scores/residuals.
+%Each suffix indicates a change of the original form of the considered testing strategy.
+%In particular, it relates to the transformations of the data before applying a statistical
+%test as represented by the different building blocks. In that way,
+%``+res'' refers to using only residuals (instead of all model scores),
+%``+scores'' to using all model scores (instead of only residuals),
+%``+cat'' to applying a categorization of split variables,
+%``+bin'' to applying a dichotomization of scores/residuals.
 
 \begin{table}[h!]
 \centering
@@ -1888,19 +1894,19 @@ both coefficients varying (right).}
 \section{Results over increasing effect size}
 \label{app:increasingdelta}
 
-\subsection{Binarization of residuals/scores}
-\label{app:binarization}
-To elaborate over an increasing effect size whether a binarization of the residuals/scores at zero 
+\subsection{Dichotomization of residuals/scores}
+\label{app:dichotomization}
+To elaborate over an increasing effect size whether a dichotomization of the residuals/scores at zero 
 leads to an improvement or a deterioration of performance, CTree and MOB are applied, once in their 
-original version without binarization and once in an adapted version with a binarization of 
-scores at zero (CTree+bin, MOB+bin). Moreover, they are compared to the adapted GUIDE version 
+original version without dichotomization and once in an adapted version with a dichotomization of 
+scores at zero (CTree+dich, MOB+dich). Moreover, they are compared to the adapted GUIDE version 
 which includes all available scores (GUIDE+scores).
 %Hence, the five strategies are obtained from the unifying framework by setting the switches 
 %as listed in Table~\ref{tab:buildingblocks_appendix}.
 
-Figure~\ref{fig:bin_stump} shows the effect of binarizing the score values over
+Figure~\ref{fig:bin_stump} shows the effect of dichotomizing the score values over
 different values for the true split point $\xi$, however, all four situations
-lead to the same conclusions: Binarizing the score values decreases the selection probability
+lead to the same conclusions: Dichotomizing the score values decreases the selection probability
 of the true split variable $Z_1$, and hence reduces the power of the testing strategy.
 
 
@@ -1918,9 +1924,9 @@ subdata$test <- factor(subdata$test,
                                   #"ctree_max", "ctree_max_bin",
                                   "mfluc", "mfluc_bin",
                                   "guide_sum_12"),
-                       labels = c("CTree","CTree+bin",
+                       labels = c("CTree","CTree+dich",
                                   #"CTree+max","CTree+max_bin",
-                                  "MOB", "MOB+bin",
+                                  "MOB", "MOB+dich",
                                   "GUIDE+scores"))
 
 par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree", 
@@ -1966,8 +1972,9 @@ xyplot(prop_Tsplit ~ delta | xi, groups = ~ test,
 @
 \caption{\label{fig:bin_stump}
 Selection probability of the true split variable $Z_1$ for
-testing strategies CTree, CTree+bin, MOB, MOB+bin, and GUIDE+scores in the ``stump''
-scenario with both parameters varying. 
+testing strategies CTree, CTree+dich, MOB, MOB+dich, and GUIDE+scores in the ``stump''
+scenario with both parameters varying. CTree+dich and MOB+dich refer to modifications
+of CTree and MOB applying a dichotomization of residuals/scores.
 Probabilities are estimated over increasing effect size $\delta$
 with 100 replications of 250 observations per step. 
 Each panel represents a different value of the true split point $\xi$ (0, 0.2, 0.5 
