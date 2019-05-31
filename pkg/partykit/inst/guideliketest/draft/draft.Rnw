@@ -278,14 +278,15 @@ and the results are illustrated and discussed in Section~\ref{sec:results}.
 \label{sec:generic_alg}
 The basic idea of building a regression tree model is to partition the data into smaller 
 and more homogeneous subgroups based on a set of covariates. Various tree 
-algorithms have been developed, following essentially the same general structure.
+algorithms have been developed, following essentially the same general structure,
+employing the covariates as \emph{split variables} in the tree induction.
 Starting at the root of the tree, pertaining to the full available data sample, the
 algorithms proceed in the following steps:
 %
 \begin{enumerate}
   \item For the current sample a (possibly simple) model is fitted by optimizing
         some objective function (or loss function) that reflects the goodness of fit.
-  \item Among all available covariates one is selected as the split variable,
+  \item Among all available split variables one is selected as the split variable,
         choosing the split point such that goodness of fit is maximized in the
         resulting subgroups.
   \item Steps 1 and 2 are repeated within each subgroup until some stopping
@@ -297,7 +298,7 @@ only least-squares or maximum-likelihood models but also simple constant
 fits such as means or average proportions.
 Therefore, depending on the type of model, the employed objective function can 
 for example be the sum of deviations from a typical/average value, but it can 
-also be based on a model for a response along with potential covariates.
+also be based on a model for a response along with potential split variables.
 For instance, different types of residuals (or the signs thereof) can be employed
 \citep[see e.g.,][]{Loh:2002} as well as rank sums or logrank scores
 \citep[as in][]{Hothorn+Hornik+VanDeWiel:2006}.
@@ -316,9 +317,9 @@ tests following the same basic strategy:
   \item The dependency or association of this goodness-of-fit matrix with
         each possible split variable $Z_j$, $j \in \{1, \dots, J\}$, is assessed
         using some suitable test statistic. The corresponding $p$-values allow for
-        a comparison of all $J$ covariates on a standardized or unified scale and in
+        a comparison of all $J$ split variables on a standardized or unified scale and in
         that way for an unbiased split variable selection.
-  \item The covariate corresponding to the smallest $p$-value -- and thus the
+  \item The split variable corresponding to the smallest $p$-value -- and thus the
         highest influence on the goodness of fit of the model -- is selected for 
         splitting the data into subgroups.
 \end{enumerate}
@@ -351,7 +352,7 @@ choice while a categorical response can be mapped to a unity vector by an indica
 $h(Y) = (0,\ldots,1,\ldots,0)^{\top}$.
 Alternatively, the function $h$ can capture location and scale of $Y$ via
 $h(Y) = (Y, (Y-\bar{Y})^2)^{\top}$. 
-If a parametric model is fitted to the response $Y$ with regressor variable(s)~$X$,
+If a parametric model is fitted to the response $Y$ with some covariate(s)~$X$ employed as regressor variable(s),
 then a model-based transformation $h(Y) = s(Y,X,\hat{\beta})$ can be used, e.g.,
 the residuals in a linear model with regression coefficients $\beta$. Moreover,
 $s$ can be the score function pertaining to the objective function (or loss function)
@@ -537,7 +538,7 @@ the splitting variables on the other are prepared or transformed:
 \begin{itemize}
   \item \emph{Goodness-of-fit measure:}\\
         Different variations of the disaggregated, observation-wise goodness-of-fit measure of the 
-        model for the response $Y$ and possible covariates $X$ can be considered. Either residuals
+        model for the response $Y$ and possible regressors $X$ can be considered. Either residuals
 	$r(Y,X,\hat{\beta})$ can be used as proposed for GUIDE or model scores $s(Y,X,\hat{\beta})$
         as proposed for MOB. All three algorithms can, in principle, use both goodness-of-fit
 	measures though, which is probably brought out most clearly in the CTree algorithm that
@@ -1057,9 +1058,9 @@ considered statistical tests can be compared as they are all applied
 as significance tests answering two questions at once:
 (1)~Should a split be performed at all? 
 (2)~If so, in which variable?
-For the first question the $p$-values regarding all available covariates are compared 
+For the first question the $p$-values regarding all available split variables are compared 
 to a predefined level of significance $\alpha = 0.05$. Only if the smallest $p$-value is smaller
-than $\alpha$ a split is performed and the covariate corresponding to this $p$-value is selected. 
+than $\alpha$ a split is performed and the split variable corresponding to this $p$-value is selected. 
 
 For the ``tree'' scenario the adjusted Rand index~(ARI) is calculated 
 as a measure of similarity between the true tree structure and the fitted model tree.
