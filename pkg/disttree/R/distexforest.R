@@ -70,6 +70,18 @@ distexforest <- function
     trace = FALSE,
     ...
 ) {
+
+    ## Get family
+    if(!inherits(family, "disttree.family"))  #FIXME: (LS) Better way to extract prepared family?
+        family <- distfamily(family)
+
+    ## Set minsize to 10 * number of parameters, if NULL
+    if (is.null(control$minbucket) | is.null(control$minsplit)) {
+      n_coef <- length(family$link)
+      minsize <- as.integer(ceiling(10L * n_coef)) #FIXME: (ML) Adapt for multivariate repsone.
+      if (is.null(control$minbucket)) control$minbucket <- minsize
+      if (is.null(control$minsplit)) control$minsplit <- minsize
+    }
    
     ### get the call and the calling environment for .urp_tree
     call <- match.call(expand.dots = FALSE)
@@ -184,9 +196,6 @@ distexforest <- function
 
     control$applyfun <- applyfun
 
-    if(!inherits(family, "disttree.family"))  #FIXME: (LS) Better way to extract prepared family?
-      family <- distfamily(family)
-    
     ret <- constparties(nodes = forest, data = mf, weights = rw,
                         fitted = fitted, terms = d$terms$all,
                         info = list(call = match.call(), 

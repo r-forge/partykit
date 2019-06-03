@@ -155,7 +155,7 @@ distextree <- function(formula,
 
   if (!doFit) return(list(d = d, update = update))
 
-  ## Set minsize to 10 * number of parameters, if NULL
+  ## Set minsize to 10 * number of parameters, if NULL ## TODO: (ML) n_coef could be get from family?!
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
       ctrl <- control
       N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
