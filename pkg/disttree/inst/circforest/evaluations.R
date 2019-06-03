@@ -68,6 +68,11 @@ vi <- disttree:::varimp.distexforest(df, nperm = 10)
 
 ## evaluate performance with circular crps
 
+# subset of full hour measurments
+d <- d[as.POSIXlt(d$Index)$min == 0,]
+dim(dh)
+dim(d)
+
 # first define learndata and testdata
 summary(d$Index)
 NROW(d[d$Index > "2017-12-31 00:00:00",])
@@ -82,7 +87,7 @@ dtest <- d[d$Index > "2018-01-01 00:00:00",]
 dt <- distextree(formula = f,
                  data = dlearn, 
                  family = dist_vonmises,
-                 control = distextree_control(maxdepth = 4)) 
+                 control = distextree_control(maxdepth = 3)) 
 plot(dt)
 predpar_dt <- predict(dt, newdata = dtest, type = "parameter")
 crps_dt <- circmax:::crps_vonmises(dtest$dd.response, 
@@ -95,9 +100,8 @@ set.seed(7)
 df <- distexforest(formula = f,
                    data = dlearn, 
                    family = dist_vonmises,
-                   ntree = 15,
-                   perturb = list(replace = FALSE, fraction = 0.5),
-                   control = distextree_control(minbucket = 1000, minsplit = 4000))
+                   ntree = 100,
+                   perturb = list(replace = FALSE, fraction = 0.632))
 
 # predict parameter stepwise (due to memory problems)
 ntest <- NROW(dtest)
@@ -119,6 +123,7 @@ crps <- c(crps_dt, crps_df)
 names(crps) <- c("crps_dt", "crps_df")
 crps
 
+vi <- disttree:::varimp.distexforest(df, nperm = 10)
 
 
 ## climatology
@@ -143,8 +148,10 @@ for(i in 1:nt){
     learnids <- c(learnids, learnids_10days)
   }
   
-  mu[i] <- mean(dlearn$dd.response[dlearn$Index %in% learnids]) 
-  kappa[i] <- 1/var(dlearn$dd.response[dlearn$Index %in% learnids]) 
+  climfit <- distexfit(dlearn$dd.response[dlearn$Index %in% learnids],
+                       family = dist_vonmises)
+  mu[i] <- coef(climfit, type = "parameter")["mu"]
+  kappa[i] <- coef(climfit, type = "parameter")["kappa"]
                 
 }
 
