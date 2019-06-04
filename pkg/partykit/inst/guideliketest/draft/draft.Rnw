@@ -675,7 +675,7 @@ Each generated data set consists of the response and regressor variables, one tr
 variable and nine noise split variables as listed in Table~\ref{tab:variables} 
 together with the corresponding distributions.
 
-\begin{table}
+\begin{table}[t!]
 \centering
 \begin{tabular}{l l l}
 \hline
@@ -870,10 +870,10 @@ class(tp) <- "grapcon_generator"
 
 @
 
-\begin{figure}%[t]
+\begin{figure}[p!]
 \setkeys{Gin}{width=1\linewidth}
 \minipage{0.45\textwidth}
-<<dgp_stump1, fig=TRUE, echo=FALSE, width=4, height=3>>=
+<<dgp_stump1, fig=TRUE, echo=FALSE, width=4, height=2.9>>=
 #par(mar=c(3,3,0,0), oma = c(3,3,0,0))
 plot(p, 
      tp_args = list(FUN = identity, width = 15), 
@@ -882,7 +882,7 @@ plot(p,
 @
 \endminipage
 \minipage{0.45\textwidth}
-<<dgp_stump2, fig=TRUE, echo=FALSE, width=4, height=3>>=
+<<dgp_stump2, fig=TRUE, echo=FALSE, width=4, height=2.9>>=
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "y", xlab = "x", 
      main = expression("varying"~beta[0]),
@@ -899,7 +899,7 @@ mtext(expression(beta[1]== 1), side = 4, col = pal_dgp[1], las = 1, line = 0.5, 
 \endminipage
 
 \minipage{0.45\textwidth}
-<<dgp_stump3, fig=TRUE, echo=FALSE, width=4, height=3>>=
+<<dgp_stump3, fig=TRUE, echo=FALSE, width=4, height=2.9>>=
 d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
                vary_beta = "beta1", beta0 = beta0, delta = delta, xi = xi, sigma = sigma)
 
@@ -917,7 +917,7 @@ mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0
 @
 \endminipage
 \minipage{0.45\textwidth}
-<<dgp_stump4, fig=TRUE, echo=FALSE, width=4, height=3>>=
+<<dgp_stump4, fig=TRUE, echo=FALSE, width=4, height=2.9>>=
 d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
                vary_beta = "all", delta = delta, xi = xi, sigma = sigma)
 par(mar = c(4,4,2,4))
@@ -944,38 +944,7 @@ fixed $\beta_0$ and varying $\beta_1$ (bottom left),
 varying $\beta_0$ and varying $\beta_1$ (bottom right).}}
 \end{figure}
 
-
-\subsubsection{``Tree'' scenario}
-For the second simulation scenario (``tree'' scenario) the same basic setting with the same 
-variables as in the ``stump'' scenario is applied (see Table~\ref{tab:variables}).
-However, not only $Z_1$ but also $Z_2$ is used as a true split variable following a uniform distribution
-on $[-1,1]$. Therefore, an additional split
-is preformed yielding a tree with three terminal nodes. The first split (in $Z_2$, at~$\xi$) induces a 
-change in the slope parameter $\beta_1$ while the second split (in $Z_1$, also at~$\xi$) corresponds 
-to a change in the intercept $\beta_0$.
-Hence, contrary to the ``stump'' scenario where three variations are considered for the parameters 
-$\beta_0$ and $\beta_1$, only this one variation with both parameters varying is investigated for 
-the ``tree'' scenario. In particular, the parameters depend on the split variables in the following way:
-%
-\begin{align*}
-\beta_{0}(Z_1, Z_2) = \begin{cases}
-0       \qquad \text{if } Z_2 \leq \xi \\
--\delta  \quad \text{ if } Z_1 \leq \xi \land Z_2 >\xi \\
-+\delta  \quad \text{ if } Z_1 > \xi \land Z_2 >\xi
-\end{cases}
-\end{align*}
-\begin{align*}
-\beta_{1}(Z_1, Z_2) = \beta_{1}(Z_2)= \begin{cases}
-+\delta \quad \text{if } Z_2 \leq \xi \\
--\delta \quad \text{if } Z_2 > \xi
-\end{cases}
-\end{align*}
-%
-The underlying tree structure for the data generating process is illustrated in 
-Figure~\ref{fig:dgp_tree}.
-
 <<true_tree_dgp, eval = TRUE, echo=FALSE, results=hide>>=
-
 # d <- dgp_tree(nobs = 250)
 set.seed(7)
 d <- dgp_tree(nobs = 250, xi = 0, binary_regressor = FALSE, vary_beta = "all", 
@@ -1004,11 +973,11 @@ p <- party(pn, d)
 @
 
 
-\begin{figure}%[t]
+\begin{figure}[p!]
 \begin{center}
 \setkeys{Gin}{width=1\linewidth}
 \minipage{0.5\textwidth}
-<<dgp_tree1, fig=TRUE, echo=FALSE, width=5, height=4.5>>=
+<<dgp_tree1, fig=TRUE, echo=FALSE, width=5.2, height=4.4>>=
 par(mar=c(0,0,0,0), oma=c(0,0,0.4,0))
 plot(p, edge_panel = ep, terminal_panel = tp,
      tp_args = list(FUN = identity, width = 15), 
@@ -1049,6 +1018,32 @@ with effect size $\delta = 1$.}
 \end{figure}
 
 
+\subsubsection{``Tree'' scenario}
+
+For the second simulation scenario (``tree'' scenario, see Figure~\ref{fig:dgp_tree}) the same basic setting with the same 
+variables as in the ``stump'' scenario is applied (see Table~\ref{tab:variables}).
+However, not only $Z_1$ but also $Z_2$ is used as a true split variable following a uniform distribution
+on $[-1,1]$. Therefore, an additional split
+is preformed yielding a tree with three terminal nodes. The first split (in $Z_2$, at~$\xi$) induces a 
+change in the slope parameter $\beta_1$ while the second split (in $Z_1$, also at~$\xi$) corresponds 
+to a change in the intercept $\beta_0$.
+Hence, contrary to the ``stump'' scenario where three variations are considered for the parameters 
+$\beta_0$ and $\beta_1$, only this one variation with both parameters varying is investigated for 
+the ``tree'' scenario. In particular, the parameters depend on the split variables in the following way:
+%
+\begin{align*}
+\beta_{0}(Z_1, Z_2) = \begin{cases}
+0       \qquad \text{if } Z_2 \leq \xi \\
+-\delta  \quad \text{ if } Z_1 \leq \xi \land Z_2 >\xi \\
++\delta  \quad \text{ if } Z_1 > \xi \land Z_2 >\xi
+\end{cases}
+\end{align*}
+\begin{align*}
+\beta_{1}(Z_1, Z_2) = \beta_{1}(Z_2)= \begin{cases}
++\delta \quad \text{if } Z_2 \leq \xi \\
+-\delta \quad \text{if } Z_2 > \xi
+\end{cases}
+\end{align*}
 
 
 \subsection{Evaluation}
@@ -1236,7 +1231,7 @@ before and 1 after the respective split point.
 for a more detailed overview of all 12 combinations of the building blocks.)
 
 
-\begin{table}[h!]
+\begin{table}[t!]
 \centering
 \begin{tabular}{ l l l }
 \hline
@@ -1743,7 +1738,7 @@ of building blocks are listed in Table~\ref{tab:combinations_appendix}.
 %``+cat'' to applying a categorization of split variables,
 %``+bin'' to applying a dichotomization of scores/residuals.
 
-\begin{table}[h!]
+\begin{table}[p!]
 \centering
 \begin{tabular}{ l l l l l}
 \hline\noalign{\smallskip} 
@@ -1772,7 +1767,7 @@ possibly after modifying the assessed variables as indicated (i.e., dichotomized
 
 \section{Significance level}\label{app:significance}
 
-\begin{figure}[t]
+\begin{figure}[p!]
 \setkeys{Gin}{width=\linewidth}
 <<scores_stump_wosign, fig=TRUE, echo=FALSE, height=5, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree", "mfluc", "guide_sum_12", "guide_sum_1_cor"))
@@ -1841,33 +1836,8 @@ but not necessarily smaller than the significance level, is illustrated.
 \section{Continuous ``stump'' scenario}
 \label{app:contbeta}
 
-In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
-and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
-either the positive or the negative value of the effect size $\delta$. Therefore, these parameters
-are step functions for which the maximum selection employed in the testing strategy of MOB has shown 
-to perform better than the linear selection in CTree. However, this changes in case of
-monotonous functions where CTree is advantageous as it is constructed to detect monotonous effects.
-To point out that the difference in performance of CTree and MOB depends on the type of effect
-the same setting for which the results are presented in Figure~\ref{fig:scores_stump} is
-evaluated again but this time with the varying parameter(s) changing continuously.
-In particular, the parameters $\beta_0$ and $\beta_1$ are linear functions of the true
-split variable $Z_1$:
-\begin{align*}
-\beta_{k-1}(Z_1) = \begin{cases}
--\delta \cdot (-1)^{k-1} \cdot Z_1\\
-+\delta \cdot (-1)^{k-1} \cdot Z_1
-\end{cases}
-\end{align*}
-for $k = 1,2=K$.
-Additionally, a modified version of CTree employing a maximum selection, such as MOB, is evaluated 
-(denoted by CTree+max). Looking at the selection probability illustrated in Figure~\ref{fig:stump_contbeta} 
-it can be observed that in this setting the original version of CTree is ahead while CTree+max and MOB perform 
-almost equally well. Hence, the comparison of Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} 
-points out that it clearly depends on the type of effect whether the maximum selection (MOB, CTree+max) 
-or the linear selection (CTree) is to be preferred.
 
-
-\begin{figure}%%[t]
+\begin{figure}[t!]
 \setkeys{Gin}{width=\linewidth}
 <<contbeta, fig=TRUE, echo=FALSE, height=4, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max","mfluc", "guide_sum_1_cor","guide_sum_12"))
@@ -1911,6 +1881,30 @@ varying intercept $\beta_0$ (left), varying slope parameter $\beta_1$ (middle) a
 both coefficients varying (right).}
 \end{figure}
 
+In the simulation study presented in Sections~\ref{sec:simulation} and \ref{sec:results} the intercept
+and slope parameters $\beta_0$ and $\beta_1$ are both either fixed or binary variables taking
+either the positive or the negative value of the effect size $\delta$. Therefore, these parameters
+are step functions for which the maximum selection employed in the testing strategy of MOB has shown 
+to perform better than the linear selection in CTree. However, this changes in case of
+monotonous functions where CTree is advantageous as it is constructed to detect monotonous effects.
+To point out that the difference in performance of CTree and MOB depends on the type of effect
+the same setting for which the results are presented in Figure~\ref{fig:scores_stump} is
+evaluated again but this time with the varying parameter(s) changing continuously.
+In particular, the parameters $\beta_0$ and $\beta_1$ are linear functions of the true
+split variable $Z_1$:
+\begin{align*}
+\beta_{k-1}(Z_1) = \begin{cases}
+-\delta \cdot (-1)^{k-1} \cdot Z_1\\
++\delta \cdot (-1)^{k-1} \cdot Z_1
+\end{cases}
+\end{align*}
+for $k = 1,2=K$.
+Additionally, a modified version of CTree employing a maximum selection, such as MOB, is evaluated 
+(denoted by CTree+max). Looking at the selection probability illustrated in Figure~\ref{fig:stump_contbeta} 
+it can be observed that in this setting the original version of CTree is ahead while CTree+max and MOB perform 
+almost equally well. Hence, the comparison of Figures \ref{fig:scores_stump} and \ref{fig:stump_contbeta} 
+points out that it clearly depends on the type of effect whether the maximum selection (MOB, CTree+max) 
+or the linear selection (CTree) is to be preferred.
 
 
 \section{Results over increasing effect size}
@@ -1932,7 +1926,28 @@ lead to the same conclusions: Dichotomizing the score values decreases the selec
 of the true split variable $Z_1$, and hence reduces the power of the testing strategy.
 
 
-\begin{figure}%[t]
+\subsection{Categorization of splitting variables}
+\label{app:categorization}
+To investigate the effect of categorizing the possible splitting variables CTree and MOB are
+applied, once in their original version without a categorization and once in an adapted version
+with a categorization of the possible split variables (CTree+cat and MOB+cat). 
+Moreover, they are also compared to GUIDE+scores which includes all available scores.
+
+In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the performance 
+is illustrated by the selection probability of $Z_1$ over increasing effect size and for four 
+different values of the true split point $\xi$. For both, CTree and MOB, it can be stated that 
+overall they perform better in their original form without categorization. Only if the true 
+split point $\xi$ is close to the quartiles used as breaks for the categorizations both 
+versions lead to a selection probability of $Z_1$ (e.g., for CTree and $\xi=0.5$)
+
+Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values
+of the split variable does not lead to any advantages unless the true split point corresponds (or is 
+at least close) to one of the quartiles used for the categorization. In most situations it even causes
+the power of the testing strategy to decrease.
+
+\newpage
+
+\begin{figure}[h!]
 \setkeys{Gin}{width=\linewidth}
 <<bin_stump, fig=TRUE, echo=FALSE, height=4, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree", "ctree_bin", 
@@ -2002,31 +2017,7 @@ with 100 replications of 250 observations per step.
 Each panel represents a different value of the true split point $\xi$ (0, 0.2, 0.5 
 and 0.8 from left to right corresponding to the 50\%, 60\%, 75\%, and 90\% quantile).
 }
-\end{figure}
 
-
-
-
-\subsection{Categorization of splitting variables}
-\label{app:categorization}
-To investigate the effect of categorizing the possible splitting variables CTree and MOB are
-applied, once in their original version without a categorization and once in an adapted version
-with a categorization of the possible split variables (CTree+cat and MOB+cat). 
-Moreover, they are also compared to GUIDE+scores which includes all available scores.
-
-In Figure~\ref{fig:cat_stump} the impact of categorizing split variables on the performance 
-is illustrated by the selection probability of $Z_1$ over increasing effect size and for four 
-different values of the true split point $\xi$. For both, CTree and MOB, it can be stated that 
-overall they perform better in their original form without categorization. Only if the true 
-split point $\xi$ is close to the quartiles used as breaks for the categorizations both 
-versions lead to a selection probability of $Z_1$ (e.g., for CTree and $\xi=0.5$)
-
-Therefore, these results support the conclusions drawn in the main manuscript: Categorizing the values
-of the split variable does not lead to any advantages unless the true split point corresponds (or is 
-at least close) to one of the quartiles used for the categorization. In most situations it even causes
-the power of the testing strategy to decrease.
-
-\begin{figure}%%[t]
 \setkeys{Gin}{width=\linewidth}
 <<cat_stump, fig=TRUE, echo=FALSE, height=4, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree", "ctree_cat",
@@ -2097,9 +2088,9 @@ and 0.8 from left to right corresponding to the 50\%, 60\%, 75\%, and 90\% quant
 }
 \end{figure}
 
+\clearpage
 
 \end{appendix}
-
 
 \end{document}
 
