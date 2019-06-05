@@ -191,7 +191,7 @@ Torsten Hothorn\\
 Universit\"at Z\"urich \\
 Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
 Hirschengraben 84\\
-CH-8001 Z\"urich, Switzerland \\
+8001 Z\"urich, Switzerland \\
 E-mail: \email{Torsten.Hothorn@R-project.org}\\
 URL: \url{http://user.math.uzh.ch/hothorn/}\\
 
@@ -1101,8 +1101,8 @@ cost-complexity post-pruning (Section~\ref{sec:tree}).
 \label{sec:scores}
 
 A crucial difference between the testing strategies of CTree/MOB and GUIDE
-is the difference between using only the residuals vs. the full model
-scores. In the literature on structural change tests there is evidence
+is the difference between using only the residuals vs.\ the full model
+scores. In the literature on structural change tests it is well-established
 that residual-based tests can only capture parameter differences that
 affect the conditional mean \citep[see e.g.,][ and further discussion in 
 Section~\ref{sec:discussion}]{Ploberger+Kraemer:1992}.
@@ -1112,21 +1112,26 @@ additionally consider a new GUIDE flavor, denoted GUIDE+scores, that uses
 dichotomized scores rather than residuals.
 
 In Figure~\ref{fig:scores_stump} the performances of the testing strategies are 
-represented by the corresponding selection probability, hence, a significance level 
-is incorporated. To show that in general the drawn conclusions do not change if no 
-significance level is included, a different illustration of the exact same evaluation 
-is provided in Appendix~\ref{app:significance} where the performances are compared based 
-on the smallest $p$-values, regardless of whether they are beneath any significance level.
+represented by the corresponding selection probability, i.e., a significance level 
+is incorporated. (Appendix~\ref{app:significance} shows that the same qualitative
+conclusions can be drawn when the significance level is \emph{not} included.)
+For a split point at the median ($\xi=0$, top row) all testing strategies 
+perform similarly well as long as the intercept varies (left and right panel) with CTree and 
+MOB being only slightly ahead. However, for the split point at the $90$\% quantile $\xi = 0.8$ 
+(bottom row) the performance of all of the applied strategies decreases. 
+While both GUIDE versions struggle to detect the correct split variable even for a high effect 
+size, MOB is clearly ahead with CTree leading to the second best results.
+This advantage of MOB over CTree is mainly due to the abrupt shift in the 
+model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
+a smooth transition with continuously-changing parameters (see Appendix~\ref{app:contbeta}).
 
-Moreover, as defined by the true tree structure used in the data generating process, the
-parameter functions $\beta_{k-1}(Z_1)$, $k=1,2=K$, are step functions which is particularly 
-advantageous for the maximum selection in the test statistic applied by MOB while the linear 
-selection in CTree is preferable for detecting monotonous dependencies. To show that employing 
-a continuous parameter function instead of a step function only has an impact on whether CTree or
-MOB performs better the exact same simulation setting as used for Figure~\ref{fig:scores_stump} 
-but with continuously changing parameters has been evaluated and is illustrated in 
-Appendix~\ref{app:contbeta}.
-
+However, in the scenario where only $\beta_1$ (but not the intercept $\beta_0$) is affected by the split,
+the residual-based GUIDE approach has no power at all even for a true split at the median (top middle panel).
+It is easily possible, though, to substantially mitigate this problem by using scores
+(sensitive to changes in all parameters) rather than residuals only (sensitive to changes
+in the conditional mean). The remaining difference between MOB/CTree and GUIDE+scores
+is due to dichotomizing the scores at zero and due to categorizing the split variables
+which are investigated in more detail in the following section.
 
 \begin{figure}
 \setkeys{Gin}{width=\linewidth}
@@ -1181,45 +1186,16 @@ for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
 (middle), or both coefficients varying (right).}
 \end{figure}
 
-Figure~\ref{fig:scores_stump} shows that overall CTree and MOB (both using full 
-model scores) perform clearly better than the original GUIDE version (using residuals 
-only) as they accomplish to select the true split variable $Z_1$ in a higher proportion
-of replications. Even though the advantage of CTree and MOB evens out in certain situations
-such as for a high effect size (see, e.g., for the median $0$ and varying $\beta_0$), 
-GUIDE is never ahead of them in any of the considered settings. Moreover, the positive 
-effect of including all available scores can be observed particularly well in the top middle 
-panel where GUIDE+scores detects a shift in the slope parameter $\beta_1$ as opposed to GUIDE. 
-%The fact that residual-based methods fail to detect changes that do not effect the
-%expected value has already been elaborated in the literature of structural change
-%analysis \citep[see, e.g.,][]{Ploberger+Kraemer:1992} and is also discussed in 
-%Section~\ref{sec:discussion}. 
-Furthermore, this advantage of including full models scores 
-clearly outweighs the cost involved which is displayed by the small gain of GUIDE compared 
-to GUIDE+scores in case of a fixed slope parameter (left panels).
-
-For a central split point ($\xi=0$ corresponding to the median, upper panels) all strategies 
-perform similarly well as long as the intercept varies (left and right panel) with CTree and 
-MOB being only slightly ahead. However, for the split point at the $90$\% quantile $0.8$ 
-(lower panels) the performance of all of the applied strategies decreases. 
-While both GUIDE versions struggle to detect the correct split variable even for a high effect 
-size, MOB is clearly ahead with CTree leading to the second best results.
-As discussed before, this advantage of MOB over CTree is mainly due to the abrupt shift in the 
-model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
-continuously changing parameters (see Appendix~\ref{app:contbeta}).
-From the fact that GUIDE and GUIDE+scores are both performing worse than MOB and CTree it 
-can be deduced that categorizing split variables and dichotomizing scores also decreases the
-ability to detect the right split variable. To elaborate these effects more in detail 
-the results for all possible combinations of the building blocks are discussed in a full 
-factorial three-way analysis in the following section.
-
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
+
 To investigate the impact of each of the building blocks separately the most general 
 case of the ``stump'' scenario where the intercept and slope parameter are both varying is 
-considered. In the underlying evaluation all possible combinations of the building blocks 
+considered. In this evaluation all possible combinations of the building blocks 
 have been included. The different levels of each of the three building blocks are listed in 
 Table~\ref{tab:levels} where $h$ and $g$ refer to the transformation functions applied to the 
 response $Y$ or a split variable $Z$ respectively, both as described in Section~\ref{sec:ctree}. 
+
 In the case of categorization, the split variable $Z$ is binned at the
 quartiles. This corresponds to a four-dimensional 0/1 transformation
 function $g(Z)$ that indicates into which of the bins each observation falls.
@@ -1227,7 +1203,7 @@ Maximum selection across potential split points in a variable $Z$ also
 corresponds to a multivariate 0/1 transformation function $g(Z)$. However,
 in this case for each potential split point an indicator is used that is 0
 before and 1 after the respective split point.
-(See Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
+(See also Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
 for a more detailed overview of all 12 combinations of the building blocks.)
 
 
@@ -1255,36 +1231,33 @@ Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
 \end{table}
 
 Based on the results displayed in Figure~\ref{fig:3way} it can be stated that dichotomizing 
-residuals/scores decreases the performance as it leads to higher $p$-values corresponding 
-to the true split variable $Z_1$ and thus to lower power in the presented settings. 
-For a central true split point ($\xi=0$, left panel) this effect remains at an almost constant 
-level regardless of whether possible split variables are categorized or not. However, in case 
-of the true split point at the $90$\% quantile $0.8$ (right panel), categorizing split 
+residuals/scores decreases the performance as it leads to higher $p$-values for
+the true split variable $Z_1$ and thus to lower power in the settings considered. 
+For a true split at the median ($\xi=0$, left panel) this effect is almost constant
+across the three types of categorization considered. However, in case 
+of the true split point at the $90$\% quantile $\xi = 0.8$ (right panel), categorizing split 
 variables increases the $p$-value of $Z_1$ even more. 
-Here, the maximum selection performs best while the linear selection shows its disadvantage in 
-detecting abrupt changes, but overall it depends on the situation whether a linear or a maximum
-selection of a split variable is advantageous. 
-Comparing the two panels suggests that unless one of the breaks used for binning 
-possible split variables is close to the true split point (as for the median $0$, left panel), 
-a categorization weakens the performance of a testing strategy. 
-Moreover, while the effect of both of these transformations of the data (dichotomization of 
-residuals/scores and categorization of split variables) can be observed
-separately in Figure~\ref{fig:3way}, combining them increases the negative impact 
-remarkably.
+Not surprisingly, maximum selection is most advantageous in this case (i.e., for a late abrupt shift)
+which is harder to detect based on a linear statistic. But overall it depends on the situation
+whether a linear or a maximum selection of a split variable leads to lower $p$-values. 
+
+Comparing the two panels suggests that a categorization weakens the performance of the
+tests unless the true split point is close to one of the breaks from the binning
+(as in the left panel).
+Moreover, while the effect of both transformations (dichotomization of residuals/scores and
+categorization of split variables) can be observed separately in Figure~\ref{fig:3way},
+combining them increases the negative impact remarkably.
 
 As already shown in Section~\ref{sec:scores} the use of scores vs.\ residuals has a minor 
 effect if there is a change in the intercept which is
 supported by the small differences between the dashed lines (scores) and the solid
 lines (residuals) in Figure~\ref{fig:3way}.
 
-Note that the choice of the two specific settings 
-(left panel: true split point at the median $0$,  effect size $0.3$; 
-right panel: true split point at the $90$\% quantile $0.8$ requiring a higher effect 
-size $1$)
-has been made based on the results shown in Figure~\ref{fig:scores_stump} in order to make 
-the differences particularly well observable. (Additional evaluations for increasing $\delta$ 
-as in Section~\ref{sec:scores} can be found in Appendix~\ref{app:increasingdelta}.)
-
+Note that the effect size $\delta$ in the results from Figure~\ref{fig:scores_stump} has been chosen
+so that $p$-values for the non-dichotomized tests are roughly comparable: $\delta = 0.3$
+for the true split point at the median $\xi = 0$ (left) vs.\ a stronger effect of $\delta = 1$
+for the true split point at the 90\% quantile $\xi = 0.8$ (right).
+Additional evaluations for varying effect size $\delta$ can be found in Appendix~\ref{app:increasingdelta}.
 
 
 <<3way_data, results=hide, echo=FALSE>>=
@@ -1353,7 +1326,7 @@ d3way$xi <- factor(d3way$xi, levels = c(0,0.8), labels = c(0,0.8))
 @
 
 
-\begin{figure}%[t]
+\begin{figure}[t!]
 \setkeys{Gin}{width=1\linewidth}
 <<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
 xyplot(pval_z1 ~ cat | xi, 
@@ -1399,30 +1372,33 @@ size $1$.}
 \end{figure}
 
 
-
-%\newpage
 \subsection[``Tree'' scenario: Pre-pruning vs. post-pruning]{``Tree'' scenario: Pre-pruning vs.\ post-pruning}
 \label{sec:tree}
-To compare the performance of testing strategies in a more complex scenario they have
-been evaluated on data sets based on the tree structure with two different split variables 
-($Z_1$ and $Z_2$) both with the same split point $\xi$ as illustrated in 
-Figure~\ref{fig:dgp_tree}.
-The results presented in the top row of Figure~\ref{fig:tree_all} have been obtained applying pre-pruning.
-Therefore, based on the corresponding ARI values conclusion can again be drawn on the power of the testing strategies 
-as significance tests. CTree and MOB perform almost equally well for the true split points $0$, $0.2$ and $0.5$ 
-($50$\%, $60$\%, and $75$\% quantile). GUIDE+scores performs slightly worse but it still achieves an ARI above 
-$0.5$ for the highest considered effect size of $\delta = 1$. 
-However, the original version of GUIDE is clearly behind which is mainly due to the fact that it doesn't detect 
-the first split in $Z_2$ corresponding to a changing slope parameter as it only considers residuals in its testing 
-strategy. 
-For a split point farther away from the center such as the $90$\% quantile $0.8$ MOB 
-outperforms all other methods and both GUIDE versions fail to find the correct tree structure.
-Hence, the insights provided by the top row of Figure~\ref{fig:tree_all} conform with the conclusions
-drawn from the ``stump'' scenario: Including all available scores in the testing strategy leads to a better performance 
-while dichotomizing scores and categorizing split variables both do not cause any improvement but in many situations even 
-have a negative effect on the power of a testing strategy. 
 
+So far the testing strategies underlying the different tree algorithms have only been considered
+as classical significance tests, i.e., in terms of power and $p$-values. However, one could argue
+that for a tree this is practically not really relevant -- at least when combined with a post-pruning
+strategy such as cost-complexity pruning \citep{Breiman+Friedman+Stone:1984}. In the latter case it only matters that the relevant split
+variables have the lowest $p$-value among all potential split variables -- but it is irrelevant whether
+this is significant or not. To investigate to which extent this is actually true we evaluate the
+different tree algorithms in the more complex ``tree'' scenario (see Figure~\ref{fig:dgp_tree}):
+once with significance-based pre-pruning and once with cost-complexity post-pruning.
 
+Recall that the true split structure is composed of splits in two different variables, both at
+the same split point $\xi$. First, the split in $Z_2$ changes the slope from $+\delta$ to
+$-\delta$. Second, the split in $Z_1$ changes the intercept in the negative slope group from
+$-\delta$ to $+\delta$. In the simulation the effect size $\delta$ is increased from 0 to 1
+for different split points $\xi$ from 0 to 0.8. Here, the performance is not evaluated in terms
+of test properties but only in terms of tree properties, namely the adjusted Rand index (ARI)
+in comparison to the true partition of the data.
+
+The top row of Figure~\ref{fig:tree_all} presents the results for pre-pruning which, not surprisingly,
+reflect the results from previous sections. Thus, CTree and MOB perform similarly and rather well
+as the underlying significance tests have good power properties. Only for late abrupt shifts the
+linear test statistics in CTree clearly have lower power than the maximally-selected statistics in MOB.
+Again, this picture would reverse for smooth changes instead of abrupt shifts. Compared to CTree/MOB
+both GUIDE flavors clearly perform worse as they underlying tests are less powerful; notably
+for the residual-based GUIDE which again has problems picking up the slope change associated with $Z_2$.
 
 <<tree_all_data, echo=FALSE, results=hide>>=
 if(file.exists("pruning.rda")){
@@ -1468,7 +1444,7 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+
 
 @
 
-\begin{figure}%[t]
+\begin{figure}[t!]
 \setkeys{Gin}{width=\linewidth}
 <<tree_all, fig=TRUE, echo=FALSE, height=5, width=8>>=
 library("latticeExtra")
@@ -1503,36 +1479,23 @@ $0.8$ from left to right, corresponding to the $50$\%, $60$\%, $75$\%, and $90$\
 }
 \end{figure}
 
+When switching from pre-pruning to post-pruning (bottom row of Figure~\ref{fig:tree_all})
+it is indeed shown that many of the problems stemming from the low power of the two GUIDE
+flavors are indeed mitigated. Thus, by first growing a large tree without stopping upon
+non-significance and then pruning back based on predictive performance instead substantially
+improves the fit of the two GUIDE flavors. However, using the residuals only in GUIDE still
+performs clearly worse compared to the GUIDE+scores. The latter is essentially on par with
+CTree and MOB when the true split matches one of the categorization bins (i.e., $xi = 0$
+and $\xi = 0.5$, respectively) while CTree/MOB still perform somewhat better in the other
+cases ($\xi = 0.2$ and $\xi = 0.8$).
 
-To elaborate the impact of the choice of a pruning strategy the presented tree models
-are built again in the exact same simulation setting but employing post-pruning (i.e., building very 
-large trees without any significance level and applying cost-complexity pruning as in the CART 
-algorithm \citep{Breiman+Friedman+Stone:1984}). 
-The corresponding ARI values are illustrated in the bottom row of Figure~\ref{fig:tree_all}
-allowing for a comparison to those obtained with pre-pruning (top row).
+In summary, there is clear support for the conventional wisdom that the power of the testing
+strategy in an unbiased tree algorithm is not so important when combined with post-pruning.
+However, there are limits to this. Consequently, when tests can be made more powerful --
+e.g., by using scores instead of residuals -- then this improves the corresponding tree
+algorithm. Finally, the simulation also supports using pre-pruning in an unbiased tree algorithm
+when the underlying testing strategy that also works well as a classical significance test.
 
-For MOB and CTree it has been shown that their tests work very well as significance tests.
-Therefore, it can be recommended to take advantage of this power and use the information
-provided by the tests for pre-pruning. As it can be seen in Figure~\ref{fig:tree_all}
-in most cases the results of these two testing strategies do not vary significantly over 
-a change of the applied pruning strategy.
-On the contrary, overall the tests in GUIDE have less power. For that reason, the pruning
-strategy should not be based on their results which argues for the application of post-pruning.
-This is also supported by the results in Figure~\ref{fig:tree_all} showing that post-pruning improves
-the performance of both GUIDE versions. Particularly if the true split point is close to a binning 
-point (such that categorizing split variables has no negative effect) the post-pruning strategy 
-compensates the lack of power of GUIDE+scores compared to CTree and MOB almost completely 
-(bottom row, first and third panel).
-In conclusion, the choice of a pruning strategy should be based on knowledge about the 
-power of the applied testing strategy. With a well working significance test additional expensive
-calculations such as needed for post-pruning may be avoided being one of the main advantages of 
-pre-pruning. However, deficiencies of a testing strategy in terms of power can be at least partly
-evened out by employing a post-pruning strategy.
-
-
-
-
-%\newpage
 
 \section{Discussion}
 \label{sec:discussion}
