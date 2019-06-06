@@ -351,7 +351,7 @@ distextree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                          parm = parm,
                          #dfsplit = dfsplit,  FIXME: (ML) Added to all tree types, see comment above   
                          vcov = vcov,
-                         ordinal = ordinal,
+                         ordinal = match.arg(ordinal),
                          ytype = ytype,
                          trim = trim))
   }

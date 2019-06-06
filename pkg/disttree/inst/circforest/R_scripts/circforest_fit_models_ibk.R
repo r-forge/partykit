@@ -139,4 +139,8 @@ crps_grimit <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i)
 ## Save output
 if (! dir.exists("results")) dir.create("results")
 #save(m_dt, m_df, file = "results/circforest_models_ibk_lag6.rds")
-save(pred, pred_naomit, crps, crps_grimit, file = "results/circforest_validation_ibk_lag6.rds")
+save(pred, pred_naomit, crps, crps_grimit, file = "results/circforest_validation_ibk_lag6_v2.rds")
+
+## Plot tree
+#circmax:::plot.circtree(dt[[1]], ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
+#  ip_args = list(pval = FALSE))
