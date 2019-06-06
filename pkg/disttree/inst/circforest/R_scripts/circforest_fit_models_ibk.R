@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-06-05 on thinkmoritz
+# - L@ST MODIFIED: 2019-06-06 on thinkmoritz
 # -------------------------------------------------------------------
 
 ## Set time to utc (just in case)
@@ -15,12 +15,15 @@ Sys.setenv('TZ'='UTC')
 library("zoo")
 library("disttree")
 library("circmax")
+library("verification") # Careful, version 1.35 needed!!
 
 # -------------------------------------------------------------------
 # Pre-process data
 # -------------------------------------------------------------------
 ## Load data / Remove rows with NAs
-tmp <- readRDS("data/circforest_prepared_data_ibk_lag3.rds")
+tmp <- readRDS("data/circforest_prepared_data_ibk_lag6.rds")
+tmp <- tmp[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(tmp))]
+
 tmp <- na.omit(tmp)
 
 ## Subset data to full hours
@@ -40,12 +43,18 @@ for(i in seq(1:nrow(d))){
   cat(sprintf("Fitting climatology %2d%%\n", (i/nrow(d) * 100)%/%5 * 5))
 
   i_plt <- as.POSIXlt(index(d)[i], origin = "1970-01-01")
+  
+  if((i_plt$mon + 1 == 2) & (i_plt$mday == 29)){
+    pred_clim[i, ] <- c("mu" = NA, "kappa" = NA)
+    next
+  }
+
   i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
     max(d_range$year)) %in% i_plt$year)] + 1900
 
   idx <- lapply(i_years, function(x) 
     as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
-    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * seq(-3, 3))
+    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-3, 3))
 
   idx <- do.call(c, idx)
   
@@ -95,7 +104,8 @@ for(cv in unique(cvID)) {
   m_df[[cv]] <- distexforest(formula = f,
                      data = train,
                      family = dist_vonmises(),
-                     ntree = 100)
+                     ntree = 500,
+                     mtry = 0.9 * ceiling(length(all.vars(f[[3]]))))
 
   ## Predict models
   pred_dt[[cv]] <- predict(m_dt[[cv]], newdata = test, type = "parameter")
@@ -108,15 +118,25 @@ for(cv in unique(cvID)) {
 pred <- list(tree = do.call("rbind", pred_dt), forest = do.call("rbind", pred_df), 
   climatology = pred_clim)
 
-## Validate models
+## Remove nans (if any)
 idx <- do.call(rbind, sapply(pred, function(x) which(is.na(x), arr.ind=TRUE)))
 idx <- unique(idx[,1]) 
-pred_naomit <- lapply(pred, function(x) x[-idx, ])
+if(length(idx) > 0){
+  pred_naomit <- lapply(pred, function(x) x[-idx, ])
+  obs <- d$dd.response[-idx]
+} else{
+  pred_naomit <- pred
+  obs <- d$dd.response
+}
 
+## Validate models
 crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
-  y = d$dd.response[-idx], sum = TRUE)) 
+  y = obs, sum = FALSE)) 
+
+crps_grimit <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i) 
+  as.numeric(crps.circ(x = obs[i], mu = x[i, "mu"], kappa = x[i, "kappa"]))))
 
 ## Save output
 if (! dir.exists("results")) dir.create("results")
-#save(m_dt, m_df, file = "results/circforest_models_ibk_lag3.rds")
-save(pred, pred_naomit, crps, file = "results/circforest_validation_ibk_lag3.rds")
+#save(m_dt, m_df, file = "results/circforest_models_ibk_lag6.rds")
+save(pred, pred_naomit, crps, crps_grimit, file = "results/circforest_validation_ibk_lag6.rds")
