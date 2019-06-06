@@ -102,27 +102,27 @@ if(file.exists("stump.rda")){
 sim_stump <- simres$res
 rm(simres)
 
-if(file.exists("tree.rda")){
-  load("tree.rda")
-} else {
-  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7,
-                         nrsplitvar = 2, nrsteps = 1, nrlevels = 2,
-                         delta = seq(from = 0, to = 1, by = 0.1),
-                         xi = c(0, 0.2, 0.5, 0.8), vary_beta = "all",
-                         binary_regressor = FALSE, binary_beta = TRUE,
-                         only_intercept = FALSE,
-                         test = c("ctree", "mfluc", "ctree_max",
-                                  "ctree_cat", "mfluc_cat", "ctree_max_cat",
-                                  "ctree_bin", "mfluc_bin", "ctree_max_bin",
-                                  "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
-                                  "guide_sum_12", "guide_coin_12", "guide_sum_1_cor"),
-                         beta0 = NULL, beta1 = NULL,
-                         stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05)
-  
-  save(simres, file = "tree.rda")
-}
-sim_tree <- simres$res
-rm(simres)
+#if(file.exists("tree.rda")){
+#  load("tree.rda")
+#} else {
+#  simres <- simwrapper_p(nobs = 250, nrep = 100, seed = 7,
+#                         nrsplitvar = 2, nrsteps = 1, nrlevels = 2,
+#                         delta = seq(from = 0, to = 1, by = 0.1),
+#                         xi = c(0, 0.2, 0.5, 0.8), vary_beta = "all",
+#                         binary_regressor = FALSE, binary_beta = TRUE,
+#                         only_intercept = FALSE,
+#                         test = c("ctree", "mfluc", "ctree_max",
+#                                  "ctree_cat", "mfluc_cat", "ctree_max_cat",
+#                                  "ctree_bin", "mfluc_bin", "ctree_max_bin",
+#                                  "ctree_cat_bin", "mfluc_cat_bin", "ctree_max_cat_bin",
+#                                  "guide_sum_12", "guide_coin_12", "guide_sum_1_cor"),
+#                         beta0 = NULL, beta1 = NULL,
+#                         stump = FALSE, z1dist = "unif", sigma = 1, alpha = 0.05)
+#  
+#  save(simres, file = "tree.rda")
+#}
+#sim_tree <- simres$res
+#rm(simres)
 
 ## HCL palette
 pal <- qualitative_hcl(5, "Dark 3")
@@ -1397,7 +1397,7 @@ reflect the results from previous sections. Thus, CTree and MOB perform similarl
 as the underlying significance tests have good power properties. Only for late abrupt shifts the
 linear test statistics in CTree clearly have lower power than the maximally-selected statistics in MOB.
 Again, this picture would reverse for smooth changes instead of abrupt shifts. Compared to CTree/MOB
-both GUIDE flavors clearly perform worse as they underlying tests are less powerful; notably
+both GUIDE flavors clearly perform worse as the underlying tests are less powerful; notably
 for the residual-based GUIDE which again has problems picking up the slope change associated with $Z_2$.
 
 <<tree_all_data, echo=FALSE, results=hide>>=
@@ -1485,7 +1485,7 @@ flavors are indeed mitigated. Thus, by first growing a large tree without stoppi
 non-significance and then pruning back based on predictive performance instead substantially
 improves the fit of the two GUIDE flavors. However, using the residuals only in GUIDE still
 performs clearly worse compared to the GUIDE+scores. The latter is essentially on par with
-CTree and MOB when the true split matches one of the categorization bins (i.e., $xi = 0$
+CTree and MOB when the true split matches one of the categorization bins (i.e., $\xi = 0$
 and $\xi = 0.5$, respectively) while CTree/MOB still perform somewhat better in the other
 cases ($\xi = 0.2$ and $\xi = 0.8$).
 
@@ -1494,7 +1494,7 @@ strategy in an unbiased tree algorithm is not so important when combined with po
 However, there are limits to this. Consequently, when tests can be made more powerful --
 e.g., by using scores instead of residuals -- then this improves the corresponding tree
 algorithm. Finally, the simulation also supports using pre-pruning in an unbiased tree algorithm
-when the underlying testing strategy that also works well as a classical significance test.
+when the underlying testing strategy also works well as a classical significance test.
 
 
 \section{Discussion}
@@ -1531,12 +1531,12 @@ Linear models as presented in this study have been chosen as they are highly rel
 allow for simple illustrations, and theoretical insights are available for the testing strategies.
 However, the results can be easily extended to a wide variety of other models where the introduced building
 blocks can be applied in the same way. Specifically, it has been shown theoretically that certain
-some changes in the parameters do not lead to shifts in the residuals (but in other components of the
+changes in the parameters do not lead to shifts in the residuals (but in other components of the
 scores). \cite{Ploberger+Kraemer:1992} showed that residual-based tests can detect a change in the parameters
 of a linear model only if it also causes a shift in the expected value $\mathbb{E}(Y)$. 
 This is not the case if changes are orthogonal to the mean regressor which in our case is $(1,0)^{\top}$.
 Consequently, if only the slope $\beta_1$ but not the intercept $\beta_0$ changes, the shift
-is of type $(0, \delta)^\top$ and thus orhtogonal to the mean regressor. Due to this residual-based
+is of type $(0, \delta)^\top$ and thus orthogonal to the mean regressor. Due to this residual-based
 tests as in GUIDE break down and do not have power to detect this. Note that this situation does not
 have to be rare in practice: Especially for binary regressor variables (e.g., as in treatment-subgroup
 investigations) it can easily occur \citep[see Figure~2 in][for an illustration]{Loh+He+Man:2015}.
@@ -1557,8 +1557,9 @@ linear model, e.g., in \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002}, a
 \label{sec:comp}
 The applied implementation is based on the \proglang{R} package \pkg{partykit}
 (version~\Sexpr{packageVersion("partykit")}) which is available 
-on \proglang{R}-Forge at (\url{https://R-Forge.R-project.org/projects/partykit/})
-where the code to reproduce the simulation study can be found as well.
+on \proglang{R}-Forge at \url{https://R-Forge.R-project.org/projects/partykit/}.
+The code to reproduce the simulation study is available in the supplement for this 
+paper on arXiv.org E-Print Archive (\url{https://arxiv.org/}).
 
 The functions \code{ctree} and \code{mob} provide an implementation of the
 two tree algorithms in their original form. For their adapted versions additional
