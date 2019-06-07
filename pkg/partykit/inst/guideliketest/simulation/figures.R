@@ -139,11 +139,9 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+
                                              fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
                      superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
-library("latticeExtra")
-useOuterStrips(xyplot(prop_z1 ~ delta | vary_beta + xi, groups = ~ test, 
+useOuterStrips(xyplot(prop_z1 ~ delta | variation + xi, groups = ~ test, 
                       data = subdataxi, 
-                      subset = binary_beta == TRUE & binary_regressor == FALSE & 
-                        only_intercept == FALSE,# & xi == 0, 
+                      subset = changetype == "abrupt", 
                       type = "l", lty = c(1,1,1,1),
                       lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
@@ -175,10 +173,9 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree+max","MO
                                              fill = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")]), 
                      superpose.line = list(col = pal[c("CTree","CTree+max","MOB", "GUIDE","GUIDE+scores")]))
 
-xyplot(prop_Tsplit ~ delta | vary_beta, groups = ~ test, 
+xyplot(prop_Tsplit ~ delta | variation, groups = ~ test, 
        data = subdata, 
-       subset = binary_beta == FALSE & binary_regressor == FALSE & 
-         only_intercept == FALSE, 
+       subset = changetype == "continuous", 
        scales=list(x=list(at=seq(1,11,2))),
        type = "l", 
        layout= c(3,1),
@@ -226,8 +223,7 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree",
 
 xyplot(prop_Tsplit ~ delta | xi, groups = ~ test, 
        data = subdata, 
-       subset = binary_beta == TRUE & binary_regressor == FALSE & 
-         only_intercept == FALSE & vary_beta == "all", 
+       subset = changetype == "abrupt" & variation == "all", 
        type = "l",
        lty = c(1,2,#1,2,
                1,2,1),
@@ -277,8 +273,7 @@ par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "CTree",
 
 xyplot(prop_Tsplit ~ delta | xi, groups = ~ test, 
        data = subdata, 
-       subset = binary_beta == TRUE & binary_regressor == FALSE & 
-         only_intercept == FALSE & vary_beta == "all", 
+       subset = changetype == "abrupt" & variation == "all", 
        type = "l", 
        lty = c(1,2,#1,2,
                1,2,1),
