@@ -10,7 +10,6 @@ by Lisa Schlosser and Torsten Hothorn and and Achim Zeileis
 # add information on where the simulation data is discussed in the paper
 # provide rda-files in zip-file (probably in a subfile)
 # add computation time (+ information on nr of used kernels)
-# add information in README file
 
 
 The simulation results can be reproduced by the function calls in the file 
@@ -42,5 +41,5 @@ The file ccrune.R contains the reimplementation of cost-complexity pruning.
 The partykit package is applied under a development version of version 1.2-4 which provides M-fluctuation-tests that are not available in version 1.2.4 as currently available on CRAN. Therefore, the applied development version
 is provided in the folder 'simulation' named partykit_1.2-4_devel.tar.gz.
 
-Computation time for full reproduction of results (on our machines, using 1 kernel): approximately 
+Computation time for full reproduction of results (on our machines, using 1 kernel): approximately ... hours 
 started 22:20
