@@ -648,14 +648,7 @@ sim <- function(scenario = c("stump", "tree"),
   if(length(scenario)>1) scenario <- scenario[1]
   if(scenario == "tree") beta0 <- beta1 <- NULL
   if(length(changetype) > 1) changetype <- changetype[1]
-  
-  ## FIXME: necessary?
-  #if(scenario == "tree" & length(xi)<2){
-  #  if(xi == -0.5) xi <- c(-0.5, 0)
-  #  if(xi == -0.4) xi <- c(-0.4, 0.3)
-  #  if(xi == 0) xi <- c(0, 0.5)
-  #}
-  
+
   
   if(scenario == "stump"){
     pval_z1 <- matrix(rep(NA, length(test)*nrep), ncol = length(test))
