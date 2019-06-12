@@ -36,36 +36,36 @@ sim_stump <- simwrapper(scenario = "stump",
 
 sim_stump <- sim_stump$res
 
-
+save(sim_stump, file = "sim_stump.rda")
 
 
 ### "stump" scenario, full factorial analysis as discussed in Section 5.2.
 
 # for delta = 0.3 and xi = 0
-sim3way1 <- sim(scenario = "stump",
-                nobs = 250, nrep = 100, seed = 7,
-                delta = 0.3,
-                xi = 0, 
-                changetype = "abrupt",
-                variation = "all", 
-                return_matrices = TRUE,
-                test = c("guide_sum_1_cor",
-                         "mfluc_resid_bin",
-                         "ctree_resid_bin",
-                         "mfluc_resid_cat",
-                         "mfluc_resid",
-                         "ctree_resid",
-                         "guide_sum_12",
-                         "mfluc_bin",
-                         "ctree_bin",
-                         "mfluc_cat",
-                         "mfluc",
-                         "ctree"))
+sim_3way1 <- sim(scenario = "stump",
+                 nobs = 250, nrep = 100, seed = 7,
+                 delta = 0.3,
+                 xi = 0, 
+                 changetype = "abrupt",
+                 variation = "all", 
+                 return_matrices = TRUE,
+                 test = c("guide_sum_1_cor",
+                          "mfluc_resid_bin",
+                          "ctree_resid_bin",
+                          "mfluc_resid_cat",
+                          "mfluc_resid",
+                          "ctree_resid",
+                          "guide_sum_12",
+                          "mfluc_bin",
+                          "ctree_bin",
+                          "mfluc_cat",
+                          "mfluc",
+                          "ctree"))
 # prepare results for illustrations
 sim_3way1 <- prep_3way(sim_3way1)
 
 
-  
+
 # for delta = 1 and xi = 0.8
 sim_3way2 <- sim(scenario = "stump",
                  nobs = 250, nrep = 100, seed = 7,
@@ -96,6 +96,7 @@ sim_3way2$xi <- 0.8
 sim_3way <- rbind(sim_3way1, sim_3way2)
 sim_3way$xi <- factor(sim_3way$xi, levels = c(0,0.8), labels = c(0,0.8))
 
+save(sim_3way, file = "sim_3way.rda")
 
 
 ### "tree" scenario as discussed in Section 5.3.
@@ -129,3 +130,6 @@ sim_tree_ex$ari[(length(sim_tree$ari)+1) : (2*length(sim_tree$ari))] <- sim_tree
 sim_tree_ex$pruning <- c(rep("pre", NROW(sim_tree)), rep("post", NROW(sim_tree)))
 sim_tree <- sim_tree_ex
 rm(sim_tree_ex)
+
+save(sim_tree, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/simulation/sim_tree_time.rda")
+save(sim_tree, file = "sim_tree.rda")
