@@ -115,7 +115,6 @@ paltrees <- rgb(c(0.9, 1), c(0.9, 1), c(0.9, 1))
 \title{The Power of Unbiased Recursive Partitioning:\\
 A Unifying View of CTree, MOB, and GUIDE}
 \Shorttitle{The Power of Unbiased Recursive Partitioning}
-%Comparing Testing Strategies of Unbiased Tree Algorithms
 
 \author{Lisa Schlosser\\Universit\"at Innsbruck
 \And Torsten Hothorn\\Universit\"at Z\"urich
@@ -123,32 +122,32 @@ A Unifying View of CTree, MOB, and GUIDE}
 \Plainauthor{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
 
 \Abstract{
-A core step of every algorithm for learning regression trees is the decision if, 
-how, and where to split the underlying data -- or, in other words, the selection 
+A core step of every algorithm for learning regression trees is the selection 
 of the best splitting variable from the available covariates and the corresponding 
-split point. Early tree algorithms (e.g., AID, CART) employed greedy search strategies 
-that directly compare all possible split points in all available covariates. However, 
-subsequent research showed that this is biased towards selection of covariates with 
+split point. Early tree algorithms (e.g., AID, CART) employed greedy search strategies, 
+directly comparing all possible split points in all available covariates. However, 
+subsequent research showed that this is biased towards selecting covariates with 
 more potential split points. Therefore, unbiased recursive partitioning algorithms 
 have been suggested (e.g., QUEST, GUIDE, CTree, MOB) that first select the covariate 
-based on statistical inference using $p$-values that are appropriately adjusted for 
-the possible split points. In a second step a split point optimizing some objective 
-function is selected in the chosen split variable. However, different unbiased tree 
-algorithms employ different inference frameworks for computing these $p$-values and 
-their relative advantages or disadvantages are not well understood, yet.
+based on statistical inference using $p$-values that are adjusted for the possible split 
+points. In a second step a split point optimizing some objective function is selected in 
+the chosen split variable. However, different unbiased tree algorithms obtain these 
+$p$-values from different inference frameworks and their relative advantages or 
+disadvantages are not well understood, yet.
 
 Therefore, three different popular approaches are considered here: classical categorical 
-association tests (as in GUIDE), conditional inference (as in CTree), and parameter instability 
-tests (as in MOB). First, these are embedded into a common inference framework encompassing
-parametric model trees, in particular linear model trees. Second, it is assessed how
-different building blocks from this common framework affect the power of the 
-tree algorithms to select the appropriate covariates for splitting: observation-wise
+association tests (as in GUIDE), conditional inference (as in CTree), and parameter 
+instability tests (as in MOB). First, these are embedded into a common inference framework
+encompassing parametric model trees, in particular linear model trees. Second, it is 
+assessed how different building blocks from this common framework affect the power of the 
+algorithms to select the appropriate covariates for splitting: observation-wise
 goodness-of-fit measure (residuals vs.\ model scores), dichotomization of residuals/scores
-at zero, and binning of possible split variables. This shows that specifically the goodness-of-fit 
-measure is crucial for the power of the procedures, with model scores without dichotomization performing
-much better in many scenarios.
+at zero, and binning of possible split variables. This shows that specifically the 
+goodness-of-fit measure is crucial for the power of the procedures, with model scores 
+without dichotomization performing much better in many scenarios.
 }
-\Keywords{classification and regression trees, independence tests, recursive partitioning}
+\Keywords{classification and regression trees, independence tests, recursive partitioning,
+simulation}
 
 \Address{
 Lisa Schlosser, Achim Zeileis \\
@@ -369,11 +368,6 @@ conceived for nonparametric models, it is easy to adapt CTree to model-based tes
 recursive partitioning by choosing a model-based $h$ transformation as argued above
 \citep[see the concrete examples in][]{Zeileis+Hothorn:2013,Seibold+Zeileis+Hothorn:2016}.
 
-% In the CTree algorithm the number of possible breaks is fixed as splits can only be made at
-% observed values or optionally at an average value lying between two observations. To select the
-% best split point two-sample linear statistics of the same structure as in the independence test 
-% are evaluated for all possible subsets of the sample space of the selected split variable.
-
 
 \subsection{MOB}\label{sec:mob}
 
@@ -488,13 +482,13 @@ rather than the entire algorithm with all default settings.
 \begin{table}[t!]
 \centering
 \begin{tabular}{ l l l l }
-\hline 
+\hline\noalign{\smallskip} 
 & Fit             & Test                     & Pruning \\ 
-\hline
+\noalign{\smallskip}\hline\noalign{\smallskip}
 CTree & Non-parametric  & Conditional inference    & Pre\\
 MOB   & Parametric      & Score-based fluctuation  & Pre (or post with AIC/BIC)\\
 GUIDE & Parametric      & Residual-based $\chi^2$  & Post (cost-complexity pruning)\\
-\hline
+\noalign{\smallskip}\hline
 \end{tabular}
 \caption{Default combinations of fitted model type, test type and pruning strategy
 for the algorithms CTree, MOB, and GUIDE.
@@ -551,13 +545,13 @@ discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
 \begin{table}[t!]
 \centering
 \begin{tabular}{ l l l l l }
-\hline 
-& Scores       & Dichotomization  & Categorization  & Statistic\\
-\hline
+\hline\noalign{\smallskip} 
+& Scores       & Dich.  & Cat.  & Statistic\\
+\noalign{\smallskip}\hline\noalign{\smallskip}
 CTree & Model scores & --	     & -- 	       & Sum of squares\\
 MOB   & Model scores & --	     & -- 	       & Maximally selected\\
 GUIDE & Residuals    & \checkmark    & \checkmark      & Sum of squares\\
-\hline
+\noalign{\smallskip}\hline
 \end{tabular}
 \caption{Testing strategies of CTree, MOB, and GUIDE with the corresponding
 setting of the building blocks in the unifying framework and the type of test statistic.
@@ -606,7 +600,7 @@ observation-wise goodness-of-fit measure. Another natural candidate for this is 
 score function for the $i$-th observation:
 $$
 s(y_i, x_i, \beta_0, \beta_1) = 
-\frac{\partial \ell}{\partial (\beta_0, \beta_1)^{f\top}}(y_i, x_i, \beta_0, \beta_1) = 
+\frac{\partial \ell}{\partial (\beta_0, \beta_1)^{\top}}(y_i, x_i, \beta_0, \beta_1) = 
 -2 \cdot r(y_i,x_i, \beta_0, \beta_1) \cdot (1,x_i)^\top
 $$
 Thus, up to a constant scaling factor of $-2$ (that could also be omitted) the first 
@@ -652,22 +646,23 @@ together with the corresponding distributions.
 \begin{table}[t!]
 \centering
 \begin{tabular}{l l l}
-\hline
+\hline\noalign{\smallskip} 
 Name                    & Notation                   & Specification \\
-\hline
-\textit{Variables:}     &                            & \\ 
-Response                & $Y$                        & $=\beta_0(Z_1) + \beta_1(Z_1) \cdot X + \epsilon$ \\
-Regressor               & $X$                        & $\mathcal{U}([-1,1])$ \\
-Error                   & $\epsilon$                 & $\mathcal{N}(0,1)$ \\
-True split variable     & $Z_1$                      & $\mathcal{U}([-1,1])$\\
-Noise split variables   & $Z_2, Z_3, \dots, Z_{10}$  & $\mathcal{U}([-1,1])$  or $\mathcal{N}(0, 1)$ (alternating) \\
-\hline
-\textit{Parameters/functions:} &            & \\ 
+\noalign{\smallskip}\hline\noalign{\smallskip} 
+\textit{Variables:}     &                        & \\ 
+Response                & $Y$                    & $=\beta_0(Z_1) + \beta_1(Z_1) \cdot X + \epsilon$ \\
+Regressor               & $X$                    & $\mathcal{U}([-1,1])$ \\
+Error                   & $\epsilon$             & $\mathcal{N}(0,1)$ \\
+True split variable     & $Z_1$                  & $\mathcal{U}([-1,1])$\\
+Noise split variables   & $Z_2$--$Z_{10}$   & $\mathcal{U}([-1,1])$  or $\mathcal{N}(0, 1)$ \\
+                        &                        & (alternating) \\
+\noalign{\smallskip}\hline\noalign{\smallskip} 
+\multicolumn{3}{l}{\textit{Parameters/functions:}} \\ 
 Intercept                      & $\beta_0$  & $0$ or $\pm \delta$\\
 Slope                          & $\beta_1$  & $1$ or $\pm \delta$\\
 True split point               & $\xi$      & $\in \{0, 0.2, 0.5, 0.8\}$ \\
 Effect size                    & $\delta$   & $\in \{0, 0.1, 0.2, \ldots , 1\}$ \\
-\hline
+\noalign{\smallskip}\hline 
 \end{tabular}
 \caption{\label{tab:variables}Variables included in the data generating process 
 as used for the ``stump'' scenario. In the ``tree'' scenario $Z_2$ is also a true split variable, 
@@ -1071,6 +1066,7 @@ cost-complexity post-pruning (Section~\ref{sec:tree}).
 % complex tree structure of the second scenario in Section~\ref{sec:tree}. 
 % The corresponding results are shown in the following plots.
 
+\newpage
 \subsection[``Stump'' scenario: Residuals vs. full model scores]{``Stump'' scenario: Residuals vs.\ full model scores}
 \label{sec:scores}
 
@@ -1107,7 +1103,7 @@ in the conditional mean). The remaining difference between MOB/CTree and GUIDE+s
 is due to dichotomizing the scores at zero and due to categorizing the split variables
 which are investigated in more detail in the following section.
 
-\begin{figure}
+\begin{figure}[t!]
 \setkeys{Gin}{width=\linewidth}
 <<scores_stump, fig=TRUE, echo=FALSE, height=5, width=8>>=
 subdata <- subset(sim_stump, test %in% c("ctree","mfluc",
@@ -1180,24 +1176,27 @@ before and 1 after the respective split point.
 for a more detailed overview of all 12 combinations of the building blocks.)
 
 
-\begin{table}[t!]
+\begin{table}
 \centering
 \begin{tabular}{ l l l }
-\hline
+\hline\noalign{\smallskip} 
 Building block               & Levels              & Transformation \\
-\hline
+\noalign{\smallskip}\hline\noalign{\smallskip} 
 Residuals vs.\ scores        & \textit{residuals}  & $h(Y) = r(Y,X,\hat{\beta})$\\
-\quad ($h$ transformation)   & \textit{scores}     & $h(Y) = s(Y,X,\hat{\beta})$\\
-\hline
+($h$ transformation)         & \textit{scores}     & $h(Y) = s(Y,X,\hat{\beta})$\\
+\noalign{\smallskip}\hline\noalign{\smallskip} 
 Dichotomization              & \textit{yes}        & $\mathds{1}_{[0,\infty)}(h)$\\
-\quad (of $h$)               & \textit{no}         & $h$ without dichotomization\\
-\hline
+(of $h$)                     & \textit{no}         & $h$ without\\
+                             &                     & \quad dichotomization\\
+\noalign{\smallskip}\hline\noalign{\smallskip} 
 Categorization               & \textit{cat}        & $g(Z)=(0,1,0,0)^{\top}$\\
-\quad ($g$ transformation)   &                     & \quad indicating the assigned bin\\
-& \textit{max}        & $g(Z)=(0,\ldots,0,1,\ldots,1)^{\top}$\\
-&                     & \quad indicating the potential split point\\
+($g$ transformation)         &                     & \quad indicating the\\
+                             &                     & \quad assigned bin\\
+& \textit{max}               & $g(Z)=(0,\ldots,0,1,\ldots,1)^{\top}$\\
+&                            & \quad indicating the\\
+&                            & \quad potential split point\\
 & \textit{lin}        & $g(Z)=Z$\\
-\hline
+\noalign{\smallskip}\hline
 \end{tabular}
 \caption{Available levels of the building blocks.
 \label{tab:levels}}
@@ -1646,18 +1645,18 @@ of building blocks are listed in Table~\ref{tab:combinations_appendix}.
 \centering
 \begin{tabular}{ l l l l l}
 \hline\noalign{\smallskip} 
-Residuals/Scores   & Dichotomization & Categorization & \multicolumn{2}{l}{Via testing strategy}\\
+Residuals/Scores   & Dich. & Cat. & \multicolumn{2}{l}{Via testing strategy}\\
 \noalign{\smallskip}\hline\noalign{\smallskip}
 residuals	   & yes	     & cat            & GUIDE & {(default)}\\
-residuals	   & yes	     & max            & MOB   & {(with modifications)}\\
-residuals	   & yes	     & lin            & CTree & {(with modifications)}\\
-residuals	   & no 	     & cat            & MOB   & {(with modifications)}\\
-residuals	   & no 	     & max            & MOB   & {(with modifications)}\\
-residuals	   & no 	     & lin            & CTree & {(with modifications)}\\
-scores  	   & yes	     & cat            & GUIDE & {(with modifications)}\\
-scores  	   & yes	     & max            & MOB   & {(with modifications)}\\
-scores  	   & yes	     & lin            & CTree & {(with modifications)}\\
-scores  	   & no 	     & cat            & MOB   & {(with modifications)}\\
+residuals	   & yes	     & max            & MOB   & {(modified)}\\
+residuals	   & yes	     & lin            & CTree & {(modified)}\\
+residuals	   & no 	     & cat            & MOB   & {(modified)}\\
+residuals	   & no 	     & max            & MOB   & {(modified)}\\
+residuals	   & no 	     & lin            & CTree & {(modified)}\\
+scores  	   & yes	     & cat            & GUIDE & {(modified)}\\
+scores  	   & yes	     & max            & MOB   & {(modified)}\\
+scores  	   & yes	     & lin            & CTree & {(modified)}\\
+scores  	   & no 	     & cat            & MOB   & {(modified)}\\
 scores  	   & no 	     & max            & MOB   & {(default)}\\
 scores  	   & no 	     & lin            & CTree & {(default)}\\
 \noalign{\smallskip}\hline
