@@ -1081,28 +1081,6 @@ default specification as shown in Table~\ref{tab:buildingblocks} -- and
 additionally consider a new GUIDE flavor, denoted GUIDE+scores, that uses
 dichotomized scores rather than residuals.
 
-In Figure~\ref{fig:scores_stump} the performances of the testing strategies are 
-represented by the corresponding selection probability, i.e., a significance level 
-is incorporated. (Appendix~\ref{app:significance} shows that the same qualitative
-conclusions can be drawn when the significance level is \emph{not} included.)
-For a split point at the median ($\xi=0$, top row) all testing strategies 
-perform similarly well as long as the intercept varies (left and right panel) with CTree and 
-MOB being only slightly ahead. However, for the split point at the $90$\% quantile $\xi = 0.8$ 
-(bottom row) the performance of all of the applied strategies decreases. 
-While both GUIDE versions struggle to detect the correct split variable even for a high effect 
-size, MOB is clearly ahead with CTree leading to the second best results.
-This advantage of MOB over CTree is mainly due to the abrupt shift in the 
-model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
-a smooth transition with continuously-changing parameters (see Appendix~\ref{app:contbeta}).
-
-However, in the scenario where only $\beta_1$ (but not the intercept $\beta_0$) is affected by the split,
-the residual-based GUIDE approach has no power at all even for a true split at the median (top middle panel).
-It is easily possible, though, to substantially mitigate this problem by using scores
-(sensitive to changes in all parameters) rather than residuals only (sensitive to changes
-in the conditional mean). The remaining difference between MOB/CTree and GUIDE+scores
-is due to dichotomizing the scores at zero and due to categorizing the split variables
-which are investigated in more detail in the following section.
-
 \begin{figure}[t!]
 \setkeys{Gin}{width=\linewidth}
 <<scores_stump, fig=TRUE, echo=FALSE, height=5, width=8>>=
@@ -1155,6 +1133,28 @@ for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
 (middle), or both coefficients varying (right).}
 \end{figure}
 
+In Figure~\ref{fig:scores_stump} the performances of the testing strategies are 
+represented by the corresponding selection probability, i.e., a significance level 
+is incorporated. (Appendix~\ref{app:significance} shows that the same qualitative
+conclusions can be drawn when the significance level is \emph{not} included.)
+For a split point at the median ($\xi=0$, top row) all testing strategies 
+perform similarly well as long as the intercept varies (left and right panel) with CTree and 
+MOB being only slightly ahead. However, for the split point at the $90$\% quantile $\xi = 0.8$ 
+(bottom row) the performance of all of the applied strategies decreases. 
+While both GUIDE versions struggle to detect the correct split variable even for a high effect 
+size, MOB is clearly ahead with CTree leading to the second best results.
+This advantage of MOB over CTree is mainly due to the abrupt shift in the 
+model parameters $\beta_0$ and $\beta_1$ and turns into an advantage of CTree over MOB for 
+a smooth transition with continuously-changing parameters (see Appendix~\ref{app:contbeta}).
+
+However, in the scenario where only $\beta_1$ (but not the intercept $\beta_0$) is affected by the split,
+the residual-based GUIDE approach has no power at all even for a true split at the median (top middle panel).
+It is easily possible, though, to substantially mitigate this problem by using scores
+(sensitive to changes in all parameters) rather than residuals only (sensitive to changes
+in the conditional mean). The remaining difference between MOB/CTree and GUIDE+scores
+is due to dichotomizing the scores at zero and due to categorizing the split variables
+which are investigated in more detail in the following section.
+
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
 
@@ -1174,7 +1174,6 @@ in this case for each potential split point an indicator is used that is 0
 before and 1 after the respective split point.
 (See also Table~\ref{tab:combinations_appendix} in Appendix~\ref{app:combinations} 
 for a more detailed overview of all 12 combinations of the building blocks.)
-
 
 \begin{table}
 \centering
@@ -1352,13 +1351,6 @@ for different split points $\xi$ from 0 to 0.8. Here, the performance is not eva
 of test properties but only in terms of tree properties, namely the adjusted Rand index (ARI)
 in comparison to the true partition of the data.
 
-The top row of Figure~\ref{fig:tree_all} presents the results for pre-pruning which, not surprisingly,
-reflect the results from previous sections. Thus, CTree and MOB perform similarly and rather well
-as the underlying significance tests have good power properties. Only for late abrupt shifts the
-linear test statistics in CTree clearly have lower power than the maximally-selected statistics in MOB.
-Again, this picture would reverse for smooth changes instead of abrupt shifts. Compared to CTree/MOB
-both GUIDE flavors clearly perform worse as the underlying tests are less powerful; notably
-for the residual-based GUIDE which again has problems picking up the slope change associated with $Z_2$.
 
 <<tree_all_data, echo=FALSE, results=hide>>=
 if(file.exists("../simulation/results/sim_tree.rda")){
@@ -1439,6 +1431,14 @@ Each panel represents a different value of the true split point $\xi$ ($0$, $0.2
 $0.8$ from left to right, corresponding to the $50$\%, $60$\%, $75$\%, and $90$\% quantile).
 }
 \end{figure}
+
+The top row of Figure~\ref{fig:tree_all} presents the results for pre-pruning which, not surprisingly,
+reflect the results from previous sections. Thus, CTree and MOB perform similarly and rather well
+as the underlying significance tests have good power properties. Only for late abrupt shifts the
+linear test statistics in CTree clearly have lower power than the maximally-selected statistics in MOB.
+Again, this picture would reverse for smooth changes instead of abrupt shifts. Compared to CTree/MOB
+both GUIDE flavors clearly perform worse as the underlying tests are less powerful; notably
+for the residual-based GUIDE which again has problems picking up the slope change associated with $Z_2$.
 
 When switching from pre-pruning to post-pruning (bottom row of Figure~\ref{fig:tree_all})
 it is indeed shown that many of the problems stemming from the low power of the two GUIDE
