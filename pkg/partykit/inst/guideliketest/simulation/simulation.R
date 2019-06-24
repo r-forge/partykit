@@ -1,7 +1,7 @@
 #################################
 ## Replication code for the simulation results presented in:
 ## The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE (2019)
-## by Lisa Schlosser and Torsten Hothorn and and Achim Zeileis
+## by Lisa Schlosser and Torsten Hothorn and Achim Zeileis
 ## (corresponding figures can be reproduced by function calls provided in figures.R)
 #################################
 
@@ -19,6 +19,11 @@ source("ccprune.R")
 #############
 ### reproduction of simulation results
 
+# computation time for full reproduction of results (on our machines, using 3 kernels): 
+# 296 hours and 20 min consisting of
+# approximately 21 h for the "stump" scenario 
+# + 20 min for the full factorial analysis of the building blocks in the "stump" scenario 
+# + 275 h for the "tree" scenario.
 
 
 ### "stump" scenario as discussed in Section 5.1. and in the Appendix
@@ -131,5 +136,4 @@ sim_tree_ex$pruning <- c(rep("pre", NROW(sim_tree)), rep("post", NROW(sim_tree))
 sim_tree <- sim_tree_ex
 rm(sim_tree_ex)
 
-save(sim_tree, file = "~/svn/partykit/pkg/partykit/inst/guideliketest/simulation/sim_tree_time.rda")
 save(sim_tree, file = "sim_tree.rda")
