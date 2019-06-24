@@ -1,7 +1,7 @@
 #################################
 ## Source file for replication of the simulation results presented in:
 ## The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE (2019)
-## by Lisa Schlosser and Torsten Hothorn and and Achim Zeileis
+## by Lisa Schlosser and Torsten Hothorn and Achim Zeileis
 ##
 ## Content: Data generating proceses and evaluation functions
 #################################

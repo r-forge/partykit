@@ -1,7 +1,7 @@
 #################################
 ## Replication code for the figures presented in:
 ## The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE (2019)
-## by Lisa Schlosser and Torsten Hothorn and and Achim Zeileis
+## by Lisa Schlosser and Torsten Hothorn and Achim Zeileis
 #################################
 
 library("lattice")
@@ -17,7 +17,7 @@ names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE+scores", "CTree+max")
 # If existing, load .rda files containing the simulation results,
 # otherwise call simulation.R to calculate the results.
 # (computation time for full replication of simulation results by simulation.R: 
-# approximately 70 hours, on our machines, using 3 kernels)
+# approximately 296 hours, on our machines, using 3 kernels)
 
 if(file.exists("sim_stump.rda") & file.exists("sim_3way.rda") & file.exists("sim_tree.rda")){
   load("sim_stump.rda")
@@ -84,6 +84,7 @@ xyplot(pval_z1 ~ cat | xi,
        col = c(pal[1], pal[3], pal[1], pal[3]),
        lty = c(1,1,2,2),
        lwd = 2,
+       layout = c(2,1),
        scales = list(alternating=FALSE),
        xlab = "Categorization",
        ylab = expression("p-value of"~Z[1]),
