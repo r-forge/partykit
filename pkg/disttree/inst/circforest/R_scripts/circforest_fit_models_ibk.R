@@ -15,7 +15,9 @@ Sys.setenv('TZ'='UTC')
 library("zoo")
 library("disttree")
 library("circmax")
-library("verification") # Careful, version 1.35 needed!!
+#library("verification") # Careful, version 1.35 needed!!
+
+if (! dir.exists("results")) dir.create("results")
 
 # -------------------------------------------------------------------
 # Pre-process data
@@ -28,6 +30,10 @@ tmp <- na.omit(tmp)
 
 ## Subset data to full hours
 d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
+
+## Remove very low values of ff and zero wind direction
+d <- d[!d[, "dd.response"] == 0,]
+d <- d[!d[, "ff.response"] < 1,]
 
 ## Transform response.dd from 0-360 degree to [-pi, pi]
 d$dd.response <- d$dd.response / 360 * 2*pi
@@ -69,6 +75,8 @@ for(i in seq(1:nrow(d))){
   }
 }
 
+save(pred_clim, file = "results/circforest_pred_clim_ibk_lag6_v3.rda")
+
 # -------------------------------------------------------------------
 # Fit Tree and Forest
 # -------------------------------------------------------------------
@@ -87,7 +95,6 @@ f <- as.formula(paste("dd.response ~ ", paste(names(d)[-grep("response", names(d
 ## Fit models with cross-validation
 cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
 
-m_dt <- m_df <- pred_dt <- pred_df <- list()
 for(cv in unique(cvID)) { 
   cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
 
@@ -95,26 +102,37 @@ for(cv in unique(cvID)) {
   test <- d[cv == cvID, ]
   
   ## Fit tree
-  m_dt[[cv]] <- distextree(formula = f,
-                   data = train,
-                   family = dist_vonmises(),
-                   control = distextree_control(maxdepth = 4))
+  m_dt <- distextree(formula = f,
+                           data = train,
+                           family = dist_vonmises(),
+                           control = distextree_control(maxdepth = 4))
   
   ## Fit forest
-  m_df[[cv]] <- distexforest(formula = f,
-                     data = train,
-                     family = dist_vonmises(),
-                     ntree = 500,
-                     mtry = 0.9 * ceiling(length(all.vars(f[[3]]))))
+  m_df <- distexforest(formula = f,
+                       data = train,
+                       family = dist_vonmises(),
+                       ntree = 100,
+                       mtry = 0.9 * ceiling(length(all.vars(f[[3]]))),
+                       perturb = list(replace = FALSE, fraction = 0.3),
+                       control = distextree_control(nmax = c("yx" = Inf, "z" = 50)))
 
   ## Predict models
-  pred_dt[[cv]] <- predict(m_dt[[cv]], newdata = test, type = "parameter")
-  pred_df[[cv]] <- predict(m_df[[cv]], newdata = test, type = "parameter")
+  pred_dt.tmp <- predict(m_dt, newdata = test, type = "parameter")
+  pred_df.tmp <- predict(m_df, newdata = test, type = "parameter")
+
+
+  save(pred_dt.tmp, pred_df.tmp, 
+    file = sprintf("results/circforest_pred_forest_ibk_lag6_v3_cv%s.rda", cv))
 }
 
-# -------------------------------------------------------------------
-# Validate and save models
-# -------------------------------------------------------------------
+pred_dt <- pred_df <- list()
+for(cv in unique(cvID)) {
+  load(file = sprintf("results/circforest_pred_forest_ibk_lag6_v3_cv%s.rds", cv))
+  pred_dt[[cv]] <- pred_dt.tmp
+  pred_df[[cv]] <- pred_df.tmp
+}
+
+
 pred <- list(tree = do.call("rbind", pred_dt), forest = do.call("rbind", pred_df), 
   climatology = pred_clim)
 
@@ -129,6 +147,14 @@ if(length(idx) > 0){
   obs <- d$dd.response
 }
 
+## Save results
+#save(m_dt, m_df, file = "results/circforest_models_ibk_lag6.rds")
+save(pred, pred_naomit, file = "results/circforest_results_ibk_lag6_v3.rds")
+
+# -------------------------------------------------------------------
+# Validate 
+# -------------------------------------------------------------------
+
 ## Validate models
 crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
   y = obs, sum = FALSE)) 
@@ -136,11 +162,9 @@ crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa
 crps_grimit <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i) 
   as.numeric(crps.circ(x = obs[i], mu = x[i, "mu"], kappa = x[i, "kappa"]))))
 
-## Save output
-if (! dir.exists("results")) dir.create("results")
-#save(m_dt, m_df, file = "results/circforest_models_ibk_lag6.rds")
-save(pred, pred_naomit, crps, crps_grimit, file = "results/circforest_validation_ibk_lag6_v2.rds")
+## Save validation
+save(crps, crps_grimit, file = "results/circforest_validation_ibk_lag6_v3.rds")
 
-## Plot tree
-#circmax:::plot.circtree(dt[[1]], ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
-#  ip_args = list(pval = FALSE))
+# Plot tree
+circmax:::plot.circtree(dt[[1]], ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
+  ip_args = list(pval = FALSE))
