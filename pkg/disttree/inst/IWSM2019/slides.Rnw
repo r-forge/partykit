@@ -1,15 +1,14 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[nototalframenumber, noslidenumber]{uibk}
+\usetheme[url, license]{uibk}
 
 \title{Distributional Trees 
 %and Forests \\
 for Circular Data}
-\author{Lisa Schlosser, Moritz N. Lang, Torsten Hothorn, \\
+\author{Lisa Schlosser, Moritz N. Lang, Torsten~Hothorn,\\
 Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 %\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
-\URL{https://R-Forge.R-project.org/projects/partykit/ \\
-https://partykit.org}
+\URL{https://R-Forge.R-project.org/projects/partykit/}
 \headerimage{3}
 
 
@@ -53,7 +52,6 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
 
 \section{Distributional Trees and Forests for Circular Data}
 
@@ -569,7 +567,7 @@ Also known as ``the circular normal distribution'' with
 
 The density for $y \in [0, 2\pi)$ is given by:
 $$
-f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
+f_\text{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
 $$
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
 
@@ -649,7 +647,7 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 
 \small{\url{https://R-Forge.R-project.org/projects/partykit/}\\ 
 and\\
-\url{https://r-forge.r-project.org/projects/uibk-rprog-2018/}}\\
+\url{https://R-Forge.R-project.org/projects/uibk-rprog-2018/}}\\
 
 \bigskip
 \bigskip
@@ -680,7 +678,7 @@ and\\
 \subsection{References}
 
 \begin{frame}
-\frametitle{References (1)}
+\frametitle{References}
 
 %\vspace{-0.4cm}
 
@@ -733,7 +731,7 @@ Jammalamadaka S R, Sengupta A (2001).
 
 
 \begin{frame}
-\frametitle{References (2)}
+\frametitle{References}
 
 %\vspace{-0.4cm}
 
