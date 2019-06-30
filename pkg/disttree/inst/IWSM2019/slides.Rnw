@@ -1,11 +1,9 @@
-\documentclass[11pt,t,usepdftitle=false,aspectratio=43]{beamer}
-\usetheme[url, license]{uibk}
+\documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
+\usetheme[nototalframenumber, url, license]{uibk}
 
-\title{Distributional Trees 
-%and Forests \\
-for Circular Data}
-\author{Lisa Schlosser, Moritz N. Lang, Torsten~Hothorn,\\
-Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
+\title{Distributional Trees and Forests for Circular Data}
+\author{Lisa Schlosser, Moritz N. Lang, \\
+Torsten~Hothorn, Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 %\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
 \URL{https://R-Forge.R-project.org/projects/partykit/}
@@ -14,10 +12,12 @@ Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
-\usepackage{Sweave}
+% \usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
-\graphicspath{{plots/}}
+\usepackage{xcolor}
+\usepackage{BOONDOX-cal}
+%\graphicspath{{plots/}}
 
 \newcommand{\argmax}{\operatorname{argmax}\displaylimits}
 
@@ -33,18 +33,8 @@ set.seed(7)
 
 # setwd("~/svn/partykit/pkg/disttree/inst/IWSM2019")
 library("disttree")
-library("Formula")
+#library("Formula")
 library("latex2exp")
-
-## HCL palette
-pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
-names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
-pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
-names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-
-transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
-
 
 @
 
@@ -58,373 +48,71 @@ transpgrey <- rgb(0.190,0.190,0.190, alpha = 0.2)
 \subsection{Motivation}
 
 \begin{frame}[fragile]
-\frametitle{Distributional Tree}
+\frametitle{Motivation}
+\textbf{Goal:} Regression model for a circular response variable%, \\
+%\hspace{1.05cm} i.e. a periodic response variable measured on the unit circle.
 
-\vspace{1cm}
+\medskip
 
-{\bf Starting point:}
+\textbf{Examples of cirular data:} 
 \begin{itemize}
-\item Response $Y$
-\item Covariate(s) $X$ $\rightarrow$ split variable(s) $X$
-\item Distribution family $\mathcal{D}(\theta)$
+\item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+\item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$
+\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+%\item \ldots
 \end{itemize}
 
-\vspace{1cm}
+\medskip
 
-{\bf Goal:} Probabilistic model
+\textbf{Application:} Probabilistic forecasting of wind directions for the next hour at Innsbruck airport (Austria, \textcolor{gray}{\url{https://innsbruck-airport.panomax.com}}).
 
-%Idea: maximum-likelihood method
-%\begin{enumerate}
-%\item Specify a distribution with log-likelihood function $\ell(\theta; y)$.
-%\item Estimate $\hat{\theta}$ via maximum likelihood.
-%\item Test for associations or instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each partitioning variable $x_i$.
-%\item Assess whether the \emph{model scores} are associated with
-%    (or change along) any of the available covariates -- e.g.,
-%    using parameter instability tests (\emph{strucchange}) or
-%    conditional inference (\emph{coin}).
-%\item Split the sample along the partitioning variable with the strongest association or instability.
-%    Choose breakpoint with highest improvement in log-likelihood.
-%\item Repeat steps 2--4 recursively in the subgroups
-%    until some stopping criterion is met.
-%    %-- e.g., for significance or sample size.
-%\item Choose the variable with the strongest association
-%\item Choose the split point which leads to the highest improvement of the model
-%\item Split and repeat 2-6 in each node until a stopping criterion is met
-%\end{enumerate}
+\medskip
 
-\end{frame}
+\textbf{Previous knowledge:} Possibly abrupt changes due to geographical position.
 
+\medskip
 
-\begin{frame}
-\frametitle{Distributional Tree}
-\vspace*{-0.12cm}
-\begin{center} 
-DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
-\vspace*{-0.21cm}
-<<dgp_tree, echo=FALSE, results=hide>>=
-data <- data.frame(x = numeric(0), x = numeric(0), x = numeric(0))
-names(data) <- c("x","x","x")
-fig <- party(
-  partynode(1L,
-            split = partysplit(2L, breaks = 0.4),
-            kids = list(
-              partynode(2L, info = c(
-                "n = 200",
-                "   True parameters:   ",
-                expression(mu == '4'),
-                expression(sigma == '1')
-              )),
-              partynode(3L,
-                        split = partysplit(3L, breaks = 0.8),
-                        kids = list(
-                          partynode(4L, info = c(
-                            "n = 200",
-                            "   True parameters:   ",
-                            expression(mu == '12'),
-                            expression(sigma == '3')
-                          )),
-                          partynode(5L, info = c(
-                            "n = 100",
-                            "   True parameters:   ",
-                            expression(mu == '4'),
-                            expression(sigma == '3')
-                          )))))),
-  data
-)
+\textbf{Idea:} Regression trees
 
+\bigskip
 
-node_inner_ext <- function (obj, id = TRUE, pval = TRUE, abbreviate = FALSE, fill = "white", 
-    gp = gpar()) 
-{
-    meta <- obj$data
-    nam <- names(obj)
-    extract_label <- function(node) {
-        if (is.terminal(node)) 
-            return(rep.int("", 2L))
-        varlab <- character_split(split_node(node), meta)$name
-        if (abbreviate > 0L) 
-            varlab <- abbreviate(varlab, as.integer(abbreviate))
-        if (pval) {
-            nullna <- function(x) is.null(x) || is.na(x)
-            pval <- suppressWarnings(try(!nullna(info_node(node)$p.value), 
-                silent = TRUE))
-            pval <- if (inherits(pval, "try-error")) 
-                FALSE
-            else pval
-        }
-        if (pval) {
-            pvalue <- node$info$p.value
-            plab <- ifelse(pvalue < 10^(-3L), paste("p <", 10^(-3L)), 
-                paste("p =", round(pvalue, digits = 3L)))
-        }
-        else {
-            plab <- ""
-        }
-        return(c(varlab, plab))
-    }
-    maxstr <- function(node) {
-        lab <- extract_label(node)
-        klab <- if (is.terminal(node)) 
-            ""
-        else unlist(lapply(kids_node(node), maxstr))
-        lab <- c(lab, klab)
-        lab <- unlist(lapply(lab, function(x) strsplit(x, "\n")))
-        lab <- lab[which.max(nchar(lab))]
-        if (length(lab) < 1L) 
-            lab <- ""
-        return(lab)
-    }
-    nstr <- maxstr(node_party(obj))
-    if (nchar(nstr) < 6) 
-        nstr <- "aAAAAa"
-    rval <- function(node) {
-        node_vp <- viewport(x = unit(0.5, "npc"), y = unit(0.5, 
-            "npc"), width = unit(1, "strwidth", nstr) * 1.3, 
-            height = unit(3, "lines"), name = paste("node_inner", 
-                id_node(node), sep = ""), gp = gp)
-        pushViewport(node_vp)
-        xell <- c(seq(0, 0.2, by = 0.01), seq(0.2, 0.8, by = 0.05), 
-            seq(0.8, 1, by = 0.01))
-        yell <- sqrt(xell * (1 - xell))
-        xell <- xell*1.11 - 0.055             # to adapt size of the ellipse to the size with p-value
-        lab <- extract_label(node)
-        fill <- rep(fill, length.out = 2L)
-        grid.polygon(x = unit(c(xell, rev(xell)), "npc"), y = unit(c(yell, 
-            -yell) + 0.5, "npc"), gp = gpar(fill = fill[1]))
-        grid.text(lab[1L], y = unit(1.5 + 0.5,                  # to adapt position of x to its position with p-value
-            "lines"))
-        #grid.text(lab[1L], y = unit(1.5 + 0.5 * (lab[2L] != ""), 
-        #    "lines"))
-        grid.text(lab[2L], y = unit(1, "lines"))
-        if (id) {
-            nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, 
-                "npc"), width = max(unit(1, "lines"), unit(1.3, 
-                "strwidth", nam[id_node(node)])), height = max(unit(1, 
-                "lines"), unit(1.3, "strheight", nam[id_node(node)])))
-            pushViewport(nodeIDvp)
-            grid.rect(gp = gpar(fill = fill[2]))
-            grid.text(nam[id_node(node)])
-            popViewport()
-        }
-        upViewport()
-    }
-    return(rval)
-}
+$\rightarrow$ \textbf{Circular distributional trees}
 
-class(node_inner_ext) <- "grapcon_generator"
-
-
-@
-
-\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
-<<plottree_dgp, fig=TRUE, echo=FALSE>>=
-paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
-plot(fig, inner_panel = node_inner_ext,
-     tp_args = list(FUN = identity, width = 18, fill = paltrees[c(1, 3)]), 
-     ip_args = list(fill = paltrees[c(2, 3)]),
-     drop_terminal = TRUE, tnex = 1.7)
-@
-\end{center}
-\end{frame}
-
-<<tree, echo=FALSE, results=hide>>=
-set.seed(7)
-nobs <- 500
-x <- runif(nobs, 0, 1)
-mu <- sigma <- ytrue <- numeric(length = nobs)
-for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
-for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
-y <- rnorm(nobs, mean = mu, sd = sigma)
-#y <- rcnorm(nobs, mean = mu, sd = sigma, left = 0)
-ytrue <- mu
-data <- data.frame(cbind(y,x, ytrue))
-tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
-#tree <- disttree(y ~ x, data = data, family = dist_list_cens_normal)
-@
-
-\begin{frame}[fragile]
-\frametitle{Distributional Tree}
-\begin{center}
-\vspace*{-0.12cm}
-Model: \code{disttree(y ~ x)}\\
-\vspace*{-0.2cm}
-\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
-<<plottree_estpar, fig=TRUE, echo=FALSE>>=
-# function for output in terminal panels
-FUN <- function (x) 
-{
-  cf <- x$coefficients
-  cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), ""))
-  c(sprintf("n = %s", x$nobs), "Estimated parameters:", parse(text = paste0("mu == '", format(round(cf[1], 2), nsmall = 2), "'")), 
-                                                        parse(text = paste0("sigma == '", format(round(cf[2], 2), nsmall = 2), "'")))
-}
-
-paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
-
-## plot version using FUN and tree of class 'disttree'
-plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
-     tp_args = list(fill = paltrees[c(1, 3)], width = 18), 
-     ip_args = list(fill = paltrees[c(2, 3)]))
-@
-\end{center}
 \end{frame}
 
 
 \begin{frame}[fragile]
-\frametitle{Distributional Tree}
-\begin{center}
-\vspace*{-0.12cm}
-Model: \code{disttree(y ~ x)}\\
-\vspace*{-0.2cm}
-\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
-<<plottree_box, fig=TRUE, echo=FALSE>>=
-plot(as.constparty(tree), tnex = 1.7, drop = TRUE,
-     tp_args = list(fill = paltrees[c(1, 3)], ylines = 1.5), 
-     ip_args = list(fill = paltrees[c(2, 3)]))
-@
-\end{center}
+\frametitle{Von Mises distribution}
+\begin{minipage}{0.5\textwidth}
+``Circular normal distribution'' with
+\begin{itemize}
+\item location parameter $\mu \in [0, 2\pi)$ 
+\item concentration parameter $\kappa > 0$ 
+\end{itemize}
+\end{minipage}
+\hspace{1cm}
+\begin{minipage}{0.4\textwidth}
+%\begin{center}
+%\vspace*{-1cm}
+\setkeys{Gin}{width=0.6\linewidth}
+\includegraphics{density_right.pdf}
+%\end{center}
+\end{minipage}
+
+\medskip
+
+The density for $y \in [0, 2\pi)$ and parameter vector $\theta = (\mu, \kappa)$ is given by
+$$
+f_\mathcal{vM}(y; \theta) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
+$$
+where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
+
+The corresponding log-likelihood function is defined by
+$$
+\ell(\theta; y) =  \log(f_\mathcal{vM}(y;\theta)).
+$$
 \end{frame}
 
-
-
-\begin{frame}[fragile]
-\frametitle{Distributional Tree}
-\begin{center}
-\vspace*{-0.12cm}
-Model: \code{disttree(y ~ x)}\\
-\vspace*{-0.2cm}
-\setkeys{Gin}{width=0.68\linewidth, height=0.68\linewidth}
-<<plottree_dens, fig=TRUE, echo=FALSE>>=
-node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
-                          main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
-                          fill = paltrees[c(1, 3)], col = "black", lwd = 0.5, ...) 
-{
-  yobs <- tree$data[,as.character(tree$info$formula[[2]])]
-  ylines <- 1.5
-  if (is.null(xscale)) xscale <- c(-5.1,22.5)
-  if (is.null(yscale)) yscale <- c(-0.05,0.45)
-  xr <- xscale
-  yr <- yscale
-  
-  if (horizontal) {
-    yyy <- xscale
-    xscale <- yscale
-    yscale <- yyy
-  }
-  
-  rval <- function(node) {
-    yrange <- seq(from = -20, to = 90)/4
-    ydens <- node$info$object$ddist(yrange)
-    
-    top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
-                                            widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
-                                            heights = unit(c(1, 1), c("lines", "null"))), 
-                       width = unit(1, "npc"), 
-                       height = unit(1, "npc") - unit(2, "lines"), 
-                       name = paste("node_density",node$id, sep = ""))
-    pushViewport(top_vp)
-    grid.rect(gp = gpar(fill = "white", col = 0))
-    top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
-    pushViewport(top)
-    mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
-    
-    grid.text(mainlab)
-    popViewport()
-    plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
-                     xscale = xscale, yscale = yscale, 
-                     name = paste("node_density",  node$id, "plot", sep = ""))
-    pushViewport(plot)
-    yd <- ydens
-    xd <- yrange
-    if (horizontal) {
-      yyy <- xd
-      xd <- yd
-      yd <- yyy
-      yyy <- xr
-      xr <- yr
-      yr <- yyy
-      rxd <- rep(0, length(xd))
-      ryd <- rev(yd)
-    } else {
-      rxd <- rev(xd)
-      ryd <- rep(0, length(yd))
-    }
-    
-    if (rug) {
-      nodeobs <- node$info$object$y
-      if (horizontal) {
-        grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
-                  default.units = "native", just = c("right", "bottom"),
-		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
-      } else {
-        grid.rect(x = nodeobs, y = yscale[1], 
-                  width = 0, height = abs(yscale[1]), default.units = "native", 
-                  just = c("center", "bottom"),
-		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
-        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
-        #           default.units = "native")
-        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
-        #           default.units = "native")
-      }
-    }
-
-    
-    grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
-              gp = gpar(col = "black", fill = fill, lwd = lwd))
-    #grid.lines(x = xd, y = yd, default.units = "native", 
-    #           gp = gpar(col = col, lwd = lwd))
-    grid.xaxis()
-    grid.yaxis()
-    grid.rect(gp = gpar(fill = "transparent"))
-    upViewport(2)
-  }
-  return(rval)
-}
-
-class(node_density) <- "grapcon_generator"
-
-plot(tree, tnex = 1.7, drop = TRUE,
-     terminal_panel = node_density,
-     tp_args = list(fill = paltrees[c(1, 3)]), 
-     ip_args = list(fill = paltrees[c(2, 3)]))
-@
-\end{center}
-\end{frame}
-
-
-<<treedata, echo=FALSE, results=hide>>=
-set.seed(54)
-nobs <- 500
-x <- runif(nobs, 0, 1)
-mu <- sigma <- ytrue <- numeric(length = nobs)
-for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
-for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
-y <- rnorm(nobs, mean = mu, sd = sigma)
-ytrue <- mu
-data <- data.frame(cbind(y,x, ytrue))
-
-alldata <- cbind(data, mu, sigma)
-odata <- alldata[order(alldata["x"]),]
-@
-
-\begin{frame}[fragile]
-\frametitle{Distributional Tree}
-\begin{center}
-\vspace*{-1.03cm}
-\setkeys{Gin}{width=0.8\linewidth}
-<<plottree_xyplot, fig=TRUE, echo=FALSE>>=
-par(mar=c(5.1,4.1,4.1,3.1))
-plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "grey")
-#plot(y=odata$y, x=odata$x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray")
-lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
-polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
-  col = pallight["forest"], border = "transparent")
-legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
-#lines(x = odata$x, y = odata$mu + odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
-#lines(x = odata$x, y = odata$mu - odata$sigma, col = hcl(10, 80, 70), lwd = 1.5, lty = 1)
-@
-\end{center}
-\end{frame}
 
 
 
@@ -433,7 +121,7 @@ legend(x = -0.0715, y = 21.62, expression(mu  %+-%  sigma), bty = "n")
 \begin{minipage}{0.7\textwidth}
 {\bf Tree:}
 \begin{enumerate}
-\item<3-> Fit global distributional model $\mathcal{D}(Y; \theta)$: \\ % to the whole data set:\\
+\item<3-> Fit global distributional model $\mathcal{vM}(Y; \theta)$: \\ % to the whole data set:\\
 Estimate $\hat{\theta}$ via maximum likelihood\\
 $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \item<7-> Test for associations/instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each covariate $X_i$.
@@ -446,39 +134,39 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
 }
 \visible<4>{
-\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\mathcal{D}(Y;\hat{\theta}$)};
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\mathcal{vM}(Y;\hat{\theta}$)};
 }
 \visible<5->{
-\node[inner sep=0pt] (density1) at (0.8, 1.7)
-    {\includegraphics[width=0.6\textwidth]{density1.jpeg}};
+\node[inner sep=0pt] (density_root) at (0.8, 1.7)
+    {\includegraphics[width=0.6\textwidth]{density_root.pdf}};
 }
 \visible<6-8>{
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {?};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {?};
-\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1);
-\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2);
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {?};
+\draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1);
+\draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2);
 }
 \visible<9-10>{
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$Y_2$};
-\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
-\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2) node [midway, right] {\scriptsize $X > p$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {$Y_2$};
+\draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (1, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
 }
 \visible<11>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\mathcal{D}(Y_1;\hat{\theta_1}$)};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$\mathcal{D}(Y_2;\hat{\theta_2}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\mathcal{vM}(Y_1;\hat{\theta_1}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {$\mathcal{vM}(Y_2;\hat{\theta_2}$)};
 }
 \visible<11->{
-\draw[-, gray, line width=0.5pt] (0.7, 1.18) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
-\draw[-, gray, line width=0.5pt] (0.9, 1.18) -- (n2) node [midway, right] {\scriptsize $X > p$};
+\draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
 }
 \visible<12->{
-\node[inner sep=0pt] (density2) at (-0.1,-0.1)
-    {\includegraphics[width=0.5\textwidth]{density2.jpeg}};
+\node[inner sep=0pt] (density2) at (-0.1,-0.3)
+    {\includegraphics[width=0.5\textwidth]{density_left.pdf}};
 }
 \visible<12->{
-\node[inner sep=0pt] (density3) at (1.7,-0.1)
-    {\includegraphics[width=0.5\textwidth]{density3.jpeg}};
+\node[inner sep=0pt] (density3) at (1.7,-0.3)
+    {\includegraphics[width=0.5\textwidth]{density_right.pdf}};
 }
 \end{tikzpicture}
 \end{minipage}
@@ -486,13 +174,12 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 %\begin{adjustwidth}{-0.0em}{-1em}
 \begin{enumerate}
 \setcounter{enumi}{2}
-\item<8-> Split along the covariate $X$ with strongest association or instability and at breakpoint $p$ with highest improvement \\
-in log-likelihood.
-\item<10-> Repeat steps 1--3 recursively until some stopping criterion \\
-is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
+\item<8-> Split along the covariate $X$ with strongest association or instability and\\ at breakpoint $p$ with highest improvement in log-likelihood.
+\item<10-> Repeat steps 1--3 recursively until some stopping criterion is met,\\
+yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
 \end{enumerate}
 %\end{adjustwidth}
-\vspace{0.4cm}
+\vspace{0.3cm}
 \visible<13->{
 {\bf Forest:} Ensemble of $T$ trees.
 \begin{itemize}
@@ -508,12 +195,11 @@ is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
 \frametitle{Adaptive Local Likelihood Estimation}
 
 \textbf{Parameter estimator} for \only<1-3>{\textbf{a global}}\only<4->{\textbf{an adaptive local}}\\ model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$} :
-
 \[
 \hat{\theta}\visible<2->{(\bold{x})} =  \argmax_{\theta \in \Theta} \sum_{i=1}^n \visible<2->{w_i(\bold{x}) \cdot} \ell(\theta; y_i)
 \]
 
-\bigskip
+\medskip
 
 \visible<3->{
 \textbf{Weights:}
@@ -527,74 +213,27 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 }}}
 \end{frame}
 
-\begin{frame}[fragile]
-\frametitle{Circular Data}
 
-\bigskip
 
-\textbf{Examples/Applications:} 
-\begin{itemize}
-\item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
-\item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$
-\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
-\item \ldots
-\end{itemize}
 
-\bigskip
-
-\textbf{Task:} Model periodic response variable measured on the unit circle. 
-
-\medskip
-
-\quad $\rightarrow$ Circular distribution
-
-%\begin{center}
-%\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%\includegraphics{}
-%\end{center}
-\end{frame}
-
-\begin{frame}[fragile]
-\frametitle{Von Mises distribution}
-Also known as ``the circular normal distribution'' with
-\begin{itemize}
-\item location parameter $\mu \in [0, 2\pi)$ 
-\item concentration parameter $\kappa > 0$ 
-\end{itemize}
-
-\medskip
-
-The density for $y \in [0, 2\pi)$ is given by:
-$$
-f_\text{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
-$$
-where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
-
-\bigskip
-
-\textit{FIXME: include a plot of the density function on the unity circle}
-%\begin{center}
-%\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%\includegraphics{}
-%\end{center}
-\end{frame}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Application
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
-\textbf{Goal:} Predict wind directions at Innsbruck Airport (Austria).
+%\textbf{Goal:} Predict wind directions for the next hour at Innsbruck airport (Austria).
 
-\medskip
+%\medskip
 
-\textbf{Input:} Observation data of various meteorological quantities of the previous hour(s) from Innsbruck and 5 nearby weather stations. 
+\textbf{Input:} Observation data of various meteorological quantities of the previous hour(s) from Innsbruck airport and 5 nearby weather stations. 
 
 \medskip
 
 \textbf{Base variables:}
 \begin{itemize}
 \item Wind direction
+\item Wind speed
 \item Temperature
 \item Air pressure
 \item \dots 
@@ -606,6 +245,12 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 %\includegraphics{}
 %\end{center}
 \end{frame}
+
+
+%\begin{frame}[fragile]
+%\includegraphics{airport_ibk.jpg}
+%\end{frame}
+
 
 
 \begin{frame}[fragile]
@@ -624,12 +269,38 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
+\textbf{Applied models and reference models:}
+\begin{itemize}
+\item Circular distributional tree
+\item Circular distributional forest
+\item Persistence
+\item Climatology 
+\end{itemize}
+
+\medskip
+
+\textbf{Data:} .. observations of response variables and .. covariates
+
+\medskip
+
 \textbf{Cross validation:} 
+\begin{itemize}
+\item 5-fold setting 
+\item learning data: .. observations
+\item testing data: .. observations
+\end{itemize}
 
-\bigskip
+\medskip
 
-\textit{FIXME: explain applied setting}
+\textbf{Evaluation:} Results are compared based on circular CRPS.
 
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Wind Directions}
+
+boxplot CRPS cross validation
 %\begin{center}
 %\vspace*{-1cm}
 %\setkeys{Gin}{width=0.8\linewidth}
@@ -641,13 +312,14 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 \begin{frame}
 \frametitle{Software}
 %\vspace{0.4cm}
-\textbf{Packages:} \emph{disttree} and \emph{circmax} available on R-Forge at\\
+\textbf{Packages:} \emph{disttree} %and \emph{circmax} 
+available on R-Forge at\\
 
 \medskip
 
-\small{\url{https://R-Forge.R-project.org/projects/partykit/}\\ 
-and\\
-\url{https://R-Forge.R-project.org/projects/uibk-rprog-2018/}}\\
+\small{\url{https://R-Forge.R-project.org/projects/partykit/}}\\ 
+%and\\
+%\url{https://R-Forge.R-project.org/projects/uibk-rprog-2018/}}\\
 
 \bigskip
 \bigskip
@@ -680,16 +352,16 @@ and\\
 \begin{frame}
 \frametitle{References}
 
-%\vspace{-0.4cm}
+\vspace{-0.3cm}
 
-\small
-Bai J, Perron P (2003).
- \dquote{Computation and Analysis of Multiple Structural Change Models.}
- \textit{Journal of Applied Econometrics}, 
- \textbf{18}, 1--22.
- \doi{}
- 
-\medskip
+\footnotesize
+%Bai J, Perron P (2003).
+% \dquote{Computation and Analysis of Multiple Structural Change Models.}
+% \textit{Journal of Applied Econometrics}, 
+% \textbf{18}, 1--22.
+% \doi{10.1002/jae.659}
+% 
+%\medskip
  
 Breiman L (2001).
  \dquote{Random Forests.}
@@ -703,7 +375,7 @@ Fisher N I, Lee A J (1992).
  \dquote{Regression Models for an Angular Response.}
  \textit{Biometrics}, 
  \textbf{48}(3), 665--677. 
- \doi{}
+ \doi{10.2307/2532334}
  
 \medskip
 
@@ -715,32 +387,25 @@ Hothorn T, Hornik K, Zeileis A (2006).
  
 \medskip
 
-Hothorn T, Zeileis A (2008).
- \dquote{Generalized Maximally Selected Statistics.}
- \textit{Biometrics}, 
- \textbf{64}(4), 1263--1269. 
- \doi{}
- 
-\medskip
+%Hothorn T, Zeileis A (2008).
+% \dquote{Generalized Maximally Selected Statistics.}
+% \textit{Biometrics}, 
+% \textbf{64}(4), 1263--1269. 
+% \doi{10.1111/j.1541-0420.2008.00995.x}
+% 
+%\medskip
 
 Jammalamadaka S R, Sengupta A (2001).
  \textit{Topics in Circular Statistics}.
  World Scientific. 
- 
-\end{frame}
 
+\medskip
 
-\begin{frame}
-\frametitle{References}
-
-%\vspace{-0.4cm}
-
-\small
 Mulder K, Klugkist I (2017).
  \dquote{Bayesian Estimation and Hypothesis Tests for a Circular Generalized Linear Model.}
  \textit{Journal of Mathematical Psychology}, 
  \textbf{80}, 4--14. 
- \doi{}
+ \doi{10.1016/j.jmp.2017.07.001}
 
 \medskip
 
@@ -748,7 +413,6 @@ Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
   \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
   \emph{arXiv 1804.02921}, arXiv.org E-Print Archive.
   \url{http://arxiv.org/abs/1804.02921}
-
 
 \medskip
 
