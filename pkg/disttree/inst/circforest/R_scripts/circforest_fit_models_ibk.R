@@ -98,9 +98,13 @@ for(i in seq(1:nrow(d))){
   train <- subset(d, index(d) %in% idx)
 
   if(nrow(train) > 2){
-    climfit <- distexfit(train$dd.response,
-                         family = dist_vonmises())
-    pred_pers[i, ] <- coef(climfit, type = "parameter")
+    persfit <- try(distexfit(train$dd.response,
+                             family = dist_vonmises()))
+    if(class(persfit) == "try-error") {
+      pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
+    } else {
+      pred_pers[i, ] <- coef(persfit, type = "parameter")
+    }
   } else {
     pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
   }
@@ -148,9 +152,13 @@ for(cv in unique(cvID)) {
     train_subset <- subset(train, index(train) %in% idx)
   
     if(nrow(train) > 2){
-      climfit <- distexfit(train_subset$dd.response,
-                           family = dist_vonmises())
-      pred_clim[[cv]][i, ] <- coef(climfit, type = "parameter")
+      climfit <- try(distexfit(train_subset$dd.response,
+                               family = dist_vonmises()))
+      if(class(climfit) == "try-error") {
+        pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      } else {
+        pred_clim[[cv]][i, ] <- coef(climfit, type = "parameter")
+      }
     } else {
       pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
     }
