@@ -1,0 +1,47 @@
+\documentclass[a4paper,nojss]{jss}
+\usepackage{amsmath,amssymb,amsfonts,thumbpdf, caption, subcaption, lipsum}
+%\usepackage[utf8]{inputenc}
+
+\newcommand{\CRANpkg}[1]{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}%
+\newcommand{\samp}[1]{`\code{#1}'}%
+\DefineVerbatimEnvironment{example}{Verbatim}{}
+\setkeys{Gin}{width=\textwidth}
+
+%% for internal use
+\newcommand{\fixme}[1]{\marginpar{\color{black}fixme} {\color{red}#1}}
+\newcommand{\readme}[1]{\marginpar{\color{black}readme} {\emph{\color{red}(#1)}}}
+\usepackage{chngcntr}
+
+%%% jss stuff
+%\let\proglang=\textsf
+%\newcommand{\pkg}[1]{{\fontseries{b}\selectfont #1}}
+%\bibliographystyle{jss}
+%\makeatletter
+%\newcommand\code{\bgroup\@makeother\_\@makeother\~\@makeother\$\@codex}
+%\def\@codex#1{{\normalfont\ttfamily\hyphenchar\font=-1 #1}\egroup}
+%\makeatother
+
+\title{Distributional Trees and Forests for Circular Data}
+
+\author{Moritz N. Lang\\University of Innsbruck \And
+        Lisa Schlosser\\University of Innsbruck \And
+        Torsten Hothorn\\University of Zurich \And
+        Georg J. Mayr\\University of Innsbruck \And
+        Reto Stauffer\\University of Innsbruck \And
+        Achim Zeileis\\University of Innsbruck}
+
+\Abstract{
+Circular data can be found in a variety of applications and subject areas,  e.g., hourly crime rate in the social-economics, animal movement direction or gene-structure in biology, and wind direction as one of the most important weather variables in meteorology. For probabilistic modeling of circular data the von Mises distribution is widely used. While most of the already existing approaches are built on additive regression models, we propose an adaption of regression trees to circular data by employing distributional trees. In comparison to the more commonly-used additive models, the resulting distributional trees are easy to interpret, can detect non-additive effects, and select covariates and their interactions automatically. In addition, as natural extension ensembles or forests of such circular trees are introduced that can further improve the forecasts by regularizing and stabilizing the model. For illustration, short-term probabilistic wind direction forecasts at airports are obtained to assure a safe landing of airplanes which are sensitive to wind shifts. To benchmark the performance of distributional trees and forests, their predictive skill is compared to a persistence model, a climatology model and to a additive regression model, employing the continuous ranked probability score. Model code for circular distributional trees and forest is available in the newly developed R package "disttree".
+}
+\Keywords{}
+\Plainkeywords{}
+
+\Address{
+  Moritz N. Lang\\
+  University of Innsbruck\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{moritz.lang@uibk.ac.at}
+}
+
+\begin{document}
+\end{document}
