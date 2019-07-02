@@ -113,13 +113,14 @@ for(i in seq(1:nrow(d))){
 save(pred_pers, file = "results/circforest_pred_pers_ibk_lag6_v3.rda")
 
 # -------------------------------------------------------------------
-# Fit climatologyi (with CV)
+# Fit climatology (with CV)
 # -------------------------------------------------------------------
 
 ## Fit models with cross-validation
 cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
 
-pred_clim <- rep(list(data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))), 5)
+pred_clim <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
+  kappa = rep(NA, sum(cvID == x))))
 
 for(cv in unique(cvID)) { 
   cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
@@ -135,7 +136,7 @@ for(cv in unique(cvID)) {
     i_plt <- as.POSIXlt(index(test)[i], origin = "1970-01-01")
     
     if((i_plt$mon + 1 == 2) & (i_plt$mday == 29)){
-      pred_clim[i, ] <- c("mu" = NA, "kappa" = NA)
+      pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
       next
     }
   
@@ -168,7 +169,7 @@ for(cv in unique(cvID)) {
 save(pred_clim, file = "results/circforest_pred_clim_ibk_lag6_v3.rda")
 
 # -------------------------------------------------------------------
-# Fit Tree and Forest
+# Fit tree and forest
 # -------------------------------------------------------------------
 
 ## Transform zoo object to data.frame
@@ -215,6 +216,10 @@ for(cv in unique(cvID)) {
     file = sprintf("results/circforest_pred_forest_ibk_lag6_v3_cv%s.rda", cv))
 }
 
+# -------------------------------------------------------------------
+# Combine predictions
+# -------------------------------------------------------------------
+
 pred_dt <- pred_df <- list()
 for(cv in unique(cvID)) {
   load(file = sprintf("results/circforest_pred_forest_ibk_lag6_v3_cv%s.rda", cv))
@@ -222,8 +227,8 @@ for(cv in unique(cvID)) {
   pred_df[[cv]] <- pred_df.tmp
 }
 
-
 load(file = "results/circforest_pred_clim_ibk_lag6_v3.rda")
+load(file = "results/circforest_pred_pers_ibk_lag6_v3.rda")
 
 pred <- list(tree = do.call("rbind", pred_dt), forest = do.call("rbind", pred_df), 
   climatology = do.call("rbind", pred_clim), persistence = pred_pers)
@@ -250,15 +255,15 @@ save(pred, pred_naomit, obs, obs_naomit, file = "results/circforest_results_ibk_
 
 load(file = "results/circforest_results_ibk_lag6_v3.rds")
 
-## Validate models
-crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
-  y = obs_naomit, sum = FALSE)) 
+### Validate models
+#crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
+#  y = obs_naomit, sum = FALSE)) 
 
 crps_grimit <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i) 
   as.numeric(crps.circ(x = obs_naomit[i], mu = x[i, "mu"], kappa = x[i, "kappa"]))))
 
 ## Save validation
-save(crps, crps_grimit, file = "results/circforest_validation_ibk_lag6_v3.rds")
+save(crps_grimit, file = "results/circforest_validation_ibk_lag6_v3.rds")
 
 ## Plot tree
 #circmax:::plot.circtree(dt[[1]], ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
