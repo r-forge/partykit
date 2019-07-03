@@ -16,7 +16,7 @@ Torsten~Hothorn, Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 \usepackage{xcolor}
-\usepackage{BOONDOX-cal}
+%\usepackage[cal=boondoxo]{mathalfa}
 %\graphicspath{{plots/}}
 
 \newcommand{\argmax}{\operatorname{argmax}\displaylimits}
@@ -35,7 +35,7 @@ set.seed(7)
 library("disttree")
 #library("Formula")
 library("latex2exp")
-
+library("circmax")
 @
 
 
@@ -49,7 +49,7 @@ library("latex2exp")
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-\textbf{Goal:} Regression model for a circular response variable%, \\
+\textbf{Goal:} Regression model for a circular response variable.%, \\
 %\hspace{1.05cm} i.e. a periodic response variable measured on the unit circle.
 
 \medskip
@@ -103,13 +103,13 @@ $\rightarrow$ \textbf{Circular distributional trees}
 
 The density for $y \in [0, 2\pi)$ and parameter vector $\theta = (\mu, \kappa)$ is given by
 $$
-f_\mathcal{vM}(y; \theta) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
+f_\text{vM}(y; \theta) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
 $$
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
 
 The corresponding log-likelihood function is defined by
 $$
-\ell(\theta; y) =  \log(f_\mathcal{vM}(y;\theta)).
+\ell(\theta; y) =  \log(f_\text{vM}(y;\theta)).
 $$
 \end{frame}
 
@@ -121,7 +121,7 @@ $$
 \begin{minipage}{0.7\textwidth}
 {\bf Tree:}
 \begin{enumerate}
-\item<3-> Fit global distributional model $\mathcal{vM}(Y; \theta)$: \\ % to the whole data set:\\
+\item<3-> Fit global distributional model $\text{vM}(Y; \theta)$: \\ % to the whole data set:\\
 Estimate $\hat{\theta}$ via maximum likelihood\\
 $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \item<7-> Test for associations/instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each covariate $X_i$.
@@ -131,30 +131,30 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 %\vspace{-0.1cm}
 \begin{tikzpicture}
 \visible<2-3>{
-\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=71pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
 }
 \visible<4>{
-\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\mathcal{vM}(Y;\hat{\theta}$)};
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=71pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\text{vM}(Y;\hat{\theta}$)};
 }
 \visible<5->{
 \node[inner sep=0pt] (density_root) at (0.8, 1.7)
     {\includegraphics[width=0.6\textwidth]{density_root.pdf}};
 }
 \visible<6-8>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {?};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {?};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {?};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {?};
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1);
 \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2);
 }
 \visible<9-10>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {$Y_2$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$Y_2$};
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
 \draw[-, gray, line width=0.5pt] (1, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
 }
 \visible<11>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\mathcal{vM}(Y_1;\hat{\theta_1}$)};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.7, 0) {$\mathcal{vM}(Y_2;\hat{\theta_2}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$\text{vM}(Y_1;\hat{\theta}_1$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$\text{vM}(Y_2;\hat{\theta}_2$)};
 }
 \visible<11->{
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
@@ -222,11 +222,21 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
-%\textbf{Goal:} Predict wind directions for the next hour at Innsbruck airport (Austria).
+\textbf{Response:} Wind direction in the next hour at Innsbruck airport (Austria).
 
-%\medskip
+\only<2>{
+%\vspace{-0.4cm}
+\begin{center}
+\setkeys{Gin}{width=0.65\linewidth}
+\includegraphics{ibk_airport.png}
+\end{center}
+}
 
-\textbf{Input:} Observation data of various meteorological quantities of the previous hour(s) from Innsbruck airport and 5 nearby weather stations. 
+\only<3->{
+\medskip
+
+\textbf{Input:} Observation data of various meteorological quantities from Innsbruck airport and 5 nearby weather stations. 
+
 
 \medskip
 
@@ -236,31 +246,33 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 \item Wind speed
 \item Temperature
 \item Air pressure
-\item \dots 
-\item \textit{FIXME: list of all included covariates}
+\item Humidity
+% "dd"   "ff"   "ffx"  "p"    "pred" "rf"   "tl"  
 \end{itemize}
-%\begin{center}
-%\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%\includegraphics{}
-%\end{center}
+
+\medskip
+
+\textbf{Variations:}
+Minima, maxima, changes over time or over location, \ldots
+
+\medskip 
+
+\quad $\rightarrow$ 354 covariates
+}
 \end{frame}
-
-
-%\begin{frame}[fragile]
-%\includegraphics{airport_ibk.jpg}
-%\end{frame}
 
 
 
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
-\textbf{Distributional tree model:} 
+\textbf{Circular distributional tree:} 
+
+\vspace{-1cm}
+
+\setkeys{Gin}{width=1.0\linewidth}
 
 \begin{center}
-%\vspace*{1cm}
-\setkeys{Gin}{width=\linewidth}
 \includegraphics{schlosser-circtree_plot.pdf}
 \end{center}
 
@@ -279,20 +291,12 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 
 \medskip
 
-\textbf{Data:} .. observations of response variables and .. covariates
-
-\medskip
-
-\textbf{Cross validation:} 
+\textbf{Evaluation setting:} 
 \begin{itemize}
-\item 5-fold setting 
-\item learning data: .. observations
-\item testing data: .. observations
+\item Data set of $40\ 000$ observations with 354 covariates
+\item 5-fold cross validation
+\item Results are compared based on circular CRPS (Grimit et al., 2006)
 \end{itemize}
-
-\medskip
-
-\textbf{Evaluation:} Results are compared based on circular CRPS.
 
 \end{frame}
 
@@ -300,14 +304,21 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
-boxplot CRPS cross validation
-%\begin{center}
+\begin{center}
 %\vspace*{-1cm}
-%\setkeys{Gin}{width=0.8\linewidth}
-%\includegraphics{}
-%\end{center}
+\setkeys{Gin}{width=0.8\linewidth}
+\includegraphics{boxplot_crpsraw.pdf}
+\end{center}
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Probabilistic Forecasting of Wind Directions}
+\begin{center}
+%\vspace*{-1cm}
+\setkeys{Gin}{width=0.8\linewidth}
+\includegraphics{boxplot_crpsskill.pdf}
+\end{center}
+\end{frame}
 
 \begin{frame}
 \frametitle{Software}
@@ -363,20 +374,28 @@ available on R-Forge at\\
 % 
 %\medskip
  
-Breiman L (2001).
- \dquote{Random Forests.}
- \textit{Machine Learning}, 
- \textbf{45}(1), 5--32.
- \doi{10.1023/A:1010933404324}
- 
-\medskip
+%Breiman L (2001).
+% \dquote{Random Forests.}
+% \textit{Machine Learning}, 
+% \textbf{45}(1), 5--32.
+% \doi{10.1023/A:1010933404324}
+% 
+%\medskip
      
 Fisher N I, Lee A J (1992).
  \dquote{Regression Models for an Angular Response.}
  \textit{Biometrics}, 
  \textbf{48}(3), 665--677. 
  \doi{10.2307/2532334}
- 
+
+\medskip
+
+Grimit E P, Gneiting T, Berrocal V J, Johnson N A (2006).
+  \dquote{The Continuous Ranked Probability Score for Circular Variables and its Application to Mesoscale Forecast Ensemble Verification.}
+  \textit{Q.J.R. Meteorol. Soc.}, 
+  \textbf{132}, 2925--2942. 
+  \doi{10.1256/qj.05.235}
+
 \medskip
 
 Hothorn T, Hornik K, Zeileis A (2006).
@@ -401,13 +420,13 @@ Jammalamadaka S R, Sengupta A (2001).
 
 \medskip
 
-Mulder K, Klugkist I (2017).
- \dquote{Bayesian Estimation and Hypothesis Tests for a Circular Generalized Linear Model.}
- \textit{Journal of Mathematical Psychology}, 
- \textbf{80}, 4--14. 
- \doi{10.1016/j.jmp.2017.07.001}
-
-\medskip
+%Mulder K, Klugkist I (2017).
+% \dquote{Bayesian Estimation and Hypothesis Tests for a Circular Generalized Linear Model.}
+% \textit{Journal of Mathematical Psychology}, 
+% \textbf{80}, 4--14. 
+% \doi{10.1016/j.jmp.2017.07.001}
+%
+%\medskip
 
 Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
   \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
@@ -417,7 +436,7 @@ Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
 \medskip
 
 Zeileis A, Hothorn T, Hornik K (2008).
- \dquote{Model-Based Recursive Partitioning.}
+  \dquote{Model-Based Recursive Partitioning.}
   \textit{Journal of Computational and Graphical Statistics},
   \textbf{17}(2), 492--514.
   \doi{10.1198/106186008X319331}
