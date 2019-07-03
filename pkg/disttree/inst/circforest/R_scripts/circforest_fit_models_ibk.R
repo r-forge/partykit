@@ -294,7 +294,28 @@ save(crps_grimit, file = sprintf("results/circforest_validation_ibk_lag6_%s.rda"
 ## -------------------------------------------------------------------
 ## Plotting
 ## -------------------------------------------------------------------
-#
-### Plot single tree
-#circmax:::plot.circtree(dt[[1]], ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
-#  ip_args = list(pval = FALSE))
+if(FALSE){
+  my_vers <- "v4"
+
+  ## Plot CRPS
+  load(file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
+
+  X11(width = 8, height = 4.5)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  boxplot(sapply(crps_grimit[c("climatology", "persistence", "tree", "forest")], 
+    function(x) (1 - x/crps_grimit[["climatology"]]) * 100), ylim = c(-60, 110), col = gray(0.6), 
+    ylab = "CRPS skill ccore [%]")
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_lag6_%s.pdf", my_vers))
+  
+  X11(width = 8, height = 4.5)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  boxplot(crps_grimit[c("climatology", "persistence", "tree", "forest")], ylim = c(0, 1), col = gray(0.6), 
+    ylab = "CRPS [m/s]")
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_ibk_lag6_%s.pdf", my_vers))
+
+  ## Plot single tree
+  cv <- 1
+  m_dt <- readRDS(file = sprintf("results/circforest_model_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+  circmax:::plot.circtree(m_dt, ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
+    ip_args = list(pval = FALSE))
+}
