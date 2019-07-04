@@ -35,7 +35,7 @@ set.seed(7)
 library("disttree")
 #library("Formula")
 library("latex2exp")
-library("circmax")
+#library("circmax")
 @
 
 
@@ -64,7 +64,7 @@ library("circmax")
 
 \medskip
 
-\textbf{Application:} Probabilistic forecasting of wind directions for the next hour at Innsbruck airport (Austria, \textcolor{gray}{\url{https://innsbruck-airport.panomax.com}}).
+\textbf{Application:} Probabilistic forecasting of wind directions for the next hour at Innsbruck airport (Austria, \textcolor{gray}{\url{https://innsbruck-airport.panomax.com/}}).
 
 \medskip
 
@@ -281,7 +281,7 @@ Minima, maxima, changes over time or over location, \ldots
 \begin{frame}[fragile]
 \frametitle{Probabilistic Forecasting of Wind Directions}
 
-\textbf{Applied models and reference models:}
+\textbf{Novel vs.\ reference models:}
 \begin{itemize}
 \item Circular distributional tree
 \item Circular distributional forest
@@ -295,7 +295,7 @@ Minima, maxima, changes over time or over location, \ldots
 \begin{itemize}
 \item Data set of $40\ 000$ observations with 354 covariates
 \item 5-fold cross validation
-\item Results are compared based on circular CRPS (Grimit et al., 2006)
+\item Results are compared based on circular CRPS
 \end{itemize}
 
 \end{frame}
@@ -323,7 +323,7 @@ Minima, maxima, changes over time or over location, \ldots
 \begin{frame}
 \frametitle{Software}
 %\vspace{0.4cm}
-\textbf{Packages:} \emph{disttree} %and \emph{circmax} 
+\textbf{Software:} \emph{disttree} %and \emph{circmax} 
 available on R-Forge at\\
 
 \medskip
@@ -392,7 +392,7 @@ Fisher N I, Lee A J (1992).
 
 Grimit E P, Gneiting T, Berrocal V J, Johnson N A (2006).
   \dquote{The Continuous Ranked Probability Score for Circular Variables and its Application to Mesoscale Forecast Ensemble Verification.}
-  \textit{Q.J.R. Meteorol. Soc.}, 
+  \textit{Quarterly Journal of the Royal Meteorological Society}, 
   \textbf{132}, 2925--2942. 
   \doi{10.1256/qj.05.235}
 
