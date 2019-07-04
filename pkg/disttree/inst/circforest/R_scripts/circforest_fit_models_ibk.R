@@ -26,8 +26,10 @@ if (! dir.exists("results")) dir.create("results")
 # Pre-process data
 # -------------------------------------------------------------------
 
+setwd("~/svn/partykit/pkg/disttree/inst/circforest/")
+
 ## Load data / Remove rows with NAs
-tmp <- readRDS("data/circforest_prepared_data_ibk_lag6.rds")
+tmp <- readRDS("circforest_data/circforest_prepared_data_ibk_lag6.rds")
 tmp <- tmp[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(tmp))]
 
 tmp <- na.omit(tmp)
@@ -183,6 +185,7 @@ for(cv in unique(cvID)) {
 saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_ibk_lag6_%s.rds", my_vers))
 rm(pred_clim, climfit, train, test, train_subset); gc()
 
+
 # -------------------------------------------------------------------
 # Fit tree and forest
 # -------------------------------------------------------------------
@@ -302,15 +305,24 @@ if(FALSE){
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
-  boxplot(sapply(crps_grimit[c("climatology", "persistence", "tree", "forest")], 
-    function(x) (1 - x/crps_grimit[["climatology"]]) * 100), ylim = c(-60, 110), col = gray(0.6), 
+  crps_grimit_skill <- data.frame(sapply(crps_grimit[c("climatology", "persistence", "tree", "forest")], 
+                       function(x) (1 - x/crps_grimit[["climatology"]]) * 100))
+  boxplot(crps_grimit_skill, ylim = c(-60, 110), col = gray(0.6), 
     ylab = "CRPS skill ccore [%]")
+  text(c(mean(unlist(crps_grimit_skill["climatology"]), na.rm = TRUE),
+         mean(unlist(crps_grimit_skill["persistence"]), na.rm = TRUE),
+         mean(unlist(crps_grimit_skill["tree"]), na.rm = TRUE),
+         mean(unlist(crps_grimit_skill["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
   dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_lag6_%s.pdf", my_vers))
   
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   boxplot(crps_grimit[c("climatology", "persistence", "tree", "forest")], ylim = c(0, 1), col = gray(0.6), 
     ylab = "CRPS [m/s]")
+  text(c(mean(unlist(crps_grimit["climatology"]), na.rm = TRUE),
+         mean(unlist(crps_grimit["persistence"]), na.rm = TRUE),
+         mean(unlist(crps_grimit["tree"]), na.rm = TRUE),
+         mean(unlist(crps_grimit["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
   dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_ibk_lag6_%s.pdf", my_vers))
 
   ## Plot single tree
