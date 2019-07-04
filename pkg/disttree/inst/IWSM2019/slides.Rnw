@@ -333,14 +333,15 @@ available on R-Forge at\\
 %\url{https://R-Forge.R-project.org/projects/uibk-rprog-2018/}}\\
 
 \bigskip
-\bigskip
+\medskip
 
 \textbf{Main functions:}
 
 \medskip
 
 \begin{tabular}{ll}
-
+\code{distfit}    & Distributional fits (ML, \code{gamlss.family}/custom \code{list}).\\
+                  & No covariates. \\
 \code{disttree}   & Distributional trees (\code{ctree}/\code{mob} + \code{distfit}).\\
                   & Covariates as partitioning variables. \\
 \code{distforest} & Distributional forests (ensemble of \code{disttree}s).\\
@@ -348,7 +349,7 @@ available on R-Forge at\\
 \end{tabular}
 
 \bigskip
-\bigskip
+\medskip
 
 \textbf{Distribution family:} \code{dist\_vonmises}
 
