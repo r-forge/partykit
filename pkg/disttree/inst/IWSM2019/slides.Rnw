@@ -95,7 +95,7 @@ $\rightarrow$ \textbf{Circular distributional trees}
 %\begin{center}
 %\vspace*{-1cm}
 \setkeys{Gin}{width=0.6\linewidth}
-\includegraphics{density_right.pdf}
+\includegraphics{density_left.pdf}
 %\end{center}
 \end{minipage}
 
@@ -146,25 +146,25 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1);
 \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2);
 }
-\visible<9-10>{
+\visible<9>{
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$Y_2$};
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
 \draw[-, gray, line width=0.5pt] (1, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
 }
-\visible<11>{
+\visible<10>{
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$\text{vM}(Y_1;\hat{\theta}_1$)};
 \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$\text{vM}(Y_2;\hat{\theta}_2$)};
 }
-\visible<11->{
+\visible<10->{
 \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
 \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
 }
-\visible<12->{
+\visible<11->{
 \node[inner sep=0pt] (density2) at (-0.1,-0.3)
     {\includegraphics[width=0.5\textwidth]{density_left.pdf}};
 }
-\visible<12->{
+\visible<11->{
 \node[inner sep=0pt] (density3) at (1.7,-0.3)
     {\includegraphics[width=0.5\textwidth]{density_right.pdf}};
 }
@@ -175,7 +175,7 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \begin{enumerate}
 \setcounter{enumi}{2}
 \item<8-> Split along the covariate $X$ with strongest association or instability and\\ at breakpoint $p$ with highest improvement in log-likelihood.
-\item<10-> Repeat steps 1--3 recursively until some stopping criterion is met,\\
+\item<12-> Repeat steps 1--3 recursively until some stopping criterion is met,\\
 yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
 \end{enumerate}
 %\end{adjustwidth}
