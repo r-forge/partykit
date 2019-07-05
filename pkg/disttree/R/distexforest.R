@@ -70,6 +70,9 @@ distexforest <- function
     trace = FALSE,
     ...
 ) {
+   
+    ## Get original formula
+    oformula <- as.formula(formula)
 
     ## Get family
     if(!inherits(family, "disttree.family"))  #FIXME: (LS) Better way to extract prepared family?
@@ -201,6 +204,9 @@ distexforest <- function
                         info = list(call = match.call(), 
                                     control = control,
                                     family = family))
+
+    ret$info$call$formula <- oformula   # FIXME: (ML) Tweak to get real formula for logLik in varimp()
+
     ret$trafo <- trafo
     ret$predictf <- d$terms$z
     class(ret) <- c("distexforest", class(ret))
