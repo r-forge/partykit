@@ -17,6 +17,10 @@ oldsrc
 tests/ctree-ctree.R
 vignettes/urp.*
 WISHLIST
+NEWS.md
+_pkgdown.yml
+index.Rmd
+vignettes/glmtree-titanic.Rmd
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^.*R2.*$
