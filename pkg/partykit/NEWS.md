@@ -1,3 +1,18 @@
+# partykit 1.2-5
+
+### Bugfixes
+
+* Trying to split in a variable where all observations were missing
+          nevertheless produced a split, as reported by Kevin Ummel.
+
+
+# partykit 1.2-4
+
+### Bugfixes
+
+* Update reference output, fix `RNGversion`.
+
+
 # partykit 1.2-3
 
 ### New Features
