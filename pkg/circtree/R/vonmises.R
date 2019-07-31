@@ -50,7 +50,8 @@ vonmises_bamlss <- function(...) {
                be0 <- besselI(par$kappa, nu = 0, expon.scaled = TRUE)
                be1 <- besselI(par$kappa, nu = 1, expon.scaled = TRUE)
                be2 <- besselI(par$kappa, nu = 2, expon.scaled = TRUE)
-               drop(-par$kappa * (cos(y - par$mu) + (-2 * be0 * be1  + be0^2 + be2 * be0 - 2 * be1^2)/(2 * be0^2)))
+               drop(-par$kappa * (cos(y - par$mu) - be1 / be0) - par$kappa^2 * ((2 * be1^2 - be0^2 - 
+                 be2 * be0) / (2 * be0^2)))
             }
          )
    )
