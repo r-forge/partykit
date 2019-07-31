@@ -23,20 +23,20 @@ test_that("computed values are correct", {
     movMF:::Rinv_upper_Amos_bound(0.3, 2)
   )
   expect_equal(
-    .Call("A_PCF", 0.3, 1.1),
-    movMF:::A(0.3, 1.1)
+    .Call("A_GCF", 0.3, 1.1),
+    movMF:::A(0.3, 1.1, method = "GCF")
   )
   expect_equal(
-    .Call("A_PCF", 0.3, 2),
-    movMF:::A(0.3, 2)
+    .Call("A_GCF", 0.3, 2),
+    movMF:::A(0.3, 2, method = "GCF")
   )
   expect_equal(
-    .Call("Aprime_PCF", 0.1, 1.1, 0.3),
-    movMF:::Aprime(0.1, 1.1, A = 0.3)
+    .Call("Aprime_GCF", 0.1, 1.1, 0.3),
+    movMF:::Aprime(0.1, 1.1, A = 0.3, method = "GCF")
   )
   expect_equal(
-    .Call("Aprime_PCF", 0.1, 0.1, 2),
-    movMF:::Aprime(0.1, 0.1, A = 2)
+    .Call("Aprime_GCF", 0.1, 0.1, 2),
+    movMF:::Aprime(0.1, 0.1, A = 2, method = "GCF")
   )
 })
 
