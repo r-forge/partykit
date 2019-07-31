@@ -1,0 +1,40 @@
+## TO-DO List (2018-07-16)
+
+## circmax
+* Check estfun() 
+* Check vcov() and include analytic hessian
+* Put each factor outside in single inverse-link function (single linkfunction or for each a linkfunction)
+* Penalty on the regression coefficients for linear predictors
+* Include offset and weights
+
+## tree
+* Check estfun(), vcov() and bread()
+* Which model should I return in circfit
+* Predict: Implement response
+* Improve tree plotting function (partly done)
+* Extend dgp()
+
+## families
+* Include alpha0 in bamlss family
+* Control once again the scores and hessian and write a fair copy of them
+
+
+## correct plotting function
+currently not with cran partykit version running
+svn info:
+  Path: .
+  Working Copy Root Path: /home/moritz/Software/partykit
+  URL: svn://svn.r-forge.r-project.org/svnroot/partykit/pkg/partykit
+  Relative URL: ^/pkg/partykit
+  Repository Root: svn://svn.r-forge.r-project.org/svnroot/partykit
+  Repository UUID: 255f4249-2263-4417-b1ea-8498779e27a7
+  Revision: 2211
+  Node Kind: directory
+  Schedule: normal
+  Last Changed Author: thothorn
+  Last Changed Rev: 2205
+  Last Changed Date: 2018-07-05 13:45:06 +0200 (Thu, 05 Jul 2018)
+
+does work currently also with r2404 (Tue, 08 Jan 2019)
+
+## building on R-forge fails due to parallel tests

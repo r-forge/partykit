@@ -1,0 +1,10 @@
+Package: circtree
+Title: Regression Trees and Forests for Circular Responses
+Version: 0.1
+Authors@R: person(given = "Moritz N.", family = "Lang", role = c("aut", "cre"), email = "moritz.n.lang@gmail.com")
+Description: Infrastructrue for fitting regression trees and forests, as well as for regression based on maximum likelihood estimation for circular responses.
+Depends: R (>= 3.4.0)
+License: GPL-2 | GPL-3
+Imports: stats, circular, Formula, partykit, movMF, gridGraphics, grDevices, sandwich, Bessel
+Suggests: bamlss, testthat, latex2exp, methods, colorspace 
+RoxygenNote: 6.1.1

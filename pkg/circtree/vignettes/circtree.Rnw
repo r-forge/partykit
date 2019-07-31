@@ -1,0 +1,268 @@
+\documentclass[a4paper,nojss]{jss}
+\usepackage{amsmath,amssymb,amsfonts,thumbpdf}
+
+\newcommand{\CRANpkg}[1]{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}%
+\newcommand{\samp}[1]{`\code{#1}'}%
+\DefineVerbatimEnvironment{example}{Verbatim}{}
+\setkeys{Gin}{width=\textwidth}
+
+%%% jss stuff
+%\let\proglang=\textsf
+%\newcommand{\pkg}[1]{{\fontseries{b}\selectfont #1}}
+%\bibliographystyle{jss}
+%\makeatletter
+%\newcommand\code{\bgroup\@makeother\_\@makeother\~\@makeother\$\@codex}
+%\def\@codex#1{{\normalfont\ttfamily\hyphenchar\font=-1 #1}\egroup}
+%\makeatother
+
+\title{Circular Regression Models and Regression Trees with circtree}
+\Plaintitle{Circular Regression Models and Regression Trees with circtree}
+
+%\author{by Jakob W. Messner, Georg J. Mayr and Achim Zeileis}
+\author{Moritz N. Lang\\Universit\"at Innsbruck}
+\Plainauthor{Moritz N. Lang}
+
+\Abstract{
+  The \pkg{circtree} package provides functions for maximum likelihood
+  estimation of circular regression models employing a von Mises distribution.
+  Additionally, a distribution tree can be fitted for a circular response 
+  employing the von Mises distribution and using the covariates as potential 
+  splitting variables. For both approaches suitable standard methods are provided
+  to print the fitted models, and compute predictions and inference.
+}
+
+\Keywords{regression, distribution tree, circular response, von Mises distribution, \proglang{R}}
+\Plainkeywords{regression, distribution tree, circular response, von Mises distribution, R}
+
+\Address{
+  Moritz N. Lang\\
+  Universit\"at Innsbruck\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{moritz.n.lang@gmail.com}
+}
+
+%% Sweave/vignette information and metadata
+%% need no \usepackage{Sweave}
+\SweaveOpts{engine = R, eps = FALSE, keep.source = TRUE, echo = TRUE}
+%\VignetteIndexEntry{Heteroscedastic Censored and Truncated Regression with crch}
+%\VignetteDepends{circtree}
+%\VignetteKeywords{regression, distribution tree, circular response, von Mises distribution, R}
+%\VignettePackage{circtree}
+
+<<preliminaries, echo=FALSE, results=hide>>=
+options(width = 70, prompt = "R> ", continue = "+  ")
+library("circtree")
+@
+
+\begin{document}
+
+\section{Introduction}
+Circular response variables occur in a variety of applications and subject areas. E.g., gun crime
+data on a $24$-hour scale is analysed in the social-economics, animal orientation or gene-structure
+analysis are often subject of examination in biology, and wind data is one of the most important weather
+variables in meteorology.
+
+To represent different circular responses the von Mises distribution is employed. It is also known as the circular 
+normal distribution, and is a special case of the von Mises-Fisher distribution on the N-dimensional sphere:
+%%
+\begin{equation}
+  f(x \mid \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(x - \mu)}\label{equ:vm},
+\end{equation}
+%%
+where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
+
+The \pkg{circtree} package provides functions to fit circular regression models 
+by maximum likelihood estimation and to fit distribution trees for a circular response
+employing potential covariates as splitting variables. For both methods, a convenient formula
+interface and standard methods for analysis and prediction are available. For 
+the illustration of the von Mises distribution, an interactive shiny app is additionally provided.
+To employ the von Mises distribution as circular response in other packages, families for \CRANpkg{bamlss} and \pkg{disttree}
+are exported with necessary functions for the computation of scores and the Hessian matrix.
+
+The outline of the paper is as follows. Section~\ref{sec:circtree} describes the
+fitting of the circular regression model, and Section~\ref{sec:circtree} presents
+methods for distribution trees for a circular response. For both methods different 
+\proglang{R} implementations are illustrated by using artificial data. In the end of the paper,
+Section~\ref{sec:summary} provides a very brief summary of the two approaches.
+
+\section{Circular regression models}\label{sec:circtree}
+For circular regression models the response is assumed to follow a von Mises distribution~$VM$ as defined
+in Equation~\ref{equ:vm}:
+%%
+\begin{equation}
+  y \sim VM
+\end{equation}
+%%
+The location parameter $\mu$ and the concentration parameter $\kappa$ are                          
+assumed to be linked to the covariates $\mathbf{x} = (x_1, x_2, \ldots)^\top$ and  
+$\mathbf{z} = (z_1, z_2, \ldots)^\top$:
+%%
+\begin{align}
+  \mu &= \alpha_0 + g^{-1}(\mathbf{x}^{\top}\beta)\label{eq_mu}\\ 
+  \kappa & = h^{-1}(\gamma_0 + \mathbf{z}^{\top}\gamma),\label{eq_sigma}
+\end{align}
+%%
+where $\beta=(\beta_1, \beta_2, \ldots)^\top$ and $\gamma=(\gamma_1, \gamma_2, \ldots)^\top$ 
+are the slope coefficients and $\alpha_0$ and $\gamma_0$ the intercepts, respectively \citep{fisher:1992}.
+The link functions $g(\cdot) : \mathbb{R} \mapsto (-\pi, \pi)$ and $h(\cdot) : \mathbb{R}^+ \mapsto \mathbb{R}$
+are monotonic and twice differentiable functions. For the concentration parameter $\kappa$ the 
+logarithm function is typically employed (i.e., $h^{\top}(\cdot) = \exp(\cdot)$). 
+For the location parameter $\mu$ the `tan-half' link is a well suited function restricting the values to $(-\pi, \pi)$:
+%%
+\begin{equation}
+g^{\top}(\cdot) = 2\,\arctan(\cdot).
+\end{equation}
+%%
+The offset parameter $\alpha_0$ outside of the inverse link function of the predictors performs   
+a simple rotation of the response. To restrict the parameter $\alpha_0$ to $(-\pi, \pi)$
+we also apply the inverse link function $g^{\top}(\cdot)$ to it. Therefore, $\mu$ can theoretically take
+values between $-2\pi$ and $+2\pi$, but has still a restricted range of $2\pi$.
+
+A circular regression model by maximum likelihood estimation can be fitted
+with the \code{circmax()} function provided by the \pkg{circtree} package.
+This function provides a standard formula interface with arguments like formula,
+data, subset, etc. It first sets up the likelihood function, gradients and Hessian
+matrix and uses \code{optim()} to maximize the von Mises likelihood. For the \proglang{S}3 
+return object various standard methods are available. 
+%%
+\begin{example}
+      circmax(formula, data, subset, na.action, model = TRUE, y = TRUE, 
+              x = FALSE, control = circmax_control(...), ...)
+\end{example}
+%%
+Here \code{formula}, \code{data}, \code{subset}, and \code{na.action}
+have their standard model frame meanings
+\citep[e.g.,][]{chambers:1992}. However, as provided in the \CRANpkg{Formula}
+package \citep{zeileis:2010} \code{formula} can have two parts separated by \samp{|} where the first
+part defines the location model and the second part the concentration model. E.g., with
+\code{y ~ x1 + x2 | z1 + z2} the location model is specified by
+\code{y ~ x1 + x2} and the concentration model by
+\code{~ z1 + z2}.
+
+The maximum likelihood estimation is carried out with the \proglang{R} function
+\code{optim()} using control options specified in \code{circmax_control()}. By default
+the \code{"Nelder-Mead"} method is applied neglecting provided gradients. If no starting values are supplied,
+a closed form maximum likelihood estimator is applied for the starting values for 
+the intercept of the location part. For the intercept of the concentration part,
+by default a Newton Fourier method is employed. The starting values for the regression
+coefficients in the location and concentration model are set by default to zero. 
+The parameters \code{model}, \code{y}, and \code{x} specify whether the model frame, 
+response, or model matrix should be returned.
+
+The following example illustrates the function calls for the circular regression model
+for a artificial data set. First the \pkg{circtree} package is loaded and 1000 simulated observations 
+are created by the function \code{circmax_simulate()} with location coefficients \code{beta} 
+$3$, $5$, and $2$ and concentration coefficients \code{gamma} $3$ and $3$.
+
+%%
+<<>>=
+library("circtree")
+sdat <- circmax_simulate(n = 1000, beta = c(3, 5, 2), gamma = c(3, 3))
+
+head(sdat)
+@
+%%
+
+We fit a circular regression by maximum likelihood employing the covariates x1, x2 for the 
+location model and the covariate x3 for the concentration model. The results show that the fitted
+coefficients are quite near to the real values. The fitted model has a log-likelihood of $45.94$ 
+with $5$ degree of freedom.
+%%
+<<>>=
+m.circmax <- circmax(y ~ x1 + x2 | x3, data = sdat)
+print(m.circmax)
+@
+%%
+
+\section{Distribution trees for a von Mises distribution}\label{sec:circtree}
+As an alternative approach, a distribution tree for a circular response employing a von Mises
+distribution can be fitted with the \code{circtree()} function. This is a wrapper function for 
+the \code{mob()} function provided in the \CRANpkg{partykit} package \citep{zeileis:2008, zeileis:2015}. 
+A fitting function \code{circfit()} for the 
+parameter estimation on the given data is given in the \pkg{circtree} package so that MOB algorithm can 
+employ all information needed for parameter instability tests and partitioning.
+
+Both \code{circtree()} and \code{circfit()} support standard interfaces for e.g.,  
+formula, data, and subset arguments. \code{circtree()} first performs some intern checks, set ups the formula
+and the control arguments and than calls the \code{mob()} function within the \CRANpkg{partykit} employing
+the fitting function \code{circfit()} for a circular response. The \code{circfit()} function provides the log-likelihood, score
+and hessian function for the von Mises distribution and performs the fitting of the distribution parameters.
+The \code{circfit()} function can be also called for distribution parameter fitting by itself. Therefore, various 
+standard methods are provided for the \proglang{S}3 return objects of the \code{circtree()} and \code{circfit()} function
+calls.
+%%
+\begin{example}
+    circtree(formula, data, start, subset, na.action, weights, offset,
+             control = partykit::mob_control(), 
+             fit_control = circfit_control(...), ...)
+\end{example}
+%%
+Here \code{formula}, \code{data}, \code{subset}, \code{na.action}, \code{weights}, and
+\code{offset} have their standard model frame meanings as described in Section~\ref{sec:circtree}.
+A list of control options for the \code{mob()} function can be set up by the \code{mob_control()} 
+function, including options for pruning. 
+
+%%
+\begin{figure}[tb!]
+\centering
+\setkeys{Gin}{width=0.7\textwidth}
+<<fig=TRUE, echo=FALSE>>=
+sdat <- circtree_simulate(n = 1000, mu = c(0, 2, 1), kappa = c(3, 3, 1))
+m.circtree <- circtree(y ~ x1 + x2, data = sdat)
+class(m.circtree) <- class(m.circtree)[class(m.circtree) != "circtree"] ## plot.circtree fails with cran version
+plot(m.circtree)
+@
+\caption{Fitted distribution tree for a circular response employing the von Mises distribution.}
+\label{fig:tree}
+\end{figure}
+%%
+
+The distribution parameter estimation is carried out by maximum likelihood estimation. The location parameter
+is calculated by a closed form maximum likelihood estimator. For the concentration parameter
+a Newton Fourier method is by default employed controlled via the \code{fit_control()} function. 
+Alternatively, a uniroot provides a safe estimation option 
+and a method introduced by \citet{Banerjee:2005} provides a quick approximation of the concentration parameter. The starting values \code{start} are currently
+not used for the parameter estimation.
+
+As in Section~\ref{sec:circtree}, the function calls for the regression tree employing a von Mises distribution are
+illustrated employing an artificial data set. First the \pkg{circtree} package is loaded and $1000$ simulated observations 
+are created by the function \code{circtree_simulate()}. We generate three groups with location parameters \code{mu} 
+$0$, $2$, and $1$ and concentration parameters \code{kappa} $3$, $3$, and $1$, respectively.
+
+%%
+<<>>=
+library("circtree")
+sdat <- circtree_simulate(n = 1000, mu = c(0, 2, 1), kappa = c(3, 3, 1))
+head(sdat)
+@
+
+In the next step, a regression tree for the circular response is fitted employing the covariates \code{x1} and \code{x2} 
+as potential splitting
+variables. The results in Figure~\ref{fig:tree} show that the fitted parameters are very close to the real values of 
+the three respective groups. The total log-likelihood is $-1140.111$ with $8$ degree of freedom.
+
+<<>>=
+m.circtree <- circtree(y ~ x1 + x2, data = sdat)
+logLik(m.circtree)
+@
+%%
+
+\section{Summary}\label{sec:summary}
+Circular response variables are common in a variety of application. However, few 
+regression methods and no distribution trees are so far implemented for circular 
+response values in \proglang{R}. 
+
+This paper presented the \pkg{circtree} package
+that provides functions to both circular regression models and to distribution trees
+employing a von Mises distribution. The main functions are illustrated for artifical
+data, however, many more exported functions and methods 
+are not shown in this short summary paper and are ready for testing. 
+Additionally, a shiny app is implemented for illustrating the von Mises distribution
+and exported families for \CRANpkg{bamlss}
+and \pkg{disttree} are provided for comparison.
+
+\newpage
+
+\bibliography{circtree}
+
+\end{document}
