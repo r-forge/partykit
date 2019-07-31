@@ -4,21 +4,18 @@
 \alias{predict.circtree}
 \alias{coef.circtree}
 \alias{logLik.circtree}
-\alias{vcov.circtree}
-\alias{estfun.circtree}
-\alias{bread.circtree}
-\alias{nobs.circtree}
 
-\title{Regression Tree for a Circular Response}
+\title{Distributional Regression Tree for a Circular Response}
 
 \description{
-  Trees based maximum-likelihood estimation of parameters for
-  a circular response employing a von Mises distribution.
+  Distributional trees based on maximum-likelihood estimation of parameters for
+  a circular response employing the von Mises distribution.
 }
 
 \usage{
-circtree(formula, data, start, subset, na.action, weights, offset,
-  control = partykit::mob_control(), fit_control = circfit_control(...), ...)
+circtree(formula, data, subset, na.action = na.pass,
+         weights, offset, cluster, control = disttree::distextree_control(...),
+         converged = NULL, scores = NULL, doFit = TRUE, ...)
 }
 
 \arguments{
@@ -27,28 +24,32 @@ circtree(formula, data, start, subset, na.action, weights, offset,
     where \code{y} should be the response variable
     and \code{x1} and \code{x2} are used as partitioning variables.}
   \item{data}{An optional data frame containing the variables in the model.}
-  \item{start}{Starting values of distribution parameters used in the optimization. \strong{Currently, not supported.}}
   \item{subset}{An optional vector specifying a subset of observations to be
-    used for fitting. \strong{Currently, not supported.}}
+    used for fitting.}
   \item{na.action}{A function which indicates what should happen when the data
-    contain \code{NA}s. \strong{Currently, not supported.}}
+    contain \code{NA}s.}
   \item{weights}{Optional numeric vector of case weights.}
   \item{offset}{Optional numeric vector with \emph{a priori} known component to
     be included in the linear predictor for the location. \strong{Currently, not supported.}}
-  \item{control}{Control arguments passed to \code{\link[partykit]{mob}}.}
-  \item{fit_control}{A list of control parameters passed to
-    \code{\link[stats]{optim}} in \code{\link{circfit}}. Default is \code{\link{circfit_control}()}}
+  \item{cluster}{An optional vector (typically numeric or factor) with a
+    cluster ID to be employed for clustered covariances in the parameter
+    stability tests.}
+  \item{control}{Control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
+  \item{converged}{An optional function for checking user-defined criteria before splits are implemented.}
+  \item{scores}{An optional named list of scores to be attached to ordered factors.}
+  \item{doFit}{A logical indicating if the tree shall be grown (TRUE) or not FALSE}
   \item{\dots}{Arguments to be used to form the default \code{control} argument
     if it is not supplied directly.}
 }
 
 \details{
-  Regression trees employing a von Mises distribution is an application of model-based recursive partitioning 
-    and unbiased recursive partitioning based on the implementation in \code{\link[partykit]{mob}}.
+  Distributional regression trees for a circular response is an application of model-based recursive 
+  partitioning and unbiased recursive partitioning based on the implementation in 
+  \code{\link[disttree]{distextree}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
 }
 
 \value{
-  An object of S3 class \code{circtree} inheriting from class \code{modelparty} or \code{constparty}.
+  An object of S3 class \code{circtree} inheriting from class \code{distextree}.
 }
 
 \examples{
@@ -60,6 +61,8 @@ m1.circtree <- circtree(y ~ x1 + x2, data = sdat)
 }
 
 
-\seealso{\code{\link[partykit]{mob}}, \code{\link{circfit}}}
+\seealso{
+  \code{\link[disttree]{distextree}}, \code{\link[party]{mob}}, \code{\link[party]{ctree}}
+}
 
-\keyword{tree, parametric modelling}
+\keyword{tree, parametric modelling, circular response}
