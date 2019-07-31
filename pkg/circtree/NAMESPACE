@@ -1,0 +1,51 @@
+## Import functions
+import("stats")
+import("graphics")
+importFrom("grDevices", "gray")
+importFrom("sandwich", "estfun")
+importFrom("sandwich", "bread")
+
+## Export functions
+export("circmax")
+export("circmax_control")
+export("circmax_fit")
+export("circmax_simulate")
+export("dvonmises")
+export("vonmises_bamlss")
+export("dist_vonmises")
+export("circtree")
+export("circfit")
+export("circfit_control")
+export("circtree_simulate")
+export("crps_vonmises")
+
+## Methods for circmax
+S3method("coef", "circmax")
+S3method("logLik", "circmax")
+S3method("predict", "circmax")
+S3method("print", "circmax")
+S3method("terms", "circmax")
+S3method("model.frame", "circmax")
+S3method("model.matrix", "circmax")
+S3method("vcov", "circmax")
+S3method("estfun", "circmax")
+
+## Methods for circtree
+S3method("coef", "circtree")
+S3method("logLik", "circtree")
+S3method("predict", "circtree")
+S3method("print", "circtree")
+S3method("plot", "circtree")
+
+## Methods for circtfit
+S3method("nobs", "circfit")
+S3method("coef", "circfit")
+S3method("logLik", "circfit")
+S3method("predict", "circfit")
+S3method("print", "circfit")
+S3method("vcov", "circfit")
+S3method("estfun", "circfit")
+S3method("bread", "circfit")
+
+## Bind .so files
+useDynLib(circtree)
