@@ -4,12 +4,12 @@ context("comparison of new implementation 'distextree()' with older version 'dis
 tr <- distextree(dist ~ speed, data = cars)
 expect_true(all(class(tr) %in% c("distextree", "modelparty", "party")))
 
-## Compare new with old disttree for tree type equal to 'mob'
-m.old <- disttree(dist ~ speed, data = cars, type.tree = "mob")
-m.new <- distextree(dist ~ speed, data = cars, type.tree = "mob")
+## Compare new with old disttree for tree type equal to 'mob' (requires .mfluc_select which is not available in partykit_1.2-4)
+# m.old <- disttree(dist ~ speed, data = cars, type.tree = "mob")
+# m.new <- distextree(dist ~ speed, data = cars, type.tree = "mob")
 
-expect_equal(coef(m.old), coef(m.new))
-expect_equal(as.numeric(logLik(m.old)), as.numeric(logLik(m.new))) # attr(logLik(c.old), 'nobs') missing
+# expect_equal(coef(m.old), coef(m.new))
+# expect_equal(as.numeric(logLik(m.old)), as.numeric(logLik(m.new))) # attr(logLik(c.old), 'nobs') missing
 
 ## Compare new with old disttree for tree type equal to 'ctree'
 ## with old control arguments
@@ -21,11 +21,11 @@ c.new <- distextree(dist ~ speed, data = cars, type.tree = "ctree",
 expect_equal(coef(c.old), coef(c.new), tolerance = 1e-6)
 expect_equal(as.numeric(logLik(c.old)), as.numeric(logLik(c.new))) # attr(logLik(c.old), 'nobs') missing
 
-expect_equal(attr(logLik(m.new), "df"), attr(logLik(m.old), "df"))
+#expect_equal(attr(logLik(m.new), "df"), attr(logLik(m.old), "df"))
 expect_equal(attr(logLik(c.new), "df"), attr(logLik(c.new), "df"))
-expect_equal(as.numeric(logLik(m.new)), as.numeric(logLik(m.old)))
+#expect_equal(as.numeric(logLik(m.new)), as.numeric(logLik(m.old)))
 expect_equal(as.numeric(logLik(c.new)), as.numeric(logLik(c.old)))
-expect_equal(nrow(cars), nobs(m.new))
+#expect_equal(nrow(cars), nobs(m.new))
 expect_equal(nrow(cars), nobs(c.new))
 
 if(FALSE){ 
