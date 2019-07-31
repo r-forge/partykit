@@ -123,7 +123,7 @@ SEXP Rinv_upper_Amos_bound(SEXP rho, SEXP nu) {
 }
 
 
-/* Literally a copy of the movMF C function C_mycfP
+/* Literally a copy of the movMF C function C_mycfG
    Compute
      I_{\nu}(z) / I_{\nu - 1}(z)
    via the Gauss continued fraction, implemented using Eqn 3.2'
@@ -133,9 +133,9 @@ SEXP Rinv_upper_Amos_bound(SEXP rho, SEXP nu) {
    http://dlmf.nist.gov/3.10#iii.
    Copyright Statement: Modified version of function distributed under GPL-2
    in R-package 'movMF'(version 0.2-2) by Kurt Hornik and Bettina Gruen*/
-double _mycfP(double z, double nu, double y, double tol) {
+double _mycfG(double z, double nu, double y, double tol) {
 
-    double xG, rho, s, t, u, v;
+    double xG, rho, t, u, v;
     double res, p;
     int i, k;
 
@@ -145,7 +145,7 @@ double _mycfP(double z, double nu, double y, double tol) {
     u = nu * (nu - 1.);
     v = 2. * nu;
     k = 1;
-    while ( fabs(p) > tol * s ) {
+    while ( fabs(p) > tol * res ) {
         u += v;
         v += 2.;
         t = xG * (1. + rho);
@@ -163,18 +163,18 @@ double _mycfP(double z, double nu, double y, double tol) {
 
 
 /* Internal function of the movMF:::A function.
-   Solely for method "PCF" (see R manual) and with fixed tolerance
+   Solely for method "GCF" (see R manual) and with fixed tolerance
    to 1e-6 corresponding to the R default.
-   Uses internal _A_PCF function to compute the results.
+   Uses internal _A_GCF function to compute the results.
    Copyright Statement: Modified version of function distributed under GPL-2
    in R-package 'movMF'(version 0.2-2) by Kurt Hornik and Bettina Gruen*/
-double _A_PCF(double kappa, double d, double tol) {
+double _A_GCF(double kappa, double d, double tol) {
 
     double res;
     /* The one "d" most often used in the Newton kappa aproximation scheme */
     if ( d == 2. ) {
         if ( kappa > tol ) {
-            res = _mycfP(kappa, 1., 1., tol);
+            res = _mycfG(kappa, 1., 1., tol);
         } else {
             double kappa3 = kappa*kappa*kappa;
             double kappa5 = kappa3*kappa*kappa;
@@ -182,7 +182,7 @@ double _A_PCF(double kappa, double d, double tol) {
         }
     } else {
         if ( kappa > tol ) {
-            res = _mycfP(kappa, d * 0.5, 1., tol);
+            res = _mycfG(kappa, d * 0.5, 1., tol);
         } else {
             double kappa3 = kappa*kappa*kappa;
             double kappa5 = kappa3*kappa*kappa;
@@ -198,12 +198,12 @@ double _A_PCF(double kappa, double d, double tol) {
 
 
 /* R/C implementation of the movMF:::A function.
-   Solely for method "PCF" (see R manual) and with fixed tolerance
+   Solely for method "GCF" (see R manual) and with fixed tolerance
    to 1e-06 corresponding to the R default.
-   Uses internal _A_PCF function to compute the results.
+   Uses internal _A_GCF function to compute the results.
    Copyright Statement: Modified version of function distributed under GPL-2
    in R-package 'movMF'(version 0.2-2) by Kurt Hornik and Bettina Gruen*/
-SEXP A_PCF(SEXP kappa, SEXP d) {
+SEXP A_GCF(SEXP kappa, SEXP d) {
     
     int i, n = length(kappa), nd = length(d);
     double tol = 1e-06;
@@ -218,11 +218,11 @@ SEXP A_PCF(SEXP kappa, SEXP d) {
      * as the input vector kappa. Exceptions are not handled! */
     if ( nd == 1 ) {
         for ( i = 0; i < n; i++ ) {
-            Aptr[i] = _A_PCF(kappaptr[i], dptr[0], tol);
+            Aptr[i] = _A_GCF(kappaptr[i], dptr[0], tol);
         }
     } else {
         for ( i = 0; i < n; i++ ) {
-            Aptr[i] = _A_PCF(kappaptr[i], dptr[i], tol);
+            Aptr[i] = _A_GCF(kappaptr[i], dptr[i], tol);
         }
     }
 
@@ -233,16 +233,16 @@ SEXP A_PCF(SEXP kappa, SEXP d) {
 
 
 /* Implementation of movMF:::Aprime. This is the internal function,
-   for R/C interaction see Aprime_PCF. Implementation currently only
-   for method = "PCF" (see R manual). 
+   for R/C interaction see Aprime_GCF. Implementation currently only
+   for method = "GCF" (see R manual). 
    Copyright Statement: Modified version of function distributed under GPL-2
    in R-package 'movMF'(version 0.2-2) by Kurt Hornik and Bettina Gruen*/
-double _Aprime_PCF(double kappa, double d, double A, double tol) {
+double _Aprime_GCF(double kappa, double d, double A, double tol) {
 
     double res, tmp;
     if ( kappa > tol ) {
         if ( isnan(A) ) {
-            tmp = _A_PCF(kappa, d, tol);
+            tmp = _A_GCF(kappa, d, tol);
         } else {
             tmp = A;
         }
@@ -268,12 +268,12 @@ double _Aprime_PCF(double kappa, double d, double A, double tol) {
 }
 
 /* R/C implementation of the movMF:::Aprime function.
-   Solely for method "PCF" (see R manual) and with fixed tolerance
+   Solely for method "GCF" (see R manual) and with fixed tolerance
    to 1e-06 corresponding to the R default.
-   Uses internal _Aprime_PCF function to compute the results.
+   Uses internal _Aprime_GCF function to compute the results.
    Copyright Statement: Modified version of function distributed under GPL-2
    in R-package 'movMF'(version 0.2-2) by Kurt Hornik and Bettina Gruen*/
-SEXP Aprime_PCF(SEXP kappa, SEXP d, SEXP A) {
+SEXP Aprime_GCF(SEXP kappa, SEXP d, SEXP A) {
     
     int i, n = length(kappa), nd = length(d), nA = length(A);
     double tol = 1e-06;
@@ -294,7 +294,7 @@ SEXP Aprime_PCF(SEXP kappa, SEXP d, SEXP A) {
         if ( nd == 1 ) { di = dptr[0]; } else { di = dptr[i]; }
         if ( nA == 1 ) { Ai = Aptr[0]; } else { Ai = Aptr[i]; }
 
-        Aprimeptr[i] = _Aprime_PCF(kappaptr[i], di, Ai, tol);
+        Aprimeptr[i] = _Aprime_GCF(kappaptr[i], di, Ai, tol);
     }
 
     UNPROTECT(1);
@@ -350,10 +350,10 @@ SEXP solve_kappa_Newton_Fourier(SEXP r, SEXP maxiter) {
         iter = 1;
         while ( iter <= maxiterptr[0] ) {
 
-            A      = _A_PCF(lower, 2., tol);
-            Aprime = _Aprime_PCF(lower, 2., A, tol);
+            A      = _A_GCF(lower, 2., tol);
+            Aprime = _Aprime_GCF(lower, 2., A, tol);
             lower  = lower - (A - rptr[i]) / Aprime;
-            A      = _A_PCF(upper, 2., tol);
+            A      = _A_GCF(upper, 2., tol);
             upper  = upper - (A - rptr[i]) / Aprime;
 
             if ( (upper-lower) < (tol * (lower+upper)) ) {
