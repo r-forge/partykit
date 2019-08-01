@@ -8,28 +8,53 @@
 
 ## Wrapper function for distextree
 circtree <- function(formula,
-                       data,
-                       subset,
-                       na.action = na.pass,
-                       weights,
-                       offset,
-                       cluster,
-                       control = disttree::distextree_control(...),
-                       converged = NULL,
-                       scores = NULL,
-                       doFit = TRUE,
-                       ...) {
+                     data,
+                     circ_range = c(0, 2*pi),
+                     subset,
+                     na.action = na.pass,
+                     weights,
+                     offset,
+                     cluster,
+                     control = disttree::distextree_control(...),
+                     converged = NULL,
+                     scores = NULL,
+                     doFit = TRUE,
+                     ...) {
   cl <- match.call()
   cl2 <- cl
   cl2[[1]] <- quote(disttree::distextree)
   cl2$family <- dist_vonmises()
+  cl2$circ_range <- NULL
+
+  formula <- Formula::as.Formula(formula)
+  if(length(formula)[2L] > 1L) {
+    formula <- Formula::Formula(formula(formula, rhs = 2L))  
+    # NOTE: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
+  }
+  response.name <- as.character(formula[[2]])
+  
+  data[,response.name] <- angle_trans(data[,response.name], 
+                                      start = circ_range[1], 
+                                      end = circ_range[2])
+  cl2$data <- data
 
   tree <- eval(cl2)
   tree$info$call <- cl
 
+  ## TO DO: to be fixed in distextree, use only fit or fitted
+  tree$fit$`(response)` <- angle_retrans(tree$fit$`(response)`, 
+                                         start = attr(cl2$data[,response.name], "circ_range")[1],
+                                         end = attr(cl2$data[,response.name], "circ_range")[2])
+  tree$fitted$`(response)` <- angle_retrans(tree$fitted$`(response)`, 
+                                         start = attr(cl2$data[,response.name], "circ_range")[1],
+                                         end = attr(cl2$data[,response.name], "circ_range")[2])
+  
+  
   class(tree) <- c("circtree", class(tree))
   tree
 }
+
 
 ## Print method
 print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", ...){
