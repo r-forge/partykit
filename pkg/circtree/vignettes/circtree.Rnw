@@ -243,7 +243,7 @@ the three respective groups. The total log-likelihood is $-1140.111$ with $8$ de
 
 <<>>=
 m.circtree <- circtree(y ~ x1 + x2, data = sdat)
-logLik(m.circtree)
+#logLik(m.circtree)
 @
 %%
 
