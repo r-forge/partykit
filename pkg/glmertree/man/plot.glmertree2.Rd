@@ -63,8 +63,8 @@ plot.glmertree2(x, which = "all", ask = TRUE, type = "extended",
 \details{
   The caterpillar plot(s) for the local (node-specific) fixed effects (created 
   when \code{which = "tree.coef"}) depict the estimated fixed-effects 
-  coefficients with 95\% confidence intervals, but these CIs DO NOT ACCOUNT FOR
-  THE SEARCHING OF THE TREE STRUCTURE and are therefore likely too narrow. 
+  coefficients with 95\% confidence intervals, but these CIs do not account for
+  the searching of the tree structure and are therefore likely too narrow. 
   There is currently no way to adjust CIs for searching the tree structure,
   thus the CIs can only be used to obtain an indication of the variability 
   of the coefficient estimates, not for statistical significance testing. 
