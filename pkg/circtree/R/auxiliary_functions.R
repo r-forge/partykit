@@ -18,6 +18,9 @@ angle_trans <- function(angle, start = NULL, end = NULL)
     } else {
       circ_range <- if(any(abs(angle) > pi)) c(-180,180) else c(-pi,pi)
     }
+
+    warning(sprintf("Circular range is guessed to be between %.2f and %.2f, specify 'circ_range' 
+      otherwise.", circ_range[1], circ_range[2]))
     
   } else {
     
@@ -37,6 +40,9 @@ angle_trans <- function(angle, start = NULL, end = NULL)
   if(circ_range[1] < 0) {
     angle[angle<0] <- angle[angle<0] + 2*pi
   }
+  if(any(angle > 2*pi) | any(angle < 0 )) 
+    warning(paste0("Response values are transformed to ", ifelse(any(is.null(c(start, end))), 
+      "approximated ", "") , "circular range."))
   angle <- angle %% (2*pi)
   # values are on scale [0, 2*pi]
   # transform to [-pi,pi)
