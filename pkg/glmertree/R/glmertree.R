@@ -487,8 +487,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
                                               fitted = "marginal",
                                               tp_args = list(), 
                                               drop_terminal = TRUE, 
-                                              terminal_panel = NULL,
-                                              ...) {
+                                              terminal_panel = NULL, ...) {
   if (type == "simple") {
     FUN <- simple_terminal_func
     plot(x$tree, drop_terminal = drop_terminal,
@@ -554,7 +553,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
                                     dimnames = list(rownames(mf), vars_to_plot))
             for (varname in vars_to_plot) {
               newdata <- x$data
-              remaining_lm_vars <- lm_vars[which(lm_vars != varname)]
+              remaining_lm_vars <- lm_vars[lm_vars != varname]
               if (length(lm_vars > 1L)) {
                 for (i in remaining_lm_vars) {
                   if (class(x$data[, i]) == "numeric") {
@@ -728,7 +727,6 @@ predict.lmertree <- function(object, newdata = NULL, type = "response",
     if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
-      levels(newdata$.tree) <- levels(object$data$.tree)
       predict(object$lmer, newdata = newdata, type = type, re.form = re.form, ...)
     } else {
       newdata$.ranef <- predict(object$lmer, newdata = newdata, re.form = re.form, ...)
@@ -749,7 +747,6 @@ predict.glmertree <- function(object, newdata = NULL, type = "response",
     if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
       newdata$.tree <- factor(newdata$.tree)
-      levels(newdata$.tree) <- levels(object$data$.tree)
       predict(object$glmer, newdata = newdata, type = type, re.form = re.form, 
               ...)
     } else {
