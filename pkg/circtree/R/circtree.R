@@ -9,7 +9,7 @@
 ## Wrapper function for distextree
 circtree <- function(formula,
                      data,
-                     circ_range = c(0, 2*pi),
+                     circ_range = (-pi,pi), ## TODO: or default c(0,2*pi) with check of values and stop function
                      subset,
                      na.action = na.pass,
                      weights,
@@ -26,6 +26,9 @@ circtree <- function(formula,
   cl2$family <- dist_vonmises()
   cl2$circ_range <- NULL
 
+  #if(!is.null(circ_range) && length(circ_range) != 2)
+  #  stop("argument 'circ_range' hast to be defined by 2 values (start and end value of the circular interval)")
+  
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
@@ -34,22 +37,33 @@ circtree <- function(formula,
   }
   response.name <- as.character(formula[[2]])
   
-  data[,response.name] <- angle_trans(data[,response.name], 
-                                      start = circ_range[1], 
-                                      end = circ_range[2])
-  cl2$data <- data
+  if(any(data[,response.name]<circ_range[1] || data[,response.name]>circ_range[2]))
+    stop("response variable has to be defined on the interval (-pi, pi]")
+  if(circ_range != c(-pi,pi))
+    stop("other response intervals than (-pi,pi] are currently not provided")
+  
+  #data[,response.name] <- angle_trans(data[,response.name], 
+  #                                    start = circ_range[1], 
+  #                                    end = circ_range[2])
+  #cl2$data <- data
 
   tree <- eval(cl2)
   tree$info$call <- cl
 
-  ## TO DO: to be fixed in distextree, use only fit or fitted
-  tree$fit$`(response)` <- angle_retrans(tree$fit$`(response)`, 
-                                         start = attr(cl2$data[,response.name], "circ_range")[1],
-                                         end = attr(cl2$data[,response.name], "circ_range")[2])
-  tree$fitted$`(response)` <- angle_retrans(tree$fitted$`(response)`, 
-                                         start = attr(cl2$data[,response.name], "circ_range")[1],
-                                         end = attr(cl2$data[,response.name], "circ_range")[2])
+  ## TODO: to be fixed in distextree, use only fit or fitted
+  #tree$fit$`(response)` <- angle_retrans(tree$fit$`(response)`, 
+  #                                       start = attr(cl2$data[,response.name], "circ_range")[1],
+  #                                       end = attr(cl2$data[,response.name], "circ_range")[2])
+  #tree$fitted$`(response)` <- angle_retrans(tree$fitted$`(response)`, 
+  #                                       start = attr(cl2$data[,response.name], "circ_range")[1],
+  #                                       end = attr(cl2$data[,response.name], "circ_range")[2])
   
+  ## TODO: change coefficients stored in tree structure accoring to circ_range
+  #for(i in 1:length(tree)){
+  #  tree[[i]]$node$info$coefficients["mu"] <- angle_retrans(tree[[i]]$node$info$coefficients["mu"],
+  #                                                          start = attr(cl2$data[,response.name], "circ_range")[1],
+  #                                                          end = attr(cl2$data[,response.name], "circ_range")[2])
+  #}
   
   class(tree) <- c("circtree", class(tree))
   tree
@@ -65,7 +79,10 @@ print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 ## Coef method
 coef.circtree <- function(object, ...){
-  partykit:::coef.modelparty(object)
+  #circ_range <- attr(object$fitted$`(response)`, "circ_range")
+  cf <- partykit:::coef.modelparty(object)
+  #cf[,"mu"] <- circtree:::angle_retrans(cf[,"mu"], start = circ_range[1], end = circ_range[2])
+  return(cf)
 }
 
 
