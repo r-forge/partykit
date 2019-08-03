@@ -2,7 +2,7 @@
 \alias{circtree_simulate}
 \title{Simulated Data Set for \code{\link{circtree}}}
 \usage{
-  circtree_simulate(n = 1000, mu = c(0, 2, 1), kappa = c(3, 3, 1), seed = 111)
+  circtree_simulate(n = 1000, mu = c(0, 2, 5), kappa = c(3, 3, 1), seed = 111)
 }
 \arguments{
 \item{n}{The number of Observations.}
