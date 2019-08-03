@@ -13,7 +13,7 @@
 }
 
 \usage{
-circtree(formula, data, subset, na.action = na.pass,
+circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
          weights, offset, cluster, control = disttree::distextree_control(...),
          converged = NULL, scores = NULL, doFit = TRUE, ...)
 }
@@ -24,6 +24,7 @@ circtree(formula, data, subset, na.action = na.pass,
     where \code{y} should be the response variable
     and \code{x1} and \code{x2} are used as partitioning variables.}
   \item{data}{An optional data frame containing the variables in the model.}
+  \item{response_range}{Circular range of response variable.}
   \item{subset}{An optional vector specifying a subset of observations to be
     used for fitting.}
   \item{na.action}{A function which indicates what should happen when the data
@@ -62,7 +63,7 @@ m1.circtree <- circtree(y ~ x1 + x2, data = sdat)
 
 
 \seealso{
-  \code{\link[disttree]{distextree}}, \code{\link[party]{mob}}, \code{\link[party]{ctree}}
+  \code{\link[disttree]{distextree}}, \code{\link[partykit]{mob}}, \code{\link[partykit]{ctree}}
 }
 
 \keyword{tree, parametric modelling, circular response}

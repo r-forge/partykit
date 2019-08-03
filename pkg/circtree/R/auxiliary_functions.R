@@ -14,14 +14,27 @@ angle_trans <- function(angle, start = NULL, end = NULL)
   if(is.null(start) & is.null(end)) {
     
     if(min(angle) >= 0) {
-      circ_range <- if(any(angle > 2 *pi)) c(0,360) else c(0,2*pi)
+      if(any(angle > 2 *pi)){ 
+        response_range <- c(0,360)
+        warning(sprintf("Range of response is guessed to be between %.2f and %.2f, specify 'response_range' otherwise.", 
+          response_range[1], response_range[2]), call. = FALSE)
+      } else {
+        response_range <- c(0,2*pi)
+        warning("Range of response is guessed to be between 0 and 2pi, specify 'response_range' otherwise.", 
+          call. = FALSE)
+      }
     } else {
-      circ_range <- if(any(abs(angle) > pi)) c(-180,180) else c(-pi,pi)
+      if(any(abs(angle) > pi)){
+        response_range <- c(-180,180)
+        warning(sprintf("Range of response is guessed to be between %.2f and %.2f, specify 'response_range' otherwise.", 
+          response_range[1], response_range[2]), call. = FALSE)
+      }  else {
+        response_range <- c(-pi,pi)
+        warning("Range of response is guessed to be between -pi and pi, specify 'response_range' otherwise.", 
+          call. = FALSE)
+      }
     }
-
-    warning(sprintf("Circular range is guessed to be between %.2f and %.2f, specify 'circ_range' 
-      otherwise.", circ_range[1], circ_range[2]))
-    
+ 
   } else {
     
     # check input arguments 'start' and 'end'
@@ -30,14 +43,14 @@ angle_trans <- function(angle, start = NULL, end = NULL)
     } else {
       if(start != 0) stop("for non-negative values the scale has to start at 0")
     }
-    circ_range <- c(start, end)
+    response_range <- c(start, end)
     
   }
   
   # transfer to a scale of length 2*pi
-  angle <- angle/diff(circ_range)*2*pi
+  angle <- angle/diff(response_range)*2*pi
   
-  if(circ_range[1] < 0) {
+  if(response_range[1] < 0) {
     angle[angle<0] <- angle[angle<0] + 2*pi
   }
   if(any(angle > 2*pi) | any(angle < 0 )) 
@@ -48,7 +61,7 @@ angle_trans <- function(angle, start = NULL, end = NULL)
   # transform to [-pi,pi)
   angle[angle>pi] <- angle[angle>pi] - 2*pi
   
-  attr(angle, "circ_range") <- circ_range
+  attr(angle, "response_range") <- response_range
 
   return(angle)
 }
@@ -60,16 +73,16 @@ angle_trans <- function(angle, start = NULL, end = NULL)
 angle_retrans <- function(angle, start = NULL, end = NULL)
 {
   
-  if(any(is.null(c(start, end))) && !is.null(attr(angle, "circ_range"))) {
-    circ_range <- attr(angle, "circ_range")
+  if(any(is.null(c(start, end))) && !is.null(attr(angle, "response_range"))) {
+    response_range <- attr(angle, "response_range")
   } else if(any(is.null(c(start, end)))) {
     stop("arguments 'start' and 'end' must be provided")
   } else {
-    circ_range <- c(start, end)
+    response_range <- c(start, end)
   }
   
-  if(circ_range[1] == 0) angle[angle<0] <- angle[angle<0] + 2*pi
-  if(circ_range[2] > 2*pi) angle <- angle/(2*pi) * diff(circ_range)
+  if(response_range[1] == 0) angle[angle<0] <- angle[angle<0] + 2*pi
+  if(response_range[2] > 2*pi) angle <- angle/(2*pi) * diff(response_range)
   
   return(angle)
 }
