@@ -82,12 +82,12 @@ dist_vonmises <- function(useC = FALSE, ncores = 1) {
     # Use R-version of the density function.
     if ( ! useC ) {
        # par <- linkinv(eta)  # CAUTION: Lisa is evaluating eta, as this simplifies the equation and, therefore, fastens the evaluation 
-       par <- c(2 * atan(eta[1]), exp(eta[2]))
+       par <- cbind(2 * atan(eta[1]), exp(eta[2]))  ## use cbind such that par is a data.frame and not a list
 
-       if (any(par[2] < 0)) {
+       if (any(par[2] < 0, na.rm = TRUE)) {
          stop("kappa must be non-negative")
        }
-       be <- besselI(par[2], nu = 0, expon.scaled = TRUE)
+       be <- besselI(par[2][[1]], nu = 0, expon.scaled = TRUE)  ## NOTE: kappa needs to be numeric, but par[2] is still a data.frame
        val <- - log(2 * pi * be) + par[2] * (cos(y - par[1]) - 1)
        if (!log) {
          val <- exp(val)
