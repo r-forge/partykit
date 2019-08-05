@@ -15,6 +15,7 @@ export("vonmises_bamlss")
 export("dist_vonmises")
 export("circtree")
 export("circtree_simulate")
+export("circforest")
 export("crps_vonmises")
 
 ## Methods for circmax
@@ -34,6 +35,10 @@ S3method("logLik", "circtree")
 S3method("predict", "circtree")
 S3method("print", "circtree")
 S3method("plot", "circtree")
+
+## Methods for circforest
+S3method("logLik", "circforest")
+S3method("predict", "circforest")
 
 ## Bind .so files
 useDynLib(circtree)
