@@ -375,9 +375,9 @@ logLik.distexforest <- function(object, newdata = NULL, weights = NULL, ...){
   
   ## FIXME: check format returned by linkfun / linkinv (in case of multidimensional data)
   ll <- sapply(1:NROW(responses),  function(i) object$info$family$ddist(responses[i], 
-                                        eta = as.numeric(object$info$family$linkfun(pred.par[i,])),
-                                        log = TRUE, weights = weights[i]))
-  ll <- do.call(ll, function(x) sum(x, na.rm = TRUE))
+           eta = as.numeric(object$info$family$linkfun(pred.par[i,])),
+           log = TRUE, weights = weights[i]))
+  ll <- sum(ll, na.rm = TRUE)
   return(ll)
 }
 
