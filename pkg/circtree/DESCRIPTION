@@ -5,6 +5,6 @@ Authors@R: person(given = "Moritz N.", family = "Lang", role = c("aut", "cre"), 
 Description: Infrastructrue for fitting regression trees and forests, as well as for regression based on maximum likelihood estimation for circular responses.
 Depends: R (>= 3.4.0)
 License: GPL-2 | GPL-3
-Imports: stats, circular, disttree, Formula, partykit, movMF, gridGraphics, grDevices, sandwich, Bessel
+Imports: stats, circular, disttree, Formula, partykit, movMF, gridGraphics, grDevices, sandwich, Bessel,  utils
 Suggests: bamlss, testthat, latex2exp, methods, colorspace 
 RoxygenNote: 6.1.1

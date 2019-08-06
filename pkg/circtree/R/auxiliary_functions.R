@@ -57,7 +57,7 @@ angle_trans <- function(angle, start = NULL, end = NULL)
     
   }
 
-  stopifnot(all(angle >= response_range[1]) & all(angle <= response_range[2])
+  stopifnot(all(angle >= response_range[1]) & all(angle <= response_range[2]))
   
   # transfer to a scale of length 2*pi
   angle <- angle/diff(response_range)*2*pi
