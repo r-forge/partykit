@@ -56,15 +56,6 @@ circforest <- function(formula,
   forest <- eval(cl2)
   forest$info$call <- cl
   
-  ## Retransform response 
-  forest$fit[["(response)"]] <- angle_retrans(forest$fit[["(response)"]], 
-                                           start = attr(cl2$data[,response.name], "response_range")[1],
-                                           end = attr(cl2$data[,response.name], "response_range")[2])
-  # TODO: to be fixed in distextree, use only fit or fitted
-  forest$fitted[["(response)"]] <- angle_retrans(forest$fitted[["(response)"]], 
-                                              start = attr(cl2$data[,response.name], "response_range")[1],
-                                              end = attr(cl2$data[,response.name], "response_range")[2])
-  
   class(forest) <- c("circforest", class(forest))
   forest
 }
