@@ -8,17 +8,41 @@ plot.circtree <- function(x, terminal_panel = node_circular,
 }
 
 
-plot_circular <- function(X, coefs = NULL, stack = 10, cex = 0.8, label = TRUE, 
-  circlab = c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$'), polygons = TRUE, rug = TRUE, 
-  kernel_density = FALSE, type = c("mathematical", "geographics")){
+plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE, 
+  circlab = NULL, polygons = TRUE, rug = TRUE, 
+  kernel_density = FALSE, type = c("response", "parameter"), 
+  plot_type = c("mathematical", "geographics"), response_range = c(-pi, pi)){
 
   type <- match.arg(type)
+  plot_type <- match.arg(plot_type)
 
   ## Convert to meteorological wind direction
-  if(type == "geographics"){
+  if(plot_type == "geographics"){
     X <- (-(X - pi/2)) %% (2 * pi)
     coefs[1] <- (-(coefs[1] - pi/2)) %% (2 * pi)
     circlab = c('E', 'N', 'W','S')
+    if(is.null(cex)) cex <- 0.8
+  }
+
+  if((!is.null(circlab) | length(circlab) != 4) & plot_type != "geographics"){
+    if(all(response_range == c(0, 2 * pi))){
+      circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$')
+      if(is.null(cex)) cex <- 0.8
+    } else if(all(response_range == c(0, 360))){
+      circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$270^\\degree$')
+      if(is.null(cex)) cex <- 0.6
+    } else if(all(response_range == c(-pi, pi))){
+      circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
+      if(is.null(cex)) cex <- 0.8
+    } else if(all(response_range == c(-180, 360))){
+      circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$-90^\\degree$')
+      if(is.null(cex)) cex <- 0.6
+    } else{
+      circlab <- round(response_range, 2)
+      if(is.null(cex)) cex <- 0.6
+    }
+  } else{
+    if(is.null(cex)) cex <- 0.6
   }
 
   # Empty Plot
@@ -65,10 +89,10 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = 0.8, label = TRUE,
   segments(.8 * cos(circ_sgm), .8 * sin(circ_sgm), 1 * cos(circ_sgm), 1 * sin(circ_sgm))
 
   if(label & requireNamespace("latex2exp", quietly = TRUE)){
-    text(.65, 0, latex2exp::TeX(circlab[1]))
-    text(0, .65, latex2exp::TeX(circlab[2]))
-    text(-.65, 0, latex2exp::TeX(circlab[3]))
-    text(0, -.65, latex2exp::TeX(circlab[4]))
+    text(.8, 0, latex2exp::TeX(circlab[1]), adj = c(1, 0.5))
+    text(0, .8, latex2exp::TeX(circlab[2]), adj = c(0.5, 1))
+    text(-.8, 0, latex2exp::TeX(circlab[3]), adj = c(0, 0.5))
+    text(0, -.8, latex2exp::TeX(circlab[4]), adj = c(0.5, 0))
   }
 
 
@@ -89,12 +113,15 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = 0.8, label = TRUE,
 
 
 node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
-  xlab = FALSE, ylab = FALSE, mainlab = NULL, type = c("mathematical", "geographics"), ...){
+  xlab = FALSE, ylab = FALSE, mainlab = NULL, type = c("response", "parameter"), 
+  plot_type = c("mathematical", "geographics"), ...){
 
   type <- match.arg(type)
+  plot_type <- match.arg(plot_type)
 
-  ## obtain dependent variable
-  y <- obj$fitted[["(response)"]]
+  ## obtain dependent variable on range of (0, 2*pi)
+  response_range <- attr(obj$fitted[["(response)"]], "response_range")
+  y <- angle_retrans(obj$fitted[["(response)"]], 0, 2*pi)
   fitted <- obj$fitted[["(fitted)"]]
 
   ## y- and x-lab
@@ -133,9 +160,9 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     if (is.null(mainlab)) { 
       mainlab <- if(id) {
       function(id, nobs, mu, kappa, type){
-        ## Convert to meteorological wind direction
-        if(type == "geographics"){
-          mu <- round(mu %% (2 * pi) * 180 / pi, 0)
+        ## Convert to response range if type = 'response'
+        if(type == "response"){
+          mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
         }
         sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, mu, kappa)
       }
@@ -153,7 +180,8 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     grid::seekViewport("plot")
 
     grid::grid.rect(gp = grid::gpar(fill = "transparent", col = 1), width = grid::unit(0.9, "npc"))
-    gridGraphics::grid.echo(function() plot_circular(y, coefs, type = type, ...), newpage = FALSE)
+    gridGraphics::grid.echo(function() plot_circular(y, coefs, plot_type = plot_type, 
+      response_range = response_range, ...), newpage = FALSE)
 
     if(ylab != "") grid::grid.text(ylab, y = grid::unit(0.5, "npc"), x = grid::unit(-2.5, "lines"), rot = 90)
     if(xlab != "") grid::grid.text(xlab, x = grid::unit(0.5, "npc"), y = grid::unit(-2, "lines"))         
