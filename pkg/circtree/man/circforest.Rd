@@ -13,9 +13,10 @@
 \usage{
 circforest(formula, data, response_range = NULL, subset, 
            na.action = na.pass, weights, offset, cluster, strata, 
-           control = distextree_control(teststat = "quad", testtype = "Univ", mincriterion = 0,
-           saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
-           ntree = 500L, fit.par = FALSE, perturb = list(replace = FALSE, fraction = 0.632),
+           control = disttree::distextree_control(teststat = "quad", testtype = "Univ", 
+           mincriterion = 0, saveinfo = FALSE, minsplit = 20, minbucket = 7, 
+           splittry = 2, ...), ntree = 500L, fit.par = FALSE, 
+           perturb = list(replace = FALSE, fraction = 0.632),
            mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL, trace = FALSE, ...)
 \method{predict}{circforest}(object, newdata = NULL,
         type = c("parameter", "response", "weights", "node"),

@@ -6,6 +6,7 @@
 # - PURPOSE: Wrapper function for distexforest plus S3 methods 
 # -------------------------------------------------------------------
 
+
 ## Wrapper function for distexforest
 circforest <- function(formula,
                        data,       
@@ -16,7 +17,7 @@ circforest <- function(formula,
                        offset, 
                        cluster,
                        strata,
-                       control = distextree_control(
+                       control = disttree::distextree_control(
                          teststat = "quad", testtype = "Univ", mincriterion = 0,
                          saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
                        ntree = 500L, 
@@ -27,7 +28,10 @@ circforest <- function(formula,
                        cores = NULL, 
                        trace = FALSE,
                        ...) {
-  
+
+  ## To pass R CMD check: "no visible binding for global variable"
+  nvar <- NULL
+
   ## Get and modify call
   cl <- match.call()
   cl2 <- cl
