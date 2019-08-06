@@ -39,11 +39,6 @@ circforest <- function(formula,
   cl2$family <- dist_vonmises()
   cl2$response_range <- NULL
   
-  ## Transform data to parameter range (-pi, pi)
-  if(!is.null(response_range) && length(response_range) != 2)
-    stop("argument 'response_range' hast to be defined by 2 values 
-         (start and end value of the circular interval)")
-  
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
@@ -51,6 +46,7 @@ circforest <- function(formula,
   }
   response.name <- as.character(formula[[2]])
   
+  ## Transform data to parameter range (-pi, pi)
   data[, response.name] <- angle_trans(data[, response.name], 
                                        start = response_range[1], 
                                        end = response_range[2])
@@ -61,13 +57,13 @@ circforest <- function(formula,
   forest$info$call <- cl
   
   ## Retransform response 
-  # forest$fit$`(response)` <- angle_retrans(forest$fit$`(response)`, 
-  #                                         start = attr(cl2$data[,response.name], "response_range")[1],
-  #                                         end = attr(cl2$data[,response.name], "response_range")[2])
+  forest$fit[["(response)"]] <- angle_retrans(forest$fit[["(response)"]], 
+                                           start = attr(cl2$data[,response.name], "response_range")[1],
+                                           end = attr(cl2$data[,response.name], "response_range")[2])
   # TODO: to be fixed in distextree, use only fit or fitted
-  # forest$fitted$`(response)` <- angle_retrans(forest$fitted$`(response)`, 
-  #                                            start = attr(cl2$data[,response.name], "response_range")[1],
-  #                                            end = attr(cl2$data[,response.name], "response_range")[2])
+  forest$fitted[["(response)"]] <- angle_retrans(forest$fitted[["(response)"]], 
+                                              start = attr(cl2$data[,response.name], "response_range")[1],
+                                              end = attr(cl2$data[,response.name], "response_range")[2])
   
   class(forest) <- c("circforest", class(forest))
   forest
@@ -85,6 +81,15 @@ predict.circforest <- function(object, newdata = NULL,
   cl <- match.call()
   cl[[1]] <- quote(disttree:::predict.distexforest)
   
+  ## NOTE: predict.distexforest uses object$fitted[["(response)"]] as response values for parameter estimation,
+  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
+  if(type == "parameter" | type == "response"){
+    object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
+                                                 start = attr(object$fitted[["(response)"]], "response_range")[1],
+                                                 end = attr(object$fitted[["(response)"]], "response_range")[2])
+    cl$object <- object
+  }  
+  
   ## For 'type=response' use 'type=parameter' and transform parameter mu
   if(type != "response"){
     eval(cl)
@@ -92,8 +97,8 @@ predict.circforest <- function(object, newdata = NULL,
     cl$type <- "parameter"
     parameters <- eval(cl)
     rval <- angle_retrans(parameters$mu,
-                          start = attr(object$fitted$`(response)`, "response_range")[1],
-                          end = attr(object$fitted$`(response)`, "response_range")[2])
+                          start = attr(object$fitted[["(response)"]], "response_range")[1],
+                          end = attr(object$fitted[["(response)"]], "response_range")[2])
     return(rval)
   }
 }
@@ -103,6 +108,16 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   
   ## Get call
   cl <- match.call()
+  
+  ## NOTE: logLik.distexforest calls predict.distexforest as a first step which 
+  # uses object$fitted[["(response)"]] as response values for parameter estimation,
+  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
+  object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
+                                               start = attr(object$fitted[["(response)"]], "response_range")[1],
+                                               end = attr(object$fitted[["(response)"]], "response_range")[2])
+  cl$object <- object
+  
+  
   
   # Get response name
   formula <- Formula::as.Formula(object$info$formula)
