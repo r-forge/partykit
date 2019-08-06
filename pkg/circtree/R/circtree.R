@@ -84,7 +84,7 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
   ## Get call
   cl <- match.call()
 
-  ## Transform newdata to same range as fit
+  ## Transform newdata to same range as fitted parameters
   if(!is.null(newdata)){
     formula <- Formula::as.Formula(object$info$formula)
     if(length(formula)[2L] > 1L) {
@@ -94,8 +94,8 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
     response.name <- as.character(formula[[2]])
 
     newdata[, response.name] <- angle_trans(newdata[, response.name],
-                                  start = attr(object$fitted$`(response)`, "response_range")[1],
-                                  end = attr(object$fitted$`(response)`, "response_range")[2])
+                                            start = attr(object$fitted$`(response)`, "response_range")[1],
+                                            end = attr(object$fitted$`(response)`, "response_range")[2])
     cl$newdata
   }
 

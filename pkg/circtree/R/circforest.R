@@ -61,13 +61,13 @@ circforest <- function(formula,
   forest$info$call <- cl
   
   ## Retransform response 
-  forest$fit$`(response)` <- angle_retrans(forest$fit$`(response)`, 
-                                           start = attr(cl2$data[,response.name], "response_range")[1],
-                                           end = attr(cl2$data[,response.name], "response_range")[2])
+  # forest$fit$`(response)` <- angle_retrans(forest$fit$`(response)`, 
+  #                                         start = attr(cl2$data[,response.name], "response_range")[1],
+  #                                         end = attr(cl2$data[,response.name], "response_range")[2])
   # TODO: to be fixed in distextree, use only fit or fitted
-  forest$fitted$`(response)` <- angle_retrans(forest$fitted$`(response)`, 
-                                              start = attr(cl2$data[,response.name], "response_range")[1],
-                                              end = attr(cl2$data[,response.name], "response_range")[2])
+  # forest$fitted$`(response)` <- angle_retrans(forest$fitted$`(response)`, 
+  #                                            start = attr(cl2$data[,response.name], "response_range")[1],
+  #                                            end = attr(cl2$data[,response.name], "response_range")[2])
   
   class(forest) <- c("circforest", class(forest))
   forest
@@ -85,29 +85,12 @@ predict.circforest <- function(object, newdata = NULL,
   cl <- match.call()
   cl[[1]] <- quote(disttree:::predict.distexforest)
   
-  ## NOTE: predict.distexforest uses object$fitted[["(response)"]] as response values for parameter estimation,
-  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
-  if(type == "parameter" | type == "response"){
-    object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
-                                                 start = attr(object$fitted$`(response)`, "response_range")[1],
-                                                 end = attr(object$fitted$`(response)`, "response_range")[2])
-    cl$object <- object
-  }  
-  
   ## For 'type=response' use 'type=parameter' and transform parameter mu
   if(type != "response"){
     eval(cl)
   } else {
     cl$type <- "parameter"
     parameters <- eval(cl)
-    formula <- if(is.name(object$info$call$formula)) eval(object$info$call$formula) else object$info$call$formula
-    formula <- Formula::as.Formula(formula)
-    if(length(formula)[2L] > 1L) {
-      formula <- Formula::Formula(formula(formula, rhs = 2L))
-      warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
-    }
-    response.name <- as.character(formula[[2]])
-    
     rval <- angle_retrans(parameters$mu,
                           start = attr(object$fitted$`(response)`, "response_range")[1],
                           end = attr(object$fitted$`(response)`, "response_range")[2])
@@ -121,34 +104,21 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   ## Get call
   cl <- match.call()
   
-  ## NOTE: logLik.distexforest calls predict.distexforest as a first step which 
-  # uses object$fitted[["(response)"]] as response values for parameter estimation,
-  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
-  object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
-                                               start = attr(object$fitted$`(response)`, "response_range")[1],
-                                               end = attr(object$fitted$`(response)`, "response_range")[2])
-  cl$object <- object
-  
-  
-  
   # Get response name
-  formula <- if(is.name(object$info$call$formula)) eval(object$info$call$formula) else object$info$call$formula
-  formula <- Formula::as.Formula(formula)
-  object$info$call$formula <- formula  ## TODO: necessary? or should eval(formula) be performed in logLikd.distexforest as well?
-  cl$object <- object
+  formula <- Formula::as.Formula(object$info$formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   response.name <- as.character(formula[[2]])
-    
-  
-  ## Transform response (possibly from newdata) to same range as fitted parameters: 
-  # for newdata: should we expect newdata to be on the same range as defined by response_range?
-  # otherwise: logLik.distexforest uses object$fitted[["(response)"]] which has already 
-  #            been transformed do (-pi,pi] within logLik.circforest
+
+  ## Transform response from newdata to same range as fitted parameters: 
+  # for newdata: we expect newdata to be on the same range as defined by response_range
   if(!is.null(newdata)) {
-    newdata[, response.name] <- angle_trans(newdata[, response.name]) ## TODO: guess start and end?
+    newdata[, response.name] <- angle_trans(newdata[, response.name],
+                                            start = attr(object$fitted$`(response)`, "response_range")[1],
+                                            end = attr(object$fitted$`(response)`, "response_range")[2])
+                                            
     cl$newdata <- newdata
   }
 
