@@ -8,8 +8,10 @@ angle_trans <- function(angle, start = NULL, end = NULL)
   # [0, 2*pi)
   # (-180, 180]
   # [0, 360)
-  
-  if(sum(c(is.null(start), is.null(end))) == 1) stop("arguments 'start' and 'end' can only be used if both are defined")
+
+  stopifnot(is.numeric(angle))
+  angle <- na.omit(angle)
+  stopifnot(length(angle) > 0)
   
   if(is.null(start) & is.null(end)) {
     
@@ -35,7 +37,15 @@ angle_trans <- function(angle, start = NULL, end = NULL)
       }
     }
  
+  } else if(is.null(start) | is.null(end)) {
+
+    stop("arguments 'start' and 'end' can only be used if both are defined")
+
   } else {
+
+    stopifnot(is.numeric(start) & length(start) == 1)
+    stopifnot(is.numeric(end) & length(end) == 1)
+    stopifnot(start < end)
     
     # check input arguments 'start' and 'end'
     if(start < 0) {
@@ -46,6 +56,8 @@ angle_trans <- function(angle, start = NULL, end = NULL)
     response_range <- c(start, end)
     
   }
+
+  stopifnot(all(angle >= response_range[1]) & all(angle <= response_range[2])
   
   # transfer to a scale of length 2*pi
   angle <- angle/diff(response_range)*2*pi
