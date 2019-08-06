@@ -49,22 +49,6 @@ circtree <- function(formula,
   tree <- eval(cl2)
   tree$info$call <- cl
 
-  ## Retransform response 
-  tree$fit$`(response)` <- angle_retrans(tree$fit$`(response)`, 
-                                         start = attr(cl2$data[,response.name], "response_range")[1],
-                                         end = attr(cl2$data[,response.name], "response_range")[2])
-  # TODO: to be fixed in distextree, use only fit or fitted
-  tree$fitted$`(response)` <- angle_retrans(tree$fitted$`(response)`, 
-                                         start = attr(cl2$data[,response.name], "response_range")[1],
-                                         end = attr(cl2$data[,response.name], "response_range")[2])
-  
-  ## TODO: should we change the coefficients stored in tree structure accoring to response_range?
-  #for(i in 1:length(tree)){
-  #  tree[[i]]$node$info$coefficients["mu"] <- angle_retrans(tree[[i]]$node$info$coefficients["mu"],
-  #                                                          start = attr(cl2$data[,response.name], "response_range")[1],
-  #                                                          end = attr(cl2$data[,response.name], "response_range")[2])
-  #}
-  
   class(tree) <- c("circtree", class(tree))
   tree
 }
@@ -85,6 +69,15 @@ coef.circtree <- function(object, ...){
 }
 
 
+## TODO: This S3-method should be defined for distextree, so no for circtree necessary anymorge
+fitted.circtree <- function(object, ...){
+
+  rval <- predict.circtree(object, newdata = NULL, type = "response", OOB = FALSE, ...)
+  return(rval)
+
+}
+
+
 ## logLik method
 logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
 
@@ -93,7 +86,7 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
 
   ## Transform newdata to same range as fit
   if(!is.null(newdata)){
-    formula <- Formula::as.Formula(object$info$call$formula)
+    formula <- Formula::as.Formula(object$info$formula)
     if(length(formula)[2L] > 1L) {
       formula <- Formula::Formula(formula(formula, rhs = 2L))
       warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
@@ -128,12 +121,6 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
     cl[[1]] <- quote(disttree:::predict.distextree)
     cl$type <- "parameter"
     parameters <- eval(cl)
-    formula <- Formula::as.Formula(object$info$call$formula)
-    if(length(formula)[2L] > 1L) {
-      formula <- Formula::Formula(formula(formula, rhs = 2L))
-      warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
-    }
-    response.name <- as.character(formula[[2]])
 
     rval <- angle_retrans(parameters$mu,
                         start = attr(object$fitted$`(response)`, "response_range")[1],
