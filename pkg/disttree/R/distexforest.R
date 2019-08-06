@@ -351,6 +351,7 @@ predict.distexforest <- function(object, newdata = NULL,
 }
 
 
+## TODO: how to deal with NAs in fitted parameters (possibly due to all zero weights)
 logLik.distexforest <- function(object, newdata = NULL, weights = NULL, ...){
   
   pred.par <- predict.distexforest(object = object, newdata = newdata, type = "parameter")
@@ -364,18 +365,19 @@ logLik.distexforest <- function(object, newdata = NULL, weights = NULL, ...){
     factors <- which(sapply(nd, is.factor))
     xlev <- lapply(factors, function(x) levels(nd[[x]]))
     names(xlev) <- names(nd)[factors]
-    nd <- model.frame(object$info$call$formula, ## FIXME: use formula with response only
+    formula <- if(is.name(object$info$call$formula)) eval(object$info$call$formula) else object$info$call$formula
+    nd <- model.frame(formula, ## FIXME: use formula with response only
                       data = newdata, na.action = na.pass, xlev = xlev)
-    responses <- nd[,as.character(object$info$call$formula[[2]])]
+    responses <- nd[,as.character(formula[[2]])]
   }
 
   if(is.null(weights)) weights <- rep.int(1, NROW(responses))
   
   ## FIXME: check format returned by linkfun / linkinv (in case of multidimensional data)
-  ll <- object$info$family$ddist(responses, 
-                                 eta = data.frame(object$info$family$linkfun(pred.par)),
-                                 log = TRUE, weights = weights, sum = TRUE)
-  
+  ll <- sapply(1:NROW(responses),  function(i) object$info$family$ddist(responses[i], 
+                                        eta = as.numeric(object$info$family$linkfun(pred.par[i,])),
+                                        log = TRUE, weights = weights[i]))
+  ll <- do.call(ll, function(x) sum(x, na.rm = TRUE))
   return(ll)
 }
 
