@@ -28,11 +28,6 @@ circtree <- function(formula,
   cl2$family <- dist_vonmises()
   cl2$response_range <- NULL
 
-  ## Transform data to parameter range (-pi, pi)
-  if(!is.null(response_range) && length(response_range) != 2)
-    stop("argument 'response_range' hast to be defined by 2 values 
-      (start and end value of the circular interval)")
-  
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
@@ -40,6 +35,7 @@ circtree <- function(formula,
   }
   response.name <- as.character(formula[[2]])
 
+  ## Transform data to parameter range (-pi, pi)
   data[, response.name] <- angle_trans(data[, response.name], 
                                        start = response_range[1], 
                                        end = response_range[2])
@@ -62,9 +58,16 @@ print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 
 ## Coef method
-coef.circtree <- function(object, ...){
-  #response_range <- attr(object$fitted$`(response)`, "response_range")
+coef.circtree <- function(object, type = c("parameter", "response"), ...){
+  type <- match.arg(type)
+
   cf <- partykit:::coef.modelparty(object)
+  
+  if(type == "response"){
+    response_range <- attr(object$fitted[["(response)"]], "response_range")
+    cf[, "mu"] <- angle_retrans(cf[, "mu"], response_range[1], response_range[2])
+  }
+
   return(cf)
 }
 
@@ -94,8 +97,8 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
     response.name <- as.character(formula[[2]])
 
     newdata[, response.name] <- angle_trans(newdata[, response.name],
-                                            start = attr(object$fitted$`(response)`, "response_range")[1],
-                                            end = attr(object$fitted$`(response)`, "response_range")[2])
+                                  start = attr(object$fitted[["(response)"]], "response_range")[1],
+                                  end = attr(object$fitted[["(response)"]], "response_range")[2])
     cl$newdata
   }
 
@@ -123,15 +126,16 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
     parameters <- eval(cl)
 
     rval <- angle_retrans(parameters$mu,
-                        start = attr(object$fitted$`(response)`, "response_range")[1],
-                        end = attr(object$fitted$`(response)`, "response_range")[2])
+                        start = attr(object$fitted[["(response)"]], "response_range")[1],
+                        end = attr(object$fitted[["(response)"]], "response_range")[2])
     return(rval)
   }
 }
 
 
 ## Simulate data
-circtree_simulate <- function(n = 1000, mu = c(0, 2, 5), kappa = c(3, 3, 1), seed = 111){
+circtree_simulate <- function(n = 1000, mu = c(0, 2, 5), kappa = c(3, 3, 1), 
+  response_range = c(0, 2 * pi), seed = 111){
   # FIXME: Extend to more general cases
   set.seed(seed)
   d <- data.frame(x1 = runif(n, -1, 1), x2 = runif(n, -1, 1))
@@ -142,5 +146,6 @@ circtree_simulate <- function(n = 1000, mu = c(0, 2, 5), kappa = c(3, 3, 1), see
   for(i in 1:n){
     d[i, "y"] <- circular::rvonmises(1, mu = circular::circular(d$mu[i]), kappa = d$kappa[i])
   }
+  d$y <- angle_retrans(d$y, response_range[1], response_range[2])
   return(d)
 }
