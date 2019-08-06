@@ -1,17 +1,10 @@
 plot.circtree <- function(x, terminal_panel = node_circular,
   tp_args = list(), tnex = NULL, drop_terminal = NULL, ...){
-  #FIXME: (ML) what is nreg needed for ??!
-  #nreg <- if(is.null(tp_args$which)) x$info$nreg else length(tp_args$which)
-  #if(nreg < 1L & missing(terminal_panel)) {
-  #  partykit:::plot.constparty(partykit::as.constparty(x),
-  #    tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
-  #} else {
-    #if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L * nreg
-    if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L * 1
-    if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
-    partykit::plot.modelparty(x, terminal_panel = terminal_panel,
-      tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
-  #}
+
+  if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L * 1
+  if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
+  partykit::plot.modelparty(x, terminal_panel = terminal_panel,
+    tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
 }
 
 
