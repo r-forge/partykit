@@ -690,6 +690,14 @@ coef.distextree <- function(object, ...){
   partykit:::coef.modelparty(object)
 }
 
+
+fitted.distextree <- function(object, ...){
+  
+  rval <- predict.distextree(object, newdata = NULL, type = "response", OOB = FALSE, ...)
+  return(rval)
+  
+}
+
 ## FIXME: Should we allow for newdata in logLik ?
 logLik.distextree <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
