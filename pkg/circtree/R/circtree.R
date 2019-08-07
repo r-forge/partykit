@@ -116,7 +116,7 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
 
   type <- match.arg(type) 
 
-  ## Retransform 'type=response' to response range
+  ## For 'type=response' transform to response_range
   if(type != "response"){
     cl <- match.call()
     cl[[1]] <- quote(disttree:::predict.distextree)

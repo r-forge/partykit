@@ -81,13 +81,12 @@ predict.circforest <- function(object, newdata = NULL,
     cl$object <- object
   }  
   
-  ## For 'type=response' use 'type=parameter' and transform parameter mu
+  ## For 'type=response' transform to response_range
   if(type != "response"){
     eval(cl)
   } else {
-    cl$type <- "parameter"
-    parameters <- eval(cl)
-    rval <- angle_retrans(parameters$mu,
+    response <- eval(cl)
+    rval <- angle_retrans(response,
                           start = attr(object$fitted[["(response)"]], "response_range")[1],
                           end = attr(object$fitted[["(response)"]], "response_range")[2])
     return(rval)
