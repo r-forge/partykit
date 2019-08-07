@@ -11,39 +11,49 @@ plot.circtree <- function(x, terminal_panel = node_circular,
 plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE, 
   circlab = NULL, polygons = TRUE, rug = TRUE, 
   kernel_density = FALSE, type = c("response", "parameter"), 
-  plot_type = c("mathematical", "geographics"), response_range = c(-pi, pi)){
+  plot_type = c("mathematical", "geographics", "time"), response_range = c(-pi, pi)) {
 
   type <- match.arg(type)
   plot_type <- match.arg(plot_type)
 
-  ## Convert to meteorological wind direction
-  if(plot_type == "geographics"){
+  if (plot_type == "geographics") {
     X <- (-(X - pi/2)) %% (2 * pi)
     coefs[1] <- (-(coefs[1] - pi/2)) %% (2 * pi)
-    circlab = c('E', 'N', 'W','S')
-    if(is.null(cex)) cex <- 0.8
-  }
-
-  if((!is.null(circlab) | length(circlab) != 4) & plot_type != "geographics"){
-    if(all(response_range == c(0, 2 * pi))){
+    if (is.null(circlab) | length(circlab) != 4) circlab = c('N', 'E', 'S','W')
+    if (is.null(cex)) cex <- 0.8
+    circlab <- circlab[c(2, 1, 4, 3)]
+  } else if (plot_type == "time") {
+    X <- (-(X - pi/2)) %% (2 * pi)
+    coefs[1] <- (-(coefs[1] - pi/2)) %% (2 * pi)
+    if (is.null(circlab) | length(circlab) != 4) circlab = c('0', '6', '12','18')
+    if (is.null(cex)) cex <- 0.8
+    circlab <- circlab[c(2, 1, 4, 3)]
+  } else if (!is.null(circlab) & length(circlab) == 4) {
+    circlab <- circlab
+    if (is.null(cex)) cex <- 0.6
+  } else if (type == "response") {
+    if (all(response_range == c(0, 2 * pi))) {
       circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$')
       if(is.null(cex)) cex <- 0.8
-    } else if(all(response_range == c(0, 360))){
+    } else if (all(response_range == c(0, 360))) {
       circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$270^\\degree$')
-      if(is.null(cex)) cex <- 0.6
-    } else if(all(response_range == c(-pi, pi))){
+      if (is.null(cex)) cex <- 0.6
+    } else if (all(response_range == c(-pi, pi))) {
       circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
-      if(is.null(cex)) cex <- 0.8
-    } else if(all(response_range == c(-180, 360))){
+      if (is.null(cex)) cex <- 0.8
+    } else if (all(response_range == c(-180, 360))) {
       circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$-90^\\degree$')
-      if(is.null(cex)) cex <- 0.6
-    } else{
-      circlab <- round(response_range, 2)
+      if (is.null(cex)) cex <- 0.6
+    } else {
+      tmp_segment <- diff(response_range) / 4
+      circlab <- response_range[1] + c(1, 2, 3, 4) * tmp_segment
+      circlab <- signif(circlab, 2)
       if(is.null(cex)) cex <- 0.6
     }
-  } else{
-    if(is.null(cex)) cex <- 0.6
-  }
+  } else if (type == "parameter") {
+    circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
+    if (is.null(cex)) cex <- 0.6
+ }
 
   # Empty Plot
   par(mar = c(0, 0, 0, 0) + 0., cex = cex)
@@ -89,10 +99,10 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
   segments(.8 * cos(circ_sgm), .8 * sin(circ_sgm), 1 * cos(circ_sgm), 1 * sin(circ_sgm))
 
   if(label & requireNamespace("latex2exp", quietly = TRUE)){
-    text(.8, 0, latex2exp::TeX(circlab[1]), adj = c(1, 0.5))
-    text(0, .8, latex2exp::TeX(circlab[2]), adj = c(0.5, 1))
-    text(-.8, 0, latex2exp::TeX(circlab[3]), adj = c(0, 0.5))
-    text(0, -.8, latex2exp::TeX(circlab[4]), adj = c(0.5, 0))
+    text(.75, 0, latex2exp::TeX(circlab[1]), adj = c(1, 0.5))
+    text(0, .75, latex2exp::TeX(circlab[2]), adj = c(0.5, 1))
+    text(-.75, 0, latex2exp::TeX(circlab[3]), adj = c(0, 0.5))
+    text(0, -.75, latex2exp::TeX(circlab[4]), adj = c(0.5, 0))
   }
 
 
@@ -114,7 +124,7 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
 
 node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
   xlab = FALSE, ylab = FALSE, mainlab = NULL, type = c("response", "parameter"), 
-  plot_type = c("mathematical", "geographics"), ...){
+  plot_type = c("mathematical", "geographics", "time"), ...){
 
   type <- match.arg(type)
   plot_type <- match.arg(plot_type)
@@ -163,7 +173,11 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
         ## Convert to response range if type = 'response'
         if(type == "response"){
           mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
+        } else if(type == "parameter" & plot_type == "geographics"){
+          warning("Changing type from 'parameter' to 'response', as plot_type='geographics'...")
+          mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
         }
+
         sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, mu, kappa)
       }
       #function(id, nobs, mu, kappa) sprintf("Node %s (n = %s)", id, nobs)
@@ -181,7 +195,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
 
     grid::grid.rect(gp = grid::gpar(fill = "transparent", col = 1), width = grid::unit(0.9, "npc"))
     gridGraphics::grid.echo(function() plot_circular(y, coefs, plot_type = plot_type, 
-      response_range = response_range, ...), newpage = FALSE)
+      response_range = response_range, type = type, ...), newpage = FALSE)
 
     if(ylab != "") grid::grid.text(ylab, y = grid::unit(0.5, "npc"), x = grid::unit(-2.5, "lines"), rot = 90)
     if(xlab != "") grid::grid.text(xlab, x = grid::unit(0.5, "npc"), y = grid::unit(-2, "lines"))         
