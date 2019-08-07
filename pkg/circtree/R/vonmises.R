@@ -240,8 +240,6 @@ dist_vonmises <- function(useC = FALSE, ncores = 1) {
     return(starteta)
   }
 
-  mle <- TRUE
-
   list(family.name = "Von Mises Distribution",
        ddist = ddist,
        sdist = sdist,
@@ -254,7 +252,8 @@ dist_vonmises <- function(useC = FALSE, ncores = 1) {
        linkinv = linkinv,
        linkinvdr = linkinvdr,
        startfun = startfun,
-       mle = mle,
+       mle = TRUE,
+       expectedvalue = TRUE,
        gamlssobj = FALSE,
        censored = FALSE
   )
