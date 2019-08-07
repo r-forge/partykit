@@ -54,11 +54,33 @@ circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
 }
 
 \examples{
-sdat <- circtree_simulate()
 
-m1.circtree <- circtree(y ~ x1 + x2, data = sdat)
-#plot(m1.circtree, tp_args = list(kernel_density = TRUE)) 
-#plot(m1.circtree) ## fails with cran version
+## example on parameter range:
+sdat.par <- circtree_simulate(response_range = c(-pi, pi))
+ct.par <- circtree(y ~ x1 + x2, data = sdat.par)
+plot(ct.par)
+
+## example on response range (0, 2pi):
+sdat.rad <- circtree_simulate(response_range = c(0, 2*pi))
+ct.rad <- circtree(y ~ x1 + x2, data = sdat.rad)
+## default: type = "response"
+plot(ct.rad, tp_args = list(type = "parameter"))
+plot(ct.rad, tp_args = list(type = "response"))
+
+## example on response range (0, 360):
+sdat.deg <- circtree_simulate(response_range = c(0, 360))
+ct.deg <- circtree(y ~ x1 + x2, data = sdat.deg)
+plot(ct.deg, tp_args = list(type = "parameter"))
+plot(ct.deg, tp_args = list(type = "response"))
+plot(ct.deg, tp_args = list(plot_type = "geographics"))
+
+## example on response range (0, 24):
+sdat.hour <- circtree_simulate(response_range = c(0, 24))
+ct.hour <- circtree(y ~ x1 + x2, data = sdat.hour, response_range = c(0, 24))
+plot(ct.hour, tp_args = list(type = "parameter"))
+plot(ct.hour, tp_args = list(type = "response", plot_type = "time"))
+plot(ct.hour, tp_args = list(type = "response", plot_type = "time", 
+  circlab = c("no", "mo", "mi", "ev")))
 }
 
 
