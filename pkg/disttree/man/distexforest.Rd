@@ -21,7 +21,7 @@ distexforest(formula, data, subset, na.action = na.pass, weights,
              applyfun = NULL, cores = NULL, trace = FALSE, ...)
 \method{predict}{distexforest}(object, newdata = NULL,
         type = c("parameter", "response", "weights", "node"),
-        OOB = TRUE, scale = TRUE, \dots)
+        OOB = FALSE, scale = TRUE, \dots)
 }
 
 \arguments{
@@ -146,8 +146,8 @@ distexforest(formula, data, subset, na.action = na.pass, weights,
   can be grown in parallel with this R only implemention which renders speed less of an issue.
   Note that the default values are different from those used in package \code{disttree}, most
   importantly the default for mtry is now data-dependent. \code{predict(, type = "node")} replaces
-  the \code{\link[party]{where}} function and \code{predict(, type = "prob")} the
-  \code{\link[party]{treeresponse}} function.
+  the \code{\link[partykit]{where}} function and \code{predict(, type = "prob")} the
+  \code{\link[partykit]{treeresponse}} function.
 
   Moreover, when predictors vary in their scale of measurement of number
   of categories, variable selection and computation of variable importance is biased
