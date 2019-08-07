@@ -31,7 +31,6 @@ S3method("estfun", "circmax")
 
 ## Methods for circtree
 S3method("coef", "circtree")
-S3method("fitted", "circtree")
 S3method("logLik", "circtree")
 S3method("predict", "circtree")
 S3method("print", "circtree")
