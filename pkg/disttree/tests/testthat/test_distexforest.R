@@ -100,8 +100,9 @@ pdefg <- defg$fitted.par
 head(cbind(pdf,pdef,pdfg,pdefg))
 
 # differences between distforest and distexforest
-expect_equal(pdf,pdef)
-expect_equal(pdfg,pdefg)
+# Note: parameters are not equal anymore as distexforest now estimates them employing OOB=FALSE (distforest: OOB=TRUE)
+#expect_equal(pdf,pdef)
+#expect_equal(pdfg,pdefg)
 
 # differences between family objects
 #expect_equal(pdf,pdfg)
