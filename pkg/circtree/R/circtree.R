@@ -146,6 +146,7 @@ circtree_simulate <- function(n = 1000, mu = c(0, 2, 5), kappa = c(3, 3, 1),
   for(i in 1:n){
     d[i, "y"] <- circular::rvonmises(1, mu = circular::circular(d$mu[i]), kappa = d$kappa[i])
   }
+  d$y <- angle_trans(d$y, 0, 2*pi)
   d$y <- angle_retrans(d$y, response_range[1], response_range[2])
   return(d)
 }
