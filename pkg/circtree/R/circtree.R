@@ -74,14 +74,6 @@ coef.circtree <- function(object, type = c("parameter", "response"), ...){
 }
 
 
-## TODO: This S3-method should be defined for distextree, so no for circtree necessary anymorge
-fitted.circtree <- function(object, ...){
-
-  rval <- predict.circtree(object, newdata = NULL, type = "response", OOB = FALSE, ...)
-  return(rval)
-
-}
-
 
 ## logLik method
 logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
