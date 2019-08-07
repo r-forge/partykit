@@ -57,6 +57,7 @@ print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 }
 
 
+## TODO: Does kappa stay the same for response scale??!
 ## Coef method
 coef.circtree <- function(object, type = c("parameter", "response"), ...){
   type <- match.arg(type)
@@ -66,6 +67,7 @@ coef.circtree <- function(object, type = c("parameter", "response"), ...){
   if(type == "response"){
     response_range <- attr(object$fitted[["(response)"]], "response_range")
     cf[, "mu"] <- angle_retrans(cf[, "mu"], response_range[1], response_range[2])
+    cf[,"kappa"] <- cf[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
 
   return(cf)

@@ -151,7 +151,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     if(length(y) > 1000) y <- sample(y, 1000)
 
     ## coefficients
-    coefs <- c(signif(coef(node$info$object)[1],2), signif(coef(node$info$object)[2],2))
+    coefs <- coef(node$info$object)
 
     ## set up viewport tree
     top.vp <- grid::viewport(layout = grid::grid.layout(ncol = 1, nrow = 3,
@@ -173,12 +173,14 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
         ## Convert to response range if type = 'response'
         if(type == "response"){
           mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
+          kappa <- signif(kappa * (2 * pi)^2 / diff(response_range)^2, 2)
+
         #} else if(type == "parameter" & plot_type == "geographics"){
         #  warning("Changing type from 'parameter' to 'response', as plot_type='geographics'...")
         #  mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
         }
 
-        sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, mu, kappa)
+        sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, signif(mu, 2), signif(kappa, 2))
       }
       #function(id, nobs, mu, kappa) sprintf("Node %s (n = %s)", id, nobs)
       } else {
