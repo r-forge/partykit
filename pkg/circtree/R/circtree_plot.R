@@ -173,9 +173,9 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
         ## Convert to response range if type = 'response'
         if(type == "response"){
           mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
-        } else if(type == "parameter" & plot_type == "geographics"){
-          warning("Changing type from 'parameter' to 'response', as plot_type='geographics'...")
-          mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
+        #} else if(type == "parameter" & plot_type == "geographics"){
+        #  warning("Changing type from 'parameter' to 'response', as plot_type='geographics'...")
+        #  mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
         }
 
         sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, mu, kappa)
