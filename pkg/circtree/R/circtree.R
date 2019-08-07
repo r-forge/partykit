@@ -124,12 +124,11 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
   } else {
     cl <- match.call()
     cl[[1]] <- quote(disttree:::predict.distextree)
-    cl$type <- "parameter"
-    parameters <- eval(cl)
-
-    rval <- angle_retrans(parameters$mu,
-                        start = attr(object$fitted[["(response)"]], "response_range")[1],
-                        end = attr(object$fitted[["(response)"]], "response_range")[2])
+    response <- eval(cl)
+    
+    rval <- angle_retrans(response,
+                          start = attr(object$fitted[["(response)"]], "response_range")[1],
+                          end = attr(object$fitted[["(response)"]], "response_range")[2])
     return(rval)
   }
 }
