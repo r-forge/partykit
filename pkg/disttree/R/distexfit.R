@@ -419,11 +419,17 @@ get_expectedvalue_distex <- function(object, par) {
   if(inherits(object, "distexfit")) {
     censored <- object$family$censored
     family.name <- object$family$family.name
+    expectedvalue <- ifelse(is.null(object$family$expectedvalue), FALSE, object$family$expectedvalue)
   }
   if(inherits(object, "distextree")) {
     censored <- object$info$family$censored
     family.name <- object$info$family$family.name
+    expectedvalue <- ifelse(is.null(object$info$family$expectedvalue), FALSE, 
+      object$info$family$expectedvalue)
   }
+
+  if(expectedvalue & (censored | "truncated" %in% strsplit(family.name, " ")[[1]]))
+    warning("parameter 'expectedvalue' of family is ignored, as family is censored/truncated...")
   
   ## FIXME: replace censored/truncated case with crch implementation 
   ## (here only for left censored at 0 -> TO DO: general form)
@@ -434,17 +440,15 @@ get_expectedvalue_distex <- function(object, par) {
       mu <- par[,1]
       sigma <- par[,2]
       expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
-    } else {
-      if("Logistic" %in% strsplit(family.name, " ")[[1]]){
+    } else if("Logistic" %in% strsplit(family.name, " ")[[1]]){
         location <- par[,1]
         scale <- par[,2]
         expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
-      } else {
-        ## FIX ME: expected value for other censored distributions:
-        warning("For censored distributions other than the censored normal and censored logistic distribution
-                the location parameter is returned as response/expected value.")
-        expv <- par[,1]
-      }
+    } else {
+      ## FIX ME: expected value for other censored distributions:
+      warning("For censored distributions other than the censored normal and censored logistic distribution
+              the location parameter is returned as response/expected value.")
+      expv <- par[,1]
     }
     return(expv)
   } 
@@ -462,6 +466,12 @@ get_expectedvalue_distex <- function(object, par) {
     }
     return(expv)
   }
+
+  if(expectedvalue){
+    expv <- par[,1]
+    return(expv)
+  }
+
   
   # integrate over function f = x * density function with estimated parameters plugged in (already in the object for class 'distexfit')
   if(inherits(object, "distexfit")) {
@@ -519,11 +529,15 @@ get_expectedvalue_distex <- function(object, par) {
 predict.distexfit <- function(object, type = c("parameter", "response"), ...) {
   # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
-  
+
   # per default 'type' is set to 'parameter'
   type <- match.arg(type)
-  
-  if(type == "response") return(get_expectedvalue_distex(object, object$par)) else return(object$par)
+
+  if(type == "response"){
+    return(get_expectedvalue_distex(object, object$par))
+  }  else {
+    return(object$par)
+  }
 }
 
 vcov.distexfit <- function(object, type = c("parameter", "link"), ...) {
