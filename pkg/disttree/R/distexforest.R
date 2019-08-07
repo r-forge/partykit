@@ -222,7 +222,7 @@ distexforest <- function
       loglik <- data.frame(idx = 1:nrow(data))
 
       # extract weights
-      w <- partykit::predict.cforest(ret, type = "weights", OOB = TRUE)  #FIXME: (LS) allow for additional argument OOB in distexforest
+      w <- partykit::predict.cforest(ret, type = "weights", OOB = FALSE)  #FIXME: (LS) allow for additional argument OOB in distexforest
 
       Y <- ret$fitted$`(response)`
 
@@ -252,7 +252,7 @@ distexforest <- function
 
 predict.distexforest <- function(object, newdata = NULL, 
                                  type = c("parameter", "response", "weights", "node"), 
-                                 OOB = TRUE, 
+                                 OOB = FALSE, 
                                  scale = TRUE, ...) {
 
     responses <- object$fitted[["(response)"]]
@@ -321,7 +321,7 @@ predict.distexforest <- function(object, newdata = NULL,
     
     if(type == "parameter" | type == "response") {
       
-      if(NOnewdata & type == "parameter" & !is.null(object$fitted.par)) return(object$fitted.par)
+      if(NOnewdata & type == "parameter" & OOB == FALSE & !is.null(object$fitted.par)) return(object$fitted.par)
         
       family <- object$info$family
       # if(!inherits(family, "disttree.family"))  
