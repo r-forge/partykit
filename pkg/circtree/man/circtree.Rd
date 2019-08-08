@@ -19,32 +19,31 @@ circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
 }
 
 \arguments{
-  \item{formula}{A symbolic description of the model to be fit. This
+  \item{formula}{a symbolic description of the model to be fit. This
     should be of type \code{y ~ x1 + x2}
     where \code{y} should be the response variable
     and \code{x1} and \code{x2} are used as partitioning variables.}
-  \item{data}{An optional data frame containing the variables in the model.}
-  \item{response_range}{Circular range of response variable.}
-  \item{subset}{An optional vector specifying a subset of observations to be
-    used for fitting.}
-  \item{na.action}{A function which indicates what should happen when the data
-    contain \code{NA}s.}
-  \item{weights}{Optional numeric vector of case weights.}
-  \item{offset}{Optional numeric vector with \emph{a priori} known component to
-    be included in the linear predictor for the location. \strong{Currently, not supported.}}
-  \item{cluster}{An optional vector (typically numeric or factor) with a
-    cluster ID to be employed for clustered covariances in the parameter
-    stability tests.}
-  \item{control}{Control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
-  \item{converged}{An optional function for checking user-defined criteria before splits are implemented.}
-  \item{scores}{An optional named list of scores to be attached to ordered factors.}
-  \item{doFit}{A logical indicating if the tree shall be grown (TRUE) or not FALSE}
-  \item{\dots}{Arguments to be used to form the default \code{control} argument
+  \item{data}{an optional data frame containing the variables in the model.}
+  \item{response_range}{an optional vector specifying a range of the 
+    circular response.}
+  \item{subset}{an optional vector specifying a subset of observations to be
+    used in the fitting process.}
+  \item{na.action}{a function which indicates what should happen when the data
+    contain missing value.}
+  \item{weights}{optional numeric vector of case weights.}
+  \item{offset}{an optional vector of offset values.}
+  \item{cluster}{an optional factor indicating independent clusters.
+    Highly experimental, use at your own risk.}
+  \item{control}{control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
+  \item{converged}{an optional function for checking user-defined criteria before splits are implemented.}
+  \item{scores}{an optional named list of scores to be attached to ordered factors.}
+  \item{doFit}{a logical indicating if the tree shall be grown (TRUE) or not FALSE}
+  \item{\dots}{arguments to be used to form the default \code{control} argument
     if it is not supplied directly.}
 }
 
 \details{
-  Distributional regression trees for a circular response is an application of model-based recursive 
+  Distributional regression trees for a circular response are an application of model-based recursive 
   partitioning and unbiased recursive partitioning based on the implementation in 
   \code{\link[disttree]{distextree}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
 }
@@ -85,7 +84,8 @@ plot(ct.hour, tp_args = list(type = "response", plot_type = "time",
 
 
 \seealso{
-  \code{\link[disttree]{distextree}}, \code{\link[partykit]{mob}}, \code{\link[partykit]{ctree}}
+  \code{\link[disttree]{distextree}}, \code{\link[disttree]{distexfit}}, 
+  \code{\link[partykit]{extree_fit}}
 }
 
-\keyword{tree, parametric modelling, circular response}
+\keyword{regression tree, parametric modelling, circular response}
