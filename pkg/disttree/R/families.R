@@ -1641,11 +1641,11 @@ dist_binomial <- function() {
   # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::pcnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right)
+                                                                           left = 0, right = Inf)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qcnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right)
-  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
+                                                                           left = 0, right = Inf)
+  rdist <- function(n, eta) crch::rcnorm(n, mean = eta[1], sd = exp(eta[2]), left = 0, right = Inf)
   
   
   link <- c("identity", "log")
@@ -1852,11 +1852,11 @@ dist_binomial <- function() {
   # FIX ME: par instead of eta better?
   pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) crch::ptnorm(q, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right)
+                                                                           left = 0, right = Inf)
   qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) crch::qtnorm(p, mean = eta[1], sd = exp(eta[2]), 
                                                                            lower.tail = lower.tail, log.p = log.p, 
-                                                                           left = left, right = right)
-  rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = left, right = right)
+                                                                           left = 0, right = Inf)
+  rdist <- function(n, eta) crch::rtnorm(n, mean = eta[1], sd = exp(eta[2]), left = 0, right = Inf)
   
   
   link <- c("identity", "log")
