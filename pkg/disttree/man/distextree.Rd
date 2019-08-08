@@ -54,7 +54,8 @@ distextree(formula, data, subset, na.action = na.pass, weights, offset,
   %\item{censpoint}{numeric value. Censoring point can be set for censored response.}
   %\item{ocontrol}{List with control parameters passed to
   %  \code{\link[stats]{optim}} in \code{\link[disttree]{distfit}}.}
-  \item{\dots}{further arguments passed to \code{\link[stats]{optim}} in \code{\link[disttree]{distexfit}}.}
+  \item{\dots}{arguments to be used to form the default \code{control} argument
+    if it is not supplied directly.}
 }
 
 \details{

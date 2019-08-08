@@ -65,7 +65,7 @@ distexforest(formula, data, subset, na.action = na.pass, weights,
                  \code{\link{distextree_control}} are ignored for \code{\link{distexforest}},
                  because they are already set.}
   \item{ntree}{
-    Number of trees to grow for the forest.}
+    number of trees to grow for the forest.}
   \item{fit.par}{logical. if TRUE, fitted and predicted values and predicted parameters are calculated 
     for the learning data (together with loglikelihood)}
   \item{perturb}{
@@ -89,9 +89,9 @@ distexforest(formula, data, subset, na.action = na.pass, weights,
   \item{trace}{a logical indicating if a progress bar shall be printed while
           the forest grows.}
   \item{object}{
-    An object as returned by \code{distexforest}}
+    an object as returned by \code{distexforest}}
   \item{newdata}{
-    An optional data frame containing test data.}
+    an optional data frame containing test data.}
   \item{type}{
     a character string denoting the type of predicted value
     returned. For \code{"parameter"} the predicted distributional parameters
@@ -105,7 +105,8 @@ distexforest(formula, data, subset, na.action = na.pass, weights,
                each tree. In the simple regression forest, predicting
                the conditional mean by nearest neighbor weights will be
                equivalent to (but slower!) the aggregation of means.}
-  \item{\dots}{ additional arguments. }
+  \item{\dots}{arguments to be used to form the default \code{control} argument
+    if it is not supplied directly.}
 }
 
 \details{
