@@ -11,7 +11,7 @@
 \alias{print.distexfit}
 \alias{summary.distexfit}
 \alias{print.summary.distexfit}
-%\alias{getSummary.distexfit}
+\alias{getSummary.distexfit}
 \alias{residuals.distexfit}
 \alias{plot.distexfit}
 
