@@ -1,4 +1,5 @@
-\name{dist_lists}
+\name{disttree.family}
+\alias{family.disttree}
 \alias{dist_gaussian}
 \alias{dist_exponential}
 \alias{dist_weibull}
@@ -15,7 +16,7 @@
 \title{Family List Generating Functions}
 
 \description{
- The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family list with all the required elements to fit a distribution in \code{distexfit}. 
+ The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family object of class \code{disttree.family} with all the required elements to fit a distribution in \code{distexfit}. 
  
  Complete distribution family lists are provided for example by \code{dist_list_normal} and \code{dist_list_cens_normal}.
 }
@@ -45,8 +46,11 @@
 }
 
 \value{
-These functions return a list with functions of the corresponding distribution family as required by \code{distexfit}, \code{distextree}, and \code{distexforest}.
+These functions return a family of class \code{disttree.family} with functions of the corresponding distribution family as required by \code{distexfit}, \code{distextree}, and \code{distexforest}.
 }
+
+\seealso{\code{\link[disttree]{distfamily}}}
+
 
 
 \examples{
@@ -54,4 +58,4 @@ These functions return a list with functions of the corresponding distribution f
 dist_gaussian()
 }
 
-\keyword{distribution family list}
+\keyword{distribution family}

@@ -2,10 +2,10 @@
 \alias{distfamily}
 
 
-\title{Preparation of family list as employed in \code{distexfit}, \code{distextree}, and \code{distexforest}}
+\title{Preparation of family object of class \code{disttree.family} as employed in \code{distexfit}, \code{distextree}, and \code{distexforest}}
 
 \description{
-  The function \code{distfamily} prepares the required family list that is employed within
+  The function \code{distfamily} prepares the required family object that is employed within
   \code{distexfit} to estimate the parameters of the specified distribution family.
 }
 
@@ -18,25 +18,25 @@
   \code{\link[gamlss.dist]{gamlss.family}} object,
   \code{\link[gamlss.dist]{gamlss.family}} function,
   character string with the name of a \code{\link[gamlss.dist]{gamlss.family}} object,
-  function generating a list with the required information about the distribution,
-  character string with the name of a function generating a list with the required information about the distribution,
-  character string with the name of a distribution for which a list generating function is provided in \code{\link[disttree]{disttree}}
+  function generating a family object with the required information about the distribution,
+  character string with the name of a function generating a family object with the required information about the distribution, list with the required information about the distribution,
+  character string with the name of a distribution for which a family  generating function is provided in \code{\link[disttree]{disttree}}
 }
   \item{bd}{optional argument for binomial distributions specifying the binomial denominator}
   \item{censpoint}{censoring point for a censored \code{\link[gamlss.dist]{gamlss.family}} object}
 }
 
 \details{
-The function \code{distfamily} is applied within \code{distexfit}, \code{distextree}, and \code{distexforest}. It generates a list of class \code{disttree.family}.
+The function \code{distfamily} is applied within \code{distexfit}, \code{distextree}, and \code{distexforest}. It generates a family object of class \code{disttree.family}.
 If \code{family} is a \code{\link[gamlss.dist]{gamlss.family}} object the function \code{distfamily_gamlss} is called within \code{distfamily}.
 }
 
 \value{
-  \code{distfamily} returns a list with
+  \code{distfamily} returns a family object of class \code{disttree.family} in form of a list with
   the following components:
   \item{family.name }{character string with the name of the specified distribution family}
   \item{ddist}{density function of the specified distribution family.}
-  \item{sdist}{scores function (1st partial derivatives) of the specified distribution family.}
+  \item{sdist}{score function (1st partial derivatives) of the specified distribution family.}
   \item{hdist}{hessian function (2nd partial derivatives) of the specified distribution family.}
   \item{pdist}{distribution function of the specified distribution family.}
   \item{qdist}{quantile function of the specified distribution family.}
@@ -46,10 +46,11 @@ If \code{family} is a \code{\link[gamlss.dist]{gamlss.family}} object the functi
   \item{linkinv}{inverse link functions.}
   \item{linkinvdr}{derivative of the inverse link functions.}
   \item{startfun}{function generating the starting values for the employed optimization.}	
-  \item{mle}{Logical. Indicates whether a closed form solution exists (TRUE) for the maximum-likelihood optimization or whether a numerical optimization should be employed to estimate parameters (FALSE).}	
-  \item{gamlssobj}{Logical. Indicates whether the family has been obtained from a \code{\link[gamlss.dist]{gamlss.family}} object.}	
-  \item{censored}{Logical. Indicates whether the specified distribution family is censored.}	  \item{censpoint}{Numeric. Censoring point (only if censored and gamlssobj),}
-  \item{censtype}{Character. Type of censoring ("left", "right") (only if censored and gamlssobj).}
+  \item{mle}{logical. Indicates whether a closed form solution exists (TRUE) for the maximum-likelihood optimization or whether a numerical optimization should be employed to estimate parameters (FALSE).}	
+  \item{gamlssobj}{logical. Indicates whether the family has been obtained from a \code{\link[gamlss.dist]{gamlss.family}} object.}	
+  \item{censored}{logical. Indicates whether the specified distribution family is censored.}	  
+  \item{censpoint}{numeric. Censoring point (only if censored and gamlssobj),}
+  \item{censtype}{character. Type of censoring ("left", "right") (only if censored and gamlssobj).}
 }
 
 \references{
@@ -63,7 +64,7 @@ Venables WN, Ripley BD (2002).
   4th Edition. Springer-Verlag, New York.
 }
 
-\seealso{\code{\link[gamlss.dist]{gamlss.family}}}
+\seealso{\code{disttree.family}, \code{\link[gamlss.dist]{gamlss.family}}}
 
 \examples{
 library(disttree)
