@@ -11,7 +11,7 @@
 \alias{print.distexfit}
 \alias{summary.distexfit}
 \alias{print.summary.distexfit}
-\alias{getSummary.distexfit}
+%\alias{getSummary.distexfit}
 \alias{residuals.distexfit}
 \alias{plot.distexfit}
 
@@ -72,7 +72,7 @@ distexfit(y, family = NO(), weights = NULL, start = NULL, start.eta = NULL,
   \item{start}{used starting values in \code{\link[stats]{optim}} that were handed over as input argument}
   \item{starteta}{starting values on the link scale used in \code{\link[stats]{optim}}}
   \item{opt}{list returned by \code{\link[stats]{optim}}}
-  \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returnes convergence = 0 and FALSE else.}
+  \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returns convergence = 0 and FALSE else.}
   \item{par}{fitted distribution parameters (on parameter scale)}
   \item{eta}{fitted distribution parameters (on link scale)}
   \item{hess}{hessian matrix}
