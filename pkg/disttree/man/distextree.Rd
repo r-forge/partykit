@@ -35,9 +35,8 @@ distextree(formula, data, subset, na.action = na.pass, weights, offset,
                    contain missing value.}
   \item{weights}{optional numeric vector of case weights.}
   \item{offset}{an optional vector of offset values.}
-  \item{cluster}{an optional vector (typically numeric or factor) with a
-    cluster ID to be employed for clustered covariances in the parameter
-    stability tests.}
+  \item{cluster}{an optional factor indicating independent clusters.
+                  Highly experimental, use at your own risk.}
   \item{family}{specification of the response distribution.
     Either a \code{\link[gamlss.dist]{gamlss.family}} object, a list generating function or a family list.}
   \item{control}{control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
