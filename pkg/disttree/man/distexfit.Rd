@@ -19,15 +19,15 @@
 
 \description{
   The function \code{distexfit} carries out maximum-likelihood
-  estimation of parameters for distributions from the GAMLSS
-  family (for generalized additive models for location, scale,
-  and shape). The parameters can be transformed through
-  link functions but do not depend on further covariates
-  (i.e., are constant across observations).
+  estimation of parameters for a specified distribution family, 
+  for example from the GAMLSS family (for generalized additive 
+  models for location, scale, and shape). The parameters can be 
+  transformed through link functions but do not depend on further 
+  covariates (i.e., are constant across observations).
 }
 
 \usage{
-distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
+distexfit(y, family = NO(), weights = NULL, start = NULL, start.eta = NULL,
           vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"),
           method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 }
@@ -62,16 +62,15 @@ distexfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
 }
 
 \value{
-  \code{distexfit} returns an object of class \code{distfit} which is a list with
+  \code{distexfit} returns an object of class \code{distexfit} which is a list with
   the following components:
   \item{npar}{number of parameter}
   \item{y}{numeric vector of the response}
   \item{ny}{number of observations}
   \item{weights}{numeric vector of case weights handed over as input argument}
-  \item{family}{name of the distribution family}
-  \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
+  \item{family}{employed distribution family list of class \code{disttree.family}}
   \item{start}{used starting values in \code{\link[stats]{optim}} that were handed over as input argument}
-  \item{starteta}{starting value on the link scale used in \code{\link[stats]{optim}}}
+  \item{starteta}{starting values on the link scale used in \code{\link[stats]{optim}}}
   \item{opt}{list returned by \code{\link[stats]{optim}}}
   \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returnes convergence = 0 and FALSE else.}
   \item{par}{fitted distribution parameters (on parameter scale)}
