@@ -105,8 +105,8 @@ circforest(formula, data, response_range = NULL, subset,
 }
 
 \examples{
-sdat <- circtree_simulate()
-cf <- circforest(y ~ x1 + x2, data = sdat, ntree = 50)
+#sdat <- circtree_simulate()
+#cf <- circforest(y ~ x1 + x2, data = sdat, ntree = 50)
 }
 
 
