@@ -345,7 +345,10 @@ predict.distexforest <- function(object, newdata = NULL,
         pred <- data.frame(pred)
         names(pred) <- names(coef.distexfit(pm, type = "parameter"))
       }
-      if(type == "response") pred <- as.vector(pred)
+      if(type == "response") {
+        pred <- data.frame(pred)
+        names(pred) <- "(fitted.response)"
+      }
       return(pred)
     }
 }
