@@ -13,6 +13,7 @@ context("comparison of new implementation 'disttree()' with original version")
 # -------------------------------------------------------------------
 # Cars example
 # -------------------------------------------------------------------
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(123)
 ### original disttree implementation with old control arguments (
 #tr_cars <- disttree(dist ~ speed, data = cars, type.tree = "ctree")

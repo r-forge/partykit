@@ -12,6 +12,7 @@ context("comparison of new implementation 'distforest()' with original version")
 # -------------------------------------------------------------------
 # Cars example
 # -------------------------------------------------------------------
+suppressWarnings(RNGversion("3.5.0"))
 set.seed(123)
 ### original distforest implementation with old control arguments (
 #f_cars <- distforest(dist ~ speed, data = cars, type.tree = "ctree")
