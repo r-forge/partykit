@@ -378,7 +378,7 @@ logLik.distexforest <- function(object, newdata = NULL, weights = NULL, ...){
            eta = as.numeric(object$info$family$linkfun(pred.par[i,])),
            log = TRUE, weights = weights[i]))
   ll <- sum(ll, na.rm = TRUE)
-  return(ll)
+  return(structure(ll, df = NA, class = "logLik"))
 }
 
 
