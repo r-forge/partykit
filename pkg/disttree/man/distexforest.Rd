@@ -184,12 +184,12 @@ Strobl C, Malley J, Tutz G (2009).
 }
 
 \examples{
-## basic example: distributional regressioin forest for cars data
+## basic example: distributional regression forest for cars data
 df <- distexforest(dist ~ speed, data = cars)
 
 ## prediction of fitted mean and visualization
 nd <- data.frame(speed = 4:25)
-nd$mean  <- predict(df, newdata = nd, type = "response")
+nd$mean  <- predict(df, newdata = nd, type = "response")[["(fitted.response)"]]
 plot(dist ~ speed, data = cars)
 lines(mean ~ speed, data = nd)
 
