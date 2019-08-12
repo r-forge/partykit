@@ -1,0 +1,13 @@
+
+Model formula:
+dist ~ speed
+
+Fitted party:
+[1] root
+|   [2] speed <= 12: 18.200 (n = 15, err = 1176.4)
+|   [3] speed > 12
+|   |   [4] speed <= 20: 46.286 (n = 28, err = 7861.7)
+|   |   [5] speed > 20: 82.857 (n = 7, err = 2852.9)
+
+Number of inner nodes:    2
+Number of terminal nodes: 3
