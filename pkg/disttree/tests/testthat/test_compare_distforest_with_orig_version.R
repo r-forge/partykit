@@ -1,30 +1,29 @@
 # -------------------------------------------------------------------
-# - NAME:   test_compare_disttree_with_orig_version.R 
+# - NAME:   test_compare_distforest_with_orig_version.R 
 # - AUTHOR: Moritz N. Lang, Lisa Schlosser
 # - DATE:   2019-08-12
 # -------------------------------------------------------------------
-# - PURPOSE: Test new implementation (build on extree()) with original implemention 
-#            build on mob() and ctree()
+# - PURPOSE: Test new implementation (build on extree()) with original implementation 
+#            build on ctree()
 # -------------------------------------------------------------------
 
-context("comparison of new implementation 'disttree()' with original version")
-
+context("comparison of new implementation 'distforest()' with original version")
 
 # -------------------------------------------------------------------
 # Cars example
 # -------------------------------------------------------------------
 set.seed(123)
-### original disttree implementation with old control arguments (
-#tr_cars <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
+### original distforest implementation with old control arguments (
+#f_cars <- distforest(dist ~ speed, data = cars, type.tree = "ctree")
 
 ## new disttree implementation with new control arguments (
-tr_cars <- distextree(dist ~ speed, data = cars, type.tree = "ctree", 
-  control = distextree_control(minsplit = 20L, minbucket = 7L, splittry = 2L))
+f_cars <- distexforest(dist ~ speed, data = cars, type.tree = "ctree")
 
-expect_known_value(apply(coef(tr_cars), 2, sort), file = "test_compare_disttree_with_orig_version_tr_cars_coef.rds", update = FALSE, tolerance = 1e-6)
-expect_known_value(logLik(tr_cars), file = "test_compare_disttree_with_orig_version_tr_cars_logLik.rds", update = FALSE)
-expect_known_value(predict(tr_cars), file = "test_compare_disttree_with_orig_version_tr_cars_pred.rds", update = FALSE, tolerance = 1e-6)
-expect_known_output(print(as.constparty(tr_cars)), file = "test_compare_disttree_with_orig_version_tr_cars_constparty.txt", update = FALSE, tolerance = 1e-6)
+expect_known_output(print(logLik(f_cars, newdata = cars)), file = "test_compare_distforest_with_orig_version_f_cars_logLik.txt", update = FALSE)
+expect_known_value(predict(f_cars, type = "parameter", newdata = cars), file = "test_compare_distforest_with_orig_version_f_cars_par.rds", update = FALSE)
+expect_known_value(predict(f_cars, type = "response", newdata = cars), file = "test_compare_distforest_with_orig_version_f_cars_response.rds", update = FALSE)
+expect_known_value(predict(f_cars, type = "node", newdata = cars), file = "test_compare_distforest_with_orig_version_f_cars_nodes.rds", update = FALSE)
+expect_known_value(predict(f_cars, type = "weights", newdata = cars), file = "test_compare_distforest_with_orig_version_f_cars_weights.rds", update = FALSE)
 
 
 # -------------------------------------------------------------------
@@ -103,25 +102,26 @@ testdata <- RainData[RainData$year %in% c(2009, 2010, 2011, 2012),]
 # fitting the model
 set.seed(123)
 
-### original disttree implementation with old control arguments (
-#fit_time <- system.time(tr_axams <- disttree(dt.formula, 
+### original distforest implementation with old control arguments (
+#fit_time <- system.time(f_axams <- distforest(dt.formula, 
 #                                             data = learndata, family = dist_list_cens_normal, 
 #                                             censtype = "left", censpoint = 0, type.tree = "ctree", 
 #                                             control = ctree_control(teststat = "quad", testtype = "Bonferroni", 
 #                                             intersplit = TRUE, mincriterion = 0.95, 
-#                                             minsplit = 50, minbucket = 20)))
+#                                             minsplit = 70, minbucket = 40), ntree = 50))
 
-## new disttree implementation with new control arguments (
-fit_time <- system.time(tr_axams <- distextree(dt.formula, 
+## new distforest implementation with new control arguments (
+fit_time <- system.time(f_axams <- distexforest(dt.formula, 
                                                data = learndata, family = dist_list_cens_normal, 
                                                control = distextree_control(type.tree = "ctree", splittry = 2L, 
                                                                             teststat = "quad", testtype = "Bonferroni", 
                                                                             intersplit = TRUE, mincriterion = 0.95, 
-                                                                            minsplit = 50, minbucket = 20)))
+                                                                            minsplit = 70, minbucket = 40), ntree = 50))
 
-expect_known_value(apply(coef(tr_axams), 2, sort), file = "test_compare_disttree_with_orig_version_tr_axams_coef.rds", update = FALSE)
-expect_known_value(logLik(tr_axams), file = "test_compare_disttree_with_orig_version_tr_axams_logLik.rds", update = FALSE)
-expect_known_value(predict(tr_axams, newdata = testdata), file = "test_compare_disttree_with_orig_version_tr_axams_pred.rds", update = FALSE)
-expect_known_value(fit_time[3L], file = "test_compare_disttree_with_orig_version_tr_axams_fittime.rds", update = FALSE, tolerance = 0.2)
-expect_known_output(print(as.constparty(tr_axams)), file = "test_compare_disttree_with_orig_version_tr_axams_constparty.txt", update = FALSE, tolerance = 1e-6)
+expect_known_output(print(logLik(f_axams, newdata = learndata)), file = "test_compare_distforest_with_orig_version_f_axams_logLik.txt", update = FALSE)
+expect_known_value(predict(f_axams, type = "parameter", newdata = testdata), file = "test_compare_distforest_with_orig_version_f_axams_par.rds", update = FALSE)
+expect_known_value(predict(f_axams, type = "response", newdata = testdata), file = "test_compare_distforest_with_orig_version_f_axams_response.rds", update = FALSE)
+expect_known_value(predict(f_axams, type = "node", newdata = learndata), file = "test_compare_distforest_with_orig_version_f_axams_nodes.rds", update = FALSE)
+expect_known_value(predict(f_axams, type = "weights", newdata = learndata), file = "test_compare_distforest_with_orig_version_f_axams_weights.rds", update = FALSE)
+expect_known_value(fit_time[3L] < 40, file = "test_compare_distforest_with_orig_version_f_axams_fittime.rds", update = FALSE, tolerance = 0.2)
 
