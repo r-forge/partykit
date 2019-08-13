@@ -387,7 +387,7 @@ model.frame.distexforest <- function(formula, ...) {
 
 ### FIXME: (ML) does not get a full distextree object
 gettree.distexforest <- function(object, tree = 1L, ...) {
-    consttree <- partykit:::gettree.cforest(object, tree = tree, ...)
+    consttree <- partykit::gettree.cforest(object, tree = tree, ...)
     #d.response <- consttree$fitted$`(response)`[consttree$fitted$`(weights)` == 1]
     d <- object$data[consttree$fitted$`(weights)` == 1,]
     ctrl <- object$info$control
