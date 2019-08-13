@@ -123,6 +123,6 @@ fit_time <- system.time(tr_axams <- disttree(dt.formula,
 expect_known_value(apply(coef(tr_axams), 2, sort), file = "test_compare_disttree_with_orig_version_tr_axams_coef.rds", update = FALSE)
 expect_known_value(logLik(tr_axams), file = "test_compare_disttree_with_orig_version_tr_axams_logLik.rds", update = FALSE)
 expect_known_value(predict(tr_axams, newdata = testdata), file = "test_compare_disttree_with_orig_version_tr_axams_pred.rds", update = FALSE)
-expect_known_value(fit_time[3L], file = "test_compare_disttree_with_orig_version_tr_axams_fittime.rds", update = FALSE, tolerance = 0.2)
+expect_known_value(fit_time[3L], file = "test_compare_disttree_with_orig_version_tr_axams_fittime.rds", update = FALSE, tolerance = 2)
 expect_known_output(print(as.constparty(tr_axams)), file = "test_compare_disttree_with_orig_version_tr_axams_constparty.txt", update = FALSE, tolerance = 1e-6)
 
