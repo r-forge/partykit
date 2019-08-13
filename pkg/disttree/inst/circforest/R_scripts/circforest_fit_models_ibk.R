@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-06-06 on thinkmoritz
+# - L@ST MODIFIED: 2019-08-13 on thinkmoritz
 # -------------------------------------------------------------------
 
 ## Model version for output files
@@ -74,7 +74,7 @@ d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
 #  train <- subset(d, index(d) %in% idx)
 #
 #  if(nrow(train) > 2){
-#    climfit <- distexfit(train$dd.response,
+#    climfit <- distfit(train$dd.response,
 #                         family = dist_vonmises())
 #    pred_clim[i, ] <- coef(climfit, type = "parameter")
 #  } else {
@@ -112,7 +112,7 @@ for(i in seq(1:nrow(d))){
   train_weights <- exp_weights[idx %in% index(train)]
 
   ## Fit persistency
-  persfit <- try(distexfit(as.numeric(train$dd.response),
+  persfit <- try(distfit(as.numeric(train$dd.response),
                            family = dist_vonmises(), weights = train_weights))
 
   ## Predict parameters
@@ -169,7 +169,7 @@ for(cv in unique(cvID)) {
     train_subset <- subset(train, index(train) %in% idx)
   
     ## Fit climatology
-    climfit <- try(distexfit(train_subset$dd.response,
+    climfit <- try(distfit(train_subset$dd.response,
                              family = dist_vonmises()))
 
     ## Predict parameters
@@ -213,19 +213,19 @@ for(cv in unique(cvID)) {
   test <- d[cv == cvID, ]
   
   ## Fit tree
-  m_dt <- distextree(formula = f,
+  m_dt <- disttree(formula = f,
                            data = train,
                            family = dist_vonmises(),
-                           control = distextree_control(maxdepth = 4))
+                           control = disttree_control(maxdepth = 4))
   
   ## Fit forest
-  m_df <- distexforest(formula = f,
+  m_df <- distforest(formula = f,
                        data = train,
                        family = dist_vonmises(),
                        ntree = 100,
                        mtry = ceiling(1. * length(all.vars(f[[3]]))),
                        perturb = list(replace = FALSE, fraction = 0.3),
-                       control = distextree_control(nmax = c("yx" = Inf, "z" = 50)))
+                       control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
 
   ## Predict models
   pred_dt.tmp <- predict(m_dt, newdata = test, type = "parameter")

@@ -16,7 +16,7 @@
 \title{Family List Generating Functions}
 
 \description{
- The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family object of class \code{disttree.family} with all the required elements to fit a distribution in \code{distexfit}. 
+ The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family object of class \code{disttree.family} with all the required elements to fit a distribution in \code{distfit}. 
  
  Complete distribution family lists are provided for example by \code{dist_list_normal} and \code{dist_list_cens_normal}.
 }
@@ -40,13 +40,13 @@
 }
 
 \details{
-  The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family list with all the required elements to fit a distribution in \code{distexfit}. These lists include a density function, a score function, a hessian function, starting values, link functions and inverse link functions.
+  The functions \code{dist_gaussian}, \code{dist_crch},  \code{dist_exponential}, \code{dist_weibull}, \code{dist_gamma} and \code{dist_poisson} generate a distribution family list with all the required elements to fit a distribution in \code{distfit}. These lists include a density function, a score function, a hessian function, starting values, link functions and inverse link functions.
   
   Complete distribution family lists are provided for example by \code{dist_list_normal} and \code{dist_list_cens_normal} for the normal and censored normal distribution respectively.
 }
 
 \value{
-These functions return a family of class \code{disttree.family} with functions of the corresponding distribution family as required by \code{distexfit}, \code{distextree}, and \code{distexforest}.
+These functions return a family of class \code{disttree.family} with functions of the corresponding distribution family as required by \code{distfit}, \code{disttree}, and \code{distforest}.
 }
 
 \seealso{\code{\link[disttree]{distfamily}}}

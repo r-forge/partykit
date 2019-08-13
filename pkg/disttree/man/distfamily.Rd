@@ -2,11 +2,11 @@
 \alias{distfamily}
 
 
-\title{Preparation of family object of class \code{disttree.family} as employed in \code{distexfit}, \code{distextree}, and \code{distexforest}}
+\title{Preparation of family object of class \code{disttree.family} as employed in \code{distfit}, \code{disttree}, and \code{distforest}}
 
 \description{
   The function \code{distfamily} prepares the required family object that is employed within
-  \code{distexfit} to estimate the parameters of the specified distribution family.
+  \code{distfit} to estimate the parameters of the specified distribution family.
 }
 
 \usage{
@@ -27,7 +27,7 @@
 }
 
 \details{
-The function \code{distfamily} is applied within \code{distexfit}, \code{distextree}, and \code{distexforest}. It generates a family object of class \code{disttree.family}.
+The function \code{distfamily} is applied within \code{distfit}, \code{disttree}, and \code{distforest}. It generates a family object of class \code{disttree.family}.
 If \code{family} is a \code{\link[gamlss.dist]{gamlss.family}} object the function \code{distfamily_gamlss} is called within \code{distfamily}.
 }
 

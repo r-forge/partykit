@@ -18,7 +18,7 @@ set.seed(123)
 #f_cars <- distforest(dist ~ speed, data = cars, type.tree = "ctree")
 
 ## new disttree implementation with new control arguments (
-f_cars <- distexforest(dist ~ speed, data = cars, type.tree = "ctree")
+f_cars <- distforest(dist ~ speed, data = cars, type.tree = "ctree")
 
 expect_known_output(print(logLik(f_cars, newdata = cars)), file = "test_compare_distforest_with_orig_version_f_cars_logLik.txt", update = FALSE)
 expect_known_value(predict(f_cars, type = "parameter", newdata = cars), file = "test_compare_distforest_with_orig_version_f_cars_par.rds", update = FALSE)
@@ -112,9 +112,9 @@ set.seed(123)
 #                                             minsplit = 70, minbucket = 40), ntree = 50))
 
 ## new distforest implementation with new control arguments (
-fit_time <- system.time(f_axams <- distexforest(dt.formula, 
+fit_time <- system.time(f_axams <- distforest(dt.formula, 
                                                data = learndata, family = dist_list_cens_normal, 
-                                               control = distextree_control(type.tree = "ctree", splittry = 2L, 
+                                               control = disttree_control(type.tree = "ctree", splittry = 2L, 
                                                                             teststat = "quad", testtype = "Bonferroni", 
                                                                             intersplit = TRUE, mincriterion = 0.95, 
                                                                             minsplit = 70, minbucket = 40), ntree = 50))
