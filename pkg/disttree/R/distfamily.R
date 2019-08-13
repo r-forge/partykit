@@ -1,5 +1,5 @@
 #### distfamily
-# generates a list of class disttree.family with all the information required in distexfit/-tree/-forest
+# generates a list of class disttree.family with all the information required in distfit/-tree/-forest
 # first checks format of the family input and if necessary transforms it to the required family list
 # family input can be of one of the following formats:
 # - gamlss.family object

@@ -19,8 +19,8 @@ set.seed(123)
 #tr_cars <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
 
 ## new disttree implementation with new control arguments (
-tr_cars <- distextree(dist ~ speed, data = cars, type.tree = "ctree", 
-  control = distextree_control(minsplit = 20L, minbucket = 7L, splittry = 2L))
+tr_cars <- disttree(dist ~ speed, data = cars, type.tree = "ctree", 
+  control = disttree_control(minsplit = 20L, minbucket = 7L, splittry = 2L))
 
 expect_known_value(apply(coef(tr_cars), 2, sort), file = "test_compare_disttree_with_orig_version_tr_cars_coef.rds", update = FALSE, tolerance = 1e-6)
 expect_known_value(logLik(tr_cars), file = "test_compare_disttree_with_orig_version_tr_cars_logLik.rds", update = FALSE)
@@ -113,9 +113,9 @@ set.seed(123)
 #                                             minsplit = 50, minbucket = 20)))
 
 ## new disttree implementation with new control arguments (
-fit_time <- system.time(tr_axams <- distextree(dt.formula, 
+fit_time <- system.time(tr_axams <- disttree(dt.formula, 
                                                data = learndata, family = dist_list_cens_normal, 
-                                               control = distextree_control(type.tree = "ctree", splittry = 2L, 
+                                               control = disttree_control(type.tree = "ctree", splittry = 2L, 
                                                                             teststat = "quad", testtype = "Bonferroni", 
                                                                             intersplit = TRUE, mincriterion = 0.95, 
                                                                             minsplit = 50, minbucket = 20)))

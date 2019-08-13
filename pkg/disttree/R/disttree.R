@@ -1,328 +1,398 @@
-## high-level convenience interface to mob() and ctree()
-# FIX ME: default settings for family, decorrelate only necesary for type.tree == "ctree"
-# FIX ME: 'starting weights' in trees?
-disttree <- function(formula, data, na.action, cluster, family = NO(), bd = NULL,
-                     type.tree = "mob", decorrelate = "none", offset,
-                     censtype = "none", censpoint = NULL, weights = NULL,
-                     terminal_objects = FALSE, 
-                     type.hessian = c("checklist", "analytic", "numeric"),
-                     #method = "L-BFGS-B",
-                     control = partykit::mob_control(), ocontrol = list(), ...)
-{
-  ## keep call
+########################################################################
+# new version of disttree using extree directly without applying ctree #
+########################################################################
+
+disttree <- function(formula, 
+                       data, 
+                       subset, 
+                       na.action = na.pass, 
+                       weights, 
+                       offset, 
+                       cluster,
+                       family = NO(),
+                       control = disttree_control(...), 
+                       converged = NULL, 
+                       scores = NULL, 
+                       doFit = TRUE, 
+                       ...) {
+
+  ## Clean up control  
+  type.hessian <- control$type.hessian
+  decorrelate <- control$decorrelate
+  method <- control$method
+  optim.control <- control$optim.control 
+  lower <- control$lower 
+  upper <- control$upper
+
+  ocontrol <- control
+  control$type.hessian <- control$decorrelate <- control$method <- control$optim.control <- NULL
+  control$lower <- control$upper <- NULL
+  if(control$saveinfo == FALSE){
+    control$saveinfo <- TRUE
+    warning("'control$saveinfo' set to TRUE, needed for distributional tree.")
+  }
+
+  ## Keep call
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
   
-  
-  ## prepare family:
-  # check format of the family input and if necessary transform it to the required familiy list
-  # family input can be of one of the following formats:
-  # - gamlss.family object
-  # - gamlss.family function
-  # - character string with the name of a gamlss.family object
-  # - function generating a list with the required information about the distribution
-  # - character string with the name of a function generating a list with the required information about the distribution
-  # - list with the required information about the distribution
-  # - character string with the name of a distribution for which a list generating function is provided in disttree
-  {
-    if(is.character(family)) {
-      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
-      if(length(getfamily$objs) == 0L) {
-        stop("unknown 'family' specification")
-      } else {
-        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
-        family <- getfamily[[2]][[1]]() #first found is chosen 
-        family$gamlssobj <- gamlssobj
-      }
-      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
-      # FIX ME: better selection of dist function
-    }
-    
-    # if family is a gamlss family object or gamlss family function
-    if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
-    
-    if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
-      stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
-    # linkinvdr only used in the method vcov for type = "parameter"
-
-  }
-  
-  np <- length(family$link)
-  
-  # check input arguments
-  type.tree <- match.arg(type.tree, c("mob", "ctree"))
-  if(!(type.tree %in% c("mob", "ctree"))) stop("unknown argument for type.tree (can only be mob or ctree)")
-  if(!(decorrelate) %in% c("none", "opg", "vcov")) stop("unknown argument for decorrelate (can only be none, opg or vcov)")
-  
-  m <- match.call(expand.dots = FALSE)
-  #m$drop.unused.levels <- TRUE
-  
-  ## formula
+  # Check formula
   oformula <- as.formula(formula)
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
-    ## FIX ME: if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
+    # NOTE: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
     warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
   }
   
-  m$formula <- formula
+  ## Set up model.frame() call
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "na.action", "weights", 
+               "offset", "cluster", "scores"), names(mf), 0L)
+
+  mf <- mf[c(1L, m)]
+  mf$yx <- "matrix"          
+  mf$nmax <- control$nmax
+  mf$ytype <- control$ytype
   
+  ## Evaluate model.frame
+  mf[[1L]] <- quote(partykit::extree_data)
   
+  d <- eval(mf, parent.frame())
+
+  subset <- partykit:::.start_subset(d)
+  weights <- model.weights(model.frame(d))
+
+  if (is.null(control$update)) control$update <- TRUE
   
-  if(type.tree == "mob") {
+  # Set up family 
+  if(!inherits(family, "disttree.family")) 
+    family <- distfamily(family)
+  
+  #Y <- d$yx[[1]]
+  # (LS) check whether d$yx really contains only the response (and no covariates)
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # NOTE: (ML) can this happen after formula creation?
+  
+  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # TODO: (ML) adapt for multidimensional responses
+  if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
+  
+  ## Set up wrapper function for distfit
+  ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
-    # select arguments for mob and put them in the right order
-    mnames <- match(c("formula", "data", "subset", "na.action", "weights", "offset", "cluster", "control"), names(m), 0L)
-    m <- m[c(1L, mnames)]
+    ys <- d$yx[[1]][subset]  # necessary to get response data into the function
+    subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     
-    ## glue code for calling distfit() with given family in mob()
-    dist_family_fit <- function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
-                                cluster = NULL, vcov = FALSE, estfun = TRUE, 
-                                object = FALSE, ...)
-    {
-      if(!(is.null(x) || NCOL(x) == 0L)) warning("x not used")
-      if(!is.null(offset)) warning("offset not used")
+    model <- disttree::distfit(ys, family = family, weights = subweights, start = info$coefficients, start.eta = NULL,
+                                 vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
+                                 method = method, estfun = estfun, optim.control = optim.control,
+                                 lower = lower, upper = upper)
+    
+    if(estfun) {
+      ef <- as.matrix(model$estfun) # distfit returns weighted scores!
       
-      model <- disttree::distfit(y, family = family, weights = weights, start = start,
-                                 vcov = vcov, estfun = estfun, type.hessian = type.hessian,
-                                 censtype= censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-      
-      ef <- NULL
-      if(estfun) {
-        ef <- as.matrix(model$estfun)
+      if(decorrelate != "none") {
+        n <- NROW(ef)
+        ef <- ef/sqrt(n)
         
-        if(decorrelate != "none") {
-          n <- NROW(ef)
-          ef <- ef/sqrt(n)
-          
-          vcov <- if(decorrelate == "vcov") {
-            vcov(model, type = "link") * n
-          } else {
-            solve(crossprod(ef))
-          }
-          
-          root.matrix <- function(X) {
-            if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-              X.eigen <- eigen(X, symmetric = TRUE)
-              if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-              sqomega <- sqrt(diag(X.eigen$values))
-              V <- X.eigen$vectors
-              return(V %*% sqomega %*% t(V))
-            }
-          }
-          ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        vcov <- if(decorrelate == "vcov") {
+          vcov(model, type = "link") * n
+        } else {
+          solve(crossprod(ef))
         }
-      }
-      estfun <- ef
-      
-      rval <- list(
-        coefficients = model$par,
-        objfun = - model$loglik,    
-        estfun = estfun, 
-        object = if(object) model else NULL
-      )
-      return(rval)
-    }
-    
-    ## call mob
-    m$fit <- dist_family_fit
-    # m$family <- m$censpoint <- m$censtype <- NULL
-    # m$family <- m$ocontrol <- NULL
-    # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
-    if("..." %in% names(m)) m[["..."]] <- NULL
-    # if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    m[[1L]] <- quote(partykit::mob)
-    # m[[1L]] <- quote(partykitR1::mob)
-    rval <- eval(m, parent.frame())
-    
-    rval$fitted$`(weights)` <- if(length(weights)>0) weights else rep.int(1, nrow(rval$data)) 
-    rval$fitted$`(response)` <- model.response(rval$data)
-    # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
-    rval$coefficients <- coef(rval)    # rval is returned from mob -> no type argument needed
-    rval$loglik <- logLik(rval)
-  }
-  
-  
-  if(type.tree == "ctree") {
-    
-    # select arguments for ctree and put them in the right order
-    mnames <- match(c("formula", "data", "weights", "subset", "offset", "cluster", "na.action", "control"), names(m), 0L)
-    m <- m[c(1L, mnames)]
-    
-    ## wrapper function to apply distfit in ctree
-    ytrafo <- function(data, weights = NULL, control) {
-      
-      Y <- model.frame(data, yxonly = TRUE)
-      if(dim(Y)[2] > 1) stop("response variable has to be univariate") 
-      Y <- Y[,1]
-      
-      modelscores_decor <- function(subset, weights, estfun = TRUE, object = FALSE, info = NULL) {
         
-        ys <- Y[subset]
-        subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset] ## FIX ME: scores with or without weights?
-        # start <- if(!(is.null(info$coefficients))) info$coefficients else NULL
-        start <- info$coefficients
-        
-        model <- disttree::distfit(ys, family = family, weights = subweights, start = start,
-                                   vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
-                                   estfun = estfun, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-        
-        if(estfun) {
-          ef <- as.matrix(model$estfun)
-          
-          if(decorrelate != "none") {
-            n <- NROW(ef)
-            ef <- ef/sqrt(n)
-            
-            vcov <- if(decorrelate == "vcov") {
-              vcov(model, type = "link") * n
-            } else {
-              solve(crossprod(ef))
-            }
-            
-            root.matrix <- function(X) {
-              if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
-                X.eigen <- eigen(X, symmetric = TRUE)
-                if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
-                sqomega <- sqrt(diag(X.eigen$values))
-                V <- X.eigen$vectors
-                return(V %*% sqomega %*% t(V))
-              }
-            }
-            ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
+        root.matrix <- function(X) {
+          if((ncol(X) == 1L)&&(nrow(X) == 1L)) return(sqrt(X)) else {
+            X.eigen <- eigen(X, symmetric = TRUE)
+            if(any(X.eigen$values < 0)) stop("Matrix is not positive semidefinite")
+            sqomega <- sqrt(diag(X.eigen$values))
+            V <- X.eigen$vectors
+            return(V %*% sqomega %*% t(V))
           }
-          
-          estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(data$data)) 
-          estfun[subset,] <- ef
-          ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights # estfun has to be unweighted for ctree
-        } else estfun <- NULL
-        
-        
-        
-        object <-  if(object) model else NULL
-        
-        ret <- list(estfun = estfun,
-                    coefficients = coef(model, type = "parameter"),
-                    objfun = logLik(model),  # optional function to be maximized (FIX: negative?/minimize?)
-                    object = object,
-                    converged = model$converged  # FIX ME: warnings if distfit does not converge
-        )
-        return(ret)
+        }
+        ef <- as.matrix(t(root.matrix(vcov) %*% t(ef)))
       }
       
-      return(modelscores_decor)
-    }    
-    
-    ## call ctree
-    m$ytrafo <- ytrafo
-    # for(n in names(ocontrol)) m[[n]] <- ocontrol[[n]]
-    if("..." %in% names(m)) m[["..."]] <- NULL
-    #if("type.tree" %in% names(m)) m[["type.tree"]] <- NULL
-    m[[1L]] <- quote(partykit::ctree)
-    rval <- eval(m, parent.frame())
-    
-    # number of terminal nodes
-    n_tn <- width(rval)
-    # predicted terminal nodes for the given data
-    pred_tn <- predict(rval, type = "node")
-    # ids of terminal nodes
-    id_tn <- as.vector(unique(pred_tn))
-    
-    if(is.null(weights) || (length(weights)==0L)) weights <- numeric(nrow(data)) + 1
-    
-    ## get coefficients for terminal nodes:
-    Y <- rval$fitted$`(response)`
-    # first iteration out of loop:
-    model1 <- disttree::distfit(y = Y[(id_tn[1]==pred_tn)], family = family, weights = weights[(id_tn[1]==pred_tn)], start = NULL,
-                                vcov = FALSE, type.hessian = type.hessian, 
-                                estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-    coefficients_par <- matrix(nrow = n_tn, ncol = length(model1$par))
-    # coefficients_eta <- matrix(nrow = n_tn, ncol = length(model1$eta)) 
-    colnames(coefficients_par) <- names(model1$par)
-    # colnames(coefficients_eta) <- names(model1$eta)
-    rownames(coefficients_par) <- as.character(id_tn)
-    # rownames(coefficients_eta) <- as.character(id_tn)
-    
-    coefficients_par[1,] <- model1$par
-    # coefficients_eta[1,] <- model1$eta
-    
-    loglik <- sum(model1$ddist(Y[(id_tn[1]==pred_tn)], log = TRUE))
-    
-    ## FIX ME: object slot stays NULL, object is not stored
-    if(terminal_objects) rval[[id_tn[1]]]$info$object <- model1
-      
-    if(n_tn>1){
-      for(i in (2:n_tn)){
-        model <- disttree::distfit(y = Y[(id_tn[i]==pred_tn)], family = family, weights = weights[(id_tn[i]==pred_tn)], start = NULL,
-                                   vcov = FALSE, type.hessian = type.hessian, 
-                                   estfun = FALSE, censtype = censtype, censpoint = censpoint, ocontrol = ocontrol, ...)
-        coefficients_par[i,] <- model$par
-        # coefficients_eta[i,] <- model$eta
-        loglik <- loglik + sum(model$ddist(Y[(id_tn[i]==pred_tn)], log = TRUE))
-        
-        ## FIX ME: object slot stays NULL, object is not stored
-        if(terminal_objects) rval[[id_tn[i]]]$info$object <- model
-      }
+      estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(d$data)) 
+      estfun[subset,] <- ef
+      ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
+    } else {
+      estfun <- NULL
     }
+    rval <- list(estfun = estfun,
+                unweighted = FALSE, # (LS) unweighted = TRUE would prevent estfun / w in extree_fit
+                coefficients = coef(model, type = "parameter"),
+                objfun = -logLik(model),  # (LS) optional function to be minimized 
+                object = if(object) model else NULL,
+                nobs = nobs(model), # TODO: (ML) check if ok, added to get nobs right
+                converged = model$converged  # TODO: (LS) warnings if distfit does not converge
+    )
     
-    rval$coefficients <- coefficients_par
-    # rval$fitted$`(fitted.response)` <- predict(rval, type = "response")
-    rval$loglik <- loglik
+    return(rval)
   }
-  
-  
-  
-  ## extend class and keep original call/family/control
-  rval$info$call <- cl
-  rval$info$family <- family   
-  rval$info$ocontrol <- ocontrol
-  rval$info$formula <- formula
-  rval$info$censpoint <- censpoint
-  rval$info$censtype <- censtype
-  
-  groupcoef <- rval$coefficients
-  if(!(is.null(groupcoef))){
-    # only 1 subgroup or 1-parametric family
-    if(is.vector(groupcoef)) {
-      # 1-parametric family
-      if(length(family$link) == 1){
-        groupcoef <- as.matrix(groupcoef)
-        colnames(groupcoef) <- "mu"
+
+  ## Set up default 'converged' function
+  # checking whether all response values are equal in one node, if so return FALSE
+  converged_default <- function(data, weights, control){
+    #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
+    convfun <- function(subset, weights){
+      ys <- data$yx[[1]][subset]
+      ws <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
+      conv <- length(unique(ys[ws > 0])) > 1
+      return(conv)
+    }
+    return(convfun)
+  }
+
+  if (is.function(converged)) {
+    stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
+    converged <- converged(d, weights, control = control) & 
+      converged_default(d, weights, control = control)
+  } else {
+    converged <- converged_default(d, weights, control = control)
+  }
+
+  ## Set up wrapper for extree_fit with predefined fit function
+  update <- function(subset, weights, control, doFit = TRUE) {
+    partykit::extree_fit(data = d, trafo = ytrafo, converged = converged, partyvars = d$variables$z, 
+                         subset = subset, weights = weights, ctrl = control, doFit = doFit)
+  }
+
+  if (!doFit) return(list(d = d, update = update))
+
+  ## Set minsize to 10 * number of parameters, if NULL ## TODO: (ML) n_coef could be get from family?!
+  if (is.null(control$minbucket) | is.null(control$minsplit)) {
+      ctrl <- control
+      N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
+      ctrl$minbucket <- ctrl$minsplit <- N
+      ctrl$logmincriterion <- Inf
+      ctrl$stump <- TRUE
+
+      tree <- update(subset = subset, weights = weights, control = ctrl)
+      cf <- tree$trafo(subset = subset, weights = weights, info = NULL)$coefficient
+      if (is.null(cf)) {
+          n_coef <- 1
       } else {
-        # only 1 subgroup
-        groupcoef <- t(as.matrix(groupcoef))
-        rownames(groupcoef) <- "1"
+          n_coef <- length(cf)
+      }
+      minsize <- as.integer(ceiling(10L * n_coef / NCOL(d$yx$y)))
+      if (is.null(control$minbucket)) control$minbucket <- minsize
+      if (is.null(control$minsplit)) control$minsplit <- minsize
+  }
+
+  ## Call the actual workhorse
+  tree <- update(subset = subset, weights = weights, control = control)
+  trafo <- tree$trafo
+
+  ### Prepare as modelparty/constpary
+  mf <- model.frame(d)
+  if(is.null(weights) || (length(weights)==0L)) weights <- rep(1, nrow(mf))
+  
+  fitted <- data.frame("(fitted)" = fitted_node(tree$nodes, mf), 
+                       "(weights)" = weights,
+                       check.names = FALSE)
+
+  fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # NOTE: (ML) y added, necessary?
+  names(fitted)[3] <- "(response)"
+
+  control$ytype <- ifelse(is.vector(y), "vector", class(y)) # NOTE: (ML) needed? (from mob)
+  control$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame NOTE: (ML) needed (from mob)
+
+  rval <- partykit::party(tree$nodes, 
+                data = if(control$model) mf else mf[0,],
+                fitted = fitted,
+                terms = d$terms$all,
+                info = list(
+                  call = cl,
+                  formula = formula,
+                  family = family,
+                  fit = distfit,
+                  #nobs = nrow(fitted),
+                  control = ocontrol
+              )
+  )
+
+  class(rval) <- c("modelparty", class(rval))  # FIXME: either model or constparty object!
+  # TODO: (AZ) check if this can be done prettier
+  which_terminals <- nodeids(rval, terminal = TRUE)
+  which_all <- nodeids(rval)
+
+  idx <- lapply(which_all, partykit:::.get_path, obj = tree$nodes)
+  names(idx) <- which_all
+  tree_ret <- unclass(rval)
+  subset_term <- predict(rval, type = "node")
+
+  for (i in which_all) {
+
+    ichar <- as.character(i)
+    iinfo <- tree_ret[[c(1, idx[[ichar]])]]$info
+
+    if (i %in% which_terminals) winfo <- control$terminal else
+      winfo <- control$inner
+
+    if (is.null(winfo)) {
+      iinfo$object <- NULL
+      iinfo$estfun <- NULL
+    } else {
+      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) |
+          any(! winfo %in% names(iinfo))) {
+        iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
+                       estfun = ("estfun" %in% winfo),
+                       object = ("object" %in% winfo))
       }
     }
-    
-    rval$fitted.par <- groupcoef[paste(rval$fitted[,1]),]
-    
-    if(is.vector(rval$fitted.par)){
-      # 1-parametric family
-      if(length(family$link) == 1) {
-        rval$fitted.par <- as.matrix(rval$fitted.par)
-        colnames(rval$fitted.par) <- "mu"
-      } else {
-        # only 1 observation
-        rval$fitted.par <- t(as.matrix(rval$fitted.par))
-      }
-    }
-    
-    rownames(rval$fitted.par) <- c(1: (length(rval$fitted.par[,1])))
-    rval$fitted.par <- as.data.frame(rval$fitted.par)
-    }
-  
-  
-  class(rval) <- c("disttree", class(rval))
-  return(rval)
+
+    tree_ret[[c(1, idx[[ichar]])]]$info <- iinfo
+  }
+
+  tree_ret$update <- update
+
+  class(tree_ret) <- c("disttree", class(rval))
+
+  return(tree_ret)
+
 }
 
 
-## methods
+disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"), 
+                               type.hessian = c("checklist", "analytic", "numeric"),
+                               decorrelate = c("none", "opg", "vcov"),
+                               method = "L-BFGS-B",
+                               optim.control = list(),
+                               lower = -Inf,
+                               upper = Inf,
+                               minsplit = NULL,     # NOTE: (ML) currently use mob default
+                               minbucket = NULL,    # NOTE: (ML) currently use mob default
+                               splittry = 1L,       # NOTE: (ML) currently use mob default
+                               
+                               ## Arguments need for disttree
+                               splitflavour = c("ctree", "exhaustive"),  
+                               testflavour = c("ctree", "mfluc", "guide"),
+                               terminal = "object",
+                               model = TRUE,
+                               inner = "object",
+
+                               ## Additional arguments for exhaustive/mobster
+                               restart = TRUE,
+                               breakties = FALSE,
+                               parm = NULL,
+                               dfsplit = TRUE,
+                               vcov = c("opg", "info", "sandwich"),
+                               ordinal = c("chisq", "max", "L2"),
+                               ytype = c("vector", "data.frame", "matrix"),
+                               trim = 0.1,
+                               #nrep = 10000L,       #FIXME: (ML) Is in mob included, needed for dt?
+                               #catsplit = "binary", #FIXME: (ML) Is in mob included, needed for dt?
+                               #numsplit = "left",   #FIXME: (ML) Is in mob included, needed for dt?
+                               #minsize = NULL,      #FIXME: (ML) Is in mob included, needed for dt?
+                               #minprob = 0.01,      #FIXME: (ML) Is in mob included, needed for dt?
+                               #nmax = Inf,          #FIXME: (ML) Is in mob included, needed for dt?
+ 
+                               ## Additonal arguments for GUIDE
+                               guide_interaction = FALSE,
+                               interaction = FALSE,
+                               #guide_unweighted = FALSE,
+                               guide_parm = NULL,  # a vector of indices of the parameters (incl. intercept) for which estfun should be considered
+                               guide_testtype = c("max", "sum", "coin"),
+                               guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
+                               xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
+                               ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
+                               weighted.scores = FALSE,   # logical, should scores be weighted in GUIDE 
+                               ...) {
+
+  ctrl <- partykit::ctree_control(minsplit = minsplit, minbucket = minbucket, splittry = splittry, ...)
+
+  ## Add parameters needed to return coefficient, etc.
+  ctrl$terminal <- terminal
+  ctrl$model <- model
+  ctrl$inner <- inner
+
+  ## Add additional parameters needed within disttree
+  ctrl$type.hessian <- match.arg(type.hessian)
+  ctrl$decorrelate <- match.arg(decorrelate)
+  ctrl$method <- method
+  ctrl$optim.control <- optim.control
+  ctrl$lower <- lower
+  ctrl$upper <- upper
+  ctrl$dfsplit <- dfsplit  # FIXME: (ML) Added to all types of tree, to get df within logLik.modelparty
+
+  ## Check the kind of tree
+  if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
+  if (length(splitflavour) == 2 & is.null(type.tree)) splitflavour <- splitflavour[1]
+  
+  if(!is.null(type.tree)) {
+    
+    if(!type.tree %in% c("ctree", "mob")) {
+      stop("type.tree can only be set to 'ctree' or 'mob'")
+    } else {
+      
+      if(type.tree == "ctree"){
+        if(!("ctree" %in% splitflavour & "ctree" %in% testflavour)){
+          stop("for type.tree = 'ctree' testflavour and splitflavour can not be set to other than 'ctree'")
+        } else {
+          
+          testflavour <- "ctree"
+          splitflavour <- "ctree"
+
+        }
+      }
+      
+      if(type.tree == "mob"){        
+        if(!("exhaustive" %in% splitflavour & "mfluc" %in% testflavour)){
+          stop("for type.tree = 'mob' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
+        } else {
+          
+          testflavour <- "mfluc"
+          splitflavour <- "exhaustive"  
+          
+        }
+      }
+    }
+  }
+  
+  if(testflavour == "mfluc" | splitflavour == "exhaustive") {
+    ctrl <- c(ctrl, list(restart = restart,
+                         breakties = breakties,
+                         parm = parm,
+                         #dfsplit = dfsplit,  FIXME: (ML) Added to all tree types, see comment above   
+                         vcov = vcov,
+                         ordinal = match.arg(ordinal),
+                         ytype = ytype,
+                         trim = trim))
+  }
+  
+  if(testflavour == "guide") {
+    
+    if(!(ctrl$criterion == "p.value") && guide_interaction){
+      stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
+    }
+    ctrl <- c(ctrl, list(guide_parm = guide_parm,    # LS: a vector of indices of parameters for which estfun should be considered
+              guide_testtype = guide_testtype,
+              interaction = interaction,
+              guide_decorrelate = guide_decorrelate, # (LS) needs to be set to other than "none" for testtype max and sum 
+                                                     # (LS) unless ytrafo returns decorrelated scores
+                                                     # FIXME: (LS) c("none","vcov","opg")
+              xgroups = xgroups,                     # (LS) number of categories for split variables (optionally breaks can be handed over)
+              ygroups = ygroups,                     # (LS) number of categories for scores (optionally breaks can be handed over)
+              weighted.scores = weighted.scores))    # (LS) logical, should scores be weighted
+  }
+
+  ## Overwrite the split- and selectfun according to the split- and testflavour 
+  if (splitflavour == "ctree") ctrl$splitfun <- partykit:::.ctree_split() 
+  if (splitflavour == "exhaustive") ctrl$splitfun <- partykit:::.objfun_split()   
+  
+  if (testflavour == "ctree") ctrl$selectfun <- partykit:::.ctree_select()
+  if (testflavour == "mfluc") ctrl$selectfun <- partykit:::.mfluc_select()
+  if (testflavour == "guide") ctrl$selectfun <- .guide_select()
+  
+  # FIXME: (LS) argumets numsplit in mob and intersplit in ctree/extree
+  # intersplit <- numsplit == "center"
+
+  return(ctrl)
+}
+
+
+
+## FIXME: adapt methods (class disttree?)
 print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
   familyname <- if(inherits(x$info$family, "gamlss.family")) {
@@ -334,29 +404,29 @@ print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 
 
-predict.disttree <- function (object, newdata = NULL, type = c("parameter", "node", "response"), OOB = FALSE, ...) 
+predict.disttree <- function (object, newdata = NULL, type = c("parameter", "response", "node"), OOB = FALSE, ...) 
 {
   
   # per default 'type' is set to 'parameter'
-  if(length(type)>1) type <- type[1]
+  type <- match.arg(type)
   
   ## get nodes
-  # if ctree was applied
-  if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
-                                                                           type = "node", OOB = OOB, ...)
+  ## if ctree was applied   # FIXME: currently class constparty can not be obtained from disttree
+  #if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
+  #                                                                         type = "node", OOB = OOB, ...)
   # if mob was applied
   if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, 
                                                                                 type = "node", OOB = OOB, ...)
   
   if(type == "node") return(pred.nodes)
-    
+  
   ## get parameters
   groupcoef <- coef(object)
   
   # only 1 subgroup or 1-parametric family
   if(is.vector(groupcoef)) {
     # 1-parametric family
-    if(length(family$link) == 1){
+    if(length(object$family$link) == 1){
       groupcoef <- as.matrix(groupcoef)
       colnames(groupcoef) <- "mu"
     } else {
@@ -365,12 +435,12 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
       rownames(groupcoef) <- "1"
     }
   }
-
+  
   pred.par <- groupcoef[paste(pred.nodes),]
   
   if(is.vector(pred.par)){
     # 1-parametric family
-    if(length(object$info$family$link) == 1) {
+    if(length(object$family$link) == 1) {
       pred.par <- as.matrix(pred.par)
       colnames(pred.par) <- "mu"
     } else {
@@ -389,13 +459,19 @@ predict.disttree <- function (object, newdata = NULL, type = c("parameter", "nod
 
 
 
-
-
 coef.disttree <- function(object, ...){
-  object$coefficients
+  partykit:::coef.modelparty(object)
 }
 
 
+fitted.disttree <- function(object, ...){
+  
+  rval <- predict.disttree(object, newdata = NULL, type = "response", OOB = FALSE, ...)
+  return(rval)
+  
+}
+
+## FIXME: Should we allow for newdata in logLik ?
 logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
     if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")
@@ -450,161 +526,177 @@ logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
 
 
 
-
-## predict.disttree <- function(object, newdata = NULL,
-##   type = c("worth", "rank", "best", "node"), ...)
-## {
-##   ## type of prediction
-##   type <- match.arg(type)
-##   
-##   ## nodes can be handled directly
-##   if(type == "node") return(partykit::predict.modelparty(object, newdata = newdata, type = "node", ...))
-##   
-##   ## get default newdata otherwise
-##   if(is.null(newdata)) newdata <- model.frame(object)
-##   
-##   pred <- switch(type,
-##     "worth" = worth,
-##     "rank" = function(obj, ...) rank(-worth(obj)),
-##     "best" = function(obj, ...) {
-##       wrth <- worth(obj)
-##       factor(names(wrth)[which.max(wrth)], levels = names(wrth))
-##     }
-##   )
-##   partykit::predict.modelparty(object, newdata = newdata, type = pred, ...)
-## }
-
-
-## FIX: adapt for disttree_mob
-# argument 'type' can be "density" (FIX), "coef" and "hist" (FIX)
-#plot.disttree <- function(x, type = "coef",
-#   tp_args = list(...), tnex = NULL, drop_terminal = NULL, ...)
-# {
-#  if(type == "density"){
-#    node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
-#                              main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
-#                              fill = "lightgrey", col = "black", lwd = 0.5, ...) {
-#      yobs <- tree$data[,as.character(tree$info$formula[[2]])]
-#      ylines <- 1.5
-#      if (is.null(xscale)) xscale <- c(-5.1,50)
-#      if (is.null(yscale)) yscale <- c(-0.05,0.25)
-#      xr <- xscale
-#      yr <- yscale
-#      
-#      if (horizontal) {
-#        yyy <- xscale
-#        xscale <- yscale
-#        yscale <- yyy
-#      }
-#      
-#      rval <- function(node) {
-#        yrange <- seq(from = -20, to = 200)/4
-#        ydens <- node$info$object$ddist(yrange)
-#        
-#        top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
-#                                                widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
-#                                                heights = unit(c(1, 1), c("lines", "null"))), 
-#                           width = unit(1, "npc"), 
-#                           height = unit(1, "npc") - unit(2, "lines"), 
-#                           name = paste("node_density",node$id, sep = ""))
-#        pushViewport(top_vp)
-#        grid.rect(gp = gpar(fill = "white", col = 0))
-#        top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
-#        pushViewport(top)
-#        mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
-#        
-#        grid.text(mainlab)
-#        popViewport()
-#        plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
-#                         xscale = xscale, yscale = yscale, 
-#                         name = paste("node_density",  node$id, "plot", sep = ""))
-#        pushViewport(plot)
-#        yd <- ydens
-#        xd <- yrange
-#        if (horizontal) {
-#          yyy <- xd
-#          xd <- yd
-#          yd <- yyy
-#          yyy <- xr
-#          xr <- yr
-#          yr <- yyy
-#          rxd <- rep(0, length(xd))
-#          ryd <- rev(yd)
-#        } else {
-#          rxd <- rev(xd)
-#          ryd <- rep(0, length(yd))
-#        }
-#        
-#        if (rug) {
-#          nodeobs <- node$info$object$y
-#          if (horizontal) {
-#            grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
-#                      default.units = "native", just = c("right", "bottom"),
-#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
-#          } else {
-#            grid.rect(x = nodeobs, y = yscale[1], 
-#                      width = 0, height = abs(yscale[1]), default.units = "native", 
-#                      just = c("center", "bottom"),
-#                      gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
-#          }
-#        }
-#        
-#        
-#        grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
-#                     gp = gpar(col = "black", fill = fill, lwd = lwd))
-#        grid.xaxis()
-#        grid.yaxis()
-#        grid.rect(gp = gpar(fill = "transparent"))
-#        upViewport(2)
-#      }
-#      return(rval)
-#    }
-#    class(node_density) <- "grapcon_generator"
-#    
-#    plot.modelparty(x, tnex = 1.7, drop = TRUE,
-#         terminal_panel = node_density)
-#  }
-#  
-#  if(type == "coef") plot.modelparty(x)
-#  
-#  #if(type == "hist"){
-#  #  terminal_panel = node_histogram
-#  #  if(is.null(tnex)) tnex <- if(is.null(terminal_panel)) 1L else 2L
-#  #  if(is.null(drop_terminal)) drop_terminal <- !is.null(terminal_panel)
-#  #  partykit::plot.modelparty(x, terminal_panel = terminal_panel,
-#  #                            tp_args = tp_args, tnex = tnex, drop_terminal = drop_terminal, ...)
-#  #}
-#   
-#}
-
-
-if(FALSE){
-  tr <- disttree(dist ~ speed, data = cars)
-  # trc <- disttree(dist ~ speed, data = cars, type.tree = "ctree")
-  print(tr)
-  
-  plot(tr)
-  plot(as.constparty(tr))
+if(TRUE) {  ##TODO: (ML) Needed for guide, delete if guide tests should not be included
+# use different version of .select than partykit:::select for GUIDE as selectfun 
+# (returns p.values from curvature and interaction tests instead of p.value and teststatistic)
+.select_g <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
+  ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+  rownames(ret$criteria) <- c("statistic", "p.value")
+  colnames(ret$criteria) <- names(model.frame(data))
+  if (length(whichvar) == 0) return(ret)
+  ### <FIXME> allow joint MC in the absense of missings; fix seeds
+  ### write ctree_test / ... with whichvar and loop over variables there
+  ### </FIXME>
+  for (j in whichvar) {
+    tst <- FUN(model = model, trafo = trafo, data = data, 
+               subset = subset, weights = weights, j = j, 
+               SPLITONLY = FALSE, ctrl = ctrl)
+    ret$criteria["statistic",j] <- - as.numeric(tst["p.curv"])
+    ret$criteria["p.value",j] <- - as.numeric(tst["p.min"])
+    
+    # for testflavour = "guide" only "p.value" can be chosen as criterion
+    # because 2 p.values need to be returned (from curvature test and the min from curvature and interaction test)
+    # the min is stored as 'p.value' in the returned matrix
+    # if this min is from an interaction test, two covariates will have the same p.value
+    # in this case the one with the lower p.value from the curvature test should be chosen
+    # in extree: among the two covariates with the lowest p.value (highest negativ p.value) the one with the higher test statistic is chosen (ranked)
+    # -> the negative p.value from the curvature test is stored as "statistic"
+  }
+  ret
 }
 
 
-if(FALSE){
-  y1 <- rNO(200,1,0.5)
-  y2 <- rNO(200,5,2)
-  y3 <- rNO(200,50,4)
-  y4 <- rNO(200,100,7)
-  x1 <- vector(mode = "numeric",length = length(y1)) + 1
-  x2 <- vector(mode = "numeric",length = length(y2)) + 2
-  x3 <- vector(mode = "numeric",length = length(y3)) + 3
-  x4 <- vector(mode = "numeric",length = length(y4)) + 4
-  d <- as.data.frame(cbind(c(y1,y2,y3,y4),c(x1,x2,x3,x4)))
-  colnames(d) <- c("y","x")
+.guide_select <- function(...)
+  function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    args <- list(...)
+    ctrl[names(args)] <- args
+    .select_g(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .guide_test)   # optional: use partykit:::.select
+  }
+
+.guide_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
   
-  test_mob <- disttree(y~x, data = d, family = dist_list_normal, type.tree = "mob")
-  test_ctree <- disttree(y~x, data = d, family = dist_list_normal, type.tree = "ctree", control = ctree_control())
-  print(test_mob)
-  plot(test_mob)
-  plot(as.constparty(test_mob))
-  print(test_ctree)
-  plot(test_ctree)
+  ## TO DO: include SPLITONLY, MIA, ... ?
+  ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+  iy <- data$yxindex ### data[["yx", type = "index"]]
+  Y <- model$estfun  ## model from distfit, returns wheigthed scores
+  if(ctrl$guide_unweighted) Y <- Y/weights  ## FIX ME: influence of weights only on categorization
+  x <- data[[j]]
+  if(!is.null(subset)) {
+    Y <- if(is.vector(Y)) Y[subset] else Y[subset,]
+    x <- x[subset]
+  }
+  
+  # if all values of the selected covariate are equal return highest possible p.value
+  if(length(unique(x))<2) return(c(p.min = 1, p.curv = 1))
+  
+  # only select those other covariates which are also in partyvars
+  ix_others <- c(1:NCOL(data$data))[data$variables$z + ctrl$partyvars == 2]
+  ix_others <- ix_others[!ix_others == j]
+  
+  # split Y into 2 parts based on whether residuals (here: scores) are positive or negative
+  # separately for each parameter
+  for(k in 1:model$object$npar){
+    respos <- (Y[,k]>0)
+    #respos <- factor((Y[,k]>0), levels = c(FALSE,TRUE), labels = c(0,1))
+    Y <- cbind(Y, respos)
+    colnames(Y)[(model$object$npar + k)] <- paste0("rp",k)
+  }
+  
+  if(is.numeric(x)){
+    x_cat <- rep.int(1, length(x))
+    q1 <- quantile(x, 0.25)
+    q2 <- quantile(x, 0.50)
+    q3 <- quantile(x, 0.75)
+    for(l in 1: length(x)){
+      if(x[l] > q1 & x[l] <= q2) x_cat[l] <- 2
+      if(x[l] > q2 & x[l] <= q3) x_cat[l] <- 3
+      if(x[l] > q3) x_cat[l] <- 4
+    }
+    x_cat <- factor(x_cat, levels = c(1:4))
+  } else {
+    x_cat <- x
+  }
+  
+  ## compute curvature test (for each parameter separately)
+  p.curv <- chisq.test(x = x_cat, y = Y[,(model$object$npar+1)])$p.value
+  if(model$object$npar > 1){
+    for(k in 2:model$object$npar){
+      p <- chisq.test(x = x_cat, y = Y[,(model$object$npar+k)])$p.value
+      if(p < p.curv) p.curv <- p
+    }
+  }  
+  
+  p.min <- p.curv
+  
+  ## compute interaction test (for each parameter and for each of the other covariates separately)
+  # only keep test if p.value is smaller than the one resulting from the curvature test
+  if(ctrl$guide_interaction & length(ix_others)>0){
+    
+    for(v in ix_others){
+      
+      xo <- data[[v]]
+      if(!is.null(subset)) xo <- xo[subset]
+      
+      # only consider other covariate for interaction test if not all of its values are equal
+      if(length(unique(xo))>1){
+        
+        x_cat_2d <- rep.int(1, length(x))
+        
+        if(is.factor(x) & is.factor(xo)){
+          c1 <- length(levels(x))
+          c2 <- length(levels(xo))
+          for(l in 1:length(x)){
+            for(m in 1:c1){
+              for(n in 1:c2){
+                if(x[l] == levels(x)[m] & xo[l] == levels(xo)[n]) x_cat_2d[l] <- (m-1)*c2+n
+              }
+            }
+          }
+        }
+        
+        if(is.factor(x) & is.numeric(xo)){
+          c1 <- length(levels(x))
+          med_xo <- median(xo)
+          for(l in 1:length(x)){
+            for(m in 1:c1){
+              if(x[l] == levels(x)[m]){
+                x_cat_2d[l] <- if(xo[l] > med_xo) c1+m else m
+              }
+            }
+          }
+        }
+        
+        if(is.numeric(x) & is.factor(xo)){
+          c2 <- length(levels(xo))
+          med_x <- median(x)
+          for(l in 1:length(x)){
+            for(n in 1:c2){
+              if(xo[l] == levels(xo)[n]){
+                x_cat_2d[l] <- if(x[l] > med_x) c2+n else n
+              }
+            }
+          }
+        }
+        
+        if(is.numeric(x) & is.numeric(xo)){
+          med_x <- median(x)
+          med_xo <- median(xo)
+          for(l in 1:length(x)){
+            if(x[l] <= med_x) {
+              x_cat_2d[l] <- if(xo[l] <= med_x) 1 else 2
+            } else {
+              x_cat_2d[l] <- if(xo[l] <= med_x) 3 else 4
+            }
+          }
+        }
+        
+        p.int <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+1)])$p.value
+        if(model$object$npar > 1){
+          for(k in 2:model$object$npar){
+            p <- chisq.test(x = x_cat_2d, y = Y[,(model$object$npar+k)])$p.value
+            if(p < p.int) p.int <- p
+          }
+        }  
+        
+        if(p.int < p.min) p.min <- p.int
+      }
+    }
+  }
+  
+  ret <- c(p.min = p.min, p.curv = p.curv)
+  
+  return(ret)
+
+}
+
 }

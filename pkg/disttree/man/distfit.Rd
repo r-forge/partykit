@@ -19,18 +19,17 @@
 
 \description{
   The function \code{distfit} carries out maximum-likelihood
-  estimation of parameters for distributions from the GAMLSS
-  family (for generalized additive models for location, scale,
-  and shape). The parameters can be transformed through
-  link functions but do not depend on further covariates
-  (i.e., are constant across observations).
+  estimation of parameters for a specified distribution family, 
+  for example from the GAMLSS family (for generalized additive 
+  models for location, scale, and shape). The parameters can be 
+  transformed through link functions but do not depend on further 
+  covariates (i.e., are constant across observations).
 }
 
 \usage{
-distfit(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-        vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), estfun = TRUE, 
-        bd = NULL, fixed = NULL, fixed.values = NULL, 
-        censtype = "none", censpoint = NULL, ocontrol = list(), ...)
+distfit(y, family = NO(), weights = NULL, start = NULL, start.eta = NULL,
+          vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"),
+          method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 }
 
 \arguments{
@@ -41,17 +40,12 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{start}{starting values for the distribution parameters handed over to \code{\link[stats]{optim}}}
   \item{start.eta}{starting values for the distribution parameters on the link scale handed over to \code{\link[stats]{optim}}.}
   \item{vcov}{logical. Specifies whether or not a variance-covariance matrix should be calculated and returned.}
-\item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
-  \item{estfun}{logical. Should the matrix of observation-wise
-    score contributions (or empirical estimating functions) be
-    returned?}
-  \item{bd}{binomial denominator: additional parameter needed for binomial gamlss.families}
-  \item{fixed}{FIXME}
-  \item{fixed.values}{FIXME}
-  \item{censtype}{Can either be 'none', 'left' or 'right' to set the type of censoring for censored response.}
-  \item{censpoint}{numeric value. Censoring point can be set for censored response.}
-  \item{ocontrol}{List with control parameters passed to
-    \code{\link[stats]{optim}}.}
+  \item{type.hessian}{Can either be 'checklist', 'analytic' or 'numeric' to decide how the hessian matrix should be 
+    calculated in the fitting process in \code{distfit}. For 'checklist' it is checked whether a function 'hdist' 
+    is given in the family list. If so, 'type.hessian' is set to 'analytic', otherwise to 'numeric'.}
+  \item{method}{Optimization which should be applied in \code{\link[stats]{optim}}}
+  \item{estfun}{logical. Should the matrix of observation-wise score contributions (or empirical estimating functions) be returned?}
+  \item{optim.control}{A list with \code{\link[stats]{optim}} control parameters.}
   \item{\dots}{further arguments passed to \code{\link[stats]{optim}}.}
 }
 
@@ -74,12 +68,11 @@ distfit(y, family, weights = NULL, start = NULL, start.eta = NULL,
   \item{y}{numeric vector of the response}
   \item{ny}{number of observations}
   \item{weights}{numeric vector of case weights handed over as input argument}
-  \item{family}{name of the distribution family}
-  \item{familylist}{if the input argument 'family' was already a list, this list is returned. Otherwise the generated family list is returned.}
+  \item{family}{employed distribution family list of class \code{disttree.family}}
   \item{start}{used starting values in \code{\link[stats]{optim}} that were handed over as input argument}
-  \item{starteta}{starting value on the link scale used in \code{\link[stats]{optim}}}
+  \item{starteta}{starting values on the link scale used in \code{\link[stats]{optim}}}
   \item{opt}{list returned by \code{\link[stats]{optim}}}
-  \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returnes convergence = 0 and FALSE else.}
+  \item{converged}{logical. TRUE if \code{\link[stats]{optim}} returns convergence = 0 and FALSE else.}
   \item{par}{fitted distribution parameters (on parameter scale)}
   \item{eta}{fitted distribution parameters (on link scale)}
   \item{hess}{hessian matrix}
@@ -114,45 +107,7 @@ y <- rnbinom(1000, size = 1, mu = 2)
   
 ## simple distfit
 df <- distfit(y, family = NBI)
-coef(df)
-confint(df)
-logLik(df)
 
-## using tabulated data
-ytab <- table(y)
-df2 <- distfit(as.numeric(names(ytab)), family = NBI, weights = ytab)
-coef(df2)
-confint(df2)
-logLik(df2)
-
-## coefficients tests
-if(require("lmtest")) {
-  coeftest(df)
-  coeftest(df2)
-}
-
-## censored logistic example
-if(require("crch") & require("gamlss.cens")) {
-    library("crch")
-    data("RainIbk", package = "crch")
-    m1 <- crch(rain ~ 1, data = RainIbk, left = 0, dist = "logistic")
-  
-    library("gamlss.cens")
-    gen.cens(LO, type = "left")
-    m2 <- distfit(RainIbk$rain, family = LOlc, cens = "left", censpoint = 0)
-    
-    dist_list_cens_log <- disttree::dist_crch(dist = "logistic", 
-                                              type = "left",
-                                              censpoint = 0)
-    m3 <- distfit(RainIbk$rain, family = dist_list_cens_log)
-    
-    coef(m1)
-    coef(m2, type = "link")
-    coef(m3, type = "link")
-    logLik(m1)
-    logLik(m2)
-    logLik(m3)
-}
 }
 
 \keyword{distribution}

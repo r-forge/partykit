@@ -1,32 +1,23 @@
-distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL, 
-                    vcov = TRUE, type.hessian = c("checklist", "analytic", "numeric"), 
-                    estfun = TRUE, bd = NULL, fixed = NULL, fixed.values = NULL,   
-                    censtype = "none", censpoint = NULL, 
-                    ocontrol = list(), ...)
-                    #ocontrol = list(method = "L-BFGS-B", 
-                    #                type.hessian = c("checklist", "analytic", "numeric")),
-                    #...)
+###################################################################
+# new version of distfit used as a fitting function in disttree #
+###################################################################
+
+distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = NULL, 
+                      vcov = TRUE, type.hessian =  c("checklist", "analytic", "numeric"), 
+                      method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 {
   
   ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
-  ## type.hessian = c("checklist", "analytic", "numeric")
   ## start on par scale
   ## start.eta on link scale
-  
-  
+
   ## FIX ME: what to do if weights consists of zeros only
+  
+  type.hessian <- match.arg(type.hessian)
   
   ## match call
   cl <- match.call()
   
-  ## FIX ME: add type.hessian and method to ocontrol? (see above)
-  # type.hessian <- ocontrol$type.hessian
-  # method <- ocontrol$method
-  # ocontrol$type.hessian <- ocontrol$method <- NULL
-  
-  ## check if 'method' is an additional argument (for optim, handed over via '...')
-  method <- if(is.null(cl$method)) "L-BFGS-B" else cl$method
-
   ## number of observations
   ny <- NROW(y)
   
@@ -70,7 +61,7 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     return(rval)
   }    
   
-  ## prepare family:
+  ## prepare family (done within distfamily()):
   # check format of the family input and if necessary transform it to the required familiy list
   # family input can be of one of the following formats:
   # - gamlss.family object
@@ -80,35 +71,10 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   # - character string with the name of a function generating a list with the required information about the distribution
   # - list with the required information about the distribution
   # - character string with the name of a distribution for which a list generating function is provided in disttree
-  {
-    if(is.character(family)) {
-      getfamily <- try(getAnywhere(paste("dist", family, sep = "_")), silent = TRUE)
-      if(length(getfamily$objs) == 0L) getfamily <- try(getAnywhere(family), silent = TRUE)
-      if(length(getfamily$objs) == 0L) {
-        stop("unknown 'family' specification")
-      } else {
-        gamlssobj <- ("gamlss.dist" %in% unlist(strsplit(getfamily$where[1], split = ":")))
-        family <- getfamily[[2]][[1]]() #first found is chosen 
-        family$gamlssobj <- gamlssobj
-      }
-      #if(!(inherits(family, "try-error")))family <- family[[2]]$`package:disttree`()    
-      # FIX ME: better selection of dist function
-    }
-    
-    # if family is a gamlss family object or gamlss family function
-    if(is.function(family)) family <- family()
-    if(inherits(family, "gamlss.family")) family <- disttree::make_dist_list(family, bd = bd)
-    
-    if(!is.list(family)) stop ("unknown family specification")
-    if(!(all(c("ddist", "sdist", "link", "linkfun", "linkinv", "mle", "startfun") %in% names(family)))) 
-      stop("family needs to specify a list with ddist, sdist, link, linkfun, linkinv, mle and startfun")
-    # linkinvdr only used in the method vcov for type = "parameter"
+  
+  if(!inherits(family, "disttree.family")) 
+    family <- distfamily(family)
 
-  }
-
-  if(!all(type.hessian %in% c("checklist", "analytic", "numeric"))) 
-    stop("argument 'type.hessian' can only be 'checklist', 'numeric' or 'analytic'")
-  if(length(type.hessian) > 1) type.hessian <- type.hessian[1]
   if(type.hessian == "checklist") {
     type.hessian <- if(is.null(family$hdist)) "numeric" else "analytic"
   }
@@ -118,15 +84,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   
   
   # if family was handed over as a gamlss.dist family object and the distribution is censored:
-  # data has to be converted to a Survival object (necessary input arguments: censtype and censpoint)
+  # data has to be converted to a Survival object (necessary family arguments: censtype and censpoint)
   if(family$censored) {
     if(family$gamlssobj) {
-      if(censtype == "none" || is.null(censpoint)) stop("for censored gamlss.dist family objects the censoring type and point(s) have to be set (input arguments censtype and censpoint)")
+      if(family$censtype == "none" || is.null(family$censpoint)) stop("for censored gamlss.dist family objects the censoring point(s) has/have to be set (family argument censpoint)")
       if(!survival::is.Surv(y)){
-        if(censtype == "left") y <- survival::Surv(y, y > censpoint, type = "left")
-        if(censtype == "right") y <- survival::Surv(y, y < censpoint, type = "right")
+        if(family$censtype == "left") y <- survival::Surv(y, y > family$censpoint, type = "left")
+        if(family$censtype == "right") y <- survival::Surv(y, y < family$censpoint, type = "right")
         ## FIX ME: interval censored
-        #if(censtype == "interval") y <- survival::Surv(y, ((y > censpoint[1]) * (y < censpoint[2])), type = "interval")
+        #if(family$censtype == "interval") y <- survival::Surv(y, ((y > family$censpoint[1]) * (y < family$censpoint[2])), type = "interval")
       }
     } else {
       if(survival::is.Surv(y)) {
@@ -254,17 +220,17 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
       #print(start)
     }
   }
-  
+
   if(!family$mle) {
     ## optimize negative log-likelihood
     opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                     hessian = (type.hessian == "numeric"), control = ocontrol, ...), silent = TRUE)
+                     hessian = (type.hessian == "numeric"), control = optim.control, ...), silent = TRUE)
     if(inherits(opt, "try-error")) {
       if(method != "L-BFGS-B") method <- "L-BFGS-B"
       warning("Error in 'optim()' for given method and additional arguments in '...', 
               optimization restarted with 'L-BFGS-B' and additional arguments ignored")
       opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
+                       hessian = (type.hessian == "numeric"), control = optim.control), silent = TRUE)
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'BFGS' and additional arguments ignored")
@@ -272,14 +238,14 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
         ## FIX ME: order of steps?
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
-                         hessian = (type.hessian == "numeric"), control = ocontrol), silent = TRUE)
+                         hessian = (type.hessian == "numeric"), control = optim.control), silent = TRUE)
         if(inherits(opt, "try-error")) {
           warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'Nelder-Mead' and additional arguments ignored")
           #print(starteta)
           method <- "Nelder-Mead"
           opt <- optim(par = starteta, fn = nll, method = method,
-                       hessian = (type.hessian == "numeric"), control = ocontrol)
+                       hessian = (type.hessian == "numeric"), control = optim.control)
         }
       }
     }    
@@ -307,15 +273,15 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
     if(is.null(family$hdist)) {
       if(family$mle) {
         nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "L-BFGS-B",
-                         hessian = TRUE, control = ocontrol, ...)$hessian)
+                         hessian = TRUE, control = optim.control, ...)$hessian)
         if(inherits(nhess, "try-error")) {
           #print("opt try-error in hess with gr=grad, L-BFGS-B")
           nhess <- try(optim(par = eta, fn = nll, gr = grad, method = "BFGS",
-                       hessian = TRUE, control = ocontrol, ...)$hessian)
+                       hessian = TRUE, control = optim.control, ...)$hessian)
           if(inherits(nhess, "try-error")) {
             #print("opt try-error in hess with gr=grad, BFGS")
             nhess <- optim(par = eta, fn = nll, method = "BFGS",
-                               hessian = TRUE, control = ocontrol, ...)$hessian
+                               hessian = TRUE, control = optim.control, ...)$hessian
           }
         }
         hess <- -nhess
@@ -377,8 +343,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
   if(family$gamlssobj && family$censored){
     ddist <- function(x, log = FALSE) {
       if(!survival::is.Surv(x)){
-        if(censtype == "left") eval <- family$ddist(survival::Surv(x, x > censpoint, type = "left"), eta = eta, log = log)
-        if(censtype == "right") eval <- family$ddist(survival::Surv(x, x < censpoint, type = "right"), eta = eta, log = log)
+        if(family$censtype == "left") eval <- family$ddist(survival::Surv(x, x > family$censpoint, type = "left"), eta = eta, log = log)
+        if(family$censtype == "right") eval <- family$ddist(survival::Surv(x, x < family$censpoint, type = "right"), eta = eta, log = log)
         ## FIX ME: interval censored
       } else eval <- family$ddist(x, eta = eta,  log=log)
       return(eval)
@@ -432,7 +398,8 @@ distfit <- function(y, family, weights = NULL, start = NULL, start.eta = NULL,
 ## methods
 nobs.distfit <- function(object, ...) return(object$ny)
 
-coef.distfit <- function(object, type = "parameter" , ...) {
+coef.distfit <- function(object, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   if(type == "link") return(object$eta)
   if(type == "parameter") return(object$par)
 }
@@ -452,30 +419,36 @@ get_expectedvalue <- function(object, par) {
   if(inherits(object, "distfit")) {
     censored <- object$family$censored
     family.name <- object$family$family.name
+    expectedvalue <- ifelse(is.null(object$family$expectedvalue), FALSE, object$family$expectedvalue)
   }
   if(inherits(object, "disttree")) {
     censored <- object$info$family$censored
     family.name <- object$info$family$family.name
+    expectedvalue <- ifelse(is.null(object$info$family$expectedvalue), FALSE, 
+      object$info$family$expectedvalue)
   }
+
+  if(expectedvalue & (censored | "truncated" %in% strsplit(family.name, " ")[[1]]))
+    warning("parameter 'expectedvalue' of family is ignored, as family is censored/truncated...")
   
-  ## FIX ME: expected value for censored distributions
-  ## here only for left censored at 0 -> TO DO: general form
+  ## FIXME: replace censored/truncated case with crch implementation 
+  ## (here only for left censored at 0 -> TO DO: general form)
+  ## other censored distributions currently not possible (other than normal or logistic)
+  ## (general implementation for closed form solutions available?)
   if(censored) {
     if("Normal" %in% strsplit(family.name, " ")[[1]]){
       mu <- par[,1]
       sigma <- par[,2]
       expv <- pnorm(mu/sigma) * (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
-    } else {
-      if("Logistic" %in% strsplit(family.name, " ")[[1]]){
+    } else if("Logistic" %in% strsplit(family.name, " ")[[1]]){
         location <- par[,1]
         scale <- par[,2]
         expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
-      } else {
-        ## FIX ME: expected value for other censored distributions:
-        warning("For censored distributions other than the censored normal and censored logistic distribution
-                the location parameter is returned as response/expected value.")
-        expv <- par[,1]
-      }
+    } else {
+      ## FIX ME: expected value for other censored distributions:
+      warning("For censored distributions other than the censored normal and censored logistic distribution
+              the location parameter is returned as response/expected value.")
+      expv <- par[,1]
     }
     return(expv)
   } 
@@ -493,6 +466,12 @@ get_expectedvalue <- function(object, par) {
     }
     return(expv)
   }
+
+  if(expectedvalue){
+    expv <- par[,1]
+    return(expv)
+  }
+
   
   # integrate over function f = x * density function with estimated parameters plugged in (already in the object for class 'distfit')
   if(inherits(object, "distfit")) {
@@ -550,16 +529,19 @@ get_expectedvalue <- function(object, par) {
 predict.distfit <- function(object, type = c("parameter", "response"), ...) {
   # for type = "response": calculation of the expected value 
   # of the given distribution with the calculated parameters
-  
+
   # per default 'type' is set to 'parameter'
-  if(length(type)>1) type <- type[1]
-  
-  if(!type %in% c("parameter", "response")) stop("argument 'type' can only be set to 'parameter' or 'response'")
-  
-  if(type == "response") return(get_expectedvalue(object, object$par)) else return(object$par)
+  type <- match.arg(type)
+
+  if(type == "response"){
+    return(get_expectedvalue(object, object$par))
+  }  else {
+    return(object$par)
+  }
 }
 
-vcov.distfit <- function(object, type = "link", ...) {
+vcov.distfit <- function(object, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   if(type == "link") return(object$vcov)
   if(type == "parameter"){
     ## delta method
@@ -569,16 +551,18 @@ vcov.distfit <- function(object, type = "link", ...) {
   }
 }
   
-estfun.distfit <- function(object, ...) return(object$estfun)
+estfun.distfit <- function(x, ...) return(x$estfun)
 
 logLik.distfit <- function(object, ...) structure(object$loglik, df = object$npar, class = "logLik")
 
-bread.distfit <- function(object, type = c("parameter", "link"), ...) {
-  if(type == "parameter") return(vcov(object, type = "parameter") * object$ny)
-  if(type == "link") return(object$vcov * object$ny)
+bread.distfit <- function(x, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
+  if(type == "parameter") return(vcov(x, type = "parameter") * x$ny)
+  if(type == "link") return(x$vcov * x$ny)
 }
 
-confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
+confint.distfit <- function(object, parm, level = 0.95, type = c("parameter", "link"), ...) {
+  type <- match.arg(type)
   np <- object$npar
   
   if(type == "link"){ 
@@ -642,7 +626,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = "link", ...) {
 
 print.distfit <- function(x, digits = max(3, getOption("digits") - 3), ...)
 {
-  cat("Fitted distributional model (", x$family$family.name, ")\n\n")
+  cat("Fitted distributional model (",x$family$family.name,")\n\n", sep = "")
   if(!(x$family$mle) && !x$converged) {
     cat("Model did not converge\n")
   } else {
@@ -673,9 +657,14 @@ summary.distfit <- function(object, ...)
   
   ## extend coefficient table
   cf <- as.vector(object$par)
-  se <- sqrt(diag(vcov(object, type = "parameter")))
-  cf <- cbind(cf, se)
-  colnames(cf) <- c("Estimate", "Std. Error")
+  if (!is.null(object$vcov)){
+    se <- sqrt(diag(vcov(object, type = "parameter")))
+    cf <- cbind(cf, se)
+    colnames(cf) <- c("Estimate", "Std. Error")
+  } else{
+    cf <- matrix(cf, ncol = 1)
+    colnames(cf) <- c("Estimate")
+  }
   rownames(cf) <- names(object$par)
   object$coefficients <- cf
   
@@ -714,9 +703,9 @@ print.summary.distfit <- function(x, digits = max(3, getOption("digits") - 3), .
 }
 
 
-getSummary.distfit <- function(obj, alpha = 0.05, ...) {
+getSummary.distfit <- function(object, alpha = 0.05, ...) {
   ## extract coefficient summary
-  s <- summary(obj)
+  s <- summary(object)
   cf <- s$coefficients
   ## augment with confidence intervals
   cval <- qnorm(1 - alpha/2)
@@ -728,19 +717,20 @@ getSummary.distfit <- function(obj, alpha = 0.05, ...) {
   
   ## return everything
   return(list(
-    family = obj$family$family.name,
+    family = object$family$family.name,
     coef = cf,
     sumstat = c(
-      "N" = obj$nobs,
-      "logLik" = as.vector(logLik(obj)),
-      "AIC" = AIC(obj),
-      "BIC" = AIC(obj, k = log(obj$ny))
+      "N" = object$nobs,
+      "logLik" = as.vector(logLik(object)),
+      "AIC" = AIC(object),
+      "BIC" = AIC(object, k = log(object$ny))
     ),
-    call = obj$call
+    call = object$call
   ))
 }
 
 
+# FIXME: check correct calculations for each available type
 residuals.distfit <- function(object, type = c("standardized", "pearson", "response"), ...) {
   if(match.arg(type) == "response") {
     object$y - predict.distfit(object, type = "response")
@@ -753,7 +743,7 @@ residuals.distfit <- function(object, type = c("standardized", "pearson", "respo
 
 
 
-## FIX ME:
+## FIXME: revise plotting options
 plot.distfit <- function(x,
                          main = "", xlab = "", ylab = "Density",
                          fill = "lightgray", col = "darkred", lwd = 1.5,
