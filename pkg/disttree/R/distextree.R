@@ -27,6 +27,10 @@ distextree <- function(formula,
   ocontrol <- control
   control$type.hessian <- control$decorrelate <- control$method <- control$optim.control <- NULL
   control$lower <- control$upper <- NULL
+  if(control$saveinfo == FALSE){
+    control$saveinfo <- TRUE
+    warning("'control$saveinfo' set to TRUE, needed for distributional tree.")
+  }
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
