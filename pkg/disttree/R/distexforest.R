@@ -1,52 +1,3 @@
-
-### constructor for forest objects
-constparties <- function(nodes, data, weights, fitted = NULL, terms = NULL, info = NULL) {
-
-    stopifnot(all(sapply(nodes, function(x) inherits(x, "partynode"))))
-    stopifnot(inherits(data, "data.frame"))
-    stopifnot(inherits(weights, "list"))
-
-    if(!is.null(fitted)) {
-        stopifnot(inherits(fitted, "data.frame"))
-        stopifnot(nrow(data) == 0L | nrow(data) == nrow(fitted))
-        if (nrow(data) == 0L)
-            stopifnot("(response)" %in% names(fitted))
-    } else {
-        stopifnot(nrow(data) > 0L)
-        stopifnot(!is.null(terms))
-        fitted <- data.frame("(response)" = model.response(model.frame(terms, data = data, 
-                                                                       na.action = na.pass)),
-                             check.names = FALSE)
-    }
-
-    ret <- list(nodes = nodes, data = data, weights = weights, fitted = fitted)
-    class(ret) <- c("constparties", "parties")
-
-    if(!is.null(terms)) {
-        stopifnot(inherits(terms, "terms"))
-        ret$terms <- terms
-    }
-
-    if (!is.null(info))
-        ret$info <- info
-
-    ret
-}
-
-.perturb <- function(replace = FALSE, fraction = .632) {
-    ret <- function(prob) {
-        if (replace) {
-            rw <- rmultinom(1, size = length(prob), prob = prob)
-        } else {
-            rw <- integer(length(prob))
-            i <- sample(1:length(prob), ceiling(fraction * length(prob)), prob = prob)
-            rw[i] <- 1L
-        }
-        as.integer(rw)
-    }
-    ret
-}
-
 distexforest <- function
 (
     formula,
@@ -199,7 +150,7 @@ distexforest <- function
 
     control$applyfun <- applyfun
 
-    ret <- constparties(nodes = forest, data = mf, weights = rw,
+    ret <- partykit:::constparties(nodes = forest, data = mf, weights = rw,
                         fitted = fitted, terms = d$terms$all,
                         info = list(call = match.call(), 
                                     control = control,
@@ -435,55 +386,37 @@ model.frame.distexforest <- function(formula, ...) {
 }
 
 ### FIXME: (ML) does not get a full distextree object
+gettree.distexforest <- function(object, tree = 1L, ...) {
+    consttree <- partykit:::gettree.cforest(object, tree = tree, ...)
+    #d.response <- consttree$fitted$`(response)`[consttree$fitted$`(weights)` == 1]
+    d <- object$data[consttree$fitted$`(weights)` == 1,]
+    ctrl <- object$info$control
+    ctrl$saveinfo <- TRUE
+    newtree <- distextree(object$info$call$formula, 
+                          data = d, control = ctrl)
+    return(newtree)
+}
+    
+
+## alternative version of gettree.distexforest
 #gettree.distexforest <- function(object, tree = 1L, ...) {
-#    ft <- object$fitted
-#    ft[["(weights)"]] <- object$weights[[tree]]
-#    ret <- party(object$nodes[[tree]], data = object$data, fitted = ft)
-#    ret$terms <- object$terms
-#    class(ret) <- c("distextree", class(ret))
-#    ret
-#}
-
-#varimp.distexforest <- function(object, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
-#                           conditional = FALSE, threshold = .2,
-#                           applyfun = NULL, cores = NULL, ...) {
-#
-#    ret <- matrix(NA, nrow = length(object$nodes), ncol = ncol(object$data))
-#    colnames(ret) <- names(object$data)
-#
-#    if (conditional) {
-#        conditions <- partykit:::.create_cond_list(object, threshold)
-#    } else {
-#        conditions <- NULL
+#  consttree <- partykit:::gettree.cforest(object, tree = tree, ...)
+#  coefs <- matrix(ncol = length(object$info$family$link), nrow = width(consttree))
+#  terminal <- 1
+#  terminal.ids <- NULL
+#  for(i in 1:length(consttree)){
+#    if(is.terminal(consttree[[i]]$node)){
+#      d <- consttree$fitted$`(response)`[consttree$fitted$`(weights)` == 1 & consttree$fitted$`(fitted)` == i]
+#      cf <- distexfit(d, family = object$info$family)
+#      # t[[i]]$node$info$coefficients <- cf$par
+#      coefs[terminal, ] <- cf$par
+#      terminal.ids <- c(terminal.ids, i)
+#      terminal <- terminal+1
 #    }
-#
-#    ## apply infrastructure 
-#    if (is.null(applyfun)) {
-#        applyfun <- if(is.null(cores)) {
-#            lapply
-#        } else {
-#            function(X, FUN, ...)
-#                parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
-#        }
-#    }
-#
-#    vi <- applyfun(1:length(object$nodes), function(b) {
-#        tree <- gettree(object, b)
-#        if (OOB) {
-#            oobw <- as.integer(object$weights[[b]] == 0)
-#            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
-#                         weights = oobw, ...)
-#        } else {
-#            vi <- varimp(tree, nperm = nperm, risk = risk, conditions = conditions,
-#                         ...)
-#        }
-#        return(vi)
-#    })
-#
-#    for (b in 1:length(object$nodes))
-#        ret[b, match(names(vi[[b]]), colnames(ret))] <- vi[[b]]
-#
-#    ret <- colMeans(ret, na.rm = TRUE)
-#    ret[!sapply(ret, is.na)]
+#  }
+#  rownames(coefs) <- as.character(terminal.ids)
+#  colnames(coefs) <- names(cf$par)
+# return(list(treestructure = consttree,
+#              coefficients = coefs))
 #}
-
+  
