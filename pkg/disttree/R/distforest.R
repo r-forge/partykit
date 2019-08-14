@@ -157,8 +157,7 @@ distforest <- function
                                     control = control,
                                     family = family))
 
-    ret$info$call$formula <- oformula   # FIXME: (ML) Tweak to get real formula for logLik in varimp()
-    ret$info$formula <- oformula   # FIXME: (ML) Tweak to keep consistency to tree structure
+    ret$info$formula <- oformula   # keep evaluated formula (for logLik)
     
     ret$trafo <- trafo
     ret$predictf <- d$terms$z
