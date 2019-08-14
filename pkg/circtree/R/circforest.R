@@ -58,7 +58,6 @@ circforest <- function(formula,
   ## Evaluate call
   forest <- eval(cl2)
   forest$info$call <- cl
-  forest$info$call$formula <- oformula   # FIXME: (ML) Tweak to get real formula for logLik in varimp()
   
   class(forest) <- c("circforest", class(forest))
   forest
