@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-08-13 on thinkmoritz
+# - L@ST MODIFIED: 2019-08-14 on thinkmoritz
 # -------------------------------------------------------------------
 
 ## Model version for output files
@@ -25,8 +25,6 @@ if (! dir.exists("results")) dir.create("results")
 # -------------------------------------------------------------------
 # Pre-process data
 # -------------------------------------------------------------------
-
-setwd("~/svn/partykit/pkg/disttree/inst/circforest/")
 
 ## Load data / Remove rows with NAs
 tmp <- readRDS("circforest_data/circforest_prepared_data_ibk_lag6.rds")
