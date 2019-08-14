@@ -27,7 +27,7 @@ if (! dir.exists("results")) dir.create("results")
 # -------------------------------------------------------------------
 
 ## Load data / Remove rows with NAs
-tmp <- readRDS("circforest_data/circforest_prepared_data_ibk_lag6.rds")
+tmp <- readRDS("data/circforest_prepared_data_ibk_lag6.rds")
 tmp <- tmp[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(tmp))]
 
 tmp <- na.omit(tmp)
