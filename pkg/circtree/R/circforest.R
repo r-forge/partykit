@@ -3,11 +3,11 @@
 # - AUTHOR: Moritz N. Lang, Lisa Schlosser
 # - DATE:   2019-08-04
 # -------------------------------------------------------------------
-# - PURPOSE: Wrapper function for distexforest plus S3 methods 
+# - PURPOSE: Wrapper function for distforest plus S3 methods 
 # -------------------------------------------------------------------
 
 
-## Wrapper function for distexforest
+## Wrapper function for distforest
 circforest <- function(formula,
                        data,       
                        response_range = NULL, ## TODO: or default c(0,2*pi) with check of values and stop function
@@ -17,7 +17,7 @@ circforest <- function(formula,
                        offset, 
                        cluster,
                        strata,
-                       control = disttree::distextree_control(
+                       control = disttree_control(
                          teststat = "quad", testtype = "Univ", mincriterion = 0,
                          saveinfo = FALSE, minsplit = 20, minbucket = 7, splittry = 2, ...),
                        ntree = 500L, 
@@ -35,7 +35,7 @@ circforest <- function(formula,
   ## Get and modify call
   cl <- match.call()
   cl2 <- cl
-  cl2[[1]] <- quote(disttree::distexforest)
+  cl2[[1]] <- quote(disttree::distforest)
   cl2$family <- dist_vonmises()
   cl2$response_range <- NULL
   
@@ -70,9 +70,9 @@ predict.circforest <- function(object, newdata = NULL,
   type <- match.arg(type) 
   
   cl <- match.call()
-  cl[[1]] <- quote(disttree:::predict.distexforest)
+  cl[[1]] <- quote(disttree:::predict.distforest)
   
-  ## NOTE: predict.distexforest uses object$fitted[["(response)"]] as response values for parameter estimation,
+  ## NOTE: predict.distforest uses object$fitted[["(response)"]] as response values for parameter estimation,
   # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
   if(type == "parameter" | type == "response"){
     object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
@@ -99,7 +99,7 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   ## Get call
   cl <- match.call()
   
-  ## NOTE: logLik.distexforest calls predict.distexforest as a first step which 
+  ## NOTE: logLik.distforest calls predict.distforest as a first step which 
   # uses object$fitted[["(response)"]] as response values for parameter estimation,
   # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
   object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
@@ -129,6 +129,6 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
 
 
   ## Evaluate call
-  cl[[1]] <- quote(disttree:::logLik.distexforest)
+  cl[[1]] <- quote(disttree:::logLik.distforest)
   eval(cl)
 }
