@@ -158,7 +158,8 @@ distforest <- function
                                     family = family))
 
     ret$info$call$formula <- oformula   # FIXME: (ML) Tweak to get real formula for logLik in varimp()
-
+    ret$info$formula <- oformula   # FIXME: (ML) Tweak to keep consistency to tree structure
+    
     ret$trafo <- trafo
     ret$predictf <- d$terms$z
     class(ret) <- c("distforest", class(ret))
@@ -320,7 +321,7 @@ logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...){
     factors <- which(sapply(nd, is.factor))
     xlev <- lapply(factors, function(x) levels(nd[[x]]))
     names(xlev) <- names(nd)[factors]
-    formula <- if(is.name(object$info$call$formula)) eval(object$info$call$formula) else object$info$call$formula
+    formula <- object$info$formula
     nd <- model.frame(formula, ## FIXME: use formula with response only
                       data = newdata, na.action = na.pass, xlev = xlev)
     responses <- nd[,as.character(formula[[2]])]
@@ -393,7 +394,7 @@ gettree.distforest <- function(object, tree = 1L, ...) {
     d <- object$data[consttree$fitted$`(weights)` == 1,]
     ctrl <- object$info$control
     ctrl$saveinfo <- TRUE
-    newtree <- disttree(object$info$call$formula, 
+    newtree <- disttree(object$info$formula, 
                           data = d, control = ctrl)
     return(newtree)
 }
