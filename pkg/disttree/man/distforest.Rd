@@ -3,6 +3,7 @@
 \alias{predict.distforest}
 \alias{logLik.distforest}
 \alias{gettree.distforest}
+\alias{varimp.distforest}
 \encoding{latin1}
 
 \title{Distributional Regression Forests}
