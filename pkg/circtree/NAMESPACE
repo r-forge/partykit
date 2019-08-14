@@ -40,6 +40,7 @@ S3method("plot", "circtree")
 ## Methods for circforest
 S3method("logLik", "circforest")
 S3method("predict", "circforest")
+S3method("varimp", "circforest")
 
 ## Bind .so files
 useDynLib(circtree)

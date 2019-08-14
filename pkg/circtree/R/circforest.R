@@ -116,3 +116,29 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   cl[[1]] <- quote(disttree:::logLik.distforest)
   eval(cl)
 }
+
+
+## varimp
+varimp.circforest <- function(object, nperm = 1L, ...){
+
+  cl <- match.call()
+
+  # Get response name
+  formula <- Formula::as.Formula(object$info$formula)
+  if(length(formula)[2L] > 1L) {
+    formula <- Formula::Formula(formula(formula, rhs = 2L))
+    warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
+  }
+  response.name <- as.character(formula[[2]])
+
+  object$data[, response.name] <- angle_retrans(object$data[, response.name],
+                                                start = attr(object$fitted[["(response)"]], "response_range")[1],
+                                                end = attr(object$fitted[["(response)"]], "response_range")[2])
+
+  ## Evaluate call
+  cl$object <- object
+  cl[[1]] <- quote(disttree:::varimp.distforest)
+  eval(cl)
+}
+
+
