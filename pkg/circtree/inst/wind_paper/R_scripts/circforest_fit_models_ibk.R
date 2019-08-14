@@ -17,7 +17,11 @@ Sys.setenv('TZ'='UTC')
 ## Load packages
 library("zoo")
 library("circtree")
+library("disttree")
 library("verification") # Careful, version 1.35 needed!!
+
+# set working directory
+# setwd("~/svn/partykit/pkg/circtree/inst/wind_paper")
 
 if (! dir.exists("results")) dir.create("results")
 
@@ -211,17 +215,19 @@ for(cv in unique(cvID)) {
   
   ## Fit tree
   m_ct <- circtree(formula = f,
-                           data = train,
-                           control = disttree_control(mincriterion = (1 - sqrt(.Machine$double.eps))))
+                   data = train,
+                   control = disttree_control(mincriterion = (1 - .Machine$double.eps),
+                                              minbucket = 2000))
   
   ## Fit forest
   m_cf <- circforest(formula = f,
-                       data = train,
-                       ntree = 100,
-                       mtry = ceiling(1. * length(all.vars(f[[3]]))),
-                       perturb = list(replace = FALSE, fraction = 0.3),
-                       control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
-
+                     data = train,
+                     ntree = 100,
+                     mtry = ceiling(1. * length(all.vars(f[[3]]))),
+                     perturb = list(replace = FALSE, fraction = 0.3),
+                     control = disttree_control(nmax = c("yx" = Inf, "z" = 50)),
+                     cores = pmax(1, parallel::detectCores() - 1))
+  
   ## Predict models
   pred_ct.tmp <- predict(m_ct, newdata = test, type = "parameter")
   pred_cf.tmp <- predict(m_cf, newdata = test, type = "parameter")
