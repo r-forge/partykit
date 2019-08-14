@@ -1,6 +1,7 @@
 ## Import functions
 import("stats")
 import("graphics")
+import("disttree")
 importFrom("grDevices", "gray")
 importFrom("sandwich", "estfun")
 importFrom("sandwich", "bread")

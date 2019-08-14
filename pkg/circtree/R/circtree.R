@@ -3,10 +3,10 @@
 # - AUTHOR: Moritz N. Lang, Lisa Schlosser
 # - DATE:   2019-07-31
 # -------------------------------------------------------------------
-# - PURPOSE: Wrapper function for distextree plus S3 methods 
+# - PURPOSE: Wrapper function for disttree plus S3 methods 
 # -------------------------------------------------------------------
 
-## Wrapper function for distextree
+## Wrapper function for disttree
 circtree <- function(formula,
                      data,
                      response_range = NULL, ## TODO: or default c(0,2*pi) with check of values and stop function
@@ -15,7 +15,7 @@ circtree <- function(formula,
                      weights,
                      offset,
                      cluster,
-                     control = disttree::distextree_control(...),
+                     control = disttree_control(...),
                      converged = NULL,
                      scores = NULL,
                      doFit = TRUE,
@@ -24,7 +24,7 @@ circtree <- function(formula,
   ## Get and modify call
   cl <- match.call()
   cl2 <- cl
-  cl2[[1]] <- quote(disttree::distextree)
+  cl2[[1]] <- quote(disttree::disttree)
   cl2$family <- dist_vonmises()
   cl2$response_range <- NULL
 
@@ -97,7 +97,7 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
   }
 
   ## Evaluate call
-  cl[[1]] <- quote(disttree:::logLik.distextree)
+  cl[[1]] <- quote(disttree:::logLik.disttree)
   eval(cl)
 }
 
@@ -111,11 +111,11 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
   ## For 'type=response' transform to response_range
   if(type != "response"){
     cl <- match.call()
-    cl[[1]] <- quote(disttree:::predict.distextree)
+    cl[[1]] <- quote(disttree:::predict.disttree)
     eval(cl)
   } else {
     cl <- match.call()
-    cl[[1]] <- quote(disttree:::predict.distextree)
+    cl[[1]] <- quote(disttree:::predict.disttree)
     response <- eval(cl)
     
     rval <- angle_retrans(response,

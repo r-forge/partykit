@@ -14,7 +14,7 @@
 
 \usage{
 circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
-         weights, offset, cluster, control = disttree::distextree_control(...),
+         weights, offset, cluster, control = disttree_control(...),
          converged = NULL, scores = NULL, doFit = TRUE, ...)
 }
 
@@ -34,7 +34,7 @@ circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
   \item{offset}{an optional vector of offset values.}
   \item{cluster}{an optional factor indicating independent clusters.
     Highly experimental, use at your own risk.}
-  \item{control}{control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}.}
+  \item{control}{control arguments passed to \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{disttree_control}}.}
   \item{converged}{an optional function for checking user-defined criteria before splits are implemented.}
   \item{scores}{an optional named list of scores to be attached to ordered factors.}
   \item{doFit}{a logical indicating if the tree shall be grown (TRUE) or not FALSE}
@@ -45,11 +45,11 @@ circtree(formula, data, response_range = NULL, subset, na.action = na.pass,
 \details{
   Distributional regression trees for a circular response are an application of model-based recursive 
   partitioning and unbiased recursive partitioning based on the implementation in 
-  \code{\link[disttree]{distextree}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
+  \code{\link[disttree]{disttree}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
 }
 
 \value{
-  An object of S3 class \code{circtree} inheriting from class \code{distextree}.
+  An object of S3 class \code{circtree} inheriting from class \code{disttree}.
 }
 
 \examples{
@@ -84,7 +84,7 @@ plot(ct.hour, tp_args = list(type = "response", plot_type = "time",
 
 
 \seealso{
-  \code{\link[disttree]{distextree}}, \code{\link[disttree]{distexfit}}, 
+  \code{\link[disttree]{disttree}}, \code{\link[disttree]{distfit}}, 
   \code{\link[partykit]{extree_fit}}
 }
 

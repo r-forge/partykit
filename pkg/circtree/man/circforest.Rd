@@ -13,7 +13,7 @@
 \usage{
 circforest(formula, data, response_range = NULL, subset, 
            na.action = na.pass, weights, offset, cluster, strata, 
-           control = disttree::distextree_control(teststat = "quad", testtype = "Univ", 
+           control = disttree_control(teststat = "quad", testtype = "Univ", 
            mincriterion = 0, saveinfo = FALSE, minsplit = 20, minbucket = 7, 
            splittry = 2, ...), ntree = 500L, fit.par = FALSE, 
            perturb = list(replace = FALSE, fraction = 0.632),
@@ -41,14 +41,14 @@ circforest(formula, data, response_range = NULL, subset,
     Highly experimental, use at your own risk.}
   \item{strata}{an optional factor for stratified sampling.}
   \item{control}{a list with control parameters passed to 
-    \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{distextree_control}}
+    \code{\link[partykit]{extree_fit}} via \code{\link[disttree]{disttree_control}}
     The default values that are not set within
-    the call of \code{\link[disttree]{distexforest}} correspond to those
-    of the default values used by \code{\link[disttree]{distextree}} from the
+    the call of \code{\link[disttree]{distforest}} correspond to those
+    of the default values used by \code{\link[disttree]{disttree}} from the
     \code{disttree} package. \code{saveinfo = FALSE} leads to less
     memory hungry representations of trees. Note that arguments
     \code{mtry}, \code{cores} and \code{applyfun} in
-    \code{\link{distextree_control}} are ignored for \code{\link{distexforest}},
+    \code{\link{disttree_control}} are ignored for \code{\link{distforest}},
     because they are already set.}
   \item{ntree}{number of trees to grow for the forest.}
   \item{fit.par}{logical. if TRUE, fitted and predicted values and predicted parameters are calculated 
@@ -97,11 +97,11 @@ circforest(formula, data, response_range = NULL, subset,
 \details{
   Distributional regression forests for a circular response are an application of model-based recursive 
   partitioning and unbiased recursive partitioning based on the implementation in 
-  \code{\link[disttree]{distexforest}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
+  \code{\link[disttree]{distforest}} using the infrastructure of \code{\link[partykit]{extree_fit}}.
 }
 
 \value{
-  An object of S3 class \code{circforest} inheriting from class \code{distexforest}.
+  An object of S3 class \code{circforest} inheriting from class \code{distforest}.
 }
 
 \examples{
@@ -111,8 +111,8 @@ circforest(formula, data, response_range = NULL, subset,
 
 
 \seealso{
-  \code{\link[disttree]{distexforest}}, \code{\link[disttree]{distextree}}, 
-  \code{\link[disttree]{distexfit}}, \code{\link[partykit]{extree_fit}}
+  \code{\link[disttree]{distforest}}, \code{\link[disttree]{disttree}}, 
+  \code{\link[disttree]{distfit}}, \code{\link[partykit]{extree_fit}}
 }
 
 \keyword{random forests, distributional regression trees, parametric modelling, 
