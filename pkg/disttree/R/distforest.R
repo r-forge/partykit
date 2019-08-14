@@ -49,6 +49,7 @@ distforest <- function
     if (!is.null(oweights))
         disttreecall$weights <- 1:NROW(oweights)
     disttreecall$control <- control ### put ... into ctree_control()
+    disttreecall$control$saveinfo <- TRUE  ## will be set to TRUE within disttree anyway but would produce a warning
     disttreecall[[1L]] <- quote(disttree::disttree)
     tree <- eval(disttreecall, parent.frame())
 
