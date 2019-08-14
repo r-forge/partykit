@@ -2,6 +2,7 @@
 import("stats")
 import("graphics")
 import("disttree")
+importFrom("partykit", "varimp")
 importFrom("grDevices", "gray")
 importFrom("sandwich", "estfun")
 importFrom("sandwich", "bread")

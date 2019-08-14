@@ -2,6 +2,7 @@
 \alias{circforest}
 \alias{predict.circforest}
 \alias{logLik.circforest}
+\alias{varimp.circforest}
 
 \title{Distributional Regression Forests for a Circular Response}
 
