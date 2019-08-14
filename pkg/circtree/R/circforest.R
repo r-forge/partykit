@@ -32,6 +32,9 @@ circforest <- function(formula,
   ## To pass R CMD check: "no visible binding for global variable"
   nvar <- NULL
 
+  ## Get original formula
+  oformula <- as.formula(formula)
+  
   ## Get and modify call
   cl <- match.call()
   cl2 <- cl
@@ -55,6 +58,7 @@ circforest <- function(formula,
   ## Evaluate call
   forest <- eval(cl2)
   forest$info$call <- cl
+  forest$info$call$formula <- oformula   # FIXME: (ML) Tweak to get real formula for logLik in varimp()
   
   class(forest) <- c("circforest", class(forest))
   forest
@@ -71,15 +75,6 @@ predict.circforest <- function(object, newdata = NULL,
   
   cl <- match.call()
   cl[[1]] <- quote(disttree:::predict.distforest)
-  
-  ## NOTE: predict.distforest uses object$fitted[["(response)"]] as response values for parameter estimation,
-  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
-  if(type == "parameter" | type == "response"){
-    object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
-                                                 start = attr(object$fitted[["(response)"]], "response_range")[1],
-                                                 end = attr(object$fitted[["(response)"]], "response_range")[2])
-    cl$object <- object
-  }  
   
   ## For 'type=response' transform to response_range
   if(type != "response"){
@@ -98,16 +93,6 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   
   ## Get call
   cl <- match.call()
-  
-  ## NOTE: logLik.distforest calls predict.distforest as a first step which 
-  # uses object$fitted[["(response)"]] as response values for parameter estimation,
-  # therefore object$fitted[["(response)"]] has to be transformed to (-pi,pi] within predict.circforest
-  object$fitted[["(response)"]] <- angle_trans(object$fitted[["(response)"]],
-                                               start = attr(object$fitted[["(response)"]], "response_range")[1],
-                                               end = attr(object$fitted[["(response)"]], "response_range")[2])
-  cl$object <- object
-  
-  
   
   # Get response name
   formula <- Formula::as.Formula(object$info$formula)
