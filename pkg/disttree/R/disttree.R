@@ -316,8 +316,8 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$dfsplit <- dfsplit  # FIXME: (ML) Added to all types of tree, to get df within logLik.modelparty
 
   ## Check the kind of tree
-  if (length(testflavour) == 3 & is.null(type.tree)) testflavour <- testflavour[1]
-  if (length(splitflavour) == 2 & is.null(type.tree)) splitflavour <- splitflavour[1]
+  testflavour <- match.arg(testflavour)
+  splitflavour <- match.arg(splitflavour)
   
   if(!is.null(type.tree)) {
     
