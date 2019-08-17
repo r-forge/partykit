@@ -1,7 +1,6 @@
 \name{disttree}
 
 \alias{disttree}
-\alias{disttree_control}
 \alias{print.disttree}
 \alias{coef.disttree}
 \alias{predict.disttree}
