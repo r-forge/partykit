@@ -5,7 +5,8 @@
 
 \description{
   Auxiliary function for \code{disttree} fitting. Specifies a list of control values for fitting
-  a distributional regression tree or forest.
+  a distributional regression tree or forest. These \code{disttree} specific control values are set 
+  in addition to the control values of \code{ctree_control} and can vary from its default values.
 }
 \usage{
 disttree_control(type.tree = NULL, type.hessian = c("checklist",
@@ -70,11 +71,11 @@ disttree_control(type.tree = NULL, type.hessian = c("checklist",
   \item{xgroups}{integer. Number of categories for split variables to be employed in chi-squared tests (optionally breaks can be handed over).}
   \item{ygroups}{integer. Number of categories for scores to be employed in chi-squared tests (optionally breaks can be handed over).}
   \item{weighted.scores}{logical. Should scores be weighted in GUIDE}
-  \item{...}{Add description}
+  \item{...}{additional \code{ctree_control} arguments.}
 }
 
 \value{
   A list with components named as the arguments.
 }
 
-\seealso{\code{\link{disttree}}, \code{\link[partykit]{extree_fit}}}
+\seealso{\code{\link{ctree_control}}, \code{\link{disttree}}, \code{\link[partykit]{extree_fit}}}
