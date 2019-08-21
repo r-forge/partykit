@@ -58,7 +58,7 @@ circforest <- function(formula,
   ## Evaluate call
   forest <- eval(cl2)
   forest$info$call <- cl
-  forest$info$response_range <- response_range
+  forest$info$response_range <- attr(data[, response.name], "response_range") 
   
   class(forest) <- c("circforest", class(forest))
   forest
