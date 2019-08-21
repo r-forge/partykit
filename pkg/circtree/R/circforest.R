@@ -69,6 +69,7 @@ circforest <- function(formula,
 predict.circforest <- function(object, newdata = NULL, 
                                type = c("parameter", "response", "weights", "node"), 
                                OOB = TRUE, 
+                               scale = TRUE,
                                response_range = FALSE, ...) {
   
   ## Check response range

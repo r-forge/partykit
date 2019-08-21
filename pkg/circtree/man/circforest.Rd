@@ -21,7 +21,7 @@ circforest(formula, data, response_range = NULL, subset,
            mtry = ceiling(sqrt(nvar)), applyfun = NULL, cores = NULL, trace = FALSE, ...)
 \method{predict}{circforest}(object, newdata = NULL,
         type = c("parameter", "response", "weights", "node"),
-        OOB = TRUE, scale = TRUE, \dots)
+        OOB = TRUE, scale = TRUE, response_range = FALSE, \dots)
 }
 
 \arguments{
@@ -30,8 +30,9 @@ circforest(formula, data, response_range = NULL, subset,
     where \code{y} should be the response variable
     and \code{x1} and \code{x2} are used as partitioning variables.}
   \item{data}{an optional data frame containing the variables in the model.}
-  \item{response_range}{an optional vector specifying a range of the
-    circular response.}
+  \item{response_range}{either a logical value indicating whether the response should be transformed
+  to its original range (TRUE) or kept on the interval (-pi,pi] or a two-dimensional vector specifying 
+  a range of the circular response.}
   \item{subset}{an optional vector specifying a subset of observations to be
     used in the fitting process.}
   \item{na.action}{a function which indicates what should happen when the data
