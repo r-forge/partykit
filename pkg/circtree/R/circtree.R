@@ -44,14 +44,15 @@ circtree <- function(formula,
   ## Evaluate call
   tree <- eval(cl2)
   tree$info$call <- cl
-
+  tree$info$response_range <- attr(data[, response.name], "response_range") 
+  
   class(tree) <- c("circtree", class(tree))
   tree
 }
 
 
 ## Print method
-print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", ...){
+print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood",  ...){
   if(is.null(title)) title <- sprintf("Circular regression tree (von Mises Distribution)")
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
@@ -59,17 +60,19 @@ print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 
 ## TODO: Does kappa stay the same for response scale??!
 ## Coef method
-coef.circtree <- function(object, type = c("parameter", "response"), ...){
-  type <- match.arg(type)
-
+coef.circtree <- function(object, response_range = FALSE, ...){
+  
+  if(!(is.logical(response_range) | (is.numeric(response_range) & length(response_range) == 2))) 
+    stop("argument 'range' has to be logical or a numeric vector of length 2")
+  
   cf <- partykit:::coef.modelparty(object)
   
-  if(type == "response"){
-    response_range <- attr(object$fitted[["(response)"]], "response_range")
+  if(any(response_range !=FALSE)) {
+    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
     cf[, "mu"] <- angle_retrans(cf[, "mu"], response_range[1], response_range[2])
     cf[,"kappa"] <- cf[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
-
+  
   return(cf)
 }
 
@@ -91,8 +94,8 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
     response.name <- as.character(formula[[2]])
 
     newdata[, response.name] <- angle_trans(newdata[, response.name],
-                                  start = attr(object$fitted[["(response)"]], "response_range")[1],
-                                  end = attr(object$fitted[["(response)"]], "response_range")[2])
+                                            start = object$info$response_range[1],
+                                            end = object$info$response_range[2])
     cl$newdata
   }
 
@@ -104,25 +107,28 @@ logLik.circtree <- function(object, newdata = NULL, weights = NULL, ...) {
 
 ## Predict method
 predict.circtree <- function (object, newdata = NULL, type = c("parameter", "response", "node"), 
-                              OOB = FALSE, ...) {
+                              response_range = FALSE, OOB = FALSE, ...) {
 
   type <- match.arg(type) 
+  if(!(is.logical(response_range) | (is.numeric(response_range) & length(response_range) == 2))) 
+    stop("argument 'range' has to be logical or a numeric vector of length 2")
 
   ## For 'type=response' transform to response_range
-  if(type != "response"){
-    cl <- match.call()
-    cl[[1]] <- quote(disttree:::predict.disttree)
-    eval(cl)
-  } else {
-    cl <- match.call()
-    cl[[1]] <- quote(disttree:::predict.disttree)
-    response <- eval(cl)
-    
-    rval <- angle_retrans(response,
-                          start = attr(object$fitted[["(response)"]], "response_range")[1],
-                          end = attr(object$fitted[["(response)"]], "response_range")[2])
-    return(rval)
+  cl <- match.call()
+  cl[[1]] <- quote(disttree:::predict.disttree)
+  rval <- eval(cl)
+  
+  if(type == "response" & (any(response_range !=FALSE))) {
+    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
+    rval <- angle_retrans(rval,
+                          start = response_range[1],
+                          end = response_range[2])
+  } else if(type == "parameter" & (any(response_range !=FALSE))) {
+    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
+    rval[, "mu"] <- angle_retrans(rval[, "mu"], response_range[1], response_range[2])
+    rval[,"kappa"] <- rval[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
+  return(rval)
 }
 
 
