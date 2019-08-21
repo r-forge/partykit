@@ -52,7 +52,7 @@ circtree <- function(formula,
 
 
 ## Print method
-print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood",  ...){
+print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", ...){
   if(is.null(title)) title <- sprintf("Circular regression tree (von Mises Distribution)")
   partykit::print.modelparty(x, title = title, objfun = objfun, ...)
 }
@@ -62,13 +62,19 @@ print.circtree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 ## Coef method
 coef.circtree <- function(object, response_range = FALSE, ...){
   
-  if(!(is.logical(response_range) | (is.numeric(response_range) & length(response_range) == 2))) 
+  ## Check response range
+  if(!(is.logical(response_range) | (is.numeric(response_range) & all(is.finite(response_range)) & 
+    length(response_range) == 2))) 
     stop("argument 'range' has to be logical or a numeric vector of length 2")
+
+  ## If TRUE, use response_range of object
+  if(identical(response_range, TRUE)) response_range <- object$info$response_range 
   
+  ## Call 
   cf <- partykit:::coef.modelparty(object)
-  
-  if(any(response_range !=FALSE)) {
-    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
+ 
+  ## Transform if necessary 
+  if(is.numeric(response_range)) {
     cf[, "mu"] <- angle_retrans(cf[, "mu"], response_range[1], response_range[2])
     cf[,"kappa"] <- cf[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
@@ -110,21 +116,26 @@ predict.circtree <- function (object, newdata = NULL, type = c("parameter", "res
                               response_range = FALSE, OOB = FALSE, ...) {
 
   type <- match.arg(type) 
-  if(!(is.logical(response_range) | (is.numeric(response_range) & length(response_range) == 2))) 
+
+  ## Check response range
+  if(!(is.logical(response_range) | (is.numeric(response_range) & all(is.finite(response_range)) &
+    length(response_range) == 2)))
     stop("argument 'range' has to be logical or a numeric vector of length 2")
 
-  ## For 'type=response' transform to response_range
+  ## If TRUE, use response_range of object
+  if(identical(response_range, TRUE)) response_range <- object$info$response_range
+
+  ## Call
   cl <- match.call()
   cl[[1]] <- quote(disttree:::predict.disttree)
   rval <- eval(cl)
-  
-  if(type == "response" & (any(response_range !=FALSE))) {
-    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
+
+  ## Transform if necessary
+  if(type == "response" & is.numeric(response_range)){
     rval <- angle_retrans(rval,
                           start = response_range[1],
                           end = response_range[2])
-  } else if(type == "parameter" & (any(response_range !=FALSE))) {
-    if(is.logical(response_range) && response_range == TRUE) response_range <- object$info$response_range 
+  } else if(type == "parameter" & is.numeric(response_range)){
     rval[, "mu"] <- angle_retrans(rval[, "mu"], response_range[1], response_range[2])
     rval[,"kappa"] <- rval[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
