@@ -58,6 +58,7 @@ circforest <- function(formula,
   ## Evaluate call
   forest <- eval(cl2)
   forest$info$call <- cl
+  forest$info$response_range <- response_range
   
   class(forest) <- c("circforest", class(forest))
   forest
@@ -68,23 +69,33 @@ circforest <- function(formula,
 predict.circforest <- function(object, newdata = NULL, 
                                type = c("parameter", "response", "weights", "node"), 
                                OOB = TRUE, 
-                               scale = TRUE, ...) {
+                               response_range = FALSE, ...) {
+  
+  ## Check response range
+  if(!(is.logical(response_range) | (is.numeric(response_range) & all(is.finite(response_range)) & 
+                                     length(response_range) == 2))) 
+    stop("argument 'range' has to be logical or a numeric vector of length 2")
+  
+  ## If TRUE, use response_range of object
+  if(identical(response_range, TRUE)) response_range <- object$info$response_range 
   
   type <- match.arg(type) 
   
   cl <- match.call()
   cl[[1]] <- quote(disttree:::predict.distforest)
   
-  ## For 'type=response' transform to response_range
-  if(type != "response"){
-    eval(cl)
-  } else {
-    response <- eval(cl)
-    rval <- angle_retrans(response,
-                          start = attr(object$fitted[["(response)"]], "response_range")[1],
-                          end = attr(object$fitted[["(response)"]], "response_range")[2])
-    return(rval)
+  rval <- eval(cl)
+  
+  ## Transform if necessary
+  if(type == "response" & is.numeric(response_range)){
+    rval <- angle_retrans(rval,
+                          start = response_range[1],
+                          end = response_range[2])
+  } else if(type == "parameter" & is.numeric(response_range)){
+    rval[, "mu"] <- angle_retrans(rval[, "mu"], response_range[1], response_range[2])
+    rval[,"kappa"] <- rval[, "kappa"] * (2 * pi)^2 / diff(response_range)^2
   }
+  return(rval)
 }
 
 
@@ -105,8 +116,8 @@ logLik.circforest <- function(object, newdata = NULL, weights = NULL, ...){
   # for newdata: we expect newdata to be on the same range as defined by response_range
   if(!is.null(newdata)) {
     newdata[, response.name] <- angle_trans(newdata[, response.name],
-                                            start = attr(object$fitted$`(response)`, "response_range")[1],
-                                            end = attr(object$fitted$`(response)`, "response_range")[2])
+                                            start = object$info$response_range[1],
+                                            end = object$info$response_range[2])
                                             
     cl$newdata <- newdata
   }
@@ -132,8 +143,8 @@ varimp.circforest <- function(object, nperm = 1L, ...){
   response.name <- as.character(formula[[2]])
 
   object$data[, response.name] <- angle_retrans(object$data[, response.name],
-                                                start = attr(object$fitted[["(response)"]], "response_range")[1],
-                                                end = attr(object$fitted[["(response)"]], "response_range")[2])
+                                                start = object$info$response_range[1],
+                                                end = object$info$response_range[2])
 
   ## Evaluate call
   cl$object <- object
