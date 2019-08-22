@@ -245,8 +245,7 @@ disttree <- function(formula,
       if (!("object" %in% winfo)) 
         iinfo$object <- NULL
 
-      if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) |
-          any(! winfo %in% names(iinfo))) {
+      if (is.null(iinfo) | any(sapply(winfo, function(x) is.null(iinfo[[x]])))) {
         # FIXME: (ML) how come that there are some nodes without info slot (compare tests with cars)
         iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
                        estfun = ("estfun" %in% winfo),
