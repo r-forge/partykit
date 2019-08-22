@@ -212,7 +212,6 @@ disttree <- function(formula,
                   #Formula = formula,  # FIXME: (ML) Both formulas are of class 'Formula', but needed for refit.modelparty() -> needed? copied from in mob!
                   #nobs = nrow(fitted),
                   #nreg = 0 FIXME: (ML) needed? copied from in mob!
-
               )
   )
 
