@@ -37,7 +37,6 @@ disttree <- function(formula,
   if(missing(data)) data <- environment(formula)
   
   # Check formula
-  oformula <- as.formula(formula)
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
@@ -194,8 +193,10 @@ disttree <- function(formula,
   fitted[[3]] <- y <- mf[, d$variables$y, drop = TRUE] # NOTE: (ML) y added, necessary?
   names(fitted)[3] <- "(response)"
 
-  control$ytype <- ifelse(is.vector(y), "vector", class(y)) # NOTE: (ML) needed? (from mob)
-  control$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame NOTE: (ML) needed (from mob)
+  ## FIXME: (ML) What should we do with xtype, ytype.. ytype is also defined in disttree_control, 
+  ##             and both are needed in the info slot for refit.modelparty()...
+  #ocontrol$ytype <- ifelse(is.vector(y), "vector", class(y))  # FIXME: (ML) needed? copied from mob!
+  #ocontrol$xtype <- "matrix" # TODO: (AZ) find out when to use data.frame  # FIXME: (ML) needed? copied from mob!
 
   rval <- partykit::party(tree$nodes, 
                 data = if(control$model) mf else mf[0,],
@@ -206,8 +207,12 @@ disttree <- function(formula,
                   formula = formula,
                   family = family,
                   fit = distfit,
-                  #nobs = nrow(fitted),
                   control = ocontrol
+                  #terms = list(response = d$terms$y, partitioning = d$terms$z),  ## FIXME: (ML) response = d$terms$yx in mob -> needed? copied from in mob!
+                  #Formula = formula,  # FIXME: (ML) Both formulas are of class 'Formula', but needed for refit.modelparty() -> needed? copied from in mob!
+                  #nobs = nrow(fitted),
+                  #nreg = 0 FIXME: (ML) needed? copied from in mob!
+
               )
   )
 
@@ -299,6 +304,8 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                                weighted.scores = FALSE,   # logical, should scores be weighted in GUIDE 
                                ...) {
 
+  mc <- match.call(expand.dots = FALSE)
+
   ctrl <- partykit::ctree_control(minsplit = minsplit, minbucket = minbucket, splittry = splittry, ...)
 
   ## Add parameters needed to return coefficient, etc.
@@ -314,39 +321,29 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
   ctrl$lower <- lower
   ctrl$upper <- upper
   ctrl$dfsplit <- dfsplit  # FIXME: (ML) Added to all types of tree, to get df within logLik.modelparty
+  ctrl$ytype = match.arg(ytype)  # FIXME: (ML) added for ctree and mob as needed by refit.modelparty()
 
   ## Check the kind of tree
   testflavour <- match.arg(testflavour)
   splitflavour <- match.arg(splitflavour)
   
   if(!is.null(type.tree)) {
-    
-    if(!type.tree %in% c("ctree", "mob")) {
+ 
+    if(!type.tree %in% c("ctree", "mob")) 
       stop("type.tree can only be set to 'ctree' or 'mob'")
-    } else {
-      
-      if(type.tree == "ctree"){
-        if(!("ctree" %in% splitflavour & "ctree" %in% testflavour)){
-          stop("for type.tree = 'ctree' testflavour and splitflavour can not be set to other than 'ctree'")
-        } else {
-          
-          testflavour <- "ctree"
-          splitflavour <- "ctree"
 
-        }
-      }
+    if(any(match(c("splitflavour", "testflavour"), names(mc), 0L) > 0)) 
+      warning(sprintf("for type.tree = '%s' arguments 'testflavour' and 'splitflavour' are ignored.",
+        type.tree))
       
-      if(type.tree == "mob"){        
-        if(!("exhaustive" %in% splitflavour & "mfluc" %in% testflavour)){
-          stop("for type.tree = 'mob' testflavour can not be set to other than 'mfluc' and splitflavour can not be set to other than 'exhaustive'")
-        } else {
-          
-          testflavour <- "mfluc"
-          splitflavour <- "exhaustive"  
-          
-        }
-      }
+    if(type.tree == "ctree"){
+      testflavour <- "ctree"
+      splitflavour <- "ctree"
+    } else if (type.tree == "mob") {        
+      testflavour <- "mfluc"
+      splitflavour <- "exhaustive"  
     }
+    
   }
   
   if(testflavour == "mfluc" | splitflavour == "exhaustive") {
@@ -356,7 +353,6 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
                          #dfsplit = dfsplit,  FIXME: (ML) Added to all tree types, see comment above   
                          vcov = vcov,
                          ordinal = match.arg(ordinal),
-                         ytype = ytype,
                          trim = trim))
   }
   
