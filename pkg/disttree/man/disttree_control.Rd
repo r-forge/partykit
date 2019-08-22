@@ -52,7 +52,7 @@ disttree_control(type.tree = NULL, type.hessian = c("checklist",
   FIXME: (LS) Should estfun always be returned within object?}
   \item{model}{logical. Should the full model frame be stored in the resulting object?}
   \item{inner}{character. Specification of which additional information ("estfun", "object", or both) should be stored in each inner node. If NULL, no additional information is stored. Note that the information slot 'object' contains a slot 'estfun' as well. 
-  FIXME: (LS) Should estfun always be returned within object?
+  FIXME: (LS) Should estfun always be returned within object?}
   \item{restart}{logical. When determining the optimal split point in a numerical variable: Should model estimation be restarted with NULL starting values for each split? The default is TRUE. If FALSE, then the parameter estimates from the previous split point are used as starting values for the next split point (because in practice the difference are often not huge). (Note that in that case a for loop is used instead of the applyfun for fitting models across sample splits.)}
   \item{breakties}{logical. If M-fluctuation tests are applied, should ties in numeric variables be broken randomly for computing the associated parameter instability test?}
   \item{parm}{numeric or character. Number or name of model parameters included in the parameter instability tests if M-fluctuation tests are applied (by default all parameters are included).
