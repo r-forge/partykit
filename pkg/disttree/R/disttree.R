@@ -237,8 +237,17 @@ disttree <- function(formula,
       iinfo$object <- NULL
       iinfo$estfun <- NULL
     } else {
+      # FIXME: (ML) we have (almost, see next fixme) always object with estfun 
+      # (in opposite to achim).. why estfun is always within object is not clear 
+      # as distfit call is with estfun = FALSE
+      if ("estfun" %in% winfo) 
+        iinfo$estfun <- iinfo$object$estfun
+      if (!("object" %in% winfo)) 
+        iinfo$object <- NULL
+
       if (is.null(iinfo) | any(is.null(iinfo[[winfo]])) |
           any(! winfo %in% names(iinfo))) {
+        # FIXME: (ML) how come that there are some nodes without info slot (compare tests with cars)
         iinfo <- trafo(subset = which(subset_term == i), weights = weights, info = NULL,
                        estfun = ("estfun" %in% winfo),
                        object = ("object" %in% winfo))
