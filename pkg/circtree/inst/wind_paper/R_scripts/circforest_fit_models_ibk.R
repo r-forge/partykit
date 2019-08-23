@@ -218,16 +218,15 @@ for(cv in unique(cvID)) {
                    data = train,
                    control = disttree_control(mincriterion = (1 - .Machine$double.eps),
                                               minbucket = 2000))
-  
-  ## Fit forest
+
+  # Fit forest
   m_cf <- circforest(formula = f,
                      data = train,
-                     ntree = 100,
+                     ntree = 50,
                      mtry = ceiling(1. * length(all.vars(f[[3]]))),
                      perturb = list(replace = FALSE, fraction = 0.3),
-                     control = disttree_control(nmax = c("yx" = Inf, "z" = 50)),
-                     cores = pmax(1, parallel::detectCores() - 1))
-  
+                     control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
+
   ## Predict models
   pred_ct.tmp <- predict(m_ct, newdata = test, type = "parameter")
   pred_cf.tmp <- predict(m_cf, newdata = test, type = "parameter")
