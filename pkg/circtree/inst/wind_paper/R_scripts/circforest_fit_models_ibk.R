@@ -21,7 +21,7 @@ library("disttree")
 library("verification") # Careful, version 1.35 needed!!
 
 # set working directory
-# setwd("~/svn/partykit/pkg/circtree/inst/wind_paper")
+# setwd("~/svn/partykit/pkg/circtree/inst/wind_paper/R_scripts/")
 
 if (! dir.exists("results")) dir.create("results")
 
@@ -95,7 +95,7 @@ exp_weights <- calc_expweights(0.4, 6)
 
 pred_pers <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
 for(i in seq(1:nrow(d))){
-  cat(sprintf("Fitting persistence %2d%%\n", (i/nrow(d) * 100)%/%5 * 5))
+  if(interactive()) cat(sprintf("Fitting persistence %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
 
   i_plt <- as.POSIXlt(index(d)[i], origin = "1970-01-01")
   
@@ -114,8 +114,8 @@ for(i in seq(1:nrow(d))){
 
   ## Fit persistency
   persfit <- try(distfit(as.numeric(train$dd.response),
-                           family = dist_vonmises(), weights = train_weights))
-
+                         family = dist_vonmises(), weights = train_weights))
+  
   ## Predict parameters
   if(class(persfit) == "try-error") {
     pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
@@ -123,6 +123,8 @@ for(i in seq(1:nrow(d))){
     pred_pers[i, ] <- coef(persfit, type = "parameter")
   }
 }
+if(interactive()) cat("\n")   
+  
 
 ## Save predictions
 saveRDS(pred_pers, file = sprintf("results/circforest_pred_pers_ibk_lag6_%s.rds", my_vers))
@@ -222,7 +224,7 @@ for(cv in unique(cvID)) {
   # Fit forest
   m_cf <- circforest(formula = f,
                      data = train,
-                     ntree = 50,
+                     ntree = 100,
                      mtry = ceiling(1. * length(all.vars(f[[3]]))),
                      perturb = list(replace = FALSE, fraction = 0.3),
                      control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
@@ -328,6 +330,6 @@ if(FALSE){
   ## Plot single tree
   cv <- 1
   m_ct <- readRDS(file = sprintf("results/circforest_model_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
-  plot(m_ct, ep_args = list(justmin = 10), tp_args = list(type = "geographics"), 
+  plot(m_ct, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
     ip_args = list(pval = FALSE))
 }
