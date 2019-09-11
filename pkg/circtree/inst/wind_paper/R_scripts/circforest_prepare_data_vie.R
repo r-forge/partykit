@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for VIE with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-08-27 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-11 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -17,9 +17,9 @@ library(foehnix)  # Reto's package
 library(STAGE)  # Reto's package
 
 data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
-data_out <- "."
+data_out <- "data"
 
-mylag <- 3
+mylag <- 6
 
 # -------------------------------------------------------------------
 # Small helper functions
@@ -42,7 +42,7 @@ calc_anglediff <- function(ff1, dd1, ff2, dd2, name) {
   out <- data.frame(ff = as.numeric(z$ff1 - z$ff2))
   a <- as.numeric(z$dd1 - z$dd2)
   a <- matrix(a, ncol = 3, nrow = length(a), byrow = FALSE)
-  b <- matrix(c(-360, 0, 360), byrow = TRUE, ncol =3, nrow = nrow(a))
+  b <- matrix(c(-360, 0, 360), byrow = TRUE, ncol = 3, nrow = nrow(a))
   c <- (a - b)
   out$dd <- c[cbind(1:nrow(c), apply(c, 1, function(x) {ret <- which.min(abs(x)); if(length(ret) == 0) ret <- NA; return(ret)}))]
   #out$dd <- sapply(1:length(dd1), function(x) {tmp <- as.numeric(dd1[x] - dd2[x]) + c(-360, 0, 360); tmp[which.min(abs(tmp))]})
@@ -142,7 +142,7 @@ data <- lag(obs_pure, -mylag)
 
 # Calculate lagged measurements
 for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff", names(data))]){
-  cmd <- sprintf("data$%1$s_ch30min <- data$%1$s - lag(data$%1$s, -mylag)",
+  cmd <- sprintf("data$%1$s_ch30min <- data$%1$s - lag(data$%1$s, -3)",
     i_name)
   eval(parse(text = cmd))
 }
@@ -151,7 +151,7 @@ tmp_names <- names(data)[grep("^dd", names(data))]
 tmp_names <- gsub('dd', '', tmp_names)
 for(idx in tmp_names){
   diff <- calc_anglediff(data[, paste0("ff", idx)], data[, paste0("dd", idx)], 
-    lag(data[, paste0("ff", idx)], -mylag), lag(data[, paste0("dd", idx)], -3), paste0(idx, "_ch30min"))
+    lag(data[, paste0("ff", idx)], -3), lag(data[, paste0("dd", idx)], -3), paste0(idx, "_ch30min"))
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
@@ -184,6 +184,7 @@ for(idx in tmp_names){
 }
 
 data <- merge(obs_pure$dd16, data, all = c(TRUE, FALSE))
+data <- merge(obs_pure$ff16, data, all = c(TRUE, FALSE))
 
 diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, data$ff16, data$dd16, "EXB")
 diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, data$ff16, data$dd16, "TOW")
@@ -192,7 +193,7 @@ diffARS <- calc_anglediff(data$ffARS, data$ddARS, data$ff16, data$dd16, "ARS")
 
 data <- merge(data, diffEXB, diffTOW, diffOM29, diffARS)
 
-tawes_around <- readRDS(paste0(data_in, "/tawes_stations_around_airport.rds"))
+tawes_around <- readRDS(paste0(data_in, "/tawes_stations_around_airport.rds"))  ## generated in Profcast git-repo
 tawes_around <- lag(tawes_around, -mylag)
 
 data <- merge(data, tawes_around, all = c(TRUE, FALSE))
@@ -202,8 +203,10 @@ for(idx in unique(regmatches(names(tawes_around), regexpr("station[0-9]{5}", nam
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
-names(data)[names(data) %in% "obs_pure$dd16"] <- "dd16_response"
+names(data)[names(data) %in% "obs_pure$dd16"] <- "dd.response"
+names(data)[names(data) %in% "obs_pure$ff16"] <- "ff.response"
 
+if (! dir.exists(data_out)) dir.create(data_out)
 saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, ".rds"))
 
 
