@@ -141,7 +141,7 @@ pred_clim <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID =
   kappa = rep(NA, sum(cvID == x))))
 
 for(cv in unique(cvID)) { 
-  cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
+  if(interactive()) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
 
   train <- d[cv != cvID, ]
   test <- d[cv == cvID, ]
@@ -183,7 +183,8 @@ for(cv in unique(cvID)) {
     }
   }
 }
-  
+if(interactive()) cat("\n")  
+
 ## Save predictions
 saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_ibk_lag6_%s.rds", my_vers))
 rm(pred_clim, climfit, train, test, train_subset); gc()
