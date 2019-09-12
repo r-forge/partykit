@@ -284,53 +284,86 @@ save(pred, pred_naomit, obs, obs_naomit,
 # -------------------------------------------------------------------
 # Validate predictions
 # -------------------------------------------------------------------
-
 load(file = sprintf("results/circforest_results_ibk_lag6_%s.rda", my_vers))
 
-### Validate models
+### Validate models based on our crps
 #crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
 #  y = obs_naomit, sum = FALSE)) 
 
-crps_grimit <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i) 
+## Validate models based on grimit's crps
+crps <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i)
   as.numeric(crps.circ(x = obs_naomit[i], mu = x[i, "mu"], kappa = x[i, "kappa"]))))
+crps <- data.frame(do.call(cbind, crps))
+
+## Calculate boot-strapped mean values
+set.seed(123)
+kboot <- 500
+crps.boot <- data.frame(matrix(NA, ncol = ncol(crps), nrow = kboot, dimnames = list(NULL, names(crps))))
+for (i in 1:kboot) {
+   s <- sample(1 : nrow(crps), nrow(crps), replace = TRUE)
+   crps.boot[i,] <- apply(coredata(crps)[s, ], 2, mean)
+}
+
+## Calculate skill scores
+crps_skill <- (1 - crps[, c("climatology", "persistence", "tree", "forest")] /
+  crps[, "climatology"]) * 100
+
+crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence", "tree", "forest")] /
+  crps.boot[, "climatology"]) * 100
 
 ## Save validation
-save(crps_grimit, file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
+save(crps, crps.boot, crps_skill, crps.boot_skill,
+  file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
 
 ## -------------------------------------------------------------------
 ## Plotting
 ## -------------------------------------------------------------------
 if(FALSE){
-  my_vers <- "v4"
 
-  ## Plot CRPS
+  ## Plot crps skill scores
   load(file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
 
+  ## Plot crps scores
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
-  crps_grimit_skill <- data.frame(sapply(crps_grimit[c("climatology", "persistence", "tree", "forest")], 
-                       function(x) (1 - x/crps_grimit[["climatology"]]) * 100))
-  boxplot(crps_grimit_skill, ylim = c(-60, 110), col = gray(0.6), 
-    ylab = "CRPS skill ccore [%]")
-  text(c(mean(unlist(crps_grimit_skill["climatology"]), na.rm = TRUE),
-         mean(unlist(crps_grimit_skill["persistence"]), na.rm = TRUE),
-         mean(unlist(crps_grimit_skill["tree"]), na.rm = TRUE),
-         mean(unlist(crps_grimit_skill["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_lag6_%s.pdf", my_vers))
-  
-  X11(width = 8, height = 4.5)
-  par(mar = c(3.1, 4.1, 2.1, 2.1))
-  boxplot(crps_grimit[c("climatology", "persistence", "tree", "forest")], ylim = c(0, 1), col = gray(0.6), 
-    ylab = "CRPS [m/s]")
-  text(c(mean(unlist(crps_grimit["climatology"]), na.rm = TRUE),
-         mean(unlist(crps_grimit["persistence"]), na.rm = TRUE),
-         mean(unlist(crps_grimit["tree"]), na.rm = TRUE),
-         mean(unlist(crps_grimit["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
+  boxplot(crps[, c("climatology", "persistence", "tree", "forest")], ylim = c(0, 1), col = gray(0.6),
+    ylab = "CRPS [m/s]", main = "Raw values")
+  text(c(mean(unlist(crps["climatology"]), na.rm = TRUE),
+         mean(unlist(crps["persistence"]), na.rm = TRUE),
+         mean(unlist(crps["tree"]), na.rm = TRUE),
+         mean(unlist(crps["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
   dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_ibk_lag6_%s.pdf", my_vers))
 
-  ## Plot single tree
-  cv <- 1
-  m_ct <- readRDS(file = sprintf("results/circforest_model_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
-  plot(m_ct, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
-    ip_args = list(pval = FALSE))
+  X11(width = 8, height = 4.5)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  boxplot(crps.boot[, c("climatology", "persistence", "tree", "forest")],
+    ylim = c(0, 1), col = gray(0.6), ylab = "CRPS [m/s]", main = "Raw values")
+  text(c(mean(unlist(crps.boot["climatology"]), na.rm = TRUE),
+         mean(unlist(crps.boot["persistence"]), na.rm = TRUE),
+         mean(unlist(crps.boot["tree"]), na.rm = TRUE),
+         mean(unlist(crps.boot["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_boot_ibk_lag6_%s.pdf", my_vers))
+
+  X11(width = 8, height = 4.5)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  boxplot(crps_skill, ylim = c(-60, 110), col = gray(0.6),
+    ylab = "CRPS skill ccore [%]", main = "Raw values")
+  text(c(mean(unlist(crps_skill["climatology"]), na.rm = TRUE),
+         mean(unlist(crps_skill["persistence"]), na.rm = TRUE),
+         mean(unlist(crps_skill["tree"]), na.rm = TRUE),
+         mean(unlist(crps_skill["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_lag6_%s.pdf", my_vers))
+
+  X11(width = 8, height = 4.5)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  boxplot(crps.boot_skill, ylim = c(-60, 110), col = gray(0.6),
+    ylab = "CRPS skill ccore [%]", main = "Boot-strapped mean values")
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_ibk_lag6_%s.pdf", my_vers))
+
+  ### Plot single tree
+  #cv <- 1
+  #m_ct <- readRDS(file = sprintf("results/circforest_model_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+  #plot(m_ct, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
+  #  ip_args = list(pval = FALSE))
 }
+
