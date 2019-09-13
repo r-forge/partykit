@@ -10,6 +10,7 @@
 
 ## Model version for output files
 my_vers <- "v5"
+my_lag <- "lag6"
 
 ## Set time to utc (just in case)
 Sys.setenv('TZ'='UTC')
@@ -30,7 +31,7 @@ if (! dir.exists("results")) dir.create("results")
 # -------------------------------------------------------------------
 
 ## Load data / Remove rows with NAs
-tmp <- readRDS("data/circforest_prepared_data_ibk_lag6.rds")
+tmp <- readRDS(sprintf("data/circforest_prepared_data_ibk_%s.rds", my_lag))
 tmp <- tmp[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(tmp))]
 
 tmp <- na.omit(tmp)
@@ -127,7 +128,7 @@ if(interactive()) cat("\n")
   
 
 ## Save predictions
-saveRDS(pred_pers, file = sprintf("results/circforest_pred_pers_ibk_lag6_%s.rds", my_vers))
+saveRDS(pred_pers, file = sprintf("results/circforest_pred_pers_ibk_%s_%s.rds", my_lag, my_vers))
 rm(pred_pers, persfit, train); gc()
 
 # -------------------------------------------------------------------
@@ -186,7 +187,7 @@ for(cv in unique(cvID)) {
 if(interactive()) cat("\n")  
 
 ## Save predictions
-saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_ibk_lag6_%s.rds", my_vers))
+saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_ibk_%s_%s.rds", my_lag, my_vers))
 rm(pred_clim, climfit, train, test, train_subset); gc()
 
 
@@ -236,11 +237,11 @@ for(cv in unique(cvID)) {
 
   ## Save predictions (and models)
   saveRDS(m_ct, 
-    file = sprintf("results/circforest_model_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+    file = sprintf("results/circforest_model_tree_ibk_%s_%s_cv%s.rds", my_lag, my_vers, cv))
   saveRDS(pred_ct.tmp, 
-    file = sprintf("results/circforest_pred_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+    file = sprintf("results/circforest_pred_tree_ibk_%s_%s_cv%s.rds", my_lag, my_vers, cv))
   saveRDS(pred_cf.tmp, 
-    file = sprintf("results/circforest_pred_forest_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+    file = sprintf("results/circforest_pred_forest_ibk_%s_%s_cv%s.rds", my_lag, my_vers, cv))
   rm(pred_ct.tmp, pred_cf.tmp, m_cf, m_ct, train, test); gc()
 }
 
@@ -251,15 +252,15 @@ for(cv in unique(cvID)) {
 ## Load predictions
 pred_ct <- pred_cf <- list()
 for(cv in unique(cvID)) {
-  pred_ct.tmp <- readRDS(file = sprintf("results/circforest_pred_tree_ibk_lag6_%s_cv%s.rds", my_vers, cv))
-  pred_cf.tmp <- readRDS(file = sprintf("results/circforest_pred_forest_ibk_lag6_%s_cv%s.rds", my_vers, cv))
+  pred_ct.tmp <- readRDS(file = sprintf("results/circforest_pred_tree_ibk_%s_%s_cv%s.rds", my_lag, my_vers, cv))
+  pred_cf.tmp <- readRDS(file = sprintf("results/circforest_pred_forest_ibk_%s_%s_cv%s.rds", my_lag, my_vers, cv))
   pred_ct[[cv]] <- pred_ct.tmp
   pred_cf[[cv]] <- pred_cf.tmp
   rm(pred_cf.tmp, pred_ct.tmp); gc()
 }
 
-pred_pers <- readRDS(file = sprintf("results/circforest_pred_pers_ibk_lag6_%s.rds", my_vers))
-pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_ibk_lag6_%s.rds", my_vers))
+pred_pers <- readRDS(file = sprintf("results/circforest_pred_pers_ibk_%s_%s.rds", my_lag, my_vers))
+pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_ibk_%s_%s.rds", my_lag, my_vers))
 
 ## Combine predictions
 pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
@@ -279,12 +280,12 @@ if(length(idx) > 0){
 
 ## Save results
 save(pred, pred_naomit, obs, obs_naomit, 
-  file = sprintf("results/circforest_results_ibk_lag6_%s.rda", my_vers))
+  file = sprintf("results/circforest_results_ibk_%s_%s.rda", my_lag, my_vers))
 
 # -------------------------------------------------------------------
 # Validate predictions
 # -------------------------------------------------------------------
-load(file = sprintf("results/circforest_results_ibk_lag6_%s.rda", my_vers))
+load(file = sprintf("results/circforest_results_ibk_%s_%s.rda", my_lag, my_vers))
 
 ### Validate models based on our crps
 #crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
@@ -313,7 +314,7 @@ crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence", "tree", "for
 
 ## Save validation
 save(crps, crps.boot, crps_skill, crps.boot_skill,
-  file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
+  file = sprintf("results/circforest_validation_ibk_%s_%s.rda", my_lag, my_vers))
 
 ## -------------------------------------------------------------------
 ## Plotting
@@ -321,7 +322,7 @@ save(crps, crps.boot, crps_skill, crps.boot_skill,
 if(FALSE){
 
   ## Plot crps skill scores
-  load(file = sprintf("results/circforest_validation_ibk_lag6_%s.rda", my_vers))
+  load(file = sprintf("results/circforest_validation_ibk_%s_%s.rda", my_lag, my_vers))
 
   ## Plot crps scores
   X11(width = 8, height = 4.5)
@@ -332,7 +333,7 @@ if(FALSE){
          mean(unlist(crps["persistence"]), na.rm = TRUE),
          mean(unlist(crps["tree"]), na.rm = TRUE),
          mean(unlist(crps["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_ibk_lag6_%s.pdf", my_vers))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_ibk_%s_%s.pdf", my_lag, my_vers))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
@@ -342,7 +343,7 @@ if(FALSE){
          mean(unlist(crps.boot["persistence"]), na.rm = TRUE),
          mean(unlist(crps.boot["tree"]), na.rm = TRUE),
          mean(unlist(crps.boot["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_boot_ibk_lag6_%s.pdf", my_vers))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_boot_ibk_%s_%s.pdf", my_lag, my_vers))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
@@ -352,13 +353,13 @@ if(FALSE){
          mean(unlist(crps_skill["persistence"]), na.rm = TRUE),
          mean(unlist(crps_skill["tree"]), na.rm = TRUE),
          mean(unlist(crps_skill["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_lag6_%s.pdf", my_vers))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_ibk_%s_%s.pdf", my_lag, my_vers))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   boxplot(crps.boot_skill, ylim = c(-60, 110), col = gray(0.6),
     ylab = "CRPS skill ccore [%]", main = "Boot-strapped mean values")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_ibk_lag6_%s.pdf", my_vers))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_ibk_%s_%s.pdf", my_lag, my_vers))
 
   ### Plot single tree
   #cv <- 1
