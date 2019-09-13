@@ -11,6 +11,7 @@
 # -------------------------------------------------------------------
 
 library("STAGE")
+library("zoo")
 
 if (!dir.exists("data")) dir.create("data")
 
@@ -34,4 +35,22 @@ for (i in 1:nrow(stations)) {
   save(file = outfile, obs)
 }
 
-save(file = "data/STAGEtawes_stationlist_extended.rda", stations)
+save(file = "data/sybase_tawes_around_vie_stationlist.rda", stations)
+
+for (i in 1:nrow(stations)) {
+
+  outfile <- sprintf("STAGEobs_tawes_wind_%d.rda", stations$statnr[i])
+  load(outfile)
+
+  stations$statnr[i] <- obs
+  eval(parse(text = sprintf("station%s <- obs", attr(obs, "info")$station)))
+
+  if (i == 1){
+    name_old <- attr(obs, "info")$station
+  } else if (i == 2){
+    eval(parse(text = sprintf("tawes_around_vie <- merge(%s, %s)", name_old, attr(obs, "info")$station)))
+  } else if (i > 2){
+    eval(parse(text = sprintf("tawes_around_vie <- merge(tawes_around, %s)", attr(obs, "info")$station)))
+  }
+
+}

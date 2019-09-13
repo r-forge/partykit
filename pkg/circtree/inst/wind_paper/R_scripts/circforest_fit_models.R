@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-08-14 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-13 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -69,7 +69,25 @@ if (opt$station == "ibk") {
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
   d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
+
 } else if (opt$station == "vie") {
+  ## Remove rows with more than 10 percent nans
+  idx_names <- names(which(apply(tmp, 2, function(x) sum(is.na(x))) > nrow(tmp) / 10))
+  tmp <- tmp[, ! (names(tmp) %in% idx_names)]
+
+  ## Remove rows with NAs
+  tmp <- na.omit(tmp)
+  
+  ## Subset data to full hours
+  d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
+  
+  ## Remove very low values of ff and zero wind direction
+  d <- d[!d[, "dd.response"] == 0,]
+  d <- d[!d[, "ff.response"] < 1,]
+  
+  ## Transform response.dd from 0-360 degree to [-pi, pi]
+  d$dd.response <- d$dd.response / 360 * 2*pi
+  d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
 
 } else {
   stop("Station not supported, currently station must be 'vie' or 'ibk'...")
@@ -84,13 +102,13 @@ calc_expweights <- function(theta, n){rev(sapply(1:n, function(x) theta^(x -1) *
 exp_weights <- calc_expweights(0.4, 6)
 
 pred_pers <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
-for(i in seq(1:nrow(d))){
-  if(opt$verbose) cat(sprintf("Fitting persistence %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
+for (i in seq(1:nrow(d))) {
+  if (opt$verbose) cat(sprintf("Fitting persistence %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
 
   i_plt <- as.POSIXlt(index(d)[i], origin = "1970-01-01")
   
   ## Skip 29th of February 
-  if((i_plt$mon + 1 == 2) & (i_plt$mday == 29)){
+  if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
     pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
     next
   }
@@ -107,13 +125,14 @@ for(i in seq(1:nrow(d))){
                          family = dist_vonmises(), weights = train_weights))
   
   ## Predict parameters
-  if(class(persfit) == "try-error") {
+  if (class(persfit) == "try-error") {
     pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
   } else {
     pred_pers[i, ] <- coef(persfit, type = "parameter")
   }
 }
-if(opt$verbose) cat("\n")   
+
+if (opt$verbose) cat("\n")   
   
 
 ## Save predictions
@@ -131,21 +150,21 @@ cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
 pred_clim <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
   kappa = rep(NA, sum(cvID == x))))
 
-for(cv in unique(cvID)) { 
-  if(opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
+for (cv in unique(cvID)) { 
+  if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
 
   train <- d[cv != cvID, ]
   test <- d[cv == cvID, ]
  
   d_range <- as.POSIXlt(range(index(train)))
 
-  for(i in seq(1:nrow(test))){
+  for (i in seq(1:nrow(test))) {
     cat(sprintf("Fitting climatology %2d%%\n", (i/nrow(test) * 100)%/%5 * 5))
   
     i_plt <- as.POSIXlt(index(test)[i], origin = "1970-01-01")
     
     ## Skip 29th of February 
-    if((i_plt$mon + 1 == 2) & (i_plt$mday == 29)){
+    if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
       pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
       next
     }
@@ -167,14 +186,15 @@ for(cv in unique(cvID)) {
                              family = dist_vonmises()))
 
     ## Predict parameters
-    if(class(climfit) == "try-error") {
+    if (class(climfit) == "try-error") {
       pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
     } else {
       pred_clim[[cv]][i, ] <- coef(climfit, type = "parameter")
     }
   }
 }
-if(opt$verbose) cat("\n")  
+
+if (opt$verbose) cat("\n")  
 
 ## Save predictions
 saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_%s_%s_%s.rds", 
@@ -267,10 +287,10 @@ obs  <- d$dd.response
 ## Remove nans (if any)
 idx <- do.call(rbind, sapply(pred, function(x) which(is.na(x), arr.ind=TRUE)))
 idx <- unique(idx[,1]) 
-if(length(idx) > 0){
+if (length(idx) > 0) {
   pred_naomit <- lapply(pred, function(x) x[-idx, ])
   obs_naomit  <- obs[-idx]
-} else{
+} else {
   pred_naomit <- pred
   obs_naomit  <- obs
 }
@@ -318,7 +338,7 @@ save(crps, crps.boot, crps_skill, crps.boot_skill,
 ## -------------------------------------------------------------------
 ## Plotting
 ## -------------------------------------------------------------------
-if(opt$plot){
+if (opt$plot) {
 
   ## Plot crps skill scores
   load(file = sprintf("results/circforest_validation_%s_%s_%s.rda", opt$station, opt$lag, opt$run_name))
