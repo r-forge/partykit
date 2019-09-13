@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------
 
 ## Model version for output files
-my_vers <- "v4"
+my_vers <- "v5"
 
 ## Set time to utc (just in case)
 Sys.setenv('TZ'='UTC')
