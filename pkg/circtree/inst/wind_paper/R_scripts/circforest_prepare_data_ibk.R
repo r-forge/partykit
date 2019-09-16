@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for IBK with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-05-28 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-16 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -17,7 +17,7 @@ library(zoo)
 data_in <- "/home/moritz/Data/circtree/Daten_Deborah/qc_agg10min"
 data_out <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
 
-mylag <- 3
+mylag <- 18
 
 # -------------------------------------------------------------------
 # Small helper functions
