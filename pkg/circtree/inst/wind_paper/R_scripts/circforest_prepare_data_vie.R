@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for VIE with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-11 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-16 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -19,7 +19,7 @@ library(STAGE)  # Reto's package
 data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
 data_out <- "data"
 
-mylag <- 6
+mylag <- 18
 
 # -------------------------------------------------------------------
 # Small helper functions
@@ -183,31 +183,78 @@ for(idx in tmp_names){
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
-data <- merge(obs_pure$dd16, data, all = c(TRUE, FALSE))
-data <- merge(obs_pure$ff16, data, all = c(TRUE, FALSE))
+data <- merge(obs_pure$dd34, data, all = c(TRUE, FALSE))
+data <- merge(obs_pure$ff34, data, all = c(TRUE, FALSE))
 
-diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, data$ff16, data$dd16, "EXB")
-diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, data$ff16, data$dd16, "TOW")
-diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, data$ff16, data$dd16, "OM29")
-diffARS <- calc_anglediff(data$ffARS, data$ddARS, data$ff16, data$dd16, "ARS")
+diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, data$ff34, data$dd34, "EXB")
+diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, data$ff34, data$dd34, "TOW")
+diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, data$ff34, data$dd34, "OM29")
+diffARS <- calc_anglediff(data$ffARS, data$ddARS, data$ff34, data$dd34, "ARS")
 
 data <- merge(data, diffEXB, diffTOW, diffOM29, diffARS)
 
-tawes_around <- readRDS(paste0(data_in, "/tawes_stations_around_airport.rds"))  ## generated in Profcast git-repo
+tawes_around <- readRDS("data/tawes_around_vie.rds")
 tawes_around <- lag(tawes_around, -mylag)
 
+## Calculate lagged tawes measurements
+## 30min change
+#for(i_name in names(tawes_around)[-grep("dd|ff", names(tawes_around))]){
+#  cmd <- sprintf("tawes_around$%1$s_ch30min <- tawes_around$%1$s - lag(tawes_around$%1$s, -3)",
+#    i_name)
+#  eval(parse(text = cmd))
+#}
+#
+#tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
+#tmp_names <- gsub('dd', '', tmp_names)
+#for(idx in tmp_names){
+#  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
+#    lag(tawes_around[, paste0("ff", idx)], -3), lag(tawes_around[, paste0("dd", idx)], -3), paste0(idx, "_ch30min"))
+#  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
+#}
+
+# 1h change
+for(i_name in names(tawes_around)[-grep("dd|ff|ch30min", names(tawes_around))]){
+  cmd <- sprintf("tawes_around$%1$s_ch1h <- tawes_around$%1$s - lag(tawes_around$%1$s, -6)",
+    i_name)
+  eval(parse(text = cmd))
+}
+
+tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
+tmp_names <- gsub('dd', '', tmp_names)
+for(idx in tmp_names){
+  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
+    lag(tawes_around[, paste0("ff", idx)], -6), lag(tawes_around[, paste0("dd", idx)], -6), paste0(idx, "_ch1h"))
+  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
+}
+
+## 3h change
+#for(i_name in names(tawes_around)[-grep("dd|ff|ch30min|ch1h", names(tawes_around))]){
+#  cmd <- sprintf("tawes_around$%1$s_ch3h <- tawes_around$%1$s - lag(tawes_around$%1$s, -18)",
+#    i_name)
+#  eval(parse(text = cmd))
+#}
+#
+#tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
+#tmp_names <- gsub('dd', '', tmp_names)
+#for(idx in tmp_names){
+#  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
+#    lag(tawes_around[, paste0("ff", idx)], -18), lag(tawes_around[, paste0("dd", idx)], -18), paste0(idx, "_ch3h"))
+#  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
+#}
+
+# Merge data and tawes
 data <- merge(data, tawes_around, all = c(TRUE, FALSE))
 
 for(idx in unique(regmatches(names(tawes_around), regexpr("station[0-9]{5}", names(tawes_around))))){
-  diff <- calc_anglediff(data[, paste0("ff.", idx)], data[, paste0("dd.", idx)], data$ff16, data$dd16, idx)
+  diff <- calc_anglediff(data[, paste0("ff.", idx)], data[, paste0("dd.", idx)], data$ff34, data$dd34, idx)
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
-names(data)[names(data) %in% "obs_pure$dd16"] <- "dd.response"
-names(data)[names(data) %in% "obs_pure$ff16"] <- "ff.response"
+names(data)[names(data) %in% "obs_pure$dd34"] <- "dd.response"
+names(data)[names(data) %in% "obs_pure$ff34"] <- "ff.response"
 
 if (! dir.exists(data_out)) dir.create(data_out)
-saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, ".rds"))
+saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, "_new.rds"))
 
 
 #data <- as.data.frame(data)
