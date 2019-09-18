@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-13 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-18 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -35,7 +35,7 @@ option_list <- list(
     dest = "verbose", help = "Print little output"),
   make_option("--run_name", type = "character", default = "v5",
     help = "Run name or version of script used for output name [default \"%default\"]"),
-  make_option("--station", type = "character", default = "ibk",
+  make_option("--station", type = "character", default = "vie",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
   make_option("--lag", type = "integer", default = 6,
     help = "Lag in 10min time steps [default %default]"),
@@ -47,6 +47,7 @@ option_list <- list(
 
 opt <- parse_args(OptionParser(option_list = option_list))
 
+if(opt$lag%%6 != 0) stop("lag must be in total hours (1lag = 10min)")
 
 # -------------------------------------------------------------------
 # Pre-process data
@@ -115,7 +116,7 @@ for (i in seq(1:nrow(d))) {
 
   ## Subset training data set
   idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
-    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * seq(-6, -1)
+    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-5, -0) - opt$lag/6)
 
   train <- subset(d, index(d) %in% idx)
   train_weights <- exp_weights[idx %in% index(train)]
@@ -172,7 +173,7 @@ for (cv in unique(cvID)) {
   
     ## Subset training data set
     i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
-    max(d_range$year)) %in% i_plt$year)] + 1900
+      max(d_range$year)) %in% i_plt$year)] + 1900
 
     idx <- lapply(i_years, function(x) 
       as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
