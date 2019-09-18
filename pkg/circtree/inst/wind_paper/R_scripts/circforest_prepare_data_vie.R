@@ -19,7 +19,7 @@ library(STAGE)  # Reto's package
 data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
 data_out <- "data"
 
-mylag <- 18
+mylag <- 6
 
 # -------------------------------------------------------------------
 # Small helper functions
