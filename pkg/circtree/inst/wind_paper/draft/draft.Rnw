@@ -167,9 +167,9 @@ Probabilistic modeling of circular data requires the selection of a proper circu
 probability distribution, i.e., a probability distribution which accounts for the periodicity
 of circular data.
 Generally, this feature can be obtained by ``wrapping'' the probability density function
-of any continuous distribtuion around the unit circle applying the modulo operation on the 
-interval length $2\pi$ \citep{Mardia+Jupp:2009}.
-In that way, for example the wrapped Cauchy distribution or the wrapped normal distribution can be employed to model symmetric unimodal circular data.
+of any continuous distribtuion around the unit circle \citep{Mardia+Jupp:2009}, for example by
+applying the modulo operation on the interval length $2\pi$.
+In that way, the wrapped Cauchy distribution or the wrapped normal distribution can be employed to model symmetric unimodal circular data.
 A close approximation to the wrapped normal distribution that is mathematically simpler and hence easier 
 to use \citep{Fisher:1993} is provided by the von Mises distribution,
 a purely circular distribution which is also known as ``the circular normal distribution''
@@ -249,7 +249,7 @@ There, each distribution parameter is linked to a linear predictor by an additiv
 While this strategy works well for smooth effects difficulties can arise in case of 
 non-additive changes. Moreover, specifying a model properly can be very challenging,
 particularly for a high number of covariates and no information about possible interactions.
-One way how to deal with these problems is to apply a tree-structured model.
+An alternative approach that can deal with these problems is to apply a tree-structured model.
 
 \subsection{Circular Distributional Tree}
 \label{sec:circtree}
@@ -269,7 +269,7 @@ the tree building algorithm as introduced by \cite{Schlosser+Hothorn+Stauffer:20
 In particular, in each node the crucial decision on how and where to split the data is based on model scores which are obtained by evaluating the score function $s$ at the individual observations and 
 parameter estimates. For the von Mises distribution and a data set of $n$ observations
 this yields an $n \times 2$ matrix that can be employed as a kind of residual, capturing how well
-a given observation conforms with the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, 
+each given observation conforms with the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, 
 respectively.
 To capture dependence on covariates, the association between the model's scores and each available
 covariate is assessed using either a parameter instability test (MOB) or a permutation test (CTree).
@@ -303,10 +303,10 @@ This procedure is repeated recursively until there are no significant parameter 
 
 Once a circular distributional tree model is fit it can be employed to obtain probabilistic predictions
 for a possibly new set of observations of the covariates $\bm{z} = (z_1, \ldots, z_m)$.
-Starting at the root node the tree structure leads the observation to a terminal node depending on the values of the covariates and in that way to the corresponding estimated parameter pair $(\hat{\mu}, \hat{\kappa})$ of this node. Therefore, the same parameter pair is estimated for all observations
-ending up in the same terminal node. This facilitates the application as the parameter estimates do not need to be recalculated for each (new) observation via maximum likelihood but can be extracted directly
-from the learning sample and the fitted model. This can also be expressed by employing weights
-
+Starting at the root node the tree structure leads the observation to a terminal node, depending on the values of the covariates, where the parameter pair $(\hat{\mu}, \hat{\kappa})$ is estimated for
+the corresponding subset of learning observations. 
+This can also be expressed by employing weights which indicate whether the $i$-th learning observation and the observation $\bm{z}$ belong to the same terminal
+node:
 \begin{equation}
 w^{\text{tree}}_i(\bm{z}) = \sum_{b=1}^B \mathbf{1}((\bm{z}_i \in \mathcal{B}_b) \land (\bm{z} \in \mathcal{B}_b)),
 \end{equation}
@@ -317,6 +317,10 @@ von Mises distribution for a given $\bm{z}$ is obtained by
 \begin{equation}
 (\hat{\mu},\hat{\kappa})(\bm{z}) = \argmax_{\mu,\kappa} \sum_{i=1}^n w^{\text{tree}}_i(\bm{z}) \cdot \ell(\mu,\kappa; y_i).
 \end{equation}
+
+Therefore, the same parameter pair is estimated for all observations
+belonging to the same terminal node. This facilitates the application as the parameter estimates do not need to be recalculated for each (new) observation via maximum likelihood but can be extracted directly
+from the learning sample and the fitted model.
 
 While tree models can capture non-additive effects they do not allow for purely smooth effects and therefore might impose abrupt changes even in case of rather smooth transitions. This can be avoided
 by combining an ensemble of trees in order to obtain a more stable forest model. 
