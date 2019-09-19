@@ -251,7 +251,7 @@ non-additive changes. Moreover, specifying a model properly can be very challeng
 particularly for a high number of covariates and no information about possible interactions.
 An alternative approach that can deal with these problems is to apply a tree-structured model.
 
-\subsection{Circular Distributional Tree}
+\subsection{Distributional Trees for Circular Data}
 \label{sec:circtree}
 Fitting a global model to a full data set can be very challenging, particularly for 
 complex data with strong variations. Therefore, separating the data set into more homogeneous 
@@ -301,7 +301,7 @@ This procedure is repeated recursively until there are no significant parameter 
 %such as permutation tests introduced by \cite{Hothorn+Hornik+VanDeWiel:2006} or asymptotic M-fluctuation
 %tests for parameter instability \citep{Zeileis+Hornik:2007}. In order to select the covariate with the %highest significant association the one covariate that corresponds to the lowest significant $p$-value (if %any) is chosen for splitting the data. Within the range of this split variable the split point leading to %the highest improvement in model fit is chosen either by optimizing the log-likelihood \citep[as in the %MOB algorithm,][]{Zeileis+Hothorn+Hornik:2008} or a two-sample test statistic  over all possible partition%s \citep[as in the CTree algorithm][]{Hothorn+Hornik+Zeileis:2006}.
 
-Once a circular distributional tree model is fit it can be employed to obtain probabilistic predictions
+Once a distributional tree model is fit it can be employed to obtain probabilistic predictions
 for a possibly new set of observations of the covariates $\bm{z} = (z_1, \ldots, z_m)$.
 Starting at the root node the tree structure leads the observation to a terminal node, depending on the values of the covariates, where the parameter pair $(\hat{\mu}, \hat{\kappa})$ is estimated for
 the corresponding subset of learning observations. 
@@ -326,9 +326,9 @@ While tree models can capture non-additive effects they do not allow for purely 
 by combining an ensemble of trees in order to obtain a more stable forest model. 
 
 
-\subsection{Circular Distributional Forest}
+\subsection{Distributional Forests for Circular Data}
 \label{sec:circforest}
-A natural extension of circular distributional trees are ensembles or forests 
+A natural extension of distributional trees for circular data are ensembles or forests 
 that can improve forecasts by regularizing and stabilizing the model.
 Random forests introduced by \cite{Breiman:2001} average the predictions of an ensemble
 of trees, each built on a subsample or bootstrap of the original data. 
@@ -337,8 +337,8 @@ by adaptive local likelihood estimation of the distributional parameters
 \citep{Schlosser+Hothorn+Stauffer:2019, Hothorn+Zeileis:2017}. 
 More specifically, for each possibly new observation~$\bm{z}$ a set of averaged ``nearest neighbor'' weights $w_i^{forest}(\bm{z})$ 
 %\citep{Lin+Jeon:2006}
-is obtained that is based on how often $\bm{z}$ is assigned to the same terminal node as
-each learning observation $y_i, i \in \{1,\ldots,n\}$.
+is obtained that is based on the number of trees in which $\bm{z}$ is assigned to the same terminal 
+node as each learning observation $y_i, i \in \{1,\ldots,n\}$.
 Hence, for a forest of $T$ trees the weights are calculated via
 \begin{equation}
 w^{\text{forest}}_i(\bm{z}) = \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t}
@@ -350,7 +350,7 @@ Hence, similar observations ending up more often in the same terminal node have 
 and in that way a stronger influence in the estimation process.
 
 In that way a specific set of weights can be calculated for each observation yielding
-its specific parameter estimates
+its specific parameter estimates for the von Mises distribution
 \begin{equation}
 (\hat{\mu},\hat{\kappa})(\bm{z}) = \operatorname{argmax}\displaylimits_{\mu, \kappa} \sum_{i=1}^n w_i^{forest}(z) \cdot \ell(\mu, \kappa; y_i). 
 \end{equation}
@@ -359,7 +359,7 @@ Therefore, the resulting parameter estimates can smoothly adapt to the given
 covariates $\bm{z}$ whereas $w_i^{forest}(\bm{z}) = 1$ would correspond to the unweighted
 full-sample estimates and $w_i^{forest}(\bm{z}) \in \{0, 1\}$ corresponds to the abrupt
 splits from the tree.
-Thus circular distributional forests can capture both, smooth and abrupt changes, while
+Thus distributional forests for circular data can capture both, smooth and abrupt changes, while
 covariates and possible interactions are selected automatically allowing for an easy to
 apply methodology to fully specify the von Mises distribution for circular data.
 
@@ -394,7 +394,7 @@ between Innsbruck and either a western or eastern location are expected to have 
 on wind directions.
 
 \subsection{Reference Models}
-Next to circular distributional trees and forests three other models have been applied and their 
+Next to distributional trees for circular data and forests three other models have been applied and their 
 performances have been compared based on a circular version of the continuous ranked probability 
 score (CRPS).
 
