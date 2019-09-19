@@ -365,6 +365,8 @@ apply methodology to fully specify the von Mises distribution for circular data.
 
 
 \section{Wind Direction Forecasts}
+
+\subsection{Motivation}
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision-making processes and risk management,
 e.g., in air traffic management or renewable energy production. 
@@ -380,39 +382,6 @@ regimes react both west and east of the airport are considered as covariates
 along with other meteorological measurements at the airport (lagged by one hour),
 such as wind direction and wind speed at Innsbruck Airport.
 Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and increases clockwise from North ($0$ degree).
-
-
-
-\subsection{Data}
-Observations of various meteorological quantities from the airport of Innsbruck and .. surrounding
-weather stations are used as covariates in order to predict the wind direction at Innsbruck
-airport in the following hour.
-In particular .. covariates are included in the model. Next to the current wind direction,
-temperature, air pressure, ... at the each of the stations also differences in these quantities
-between the considered stations are included. For example, differences in air pressure
-between Innsbruck and either a western or eastern location are expected to have a high influence 
-on wind directions.
-
-\subsection{Reference Models}
-Next to distributional trees for circular data and forests three other models have been applied and their 
-performances have been compared based on a circular version of the continuous ranked probability 
-score (CRPS).
-
-\paragraph{Persistence}
-Assuming that weather conditions will remain the same in the following hours/days is the
-basic idea of persistence in meteorology. Hence, fitting a distributional model as presented in
-Section~\ref{sec:prob_circ} to the observations of the response variable from the previous hour(s) 
-contained in the learning data provides a distributional approach to persistence.
-
-\paragraph{Climatology}
-If there are no climatological changes it can be expected that for a selected day of the year weather conditions will always be the same. Therefore, in order to predict wind direction for a specified day
-and time observations for this selected timespace from all years contained in the learning data are
-used to fit a distributional model.
-
-\paragraph{Linear Model}
-Another commonly applied model ...
-
-\subsection{Results}
 
 \begin{figure}[t]
 \centering
@@ -442,6 +411,42 @@ estimated concentration $\hat \kappa$. In terms of covariates, the lagged
 wind direction (``persistence'') is mostly responsible for distinguishing
 the broad wind regimes listed above while the pressure gradients and wind
 speed separate between subgroups with high vs.\ low precision.
+
+\subsection{Data}
+Observations of various meteorological quantities from the airport of Innsbruck and .. surrounding
+weather stations are used as covariates in order to predict the wind direction at Innsbruck
+airport in the following hour.
+In particular .. covariates are included in the model. Next to the current wind direction,
+temperature, air pressure, ... at the each of the stations also differences in these quantities
+between the considered stations are included. For example, differences in air pressure
+between Innsbruck and either a western or eastern location are expected to have a high influence 
+on wind directions.
+
+\subsection{Models and Evaluation}
+Next to distributional trees for circular data and forests three other models have been applied and their 
+performances have been compared based on a circular version of the continuous ranked probability 
+score (CRPS).
+
+\paragraph{Persistence}
+Assuming that weather conditions will remain the same in the following hours/days is the
+basic idea of persistence in meteorology. Hence, fitting a distributional model as presented in
+Section~\ref{sec:prob_circ} to the observations of the response variable from the previous hour(s) 
+contained in the learning data provides a distributional approach to persistence.
+
+\paragraph{Climatology}
+If there are no climatological changes it can be expected that for a selected day of the year weather conditions will always be the same. Therefore, in order to predict wind direction for a specified day
+and time observations for this selected timespace from all years contained in the learning data are
+used to fit a distributional model.
+
+\paragraph{Linear Model}
+Another commonly applied model ...
+
+Compare fitted models based on a circular version of CRPS ...
+
+
+
+\subsection{Results}
+Ibk/Vie, 1h/3h
 
 
 
