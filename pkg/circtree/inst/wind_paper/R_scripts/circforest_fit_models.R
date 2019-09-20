@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-18 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-20 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -56,36 +56,44 @@ if(opt$lag%%6 != 0) stop("lag must be in total hours (1lag = 10min)")
 tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%s.rds", opt$station, opt$lag))
 
 if (opt$station == "ibk") {
-  ## Subset data and remove rows with NAs
-  tmp <- tmp[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(tmp))]
-  tmp <- na.omit(tmp)
-  
-  ## Subset data to full hours
+  ## Subset data to five years and to full hours 
+  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-01")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
-  
+
+  ## Remove station without any influence
+  #d <- d[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(d))]
+
   ## Remove very low values of ff and zero wind direction
   d <- d[!d[, "dd.response"] == 0,]
   d <- d[!d[, "ff.response"] < 1,]
-  
+
+  ## Remove covariates with more than 10 nans
+  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
+  d <- d[, ! (names(d) %in% idx_names)]
+
+  ## Omit nans
+  d <- na.omit(d)
+
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
   d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
 
 } else if (opt$station == "vie") {
-  ## Remove rows with more than 10 percent nans
-  idx_names <- names(which(apply(tmp, 2, function(x) sum(is.na(x))) > nrow(tmp) / 10))
-  tmp <- tmp[, ! (names(tmp) %in% idx_names)]
-
-  ## Remove rows with NAs
-  tmp <- na.omit(tmp)
-  
-  ## Subset data to full hours
+  ## Subset data to five years and to full hours
+  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-01")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
-  
+
   ## Remove very low values of ff and zero wind direction
   d <- d[!d[, "dd.response"] == 0,]
   d <- d[!d[, "ff.response"] < 1,]
-  
+
+  ## Remove covariates with more than 10 nans
+  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
+  d <- d[, ! (names(d) %in% idx_names)]
+
+  ## Omit nans
+  d <- na.omit(d)
+
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
   d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
@@ -208,6 +216,7 @@ rm(pred_clim, climfit, train, test, train_subset); gc()
 # Fit tree and forest
 # -------------------------------------------------------------------
 ## Transform zoo object to data.frame
+timepoints <- index(d)
 tmp_time <- as.POSIXlt(index(d))
 d <- as.data.frame(d)
 
@@ -292,13 +301,15 @@ idx <- unique(idx[,1])
 if (length(idx) > 0) {
   pred_naomit <- lapply(pred, function(x) x[-idx, ])
   obs_naomit  <- obs[-idx]
+  timepoints_naomit <- timepoints[-idx]
 } else {
   pred_naomit <- pred
   obs_naomit  <- obs
+  timepoints <- timepoints
 }
 
 ## Save results
-save(pred, pred_naomit, obs, obs_naomit, 
+save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
   file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 
@@ -316,6 +327,15 @@ crps <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i)
   as.numeric(crps.circ(x = obs_naomit[i], mu = x[i, "mu"], kappa = x[i, "kappa"]))))
 crps <- data.frame(do.call(cbind, crps))
 
+## Calculate mean scores per hour over single month
+crps.agg <- aggregate(crps, list(month = as.POSIXlt(timepoints_naomit)$mon + 1, 
+  hour = as.POSIXlt(timepoints_naomit)$hour + 1), FUN = mean)
+
+crps.agg <- within(crps.agg, {
+  month = factor(month)
+  hour = factor(hour)
+  })
+
 ## Calculate boot-strapped mean values
 set.seed(opt$seed)
 kboot <- 500
@@ -329,11 +349,15 @@ for (i in 1:kboot) {
 crps_skill <- (1 - crps[, c("climatology", "persistence", "tree", "forest")] /
   crps[, "climatology"]) * 100
 
+crps.agg_skill <- cbind(crps.agg[, c("month", "hour")], 
+  (1 - crps.agg[, c("climatology", "persistence", "tree", "forest")] /
+  crps.agg[, "climatology"]) * 100)
+
 crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence", "tree", "forest")] /
   crps.boot[, "climatology"]) * 100
 
 ## Save validation
-save(crps, crps.boot, crps_skill, crps.boot_skill,
+save(crps, crps.boot, crps_skill, crps.boot_skill, crps.agg, crps.agg_skill,
   file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 
@@ -349,7 +373,7 @@ if (opt$plot) {
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   boxplot(crps[, c("climatology", "persistence", "tree", "forest")], ylim = c(0, 1), col = gray(0.6),
-    ylab = "CRPS [m/s]", main = "Raw values")
+    ylab = "CRPS [rad]", main = "Raw values")
   text(c(mean(unlist(crps["climatology"]), na.rm = TRUE),
          mean(unlist(crps["persistence"]), na.rm = TRUE),
          mean(unlist(crps["tree"]), na.rm = TRUE),
@@ -360,7 +384,7 @@ if (opt$plot) {
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   boxplot(crps.boot[, c("climatology", "persistence", "tree", "forest")],
-    ylim = c(0, 1), col = gray(0.6), ylab = "CRPS [m/s]", main = "Raw values")
+    ylim = c(0, 1), col = gray(0.6), ylab = "CRPS [rad]", main = "Raw values")
   text(c(mean(unlist(crps.boot["climatology"]), na.rm = TRUE),
          mean(unlist(crps.boot["persistence"]), na.rm = TRUE),
          mean(unlist(crps.boot["tree"]), na.rm = TRUE),
@@ -385,6 +409,34 @@ if (opt$plot) {
     ylab = "CRPS skill ccore [%]", main = "Boot-strapped mean values")
   dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_%s_lag%s_%s.pdf", 
     opt$station, opt$lag, opt$run_name))
+
+  library(ggplot2)
+  library(reshape2)
+  library(ggpubr)
+  
+  crps.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
+  crps.agg_skill.m$model <- plyr::revalue(crps.agg_skill.m$model,
+    c("climatology" = "Climatology",
+    "persistence" = "Persistence",
+    "tree" = "Tree",
+    "forest" = "Forest"))
+  
+  theme_set(theme_bw(base_size = 12) +
+     theme(panel.grid.major = element_line(linetype = "dotted", colour = "grey80"),
+           panel.grid.minor = element_blank(),
+           plot.title = element_text(hjust = 0.5)))
+  
+  p1 <- ggplot(crps.agg_skill.m, aes(x = model, y = value)) +
+        geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+        stat_boxplot(geom = "errorbar", width = 0.2) +
+        geom_boxplot(fill = "gray60")
+  p1 <- p1 + labs(x = "", y = "CRPS skill score [rad]") 
+
+  dev.new(width=8, height=4.5)
+  print(ggarrange(p1, legend = "none"))
+  pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_%s_lag%s_%s.pdf",
+    opt$station, opt$lag, opt$run_name)
+  ggsave(pdf_file)
 
   ### Plot single tree
   #cv <- 1
