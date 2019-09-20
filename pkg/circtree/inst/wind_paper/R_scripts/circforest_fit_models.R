@@ -33,7 +33,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v5",
+  make_option("--run_name", type = "character", default = "v6",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "vie",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -102,7 +102,6 @@ if (opt$station == "ibk") {
   stop("Station not supported, currently station must be 'vie' or 'ibk'...")
 } 
 
-
 # -------------------------------------------------------------------
 # Fit persistence model (no CV)
 # -------------------------------------------------------------------
@@ -154,7 +153,8 @@ rm(pred_pers, persfit, train); gc()
 # Fit climatology (with CV)
 # -------------------------------------------------------------------
 ## Fit models with cross-validation
-cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+#cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+cvID <- as.numeric(factor(as.POSIXlt(index(d))$year))
 
 pred_clim <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
   kappa = rep(NA, sum(cvID == x))))
@@ -230,7 +230,7 @@ rm(tmp_time); gc()
 f <- as.formula(paste("dd.response ~ ", paste(names(d)[-grep("response", names(d))], collapse= "+")))
 
 ## Fit models with cross-validation
-cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+#cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
 
 for(cv in unique(cvID)) { 
   if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
