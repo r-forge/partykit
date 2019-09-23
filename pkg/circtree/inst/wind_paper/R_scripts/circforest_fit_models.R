@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-20 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-23 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -35,7 +35,7 @@ option_list <- list(
     dest = "verbose", help = "Print little output"),
   make_option("--run_name", type = "character", default = "v6",
     help = "Run name or version of script used for output name [default \"%default\"]"),
-  make_option("--station", type = "character", default = "vie",
+  make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
   make_option("--lag", type = "integer", default = 6,
     help = "Lag in 10min time steps [default %default]"),
@@ -228,6 +228,16 @@ rm(tmp_time); gc()
 
 ## Set up formula
 f <- as.formula(paste("dd.response ~ ", paste(names(d)[-grep("response", names(d))], collapse= "+")))
+
+## Fit single tree for visualization
+m_ct.plot <- circtree(formula = f,
+                 data = d,
+                 control = disttree_control(mincriterion = (1 - .Machine$double.eps),
+                                            minbucket = 2000))
+
+saveRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds", 
+  opt$station, opt$lag, opt$run_name))
+
 
 ## Fit models with cross-validation
 #cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
@@ -430,7 +440,7 @@ if (opt$plot) {
         geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
         stat_boxplot(geom = "errorbar", width = 0.2) +
         geom_boxplot(fill = "gray60")
-  p1 <- p1 + labs(x = "", y = "CRPS skill score [rad]") 
+  p1 <- p1 + labs(x = "", y = "CRPS skill score [%]") 
 
   dev.new(width=8, height=4.5)
   print(ggarrange(p1, legend = "none"))
@@ -438,11 +448,40 @@ if (opt$plot) {
     opt$station, opt$lag, opt$run_name)
   ggsave(pdf_file)
 
-  ### Plot single tree
-  #cv <- 1
-  #m_ct <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag6_%s_cv%s.rds", 
-  #  opt$station, opt$run_name, cv))
-  #plot(m_ct, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
-  #  ip_args = list(pval = FALSE))
+  crps.m <- melt(crps[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
+  crps.m$model <- plyr::revalue(crps.m$model,
+    c("climatology" = "Climatology",
+    "persistence" = "Persistence",
+    "tree" = "Tree",
+    "forest" = "Forest"))
+  
+  theme_set(theme_bw(base_size = 12) +
+     theme(panel.grid.major = element_line(linetype = "dotted", colour = "grey80"),
+           panel.grid.minor = element_blank(),
+           plot.title = element_text(hjust = 0.5)))
+  
+  p2 <- ggplot(crps.m, aes(x = model, y = value)) +
+        geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+        stat_boxplot(geom = "errorbar", width = 0.2) +
+        geom_boxplot(fill = "gray60")
+  p2 <- p2 + labs(x = "", y = "CRPS [rad]") 
+
+  dev.new(width=8, height=4.5)
+  print(ggarrange(p2, legend = "none"))
+  pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw2_%s_lag%s_%s.pdf",
+    opt$station, opt$lag, opt$run_name)
+  ggsave(pdf_file)
+
+
+  ## Plot single tree
+  m_ct.plot <- readRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
+    opt$station, opt$lag, opt$run_name))
+
+  X11(width = 18, height = 10)
+  par(mar = c(3.1, 4.1, 2.1, 2.1))
+  plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
+    ip_args = list(pval = FALSE))
+  dev.print(pdf, sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
+    opt$station, opt$lag, opt$run_name))
 }
 
