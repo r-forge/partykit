@@ -854,3 +854,9 @@ titan <- as.data.frame(Titanic)
 (tree <- ctree(Survived ~ Class + Sex + Age, data = titan, weights = Freq))
 ### prune off nodes 5-12 and check if the other nodes are not affected
 nodeprune(tree, 4)
+
+### this gave a warning "ME is not a factor"
+library(partykit)
+data("mammoexp", package = "TH.data")
+a <- cforest(ME ~ PB + SYMPT, data = mammoexp, ntree = 5)
+predict(a, newdata=mammoexp[1:3,])
