@@ -33,7 +33,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v6",
+  make_option("--run_name", type = "character", default = "v7",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -57,7 +57,7 @@ tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%s.rds", opt$station
 
 if (opt$station == "ibk") {
   ## Subset data to five years and to full hours 
-  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-01")
+  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
   ## Remove station without any influence
@@ -80,7 +80,7 @@ if (opt$station == "ibk") {
 
 } else if (opt$station == "vie") {
   ## Subset data to five years and to full hours
-  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-01")
+  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
   ## Remove very low values of ff and zero wind direction
