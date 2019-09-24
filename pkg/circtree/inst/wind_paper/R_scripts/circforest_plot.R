@@ -60,14 +60,13 @@ theme_set(theme_bw(base_size = 14.5) +
 ## Loading data and plots per station and lag
 ## -------------------------------------------------------------------
 ## Loop over stations and lag
-crps.mall <- crps.agg_skill.mall <- data.frame()
+crps.mall <- crps.agg.mall <- crps.agg_skill.mall <- data.frame()
 
 for (i_station in c("ibk", "vie")){
   for (i_lag in c("6", "18")){
 
     load(file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
 
-    ## Plot raw crps
     crps.m <- melt(crps[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
     crps.m$model <- plyr::revalue(crps.m$model,
       c("climatology" = "Climatology",
@@ -76,6 +75,15 @@ for (i_station in c("ibk", "vie")){
       "forest" = "Forest"))
     crps.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
     crps.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
+
+    crps.agg.m <- melt(crps.agg[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
+    crps.agg.m$model <- plyr::revalue(crps.agg.m$model,
+      c("climatology" = "Climatology",
+      "persistence" = "Persistence",
+      "tree" = "Tree",
+      "forest" = "Forest"))
+    crps.agg.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
+    crps.agg.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
 
     crps.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
     crps.agg_skill.m$model <- plyr::revalue(crps.agg_skill.m$model,
@@ -87,6 +95,7 @@ for (i_station in c("ibk", "vie")){
     crps.agg_skill.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
 
     crps.mall <- rbind(crps.mall, crps.m)
+    crps.agg.mall <- rbind(crps.agg.mall, crps.agg.m)
     crps.agg_skill.mall <- rbind(crps.agg_skill.mall, crps.agg_skill.m)
 
     ## Plot raw crps    
@@ -145,16 +154,30 @@ print(ggarrange(p3, legend = "none"))
 pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_comparison_%s.pdf", opt$run_name)
 ggsave(pdf_file)
 
-## Make summary plots with four panels (cprs skill score)
-p4 <- ggplot(crps.agg_skill.mall, aes(x = model, y = value)) +
+## Make summary plots with four panels (cprs raw)
+p4 <- ggplot(crps.agg.mall, aes(x = model, y = value)) +
       geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
       stat_boxplot(geom = "errorbar", width = 0.2) +
       geom_boxplot(fill = "gray60") + 
       facet_grid(lag ~ station, scales = "free")
-p4 <- p4 + labs(x = "", y = "CRPS skill score [%]") 
+p4 <- p4 + labs(x = "", y = "CRPS [rad]") 
 p4 <- p4 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
 
 dev.new(width=10, height=6.5)
 print(ggarrange(p4, legend = "none"))
+pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_agg_comparison_%s.pdf", opt$run_name)
+ggsave(pdf_file)
+
+## Make summary plots with four panels (cprs skill score)
+p5 <- ggplot(crps.agg_skill.mall, aes(x = model, y = value)) +
+      geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+      stat_boxplot(geom = "errorbar", width = 0.2) +
+      geom_boxplot(fill = "gray60") + 
+      facet_grid(lag ~ station, scales = "free")
+p5 <- p5 + labs(x = "", y = "CRPS skill score [%]") 
+p5 <- p5 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
+
+dev.new(width=10, height=6.5)
+print(ggarrange(p5, legend = "none"))
 pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_comparison_%s.pdf", opt$run_name)
 ggsave(pdf_file)
