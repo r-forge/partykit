@@ -202,12 +202,12 @@ lines(mean ~ speed, data = nd)
     apply(sqrt(RainIbk[,grep('^rainfc',names(RainIbk))]), 1, mean)
   RainIbk$sqrtenssd <- 
     apply(sqrt(RainIbk[,grep('^rainfc',names(RainIbk))]), 1, sd)
-  RainIbk$rain <- sqrt(rain)
+  RainIbk$rain <- sqrt(RainIbk$rain)
   f.rain <- as.formula(paste("rain ~ ", paste(names(RainIbk)[-grep("rain$", names(RainIbk))], 
     collapse= "+")))
   
   dt.rain <- disttree(f.rain, data = RainIbk, family = NO())
-  df.rain <- distforest(f, data = RainIbk, family = NO(), ntree = 10)
+  df.rain <- distforest(f.rain, data = RainIbk, family = NO(), ntree = 10)
   df_vi.rain <- varimp(df.rain)
   
   ## Bodyfat Example
