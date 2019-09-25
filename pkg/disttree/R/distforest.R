@@ -339,15 +339,25 @@ logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...){
 
 
 ## varimp
-varimp.distforest <- function(object, nperm = 1L, ...){
+varimp.distforest <- function(object, nperm = 1L, applyfun = NULL, cores = NULL, ...){
 
-  # define function for parallelization
-  applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, parallel::detectCores() - 1))
+  ## define function for parallelization
+  #applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pmax(1, parallel::detectCores() - 1))
+
+  ## apply infrastructure 
+  if (is.null(applyfun)) {
+    applyfun <- if(is.null(cores)) {
+      lapply
+    } else {
+      function(X, FUN, ...)
+        parallel::mclapply(X, FUN, ..., mc.set.seed = TRUE, mc.cores = cores)
+    }
+  }
   
   # function to permutate chosen variable and then calculate mean loglikelihood
   riskfun <- function(permute = NULL, newdata = object$data) {
     if(!is.null(permute)) newdata[[permute]] <- sample(newdata[[permute]])
-    logLik(object, newdata = newdata)
+    -logLik(object, newdata = newdata)
   }
 
   # apply for all covariates except for dswrf_mean_min and 
@@ -371,13 +381,10 @@ varimp.distforest <- function(object, nperm = 1L, ...){
   
   names(risk) <- names(object$data)[splitid]
   vimp <- risk - riskfun(newdata = object$data)
-  vimp <- sort(vimp, decreasing = TRUE)
+  #vimp <- sort(vimp, decreasing = TRUE)
 
   return(vimp)
 }
-
-
-
 
 
 ## copied methods from cforest

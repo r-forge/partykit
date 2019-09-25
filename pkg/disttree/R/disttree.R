@@ -528,6 +528,101 @@ logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
 }
 
 
+varimp.disttree <- function(object, nperm = 1L, risk = c("loglik", "misclassification"),
+                              conditions = NULL, mincriterion = 0, ...) {
+#    if (!is.function(risk)) {
+#        risk <- match.arg(risk)
+#        ### risk is _NEGATIVE_ log-likelihood
+#        risk <- switch(risk, 
+#          "loglik" = function(object, perm, ...) {
+#
+#            if (is.null(perm)) {
+#              -logLik(object)
+#            } else {
+#              ### no need to watch vmatch because newdata is always mf
+#              vnames <- names(object$data)
+#              if (is.character(perm)) {
+#                  stopifnot(all(perm %in% vnames))
+#                  perm <- match(perm, vnames)
+#              } else {
+#                  ### perm is a named list of factors coding strata
+#                  ### (for varimp(..., conditional = TRUE)
+#                  stopifnot(all(names(perm) %in% vnames))
+#                  stopifnot(all(sapply(perm, is.factor)))
+#                  tmp <- vector(mode = "list", length = length(vnames))
+#                  tmp[match(names(perm), vnames)] <- perm
+#                  perm <- tmp
+#              }
+#              newdata <- object$data
+#              idx_sample <- sample(1:NROW(newdata))
+#              newdata[, perm] <- newdata[idx_sample, perm]
+#              -logLik(object, newdata = newdata)
+#            }
+#          
+#        },
+#          "misclassification" = partykit::miscls)
+#    }
+        ### risk is _NEGATIVE_ log-likelihood
+        risk <- function(...) {
+
+            if (is.null(perm)) {
+              -logLik(object)
+            } else {
+              ### no need to watch vmatch because newdata is always mf
+              vnames <- names(object$data)
+              if (is.character(perm)) {
+                  stopifnot(all(perm %in% vnames))
+                  perm <- match(perm, vnames)
+              } else {
+                  ### perm is a named list of factors coding strata
+                  ### (for varimp(..., conditional = TRUE)
+                  stopifnot(all(names(perm) %in% vnames))
+                  stopifnot(all(sapply(perm, is.factor)))
+                  tmp <- vector(mode = "list", length = length(vnames))
+                  tmp[match(names(perm), vnames)] <- perm
+                  perm <- tmp
+              }
+              newdata <- object$data
+              idx_sample <- sample(1:NROW(newdata))
+              newdata[, perm] <- newdata[idx_sample, perm]
+              -logLik(object, newdata = newdata)
+            }
+          
+      }
+
+    if (mincriterion > 0)
+        stop("mincriterion not yet implemented") ### use nodeprune
+
+    psplitids <- unique(do.call("c",
+        nodeapply(node_party(object),
+                  ids = nodeids(node_party(object)),
+                  FUN = function(x) split_node(x)$varid)))
+    vnames <- names(object$data)
+    psplitvars <- vnames[psplitids]
+    ret <- numeric(length(psplitvars))
+    names(ret) <- psplitvars
+
+    for (vn in psplitvars) {
+        cvn <- conditions[[vn]]
+        if (is.null(cvn)) {
+            perm <- vn
+        } else {
+            blocks <- partykit:::.get_psplits(object, cvn) 
+            if (length(blocks) == 0) blocks <- factor(rep(1, nrow(object$data)))
+            perm <- vector(mode = "list", length = 1)
+            names(perm) <- vn
+            perm[[vn]] <- blocks
+           }
+        for (p in 1:nperm)
+            ret[vn] <- ret[vn] + risk(object, perm = perm, ...)
+    }
+    ret <- ret / nperm - risk(object, ...)
+
+    ret
+}
+
+
+
 
 if(TRUE) {  ##TODO: (ML) Needed for guide, delete if guide tests should not be included
 # use different version of .select than partykit:::select for GUIDE as selectfun 
