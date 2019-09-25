@@ -195,6 +195,30 @@ nd$mean  <- predict(df, newdata = nd, type = "response")[["(fitted.response)"]]
 plot(dist ~ speed, data = cars)
 lines(mean ~ speed, data = nd)
 
+\dontrun{
+  ## Rain Example
+  data("RainIbk", package = "crch")
+  RainIbk$sqrtensmean <- 
+    apply(sqrt(RainIbk[,grep('^rainfc',names(RainIbk))]), 1, mean)
+  RainIbk$sqrtenssd <- 
+    apply(sqrt(RainIbk[,grep('^rainfc',names(RainIbk))]), 1, sd)
+  RainIbk$rain <- sqrt(rain)
+  f.rain <- as.formula(paste("rain ~ ", paste(names(RainIbk)[-grep("rain$", names(RainIbk))], 
+    collapse= "+")))
+  
+  dt.rain <- disttree(f.rain, data = RainIbk, family = NO())
+  df.rain <- distforest(f, data = RainIbk, family = NO(), ntree = 10)
+  df_vi.rain <- varimp(df.rain)
+  
+  ## Bodyfat Example
+  data("bodyfat", package = "TH.data")
+  bodyfat$DEXfat <- sqrt(bodyfat$DEXfat)
+  
+  f.fat <- as.formula(paste("DEXfat ~ ", paste(names(bodyfat)[-grep("DEXfat", names(bodyfat))], 
+    collapse= "+")))
+  df.fat <- distforest(f.fat, data = bodyfat, family = NO(), ntree = 10)
+  df.fat_vi <- varimp(df.fat)
+}
 }
 
 \keyword{random forests, distributional regression trees, parametric modeling}
