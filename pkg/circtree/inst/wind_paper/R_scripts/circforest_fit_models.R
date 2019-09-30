@@ -33,7 +33,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v7",
+  make_option("--run_name", type = "character", default = "v8",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -241,6 +241,7 @@ saveRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4pl
 
 ## Fit models with cross-validation
 #cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+vip_cf <- list()
 
 for(cv in unique(cvID)) { 
   if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
@@ -262,6 +263,8 @@ for(cv in unique(cvID)) {
                      perturb = list(replace = FALSE, fraction = 0.3),
                      control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
 
+  vip_cf[[cv]] <- disttree:::varimp.distforest(m_cf, nperm = 10)
+
   ## Predict models
   pred_ct.tmp <- predict(m_ct, newdata = test, type = "parameter")
   pred_cf.tmp <- predict(m_cf, newdata = test, type = "parameter")
@@ -276,7 +279,10 @@ for(cv in unique(cvID)) {
   saveRDS(pred_cf.tmp, 
     file = sprintf("results/circforest_pred_forest_%s_lag%s_%s_cv%s.rds",
       opt$station, opt$lag, opt$run_name, cv))
-  rm(pred_ct.tmp, pred_cf.tmp, m_cf, m_ct, train, test); gc()
+  saveRDS(vip_cf, 
+    file = sprintf("results/circforest_vip_forest_%s_lag%s_%s_cv%s.rds",
+      opt$station, opt$lag, opt$run_name, cv))
+  rm(pred_ct.tmp, pred_cf.tmp, m_cf, m_ct, train, test, vip_cf); gc()
 }
 
 
