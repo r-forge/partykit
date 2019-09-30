@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-24 on thinkmoritz
+# - L@ST MODIFIED: 2019-09-30 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -20,9 +20,42 @@ library("zoo")
 library("circtree")
 library("disttree")
 library("verification") # Careful, version 1.35 needed!!
+require("circular", character.only = TRUE)
+detach(pos = match(paste("package", "circular", sep = ":"), search()))
 
 ## Create folder for outputs
 if (! dir.exists("results")) dir.create("results")
+
+## Small helper functions
+
+## Exponential weights
+#calc_expweights <- function(theta, n){rev(sapply(1:n, function(x) theta^(x -1) * (1 - theta)))}
+calc_expweights <- function(theta, n){rev(sapply(1:n, function(x) theta^(x -1) / 
+  ((theta^n - 1) /(theta - 1))))}
+
+## Exponential centered weights
+calc_expweights_centered <- function(theta, n){sapply(-n:n, function(x) theta^(abs(x) -1) / 
+  sum(theta^(abs(-n:n) -1)))}
+
+ddff2uv <- function (dd, ff = NULL) {
+    if (class(dd) %in% c("zoo", "data.frame")) {
+        if (sum(!c("ff", "dd") %in% names(dd)) > 0) 
+            stop("necessary colums \"ff\" and/or \"dd\" missing")
+        ff = as.numeric(dd$ff)
+        dd = as.numeric(dd$dd)
+        print("x")
+    }
+    else if (NCOL(dd) == 2) {
+        ff <- dd[, 1]
+        dd <- dd[, 2]
+    }
+    metrad <- dd * pi/180
+    u <- ff * (-sin(metrad))
+    v <- ff * (-cos(metrad))
+    rad <- 2 * pi - metrad - pi/2
+    rad <- ifelse(rad >= 2 * pi, rad - 2 * pi, rad)
+    data.frame(u, v, rad)
+}
 
 
 # -------------------------------------------------------------------
@@ -35,7 +68,7 @@ option_list <- list(
     dest = "verbose", help = "Print little output"),
   make_option("--run_name", type = "character", default = "v8",
     help = "Run name or version of script used for output name [default \"%default\"]"),
-  make_option("--station", type = "character", default = "ibk",
+  make_option("--station", type = "character", default = "vie",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
   make_option("--lag", type = "integer", default = 6,
     help = "Lag in 10min time steps [default %default]"),
@@ -48,6 +81,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list = option_list))
 
 if(opt$lag%%6 != 0) stop("lag must be in total hours (1lag = 10min)")
+
 
 # -------------------------------------------------------------------
 # Pre-process data
@@ -74,6 +108,11 @@ if (opt$station == "ibk") {
   ## Omit nans
   d <- na.omit(d)
 
+  ## Calculate u and v for lagged response (ibk)
+  tmp <- ddff2uv(dd = as.numeric(d$dd.innsbruck), ff = as.numeric(d$ff.innsbruck))
+  d$u.innsbruck <- tmp$u
+  d$v.innsbruck <- tmp$v
+
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
   d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
@@ -94,6 +133,11 @@ if (opt$station == "ibk") {
   ## Omit nans
   d <- na.omit(d)
 
+  ## Calculate u and v for lagged response (windmessanlage 34)
+  tmp <- ddff2uv(dd = as.numeric(d$dd34), ff = as.numeric(d$ff34))
+  d$u34 <- tmp$u
+  d$v34 <- tmp$v
+
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
   d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
@@ -102,41 +146,86 @@ if (opt$station == "ibk") {
   stop("Station not supported, currently station must be 'vie' or 'ibk'...")
 } 
 
+
 # -------------------------------------------------------------------
-# Fit persistence model (no CV)
+# Fit persistence model with previous time points (no CV)
 # -------------------------------------------------------------------
 ## Calculate exponential weights
-calc_expweights <- function(theta, n){rev(sapply(1:n, function(x) theta^(x -1) * (1 - theta)))}
-exp_weights <- calc_expweights(0.4, 6)
+exp_weights <- calc_expweights(0.4, 7)
 
-pred_pers <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
+pred_pers_hour <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
 for (i in seq(1:nrow(d))) {
-  if (opt$verbose) cat(sprintf("Fitting persistence %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
+  if (opt$verbose) cat(sprintf("Fitting persistence (previous time points) %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
 
   i_plt <- as.POSIXlt(index(d)[i], origin = "1970-01-01")
   
   ## Skip 29th of February 
   if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
-    pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
+    pred_pers_hour[i, ] <- c("mu" = NA, "kappa" = NA)
     next
   }
 
   ## Subset training data set
   idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
-    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-5, -0) - opt$lag/6)
+    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-6, -0) - opt$lag/6)
 
   train <- subset(d, index(d) %in% idx)
   train_weights <- exp_weights[idx %in% index(train)]
 
   ## Fit persistency
-  persfit <- try(distfit(as.numeric(train$dd.response),
+  pers_hour_fit <- try(distfit(as.numeric(train$dd.response),
                          family = dist_vonmises(), weights = train_weights))
   
   ## Predict parameters
-  if (class(persfit) == "try-error") {
-    pred_pers[i, ] <- c("mu" = NA, "kappa" = NA)
+  if (class(pers_hour_fit) == "try-error") {
+    pred_pers_hour[i, ] <- c("mu" = NA, "kappa" = NA)
   } else {
-    pred_pers[i, ] <- coef(persfit, type = "parameter")
+    pred_pers_hour[i, ] <- coef(pers_hour_fit, type = "parameter")
+  }
+}
+
+if (opt$verbose) cat("\n")   
+
+## Save predictions
+saveRDS(pred_pers_hour, file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
+rm(pred_pers_hour, pers_hour_fit, train); gc()
+
+
+# -------------------------------------------------------------------
+# Fit persistence model with previous days (no CV)
+# -------------------------------------------------------------------
+## Calculate exponential weights
+exp_weights_centered <- calc_expweights_centered(0.4, 3)
+
+pred_pers_day <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
+for (i in seq(1:nrow(d))) {
+  if (opt$verbose) cat(sprintf("Fitting persistence (previous days) %2d%%\r", (i/nrow(d) * 100)%/%5 * 5))
+
+  i_plt <- as.POSIXlt(index(d)[i], origin = "1970-01-01")
+  
+  ## Skip 29th of February 
+  if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
+    pred_pers_day[i, ] <- c("mu" = NA, "kappa" = NA)
+    next
+  }
+
+  ## Subset training data set
+  idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
+    i_plt$hour, i_plt$min), origin = "1970-01-01") - 60 * 60 * 24 + 60 * 60 * seq(-3, 3)
+
+  train <- subset(d, index(d) %in% idx)
+  train_weights <- exp_weights_centered[idx %in% index(train)]
+
+  ## Fit persistency
+  pers_day_fit <- try(distfit(as.numeric(train$dd.response),
+                         family = dist_vonmises(), weights = train_weights))
+  
+  ## Predict parameters
+  if (class(pers_day_fit) == "try-error") {
+    pred_pers_day[i, ] <- c("mu" = NA, "kappa" = NA)
+  } else {
+    pred_pers_day[i, ] <- coef(pers_day_fit, type = "parameter")
   }
 }
 
@@ -144,9 +233,9 @@ if (opt$verbose) cat("\n")
   
 
 ## Save predictions
-saveRDS(pred_pers, file = sprintf("results/circforest_pred_pers_%s_lag%s_%s.rds", 
+saveRDS(pred_pers_day, file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s.rds", 
   opt$station, opt$lag, opt$run_name))
-rm(pred_pers, persfit, train); gc()
+rm(pred_pers_day, pers_day_fit, train); gc()
 
 
 # -------------------------------------------------------------------
@@ -185,7 +274,7 @@ for (cv in unique(cvID)) {
 
     idx <- lapply(i_years, function(x) 
       as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
-      i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-3, 3))
+      i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
   
     idx <- do.call(c, idx)
     
@@ -210,6 +299,104 @@ if (opt$verbose) cat("\n")
 saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds", 
   opt$station, opt$lag, opt$run_name))
 rm(pred_clim, climfit, train, test, train_subset); gc()
+
+
+# -------------------------------------------------------------------
+# Fit circular linear model (with CV)
+# -------------------------------------------------------------------
+## Fit models with cross-validation
+#cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+cvID <- as.numeric(factor(as.POSIXlt(index(d))$year))
+
+pred_lm <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
+  kappa = rep(NA, sum(cvID == x))))
+
+for (cv in unique(cvID)) { 
+  if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
+
+  train <- d[cv != cvID, ]
+  test <- d[cv == cvID, ]
+ 
+  d_range <- as.POSIXlt(range(index(train)))
+
+  for (i in seq(1:nrow(test))) {
+
+    if (opt$verbose) cat(sprintf("Fitting circular linear model %2d%%\n", (i/nrow(test) * 100)%/%5 * 5))
+  
+    i_plt <- as.POSIXlt(index(test)[i], origin = "1970-01-01")
+    
+    ## Skip 29th of February 
+    if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
+      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      next
+    }
+  
+    ## Subset training data set
+    i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
+      max(d_range$year)) %in% i_plt$year)] + 1900
+
+    idx <- lapply(i_years, function(x) 
+      as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
+      i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
+  
+    idx <- do.call(c, idx)
+    
+    train_subset <- subset(train, index(train) %in% idx)
+  
+    ## Fit lm with time limit
+    lm_foo <- function() {
+      time_limit <- 30
+    
+      setTimeLimit(cpu = time_limit, elapsed = time_limit, transient = TRUE)
+      on.exit({
+        setTimeLimit(cpu = Inf, elapsed = Inf, transient = FALSE)
+      })
+      if(opt$station == "ibk"){
+        lmfit <- circular::lm.circular(y = circular::circular(train_subset$dd.response), 
+                                 x = as.matrix(data.frame(u.innsbruck = train_subset$u.innsbruck,
+                                                v.innsbruck = train_subset$v.innsbruck,
+                                                ffx.innsbruck = train_subset$ffx.innsbruck)),
+                                 init = c(1, 1, 1), type = 'c-l', tol = 1e-10, verbose = opt$verbose)
+      } else if (opt$station == "vie"){
+        lmfit <- circular::lm.circular(y = circular::circular(train_subset$dd.response),
+                                 x = as.matrix(data.frame(u34 = train_subset$u34,
+                                                v34 = train_subset$v34, ff34 = train_subset$ff34)),
+                                 init = c(1, 1, 1), type = 'c-l', tol = 1e-10, verbose = opt$verbose)
+      } else {
+        stop("Station not supported, currently station must be 'vie' or 'ibk'...")
+      }
+      return(lmfit)
+    }
+    lmfit <- try(lm_foo())
+
+    ## Predict parameters
+    if(opt$station == "ibk"){
+      xhat <- as.matrix(subset(d, index(d) %in% index(test)[i], select = c(u.innsbruck,
+        v.innsbruck, ffx.innsbruck)))
+    } else if (opt$station == "vie"){ 
+      xhat <- as.matrix(subset(d, index(d) %in% index(test)[i], select = c(u34,
+        v34, ff34)))
+    } else {
+      stop("Station not supported, currently station must be 'vie' or 'ibk'...")
+    } 
+                             
+    if (class(lmfit) == "try-error") {
+      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+    } else {
+      pred_lm[[cv]][i, "mu"] <- lmfit$mu + 2 * atan(xhat %*% coef(lmfit))
+      pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] <- 
+        pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] - 2 * pi
+      pred_lm[[cv]][i, "kappa"] <- lmfit$kappa
+    }
+  }
+}
+
+if (opt$verbose) cat("\n")  
+
+## Save predictions
+saveRDS(pred_lm, file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
+rm(pred_lm, lmfit, train, test, train_subset); gc()
 
 
 # -------------------------------------------------------------------
@@ -263,7 +450,7 @@ for(cv in unique(cvID)) {
                      perturb = list(replace = FALSE, fraction = 0.3),
                      control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
 
-  vip_cf[[cv]] <- disttree:::varimp.distforest(m_cf, nperm = 10)
+  #vip_cf[[cv]] <- disttree:::varimp.distforest(m_cf, nperm = 10)
 
   ## Predict models
   pred_ct.tmp <- predict(m_ct, newdata = test, type = "parameter")
@@ -279,10 +466,10 @@ for(cv in unique(cvID)) {
   saveRDS(pred_cf.tmp, 
     file = sprintf("results/circforest_pred_forest_%s_lag%s_%s_cv%s.rds",
       opt$station, opt$lag, opt$run_name, cv))
-  saveRDS(vip_cf, 
-    file = sprintf("results/circforest_vip_forest_%s_lag%s_%s_cv%s.rds",
-      opt$station, opt$lag, opt$run_name, cv))
-  rm(pred_ct.tmp, pred_cf.tmp, m_cf, m_ct, train, test, vip_cf); gc()
+  #saveRDS(vip_cf, 
+  #  file = sprintf("results/circforest_vip_forest_%s_lag%s_%s_cv%s.rds",
+  #    opt$station, opt$lag, opt$run_name, cv))
+  rm(pred_ct.tmp, pred_cf.tmp, m_cf, m_ct, train, test); gc()
 }
 
 
@@ -301,14 +488,19 @@ for(cv in unique(cvID)) {
   rm(pred_cf.tmp, pred_ct.tmp); gc()
 }
 
-pred_pers <- readRDS(file = sprintf("results/circforest_pred_pers_%s_lag%s_%s.rds", 
+pred_pers_hour <- readRDS(file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
+pred_pers_day <- readRDS(file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s.rds", 
   opt$station, opt$lag, opt$run_name))
 pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
+pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
   opt$station, opt$lag, opt$run_name))
 
 ## Combine predictions
 pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
-  climatology = do.call("rbind", pred_clim), persistence = pred_pers)
+  climatology = do.call("rbind", pred_clim), linear_model = do.call("rbind", pred_lm),
+  persistence_hour = pred_pers_hour, persistence_day = pred_pers_day)
 obs  <- d$dd.response
 
 ## Remove nans (if any)
@@ -330,13 +522,53 @@ save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
 
 
 # -------------------------------------------------------------------
-# Validate predictions
+# Validate predictions based on own crps
 # -------------------------------------------------------------------
 load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
-### Validate models based on our crps
-#crps <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
-#  y = obs_naomit, sum = FALSE)) 
+## Validate models based on our crps
+crps_own <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
+  y = obs_naomit, sum = FALSE)) 
+crps_own <- data.frame(do.call(cbind, crps_own))
+
+## Calculate mean scores per hour over single month
+crps_own.agg <- aggregate(crps_own, list(month = as.POSIXlt(timepoints_naomit)$mon + 1,
+  hour = as.POSIXlt(timepoints_naomit)$hour + 1), FUN = mean)
+
+crps_own.agg <- within(crps_own.agg, {
+  month = factor(month)
+  hour = factor(hour)
+  })
+
+## Calculate boot-strapped mean values
+set.seed(opt$seed)
+kboot <- 500
+crps_own.boot <- data.frame(matrix(NA, ncol = ncol(crps_own), nrow = kboot, dimnames = list(NULL, names(crps_own))))
+for (i in 1:kboot) {
+   s <- sample(1 : nrow(crps_own), nrow(crps_own), replace = TRUE)
+   crps_own.boot[i,] <- apply(coredata(crps_own)[s, ], 2, mean)
+}
+
+## Calculate skill scores
+crps_own_skill <- (1 - crps_own[, c("climatology", "persistence_hour", "persistence_day",
+  "linear_model", "tree", "forest")] / crps_own[, "climatology"]) * 100
+
+crps_own.agg_skill <- cbind(crps_own.agg[, c("month", "hour")],
+  (1 - crps_own.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree",
+  "forest")] / crps_own.agg[, "climatology"]) * 100)
+
+crps_own.boot_skill <- (1 - crps_own.boot[, c("climatology", "persistence_hour", "persistence_day",
+  "linear_model", "tree", "forest")] / crps_own.boot[, "climatology"]) * 100
+
+## Save validation
+save(crps_own, crps_own.boot, crps_own_skill, crps_own.boot_skill, crps_own.agg, crps_own.agg_skill,
+  file = sprintf("results/circforest_validation_own_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
+
+
+# -------------------------------------------------------------------
+# Validate predictions based on grimit's crps
+# -------------------------------------------------------------------
+load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 ## Validate models based on grimit's crps
 crps <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i)
@@ -362,15 +594,15 @@ for (i in 1:kboot) {
 }
 
 ## Calculate skill scores
-crps_skill <- (1 - crps[, c("climatology", "persistence", "tree", "forest")] /
-  crps[, "climatology"]) * 100
+crps_skill <- (1 - crps[, c("climatology", "persistence_hour", "persistence_day", 
+  "linear_model", "tree", "forest")] / crps[, "climatology"]) * 100
 
 crps.agg_skill <- cbind(crps.agg[, c("month", "hour")], 
-  (1 - crps.agg[, c("climatology", "persistence", "tree", "forest")] /
-  crps.agg[, "climatology"]) * 100)
+  (1 - crps.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree", 
+  "forest")] / crps.agg[, "climatology"]) * 100)
 
-crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence", "tree", "forest")] /
-  crps.boot[, "climatology"]) * 100
+crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence_hour", "persistence_day", 
+  "linear_model", "tree", "forest")] / crps.boot[, "climatology"]) * 100
 
 ## Save validation
 save(crps, crps.boot, crps_skill, crps.boot_skill, crps.agg, crps.agg_skill,
