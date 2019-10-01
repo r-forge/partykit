@@ -64,8 +64,9 @@ plot(ct.par)
 sdat.rad <- circtree_simulate(response_range = c(0, 2*pi))
 ct.rad <- circtree(y ~ x1 + x2, data = sdat.rad)
 ## default: type = "response"
-plot(ct.rad, tp_args = list(type = "parameter"))
-plot(ct.rad, tp_args = list(type = "response"))
+plot(ct.rad, tp_args = list(response_range = FALSE))
+plot(ct.rad, tp_args = list(response_range = TRUE))
+plot(ct.rad, tp_args = list(response_range = c(0, 24)))
 
 ## example on response range (0, 360):
 sdat.deg <- circtree_simulate(response_range = c(0, 360))
