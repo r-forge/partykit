@@ -345,7 +345,7 @@ for (cv in unique(cvID)) {
   
     ## Fit lm with time limit
     lm_foo <- function() {
-      time_limit <- 30
+      time_limit <- 10
     
       setTimeLimit(cpu = time_limit, elapsed = time_limit, transient = TRUE)
       on.exit({
@@ -527,13 +527,6 @@ save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
 load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 ## Validate models based on our crps
-
-#crps_own <- list()
-#for(i in 1:length(pred_naomit)){
-#  crps_own[[i]] <- crps_vonmises(mu = pred_naomit[[i]]$mu, kappa = pred_naomit[[i]]$kappa, 
-#  y = obs_naomit, sum = FALSE)
-#} 
-
 crps_own <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
   y = obs_naomit, sum = FALSE)) 
 crps_own <- data.frame(do.call(cbind, crps_own))
