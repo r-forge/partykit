@@ -2,5 +2,5 @@ vignettes/Makefile
 vignettes/circtree.pdf
 vignettes/circtree_backup.pdf
 vignettes/circtree.tex
-inst/wind_paper
+inst/wind_paper/
 TODO

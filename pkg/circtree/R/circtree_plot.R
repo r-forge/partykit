@@ -10,50 +10,45 @@ plot.circtree <- function(x, terminal_panel = node_circular,
 
 plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE, 
   circlab = NULL, polygons = TRUE, rug = TRUE, 
-  kernel_density = FALSE, type = c("response", "parameter"), 
-  plot_type = c("mathematical", "geographics", "time"), response_range = c(-pi, pi)) {
+  kernel_density = FALSE, template = c("mathematical", "geographics", "clock24"), zero = c("0", "pi/2", 
+  "pi", "3/2*pi"), rotation = c("counter", "clock"), response_range = FALSE) {
 
-  type <- match.arg(type)
-  plot_type <- match.arg(plot_type)
+  template <- match.arg(template)
+  rotation <- match.arg(rotation)
+  zero <- as.numeric(match.arg(zero))
 
-  if (plot_type == "geographics") {
-    X <- (-(X - pi/2)) %% (2 * pi)
-    coefs[1] <- (-(coefs[1] - pi/2)) %% (2 * pi)
+  if (template == "geographics") {
+    zero <- pi/2
+    rotation <- "counter"
     if (is.null(circlab) | length(circlab) != 4) circlab = c('N', 'E', 'S','W')
     if (is.null(cex)) cex <- 0.8
-    circlab <- circlab[c(2, 1, 4, 3)]
-  } else if (plot_type == "time") {
-    X <- (-(X - pi/2)) %% (2 * pi)
-    coefs[1] <- (-(coefs[1] - pi/2)) %% (2 * pi)
+  } else if (template == "clock24") {
+    zero <- pi/2
+    rotation <- "counter"
     if (is.null(circlab) | length(circlab) != 4) circlab = c('0', '6', '12','18')
     if (is.null(cex)) cex <- 0.8
-    circlab <- circlab[c(2, 1, 4, 3)]
-  } else if (!is.null(circlab) & length(circlab) == 4) {
-    circlab <- circlab
+  } else if (all(response_range == c(0, 2 * pi))) {
+    if (is.null(circlab) | length(circlab) != 4) circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$')
+    if(is.null(cex)) cex <- 0.8
+  } else if (all(response_range == c(0, 360))) {
+    if (is.null(circlab) | length(circlab) != 4) circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$270^\\degree$')
     if (is.null(cex)) cex <- 0.6
-  } else if (type == "response") {
-    if (all(response_range == c(0, 2 * pi))) {
-      circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$')
-      if(is.null(cex)) cex <- 0.8
-    } else if (all(response_range == c(0, 360))) {
-      circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$270^\\degree$')
-      if (is.null(cex)) cex <- 0.6
-    } else if (all(response_range == c(-pi, pi))) {
-      circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
-      if (is.null(cex)) cex <- 0.8
-    } else if (all(response_range == c(-180, 360))) {
-      circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$-90^\\degree$')
-      if (is.null(cex)) cex <- 0.6
-    } else {
-      tmp_segment <- diff(response_range) / 4
-      circlab <- response_range[1] + c(1, 2, 3, 4) * tmp_segment
-      circlab <- signif(circlab, 2)
-      if(is.null(cex)) cex <- 0.6
-    }
-  } else if (type == "parameter") {
-    circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
+  } else if (all(response_range == c(-pi, pi))) {
+    if (is.null(circlab) | length(circlab) != 4) circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$-\\pi/2$')
+    if (is.null(cex)) cex <- 0.8
+  } else if (all(response_range == c(-180, 360))) {
+    if (is.null(circlab) | length(circlab) != 4) circlab <- c('$0^\\degree$', '$90^\\degree$', '$180^\\degree$','$-90^\\degree$')
     if (is.null(cex)) cex <- 0.6
- }
+  } else {
+    tmp_segment <- diff(response_range) / 4
+    circlab <- response_range[1] + c(0, 1, 2, 3) * tmp_segment
+    circlab <- signif(circlab, 2)
+    if(is.null(cex)) cex <- 0.6
+  }
+
+  X <- (ifelse(rotation == "clock", 1, -1) *(X - zero)) %% (2 * pi)
+  coefs[1] <- (ifelse(rotation == "clock", 1, -1) *(coefs[1] - zero)) %% (2 * pi)
+  circlab <- circlab[which(zero == c(0, pi/2, pi, 3/2*pi)) + c(0, 1, 2, 3)]
 
   # Empty Plot
   par(mar = c(0, 0, 0, 0) + 0., cex = cex)
@@ -123,14 +118,32 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
 
 
 node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
-  xlab = FALSE, ylab = FALSE, mainlab = NULL, type = c("response", "parameter"), 
-  plot_type = c("mathematical", "geographics", "time"), ...){
+  xlab = FALSE, ylab = FALSE, mainlab = NULL, 
+  template = c("mathematical", "geographics", "clock24"), zero = c("0", "pi/2", "pi", "3/2*pi"), 
+  rotation = c("counter", "clock"), response_range = FALSE, ...) {
 
-  type <- match.arg(type)
-  plot_type <- match.arg(plot_type)
+  template <- match.arg(template)
+  rotation <- match.arg(rotation)
+  zero <- match.arg(zero)
+
+  if(!(is.logical(response_range) | (is.numeric(response_range) & all(is.finite(response_range)) &
+    length(response_range) == 2)))
+    stop("argument 'range' has to be logical or a numeric vector of length 2")
+
+  ## Get numeric vector for respone_range
+  if (identical(response_range, TRUE)) {
+    response_range <- obj$info$response_range
+  } else if (identical(response_range, FALSE)) {
+    response_range <- c(-pi, pi)
+  }
+
+  if (template == "geographics") {
+    response_range <- c(0, 360)
+  } else if (template == "clock24") {
+    response_range <- c(0, 24)
+  }
 
   ## obtain dependent variable on range of (0, 2*pi)
-  response_range <- attr(obj$fitted[["(response)"]], "response_range")
   y <- angle_retrans(obj$fitted[["(response)"]], 0, 2*pi)
   fitted <- obj$fitted[["(fitted)"]]
 
@@ -169,15 +182,11 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
 
     if (is.null(mainlab)) { 
       mainlab <- if(id) {
-      function(id, nobs, mu, kappa, type){
-        ## Convert to response range if type = 'response'
-        if(type == "response"){
+      function(id, nobs, mu, kappa, response_range){
+        ## Convert to response range if numeric
+        if(is.numeric(response_range)){
           mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
           kappa <- signif(kappa * (2 * pi)^2 / diff(response_range)^2, 2)
-
-        #} else if(type == "parameter" & plot_type == "geographics"){
-        #  warning("Changing type from 'parameter' to 'response', as plot_type='geographics'...")
-        #  mu <- signif(angle_retrans(mu, response_range[1], response_range[2]), 2)
         }
 
         sprintf("Node %s (n = %s) \n mu = %s, kappa = %s", id, nobs, signif(mu, 2), signif(kappa, 2))
@@ -188,7 +197,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
       }
     }
     if (is.function(mainlab)) {
-      mainlab <- mainlab(nid, node$info$object$ny, coefs[1], coefs[2], type)
+      mainlab <- mainlab(nid, node$info$object$ny, coefs[1], coefs[2], response_range)
     }
     grid::grid.text(mainlab, y = grid::unit(0.9, "npc"))
 
@@ -196,8 +205,8 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     grid::seekViewport("plot")
 
     grid::grid.rect(gp = grid::gpar(fill = "transparent", col = 1), width = grid::unit(0.9, "npc"))
-    gridGraphics::grid.echo(function() plot_circular(y, coefs, plot_type = plot_type, 
-      response_range = response_range, type = type, ...), newpage = FALSE)
+    gridGraphics::grid.echo(function() plot_circular(y, coefs, template = template, 
+      response_range = response_range, ...), newpage = FALSE)
 
     if(ylab != "") grid::grid.text(ylab, y = grid::unit(0.5, "npc"), x = grid::unit(-2.5, "lines"), rot = 90)
     if(xlab != "") grid::grid.text(xlab, x = grid::unit(0.5, "npc"), y = grid::unit(-2, "lines"))         

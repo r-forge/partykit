@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-30 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-01 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -68,7 +68,7 @@ option_list <- list(
     dest = "verbose", help = "Print little output"),
   make_option("--run_name", type = "character", default = "v8",
     help = "Run name or version of script used for output name [default \"%default\"]"),
-  make_option("--station", type = "character", default = "vie",
+  make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
   make_option("--lag", type = "integer", default = 6,
     help = "Lag in 10min time steps [default %default]"),
@@ -504,7 +504,7 @@ pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf
 obs  <- d$dd.response
 
 ## Remove nans (if any)
-idx <- do.call(rbind, sapply(pred, function(x) which(is.na(x), arr.ind=TRUE)))
+idx <- do.call(rbind, sapply(pred, function(x) which(is.na(x) | x$mu < -pi | x$mu > pi, arr.ind=TRUE)))
 idx <- unique(idx[,1]) 
 if (length(idx) > 0) {
   pred_naomit <- lapply(pred, function(x) x[-idx, ])
@@ -527,6 +527,13 @@ save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
 load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 ## Validate models based on our crps
+
+#crps_own <- list()
+#for(i in 1:length(pred_naomit)){
+#  crps_own[[i]] <- crps_vonmises(mu = pred_naomit[[i]]$mu, kappa = pred_naomit[[i]]$kappa, 
+#  y = obs_naomit, sum = FALSE)
+#} 
+
 crps_own <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
   y = obs_naomit, sum = FALSE)) 
 crps_own <- data.frame(do.call(cbind, crps_own))
