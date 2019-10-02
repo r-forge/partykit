@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-01 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-02 on thinkmoritz
 # -------------------------------------------------------------------
 
 ## Load libraries
@@ -15,23 +15,25 @@ library("verification") # Careful, version 1.35 needed!!
 library("raster")
 library('sp')
 library("colorspace")
+library("latex2exp")
 
 ## Create folder for outputs
 if (! dir.exists("results")) dir.create("results")
 
 ## Helper function to plot grid search
-toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", ...) {
+toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", mtext  = NULL, ...) {
   xylab <- names(x)[grep("^mu|^kappa", names(x))]
   ra <- rasterFromXYZ(as.matrix(x[,c(xylab[1], xylab[2], which)]))
   if(any(is.null(c(brks, brks.col))) & (type == "absolute")) {
     brks <- pretty(x[, which], n = 8)
+    if(all(brks >= 0) & brks[1] == 0) brks <- c(-brks[2], brks)
     brks.col <- rev(heat_hcl(length(brks), h = c(300, 200), c = c(60, 0), 
       l = c(25, 95), power = c(0.7, 1.3)))
   } else if(any(is.null(c(brks, brks.col))) & (type == "relative")){
     brks <- pretty(x[, which], n = 8)
     tmp <- seq(-max(abs(brks)), max(abs(brks)), diff(brks)[1])
     brks.col <-  diverge_hcl(length(tmp) - 1, h = c(260, 0), c = 80, 
-      l = c(30, 90), power = 1.5)[round(tmp,1) %in% round(brks,1)]
+      l = c(30, 90), power = 1.)[round(tmp,1) %in% round(brks,1)]
   }
 
   xylab[grep("^kappa", xylab)] <- paste0("log(", xylab[grep("^kappa", xylab)], ")")
@@ -40,6 +42,7 @@ toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", 
     smallplot = c(0.8, 0.85, 0.3, 0.75), col = brks.col, 
     legend.args = list(text = ifelse(type == "absolute", "CRPS [rad]", "CRPS [%]"), side = 4, cex = 0.8,
     line = 3))
+  if(!is.null(mtext)) mtext(side=3, line=0.25, cex=0.7, mtext)
 }
 
 for(i_obs in c(-pi, -pi/2, 0, pi/2, pi)){
@@ -54,14 +57,17 @@ for(i_obs in c(-pi, -pi/2, 0, pi/2, pi)){
   }
   
   ## Calculate crps percentage change
-  grid$crps_diff <- (grid$crps_own - grid$crps_grimit) / abs(grid$crps_grimit) * 100
+  grid$crps_pchange <- (grid$crps_own - grid$crps_grimit) / abs(grid$crps_grimit) * 100
+  grid$crps_diff <- grid$crps_own - grid$crps_grimit
   
   pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
-    abs(i_obs)), width = 12.5, height = 4)
-  par(mfrow = c(1,3), mar = c(5, 5, 4, 7) + 0.1)
-  toraster(grid, which = "crps_grimit", main = sprintf("CRPS 'Grimit et al. (2006)' (observation = %2.2f)", i_obs))
-  toraster(grid, which = "crps_own", main = sprintf("CRPS 'characteristic function' (observation = %2.2f)", i_obs))
-  toraster(grid, which = "crps_diff", main = sprintf("CRPS 'Percentage change' (observation = %2.2f)", i_obs),
-    type = "relative")
+    abs(i_obs)), width = 8, height = 6)
+  par(mfrow = c(2,2), mar = c(5, 5, 4, 6) + 0.1, oma = c(0, 1, 3, 2.5))
+  toraster(grid, which = "crps_grimit", main = "CRPS 'Grimit et al. (2006)'", asp = 0)
+  toraster(grid, which = "crps_own", main = "CRPS 'Characteristic Function'", asp = 0)
+  toraster(grid, which = "crps_diff", main = "CRPS Difference", mtext = TeX('$CRPS_{CharFun} - CRPS_{Grimit}$'), asp = 0)
+  toraster(grid, which = "crps_pchange", main = "CRPS Percentage Change", 
+    mtext = TeX('$(CRPS_{CharFun} - CRPS_{Grimit}) / |CRPS_{Grimit}| \\times 100$'), type = "relative", asp = 0)
+  mtext(sprintf("Circular CRPS Comparison (observation = %2.2f)", i_obs), side = 3, line = 1, outer = TRUE, cex = 1.5)
   dev.off()
 }
