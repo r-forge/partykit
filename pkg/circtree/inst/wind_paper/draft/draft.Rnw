@@ -152,13 +152,41 @@ of meteorological measurements from Innsbruck and surrounding weather stations.
 Circular data can be found in a variety of applications and subject areas, 
 e.g., hourly crime rate in the social-economics, animal movement direction or 
 gene-structure in biology, and wind direction as one of the most important weather 
-variables in meteorology.
-Circular regression models were first introduced by \cite{Fisher+Lee:1992} and 
-further extended by \cite{Jammalamadaka+Sengupta:2001} and 
-\cite{Mulder+Klugkist:2017} among others.
-While most of the already existing approaches are built on additive regression models, 
-we propose an adaption of regression trees to circular data by employing 
-distributional trees.
+variables in meteorology. Fitting a statistical model to this type of data requires
+the incorporation of its specific feature of periodicity, i.e., in case of angular
+data the fact that values are restricted to an interval such as $[0,2\pi)$ with
+$0$ being equivalent to $2\pi$.
+
+In many approaches to model circular data it is assumed that the circular variable of interest 
+follows a circular distribution, in particular the von Mises distribution (which will be discussed 
+in more detail in Section~\ref{sec:prob_circ}). This was also the basis on which early regression
+models for circular data were built on as they regress the distribution parameter(s) on covariates.
+One of the first regression models with a circular response variable and linear covariates
+was presented by \cite{Gould:1969} where a linear combination of the covariates is employed to model
+the circular mean, hence the location parameter of the von Mises distribtuion. 
+\cite{Johnson+Wehrly:1978} took this idea one step further 
+by plugging in a link function such that the values of the linear predictor are transformed 
+to an restricted interval of length $2\pi$. 
+This model was further extended by \cite{Fisher+Lee:1992} and subsequently by \cite{Fisher:1993} 
+allowing for the mean direction or the dispersion to be modeled not only in separate models 
+but also in a mixed model. However, applying these models has shown to be very challenging, 
+mainly due to the complexity encountered in optimizing the log-likelihood function.
+Moreover the named approaches and also its further developments 
+\citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001, Mulder+Klugkist:2017}
+are built on additive regression models which may not be able to capture all types of effects.
+For example abrupt changes might not be detected properly owing to the fixed structure enforced
+by model assumptions such as the type of link function and the type of linear combination.
+Therefore, we propose an adaption of regression trees and random forests to circular data by employing 
+distributional trees and distributional forests. 
+In that way no model assumptions are required as covariates and their possible interactions are
+selected automatically. Non-additive effects are captured by the tree structure while combining an ensemble
+of trees to a forest model allows for modeling smooth changes as well. 
+Therefore, a high level of flexibility is provided while a full distributional model is specified by distributional trees and forests such that a wide range of inference is made available.
+These features and the corresponding methodology are presented in Section~\ref{sec:tree_forest} after discussing 
+distributional models for circular data in Section~\ref{sec:prob_circ}.
+In Section~\ref{sec:wind} the presented models a applied to probabilistic forecasting of wind direction
+at the airports Innsbruck and Vienna.
+
 
 
 \section{Probabilistic Circular Modeling}
@@ -240,7 +268,7 @@ Therefore, distributional regression models are of high interest for all types o
 including circular data.
 
 \section{Regression Trees and Forests for Circular Data}
-
+\label{sec:tree_forest}
 \subsection{Motivation}
 A commonly used approach to including covariates as regressors in distributional models is 
 provided by generalized additive models for location, scale, and shape 
@@ -365,7 +393,7 @@ apply methodology to fully specify the von Mises distribution for circular data.
 
 
 \section{Wind Direction Forecasts}
-
+\label{sec:wind}
 \subsection{Motivation}
 Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision-making processes and risk management,
@@ -373,15 +401,33 @@ e.g., in air traffic management or renewable energy production.
 
 %% TODO: available approaches to wind direction forecasting
 
-This study employs the above introduced methodology of circular distributional
-trees and forests to obtain hourly wind direction forecasts at Innsbruck Airport.
-Innsbruck lies at the bottom of a deep valley in the Alps. Topography
-channels wind along the west-east valley axis or along a tributary valley
-intersecting from the south. Hence, pressure gradients to which valley wind
-regimes react both west and east of the airport are considered as covariates
-along with other meteorological measurements at the airport (lagged by one hour),
+As a motivational example Figure~\ref{fig:tree_ibk} illustrates a distributional
+tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
+Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
+west-east valley axis or along a tributary valley intersecting from the south. Hence, pressure 
+gradients to which valley wind regimes react both west and east of the airport are considered 
+as covariates along with other meteorological measurements at the airport (lagged by one hour),
 such as wind direction and wind speed at Innsbruck Airport.
-Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and increases clockwise from North ($0$ degree).
+
+Next to the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
+and fitted von Mises (red) distribution of wind direction in each terminal node. Based on the 
+fitted location parameters $\hat \mu$, the subgroups can be distinguished into the following 
+wind regimes:
+(1)~Up-valley winds blowing from the valley mouth towards the upper valley (from
+east to west, nodes 4 and 5). 
+(2) Downslope winds blowing across the Alpine crest along the intersecting valley towards 
+Innsbruck (from south-east to north-west, nodes 7 and 8). 
+(3) Down-valley winds blowing in the direction of the valley mouth (from west to east, 
+nodes 12, 14 and 15). 
+Node~11 captures observations with rather low wind speeds that cannot be distinguished
+clearly into wind regimes and consequently are associated with a very low
+estimated concentration $\hat \kappa$. In terms of covariates, the lagged
+wind direction (``persistence'') is mostly responsible for distinguishing
+the broad wind regimes listed above while the pressure gradients and wind
+speed separate between subgroups with high vs.\ low precision.
+Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and 
+increases clockwise from North ($0$ degree).
+
 
 \begin{figure}[t]
 \centering
@@ -396,51 +442,107 @@ all lagged by one hour.}
 \label{fig:tree_ibk} 
 \end{figure}
 
-Figure~\ref{fig:tree_ibk} depicts the resulting distributional tree, including
-both the empirical (gray) and fitted von Mises (red) distribution of wind direction
-in each terminal node. Based on the fitted location parameters $\hat \mu$, the subgroups
-can be distinguished into the following wind regimes:
-(1)~Up-valley winds blowing from the valley mouth towards the upper valley
-(from east to west, nodes 4 and 5). (2) Downslope winds blowing across
-the Alpine crest along the intersecting valley towards Innsbruck (from south-east to
-north-west, nodes 7 and 8). (3) Down-valley winds blowing in the direction
-of the valley mouth (from west to east, nodes 12, 14, and 15). Node~11
-captures observations with rather low wind speeds that cannot be distinguished
-clearly into wind regimes and consequently are associated with a very low
-estimated concentration $\hat \kappa$. In terms of covariates, the lagged
-wind direction (``persistence'') is mostly responsible for distinguishing
-the broad wind regimes listed above while the pressure gradients and wind
-speed separate between subgroups with high vs.\ low precision.
+
+
+Next to the airport of Innsbruck, located in the west of Austria, in the center of the Alps,
+a second airport in Austria, the airport of Vienna, situated in the east of the country in a rather flat
+area, is considered in this study.
+In that way completely different geographic features and their possible influences
+on wind direction are included which allows to test for a high flexibility of the applied methods.
+For the two locations the above introduced methodology of circular distributional trees and forests is
+employed to wind direction data and additional meteorological measurements in order to obtain hourly 
+wind direction forecasts, separately for Innsbruck and Vienna.
+
+
+
 
 \subsection{Data}
-Observations of various meteorological quantities from the airport of Innsbruck and .. surrounding
-weather stations are used as covariates in order to predict the wind direction at Innsbruck
-airport in the following hour.
-In particular .. covariates are included in the model. Next to the current wind direction,
-temperature, air pressure, ... at the each of the stations also differences in these quantities
-between the considered stations are included. For example, differences in air pressure
-between Innsbruck and either a western or eastern location are expected to have a high influence 
-on wind directions.
+For both airports observations of various meteorological quantities measured
+either directly at the airports or at surrounding weather stations are used as 
+covariates in order to predict the wind direction at the corresponding airport 
+in the following hour.
+Next to the current wind direction, temperature, air pressure, humidity, ... at each 
+of the weather stations also differences in these quantities between the considered 
+stations are included. For example, differences in air pressure between Innsbruck and 
+either a western or eastern location are expected to have a high influence on wind 
+directions. Moreover, changes of these quantities over time are included as well as 
+daytime. In total, 550 covariates are provided for Innsbruck and 522 covariates for Vienna. 
+A list of all covariates together with their abbreviations as used in this paper
+can be found in Table~\ref{tab:covariates}.
+The data sets each provide observations from 5 years, in particular from 2014 to 2017, both included.
+After eliminating observations with at least one missing value a total number of 26861 time points
+for Innsbruck and 33853 for Vienna are available.
+
+
+\begin{table}[t!]
+%\resizebox{1.4\textwidth}{!}{
+\begin{minipage}{\textwidth}
+\caption[Table caption text]{Basic covariates together with the type of variations.}
+\label{tab:covariates}
+\begin{tabular}{l  l}
+\hline
+Basic covariates & Variations\\
+\hline
+\emph{dd}: wind direction       & different locations, \\
+                                & changes over time(?)\\
+\emph{ff}: wind speed           & different locations, \\
+                                & changes over time(?), \\
+                                & (hourly) maxima\\
+\emph{p}: pressure              & different locations, \\
+                                & differences between locations, \\
+                                & changes over time(?)\\
+\emph{t}: temperature           & different locations, \\
+                                & changes over time(?)\\
+\emph{rf}: relative humidity    & different locations\\
+\hline
+\end{tabular}
+\end{minipage} 
+%}
+\end{table}
+
 
 \subsection{Models and Evaluation}
-Next to distributional trees for circular data and forests three other models have been applied and their 
-performances have been compared based on a circular version of the continuous ranked probability 
+Along with distributional trees for circular data and forests three other models have been applied 
+and their performances have been compared based on a circular version of the continuous ranked probability 
 score (CRPS).
 
 \paragraph{Persistence}
-Assuming that weather conditions will remain the same in the following hours/days is the
-basic idea of persistence in meteorology. Hence, fitting a distributional model as presented in
-Section~\ref{sec:prob_circ} to the observations of the response variable from the previous hour(s) 
-contained in the learning data provides a distributional approach to persistence.
+Assuming that weather conditions will remain the same after a certain period of time is the
+basic idea of persistence in meteorology. While this simple way of making predictions can
+be very effective particularly under stable atmospheric circumstances it can fail remarkably
+as soon as any changes take place, especially in case of rapid changes.
+Therefore, it heavily depends on the specific features and the variability of the variable
+of interest whether this approach can provide overall reliable predictions.
+% TODO: references
+To establish a distributional model of persistence for this study a set of six observations
+is considered to make a prediction for a selected day and time point. In particular,
+the exact same time points of the previous six days are considered. In order to account
+for a stronger influence of observations closer to the prediction time point exponentially
+increasing weights are included with the highest weight being assigned to the time point of the
+previous day. For this selected set of observations the distribution parameters of the von Mises 
+distribution can be estimated as presented in Section~\ref{sec:prob_circ} such that a full
+parametric model is specified allowing for probabilistic predictions and an evaluation of the CRPS.
 
 \paragraph{Climatology}
-If there are no climatological changes it can be expected that for a selected day of the year weather conditions will always be the same. Therefore, in order to predict wind direction for a specified day
-and time observations for this selected timespace from all years contained in the learning data are
-used to fit a distributional model.
+If there are no climatological changes within a certain number of years it can be expected that 
+for a selected day of the year weather conditions will always be the same over all years 
+considered.
+Again, this idea provides a very simple and stable way of obtaining predictions for a considered 
+meteorological variable of interest that can be very useful but its performance can also suffer 
+dramatically from a high variance and abrupt changes, especially if they occur frequently during one day.
+% TODO: references
+Similar to the applied persistence model observations are selected to fit a distributional climatology
+model. For a specified day and time point observations from the exact same time point and day but all 
+other years contained in the learning data are selected and parameters are estimated following again Section~\ref{sec:prob_circ}.
 
-\paragraph{Linear Model}
-Another commonly applied model ...
+\paragraph{Generalized Linear Model}
+Another commonly applied approach is to regress the parameter(s) of the von Mises distribution
+on covariates by a linear combination of selected covariates connected to the parameter(s) via
+a specified link function. The toolbox of generalized linear models ...
+% TODO: references
 
+% TODO: CRPS
+\vspace{0.5cm}
 Compare fitted models based on a circular version of CRPS ...
 
 
