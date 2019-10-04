@@ -106,8 +106,9 @@ distributional trees are easy to interpret, can detect non-additive effects, and
 covariates and their interactions automatically. In order to stabelize and regularize
 the model an ensemble of distributional trees is combined yielding a distributional
 forest which allows for modeling smooth effects as well.
-For illustration, hourly wind direction forecasts are obtained at Innsbruck Airport based on a set 
-of meteorological measurements from Innsbruck and surrounding weather stations.
+For illustration, hourly wind direction forecasts are obtained at two airports in Austria
+(Vienna and Innsbruck) based on a set of meteorological measurements from each of the 
+airports and surrounding weather stations.
 }
 \Keywords{Distributional Trees; Circular Response; Von Mises Distribution}
 
@@ -181,11 +182,11 @@ distributional trees and distributional forests.
 In that way no model assumptions are required as covariates and their possible interactions are
 selected automatically. Non-additive effects are captured by the tree structure while combining an ensemble
 of trees to a forest model allows for modeling smooth changes as well. 
-Therefore, a high level of flexibility is provided while a full distributional model is specified by distributional trees and forests such that a wide range of inference is made available.
+In that way, a high level of flexibility is provided while a full distributional model is specified by distributional trees and forests such that a wide range of inference is made available.
 These features and the corresponding methodology are presented in Section~\ref{sec:tree_forest} after discussing 
 distributional models for circular data in Section~\ref{sec:prob_circ}.
 In Section~\ref{sec:wind} the presented models a applied to probabilistic forecasting of wind direction
-at the airports Innsbruck and Vienna.
+at the airports of Innsbruck and Vienna.
 
 
 
@@ -501,7 +502,7 @@ Basic covariates & Variations\\
 \end{table}
 
 
-\subsection{Models and Evaluation}
+\subsection{Reference Models}
 Along with distributional trees for circular data and forests three other models have been applied 
 and their performances have been compared based on a circular version of the continuous ranked probability 
 score (CRPS).
@@ -532,8 +533,9 @@ meteorological variable of interest that can be very useful but its performance 
 dramatically from a high variance and abrupt changes, especially if they occur frequently during one day.
 % TODO: references
 Similar to the applied persistence model observations are selected to fit a distributional climatology
-model. For a specified day and time point observations from the exact same time point and day but all 
-other years contained in the learning data are selected and parameters are estimated following again Section~\ref{sec:prob_circ}.
+model. For a specified day and time point observations from the exact same time point and the same day 
+as well as the 30 surrounding days from all other years contained in the learning data are selected and
+parameters are estimated following again Section~\ref{sec:prob_circ}.
 
 \paragraph{Generalized Linear Model}
 Another commonly applied approach is to regress the parameter(s) of the von Mises distribution
@@ -541,8 +543,9 @@ on covariates by a linear combination of selected covariates connected to the pa
 a specified link function. The toolbox of generalized linear models ...
 % TODO: references
 
-% TODO: CRPS
-\vspace{0.5cm}
+\subsection{Evaluation}
+Five-fold cross validation (four years as learning data, one year as testing data) ...
+
 Compare fitted models based on a circular version of CRPS ...
 
 
