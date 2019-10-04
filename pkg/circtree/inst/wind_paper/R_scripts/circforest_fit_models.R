@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-02 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-03 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -20,8 +20,7 @@ library("zoo")
 library("circtree")
 library("disttree")
 library("verification") # Careful, version 1.35 needed!!
-require("circular", character.only = TRUE)
-detach(pos = match(paste("package", "circular", sep = ":"), search()))
+library("circglmbayes")
 
 ## Create folder for outputs
 if (! dir.exists("results")) dir.create("results")
@@ -301,102 +300,80 @@ saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds"
 rm(pred_clim, climfit, train, test, train_subset); gc()
 
 
-#%# -------------------------------------------------------------------
-#%# Fit circular linear model (with CV)
-#%# -------------------------------------------------------------------
-#%## Fit models with cross-validation
-#%#cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
-#%cvID <- as.numeric(factor(as.POSIXlt(index(d))$year))
-#%
-#%pred_lm <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
-#%  kappa = rep(NA, sum(cvID == x))))
-#%
-#%for (cv in unique(cvID)) { 
-#%  if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
-#%
-#%  train <- d[cv != cvID, ]
-#%  test <- d[cv == cvID, ]
-#% 
-#%  d_range <- as.POSIXlt(range(index(train)))
-#%
-#%  for (i in seq(1:nrow(test))) {
-#%
-#%    if (opt$verbose) cat(sprintf("Fitting circular linear model %2d%%\n", (i/nrow(test) * 100)%/%5 * 5))
-#%  
-#%    i_plt <- as.POSIXlt(index(test)[i], origin = "1970-01-01")
-#%    
-#%    ## Skip 29th of February 
-#%    if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
-#%      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
-#%      next
-#%    }
-#%  
-#%    ## Subset training data set
-#%    i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
-#%      max(d_range$year)) %in% i_plt$year)] + 1900
-#%
-#%    idx <- lapply(i_years, function(x) 
-#%      as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
-#%      i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
-#%  
-#%    idx <- do.call(c, idx)
-#%    
-#%    train_subset <- subset(train, index(train) %in% idx)
-#%  
-#%    ## Fit lm with time limit
-#%    lm_foo <- function() {
-#%      time_limit <- 10
-#%    
-#%      setTimeLimit(cpu = time_limit, elapsed = time_limit, transient = TRUE)
-#%      on.exit({
-#%        setTimeLimit(cpu = Inf, elapsed = Inf, transient = FALSE)
-#%      })
-#%      if(opt$station == "ibk"){
-#%        lmfit <- circular::lm.circular(y = circular::circular(train_subset$dd.response), 
-#%                                 x = as.matrix(data.frame(u.innsbruck = train_subset$u.innsbruck,
-#%                                                v.innsbruck = train_subset$v.innsbruck,
-#%                                                ffx.innsbruck = train_subset$ffx.innsbruck)),
-#%                                 init = c(1, 1, 1), type = 'c-l', tol = 1e-10, verbose = opt$verbose)
-#%      } else if (opt$station == "vie"){
-#%        lmfit <- circular::lm.circular(y = circular::circular(train_subset$dd.response),
-#%                                 x = as.matrix(data.frame(u34 = train_subset$u34,
-#%                                                v34 = train_subset$v34, ff34 = train_subset$ff34)),
-#%                                 init = c(1, 1, 1), type = 'c-l', tol = 1e-10, verbose = opt$verbose)
-#%      } else {
-#%        stop("Station not supported, currently station must be 'vie' or 'ibk'...")
-#%      }
-#%      return(lmfit)
-#%    }
-#%    lmfit <- try(lm_foo())
-#%
-#%    ## Predict parameters
-#%    if(opt$station == "ibk"){
-#%      xhat <- as.matrix(subset(d, index(d) %in% index(test)[i], select = c(u.innsbruck,
-#%        v.innsbruck, ffx.innsbruck)))
-#%    } else if (opt$station == "vie"){ 
-#%      xhat <- as.matrix(subset(d, index(d) %in% index(test)[i], select = c(u34,
-#%        v34, ff34)))
-#%    } else {
-#%      stop("Station not supported, currently station must be 'vie' or 'ibk'...")
-#%    } 
-#%                             
-#%    if (class(lmfit) == "try-error") {
-#%      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
-#%    } else {
-#%      pred_lm[[cv]][i, "mu"] <- lmfit$mu + 2 * atan(xhat %*% coef(lmfit))
-#%      pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] <- 
-#%        pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] - 2 * pi
-#%      pred_lm[[cv]][i, "kappa"] <- lmfit$kappa
-#%    }
-#%  }
-#%}
-#%
-#%if (opt$verbose) cat("\n")  
-#%
-#%## Save predictions
-#%saveRDS(pred_lm, file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
-#%  opt$station, opt$lag, opt$run_name))
-#%rm(pred_lm, lmfit, train, test, train_subset); gc()
+# -------------------------------------------------------------------
+# Fit circular linear model (with CV)
+# -------------------------------------------------------------------
+## Fit models with cross-validation
+#cvID <- sort(rep(1:5, ceiling(nrow(d) / 5)))[1:nrow(d)]
+cvID <- as.numeric(factor(as.POSIXlt(index(d))$year))
+
+pred_lm <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == x)), 
+  kappa = rep(NA, sum(cvID == x))))
+
+d.lm <- d
+d.lm[d.lm$dd.response < 0] <- d.lm$dd.response[d.lm$dd.response < 0] + 2 * pi
+
+for (cv in unique(cvID)) { 
+  if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
+
+  train <- d.lm[cv != cvID, ]
+  test <- d.lm[cv == cvID, ]
+ 
+  d_range <- as.POSIXlt(range(index(train))) ## CHECK IF CORRECT, HERE AND EVERYWHERE ELSE
+
+  for (i in seq(1:nrow(test))) {
+
+    if (opt$verbose) cat(sprintf("Fitting circular linear model %2d%%\n", (i/nrow(test) * 100)%/%5 * 5))
+  
+    i_plt <- as.POSIXlt(index(test)[i], origin = "1970-01-01")
+    
+    ## Skip 29th of February 
+    if ((i_plt$mon + 1 == 2) & (i_plt$mday == 29)) {
+      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      next
+    }
+  
+    ## Subset training data set
+    i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
+      max(d_range$year)) %in% i_plt$year)] + 1900
+
+    idx <- lapply(i_years, function(x) 
+      as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
+      i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
+  
+    idx <- do.call(c, idx)
+    
+    train_subset <- subset(train, index(train) %in% idx)
+  
+    ## Fit lm model
+    if(opt$station == "ibk"){
+      f.lm <- as.formula(dd.response ~ u.innsbruck + v.innsbruck + ffx.innsbruck)
+    } else if (opt$station == "vie"){
+      f.lm <- as.formula(dd.response ~ u34 + v34 + ff34)
+    } else {
+      stop("Station not supported, currently station must be 'vie' or 'ibk'...")
+    }
+    lmfit <- try(circGLM(f.lm, data = train_subset, skipDichSplit = FALSE))
+
+    ## Predict parameters
+    if (any(class(lmfit) %in% "try-error")) {
+      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+    } else {
+      pred_lm[[cv]][i, "mu"] <- predict(lmfit, newdata = subset(d.lm, index(d.lm) %in% index(test)[i]))
+      pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] <- 
+        pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] - 2 * pi
+
+      pred_lm[[cv]][i, "kappa"] <- coef(lmfit)["Kappa", "Estimate"]
+    }
+  }
+}
+
+if (opt$verbose) cat("\n")  
+
+## Save predictions
+saveRDS(pred_lm, file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
+rm(pred_lm, lmfit, train, test, train_subset); gc()
 
 
 # -------------------------------------------------------------------
@@ -494,15 +471,12 @@ pred_pers_day <- readRDS(file = sprintf("results/circforest_pred_pers_day_%s_lag
   opt$station, opt$lag, opt$run_name))
 pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds", 
   opt$station, opt$lag, opt$run_name))
-#%pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
-#%  opt$station, opt$lag, opt$run_name))
+pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
+  opt$station, opt$lag, opt$run_name))
 
 ## Combine predictions
-#%pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
-#%  climatology = do.call("rbind", pred_clim), linear_model = do.call("rbind", pred_lm),
-#%  persistence_hour = pred_pers_hour, persistence_day = pred_pers_day)
 pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
-  climatology = do.call("rbind", pred_clim), 
+  climatology = do.call("rbind", pred_clim), linear_model = do.call("rbind", pred_lm),
   persistence_hour = pred_pers_hour, persistence_day = pred_pers_day)
 obs  <- d$dd.response
 

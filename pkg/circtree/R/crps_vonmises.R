@@ -6,7 +6,7 @@
 # - PURPOSE: Circular CRPS (von Mises) based on numeric integration using
 #            the charististic equation
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-01 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-04 on thinkmoritz
 # -------------------------------------------------------------------
 
 ##YEAR: 2017
@@ -26,7 +26,7 @@ cfC_vonMises <- function(t, mu = 0, kappa = 1){
 
 
 ## CRPS von Mises
-crps_vonmises <- function(y, mu, kappa, sum = FALSE) {
+crps_vonmises <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE) {
 
   ## Perform some input checks
   if(any(y < -pi) || any(y > pi) || any(mu < -pi) || any(mu > pi) || any(kappa < 0 ))
@@ -47,16 +47,22 @@ crps_vonmises <- function(y, mu, kappa, sum = FALSE) {
 
   ## Calculate CRPS based on characteristic function  
   rval <- sapply(1:nrow(dat), function(i){
+    if(dat[i, "kappa"] > 1500){
+      crps <- scoringRules::crps_norm(y = dat[i, "y"], mean = dat[i, "mu"], sd = sqrt(1 / dat[i, "kappa"]))
+      return(crps)
 
-    int_fun <- function(x) {
-      1 / pi * abs(cfC_vonMises(x, dat[i, "mu"], dat[i, "kappa"]) - 
-        exp((0+1i) * x * dat[i, "y"]))^2 / x^2
+    } else {
+      int_fun <- function(x) {
+        1 / pi * abs(cfC_vonMises(x, dat[i, "mu"], dat[i, "kappa"]) - 
+          exp((0+1i) * x * dat[i, "y"]))^2 / x^2
+      }
+
+      crps <- try(integrate(int_fun, 0, Inf)$value)
+      if(any(class(crps) %in% "try-error")) crps <- NA
+      return(crps)
     }
-
-    crps <- integrate(int_fun, 0, Inf)$value
-    return(crps)
   })
 
-  if(sum) rval <- sum(rval)
+  if(sum) rval <- sum(rval, na.rm = na.rm)
   return(rval)
 }

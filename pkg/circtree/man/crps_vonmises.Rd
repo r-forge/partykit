@@ -9,7 +9,7 @@
 }
 
 \usage{
-  crps_vonmises(y, mu, kappa, sum = FALSE)
+  crps_vonmises(y, mu, kappa, sum = FALSE, na.rm = FALSE)
 }
 
 \arguments{
@@ -17,6 +17,7 @@
   \item{mu}{numeric. Location parameter of the von Mises distribution.}
   \item{kappa}{numeric. Concentration parameter of the von Mises distribution.}
   \item{sum}{logical. Should the sum of the CRPS-values over all response values be returned.}
+  \item{na.rm}{logical. Should missing values (including `NaN') in case of `sum = TRUE' be removed?}
 }
 
 \value{
