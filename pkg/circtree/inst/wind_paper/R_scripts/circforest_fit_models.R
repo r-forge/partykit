@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-03 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-04 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -65,7 +65,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v8",
+  make_option("--run_name", type = "character", default = "v9",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -359,9 +359,11 @@ for (cv in unique(cvID)) {
     if (any(class(lmfit) %in% "try-error")) {
       pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
     } else {
-      pred_lm[[cv]][i, "mu"] <- predict(lmfit, newdata = subset(d.lm, index(d.lm) %in% index(test)[i]))
-      pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] <- 
-        pred_lm[[cv]][i, "mu"][pred_lm[[cv]][i, "mu"] > pi] - 2 * pi
+      pred_tmp <- predict(lmfit, newdata = subset(d.lm, index(d.lm) %in% index(test)[i]))
+      pred_tmp <- pred_tmp %% (2*pi)
+      pred_tmp[pred_tmp > pi] <- 
+        pred_tmp[pred_tmp > pi] - 2 * pi
+      pred_lm[[cv]][i, "mu"] <- pred_tmp
 
       pred_lm[[cv]][i, "kappa"] <- coef(lmfit)["Kappa", "Estimate"]
     }
