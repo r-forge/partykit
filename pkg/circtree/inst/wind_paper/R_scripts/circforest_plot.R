@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-24 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-04 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -36,7 +36,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v7",
+  make_option("--run_name", type = "character", default = "v8",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),
@@ -67,19 +67,21 @@ for (i_station in c("ibk", "vie")){
 
     load(file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
 
-    crps.m <- melt(crps[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
+    crps.m <- melt(crps[, c("climatology", "persistence_hour", "persistence_day", "tree", "forest")], variable.name = "model")
     crps.m$model <- plyr::revalue(crps.m$model,
       c("climatology" = "Climatology",
-      "persistence" = "Persistence",
+      "persistence_hour" = "Persistence Hour",
+      "persistence_day" = "Persistence Day",
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
     crps.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
 
-    crps.agg.m <- melt(crps.agg[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
+    crps.agg.m <- melt(crps.agg[, c("climatology", "persistence_hour", "persistence_day", "tree", "forest")], variable.name = "model")
     crps.agg.m$model <- plyr::revalue(crps.agg.m$model,
       c("climatology" = "Climatology",
-      "persistence" = "Persistence",
+      "persistence_hour" = "Persistence Hour",
+      "persistence_day" = "Persistence Day",
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.agg.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
@@ -88,7 +90,8 @@ for (i_station in c("ibk", "vie")){
     crps.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
     crps.agg_skill.m$model <- plyr::revalue(crps.agg_skill.m$model,
       c("climatology" = "Climatology",
-      "persistence" = "Persistence",
+      "persistence_hour" = "Persistence Hour",
+      "persistence_day" = "Persistence Day",
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.agg_skill.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
@@ -124,16 +127,16 @@ for (i_station in c("ibk", "vie")){
       i_station, i_lag, opt$run_name)
     ggsave(pdf_file)
     
-    ## Plot single tree
-    m_ct.plot <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
-      i_station, i_lag, opt$run_name))
-    
-    pdf(file = sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
-      i_station, i_lag, opt$run_name), width = 18, height = 10)
-    par(mar = c(3.1, 4.1, 2.1, 2.1))
-    plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
-      ip_args = list(pval = FALSE))
-    dev.off()
+    ### Plot single tree
+    #m_ct.plot <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
+    #  i_station, i_lag, opt$run_name))
+    #
+    #pdf(file = sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
+    #  i_station, i_lag, opt$run_name), width = 18, height = 10)
+    #par(mar = c(3.1, 4.1, 2.1, 2.1))
+    #plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
+    #  ip_args = list(pval = FALSE))
+    #dev.off()
   }
 }
 

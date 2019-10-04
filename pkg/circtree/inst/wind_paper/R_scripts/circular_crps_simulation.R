@@ -36,7 +36,7 @@ toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", 
       l = c(30, 90), power = 1.)[round(tmp,1) %in% round(brks,1)]
   }
 
-  xylab[grep("^kappa", xylab)] <- paste0("log(", xylab[grep("^kappa", xylab)], ")")
+  xylab[grep("^kappa", xylab)] <- paste0("", xylab[grep("^kappa", xylab)], "")
   plot(ra, breaks = brks, legend = FALSE, col = brks.col, xlab = xylab[1], ylab = xylab[2], ...)
   plot(ra, breaks = brks, legend.only = TRUE, 
     smallplot = c(0.8, 0.85, 0.3, 0.75), col = brks.col, 
@@ -47,20 +47,20 @@ toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", 
 
 for(i_obs in c(-pi, -pi/2, 0, pi/2, pi)){
   ## Create grid
-  grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 6.1, by = 0.4))
+  grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 2, by = 0.12))
 
   ## Calculate crps  
   crps <- NULL
   for(i in 1:nrow(grid)){
-    grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"])))
-    grid$crps_own[i] <- crps_vonmises(y = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"]), sum = FALSE)
+    grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"]))
+    grid$crps_own[i] <- crps_vonmises(y = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"], sum = FALSE)
   }
   
   ## Calculate crps percentage change
   grid$crps_pchange <- (grid$crps_own - grid$crps_grimit) / abs(grid$crps_grimit) * 100
   grid$crps_diff <- grid$crps_own - grid$crps_grimit
   
-  pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
+  pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid_smallkappa.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
     abs(i_obs)), width = 8, height = 6)
   par(mfrow = c(2,2), mar = c(5, 5, 4, 6) + 0.1, oma = c(0, 1, 3, 2.5))
   toraster(grid, which = "crps_grimit", main = "CRPS 'Grimit et al. (2006)'", asp = 0)
