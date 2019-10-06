@@ -169,10 +169,12 @@ the circular mean, hence the location parameter of the von Mises distribtuion.
 by plugging in a link function such that the values of the linear predictor are transformed 
 to an restricted interval of length $2\pi$. 
 This model was further extended by \cite{Fisher+Lee:1992} and subsequently by \cite{Fisher:1993} 
-allowing for the mean direction or the dispersion to be modeled not only in separate models 
-but also in a mixed model. However, applying these models has shown to be very challenging, 
-mainly due to the complexity encountered in optimizing the log-likelihood function.
-Moreover the named approaches and also its further developments 
+introducing another specific transformation function which maps the values of the real line to the 
+unit circle. Moreover, the presented methodology allows for the mean direction or the dispersion 
+to be modeled not only in separate models but also in a mixed model. However, applying these models 
+has shown to be very challenging, mainly due to the complexity encountered in optimizing the 
+log-likelihood function.
+Additionally, the named approaches and also its further developments 
 \citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001, Mulder+Klugkist:2017}
 are built on additive regression models which may not be able to capture all types of effects.
 For example abrupt changes might not be detected properly owing to the fixed structure enforced
@@ -180,9 +182,10 @@ by model assumptions such as the type of link function and the type of linear co
 Therefore, we propose an adaption of regression trees and random forests to circular data by employing 
 distributional trees and distributional forests. 
 In that way no model assumptions are required as covariates and their possible interactions are
-selected automatically. Non-additive effects are captured by the tree structure while combining an ensemble
-of trees to a forest model allows for modeling smooth changes as well. 
-In that way, a high level of flexibility is provided while a full distributional model is specified by distributional trees and forests such that a wide range of inference is made available.
+selected automatically. Non-additive effects are captured by the tree structure while combining an 
+ensemble of trees to a forest model allows for modeling smooth changes as well. 
+In that way, a high level of flexibility is provided while a full distributional model is specified 
+by distributional trees and forests such that a wide range of inference is made available.
 These features and the corresponding methodology are presented in Section~\ref{sec:tree_forest} after discussing 
 distributional models for circular data in Section~\ref{sec:prob_circ}.
 In Section~\ref{sec:wind} the presented models a applied to probabilistic forecasting of wind direction
@@ -203,8 +206,8 @@ A close approximation to the wrapped normal distribution that is mathematically 
 to use \citep{Fisher:1993} is provided by the von Mises distribution,
 a purely circular distribution which is also known as ``the circular normal distribution''
 and commonly applied for probabilistic modeling of circular data.
-Based on a location parameter $\mu \in [0, 2\pi]$ and a concentration parameter $\kappa > 0$ 
-the density of the von Mises distribution for an observation $y \in [0, 2\pi]$ is given by:
+Based on a location parameter $\mu \in (-\pi, \pi]$ and a concentration parameter $\kappa > 0$ 
+the density of the von Mises distribution for an observation $y \in (-\pi, \pi]$ is given by:
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
 \end{equation}
@@ -268,6 +271,7 @@ can improve any model remarkably as they might provide valuable additional infor
 Therefore, distributional regression models are of high interest for all types of data,
 including circular data.
 
+
 \section{Regression Trees and Forests for Circular Data}
 \label{sec:tree_forest}
 \subsection{Motivation}
@@ -275,10 +279,18 @@ A commonly used approach to including covariates as regressors in distributional
 provided by generalized additive models for location, scale, and shape 
 \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}.
 There, each distribution parameter is linked to a linear predictor by an additive function.
-While this strategy works well for smooth effects difficulties can arise in case of 
-non-additive changes. Moreover, specifying a model properly can be very challenging,
+For circular data the mixed model by \cite{Fisher:1993} follows the idea of modeling both
+parameters of the von Mises distribution, however, in an iterative optimization procedure
+requiring well fitting initial values for the parameters that are recommended to be calculated 
+in advance in two separate models. Using the obtained initial value the model parameters are 
+estimated and improved stepwise until convergence. While providing a well elaborated theory 
+this methodology and the contained optimization problem have shown to be very complex and 
+bear the risk of not converging if not applied thoughtfully \textit{FIXME: citation}. %\citealp{}.
+Furthermore, these additive strategies work well for smooth effects but difficulties can arise 
+in case of non-additive changes. Additionally, specifying a model properly can be very challenging,
 particularly for a high number of covariates and no information about possible interactions.
-An alternative approach that can deal with these problems is to apply a tree-structured model.
+An alternative regression approach that can deal with these problems is to apply a tree-structured 
+model.
 
 \subsection{Distributional Trees for Circular Data}
 \label{sec:circtree}
@@ -502,10 +514,46 @@ Basic covariates & Variations\\
 \end{table}
 
 
-\subsection{Reference Models}
-Along with distributional trees for circular data and forests three other models have been applied 
-and their performances have been compared based on a circular version of the continuous ranked probability 
-score (CRPS).
+\subsection{Evaluation Setting and Models Applied}
+Along with distributional trees and forests for circular data three other models have been applied
+in this study. In particular, they have been evaluated in a five-fold cross validation with each of 
+the five years contained in the data set being used as testing data once after the models where 
+learned on the remaining four years. 
+In order to compare the performances of the employed models a circular version of the continuous 
+ranked probability score (CRPS) is calculated and summed up over each observation contained in
+the learning data and the corresponding predicted distribution parameters of each of the models.
+
+To test whether distributional trees and forests can be applied as a reasonable alternative to already
+existing approaches to modeling circular data, particularly in the field of meteorological forecasting,
+three commonly used models are selected as reference models.
+The exact settings of the tree and forest models as well as a specification of the reference models
+is provided in the remainder of this section.
+
+\paragraph{Distributional Tree}
+For the distributional tree as discussed in Section~\ref{sec:circtree} all covariates provided in the 
+learning data are considered. The tree is obtained by employing the CTree algorithm with a minimal 
+number of 2000 observations in each terminal node serving as a stopping criterion 
+(argument \code{minbucket} of our implementation).
+
+\paragraph{Distributional Forest}
+Following the description in Section~\ref{sec:circforest} a distributional forest is constructed.
+As for the distributional tree all available covariates are used to learn a distributional 
+forest of 100 trees. Each of these trees is built by the CTree algorithm on a subsample 
+containing a fraction of 30 percent of the original learning data. As it can be expected that 
+the lagged response variable (as included as a covariate) has a strong influence on the 
+response variable it is desirable to employ it in each tree of the forest. Therefore, all 
+covariates are considered for each tree
+(by setting the argument \code{mtry} of our implementation to the total number of covariates)
+in order to guarantee for the lagged response to be available.
+Since a high number of possible split points lead to a high computational effort that is 
+particularly noteworthy for forest models the covariates are binned allowing for a maximum of
+$50$ classes.
+% control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
+As stopping criteria the minimal number of observations to perform a split (\texttt{minsplit}) 
+is set to 20, the minimal number of observations in each terminal node (\texttt{minbucket})
+is set to 7, and the significance level for variable selection (\texttt{alpha}) is kept at its 
+maximum value of 1 in order to build trees as large as possible as commonly done for forest models.
+
 
 \paragraph{Persistence}
 Assuming that weather conditions will remain the same after a certain period of time is the
@@ -523,6 +571,10 @@ increasing weights are included with the highest weight being assigned to the ti
 previous day. For this selected set of observations the distribution parameters of the von Mises 
 distribution can be estimated as presented in Section~\ref{sec:prob_circ} such that a full
 parametric model is specified allowing for probabilistic predictions and an evaluation of the CRPS.
+As this approach only considers data from the previous six days a cross validation is not 
+applicable, however, the same evaluation framework as for the other four models can be employed 
+by obtaining predictions only for the testing data of the cross validation without using 
+the corresponding learning data.
 
 \paragraph{Climatology}
 If there are no climatological changes within a certain number of years it can be expected that 
@@ -543,10 +595,6 @@ on covariates by a linear combination of selected covariates connected to the pa
 a specified link function. The toolbox of generalized linear models ...
 % TODO: references
 
-\subsection{Evaluation}
-Five-fold cross validation (four years as learning data, one year as testing data) ...
-
-Compare fitted models based on a circular version of CRPS ...
 
 
 
