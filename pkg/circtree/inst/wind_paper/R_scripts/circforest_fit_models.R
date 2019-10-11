@@ -253,7 +253,7 @@ for (cv in unique(cvID)) {
   train <- d[cv != cvID, ]
   test <- d[cv == cvID, ]
  
-  d_range <- as.POSIXlt(range(index(train)))
+  d_range <- as.POSIXlt(range(index(d)))
 
   for (i in seq(1:nrow(test))) {
 
@@ -268,8 +268,7 @@ for (cv in unique(cvID)) {
     }
   
     ## Subset training data set
-    i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
-      max(d_range$year)) %in% i_plt$year)] + 1900
+    i_years <- seq.int(min(d_range$year), max(d_range$year)) + 1900
 
     idx <- lapply(i_years, function(x) 
       as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
@@ -319,7 +318,7 @@ for (cv in unique(cvID)) {
   train <- d.lm[cv != cvID, ]
   test <- d.lm[cv == cvID, ]
  
-  d_range <- as.POSIXlt(range(index(train))) ## CHECK IF CORRECT, HERE AND EVERYWHERE ELSE
+  d_range <- as.POSIXlt(range(index(d)))
 
   for (i in seq(1:nrow(test))) {
 
@@ -334,8 +333,7 @@ for (cv in unique(cvID)) {
     }
   
     ## Subset training data set
-    i_years <- seq.int(min(d_range$year), max(d_range$year))[!(seq.int(min(d_range$year), 
-      max(d_range$year)) %in% i_plt$year)] + 1900
+    i_years <- seq.int(min(d_range$year), max(d_range$year)) + 1900
 
     idx <- lapply(i_years, function(x) 
       as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", x, i_plt$mon + 1, i_plt$mday, 
