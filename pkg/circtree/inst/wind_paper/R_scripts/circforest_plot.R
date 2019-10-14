@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-07 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-14 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -37,7 +37,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v9",
+  make_option("--run_name", type = "character", default = "v10",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),
@@ -69,6 +69,8 @@ for (i_station in c("ibk", "vie")){
 
     ## Load and prepare CRPS alias Grimit et al. 2010
     load(file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
+
+    cat(sprintf("Station %s at lag %s: Total of %s timepoints used for validation.", i_station, i_lag, nrow(crps)))
 
     crps.m <- melt(crps[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree", "forest")], 
       variable.name = "model")
@@ -177,16 +179,16 @@ for (i_station in c("ibk", "vie")){
       i_station, i_lag, opt$run_name)
     ggsave(pdf_file)
     
-    ### Plot single tree
-    #m_ct.plot <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
-    #  i_station, i_lag, opt$run_name))
-    #
-    #pdf(file = sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
-    #  i_station, i_lag, opt$run_name), width = 18, height = 10)
-    #par(mar = c(3.1, 4.1, 2.1, 2.1))
-    #plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
-    #  ip_args = list(pval = FALSE))
-    #dev.off()
+    ## Plot single tree
+    m_ct.plot <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
+      i_station, i_lag, opt$run_name))
+    
+    pdf(file = sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
+      i_station, i_lag, opt$run_name), width = 18, height = 10)
+    par(mar = c(3.1, 4.1, 2.1, 2.1))
+    plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(template = "geographics"), 
+      ip_args = list(pval = FALSE))
+    dev.off()
   }
 }
 
@@ -264,3 +266,23 @@ dev.new(width=12.5, height=6.5)
 print(ggarrange(p7, legend = "none"))
 pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_diff_agg_comparison_%s.pdf", opt$run_name)
 ggsave(pdf_file)
+
+for (i_station in c("ibk", "vie")){
+  for (i_lag in c("6", "18")){
+
+    load(sprintf("results/circforest_results_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
+    pred_df <- sapply(pred_naomit,function(x) x$mu)
+    pred_df <- cbind(obs_naomit, pred_df)
+    colnames(pred_df)[colnames(pred_df) == "obs_naomit"] <- "obs"
+    pred_names <- colnames(pred_df)
+    
+    mycol <- colorspace::qualitative_hcl(length(pred_names) - 1, alpha = 0.1)
+    names(mycol) <- pred_names[!pred_names %in% "obs"]
+    for(i_name in pred_names[!pred_names %in% "obs"]){
+      png(filename = sprintf("results/_plot_circforest_scatterplot_%s_%s_lag%s_%s.png",
+        i_name, i_station, i_lag, opt$run_name), width = 8, height = 8, units = "in", res = 300)
+      eval(parse(text = sprintf("scatterplot(obs ~ %s, data = pred_df, ylim = c(-pi, pi), xlim = c(-pi, pi), col = mycol['%s'])", i_name, i_name)))
+      dev.off()
+    }
+  }
+}

@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-04 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-14 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -65,7 +65,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v9",
+  make_option("--run_name", type = "character", default = "v11",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -96,9 +96,8 @@ if (opt$station == "ibk") {
   ## Remove station without any influence
   #d <- d[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(d))]
 
-  ## Remove very low values of ff and zero wind direction
-  d <- d[!d[, "dd.response"] == 0,]
-  d <- d[!d[, "ff.response"] < 1,]
+  ## Remove very low values of ff 
+#  d <- d[!d[, "ff.response"] < 1,], not very meaningful, but at least working
 
   ## Remove covariates with more than 10 nans
   idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
@@ -121,9 +120,8 @@ if (opt$station == "ibk") {
   tmp <- window(tmp, start = "2013-01-01", end = "2017-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
-  ## Remove very low values of ff and zero wind direction
-  d <- d[!d[, "dd.response"] == 0,]
-  d <- d[!d[, "ff.response"] < 1,]
+  ## Remove very low values of ff
+  d <- d[!d[, "ff.response"] < 2,] ## equals to dd.response = 0, no realistic values 
 
   ## Remove covariates with more than 10 nans
   idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
@@ -150,7 +148,7 @@ if (opt$station == "ibk") {
 # Fit persistence model with previous time points (no CV)
 # -------------------------------------------------------------------
 ## Calculate exponential weights
-exp_weights <- calc_expweights(0.4, 7)
+exp_weights <- calc_expweights(0.5, 6)
 
 pred_pers_hour <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
 for (i in seq(1:nrow(d))) {
@@ -195,7 +193,7 @@ rm(pred_pers_hour, pers_hour_fit, train); gc()
 # Fit persistence model with previous days (no CV)
 # -------------------------------------------------------------------
 ## Calculate exponential weights
-exp_weights_centered <- calc_expweights_centered(0.4, 3)
+exp_weights_centered <- calc_expweights_centered(0.5, 3)
 
 pred_pers_day <- data.frame(mu = rep(NA, nrow(d)), kappa = rep(NA, nrow(d)))
 for (i in seq(1:nrow(d))) {
