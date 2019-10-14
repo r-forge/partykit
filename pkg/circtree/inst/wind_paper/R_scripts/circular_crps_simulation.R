@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-09 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-14 on thinkmoritz
 # -------------------------------------------------------------------
 
 ## Load libraries
@@ -16,6 +16,54 @@ library("raster")
 library('sp')
 library("colorspace")
 library("latex2exp")
+
+angle_dist <- function(a, b) {
+  d <- abs(b - a)
+  return(pmin(d, 2*pi - d))
+}
+
+## CRPS von Mises
+crps_vonmises_new <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE) {
+  set.seed(123)
+  ## Perform some input checks
+  if(any(y < -pi) || any(y > pi) || any(mu < -pi) || any(mu > pi) || any(kappa < 0 ))
+    stop("y and mu must be in the interval of [-pi, pi], and kappa must be non negative!")
+
+  if(!inherits(y, c("numeric", "integer")) || !inherits(mu, c("numeric", "integer")) ||
+    !inherits(kappa, c("numeric", "integer"))) {
+    stop("Input 'y', 'mu', and 'kappa' must be numeric vectors...")
+  }
+
+  ## Create data.frame (fails if any has not the same length or length equal one)
+  dat <- data.frame("y" = y, "mu" = mu, "kappa" = kappa)
+
+  ## Get mu with smallest absolute distance
+  idx <- apply(abs(matrix(dat$mu, ncol = 3, nrow = nrow(dat), byrow = FALSE) +
+    matrix(c(-2 * pi, 0, 2 * pi), ncol = 3, nrow = nrow(dat), byrow = TRUE) - dat$y), 1, which.min)
+  dat$mu <- dat$mu + c(-2 * pi, 0, 2 * pi)[idx]
+
+  ## Calculate CRPS based on characteristic function  
+  rval <- sapply(1:nrow(dat), function(i){
+    if(dat[i, "kappa"] > 1500){
+      crps <- scoringRules::crps_norm(y = dat[i, "y"], mean = dat[i, "mu"], sd = sqrt(1 / dat[i, "kappa"]))
+      return(crps)
+
+    } else {
+
+      dat[i, "y"] <- dat[i, "y"] %% (2 * pi)
+      dat[i, "mu"] <- dat[i, "mu"] %% (2 * pi)
+
+      n <- 1000
+
+      crps <- mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), dat[i, "y"])) - 
+        0.5 * mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), rvm(n, dat[i, "mu"], dat[i, "kappa"])))
+      return(crps)
+    }
+  })
+
+  if(sum) rval <- sum(rval, na.rm = na.rm)
+  return(rval)
+}
 
 ## Create folder for outputs
 if (! dir.exists("results")) dir.create("results")
@@ -48,27 +96,29 @@ toraster <- function(x, which, brks = NULL, brks.col = NULL, type = "absolute", 
 }
 
 for(i_obs in c(-pi, -pi/2, 0, pi/2, pi)){
+
+  cat(sprintf("Now calculating %.2f...\n", i_obs))
   ## Create grid
-  grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 6.1, by = 0.4))
-  ##grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 2, by = 0.12))
+  ##grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 6.1, by = 0.4))
+  grid <- expand.grid(mu = seq(-pi, pi, by = 5 * 2 * pi / 360), kappa = seq(0.1, 2, by = 0.12))
 
   ## Calculate crps  
   crps <- NULL
   for(i in 1:nrow(grid)){
-    grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"])))
-    grid$crps_own[i] <- crps_vonmises(y = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"]), sum = FALSE)
-    ##grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"]))
-    ##grid$crps_own[i] <- crps_vonmises(y = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"], sum = FALSE)
+    ##grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"])))
+    ##grid$crps_own[i] <- crps_vonmises_new(y = i_obs, mu = grid[i, "mu"], kappa = exp(grid[i, "kappa"]), sum = FALSE)
+    grid$crps_grimit[i] <- as.numeric(crps.circ(x = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"]))
+    grid$crps_own[i] <- crps_vonmises(y = i_obs, mu = grid[i, "mu"], kappa = grid[i, "kappa"], sum = FALSE)
   }
   
   ## Calculate crps percentage change
   grid$crps_pchange <- (grid$crps_own - grid$crps_grimit) / abs(grid$crps_grimit) * 100
   grid$crps_diff <- grid$crps_own - grid$crps_grimit
   
-  pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
-    abs(i_obs)), width = 8, height = 6)
-  ##pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid_smallkappa.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
+  ##pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid_crpsnew.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
   ##  abs(i_obs)), width = 8, height = 6)
+  pdf(file = sprintf("results/circular_crps_simulation_obs_%s%2.1f_grid_smallkappa.pdf", ifelse(sign(i_obs) == -1, "neg", "pos"), 
+    abs(i_obs)), width = 8, height = 6)
   par(mfrow = c(2,2), mar = c(5, 5, 4, 6) + 0.1, oma = c(0, 1, 3, 2.5))
   toraster(grid, which = "crps_grimit", main = "CRPS 'Grimit et al. (2006)'", asp = 0)
   toraster(grid, which = "crps_own", main = "CRPS 'Characteristic Function'", asp = 0)
@@ -79,7 +129,6 @@ for(i_obs in c(-pi, -pi/2, 0, pi/2, pi)){
   dev.off()
 }
 
-
 # -------------------------------------------------------------------
 # Comparison of different charFuns
 # -------------------------------------------------------------------
@@ -89,49 +138,6 @@ library("verification")
 library("scoringRules")
 library("CharFun")
 library("latex2exp")
-
-angle_dist <- function(a, b) {
-  d <- abs(b - a)
-  return(pmin(d, 2*pi - d))
-}
-
-## CRPS von Mises
-crps_vonmises_new <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE) {
-
-  ## Perform some input checks
-  if(any(y < -pi) || any(y > pi) || any(mu < -pi) || any(mu > pi) || any(kappa < 0 ))
-    stop("y and mu must be in the interval of [-pi, pi], and kappa must be non negative!")
-
-  if(!inherits(y, c("numeric", "integer")) || !inherits(mu, c("numeric", "integer")) ||
-    !inherits(kappa, c("numeric", "integer"))) {
-    stop("Input 'y', 'mu', and 'kappa' must be numeric vectors...")
-  }
-
-  ## Create data.frame (fails if any has not the same length or length equal one)
-  dat <- data.frame("y" = y, "mu" = mu, "kappa" = kappa)
-
-  ## Get mu with smallest absolute distance
-  idx <- apply(abs(matrix(dat$mu, ncol = 3, nrow = nrow(dat), byrow = FALSE) +
-    matrix(c(-2 * pi, 0, 2 * pi), ncol = 3, nrow = nrow(dat), byrow = TRUE) - dat$y), 1, which.min)
-  dat$mu <- dat$mu + c(-2 * pi, 0, 2 * pi)[idx]
-
-  ## Calculate CRPS based on characteristic function  
-  rval <- sapply(1:nrow(dat), function(i){
-    if(dat[i, "kappa"] > 1500){
-      crps <- scoringRules::crps_norm(y = dat[i, "y"], mean = dat[i, "mu"], sd = sqrt(1 / dat[i, "kappa"]))
-      return(crps)
-
-    } else {
-      n <- 100000
-      crps <- mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), dat[i, "y"])) - 
-        0.5 * mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), rvm(n, dat[i, "mu"], dat[i, "kappa"])))
-      return(crps)
-    }
-  })
-
-  if(sum) rval <- sum(rval, na.rm = na.rm)
-  return(rval)
-}
 
 
 ## Define characteristic functions
