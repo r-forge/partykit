@@ -5,7 +5,7 @@
 
 \description{
 Artificial dataset to illustrate fitting of LMM trees with growth curve models  
-the terminal nodes. 
+in the terminal nodes. 
 }
 
 \usage{
@@ -13,7 +13,9 @@ data("GrowthCurveDemo")
 }
 
 \format{
-A data frame containing 1250 repeated observations on 250 persons:
+A data frame containing 1250 repeated observations on 250 persons. x1 - x8 are
+time-invariant partitioning variables. Thus, they are measurements on the person
+(i.e., cluster) level, not on the individual observation level.
 \describe{
   \item{person}{numeric. Indicator linking repeated measurements to persons.}
   \item{time}{factor. Indicator for timepoint.}
@@ -26,44 +28,27 @@ A data frame containing 1250 repeated observations on 250 persons:
   \item{x6}{numeric. Potential partitioning variable.}
   \item{x7}{numeric. Potential partitioning variable.}
   \item{x8}{numeric. Potential partitioning variable.}
-  \item{x9}{numeric. Potential partitioning variable.}
-  \item{x10}{numeric. Potential partitioning variable.}
-  \item{x11}{numeric. Potential partitioning variable.}
-  \item{x12}{numeric. Potential partitioning variable.}
-  \item{x13}{numeric. Potential partitioning variable.}
-  \item{x14}{numeric. Potential partitioning variable.}
-  \item{x15}{numeric. Potential partitioning variable.}
-  \item{x16}{numeric. Potential partitioning variable.}
-  \item{x17}{numeric. Potential partitioning variable.}
-  \item{x18}{numeric. Potential partitioning variable.}
-  \item{x19}{numeric. Potential partitioning variable.}
-  \item{x20}{numeric. Potential partitioning variable.}
-  \item{x21}{numeric. Potential partitioning variable.}
-  \item{x22}{numeric. Potential partitioning variable.}
-  \item{x23}{numeric. Potential partitioning variable.}
-  \item{x24}{numeric. Potential partitioning variable.}
-  \item{x25}{numeric. Potential partitioning variable.}
-  \item{x26}{numeric. Potential partitioning variable.}
-  \item{x27}{numeric. Potential partitioning variable.}
-  \item{x28}{numeric. Potential partitioning variable.}
 }}
 
 \details{Data were generated so that \code{x1}, \code{x2} and \code{x3} are
-true partitioning variables, while \code{x4} through \code{x28} are noise
-variables.}
+true partitioning variables, \code{x4} through \code{x8} are noise
+variables. The (potential) partitioning variables are time invariant.
+Time-varying covariates can also be included in the model. For partitioning
+growth curves these should probably not be potential partitioning variables,
+as this could result in observations from the same person ending up in 
+different terminal nodes. Thus, time-varying covariates are probably
+best included as predictors in the node-specific regression model. E.g.: 
+\code{y ~ time + timevarying_cov | person | x1 + x2 + x3 + x4}.}
 
 \seealso{\code{\link{lmertree}}, \code{\link{glmertree}}}
 
 \examples{
 \donttest{
 data("GrowthCurveDemo", package = "glmertree")
-dim(GrowthCurveDemo)
-names(GrowthCurveDemo)
+head(GrowthCurveDemo)
 
-## Fit LMM tree, while estimating random intercept for time
-form <- formula(paste0("y ~ time | person | ", 
-                paste0("x", 1:28, collapse = " + ")))
-form
+## Fit LMM tree with a random intercept w.r.t. person:
+form <- y ~ time | person | x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
 lt.default <- lmertree(form, data = GrowthCurveDemo)
 plot(lt.default, which = "tree") ## yields too large tree
 VarCorr(lt.default)
@@ -73,14 +58,11 @@ lt.cluster <- lmertree(form, cluster = person, data = GrowthCurveDemo)
 plot(lt.cluster, which = "tree") ## yields correct tree
 VarCorr(lt.cluster) ## yields slightly larger ranef variance
 
-## Also estimate random slopes of time:
-form.s <- formula(paste0("y ~ time | ((1+time)|person) | ", 
-                  paste0("x", 1:28, collapse = " + ")))
-form.s
+## Fit LMM tree with random intercept and random slope of time w.r.t. person:
+form.s <- y ~ time | (1 + time | person) | x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8
 lt.s.cluster <- lmertree(form.s, cluster = person, data = GrowthCurveDemo)
 plot(lt.s.cluster, which = "tree") ## same tree as before
 VarCorr(lt.s.cluster)
-
 }
 }
 

@@ -11,9 +11,7 @@ importFrom("graphics", "boxplot", "hist")
 
 export(
   "lmertree",
-  "glmertree",
-  "plot.lmertree2",
-  "plot.glmertree2"
+  "glmertree"
 )
 
 S3method("print", "lmertree")

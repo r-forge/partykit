@@ -11,7 +11,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   
   ## check if data is complet, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
-    warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+    warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
   }
   
   ## process offset:
@@ -46,12 +46,12 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ## formula processing (full, tree, random)
   ff <- Formula::as.Formula(formula)
   tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
-  if(length(attr(ff, "rhs")[[2L]]) == 1L) {
+  if (length(attr(ff, "rhs")[[2L]]) == 1L) {
     rf <- (. ~ (1 | id))[[3L]]
     rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
     attr(ff, "rhs")[[2L]] <- rf
   }
-  if(joint) {
+  if (joint) {
     rf <- formula(ff, lhs = 1L, rhs = 1L)
     rf <- update(rf, . ~ .tree / .)
     rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
@@ -361,38 +361,37 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
 
 
 
-fixef.lmertree <- coef.lmertree <- fixef.glmertree <- coef.glmertree <- 
-  function(object, which = "tree", drop = FALSE, ...) {
-    
+fixef.lmertree <- coef.lmertree <- fixef.glmertree <- 
+  coef.glmertree <- function(object, which = "tree", 
+                             drop = FALSE, ...) {
   merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
-  coefs <- coef(object$tree, drop = FALSE, ...)
-  lmer_fixef <- fixef(object[[merMod_type]])
-  ## TODO: Add warning that intercept should not be omitted (at least from the local lm)?
-  if (object$joint && which == "tree") {
-    if (nrow(coefs) > 1L) {
-      ## Add the intercept to intercepts of all other nodes:
-      lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
-        lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef[1L]
-      ## Change name of intercept to first terminal node:
-      names(lmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
-      local_coefs <- lmer_fixef[grepl(".tree", names(lmer_fixef))]
-      for (i in rownames(coefs)) {
-        coef_names <- paste0(".tree", i)
-        if (ncol(coefs) > 1L) {
-          coef_names <- c(coef_names, paste0(coef_names, ":", colnames(coefs)[-1]))
+  if (which == "tree") { 
+    coefs <- coef(object$tree, drop = FALSE)
+    if (object$joint) { ## overwrite tree coefs with those (g)lmer:
+      lmer_fixef <- fixef(object[[merMod_type]])
+      if (nrow(coefs) > 1L) {
+        ## Add the intercept to intercepts of all other nodes:
+        lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] <- 
+          lmer_fixef[paste0(".tree", rownames(coefs)[-1L])] + lmer_fixef[1L]
+        ## Change name of intercept to first terminal node:
+        names(lmer_fixef)[1L] <- paste0(".tree", rownames(coefs)[1L])
+        local_coefs <- lmer_fixef[grepl(".tree", names(lmer_fixef))]
+        for (i in rownames(coefs)) {
+          coef_names <- paste0(".tree", i)
+          if (ncol(coefs) > 1L) {
+            coef_names <- c(coef_names, paste0(coef_names, ":", 
+                                               colnames(coefs)[-1]))
+          }
+          coefs[i, ] <- local_coefs[coef_names]
         }
-        coefs[i, ] <- local_coefs[coef_names]
+      } else {
+        coefs[1, ] <- lmer_fixef[colnames(coefs)]
       }
-    } else {
-      coefs[1, ] <- lmer_fixef[colnames(coefs)]
     }
-  }
-  if (which == "global") {
-    if (nrow(coefs) > 1L) {
-      coefs <- lmer_fixef[!grepl(".tree", names(lmer_fixef))]
-    } else {
-      coefs <- lmer_fixef[colnames(coefs)]
-    }
+  } else if (which == "global") {
+    coefs <- fixef(object[[merMod_type]])
+    coefs <- coefs[-which(names(coefs) == "(Intercept)")]
+    coefs <- coefs[!grepl(".tree", names(coefs))]
   }
   if (drop) return(drop(coefs)) else return(coefs)
 }
@@ -405,105 +404,110 @@ VarCorr.lmertree <- VarCorr.glmertree <- function(object, ...) {
 }
 
 
-plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
-                                            type = "extended", ...) {    
+# plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
+#                                             type = "extended", ...) {    
+# 
+#   merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")  
+#   if (which != "ranef") {
+#     if (type == "extended") {
+#       plot(x$tree, ...)
+#     } else if (type == "simple") {
+#       plot(x$tree, terminal_panel = node_terminal, tp_args = list(
+#         FUN = simple_terminal_func, align = "right"))
+#     }
+#   }
+#   if (which != "tree") {
+#     if (which == "all" && ask == TRUE) {
+#       orig_devAsk <- devAskNewPage()
+#       devAskNewPage(ask = TRUE)
+#     }
+#     if (requireNamespace("lattice")) {
+#       print(lattice::dotplot(ranef(x[[merMod_type]], condVar = TRUE), 
+#                              main = TRUE))
+#     }
+#     if (which == "all" && ask == TRUE) {
+#       grDevices::devAskNewPage(ask = orig_devAsk)
+#     }
+#   }
+# }
 
-  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")  
-  if (which != "ranef") {
-    if (type == "extended") {
-      plot(x$tree, ...)
-    } else if (type == "simple") {
-      plot(x$tree, terminal_panel = node_terminal, tp_args = list(
-        FUN = simple_terminal_func, align = "right"))
-    }
-  }
-  if (which != "tree") {
-    if (which == "all" && ask == TRUE) {
-      orig_devAsk <- devAskNewPage()
-      devAskNewPage(ask = TRUE)
-    }
-    if (requireNamespace("lattice")) {
-      print(lattice::dotplot(ranef(x[[merMod_type]], condVar = TRUE), 
-                             main = TRUE))
-    }
-    if (which == "all" && ask == TRUE) {
-      grDevices::devAskNewPage(ask = orig_devAsk)
-    }
-  }
-}
 
-
-
-get_merMod_SEs <- function(object, global_intercept = TRUE) {
+## Helper function for extracting standard errors from merMod objects:
+get_merMod_SEs <- function(object, which = "tree", global_intercept = TRUE) {
   ##
   ## object: should be of class "(g)lmertree"
+  ## 
+  ## which: should be "tree" (then a matrix in the shape of coef(object) will
+  ##    be returned), or "global" (then a vector with SEs will be returned). 
   ##
   ## global_intercept: specifies whether(default) treatment contrast
   ##    coding was used in estimating the fixed effects in the (g)lmer 
   ##    model. If TRUE, standard errors for the intercepts of the 
-  ##    non-first will be corrected for the intercepts being a sum of 
-  ##    two coefficients.
+  ##    non-first terminal nodes will be corrected for these intercepts 
+  ##    being a sum of two coefficients.
   ##
   merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
   ## Prepare matrix for returning SEs:
-  local_SEs <- coef(object)
-  local_SEs[is.numeric(local_SEs)] <- NA
+  SEs <- coef(object, which = which)
+  SEs[is.numeric(SEs)] <- NA
   ## Get covariance matrix of parameter estimates:
   vc <- as.matrix(lme4::vcov.merMod(object[[merMod_type]]))
-  ## Get standard errors:
-  if (nrow(local_SEs) > 1L) {
-    colnames(vc)[1] <- rownames(vc)[1] <- 
-      paste0(".tree", rownames(local_SEs)[1])
-    lmer_SEs <- sqrt(diag(vc))
-    lmer_SEs <- lmer_SEs[grep(".tree", names(lmer_SEs))]
-    for (i in rownames(local_SEs)) {
+  colnames(vc)[1] <- rownames(vc)[1] <- paste0(".tree", rownames(SEs)[1])
+  lmer_SEs <- sqrt(diag(vc))
+  if (which == "tree") {
+    lmer_SEs <- lmer_SEs[grepl(".tree", names(lmer_SEs))]
+    for (i in rownames(SEs)) {
       coef_names <- paste0(".tree", i)
-      if (ncol(local_SEs) > 1L) {
+      if (ncol(SEs) > 1L) {
         coef_names <- c(coef_names, 
-                        paste0(coef_names, ":", colnames(local_SEs)[-1]))
+                        paste0(coef_names, ":", colnames(SEs)[-1]))
       }
-      local_SEs[i, ] <- lmer_SEs[coef_names]
-    }
-    if (global_intercept) {
-      ## SE of the sum of two coefficients is given by 
-      ##    sqrt( se(coef_1)^2 + se(coef_2)^2  + 2*cov(coef_1, coef_2) )
-      for (i in rownames(local_SEs)[-1]) {
-        local_SEs[i , "(Intercept)"] <- sqrt(
-          local_SEs[1, "(Intercept)"]^2 + local_SEs[i, "(Intercept)"]^2 + 
-            2*vc[1, rownames(vc) == paste0(".tree", i)])
+      SEs[i, ] <- lmer_SEs[coef_names]
+      if (global_intercept) {
+        ## SE of the sum of two coefficients is given by 
+        ##    sqrt( se(coef_1)^2 + se(coef_2)^2  + 2*cov(coef_1, coef_2) )
+        if (i != rownames(SEs)[1L]) {
+          SEs[i , "(Intercept)"] <- sqrt(
+            SEs[1L, "(Intercept)"]^2 + SEs[i, "(Intercept)"]^2 + 
+              2*vc[1L, rownames(vc) == paste0(".tree", i)])
+        }
       }
     }
-  } else {
-    local_SEs[1, ] <- sqrt(diag(vc))[colnames(local_SEs)] 
-  }
-  return(local_SEs)
+  } else SEs <- lmer_SEs[!grepl(".tree", names(lmer_SEs))]
+  return(SEs)
 }
 
 
-
-plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
+plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef", "tree.coef", "global.coef", "all") 
+                                              ask = TRUE,
                                               type = "extended", 
                                               observed = TRUE, 
-                                              fitted = "marginal",
+                                              fitted = "combined", 
                                               tp_args = list(), 
                                               drop_terminal = TRUE, 
                                               terminal_panel = NULL, ...) {
-  if (type == "simple") {
-    FUN <- simple_terminal_func
-    plot(x$tree, drop_terminal = drop_terminal,
-         terminal_panel = node_terminal_glmertree, 
-         tp_args = list(FUN = FUN, align = "right"))
-  } else { # type = "extended"
-    merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
-    if (which != "ranef") {
-      mf <- model.frame(x) 
-      ## TODO: this goes wrong when | cluster_id | is used:
-      if (length(x$formula[[3]][[2]][[3]]))
-      global_lm_vars <- all.vars(nobars(x$formula[[3]][[2]][[3]]))
-      global_lm_vars <- global_lm_vars[!global_lm_vars %in% 
-                                         names(ranef(x[[merMod_type]]))]
-      if (length(global_lm_vars) > 0L) {
-        warning("Global fixed effects were specified, but will not be plotted.")
+  
+  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
+  ff <- Formula::as.Formula(x$formula)
+  if (which %in% c("tree", "all", "tree.coef")) {
+    if (attr(ff, "rhs")[[1]] == 1L && which != "tree.coef") {
+      plot(x$tree, type = type)
+    } else if (type == "simple") {
+      FUN <- simple_terminal_func
+      plot(x$tree, drop_terminal = drop_terminal,
+           terminal_panel = node_terminal_glmertree, 
+           tp_args = list(FUN = FUN, align = "right"))
+    } else if (type == "extended") {
+      mf <- model.frame(x)
+      if (length(attr(ff, "rhs")[[2L]]) > 1L) {
+        global_lm_vars <- all.vars(nobars(x$formula[[3]][[2]][[3]]))
+        global_lm_vars <- global_lm_vars[!global_lm_vars %in% 
+                                           names(ranef(x[[merMod_type]]))]
+        if (length(global_lm_vars) > 0L) {
+          warning("Global fixed effects were specified and/or estimated, but will not be plotted.")
+        }
+      } else {
+        global_lm_vars <- character()
       }
       local_lm_vars <- all.vars(x$formula[[3]][[2]][[2]])
       lm_vars <- unique(c(global_lm_vars, local_lm_vars))
@@ -513,7 +517,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
           paste("node", rownames(coefs)), times = ncol(coefs)),
           stringsAsFactors = FALSE)
         if (x$joint) {
-          local_SEs <- get_merMod_SEs(x)
+          local_SEs <- get_merMod_SEs(x, which = "tree")
           long_local_SEs <- utils::stack(as.data.frame(local_SEs))
           long_coefs$upper <- long_coefs$values + 1.96*long_local_SEs$values
           long_coefs$lower <- long_coefs$values - 1.96*long_local_SEs$values
@@ -537,7 +541,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
                       scales = list(x = list(relation = "free")),
                       xlab = "Estimated coefficients", 
                       main = "Fixed effects from tree"))
-      } else { ## which != "tree.coef"
+      } else {
         if (length(local_lm_vars > 0L)) {
           if (is.null(tp_args$which)) {
             vars_to_plot <- 1L:length(local_lm_vars)
@@ -557,7 +561,7 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
               if (length(lm_vars > 1L)) {
                 for (i in remaining_lm_vars) {
                   if (class(x$data[, i]) == "numeric") {
-                    ## set all values to mean:
+                    ## set all values to mean value:
                     newdata[, i] <- mean(x$data[, i])
                   } else if (class(x$data[, i]) == "factor") {
                     ## set all values to most common class:
@@ -592,25 +596,51 @@ plot.glmertree2 <- plot.lmertree2 <- function(x, which = "all", ask = TRUE,
              drop_terminal = drop_terminal, tp_args = tp_args, ...)
       }
     }
-    if (!which %in% c("tree", "tree.coef")) {
-      if (which == "all" && ask == TRUE) {
-        orig_devAsk <- devAskNewPage()
-        devAskNewPage(ask = TRUE)
+  }
+  if (which == "global.coef") {
+    coefs <- fixef(x, which = "global")
+    if (x$joint) {
+      local_SEs <- get_merMod_SEs(x, which = "global")
+      upper <- coefs + 1.96*local_SEs
+      lower <- coefs - 1.96*local_SEs
+    } else {
+      upper <- lower <- coefs
+    }
+    panel <- function(x, y, lx, ux, subscripts, pch = 16) {
+      lattice::panel.abline(h = unique(y), col = "grey")
+      lattice::panel.arrows(lx[subscripts], y, ux[subscripts], y, 
+                            col = 'black', length = 0, unit = "native", 
+                            angle = 90, code = 3)
+      lattice::panel.xyplot(x, y, pch = pch)
+    }
+    prepanel <- function(x, lx, ux, subscripts, ...) {
+      list(xlim = range(x[subscripts], ux[subscripts], lx[subscripts], 
+                        finite = TRUE))
+    }
+    print(lattice::dotplot(coefs, lx = lower, ux = upper,
+                           prepanel = prepanel, panel = panel, as.table = TRUE,
+                           scales = list(x = list(relation = "free")),
+                           xlab = "Estimated coefficients", 
+                           main = "Global fixed effects"))
+  }
+  if (which %in% c("all", "ranef")) {
+    if (which == "all" && ask == TRUE) {
+      orig_devAsk <- devAskNewPage()
+      devAskNewPage(ask = TRUE)
+    }
+    if (requireNamespace("lattice")) {
+      if (inherits(x, "lmertree")) {
+        ## TODO: allow additional arguments to be passed to lattice dotplot?
+        print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), 
+                               main = TRUE))
+      } else {
+        ## TODO: allow additional arguments to be passed to lattice dotplot?
+        print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), 
+                               main = TRUE))
       }
-      if (requireNamespace("lattice")) {
-        if (inherits(x, "lmertree")) {
-          ## TODO: allow additional arguments to be passed to lattice dotplot?
-          print(lattice::dotplot(ranef(x$lmer, condVar = TRUE), 
-                                 main = TRUE))
-        } else {
-          ## TODO: allow additional arguments to be passed to lattice dotplot?
-          print(lattice::dotplot(ranef(x$glmer, condVar = TRUE), 
-                                 main = TRUE))
-        }
-      }
-      if (which == "all" && ask == TRUE) {
-        grDevices::devAskNewPage(ask = orig_devAsk)
-      }
+    }
+    if (which == "all" && ask == TRUE) {
+      grDevices::devAskNewPage(ask = orig_devAsk)
     }
   }
 }
@@ -726,7 +756,8 @@ predict.lmertree <- function(object, newdata = NULL, type = "response",
   } else {
     if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
-      newdata$.tree <- factor(newdata$.tree)
+      newdata$.tree <- factor(newdata$.tree, 
+                              levels = levels(object$data$.tree))
       predict(object$lmer, newdata = newdata, type = type, re.form = re.form, ...)
     } else {
       newdata$.ranef <- predict(object$lmer, newdata = newdata, re.form = re.form, ...)
@@ -746,7 +777,8 @@ predict.glmertree <- function(object, newdata = NULL, type = "response",
   } else {
     if (object$joint) {
       newdata$.tree <- predict(object$tree, newdata = newdata, type = "node")
-      newdata$.tree <- factor(newdata$.tree)
+      newdata$.tree <- factor(newdata$.tree,
+                              levels = levels(object$data$.tree))
       predict(object$glmer, newdata = newdata, type = type, re.form = re.form, 
               ...)
     } else {

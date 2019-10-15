@@ -2,7 +2,6 @@
 \alias{lmertree}
 \alias{glmertree}
 
-\alias{plot.lmertree}
 \alias{print.lmertree}
 \alias{ranef.lmertree}
 \alias{logLik.lmertree}
@@ -14,7 +13,6 @@
 \alias{resid.lmertree}
 \alias{VarCorr.lmertree}
 
-\alias{plot.glmertree}
 \alias{print.glmertree}
 \alias{ranef.glmertree}
 \alias{logLik.glmertree}
