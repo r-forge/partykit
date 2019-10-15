@@ -1,12 +1,22 @@
 
-Changes in Version 0.1-3
+Changes in Version 0.2
 
-  o New plotting method for (g)lmertrees.
+  o Bug fixed in predict method: Erronous allocation of new observations
+    to tree nodes could occur, which has been fixed now. 
 
-  o Two new sections added to vignette, illustrating how mixed-effects 
-    regression trees with constant fits in the terminal nodes can be
-    fitted, and how longitudinal data / growth curve models can be 
-    partitioned.
+  o New plotting method for (g)lmertrees. Arguments which, type and fitted
+    now support wider range of plots. E.g., fitted argument provides 
+    different ways to compute fitted values in terminal panel plots. 
+    E.g., type argument now supports the plotting of fixed-effects 
+    coefficients with standard-error bars.
+  
+  o Two artificial example datasets added to illustate fitting of constant 
+    fits (MHserviceDemo) and growth-curve models (GrowthCurveDemo) in
+    terminal nodes. 
+
+  o New sections added to vignette, illustrating how mixed-effects 
+    regression trees with constant fits and growth curve models in terminal
+    nodes can be fitted.
 
 
 Changes in Version 0.1-2
