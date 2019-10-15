@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for VIE with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-09-16 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-15 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -20,6 +20,7 @@ data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out
 data_out <- "data"
 
 mylag <- 6
+
 
 # -------------------------------------------------------------------
 # Small helper functions
@@ -56,32 +57,23 @@ calc_anglediff <- function(ff1, dd1, ff2, dd2, name) {
   return(out)
 }
 
+
 # -------------------------------------------------------------------
-# Load observations from databases
-# Using LOWVIS mysql database for the observations (STAGE::lowvis)
-# and the sqlite3 for the wind-observations (Profcast::observations).
+# Load observations from databases using LOWVIS mysql database for the observations (STAGE::lowvis)
 # -------------------------------------------------------------------
 
 # Getting lowvisDescription file
-obsfile <- sprintf("%s/_pure_observations_lowvisdb.rda", data_in)
+obsfile <- sprintf("data/_pure_observations_lowvisdb_update20191015.rds")
 if (! file.exists(obsfile)) {
 
-  # -----------------------------------------
-  # Getting LOWVIS observations
-  # -----------------------------------------
-  # Loaded distinct sensorids from database directly
-  sensors <- c(200,201,205,206,208,502,507,522,527,542,547,562,567,
-               582,587,590,10,20,30,0,12,22,32,2,121,131,151,9002,420,
-               9000,141,161,9006,9008,9009,9010,9007,602,607,610,614,622,
-               627,630,634,9102,165,166,9104,164,314,334,344,364,901,911,
-               921,931,941,951,9001,9111,9116,9129,9134,9211,9216,9229,
-               9234,9011,9016,9029,9034,907,917,927,937,947,957,662,667,
-               670,674,682,687,690,694,702,707,710,714,594,9103,9311,9312,
-               9313,9314,9105,666,608,9043)
+  ## Loaded distinct sensorids from database directly
+  sensors <- c(2, 12, 22, 32, 161, 200, 201, 205, 206, 208, 420, 502, 507, 522,
+               527, 542, 547, 562, 567, 582, 587, 590, 594, 602, 607, 610, 614, 622, 627,
+               630, 634, 662, 666, 667, 670, 674, 682, 687, 690, 694, 702, 707, 710, 714)
 
-  # Loading year by year
+  ## Loading year by year
   obs_pure <- list()
-  for (yr in 2013:2017) {
+  for (yr in 2013:2018) {
     cat(sprintf("   Fetching observations for year %04d\n", yr))
     bgn <- as.POSIXct(sprintf("%04d-01-01 00:00:00", yr))
     end <- as.POSIXct(sprintf("%04d-12-31 12:59:59", yr))
@@ -94,67 +86,24 @@ if (! file.exists(obsfile)) {
   attr(obs_pure, "created") <- Sys.time()
   attr(obs_pure, "createdon") <- Sys.info()["nodename"]
 
-  # -----------------------------------------
-  # Getting ffmax_10min and ffmean_2min for WMA's
-  # -----------------------------------------
-  stations <- stations("LOWW", relevant = TRUE)
-  # Have some duplicated entries in the DB which are not in the DB which is
-  # a bit freaky but ok.
-  rmduplicated <- function(x) {
-    idx <- which(duplicated(index(x)))
-    if (length(idx) > 0) x <- x[-idx, ]
-    x
-  }
-  # Looping over stations
-  ffobs <- list()
-  for (i in 1:nrow(stations)) {
-    if (is.na(stations$sensors[i])) next
-    cat(sprintf("   Loading observations for \"%s\"\n", stations$statnr[i]))
-    tmp <- Profcast::observations(unlist(stations$sensors[i]), type = "10min",
-          date = c(as.Date("2013-01-01"), Sys.Date()), verbose = opt$verbose)
-    tmp <- lapply(tmp, rmduplicated)
-    # Remove all flagged values here
-    tmp <- lapply(tmp, function(x) subset(x, flag == 0)$value)
-    # merge and rename
-    tmp <- do.call("merge", tmp)
-    names(tmp) <- sprintf("%s.%s", as.character(stations$statnr[i]), names(tmp))
-    ffobs[[as.character(stations$statnr[i])]] <- tmp
-  }
-  ffobs <- do.call("merge", ffobs)
-  attr(ffobs, "created") <- Sys.time()
-  attr(ffobs, "createdon") <- Sys.info()["nodename"]
-
-  # Save both objects
-  save(file = obsfile, obs_pure, ffobs)
+  ## Save both objects
+  saveRDS(file = obsfile, obs_pure)
 } else {
   cat(sprintf("   File \"%s\" exists, load and continue\n", obsfile))
-  tmp <- load(obsfile)
-  if("res" %in% tmp) obs_pure <- res; rm(res)  # workaround as vector might be called "res"
+  obs_pure <- readRDS(obsfile)
 }
 
 # -------------------------------------------------------------------
-# Prepate data
+# Prepare lowvis data
 # -------------------------------------------------------------------
+## Create lagged observations (obs_pure)   
 obs_pure <- make_strict(obs_pure)
-
-# Create lagged observations (obs_pure)   
+if(unique(diff(index(data))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
 data <- lag(obs_pure, -mylag)
+rm(obs_pure); gc()
 
-# Calculate lagged measurements
-for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff", names(data))]){
-  cmd <- sprintf("data$%1$s_ch30min <- data$%1$s - lag(data$%1$s, -3)",
-    i_name)
-  eval(parse(text = cmd))
-}
-
-tmp_names <- names(data)[grep("^dd", names(data))]
-tmp_names <- gsub('dd', '', tmp_names)
-for(idx in tmp_names){
-  diff <- calc_anglediff(data[, paste0("ff", idx)], data[, paste0("dd", idx)], 
-    lag(data[, paste0("ff", idx)], -3), lag(data[, paste0("dd", idx)], -3), paste0(idx, "_ch30min"))
-  data <- merge(data, diff, all = c(TRUE, FALSE))
-}
-
+## Calculate lagged measurements
+## 1 hour change
 for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min", names(data))]){
   cmd <- sprintf("data$%1$s_ch1h <- data$%1$s - lag(data$%1$s, -6)",
     i_name)
@@ -169,6 +118,7 @@ for(idx in tmp_names){
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
+## 3 hour change
 for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min|ch1h", names(data))]){
   cmd <- sprintf("data$%1$s_ch3h <- data$%1$s - lag(data$%1$s, -18)",
     i_name)
@@ -183,36 +133,37 @@ for(idx in tmp_names){
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
-data <- merge(obs_pure$dd34, data, all = c(TRUE, FALSE))
-data <- merge(obs_pure$ff34, data, all = c(TRUE, FALSE))
+# -------------------------------------------------------------------
+# Merge 'data' with 'response' and calculate angle differences
+# -------------------------------------------------------------------
+#obs_pure_nolag <- readRDS(obsfile)
+#dd.response <- obs_pure_nolag$dd34
+#ff.response <- obs_pure_nolag$ff34
+#rm(obs_pure_nolag); gc()
+tawes_around_nolag <- readRDS("data/tawes_around_vie.rds")
+dd.response <- tawes_around_nolag$dd.station11036
+ff.response <- tawes_around_nolag$ff.station11036
+rm(tawes_around_nolag); gc()
 
-diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, data$ff34, data$dd34, "EXB")
-diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, data$ff34, data$dd34, "TOW")
-diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, data$ff34, data$dd34, "OM29")
-diffARS <- calc_anglediff(data$ffARS, data$ddARS, data$ff34, data$dd34, "ARS")
+data <- merge(dd.response, data, all = c(TRUE, FALSE))
+data <- merge(ff.response, data, all = c(TRUE, FALSE))
+
+diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, ff.response, dd.response, "EXB")
+diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, ff.response, dd.response, "TOW")
+diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, ff.response, dd.response, "OM29")
+diffARS <- calc_anglediff(data$ffARS, data$ddARS, ff.response, dd.response, "ARS")
 
 data <- merge(data, diffEXB, diffTOW, diffOM29, diffARS)
 
+
+# -------------------------------------------------------------------
+# Prepare tawes data
+# -------------------------------------------------------------------
 tawes_around <- readRDS("data/tawes_around_vie.rds")
 tawes_around <- lag(tawes_around, -mylag)
 
 ## Calculate lagged tawes measurements
-## 30min change
-#for(i_name in names(tawes_around)[-grep("dd|ff", names(tawes_around))]){
-#  cmd <- sprintf("tawes_around$%1$s_ch30min <- tawes_around$%1$s - lag(tawes_around$%1$s, -3)",
-#    i_name)
-#  eval(parse(text = cmd))
-#}
-#
-#tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
-#tmp_names <- gsub('dd', '', tmp_names)
-#for(idx in tmp_names){
-#  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
-#    lag(tawes_around[, paste0("ff", idx)], -3), lag(tawes_around[, paste0("dd", idx)], -3), paste0(idx, "_ch30min"))
-#  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
-#}
-
-# 1h change
+## 1 hour change
 for(i_name in names(tawes_around)[-grep("dd|ff|ch30min", names(tawes_around))]){
   cmd <- sprintf("tawes_around$%1$s_ch1h <- tawes_around$%1$s - lag(tawes_around$%1$s, -6)",
     i_name)
@@ -227,34 +178,35 @@ for(idx in tmp_names){
   tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
 }
 
-## 3h change
-#for(i_name in names(tawes_around)[-grep("dd|ff|ch30min|ch1h", names(tawes_around))]){
-#  cmd <- sprintf("tawes_around$%1$s_ch3h <- tawes_around$%1$s - lag(tawes_around$%1$s, -18)",
-#    i_name)
-#  eval(parse(text = cmd))
-#}
-#
-#tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
-#tmp_names <- gsub('dd', '', tmp_names)
-#for(idx in tmp_names){
-#  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
-#    lag(tawes_around[, paste0("ff", idx)], -18), lag(tawes_around[, paste0("dd", idx)], -18), paste0(idx, "_ch3h"))
-#  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
-#}
+## 3 hour change
+for(i_name in names(tawes_around)[-grep("dd|ff|ch30min|ch1h", names(tawes_around))]){
+  cmd <- sprintf("tawes_around$%1$s_ch3h <- tawes_around$%1$s - lag(tawes_around$%1$s, -18)",
+    i_name)
+  eval(parse(text = cmd))
+}
 
-# Merge data and tawes
+tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
+tmp_names <- gsub('dd', '', tmp_names)
+for(idx in tmp_names){
+  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
+    lag(tawes_around[, paste0("ff", idx)], -18), lag(tawes_around[, paste0("dd", idx)], -18), paste0(idx, "_ch3h"))
+  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
+}
+
+
+# -------------------------------------------------------------------
+# Merge 'data'  with 'tawes' and calculate angle differences
+# -------------------------------------------------------------------
 data <- merge(data, tawes_around, all = c(TRUE, FALSE))
 
 for(idx in unique(regmatches(names(tawes_around), regexpr("station[0-9]{5}", names(tawes_around))))){
-  diff <- calc_anglediff(data[, paste0("ff.", idx)], data[, paste0("dd.", idx)], data$ff34, data$dd34, idx)
+  diff <- calc_anglediff(data[, paste0("ff.", idx)], data[, paste0("dd.", idx)], ff.response, dd.response, idx)
   data <- merge(data, diff, all = c(TRUE, FALSE))
 }
 
-names(data)[names(data) %in% "obs_pure$dd34"] <- "dd.response"
-names(data)[names(data) %in% "obs_pure$ff34"] <- "ff.response"
-
+## Save data
 if (! dir.exists(data_out)) dir.create(data_out)
-saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, "_new.rds"))
+saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, "_update20191015.rds"))
 
 
 #data <- as.data.frame(data)
