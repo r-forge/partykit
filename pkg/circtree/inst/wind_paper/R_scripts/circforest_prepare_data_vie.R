@@ -16,7 +16,7 @@ library(zoo)
 library(foehnix)  # Reto's package
 library(STAGE)  # Reto's package
 
-mylag <- 1
+mylag <- 3
 response_station <- "11036"
 
 # -------------------------------------------------------------------
@@ -97,7 +97,7 @@ if (! file.exists(lowvis_file)) {
 
   ## Save both objects
   saveRDS(file = lowvis_file, lowvis_data)
-  rm(lowvis_data, tmp); gc()
+  rm(lowvis_data); gc()
 } 
 
 # -------------------------------------------------------------------
@@ -108,7 +108,7 @@ loww <- list(lat = 48.110833, lon = 16.570833)
 stations <- sybasestations("*")
 
 stations$d <- sqrt((stations$lon - loww$lon)^2 + (stations$lat-loww$lat)^2)
-stations <- subset(stations,d < .5 & tawes == 1)
+stations <- subset(stations,d < .4 & tawes == 1)
 
 params <- c("dd", "ff", "ffx", "tl", "rf", "p", "pred")
 
@@ -120,11 +120,10 @@ for (i in 1:nrow(stations)) {
   
   tmp <- sybase("tawes", stations$statnr[i], parameter = params,
     begin = "2013-01-01", end = "2018-12-31", archive = TRUE)
-  names(tmp) <- sprintf("%s.station%s", names(tmp), stations$statnr[i])
   
   saveRDS(file = outfile, tmp)
+  rm(tmp); gc()
 }
-rm(tmp); gc()
 sybase_stationlist <- do.call("c", sybase_stationlist)
 
 # -------------------------------------------------------------------
@@ -169,7 +168,7 @@ if(file.exists(datafile)) {
     eval(parse(text = sprintf("%s <- make_strict(readRDS(file))", tmp)))
 
     ## Check if 10min interval 
-    if(unique(diff(index(tmp))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
+    eval(parse(text = sprintf("if(unique(diff(index(%s))) != 10) stop('wrong temporal resolution, suspected to 10min intervals')", tmp)))
 
     ## Subset to full hours
     eval(parse(text = sprintf("%1$s <- %1$s[as.POSIXlt(index(%1$s))$min == 0L, ]", tmp)))
@@ -213,7 +212,7 @@ if(file.exists(datafile)) {
     }
 
     ## Calculate temporal changes
-    for(i_param in names(eval(parse(text = tmp)))){
+    for(i_param in names(eval(parse(text = tmp)))[!grepl("(min|max|mean|diff)", names(eval(parse(text = tmp))))]){
       if(grepl("dd", i_param)){
         eval(parse(text = sprintf("%1$s$%2$s_ch1h <- calc_anglediff(%1$s$ff, %1$s$dd, 
           lag(%1$s$ff, -1), lag(%1$s$dd, -1))$diff_dd", tmp, i_param)))

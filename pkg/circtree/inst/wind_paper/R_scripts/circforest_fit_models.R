@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-14 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-16 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -65,11 +65,11 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v11",
+  make_option("--run_name", type = "character", default = "v12",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
-  make_option("--lag", type = "integer", default = 6,
+  make_option("--lag", type = "integer", default = 1,
     help = "Lag in 10min time steps [default %default]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),
@@ -79,28 +79,22 @@ option_list <- list(
 
 opt <- parse_args(OptionParser(option_list = option_list))
 
-if(opt$lag%%6 != 0) stop("lag must be in total hours (1lag = 10min)")
-
-
 # -------------------------------------------------------------------
 # Pre-process data
 # -------------------------------------------------------------------
 ## Load data
-tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%s.rds", opt$station, opt$lag))
+tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%sh_update20191015.rds", opt$station, opt$lag))
 
 if (opt$station == "ibk") {
   ## Subset data to five years and to full hours 
-  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-31")
+  tmp <- window(tmp, start = "2014-01-01", end = "2018-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
-  ## Remove station without any influence
-  #d <- d[, -grep("obertauern|montana|mariazell|guetsch|altdorf", names(d))]
-
   ## Remove very low values of ff 
-#  d <- d[!d[, "ff.response"] < 1,], not very meaningful, but at least working
+  d <- d[!d[, "ff.response"] < 1,], not very meaningful, but at least working
 
   ## Remove covariates with more than 10 nans
-  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
+  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 10)) ## remove sattelberg and ellboegen
   d <- d[, ! (names(d) %in% idx_names)]
 
   ## Omit nans
@@ -117,23 +111,27 @@ if (opt$station == "ibk") {
 
 } else if (opt$station == "vie") {
   ## Subset data to five years and to full hours
-  tmp <- window(tmp, start = "2013-01-01", end = "2017-12-31")
+  tmp <- window(tmp, start = "2014-01-01", end = "2018-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
+  ## Remove station without (hopefully) any influence
+  d <- d[, -grep("bruckneudorf|brunn_am_gebirge|eisenstadt|neusiedl_am_see|wien_stammersdorf|
+    wien_mariabrunn|zwerndorf_marchegg|altenburg|baden|mistelbach|podersdorf", names(d))]
+
   ## Remove very low values of ff
-  d <- d[!d[, "ff.response"] < 2,] ## equals to dd.response = 0, no realistic values 
+  d <- d[!d[, "ff.response"] < 1,] ## ff == 0.5 -> dd = NA; ff == 0 -> dd = 0
 
   ## Remove covariates with more than 10 nans
-  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 10))
+  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 5))
   d <- d[, ! (names(d) %in% idx_names)]
 
   ## Omit nans
   d <- na.omit(d)
 
   ## Calculate u and v for lagged response (windmessanlage 34)
-  tmp <- ddff2uv(dd = as.numeric(d$dd34), ff = as.numeric(d$ff34))
-  d$u34 <- tmp$u
-  d$v34 <- tmp$v
+  tmp <- ddff2uv(dd = as.numeric(d$dd.wien_schwechat_flughafen), ff = as.numeric(d$ff.wien_schwechat_flughafen))
+  d$u.wien_schwechat_flughafen <- tmp$u
+  d$v.wien_schwechat_flughafen <- tmp$v
 
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$dd.response <- d$dd.response / 360 * 2*pi
@@ -345,7 +343,7 @@ for (cv in unique(cvID)) {
     if(opt$station == "ibk"){
       f.lm <- as.formula(dd.response ~ u.innsbruck + v.innsbruck + ffx.innsbruck)
     } else if (opt$station == "vie"){
-      f.lm <- as.formula(dd.response ~ u34 + v34 + ff34)
+      f.lm <- as.formula(dd.response ~ u.wien_schwechat_flughafen + v.wien_schwechat_flughafen + ff.wien_schwechat_flughafen)
     } else {
       stop("Station not supported, currently station must be 'vie' or 'ibk'...")
     }

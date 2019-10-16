@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-14 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-16 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -267,22 +267,25 @@ print(ggarrange(p7, legend = "none"))
 pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_diff_agg_comparison_%s.pdf", opt$run_name)
 ggsave(pdf_file)
 
-for (i_station in c("ibk", "vie")){
-  for (i_lag in c("6", "18")){
-
-    load(sprintf("results/circforest_results_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
-    pred_df <- sapply(pred_naomit,function(x) x$mu)
-    pred_df <- cbind(obs_naomit, pred_df)
-    colnames(pred_df)[colnames(pred_df) == "obs_naomit"] <- "obs"
-    pred_names <- colnames(pred_df)
-    
-    mycol <- colorspace::qualitative_hcl(length(pred_names) - 1, alpha = 0.1)
-    names(mycol) <- pred_names[!pred_names %in% "obs"]
-    for(i_name in pred_names[!pred_names %in% "obs"]){
-      png(filename = sprintf("results/_plot_circforest_scatterplot_%s_%s_lag%s_%s.png",
-        i_name, i_station, i_lag, opt$run_name), width = 8, height = 8, units = "in", res = 300)
-      eval(parse(text = sprintf("scatterplot(obs ~ %s, data = pred_df, ylim = c(-pi, pi), xlim = c(-pi, pi), col = mycol['%s'])", i_name, i_name)))
-      dev.off()
+if(FALSE){
+  library(car)
+  for (i_station in c("ibk", "vie")){
+    for (i_lag in c("6", "18")){
+  
+      load(sprintf("results/circforest_results_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
+      pred_df <- sapply(pred_naomit,function(x) x$mu)
+      pred_df <- cbind(obs_naomit, pred_df)
+      colnames(pred_df)[colnames(pred_df) == "obs_naomit"] <- "obs"
+      pred_names <- colnames(pred_df)
+      
+      mycol <- colorspace::qualitative_hcl(length(pred_names) - 1, alpha = 0.1)
+      names(mycol) <- pred_names[!pred_names %in% "obs"]
+      for(i_name in pred_names[!pred_names %in% "obs"]){
+        png(filename = sprintf("results/_plot_circforest_scatterplot_%s_%s_lag%s_%s.png",
+          i_name, i_station, i_lag, opt$run_name), width = 8, height = 8, units = "in", res = 300)
+        eval(parse(text = sprintf("scatterplot(obs ~ %s, data = pred_df, ylim = c(-pi, pi), xlim = c(-pi, pi), col = mycol['%s'])", i_name, i_name)))
+        dev.off()
+      }
     }
   }
 }
