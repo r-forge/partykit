@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Create data file for VIE with temporal/spatial differences
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-15 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-16 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -17,10 +17,8 @@ library(foehnix)  # Reto's package
 library(STAGE)  # Reto's package
 
 data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
-data_out <- "data"
 
 mylag <- 6
-
 
 # -------------------------------------------------------------------
 # Small helper functions
@@ -98,9 +96,14 @@ if (! file.exists(obsfile)) {
 # -------------------------------------------------------------------
 ## Create lagged observations (obs_pure)   
 obs_pure <- make_strict(obs_pure)
-if(unique(diff(index(data))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
 data <- lag(obs_pure, -mylag)
 rm(obs_pure); gc()
+
+## Convert airport measurements in kt to m/s
+data[, grep("ff", names(data))] <- data[, grep("ff", names(data))] / 1.9438444924574
+
+## Check if 10min interval 
+if(unique(diff(index(data))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
 
 ## Calculate lagged measurements
 ## 1 hour change
@@ -148,6 +151,7 @@ rm(tawes_around_nolag); gc()
 data <- merge(dd.response, data, all = c(TRUE, FALSE))
 data <- merge(ff.response, data, all = c(TRUE, FALSE))
 
+## Calculate spatial differences 
 diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, ff.response, dd.response, "EXB")
 diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, ff.response, dd.response, "TOW")
 diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, ff.response, dd.response, "OM29")
@@ -205,8 +209,8 @@ for(idx in unique(regmatches(names(tawes_around), regexpr("station[0-9]{5}", nam
 }
 
 ## Save data
-if (! dir.exists(data_out)) dir.create(data_out)
-saveRDS(data, paste0(data_out, "/circforest_prepared_data_vie_lag", mylag, "_update20191015.rds"))
+if (! dir.exists("data")) dir.create("data")
+saveRDS(data, "data/circforest_prepared_data_vie_lag", mylag, "_update20191015.rds")
 
 
 #data <- as.data.frame(data)
