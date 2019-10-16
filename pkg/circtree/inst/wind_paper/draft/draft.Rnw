@@ -256,8 +256,10 @@ the optimization problem in Equation~\ref{eq:optim} can also be defined by
 \centering
 \includegraphics[width=4cm]{density_vM.pdf}
 \caption{Empirical histogram (gray) and fitted density (red line)
-are depicted along with the estimated location parameter (red hand).}
-%TODO: refer to data, Innsbruck airport
+are depicted along with the estimated location parameter (red hand).
+\fixme{refer to data, Innsbruck airport}
+}
+
 \label{fig:density_vM} 
 \end{figure}
 
@@ -285,7 +287,7 @@ requiring well fitting initial values for the parameters that are recommended to
 in advance in two separate models. Using the obtained initial value the model parameters are 
 estimated and improved stepwise until convergence. While providing a well elaborated theory 
 this methodology and the contained optimization problem have shown to be very complex and 
-bear the risk of not converging if not applied thoughtfully \textit{FIXME: citation}. %\citealp{}.
+bear the risk of not converging if not applied thoughtfully. \fixme{citation} %\citealp{}.
 Furthermore, these additive strategies work well for smooth effects but difficulties can arise 
 in case of non-additive changes. Additionally, specifying a model properly can be very challenging,
 particularly for a high number of covariates and no information about possible interactions.
@@ -412,7 +414,7 @@ Wind is a classical circular quantity and accurate forecasts of wind direction
 are of great importance for decision-making processes and risk management,
 e.g., in air traffic management or renewable energy production. 
 
-%% TODO: available approaches to wind direction forecasting
+\fixme{information on already available approaches to wind direction forecasting}
 
 As a motivational example Figure~\ref{fig:tree_ibk} illustrates a distributional
 tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
@@ -422,7 +424,7 @@ gradients to which valley wind regimes react both west and east of the airport a
 as covariates along with other meteorological measurements at the airport (lagged by one hour),
 such as wind direction and wind speed at Innsbruck Airport.
 
-Next to the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
+Together with the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
 and fitted von Mises (red) distribution of wind direction in each terminal node. Based on the 
 fitted location parameters $\hat \mu$, the subgroups can be distinguished into the following 
 wind regimes:
@@ -456,7 +458,6 @@ all lagged by one hour.}
 \end{figure}
 
 
-
 Next to the airport of Innsbruck, located in the west of Austria, in the center of the Alps,
 a second airport in Austria, the airport of Vienna, situated in the east of the country in a rather flat
 area, is considered in this study.
@@ -468,60 +469,19 @@ wind direction forecasts, separately for Innsbruck and Vienna.
 
 
 
-
-\subsection{Data}
-For both airports observations of various meteorological quantities measured
-either directly at the airports or at surrounding weather stations are used as 
-covariates in order to predict the wind direction at the corresponding airport 
-in the following hour.
-Next to the current wind direction, temperature, air pressure, humidity, ... at each 
-of the weather stations also differences in these quantities between the considered 
-stations are included. For example, differences in air pressure between Innsbruck and 
-either a western or eastern location are expected to have a high influence on wind 
-directions. Moreover, changes of these quantities over time are included as well as 
-daytime. In total, 550 covariates are provided for Innsbruck and 522 covariates for Vienna. 
-A list of all covariates together with their abbreviations as used in this paper
-can be found in Table~\ref{tab:covariates}.
-The data sets each provide observations from 5 years, in particular from 2014 to 2017, both included.
-After eliminating observations with at least one missing value a total number of 26861 time points
-for Innsbruck and 33853 for Vienna are available.
-
-
-\begin{table}[t!]
-%\resizebox{1.4\textwidth}{!}{
-\begin{minipage}{\textwidth}
-\caption[Table caption text]{Basic covariates together with the type of variations.}
-\label{tab:covariates}
-\begin{tabular}{l  l}
-\hline
-Basic covariates & Variations\\
-\hline
-\emph{dd}: wind direction       & different locations, \\
-                                & changes over time(?)\\
-\emph{ff}: wind speed           & different locations, \\
-                                & changes over time(?), \\
-                                & (hourly) maxima\\
-\emph{p}: pressure              & different locations, \\
-                                & differences between locations, \\
-                                & changes over time(?)\\
-\emph{t}: temperature           & different locations, \\
-                                & changes over time(?)\\
-\emph{rf}: relative humidity    & different locations\\
-\hline
-\end{tabular}
-\end{minipage} 
-%}
-\end{table}
-
-
 \subsection{Evaluation Setting and Models Applied}
 Along with distributional trees and forests for circular data three other models have been applied
 in this study. In particular, they have been evaluated in a five-fold cross validation with each of 
 the five years contained in the data set being used as testing data once after the models where 
 learned on the remaining four years. 
 In order to compare the performances of the employed models a circular version of the continuous 
-ranked probability score (CRPS) is calculated and summed up over each observation contained in
-the learning data and the corresponding predicted distribution parameters of each of the models.
+ranked probability score (CRPS) as introduced by \cite{Grimit+Gneiting+Berrocal:2006} is calculated.
+As the linear version of the CRPS it measures the difference between an observation
+and the corresponding predicted distribution function in order to assess the probabilistic goodness 
+of fit. In order to adjust this general methodology to circular data an additional auxiliary function
+is employed which measures the angular distance between two circular variables. 
+The resulting values are summed up over each observation contained in the learning data and the 
+corresponding predicted distribution parameters of each of the models.
 
 To test whether distributional trees and forests can be applied as a reasonable alternative to already
 existing approaches to modeling circular data, particularly in the field of meteorological forecasting,
@@ -562,13 +522,18 @@ be very effective particularly under stable atmospheric circumstances it can fai
 as soon as any changes take place, especially in case of rapid changes.
 Therefore, it heavily depends on the specific features and the variability of the variable
 of interest whether this approach can provide overall reliable predictions.
-% TODO: references
-To establish a distributional model of persistence for this study a set of six observations
+
+\fixme{references}
+
+To establish a distributional model of persistence in this study a set of six observations
 is considered to make a prediction for a selected day and time point. In particular,
-the exact same time points of the previous six days are considered. In order to account
-for a stronger influence of observations closer to the prediction time point exponentially
-increasing weights are included with the highest weight being assigned to the time point of the
-previous day. For this selected set of observations the distribution parameters of the von Mises 
+the six previous time points are considered. In order to allow for a stronger influence of 
+observations closer to the prediction time point exponential smoothing is employed, i.e.,
+exponentially decaying weights are included with a smoothing factor of $0.5$ such that
+in each prediction step the current prediction and the previous observation both have an 
+equal influence rate of 50 percent. If a seventh or even earlier observations were considered 
+as well their weights would be $<0.01$ and thus are not included anymore to simplify calculations.
+For this selected set of weighted observations the distribution parameters of the von Mises 
 distribution can be estimated as presented in Section~\ref{sec:prob_circ} such that a full
 parametric model is specified allowing for probabilistic predictions and an evaluation of the CRPS.
 As this approach only considers data from the previous six days a cross validation is not 
@@ -583,7 +548,9 @@ considered.
 Again, this idea provides a very simple and stable way of obtaining predictions for a considered 
 meteorological variable of interest that can be very useful but its performance can also suffer 
 dramatically from a high variance and abrupt changes, especially if they occur frequently during one day.
-% TODO: references
+
+\fixme{add references}
+
 Similar to the applied persistence model observations are selected to fit a distributional climatology
 model. For a specified day and time point observations from the exact same time point and the same day 
 as well as the 30 surrounding days from all other years contained in the learning data are selected and
@@ -593,9 +560,63 @@ parameters are estimated following again Section~\ref{sec:prob_circ}.
 Another commonly applied approach is to regress the parameter(s) of the von Mises distribution
 on covariates by a linear combination of selected covariates connected to the parameter(s) via
 a specified link function. The toolbox of generalized linear models ...
-% TODO: references
+
+\fixme{add references}
+
+\fixme{information on applied implementation}
 
 
+
+\subsection{Data}
+For both airports, Innsbruck and Vienna, observations of various meteorological quantities 
+such as wind direction, temperature, air pressure and humidity
+measured either directly at the airports or at surrounding weather stations are used as 
+covariates in order to predict the wind direction at the corresponding airport 
+in the following hour.
+Next to the current measurements at each of the weather stations also differences in these 
+quantities between the considered stations are included. For example, differences in air 
+pressure between Innsbruck and either a western or eastern location are expected to have a 
+high influence on wind directions. Moreover, changes of these quantities over time are 
+included as well as daytime. In total, 550 covariates are provided for Innsbruck and 522 
+covariates for Vienna. 
+A list of all covariates together with their abbreviations as used in this paper
+can be found in Table~\ref{tab:covariates}.
+The data sets each provide observations from 5 years, in particular from 2014 to 2017, both included.
+After eliminating observations with at least one missing value a total number of 26861 time points
+for Innsbruck and 33853 for Vienna are available.
+As winds with very low speed tend to vary their direction strongly they are not expected to be very 
+useful/meaningful for predictions. Moreover, the performance and the stability of the employed reference 
+models might suffer from the influence of these ``noise'' observations. Therefore, only observations
+corresponding to a wind speed of at least $1$ m/s are considered.
+
+\fixme{information on NAs}
+
+
+\begin{table}[t!]
+%\resizebox{1.4\textwidth}{!}{
+\begin{minipage}{\textwidth}
+\caption[Table caption text]{Basic covariates together with the type of variations.}
+\label{tab:covariates}
+\begin{tabular}{l  l}
+\hline
+Basic covariates & Variations\\
+\hline
+\emph{dd}: wind direction       & different locations, \\
+                                & changes over time(?)\\
+\emph{ff}: wind speed           & different locations, \\
+                                & changes over time(?), \\
+                                & (hourly) maxima\\
+\emph{p}: pressure              & different locations, \\
+                                & differences between locations, \\
+                                & changes over time(?)\\
+\emph{t}: temperature           & different locations, \\
+                                & changes over time(?)\\
+\emph{rf}: relative humidity    & different locations\\
+\hline
+\end{tabular}
+\end{minipage} 
+%}
+\end{table}
 
 
 \subsection{Results}
