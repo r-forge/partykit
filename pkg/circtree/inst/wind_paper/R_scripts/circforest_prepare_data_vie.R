@@ -1,9 +1,9 @@
 # -------------------------------------------------------------------
 # - NAME:   circforest_prepare_data_vie.R
 # - AUTHOR: Moritz N. Lang
-# - DATE:   2019-05-27
+# - DATE:   2019-10-16
 # -------------------------------------------------------------------
-# - PURPOSE: Create data file for VIE with temporal/spatial differences
+# - PURPOSE: Create data file for IBK with temporal/spatial differences
 # -------------------------------------------------------------------
 # - L@ST MODIFIED: 2019-10-16 on thinkmoritz
 # -------------------------------------------------------------------
@@ -16,9 +16,8 @@ library(zoo)
 library(foehnix)  # Reto's package
 library(STAGE)  # Reto's package
 
-data_in <- "/home/moritz/Projects/profcast_project/scripts/Rdevelopment/data_out"
-
-mylag <- 6
+mylag <- 1
+response_station <- "11036"
 
 # -------------------------------------------------------------------
 # Small helper functions
@@ -35,7 +34,7 @@ make_strict <- function(x, dates = NULL) {
   return(x)
 }
 
-calc_anglediff <- function(ff1, dd1, ff2, dd2, name) {
+calc_anglediff <- function(ff1, dd1, ff2, dd2, name = NULL) {
   z <- merge(ff1, dd1, ff2, dd2)
   #z <- na.omit(z)
   out <- data.frame(ff = as.numeric(z$ff1 - z$ff2))
@@ -55,14 +54,26 @@ calc_anglediff <- function(ff1, dd1, ff2, dd2, name) {
   return(out)
 }
 
+make_nicename <- function(name){
+  name <- as.character(name)
+  name <- gsub('^ | $', '', name)
+  name <- gsub(' ', '_', name)
+  name <- gsub('-', '_', name)
+  name <- gsub('\\/', '_', name)
+  name <- gsub('(\\(|\\))', "", name)
+  name <- paste0(name, collapse = "")
+  name <- tolower(name)
+  name
+}
+
+## Create data directory if necessary
+if (!dir.exists("data")) dir.create("data")
 
 # -------------------------------------------------------------------
-# Load observations from databases using LOWVIS mysql database for the observations (STAGE::lowvis)
+# Read observations from databases using LOWVIS mysql database for the observations (STAGE::lowvis)
 # -------------------------------------------------------------------
-
-# Getting lowvisDescription file
-obsfile <- sprintf("data/_pure_observations_lowvisdb_update20191015.rds")
-if (! file.exists(obsfile)) {
+lowvis_file <- sprintf("data/_observations_lowvisdb_update20191015.rds")
+if (! file.exists(lowvis_file)) {
 
   ## Loaded distinct sensorids from database directly
   sensors <- c(2, 12, 22, 32, 161, 200, 201, 205, 206, 208, 420, 502, 507, 522,
@@ -70,156 +81,225 @@ if (! file.exists(obsfile)) {
                630, 634, 662, 666, 667, 670, 674, 682, 687, 690, 694, 702, 707, 710, 714)
 
   ## Loading year by year
-  obs_pure <- list()
+  lowvis_data <- list()
   for (yr in 2013:2018) {
     cat(sprintf("   Fetching observations for year %04d\n", yr))
     bgn <- as.POSIXct(sprintf("%04d-01-01 00:00:00", yr))
     end <- as.POSIXct(sprintf("%04d-12-31 12:59:59", yr))
     tmp <- lowvis("obs", sensorids = sensors, begin = bgn, end = end)
-    obs_pure[[sprintf("year_%04d",yr)]] <- tmp; rm(tmp)
+    lowvis_data[[sprintf("year_%04d",yr)]] <- tmp; rm(tmp)
   }
-  hold <- obs_pure
-  obs_pure <- do.call("rbind", obs_pure)
-  attr(obs_pure, "sensors") <- sensors
-  attr(obs_pure, "created") <- Sys.time()
-  attr(obs_pure, "createdon") <- Sys.info()["nodename"]
+
+  lowvis_data <- do.call("rbind", lowvis_data)
+  attr(lowvis_data, "sensors") <- sensors
+  attr(lowvis_data, "created") <- Sys.time()
+  attr(lowvis_data, "createdon") <- Sys.info()["nodename"]
 
   ## Save both objects
-  saveRDS(file = obsfile, obs_pure)
+  saveRDS(file = lowvis_file, lowvis_data)
+  rm(lowvis_data, tmp); gc()
+} 
+
+# -------------------------------------------------------------------
+# Read TAWES around airport from databeses at ZAMG (STAGE::sybase)
+# -------------------------------------------------------------------
+
+loww <- list(lat = 48.110833, lon = 16.570833)
+stations <- sybasestations("*")
+
+stations$d <- sqrt((stations$lon - loww$lon)^2 + (stations$lat-loww$lat)^2)
+stations <- subset(stations,d < .5 & tawes == 1)
+
+params <- c("dd", "ff", "ffx", "tl", "rf", "p", "pred")
+
+sybase_stationlist <- list()
+for (i in 1:nrow(stations)) {
+  outfile <- sprintf("data/_observations_sybase_tawes_around_vie_%d_update20191015.rds", stations$statnr[i])
+  sybase_stationlist[[i]] <- outfile
+  if (file.exists(outfile)) next
+  
+  tmp <- sybase("tawes", stations$statnr[i], parameter = params,
+    begin = "2013-01-01", end = "2018-12-31", archive = TRUE)
+  names(tmp) <- sprintf("%s.station%s", names(tmp), stations$statnr[i])
+  
+  saveRDS(file = outfile, tmp)
+}
+rm(tmp); gc()
+sybase_stationlist <- do.call("c", sybase_stationlist)
+
+# -------------------------------------------------------------------
+# Read data sets
+# -------------------------------------------------------------------
+cat("\nPrepare data ...\n")
+
+datafile <- sprintf("data/circforest_prepared_data_vie_lag%sh_update20191015.rds", mylag)
+
+## Load or create (and save) data set
+if(file.exists(datafile)) {
+
+  cat(sprintf("File \"%s\" exists, loading data ...\n", datafile))
+  data <- readRDS(datafile)
+
 } else {
-  cat(sprintf("   File \"%s\" exists, load and continue\n", obsfile))
-  obs_pure <- readRDS(obsfile)
+
+  file_names <- sybase_stationlist
+
+  ## Read response and make strict zoo object
+  response <- eval(parse(text = sprintf("response <- make_strict(readRDS('%s'))", file_names[grep(response_station, file_names)])))
+  if(unique(diff(index(response))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
+
+  ## Subset to full hours
+  response <- response[as.POSIXlt(index(response))$min == 0L, ]
+
+  ## Calculate lagged response for spatial differences
+  eval(parse(text = sprintf("response_lag <- lag(response, %s)", -mylag)))
+
+  # -------------------------------------------------------------------
+  # Prepare tawes data
+  # -------------------------------------------------------------------
+  stat_names <- NULL
+  data <- NULL
+  for(file in file_names){
+    tmp <- sub('data/_observations_sybase_tawes_around_vie_', '', file)
+    tmp <- sub('_update20191015.rds', '', tmp)
+    tmp <- make_nicename(subset(stations, statnr == tmp)$name)
+
+    cat(sprintf("\nPrepare data for station '%s'\n", tmp))
+    
+    eval(parse(text = sprintf("%s <- make_strict(readRDS(file))", tmp)))
+
+    ## Check if 10min interval 
+    if(unique(diff(index(tmp))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
+
+    ## Subset to full hours
+    eval(parse(text = sprintf("%1$s <- %1$s[as.POSIXlt(index(%1$s))$min == 0L, ]", tmp)))
+
+    ## Make lags
+    eval(parse(text = sprintf("%1$s <- lag(%1$s, %2$s)", tmp, -mylag)))
+    eval(parse(text = sprintf("%1$s <- make_strict(%1$s, index(response_lag))", tmp)))
+
+    ## Create differences to Vienna airport
+    if (tmp != make_nicename(subset(stations, statnr == response_station)$name)) {
+      for(i_param in names(eval(parse(text = tmp)))){
+        if(grepl("dd", i_param) & "ff" %in% names(eval(parse(text = tmp)))){
+          eval(parse(text = sprintf("%1$s$dd_diff <- calc_anglediff(response_lag$ff, response_lag$dd, 
+            %1$s$ff, %1$s$dd)$diff_dd", tmp)))
+        } else if (i_param %in% c("p", "psta")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$p - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("pred", "predsta")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$pred - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("t", "tl")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$t - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("rh", "rf")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$rf - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("ffx", "ffx1s")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ffx - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("ff")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ff - %1$s$%2$s", tmp, i_param)))
+        }
+      }
+    }
+ 
+    ## Get ff maximum, minimum and mean over last three hours
+    for(i_param in names(eval(parse(text = tmp)))){
+      if (i_param %in% c("ff", "ffx", "ffx1s")){
+        eval(parse(text = sprintf("%1$s$%2$s_max <- rollapply(%1$s$%2$s, width = 3, FUN = max, fill = NA, align = 'right')", 
+          tmp, i_param)))
+        eval(parse(text = sprintf("%1$s$%2$s_min <- rollapply(%1$s$%2$s, width = 3, FUN = min, fill = NA, align = 'right')", 
+          tmp, i_param)))
+        eval(parse(text = sprintf("%1$s$%2$s_mean <- rollapply(%1$s$%2$s, width = 3, FUN = mean, fill = NA, align = 'right')", 
+          tmp, i_param)))
+      }
+    }
+
+    ## Calculate temporal changes
+    for(i_param in names(eval(parse(text = tmp)))){
+      if(grepl("dd", i_param)){
+        eval(parse(text = sprintf("%1$s$%2$s_ch1h <- calc_anglediff(%1$s$ff, %1$s$dd, 
+          lag(%1$s$ff, -1), lag(%1$s$dd, -1))$diff_dd", tmp, i_param)))
+        eval(parse(text = sprintf("%1$s$%2$s_ch3h <- calc_anglediff(%1$s$ff, %1$s$dd, 
+          lag(%1$s$ff, -3), lag(%1$s$dd, -3))$diff_dd", tmp, i_param)))
+      } else {
+        eval(parse(text = sprintf("%1$s$%2$s_ch1h <- %1$s$%2$s - lag(%1$s$%2$s, -1)", tmp, i_param)))
+        eval(parse(text = sprintf("%1$s$%2$s_ch3h <- %1$s$%2$s - lag(%1$s$%2$s, -3)", tmp, i_param)))
+      }
+    }
+
+    if(is.null(data)) {
+      names(response) <- paste0(names(response), ".response")
+      eval(parse(text = sprintf("names(%1$s) <- paste0(names(%1$s), '.%1$s')", tmp)))
+      eval(parse(text = sprintf("data <- merge(response, %s)", tmp)))
+    } else {
+      eval(parse(text = sprintf("names(%1$s) <- paste0(names(%1$s), '.%1$s')", tmp)))
+      eval(parse(text = sprintf("data <- merge(data, %s)", tmp)))
+    }  
+
+    stat_names <- c(stat_names, tmp)
+    eval(parse(text = sprintf("rm(%s)", tmp)))
+
+  }
+
+
+  # -------------------------------------------------------------------
+  # Prepare lowvis data
+  # -------------------------------------------------------------------
+  lowvis_data <- make_strict(readRDS(lowvis_file))
+
+  ## Check if 10min interval 
+  if(unique(diff(index(lowvis_data))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
+
+  ## Subset to full hours
+  lowvis_data <- lowvis_data[as.POSIXlt(index(lowvis_data))$min == 0L, ]
+
+  # Make lags
+  lowvis_data <- lag(lowvis_data, -mylag)
+  lowvis_data <- make_strict(lowvis_data, index(response_lag))
+
+  ## Convert airport measurements in kt to m/s
+  lowvis_data[, grep("^ff", names(lowvis_data))] <- lowvis_data[, grep("^ff", names(lowvis_data))] / 1.9438444924574
+  
+  ## Calculate lagged measurements
+  ## 1 hour change
+  for(i_name in names(lowvis_data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min", names(lowvis_data))]){
+    cmd <- sprintf("lowvis_data$%1$s_ch1h <- lowvis_data$%1$s - lag(lowvis_data$%1$s, -1)",
+      i_name)
+    eval(parse(text = cmd))
+  }
+  
+  tmp_names <- names(lowvis_data)[grep("^dd", names(lowvis_data))]
+  tmp_names <- gsub('dd', '', tmp_names)
+  for(idx in tmp_names){
+    diff <- calc_anglediff(lowvis_data[, paste0("ff", idx)], lowvis_data[, paste0("dd", idx)],
+      lag(lowvis_data[, paste0("ff", idx)], -1), lag(lowvis_data[, paste0("dd", idx)], -1), paste0(idx, "_ch1h"))
+    lowvis_data <- merge(lowvis_data, diff, all = c(TRUE, FALSE))
+  }
+  
+  ## 3 hour change
+  for(i_name in names(lowvis_data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min|ch1h", names(lowvis_data))]){
+    cmd <- sprintf("lowvis_data$%1$s_ch3h <- lowvis_data$%1$s - lag(lowvis_data$%1$s, -3)",
+      i_name)
+    eval(parse(text = cmd))
+  }
+  
+  tmp_names <- names(lowvis_data)[grep("^dd", names(lowvis_data))]
+  tmp_names <- gsub('dd', '', tmp_names)
+  for(idx in tmp_names){
+    diff <- calc_anglediff(lowvis_data[, paste0("ff", idx)], lowvis_data[, paste0("dd", idx)],
+      lag(lowvis_data[, paste0("ff", idx)], -3), lag(lowvis_data[, paste0("dd", idx)], -3), paste0(idx, "_ch3h"))
+    lowvis_data <- merge(lowvis_data, diff, all = c(TRUE, FALSE))
+  }
+
+  ## Calculate spatial differences 
+  diffEXB <- calc_anglediff(response_lag$ff, response_lag$dd, lowvis_data$ffEXB, lowvis_data$ddEXB, "EXB")
+  diffTOW <- calc_anglediff(response_lag$ff, response_lag$dd, lowvis_data$ffTOW, lowvis_data$ddTOW, "TOW")
+  diffOM29 <- calc_anglediff(response_lag$ff, response_lag$dd, lowvis_data$ffOM29, lowvis_data$ddOM29, "OM29")
+  diffARS <- calc_anglediff(response_lag$ff, response_lag$dd, lowvis_data$ffARS, lowvis_data$ddARS, "ARS")
+  
+  lowvis_data <- merge(lowvis_data, diffEXB, diffTOW, diffOM29, diffARS)
+
+  data <- merge(data, lowvis_data)
+
+  cat(sprintf("File \"%s\" does not exists, saving data ...\n", datafile))
+  saveRDS(data, datafile)
+
 }
-
-# -------------------------------------------------------------------
-# Prepare lowvis data
-# -------------------------------------------------------------------
-## Create lagged observations (obs_pure)   
-obs_pure <- make_strict(obs_pure)
-data <- lag(obs_pure, -mylag)
-rm(obs_pure); gc()
-
-## Convert airport measurements in kt to m/s
-data[, grep("ff", names(data))] <- data[, grep("ff", names(data))] / 1.9438444924574
-
-## Check if 10min interval 
-if(unique(diff(index(data))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
-
-## Calculate lagged measurements
-## 1 hour change
-for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min", names(data))]){
-  cmd <- sprintf("data$%1$s_ch1h <- data$%1$s - lag(data$%1$s, -6)",
-    i_name)
-  eval(parse(text = cmd))
-}
-
-tmp_names <- names(data)[grep("^dd", names(data))]
-tmp_names <- gsub('dd', '', tmp_names)
-for(idx in tmp_names){
-  diff <- calc_anglediff(data[, paste0("ff", idx)], data[, paste0("dd", idx)], 
-    lag(data[, paste0("ff", idx)], -6), lag(data[, paste0("dd", idx)], -6), paste0(idx, "_ch1h"))
-  data <- merge(data, diff, all = c(TRUE, FALSE))
-}
-
-## 3 hour change
-for(i_name in names(data)[-grep("vv|sws|lvp|cei|rvr|vis|dd|ff|ch30min|ch1h", names(data))]){
-  cmd <- sprintf("data$%1$s_ch3h <- data$%1$s - lag(data$%1$s, -18)",
-    i_name)
-  eval(parse(text = cmd))
-}
-
-tmp_names <- names(data)[grep("^dd", names(data))]
-tmp_names <- gsub('dd', '', tmp_names)
-for(idx in tmp_names){
-  diff <- calc_anglediff(data[, paste0("ff", idx)], data[, paste0("dd", idx)], 
-    lag(data[, paste0("ff", idx)], -18), lag(data[, paste0("dd", idx)], -18), paste0(idx, "_ch3h"))
-  data <- merge(data, diff, all = c(TRUE, FALSE))
-}
-
-# -------------------------------------------------------------------
-# Merge 'data' with 'response' and calculate angle differences
-# -------------------------------------------------------------------
-#obs_pure_nolag <- readRDS(obsfile)
-#dd.response <- obs_pure_nolag$dd34
-#ff.response <- obs_pure_nolag$ff34
-#rm(obs_pure_nolag); gc()
-tawes_around_nolag <- readRDS("data/tawes_around_vie.rds")
-dd.response <- tawes_around_nolag$dd.station11036
-ff.response <- tawes_around_nolag$ff.station11036
-rm(tawes_around_nolag); gc()
-
-data <- merge(dd.response, data, all = c(TRUE, FALSE))
-data <- merge(ff.response, data, all = c(TRUE, FALSE))
-
-## Calculate spatial differences 
-diffEXB <- calc_anglediff(data$ffEXB, data$ddEXB, ff.response, dd.response, "EXB")
-diffTOW <- calc_anglediff(data$ffTOW, data$ddTOW, ff.response, dd.response, "TOW")
-diffOM29 <- calc_anglediff(data$ffOM29, data$ddOM29, ff.response, dd.response, "OM29")
-diffARS <- calc_anglediff(data$ffARS, data$ddARS, ff.response, dd.response, "ARS")
-
-data <- merge(data, diffEXB, diffTOW, diffOM29, diffARS)
-
-
-# -------------------------------------------------------------------
-# Prepare tawes data
-# -------------------------------------------------------------------
-tawes_around <- readRDS("data/tawes_around_vie.rds")
-tawes_around <- lag(tawes_around, -mylag)
-
-## Calculate lagged tawes measurements
-## 1 hour change
-for(i_name in names(tawes_around)[-grep("dd|ff|ch30min", names(tawes_around))]){
-  cmd <- sprintf("tawes_around$%1$s_ch1h <- tawes_around$%1$s - lag(tawes_around$%1$s, -6)",
-    i_name)
-  eval(parse(text = cmd))
-}
-
-tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
-tmp_names <- gsub('dd', '', tmp_names)
-for(idx in tmp_names){
-  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
-    lag(tawes_around[, paste0("ff", idx)], -6), lag(tawes_around[, paste0("dd", idx)], -6), paste0(idx, "_ch1h"))
-  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
-}
-
-## 3 hour change
-for(i_name in names(tawes_around)[-grep("dd|ff|ch30min|ch1h", names(tawes_around))]){
-  cmd <- sprintf("tawes_around$%1$s_ch3h <- tawes_around$%1$s - lag(tawes_around$%1$s, -18)",
-    i_name)
-  eval(parse(text = cmd))
-}
-
-tmp_names <- names(tawes_around)[grep("^dd", names(tawes_around))]
-tmp_names <- gsub('dd', '', tmp_names)
-for(idx in tmp_names){
-  diff <- calc_anglediff(tawes_around[, paste0("ff", idx)], tawes_around[, paste0("dd", idx)],
-    lag(tawes_around[, paste0("ff", idx)], -18), lag(tawes_around[, paste0("dd", idx)], -18), paste0(idx, "_ch3h"))
-  tawes_around <- merge(tawes_around, diff, all = c(TRUE, FALSE))
-}
-
-
-# -------------------------------------------------------------------
-# Merge 'data'  with 'tawes' and calculate angle differences
-# -------------------------------------------------------------------
-data <- merge(data, tawes_around, all = c(TRUE, FALSE))
-
-for(idx in unique(regmatches(names(tawes_around), regexpr("station[0-9]{5}", names(tawes_around))))){
-  diff <- calc_anglediff(data[, paste0("ff.", idx)], data[, paste0("dd.", idx)], ff.response, dd.response, idx)
-  data <- merge(data, diff, all = c(TRUE, FALSE))
-}
-
-## Save data
-if (! dir.exists("data")) dir.create("data")
-saveRDS(data, "data/circforest_prepared_data_vie_lag", mylag, "_update20191015.rds")
-
-
-#data <- as.data.frame(data)
-#
-## Remove all columns with too little data
-#tmp <- which(colSums(is.na(data)) / nrow(data) > 0.1)
-#if (length(tmp) > 0) data <- data[, -tmp]
-#
-## Remove NA's
-#data <- na.omit(data)
-#cat(sprintf("   We ended up with a matrix of size: %d x %d\n", nrow(data), ncol(data)))
-
