@@ -16,7 +16,7 @@ library(zoo)
 
 data_in <- "/home/moritz/Data/circtree/Daten_Deborah/qc_agg10min"
 
-mylag <- 1
+mylag <- 3
 response_station <- "innsbruck"
 
 # -------------------------------------------------------------------
@@ -91,7 +91,7 @@ if(file.exists(datafile)) {
     eval(parse(text = sprintf("%s <- make_strict(readRDS(file))", tmp)))
 
     ## Check if 10min interval 
-    if(unique(diff(index(tmp))) != 10) stop("wrong temporal resolution, suspected to 10min intervals")
+    eval(parse(text = sprintf("if(unique(diff(index(%s))) != 10) stop('wrong temporal resolution, suspected to 10min intervals')", tmp)))
 
     ## Subset to full hours
     eval(parse(text = sprintf("%1$s <- %1$s[as.POSIXlt(index(%1$s))$min == 0L, ]", tmp)))
@@ -101,22 +101,24 @@ if(file.exists(datafile)) {
     eval(parse(text = sprintf("%1$s <- make_strict(%1$s, index(response_lag))", tmp)))
 
     ## Create differences to Innsbruck
-    for(i_param in names(eval(parse(text = tmp)))){
-      if(grepl("dd", i_param) & "ff" %in% names(eval(parse(text = tmp)))){
-        eval(parse(text = sprintf("%1$s$dd_diff <- calc_anglediff(response_lag$ff, response_lag$dd, 
-          %1$s$ff, %1$s$dd)$diff_dd", tmp)))
-      } else if (i_param %in% c("p", "psta")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$p - %1$s$%2$s", tmp, i_param)))
-      } else if (i_param %in% c("pred", "predsta")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$pred - %1$s$%2$s", tmp, i_param)))
-      } else if (i_param %in% c("t", "tl")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$t - %1$s$%2$s", tmp, i_param)))
-      } else if (i_param %in% c("rh", "rf")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$rf - %1$s$%2$s", tmp, i_param)))
-      } else if (i_param %in% c("ffx", "ffx1s")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ffx - %1$s$%2$s", tmp, i_param)))
-      } else if (i_param %in% c("ff")){
-        eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ff - %1$s$%2$s", tmp, i_param)))
+    if (!grepl(response_station, file)){
+      for(i_param in names(eval(parse(text = tmp)))){
+        if(grepl("dd", i_param) & "ff" %in% names(eval(parse(text = tmp)))){
+          eval(parse(text = sprintf("%1$s$dd_diff <- calc_anglediff(response_lag$ff, response_lag$dd, 
+            %1$s$ff, %1$s$dd)$diff_dd", tmp)))
+        } else if (i_param %in% c("p", "psta")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$p - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("pred", "predsta")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$pred - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("t", "tl")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$t - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("rh", "rf")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$rf - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("ffx", "ffx1s")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ffx - %1$s$%2$s", tmp, i_param)))
+        } else if (i_param %in% c("ff")){
+          eval(parse(text = sprintf("%1$s$%2$s_diff <- response_lag$ff - %1$s$%2$s", tmp, i_param)))
+        }
       }
     }
  
