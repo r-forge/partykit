@@ -91,7 +91,7 @@ if (opt$station == "ibk") {
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
   ## Remove very low values of ff 
-  d <- d[!d[, "ff.response"] < 1,], not very meaningful, but at least working
+  d <- d[!d[, "ff.response"] < 1,] ## not very meaningful, but at least working
 
   ## Remove covariates with more than 10 nans
   idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 10)) ## remove sattelberg and ellboegen
