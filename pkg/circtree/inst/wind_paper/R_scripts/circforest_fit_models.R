@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-16 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-17 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -162,10 +162,13 @@ for (i in seq(1:nrow(d))) {
 
   ## Subset training data set
   idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
-    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-6, -0) - opt$lag/6)
+    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-6, -0) - opt$lag)
 
   train <- subset(d, index(d) %in% idx)
+
+  ## Get weights and rescale to sum up to one
   train_weights <- exp_weights[idx %in% index(train)]
+  train_weights <- train_weights / sum(train_weights) * 1
 
   ## Fit persistency
   pers_hour_fit <- try(distfit(as.numeric(train$dd.response),
@@ -210,7 +213,10 @@ for (i in seq(1:nrow(d))) {
     i_plt$hour, i_plt$min), origin = "1970-01-01") - 60 * 60 * 24 + 60 * 60 * seq(-3, 3)
 
   train <- subset(d, index(d) %in% idx)
+  
+  ## Get weights and rescale to sum up to one
   train_weights <- exp_weights_centered[idx %in% index(train)]
+  train_weights <- train_weights / sum(train_weights) * 1
 
   ## Fit persistency
   pers_day_fit <- try(distfit(as.numeric(train$dd.response),
