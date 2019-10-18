@@ -37,7 +37,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v10",
+  make_option("--run_name", type = "character", default = "v12",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),

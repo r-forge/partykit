@@ -65,7 +65,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v12",
+  make_option("--run_name", type = "character", default = "v13",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -91,10 +91,10 @@ if (opt$station == "ibk") {
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
   ## Remove very low values of ff 
-  d <- d[!d[, "ff.response"] < 1,] ## not very meaningful, but at least working
+  d <- d[!d[, "ff.response"] < 1,] ## ff below 1 not very meaningful, but at least correctly measured
 
   ## Remove covariates with more than 10 nans
-  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 10)) ## remove sattelberg and ellboegen
+  idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 5)) ## remove sattelberg and ellboegen
   d <- d[, ! (names(d) %in% idx_names)]
 
   ## Omit nans
@@ -162,24 +162,40 @@ for (i in seq(1:nrow(d))) {
 
   ## Subset training data set
   idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
-    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-6, -0) - opt$lag)
+    i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-5, -0) - opt$lag)
 
   train <- subset(d, index(d) %in% idx)
+
+  ## Go to next iteration if train has no values
+  if(nrow(train) == 0){
+    pred_pers_hour[i, ] <- c("mu" = NA, "kappa" = NA)
+    next
+  }
 
   ## Get weights and rescale to sum up to one
   train_weights <- exp_weights[idx %in% index(train)]
   train_weights <- train_weights / sum(train_weights) * 1
 
-  ## Fit persistency
-  pers_hour_fit <- try(distfit(as.numeric(train$dd.response),
-                         family = dist_vonmises(), weights = train_weights))
-  
-  ## Predict parameters
-  if (class(pers_hour_fit) == "try-error") {
-    pred_pers_hour[i, ] <- c("mu" = NA, "kappa" = NA)
+  ## Perform fit only if values vary
+  train_response <- as.numeric(train$dd.response)
+
+  if (!all(train_response == train_response[1])) {
+    ## Fit persistency
+    pers_hour_fit <- try(distfit(train_response,
+                           family = dist_vonmises(), weights = train_weights))
+
+    ## Predict parameters
+    if (class(pers_hour_fit) == "try-error") {
+      pred_pers_hour[i, ] <- c("mu" = NA, "kappa" = NA)
+    } else {
+      pred_pers_hour[i, ] <- coef(pers_hour_fit, type = "parameter")
+    }
+
   } else {
-    pred_pers_hour[i, ] <- coef(pers_hour_fit, type = "parameter")
+    ## Set coefficients to single value and kappa to ~Infinity
+    pred_pers_hour[i, ] <- c("mu" = unique(train_response), "kappa" = 1e+16)
   }
+  
 }
 
 if (opt$verbose) cat("\n")   
@@ -213,21 +229,37 @@ for (i in seq(1:nrow(d))) {
     i_plt$hour, i_plt$min), origin = "1970-01-01") - 60 * 60 * 24 + 60 * 60 * seq(-3, 3)
 
   train <- subset(d, index(d) %in% idx)
+
+  ## Go to next iteration if train has no values
+  if(nrow(train) == 0){
+    pred_pers_day[i, ] <- c("mu" = NA, "kappa" = NA)
+    next
+  }
   
   ## Get weights and rescale to sum up to one
   train_weights <- exp_weights_centered[idx %in% index(train)]
   train_weights <- train_weights / sum(train_weights) * 1
 
-  ## Fit persistency
-  pers_day_fit <- try(distfit(as.numeric(train$dd.response),
-                         family = dist_vonmises(), weights = train_weights))
-  
-  ## Predict parameters
-  if (class(pers_day_fit) == "try-error") {
-    pred_pers_day[i, ] <- c("mu" = NA, "kappa" = NA)
+  ## Perform fit only if values vary
+  train_response <- as.numeric(train$dd.response)
+
+  if (!all(train_response == train_response[1])) {
+    ## Fit persistency
+    pers_day_fit <- try(distfit(train_response,
+                           family = dist_vonmises(), weights = train_weights))
+
+    ## Predict parameters
+    if (class(pers_day_fit) == "try-error") {
+      pred_pers_day[i, ] <- c("mu" = NA, "kappa" = NA)
+    } else {
+      pred_pers_day[i, ] <- coef(pers_day_fit, type = "parameter")
+    }
+
   } else {
-    pred_pers_day[i, ] <- coef(pers_day_fit, type = "parameter")
+    ## Set coefficients to single value and kappa to ~Infinity
+    pred_pers_day[i, ] <- c("mu" = unique(train_response), "kappa" = 1e+16)
   }
+
 }
 
 if (opt$verbose) cat("\n")   
@@ -277,19 +309,35 @@ for (cv in unique(cvID)) {
       i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
   
     idx <- do.call(c, idx)
-    
     train_subset <- subset(train, index(train) %in% idx)
-  
-    ## Fit climatology
-    climfit <- try(distfit(train_subset$dd.response,
+
+    ## Go to next iteration if train has no values
+    if(nrow(train_subset) == 0){
+      pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      next
+    }
+    
+    train_response <- as.numeric(train_subset$dd.response)
+
+    ## Perform fit only if values vary
+    if (!all(train_response == train_response[1])) {
+
+      ## Fit climatology
+      climfit <- try(distfit(train_response,
                              family = dist_vonmises()))
 
-    ## Predict parameters
-    if (class(climfit) == "try-error") {
-      pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      ## Predict parameters
+      if (class(climfit) == "try-error") {
+        pred_clim[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      } else {
+        pred_clim[[cv]][i, ] <- coef(climfit, type = "parameter")
+      }
+
     } else {
-      pred_clim[[cv]][i, ] <- coef(climfit, type = "parameter")
+      ## Set coefficients to single value and kappa to ~Infinity
+      pred_clim[[cv]][i, ] <- c("mu" = unique(train_response), "kappa" = 1e+16)
     }
+
   }
 }
 
@@ -342,8 +390,13 @@ for (cv in unique(cvID)) {
       i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * 24 * seq(-15, 15))
   
     idx <- do.call(c, idx)
-    
     train_subset <- subset(train, index(train) %in% idx)
+
+    ## Go to next iteration if train has no values
+    if(nrow(train_subset) == 0){
+      pred_lm[[cv]][i, ] <- c("mu" = NA, "kappa" = NA)
+      next
+    }
   
     ## Fit lm model
     if(opt$station == "ibk"){
@@ -498,50 +551,6 @@ if (length(idx) > 0) {
 ## Save results
 save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
   file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
-
-
-# -------------------------------------------------------------------
-# Validate predictions based on own crps
-# -------------------------------------------------------------------
-load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
-
-## Validate models based on our crps
-crps_own <- lapply(pred_naomit, function(x) crps_vonmises(mu = x$mu, kappa = x$kappa, 
-  y = obs_naomit, sum = FALSE)) 
-crps_own <- data.frame(do.call(cbind, crps_own))
-
-## Calculate mean scores per hour over single month
-crps_own.agg <- aggregate(crps_own, list(month = as.POSIXlt(timepoints_naomit)$mon + 1,
-  hour = as.POSIXlt(timepoints_naomit)$hour + 1), FUN = mean)
-
-crps_own.agg <- within(crps_own.agg, {
-  month = factor(month)
-  hour = factor(hour)
-  })
-
-## Calculate boot-strapped mean values
-set.seed(opt$seed)
-kboot <- 500
-crps_own.boot <- data.frame(matrix(NA, ncol = ncol(crps_own), nrow = kboot, dimnames = list(NULL, names(crps_own))))
-for (i in 1:kboot) {
-   s <- sample(1 : nrow(crps_own), nrow(crps_own), replace = TRUE)
-   crps_own.boot[i,] <- apply(coredata(crps_own)[s, ], 2, mean)
-}
-
-## Calculate skill scores
-crps_own_skill <- (1 - crps_own[, c("climatology", "persistence_hour", "persistence_day",
-  "linear_model", "tree", "forest")] / crps_own[, "climatology"]) * 100
-
-crps_own.agg_skill <- cbind(crps_own.agg[, c("month", "hour")],
-  (1 - crps_own.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree",
-  "forest")] / crps_own.agg[, "climatology"]) * 100)
-
-crps_own.boot_skill <- (1 - crps_own.boot[, c("climatology", "persistence_hour", "persistence_day",
-  "linear_model", "tree", "forest")] / crps_own.boot[, "climatology"]) * 100
-
-## Save validation
-save(crps_own, crps_own.boot, crps_own_skill, crps_own.boot_skill, crps_own.agg, crps_own.agg_skill,
-  file = sprintf("results/circforest_validation_own_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
 
 
 # -------------------------------------------------------------------
