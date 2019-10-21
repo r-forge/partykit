@@ -15,16 +15,16 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
 
   template <- match.arg(template)
   rotation <- match.arg(rotation)
-  zero <- as.numeric(match.arg(zero))
+  zero <- eval(parse(text = match.arg(zero)))
 
   if (template == "geographics") {
     zero <- pi/2
-    rotation <- "counter"
-    if (is.null(circlab) | length(circlab) != 4) circlab = c('N', 'E', 'S','W')
+    rotation <- "clock"
+    if (is.null(circlab) | length(circlab) != 4) circlab = c('N', 'E', 'S', 'W')
     if (is.null(cex)) cex <- 0.8
   } else if (template == "clock24") {
     zero <- pi/2
-    rotation <- "counter"
+    rotation <- "clock"
     if (is.null(circlab) | length(circlab) != 4) circlab = c('0', '6', '12','18')
     if (is.null(cex)) cex <- 0.8
   } else if (all(response_range == c(0, 2 * pi))) {
@@ -46,9 +46,14 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
     if(is.null(cex)) cex <- 0.6
   }
 
-  X <- (ifelse(rotation == "clock", 1, -1) *(X - zero)) %% (2 * pi)
-  coefs[1] <- (ifelse(rotation == "clock", 1, -1) *(coefs[1] - zero)) %% (2 * pi)
-  circlab <- circlab[which(zero == c(0, pi/2, pi, 3/2*pi)) + c(0, 1, 2, 3)]
+  X <- (ifelse(rotation == "counter", 1, -1) * (X - zero)) %% (2 * pi)
+  coefs[1] <- (ifelse(rotation == "counter", 1, -1) * (coefs[1] - zero)) %% (2 * pi)
+
+  idx_circlab <- (which(zero == c(0, pi/2, pi, 3/2*pi)) + c(0, 1, 2, 3)) %% 4
+  idx_circlab[idx_circlab == 0] <- 4
+  circlab <- circlab[idx_circlab]
+
+  if(rotation == "clock") circlab <- circlab[c(1, 4, 3, 2)]
 
   # Empty Plot
   par(mar = c(0, 0, 0, 0) + 0., cex = cex)
@@ -88,11 +93,10 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
   # Plot circle
   circ_ln <- seq(0, 360, 0.5) * pi / 180
   lines(cos(circ_ln), sin(circ_ln))
-  
+
   # Plot ticks and labels
   circ_sgm <- seq(0, 360, 45) * pi / 180
   segments(.8 * cos(circ_sgm), .8 * sin(circ_sgm), 1 * cos(circ_sgm), 1 * sin(circ_sgm))
-
   if(label & requireNamespace("latex2exp", quietly = TRUE)){
     text(.75, 0, latex2exp::TeX(circlab[1]), adj = c(1, 0.5))
     text(0, .75, latex2exp::TeX(circlab[2]), adj = c(0.5, 1))
@@ -199,13 +203,15 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     if (is.function(mainlab)) {
       mainlab <- mainlab(nid, node$info$object$ny, coefs[1], coefs[2], response_range)
     }
-    grid::grid.text(mainlab, y = grid::unit(0.9, "npc"))
+    ##grid::grid.text(mainlab, y = grid::unit(0.9, "npc"), gp = gpar(cex = 0.8))
+    g <- resizingTextGrob(mainlab, y = grid::unit(0.9, "npc"))
+    grid::grid.draw(g)
 
     ## plot rectangle and actual graphic, optional x and ylab 
     grid::seekViewport("plot")
 
     grid::grid.rect(gp = grid::gpar(fill = "transparent", col = 1), width = grid::unit(0.9, "npc"))
-    gridGraphics::grid.echo(function() plot_circular(y, coefs, template = template, 
+    gridGraphics::grid.echo(function() plot_circular(y, coefs, template = template, zero = zero,
       response_range = response_range, ...), newpage = FALSE)
 
     if(ylab != "") grid::grid.text(ylab, y = grid::unit(0.5, "npc"), x = grid::unit(-2.5, "lines"), rot = 90)
@@ -218,4 +224,26 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
   return(rval)
 }
 class(node_circular) <- "grapcon_generator"
+
+
+## Helper functions for dynamic text font
+## compare: https://www.r-bloggers.com/creating-a-text-grob-that-automatically-adjusts-to-viewport-size/
+resizingTextGrob <- function(...) {
+  grid::grob(tg=grid::textGrob(...), cl="resizingTextGrob")
+}
+
+drawDetails.resizingTextGrob <- function(x, recording=TRUE) {
+  grid::grid.draw(x$tg)
+}
+
+preDrawDetails.resizingTextGrob <- function(x) {
+  h <- grid::convertHeight(unit(1, "snpc"), "mm", valueOnly=TRUE)
+  fs <- scales::rescale(h, to=c(18, 9), from=c(120, 20))
+  grid::pushViewport(grid::viewport(gp = grid::gpar(fontsize = fs)))
+}
+
+postDrawDetails.resizingTextGrob <- function(x) {
+  grid::popViewport()
+}
+
 

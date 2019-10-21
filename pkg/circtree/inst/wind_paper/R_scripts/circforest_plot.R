@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-16 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-21 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -24,6 +24,7 @@ library("ggplot2")
 library("reshape2")
 library("ggpubr")
 library("latex2exp")
+devtools::load_all(".")
 
 ## Create folder for outputs
 if (! dir.exists("results")) dir.create("results")
@@ -37,7 +38,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v12",
+  make_option("--run_name", type = "character", default = "v13",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),
@@ -62,15 +63,14 @@ theme_set(theme_bw(base_size = 14.5) +
 ## -------------------------------------------------------------------
 ## Loop over stations and lag
 crps.mall <- crps.agg.mall <- crps.agg_skill.mall <- data.frame()
-crps_own.mall <- crps_own.agg.mall <- crps_own.agg_skill.mall <- data.frame()
 
 for (i_station in c("ibk", "vie")){
-  for (i_lag in c("6", "18")){
+  for (i_lag in c("1", "3")){
 
     ## Load and prepare CRPS alias Grimit et al. 2010
     load(file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
 
-    cat(sprintf("Station %s at lag %s: Total of %s timepoints used for validation.", i_station, i_lag, nrow(crps)))
+    cat(sprintf("Station %s at lag %sh: Total of %s timepoints used for validation.", i_station, i_lag, nrow(crps)))
 
     crps.m <- melt(crps[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree", "forest")], 
       variable.name = "model")
@@ -82,7 +82,7 @@ for (i_station in c("ibk", "vie")){
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
+    crps.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
 
     crps.agg.m <- melt(crps.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model", 
       "tree", "forest")], variable.name = "model")
@@ -94,7 +94,7 @@ for (i_station in c("ibk", "vie")){
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.agg.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps.agg.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
+    crps.agg.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
 
     crps.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
     crps.agg_skill.m$model <- plyr::revalue(crps.agg_skill.m$model,
@@ -105,53 +105,12 @@ for (i_station in c("ibk", "vie")){
       "tree" = "Tree",
       "forest" = "Forest"))
     crps.agg_skill.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps.agg_skill.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
+    crps.agg_skill.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
 
     crps.mall <- rbind(crps.mall, crps.m)
     crps.agg.mall <- rbind(crps.agg.mall, crps.agg.m)
     crps.agg_skill.mall <- rbind(crps.agg_skill.mall, crps.agg_skill.m)
 
-    ## Load and prepare own CRPS
-    load(file = sprintf("results/circforest_validation_own_%s_lag%s_%s.rda", i_station, i_lag, opt$run_name))
-
-    crps_own.m <- melt(crps_own[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree", "forest")], 
-      variable.name = "model")
-    crps_own.m$model <- plyr::revalue(crps_own.m$model,
-      c("climatology" = "Climatology",
-      "persistence_hour" = "Persistence\nHour",
-      "persistence_day" = "Persistence\nDay",
-      "linear_model" = "Linear\nModel",
-      "tree" = "Tree",
-      "forest" = "Forest"))
-    crps_own.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps_own.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
-
-    crps_own.agg.m <- melt(crps_own.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model", 
-      "tree", "forest")], variable.name = "model")
-    crps_own.agg.m$model <- plyr::revalue(crps_own.agg.m$model,
-      c("climatology" = "Climatology",
-      "persistence_hour" = "Persistence\nHour",
-      "persistence_day" = "Persistence\nDay",
-      "linear_model" = "Linear\nModel",
-      "tree" = "Tree",
-      "forest" = "Forest"))
-    crps_own.agg.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps_own.agg.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
-
-    crps_own.agg_skill.m <- melt(crps_own.agg_skill, variable.name = "model")
-    crps_own.agg_skill.m$model <- plyr::revalue(crps_own.agg_skill.m$model,
-      c("climatology" = "Climatology",
-      "persistence_hour" = "Persistence\nHour",
-      "persistence_day" = "Persistence\nDay",
-      "linear_model" = "Linear\nModel",
-      "tree" = "Tree",
-      "forest" = "Forest"))
-    crps_own.agg_skill.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
-    crps_own.agg_skill.m$lag <- factor(i_lag, levels = c("6", "18"), labels = c("1-hour forecast", "3-hour forecast"))
-
-    crps_own.mall <- rbind(crps_own.mall, crps_own.m)
-    crps_own.agg.mall <- rbind(crps_own.agg.mall, crps_own.agg.m)
-    crps_own.agg_skill.mall <- rbind(crps_own.agg_skill.mall, crps_own.agg_skill.m)
 
     ## Plot raw crps    
     p1 <- ggplot(crps.m, aes(x = model, y = value)) +
@@ -237,36 +196,6 @@ print(ggarrange(p5, legend = "none"))
 pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_comparison_%s.pdf", opt$run_name)
 ggsave(pdf_file)
 
-## Make summary plots with four panels (cprs raw own)
-p6 <- ggplot(crps_own.agg.mall, aes(x = model, y = value)) +
-      geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
-      stat_boxplot(geom = "errorbar", width = 0.2) +
-      geom_boxplot(fill = "gray60") + 
-      facet_grid(lag ~ station, scales = "free")
-p6 <- p6 + labs(x = "", y = TeX('$CRPS_{CharFun}$  \\[rad\\]')) 
-p6 <- p6 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
-
-dev.new(width=12.5, height=6.5)
-print(ggarrange(p6, legend = "none"))
-pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_own_agg_comparison_%s.pdf", opt$run_name)
-ggsave(pdf_file)
-
-crps_diff.agg.mall <- crps_own.agg.mall
-crps_diff.agg.mall$value <- (crps_own.agg.mall$value - crps.agg.mall$value) / abs(crps.agg.mall$value) * 100
-p7 <- ggplot(crps_diff.agg.mall, aes(x = model, y = value)) +
-      geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
-      stat_boxplot(geom = "errorbar", width = 0.2) +
-      geom_boxplot(fill = "gray60") + 
-      facet_grid(lag ~ station, scales = "free")
-p7 <- p7 + labs(x = "", y = TeX('$(CRPS_{CharFun} - CRPS_{Grimit}) / |CRPS_{Grimit}| \\times 100$  \\[%\\]')) + 
-  coord_cartesian(ylim = c(0, 100))
-p7 <- p7 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
-
-dev.new(width=12.5, height=6.5)
-print(ggarrange(p7, legend = "none"))
-pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_diff_agg_comparison_%s.pdf", opt$run_name)
-ggsave(pdf_file)
-
 if(FALSE){
   library(car)
   for (i_station in c("ibk", "vie")){
@@ -281,7 +210,7 @@ if(FALSE){
       mycol <- colorspace::qualitative_hcl(length(pred_names) - 1, alpha = 0.1)
       names(mycol) <- pred_names[!pred_names %in% "obs"]
       for(i_name in pred_names[!pred_names %in% "obs"]){
-        png(filename = sprintf("results/_plot_circforest_scatterplot_%s_%s_lag%s_%s.png",
+        png(filename = sprintf("results/_plot_circforest_scatterplot_%s_%s_lag%sh_%s.png",
           i_name, i_station, i_lag, opt$run_name), width = 8, height = 8, units = "in", res = 300)
         eval(parse(text = sprintf("scatterplot(obs ~ %s, data = pred_df, ylim = c(-pi, pi), xlim = c(-pi, pi), col = mycol['%s'])", i_name, i_name)))
         dev.off()

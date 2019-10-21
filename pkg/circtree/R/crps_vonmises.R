@@ -6,7 +6,7 @@
 # - PURPOSE: Circular CRPS (von Mises) based on numeric integration using
 #            the charististic equation
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-04 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-15 on thinkmoritz
 # -------------------------------------------------------------------
 
 ##YEAR: 2017
@@ -66,3 +66,77 @@ crps_vonmises <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE) {
   if(sum) rval <- sum(rval, na.rm = na.rm)
   return(rval)
 }
+
+
+
+## CRPS von Mises based on sampling
+crps_vonmises_sample <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE, n = 1000, seed = 123) {
+  
+  ## Define helper function
+  angle_dist <- function(a, b) {
+    d <- abs(b - a)
+    return(pmin(d, 2*pi - d))
+  }
+
+  ## Set seed
+  set.seed(seed)
+
+  ## Perform some input checks
+  if(any(y < -pi) || any(y > pi) || any(mu < -pi) || any(mu > pi) || any(kappa < 0 ))
+    stop("y and mu must be in the interval of [-pi, pi], and kappa must be non negative!")
+
+  if(!inherits(y, c("numeric", "integer")) || !inherits(mu, c("numeric", "integer")) ||
+    !inherits(kappa, c("numeric", "integer"))) {
+    stop("Input 'y', 'mu', and 'kappa' must be numeric vectors...")
+  }
+
+  ## Create data.frame (fails if any has not the same length or length equal one)
+  dat <- data.frame("y" = y, "mu" = mu, "kappa" = kappa)
+
+  ## Get mu with smallest absolute distance
+  idx <- apply(abs(matrix(dat$mu, ncol = 3, nrow = nrow(dat), byrow = FALSE) +
+    matrix(c(-2 * pi, 0, 2 * pi), ncol = 3, nrow = nrow(dat), byrow = TRUE) - dat$y), 1, which.min)
+  dat$mu <- dat$mu + c(-2 * pi, 0, 2 * pi)[idx]
+
+  ## Calculate CRPS based on sampling
+  rval <- sapply(1:nrow(dat), function(i){
+    if(dat[i, "kappa"] > 1500){
+      crps <- scoringRules::crps_norm(y = dat[i, "y"], mean = dat[i, "mu"], sd = sqrt(1 / dat[i, "kappa"]))
+      return(crps)
+
+    } else {
+
+      dat[i, "y"] <- dat[i, "y"] %% (2 * pi)
+      dat[i, "mu"] <- dat[i, "mu"] %% (2 * pi)
+
+      crps <- mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), dat[i, "y"])) -
+        0.5 * mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), rvm(n, dat[i, "mu"], dat[i, "kappa"])))
+      return(crps)
+    }
+  })
+
+  if(sum) rval <- sum(rval, na.rm = na.rm)
+  return(rval)
+}
+
+### angular distance
+#angle_dist <- function(a, b, unit = c("rad", "degree")) {
+#
+#  if(class(a) == "zoo" && class(b) == "zoo"){
+#    z <- merge(a, b)
+#    a <- as.numeric(z$a) 
+#    b <- as.numeric(z$b)
+#  }
+#
+#  unit <- match.arg(unit)
+#  if (unit == "rad") {
+#    tmp.max <- 2 * pi
+#  } else {
+#    tmp.max <- 360
+#  }
+#  if (any(c(a, b) < 0, na.rm = TRUE) | any(c(a, b) > tmp.max, na.rm = TRUE)) stop("values not within meaningful domain")
+#
+#  d <- abs(b - a)
+#  return(pmin(d, tmp.max - d))
+#}
+
