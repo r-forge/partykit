@@ -71,6 +71,8 @@ option_list <- list(
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
   make_option("--lag", type = "integer", default = 1,
     help = "Lag in 10min time steps [default %default]"),
+  make_option("--lowff", action = "store_true", default = FALSE,
+    help = "Use wind speeds (ff) below 1 m/s (Warning: TRUE not meaningful for Vie) [default]"),
   make_option("--plot", action = "store_true", default = FALSE,
     help = "Plot validation [default]"),
   make_option(c("--seed"), type = "integer", default = 123,
@@ -91,7 +93,9 @@ if (opt$station == "ibk") {
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
   ## Remove very low values of ff 
-  d <- d[!d[, "ff.response"] < 1,] ## ff below 1 not very meaningful, but at least correctly measured
+  if(!opt$lowff){
+    d <- d[!d[, "ff.response"] < 1,] ## ff below 1 not very meaningful, but at least correctly measured
+  }
 
   ## Remove covariates with more than 10 nans
   idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 5)) ## remove sattelberg and ellboegen
@@ -119,7 +123,9 @@ if (opt$station == "ibk") {
     wien_mariabrunn|zwerndorf_marchegg|altenburg|baden|mistelbach|podersdorf", names(d))]
 
   ## Remove very low values of ff
-  d <- d[!d[, "ff.response"] < 1,] ## ff == 0.5 -> dd = NA; ff == 0 -> dd = 0
+  if(!opt$lowff){
+    d <- d[!d[, "ff.response"] < 1,] ## ff == 0.5 -> dd = NA; ff == 0 -> dd = 0
+  }
 
   ## Remove covariates with more than 10 nans
   idx_names <- names(which(apply(d, 2, function(x) sum(is.na(x))) > nrow(d) / 100 * 5))
@@ -201,8 +207,8 @@ for (i in seq(1:nrow(d))) {
 if (opt$verbose) cat("\n")   
 
 ## Save predictions
-saveRDS(pred_pers_hour, file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
+saveRDS(pred_pers_hour, file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 rm(pred_pers_hour, pers_hour_fit, train); gc()
 
 
@@ -266,8 +272,8 @@ if (opt$verbose) cat("\n")
   
 
 ## Save predictions
-saveRDS(pred_pers_day, file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
+saveRDS(pred_pers_day, file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 rm(pred_pers_day, pers_day_fit, train); gc()
 
 
@@ -344,8 +350,8 @@ for (cv in unique(cvID)) {
 if (opt$verbose) cat("\n")  
 
 ## Save predictions
-saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
+saveRDS(pred_clim, file = sprintf("results/circforest_pred_clim_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 rm(pred_clim, climfit, train, test, train_subset); gc()
 
 
@@ -426,8 +432,8 @@ for (cv in unique(cvID)) {
 if (opt$verbose) cat("\n")  
 
 ## Save predictions
-saveRDS(pred_lm, file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
+saveRDS(pred_lm, file = sprintf("results/circforest_pred_lm_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 rm(pred_lm, lmfit, train, test, train_subset); gc()
 
 
@@ -454,8 +460,8 @@ m_ct.plot <- circtree(formula = f,
                  control = disttree_control(mincriterion = (1 - .Machine$double.eps),
                                             minbucket = 2000))
 
-saveRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds", 
-  opt$station, opt$lag, opt$run_name))
+saveRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s%s_4plotting.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
 
 ## Fit models with cross-validation
@@ -490,14 +496,14 @@ for(cv in unique(cvID)) {
 
   ## Save predictions (and models)
   saveRDS(m_ct, 
-    file = sprintf("results/circforest_model_tree_%s_lag%s_%s_cv%s.rds", 
-      opt$station, opt$lag, opt$run_name, cv))
+    file = sprintf("results/circforest_model_tree_%s_lag%s_%s%s_cv%s.rds", 
+      opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name, cv))
   saveRDS(pred_ct.tmp, 
-    file = sprintf("results/circforest_pred_tree_%s_lag%s_%s_cv%s.rds",
-       opt$station, opt$lag, opt$run_name, cv))
+    file = sprintf("results/circforest_pred_tree_%s_lag%s_%s%s_cv%s.rds",
+       opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name, cv))
   saveRDS(pred_cf.tmp, 
-    file = sprintf("results/circforest_pred_forest_%s_lag%s_%s_cv%s.rds",
-      opt$station, opt$lag, opt$run_name, cv))
+    file = sprintf("results/circforest_pred_forest_%s_lag%s_%s%s_cv%s.rds",
+      opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name, cv))
   #saveRDS(vip_cf, 
   #  file = sprintf("results/circforest_vip_forest_%s_lag%s_%s_cv%s.rds",
   #    opt$station, opt$lag, opt$run_name, cv))
@@ -511,23 +517,23 @@ for(cv in unique(cvID)) {
 ## Load predictions
 pred_ct <- pred_cf <- list()
 for(cv in unique(cvID)) {
-  pred_ct.tmp <- readRDS(file = sprintf("results/circforest_pred_tree_%s_lag%s_%s_cv%s.rds",
-    opt$station, opt$lag, opt$run_name, cv))
-  pred_cf.tmp <- readRDS(file = sprintf("results/circforest_pred_forest_%s_lag%s_%s_cv%s.rds", 
-    opt$station, opt$lag, opt$run_name, cv))
+  pred_ct.tmp <- readRDS(file = sprintf("results/circforest_pred_tree_%s_lag%s_%s%s_cv%s.rds",
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name, cv))
+  pred_cf.tmp <- readRDS(file = sprintf("results/circforest_pred_forest_%s_lag%s_%s%s_cv%s.rds", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name, cv))
   pred_ct[[cv]] <- pred_ct.tmp
   pred_cf[[cv]] <- pred_cf.tmp
   rm(pred_cf.tmp, pred_ct.tmp); gc()
 }
 
-pred_pers_hour <- readRDS(file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
-pred_pers_day <- readRDS(file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
-pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
-pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s.rds", 
-  opt$station, opt$lag, opt$run_name))
+pred_pers_hour <- readRDS(file = sprintf("results/circforest_pred_pers_hour_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
+pred_pers_day <- readRDS(file = sprintf("results/circforest_pred_pers_day_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
+pred_clim <- readRDS(file = sprintf("results/circforest_pred_clim_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
+pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s%s.rds", 
+  opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
 ## Combine predictions
 pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
@@ -550,13 +556,15 @@ if (length(idx) > 0) {
 
 ## Save results
 save(pred, pred_naomit, obs, obs_naomit, timepoints, timepoints_naomit,
-  file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
+  file = sprintf("results/circforest_results_%s_lag%s_%s%s.rda", opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), 
+    opt$run_name))
 
 
 # -------------------------------------------------------------------
 # Validate predictions based on grimit's crps
 # -------------------------------------------------------------------
-load(file = sprintf("results/circforest_results_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
+load(file = sprintf("results/circforest_results_%s_lag%s_%s%s.rda", opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), 
+  opt$run_name))
 
 ## Validate models based on grimit's crps
 crps <- lapply(pred_naomit, function(x) sapply(1:nrow(x), function(i)
@@ -594,7 +602,8 @@ crps.boot_skill <- (1 - crps.boot[, c("climatology", "persistence_hour", "persis
 
 ## Save validation
 save(crps, crps.boot, crps_skill, crps.boot_skill, crps.agg, crps.agg_skill,
-  file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
+  file = sprintf("results/circforest_validation_%s_lag%s_%s%s.rda", opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), 
+  opt$run_name))
 
 
 ## -------------------------------------------------------------------
@@ -603,7 +612,8 @@ save(crps, crps.boot, crps_skill, crps.boot_skill, crps.agg, crps.agg_skill,
 if (opt$plot) {
 
   ## Plot crps skill scores
-  load(file = sprintf("results/circforest_validation_%s_lag%s_%s.rda", opt$station, opt$lag, opt$run_name))
+  load(file = sprintf("results/circforest_validation_%s_lag%s_%s%s.rda", opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), 
+    opt$run_name))
 
   ## Plot crps scores
   X11(width = 8, height = 4.5)
@@ -614,8 +624,8 @@ if (opt$plot) {
          mean(unlist(crps["persistence"]), na.rm = TRUE),
          mean(unlist(crps["tree"]), na.rm = TRUE),
          mean(unlist(crps["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_%s_lag%s_%s.pdf", 
-    opt$station, opt$lag, opt$run_name))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_%s_lag%s_%s%s.pdf", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
@@ -625,8 +635,8 @@ if (opt$plot) {
          mean(unlist(crps.boot["persistence"]), na.rm = TRUE),
          mean(unlist(crps.boot["tree"]), na.rm = TRUE),
          mean(unlist(crps.boot["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_boot_%s_lag%s_%s.pdf", 
-    opt$station, opt$lag, opt$run_name))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsraw_boot_%s_lag%s_%s%s.pdf", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
@@ -636,15 +646,15 @@ if (opt$plot) {
          mean(unlist(crps_skill["persistence"]), na.rm = TRUE),
          mean(unlist(crps_skill["tree"]), na.rm = TRUE),
          mean(unlist(crps_skill["forest"]), na.rm = TRUE)), "*", cex=2.5 , col = "red")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_%s_lag%s_%s.pdf", 
-    opt$station, opt$lag, opt$run_name))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_%s_lag%s_%s%s.pdf", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
   X11(width = 8, height = 4.5)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   boxplot(crps.boot_skill, ylim = c(-60, 110), col = gray(0.6),
     ylab = "CRPS skill ccore [%]", main = "Boot-strapped mean values")
-  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_%s_lag%s_%s.pdf", 
-    opt$station, opt$lag, opt$run_name))
+  dev.print(pdf, sprintf("results/_plot_circforest_validation_crpsskill_boot_%s_lag%s_%s%s.pdf", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
   library(ggplot2)
   library(reshape2)
@@ -670,8 +680,8 @@ if (opt$plot) {
 
   dev.new(width=8, height=4.5)
   print(ggarrange(p1, legend = "none"))
-  pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_%s_lag%s_%s.pdf",
-    opt$station, opt$lag, opt$run_name)
+  pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_%s_lag%s_%s%s.pdf",
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name)
   ggsave(pdf_file)
 
   crps.m <- melt(crps[, c("climatology", "persistence", "tree", "forest")], variable.name = "model")
@@ -694,20 +704,20 @@ if (opt$plot) {
 
   dev.new(width=8, height=4.5)
   print(ggarrange(p2, legend = "none"))
-  pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw2_%s_lag%s_%s.pdf",
-    opt$station, opt$lag, opt$run_name)
+  pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw2_%s_lag%s_%s%s.pdf",
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name)
   ggsave(pdf_file)
 
 
   ## Plot single tree
-  m_ct.plot <- readRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s_4plotting.rds",    
-    opt$station, opt$lag, opt$run_name))
+  m_ct.plot <- readRDS(m_ct.plot, file = sprintf("results/circforest_model_tree_%s_lag%s_%s%s_4plotting.rds",    
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 
   X11(width = 18, height = 10)
   par(mar = c(3.1, 4.1, 2.1, 2.1))
   plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(type = "response", plot_type = "geographics"), 
     ip_args = list(pval = FALSE))
-  dev.print(pdf, sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s.pdf", 
-    opt$station, opt$lag, opt$run_name))
+  dev.print(pdf, sprintf("results/_plot_circforest_exampletree_%s_lag%s_%s%s.pdf", 
+    opt$station, opt$lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name))
 }
 
