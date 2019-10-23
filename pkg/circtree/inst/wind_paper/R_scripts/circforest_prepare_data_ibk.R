@@ -276,7 +276,7 @@ if(file.exists(datafile)) {
   lowvis_data <- lag(lowvis_data, -mylag)
   lowvis_data <- make_strict(lowvis_data, index(response_lag))
 
-  ## Calculate spatial differences (just for wind speed and direction)
+  ## Calculate spatial differences (just for wind speed, direction and temperature)
   for(i_param in names(lowvis_data)[!grepl("(2min|_min|_max|ch|diff)", names(lowvis_data))]){
     if(grepl("dd", i_param)){
       eval(parse(text = sprintf("%1$s$%2$s.diff_resp <- calc_angle_dist(response_lag$dd, %1$s$%2$s, direction = TRUE, unit = 'deg')",
@@ -284,12 +284,15 @@ if(file.exists(datafile)) {
     } else if (grepl("ff", i_param)) {
       eval(parse(text = sprintf("%1$s$%2$s.diff_resp <- response_lag$ff - %1$s$%2$s",
       "lowvis_data", i_param)))
+    } else if (grepl("temp", i_param)) {
+      eval(parse(text = sprintf("%1$s$%2$s.diff_resp <- response_lag$tl - %1$s$%2$s",
+      "lowvis_data", i_param)))
     }
   }
 
-  ## Get ff maximum, minimum and mean over last three hours
+  ## Get ff and temp maximum, minimum and mean over last three hours
   for(i_param in names(lowvis_data)[!grepl("(2min|_min|_max|ch|diff)", names(lowvis_data))]){
-    if (grepl("ff", i_param)){
+    if (grepl("(ff|temp)", i_param)){
       eval(parse(text = sprintf("%1$s$%2$s.max3h <- rollapply(%1$s$%2$s, width = 3, FUN = max, fill = NA, align = 'right')",
         "lowvis_data", i_param)))
       eval(parse(text = sprintf("%1$s$%2$s.min3h <- rollapply(%1$s$%2$s, width = 3, FUN = min, fill = NA, align = 'right')",

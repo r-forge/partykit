@@ -85,7 +85,7 @@ opt <- parse_args(OptionParser(option_list = option_list))
 # Pre-process data
 # -------------------------------------------------------------------
 ## Load data
-tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%sh_2018-12-01_2018-12-31_update20191023.rds", opt$station, opt$lag))
+tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%sh_2014-01-01_2018-12-31_update20191023.rds", opt$station, opt$lag))
 
 if (opt$station == "ibk") {
   ## Subset data to five years and to full hours 
@@ -105,9 +105,9 @@ if (opt$station == "ibk") {
   d <- na.omit(d)
 
   ## Calculate u and v for lagged response (ibk)
-  tmp <- ddff2uv(dd = as.numeric(d$dd.innsbruck), ff = as.numeric(d$ff.innsbruck))
-  d$u.innsbruck <- tmp$u
-  d$v.innsbruck <- tmp$v
+  tmp <- ddff2uv(dd = as.numeric(d$innsbruck.dd), ff = as.numeric(d$innsbruck.ff))
+  d$innsbruck.u <- tmp$u
+  d$innsbruck.v <- tmp$v
 
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$response.dd <- d$response.dd / 360 * 2*pi
@@ -132,8 +132,8 @@ if (opt$station == "ibk") {
 
   ## Calculate u and v for lagged response (windmessanlage 34)
   tmp <- ddff2uv(dd = as.numeric(d$wien_schwechat_flughafen.dd), ff = as.numeric(d$wien_schwechat_flughafen.ff))
-  d$u.wien_schwechat_flughafen <- tmp$u
-  d$v.wien_schwechat_flughafen <- tmp$v
+  d$wien_schwechat_flughafen.u <- tmp$u
+  d$wien_schwechat_flughafen.v <- tmp$v
 
   ## Transform response.dd from 0-360 degree to [-pi, pi]
   d$response.dd <- d$response.dd / 360 * 2*pi
@@ -402,9 +402,9 @@ for (cv in unique(cvID)) {
   
     ## Fit lm model
     if(opt$station == "ibk"){
-      f.lm <- as.formula(response.dd ~ u.innsbruck + v.innsbruck + ffx.innsbruck)
+      f.lm <- as.formula(response.dd ~ innsbruck.u + innsbruck.v + innsbruck.ff)
     } else if (opt$station == "vie"){
-      f.lm <- as.formula(response.dd ~ u.wien_schwechat_flughafen + v.wien_schwechat_flughafen + ff.wien_schwechat_flughafen)
+      f.lm <- as.formula(response.dd ~ wien_schwechat_flughafen.u + wien_schwechat_flughafen.v + wien_schwechat_flughafen.ff)
     } else {
       stop("Station not supported, currently station must be 'vie' or 'ibk'...")
     }
