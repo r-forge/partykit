@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-22 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-23 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -65,7 +65,7 @@ option_list <- list(
     help = "Print extra output [default]"),
   make_option(c("-q", "--quietly"), action = "store_false",
     dest = "verbose", help = "Print little output"),
-  make_option("--run_name", type = "character", default = "v13",
+  make_option("--run_name", type = "character", default = "v14",
     help = "Run name or version of script used for output name [default \"%default\"]"),
   make_option("--station", type = "character", default = "ibk",
     help = "Weather Station used for fitting (e.g., 'ibk', 'vie') [default \"%default\"]"),
@@ -85,7 +85,7 @@ opt <- parse_args(OptionParser(option_list = option_list))
 # Pre-process data
 # -------------------------------------------------------------------
 ## Load data
-tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%sh_update20191015.rds", opt$station, opt$lag))
+tmp <- readRDS(sprintf("data/circforest_prepared_data_%s_lag%sh_2018-12-01_2018-12-31_update20191023.rds", opt$station, opt$lag))
 
 if (opt$station == "ibk") {
   ## Subset data to five years and to full hours 
@@ -94,7 +94,7 @@ if (opt$station == "ibk") {
 
   ## Remove very low values of ff 
   if(!opt$lowff){
-    d <- d[!d[, "ff.response"] < 1,] ## ff below 1 not very meaningful, but at least correctly measured
+    d <- d[!d[, "response.ff"] < 1,] ## ff below 1 not very meaningful, but at least correctly measured
   }
 
   ## Remove covariates with more than 10 nans
@@ -110,21 +110,17 @@ if (opt$station == "ibk") {
   d$v.innsbruck <- tmp$v
 
   ## Transform response.dd from 0-360 degree to [-pi, pi]
-  d$dd.response <- d$dd.response / 360 * 2*pi
-  d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
+  d$response.dd <- d$response.dd / 360 * 2*pi
+  d$response.dd[d$response.dd > pi] <- d$response.dd[d$response.dd > pi] - 2*pi
 
 } else if (opt$station == "vie") {
   ## Subset data to five years and to full hours
   tmp <- window(tmp, start = "2014-01-01", end = "2018-12-31")
   d <- tmp[as.POSIXlt(index(tmp))$min == 0L, ]; rm(tmp); gc()
 
-  ## Remove station without (hopefully) any influence
-  d <- d[, -grep("bruckneudorf|brunn_am_gebirge|eisenstadt|neusiedl_am_see|wien_stammersdorf|
-    wien_mariabrunn|zwerndorf_marchegg|altenburg|baden|mistelbach|podersdorf", names(d))]
-
   ## Remove very low values of ff
   if(!opt$lowff){
-    d <- d[!d[, "ff.response"] < 1,] ## ff == 0.5 -> dd = NA; ff == 0 -> dd = 0
+    d <- d[!d[, "response.ff"] < 1,] ## ff == 0.5 -> dd = NA; ff == 0 -> dd = 0
   }
 
   ## Remove covariates with more than 10 nans
@@ -135,13 +131,13 @@ if (opt$station == "ibk") {
   d <- na.omit(d)
 
   ## Calculate u and v for lagged response (windmessanlage 34)
-  tmp <- ddff2uv(dd = as.numeric(d$dd.wien_schwechat_flughafen), ff = as.numeric(d$ff.wien_schwechat_flughafen))
+  tmp <- ddff2uv(dd = as.numeric(d$wien_schwechat_flughafen.dd), ff = as.numeric(d$wien_schwechat_flughafen.ff))
   d$u.wien_schwechat_flughafen <- tmp$u
   d$v.wien_schwechat_flughafen <- tmp$v
 
   ## Transform response.dd from 0-360 degree to [-pi, pi]
-  d$dd.response <- d$dd.response / 360 * 2*pi
-  d$dd.response[d$dd.response > pi] <- d$dd.response[d$dd.response > pi] - 2*pi
+  d$response.dd <- d$response.dd / 360 * 2*pi
+  d$response.dd[d$response.dd > pi] <- d$response.dd[d$response.dd > pi] - 2*pi
 
 } else {
   stop("Station not supported, currently station must be 'vie' or 'ibk'...")
@@ -183,7 +179,7 @@ for (i in seq(1:nrow(d))) {
   train_weights <- train_weights / sum(train_weights) * 1
 
   ## Perform fit only if values vary
-  train_response <- as.numeric(train$dd.response)
+  train_response <- as.numeric(train$response.dd)
 
   if (!all(train_response == train_response[1])) {
     ## Fit persistency
@@ -247,7 +243,7 @@ for (i in seq(1:nrow(d))) {
   train_weights <- train_weights / sum(train_weights) * 1
 
   ## Perform fit only if values vary
-  train_response <- as.numeric(train$dd.response)
+  train_response <- as.numeric(train$response.dd)
 
   if (!all(train_response == train_response[1])) {
     ## Fit persistency
@@ -323,7 +319,7 @@ for (cv in unique(cvID)) {
       next
     }
     
-    train_response <- as.numeric(train_subset$dd.response)
+    train_response <- as.numeric(train_subset$response.dd)
 
     ## Perform fit only if values vary
     if (!all(train_response == train_response[1])) {
@@ -366,7 +362,7 @@ pred_lm <- lapply(unique(cvID), function(x) data.frame(mu = rep(NA, sum(cvID == 
   kappa = rep(NA, sum(cvID == x))))
 
 d.lm <- d
-d.lm[d.lm$dd.response < 0] <- d.lm$dd.response[d.lm$dd.response < 0] + 2 * pi
+d.lm[d.lm$response.dd < 0] <- d.lm$response.dd[d.lm$response.dd < 0] + 2 * pi
 
 for (cv in unique(cvID)) { 
   if (opt$verbose) cat(sprintf("Fitting models cv %s/%s\n", cv, max(cvID)))
@@ -406,9 +402,9 @@ for (cv in unique(cvID)) {
   
     ## Fit lm model
     if(opt$station == "ibk"){
-      f.lm <- as.formula(dd.response ~ u.innsbruck + v.innsbruck + ffx.innsbruck)
+      f.lm <- as.formula(response.dd ~ u.innsbruck + v.innsbruck + ffx.innsbruck)
     } else if (opt$station == "vie"){
-      f.lm <- as.formula(dd.response ~ u.wien_schwechat_flughafen + v.wien_schwechat_flughafen + ff.wien_schwechat_flughafen)
+      f.lm <- as.formula(response.dd ~ u.wien_schwechat_flughafen + v.wien_schwechat_flughafen + ff.wien_schwechat_flughafen)
     } else {
       stop("Station not supported, currently station must be 'vie' or 'ibk'...")
     }
@@ -452,7 +448,7 @@ d$doy <- tmp_time$yday + 1
 rm(tmp_time); gc()
 
 ## Set up formula
-f <- as.formula(paste("dd.response ~ ", paste(names(d)[-grep("response", names(d))], collapse= "+")))
+f <- as.formula(paste("response.dd ~ ", paste(names(d)[-grep("response", names(d))], collapse= "+")))
 
 ## Fit single tree for visualization
 m_ct.plot <- circtree(formula = f,
@@ -539,7 +535,7 @@ pred_lm <- readRDS(file = sprintf("results/circforest_pred_lm_%s_lag%s_%s%s.rds"
 pred <- list(tree = do.call("rbind", pred_ct), forest = do.call("rbind", pred_cf), 
   climatology = do.call("rbind", pred_clim), linear_model = do.call("rbind", pred_lm),
   persistence_hour = pred_pers_hour, persistence_day = pred_pers_day)
-obs  <- d$dd.response
+obs  <- d$response.dd
 
 ## Remove nans (if any)
 idx <- do.call(rbind, sapply(pred, function(x) which(is.na(x) | x$mu < -pi | x$mu > pi, arr.ind=TRUE)))
