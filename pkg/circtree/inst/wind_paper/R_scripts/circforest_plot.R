@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-21 on thinkmoritz
+# - L@ST MODIFIED: 2019-10-22 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -148,6 +148,85 @@ for (i_station in c("ibk", "vie")){
     plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(template = "geographics"), 
       ip_args = list(pval = FALSE))
     dev.off()
+  
+    if(file.exists(lowff_file <- sprintf("results/circforest_validation_%s_lag%s_with_lowff_%s.rda", i_station, i_lag, opt$run_name))) {
+
+      load(lowff_file)
+
+      crps_lowff.m <- melt(crps[, c("climatology", "persistence_hour", "persistence_day", "linear_model", "tree", "forest")],
+        variable.name = "model")
+      crps_lowff.m$model <- plyr::revalue(crps_lowff.m$model,
+        c("climatology" = "Climatology",
+        "persistence_hour" = "Persistence\nHour",
+        "persistence_day" = "Persistence\nDay",
+        "linear_model" = "Linear\nModel",
+        "tree" = "Tree",
+        "forest" = "Forest"))
+      crps_lowff.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
+      crps_lowff.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
+
+      crps_lowff.agg.m <- melt(crps.agg[, c("climatology", "persistence_hour", "persistence_day", "linear_model",
+        "tree", "forest")], variable.name = "model")
+      crps_lowff.agg.m$model <- plyr::revalue(crps_lowff.agg.m$model,
+        c("climatology" = "Climatology",
+        "persistence_hour" = "Persistence\nHour",
+        "persistence_day" = "Persistence\nDay",
+        "linear_model" = "Linear\nModel",
+        "tree" = "Tree",
+        "forest" = "Forest"))
+      crps_lowff.agg.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
+      crps_lowff.agg.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
+
+      crps_lowff.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
+      crps_lowff.agg_skill.m$model <- plyr::revalue(crps_lowff.agg_skill.m$model,
+        c("climatology" = "Climatology",
+        "persistence_hour" = "Persistence\nHour",
+        "persistence_day" = "Persistence\nDay",
+        "linear_model" = "Linear\nModel",
+        "tree" = "Tree",
+        "forest" = "Forest"))
+      crps_lowff.agg_skill.m$station <- factor(i_station, levels = c("ibk", "vie"), labels = c("Innsbruck", "Vienna"))
+      crps_lowff.agg_skill.m$lag <- factor(i_lag, levels = c("1", "3"), labels = c("1-hour forecast", "3-hour forecast"))
+
+      ## Plot raw crps    
+      p1 <- ggplot(crps_lowff.m, aes(x = model, y = value)) +
+            geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+            stat_boxplot(geom = "errorbar", width = 0.2) +
+            geom_boxplot(fill = "gray60")
+      p1 <- p1 + labs(x = "", y = "CRPS [rad]")
+
+      dev.new(width=8, height=4.5)
+      print(ggarrange(p1, legend = "none"))
+      pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_%s_lag%s_with_lowff_%s.pdf",
+        i_station, i_lag, opt$run_name)
+      ggsave(pdf_file)
+
+      ## Plot crps skill scores   
+      p2 <- ggplot(crps_lowff.agg_skill.m, aes(x = model, y = value)) +
+            geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+            stat_boxplot(geom = "errorbar", width = 0.2) +
+            geom_boxplot(fill = "gray60")
+      p2 <- p2 + labs(x = "", y = "CRPS skill score [%]")
+
+      dev.new(width=8, height=4.5)
+      print(ggarrange(p2, legend = "none"))
+      pdf_file <- sprintf("results/_plot_circforest_validation_crpsskill_agg_%s_lag%s_with_lowff_%s.pdf",
+        i_station, i_lag, opt$run_name)
+      ggsave(pdf_file)
+
+      ## Plot single tree
+      m_ct.plot <- readRDS(file = sprintf("results/circforest_model_tree_%s_lag%s_with_lowff_%s_4plotting.rds",
+        i_station, i_lag, opt$run_name))
+
+      pdf(file = sprintf("results/_plot_circforest_exampletree_%s_lag%s_with_lowff_%s.pdf",
+        i_station, i_lag, opt$run_name), width = 18, height = 10)
+      par(mar = c(3.1, 4.1, 2.1, 2.1))
+      plot(m_ct.plot, ep_args = list(justmin = 10), tp_args = list(template = "geographics"),
+        ip_args = list(pval = FALSE))
+      dev.off()
+
+    }
+
   }
 }
 
