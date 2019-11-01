@@ -74,7 +74,7 @@ After installation, the package can be loaded as follows:
 library("glmertree")
 @
 %
-The main functions in package \pkg{glmertree} are \code{lmertree()} for continuous outcome variables, and \code{glmertree()} for binary or count outcome variables. Both functions require specification of a \code{formula} and \data{data} argument, as will also be illustrated in the examples below. The various methods that are available to plot and print the fitted models and to extract further information will also be shown in the examples below. 
+The main functions in package \pkg{glmertree} are \code{lmertree()} for continuous outcome variables, and \code{glmertree()} for binary or count outcome variables. Both functions require specification of a \code{formula} and \code{data} argument, as will also be illustrated in the examples below. The various methods that are available to plot and print the fitted models and to extract further information will also be shown in the examples below. 
 
 For both main functions, the \code{formula} argument specifies the model formula, which is composed of a left- and right-hand side: the left-hand side specifies the response variable, followed by a tilde (\code{~}). The right-hand side comprises three parts: the predictors for the node-specific model (comprising fixed effects only, with coefficients that are allowed to differ over subgroups), the global model (comprising random and/or fixed effects, for which coefficients are estimated globally, using all observations) and the potential partitioning variables. The three parts of the right-hand side are separated by vertical bars: 
 \newline
