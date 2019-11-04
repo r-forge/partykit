@@ -433,7 +433,7 @@ e.g., in air traffic management or renewable energy production.
 
 \fixme{information on already available approaches to wind direction forecasting}
 
-\subsection{Motivational Example}
+\subsection{Motivational Example}\label{sec:mot_ex}
 As a first illustration Figure~\ref{fig:tree_ibk} displays a distributional
 tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
 Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
@@ -491,7 +491,7 @@ For both airports, Innsbruck and Vienna, observations of various meteorological 
 such as wind direction, temperature, air pressure and humidity
 measured either directly at the airports or at surrounding weather stations are used as 
 covariates in order to predict the wind direction at the corresponding airport 
-in the following hour.
+in the following hour(s).
 Next to the current measurements at each of the weather stations also differences in these 
 quantities between the considered stations are included. For example, differences in air 
 pressure between Innsbruck and either a western or eastern location are expected to have a 
@@ -669,12 +669,63 @@ parameter is fitted to the full learning sample.
 
 
 \subsection{Results}
-Ibk/Vie, 1h/3h
+In order to test and compare the models over varying settings not only 1-hour but also 3-hour
+forecasts are considered at both airports yielding four different scenarios of which the results
+are discussed in this section.
 
+Figure~\ref{fig:boxplot_crpsraw} illustrates the CRPS values of the employed models with a lower 
+CRPS indicating better performance. 
+In all four settings it can be observed that on average the distributional forest provides the best 
+fitting probabilistic predictions followed by the distributional tree. Especially in Vienna the 
+persistence (hour) model is only slightly behind while the linear model and the climatology
+show clearly higher CRPS values.
+
+Comparing the performances over the different locations the narrower boxes in Vienna represent
+a lower variation. This can be explained by more abrupt changes of wind directions in Innsbruck
+due to the surrounding mountains channeling wind and in that way allowing only for a limited
+number of possible wind directions (mainly the three wind regimes as discussed in the motivational
+example in Section~\ref{sec:mot_ex}). For that reason, relatively stable models such as persistency
+produce well fitting forecasts as long as wind directions remain in one of these possible states,
+however, once a change takes place it can only be an abrupt and major shift leading to high
+prediction errors as supported by the wide boxes of the persistence model in Innsbruck. In Vienna,
+on the other hand, changes can also appear in a smaller extend as the geographic surroundings do not
+constrain wind directions. This wider range of possible observations might also weaken the performance
+of the climatology as expressed by the higher CRPS values in Vienna.
+
+The impact of the different forecasting time windows of 1 and 3 hours can hardly be noticed, especially
+as it does not seem to effect the order of which method performs best. But taking a closer look
+at the CRPS values of the tree, forest and persistency reveals lower scores and hence a better 
+performance for the 1-hour forecasts as it could have been expected due to increasing uncertainties
+in a longer time window.
+
+\begin{figure}[t]
+\centering
+\setkeys{Gin}{width=1.0\textwidth}
+%\hspace{-2cm}
+\includegraphics{boxplot_crpsraw.pdf}
+\caption{}
+\label{fig:boxplot_crpsraw} 
+\end{figure}
+
+
+With the aim of excluding any possible influence of the selection of testing and training data
+the performances of the methods are also compared based on the CRPS skills score as illustrated in 
+Figure~\ref{fig:boxplot_crpsskill}. Using the climatology as reference model the values on the y-axis
+indicate the percentage of improvement of each model compared to the reference model. Overall
+the same conclusions can be drawn as from Figure~\ref{fig:boxplot_crpsraw} with the distribution
+forest leading to the highest overall improvement in model fit.
+
+\begin{figure}[t]
+\centering
+\setkeys{Gin}{width=1.0\textwidth}
+%\hspace{-2cm}
+\includegraphics{boxplot_crpsskill.pdf}
+\caption{}
+\label{fig:boxplot_crpsskill} 
+\end{figure}
 
 
 \section{Discussion and Outlook}
-
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
 The resulting trees can capture nonlinear changes, shifts, and potential interactions
