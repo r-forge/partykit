@@ -1,5 +1,5 @@
 extree <- function(data, 
-		   # trafo,
+		   trafo,
 		   control = extree_control(#var_select, split_select, 
 		       ...), 
 		   converged = NULL,
@@ -11,15 +11,6 @@ extree <- function(data,
     weights <- model.weights(model.frame(data))
     
     ## trafo preprocessing (if needed)
-    
-    ### this I don't want
-    trafo <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
-        estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
-        estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
-        list(estfun = estfun, objfun = -sum((data$yx$y - mean(data$yx$y))^2), converged = TRUE)
-    }
-    ###
-    
     mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
         trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
     }
