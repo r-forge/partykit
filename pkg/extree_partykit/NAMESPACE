@@ -32,6 +32,8 @@ export(
   "partysplit",
 
   ## internal tree growing infrastructure
+  "extree",
+  "extree_control",
   "extree_data",
   "extree_fit",
 

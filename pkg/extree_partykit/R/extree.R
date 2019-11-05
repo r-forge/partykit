@@ -1,19 +1,26 @@
 extree <- function(data, 
 		   fitter,
-		   control = extree_control(var_select, split_select, ...), 
+		   control = extree_control(#var_select, split_select, 
+		       ...), 
 		   converged = NULL,
 		   ...) {
 
     ## check / preprocess extree data
+    # d <- data
+    subset <- partykit:::.start_subset(data = data)
+    weights <- model.weights(model.frame(data))
     
     ## trafo preprocessing (if needed)
+    fitter <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
+        fitter(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
+    }
 
     ## converged preprocessing (if needed)
 
     ## set up trafo
     update <- function(subset, weights, control, doFit = TRUE) {
-	partykit::extree_fit(data = d, trafo = fitter, converged = converged,
-			     partyvars = d$variables$z, subset = subset,
+	partykit::extree_fit(data = data, trafo = fitter, converged = converged,
+			     partyvars = data$variables$z, subset = subset,
 			     weights = weights, ctrl = control, doFit = doFit)  
     }
 
