@@ -1,0 +1,44 @@
+#################################
+Replication material for: 
+The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE (2019)
+by Lisa Schlosser and Torsten Hothorn and Achim Zeileis
+#################################
+
+
+The simulation results can be reproduced by the function calls in the file 
+simulation.R
+
+The corresponding figures can be reproduced by the function calls in the file
+figures.R
+
+The already calculated simulation results are provided in the folder 'results' containing three .rda files:
+sim_stump.rda
+sim_3way.rda
+sim_tree.rda
+
+If results should not be recalculated for producing figures, the .rda files need
+to be exported from the folder 'results' to the main folder 'simulation', otherwise 
+the results are recalculated when executing figures.R.
+
+Functions applied in the simulation are provided in the source files 
+tests_guideprune.R
+guidelike.R
+ccprune.R
+
+The file tests_guideprune.R contains the data generating proceses and the evaluation functions 
+providing the general framework to apply all tests considered in the study and obtain results 
+already prepared for illustration.
+
+The file guidelike.R contains the testing functions, i.e., the modifications of CTree and MOB 
+and the reimplementation of GUIDE also allowing for modifications.
+
+The file ccprune.R contains the reimplementation of cost-complexity pruning.
+
+For the partykit package a development version (1.2-4.2) which is based on version 1.2-4 is applied. 
+Contrary to version 1.2.4 (as currently available on CRAN) this development version provides M-fluctuation-tests. 
+Therefore, the applied development version is provided in the folder 'simulation' named partykit_1.2-4.2.tar.gz.
+
+Computation time for full reproduction of results (on our machines, using 3 kernels): 296 hours and 20 min consisting of
+approximately 21 h for the "stump" scenario 
++ 20 min for the full factorial analysis of the building blocks in the "stump" scenario 
++ 275 h for the "tree" scenario.
