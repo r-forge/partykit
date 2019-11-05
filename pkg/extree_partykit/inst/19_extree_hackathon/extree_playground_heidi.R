@@ -5,11 +5,11 @@ my_data <- extree_data(Ozone ~ Wind + Temp,
     data = airq, yx = "matrix")
 
 ## This currently needs to be done within extree
-# fitter <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
-#     estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
-#     estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
-#     list(estfun = estfun, converged = TRUE)
-# }
+trafo <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
+    estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
+    estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
+    list(estfun = estfun, objfun = -sum((data$yx$y - mean(data$yx$y))^2), converged = TRUE)
+}
 
 my_split <- function(...) {
     msfn <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
@@ -32,7 +32,7 @@ my_split <- function(...) {
 # debug(my_split)
 # undebug(partykit:::.extree_node)
 
-tr <- extree(data = my_data, #trafo = fitter, 
+tr <- extree(data = my_data, trafo = trafo, 
     control = c(extree_control(criterion = "statistic",
         logmincriterion = log(1 - 0.04),
         update = TRUE,
