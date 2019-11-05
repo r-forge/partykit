@@ -1,3 +1,30 @@
+extree <- function(data, 
+		   fitter,
+		   control = extree_control(var_select, split_select, ...), 
+		   converged = NULL,
+		   ...) {
+
+    ## check / preprocess extree data
+    
+    ## trafo preprocessing (if needed)
+
+    ## converged preprocessing (if needed)
+
+    ## set up trafo
+    update <- function(subset, weights, control, doFit = TRUE) {
+	partykit::extree_fit(data = d, trafo = fitter, converged = converged,
+			     partyvars = d$variables$z, subset = subset,
+			     weights = weights, ctrl = control, doFit = doFit)  
+    }
+
+    ## fit
+    tree <- update(subset = subset, weights = weights, control = control)
+
+    ## prepare extree object
+    
+}
+
+
 
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
     ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
