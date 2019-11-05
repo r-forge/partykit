@@ -1,5 +1,5 @@
 extree <- function(data, 
-		   fitter,
+		   # trafo,
 		   control = extree_control(#var_select, split_select, 
 		       ...), 
 		   converged = NULL,
@@ -11,15 +11,24 @@ extree <- function(data,
     weights <- model.weights(model.frame(data))
     
     ## trafo preprocessing (if needed)
-    fitter <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
-        fitter(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
+    
+    ### this I don't want
+    trafo <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
+        estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
+        estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
+        list(estfun = estfun, objfun = -sum((data$yx$y - mean(data$yx$y))^2), converged = TRUE)
+    }
+    ###
+    
+    mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
+        trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
     }
 
     ## converged preprocessing (if needed)
 
     ## set up trafo
     update <- function(subset, weights, control, doFit = TRUE) {
-	partykit::extree_fit(data = data, trafo = fitter, converged = converged,
+	partykit::extree_fit(data = data, trafo = mytrafo, converged = converged,
 			     partyvars = data$variables$z, subset = subset,
 			     weights = weights, ctrl = control, doFit = doFit)  
     }
