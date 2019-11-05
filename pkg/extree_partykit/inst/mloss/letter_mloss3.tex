@@ -1,0 +1,58 @@
+\documentclass[ngerman,uzh]{scrlttr2}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+%% ANPASSUNGSMÖGLICHKEITEN
+\KOMAoptions{%
+%backaddress=false%  Keine Rücksendeadresse im Adressfeld
+%,foldmarks=false%  Faltmarken ausschalten
+}
+
+\usepackage{babel}
+
+
+\begin{document}
+
+%% VARIABLEN
+% Falls Unterschrift vom definierten Namen abweicht:
+\setkomavar{signature}{Torsten Hothorn}
+\setkomavar{subject}{Betreff}
+%\setkomavar{specialmail}{Interne Post}
+
+\begin{letter}{
+Dr.~Cheng Soon Ong \\
+MLOSS Editor \\
+Journal of Machine Learning Research}
+
+\subject{JMLR-14-133-3 revision}
+
+\opening{Dear Cheng Soon,}
+
+I uploaded a revised version of our manuscript
+``\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in R'' to the
+Machine Learning Open-Source Software track of the Journal of Machine
+Learning Research.
+
+Reviewer~3 suggested to add forest functionality to the \emph{partykit}
+package to increase it breadth.
+This suggestion was already brought up in the previous revision by
+Reviewer~2 and answered to the satisfaction of the first two reviewers:
+While the basic idea for setting up a generic class for ``random forests''
+is straightforward, many of the details in the implementation are not
+obvious at all and deserve much more attention.  
+Of course, we could easily copy the code of the old \texttt{party::cforest}
+into the new \emph{partykit} package but this would not increase the
+usefulness for the practitioner because \emph{party} is easily available. We
+therefore decided not to follow the suggestion by reviewer~3 for the same
+reasons as explained in the previous round and, in more detail now, the
+rebuttal letter.
+
+We revised the manuscript following the Instructions for Authors closely and
+will send the copyright forms upon acceptance.
+
+Best regards, \\
+\includegraphics[width = .25\textwidth]{TH_Unterschrift}
+
+\end{letter}
+
+\end{document}

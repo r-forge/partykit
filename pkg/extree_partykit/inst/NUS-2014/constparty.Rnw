@@ -1,0 +1,955 @@
+\documentclass[11pt,compress,t]{beamer}
+
+\usetheme{uzhneu-en-informal}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts,amstext,amsmath,amssymb,amsthm}
+
+%% instead of \usepackage{Sweave}
+\definecolor{InputColor}{rgb}{0,0,0.3}
+\definecolor{OutputColor}{rgb}{0.2,0.2,0.2}
+\setkeys{Gin}{width=0.8\textwidth}
+\RequirePackage{fancyvrb,upquote}
+\renewcommand{\ttdefault}{laett}
+\DefineVerbatimEnvironment{Scode}{Verbatim}{}
+\DefineVerbatimEnvironment{Sinput}{Verbatim}{formatcom=\color{InputColor}}
+\DefineVerbatimEnvironment{Soutput}{Verbatim}{formatcom=\color{OutputColor}}
+\newenvironment{Schunk}{\fontsize{9}{10}\selectfont}{}
+
+%% commands
+\newcommand{\code}[1]{{\tt \small #1}}
+\let\class\code
+\let\fct\code
+\let\doi\code
+\newcommand{\dquote}[1]{``#1''}
+\newcommand{\ui}{\underline{i}}
+\newcommand{\oi}{\overline{\imath}}
+\newcommand{\darrow}{\stackrel{\mbox{\tiny \textnormal{d}}}{\longrightarrow}}
+\newcommand{\parrow}{\stackrel{\mbox{\tiny \textnormal{p}}}{\longrightarrow}}
+\newcommand{\dotequals}{\stackrel{\cdot}{=}}
+\newcommand{\efp}{\mathrm{\it efp}}
+\newcommand{\given}{\, | \,}
+\newcommand{\ltime}{\lambda_\mathrm{time}}
+\newcommand{\lcomp}{\lambda_\mathrm{comp}}
+\newcommand{\argmin}{\operatorname{argmin}\displaylimits}
+
+\SweaveOpts{engine=R, eps=FALSE, echo=FALSE, results=hide, keep.source=TRUE}
+
+<<packages>>=
+library("partykit")
+library("Formula")
+library("rpart")
+library("RWeka")
+library("evtree")
+@
+
+<<data>>=
+data("Titanic", package = "datasets")
+ttnc <- as.data.frame(Titanic)
+ttnc <- ttnc[rep(1:nrow(ttnc), ttnc$Freq), 1:4]
+names(ttnc)[2] <- "Gender"
+ttnc <- transform(ttnc, Treatment = factor(
+  Gender == "Female" | Age == "Child",
+  levels = c(FALSE, TRUE),
+  labels = c("Normal\n(Male&Adult)", "Preferential\n(Female|Child)")
+))
+set.seed(1071)
+@
+
+<<rpart, eval=FALSE>>=
+rp <- rpart(Survived ~ Gender + Age + Class, data = ttnc)
+@
+
+<<ctree, eval=FALSE>>=
+ct <- ctree(Survived ~ Gender + Age + Class, data = ttnc,
+  control = ctree_control(mincrit = 1 - 0.01, teststat = "max"))
+@
+
+<<evtree, eval=FALSE>>=
+ev <- evtree(Survived ~ Gender + Age + Class, 
+  data = ttnc, maxdepth = 3)
+@
+
+<<pmml, eval=FALSE>>=
+pm <- pmmlTreeModel(system.file("pmml", "ttnc.pmml",
+  package = "partykit"))
+@
+
+<<mob, eval=FALSE>>=
+mb <- glmtree(Survived ~ Treatment | Age + Gender + Class,
+  data = ttnc, family = binomial, alpha = 0.01)
+@
+
+<<mytree, eval=FALSE>>=
+findsplit <- function(response, data, weights) {
+
+  ### extract response values from data
+  y <- data[[response]]
+
+  ### cycle through all features
+  logpmin <- 0; xselect <- NULL
+  for (i in which(names(data) != response)) {
+
+    ### expand data by case weights
+    x <- data[[i]]
+    xt <- rep(x, weights) 
+    yt <- rep(y, weights)
+
+    ### set-up all possible splits in two daughter nodes
+    lev <- levels(xt[drop = TRUE])
+    if (length(lev) == 1) next()
+    if (length(lev) == 2) comb <- list(lev[1])
+    if (length(lev) > 2) 
+        comb <- do.call("c", lapply(1:(length(lev) - 2),
+            function(x) combn(lev,x, simplify = FALSE)))
+
+    ### assess all potential splits by their chi^2 test log p-value
+    logp <- sapply(comb, function(q) {   
+      ct <- chisq.test(table(yt, xt %in% q))
+      pchisq(ct$statistic, ct$parameter, log = TRUE, lower.tail = FALSE)
+    })
+
+    ### if the best split in variable i significant AND
+    ### better than what we already had store this information
+    if (min(logp) < logpmin & min(logp) < log(0.01)) {
+      logpmin <- min(logp)
+      xselect <- i
+      splitpoint <- comb[[which.min(logp)]]
+    }
+  }
+   
+  ### no significant split found, give up  
+  if (is.null(xselect)) return(NULL)
+   
+  ### return split as partysplit object
+  return(partysplit(
+      varid = as.integer(xselect),         ### which variable?   
+      index = levels(data[[xselect]]) %in%
+              splitpoint + 1L,             ### which split point?
+      info = list(p.value = exp(logpmin)   ### save p-value in addition
+  )))
+}
+growtree <- function(id = 1L, response, data, weights) {
+
+  ### for less than 30 observations stop here
+  if (sum(weights) < 30) return(partynode(id = id))
+
+  ### find best split
+  sp <- findsplit(response, data, weights)
+  ### no split found, stop here
+  if (is.null(sp)) return(partynode(id = id))
+
+  ### actually split the data
+  kidids <- kidids_split(sp, data = data)
+
+  ### set-up all daugther nodes
+  kids <- vector(mode = "list", length = max(kidids))
+  for (kidid in 1:max(kidids)) {
+  ### select observations for current node
+  w <- weights
+  w[kidids != kidid] <- 0
+  ### get next node id
+  if (kidid > 1) {
+    myid <- max(nodeids(kids[[kidid - 1]]))
+  } else {
+    myid <- id
+  }
+  ### start recursion on this daugther node
+  kids[[kidid]] <- growtree(id = as.integer(myid + 1), response, data, w)
+  }
+
+  ### return nodes  
+  return(partynode(id = as.integer(id), split = sp, kids = kids))
+}
+mytree <- function(formula, data, weights = NULL) {
+
+  ### name of the response variable
+  response <- all.vars(formula)[1]
+  ### data without missing values, response comes last
+  data <- data[complete.cases(data), c(all.vars(formula)[-1], response)]
+  ### data is factors only
+  stopifnot(all(sapply(data, is.factor)))
+
+  if (is.null(weights)) weights <- rep(1L, nrow(data))
+  ### weights are case weights, i.e., integers
+  stopifnot(length(weights) == nrow(data) &
+    max(abs(weights - floor(weights))) < .Machine$double.eps)
+
+  ### grow tree
+  nodes <- growtree(id = 1L, response, data, weights)
+
+  ### compute terminal node number for each observation
+  fitted <- fitted_node(nodes, data = data)
+  ### return rich constparty object
+  ret <- party(nodes, 
+    data = data,
+    fitted = data.frame(
+      "(fitted)" = fitted,
+      "(response)" = data[[response]],
+      "(weights)" = weights,
+      check.names = FALSE),
+    terms = terms(formula))
+  as.constparty(ret)
+}  
+myttnc <- mytree(Survived ~ Class + Age + Gender, data = ttnc)
+@
+
+<<cache>>=
+if(file.exists("constparty-trees.rda")) load("constparty-trees.rda") else {
+<<rpart>>
+<<ctree>>
+<<evtree>>
+<<pmml>>
+<<mob>>
+<<mytree>>
+save(rp, ct, ev, pm, mb, myttnc, file = "constparty-trees.rda")
+}
+@
+
+<<J48>>=
+j48 <- J48(Survived ~ Gender + Age + Class, data = ttnc)
+@
+
+<<Morgen+Sonquist-1963>>=
+ms63d <- data.frame(
+  earnings = numeric(),
+  ethnicity = factor(, levels = 1:2, labels = c("cauc", "afam")),
+  age = numeric(),
+  occupation = factor(, levels = 1:2, labels = c("other", "farmer")),
+  education = factor(, levels = 1:4, labels = c("elementary", "highschool", "college", "university"), ordered = TRUE)
+)
+
+ms63p <- partynode(1L,
+  split = partysplit(2L, index = 1:2),
+  kids = list(
+    partynode(2L,
+      split = partysplit(3L, breaks = 65, right = FALSE),
+      kids = list(
+        partynode(3L,
+	  split = partysplit(4L, index = 1:2),
+	  kids = list(
+	    partynode(4L,
+	      split = partysplit(5L, breaks = 3L, right = FALSE),
+	      kids = list(
+	        partynode(5L,
+		  split = partysplit(5L, breaks = 2L, right = FALSE),
+		  kids = list(
+		    partynode(6L, info = "$5000"),
+		    partynode(7L, info = "$6500")
+		  )
+		),
+		partynode(8L,
+		  split = partysplit(3L, breaks = 45, right = FALSE),
+		  kids = list(
+		    partynode(9L, info = "$7000"),
+		    partynode(10L, info = "$9000")
+		  )
+		)
+	      )
+	    ),
+	    partynode(11L, info = "$4500")
+	  )
+	),
+	partynode(12L,
+	  split = partysplit(5L, breaks = 2L, right = FALSE),
+	  kids = list(
+	    partynode(13L, info = "$2200"),
+	    partynode(14L, info = "$4500")
+	  )
+	)
+      ),
+      info = "$5500"
+    ),
+    partynode(15L,
+      split = partysplit(5L, breaks = 2L, right = FALSE),
+      kids = list(
+        partynode(16L, info = "$2500"),
+	partynode(17L, info = "$5000")
+      ),
+      info = "$3000"
+    )
+  ),
+  info = "$5000"
+)
+ms63p <- party(ms63p, ms63d)
+@
+
+\begin{document}
+
+\title[Constant Partying]{Constant Partying: \\ 
+      Introducing a Generic Toolkit for Recursive Partitioning in R}
+\author{Torsten Hothorn (Universit\"at Z\"urich) \\
+        Achim Zeileis (Universit\"at Innsbruck)}
+\date{NUS 2014}
+%\URL{http://user.math.uzh.ch/hothorn/}
+%\lecture{partykit: A Toolkit for Recursive Partytioning}
+
+\maketitle
+
+\begin{frame}
+\frametitle{Celebrating 50th anniversary}
+
+\begin{center}
+\includegraphics{aid-abstract}
+\end{center}
+JASA $\bold{58}(302)$ June 1963 (well, there were no early online versions, so
+most people read the paper in 1964 for the first time). \\
+
+We need a partykit!
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Celebrating 50th anniversary}
+
+\vspace*{-0.5cm}
+\begin{center}
+\includegraphics[width=\textwidth]{aid-tree}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Overview}
+
+\begin{itemize}
+  \item Status quo: R software for tree models
+  \item New package: partykit
+  \begin{itemize}
+    \item Unified infrastructure for recursive partytioning
+    \item Classes and methods
+    \item Interfaces to \code{rpart}, \code{J48}, \dots
+    \item Illustrations
+  \end{itemize}
+  \item Here and now: Intro to partykit for trees with constant fits in each node.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{R software for tree models}
+
+\textbf{Status quo:}
+The CRAN task view on ``Machine Learning'' at \url{http://CRAN.R-project.org/view=MachineLearning}
+lists numerous packages for tree-based modeling and recursive partitioning, including
+%
+\begin{itemize}
+  \item rpart (CART),
+  \item tree (CART),
+  \item mvpart (multivariate CART),
+  \item RWeka (J4.8, M5', LMT),
+  \item party (CTree, MOB),
+  \item and many more (C50, quint, stima, \dots).
+\end{itemize}
+
+\medskip
+
+\textbf{Related:} Packages for tree-based ensemble methods
+such as random forests or boosting, e.g., randomForest, gbm, mboost, etc.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{R software for tree models}
+
+\textbf{Furthermore:} Tree algorithms/software without R interface, e.g.,
+%
+\begin{itemize}
+  \item QUEST,
+  \item GUIDE,
+  \item LOTUS,
+  \item CRUISE,
+  \item \dots
+\end{itemize}
+
+\medskip
+
+\textbf{Currently:}
+All algorithms/software have to deal with similar problems \emph{but}
+provide different solutions without reusing code.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{R software for tree models}
+
+\textbf{Challenge:} For implementing new algorithms in R, code
+is required not only for fitting the tree model
+but also
+\begin{itemize}
+  \item representing fitted trees,
+  \item printing trees,
+  \item plotting trees,
+  \item computing predictions from trees.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{R software for tree models}
+
+\textbf{Question:} Wouldn't it be nice if there were an R package
+that provided code for
+\begin{itemize}
+  \item representing fitted trees,
+  \item printing trees,
+  \item plotting trees,
+  \item computing predictions from trees?
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{R software for tree models}
+
+\textbf{Answer:} The R package partykit provides unified
+infrastructure for recursive partytioning, especially
+\begin{itemize}
+  \item representing fitted trees,
+  \item printing trees,
+  \item plotting trees,
+  \item computing predictions from trees!
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Unified infrastructure}
+
+\textbf{Design principles:} Toolkit for recursive partytitioning.
+\begin{itemize}
+  \item One `agnostic' base class which can encompass an extremely wide
+        range of different types of trees.
+  \item Subclasses for important types of trees, e.g., trees with constant
+        fits in each terminal node.
+  \item Nodes are recursive objects: nodes can contain child nodes.
+  \item Keep data out of the recursive node and split structure.
+  \item Basic print, plot, and predict for raw node structure.
+  \item Customization via panel or panel-generating functions.
+  \item Coercion from existing objects (e.g., rpart) to new class.
+  \item Use simple/fast S3 classes and methods.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Base classes}
+
+\textbf{Class constructors:} Generate basic building blocks.
+\begin{itemize}
+  \item \code{partysplit(varid, breaks = NULL, index = NULL, ...)}
+
+    where \code{breaks} provides the breakpoints wrt variable \code{varid};
+    \code{index} determines to which kid node observations are assigned.
+
+  \item \code{partynode(id, split = NULL, kids = NULL, ...)}
+
+    where \code{split} is a \class{partysplit} and \code{kids} a list of \class{partynode}s.
+
+  \item \code{party(node, data, fitted = NULL, ...)}
+
+    where \code{node} is a \class{partynode} and \code{data} the
+    corresponding (learning) data (optionally without any rows) and
+    \code{fitted} the corresponding fitted node ids.
+\end{itemize}
+
+\medskip
+
+\textbf{Additionally:} All three objects have an \code{info} slot where
+optionally arbitrary information can be stored.
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Base classes}
+
+<<ms63-party, echo=TRUE, results=verbatim>>=
+str(ms63d)
+pn <- partynode(1L,
+  split = partysplit(2L, index = 1:2),
+  kids = list(
+    partynode(2L, info = "$5500"),
+    partynode(3L, info = "$3000")
+  )
+)
+py <- party(pn, ms63d)
+print(py)
+plot(py)
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Base classes}
+
+\setkeys{Gin}{width=0.65\textwidth}
+\begin{center}
+<<ms63-plot1, fig=TRUE>>=
+plot(py)
+@
+\end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Base classes}
+
+\setkeys{Gin}{width=1.2\textwidth}
+\hspace*{-1cm}%
+<<ms63-plot2, fig=TRUE, height=8, width=14>>=
+plot(ms63p, drop = TRUE, ep_args = list(justmin = 10))
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Further classes and methods}
+
+\textbf{Further classes:} For trees with constant fits in each terminal node,
+both inheriting from \class{party}.
+\begin{itemize}
+  \item \class{constparty}: Stores full observed response and fitted terminal nodes
+    in \code{fitted}; predictions are computed from empirical distribution of
+    the response.
+  \item \class{simpleparty}: Stores only one predicted response value along with
+    some summary details (such as error and sample size) for each terminal node
+    in the corresponding \code{info}.
+\end{itemize}
+
+\medskip
+
+\textbf{Methods:}
+\begin{itemize}
+  \item Display: \fct{print}, \fct{plot}, \fct{predict}.
+  \item Query: \fct{length}, \fct{width}, \fct{depth}, \fct{names}, \fct{nodeids}.
+  \item Extract: \code{[}, \code{[[}, \fct{nodeapply}.
+  \item Coercion: \fct{as.party}. 
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Illustration}
+
+\textbf{Intention:}
+\begin{itemize}
+  \item Illustrate several trees using the same data.
+  \item Here: Titanic survival data.
+  \item In case you are not familiar with it: Survival status, gender, age (child/adult), and
+    class (1st, 2nd, 3rd, crew) for the \Sexpr{nrow(ttnc)}~persons on the ill-fated
+    maiden voyage of the Titanic.
+\end{itemize}
+
+\medskip
+
+\textbf{Question:} Who survived? Or how does the probability of survival vary across
+the covariates?
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Interface to \texttt{rpart}}
+
+\textbf{CART:} Apply \fct{rpart} to preprocessed \code{ttnc} data (see \code{constparty} vignette in partykit).
+
+<<rpart-show, echo=TRUE, eval=FALSE>>=
+<<rpart>>
+@
+
+\medskip
+
+Standard plot:
+
+<<rpart-plot, echo=TRUE, eval=FALSE>>=
+plot(rp)
+text(rp)
+@
+
+\medskip
+
+Visualization via partykit:
+
+<<rpart-party-plot, echo=TRUE, eval=FALSE>>=
+plot(as.party(rp))
+@
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Interface to \texttt{rpart}}
+
+\vspace*{-0.5cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-rpart-visualization1, fig=TRUE, height=6, width=9>>=
+<<rpart-plot>>
+@
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Interface to \texttt{rpart}}
+
+\vspace*{-0.5cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-rpart-visualization2, fig=TRUE, height=8, width=12>>=
+<<rpart-party-plot>>
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Interface to \texttt{rpart}}
+\small{
+<<rpart-print, echo=TRUE, results=verbatim>>=
+rp
+@
+}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Interface to \texttt{rpart}}
+
+\small{
+<<rpart-print, echo=TRUE, results=verbatim>>=
+as.party(rp)
+@
+}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Interface to \texttt{rpart}}
+
+\textbf{Prediction:} Compare rpart's C code and partykit's R code
+
+<<rpart-predict, echo=TRUE, results=verbatim>>=
+nd <- ttnc[rep(1:nrow(ttnc), 100), ]
+system.time(p1 <- predict(rp, newdata = nd, type = "class"))
+system.time(p2 <- predict(as.party(rp), newdata = nd))
+table(rpart = p1, party = p2)
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Interface to \texttt{J48}}
+
+\textbf{J4.8:} Open-source implementation of C4.5 in RWeka.
+
+<<J48-show, echo=TRUE, eval=FALSE>>=
+<<J48>>
+@
+
+\medskip
+
+Results in a tree with multi-way splits which previously
+could only be displayed via Weka itself or Graphviz but not in R
+directly. Now:
+
+<<J48-plot, echo=TRUE, eval=FALSE>>=
+j48p <- as.party(j48)
+plot(j48p)
+@
+
+\medskip
+
+Or just a subtree:
+
+<<J48-subtree, echo=TRUE, eval=FALSE>>=
+plot(j48p[11])
+@
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Interface to \texttt{J48}}
+
+\vspace*{-0.5cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-J48-visualization, fig=TRUE, height=8, width=12>>=
+plot(as.party(j48), tp_args = list(id = FALSE))
+@
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: Interface to \texttt{J48}}
+
+\vspace*{-0.5cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-J48-visualization2, fig=TRUE, height=6, width=9>>=
+plot(as.party(j48)[11], tnex = 1)
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{partykit: Further interfaces}
+
+\textbf{PMML:} Predictive Model Markup Language. XML-based format
+exported by various software packages including SAS, SPSS, R/pmml.
+Here, import QUEST tree from SPSS.
+
+<<pmml-show, echo=TRUE, eval=FALSE>>=
+<<pmml>>
+@
+
+\medskip
+
+\textbf{evtree:} Evolutionary learning of globally optimal trees, directly
+using partykit.
+
+<<evtree-show, echo=TRUE, eval=FALSE>>=
+<<evtree>>
+@
+
+\medskip
+
+\textbf{CTree:} Conditional inference trees \fct{ctree} are reimplemented
+more efficiently within partykit.
+
+\medskip
+
+\textbf{CHAID:} R package on R-Forge, directly using partykit.
+(Alternatively, use SPSS and export via PMML.)
+
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: QUEST via PMML}
+
+\vspace*{-0.2cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-pmml-visualization, fig=TRUE, height=12, width=17>>=
+plot(pm)
+@
+
+\end{frame}
+
+\begin{frame}
+\frametitle{partykit: evtree}
+
+\vspace*{-0.5cm}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-evtree-visualization, fig=TRUE, height=8, width=12>>=
+plot(ev)
+@
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Your first partykit tree}
+
+Finally, we want to set-up a little program that implements the
+following tree algorithm for the Titanic data
+\begin{itemize}
+\item In each node, do
+  \begin{itemize}
+    \item For each explanatory variable, do
+    \begin{itemize}
+      \item compute the minimal $\chi^2$ $p$-value over all
+            possible splits in two groups
+    \end{itemize}
+  \item Select the best variable/split combination
+        and implement the split
+  \end{itemize}
+\item Recurse until $p$-value > .01 or sample size too small.
+\end{itemize}
+
+We only need three little functions:
+\begin{itemize}
+\item \code{findsplit}
+\item \code{growtree}
+\item \code{mytree}
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{findsplit}
+
+\begin{Schunk}
+\begin{Sinput}
+findsplit <- function(response, data, weights) {
+  ### response: name of the response variable   
+  ### data: data.frame with all variables
+  ### weights: case weights for current node
+ 
+  ### ... some computations
+ 
+  ### return split as partysplit object
+  return(partysplit(
+      varid = as.integer(xselect),         ### which variable?
+      index = levels(data[[xselect]]) %in%
+              splitpoint + 1L,             ### which split point?
+      info = list(p.value = exp(logpmin)   ### save p-value
+  )))
+}
+\end{Sinput}
+\end{Schunk}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{growtree}
+
+\begin{Schunk}
+\begin{Sinput}
+growtree <- function(id = 1L, response, data, weights) {
+  ### recursive function of
+  ### id: node identifier
+  ### response: name of the response variable 
+  ### data: data.frame with all variables 
+  ### weights: case weights for current node
+
+  ### ... some computations, call to findsplit()
+  ### and growtree()
+
+  ### return nodes  
+  return(partynode(id = as.integer(id), split = sp, kids = kids))
+}
+\end{Sinput}
+\end{Schunk}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{mytree}
+
+\begin{Schunk}
+\begin{Sinput}
+mytree <- function(formula, data, weights = NULL) {
+  ### formula: a model formula
+  ### data: data.frame with all variables 
+  ### weights: case weights for root node
+
+  ### ... some computations
+
+  nodes <- growtree(id = 1L, response, data, weights)
+
+  ### ... some computations
+
+  ### return rich constparty object
+  ret <- party(nodes, data = data,
+    fitted = data.frame(
+      "(fitted)" = fitted,
+      "(response)" = data[[response]],
+      "(weights)" = weights,
+      check.names = FALSE), 
+    terms = terms(formula)) 
+  as.constparty(ret)
+}  
+\end{Sinput}
+\end{Schunk}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{OK, fire away!}
+
+<<Titanic-mytree-vis, eval = FALSE, echo = TRUE>>=
+plot(mytree(Survived ~ Class + Age + Gender, data = ttnc))
+@
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Your first partykit tree}
+
+\setkeys{Gin}{width=1.1\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-mytree-vis, fig = TRUE, height=8, width=12>>=
+plot(myttnc)
+@
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Too big a tree? Prune!}
+
+\setkeys{Gin}{width=\textwidth}
+\hspace*{-0.4cm}%
+<<Titanic-mytree-prune, echo = TRUE, fig = TRUE, height=8, width=12>>=
+plot(nodeprune(myttnc, 10))
+@ 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{What's next?}
+
+\textbf{Model-based recursive partitioning:} Trees with parametric models in each node
+(e.g., based on least squares or maximum likelihood). Splitting based on parameter
+instability tests.
+
+\medskip
+
+Talk by Achim; but I'm entitled to a coffee first...
+
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Computational details}
+
+All examples have been produced with
+R~\Sexpr{with(R.Version(), paste(major, minor, sep = "."))} and packages
+\begin{itemize}
+\item partykit~\Sexpr{packageDescription("partykit")$Version},
+\item rpart~\Sexpr{packageDescription("rpart")$Version},
+\item  RWeka~\Sexpr{packageDescription("RWeka")$Version},
+\item evtree~\Sexpr{packageDescription("evtree")$Version}. 
+\end{itemize}
+All packages are
+freely available under the GPL from \url{http://R-forge.R-project.org/} (partykit~\Sexpr{packageDescription("partykit")$Version})
+or \url{http://CRAN.R-project.org/}.
+
+\end{frame}
+
+\begin{frame}
+\frametitle{References}
+
+\small
+
+Hothorn T, Zeileis A (2014).
+ \textit{partykit: A Toolkit for Recursive Partytioning.}
+ R~package vignette version~0.8-0.
+ URL~\url{https://r-forge.r-project.org/projects/partykit}
+
+\bigskip
+
+Hothorn T, Hornik K, Zeileis A (2006).
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+ \textit{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
+
+\bigskip
+
+Grubinger T, Zeileis A, Pfeiffer KP (2011).
+ \dquote{evtree: Evolutionary Learning of Globally Optimal Classification and Regression Trees in R.}
+ \textit{Working Paper~2011-20}, Working Papers in Economics and Statistics,
+ Research Platform Empirical and Experimental Economics, Universit\"at Innsbruck.
+ URL~\url{http://EconPapers.RePEc.org/RePEc:inn:wpaper:2011-20}
+
+\end{frame}
+
+
+\end{document}

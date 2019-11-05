@@ -1,0 +1,100 @@
+reference:
+  - title: "Conditional inference trees"
+    contents:
+      - ctree
+      - ctree_control
+  - title: "Model-based recursive partitioning"
+    contents:
+      - mob
+      - mob_control
+      - lmtree
+      - glmtree
+  - title: "Extensible tree learning framework (in development)"
+    contents:
+      - extree_data
+      - extree_fit
+  - title: "Random forests"
+    contents:
+      - cforest
+      - predict.cforest
+      - gettree.cforest
+  - title: "Infrastructure for recursive partitioning"
+    contents:
+      - partynode
+      - kidids_node
+      - fitted_node
+      - id_node
+      - split_node
+      - surrogates_node
+      - kids_node
+      - info_node
+      - formatinfo_node
+      - is.partynode
+      - as.partynode
+      - as.list.partynode
+      - length.partynode
+      - "[.partynode"
+      - "[[.partynode"
+      - is.terminal
+      - depth.partynode
+      - width
+      - print.partynode
+      - nodeprune.partynode
+      - partysplit
+      - kidids_split
+      - character_split
+      - varid_split
+      - breaks_split
+      - index_split
+      - right_split
+      - prob_split
+      - info_split
+      - party
+      - names.party
+      - "names<-.party"
+      - data_party
+      - node_party
+      - is.constparty
+      - is.simpleparty
+      - as.party
+      - pmmlTreeModel
+      - as.constparty
+      - as.simpleparty
+      - print.party
+      - print.simpleparty
+      - print.constparty
+      - length.party
+      - "[.party"
+      - "[[.party"
+      - depth.party
+      - width.party
+      - nodeprune.party
+      - predict.party
+      - predict_party
+      - nodeapply
+      - nodeids
+      - get_paths
+  - title: "Visualization"
+    contents:
+      - plot.party
+      - plot.constparty
+      - plot.simpleparty
+      - node_terminal
+      - node_boxplot
+      - node_barplot
+      - node_surv
+      - node_ecdf
+      - node_bivplot
+      - node_mvar
+      - node_inner
+      - edge_simple
+  - title: "Miscellaneous utilities"
+    contents:
+      - varimp.constparty
+      - varimp.cforest
+      - prune.modelparty
+      - model_frame_rpart
+  - title: "Data sets"
+    contents:
+      - HuntingSpiders
+      - WeatherPlay
