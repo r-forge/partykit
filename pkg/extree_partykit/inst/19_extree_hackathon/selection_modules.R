@@ -101,6 +101,12 @@ if(FALSE){
                     data = iris, yx = "matrix")
   
   ef <- trafo(d)
-  varsel <- var_select(ef, d, 4)
+  
+  varsel4 <- var_select(ef, d, 4)
+  varsel5 <- var_select(ef, d, 5)
+  
+  varsel <- var_select_all(ef, d)
+  
+  
 
 }
