@@ -76,30 +76,18 @@ trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = T
 source("selection_modules.R")
 
 var_select2 <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    ## TODO: what about subset???
-    res <- var_select(estfun = model$estfun, data = data, j = j)
+    res <- var_select(estfun = model$estfun, data = data, subset = subset, j = j)
     return(as.list(res))
 }
 
-var_select2_call <- function(...) {
-    var_sel_fun <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-        args <- list(...)
-        ctrl[names(args)] <- args
-        # partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, 
-        #     FUN = var_select2)
-        var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
-            var_select = var_select2)
-    }
-    return(var_sel_fun)
+var_select2_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    # args <- list(...)
+    # ctrl[names(args)] <- args
+    # partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, 
+    #     FUN = var_select2)
+    var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+        var_select = var_select2)
 }
-
-### how could we allow the following?
-## FUN = list(numeric = ..., factor = ..., ordered = ..., default = ...)
-
-### or create the list automatically
-## FUN = "foo"
-## class(z)
-## try(do.call(sprintf("var_select_%s_%s"), FUN, class(z), ...))
 
 
 ## split select with median
@@ -111,12 +99,64 @@ tr2 <- extree(data = d, trafo = trafo2,
     control = c(extree_control(criterion = "p.value",
         logmincriterion = log(1 - 0.05),
         update = TRUE,
-        selectfun = var_select2_call(),
+        selectfun = var_select2_call,
         splitfun = split_select1,
-        svselectfun = var_select2_call(),
+        svselectfun = var_select2_call,
         svsplitfun = split_select1,
         minsplit = 70),
         restart = TRUE))
 
 tr2
+
+
+
+### --- Example 3 --- ###
+### Based on selection_modules.R from Lisa
+### - iris data
+### - Trafo with estfun = y
+### - var_select with GUIDE test, but separate functions
+### - split_select with median
+
+### how could we allow the following?
+## FUN = list(numeric = ..., factor = ..., ordered = ..., default = ...)
+
+var_select3_num <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+    res <- var_select_num(estfun = model$estfun, data = data, subset = subset, j = j)
+    return(as.list(res))
+}
+
+var_select3_cat <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+    res <- var_select_cat(estfun = model$estfun, data = data, subset = subset, j = j)
+    return(as.list(res))
+}
+
+var_select3 <- list(
+    numeric = var_select3_num,
+    default = var_select3_cat
+)
+
+var_select3_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+        var_select = var_select3)
+}
+
+tr3 <- extree(data = d, trafo = trafo2, 
+    control = c(extree_control(criterion = "p.value",
+        logmincriterion = log(1 - 0.05),
+        update = TRUE,
+        selectfun = var_select3_call,
+        splitfun = split_select1,
+        svselectfun = var_select3_call,
+        svsplitfun = split_select1,
+        minsplit = 70),
+        restart = TRUE))
+
+tr3
+
+all.equal(tr2, tr3)
+
+### or create the list automatically
+## FUN = "foo"
+## class(z)
+## try(do.call(sprintf("var_select_%s_%s"), FUN, class(z), ...))
 

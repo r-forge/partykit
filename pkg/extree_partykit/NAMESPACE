@@ -159,6 +159,10 @@ S3method("plot", "party")
 S3method("data_party", "default")
 S3method("predict_party", "default")
 
+## methods for class extree_data
+S3method("str", "extree_data")
+S3method("print", "extree_data")
+S3method("dimnames", "extree_data")
 S3method("[[", "extree_data")
 S3method("model.frame", "extree_data")
 
@@ -234,3 +238,4 @@ if(getRversion() >= "3.6.0") {
   S3method(strucchange::sctest, "constparty")
   S3method(strucchange::sctest, "modelparty")
 }
+

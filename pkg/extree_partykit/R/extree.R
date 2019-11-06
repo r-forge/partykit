@@ -50,25 +50,23 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
                 split_only = FALSE, control = ctrl)
             
         } else if (is.list(var_select) && all(sapply(var_select, is.function))) {
-            ## TODO: (HS) Test and then remove warning! 
             
             ## if var_select is list of functions, apply appropriate function
-            warning("HS: has not been tested yet ;)")
             
-            ## which class is variable?
+            ### which class is variable?
             varclass <- class(extree_variable(x = data, i = j))
             
-            ## Use most appropriate class (1st), if more than one is available
-            ## Remove varclass if no var_select function is available
+            ### Use most appropriate class (1st), if more than one is available
+            ### Remove varclass if no var_select function is available
             varclass <- varclass[varclass %in% names(var_select)][1]
             
-            ## if no function for this class is provided use default function
+            ### if no function for this class is provided use default function
             if(length(varclass) == 0) {
                 stopifnot("default" %in% names(var_select))
                 varclass <- "default"
             } 
             
-            ## Run appropriate var_select function
+            ### Run appropriate var_select function
             tst <- var_select[[varclass]](model = model, trafo = trafo, data = data, 
                 subset = subset, weights = weights, j = j, 
                 split_only = FALSE, control = ctrl)
