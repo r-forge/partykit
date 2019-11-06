@@ -155,6 +155,79 @@ tr3
 
 all.equal(tr2, tr3)
 
+
+### --- Example 4 --- ###
+### Based on selection_modules.R from Lisa
+### - anorexia data
+### - Trafo with estfun = y
+### - var_select with GUIDE test, but separate functions
+### - split_select with median
+
+## data
+library("MASS")
+data("anorexia")
+d4 <- extree_data(Postwt ~ Prewt + Treat, data = anorexia, yx = "matrix")
+
+
+## split_select with median
+split_select4_num <- function(model, trafo, data, subset, weights, j, 
+    split_only = TRUE, control) {
+    
+    ## split variable at median
+    x <- model.frame(data)[[j]][subset]
+    ret <- partysplit(as.integer(j), breaks = median(x))
+    
+    return(ret)
+}
+
+
+## split_select multiway
+split_select4_cat <- function(model, trafo, data, subset, weights, j, 
+    split_only = TRUE, control) {
+    
+    
+    ## --- copied from .split
+    x <- model.frame(data)[[j]]
+    
+    index <- 1L:nlevels(x)
+    xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
+    index[xt == 0] <- NA
+    index[xt > 0 & xt < ctrl$minbucket] <- nlevels(x) + 1L
+    if (length(unique(index)) == 1) {
+        ret <- NULL
+    } else {
+        index <- unclass(factor(index))
+        ret <- partysplit(as.integer(j), index = as.integer(index))
+    }
+    ## ---
+    
+    return(ret)
+}
+
+split_select4 <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    
+    split_select_loop(model = model, trafo = trafo, data = data, 
+        subset = subset, weights = weights, whichvar = whichvar, 
+        control = ctrl, split_select = split_select4_num)
+}
+
+
+## tree
+tr4 <- extree(data = d4, trafo = trafo2, 
+    control = c(extree_control(criterion = "p.value",
+        logmincriterion = log(1 - 0.05),
+        update = TRUE,
+        selectfun = var_select3_call,
+        splitfun = split_select4,
+        svselectfun = var_select3_call,
+        svsplitfun = split_select4,
+        minsplit = 70),
+        restart = TRUE))
+
+tr4
+
+
+
 ### or create the list automatically
 ## FUN = "foo"
 ## class(z)
