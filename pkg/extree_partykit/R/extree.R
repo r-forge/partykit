@@ -6,7 +6,6 @@ extree <- function(data,
 		   ...) {
 
     ## check / preprocess extree data
-    # d <- data
     subset <- partykit:::.start_subset(data = data)
     weights <- model.weights(model.frame(data))
     
@@ -15,7 +14,7 @@ extree <- function(data,
         trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
     }
 
-    ## converged preprocessing (if needed)
+    ## TODO: converged preprocessing (if needed)
 
     ## set up trafo
     update <- function(subset, weights, control, doFit = TRUE) {
@@ -27,7 +26,7 @@ extree <- function(data,
     ## fit
     tree <- update(subset = subset, weights = weights, control = control)
 
-    ## prepare extree object
+    ## TODO: prepare extree object
     
 }
 
