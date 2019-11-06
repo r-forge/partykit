@@ -61,7 +61,7 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
             varclass <- varclass[varclass %in% names(var_select)][1]
             
             ### if no function for this class is provided use default function
-            if(length(varclass) == 0) {
+            if(length(varclass) == 0 | is.na(varclass)) {
                 stopifnot("default" %in% names(var_select))
                 varclass <- "default"
             } 
@@ -83,6 +83,33 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
     ret
 }
 
+## Split function new
+split_select_loop <- function(model, trafo, data, subset, weights, whichvar, control, split_select) {
+    if (length(whichvar) == 0) return(NULL)
+    
+    ## loop over all vars in whichvar (stop if split is found)
+    for (j in whichvar) {
+        x <- model.frame(data)[[j]]
+        
+        ret <- split_select(model = model, trafo = trafo, data = data, 
+            subset = subset, weights = weights, j = j, 
+            split_only = TRUE, control = control)
+        
+        ### check if trafo can be successfully applied to all daugther nodes 
+        ### (converged = TRUE)
+        if (ctrl$lookahead & !is.null(ret)) {
+            sp <- kidids_split(ret, model.frame(data), obs = subset)
+            conv <- sapply(unique(na.omit(sp)), function(i)
+                isTRUE(trafo(subset[sp == i & !is.na(sp)], weights = weights)$converged))
+            if (!all(conv)) ret <- NULL
+        }
+        
+        ## stop if a split was found, otherwise continue with next possible var
+        if (!is.null(ret)) break()
+    }
+    return(ret)
+}
+
 ## Select function old
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
     ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
@@ -102,6 +129,7 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
     ret
 }
 
+## Split function old
 .split <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
     if (length(whichvar) == 0) return(NULL)
     for (j in whichvar) {
