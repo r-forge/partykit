@@ -1,3 +1,39 @@
+trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL, 
+                      estfun = TRUE, object = FALSE) {
+
+  ## Get data and apply offset
+  y <- data[[1, "origin"]]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  if (!is.null(offset)) y <- y - offset
+
+  ## Get weights for subset
+  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y))[subset] else weights[subset]
+
+  ## Calculate res and rss for subset
+  m <- mean(y[subset] * weights) / mean(weights)
+  res <- y[subset] - m
+  rss <- sum(res^2 * weights)
+
+  ## Build estfun with original dimension and fill up subsetted indices
+  estfun <- matrix(0, ncol = NCOL(y), nrow = NROW(y))
+  estfun[subset, ] <- res * weights
+
+  ## Return list
+  rval <- list(
+    estfun = if(estfun) estfun else NULL,
+    unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
+    coefficients = c("mean" = m),
+    objfun = -rss,
+    object = if(object) list(nuisance = c("log(variance)" = log(rss/sum(weights)))) else NULL,
+    nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    converged = TRUE  # FIXME: (ML, LS) always converged?
+  )
+  
+  return(rval)
+
+}
+
+
+
 mtree_ols <- list(
   fit = function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
     ..., estfun = FALSE, object = FALSE)
