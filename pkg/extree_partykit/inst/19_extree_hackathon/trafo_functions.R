@@ -1,3 +1,6 @@
+# -------------------------------------------------------------------
+# Numeric trafo
+# -------------------------------------------------------------------
 trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL, 
                       estfun = TRUE, object = FALSE) {
 
@@ -33,6 +36,119 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 }
 
 
+# -------------------------------------------------------------------
+# Categorical trafo
+# -------------------------------------------------------------------
+trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL, 
+                      estfun = TRUE, object = FALSE) {
+
+  ## Get data and apply offset
+  ys <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
+
+  ## Get weights for subset
+  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y)) else weights[subset]
+
+  ## tables and probabilities
+  tab <- tapply(weights, ys, sum)
+  tab[is.na(tab)] <- 0L
+  pr <- tab/sum(tab)
+  alias <- tab == 0L
+  ix1 <- which(!alias)[1L]
+  if(estfun) ef <- matrix(0, nrow = length(ys), ncol = length(tab),
+    dimnames = list(names(ys), names(tab)))
+  
+  if(sum(!alias) < 2L) {
+    return(list(
+      estfun = NULL,
+      unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
+      coefficients = log(pr[-ix1]) - log(pr[ix1]),
+      objfun = 0,
+      object = NULL,
+      nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+      converged = TRUE  # FIXME: (ML, LS) always converged?
+    ))
+  }
+  
+  ## information required for mob()
+  rval <- list(
+    estfun = NULL,
+    unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
+    coefficients = log(pr[-ix1]) - log(pr[ix1]),
+    objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])),
+    object = NULL,
+    nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    converged = TRUE  # FIXME: (ML, LS) always converged?
+  )
+  
+  ## Build estfun with original dimension and fill up subsetted indices
+  if(estfun) {
+    rval$estfun <- matrix(0, ncol = NCOL(ys), nrow = NROW(data[[1, "origin"]]))
+    
+    cf <- log(pr) - log(pr[ix1])
+    ef[] <- rep(-pr, each = nrow(ef))
+    ef[cbind(1:nrow(ef), as.numeric(ys))] <- (1 - pr[ys])
+    ef <- ef[, !alias, drop = FALSE]
+    ef <- ef[, -1L, drop = FALSE]
+    rval$estfun[subset, ] <- ef * weights
+  }
+  
+  return(rval)
+
+}
+
+
+mtree_multinom <- list(
+  fit = function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
+    ..., estfun = FALSE, object = FALSE)
+  {
+    ## tables and probabilities
+    tab <- tapply(weights, y, sum)
+    tab[is.na(tab)] <- 0L
+    pr <- tab/sum(tab)
+    alias <- tab == 0L
+    ix1 <- which(!alias)[1L]
+    if(estfun) ef <- matrix(0, nrow = length(y), ncol = length(tab),
+      dimnames = list(names(y), names(tab)))
+  
+    if(sum(!alias) < 2L) {
+      return(list(
+        coefficients = log(pr[-ix1]) - log(pr[ix1]),
+        objfun = 0,
+        estfun = NULL,
+        object = NULL
+      ))
+    }
+  
+    ## information required for mob()
+    rval <- list(
+      coefficients = log(pr[-ix1]) - log(pr[ix1]),
+      objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])),
+      estfun = NULL,
+      object = NULL
+    )
+    if(estfun) {
+      cf <- log(pr) - log(pr[ix1])
+      ef[] <- rep(-pr, each = nrow(ef))
+      ef[cbind(1:nrow(ef), as.numeric(y))] <- (1 - pr[y])
+      ef <- ef[, !alias, drop = FALSE]
+      ef <- ef[, -1L, drop = FALSE]
+      rval$estfun <- ef * weights
+    }
+    
+    return(rval)
+  },
+  
+  ddist = function(x, par, log = FALSE) {
+    par <- matrix(par, ncol = NCOL(par))
+    par <- cbind(par, 1 - rowSums(par))
+    dmultinom(x, prob = par, log = log)
+  },
+
+  pdist = NULL,
+
+  qdist = NULL
+)
+##
 
 mtree_ols <- list(
   fit = function(y, x = NULL, start = NULL, weights = NULL, offset = NULL,
