@@ -30,8 +30,60 @@ extree <- function(data,
     
 }
 
+## new selectfunction
+var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl, var_select) {
 
+    ## set up return list + criteria matrix
+    ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+    rownames(ret$criteria) <- c("statistic", "p.value")
+    colnames(ret$criteria) <- names(model.frame(data))
+    if (length(whichvar) == 0) return(ret)
 
+    ## loop over all relevant variables and use var_select function supplied
+    for (j in whichvar) {
+        
+        
+        if(is.function(var_select)) {
+            ## if var_select is function, apply function
+            tst <- var_select(model = model, trafo = trafo, data = data, 
+                subset = subset, weights = weights, j = j, 
+                split_only = FALSE, control = ctrl)
+            
+        } else if (is.list(var_select) && all(sapply(var_select, is.function))) {
+            ## if var_select is list of functions, apply appropriate function
+            stop("to be implemented soon ;)")
+            
+            ## which class is variable?
+            varclass <- class(extree_variable(x = data, i = j))
+            
+            ## Use most appropriate class (1st), if more than one is available
+            ## Remove varclass if no var_select function is available
+            varclass <- varclass[varclass %in% names(var_select)][1]
+            
+            ## if no function for this class is provided use default function
+            if(length(varclass) == 0) {
+                stopifnot("default" %in% names(var_select))
+                varclass <- "default"
+            } 
+            
+            ## Run appropriate var_select function
+            tst <- var_select[[varclass]](model = model, trafo = trafo, data = data, 
+                subset = subset, weights = weights, j = j, 
+                split_only = FALSE, control = ctrl)
+            
+        } else {
+            ## a future option would be a character which hints to functions 
+            ## to be used.
+            stop("Variable selection strategy must currently be a function or a named list of functions.")
+        }
+        
+        ret$criteria["statistic",j] <- tst$statistic
+        ret$criteria["p.value",j] <- tst$p.value
+    }
+    ret
+}
+
+## Select function old
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
     ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
     rownames(ret$criteria) <- c("statistic", "p.value")
@@ -743,7 +795,9 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 }    
 
 ### <FIXME> document how to extract slots fast </FIXME>
-"[[.extree_data" <- function(x, i, type = c("original", "index", "scores", "missings")) {
+### <FIXME> (HS) replace [[]] with function extree_variable</FIXME>
+"[[.extree_data" <- extree_variable <- function(x, i, 
+    type = c("original", "index", "scores", "missings")) {
     type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
     switch(type, 
         "original" = {

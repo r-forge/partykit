@@ -15,7 +15,7 @@ my_data <- extree_data(Ozone ~ Wind + Temp,
 trafo1 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
     estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
     estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
-    list(estfun = estfun, objfun = -sum((data$yx$y - mean(data$yx$y))^2), converged = TRUE)
+    list(estfun = estfun, objfun = -sum((data$yx$y[subset] - mean(data$yx$y[subset]))^2), converged = TRUE)
 }
 
 ## split_select with median
@@ -75,7 +75,7 @@ trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = T
 ## var_select via GUIDE
 source("selection_modules.R")
 
-var_select2 <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
+var_select2 <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
     ## TODO: what about subset???
     res <- var_select(estfun = model$estfun, data = data, j = j)
     return(as.list(res))
@@ -85,8 +85,10 @@ var_select2_call <- function(...) {
     var_sel_fun <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
         args <- list(...)
         ctrl[names(args)] <- args
-        partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, 
-            FUN = var_select2)
+        # partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, 
+        #     FUN = var_select2)
+        var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+            var_select = var_select2)
     }
     return(var_sel_fun)
 }
