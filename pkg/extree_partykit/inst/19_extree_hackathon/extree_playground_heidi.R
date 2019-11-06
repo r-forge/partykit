@@ -19,19 +19,12 @@ trafo1 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = T
 }
 
 ## split_select with median
-split_select1 <- function(...) {
-    msfn <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+split_select1 <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
         # args <- list(...)
         
         print(whichvar)
         
         if (length(whichvar) == 0) return(NULL)
-        
-        # ## split LAST variable at median
-        # for (j in whichvar) {
-        #     x <- model.frame(data)[[j]][subset]
-        #     ret <- partysplit(as.integer(j), breaks = median(x))
-        # }
         
         ## split FIRST variable at median
         j <- whichvar[1]
@@ -39,9 +32,6 @@ split_select1 <- function(...) {
         ret <- partysplit(as.integer(j), breaks = median(x))
         
         return(ret)
-    }
-    
-    return(msfn)
 }
 
 ## run tree
@@ -50,9 +40,9 @@ tr1 <- extree(data = my_data, trafo = trafo1,
         logmincriterion = log(1 - 0.04),
         update = TRUE,
         selectfun = partykit:::.objfun_select(),
-        splitfun = split_select1(),
+        splitfun = split_select1,
         svselectfun = partykit:::.objfun_select(),
-        svsplitfun = split_select1()),
+        svsplitfun = split_select1),
         restart = TRUE))
 
 tr1
@@ -73,7 +63,7 @@ d <-  extree_data(Species ~ Petal.Width + Petal.Length,
 
 ## Trafo with estfun = y
 trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
-    estfun <- data$yx$y
+    estfun <- data$yx$y  ## data[[1, "original"]]
     estfun[-subset] <- NA
     
     # estfun <- matrix(NA, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
@@ -86,7 +76,7 @@ trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = T
 source("selection_modules.R")
 
 var_select2 <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
-    
+    ## TODO: what about subset???
     res <- var_select(estfun = model$estfun, data = data, j = j)
     return(as.list(res))
 }
@@ -101,6 +91,15 @@ var_select2_call <- function(...) {
     return(var_sel_fun)
 }
 
+### how could we allow the following?
+## FUN = list(numeric = ..., factor = ..., ordered = ..., default = ...)
+
+### or create the list automatically
+## FUN = "foo"
+## class(z)
+## try(do.call(sprintf("var_select_%s_%s"), FUN, class(z), ...))
+
+
 ## split select with median
 ## see above
 
@@ -111,9 +110,9 @@ tr2 <- extree(data = d, trafo = trafo2,
         logmincriterion = log(1 - 0.05),
         update = TRUE,
         selectfun = var_select2_call(),
-        splitfun = split_select1(),
+        splitfun = split_select1,
         svselectfun = var_select2_call(),
-        svsplitfun = split_select1(),
+        svsplitfun = split_select1,
         minsplit = 70),
         restart = TRUE))
 
