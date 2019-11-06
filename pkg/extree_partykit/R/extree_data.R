@@ -1,3 +1,22 @@
+
+## dimnames method
+dimnames.extree_data <- function(x) {
+    dimnames(x$data)
+}
+
+## str method
+str.extree_data <- function(object, max.level = 1, give.attr = FALSE, ...) {
+    cat("'extree_data':\n")
+    str(unclass(object), max.level = max.level, give.attr = give.attr, ...)
+}
+
+
+## print method
+print.extree_data <- function(x) {
+    str(x)
+}
+
+
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
     strata, scores = NULL, yx = c("none", "matrix"), ytype = c("vector", "data.frame", "matrix"), 
