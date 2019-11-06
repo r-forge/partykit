@@ -46,7 +46,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   ys <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
 
   ## Get weights for subset
-  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y)) else weights[subset]
+  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
 
   ## tables and probabilities
   tab <- tapply(weights, ys, sum)
@@ -82,7 +82,8 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   
   ## Build estfun with original dimension and fill up subsetted indices
   if(estfun) {
-    rval$estfun <- matrix(0, ncol = NCOL(ys), nrow = NROW(data[[1, "origin"]]))
+    rval$estfun <- matrix(0, ncol = length(tab), nrow = NROW(data[[1, "origin"]]),
+      dimnames = list(names(ys), names(tab)))[, -1L, drop = FALSE]
     
     cf <- log(pr) - log(pr[ix1])
     ef[] <- rep(-pr, each = nrow(ef))
