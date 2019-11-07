@@ -259,6 +259,7 @@ tr5 <- extree(data = d4, trafo = trafo2,
 
 tr5
 
+all.equal(tr4, tr5)
 
 ### --- Example 6 --- ###
 ### Based on selection_modules.R from Lisa
@@ -271,15 +272,18 @@ var_select_awesome_numeric <- var_select3_num
 var_select_awesome_default <- var_select3_cat
 
 split_select_awesome_numeric <- split_select4_num
-split_select_awesome_numeric <- split_select4_cat
+split_select_awesome_default <- split_select4_cat
 
 ctrl6 <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
-    selectfun = list(numeric = "awesome_numeric", default = "awesome_default"),
+    selectfun = list(
+        numeric = "awesome_numeric", 
+        default = "awesome_default"
+    ),
     splitfun = list(
-        numeric = split_select4_num,
-        factor = split_select4_cat
+        numeric = "awesome_numeric",
+        default = "awesome_default"
     ),
     # splitfun = "awesome",
     svselectfun = var_select3_call,
@@ -292,10 +296,6 @@ ctrl6$splitfun
 tr6 <- extree(data = d4, trafo = trafo2, 
     control = c(ctrl6, restart = TRUE))
 
-tr6
+all.equal(tr6, tr4)
 
-### or create the list automatically
-## FUN = "foo"
-## class(z)
-## try(do.call(sprintf("var_select_%s_%s"), FUN, class(z), ...))
 

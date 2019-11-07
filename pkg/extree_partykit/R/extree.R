@@ -45,7 +45,7 @@ extree <- function(data,
     onam <- unique(onam[grep(snam, onam)])
     strategy <- lapply(onam, get)
     nam <- gsub(pattern = snam, replacement = "", onam)
-    if (nam == "") nam <- regmatches(onam, regexpr("[a-z]+$", onam))
+    # if (nam == "") nam <- regmatches(onam, regexpr("[a-z]+$", onam))
     names(strategy) <- nam
     
     
@@ -93,7 +93,7 @@ extree <- function(data,
         }
         
         ## go through all list elements and choose approriate function
-        select_list <- sapply(names(select), FUN = get_strategy, simplify = FALSE, USE.NAMES = TRUE)
+        select_list <- sapply(names(select), FUN = get_strategy, simplify = TRUE, USE.NAMES = TRUE)
         return(select_list)
     }
 }
