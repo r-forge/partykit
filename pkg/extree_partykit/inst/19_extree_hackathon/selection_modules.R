@@ -1,9 +1,3 @@
-trafo <- function(data){
-  estfun <- data$yx$y
-  return(estfun)
-}
-
-
 
 # variable selection for numeric splitvariable with index j
 var_select_num <- function(estfun, data, subset, j){
@@ -125,6 +119,12 @@ var_select_all <- function(estfun, data, subset){
 
 
 if(FALSE){
+
+  trafo <- function(data){
+    estfun <- data$yx$y
+    return(estfun)
+  }
+
   
   library("partykit")
   
