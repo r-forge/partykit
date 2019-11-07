@@ -30,8 +30,57 @@ extree <- function(data,
     
 }
 
+
+.get_varclass <- function(select_list, data, j) {
+    ### which class is variable?
+    varclass <- class(extree_variable(x = data, i = j))
+    
+    ### Use most appropriate class (1st), if more than one is available
+    ### Remove varclass if no var_select function is available
+    varclass <- varclass[varclass %in% names(select_list)][1]
+    
+    ### if no function for this class is provided use default function
+    if(length(varclass) == 0 | is.na(varclass)) {
+        stopifnot("default" %in% names(select_list))
+        varclass <- "default"
+    } 
+    
+    return(varclass)
+}
+
+
+selector <- function(select, model, trafo, data, subset, weights, whichvar, control, j) {
+    
+    if(is.function(select)) {
+        ## if var_select is function, apply function
+        ret <- select(model = model, trafo = trafo, data = data, 
+            subset = subset, weights = weights, j = j, 
+            split_only = FALSE, control = control)
+        
+    } else if (is.list(select) && all(sapply(select, is.function))) {
+        
+        ## if var_select is list of functions, apply appropriate function
+        varclass <- .get_varclass(select_list = select, data = data, 
+            j = j)
+        
+        ### Run appropriate var_select function
+        ret <- select[[varclass]](model = model, trafo = trafo, data = data, 
+            subset = subset, weights = weights, j = j, 
+            split_only = FALSE, control = control)
+        
+    } else {
+        ## a future option would be a character which hints to functions 
+        ## to be used.
+        stop("Selection strategy must currently be a function or a named list of functions.")
+    }
+    
+    return(ret)
+}
+
+
 ## new selectfunction
-var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl, var_select) {
+var_select_loop <- function(model, trafo, data, subset, weights, whichvar, 
+    control, var_select) {
 
     ## set up return list + criteria matrix
     ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
@@ -42,40 +91,9 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
     ## loop over all relevant variables and use var_select function supplied
     for (j in whichvar) {
         
-        
-        if(is.function(var_select)) {
-            ## if var_select is function, apply function
-            tst <- var_select(model = model, trafo = trafo, data = data, 
-                subset = subset, weights = weights, j = j, 
-                split_only = FALSE, control = ctrl)
-            
-        } else if (is.list(var_select) && all(sapply(var_select, is.function))) {
-            
-            ## if var_select is list of functions, apply appropriate function
-            
-            ### which class is variable?
-            varclass <- class(extree_variable(x = data, i = j))
-            
-            ### Use most appropriate class (1st), if more than one is available
-            ### Remove varclass if no var_select function is available
-            varclass <- varclass[varclass %in% names(var_select)][1]
-            
-            ### if no function for this class is provided use default function
-            if(length(varclass) == 0 | is.na(varclass)) {
-                stopifnot("default" %in% names(var_select))
-                varclass <- "default"
-            } 
-            
-            ### Run appropriate var_select function
-            tst <- var_select[[varclass]](model = model, trafo = trafo, data = data, 
-                subset = subset, weights = weights, j = j, 
-                split_only = FALSE, control = ctrl)
-            
-        } else {
-            ## a future option would be a character which hints to functions 
-            ## to be used.
-            stop("Variable selection strategy must currently be a function or a named list of functions.")
-        }
+        tst <- selector(select = var_select, model = model, trafo = trafo, 
+            data = data, subset = subset, weights = weights, j = j, 
+            control = control)
         
         ret$criteria["statistic",j] <- tst$statistic
         ret$criteria["p.value",j] <- tst$p.value
@@ -84,20 +102,21 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar, ctrl,
 }
 
 ## Split function new
-split_select_loop <- function(model, trafo, data, subset, weights, whichvar, control, split_select) {
+split_select_loop <- function(model, trafo, data, subset, weights, whichvar, 
+    control, split_select) {
+    
     if (length(whichvar) == 0) return(NULL)
     
     ## loop over all vars in whichvar (stop if split is found)
     for (j in whichvar) {
-        x <- model.frame(data)[[j]]
         
-        ret <- split_select(model = model, trafo = trafo, data = data, 
-            subset = subset, weights = weights, j = j, 
-            split_only = TRUE, control = control)
+        ret <- selector(select = split_select, model = model, trafo = trafo, 
+            data = data, subset = subset, weights = weights, j = j, 
+            control = control)
         
         ### check if trafo can be successfully applied to all daugther nodes 
         ### (converged = TRUE)
-        if (ctrl$lookahead & !is.null(ret)) {
+        if (control$lookahead & !is.null(ret)) {
             sp <- kidids_split(ret, model.frame(data), obs = subset)
             conv <- sapply(unique(na.omit(sp)), function(i)
                 isTRUE(trafo(subset[sp == i & !is.na(sp)], weights = weights)$converged))
