@@ -141,7 +141,7 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 
   ## Get data and apply offset
   ys <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
-  xs <- data["yx"]$yx$x[subset, ]  # FIXME: (ML) needs to be done nicer! data copy? no aggregation possible!
+  xs <- data$yx$x[subset, ]  # FIXME: (ML) needs to be done nicer! data copy? no aggregation possible!
 
   ## Get weights for subset
   weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
