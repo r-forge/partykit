@@ -1,34 +1,104 @@
 extree <- function(data, 
-		   trafo,
-		   control = extree_control(#var_select, split_select, 
-		       ...), 
-		   converged = NULL,
-		   ...) {
-
+    trafo,
+    control = extree_control(#TODO: rename selectfun -> var_select, splitfun -> split_select, 
+        ...), 
+    converged = NULL,
+    ...) {
+    
     ## check / preprocess extree data
     subset <- partykit:::.start_subset(data = data)
     weights <- model.weights(model.frame(data))
     
-    ## trafo preprocessing (if needed)
+    
+    
+    
+    ## trafo preprocessing
     mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
         trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
     }
-
+    
     ## TODO: converged preprocessing (if needed)
-
+    
     ## set up trafo
     update <- function(subset, weights, control, doFit = TRUE) {
-	partykit::extree_fit(data = data, trafo = mytrafo, converged = converged,
-			     partyvars = data$variables$z, subset = subset,
-			     weights = weights, ctrl = control, doFit = doFit)  
+        partykit::extree_fit(data = data, trafo = mytrafo, converged = converged,
+            partyvars = data$variables$z, subset = subset,
+            weights = weights, ctrl = control, doFit = doFit)  
     }
-
+    
     ## fit
     tree <- update(subset = subset, weights = weights, control = control)
-
+    
     ## TODO: prepare extree object
     
 }
+
+
+## helper function for .preprocess_var_select
+.get_strategy_function <- function(strategy, var_type = NULL, 
+    select_type = "var") {
+    
+    if(is.null(var_type)) var_type <- ""
+    if(length(var_type) != 1) stop("This function allows only one var_type")
+    
+    ## find matching objects and set up list
+    ## FIXME: better solution than via search()?
+    snam <- sprintf(paste0("^", select_type, "_select_%s_%s"), strategy, var_type)
+    onam <- unlist(lapply(search(), objects))
+    onam <- unique(onam[grep(snam, onam)])
+    strategy <- lapply(onam, get)
+    names(strategy) <- ifelse(var_type == "", gsub(snam, "", onam), var_type)
+    
+    ## drop non-functions
+    strategy <- strategy[sapply(strategy, is.function)]
+    
+    return(strategy)
+}
+
+
+
+
+.preprocess_select <- function(select, select_type = "var") {
+    
+    ## function: return as is
+    if(is.function(select)) return(select)
+    
+    ## character: return appropriate function
+    if(is.character(select)) {
+        return(
+            .get_strategy_function(select, strategy = "", 
+                select_type = select_type)
+            )
+    }
+    
+    ## list: go through all elements and return accordingly
+    if(is.list(select)) {
+        
+        get_strategy <- function(select_nam) {
+            
+            ## return function if function
+            if(is.function(select[[select_nam]])) {
+                return(select[[select_nam]])
+            } 
+            
+            ## get appropriat function if character
+            if(is.character(select[[select_nam]])) {
+                return(.get_strategy_function(select[[select_nam]], 
+                    var_type = select_nam, select_type = select_type))
+            } 
+            
+            ## if none of the above -> ERROR
+            stop("select can only be functions or characters.")
+            
+        }
+        
+        ## go through all list elements and choose approriate function
+        select_list <- lapply(names(select), get_strategy)
+        return(select_list)
+    }
+}
+
+
 
 # <FIXME> (HS) better name of function
 .get_varclass <- function(select_list, data, j) {
@@ -632,6 +702,29 @@ extree_control <- function
     ### well, it is implemented but not correctly so
     if (multiway & maxsurrogate > 0L)
         stop("surrogate splits currently not implemented for multiway splits")
+    
+    ## var_select preprocessing
+    if("j" %in% names(formals(selectfun)) | is.list(selectfun)) {
+        
+        selectfun <- function(model, trafo, data, subset, weights, 
+            whichvar, ctrl) {
+            var_sel <- .preprocess_select(selectfun, select_type = "var")
+            var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+                var_select = var_sel)
+        }
+    }
+    
+    ## split_select preprocessing
+    if("j" %in% names(formals(splitfun)) | is.list(splitfun)) {
+        
+        splitfun <- function(model, trafo, data, subset, weights,
+            whichvar, ctrl) {
+            split_sel <- .preprocess_select(splitfun, select_type = "split")
+            split_select_loop(model = model, trafo = trafo, data = data, 
+                subset = subset, weights = weights, whichvar = whichvar, 
+                control = ctrl, split_select = split_sel)
+        }
+    }
 
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
