@@ -13,9 +13,9 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = T
   ## Get weights for subset
   weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y))[subset] else weights[subset]
 
-  ## Build estfun with original dimension and fill up subsetted indices
+  ## Build estfun and set values not in subset to zero
   ef <- as.matrix(y[subset])
-  ef[-subset, ] <- NA
+  ef[-subset, ] <- 0  # FIXME: (ML) zero or NA?
 
   ## Return list
   rval <- list(
@@ -92,6 +92,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   if(estfun) ef <- matrix(0, nrow = length(ys), ncol = length(tab),
     dimnames = list(names(ys), names(tab)))
   
+  ## Setup return list if alias < 2
   if(sum(!alias) < 2L) {
     return(list(
       estfun = NULL,
@@ -104,7 +105,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     ))
   }
   
-  ## information required for mob()
+  ## Setup return list if alias > 2
   rval <- list(
     estfun = NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
@@ -134,7 +135,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 
 
 # -------------------------------------------------------------------
-# Trafo for numerical response w/ regressor matrix
+# Trafo for numerical response w/ regressor matrix (adapted of lmfit)
 # -------------------------------------------------------------------
 trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL, 
                      estfun = TRUE, object = FALSE, ...) {
@@ -145,8 +146,6 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 
   ## Get weights for subset
   weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
-
-  ## Copy of lmfit
 
   ## add intercept-only regressor matrix (if missing)
   ## NOTE: does not have terms/formula
