@@ -192,7 +192,7 @@ split_select4_cat <- function(model, trafo, data, subset, weights, j,
     index <- 1L:nlevels(x)
     xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
     index[xt == 0] <- NA
-    index[xt > 0 & xt < ctrl$minbucket] <- nlevels(x) + 1L
+    index[xt > 0 & xt < control$minbucket] <- nlevels(x) + 1L
     if (length(unique(index)) == 1) {
         ret <- NULL
     } else {
@@ -208,7 +208,8 @@ split_select4 <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
     
     split_select_loop(model = model, trafo = trafo, data = data, 
         subset = subset, weights = weights, whichvar = whichvar, 
-        control = ctrl, split_select = split_select4_num)
+        control = ctrl, split_select = list(numeric = split_select4_num,
+            factor = split_select4_cat))
 }
 
 
