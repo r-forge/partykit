@@ -44,7 +44,7 @@ extree <- function(data,
     onam <- unlist(lapply(search(), objects))
     onam <- unique(onam[grep(snam, onam)])
     strategy <- lapply(onam, get)
-    nam <- gsub(pattern = snam, replacement = "", onam)
+    nam <- gsub(pattern = paste0(snam, "_"), replacement = "", onam)
     # if (nam == "") nam <- regmatches(onam, regexpr("[a-z]+$", onam))
     names(strategy) <- nam
     
@@ -66,7 +66,7 @@ extree <- function(data,
     ## character: return appropriate function
     if (is.character(select)) {
         return(
-            .get_strategy_function(select, strategy = "", 
+            .get_strategy_function(select, 
                 select_type = select_type)
             )
     }
@@ -704,7 +704,7 @@ extree_control <- function
         stop("surrogate splits currently not implemented for multiway splits")
     
     ## var_select preprocessing
-    if(is.list(selectfun) || "j" %in% names(formals(selectfun))) {
+    if(is.list(selectfun) || is.character(selectfun) || "j" %in% names(formals(selectfun))) {
         
         var_sel <- .preprocess_select(selectfun, select_type = "var")
         
@@ -716,7 +716,7 @@ extree_control <- function
     }
     
     ## split_select preprocessing
-    if(is.list(splitfun) || "j" %in% names(formals(splitfun))) {
+    if(is.list(splitfun) || is.character(selectfun) || "j" %in% names(formals(splitfun))) {
         
         split_sel <- .preprocess_select(splitfun, select_type = "split")
         
