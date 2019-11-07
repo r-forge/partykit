@@ -251,6 +251,9 @@ ctrl5 <- extree_control(criterion = "p.value",
     svsplitfun = split_select4,
     minsplit = 70)
 
+ctrl5$selectfun
+ctrl5$splitfun
+
 tr5 <- extree(data = d4, trafo = trafo2, 
     control = c(ctrl5, restart = TRUE))
 

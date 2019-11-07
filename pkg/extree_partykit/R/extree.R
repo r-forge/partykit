@@ -93,7 +93,7 @@ extree <- function(data,
         }
         
         ## go through all list elements and choose approriate function
-        select_list <- lapply(names(select), get_strategy)
+        select_list <- sapply(names(select), get_strategy, simplify = FALSE, USE.NAMES = TRUE)
         return(select_list)
     }
 }
@@ -704,24 +704,26 @@ extree_control <- function
         stop("surrogate splits currently not implemented for multiway splits")
     
     ## var_select preprocessing
-    if("j" %in% names(formals(selectfun)) | is.list(selectfun)) {
+    if(is.list(selectfun) || "j" %in% names(formals(selectfun))) {
         
-        selectfun <- function(model, trafo, data, subset, weights, 
+        var_sel <- .preprocess_select(selectfun, select_type = "var")
+        
+        selectfun <- function(model, trafo, data, subset, weights,
             whichvar, ctrl) {
-            var_sel <- .preprocess_select(selectfun, select_type = "var")
-            var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+            var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl,
                 var_select = var_sel)
         }
     }
     
     ## split_select preprocessing
-    if("j" %in% names(formals(splitfun)) | is.list(splitfun)) {
+    if(is.list(splitfun) || "j" %in% names(formals(splitfun))) {
+        
+        split_sel <- .preprocess_select(splitfun, select_type = "split")
         
         splitfun <- function(model, trafo, data, subset, weights,
             whichvar, ctrl) {
-            split_sel <- .preprocess_select(splitfun, select_type = "split")
-            split_select_loop(model = model, trafo = trafo, data = data, 
-                subset = subset, weights = weights, whichvar = whichvar, 
+            split_select_loop(model = model, trafo = trafo, data = data,
+                subset = subset, weights = weights, whichvar = whichvar,
                 control = ctrl, split_select = split_sel)
         }
     }
