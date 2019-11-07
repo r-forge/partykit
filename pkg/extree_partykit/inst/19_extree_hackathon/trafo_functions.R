@@ -1,18 +1,19 @@
 # -------------------------------------------------------------------
 # Trafo returning the response (identity) 
-# NOTE: Assumes 1-d response, returns estfun vector
+# Assumes 1-d response
 # -------------------------------------------------------------------
 trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = TRUE, object = TRUE) {
   
   if(! is.null(weights))  stop("weights must be null")
 
   ## Build estfun and set values not in subset to zero
-  ef <- data[[1, "origin"]]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  ef <- extree_variable(data, i = 1, type = "original")  # FIXME: (ML, LS) data copy? no aggregation possible!
+
   ef[-subset] <- NA  # FIXME: (ML) zero or NA?
 
   ## Return list
   rval <- list(
-    estfun = if(estfun) ef else NULL,
+    estfun = if (estfun) ef else NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
     coefficients = 1,  # FIXME: (ML) what is coef here ?
     objfun = 0,  # FIXME: (ML) what is the objfun here?
@@ -32,7 +33,8 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
                       estfun = TRUE, object = FALSE) {
 
   ## Get data and apply offset
-  y <- data[[1, "origin"]]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  y <- extree_variable(data, i = 1, type = "original")  # FIXME: (ML, LS) data copy? no aggregation possible!
+
   if (!is.null(offset)) y <- y - offset
 
   ## Get weights for subset
@@ -44,7 +46,7 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   rss <- sum(res^2 * weights)
 
   ## Build estfun with original dimension and fill up subsetted indices
-  ef <- matrix(0, ncol = NCOL(y), nrow = NROW(y))
+  ef <- matrix(NA, ncol = NCOL(y), nrow = NROW(y))
   ef[subset, ] <- res * weights
 
   ## Return list
@@ -70,7 +72,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
                       estfun = TRUE, object = FALSE) {
 
   ## Get data and apply offset
-  ys <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  ys <- extree_variable(data, i = 1, type = "original")[subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
 
   ## Get weights for subset
   weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
@@ -81,7 +83,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   pr <- tab/sum(tab)
   alias <- tab == 0L
   ix1 <- which(!alias)[1L]
-  if(estfun) ef <- matrix(0, nrow = length(ys), ncol = length(tab),
+  if(estfun) ef <- matrix(NA, nrow = length(ys), ncol = length(tab),
     dimnames = list(names(ys), names(tab)))
   
   ## Setup return list if alias < 2
@@ -92,7 +94,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
       coefficients = log(pr[-ix1]) - log(pr[ix1]),
       objfun = 0,
       object = NULL,
-      nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+      nobs = NROW(extree_variable(data, i = 1, type = "original")),  # FIXME: (ML, LS) needed?
       converged = TRUE  # FIXME: (ML, LS) always converged?
     ))
   }
@@ -104,13 +106,13 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     coefficients = log(pr[-ix1]) - log(pr[ix1]),
     objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])), # FIXME: (ML) Is this minus??
     object = NULL,
-    nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    nobs = NROW(extree_variable(data, i = 1, type = "original")),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
   
   ## Build estfun with original dimension and fill up subsetted indices
   if(estfun) {
-    rval$estfun <- matrix(0, ncol = length(tab), nrow = NROW(data[[1, "origin"]]),
+    rval$estfun <- matrix(NA, ncol = length(tab), nrow = NROW(extree_variable(data, i = 1, type = "original")),
       dimnames = list(names(ys), names(tab)))[, -1L, drop = FALSE]
     
     cf <- log(pr) - log(pr[ix1])
@@ -133,7 +135,7 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
                      estfun = TRUE, object = FALSE, ...) {
 
   ## Get data and apply offset
-  ys <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  ys <- extree_variable(data, i = 1, type = "original")[subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
   xs <- data$yx$x[subset, ]  # FIXME: (ML) needs to be done nicer! data copy? no aggregation possible!
 
   ## Get weights for subset
@@ -159,13 +161,13 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     coefficients = z$coefficients,
     objfun = sum(weights * z$residuals^2),  # FIXME: (ML) changed to negative sum
     object = NULL,
-    nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    nobs = NROW(extree_variable(data, i = 1, type = "original")),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
 
   ## add estimating functions (if desired)
   if(estfun) {
-    rval$estfun <- as.vector(z$residuals) * weights * xs[, !is.na(z$coefficients), drop = FALSE]
+    rval$estfun <- as.vector(z$residuals) * weights ##* xs[, !is.na(z$coefficients), drop = FALSE]
   }
 
   ## add model (if desired)
