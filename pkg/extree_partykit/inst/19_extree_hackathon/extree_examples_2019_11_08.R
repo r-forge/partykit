@@ -91,3 +91,30 @@ tr2_guide <- extree(data = iris_dat, trafo = trafo_identity,
 
 tr2_guide
 
+
+# -------------------------------------------------------------------
+# EXAMPLE 3: Compare extree with ctree
+# -------------------------------------------------------------------
+airq <- subset(airquality, !is.na(Ozone))
+airq_dat <- extree_data(Ozone ~ Wind + Temp,
+    data = airq, yx = "matrix")
+
+## Call original ctree
+tr1_ctree <- ctree(Ozone ~ Wind + Temp, data = airq)
+
+## Set up control
+ctrl <- extree_control(criterion = "p.value",
+  logmincriterion = log(1 - 0.05),
+  update = TRUE,
+  selectfun = .ctree_select(),
+  splitfun = .ctree_split(),
+  svselectfun = .ctree_select(),
+  svsplitfun = .ctree_split(),
+  minsplit = 2)
+
+## Add ctree specific control arguments
+ctrl <- c(ctrl, ctree_control()[!names(ctree_control()) %in% names(ctrl)])
+
+## Call extree 
+tr2_ctree <- extree(data = airq_dat, trafo = tr1_ctree$trafo,
+    control = ctrl)
