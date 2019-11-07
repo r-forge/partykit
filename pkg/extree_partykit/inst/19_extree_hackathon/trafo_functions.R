@@ -53,7 +53,7 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     estfun = if(estfun) ef else NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
     coefficients = c("mean" = m),
-    objfun = -rss,
+    objfun = rss,
     object = if(object) list(nuisance = c("log(variance)" = log(rss/sum(weights)))) else NULL,
     nobs = NROW(ef),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
@@ -103,7 +103,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     estfun = NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
     coefficients = log(pr[-ix1]) - log(pr[ix1]),
-    objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])),
+    objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])), # FIXME: (ML) Is this minus??
     object = NULL,
     nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
@@ -158,7 +158,7 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     estfun = NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
     coefficients = z$coefficients,
-    objfun = -sum(weights * z$residuals^2),  # FIXME: (ML) changed to negative sum
+    objfun = sum(weights * z$residuals^2),  # FIXME: (ML) changed to negative sum
     object = NULL,
     nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
