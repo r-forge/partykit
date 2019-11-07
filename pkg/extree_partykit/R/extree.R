@@ -35,19 +35,19 @@ extree <- function(data,
 
 
 ## helper function for .preprocess_var_select
-.get_strategy_function <- function(strategy, var_type = NULL, 
-    select_type = "var") {
+.get_strategy_function <- function(strategy, select_type = "var") {
     
-    if(is.null(var_type)) var_type <- ""
-    if(length(var_type) != 1) stop("This function allows only one var_type")
     
     ## find matching objects and set up list
     ## FIXME: better solution than via search()?
-    snam <- sprintf(paste0("^", select_type, "_select_%s_%s"), strategy, var_type)
+    snam <- sprintf(paste0("^", select_type, "_select_%s"), strategy)
     onam <- unlist(lapply(search(), objects))
     onam <- unique(onam[grep(snam, onam)])
     strategy <- lapply(onam, get)
-    names(strategy) <- ifelse(var_type == "", gsub(snam, "", onam), var_type)
+    nam <- gsub(pattern = snam, replacement = "", onam)
+    if (nam == "") nam <- regmatches(onam, regexpr("[a-z]+$", onam))
+    names(strategy) <- nam
+    
     
     ## drop non-functions
     strategy <- strategy[sapply(strategy, is.function)]
@@ -61,10 +61,10 @@ extree <- function(data,
 .preprocess_select <- function(select, select_type = "var") {
     
     ## function: return as is
-    if(is.function(select)) return(select)
+    if (is.function(select)) return(select)
     
     ## character: return appropriate function
-    if(is.character(select)) {
+    if (is.character(select)) {
         return(
             .get_strategy_function(select, strategy = "", 
                 select_type = select_type)
@@ -72,19 +72,19 @@ extree <- function(data,
     }
     
     ## list: go through all elements and return accordingly
-    if(is.list(select)) {
+    if (is.list(select)) {
         
         get_strategy <- function(select_nam) {
             
             ## return function if function
-            if(is.function(select[[select_nam]])) {
+            if (is.function(select[[select_nam]])) {
                 return(select[[select_nam]])
             } 
             
             ## get appropriat function if character
-            if(is.character(select[[select_nam]])) {
+            if (is.character(select[[select_nam]])) {
                 return(.get_strategy_function(select[[select_nam]], 
-                    var_type = select_nam, select_type = select_type))
+                    select_type = select_type))
             } 
             
             ## if none of the above -> ERROR
@@ -93,7 +93,7 @@ extree <- function(data,
         }
         
         ## go through all list elements and choose approriate function
-        select_list <- sapply(names(select), get_strategy, simplify = FALSE, USE.NAMES = TRUE)
+        select_list <- sapply(names(select), FUN = get_strategy, simplify = FALSE, USE.NAMES = TRUE)
         return(select_list)
     }
 }
