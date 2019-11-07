@@ -1,14 +1,14 @@
 # -------------------------------------------------------------------
-# Trafo returning the response (identity)
+# Trafo returning the response (identity) 
+# NOTE: Assumes 1-d response, returns estfun vector
 # -------------------------------------------------------------------
-## Trafo with estfun = y
 trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = TRUE, object = TRUE) {
   
   if(! is.null(weights))  stop("weights must be null")
 
   ## Build estfun and set values not in subset to zero
-  ef <- as.matrix(data[[1, "origin"]])  # FIXME: (ML, LS) data copy? no aggregation possible!
-  ef[-subset, ] <- 0  # FIXME: (ML) zero or NA?
+  ef <- data[[1, "origin"]]  # FIXME: (ML, LS) data copy? no aggregation possible!
+  ef[-subset] <- NA  # FIXME: (ML) zero or NA?
 
   ## Return list
   rval <- list(
@@ -22,7 +22,6 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = T
   )
 
   return(rval)
-
 }
 
 
