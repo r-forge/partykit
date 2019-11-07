@@ -12,8 +12,8 @@ str.extree_data <- function(object, max.level = 1, give.attr = FALSE, ...) {
 
 
 ## print method
-print.extree_data <- function(x) {
-    str(x)
+print.extree_data <- function(x, ...) {
+    str(x, ...)
 }
 
 
