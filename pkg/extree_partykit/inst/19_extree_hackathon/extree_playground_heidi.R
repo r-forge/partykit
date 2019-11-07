@@ -229,6 +229,34 @@ tr4 <- extree(data = d4, trafo = trafo2,
 tr4
 
 
+### --- Example 5 --- ###
+### Based on selection_modules.R from Lisa
+### - anorexia data
+### - Trafo with estfun = y
+### - var_select with GUIDE test, but separate functions
+### - split_select with median
+
+ctrl5 <- extree_control(criterion = "p.value",
+    logmincriterion = log(1 - 0.05),
+    update = TRUE,
+    selectfun = list(
+        numeric = var_select3_num,
+        default = var_select3_cat
+    ),
+    splitfun = list(
+        numeric = split_select4_num,
+        factor = split_select4_cat
+    ),
+    svselectfun = var_select3_call,
+    svsplitfun = split_select4,
+    minsplit = 70)
+
+tr5 <- extree(data = d4, trafo = trafo2, 
+    control = c(ctrl5, restart = TRUE))
+
+tr5
+
+
 
 ### or create the list automatically
 ## FUN = "foo"
