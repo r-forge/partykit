@@ -6,15 +6,8 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = T
   
   if(! is.null(weights))  stop("weights must be null")
 
-  ## Get subset 
-  y <- data[[1, "origin"]][subset]  # FIXME: (ML, LS) data copy? no aggregation possible!
-
-
-  ## Get weights for subset
-  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y))[subset] else weights[subset]
-
   ## Build estfun and set values not in subset to zero
-  ef <- as.matrix(y[subset])
+  ef <- as.matrix(data[[1, "origin"]])  # FIXME: (ML, LS) data copy? no aggregation possible!
   ef[-subset, ] <- 0  # FIXME: (ML) zero or NA?
 
   ## Return list
@@ -24,7 +17,7 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = T
     coefficients = 1,  # FIXME: (ML) what is coef here ?
     objfun = 0,  # FIXME: (ML) what is the objfun here?
     object = NULL,
-    nobs = NROW(y),  # FIXME: (ML, LS) needed?
+    nobs = NROW(ef),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
 
@@ -62,7 +55,7 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     coefficients = c("mean" = m),
     objfun = -rss,
     object = if(object) list(nuisance = c("log(variance)" = log(rss/sum(weights)))) else NULL,
-    nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    nobs = NROW(ef),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
   
@@ -100,7 +93,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
       coefficients = log(pr[-ix1]) - log(pr[ix1]),
       objfun = 0,
       object = NULL,
-      nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+      nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
       converged = TRUE  # FIXME: (ML, LS) always converged?
     ))
   }
@@ -112,7 +105,7 @@ trafo_cat <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     coefficients = log(pr[-ix1]) - log(pr[ix1]),
     objfun = -sum(tab[tab > 0L] * log(pr[tab > 0L])),
     object = NULL,
-    nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
   
@@ -167,7 +160,7 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
     coefficients = z$coefficients,
     objfun = -sum(weights * z$residuals^2),  # FIXME: (ML) changed to negative sum
     object = NULL,
-    nobs = NROW(d[[1, "origin"]]),  # FIXME: (ML, LS) needed?
+    nobs = NROW(data[[1, "origin"]]),  # FIXME: (ML, LS) needed?
     converged = TRUE  # FIXME: (ML, LS) always converged?
   )
 
