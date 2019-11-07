@@ -164,6 +164,7 @@ S3method("predict_party", "default")
 S3method("str", "extree_data")
 S3method("print", "extree_data")
 S3method("dimnames", "extree_data")
+S3method("dim", "extree_data")
 S3method("[[", "extree_data")
 S3method("model.frame", "extree_data")
 

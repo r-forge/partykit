@@ -30,7 +30,7 @@ extree <- function(data,
     
 }
 
-
+# <FIXME> (HS) better name of function
 .get_varclass <- function(select_list, data, j) {
     ### which class is variable?
     varclass <- class(extree_variable(x = data, i = j))
@@ -41,15 +41,18 @@ extree <- function(data,
     
     ### if no function for this class is provided use default function
     if(length(varclass) == 0 | is.na(varclass)) {
-        stopifnot("default" %in% names(select_list))
+        stopifnot("default" %in% names(select_list)) # <FIXME> (HS) improve error message
         varclass <- "default"
     } 
     
     return(varclass)
 }
 
-
+# <FIXME> (HS) Better name for function
 selector <- function(select, model, trafo, data, subset, weights, whichvar, control, j) {
+    
+    
+    # <FIXME> (HS) add check if function(s) return what we want
     
     if(is.function(select)) {
         ## if var_select is function, apply function

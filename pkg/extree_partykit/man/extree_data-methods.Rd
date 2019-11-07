@@ -1,6 +1,7 @@
 \name{extree_data-methods}
 \alias{extree_data-methods}
 \alias{dim.extree_data}
+\alias{dimnames.extree_data}
 \alias{print.extree_data}
 \alias{str.extree_data}
 
@@ -14,6 +15,7 @@
 \method{str}{extree_data}(object, max.level = 1, give.attr = FALSE, ...)
 \method{print}{extree_data}(x, ...)
 \method{dimnames}{extree_data}(x)
+\method{dim}{extree_data}(x)
 }
 \arguments{
   \item{x}{ an object of class \code{\link{extree_data}}.}
@@ -29,7 +31,8 @@
   \code{str} compactly shows the internal structure of the object and 
   \code{print} calls \code{str}.
   
-  \code{dimnames} gets the \code{dimnames} of \code{x$data}.
+  \code{dimnames} gets the \code{dimnames} of \code{x$data} and \code{dim} gets 
+  the \code{dim} of \code{x$data}.
 
 }
 \examples{
@@ -42,6 +45,7 @@
     ## use methods
     print(my_data)
     str(my_data)
+    dim(my_data)
     dimnames(my_data)
     
 }

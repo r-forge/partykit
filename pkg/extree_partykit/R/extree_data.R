@@ -1,4 +1,9 @@
 
+## dim method
+dim.extree_data <- function(x) {
+    dim(x$data)
+}
+
 ## dimnames method
 dimnames.extree_data <- function(x) {
     dimnames(x$data)

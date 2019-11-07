@@ -15,7 +15,7 @@ my_data <- extree_data(Ozone ~ Wind + Temp,
 trafo1 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
     estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
     estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
-    list(estfun = estfun, objfun = -sum((data$yx$y[subset] - mean(data$yx$y[subset]))^2), converged = TRUE)
+    list(estfun = estfun, objfun = sum((data$yx$y[subset] - mean(data$yx$y[subset]))^2), converged = TRUE)
 }
 
 ## split_select with median
@@ -65,10 +65,7 @@ d <-  extree_data(Species ~ Petal.Width + Petal.Length,
 trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
     estfun <- data$yx$y  ## data[[1, "original"]]
     estfun[-subset] <- NA
-    
-    # estfun <- matrix(NA, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
-    # estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
-    # estfun[subset,] <- as.data.frame(data$yx$y)[subset, ]
+     
     list(estfun = estfun, converged = TRUE)
 }
 
@@ -134,6 +131,10 @@ var_select3 <- list(
     numeric = var_select3_num,
     default = var_select3_cat
 )
+
+## allow that I can give list directly to selectfun
+## or even just selectfun = "guide" and the functions need to be called
+## var_select_guide_factor, var_select_guide_numeric
 
 var_select3_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
     var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
