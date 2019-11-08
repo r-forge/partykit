@@ -58,20 +58,20 @@ var_select_guide_factor <- function(model, trafo, data, subset, weights, j,
     
     estfun <- model$estfun[subset]
     
-    # categorize estfun if not already a factor
-    if(is.factor(estfun)) {
-        est_cat <- estfun 
-    } else {
+    ## categorize estfun if not already a factor
+    if(is.factor(estfun)) est_cat <- estfun else {
         breaks <- unique(quantile(estfun, c(0, 0.5, 1)))
         if(length(breaks) < 3) breaks <- c(min(estfun), mean(estfun), max(estfun))
         est_cat <- cut(estfun, breaks = breaks, 
             include.lowest = TRUE, right = TRUE)
     }
     
-    # get possible split variable
-    sv_cat <- data$zindex[[j]][subset]
+    ## get possible split variable
+    # sv_cat <- data$zindex[[j]][subset] ## FIXME: always the same as below?
+    sv_cat <- extree_variable(data, i = j, type = "index")[subset]
+    ## FIXME: can copying be avoided here^?
     
-    # independence test
+    ## independence test
     test <- chisq.test(x = est_cat, y = sv_cat)
     res <- list(statistic = test$statistic, p.value = test$p.value) 
     ## FIXME: (ML, LS) return log(1 - p-value) instead?
