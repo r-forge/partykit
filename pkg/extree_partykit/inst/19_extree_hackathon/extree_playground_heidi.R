@@ -275,7 +275,7 @@ ctrl6 <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
     selectfun = list(
-        numeric = "awesome_numeric", 
+        numeric = var_select_awesome_numeric, 
         default = "awesome_default"
     ),
     splitfun = list(
