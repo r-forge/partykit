@@ -24,45 +24,112 @@ airq_dat <- extree_data(Ozone ~ Wind + Temp,
     data = airq, yx = "matrix")
 
 ## Set up variable selection list
-var_select_guide_numeric <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    res <- var_select_num(estfun = model$estfun, data = data, subset = subset, j = j)
-    return(as.list(res))
+var_select_guide_numeric <- function(model, trafo, data, subset, weights, j, 
+    split_only = FALSE, control) {
+    
+    estfun <- model$estfun[subset]
+    
+    # categorize estfun if not already a factor
+    est_cat <- if (is.factor(estfun)) estfun else cut(estfun, 
+        breaks = c(min(estfun), mean(estfun), max(estfun)), 
+        include.lowest = TRUE, right = TRUE)
+    
+    ## get possible split variable
+    # sv <- data$zindex[[j]][subset] ## FIXME: always the same as below?
+    sv <- extree_variable(data, i = j, type = "index")[subset]
+    ## FIXME: can copying be avoided here^?
+    
+    ## categorize possible split variable
+    breaks <- unique(quantile(sv, c(0, 0.25, 0.5, 0.75, 1)))
+    if (length(breaks) < 5) breaks <- c(min(sv), mean(sv), max(sv))
+    sv_cat <- cut(sv, breaks = breaks, 
+        include.lowest = TRUE, right = TRUE)
+    
+    ## independence test 
+    test <- chisq.test(x = est_cat, y = sv_cat) ## FIXME: use libcoin?
+    res <- list(statistic = test$statistic, p.value = test$p.value) 
+    ## FIXME: (ML, LS) return log(1 - p-value) instead?
+    
+    return(res)
 }
 
-var_select_guide_factor <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    res <- var_select_cat(estfun = model$estfun, data = data, subset = subset, j = j)
-    return(as.list(res))
+var_select_guide_factor <- function(model, trafo, data, subset, weights, j, 
+    split_only = FALSE, control) {
+    
+    estfun <- model$estfun[subset]
+    
+    # categorize estfun if not already a factor
+    if(is.factor(estfun)) {
+        est_cat <- estfun 
+    } else {
+        breaks <- unique(quantile(estfun, c(0, 0.5, 1)))
+        if(length(breaks) < 3) breaks <- c(min(estfun), mean(estfun), max(estfun))
+        est_cat <- cut(estfun, breaks = breaks, 
+            include.lowest = TRUE, right = TRUE)
+    }
+    
+    # get possible split variable
+    sv_cat <- data$zindex[[j]][subset]
+    
+    # independence test
+    test <- chisq.test(x = est_cat, y = sv_cat)
+    res <- list(statistic = test$statistic, p.value = test$p.value) 
+    ## FIXME: (ML, LS) return log(1 - p-value) instead?
+    
+    return(res)
 }
 
-var_select_guide <- list(
-    numeric = var_select_guide_numeric,
-    default = var_select_guide_factor
-)
 
 ## Set up split selection: split_select with median without index j
-split_select_median_numeric <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+split_select_median_numeric <- function(model, trafo, data, subset, weights, 
+    whichvar, ctrl) {
 
     if (length(whichvar) == 0) return(NULL)
 
-    ## split FIRST variable at median
+    ## split FIRST variable at median 
+    ## FIXME: loop if necessary
     j <- whichvar[1]
-    x <- model.frame(data)[[j]][subset]
+    x <- model.frame(data)[[j]][subset] ## FIXME: better via extree_variable or model.frame?
     ret <- partysplit(as.integer(j), breaks = median(x))
 
     return(ret)
 }
 
 ## Call extree
-tr1 <- extree(data = airq_dat, trafo = trafo_num,
-    control = c(extree_control(criterion = "p.value",
-        logmincriterion = log(1 - 0.05),
-        update = TRUE,
-        selectfun = var_select_guide,
-        splitfun = split_select_median_numeric,
-        svselectfun = .ctree_select(),
-        svsplitfun = .ctree_split(),
-        minsplit = 20),
-        restart = TRUE))
+ctrl1 <- extree_control(criterion = "p.value",
+    logmincriterion = log(1 - 0.05),
+    update = TRUE,
+    selectfun = list(
+        numeric = var_select_guide_numeric,
+        default = var_select_guide_factor
+    ),
+    splitfun = split_select_median_numeric,
+    svselectfun = NULL, ## FIXME: we need a better default here!!!
+    svsplitfun = NULL,
+    minsplit = 50)
+
+
+## trafo
+trafo_identity <- function(subset, data, weights = NULL, info = NULL, 
+    estfun = TRUE, object = TRUE) {
+    
+    ## Extract response and "subset"
+    y <- extree_variable(data, i = 1, type = "original")  # FIXME: (ML, LS) data copy? no aggregation possible!
+    y[-subset] <- NA  
+    
+    ## Return list
+    rval <- list(
+        estfun = if (estfun) y else NULL,
+        unweighted = TRUE,  
+        converged = TRUE 
+    )
+    
+    return(rval)
+}
+
+
+tr1 <- extree(data = airq_dat, trafo = trafo_identity, 
+    control = c(ctrl1, restart = TRUE))
 
 tr1
 
@@ -75,16 +142,17 @@ iris_dat <-  extree_data(Species ~ Petal.Width + Petal.Length,
     data = iris, yx = "matrix")
 
 ## Call extree
+ctrl2 <- extree_control(criterion = "p.value",
+    logmincriterion = log(1 - 0.05),
+    update = TRUE,
+    selectfun = "guide",
+    splitfun = split_select_median_numeric,
+    svselectfun = NULL, ## FIXME: we need a better default here!!!
+    svsplitfun = NULL,
+    minsplit = 50)
+
 tr2 <- extree(data = iris_dat, trafo = trafo_identity,
-    control = c(extree_control(criterion = "p.value",
-        logmincriterion = log(1 - 0.05),
-        update = TRUE,
-        selectfun = var_select_guide,
-        splitfun = split_select_median_numeric,
-        svselectfun = .ctree_select(),
-        svsplitfun = .ctree_split(),
-        minsplit = 70),
-        restart = TRUE))
+    control = c(ctrl2, restart = TRUE))
 
 tr2
 
@@ -99,9 +167,8 @@ ano_dat <- extree_data(Postwt ~ Prewt + Treat, data = anorexia, yx = "matrix")
 split_select_multiway_factor <- function(model, trafo, data, subset, weights, j,
     split_only = TRUE, control) {
 
-
     ## copied from .split
-    x <- model.frame(data)[[j]]
+    x <- model.frame(data)[[j]] ## FIXME: use extree_variable instead?
 
     index <- 1L:nlevels(x)
     xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
@@ -129,9 +196,9 @@ ctrl3 <- extree_control(criterion = "p.value",
         numeric = split_select_median_numeric,
         factor = split_select_multiway_factor
     ),
-    svselectfun = .ctree_select(),
-    svsplitfun = .ctree_split(),
-    minsplit = 70)
+    svselectfun = NULL,
+    svsplitfun = NULL,
+    minsplit = 50)
 
 tr3 <- extree(data = ano_dat, trafo = trafo_identity,
     control = c(ctrl3, restart = TRUE))
@@ -139,26 +206,26 @@ tr3 <- extree(data = ano_dat, trafo = trafo_identity,
 tr3
 
 
-# -------------------------------------------------------------------
-# EXAMPLE 4: As example 3, but with character arguments for split/select fun
-# -------------------------------------------------------------------
-ctrl4 <- extree_control(criterion = "p.value",
-    logmincriterion = log(1 - 0.05),
-    update = TRUE,
-    selectfun = "guide",
-    splitfun = list(
-        numeric = "median_numeric",
-        default = "multiway_factor"
-    ),
-    svselectfun = .ctree_select(),
-    svsplitfun = .ctree_split(),
-    minsplit = 70)
-
-
-tr4 <- extree(data = ano_dat, trafo = trafo_identity,
-    control = c(ctrl4, restart = TRUE))
-
-tr4
+# # -------------------------------------------------------------------
+# # EXAMPLE 4: As example 3, but with character arguments for split/select fun
+# # -------------------------------------------------------------------
+# ctrl4 <- extree_control(criterion = "p.value",
+#     logmincriterion = log(1 - 0.05),
+#     update = TRUE,
+#     selectfun = "guide",
+#     splitfun = list(
+#         numeric = "median_numeric",
+#         default = "multiway_factor"
+#     ),
+#     svselectfun = NULL,
+#     svsplitfun = NULL,
+#     minsplit = 50)
+# 
+# 
+# tr4 <- extree(data = ano_dat, trafo = trafo_identity,
+#     control = c(ctrl4, restart = TRUE))
+# 
+# tr4
 
 
 # -------------------------------------------------------------------
@@ -175,10 +242,10 @@ tr5_ctree <- ctree(Ozone ~ Wind + Temp, data = airq)
 ctrl <- extree_control(criterion = "p.value",
   logmincriterion = log(1 - 0.05),
   update = TRUE,
-  selectfun = .ctree_select(),
-  splitfun = .ctree_split(),
-  svselectfun = .ctree_select(),
-  svsplitfun = .ctree_split(),
+  selectfun = partykit:::.ctree_select(),
+  splitfun = partykit:::.ctree_split(),
+  svselectfun = NULL,
+  svsplitfun = NULL,
   minsplit = 2)
 
 ## Add ctree specific control arguments
@@ -187,3 +254,7 @@ ctrl5 <- c(ctrl, ctree_control()[!names(ctree_control()) %in% names(ctrl)])
 ## Call extree 
 tr5 <- extree(data = airq_dat, trafo = tr5_ctree$trafo,
     control = ctrl5)
+
+
+tr5_ctree
+tr5
