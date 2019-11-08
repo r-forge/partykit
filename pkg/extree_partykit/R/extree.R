@@ -80,13 +80,16 @@ extree <- function(data,
             
             ## return function if function
             if (is.function(select[[select_nam]])) {
-                return(select[[select_nam]])
+                sfun <- list(select[[select_nam]])
+                names(sfun) <- select_nam
+                return(sfun)
             } 
             
             ## get appropriat function if character
             if (is.character(select[[select_nam]])) {
-                return(.get_strategy_function(select[[select_nam]], 
-                    select_type = select_type))
+                sfun <- .get_strategy_function(select[[select_nam]], 
+                    select_type = select_type)
+                return(sfun)
             } 
             
             ## if none of the above -> ERROR
@@ -95,7 +98,7 @@ extree <- function(data,
         }
         
         ## go through all list elements and choose approriate function
-        select_list <- sapply(names(select), FUN = get_strategy, simplify = TRUE, USE.NAMES = TRUE)
+        select_list <- sapply(names(select), FUN = get_strategy, simplify = TRUE, USE.NAMES = FALSE)
         return(select_list)
     }
 }
