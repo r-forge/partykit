@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE: Some examples illustrating the proposed extree structure
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-11-07 on thinkmoritz
+# - L@ST MODIFIED: 2019-11-08 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -40,8 +40,8 @@ var_select_guide <- list(
 )
 
 
-## Set up split selection: split_select with median
-split_select1 <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+## Set up split selection: split_select with median without index j
+split_select_median <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
     # args <- list(...)
 
     print(whichvar)
@@ -62,13 +62,14 @@ tr1_guide <- extree(data = airq_dat, trafo = trafo_num,
         logmincriterion = log(1 - 0.05),
         update = TRUE,
         selectfun = var_select_guide,
-        splitfun = split_select1,
+        splitfun = split_select_median,
         svselectfun = var_select_guide,
-        svsplitfun = split_select1,
+        svsplitfun = split_select_median,
         minsplit = 70),
         restart = TRUE))
 
 tr1_guide
+
 
 # -------------------------------------------------------------------
 # EXAMPLE 2: Use trafo_identity() and guide_test() for iris data
@@ -83,17 +84,119 @@ tr2_guide <- extree(data = iris_dat, trafo = trafo_identity,
         logmincriterion = log(1 - 0.05),
         update = TRUE,
         selectfun = var_select_guide,
-        splitfun = split_select1,
+        splitfun = split_select_median,
         svselectfun = var_select_guide,
-        svsplitfun = split_select1,
+        svsplitfun = split_select_median,
         minsplit = 70),
         restart = TRUE))
 
 tr2_guide
 
+# -------------------------------------------------------------------
+# EXAMPLE 3: Define split_select with median and multiway for anorexia data
+# -------------------------------------------------------------------
+library("MASS")
+data("anorexia")
+ano_dat <- extree_data(Postwt ~ Prewt + Treat, data = anorexia, yx = "matrix")
+
+## Split_select with median
+split_selectmedian_num <- function(model, trafo, data, subset, weights, j,
+    split_only = TRUE, control) {
+
+    ## split variable at median
+    x <- model.frame(data)[[j]][subset]
+    ret <- partysplit(as.integer(j), breaks = median(x))
+
+    return(ret)
+}
+
+
+## Split_select multiway
+split_selectmultiway_cat <- function(model, trafo, data, subset, weights, j,
+    split_only = TRUE, control) {
+
+
+    ## copied from .split
+    x <- model.frame(data)[[j]]
+
+    index <- 1L:nlevels(x)
+    xt <- libcoin::ctabs(ix = unclass(x), weights = weights, subset = subset)[-1]
+    index[xt == 0] <- NA
+    index[xt > 0 & xt < control$minbucket] <- nlevels(x) + 1L
+    if (length(unique(index)) == 1) {
+        ret <- NULL
+    } else {
+        index <- unclass(factor(index))
+        ret <- partysplit(as.integer(j), index = as.integer(index))
+    }
+    ## ---
+
+    return(ret)
+}
+
+## Split_select combined without index j
+split_select <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+
+    split_select_loop(model = model, trafo = trafo, data = data,
+        subset = subset, weights = weights, whichvar = whichvar,
+        control = ctrl, split_select = list(numeric = split_selectmedian_num,
+            factor = split_selectmultiway_cat))
+}
+
+
+ctrl_ano <- extree_control(criterion = "p.value",
+    logmincriterion = log(1 - 0.05),
+    update = TRUE,
+    selectfun = list(
+        numeric = var_select_guide_num,
+        default = var_select_guide_cat
+    ),
+    splitfun = list(
+        numeric = split_selectmedian_num,
+        factor = split_selectmultiway_cat
+    ),
+    svselectfun = var_select_guide,
+    svsplitfun = split_select,
+    minsplit = 70)
+
+tr_ano <- extree(data = ano_dat, trafo = trafo_identity,
+    control = c(ctrl_ano, restart = TRUE))
+
+tr_ano
 
 # -------------------------------------------------------------------
-# EXAMPLE 3: Compare extree with ctree
+# EXAMPLE 4: As example 3, but with character arguments for split/select fun
+# -------------------------------------------------------------------
+var_select_awesome_numeric <- var_select_guide_num
+var_select_awesome_default <- var_select_guide_cat
+
+split_select_awesome_numeric <- split_selectmedian_num
+split_select_awesome_default <- split_selectmultiway_cat
+
+ctrl2_ano <- extree_control(criterion = "p.value",
+    logmincriterion = log(1 - 0.05),
+    update = TRUE,
+    selectfun = list(
+        numeric = "awesome_numeric",
+        default = "awesome_default"
+    ),
+    splitfun = list(
+        numeric = "awesome_numeric",
+        default = "awesome_default"
+    ),
+    svselectfun = var_select3_call,
+    svsplitfun = split_select4,
+    minsplit = 70)
+
+
+tr2_ano <- extree(data = ano_dat, trafo = trafo_identity,
+    control = c(ctrl2_ano, restart = TRUE))
+
+tr2_ano
+
+
+# -------------------------------------------------------------------
+# EXAMPLE 5: Compare extree with ctree
 # -------------------------------------------------------------------
 airq <- subset(airquality, !is.na(Ozone))
 airq_dat <- extree_data(Ozone ~ Wind + Temp,
