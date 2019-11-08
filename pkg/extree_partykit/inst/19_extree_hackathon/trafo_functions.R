@@ -38,7 +38,8 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
   if (!is.null(offset)) y <- y - offset
 
   ## Get weights for subset
-  weights <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(y))[subset] else weights[subset]
+  weights <- if(is.null(weights) || (length(weights)==0L)) 
+      rep.int(1, NROW(y))[subset] else weights[subset]
 
   ## Calculate res and rss for subset
   m <- mean(y[subset] * weights) / mean(weights)
@@ -51,13 +52,13 @@ trafo_num <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 
   ## Return list
   rval <- list(
-    estfun = if(estfun) ef else NULL,
+    estfun = if (estfun) ef else NULL,
     unweighted = FALSE,  # FIXME: estfun is weighted, extree_fit reverts weighting
     coefficients = c("mean" = m),
     objfun = rss,
-    object = if(object) list(nuisance = c("log(variance)" = log(rss/sum(weights)))) else NULL,
+    object = if (object) list(nuisance = c("log(variance)" = log(rss / sum(weights)))) else NULL,
     nobs = NROW(ef),  # FIXME: (ML, LS) needed?
-    converged = TRUE  # FIXME: (ML, LS) always converged?
+    converged = TRUE  
   )
   
   return(rval)
