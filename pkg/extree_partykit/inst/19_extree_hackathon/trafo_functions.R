@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------
 # Trafo returning the response (identity) 
-# Assumes 1-d response
+# NOTE: Assumes 1-d response
 # -------------------------------------------------------------------
 trafo_identity <- function(subset, data, weights = NULL, info = NULL, estfun = TRUE, object = TRUE) {
   
@@ -167,7 +167,7 @@ trafo_lm <- function(subset, data, weights = NULL, offset = NULL, info = NULL,
 
   ## add estimating functions (if desired)
   if(estfun) {
-    rval$estfun <- as.vector(z$residuals) * weights ##* xs[, !is.na(z$coefficients), drop = FALSE]
+    rval$estfun <- as.vector(z$residuals) * weights * xs[, !is.na(z$coefficients), drop = FALSE]
   }
 
   ## add model (if desired)

@@ -11,7 +11,7 @@
 # -------------------------------------------------------------------
 # Prelimanaries
 # -------------------------------------------------------------------
-library(partykit)
+library("partykit")
 source("selection_modules.R")
 source("trafo_functions.R")
 
@@ -176,16 +176,14 @@ split_select_awesome_default <- split_selectmultiway_cat
 ctrl2_ano <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
-    selectfun = list(
-        numeric = "awesome_numeric",
-        default = "awesome_default"
-    ),
-    splitfun = list(
-        numeric = "awesome_numeric",
-        default = "awesome_default"
-    ),
-    svselectfun = var_select3_call,
-    svsplitfun = split_select4,
+    selectfun = "awesome",
+    #selectfun = list(
+    #    numeric = "awesome",
+    #    default = "awesome"
+    #),
+    splitfun = "awesome",
+    svselectfun = var_select_guide,
+    svsplitfun = split_select,
     minsplit = 70)
 
 
