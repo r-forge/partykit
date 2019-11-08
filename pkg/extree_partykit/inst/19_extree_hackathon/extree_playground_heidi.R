@@ -310,19 +310,16 @@ ctrl7 <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
     selectfun = "awesome",
-    splitfun = list(
-        numeric = "awesome_numeric",
-        default = "awesome_default"
-    ),
+    splitfun = "awesome",
     # splitfun = "awesome",
     svselectfun = var_select3_call,
     svsplitfun = split_select4,
     minsplit = 70)
 
-ctrl6$selectfun
-ctrl6$splitfun
+ctrl7$selectfun
+ctrl7$splitfun
 
-tr6 <- extree(data = d4, trafo = trafo2, 
-    control = c(ctrl6, restart = TRUE))
+tr7 <- extree(data = d4, trafo = trafo2, 
+    control = c(ctrl7, restart = TRUE))
 
-all.equal(tr6, tr4)
+all.equal(tr7, tr4)
