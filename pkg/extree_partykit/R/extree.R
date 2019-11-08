@@ -44,8 +44,10 @@ extree <- function(data,
     onam <- unlist(lapply(search(), objects))
     onam <- unique(onam[grep(snam, onam)])
     strategy <- lapply(onam, get)
+    
+    ## supply variable type a name
     nam <- gsub(pattern = paste0(snam, "_"), replacement = "", onam)
-    # if (nam == "") nam <- regmatches(onam, regexpr("[a-z]+$", onam))
+    if (all(nam %in% onam)) nam <- regmatches(onam, regexpr("[a-z]+$", onam))
     names(strategy) <- nam
     
     
@@ -103,15 +105,17 @@ extree <- function(data,
 # <FIXME> (HS) better name of function
 .get_varclass <- function(select_list, data, j) {
     ### which class is variable?
-    varclass <- class(extree_variable(x = data, i = j))
+    varclass_orig <- class(extree_variable(x = data, i = j))
     
     ### Use most appropriate class (1st), if more than one is available
     ### Remove varclass if no var_select function is available
-    varclass <- varclass[varclass %in% names(select_list)][1]
+    varclass <- varclass_orig[varclass_orig %in% names(select_list)][1]
     
     ### if no function for this class is provided use default function
     if(length(varclass) == 0 | is.na(varclass)) {
-        stopifnot("default" %in% names(select_list)) # <FIXME> (HS) improve error message
+        if (!("default" %in% names(select_list))) 
+            stop("The is no specific or default select function for split variables of class ",
+                varclass_orig, ". Please provide one.")
         varclass <- "default"
     } 
     
@@ -716,7 +720,7 @@ extree_control <- function
     }
     
     ## split_select preprocessing
-    if(is.list(splitfun) || is.character(selectfun) || "j" %in% names(formals(splitfun))) {
+    if(is.list(splitfun) || is.character(splitfun) || "j" %in% names(formals(splitfun))) {
         
         split_sel <- .preprocess_select(splitfun, select_type = "split")
         
