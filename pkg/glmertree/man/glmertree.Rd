@@ -202,9 +202,4 @@ residuals(gt)
 VarCorr(gt) # see lme4::VarCorr
 }
 }
-
-% \donttest{} statements for lmertree added in order to fix noLD warning on 
-% CRAN since new lme4 version of Feb. 6 2019. All other tests pass.
-% TODO: fix this in a better way.
-
 \keyword{tree}

@@ -1,7 +1,7 @@
 Package: glmertree
 Title: Generalized Linear Mixed Model Trees
 Date: 2019-04-15
-Version: 0.2
+Version: 0.2-0
 Authors@R: c(person(given = "Marjolein", family = "Fokkema", 
     role = c("aut", "cre"), email = "M.Fokkema@fsw.leidenuniv.nl"), 
   person(given = "Achim", family = "Zeileis", role = "aut", 
