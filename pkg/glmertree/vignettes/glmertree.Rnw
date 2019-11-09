@@ -1,6 +1,6 @@
 \documentclass[nojss]{jss}
 
-%\VignetteIndexEntry{Detecting Treatment-Subgroup Interactions with Generalized Linear Mixed-Effects Model Trees}
+%\VignetteIndexEntry{Fitting Generalized Linear Mixed-Effects Model Trees}
 %\VignetteDepends{glmertree}
 %\VignetteKeywords{mixed-effects model trees, recursive partitioning, decision trees}
 %\VignettePackage{glmertree}

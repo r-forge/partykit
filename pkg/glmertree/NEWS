@@ -1,7 +1,7 @@
 
-Changes in Version 0.2
+Changes in Version 0.2-0
 
-  o Bug fixed in predict method: Erronous allocation of new observations
+  o Bug fix in predict method: Erroneous allocation of new observations
     to tree nodes could occur, which has been fixed now. 
 
   o New plotting method for (g)lmertrees. Arguments which, type and fitted
