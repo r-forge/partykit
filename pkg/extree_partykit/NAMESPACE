@@ -22,7 +22,8 @@ importFrom("utils",
   "head",
   "tail",
   "setTxtProgressBar",
-  "txtProgressBar"
+  "txtProgressBar",
+  "str"
 )
 
 export(

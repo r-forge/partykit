@@ -6,7 +6,7 @@ extree <- function(data,
     ...) {
     
     ## check / preprocess extree data
-    subset <- partykit:::.start_subset(data = data)
+    subset <- .start_subset(data = data)
     weights <- model.weights(model.frame(data))
     
     
