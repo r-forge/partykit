@@ -201,6 +201,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
             conv <- sapply(unique(na.omit(sp)), function(i)
                 isTRUE(trafo(subset[sp == i & !is.na(sp)], weights = weights)$converged))
             if (!all(conv)) ret <- NULL
+            ## FIXME: allow option to keep estfun and move on --> update = FALSE
         }
         
         ## stop if a split was found, otherwise continue with next possible var
@@ -669,8 +670,8 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
 ### control arguments needed in this file
 extree_control <- function
 (
-    criterion, 
-    logmincriterion, 
+    criterion, ## FIXME: add default
+    logmincriterion, ## FIXME: add default
     minsplit = 20L,
     minbucket = 7L, 
     minprob = 0.01, 
@@ -690,10 +691,10 @@ extree_control <- function
     saveinfo = TRUE,
     bonferroni = FALSE,
     update = NULL,
-    selectfun, 
-    splitfun, 
-    svselectfun, 
-    svsplitfun
+    selectfun, ## FIXME: add default (ctree?)
+    splitfun, ## FIXME: add default
+    svselectfun, ## FIXME: add default
+    svsplitfun ## FIXME: add default
 ) {
 
     ## apply infrastructure for determining split points

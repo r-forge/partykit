@@ -6,7 +6,7 @@
 }
 \description{
   A routine for preprocessing data before an extensible tree can be grown by
-  \code{extree_fit}.
+  \code{extree} or \code{extree_fit}.
 }
 \usage{
 extree_data(formula, data, subset, na.action = na.pass, weights, offset, 
