@@ -64,7 +64,7 @@
 \definecolor{changes}{rgb}{1,1,0.7}
 \newcommand{\hlc}[1]{{\sethlcolor{changes}\hl{#1}}}
 
-\numberwithin{equation}{subsection}
+\numberwithin{equation}{section}
 
 
 <<preliminaries, echo=FALSE, results=hide>>=
@@ -84,7 +84,8 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 
 
 
-\title{Distributional Trees and Forests for Circular Data with an Application to Probabilistic Wind Direction Forecasting}
+\title{Circular Regression Trees and Forests with an Application to 
+    Probabilistic Wind Direction Forecasting}
 \Shorttitle{Distributional Trees and Forests for Circular Data}
 
 \author{Moritz N. Lang\\Universit\"at Innsbruck
@@ -103,7 +104,7 @@ For probabilistic modeling of circular data the von Mises distribution is widely
 To capture how its parameters change with covariates, a regression tree model
 is proposed as an alternative to more commonly-used additive models. The resulting
 distributional trees are easy to interpret, can detect non-additive effects, and select
-covariates and their interactions automatically. In order to stabelize and regularize
+covariates and their interactions automatically. In order to stabilize and regularize
 the model an ensemble of distributional trees is combined yielding a distributional
 forest which allows for modeling smooth effects as well.
 For illustration, hourly wind direction forecasts are obtained at two airports in Austria
@@ -185,12 +186,16 @@ An alternative approach to regression modeling of circular data that avoids this
 on choosing well-fitting initial values is presented by \cite{Mulder+Klugkist:2017} employing a GLM 
 in a Bayesian framework. 
 
+\fixme{revise literature survey with focus on transition to GLM}
+
 The named methods and also many of their further developments 
 \citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001} are built on additive regression models.
 While they provide a powerful toolbox for modeling circular data, particularly in case of
 smooth effects, they may not be able to capture all types of effects. For example, abrupt changes 
 might not be detected properly owing to the enforced additive structure and model assumptions 
 such as the type of link function and the form of linear combinations.
+
+\fixme{revise transition to trees/forests}
 
 Therefore, we propose a very flexible alternative approach by adapting regression trees and random 
 forests to circular data, specifically by employing the von Mises distribution within the methodology
@@ -200,6 +205,48 @@ selected automatically. Non-additive effects are captured by the tree structure 
 ensemble of trees to a forest model allows for modeling smooth changes as well. 
 Thus, a high level of flexibility is provided while a full distributional model is specified 
 by distributional trees and forests such that a wide range of inference is made available.
+
+\fixme{include and revise ``motivating'' example}
+
+As a first illustration Figure~\ref{fig:tree_ibk} displays a distributional
+tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
+Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
+west-east valley axis or along a tributary valley intersecting from the south. Hence, pressure 
+gradients to which valley wind regimes react both west and east of the airport are considered 
+as covariates along with other meteorological measurements at the airport (lagged by one hour),
+such as wind direction and wind speed at Innsbruck Airport.
+
+Together with the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
+and fitted von Mises (red) distribution of wind direction in each terminal node. Based on the 
+fitted location parameters $\hat \mu$, the subgroups can be distinguished into the following 
+wind regimes:
+(1)~Up-valley winds blowing from the valley mouth towards the upper valley (from
+east to west, nodes 4 and 5). 
+(2) Downslope winds blowing across the Alpine crest along the intersecting valley towards 
+Innsbruck (from south-east to north-west, nodes 7 and 8). 
+(3) Down-valley winds blowing in the direction of the valley mouth (from west to east, 
+nodes 12, 14 and 15). 
+Node~11 captures observations with rather low wind speeds that cannot be distinguished
+clearly into wind regimes and consequently are associated with a very low
+estimated concentration $\hat \kappa$. In terms of covariates, the lagged
+wind direction (``persistence'') is mostly responsible for distinguishing
+the broad wind regimes listed above while the pressure gradients and wind
+speed separate between subgroups with high vs.\ low precision.
+Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and 
+increases clockwise from North ($0$ degree).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width = \textwidth]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
+\caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
+In each terminal node the empirical histogram (gray) and fitted density (red line)
+are depicted along with the estimated location parameter (red hand). The covariates
+employed are wind direction (degree), wind speed ($\text{ms}^{-1}$),
+and pressure gradients ($\text{dpressure; hPa}$) west and east of the airport,
+all lagged by one hour.}
+\label{fig:tree_ibk} 
+\end{figure}
+
 The corresponding methodology and its features are presented in Section~\ref{sec:tree_forest} after
 discussing distributional models for circular data in Section~\ref{sec:prob_circ}.
 In Section~\ref{sec:wind} the presented models are applied to probabilistic forecasting of wind direction
@@ -207,7 +254,7 @@ at the airports of Innsbruck and Vienna.
 
 
 
-\section{Probabilistic Circular Modeling}
+\section{Probabilistic circular modeling}
 \label{sec:prob_circ}
 Probabilistic modeling of circular data requires the selection of a proper circular
 probability distribution, i.e., a probability distribution which accounts for the periodicity
@@ -221,6 +268,7 @@ to use \citep{Fisher:1993} is provided by the von Mises distribution,
 a purely circular distribution which is also known as ``the circular normal distribution''
 and commonly applied for probabilistic modeling of circular data.
 Based on a location parameter $\mu \in (-\pi, \pi]$ and a concentration parameter $\kappa > 0$ 
+\fixme{check domain of $\mu$ in literature}
 the density of the von Mises distribution for an observation $y \in (-\pi, \pi]$ is given by:
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
@@ -278,6 +326,7 @@ along with the estimated location parameter (red hand).
 }
 \label{fig:density_vM} 
 \end{figure}
+\fixme{update figure 2d to 3d, using data of example tree}
 
 Figure~\ref{fig:density_vM} illustrates a distributional model fitted to circular data
 employing the von Mises distribution.
@@ -291,9 +340,9 @@ Therefore, distributional regression models are of high interest for all types o
 including circular data.
 
 
-\section{Regression Trees and Forests for Circular Data}
+\section{Circular regression trees and forests}
 \label{sec:tree_forest}
-%\subsection{Motivation}
+\fixme{revise transition from sec\,2. to sect\,3. with the focus on circular methods}
 A common way of including covariates as regressors in distributional models is to apply
 generalized additive models for location, scale, and shape 
 \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005} where each distribution parameter is estimated
@@ -305,7 +354,7 @@ and no information on possible interactions.
 An alternative regression approach that can deal with these problems is to apply a tree-structured 
 model.
 
-\subsection{Distributional Trees for Circular Data}
+\subsection{Circular trees}
 \label{sec:circtree}
 Fitting a global model to a full data set can be very challenging, particularly for 
 complex data with strong variations. Therefore, separating the data set into more homogeneous 
@@ -385,7 +434,7 @@ they might impose abrupt changes even in case of rather smooth transitions. This
 by combining an ensemble of trees in order to obtain a more stable forest model. 
 
 
-\subsection{Distributional Forests for Circular Data}
+\subsection{Circular forests}
 \label{sec:circforest}
 A natural extension of distributional trees for circular data are ensembles or forests 
 that can improve forecasts by regularizing and stabilizing the model.
@@ -424,7 +473,7 @@ covariates and possible interactions are selected automatically allowing for an 
 apply methodology to fully specify the von Mises distribution for circular data.
 
 
-\section{Case Study: Wind Direction Forecasts}
+\section{Case study: Probabilistic wind direction forecasting}
 \label{sec:wind}
 
 Wind is a classical circular quantity and accurate forecasts of wind direction
@@ -432,49 +481,6 @@ are of great importance for decision-making processes and risk management,
 e.g., in air traffic management or renewable energy production. 
 
 \fixme{information on already available approaches to wind direction forecasting}
-
-\subsection{Motivational Example}\label{sec:mot_ex}
-As a first illustration Figure~\ref{fig:tree_ibk} displays a distributional
-tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
-Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
-west-east valley axis or along a tributary valley intersecting from the south. Hence, pressure 
-gradients to which valley wind regimes react both west and east of the airport are considered 
-as covariates along with other meteorological measurements at the airport (lagged by one hour),
-such as wind direction and wind speed at Innsbruck Airport.
-
-Together with the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
-and fitted von Mises (red) distribution of wind direction in each terminal node. Based on the 
-fitted location parameters $\hat \mu$, the subgroups can be distinguished into the following 
-wind regimes:
-(1)~Up-valley winds blowing from the valley mouth towards the upper valley (from
-east to west, nodes 4 and 5). 
-(2) Downslope winds blowing across the Alpine crest along the intersecting valley towards 
-Innsbruck (from south-east to north-west, nodes 7 and 8). 
-(3) Down-valley winds blowing in the direction of the valley mouth (from west to east, 
-nodes 12, 14 and 15). 
-Node~11 captures observations with rather low wind speeds that cannot be distinguished
-clearly into wind regimes and consequently are associated with a very low
-estimated concentration $\hat \kappa$. In terms of covariates, the lagged
-wind direction (``persistence'') is mostly responsible for distinguishing
-the broad wind regimes listed above while the pressure gradients and wind
-speed separate between subgroups with high vs.\ low precision.
-Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and 
-increases clockwise from North ($0$ degree).
-
-
-\begin{figure}[t]
-\centering
-%\includegraphics[height = .5\textheight,angle=90,origin=c]{schlosserfig1.pdf}
-\includegraphics[width = \textwidth]{tree_ibk.pdf}
-\caption{Fitted tree based on the von Mises distribution for wind direction forecasting.
-In each terminal node the empirical histogram (gray) and fitted density (red line)
-are depicted along with the estimated location parameter (red hand). The covariates
-employed are wind direction (degree), wind speed ($\text{ms}^{-1}$),
-and pressure gradients ($\text{dpressure; hPa}$) west and east of the airport,
-all lagged by one hour.}
-\label{fig:tree_ibk} 
-\end{figure}
-
 
 Next to the airport of Innsbruck, located in the west of Austria, in the center of the Alps,
 a second airport in Austria, the airport of Vienna, situated in the east of the country in a rather flat
@@ -509,7 +515,7 @@ especially of the employed reference models might suffer from the influence of t
 observations. Therefore, only observations corresponding to a wind speed of at least $1$ m/s are 
 considered.
 
-\fixme{information on NAs}
+\fixme{information on NAs, update data information, include overview}
 
 
 \begin{table}[t!]
@@ -540,7 +546,7 @@ Basic covariates & Variations\\
 
 
 
-\subsection{Evaluation Setting and Models Applied}
+\subsection{Evaluation and models}
 Along with distributional trees and forests for circular data three other models have been applied
 in this study. In particular, they have been evaluated in a five-fold cross validation with each of 
 the five years contained in the data set being used as testing data once after the models where 
@@ -555,11 +561,13 @@ the better the performance. In order to adjust the general methodology of the CR
 \cite{Grimit+Gneiting+Berrocal:2006} employ an auxiliary function which measures the angular distance 
 between two circular variables. 
 
+\fixme{condense evaluation}
+
 The circular CRPS is evaluated out of sample and the resulting values are averaged over 
 each observation contained in the testing data and the corresponding predicted distribution 
 parameters of each of the models.
 
-\fixme{Comment on aggregation}
+\fixme{comment on aggregation}
 
 To measure the improvement of one of the applied methods over a climatology model (which will 
 be described in detail subsequently) the skill score based on the circular 
@@ -573,6 +581,8 @@ distributional trees and forests can be applied as a reasonable alternative to a
 existing approaches to modeling circular data, particularly in the field of meteorological forecasting.
 The exact settings of the tree and forest models as well as a specification of the reference models
 is provided in the remainder of this section.
+
+\fixme{condense model descriptions}
 
 \paragraph{Distributional Tree}
 For the distributional tree as discussed in Section~\ref{sec:circtree} all covariates provided in the 
@@ -609,7 +619,7 @@ as soon as any changes take place, especially in case of rapid changes.
 Therefore, it heavily depends on the specific features and the variability of the variable
 of interest whether this approach can provide overall reliable predictions.
 
-\fixme{references}
+\fixme{add references}
 
 To establish a distributional model of persistence in this study a set of six observations
 is considered to make a prediction for a selected day and time point. In particular,
@@ -662,13 +672,14 @@ parameter is fitted to the full learning sample.
 
 \fixme{add references and further information on the estimation process within circGLM?}
 
-\fixme{information on applied implementation here or in separate chapter?}
+\fixme{add information on applied implementation here (!) or in separate chapter?}
 
 
 
 
 
 \subsection{Results}
+\fixme{update results section}
 In order to test and compare the models over varying settings not only 1-hour but also 3-hour
 forecasts are considered at both airports yielding four different scenarios of which the results
 are discussed in this section.
@@ -702,7 +713,8 @@ in a longer time window.
 \centering
 \setkeys{Gin}{width=1.0\textwidth}
 %\hspace{-2cm}
-\includegraphics{boxplot_crpsraw.pdf}
+%\includegraphics{boxplot_crpsraw.pdf}
+\includegraphics{_plot_circforest_validation_crpsraw_agg_comparison_with_lowff_v14b.pdf}
 \caption{}
 \label{fig:boxplot_crpsraw} 
 \end{figure}
@@ -719,13 +731,14 @@ forest leading to the highest overall improvement in model fit.
 \centering
 \setkeys{Gin}{width=1.0\textwidth}
 %\hspace{-2cm}
-\includegraphics{boxplot_crpsskill.pdf}
+%\includegraphics{boxplot_crpsskill.pdf}
+\includegraphics{_plot_circforest_validation_crpsskill_agg_comparison_with_lowff_v14b.pdf}
 \caption{}
 \label{fig:boxplot_crpsskill} 
 \end{figure}
 
 
-\section{Discussion and Outlook}
+\section{Summary and conclusion}
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
 The resulting trees can capture nonlinear changes, shifts, and potential interactions
@@ -733,9 +746,9 @@ in covariates without prespecification of such effects. This is particularly
 useful for modeling wind direction in mountainous terrain where wind shifts
 can occur due to turns of the pressure gradients along a valley.
 
-\fixme{Summary of results}
+\fixme{add summary of results}
 
-\fixme{Possible extensions of models, use of NWP data}
+\fixme{outlook on possible extensions of models, use of NWP data}
 
 %\subsection{Splits in circular covariates}
 
