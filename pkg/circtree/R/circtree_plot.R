@@ -204,7 +204,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
       mainlab <- mainlab(nid, node$info$object$ny, coefs[1], coefs[2], response_range)
     }
     ##grid::grid.text(mainlab, y = grid::unit(0.9, "npc"), gp = gpar(cex = 0.8))
-    g <- resizingTextGrob(mainlab, y = grid::unit(0.9, "npc"))
+    g <- resizingTextGrob(mainlab, y = grid::unit(0.8, "npc"), gp = gpar(cex = 1.2))
     grid::grid.draw(g)
 
     ## plot rectangle and actual graphic, optional x and ylab 
