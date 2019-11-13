@@ -15,7 +15,8 @@ diff:
 	-bibtex diff.aux
 	-pdflatex diff.tex
 	-pdflatex diff.tex
-	-rm diff.out diff.aux diff.blg diff.bbl diff.log diff.tex draft.tex
+	-rm diff.out diff.aux diff.blg diff.bbl diff.log diff.tex
+	-make clean
 	-mv diff.pdf diff_tease_paper_version_2019_11_12.pdf
 
 
