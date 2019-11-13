@@ -15,8 +15,10 @@ extree_data(formula, data, subset, na.action = na.pass, weights, offset,
             nmax = c(yx = Inf, z = Inf), ...)
 }
 \arguments{
-  \item{formula}{a formula describing the model of the form \code{y1 + y2 + ... ~
-x1 + x2 + ... | z1 + z2 + ...}.
+  \item{formula}{a (multi-part) formula describing the model (\code{y1 + y2 +
+		  ... ~ z1 + z2 + ...} or \code{y1 + y2 + ... ~ x1 + x2 + ... |
+		  z1 + z2 + ...} or a named list with entries "y" and "z", and
+	  optionally "x", "weights", "offset", "cluster", "strata".
 }
   \item{data}{an optional data.frame containing the variables in the model.
 }
