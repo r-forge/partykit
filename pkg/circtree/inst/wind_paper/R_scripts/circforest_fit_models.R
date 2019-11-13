@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-11-12 on thinkmoritz
+# - L@ST MODIFIED: 2019-11-13 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -130,7 +130,7 @@ if (opt$station == "ibk") {
   ## Omit nans
   d <- na.omit(d)
 
-  ## Calculate u and v for lagged response (windmessanlage 34)
+  ## Calculate u and v for lagged response (wien_schwechat_flughaven/tawes station)
   tmp <- ddff2uv(dd = as.numeric(d$wien_schwechat_flughafen.dd), ff = as.numeric(d$wien_schwechat_flughafen.ff))
   d$wien_schwechat_flughafen.u <- tmp$u
   d$wien_schwechat_flughafen.v <- tmp$v
@@ -162,7 +162,8 @@ for (i in seq(1:nrow(d))) {
     next
   }
 
-  ## Subset training data set
+  ## Subset training data set 
+  ## with at least 'lag' time steps before (necessary as response at no covariables is employed in fitting)
   idx <- as.POSIXct(sprintf("%04d-%02d-%02d %02d:%02d:00", i_plt$year + 1900, i_plt$mon + 1, i_plt$mday, 
     i_plt$hour, i_plt$min), origin = "1970-01-01") + 60 * 60 * (seq(-5, -0) - opt$lag)
 
@@ -304,6 +305,7 @@ for (cv in unique(cvID)) {
     }
   
     ## Subset training data set
+    ## first find all time points at same time over all years, then subset for training data (excluding the current year)
     i_years <- seq.int(min(d_range$year), max(d_range$year)) + 1900
 
     idx <- lapply(i_years, function(x) 
@@ -385,6 +387,7 @@ for (cv in unique(cvID)) {
     }
   
     ## Subset training data set
+    ## first find all time points at same time over all years, then subset for training data (excluding the current year)
     i_years <- seq.int(min(d_range$year), max(d_range$year)) + 1900
 
     idx <- lapply(i_years, function(x) 
@@ -401,6 +404,7 @@ for (cv in unique(cvID)) {
     }
   
     ## Fit lm model
+    ## Covariables are already lagged in data set
     if(opt$station == "ibk"){
       f.lm <- as.formula(response.dd ~ innsbruck.u + innsbruck.v + innsbruck.ff)
     } else if (opt$station == "vie"){
@@ -448,6 +452,7 @@ d$doy <- tmp_time$yday + 1
 rm(tmp_time); gc()
 
 ## Set up formula
+## Covariables are already lagged in data set
 f <- as.formula(paste("response.dd ~ ", paste(names(d)[-grep("response", names(d))], collapse= "+")))
 
 ## Fit single tree for visualization

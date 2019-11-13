@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-11-12 on thinkmoritz
+# - L@ST MODIFIED: 2019-11-13 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -262,7 +262,7 @@ p4 <- ggplot(crps.agg.mall, aes(x = model, y = value)) +
       geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
       stat_boxplot(geom = "errorbar", width = 0.2) +
       geom_boxplot(fill = "gray60") + 
-      facet_grid(lag ~ station, scales = "free")
+      facet_grid(lag ~ station)#, scales = "free")
 p4 <- p4 + labs(x = "", y = "CRPS [rad]") 
 #p4 <- p4 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
 ann_text <- data.frame(x = c(-Inf, -Inf, -Inf, -Inf), station = rep(c("Innsbruck", "Vienna"), 2), lag = c(rep("1-hour forecast", 2), rep("3-hour forecast", 2)), 
