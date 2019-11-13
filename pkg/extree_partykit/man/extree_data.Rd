@@ -58,7 +58,7 @@ This internal functionality will be the basis of implementations of other
 tree algorithms in future versions. Currently, only \code{ctree} relies on
 this function.
 }
-\value{An object of class \code{extree_data}.
+\value{An object of class \code{extree_data}. %TODO add mor info here
 }
 \examples{
 

@@ -10,7 +10,7 @@
   split point selection functions.
 }
 \usage{
-extree(data, trafo, control = extree_control(selectfun, splitfun, ...), 
+extree(data, trafo, control = extree_control(...), 
     converged = NULL, ...)
 }
 \arguments{
