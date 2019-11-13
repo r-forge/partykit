@@ -680,9 +680,10 @@ parameter is fitted to the full learning sample.
 
 \subsection{Results}
 \fixme{update results section}
-In order to test and compare the models over varying settings not only 1-hour but also 3-hour
-forecasts are considered at both airports yielding four different scenarios of which the results
-are discussed in this section.
+This section provides a detailed analysis of the different proposed statistal models with focus
+on their predictive performance. For a comprehensive comparison of the models, $1$\,hour and 
+$3$\,h wind direction forecasts are evaluated at two airports, namely Innsbruck and Vienna, with
+different meteorological site characteristics.
 
 Figure~\ref{fig:boxplot_crpsraw} illustrates the CRPS values of the employed models with a lower 
 CRPS indicating better performance. 
@@ -710,13 +711,19 @@ performance for the 1-hour forecasts as it could have been expected due to incre
 in a longer time window.
 
 \begin{figure}[t]
-\centering
-\setkeys{Gin}{width=1.0\textwidth}
-%\hspace{-2cm}
-%\includegraphics{boxplot_crpsraw.pdf}
-\includegraphics{_plot_circforest_validation_crpsraw_agg_comparison_with_lowff_v14b.pdf}
-\caption{}
-\label{fig:boxplot_crpsraw} 
+  \centering
+  \setkeys{Gin}{width=1.0\textwidth}
+  %\hspace{-2cm}
+  %\includegraphics{boxplot_crpsraw.pdf}
+  \includegraphics{_plot_circforest_validation_crpsraw_agg_comparison_with_lowff_v14b.pdf}
+  \caption{CRPS skill scores for wind direction forecasts based on the full
+    predictive von~Mises distribution for $+1$ and $+3$\,h forecasts at the
+    airports Innsbruck and Vienna. Each box-and-whisker contains $24$~hourly scores
+    per $12$~months averaged over the $5$~validation years; this yields a total of
+    $288$~yearly mean values. The scores are shown for the reference models climatology, 
+    persistence and the linear model, as well as for the circular regression tree and
+    forest.}
+  \label{fig:boxplot_crpsraw} 
 \end{figure}
 
 
@@ -728,13 +735,15 @@ the same conclusions can be drawn as from Figure~\ref{fig:boxplot_crpsraw} with 
 forest leading to the highest overall improvement in model fit.
 
 \begin{figure}[t]
-\centering
-\setkeys{Gin}{width=1.0\textwidth}
-%\hspace{-2cm}
-%\includegraphics{boxplot_crpsskill.pdf}
-\includegraphics{_plot_circforest_validation_crpsskill_agg_comparison_with_lowff_v14b.pdf}
-\caption{}
-\label{fig:boxplot_crpsskill} 
+  \centering
+  \setkeys{Gin}{width=1.0\textwidth}
+  %\hspace{-2cm}
+  %\includegraphics{boxplot_crpsskill.pdf}
+  \includegraphics{_plot_circforest_validation_crpsskill_agg_comparison_with_lowff_v14b.pdf}
+  \caption{As Figure~\ref{fig:boxplot_crpsraw}, but showing CRPS skill scores
+    with the climatology model as reference. Skill scores are in percent; positive
+    values indicate improvements over the reference.} 
+  \label{fig:boxplot_crpsskill} 
 \end{figure}
 
 
