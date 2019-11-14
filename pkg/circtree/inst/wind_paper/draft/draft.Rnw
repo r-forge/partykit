@@ -208,7 +208,7 @@ by distributional trees and forests such that a wide range of inference is made 
 
 \fixme{include and revise ``motivating'' example}
 
-As a first illustration Figure~\ref{fig:tree_ibk} displays a distributional
+As a motivational example Figure~\ref{fig:tree_ibk} displays a distributional
 tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
 Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
 west-east valley axis or along a tributary valley intersecting from the south. Hence, pressure 
@@ -223,10 +223,10 @@ wind regimes:
 (1)~Up-valley winds blowing from the valley mouth towards the upper valley (from
 east to west, nodes 4 and 5). 
 (2) Downslope winds blowing across the Alpine crest along the intersecting valley towards 
-Innsbruck (from south-east to north-west, nodes 7 and 8). 
+Innsbruck (from south-east to north-west, node 8). 
 (3) Down-valley winds blowing in the direction of the valley mouth (from west to east, 
-nodes 12, 14 and 15). 
-Node~11 captures observations with rather low wind speeds that cannot be distinguished
+nodes 10, 12 and 13). 
+Node~7 captures observations with rather low wind speeds that cannot be distinguished
 clearly into wind regimes and consequently are associated with a very low
 estimated concentration $\hat \kappa$. In terms of covariates, the lagged
 wind direction (``persistence'') is mostly responsible for distinguishing
@@ -234,7 +234,7 @@ the broad wind regimes listed above while the pressure gradients and wind
 speed separate between subgroups with high vs.\ low precision.
 Note that in the meteorological context wind direction is defined on the scale $[0,360]$ degree and 
 increases clockwise from North ($0$ degree).
-
+  
 \begin{figure}[t]
 \centering
 \includegraphics[width = \textwidth]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
@@ -247,11 +247,12 @@ all lagged by one hour.}
 \label{fig:tree_ibk} 
 \end{figure}
 
-The corresponding methodology and its features are presented in Section~\ref{sec:tree_forest} after
-discussing distributional models for circular data in Section~\ref{sec:prob_circ}.
-In Section~\ref{sec:wind} the presented models are applied to probabilistic forecasting of wind direction
-at the airports of Innsbruck and Vienna.
-
+A more extensive case study of circular regression trees and forests applied to probabilistic 
+forecasting of wind direction at the airports of Innsbruck and Vienna is presented in 
+Section~\ref{sec:wind} where their performance is also compared to other commonly used models.
+Before that, distributional models for circular data are discussed in Section~\ref{sec:prob_circ} 
+and the methodology of circular regression trees and forest and its features are presented in 
+Section~\ref{sec:tree_forest}.
 
 
 \section{Probabilistic circular modeling}
@@ -343,14 +344,20 @@ including circular data.
 \section{Circular regression trees and forests}
 \label{sec:tree_forest}
 \fixme{revise transition from sec\,2. to sect\,3. with the focus on circular methods}
-A common way of including covariates as regressors in distributional models is to apply
-generalized additive models for location, scale, and shape 
-\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005} where each distribution parameter is estimated
-by its own generalized additive model (GAM).
-As already discussed in Section~\ref{sec:introduction}, additive strategies work well 
-for smooth effects but difficulties can arise in case of non-additive changes. Additionally, 
-specifying a model properly can be very challenging, particularly for a high number of covariates 
-and no information on possible interactions.
+A common way of including covariates is to regress the model parameters on the covariates.
+In the case of a probabilistic model for a circular response this corresponds to expressing the 
+location parameter $\mu$ and the concentration parameter $\kappa$ of the von Mises distribution
+by means of the available covariates, e.g., in the form of a linear combination, possibly with an 
+appropriate link function plugged in as in GLMs \citep{Fisher+Lee:1992, Fisher:1993}.
+In a more general setting this idea can be extended by generalized additive models for location, scale, 
+and shape \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005} where each distribution parameter is estimated
+by its own generalized additive model (GAM). However, an adaption of this methodology to circular data
+can not be obtained by the straight forward approach of simply wrapping the modelled additive effects
+around the unit circle since the parameters of the von Mises distribution and their dependence/interaction 
+differs strongly from the linear case and therefore requires specific handling.
+Moreover, difficulties might arise in case of non-additive changes and specifying a model properly can 
+be very challenging, particularly for a high number of covariates and no information on possible 
+interactions.
 An alternative regression approach that can deal with these problems is to apply a tree-structured 
 model.
 
