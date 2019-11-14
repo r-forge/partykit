@@ -655,14 +655,14 @@ analogue of the continuous ranked probability score (CRPS) as introduced by
 the CRPS \citep[for more details see][]{Hersbach:2000} it is a proper scoring
 rule \citep{Gneiting+Raftery:2007} and measures the difference between an
 observation and the corresponding predicted distribution function in order to
-assess the probabilistic goodness of fit for the estimated model. Hence, the lower
-the CRPS value the better the performance.  Contrary to the linear version, the
-circular CRPS reduces not to the absolute error but to the angular distance
-when the forecast is deterministic.
+assess the probabilistic goodness of fit for the estimated model. Hence, the
+lower the CRPS value the better the predictive performance.  Contrary to the
+linear version, the circular CRPS reduces not to the absolute error but to the
+angular distance when the forecast is deterministic.
 
 In addition to the raw CRPS, to assess differences in the
 improvement of the various statistical models over the climatological model
-used as a reference method, CRPS-based skill scores are computed according to
+used as a reference, CRPS-based skill scores are computed according to
 \begin{equation} 
   \text{CRPSS}_{\text{method}} = 1 -
 \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{climatology}}}.
@@ -671,17 +671,18 @@ used as a reference method, CRPS-based skill scores are computed according to
 All scores presented in the next section are out-of-sample: For the persistency
 model only time points prior to the time of interest are used, for all other
 models a five-fold cross-validation is employed using up to four calendar years
-for model training and the remaining single calendar year for validation. Due to the large sample
-size of 24-hourly values per day over five years, some kind of temporal
-aggregation is needed to ensure a correct visual comparison of the individual
-methods. As for the employed models the variablilty of the predictive performance over the five years
-is lower than over a single day or over a single year, CRPS and CRPS skill scores are
-aggregrated over the respective five validation years; this yields 24 hourly
-scores per 12 months averaged over the five validation years.
+for model training and the remaining single calendar year for validation. Due
+to the large sample size of 24-hourly values per day over five years, some kind
+of temporal aggregation is needed to ensure a correct visual comparison of the
+individual methods. As for the employed models the variability of the
+predictive performance over the five years is lower than over a single day or
+over a single year, CRPS and CRPS skill scores are aggregated over the
+respective five validation years; this yields 24 hourly scores per 12 months
+averaged over the five validation years.
 
 \subsection{Results} 
 This section provides a detailed analysis on the predictive performance of the
-different proposed statistal models applied to probabilistic wind direction
+different proposed statistical models applied to probabilistic wind direction
 forecasting. To ensure a comprehensive comparison of the models, wind direction
 forecasts are evaluated for two different lead times at two airports with
 different climatological site characteristics.
@@ -696,7 +697,7 @@ $3$\,h forecast at Innsbruck, the persistency model.  In comparison to the
 circular tree and forest, for both stations and forecast steps, the
 climatological model and the linear model show clearly higher CRPS scores and
 hence a lower predictive performance.
- 
+
 The different site characteristics between the airports Innsbruck
 (Figure~\ref{fig:boxplot_crpsraw}a,\,c) and Vienna
 (Figure~\ref{fig:boxplot_crpsraw}b,\,d) seem to have an effect on the absolute
@@ -706,32 +707,31 @@ possible wind directions exists, namely the three wind regimes discussed for
 Figure~\ref{fig:tree_ibk} in Section~\ref{sec:introduction}. Therefore, for
 Innsbruck the wind direction remains rather constant in one of these possible
 states, but once a change takes place it is mostly a major wind direction
-shift.  Hence, due to the few wind regimes the rather unflexible climatological
-and linear models perform relatively similar to the other models
-(Figure~\ref{fig:boxplot_crpsraw}a,\,c). In addition, at Innsbruck the potential
-high prediction errors in case of a paradigma change seem to lead to an higher
-variation in the predictive performance for all models in comparison to Vienna;
-this variation is especially high for the persistency model due to its strong
-vulnerability to abrupt wind shifts. On the contrary, at Vienna the geographic
-surroundings do not constrain any wind direction which leads to smaller and
-less abrupt changes in the wind direction as well as less pronounced wind
-regimes. This seems to weaken the predictive performance of the climatological
-and linear models, and to reduce the performance variability for all models
-(Figure~\ref{fig:boxplot_crpsraw}b,\,d).
+shift.  Hence, due to the few wind regimes the rather inflexible climatological
+and linear models score relatively well with similar values as the other models
+(Figure~\ref{fig:boxplot_crpsraw}a,\,c). In addition, at Innsbruck the
+potential high prediction errors in case of a paradigm shift seem to lead to
+an higher variation in the predictive performance for all models in comparison
+to Vienna; this variation is especially high for the persistency model due to
+its strong vulnerability to abrupt wind shifts. On the contrary, at Vienna the
+geographic surroundings do not constrain any wind direction which leads to
+smaller and less abrupt changes in the wind direction as well as less
+pronounced wind regimes. This seems to weaken the predictive performance of the
+climatological and linear models, and to reduce the performance variability for
+all models (Figure~\ref{fig:boxplot_crpsraw}b,\,d).
 
 The different forecast steps seem to have only a minor effect on the predictive
-performance of the climatological model and the linear model for both stations.
+performance of the climatological model and the linear model at both stations.
 However, for the persistency model, at both stations, higher scores for the
-$3$\,h forecast (panels c,\,d) reveal a lower performance for longer lead times. This is
-clearly due to at least 3-hourly instead of 1-hourly lagged response values
-employed as covariates in the persistency model. Apparently, the circular
-regression tree and forest can partially compensate the lower skill of
+$3$\,h forecast (panels c,\,d) reveal a lower performance for longer lead
+times; this is probably due to minimum 3-hourly instead of 1-hourly lagged
+response values employed as covariates in the persistency model. The circular
+regression tree and forest seem to partially compensate for the lower skill of
 the lagged response values by other covariates, hence their predictive
-perfomance only slightly decreases for the 3-hourly in comparison to the
-1-hourly wind direction forecast. This compensation is especially evident for
-Innsbruck, where the performance difference between the persistency model and
-the tree-based methods significantly increases for the 3-hourly forecast, with
-a significantly better performance for the circular tree and forest.
+performance only slightly decreases for the longer lead time.  This compensation
+is especially evident for Innsbruck, where the performance difference between
+the persistency model and the tree-based methods significantly increases from
+the 1-hourly to the 3-hourly forecast.
 
 \begin{figure}[t]
   \centering
@@ -756,11 +756,11 @@ performance over the reference. For all setups, the circular regression forest
 has the highest skill scores with a mean performance gain of 13--25\% and 58--71\% for
 Innsbruck and Vienna, respectively. As discussed for
 Figure~\ref{fig:boxplot_crpsraw}, this improvement over the climatological
-model is lower for Innsbruck due to the few number of predominat wind regimes
+model is lower for Innsbruck due to the few number of predominant wind regimes
 and hence a relatively good performance of the climatological model.
 Additionally, Figure~\ref{fig:boxplot_crpsskill} shows that even if the
 persistency model's performance is lower than the reference (panel c) the
-tree-based models are significantly superior to the climatolical model used as
+tree-based models are significantly superior to the climatological model used as
 reference.
 
 \begin{figure}[t]
