@@ -208,13 +208,14 @@ by distributional trees and forests such that a wide range of inference is made 
 
 \fixme{include and revise ``motivating'' example}
 
-As a motivational example Figure~\ref{fig:tree_ibk} displays a distributional
-tree applied to predict the wind direction at the airport of Innsbruck in the following hour. 
-Innsbruck lies at the bottom of a deep valley in the Alps. Topography channels wind along the 
-west-east valley axis or along a tributary valley intersecting from the south. Hence, pressure 
-gradients to which valley wind regimes react both west and east of the airport are considered 
-as covariates along with other meteorological measurements at the airport (lagged by one hour),
-such as wind direction and wind speed at Innsbruck Airport.
+As a motivating example Figure~\ref{fig:tree_ibk} displays a distributional
+tree applied to predict the wind direction at the airport of Innsbruck in the
+following hour.  Innsbruck lies at the bottom of a deep valley in the Alps.
+Topography channels wind along the west-east valley axis or along a tributary
+valley intersecting from the south. Hence, pressure gradients to which valley
+wind regimes react are considered as covariates along with other meteorological
+measurements at the airport (lagged by one hour), such as wind direction and
+wind speed at the airport.
 
 Together with the tree structure itself Figure~\ref{fig:tree_ibk} also depicts the empirical (gray) 
 and fitted von Mises (red) distribution of wind direction in each terminal node. Based on the 
@@ -247,12 +248,15 @@ all lagged by one hour.}
 \label{fig:tree_ibk} 
 \end{figure}
 
-A more extensive case study of circular regression trees and forests applied to probabilistic 
-forecasting of wind direction at the airports of Innsbruck and Vienna is presented in 
-Section~\ref{sec:wind} where their performance is also compared to other commonly used models.
-Before that, distributional models for circular data are discussed in Section~\ref{sec:prob_circ} 
-and the methodology of circular regression trees and forest and its features are presented in 
-Section~\ref{sec:tree_forest}.
+A more extensive case study of circular regression trees and forests applied to
+probabilistic forecasting of wind direction at the airports of Innsbruck and
+Vienna is presented in Section~\ref{sec:wind} where their performances are
+benchmarked to alternative commonly used approaches.  Beforehand,
+distributional models for circular data are discussed in
+Section~\ref{sec:prob_circ} and the methodology of circular regression trees
+and forest and its features are presented in Section~\ref{sec:tree_forest}.
+After the case study, a comprehensive summary and conlusion is given in
+Section~\ref{sec:summary}.
 
 
 \section{Probabilistic circular modeling}
@@ -500,12 +504,17 @@ wind direction forecasts, separately for Innsbruck and Vienna.
 
 
 \subsection{Data}
-For both airports, Innsbruck and Vienna, observations of various meteorological quantities 
-such as wind direction, temperature, air pressure and humidity
-measured either directly at the airports or at surrounding weather stations are used as 
-covariates in order to predict the wind direction at the corresponding airport 
-in the following hour(s).
-Next to the current measurements at each of the weather stations also differences in these 
+As response variables, $10$\,min mean wind direction observations are employed at
+the airports Innsbruck and Vienna on an hourly temporal resolution. As
+predictor variables, we use observations of various meteorological quantities
+such as wind direction, temperature, air pressure and humidity directly at the
+respective airports, as well as within the vicinity of the airports. For
+Innsbruck, meteorological variables are observed at XXX different locations
+along the intersecting valleys; whereas for Vienna, located in the flat,
+meteorological variables are observed at XXX different locations within an area
+of about $10$\,km$^2$. In addition, we employ temporal differences, averages, minima, maxima over the last 3\,h, 
+
+of ias well as tempat each of the weather stations also differences in these 
 quantities between the considered stations are included. For example, differences in air 
 pressure between Innsbruck and either a western or eastern location are expected to have a 
 high influence on wind directions. Moreover, changes of these quantities over time are 
@@ -555,14 +564,14 @@ Basic covariates & Variations\\
 
 \subsection{Models and evaluation}\label{sec:wind:models}
 For a fair evaluation of circular regression trees and forest and to
-investigate whether circular trees and forests can be applied as a reasonable
-alternative to already existing approaches, three additional statistical models are
-applied in this study to probabilistically forecast wind directions. Two
-approaches are based on existing approaches in the field of meteorological
-forecasting, one approach is a state-of-the-art model to forecast circular
-variables.  The next paragraphs introduce the alternative approaches and
-provide for all statistical models, including the circular tree and forest, the
-model specification employed in this study.
+investigate whether they can be applied as a reasonable alternative to already
+existing approaches, three additional statistical models are employed in this
+study for probabilistic forecasting of wind directions. Two of them are based
+on existing approaches in the field of meteorological forecasting while the
+third is a state-of-the-art model to forecast circular response variables. The
+next paragraphs introduce the reference methods and provide the corresponding
+model specifications as employed in this study for all considered model
+including the circular tree and forest. 
 
 \paragraph{Circular regression tree}
 For the distributional tree as discussed in Section~\ref{sec:circtree} all covariates provided in the 
@@ -667,9 +676,9 @@ lower the CRPS value the better the predictive performance.  Contrary to the
 linear version, the circular CRPS reduces not to the absolute error but to the
 angular distance when the forecast is deterministic.
 
-In addition to the raw CRPS, to assess differences in the
-improvement of the various statistical models over the climatological model
-used as a reference, CRPS-based skill scores are computed according to
+In addition to the raw CRPS, CRPS-based skill scores are computed to assess
+differences in the improvement of the various statistical models over the
+climatological model used as a reference:
 \begin{equation} 
   \text{CRPSS}_{\text{method}} = 1 -
 \frac{\text{CRPS}_{\text{method}}}{\text{CRPS}_{\text{climatology}}}.
@@ -679,12 +688,12 @@ All scores presented in the next section are out-of-sample: For the persistency
 model only time points prior to the time of interest are used, for all other
 models a five-fold cross-validation is employed using up to four calendar years
 for model training and the remaining single calendar year for validation. Due
-to the large sample size of 24-hourly values per day over five years, some kind
+to the large sample size of 24 hourly values per day over five years, some kind
 of temporal aggregation is needed to ensure a correct visual comparison of the
-individual methods. As for the employed models the variability of the
+individual methods. As observed for the employed models, the variability of the
 predictive performance over the five years is lower than over a single day or
-over a single year, CRPS and CRPS skill scores are aggregated over the
-respective five validation years; this yields 24 hourly scores per 12 months
+over a single year. Hence, CRPS and CRPS skill scores are aggregated over the
+respective five validation years which yields 24 hourly scores per month
 averaged over the five validation years.
 
 \subsection{Results} 
@@ -708,7 +717,7 @@ hence a lower predictive performance.
 The different site characteristics between the airports Innsbruck
 (Figure~\ref{fig:boxplot_crpsraw}a,\,c) and Vienna
 (Figure~\ref{fig:boxplot_crpsraw}b,\,d) seem to have an effect on the absolute
-level of the respective model performances and on their respective performance
+level of the model performances and on their respective performance
 variation. At Innsbruck, due to the surrounding mountains a limited number of
 possible wind directions exists, namely the three wind regimes discussed for
 Figure~\ref{fig:tree_ibk} in Section~\ref{sec:introduction}. Therefore, for
@@ -718,7 +727,7 @@ shift.  Hence, due to the few wind regimes the rather inflexible climatological
 and linear models score relatively well with similar values as the other models
 (Figure~\ref{fig:boxplot_crpsraw}a,\,c). In addition, at Innsbruck the
 potential high prediction errors in case of a paradigm shift seem to lead to
-an higher variation in the predictive performance for all models in comparison
+a higher variation in the predictive performance for all models in comparison
 to Vienna; this variation is especially high for the persistency model due to
 its strong vulnerability to abrupt wind shifts. On the contrary, at Vienna the
 geographic surroundings do not constrain any wind direction which leads to
@@ -749,9 +758,9 @@ the 1-hourly to the 3-hourly forecast.
   \caption{CRPS skill scores for wind direction forecasts based on the full
     predictive von~Mises distribution for $+1$ and $+3$\,h forecasts at the
     airports Innsbruck and Vienna. Each box-and-whisker contains $24$~hourly scores
-    per $12$~months averaged over the $5$~validation years; this yields a total of
-    $288$~yearly mean values. The scores are shown for the reference models climatology, 
-    persistence and the linear model, as well as for the circular regression tree and
+    per for each of the $12$~months averaged over the $5$~validation years which yields a total of
+    $288$~yearly mean values. The scores are shown for the climatological, 
+    persistency and the linear model as well as for the circular regression tree and
     forest.}
   \label{fig:boxplot_crpsraw} 
 \end{figure}
@@ -783,7 +792,7 @@ reference.
 \end{figure}
 
 
-\section{Summary and conclusion}
+\section{Summary and conclusion}\label{sec:summary}
 Distributional trees for circular responses are established by coupling
 model-based recursive partitioning with the von Mises distribution.
 The resulting trees can capture nonlinear changes, shifts, and potential interactions
