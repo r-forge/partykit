@@ -288,7 +288,7 @@ The corresponding log-likelihood function is defined by
 \begin{equation}
 \begin{aligned}
 \ell(\mu, \kappa; y) &= \log(f_\mathrm{vM}(y;\mu, \kappa)) \\
-&= -\log(2 \pi I_0(\kappa)) +  \kappa \cos(y - \mu).
+&= -\log(2 \pi I_0(\kappa)) +  \kappa \cos(y - \mu).\label{equ:vM:loglik}
 \end{aligned}
 \end{equation}
 
@@ -515,36 +515,30 @@ employed to wind direction data and additional meteorological measurements in or
 wind direction forecasts, separately for Innsbruck and Vienna.
 
 
-\subsection{Data}
-As response variables, $10$\,min mean wind direction observations are employed at
-the airports Innsbruck and Vienna on an hourly temporal resolution. As
-predictor variables, we use observations of various meteorological quantities
-such as wind direction, temperature, air pressure and humidity directly at the
-respective airports, as well as within the vicinity of the airports. For
-Innsbruck, meteorological variables are observed at XXX different locations
-along the intersecting valleys; whereas for Vienna, located in the flat,
-meteorological variables are observed at XXX different locations within an area
-of about $10$\,km$^2$. In addition, we employ temporal differences, averages, minima, maxima over the last 3\,h, 
+\subsection{Data}\label{sec:wind:data}
+For the case study, as circular response variables we employ $10$\,min mean
+wind direction measurements at the airports Innsbruck and Vienna on an hourly
+temporal resolution. As predictor variables, we use $1$-hourly resolved
+$10$\,min mean observations of various meteorological quantities such as wind
+direction, wind speed, temperature, air pressure and humidity, all
+lagged by one or three hours according to the respective forecasting step. The
+meteorological variables are measured either directly at the airports or within
+the vicinity of the respective airports. For Innsbruck, measurements of
+21~different locations at the airport and along the intersecting valleys are
+used, whereas, for Vienna, measurements of 22~locations at the airport and
+within an area of about $10$\,km$^2$ are used. A topographical overview of the
+airports and their surrounding areas with the station sites employed in this
+study is provided in Figure~XXX. In addition, we use derived quantities such
+as 3~hourly means, minima and maxima, as well as 1~and 3~hourly temporal
+changes and spatial differences towards the airport of the respective
+quantities. A summary of all predictor variables can be found in
+Table~\ref{tab:covariates}. 
 
-of ias well as tempat each of the weather stations also differences in these 
-quantities between the considered stations are included. For example, differences in air 
-pressure between Innsbruck and either a western or eastern location are expected to have a 
-high influence on wind directions. Moreover, changes of these quantities over time are 
-included as well as daytime. In total, 550 covariates are provided for Innsbruck and 522 
-covariates for Vienna. 
-A list of all covariates together with their abbreviations as used in this paper
-can be found in Table~\ref{tab:covariates}.
-The data sets each provide observations from 5 years, in particular from 2014 to 2017, both included.
-After eliminating observations with at least one missing value a total number of 26861 time points
-for Innsbruck and 33853 for Vienna are available.
-As winds with very low speed tend to vary their direction rapidly and almost randomly they are not 
-expected to have a meaningful impact on predictions. Moreover, the performance and the stability 
-especially of the employed reference models might suffer from the influence of these ``noise'' 
-observations. Therefore, only observations corresponding to a wind speed of at least $1$ m/s are 
-considered.
-
-\fixme{information on NAs, update data information, include overview}
-
+The data used in this study consists of 5~total years from January 2015 to
+December 2018. After first eliminating predictor variables with more than 5\% missing
+values and then cases with missing observations, the
+data set consists of 41979 time points and 260 covariates for Innsbruck, and of
+38985 times points and 494 covariates for Vienna, respectively.
 
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
@@ -575,107 +569,129 @@ Basic covariates & Variations\\
 
 
 \subsection{Models and evaluation}\label{sec:wind:models}
-For a fair evaluation of circular regression trees and forest and to
+For a fair evaluation of circular regression trees and forests, and to
 investigate whether they can be applied as a reasonable alternative to already
 existing approaches, three additional statistical models are employed in this
 study for probabilistic forecasting of wind directions. Two of them are based
-on existing approaches in the field of meteorological forecasting while the
-third is a state-of-the-art model to forecast circular response variables. The
-next paragraphs introduce the reference methods and provide the corresponding
-model specifications as employed in this study for all considered model
-including the circular tree and forest. 
-
-\paragraph{Circular regression tree}
-For the distributional tree as discussed in Section~\ref{sec:circtree} all covariates provided in the 
-learning data are considered. The tree is obtained by employing the CTree algorithm with a minimal 
-number of 2000 observations in each terminal node serving as a stopping criterion 
-(argument \code{minbucket} of our implementation).
-
-\paragraph{Circular regression forest}
-Following the description in Section~\ref{sec:circforest} a distributional forest is constructed.
-As for the distributional tree all available covariates are used to learn a distributional 
-forest of 100 trees. Each of these trees is built by the CTree algorithm on a subsample 
-containing a fraction of 30 percent of the original learning data. As it can be expected that 
-the lagged response variable (as included as a covariate) has a strong influence on the 
-response variable it is desirable to employ it in each tree of the forest. Therefore, all 
-covariates are considered for each tree
-(by setting the argument \code{mtry} of our implementation to the total number of covariates)
-in order to guarantee for the lagged response to be available.
-Since a high number of possible split points leads to a high computational effort that is 
-particularly noteworthy for forest models the covariates are binned allowing for a maximum of
-$50$ classes. In that way the number of split points that have to be considered is reduced
-in a reasonably.
-% control = disttree_control(nmax = c("yx" = Inf, "z" = 50)))
-As stopping criteria the minimal number of observations to perform a split (\texttt{minsplit}) 
-is set to 20, the minimal number of observations in each terminal node (\texttt{minbucket})
-is set to 7, and the significance level for variable selection (\texttt{alpha}) is kept at its 
-maximum value of 1 in order to build trees as large as possible as commonly done for forest models.
+on existing approaches in the meteorological field while the third is a
+state-of-the-art model to forecast circular response variables. The next
+paragraphs introduce the reference methods and provide the corresponding model
+specifications as employed in this study for all considered models including the
+circular tree and forest. 
 
 
-\paragraph{Persistency model}
-Assuming that weather conditions will remain the same after a certain period of time is the
-basic idea of persistence in meteorology. While this simple way of making predictions can
-be very effective particularly under stable atmospheric circumstances it can fail remarkably
-as soon as any changes take place, especially in case of rapid changes.
-Therefore, it heavily depends on the specific features and the variability of the variable
-of interest whether this approach can provide overall reliable predictions.
+\paragraph{Climatological model} 
+Accurate knowledge of weather quantities' climatologies can be important for a
+wide range of applications and are often also used as a baseline for the
+validation of newly developed forecasting systems
+\citep{simon.etal:2017,stauffer.etal:2017}. Usually, the performance of
+climatological models strongly depends on the temporal dependency of the
+quantity itself, either on a daily or yearly basis. Wind direction at a single
+location is often quite unstable and shows only a daily or annual
+seasonality in case of predominant local wind systems like the ones at
+Innsbruck introduced for the analysis of Figure~\ref{fig:tree_ibk}. Hence,
+the climatological model in this study provides a very simple implementation of
+a baseline model and might experience serious performance losses in case of
+random temporal variabilities or abrupt changes in the employed response
+variable wind direction.
 
-\fixme{add references}
+For simplicity, rather to fit one single climatological model, we perform the
+model fitting for each time point separately with varying training data. For
+each time point, the training data set consists of the same daytime as the time
+of interest within 31~days centered around the same calender day over all years
+except the year of interest. To gain full probabilistic climatological
+forecasts, we employ the steps described in Section~\ref{sec:prob_circ} and fit
+the distribution parameters of the von Mises distribution via maximum
+likelihood estimation. The construction of a climatological reference model
+was similarly pursued by \citet{vogel.etal:2018} and is discussed in a
+comprehensive summary on different time-adaptive training scheme in
+\citet{lang.etal:2019c}.
 
-To establish a distributional model of persistence in this study a set of six observations
-is considered to make a prediction for a selected day and time point. In particular,
-the six previous time points are considered. In order to allow for a stronger influence of 
-observations closer to the prediction time point exponential smoothing is employed, i.e.,
-exponentially decaying weights are included with a smoothing factor of $0.5$ such that
-in each prediction step the current prediction and the previous observation both have an 
-equal influence rate of 50 percent. If a seventh or even earlier observations were considered 
-as well their weights would be $<0.01$ and thus are not included anymore to simplify calculations.
-For this selected set of weighted observations the distribution parameters of the von Mises 
-distribution can be estimated as presented in Section~\ref{sec:prob_circ} such that a full
-parametric model is specified allowing for probabilistic predictions and an evaluation of the 
-circular CRPS.
-As this approach only considers data from the previous six days a cross validation is not 
-applicable, however, the same evaluation framework as for the other four models can be employed 
-by obtaining predictions only for the testing data of the cross validation without using 
-the corresponding learning data.
-\fixme{not done like this, always using the whole data set. wrong?}
+\paragraph{Persistency model} 
+Persistence describes the previous value of a single weather quantity in a time
+series; hence, it is another objective measure in the verification of
+weather forecasts and also often applied as a reference model
+\citep{noaasnationalweatherservice:2019}. For short forecast steps under stable
+atmospheric conditions, persistence can be a very good estimate, but as soon as
+any major change takes place in the response variable during the forecast
+period, forecasts based on persistence may also fail remarkably. Therefore, it
+heavily depends on the variability of the variable of interest and the length
+of the forecasting step whether persistence can provide overall reliable
+predictions.
+%If a certain weather quantity remains constant over a certain time period,
+%persistence can be a very good estimate.
 
-\paragraph{Climatological model}
-If there are no climatological changes within a certain number of years it can be expected that 
-for a selected time point and day of the year weather conditions will always be the same over all 
-years considered.
-Again, this idea provides a very simple and stable way of obtaining predictions for a considered 
-meteorological variable of interest that can be very useful but its performance can also suffer 
-dramatically from a high variance and abrupt changes, especially if they occur frequently during one day.
-
-\fixme{add references}
-
-Similar to the applied persistence model a set of observations is selected to fit a distributional
-climatology model. For a specified day and time point observations from the exact same time point of 
-the same day as well as of the 30 surrounding days from all other years contained in the learning data 
-are selected and parameters are estimated following again Section~\ref{sec:prob_circ}.
+To gain a full probabilistic persistency model, we use as for the
+climatological model maximimum likelihood estimation and fit the distribution
+parameters of the von Mises distribution conditional on lagged response values
+according to the description in Section~\ref{sec:prob_circ}. We fit one model
+for every time point in the validation data set employing the previous six
+lagged response values as training data. In order to allow for a stronger
+influence of observations closer to the time of interest an exponential
+smoothing is employed with a smoothing factor of $0.5$; accordingly, for every
+prediction the current observation and all previous five observations together
+have an equal influence rate of 50 percent. Observations with longer time lags
+have exponential weights below $0.01$ and are therefore omitted
+from the training data.
 
 \paragraph{Generalized linear model}
-Another commonly applied approach is to linearly regress the circular variable of interest on
-its lagged values. For the here discussed application this corresponds to establishing a generalized
-linear model with wind direction as the outcome variable and wind direction of the previous time point 
-as covariate. 
-Following \cite{Mulder+Klugkist:2017} the employed model plugs in a link function in order
-to guarantee values on the interval $[-\pi,\pi]$ and is of the form
+Traditional approaches to forecast circular response variables are often based on
+circular GLMs \citep{Fisher:1993}. As discussed in
+Section~\ref{sec:introduction}, circular regression models often experience
+the problem that the likelihood function can be strongly irregular which makes
+optimization rather difficult. Hence, they often do not converge if no
+appropriate initial values are provided \citep{Pewsey+Neuhaeuser+Ruxton:2013,
+Gill+Hangartner:2010}. In this study, to be able to employ a GLM out of the box
+as a reference, we use the Bayesian implementation of
+\cite{Mulder+Klugkist:2017} which does not dependent so much on initial values
+due to an MCMC sampling algorithm using weakly- or non-informative priors.
+
+Following \cite{Mulder+Klugkist:2017} the employed model plugs in an
+appropriate link function~$g$ in order to guarantee response values on the
+interval $[-\pi,\pi]$. As the implementation cannot handle circular covariates,
+we use the components of the lagged 2-dimensional wind vector $vec$ and the lagged
+wind speed $spd$ as predictor variables. The model formula for the location parameter
+$mu$ of the von Mises distribution can be written as:
+%%
 \begin{align}
-dd = \beta_0 + g(\beta_1 \cdot dd_{lagged})
+\mu = \beta_0 + g(\beta_1 \cdot vec_{1} + \beta_2 \cdot vec_{2} + \beta_3 \cdot spd
 \end{align}
-with $\beta_0$ being a circular intercept, $\beta_1$ the regression coefficient and 
-$g$ the link function $g(x) = r \cdot \arctan(x)$ with an optional factor $r$. 
-The intercept and the regression coefficient are estimated in a Bayesian framework where an 
-MCMC algorithm is used to obtain posterior samples. Moreover, a constant concentration
-parameter is fitted to the full learning sample.
+%%
+with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
+coefficients and $g$ the link function $g(x) = 2 \cdot \arctan(x)$. In addition, a
+constant concentration parameter $\kappa$ is fitted to the full learning sample.
 
+\paragraph{Circular regression tree}
+For the circular regression tree introduced in Section~\ref{sec:circtree}, all
+covariates provided in the learning data, as described in
+Section~\ref{sec:wind:data}, can be considered due to an intrinsic automatic
+variable selection performed in the tree estimation. The tree building is
+performed by our newly developed R-package \pkg{circtree} employing the CTree
+algorithm \citep{Hothorn+Hornik+Zeileis:2006} with a minimal number of 2000
+observations in each terminal node serving as a stopping criterion (argument
+\code{minbucket}).
 
-%\fixme{add references and further information on the estimation process within circGLM?}
-
-%\fixme{add information on applied implementation here (!) or in separate chapter?}
-
+\paragraph{Circular regression forest} Following the description in
+Section~\ref{sec:circforest}, a circular regression forest is constructed based
+on 100 individual trees employing our R-package \pkg{circtree}. Each of these
+trees is again built by the CTree algorithm on a subsample containing a
+fraction of 30 percent of the original learning data. As it can be expected
+that the lagged response variable is one of the most informative predictor
+variables for wind direction forecasting, all covariates are considered for
+building each tree. This `bagging' ensures that the lagged response
+variable is included in each tree; in our implementation this can be done by
+setting the argument \code{mtry} to the total number of covariates. Since a
+high number of possible split points leads to high computational costs, the
+covariates are automatically binned in a maximum of $50$ classes (argument
+\code{nmax = c("yx" = Inf, "z" = 50)}). Contrary to building a single tree,
+forests usually consists of large trees as they are not prone to overfitting
+the data after some kind of averaging over the individual trees. Therefore, we
+use the following control arguments to build rather long trees: The minimal number 
+of observations to perform a split is set to 20
+(argument \texttt{minsplit}), the minimal number of observations in each
+terminal node is set to 7 (argument \texttt{minbucket}), and the significance
+level for variable selection is kept at its maximum value of $1$
+(argument \texttt{alpha}).
 
 To compare the predictive performances of all proposed models a circular
 analogue of the continuous ranked probability score (CRPS) as introduced by
@@ -684,7 +700,7 @@ the CRPS \citep[for more details see][]{Hersbach:2000} it is a proper scoring
 rule \citep{Gneiting+Raftery:2007} and measures the difference between an
 observation and the corresponding predicted distribution function in order to
 assess the probabilistic goodness of fit for the estimated model. Hence, the
-lower the CRPS value the better the predictive performance.  Contrary to the
+lower the CRPS value the better the predictive performance. Contrary to the
 linear version, the circular CRPS reduces not to the absolute error but to the
 angular distance when the forecast is deterministic.
 
@@ -718,10 +734,10 @@ Figure~\ref{fig:boxplot_crpsraw} shows the CRPS values of the employed models
 at forecast steps 1\,h and 3\,h for the airports Innsbruck (panels a,\,c) and
 Vienna (panels b,\,d). The scores are aggregated over the $5$~validation years,
 yielding yearly mean values for every hour per calendar month, with a lower
-score indicating better performance.  For both stations at both forecast steps,
+score indicating better performance. For both stations at both forecast steps,
 the circular regression forest overall provides the best predictive
 performance, followed by the circular regression tree and, except for the
-$3$\,h forecast at Innsbruck, the persistency model.  In comparison to the
+$3$\,h forecast at Innsbruck, the persistency model. In comparison to the
 circular tree and forest, for both stations and forecast steps, the
 climatological model and the linear model show clearly higher CRPS scores and
 hence a lower predictive performance.
@@ -735,7 +751,7 @@ possible wind directions exists, namely the three wind regimes discussed for
 Figure~\ref{fig:tree_ibk} in Section~\ref{sec:introduction}. Therefore, for
 Innsbruck the wind direction remains rather constant in one of these possible
 states, but once a change takes place it is mostly a major wind direction
-shift.  Hence, due to the few wind regimes the rather inflexible climatological
+shift. Hence, due to the few wind regimes the rather inflexible climatological
 and linear models score relatively well with similar values as the other models
 (Figure~\ref{fig:boxplot_crpsraw}a,\,c). In addition, at Innsbruck the
 potential high prediction errors in case of a paradigm shift seem to lead to
@@ -756,7 +772,7 @@ times; this is probably due to minimum 3-hourly instead of 1-hourly lagged
 response values employed as covariates in the persistency model. The circular
 regression tree and forest seem to partially compensate for the lower skill of
 the lagged response values by other covariates, hence their predictive
-performance only slightly decreases for the longer lead time.  This compensation
+performance only slightly decreases for the longer lead time. This compensation
 is especially evident for Innsbruck, where the performance difference between
 the persistency model and the tree-based methods significantly increases from
 the 1-hourly to the 3-hourly forecast.
