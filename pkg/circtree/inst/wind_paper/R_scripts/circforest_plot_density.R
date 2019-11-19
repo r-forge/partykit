@@ -24,19 +24,26 @@ template = "mathematical"
 zero = "0"
 rotation = "counter"
 response_range = c(0, 2 * pi)
-circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3/2\\pi$')
+circlab <- c('$0$', '$\\pi/2$', '$\\pi$','$3\\pi/2$')
 
 # Create data
 X <- rvonmises(500, coefs[1], coefs[2])
 
+#par(mfrow = c(1,2))
+
+## circular density
+pdf(file = "density_circular.pdf", width = 6, height = 3)
+par(mar = c(3.1, 2.1, 2.1, 2.1))
+
 # Empty Plot
-plot(NA, xlim = c(-2,2), ylim = c(-2,2),
+plot(NA, xlim = c(-2,1), ylim = c(-1,1),
   type = "l", axes = FALSE, xlab = "",ylab = "", asp = 1)
 
 # Histogram
 Xhist <- hist(X, plot = FALSE, breaks = seq(0, 360, stack) * pi / 180)
 idx <- (Xhist$density != 0)
 Xscaled <- Xhist$density / max(Xhist$density)
+
 
 # Draw densities (lines or polygons)
 if (! polygons) {
@@ -82,10 +89,28 @@ if(!is.null(coefs)){
   circular::plot.function.circular(function(x)
     dvonmises(x, circular::circular(coefs[1]), coefs[2]), add = TRUE, col = 2, lty = 1, lwd = 1.5)
 }
+dev.off()
 
-# Second plot
-  plot.function(function(x)
-    dvonmises(x, circular::circular(coefs[1]), coefs[2]), col = 2, lty = 1, lwd = 1.5, 
-      from = 0, to = 2 *pi)
+
+
+## linear plot
+breaks <- seq(from = 0, to = 2*pi, by = segwidth)
+pdf(file = "density_linear.pdf", width = 6, height = 3)
+par(mar = c(3.1, 2.1, 2.1, 2.1))
+hist(as.numeric(X), border = NA, col = "gray80", axes = F, xlab = "", probability = T,
+     ylab = "", main = "", breaks = breaks)
+axis(1, at=seq(0,2*pi, by=pi/2), line = -0.38, 
+     labels=c(latex2exp::TeX(circlab[1]),
+              latex2exp::TeX(circlab[2]),
+              latex2exp::TeX(circlab[3]),
+              latex2exp::TeX(circlab[4]),
+              latex2exp::TeX("$2\\pi$")))
+plot.function(function(x)
+  dvonmises(x, circular::circular(coefs[1]), coefs[2]), col = 2, lty = 1, lwd = 1.5, 
+  from = 0, to = 2 *pi, add = TRUE)
+rug(as.numeric(X), ticksize=0.036, side=1, lwd=0.5)
+rug(seq(0,2*pi, by=pi/2), ticksize=0.08, side=1, lwd=1, line = 0.4)
+rug(pi, ticksize=0.08, side=1, lwd=1, line = -0.4, col = "red")
+dev.off()
 
 
