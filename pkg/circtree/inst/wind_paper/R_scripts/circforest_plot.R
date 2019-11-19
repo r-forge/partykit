@@ -78,10 +78,10 @@ for (i_station in c("ibk", "vie")){
     crps.m <- melt(crps[, c("climatology", "persistence", "linear_model", "tree", "forest")], 
       variable.name = "model")
     crps.m$model <- plyr::revalue(crps.m$model,
-      c("climatology" = "Climatology",
+      c("climatology" = "Climatological\nModel",
       ##"persistence_hour" = "Persistence\nHour",
       ##"persistence_day" = "Persistence\nDay",
-      "persistence" = "Persistence",
+      "persistence" = "Persistency\nModel",
       "linear_model" = "Linear\nModel",
       "tree" = "Tree",
       "forest" = "Forest"))
@@ -92,8 +92,8 @@ for (i_station in c("ibk", "vie")){
     crps.agg.m <- melt(crps.agg[, c("climatology", "persistence", "linear_model", 
       "tree", "forest")], variable.name = "model")
     crps.agg.m$model <- plyr::revalue(crps.agg.m$model,
-      c("climatology" = "Climatology",
-      "persistence" = "Persistence",
+      c("climatology" = "Climatological\nModel",
+      "persistence" = "Persistency\nModel",
       ##"persistence_hour" = "Persistence\nHour",
       ##"persistence_day" = "Persistence\nDay",
       "linear_model" = "Linear\nModel",
@@ -104,8 +104,8 @@ for (i_station in c("ibk", "vie")){
 
     crps.agg_skill.m <- melt(crps.agg_skill, variable.name = "model")
     crps.agg_skill.m$model <- plyr::revalue(crps.agg_skill.m$model,
-      c("climatology" = "Climatology",
-      "persistence" = "Persistence",
+      c("climatology" = "Climatological\nModel",
+      "persistence" = "Persistency\nModel",
       ##"persistence_hour" = "Persistence\nHour",
       ##"persistence_day" = "Persistence\nDay",
       "linear_model" = "Linear\nModel",
@@ -137,7 +137,7 @@ for (i_station in c("ibk", "vie")){
           geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
           stat_boxplot(geom = "errorbar", width = 0.2) +
           geom_boxplot(fill = "gray60")
-    p2 <- p2 + labs(x = "", y = "CRPS skill score [%]") 
+    p2 <- p2 + labs(x = "", y = "CRPSS [%]") 
     
     dev.new(width=8, height=4.5)
     print(ggarrange(p2, legend = "none"))
@@ -280,7 +280,7 @@ p5 <- ggplot(crps.agg_skill.mall, aes(x = model, y = value)) +
       stat_boxplot(geom = "errorbar", width = 0.2) +
       geom_boxplot(fill = "gray60") + 
       facet_grid(lag ~ station, scales = "free")
-p5 <- p5 + labs(x = "", y = "CRPS skill score [%]") 
+p5 <- p5 + labs(x = "", y = "CRPSS [%]") 
 #p5 <- p5 + annotate("text", -Inf, Inf, label = paste0("(", letters[1:4], ")"), hjust = -0.2, vjust = 1.3)
 ann_text <- data.frame(x = c(-Inf, -Inf, -Inf, -Inf), station = rep(c("Innsbruck", "Vienna"), 2), lag = c(rep("1-hour forecast", 2), rep("3-hour forecast", 2)), 
     y = c(Inf, Inf, Inf, Inf), label = paste0("(", letters[1:4], ")"))

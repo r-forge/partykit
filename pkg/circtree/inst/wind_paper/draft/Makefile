@@ -10,13 +10,13 @@ clean:
 
 diff:
 	R CMD Sweave --pdf draft.Rnw
-	latexdiff -t CTRADITIONAL --exclude-textcmd="section" --exclude-textcmd="subsection" --exclude-textcmd="subsubsection" draft_2019_11_12.tex draft.tex  > diff.tex
+	latexdiff -t CTRADITIONAL --exclude-textcmd="section" --exclude-textcmd="subsection" --exclude-textcmd="subsubsection" draft_2019_11_18.tex draft.tex  > diff.tex
 	-pdflatex diff.tex
 	-bibtex diff.aux
 	-pdflatex diff.tex
 	-pdflatex diff.tex
 	-rm diff.out diff.aux diff.blg diff.bbl diff.log diff.tex
 	-make clean
-	-mv diff.pdf diff_tease_paper_version_2019_11_12.pdf
+	-mv diff.pdf diff_tease_paper_version_2019_11_18.pdf
 
 

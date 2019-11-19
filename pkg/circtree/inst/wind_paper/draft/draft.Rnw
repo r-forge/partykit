@@ -508,7 +508,7 @@ within flat terrain in the East of Austria. In addition to the newly
 introduced circular distributional trees and forests, the case study employs various
 alternative approaches to forecast wind direction. The study is based on
 $1$\,h and $3$\,h forecasts employing lagged observations in the vicinity of
-the airports. 
+the airports as predictor variables. 
 
 %
 %highly fluctating, intersting variable for trees,,, requires high flexibility
