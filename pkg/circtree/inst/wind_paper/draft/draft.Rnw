@@ -84,9 +84,9 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 
 
 
-\title{Circular Regression Trees and Forests with an Application to 
+\title{Circular Trees and Forests with an Application to 
     Probabilistic Wind Direction Forecasting}
-\Shorttitle{Distributional Trees and Forests for Circular Data}
+\Shorttitle{Circular Trees and Forests}
 
 \author{Moritz N. Lang\\Universit\"at Innsbruck
    \And Lisa Schlosser\\Universit\"at Innsbruck
@@ -101,7 +101,7 @@ G. J. Mayr, R. Stauffer, A. Zeileis}
 As circular data can be found in many different subject areas accounting for periodicity has 
 become an important aspect in establishing appropriate statistical models.
 For probabilistic modeling of circular data the von Mises distribution is widely used.
-To capture how its parameters change with covariates, a regression tree model
+To capture how its parameters change with covariates, a distributional regression tree model
 is proposed as an alternative to more commonly-used additive models. The resulting
 distributional trees are easy to interpret, can detect non-additive effects, and select
 covariates and their interactions automatically. In order to stabilize and regularize
@@ -250,13 +250,13 @@ all lagged by one hour.}
 \label{fig:tree_ibk} 
 \end{figure}
 
-A more extensive case study of circular regression trees and forests applied to
+A more extensive case study of circular distributional trees and forests applied to
 probabilistic forecasting of wind direction at the airports of Innsbruck and
 Vienna will be presented in this paper. Moreover, their performances are
 benchmarked to alternative commonly used approaches.  The theory on
 probabilistic circular modeling introducing the von Mises distribution will be
 discussed in Section~\ref{sec:prob_circ}. The methodology of circular
-distributional trees and forests and their features are introcuded in
+distributional trees and forests and their features are introduced in
 Section~\ref{sec:tree_forest}.  After the case study presented in
 \ref{sec:wind}, a comprehensive summary and conclusion is given in
 Section~\ref{sec:summary}.
@@ -346,7 +346,7 @@ Therefore, distributional regression models are of high interest for all types o
 including circular data.
 
 
-\section{Circular regression trees and forests}
+\section{Circular distributional trees and forests}
 \label{sec:tree_forest}
 %\fixme{revise transition from sec\,2. to sect\,3. with the focus on circular methods}
 A common way of including covariates is to regress the model parameters on covariates.
@@ -497,11 +497,11 @@ apply methodology to fully specify the von Mises distribution for circular data.
 \section{Case study: Probabilistic wind direction forecasting}
 \label{sec:wind}
 Accurate forecasts of wind directions are of great importance for risk
-management in various fields such as agriculture, industry or energy
-production. Thus, for example in order to direct airplanes to a safe landing,
-precise knowledge of wind direction at the respective airport for the next hour(s) is highly
-desirable. This section provides a comprehensive case study on probabilistic
-wind direction forecasting at two airports in Austria with fundamentally
+management in various fields such as agriculture, energy production or air safety control. 
+For example in order to direct airplanes to a safe landing, precise knowledge of wind 
+direction at the respective airport for the next hour(s) is highly desirable and adequate 
+prediction methods are required. In this section, a comprehensive case study on probabilistic
+wind direction forecasting is provided for two airports in Austria with fundamentally
 different site characteristics: Innsbruck with a rather unusual location for an
 airport, located at the bottom of a deep alpine valley, and Vienna located
 within flat terrain in the East of Austria. In addition to the newly
@@ -552,7 +552,7 @@ study is provided in Figure~XXX. In addition, we use derived quantities such
 as 3-hourly means, minima and maxima, as well as 1-and 3-hourly temporal
 changes and spatial differences towards the airport of the respective
 quantities. A summary of all predictor variables can be found in
-Table~\ref{tab:covariates}. 
+Table~\ref{tab:data}. 
 
 The data used in this study consists of 5~total years from January 2015 to
 December 2018. After first eliminating predictor variables with more than 5\% missing
@@ -563,23 +563,32 @@ data set consists of 41979 time points and 260 covariates for Innsbruck, and of
 \begin{table}[t!]
 %\resizebox{1.4\textwidth}{!}{
 \begin{minipage}{\textwidth}
-\caption[Table caption text]{Basic covariates together with the type of variations.}
-\label{tab:covariates}
+\caption[Table caption text]{Overview of the employed data set.}
+\label{tab:data}
 \begin{tabular}{l  l}
 \hline
-Basic covariates & Variations\\
+Data components              & Description \\
 \hline
-\emph{dd}: wind direction       & different locations, \\
-                                & changes over time(?)\\
-\emph{ff}: wind speed           & different locations, \\
-                                & changes over time(?), \\
-                                & (hourly) maxima\\
-\emph{p}: pressure              & different locations, \\
-                                & differences between locations, \\
-                                & changes over time(?)\\
-\emph{t}: temperature           & different locations, \\
-                                & changes over time(?)\\
-\emph{rf}: relative humidity    & different locations\\
+Meteorological variables     & Wind direction, wind speed, air pressure, \\
+                             & temperature, relative humidity \\
+Derived quantities           & 3-hourly means, minima, maxima; \\
+                             & 1-hourly and 3-hourly temporal changes; \\
+                             & spatial differences towards the airport\\
+Weather stations (Innsbruck) & 21 stations at the airport, \\
+                             & Landeck, Kufstein, Steinach, \dots \\
+Weather stations (Vienna)    & 22 stations at the airport, \\
+                             & \ldots \\
+%\emph{dd}: wind direction       & different locations, \\
+%                                & changes over time(?)\\
+%\emph{ff}: wind speed           & different locations, \\
+%                                & changes over time(?), \\
+%                                & (hourly) maxima\\
+%\emph{p}: pressure              & different locations, \\
+%                                & differences between locations, \\
+%                                & changes over time(?)\\
+%\emph{t}: temperature           & different locations, \\
+%                                & changes over time(?)\\
+%\emph{rf}: relative humidity    & different locations\\
 \hline
 \end{tabular}
 \end{minipage} 
@@ -589,7 +598,7 @@ Basic covariates & Variations\\
 
 
 \subsection{Models and evaluation}\label{sec:wind:models}
-For a fair evaluation of circular regression trees and forests, and to
+For a fair evaluation of circular distributional trees and forests, and to
 investigate whether they can be applied as a reasonable alternative to already
 existing approaches, three additional statistical models are employed in this
 study for probabilistic forecasting of wind directions. Two of them are based
@@ -642,7 +651,7 @@ predictions.
 %persistence can be a very good estimate.
 \newline
 To gain a full probabilistic persistency model, we proceed similarly as for the
-climatological model by using maximimum likelihood estimation and fitting the distribution
+climatological model by using maximum likelihood estimation and fitting the distribution
 parameters of the von Mises distribution conditional on lagged response values
 according to the description in Section~\ref{sec:prob_circ}. We fit one model
 for every time point in the validation data set employing the previous six
@@ -681,8 +690,8 @@ with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
 coefficients and $g$ the link function $g(x) = 2 \cdot \arctan(x)$. In addition, a
 constant concentration parameter $\kappa$ is fitted to the full learning sample.
 %%
-\item \emph{Circular regression tree:}
-For the circular regression tree introduced in Section~\ref{sec:circtree}, all
+\item \emph{Circular distributional tree:}
+For the circular distributional tree introduced in Section~\ref{sec:circtree}, all
 covariates provided in the learning data, as described in
 Section~\ref{sec:wind:data}, can be considered due to an intrinsic automatic
 variable selection performed in the tree estimation. The tree building is
@@ -759,7 +768,7 @@ Vienna (Panels~b,\,d). The scores are aggregated over the $5$~validation years,
 yielding yearly mean values for every hour per calendar month, with a lower
 score indicating better performance. For both stations at both forecast steps,
 the circular regression forest overall provides the best predictive
-performance, followed by the circular regression tree and, except for the
+performance, followed by the circular distributional tree and, except for the
 $3$\,h forecast at Innsbruck, the persistency model. In comparison to the
 circular tree and forest, for both stations and forecast steps, the
 climatological model and the linear model show clearly higher CRPS values and
@@ -793,7 +802,7 @@ However, for the persistency model, at both stations, higher scores for the
 $3$\,h forecast (Panels~c,\,d) reveal a lower performance for longer lead
 times; this is probably due to minimum 3-hourly instead of 1-hourly lagged
 response values employed as covariates in the persistency model. The circular
-regression tree and forest seem to partially compensate for the lower skill of
+distributional tree and forest seem to partially compensate for the lower skill of
 the lagged response values by other covariates, hence their predictive
 performance only slightly decreases for the longer lead time. This compensation
 is especially evident for Innsbruck, where the performance difference between
@@ -811,7 +820,7 @@ the 1-hourly to the 3-hourly forecast.
     airports Innsbruck and Vienna. Each box-and-whisker contains $24$~hourly scores
     per for each of the $12$~months averaged over the $5$~validation years which yields a total of
     $288$~yearly mean values. The scores are shown for the climatological, 
-    persistency and the linear model as well as for the circular regression tree and
+    persistency and the linear model as well as for the circular distributional tree and
     forest.}
   \label{fig:boxplot_crpsraw} 
 \end{figure}
