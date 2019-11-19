@@ -84,8 +84,8 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 
 
 
-\title{Circular Trees and Forests with an Application to 
-    Probabilistic Wind Direction Forecasting}
+\title{Circular Distributional Trees and Forests with an Application to 
+    Wind Direction Forecasting}
 \Shorttitle{Circular Trees and Forests}
 
 \author{Moritz N. Lang\\Universit\"at Innsbruck
