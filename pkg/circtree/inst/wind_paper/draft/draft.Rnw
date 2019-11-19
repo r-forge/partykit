@@ -324,17 +324,28 @@ be defined by
 \end{equation}
 
 \begin{figure}[t]
-\centering
-\includegraphics[width=4cm]{density_vM.pdf}
-\caption{Illustration of a distributional model fitted to circular data by maximum likelihood-estimation
-employing the von Mises distribution. Empirical histogram (gray) and fitted density (red line) are depicted
-along with the estimated location parameter (red hand).
-}
-\label{fig:density_vM} 
+%\centering
+\hspace{-1cm}
+\begin{minipage}{.5\textwidth}
+  %\centering
+  \includegraphics[width=1.2\linewidth]{density_linear.pdf}
+  \end{minipage}%
+\begin{minipage}{.5\textwidth}
+  %\centering
+  \includegraphics[width=1.2\linewidth]{density_circular.pdf}
+\end{minipage}
+\caption{Illustration of a distributional model fitted to circular data by 
+  maximum likelihood-estimation employing the von Mises distribution. 
+  Left panel: linear illustration. Right panel: circular illustration.
+  In both panels the empirical histogram (gray) and fitted density (red line) are depicted along 
+  with the estimated location parameter (red hand).
+  }
+  \label{fig:densities} 
+  %\includegraphics[width=4cm]{density_vM.pdf}
 \end{figure}
 \fixme{update figure 2d to 3d, using data of example tree}
 
-Figure~\ref{fig:density_vM} illustrates a distributional model fitted to circular data
+Figure~\ref{fig:densities} illustrates a distributional model fitted to circular data
 employing the von Mises distribution.
 % on observed wind direction data from the airport of Innsbruck.
 This example shows that reasonably well fitting probabilistic models can
