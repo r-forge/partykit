@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-11-12 on thinkmoritz
+# - L@ST MODIFIED: 2019-11-19 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -161,8 +161,25 @@ d$doy <- tmp_time$yday + 1
 
 rm(tmp_time); gc()
 
+d$steinach.pred.diff_resp <- round((d$innsbruck.pred - mean(d$innsbruck.pred)) - 
+  (d$steinach.pred - mean(d$steinach.pred)), 1)
 d_example <- subset(d, select = c(response.dd, innsbruck.dd, innsbruck.ff, landeck.pred.diff_resp,
     kufstein.pred.diff_resp, steinach.pred.diff_resp))
+
+#par(mfrow = c(2, 1))
+#plot(d$steinach.p[1:100], type = "l", col = 2, ylim = 
+#  range(c(d$steinach.p[1:100], d$steinach.pred[1:100])), main = "Steinach")
+#lines(d$steinach.pred[1:100], col = 3)
+#legend("topleft", lty = 1, col = c(2, 3), legend = c(paste0("mean(p) = ", 
+#  round(mean(d$steinach.p), 2)), 
+#  paste0("mean(pred) = ", round(mean(d$steinach.pred), 2))))
+#
+#plot(d$innsbruck.p[1:100], type = "l", col = 2, ylim = 
+#  range(c(d$innsbruck.p[1:100], d$innsbruck.pred[1:100])), main = "Innsbruck")
+#lines(d$innsbruck.pred[1:100], col = 3)
+#legend("topleft", lty = 1, col = c(2, 3), legend = c(paste0("mean(p) = ", 
+#  round(mean(d$innsbruck.p), 2)), 
+#  paste0("mean(pred) = ", round(mean(d$innsbruck.pred), 2))))
 
 names(d_example)[names(d_example) == "innsbruck.dd"] <- "direction"
 names(d_example)[names(d_example) == "innsbruck.ff"] <- "speed"
