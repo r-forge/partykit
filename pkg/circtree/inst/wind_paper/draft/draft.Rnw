@@ -98,20 +98,37 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 G. J. Mayr, R. Stauffer, A. Zeileis}
 
 \Abstract{
-As circular data can be found in many different subject areas accounting for periodicity has 
-become an important aspect in establishing appropriate statistical models.
-For probabilistic modeling of circular data the von Mises distribution is widely used.
-To capture how its parameters change with covariates, a distributional regression tree model
-is proposed as an alternative to more commonly-used additive models. The resulting
-distributional trees are easy to interpret, can detect non-additive effects, and select
-covariates and their interactions automatically. In order to stabilize and regularize
-the model an ensemble of distributional trees is combined yielding a distributional
-forest which allows for modeling smooth effects as well.
-For illustration, hourly wind direction forecasts are obtained at two airports in Austria
-(Vienna and Innsbruck) based on a set of meteorological measurements from each of the 
-airports and surrounding weather stations.
+As circular data can be found in many different areas, the development of
+appropriate statistical models accounting, i.a., for periodicity has become a
+challenging and important research field. For probabilistic forecasting
+typically the von Mises distribution is employed in an additive model
+framework. Combining their underlying distributional setup with tree-based
+estimation methods, circular distributional trees will be presented. The resulting
+distributional trees are easy to interpret, can detect non-additive effects,
+and select covariates and their interactions automatically. By combining
+ensembles of circular trees a stabilized circular forest can build, which
+automatically regularizes the estimation and, hence, allows for modeling smooth effects.
+
+To validate the proposed circular trees and forests, a case study on
+probabilistic forecasting of wind direction will be shown for two airports in
+Austria. In addition to the tree-based models, alternative commonly used
+approaches will be employed to compare their predictive performances to the
+proposed circular trees and forest. 
+
+%As circular data can be found in many different subject areas accounting for periodicity has 
+%become an important aspect in establishing appropriate statistical models.
+%For probabilistic modeling of circular data the von Mises distribution is widely used.
+%To capture how its parameters change with covariates, a distributional regression tree model
+%is proposed as an alternative to more commonly-used additive models. The resulting
+%distributional trees are easy to interpret, can detect non-additive effects, and select
+%covariates and their interactions automatically. In order to stabilize and regularize
+%the model an ensemble of distributional trees is combined yielding a distributional
+%forest which allows for modeling smooth effects as well.
+%For illustration, hourly wind direction forecasts are obtained at two airports in Austria
+%(Vienna and Innsbruck) based on a set of meteorological measurements from each of the 
+%airports and surrounding weather stations.
 }
-\Keywords{Distributional Trees and Forests; Circular Response; Von Mises Distribution}
+\Keywords{Distributional Trees and Forests; Circular Response; von Mises Distribution}
 
 \Address{
   Moritz N. Lang, Lisa Schlosser, Reto Stauffer, Achim Zeileis \\
@@ -325,15 +342,22 @@ be defined by
 
 \begin{figure}[t]
 %\centering
-\hspace{-1cm}
-\begin{minipage}{.5\textwidth}
+%\hspace{-1cm}
+\begin{minipage}{.05\textwidth}
+\hfill
+\end{minipage}%
+\begin{minipage}{.45\textwidth}
   %\centering
-  \includegraphics[width=1.2\linewidth]{density_linear.pdf}
+  \vspace{-1em}
+  \includegraphics[width=1.05\linewidth]{density_linear.pdf}
   \end{minipage}%
-\begin{minipage}{.5\textwidth}
+\begin{minipage}{.45\textwidth}
   %\centering
   \includegraphics[width=1.2\linewidth]{density_circular.pdf}
 \end{minipage}
+\begin{minipage}{.05\textwidth}
+\hfill
+\end{minipage}%
 \caption{Illustration of a distributional model fitted to circular data by 
   maximum likelihood-estimation employing the von Mises distribution. 
   Left panel: linear illustration. Right panel: circular illustration.
