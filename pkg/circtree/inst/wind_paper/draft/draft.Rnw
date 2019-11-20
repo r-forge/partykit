@@ -625,40 +625,36 @@ data set consists of 41979 time points and 260 covariates for Innsbruck, and of
 38985 times points and 494 covariates for Vienna, respectively.
 
 \begin{table}[t!]
-%\resizebox{1.4\textwidth}{!}{
-\begin{minipage}{\textwidth}
-\caption[Table caption text]{Overview of the employed data set.}
+\caption[Table caption text]{Overview of the employed data sets for the case study. For Innsbruck and Vienna,
+ various meteorological variables and derived quantities of these are considered at the respective stations, located directly  at the airports or in their vicinities.}
 \label{tab:data}
+\begin{center}
 \begin{tabular}{l  l}
+%\noalign{\vskip 1mm}                  
 \hline
-Data components              & Description \\
+Data components               & Description \\
 \hline
-Meteorological variables     & Wind direction, wind speed, air pressure, \\
-                             & temperature, relative humidity \\
-Derived quantities           & 3-hourly means, minima, maxima; \\
-                             & 1-hourly and 3-hourly temporal changes; \\
-                             & spatial differences towards the airport\\
-Weather stations (Innsbruck) & 21 stations at the airport, \\
-                             & Landeck, Kufstein, Steinach, \dots \\
-Weather stations (Vienna)    & 22 stations at the airport, \\
-                             & \ldots \\
-%\emph{dd}: wind direction       & different locations, \\
-%                                & changes over time(?)\\
-%\emph{ff}: wind speed           & different locations, \\
-%                                & changes over time(?), \\
-%                                & (hourly) maxima\\
-%\emph{p}: pressure              & different locations, \\
-%                                & differences between locations, \\
-%                                & changes over time(?)\\
-%\emph{t}: temperature           & different locations, \\
-%                                & changes over time(?)\\
-%\emph{rf}: relative humidity    & different locations\\
+Meteorological variables:     & Wind direction, wind (gust) speed, \\
+                              & (reduced) air pressure, relative humidity, \\
+                              & temperature\\ 
+\noalign{\vskip 1mm}                           
+Derived quantities:           & 3-hourly means/minima/maxima, \\
+                              & 1-hourly and 3-hourly temporal changes, \\
+                              & spatial differences towards the airport\\
+\noalign{\vskip 1mm}                              
+Weather stations (Innsbruck): & 4 stations at the airport, \\
+                              & Igls, Kematen, Kufstein, Landeck, Patscherkofel, \\
+                              & Steinach\\
+\noalign{\vskip 1mm}
+Weather stations (Vienna):    & 9 stations at the airport, \\
+                              & Arsenal, Donaufeld, Exelberg, G\"anserndorf, \\
+                              & Gro{\ss}-Enzersdorf, Gumpoldskirchen, Hohe Warte,\\
+                              & Innere Stadt, Jubil\"aumswarte, Mariabrunn, \\
+                              & Seibersdorf, Unterlaa, Wolkersdorf\\
 \hline
 \end{tabular}
-\end{minipage} 
-%}
+\end{center}
 \end{table}
-
 
 
 \subsection{Models and evaluation}\label{sec:wind:models}
