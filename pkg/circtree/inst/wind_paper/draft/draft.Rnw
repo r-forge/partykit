@@ -98,22 +98,46 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 G. J. Mayr, R. Stauffer, A. Zeileis}
 
 \Abstract{
-As circular data can be found in many different areas, the development of
-appropriate statistical models accounting, i.a., for periodicity has become a
-challenging and important research field. For probabilistic forecasting
-typically the von Mises distribution is employed in an additive model
-framework. Combining their underlying distributional setup with tree-based
-estimation methods, circular distributional trees will be presented. The resulting
-distributional trees are easy to interpret, can detect non-additive effects,
-and select covariates and their interactions automatically. By combining
-ensembles of circular trees a stabilized circular forest can build, which
-automatically regularizes the estimation and, hence, allows for modeling smooth effects.
+As circular data appears in many different areas, the development of appropriate statistical 
+models which also account for periodicity has become an important but challenging research field. 
+For probabilistic modeling of circular data typically the von Mises distribution is employed.
+In order to regress its parameters on covariates, a circular distributional tree is proposed as 
+an alternative to more commonly-used additive models. The resulting circular trees are 
+easy to interpret, can detect non-additive effects, and select covariates and their 
+interactions automatically.
+By combining an ensemble of circular trees a more stable and regularized circular distributional forest
+can be built which allows for modeling smooth effects as well.
+%To stabilize and regularize the model an ensemble of distributional trees can be combined 
+%yielding a distributional forest which allows for modeling smooth effects as well.
 
-To validate the proposed circular trees and forests, a case study on
-probabilistic forecasting of wind direction will be shown for two airports in
-Austria. In addition to the tree-based models, alternative commonly used
-approaches will be employed to compare their predictive performances to the
-proposed circular trees and forest. 
+To evaluate the proposed circular trees and forests, a case study on probabilistic 
+forecasting of wind direction for two airports in Austria is presented. 
+In addition to the tree-based models, alternative common approaches are 
+used as a benchmark in order to assess the predictive performances of circular trees 
+and forests. 
+
+%In order to assess the predictive performance of the proposed circular trees and forests,
+%a case study on probabilistic forecasting of wind direction for two airports in Austria is presented
+%with alternative commonly used approaches being employed as benchmarks.
+
+%As circular data can be found in many different areas, the development of
+%appropriate statistical models accounting, i.a., for periodicity has become a
+%challenging and important research field. For probabilistic forecasting
+%typically the von Mises distribution is employed in an additive model
+%framework. Combining their underlying distributional setup with tree-based
+%estimation methods, circular distributional trees will be presented. The resulting
+%distributional trees are easy to interpret, can detect non-additive effects,
+%and select covariates and their interactions automatically. By combining
+%ensembles of circular trees a stabilized circular forest can build, which
+%automatically regularizes the estimation and, hence, allows for modeling smooth effects.
+
+%To validate the proposed circular trees and forests, a case study on
+%probabilistic forecasting of wind direction will be shown for two airports in
+%Austria. In addition to the tree-based models, alternative commonly used
+%approaches will be employed to compare their predictive performances to the
+%proposed circular trees and forest. 
+
+%%%%%%
 
 %As circular data can be found in many different subject areas accounting for periodicity has 
 %become an important aspect in establishing appropriate statistical models.
@@ -360,21 +384,26 @@ be defined by
 \end{minipage}%
 \caption{Illustration of a distributional model fitted to circular data by 
   maximum likelihood-estimation employing the von Mises distribution. 
-  Left panel: linear illustration. Right panel: circular illustration.
+  Left panel: ``linear'' illustration restricted to the interval $[0, 2\pi)$. 
+  Right panel: circular illustration.
   In both panels the empirical histogram (gray) and fitted density (red line) are depicted along 
   with the estimated location parameter (red hand).
   }
   \label{fig:densities} 
   %\includegraphics[width=4cm]{density_vM.pdf}
 \end{figure}
-\fixme{update figure 2d to 3d, using data of example tree}
+%\fixme{update figure 2d to 3d, using data of example tree}
 
-Figure~\ref{fig:densities} illustrates a distributional model fitted to circular data
-employing the von Mises distribution.
+Figure~\ref{fig:densities} depicts a distributional model fitted to circular data
+employing the von Mises distribution. While the left panel only serves as an illustration 
+of the corresponding  ``linear'' description restricted to an interval of length $2\pi$ but 
+consequently not accounting for periodicity the right panel displays an appropriate 
+representation of a circular quantity on the unit circle. 
 % on observed wind direction data from the airport of Innsbruck.
-This example shows that reasonably well fitting probabilistic models can
-be established for circular data by specifying an appropriate distribution family 
-such as the von Mises distribution and estimating its parameters via maximum likelihood. 
+Looking at the fitted density (red line) and estimated location (red hand) this example 
+shows that reasonably well fitting probabilistic models can be established for circular 
+data by specifying an appropriate distribution family such as the von Mises distribution
+and estimating its parameters via maximum likelihood. 
 However, this procedure considers only the response variable $Y$. Including covariates 
 can improve any model remarkably as they might provide valuable additional information.
 Therefore, distributional regression models are of high interest for all types of data,
