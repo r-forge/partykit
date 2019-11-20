@@ -107,8 +107,6 @@ easy to interpret, can detect non-additive effects, and select covariates and th
 interactions automatically.
 By combining an ensemble of circular trees a more stable and regularized circular distributional forest
 can be built which allows for modeling smooth effects as well.
-%To stabilize and regularize the model an ensemble of distributional trees can be combined 
-%yielding a distributional forest which allows for modeling smooth effects as well.
 
 To evaluate the proposed circular trees and forests, a case study on probabilistic 
 forecasting of wind direction for two airports in Austria is presented. 
@@ -116,9 +114,6 @@ In addition to the tree-based models, alternative common approaches are
 used as a benchmark in order to assess the predictive performances of circular trees 
 and forests. 
 
-%In order to assess the predictive performance of the proposed circular trees and forests,
-%a case study on probabilistic forecasting of wind direction for two airports in Austria is presented
-%with alternative commonly used approaches being employed as benchmarks.
 
 %As circular data can be found in many different areas, the development of
 %appropriate statistical models accounting, i.a., for periodicity has become a
@@ -226,7 +221,6 @@ complexity encountered in optimizing the log-likelihood function which is not gl
 highly informative starting values are crucial for the model to converge at all.
 In order to avoid this strong dependence on appropriate initial values, \cite{Mulder+Klugkist:2017} presented an alternative approach to regression modeling of circular data by employing a GLM 
 in a Bayesian framework. 
-%\fixme{revise literature survey with focus on transition to GLM}
 The named methods and also many of their further developments \citep[see,
 e.g.,][]{Jammalamadaka+Sengupta:2001} are built on additive regression models.
 While generally providing a powerful toolbox for modeling particularly smooth
@@ -392,7 +386,6 @@ be defined by
   \label{fig:densities} 
   %\includegraphics[width=4cm]{density_vM.pdf}
 \end{figure}
-%\fixme{update figure 2d to 3d, using data of example tree}
 
 Figure~\ref{fig:densities} depicts a distributional model fitted to circular data
 employing the von Mises distribution. While the left panel only serves as an illustration 
@@ -412,7 +405,6 @@ including circular data.
 
 \section{Circular distributional trees and forests}
 \label{sec:tree_forest}
-%\fixme{revise transition from sec\,2. to sect\,3. with the focus on circular methods}
 A common way of including covariates is to regress the model parameters on covariates.
 In the case of a probabilistic model for a circular response this corresponds to expressing the 
 location parameter $\mu$ and the concentration parameter $\kappa$ of the von Mises distribution
@@ -574,13 +566,6 @@ alternative approaches to forecast wind direction. The study is based on
 $1$\,h and $3$\,h forecasts employing lagged observations in the vicinity of
 the airports as predictor variables. 
 
-%
-%highly fluctating, intersting variable for trees,,, requires high flexibility
-%many covariables, few variables have influence, hihgly non-linear non-known interactions
-%airports vienna and innsbruck
-%lead times 1 and 3 hours
-%
-% plus figures table and fixmes
 %The motivating example in Section~\ref{sec:introduction} depicts a fitted distributional tree
 %employed for probabilistic forecasting of wind directions at the airport of Innsbruck. As explained
 %and also supported by the results illustrated in the terminal nodes of the tree in 
@@ -630,7 +615,6 @@ data set consists of 41979 time points and 260 covariates for Innsbruck, and of
 \label{tab:data}
 \begin{center}
 \begin{tabular}{l  l}
-%\noalign{\vskip 1mm}                  
 \hline
 Data components               & Description \\
 \hline
