@@ -232,7 +232,7 @@ empirical (gray) and fitted von Mises (red) distribution of wind direction in
 each terminal node. Based on the fitted location parameters $\hat \mu$, the
 subgroups can be distinguished into the following wind regimes: (1)~Up-valley
 winds blowing from the valley mouth towards the upper valley (from east to
-west, nodes 4 and 5). (2) Downslope winds blowing across the Alpine crest
+west, nodes~4 and 5). (2) Downslope winds blowing across the Alpine crest
 along the intersecting valley towards Innsbruck (from south-east to north-west,
 node 8). (3) Down-valley winds blowing in the direction of the valley mouth
 (from west to east, nodes 10, 12 and 13). Node~7 captures observations with
@@ -327,7 +327,7 @@ By means of the score function
   \begin{aligned}
     s(\mu, \kappa, y) &= \bigg(\frac{\partial \ell}{\partial \mu}(\mu,\kappa; y)
     \smallskip &,
-    \quad & \frac{\partial \ell}{\partial \kappa}(\mu,\kappa; y_i) \bigg) 
+    \quad & \frac{\partial \ell}{\partial \kappa}(\mu,\kappa; y) \bigg) 
     \\
     &= \bigg(\kappa \sin(y-\mu)
     \smallskip &,
@@ -898,7 +898,7 @@ For the circular GLM considered as reference model the corresponding
 implementation is provided in the \textsf{R} package \textbf{circglmbayes} by
 \cite{Mulder+Klugkist:2017}. In particular the function \textbf{circGLM} is
 applied to estimates the intercept and regression coefficient along with the
-concentration parameter $\kappa$.
+concentration parameter.
 
 %\newpage
 %\section*{Appendix}
