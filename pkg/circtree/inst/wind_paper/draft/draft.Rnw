@@ -188,26 +188,36 @@ the parameter(s) of the von Mises distribution on covariates. One of the first
 regression models with a circular response variable and linear covariates was
 presented by \cite{Gould:1969} where the circular mean, i.e., the location
 parameter of the von Mises distribution is predicted by a linear combination of
-covariates. \cite{Johnson+Wehrly:1978} took this idea one step further by
+covariates. 
+\cite{Johnson+Wehrly:1978} took this idea one step further by
 plugging in a link function such that the values of the linear predictor are
-transformed to a restricted interval of length $2\pi$. This generalized linear
+transformed to a restricted interval of length $2\pi$. 
+%This generalized linear
+%model (GLM)-type approach was further extended by \cite{Fisher+Lee:1992} and
+%subsequently by \cite{Fisher:1993} introducing another specific transformation
+%function which maps the values of the real line to the unit circle. 
+This generalized linear
 model (GLM)-type approach was further extended by \cite{Fisher+Lee:1992} and
-subsequently by \cite{Fisher:1993} introducing another specific transformation
-function which maps the values of the real line to the unit circle. 
-Moreover, the presented methodology does not only allow for the mean direction to be modeled 
-depending on covariates while a constant estimate is obtained for the concentration parameter 
-but also for the vice versa version. For each of these two approaches a separate model is introduced, 
-however, they are also combined in a joint model (referred to as ``mixed model'').
-%Moreover, the presented methodology allows for both distribution parameters, the mean
-%direction and the concentration parameter of the von Mises distribution, to be
-%modeled depending on covariates, not only separately but also in a
-%combined model (also referred to ``mixed model''). 
-In the employed iterative optimization algorithm the two sets of regression coefficients used
-to model $\mu$ and $\sigma$ respectively are updated in alternation until convergence.
-%To obtain proper initial values it is recommended to apply two separate models 
-%where either one of the parameters is fixed while the other is predicted employing covariates 
-%in a GLM-type model.
-While the combined model but also the two separate models are built on well elaborated theory 
+subsequently by \cite{Fisher:1993} introducing independent GLMs for either the 
+location or scale parameter with appropriate link functions while keeping the other 
+parameter constant. Additionally, they introduce a combined hetereoscedastic version 
+where the location and scale parameter are alternately reestimated conditional on 
+respective sets of covariates until convergence.
+%Moreover, the presented methodology does not only allow for the mean direction to be modeled 
+%depending on covariates while a constant estimate is obtained for the concentration parameter 
+%but also for the vice versa version. For each of these two approaches a separate model is introduced, 
+%however, they are also combined in a joint model (referred to as ``mixed model'').
+%%Moreover, the presented methodology allows for both distribution parameters, the mean
+%%direction and the concentration parameter of the von Mises distribution, to be
+%%modeled depending on covariates, not only separately but also in a
+%%combined model (also referred to ``mixed model''). 
+%In the employed iterative optimization algorithm the two sets of regression coefficients used
+%to model $\mu$ and $\sigma$ respectively are updated in alternation until convergence.
+%%To obtain proper initial values it is recommended to apply two separate models 
+%%where either one of the parameters is fixed while the other is predicted employing covariates 
+%%in a GLM-type model.
+%While the combined model but also the two separate models are built on well elaborated theory 
+While all of these models are built on well elaborated theory 
 the employed methodology has shown to be very challenging in its application, mainly due to the 
 complexity encountered in optimizing the log-likelihood function which is not globally concave. 
 Therefore, highly informative starting values are crucial for the model to converge at all 
@@ -222,7 +232,7 @@ however, in the case of circular data a possibly highly non-linear link function
 can induce a more complex behavior of the modeled parameters as the location
 parameter shifts closely towards the ``origin point'' $0$, also depending on the 
 direction of the shift.
-Moreover, not all types effects of may be modeled adequately. Especially abrupt changes 
+Moreover, not all types of effects may be modeled adequately. Especially abrupt changes 
 might not be detected properly owing to the enforced additive structure and selected model 
 specification such as the form of linear combinations.
 %% FIXME: clear explanation of difficulties close to 0
@@ -446,31 +456,41 @@ appropriate distribution family such as the von Mises distribution and
 estimating its parameters via maximum likelihood. However, this procedure
 considers only the response variable. Including covariates can improve any
 model remarkably as they might provide valuable additional information.
-Therefore, distributional regression models are of high interest for all types
+Therefore, (distributional) regression models are of high interest for all types
 of data, including circular data.
-Already existing generalized linear or additive approaches to circular regression 
-models employ linear combinations of the covariates to connect them to one (or more) 
-distribution parameters. 
-%For the mean direction~$\mu$ \cite{Gould:1969} proposes the model 
-%\begin{equation}
-%\mu = \mu_0 + \sum_j \beta_j\cdot x_j(\textit{mod } 2\pi)
-%\end{equation}
-%with a circular intercept $\mu_0$ and $x$ being a vector of covariates
-%with the corresponding vector of coefficients $\beta$.
-By following this idea and including a link function $g$ many other models
-have been developed in the general form 
+
+In already existing generalized linear or additive approaches to circular regression modeling 
+usually the location parameter $\mu$ of is regressed on 
+covariates in the general form 
+%models employ linear combinations of the covariates to connect them to distribution 
+%parameters. By plugging in a link function $g$ 
 \begin{equation}
 \mu = \mu_0 + g(\beta^{\top} x).
 \end{equation}
+with a circular intercept $\mu_0$ and $x$ being a vector of covariates
+with the corresponding vector of coefficients $\beta$ that are to be estimated.
 For example, \cite{Johnson+Wehrly:1978} guarantee for the link function to return values
-on an intervall of length $2\pi$ by setting $g(x) = 2\pi \cdot F(x)$ for a cumulative 
+on an interval of length $2\pi$ by setting $g(x) = 2\pi \cdot F(x)$ for a cumulative 
 distribution function $F$ while \cite{Fisher+Lee:1992} suggest to use
-$g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. The concentration parameter
-
-
-%% FIXME: information on already existing generalized linear and additive approaches
-%% with formulas (\mu = g(X \beta) + \mu_0)   FIXME: add mu_0?
-%% clear description of difficulties 
+$g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. 
+The concentration parameter $\kappa$ is mostly estimated as a constant, however,
+\cite{Fisher+Lee:1992} also present a model where $\kappa$ is regressed on covariates
+employing the exponential function as a link function while $\mu$ is assumed to be a fixed
+value. But regardless of whether $\mu$ or $\kappa$ depend on covariates,
+both variations have shown to be very complex in their optimization procedure and hence
+challenging in their application. Consequently, these difficulties intensify even more in 
+a combined model where the sets of regression 
+coefficients for the two distribution parameters $\mu$ and $\kappa$ respectively are reestimated 
+alternatingly in an iterative optimization algorithm. Hence, regardless of difficulties in practice, 
+the presented theory provides a first approach to probabilistic regression modeling of circular data, 
+however, the parameters are not regressed simultaneously on covariates as for example in a more general
+case by generalized additive models for location, scale, and shape 
+\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}.
+Moreover, the additive structure of the discussed models might impose a smooth effect even if the 
+true underlying effect is an abrupt shift.
+One way how to deal with or even avoid the mentioned difficulties in circular regression modeling
+is to employ tree-based models as presented in the following Section.
+%% FIXME: better description of difficulties?
 
 
 
@@ -479,7 +499,6 @@ $g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. The concentration parameter
 % -------------------------------------------------------------------
 \section{Circular regression trees and forests}
 \label{sec:tree_forest}
-
 %% FIXME: what are we aiming at? which problems do we want to avoid/solve?
 %% mu and kappa as constants in subgroups, no initial values
 %% Lund: what do they present (including formulas)
