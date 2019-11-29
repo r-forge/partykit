@@ -98,19 +98,62 @@ Probabilistic Wind Direction Forecasting}
 G. J. Mayr, R. Stauffer, A. Zeileis}
 
 \Abstract{
-Establishing a proper regression model for circular data such as animal movement
-directions, periodic measurements of neuronal activity or wind directions has shown
-to be very challenging. Commonly applied generalized linear and additive models 
-can provide a useful toolbox, however, non-additive effects might not be detected 
-and difficulties may arise in modeling smooth effects due to highly non-linear link 
-functions and increasing irregularities when moving closer to the ``origin point'' 
-(0 which is equal to $2\pi$ in the radiant case).
-%% FIXME: clear explanation of difficulties
-Therefore, we propose a new approach by applying distributional trees and 
-forests to circular data. In particular, the parameters of the employed von Mises 
-distribution are regressed on covariates by a tree-based model yielding a constant set 
-of estimated distribution parameters for each resulting subgroup, regardless of any 
-``circular shift''/the ``circular position''.
+Despite the occurrence of circular data in a wide range of scientific
+fields, the existing methodology for probabilistically forecasting
+circular data
+is highly limited. Most of the existing methods are built on the
+framework of
+generalized linear and additive models, which can incorporate
+difficulties in
+both the optimization and the interpretation. As a very intuitive
+alternative
+to additive circular regression models, we extend previous ideas of circular
+trees and introduce probabilistic circular regression trees and forests
+employing the von Mises distribution. The resulting tree-based models
+simplify
+the estimation process by separating the data into more homogeneous
+subgroups
+and fitting a simple intercept-only model for each resulting subset. By
+incorporating the framework of distributional modeling, splits in all
+distribution parameters are considered and a fully specified distribution is
+provided for each node.  The proposed circular regression trees are easy to
+interpret, can detect non-additive effects, and select covariates and their
+interactions automatically. By combining an ensemble of circular regression
+trees a more stable and regularized circular regression forest can be built
+which allows for modeling smooth effects as well.
+
+To evaluate the proposed circular regression trees and forests, a case
+study on
+probabilistic forecasting of wind direction for two airports in Austria is
+presented. In addition to the tree-based models, alternative common
+approaches
+are used as a benchmark in order to assess the predictive performances of
+circular regression trees and forests.
+%Establishing a proper regression model for circular data such as animal movement
+%directions, periodic measurements of neuronal activity or wind directions,
+%requires specific attention regarding its representation on the unit circle.
+%Commonly applied generalized linear and additive models can provide a useful toolbox, 
+%however, highly non-linear link functions can complicate interpretations while
+%a non-concave log-likelihood function of the usually employed von Mises distribution 
+%leads to difficulties in the incorporated optimization procedure.
+%Moreover, an adequate model specification can be very challenging and non-additive 
+%effects might not be detected.
+
+%Therefore, an alternative approach to modeling circular data is proposed by
+%employing the von Mises distribution within the methodology of distributional 
+%trees and forests. Exploiting the tree-based separation of the data set into 
+%subgroups an intercept-model is fitted within each subset such that no covariates 
+%are included simplifying ....
+%difficulties may arise in 
+%modeling smooth effects due to highly non-linear link 
+%functions and increasing irregularities when moving closer to the ``origin point'' 
+%(0 which is equal to $2\pi$ in the radiant case).
+%%% FIXME: clear explanation of difficulties
+%Therefore, we propose a new approach by applying distributional trees and 
+%forests to circular data. In particular, the parameters of the employed von Mises 
+%distribution are regressed on covariates by a tree-based model yielding a constant set 
+%of estimated distribution parameters for each resulting subgroup, regardless of any 
+%``circular shift''/the ``circular position''.
 %As circular data appears in many different areas, the development of
 %appropriate statistical models which can account for periodicity has become an
 %important but challenging research field. For probabilistic modeling of
@@ -118,17 +161,17 @@ of estimated distribution parameters for each resulting subgroup, regardless of 
 %regress its parameters on covariates, a circular regression tree is
 %proposed as an alternative to more commonly-used generalized linear and additive 
 %models. 
-The resulting circular regression trees are easy to interpret, can detect non-additive effects, 
-and select covariates and their interactions automatically. By combining an
-ensemble of circular regression trees a more stable and regularized circular
-regression forest can be built which allows for modeling smooth effects as
-well.
+%Moreover, the resulting circular regression trees are easy to interpret, 
+%can detect non-additive effects, and select covariates and their interactions automatically. 
+%By combining an ensemble of circular regression trees a more stable and regularized circular
+%regression forest can be built which allows for modeling smooth effects as
+%well.
 
-To evaluate the proposed circular regression trees and forests, a case study on
-probabilistic forecasting of wind direction for two airports in Austria is
-presented. In addition to the tree-based models, alternative common approaches
-are used as a benchmark in order to assess the predictive performances of
-circular regression trees and forests. 
+%To evaluate the proposed circular regression trees and forests, a case study on
+%probabilistic forecasting of wind direction for two airports in Austria is
+%presented. In addition to the tree-based models, alternative common approaches
+%are used as a benchmark in order to assess the predictive performances of
+%circular regression trees and forests. 
 }
 \Keywords{Distributional Trees, Random Forests; Circular Data; von Mises Distribution}
 
@@ -234,8 +277,8 @@ In order to avoid this strong dependence on appropriate initial values, \cite{Mu
 present a Bayesian alternative of a homoscedastic GLM for circular data.
 However, apart from potential difficulties in the optimization procedure of circular GLMs, 
 additive effects and their interpretation are not intuitive for circular responses
-due to the highly non-linear link function. Consequently, the representation of smooth transitions 
-on the unit circle is not straightforward. In addition, the same rotation can be obtained in either 
+due to the highly non-linear link function and the representation of smooth transitions 
+on the unit circle is not straightforward. For example, the same rotation can be obtained in either 
 positive or negative direction on the circle leading to an ambiguous interpretation.
 
 %%%All listed methods and most of their further developments \citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001} 
@@ -263,14 +306,14 @@ The resulting circular regression trees and forests avoid the discussed difficul
 of circular GLMs by separating the data into more homogeneous subgroups and fitting a 
 simple intercept-only model for each resulting subset.
 Therefore, no covariates and, thus, no link function must be employed in the estimation
-of the group-specific distribution parameters.
-By incorporating the framework of distributional modeling we allow for detecting 
+of the group-specific distribution parameters which also simplifies the optimization process.
+By incorporating the framework of distributional modeling, we allow for detecting 
 splits in all distribution parameters and provide a fully specified circular response distribution 
 for each terminal node offering a wide range of inference.
 In addition, the employed tree structure captures non-additive effects while forests allow for 
 modeling smooth changes as well.
-Furthermore, covariates and their possible interactions do not need to specified in advance as they are
-selected automatically.
+Furthermore, covariates and their possible interactions do not need to be specified in advance as 
+they are selected automatically.
 
 %Moreover, non-additive effects are captured by the tree structure while forests allow for 
 %modeling smooth changes as well. Thus, a high level of flexibility is provided while a full 
@@ -295,7 +338,7 @@ only for linear but also for a circular covariate, the tree only considers effec
 direction for splitting, i.e., only the location parameter $\mu$ is regressed on covariates.
 Therefore, the introduced distributional approach to circular regression trees extends the concept
 of previous circular trees by considering splits in all distribution parameters and 
-yielding a full probabilistic model. In addition, as a natural further development ensembles or forests 
+yielding a full probabilistic model. In addition, as a natural further development, ensembles or forests 
 of circular regression trees are presented in this study. 
 % that can improve forecasts by regularizing and stabilizing the model.
 
@@ -506,14 +549,14 @@ the location parameter $\mu$ is regressed on covariates $\mathbf{z}$ in the form
 %models employ linear combinations of the covariates to connect them to distribution 
 %parameters. By plugging in a link function $g$ 
 \begin{equation}
-\mu = \mu_0 + g(\mathbf{\beta}^{\top} \mathbf{z})
+\mu = \mu_0 + g\left(\mathbf{\beta}^{\top} \mathbf{z}\right),
 \end{equation}
 with a circular intercept $\mu_0$ and a coefficient vector $\mathbf{\beta}$; whereby the 
-the additive predictor is transformed to an interval of length $2\pi$  by a link function $g$. 
+additive predictor is transformed to an interval of length $2\pi$  by a link function $g$. 
 As an appropriate link function typically $g(x) = 2 \cdot arctan(x)$ is employed, 
 as suggested by \citet{Fisher+Lee:1992}.
 While most of the proposed models estimate a constant concentration parameter, hence, assume
-homogeneity, \citet{Fisher+Lee:1992} also provide a heteroscedastic version by combining two  
+homoscedasticity, \citet{Fisher+Lee:1992} also developed a heteroscedastic version by combining two  
 individual GLMs, each for one of the parameters $\mu$ and $\kappa$. 
 This provides a first approach to a fully probabilistic regression model for circular 
 data, however, the parameters are not regressed simultaneously on covariates as known from the 
@@ -569,7 +612,7 @@ The main goal of employing tree-based models to circular data is to provide a fl
 easy-to-apply modeling approach which accounts for a proper representation on the unit circle.
 Based on ideas of \citet{Lund:2002}, we introduce probabilistic circular regression trees and forests
 employing the von Mises distribution. The resulting tree-based models provide a very intuitive and data-driven 
-alternative to commonly used circular regression models for circular data.
+alternative to commonly used regression models for circular data.
 
 
 %A very flexible framework should allow for detecting a wide range of 
@@ -678,7 +721,7 @@ in case of rather smooth transitions. This can be avoided by combining an
 ensemble of trees in order to obtain a more stable forest model. 
 
 
-\subsection{Circular forests}
+\subsection{Circular regression forests}
 \label{sec:circforest} 
 A natural extension of circular regression trees are ensembles or forests
 that can improve forecasts by regularizing and stabilizing the model. Random
