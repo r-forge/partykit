@@ -264,12 +264,12 @@ of circular GLMs by separating the data into more homogeneous subgroups and fitt
 simple intercept-only model for each resulting subset.
 Therefore, no covariates and, thus, no link function must be employed in the estimation
 of the group-specific distribution parameters.
-Moreover, by incorporating the framework of distributional modeling we allow for detecting 
+By incorporating the framework of distributional modeling we allow for detecting 
 splits in all distribution parameters and provide a fully specified circular response distribution 
 for each terminal node offering a wide range of inference.
 In addition, the employed tree structure captures non-additive effects while forests allow for 
 modeling smooth changes as well.
-Furhtermore, covariates and their possible interactions do not need to specified in advance as they are
+Furthermore, covariates and their possible interactions do not need to specified in advance as they are
 selected automatically.
 
 %Moreover, non-additive effects are captured by the tree structure while forests allow for 
@@ -501,49 +501,61 @@ model remarkably as they might provide valuable additional information.
 Therefore, (distributional) regression models are of high interest for all types
 of data, including circular data.
 
-In already existing generalized linear or additive approaches to circular regression modeling 
-usually the location parameter $\mu$ is regressed on covariates in the general form 
+In most generalized linear or additive approaches to circular regression modeling 
+the location parameter $\mu$ is regressed on covariates $\mathbf{z}$ in the form of 
 %models employ linear combinations of the covariates to connect them to distribution 
 %parameters. By plugging in a link function $g$ 
 \begin{equation}
-\mu = \mu_0 + g(\beta^{\top} z).
+\mu = \mu_0 + g(\mathbf{\beta}^{\top} \mathbf{z})
 \end{equation}
-with a circular intercept $\mu_0$, a vector of covariates $z$
-with the corresponding vector of coefficients $\beta$ that are to be estimated,
-and a link function $g$.
-For example, \cite{Johnson+Wehrly:1978} guarantee for the link function to return values
-on an interval of length $2\pi$ by setting 
-$g(x) = 2\pi \cdot F(x)$ 
-for a cumulative distribution function $F$ while \cite{Fisher+Lee:1992} suggest to use
-$g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. 
-Most of these approaches assume homogeneity, thus, the concentration parameter $\kappa$ is estimated 
-as a constant. However, \cite{Fisher+Lee:1992} also present a model where $\kappa$ is regressed on 
-covariates employing the exponential function as a link function while $\mu$ is assumed to be a 
-constant value. Additionally to these two model variations where only one of the two distribution 
-parameters depends on covariates a combination of them is introduced. In this joint model the 
-two sets of regression coefficients employed to model $\mu$ or $\kappa$ respectively are reestimated 
-in alternation within an iterative optimization algorithm. 
-Hence, the presented theory provides a first approach to probabilistic regression modeling of circular 
-data, even though, the parameters are not regressed simultaneously on covariates as for example in a 
-more general case by generalized additive models for location, scale, and shape 
-\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}.
-However, in practice the incorporated optimization procedure has shown to be very complex, already
-for only one parameter being regressed on covariates and consequently even more so in the joint model.
-This is primarily due to characteristics of the log-likelihood function of the employed von Mises 
-distribution with the plugged-in link function. In particular, the function is not globally concave and
-possibly very sharp local maxima can prevent the algorithm from converging towards the true parameters.
-Furthermore, representing smooth effects on the unit circle and interpreting the corresponding coefficients
-is not straightforward, mainly owing to possibly highly nonlinear link functions. In particular, changing 
-covariates can induce rotations, however, potentially in both directions and in certain cases yielding a 
-compression of the estimated density function.
-\newline
-Referring to additive models in general and hence also to their application on circular data, it has to
-be considered that a proper model specification can be very challenging, particularly for a high number 
-of covariates and no information on possible interactions. Moreover, the additive structure might impose 
-a smooth effect even  if the true underlying effect is an abrupt shift.
-\newline
-One way how to deal with or even avoid the mentioned difficulties in circular regression modeling
-is to employ tree-based models as presented in the following Section.
+with a circular intercept $\mu_0$ and a coefficient vector $\mathbf{\beta}$; whereby the 
+the additive predictor is transformed to an interval of length $2\pi$  by a link function $g$. 
+As an appropriate link function typically $g(x) = 2 \cdot arctan(x)$ is employed, 
+as suggested by \citet{Fisher+Lee:1992}.
+While most of the proposed models estimate a constant concentration parameter, hence, assume
+homogeneity, \citet{Fisher+Lee:1992} also provide a heteroscedastic version by combining two  
+individual GLMs, each for one of the parameters $\mu$ and $\kappa$. 
+This provides a first approach to a fully probabilistic regression model for circular 
+data, however, the parameters are not regressed simultaneously on covariates as known from the 
+more general framework provided by generalized additive models for location, scale, and shape 
+\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}. 
+However, all circular additive models incorporate the previously discussed difficulties induced by
+the characteristics of the log-likelihood function and the strongly non-linear link function.
+%For example, \cite{Johnson+Wehrly:1978} guarantee for the link function to return values
+%on an interval of length $2\pi$ by setting 
+%$g(x) = 2\pi \cdot F(x)$ 
+%for a cumulative distribution function $F$ while \cite{Fisher+Lee:1992} suggest to use
+%$g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. 
+%Most of these approaches assume homogeneity, thus, the concentration parameter $\kappa$ is estimated 
+%as a constant. However, \cite{Fisher+Lee:1992} also present a model where $\kappa$ is regressed on 
+%covariates employing the exponential function as a link function while $\mu$ is assumed to be a 
+%constant value. Additionally to these two model variations where only one of the two distribution 
+%parameters depends on covariates a combination of them is introduced. In this joint model the 
+%two sets of regression coefficients employed to model $\mu$ or $\kappa$ respectively are reestimated 
+%in alternation within an iterative optimization algorithm. 
+%Hence, the presented theory provides a first approach to probabilistic regression modeling of circular 
+%data, even though, the parameters are not regressed simultaneously on covariates as for example in a 
+%more general case by generalized additive models for location, scale, and shape 
+%\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}.
+%However, in practice the incorporated optimization procedure has shown to be very complex, already
+%for only one parameter being regressed on covariates and consequently even more so in the joint model.
+%This is primarily due to characteristics of the log-likelihood function of the employed von Mises 
+%distribution with the plugged-in link function. In particular, the function is not globally concave and
+%possibly very sharp local maxima can prevent the algorithm from converging towards the true parameters.
+%Furthermore, representing smooth effects on the unit circle and interpreting the corresponding coefficients
+%is not straightforward, mainly owing to possibly highly nonlinear link functions. In particular, changing 
+%covariates can induce rotations, however, potentially in both directions and in certain cases yielding a 
+%compression of the estimated density function.
+%\newline
+Referring to additive models in general, it has to be considered that a proper model specification 
+can be very challenging, particularly for a high number of covariates and no information on possible 
+interactions. Moreover, the additive structure might impose a smooth effect even if the true underlying 
+effect is an abrupt shift.
+
+An alternative to additive models, which can deal or even 
+avoid the mentioned difficulties in circular regression modeling, is to employ tree-based models. 
+For the particular case of circular data, the methodology of circular regression trees and forests is
+presented in the following section.
 
 
 
@@ -552,24 +564,29 @@ is to employ tree-based models as presented in the following Section.
 % -------------------------------------------------------------------
 \section{Circular regression trees and forests}
 \label{sec:tree_forest}
+
 The main goal of employing tree-based models to circular data is to provide a flexible and 
-easy-to-apply modeling approach which allows to detect additive as well as abrupt changes while
-accounting for a proper representation on the unit circle. 
+easy-to-apply modeling approach which accounts for a proper representation on the unit circle.
+Based on ideas of \citet{Lund:2002}, we introduce probabilistic circular regression trees and forests
+employing the von Mises distribution. The resulting tree-based models provide a very intuitive and data-driven 
+alternative to commonly used circular regression models for circular data.
+
+
 %A very flexible framework should allow for detecting a wide range of 
 %effects, from abrupt changes to smooth transitions, while for the latter difficulties related
 %to a circular representation should be avoided as well as any dependence on initial values.
-\cite{Lund:2002} introduced the concept of circular regression trees where a circular response 
-variable is regressed on linear as well as a circular covariate. For the crucial decision on how 
-and where to split the data an angular distance measure is evaluated between the mean direction 
-and each observation in a resulting subgroup in order to assess homogeneity within this subgroup. 
-Hence, only the location parameter is considered for splitting such that effects in other parameters 
-might be missed. Therefore, we introduce a distributional approach to circular regression trees 
-where a fully specified distributional model is fitted in each node of the tree which enables the 
-detecting of splits in all parameters. Moreover, not only predictions of the expected value but also 
-corresponding confidence intervals, thresholds and quantiles can be obtained among many other information
-quantities.
-Additionally, possible difficulties induced by circular rotations are avoided as the distributional model
-within each node is fitted without employing covariates.
+%\cite{Lund:2002} introduced the concept of circular regression trees where a circular response 
+%variable is regressed on linear as well as a circular covariate. For the crucial decision on how 
+%and where to split the data an angular distance measure is evaluated between the mean direction 
+%and each observation in a resulting subgroup in order to assess homogeneity within this subgroup. 
+%Hence, only the location parameter is considered for splitting such that effects in other parameters 
+%might be missed. Therefore, we introduce a distributional approach to circular regression trees 
+%where a fully specified distributional model is fitted in each node of the tree which enables the 
+%detecting of splits in all parameters. Moreover, not only predictions of the expected value but also 
+%corresponding confidence intervals, thresholds and quantiles can be obtained among many other information
+%quantities.
+%Additionally, possible difficulties induced by circular rotations are avoided as the distributional model
+%within each node is fitted without employing covariates.
 %A common way of including covariates is to regress the model parameters on
 %covariates. In the case of a probabilistic model for a circular response this
 %corresponds to expressing the location parameter $\mu$ and the concentration
