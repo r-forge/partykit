@@ -233,10 +233,11 @@ Therefore, highly informative starting values are crucial for these circular GLM
 In order to avoid this strong dependence on appropriate initial values, \cite{Mulder+Klugkist:2017} 
 present a Bayesian alternative of a homoscedastic GLM for circular data.
 However, apart from potential difficulties in the optimization procedure of circular GLMs, 
-additive effects and their interpretation are not intuitive for circular responses.
-Due to the highly non-linear link function, the representation of smooth transitions on the unit circle
-is not straightforward; additionally, the same rotation
-can be obtained in either positive or negative direction on the circle.
+additive effects and their interpretation are not intuitive for circular responses
+due to the highly non-linear link function. Consequently, the representation of smooth transitions 
+on the unit circle is not straightforward. In addition, the same rotation can be obtained in either 
+positive or negative direction on the circle leading to an ambiguous interpretation.
+
 %%%All listed methods and most of their further developments \citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001} 
 %%%are built on additive regression models.
 %%%Generally these provide a powerful toolbox for modeling particularly smooth effects.
@@ -258,23 +259,46 @@ distributional forests \citep{Schlosser+Hothorn+Stauffer:2019}.
 %we propose an alternative and very flexible 
 %approach by applying the von Mises distribution within the methodology of distributional 
 %trees and distributional forests \citep{Schlosser+Hothorn+Stauffer:2019}. 
-The resulting circular regression trees and forests 
-do not require a pre-specified link function or any other model assumptions as covariates and their possible interactions are
-selected automatically. Non-additive effects are captured by the tree structure while 
-forests allow for modeling smooth changes as well. Thus, a high level of 
-flexibility is provided while a full distributional model is specified in each terminal 
-node offering a wide range of inference. Moreover, as covariates are employed for splitting only and not
-considered for the parameter estimation within the resulting subgroups, their effects are easier to be interpreted for circular responses.
-Moreover, abrupt changes 
-might not be detected properly owing to the enforced additive structure and selected model 
-specification such as the form of linear combinations.
+The resulting circular regression trees and forests avoid the discussed difficulties 
+of circular GLMs by separating the data into more homogeneous subgroups and fitting a 
+simple intercept-only model for each resulting subset.
+Therefore, no covariates and, thus, no link function must be employed in the estimation
+of the group-specific distribution parameters.
+Moreover, by incorporating the framework of distributional modeling we allow for detecting 
+splits in all distribution parameters and provide a fully specified circular response distribution 
+for each terminal node offering a wide range of inference.
+In addition, the employed tree structure captures non-additive effects while forests allow for 
+modeling smooth changes as well.
+Furhtermore, covariates and their possible interactions do not need to specified in advance as they are
+selected automatically.
+
+%Moreover, non-additive effects are captured by the tree structure while forests allow for 
+%modeling smooth changes as well. Thus, a high level of flexibility is provided while a full 
+%distributional model is specified in each terminal node offering a wide range of inference. 
+
+%The resulting circular regression trees and forests do not require a pre-specified link function 
+%or any other model assumptions as covariates and their possible interactions are
+%selected automatically. 
+
+%Moreover, as covariates are employed for splitting only and not
+%considered for the parameter estimation within the resulting subgroups, their effects are easier to be interpreted for circular responses.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%
 This novel approach to circular regression trees and forests complements the literature 
 on tree-based circular modeling.
 %In particular, 
-\cite{Lund:2002} has already introduced the concept of circular regression 
-trees where binary splits are made based on an angular distance measure employed to evaluate node homogeneity.
+\cite{Lund:2002} has already introduced the concept of circular regression trees where 
+binary splits are made based on an angular distance measure employed to evaluate node 
+homogeneity.
+While this approach and also further extensions \citep{Larraondo+Inza+Lozano:2018} allow not 
+only for linear but also for a circular covariate, the tree only considers effects in the mean 
+direction for splitting, i.e., only the location parameter $\mu$ is regressed on covariates.
+Therefore, the introduced distributional approach to circular regression trees extends the concept
+of previous circular trees by considering splits in all distribution parameters and 
+yielding a full probabilistic model. In addition, as a natural further development ensembles or forests 
+of circular regression trees are presented in this study. 
+% that can improve forecasts by regularizing and stabilizing the model.
+
 %which is evaluated between 
 %the observed response values and the conditional mean direction of the circular response variable
 %and in that way serves as a measure of homogeneity within subgroups. 
@@ -282,11 +306,9 @@ trees where binary splits are made based on an angular distance measure employed
 %%the employed circular distance is defined by $1-\cos(\theta - \mu(z)$.
 %%In each terminal node a predicted values is provided by the sample mean direction of the corresponding 
 %%subset of observations.
-While this approach and also further extensions \citep{Larraondo+Inza+Lozano:2018} allow not only for 
-linear but also for a circular covariate, the tree only considers effects in the mean direction for splitting, i.e., only the location parameter $\mu$ is regressed on covariates.
 %Furthermore, even though an estimate of dispersion in the form of total node heterogeneity is provided 
 %along with the predicted mean value in each terminal node
-By incorporating the framework of distributional modeling, we extend the idea of circular trees allowing splits in all distribution parameters and providing a fully specified circular response distribution for each terminal node. 
+%By incorporating the framework of distributional modeling, we extend the idea of circular trees allowing splits in all distribution parameters and providing a fully specified circular response distribution for each terminal node. 
 
 %Hence, the here proposed circular regression trees and forests can be seen as a further step in the development
 %of tree-based circular models by incorporating the framework of distributional modeling and in that way
