@@ -683,8 +683,8 @@ chosen either by optimizing the log-likelihood~(MOB) or a two-sample test
 statistic~(CTree) over all possible partitions. This procedure is repeated
 recursively until there are no significant parameter instabilities or until
 another stopping criterion is met (e.g., subgroup size or tree depth).
-A more detailed description of the applied tree-building algorithm,
-particularly of CTree, can be found in Appendix~\ref{app:tree}.
+A more detailed description of the applied tree-building algorithm
+can be found in Appendix~\ref{app:algorithm}.
 
 Once a distributional tree model is fitted it can be employed to obtain
 probabilistic predictions for a possibly new set of observed covariates $\bm{z}
@@ -1142,17 +1142,164 @@ implementation is provided in the \textsf{R} package \textbf{circglmbayes} by
 applied to estimates the intercept and regression coefficient along with the
 concentration parameter.
 
-%\newpage
-%\section*{Appendix}
-%\begin{appendix}
-%\end{appendix}
 
 %\newpage
 \bibliography{ref.bib}
 
 \begin{appendix}
-\section{Tree-building algorithms}
-\label{app:tree}
-CTree, MOB
+
+\section{Tree algorithm}
+\label{app:algorithm}
+This section provides a more detailed overview on the permutation-test-based CTree algorithm 
+\citep{Hothorn+Hornik+Zeileis:2006}, 
+specifically for circular data as applied to build the circular regression trees and forests 
+in the presented case study. 
+Alternatively, also the MOB algorithm, which is based on M-fluctuation tests, can be employed 
+\citep[see][for more details]{Zeileis+Hothorn+Hornik:2008}.
+
+\subsection*{CTree}
+In the following the testing and splitting strategy is described for the root node of the tree
+which contains the entire learning sample.
+%consisting of circular observations denoted by $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. 
+For a complete tree model, the same procedure is applied to all resulting child nodes with the 
+corresponding subsamples.
+
+First, employing the von Mises distribution, a distributional model $\text{vM}(Y; \mu,\kappa)$ 
+is fitted to the learning sample of circular observations $\{y_i\}_{i = 1,\ldots,n}$ as explained 
+in Section~\ref{sec:prob_circ}.
+In order to obtain a goodness-of-fit measurement of $\text{vM}(Y; \mu,\kappa)$ for each parameter 
+and each observation the score function $s(\mu, \kappa, Y)$ is evaluated at the estimated location 
+and concentration parameter $\hat{\mu}$ and $\hat{\kappa}$.
+In a next step, a statistical test is employed to detect dependencies between the calculated score 
+values
+\begin{equation}
+s(\hat{\mu}, \hat{\kappa}, y) = 
+\begin{pmatrix} 
+s(\hat{\mu}, \hat{\kappa}, y_1)_1 & s(\hat{\mu}, \hat{\kappa}, y_1)_2\\
+\vdots & \vdots\\
+s(\hat{\mu}, \hat{\kappa}, y_n)_1 & s(\hat{\mu}, \hat{\kappa}, y_n)_2
+\end{pmatrix}
+\end{equation}
+and each possible split variable $Z_l \in \{Z_1, \ldots, Z_m\}$.  
+In particular, a permutation test is applied to asses the following hypotheses:
+\begin{align}
+H_0^l:  s(\hat{\mu}, \hat{\kappa}, Y) \qquad \bot \qquad Z_l.
+\end{align}
+%
+The permutation test is based on the multivariate linear statistic
+\begin{equation}
+T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\hat{\mu}, \hat{\kappa}, Y_i)\right)
+\end{equation}
+where $s(\hat{\mu}, \hat{\kappa}, Y_i) \in \mathbb{R}^{1\times 2}$. The form 
+of the transformation function $v_l$ depends on the type of the split 
+variable $Z_l$. If $Z_l$ is numeric then $v_l$ is simply the identity 
+function $v_l(Z_{li}) = Z_{li}$ and therefore $T_l \in \mathbb{R}^2$ as 
+the ``vec'' operator converts the $1 \times 2$ matrix into a $2$ column vector. 
+If $Z_l$ is a categorical variable with $H$ categories then 
+$v_l(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$ 
+such that $v_l$ is a $H$-dimensional unit vector where the element corresponding to 
+the value of $Z_{li}$ is $1$. In this case the statistic $T_l \in \mathbb{R}^{H \cdot 2}$
+as the ``vec'' operator converts the $H \times 2$ matrix into a $H \cdot 2$ column vector 
+by column-wise combination. Observations with missing values are excluded from the sums.
+
+Using the conditional expectation $\mu_l$ and the covariance 
+$\Sigma_l$ of $T_l$ as derived by \cite{Strasser+Weber:1999} 
+the test statistic can be standardized. 
+The observed multivariate linear statistic $t_l$ which is either a
+$2$- or $2 \cdot H$-dimensional vector, depending on the scale of $Z_l$,
+is mapped onto the real line by a univariate test statistic $c$.
+In the application of this paper a quadratic form is chosen, such that
+\begin{equation}
+c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
+\end{equation}
+where $\Sigma_l^+$ is the Moore-Penrose inverse of $\Sigma_l$. Alternatively,
+the maximum of the absolute values of the standardized linear statistic
+can be considered ($c_{\text{max}}$).
+
+\cite{Strasser+Weber:1999} showed that the asymptotic conditional 
+distribution of the linear statistic $t_l$ is a multivariate normal with parameters
+$\mu_l$ and $\Sigma_l$. Hence, the asymptotic conditional distribution of
+$c(t_{l},\mu_{l},\Sigma_{l})$ 
+is either normal
+(for $c_{\text{max}}$) 
+or 
+$\chi^2$ (for $c_{\text{quad}}$).
+
+The smaller the $p$-value corresponding to the standardized test 
+statistic $c(t_{l},\mu_{l},\Sigma_{l})$ is the stronger the discrepancy 
+from the assumption of independence between the scores and the split 
+variable $Z_l$.
+%
+After Bonferroni-adjusting the $p$-values it has to be assessed whether
+any of the resulting $p$-values is beneath the selected significance level. 
+If so, the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value 
+is chosen as splitting variable. Otherwise no further split is made 
+in this node as the stopping criterion of no $p$-values being below the 
+significance level is fulfilled. This type of early-stopping in building
+a tree is sometimes also referred to as ``pre-pruning''. For random forests
+pre-pruning is often switched off by setting the significance level to $1$.
+
+The breakpoint that leads to the highest discrepancy between score functions 
+in the two resulting subgroups is selected as split point. 
+This is measured by the linear statistic
+\begin{equation}
+T_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\hat{\mu}, \hat{\kappa}, Y_i)
+\end{equation}
+for $q \in \{1,2\}$ where $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ are the 
+two new subgroups, without any particular ordering, that are defined by 
+splitting in split point $r$ of variable $Z_{l^{\ast}}$.
+The split point is then chosen as follows:
+\begin{equation}
+r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Sigma_{l^{\ast}}^{qr})).
+\end{equation}
+One repeats the testing and splitting procedure in each of the resulting 
+subgroups until some stopping criterion is reached. This criterion 
+can for example be a minimal number of observations in a node or a 
+minimal $p$-value for the statistical tests. In that way pre-pruning
+is applied in order to find right-sized trees and hence 
+avoid overfitting.
+
+%This permutation-test-based tree algorithm is presented in 
+%\cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
+%A different framework to build a likelihood-based tree is provided by the MOB algorithm 
+%which is based on M-fluctuation tests (\citealp{Zeileis+Hothorn+Hornik:2008}).
+
+
+
+%\subsection{Teststatistic: CTree}\label{app:teststat_ctree}
+%To measure the association of a response $Y$ and each possible split variable $Z_j$, $j=1,\ldots,J$,
+%the CTree algorithm applies a linear test statistic $T_j$ which is excerpted from Section~3.1.
+%(``Variable selection and stopping criteria'') of the original paper 
+%\citep{Hothorn+Hornik+Zeileis:2006} and is of the following form:
+%$$
+%T_j(Y, Z_j, w) = \text{vec}\left( \sum_{i=1}^N w_i g_j(Z_{ji})h(Y_i)^{\top}\right)
+%$$
+%where $w$ are optional weights, $g_j: \mathcal{Z}_j \rightarrow \mathbb{R}^{P}$ is a nonrandom 
+%transformation of the split variable $Z_j$ and the influence function 
+%$h: \mathcal{Y} \times \mathcal{Y}^N \rightarrow \mathbb{R}^Q$ depends on the response 
+%$Y = (Y_1, \ldots, Y_N)$ in a permutation symmetric way and is set to 
+%$h(Y_i) = s(Y_i, X_i, \hat{\beta})$ for a score-based approach. 
+%Moreover, by applying the ``vec'' operator the resulting
+%$P~\times~Q$ matrix is converted into a $PQ$ column vector.
+%Following \cite{Strasser+Weber:1999}
+%the conditional expectation $\mu_j$ and covariance $\Sigma_j$ of a linear test statistic
+%$T_j$ can be calculated and used to standardize an observed linear test statistic $t_j$ within a 
+%function $c$ mapping into the real line.
+%For example, the maximum of the absolute values of the standardized linear statistic
+%$$
+%c_{\max}(t_j,\mu_j,\Sigma_j) = \max \left| \frac{(t_j-\mu_j)}{\text{diag}(\Sigma_j)} \right|
+%$$
+%or a quadratic form
+%$$
+%c_{\text{quad}}(t_j, \mu_j, \Sigma_j) = (t_j - \mu_j)\Sigma_j^{+} (t_j - \mu_j)^{\top}
+%$$
+%can be considered where $\Sigma_j^{+}$ is the Moore-Penrose inverse of $\Sigma_j$.
+%Since the asymptotic conditional distribution of a linear test statistic $T_j$ is a 
+%multivariate normal with parameters $\mu_j$ and $\Sigma_j$ \citep{Strasser+Weber:1999}, 
+%the asymptotic distribution of $c_{\text{max}}$ is normal while the quadratic form 
+%$c_{\text{quad}}$ follows an asymptotic $\chi^2$~distribution. Based on this knowledge 
+%the corresponding $p$-values can be calculated easily.
+
 \end{appendix}
+
 \end{document}
