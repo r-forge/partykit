@@ -1137,7 +1137,12 @@ highly skillful estimates leading to good performance of the persistency model f
 Hence, the tree-based models provide reliable forecasts in all tested meterological settings.
 For operational use, a possible extension could be the incorporation of numerical weather predictions as (additional) covariates. While this probably only slightly improves the predictive skill for short leadtimes, it possibly extends the potential forecast range of the different methods. 
 
-% TODO: circular splits (see first version of IWSM, 4 pages)
+Another possible improvement for obtaining more parsimonious circular trees is
+to consider splitting circular covariates into two circle segments by searching
+two split points simultaneously rather than sequentially at different depths.
+While this might slightly improve the predictive performance of circular trees,
+this should not affect the performance  of circular forest, as these still typically 
+consist of very large trees with many different splits.
 
 To conlcude, the tree structure can capture non-linear changes, shifts, and potential interactions in 
 covariates without prespecification of such effects. As supported by the presented case study,
