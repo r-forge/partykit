@@ -116,7 +116,7 @@ subgroups
 and fitting a simple intercept-only model for each resulting subset. By
 incorporating the framework of distributional modeling, splits in all
 distribution parameters are considered and a fully specified distribution is
-provided for each terminal node.  The proposed circular regression trees are easy to
+provided for each terminal node. The proposed circular regression trees are easy to
 interpret, can detect non-additive effects, and select covariates and their
 interactions automatically. By combining an ensemble of circular regression
 trees a more stable and regularized circular regression forest can be built
@@ -173,7 +173,7 @@ the novel methodology of circular regression trees and forests.
 %are used as a benchmark in order to assess the predictive performances of
 %circular regression trees and forests. 
 }
-\Keywords{Distributional Trees, Random Forests; Circular Data; von Mises Distribution}
+\Keywords{Distributional Trees; Random Forests; Circular Data; von Mises Distribution}
 
 \Address{
   Moritz N. Lang, Lisa Schlosser, Reto Stauffer, Achim Zeileis \\
@@ -1117,19 +1117,47 @@ superior to the reference.
 % -------------------------------------------------------------------
 \section{Summary and conclusion}
 \label{sec:summary}
-Circular regression trees and forests for circular responses are established by coupling 
-model-based recursive partitioning with the von Mises distribution. 
+Extending the toolbox for modeling circular data, circular regression trees and forests 
+are established by coupling model-based recursive partitioning with the von Mises distribution. 
+By separating the data into more homogeneous subgroups, possible difficulties in circular regression
+are bypassed as covariates are solely considered for splitting and 
+group-specific models are fitted as intercept-only models.
+%distributional models are fitted as intercept-only models in each node. 
+In addition, by specifying the von Mises distribution for each node and
+allowing for splits in both distribution parameters $\mu$ and $\kappa$, 
+fully probabilistic forecasts are provided.
 
-The resulting 
-trees can capture non-linear changes, shifts, and potential interactions in covariates 
-without prespecification of such effects. This is particularly useful for modeling a 
-highly fluctuating response such as wind direction. \dots
+The performance of the novel circular trees and forests are assessed in a real case study for shortterm
+probabilistic wind direction forecasting at two airports with different site characteristics.
+As benchline models, probabilistic climatology and perstistency models, as well as a state-of-the-art
+circular GLM are evaluated based on proper scoring rules.
+In summary, the circular trees and forests have the highest predictive performance in this setting.
+For cases without changes in the wind regime, lagged response values provide already
+highly skillful estimates leading to good performance of the persistency model for shortterm wind direction forecasts. While in these cases the trees and forests also benefit from the highly informative lagged response, they can compensate for a lower information of this covariate by incorporating other quantities and possible interactions of these, contrary to the persistency model (see Figure~\ref{fig:boxplot_crpsskill}).
+Hence, the tree-based models provide reliable forecasts in all tested meterological settings.
+For operational use, a possible extension could be the incorporation of numerical weather predictions as (additional) covariates. While this probably only slightly improves the predictive skill for short leadtimes, it possibly extends the potential forecast range of the different methods. 
 
-\begin{itemize}
-  \item Add summary/conclusion of case study;
-  \item Add summary/conclusion of circular regression trees and forests.
-  \item Outlook on possible extensions (use of NWP data, circular splits, ...).
-\end{itemize}
+% TODO: circular splits (see first version of IWSM, 4 pages)
+
+To conlcude, the tree structure can capture non-linear changes, shifts, and potential interactions in 
+covariates without prespecification of such effects. As supported by the presented case study,
+this can be particularly useful for modeling a highly fluctuating response, such as typically 
+observed for wind direction, or/and in case of a large number of possible covariates.
+Moreover, the case study shows that building ensembles of circular trees can even improve the forecasting performance, as the resulting circular forests allow for modeling smooth effects and stabelize the model.
+
+
+
+%The comparison of the novel circular trees with simple climatological and persistency models, depicted
+%for probabilistic wind direction forecasts at two airports, shows that even in case of no obvious 
+%skillful covariates the trees have an high predictive performance. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\begin{itemize}
+%  \item Add summary/conclusion of case study;
+%  \item Add summary/conclusion of circular regression trees and forests.
+%  \item Outlook on possible extensions (use of NWP data, circular splits, ...).
+%\end{itemize}
 
 \section*{Acknowledgments}
 This project was partially funded by the Austrian Research Promotion
