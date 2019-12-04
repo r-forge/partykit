@@ -1136,12 +1136,11 @@ For cases without changes in the wind regime, lagged response values provide alr
 highly skillful estimates leading to good performance of the persistency model for shortterm wind direction forecasts. While in these cases the trees and forests also benefit from the highly informative lagged response, they can compensate for a lower information of this covariate by incorporating other quantities and possible interactions of these, contrary to the persistency model (see Figure~\ref{fig:boxplot_crpsskill}).
 Hence, the tree-based models provide reliable forecasts in all tested meterological settings.
 For operational use, a possible extension could be the incorporation of numerical weather predictions as (additional) covariates. While this probably only slightly improves the predictive skill for short leadtimes, it possibly extends the potential forecast range of the different methods. 
-
 Another possible improvement for obtaining more parsimonious circular trees is
 to consider splitting circular covariates into two circle segments by searching
 two split points simultaneously rather than sequentially at different depths.
 While this might slightly improve the predictive performance of circular trees,
-this should not affect the performance  of circular forest, as these still typically 
+this should not affect the performance  of circular forest, as these
 consist of very large trees with many different splits.
 
 To conlcude, the tree structure can capture non-linear changes, shifts, and potential interactions in 
