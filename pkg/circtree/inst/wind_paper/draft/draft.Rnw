@@ -381,7 +381,7 @@ tree is employed for probabilistic wind direction forecasting. Wind direction is
 classical circular quantity and accurate forecasts are of great importance for
 decision-making processes, e.g., in air traffic management as considered in this study.
 Figure~\ref{fig:tree_ibk} shows an estimated tree for 1-hourly forecasts at the
-airport of Innsbruck which lies at the bottom of a narro valley within the European Alps.
+airport of Innsbruck which lies at the bottom of a narrow valley within the European Alps.
 Topography channels the wind along the west-east valley axis or along a tributary
 valley intersecting from the south. Hence, pressure gradients to which valley
 wind regimes react are considered as covariates along with other meteorological
@@ -1129,21 +1129,21 @@ fully probabilistic forecasts are provided.
 
 The performance of the novel circular trees and forests are assessed in a real case study for shortterm
 probabilistic wind direction forecasting at two airports with different site characteristics.
-As benchline models, probabilistic climatology and perstistency models, as well as a state-of-the-art
+As benchline models, probabilistic climatology and persistency models, as well as a state-of-the-art
 circular GLM are evaluated based on proper scoring rules.
 In summary, the circular trees and forests have the highest predictive performance in this setting.
 For cases without changes in the wind regime, lagged response values provide already
-highly skillful estimates leading to good performance of the persistency model for shortterm wind direction forecasts. While in these cases the trees and forests also benefit from the highly informative lagged response, they can compensate for a lower information of this covariate by incorporating other quantities and possible interactions of these, contrary to the persistency model (see Figure~\ref{fig:boxplot_crpsskill}).
-Hence, the tree-based models provide reliable forecasts in all tested meterological settings.
+highly skillful estimates leading to a good performance of the persistency model as observed for shortterm wind direction forecasts in this study. While in these cases the trees and forests also benefit from the highly informative lagged response, they can compensate for a lower information of this covariate by incorporating other quantities and possible interactions of these, contrary to the persistency model (see Figure~\ref{fig:boxplot_crpsskill}).
+Hence, the tree-based models provide reliable forecasts in all tested meteorological settings.
 For operational use, a possible extension could be the incorporation of numerical weather predictions as (additional) covariates. While this probably only slightly improves the predictive skill for short leadtimes, it possibly extends the potential forecast range of the different methods. 
 Another possible improvement for obtaining more parsimonious circular trees is
 to consider splitting circular covariates into two circle segments by searching
 two split points simultaneously rather than sequentially at different depths.
 While this might slightly improve the predictive performance of circular trees,
-this should not affect the performance  of circular forest, as these
+this should not affect the performance  of circular forests, as these
 consist of very large trees with many different splits.
 
-To conlcude, the tree structure can capture non-linear changes, shifts, and potential interactions in 
+To conclude, in general the tree structure can capture non-linear changes, shifts, and potential interactions in 
 covariates without prespecification of such effects. As supported by the presented case study,
 this can be particularly useful for modeling a highly fluctuating response, such as typically 
 observed for wind direction, or/and in case of a large number of possible covariates.
