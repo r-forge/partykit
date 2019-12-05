@@ -5,7 +5,7 @@
 # -------------------------------------------------------------------
 # - PURPOSE:
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-11-13 on thinkmoritz
+# - L@ST MODIFIED: 2019-11-28 on thinkmoritz
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -118,7 +118,6 @@ for (i_station in c("ibk", "vie")){
     crps.agg.mall <- rbind(crps.agg.mall, crps.agg.m)
     crps.agg_skill.mall <- rbind(crps.agg_skill.mall, crps.agg_skill.m)
 
-
     ## Plot raw crps    
     p1 <- ggplot(crps.m, aes(x = model, y = value)) +
           geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
@@ -129,6 +128,19 @@ for (i_station in c("ibk", "vie")){
     dev.new(width=8, height=4.5)
     print(ggarrange(p1, legend = "none"))
     pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_%s_lag%s_%s%s.pdf",
+      i_station, i_lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name)
+    ggsave(pdf_file)
+
+    ## Plot raw aggregates crps    
+    p1 <- ggplot(crps.agg.m, aes(x = model, y = value)) +
+          geom_hline(yintercept = 0, linetype ="solid", colour = "gray80") +
+          stat_boxplot(geom = "errorbar", width = 0.2) +
+          geom_boxplot(fill = "gray60")
+    p1 <- p1 + labs(x = "", y = "CRPS [rad]") 
+
+    dev.new(width=8, height=4.5)
+    print(ggarrange(p1, legend = "none"))
+    pdf_file <- sprintf("results/_plot_circforest_validation_crpsraw_agg_%s_lag%s_%s%s.pdf",
       i_station, i_lag, ifelse(opt$lowff, "with_lowff_", ""), opt$run_name)
     ggsave(pdf_file)
     
