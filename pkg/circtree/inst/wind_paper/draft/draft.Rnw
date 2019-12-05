@@ -1193,6 +1193,7 @@ concentration parameter.
 %\newpage
 \bibliography{ref.bib}
 
+\newpage
 \begin{appendix}
 
 \section{Tree algorithm}
@@ -1200,7 +1201,7 @@ concentration parameter.
 This section provides a more detailed overview on the permutation-test-based CTree algorithm 
 \citep{Hothorn+Hornik+Zeileis:2006}, 
 specifically for circular data as applied for building circular regression trees and forests 
-as presented in this case study. 
+presented in this case study. 
 An alternative tree-building framework is provided by the MOB algorithm, which is based on 
 M-fluctuation tests \citep[see][for more details]{Zeileis+Hothorn+Hornik:2008}.
 
