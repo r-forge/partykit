@@ -296,7 +296,7 @@ positive or negative direction on the circle leading to an ambiguous interpretat
 As a very intuitive and data-driven alternative, we propose a flexible
 tree-based regression approach for modeling circular data by applying the von
 Mises distribution within the methodology of distributional trees and
-distributional forests \citep{Schlosser+Hothorn+Stauffer:2019}. 
+forests \citep{Schlosser+Hothorn+Stauffer:2019}. 
 %In order to avoid these difficulties in regression modeling of circular data 
 %(and also the requirement of initial values) 
 %we propose an alternative and very flexible 
@@ -333,7 +333,7 @@ on tree-based circular modeling.
 \cite{Lund:2002} has already introduced the concept of circular regression trees where 
 binary splits are made based on an angular distance measure employed to evaluate node 
 homogeneity.
-While this approach and further extensions \citep{Larraondo+Inza+Lozano:2018} do not only
+While this approach does not only
 allow for linear, but also for circular covariates, the tree solely considers effects in the mean 
 direction for splitting, i.e., only the location parameter $\mu$ is regressed on covariates.
 Therefore, the introduced distributional approach to circular regression trees extends the concept
@@ -390,11 +390,11 @@ wind direction and wind speed at the airport or spatial and temporal differences
 %%
 \begin{figure}[p!]
   \centering
-  \includegraphics[width=0.95\textheight,,angle=90,origin=c]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
+  \includegraphics[width=0.9\textheight,,angle=90,origin=c]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
   \caption{Fitted tree based on the von Mises distribution for 1-hourly wind
   direction forecasts at the airport of Innsbruck. In each terminal node the
   empirical histogram (gray) and fitted density (red line) are depicted along
-  with the estimated location parameter (red hand). The covariates used for splitting
+  with the estimated location parameter (red hand). The covariates selected for splitting
   are wind direction (degree), wind speed ($\text{ms}^{-1}$), and pressure gradients
   ($\text{dpressure; hPa}$) west, east and south of the airport, all lagged by
   one hour.
@@ -415,7 +415,7 @@ node~8); (3) Down-valley winds blowing in the direction of the valley mouth
 (from west to east, nodes 10, 12 and 13). Node~7 captures observations with
 rather low wind speeds that cannot be clearly distinguished into specific wind 
 regimes and are consequently associated with a very low estimated concentration 
-parameter~$\kappa$, i.e. a high estimated variance. 
+parameter~$\hat{\kappa}$, i.e., a high estimated variance. 
 In terms of covariates, the lagged wind direction (``persistence'') is mostly 
 responsible for distinguishing the broad range of wind regimes listed above while
 the pressure gradients and wind speed separate the data into subgroups with high 
@@ -426,7 +426,8 @@ Innsbruck and Vienna will be presented in this paper. Moreover, their
 performances are benchmarked to alternative commonly used approaches. 
 
 The remainder of the paper is structured as follows: The theory on probabilistic
-circular modeling introducing the von Mises distribution will be discussed in
+circular modeling introducing the von Mises distribution, and circular regression
+models will be discussed in
 Section~\ref{sec:prob_circ}. The methodology of circular regression trees
 and forests and their features are introduced in Section~\ref{sec:tree_forest}.
 After the case study presented in \ref{sec:wind}, a comprehensive summary and
@@ -451,14 +452,14 @@ circular distribution which is also known as ``the circular normal
 distribution'' and is a common choice for probabilistic modeling of circular
 data. Based on a location parameter $\mu \in [0, 2\pi)$ and a concentration
 parameter $\kappa > 0$ the density of the von Mises distribution for an
-observation $y \in [0, 2\pi)$ is given by:
+observation $y \in [0, 2\pi)$ is given by
 %%
 \begin{equation}
-  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)}\label{schlosser:equ_vm}
+  f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)},\label{schlosser:equ_vm}
 \end{equation}
 %%
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order
-$0$ (see, e.g., \citealt{Jammalamadaka+Sengupta:2001} or \citealt{Ley+Verdebout:2017} for a more detailed overview).
+$0$ (see, e.g., \citealt{Jammalamadaka+Sengupta:2001} and \citealt{Ley+Verdebout:2017} for a more detailed overview).
 
 The corresponding log-likelihood function is defined as
 %%
@@ -536,7 +537,8 @@ data employing the von Mises distribution. While the left panel only serves as
 an illustration of the corresponding ``linear'' description restricted to an
 interval of length $2\pi$ but consequently not accounting for periodicity, the
 right panel displays an appropriate representation of a circular quantity on
-the unit circle. Looking at the fitted density (red line) and estimated
+the unit circle. Looking at the empirical histogram along with 
+the fitted density (red line) and estimated
 location parameter (red hand) this example shows that reasonably well fitting
 probabilistic models can be established for circular data by specifying an
 appropriate distribution family such as the von Mises distribution and
@@ -564,7 +566,7 @@ This provides a first approach to a fully probabilistic regression model for cir
 data, however, the parameters are not regressed simultaneously on covariates as known from the 
 more general framework provided by generalized additive models for location, scale, and shape 
 \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}. 
-However, all circular additive models incorporate the previously discussed difficulties induced by
+Nevertheless, all circular additive models incorporate the previously discussed difficulties induced by
 the characteristics of the log-likelihood function and the strongly non-linear link function.
 %For example, \cite{Johnson+Wehrly:1978} guarantee for the link function to return values
 %on an interval of length $2\pi$ by setting 
@@ -598,7 +600,7 @@ interactions. Moreover, the additive structure might impose a smooth effect even
 effect is an abrupt shift.
 
 An alternative to additive models, which can deal or even 
-avoid the mentioned difficulties in circular regression modeling, are 
+avoid the mentioned difficulties in circular regression modeling are 
 tree-based models. For the particular case of circular data, the methodology 
 of circular regression trees and forests is presented in the following section.
 
@@ -799,7 +801,7 @@ one or three hours according to the respective forecasting step. The
 meteorological variables are measured either directly at the airports or within
 their vicinities. For Innsbruck, measurements at the airport and along the
 intersecting valleys are used, whereas, for Vienna, measurements at the airport
-and within an area of about XXX\,km$^2$ are used. A topographical overview of
+and within an area of approximately 30\,km$^2$ are used. A topographical overview of
 the airports and their surrounding areas with the station sites employed in
 this study is provided in Figure~XXX. In addition, we use derived quantities
 such as 3-hourly means, minima and maxima, as well as 1-and 3-hourly temporal
@@ -880,7 +882,7 @@ circular regression tree and forest.
     \newline
     For simplicity, rather to fit one single climatological model, separate models are estimated 
     rolling over all observation time points, 
-    using the $31$~days centered around the day of interest over all available years in the training data.
+    using the same daytime of $31$~days centered around the day of interest over all available years in the training data.
     %For simplicity, rather to fit one single climatological model, we perform the
     %model fitting separately rolling over all time points. For each time point, the
     %training data set consists of the same daytime as the time of interest within
@@ -899,7 +901,7 @@ circular regression tree and forest.
     forecasts and also often applied as a reference model
     \citep{noaasnationalweatherservice:2019}. For short forecast steps under stable
     atmospheric conditions, persistence can be a very good estimate, but as soon as
-    the regime changes takes place in the response variable during the forecast
+    the regime changes during the forecast
     period, forecasts based on persistence may also fail remarkably. Therefore, it
     heavily depends on the variability of the variable of interest and the length
     of the forecasting step whether the persistence can provide overall reliable
@@ -967,7 +969,7 @@ circular regression tree and forest.
     This bagging approach can be applied in \pkg{circtree} by setting the argument
     \code{mtry} to the total number of covariates. Since a high number of possible
     split points leads to high computational costs, the covariates are binned in a
-    maximum of $50$ classes (argument \code{nmax = c("yx" = Inf, "z" = 50)}).
+    maximum of $50$ classes (argument \code{nmax = c("yx"\,=\,Inf, "z"\,=\,50)}).
     Contrary to a single-tree model, forests usually consist of very large trees as
     they are not prone to overfitting the data due to the stabilization obtained by
     combining the individual trees. Therefore, we use the following control
@@ -1025,8 +1027,8 @@ Vienna (Panels~b,\,d). The scores are aggregated over the five validation years,
 yielding yearly mean values for every hour per calendar month, with a lower
 score indicating better performance. For both stations at both forecast steps,
 the circular forest overall provides the best predictive performance, followed
-by the circular regression tree and the persistency model; except for the $3$\,h~forecast 
-at Innsbruck, where the persistency model is outperformed by all others. 
+by the circular regression tree and the persistency model; except for the $3$\,h~forecasts
+at Innsbruck where the persistency model is outperformed by all others. 
 In comparison to the circular regression tree and
 forest, for both stations and forecast steps, the climatological model and the
 linear model show clearly higher CRPS values and hence a lower predictive
@@ -1037,7 +1039,7 @@ performance.
   \setkeys{Gin}{width=1.0\textwidth}
   \includegraphics{_plot_circforest_validation_crpsraw_agg_comparison_with_lowff_v14b.pdf}
   \caption{CRPS skill scores of wind direction forecasts based on the full
-    predictive von~Mises distribution for $+1$ and $+3$\,h forecasts at the
+    predictive von~Mises distribution for $+1$\,h and $+3$\,h forecasts at the
     airports Innsbruck and Vienna. Each box-and-whisker contains $24$~hourly scores
     for each of the $12$~months averaged over the $5$~validation years which
     yields a total of $288$~yearly mean values. The scores are shown for the
@@ -1197,10 +1199,10 @@ concentration parameter.
 \label{app:algorithm}
 This section provides a more detailed overview on the permutation-test-based CTree algorithm 
 \citep{Hothorn+Hornik+Zeileis:2006}, 
-specifically for circular data as applied to build the circular regression trees and forests 
-in the presented case study. 
-Alternatively, also the MOB algorithm, which is based on M-fluctuation tests, can be employed 
-\citep[see][for more details]{Zeileis+Hothorn+Hornik:2008}.
+specifically for circular data as applied for building circular regression trees and forests 
+as presented in this case study. 
+An alternative tree-building framework is provided by the MOB algorithm, which is based on 
+M-fluctuation tests \citep[see][for more details]{Zeileis+Hothorn+Hornik:2008}.
 
 \subsection*{CTree}
 In the following, the testing and splitting strategy is described for the root node of the tree
@@ -1245,8 +1247,7 @@ In this case the ``vec'' operator converts the $H \times 2$ matrix into a $H \cd
 by column-wise combination such that $T_l \in \mathbb{R}^{H \cdot 2}$. 
 If there are any observations with missing values these are not included in the calculation of $T_l$.
 
-To map the observed multivariate linear statistic $t_l$ onto the real line a univariate test statistic
-$c$ is employed, for example in a quadratic form
+To map the observed multivariate linear statistic $t_l$ onto the real line a univariate test statistic~$c$ is employed, for example in a quadratic form
 \begin{equation}
 c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 \end{equation}
