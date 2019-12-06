@@ -2,6 +2,13 @@
 
 \title{NEWS file for the \pkg{model4you} package}
 
+\section{Changes in Version 0.9-5}{
+  \itemize{
+    \item avoid using class()==, instead use is(), especially for matrix
+  }
+}
+
+
 \section{Changes in Version 0.9-4}{
   \itemize{
     \item allow for custom coefficient tables in node_pmterminal()

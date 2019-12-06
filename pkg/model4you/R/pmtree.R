@@ -11,6 +11,10 @@
 #' Useful when \code{coef()} does not return all coefficients (e.g. \code{survreg}).
 #' @param ... additional parameters passed on to model fit such as weights.
 #'
+#' @details Sometimes the number of participant in each treatment group needs to 
+#' be of a certain size. This can be accomplished by setting \code{control$converged}.
+#' See example below.
+#'
 #' @return ctree object
 #'
 #' @example inst/examples/ex-pmtree.R

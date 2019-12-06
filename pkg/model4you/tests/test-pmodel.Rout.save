@@ -1,6 +1,6 @@
 
-R version 3.4.4 (2018-03-15) -- "Someone to Lean On"
-Copyright (C) 2018 The R Foundation for Statistical Computing
+R version 3.6.1 (2019-07-05) -- "Action of the Toes"
+Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -20,6 +20,7 @@ Loading required package: partykit
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
+Loading required package: rpart
 > library("mvtnorm")
 > library("survival")
 > set.seed(123)
@@ -71,13 +72,13 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > ## personalised models
 > coefs_lm <- pmodel(x = frst_lm, newdata = tsimdata)
 > summary(coefs_lm)
-  (Intercept)          aA          
- Min.   :6.083   Min.   :-2.09411  
- 1st Qu.:6.832   1st Qu.:-0.65812  
- Median :7.097   Median : 0.08235  
- Mean   :7.061   Mean   : 0.04625  
- 3rd Qu.:7.277   3rd Qu.: 0.77876  
- Max.   :7.667   Max.   : 2.34688  
+  (Intercept)          aA         
+ Min.   :6.319   Min.   :-2.2799  
+ 1st Qu.:6.929   1st Qu.:-1.1221  
+ Median :7.104   Median : 0.2540  
+ Mean   :7.093   Mean   : 0.0459  
+ 3rd Qu.:7.302   3rd Qu.: 1.0339  
+ Max.   :7.567   Max.   : 2.7587  
 > 
 > 
 > coeffun <- function(model) {
@@ -98,30 +99,30 @@ No data given. I'm using data set simdata_s from the current environment parent.
 +                    fun = coeffun)
 > summary(coefs_wb)
   (Intercept)          aA               scale          median_s0    
- Min.   :1.865   Min.   :-0.19163   Min.   :0.1189   Min.   :5.726  
- 1st Qu.:1.972   1st Qu.: 0.02691   1st Qu.:0.1713   1st Qu.:6.640  
- Median :1.993   Median : 0.09052   Median :0.2071   Median :6.849  
- Mean   :1.987   Mean   : 0.08881   Mean   :0.2079   Mean   :6.766  
- 3rd Qu.:2.016   3rd Qu.: 0.18074   3rd Qu.:0.2348   3rd Qu.:6.961  
- Max.   :2.060   Max.   : 0.31687   Max.   :0.3339   Max.   :7.481  
+ Min.   :1.873   Min.   :-0.36744   Min.   :0.1086   Min.   :5.798  
+ 1st Qu.:1.957   1st Qu.: 0.03179   1st Qu.:0.1622   1st Qu.:6.552  
+ Median :1.987   Median : 0.14243   Median :0.1906   Median :6.816  
+ Mean   :1.982   Mean   : 0.10863   Mean   :0.1974   Mean   :6.759  
+ 3rd Qu.:2.008   3rd Qu.: 0.21164   3rd Qu.:0.2212   3rd Qu.:6.963  
+ Max.   :2.098   Max.   : 0.33714   Max.   :0.3557   Max.   :7.616  
    median_s1      median_sdiff    
- Min.   :5.522   Min.   :-1.2053  
- 1st Qu.:6.850   1st Qu.: 0.1870  
- Median :7.373   Median : 0.6193  
- Mean   :7.440   Mean   : 0.6739  
- 3rd Qu.:8.074   3rd Qu.: 1.2791  
- Max.   :9.123   Max.   : 2.4165  
+ Min.   :5.265   Min.   :-2.3418  
+ 1st Qu.:6.805   1st Qu.: 0.2223  
+ Median :7.823   Median : 1.0440  
+ Mean   :7.606   Mean   : 0.8467  
+ 3rd Qu.:8.519   3rd Qu.: 1.6195  
+ Max.   :9.331   Max.   : 2.5813  
 > 
 > 
 > ## Variable importance
 > set.seed(123)
 > (vi_lm <- varimp(frst_lm))
-       z1        z2        z3        z4        z5 
-276.42033  94.80836  56.22248  76.87214  49.14115 
+        z1         z2         z3         z4         z5 
+479.272990  56.304019   1.554203  44.625821  35.586728 
 > (vi_wb <- varimp(frst_wb))
        z1        z2        z3        z4        z5 
-175.05534  55.50342  30.40423  26.41688  38.69822 
+153.05987  28.35612  36.75283  23.65575  34.97163 
 > 
 > proc.time()
    user  system elapsed 
- 16.864   0.059  16.922 
+ 13.112   0.085  13.187 
