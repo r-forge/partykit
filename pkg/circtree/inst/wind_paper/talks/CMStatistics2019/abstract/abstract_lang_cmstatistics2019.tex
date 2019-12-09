@@ -1,0 +1,66 @@
+\documentclass[a4paper,nojss]{jss}
+\usepackage{amsmath,amssymb,amsfonts,thumbpdf, caption, subcaption, lipsum}
+%\usepackage[utf8]{inputenc}
+
+\newcommand{\CRANpkg}[1]{\href{http://CRAN.R-project.org/package=#1}{\pkg{#1}}}%
+\newcommand{\samp}[1]{`\code{#1}'}%
+\DefineVerbatimEnvironment{example}{Verbatim}{}
+\setkeys{Gin}{width=\textwidth}
+
+%% for internal use
+\newcommand{\fixme}[1]{\marginpar{\color{black}fixme} {\color{red}#1}}
+\newcommand{\readme}[1]{\marginpar{\color{black}readme} {\emph{\color{red}(#1)}}}
+\usepackage{chngcntr}
+
+%%% jss stuff
+%\let\proglang=\textsf
+%\newcommand{\pkg}[1]{{\fontseries{b}\selectfont #1}}
+%\bibliographystyle{jss}
+%\makeatletter
+%\newcommand\code{\bgroup\@makeother\_\@makeother\~\@makeother\$\@codex}
+%\def\@codex#1{{\normalfont\ttfamily\hyphenchar\font=-1 #1}\egroup}
+%\makeatother
+
+\title{Distributional Trees and Forests for Circular Data}
+
+\author{Moritz N. Lang\\University of Innsbruck 
+\And Lisa Schlosser\\University of Innsbruck 
+\And Torsten Hothorn\\University of Zurich 
+\AND Georg J. Mayr\\University of Innsbruck 
+\And Reto Stauffer\\University of Innsbruck 
+\And Achim Zeileis\\University of Innsbruck}
+
+\Plainauthor{Moritz N. Lang}
+
+\Abstract{
+Circular data can be found in a variety of applications and subject areas,
+e.g., hourly crime rates in the social-economics, animal movement direction in
+ecology, and wind direction as one of the most important weather variables in
+meteorology. For probabilistic modeling of circular data the von Mises
+distribution is widely used. While most existing approaches are built on
+additive regression models, we propose an adaption of regression trees to
+circular data by employing distributional trees. In comparison to the more
+commonly-used additive models, the resulting distributional trees are easy to
+interpret, can detect non-additive effects, and automatically select covariates
+and their interactions. In addition, as a natural extension, ensembles or
+forests of such circular trees are introduced that can further improve the
+forecasts by regularizing and stabilizing the model. For illustration,
+short-term probabilistic wind direction nowcasts at different airports are
+obtained in order to direct airplanes to a safe landing. The predictive skill
+of the novel approaches is benchmarked with an additive regression model plus a
+persistency and a climatology model, employing the circular continuous ranked
+probability score. The proposed methods for circular distributional trees and
+forests are available in the R package ``disttree'' from R-Forge.
+} 
+
+\Keywords{Distributional Trees; Distributional Forest; Circular Response; Von Mises Distribution}
+
+\Address{
+  Moritz N. Lang\\
+  University of Innsbruck\\
+  6020 Innsbruck, Austria\\
+  E-mail: \email{moritz.lang@uibk.ac.at}
+}
+
+\begin{document}
+\end{document}

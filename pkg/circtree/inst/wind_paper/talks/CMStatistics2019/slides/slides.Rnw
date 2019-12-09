@@ -1,0 +1,1098 @@
+\documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
+\usetheme[url,license]{uibk}
+
+\title{Distributional Trees and Forests for Circular Data}
+\author{Moritz N. Lang, Lisa Schlosser, \\
+Torsten~Hothorn, Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
+
+%-------------------------------------------------------------------
+% Preamble
+%-------------------------------------------------------------------
+\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+\URL{https://R-Forge.R-project.org/projects/partykit/}
+%\renewcommand{\headerimage}[1]{%
+%   \IfStrEqCase{#1}{%
+%      {1}{%
+%         \gdef\myheaderimageid{#1}%
+%         \gdef\myheaderimageposition{nw}%
+%         \gdef\myheaderimage{forest.jpg}%
+%      }}[%
+%         \gdef\myheaderimageid{1}%
+%         \gdef\myheaderimageposition{nw}%
+%         \gdef\myheaderimage{forest.jpg}%
+%      ]%
+%}
+\headerimage{1}
+
+
+\graphicspath{{images/}{./}}
+\usepackage[utf8]{inputenc}
+
+\setbeamertemplate{caption}{\insertcaption} 
+%% includes a replacement for \usepackage{Sweave}
+% \usepackage{Sweave}
+\usepackage{changepage}
+\usepackage{amsmath,tikz}
+\usepackage{calc}
+\usepackage{graphicx}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
+\usepackage{xcolor}
+%\usepackage[cal=boondoxo]{mathalfa}
+%\graphicspath{{plots/}}
+\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+\definecolor{forestred}{RGB}{206,73,81}
+\definecolor{treegreen}{RGB}{0,143,0}
+\definecolor{lightblue}{RGB}{34,151,230}
+\definecolor{lightorange}{RGB}{255,165,0}
+
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+
+set.seed(7)
+
+invisible(.Call(grDevices:::C_palette, grDevices::hcl(
+  h = c(0,   5, 125, 245, 195, 315,  65,   0),
+  c = c(0, 100,  90,  85,  63, 105,  90,   0),
+  l = c(0,  55,  75,  60,  82,  48,  80,  65)
+)))
+
+# setwd("~/svn/partykit/pkg/disttree/inst/dissertation_overview/slides/")
+library("disttree")
+library("Formula")
+library("latex2exp")
+library("gamlss")
+library("lattice")
+library("crch")
+library("RainTyrol")
+library("parallel")
+library("gamlss.cens")
+gen.cens(NO, type = "left")
+library("ggplot2")
+theme_set(theme_bw(base_size = 18))
+
+## HCL palette
+pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+
+pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+
+transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
+@
+
+
+%-------------------------------------------------------------------
+% Main
+%-------------------------------------------------------------------
+\begin{document}
+\section{Distributional Trees and Forests for Circular Data}
+\subsection{Motivation}
+%%% SLIDE 
+%\begin{frame}%[fragile]
+%\frametitle{Motivation}
+%\vspace{-0.41cm}
+%\begin{figure}[!htb]
+%\minipage{0.285\textwidth}
+%\begin{center}
+%<<motivation_GLM, echo=FALSE, results=hide>>=
+%nobs <- 200
+%## GLM
+%set.seed(7)
+%x <- c(1:nobs)/nobs
+%ytrue <- 1+x*1.5
+%y <- ytrue + rnorm(nobs,0,0.3)
+%@
+%\visible<2->{
+%<<plot_motivation_GLM, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+%box(lwd=5)
+%lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+%@
+%}
+%\end{center}
+%\endminipage
+%\visible<3->{{\LARGE$\rightarrow$}}
+%\minipage{0.285\textwidth}
+%\begin{center}
+%<<motivation_GAM, echo=FALSE, results=hide>>=
+%## GAM
+%set.seed(7)
+%x <- c(1:nobs)/nobs
+%x <- 2*(x-0.5)
+%ytrue <- x^3 
+%y <- ytrue + rnorm(nobs,0,0.3)
+%@
+%\visible<3->{
+%<<plot_motivation_GAM, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(y=y , x=x, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+%box(lwd=5)
+%lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
+%@
+%}
+%\end{center}
+%\endminipage
+%\visible<4->{{\LARGE$\rightarrow$}}
+%\minipage{0.285\textwidth}
+%\begin{center}
+%<<motivation_GAMLSS, echo=FALSE, results=hide>>=
+%## GAMLSS
+%set.seed(7)
+%x <- c(1:nobs)/nobs
+%x <- 2*(x-0.5)
+%ytrue <- x^3
+%var <- exp(-(2*x)^2)/2
+%y <- ytrue + rnorm(nobs, 0, 0.1 + var)
+%@
+%\visible<4->{
+%<<plot_motivation_GAMLSS, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(x, y, xaxt = "n", yaxt = "n", ann = FALSE, type = "n")
+%polygon(c(x, rev(x)), c(ytrue + 0.1 + var, rev(ytrue - 0.1 - var)),
+%  col = pallight["forest"], border = "transparent")
+%lines(x, ytrue, col = pal["forest"], lwd=7)
+%points(x, y, col = "slategray", pch = 19)
+%box(lwd = 5)
+%@
+%}
+%\end{center}
+%\endminipage
+%
+%\vspace{0.5cm}
+%\minipage{0.25\textwidth}
+%\begin{center}
+%\visible<2->{
+%LM, GLM\\
+%\vspace{0.5cm}
+%\code{lm}\\
+%\code{glm}\\
+%\vspace{1.5cm}}
+%\end{center}
+%\endminipage
+%\hspace{1.1cm}
+%\minipage{0.25\textwidth}
+%\begin{center}
+%\visible<3->{
+%GAM\\
+%\vspace{0.5cm}
+%\code{mgcv}\\
+%\code{VGAM}\\
+%\vspace{1.5cm}}
+%\end{center}
+%\endminipage
+%\hspace{1.1cm}
+%\minipage{0.25\textwidth}
+%\begin{center}
+%\visible<4->{
+%GAMLSS\\
+%\vspace{0.5cm}
+%\code{gamlss}\\
+%\code{mgcv}\\
+%\code{VGAM}\\
+%\code{gamboostLSS}\\
+%\code{bamlss}}
+%\end{center}
+%\endminipage
+%\end{figure}
+%\end{frame}
+
+
+%%% SLIDE
+%\begin{frame}[fragile]
+%\frametitle{Motivation}
+%\vspace{-0.41cm}
+%\begin{figure}[!htb]
+%\minipage{0.285\textwidth}
+%\begin{center}
+%<<motivation_regtree, echo=FALSE, results=hide>>=
+%## Reg. Tree
+%set.seed(7)
+%kappa <- 12
+%x <- c(1:nobs)/nobs
+%ytrue <- ytree <- yforest <- numeric(length = length(x))
+%for(i in 1:nobs) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
+%y <- ytrue + rnorm(nobs,0,0.3)
+%for(i in 1:nobs) ytree[i] <- if(x[i]<1/3) 0.5 else {if(x[i]<2/3) 2 else 1}
+%@
+%\visible<1->{
+%<<plot_motivation_regtree, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+%box(lwd=5)
+%#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
+%lines(x = x, y = ytree, col = pal["forest"], lwd=7)
+%@
+%}
+%\end{center}
+%
+%\endminipage
+%\visible<2->{{\LARGE$\rightarrow$}}
+%\minipage{0.285\textwidth}
+% \begin{center}
+%<<motivation_randforest, echo=FALSE, results=hide>>=
+%## Random Forest
+%for(i in 1:nobs) yforest[i] <- if(x[i]<0.27) 0.5 else { if(x[i]<0.39) 0.5 + 1.5*(plogis((x[i]-0.33)/6*700)) else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))}
+%@
+%\visible<2->{
+%<<plot_motivation_randforest, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+%box(lwd=5)
+%#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
+%lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
+%@
+%}
+%\end{center}
+%
+%\endminipage
+%\visible<3->{{\LARGE$\rightarrow$}}
+%\minipage{0.285\textwidth}
+%\begin{center}
+%\visible<3->{
+%<<plot_motivation_question, fig=TRUE, echo=FALSE>>=
+%par(mar=c(2,0,2,0))
+%plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, type = "n")
+%box(lwd=5)
+%text(x = mean(range(x)), y = mean(range(y)), "?", cex = 12)
+%@
+%}
+%\end{center}
+%
+%\endminipage
+%
+%\minipage{0.285\textwidth}
+%\begin{center}
+%\vspace{0.0cm}
+%\visible<1->{
+%Regression tree\\
+%\vspace{0.3cm}
+%\resizebox{0.2\textwidth}{!}{
+%\begin{tikzpicture}
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (1, 2) {};
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (0.5, 1) {};
+%  \draw[-, line width=1pt] (n0) -- (n1);
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (1.5, 1) {};
+%  \draw[-, line width=1pt] (n0) -- (n2);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (1, 0) {};
+%  \draw[-, line width=1pt] (n2) -- (n3);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (2, 0) {};
+%  \draw[-, line width=1pt] (n2) -- (n4);
+%\end{tikzpicture}}
+%\vspace{0.2cm}\\
+%\code{rpart}\\
+%\code{party(kit)}\\
+%\vspace{1cm}}
+%\end{center}
+%\endminipage
+%\hspace{0.65cm}
+%\minipage{0.285\textwidth}
+%\begin{center}
+%\vspace{-0.4cm}
+%\visible<2->{
+%Random forest\\
+%\vspace{0.4cm}
+%\resizebox{0.6\textwidth}{!}{
+%\begin{tikzpicture}
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n00) at (1, 2) {};
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n01) at (0.5, 1) {};
+%  \draw[-, line width=1pt] (n00) -- (n01);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n02) at (1.5, 1) {};
+%  \draw[-, line width=1pt] (n00) -- (n02);
+%  
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n10) at (3, 2) {};
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n11) at (2.5, 1) {};
+%  \draw[-, line width=1pt] (n10) -- (n11);
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n12) at (3.5, 1) {};
+%  \draw[-, line width=1pt] (n10) -- (n12);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n13) at (2, 0) {};
+%  \draw[-, line width=1pt] (n11) -- (n13);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n14) at (2.8, 0) {};
+%  \draw[-, line width=1pt] (n11) -- (n14);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n15) at (3.2, 0) {};
+%  \draw[-, line width=1pt] (n12) -- (n15);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n16) at (4, 0) {};
+%  \draw[-, line width=1pt] (n12) -- (n16);
+%  
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n20) at (5, 2) {};
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n21) at (4.5, 1) {};
+%  \draw[-, line width=1pt] (n20) -- (n21);
+%  \node[ellipse, fill=HighlightBlue!70, align=center] (n22) at (5.5, 1) {};
+%  \draw[-, line width=1pt] (n20) -- (n22);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n23) at (5, 0) {};
+%  \draw[-, line width=1pt] (n22) -- (n23);
+%  \node[rectangle, fill=HighlightOrange!70, align=center] (n24) at (6, 0) {};
+%  \draw[-, line width=1pt] (n22) -- (n24);
+%\end{tikzpicture}
+%}
+%\vspace{0.3cm}\\
+%\code{randomForest}\\
+%\code{ranger}\\
+%\code{party(kit)}}
+%\end{center}
+%\endminipage
+%\hspace{0.65cm}
+%\minipage{0.285\textwidth}
+%\begin{center}
+%\vspace{0.15cm}
+%\visible<3->{
+%Distributional trees and forests\\
+%\vspace{1.15cm}
+%\code{disttree}\\
+%based on \code{partykit}\\
+%\vspace{1cm}}
+%\end{center}
+%\endminipage
+%\end{figure}
+%\end{frame}
+
+
+%%% SLIDE
+%\begin{frame}
+%\frametitle{Motivation}
+%
+%\textbf{Distributional:}
+%\begin{itemize}
+%  \item Specify the complete probability distribution (location, scale, shape, \dots).
+%\end{itemize}
+%
+%\medskip
+%
+%\textbf{Tree:}
+%\begin{itemize}
+%  \item Automatic detection of steps and abrupt changes. %(data driven)
+%  \item Capture non-linear and non-additive effects and interactions.
+%\end{itemize}
+%
+%\medskip
+%
+%\textbf{Forest:}
+%\begin{itemize}
+%  \item Smoother effects.
+%  \item Stabilization and regularization of the model.
+%\end{itemize}
+%\end{frame}
+%
+%
+%
+%
+%\subsection{Distributional trees}
+%
+%<<treedata, echo=FALSE, results=hide>>=
+%set.seed(54)
+%nobs <- 500
+%x <- runif(nobs, 0, 1)
+%mu <- sigma <- ytrue <- numeric(length = nobs)
+%for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+%for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+%y <- rnorm(nobs, mean = mu, sd = sigma)
+%ytrue <- mu
+%data <- data.frame(cbind(y,x, ytrue))
+%
+%alldata <- cbind(data, mu, sigma)
+%odata <- alldata[order(alldata["x"]),]
+%@
+%
+%<<dgp_tree, echo=FALSE, results=hide>>=
+%data <- data.frame(x = numeric(0), x = numeric(0), x = numeric(0))
+%names(data) <- c("x","x","x")
+%fig <- party(
+%  partynode(1L,
+%            split = partysplit(2L, breaks = 0.4),
+%            kids = list(
+%              partynode(2L, info = c(
+%                "n = 200",
+%                "   True parameters:   ",
+%                expression(mu == '4'),
+%                expression(sigma == '1')
+%              )),
+%              partynode(3L,
+%                        split = partysplit(3L, breaks = 0.8),
+%                        kids = list(
+%                          partynode(4L, info = c(
+%                            "n = 200",
+%                            "   True parameters:   ",
+%                            expression(mu == '12'),
+%                            expression(sigma == '3')
+%                          )),
+%                          partynode(5L, info = c(
+%                            "n = 100",
+%                            "   True parameters:   ",
+%                            expression(mu == '4'),
+%                            expression(sigma == '3')
+%                          )))))),
+%  data
+%)
+%
+%
+%node_inner_ext <- function (obj, id = TRUE, pval = TRUE, abbreviate = FALSE, fill = "white", 
+%    gp = gpar()) 
+%{
+%    meta <- obj$data
+%    nam <- names(obj)
+%    extract_label <- function(node) {
+%        if (is.terminal(node)) 
+%            return(rep.int("", 2L))
+%        varlab <- character_split(split_node(node), meta)$name
+%        if (abbreviate > 0L) 
+%            varlab <- abbreviate(varlab, as.integer(abbreviate))
+%        if (pval) {
+%            nullna <- function(x) is.null(x) || is.na(x)
+%            pval <- suppressWarnings(try(!nullna(info_node(node)$p.value), 
+%                silent = TRUE))
+%            pval <- if (inherits(pval, "try-error")) 
+%                FALSE
+%            else pval
+%        }
+%        if (pval) {
+%            pvalue <- node$info$p.value
+%            plab <- ifelse(pvalue < 10^(-3L), paste("p <", 10^(-3L)), 
+%                paste("p =", round(pvalue, digits = 3L)))
+%        }
+%        else {
+%            plab <- ""
+%        }
+%        return(c(varlab, plab))
+%    }
+%    maxstr <- function(node) {
+%        lab <- extract_label(node)
+%        klab <- if (is.terminal(node)) 
+%            ""
+%        else unlist(lapply(kids_node(node), maxstr))
+%        lab <- c(lab, klab)
+%        lab <- unlist(lapply(lab, function(x) strsplit(x, "\n")))
+%        lab <- lab[which.max(nchar(lab))]
+%        if (length(lab) < 1L) 
+%            lab <- ""
+%        return(lab)
+%    }
+%    nstr <- maxstr(node_party(obj))
+%    if (nchar(nstr) < 6) 
+%        nstr <- "aAAAAa"
+%    rval <- function(node) {
+%        node_vp <- viewport(x = unit(0.5, "npc"), y = unit(0.5, 
+%            "npc"), width = unit(1, "strwidth", nstr) * 1.3, 
+%            height = unit(3, "lines"), name = paste("node_inner", 
+%                id_node(node), sep = ""), gp = gp)
+%        pushViewport(node_vp)
+%        xell <- c(seq(0, 0.2, by = 0.01), seq(0.2, 0.8, by = 0.05), 
+%            seq(0.8, 1, by = 0.01))
+%        yell <- sqrt(xell * (1 - xell))
+%        xell <- xell*1.11 - 0.055             # to adapt size of the ellipse to the size with p-value
+%        lab <- extract_label(node)
+%        fill <- rep(fill, length.out = 2L)
+%        grid.polygon(x = unit(c(xell, rev(xell)), "npc"), y = unit(c(yell, 
+%            -yell) + 0.5, "npc"), gp = gpar(fill = fill[1]))
+%        grid.text(lab[1L], y = unit(1.5 + 0.5,                  # to adapt position of x to its position with p-value
+%            "lines"))
+%        #grid.text(lab[1L], y = unit(1.5 + 0.5 * (lab[2L] != ""), 
+%        #    "lines"))
+%        grid.text(lab[2L], y = unit(1, "lines"))
+%        if (id) {
+%            nodeIDvp <- viewport(x = unit(0.5, "npc"), y = unit(1, 
+%                "npc"), width = max(unit(1, "lines"), unit(1.3, 
+%                "strwidth", nam[id_node(node)])), height = max(unit(1, 
+%                "lines"), unit(1.3, "strheight", nam[id_node(node)])))
+%            pushViewport(nodeIDvp)
+%            grid.rect(gp = gpar(fill = fill[2]))
+%            grid.text(nam[id_node(node)])
+%            popViewport()
+%        }
+%        upViewport()
+%    }
+%    return(rval)
+%}
+%
+%class(node_inner_ext) <- "grapcon_generator"
+%
+%@
+
+
+%%% SLIDE
+%\begin{frame}[fragile]
+%\frametitle{Distributional trees}
+%\vspace*{-0.12cm}
+%\begin{center} 
+%DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
+%
+%\vspace*{-0.21cm}
+%\setkeys{Gin}{width=0.58\linewidth}
+%<<plottree_xyplot, fig=TRUE, echo=FALSE,width=7>>=
+%par(mar=c(5.1,4.1,2.4,1.1))
+%plot(y=odata$y, x=odata$x, ylab = "y", xlab = "x", col = "gray")
+%lines(x = odata$x, y = odata$mu, col = pal["forest"], lwd = 2.5, main = "")
+%polygon(c(odata$x, rev(odata$x)), c(odata$mu + odata$sigma, rev(odata$mu - odata$sigma)),
+%  col = pallight["forest"], border = "transparent")
+%legend("topleft", expression(mu  %+-%  sigma), bty = "n")
+%@
+%\end{center}
+%\end{frame}
+
+
+%%% SLIDE
+%\begin{frame}
+%\frametitle{Distributional trees}
+%\vspace*{-0.12cm}
+%\begin{center} 
+%DGP:  $\; Y\ |\ X = x \; \sim  \; \mathcal{N}(\mu(x), \sigma^2(x))$
+%
+%\vspace*{-0.21cm}
+%\setkeys{Gin}{width=0.5\linewidth}
+%<<plottree_dgp, fig=TRUE, echo=FALSE>>=
+%paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+%plot(fig, inner_panel = node_inner_ext,
+%     tp_args = list(FUN = identity, width = 18, fill = paltrees[c(1, 3)]), 
+%     ip_args = list(fill = paltrees[c(2, 3)]),
+%     drop_terminal = TRUE, tnex = 1.7)
+%@
+%\end{center}
+%\end{frame}
+
+
+%%% SLIDE
+%<<tree, echo=FALSE, results=hide>>=
+%set.seed(7)
+%nobs <- 500
+%x <- runif(nobs, 0, 1)
+%mu <- sigma <- ytrue <- numeric(length = nobs)
+%for(i in 1:nobs) sigma[i] <- if(x[i]<=0.4) 1 else 3
+%for(i in 1:nobs) mu[i] <- if(x[i]<= 0.4|| x[i]>0.8) 4 else 12
+%y <- rnorm(nobs, mean = mu, sd = sigma)
+%#y <- rcnorm(nobs, mean = mu, sd = sigma, left = 0)
+%ytrue <- mu
+%data <- data.frame(cbind(y,x, ytrue))
+%tree <- disttree(y ~ x, data = data, family = NO(), type.tree = "mob")
+%#tree <- disttree(y ~ x, data = data, family = dist_list_cens_normal)
+%@
+%
+%\begin{frame}[fragile]
+%\frametitle{Distributional trees}
+%\begin{center}
+%\vspace*{-0.12cm}
+%Model: \code{disttree(y ~ x)}\\
+%\vspace*{-0.2cm}
+%\setkeys{Gin}{width=0.5\linewidth}
+%<<plottree_estpar, fig=TRUE, echo=FALSE>>=
+%# function for output in terminal panels
+%FUN <- function (x) 
+%{
+%  cf <- x$coefficients
+%  cf <- matrix(cf, ncol = 1, dimnames = list(names(cf), ""))
+%  c(sprintf("n = %s", x$nobs), "Estimated parameters:", parse(text = paste0("mu == '", format(round(cf[1], 2), nsmall = 2), "'")), 
+%                                                        parse(text = paste0("sigma == '", format(round(cf[2], 2), nsmall = 2), "'")))
+%}
+%
+%paltrees <- rgb(c(0.97, 0.64, 1), c(0.70, 0.83, 1), c(0.30, 0.99, 1))
+%
+%## plot version using FUN and tree of class 'disttree'
+%plot(tree, drop = TRUE, tnex = 1.7, FUN = FUN,
+%     tp_args = list(fill = paltrees[c(1, 3)], width = 18), 
+%     ip_args = list(fill = paltrees[c(2, 3)]))
+%@
+%\end{center}
+%\end{frame}
+
+
+%%% SLIDE
+%\begin{frame}[fragile]
+%\frametitle{Distributional trees}
+%\begin{center}
+%\vspace*{-0.12cm}
+%Model: \code{disttree(y ~ x)}\\
+%\vspace*{-0.2cm}
+%\setkeys{Gin}{width=0.5\linewidth}
+%<<plottree_box, fig=TRUE, echo=FALSE>>=
+%plot(as.constparty(tree), tnex = 1.7, drop = TRUE,
+%     tp_args = list(fill = paltrees[c(1, 3)], ylines = 1.5), 
+%     ip_args = list(fill = paltrees[c(2, 3)]))
+%@
+%\end{center}
+%\end{frame}
+
+
+%%% SLIDE
+%\begin{frame}[fragile]
+%\frametitle{Distributional trees}
+%\begin{center}
+%\vspace*{-0.12cm}
+%Model: \code{disttree(y ~ x)}\\
+%\vspace*{-0.2cm}
+%\setkeys{Gin}{width=0.5\linewidth}
+%<<plottree_dens, fig=TRUE, echo=FALSE>>=
+%node_density <- function (tree, xscale = NULL, yscale = NULL, horizontal = FALSE,
+%                          main = "", xlab = "", ylab = "Density", id = TRUE, rug = TRUE,
+%                          fill = paltrees[c(1, 3)], col = "black", lwd = 0.5, ...) 
+%{
+%  yobs <- tree$data[,as.character(tree$info$formula[[2]])]
+%  ylines <- 1.5
+%  if (is.null(xscale)) xscale <- c(-5.1,22.5)
+%  if (is.null(yscale)) yscale <- c(-0.05,0.45)
+%  xr <- xscale
+%  yr <- yscale
+%  
+%  if (horizontal) {
+%    yyy <- xscale
+%    xscale <- yscale
+%    yscale <- yyy
+%  }
+%  
+%  rval <- function(node) {
+%    yrange <- seq(from = -20, to = 90)/4
+%    ydens <- node$info$object$ddist(yrange)
+%    
+%    top_vp <- viewport(layout = grid.layout(nrow = 2, ncol = 3, 
+%                                            widths = unit(c(ylines, 1, 1), c("lines", "null", "lines")), 
+%                                            heights = unit(c(1, 1), c("lines", "null"))), 
+%                       width = unit(1, "npc"), 
+%                       height = unit(1, "npc") - unit(2, "lines"), 
+%                       name = paste("node_density",node$id, sep = ""))
+%    pushViewport(top_vp)
+%    grid.rect(gp = gpar(fill = "white", col = 0))
+%    top <- viewport(layout.pos.col = 2, layout.pos.row = 1)
+%    pushViewport(top)
+%    mainlab <- paste(ifelse(id, paste("Node", node$id, "(n = "), "n = "), node$info$nobs, ifelse(id, ")", ""), sep = "")
+%    
+%    grid.text(mainlab)
+%    popViewport()
+%    plot <- viewport(layout.pos.col = 2, layout.pos.row = 2, 
+%                     xscale = xscale, yscale = yscale, 
+%                     name = paste("node_density",  node$id, "plot", sep = ""))
+%    pushViewport(plot)
+%    yd <- ydens
+%    xd <- yrange
+%    if (horizontal) {
+%      yyy <- xd
+%      xd <- yd
+%      yd <- yyy
+%      yyy <- xr
+%      xr <- yr
+%      yr <- yyy
+%      rxd <- rep(0, length(xd))
+%      ryd <- rev(yd)
+%    } else {
+%      rxd <- rev(xd)
+%      ryd <- rep(0, length(yd))
+%    }
+%    
+%    if (rug) {
+%      nodeobs <- node$info$object$y
+%      if (horizontal) {
+%        grid.rect(x = xscale[1], y = nodeobs , height = 0, width = xscale[1], 
+%                  default.units = "native", just = c("right", "bottom"),
+%		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+%      } else {
+%        grid.rect(x = nodeobs, y = yscale[1], 
+%                  width = 0, height = abs(yscale[1]), default.units = "native", 
+%                  just = c("center", "bottom"),
+%		  gp = gpar(lwd = 2, col = gray(0, alpha = 0.18)))
+%        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+%        #           default.units = "native")
+%        #grid.lines(x = xr, y = yr, gp = gpar(col = "lightgray"), 
+%        #           default.units = "native")
+%      }
+%    }
+%
+%    
+%    grid.polygon(x = c(xd, rxd), y = c(yd, ryd), default.units = "native",
+%              gp = gpar(col = "black", fill = fill, lwd = lwd))
+%    #grid.lines(x = xd, y = yd, default.units = "native", 
+%    #           gp = gpar(col = col, lwd = lwd))
+%    grid.xaxis()
+%    grid.yaxis()
+%    grid.rect(gp = gpar(fill = "transparent"))
+%    upViewport(2)
+%  }
+%  return(rval)
+%}
+%
+%class(node_density) <- "grapcon_generator"
+%
+%plot(tree, tnex = 1.7, drop = TRUE,
+%     terminal_panel = node_density,
+%     tp_args = list(fill = paltrees[c(1, 3)]), 
+%     ip_args = list(fill = paltrees[c(2, 3)]))
+%@
+%\end{center}
+%\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Motivation}
+
+\vspace*{-0.2cm}
+
+\textbf{Goal:} 
+\begin{itemize}
+  \item Regression trees and random forests for circular response variable.
+  \item Probabilistic/distributional modeling.
+\end{itemize} 
+
+\medskip
+
+\textbf{Examples:} Circular data.
+\begin{itemize}
+\item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+\item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$
+\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+%\item \ldots
+\end{itemize}
+
+\medskip
+
+\textbf{Here:} Probabilistic forecasting of wind directions for the next hours 
+  at \\Innsbruck Airport, Austria. 
+
+\medskip
+
+\textbf{Prior knowledge:} Trees are natural idea for capturing abrupt 
+  changes \\due to geographical position. 
+
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Circular response distribution}
+
+\vspace*{-0.3cm}
+
+\begin{minipage}{0.5\textwidth}
+\textbf{Distribution assumption:} Von Mises.
+\begin{itemize}
+\item Circular normal distribution.
+\item Location parameter $\mu \in [0, 2 \pi)$.
+\item Concentration parameter $\kappa > 0$.
+\end{itemize}
+\end{minipage}
+\begin{minipage}{0.49\textwidth}
+\only<1>{\includegraphics[width=\linewidth]{density_linear.pdf}}%
+\only<2>{\includegraphics[width=\linewidth]{density_circular.pdf}}%
+\end{minipage}
+
+\bigskip
+\medskip
+
+\textbf{Log-likelihood:} $y \in [0, 2 \pi)$ and parameter vector $\theta = (\mu, \kappa)$.
+$$
+\ell(\theta; y) = \log \left\{ \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)} \right\}
+$$
+where $I_0(\kappa)$ is the modified Bessel function of the first kind and order $0$.
+
+\end{frame}
+
+
+\subsection{Learning}
+%% SLIDE
+\begin{frame}
+\frametitle{Learning circular trees and forests}
+\begin{minipage}{0.7\textwidth}
+{\bf Tree:}
+\begin{enumerate}
+\item<3-> Fit global distributional model vM$(Y; \theta)$: \\ % to the whole data set:\\
+Estimate $\hat{\theta}$ via maximum likelihood \\
+$\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
+\item<7-> Test for associations/instabilities of the scores $\frac{\partial \ell}{\partial \theta}(\hat{\theta};y_i)$ and each covariate $X_i$.
+\end{enumerate}
+\end{minipage}
+\begin{minipage}{0.23\textwidth}
+%\vspace{-0.1cm}
+\begin{tikzpicture}
+\visible<2-3>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
+}
+\visible<4>{
+\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\text{vM}(Y;\hat{\theta}$)};
+}
+\visible<5->{
+\node[inner sep=0pt] (density1) at (0.8, 1.7)
+{\includegraphics[width=0.6\textwidth]{density_root.pdf}};
+}
+\visible<6-8>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {?};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {?};
+\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1);
+\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2);
+}
+\visible<9-10>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$Y_2$};
+\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2) node [midway, right] {\scriptsize $X > p$};
+}
+\visible<11>{
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\text{vM}(Y_1;\hat{\theta_1}$)};
+\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$\text{vM}(Y_2;\hat{\theta_2}$)};
+}
+\visible<11->{
+\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2) node [midway, right] {\scriptsize $X > p$};
+}
+\visible<12->{
+\node[inner sep=0pt] (density2) at (-0.1,-0.1)
+{\includegraphics[width=0.5\textwidth]{density_left.pdf}};
+}
+\visible<12->{
+\node[inner sep=0pt] (density3) at (1.7,-0.1)
+{\includegraphics[width=0.5\textwidth]{density_right.pdf}};
+}
+\end{tikzpicture}
+\end{minipage}
+\vspace{0.1cm}
+%\begin{adjustwidth}{-0.0em}{-1em}
+\begin{enumerate}
+\setcounter{enumi}{2}
+\item<8-> Split along the covariate $X$ with strongest association or instability and at breakpoint $p$ with highest improvement in log-likelihood.
+\item<10-> Repeat steps 1--3 recursively until some stopping criterion \\
+is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
+\end{enumerate}
+%\end{adjustwidth}
+\vspace{0.4cm}
+\visible<13->{
+{\bf Forest:} Ensemble of $T$ trees.
+\begin{itemize}
+\item Bootstrap or subsamples.
+\item Random input variable sampling.
+\end{itemize}
+}
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}
+\frametitle{Adaptive local likelihood estimation}
+
+\textbf{Parameter estimator} for \only<1-3>{\textbf{a global}}\only<4->{\textbf{an adaptive local}}\\ model with learning data \only<1>{$\{y_i\}_{i=1,\ldots,n}$}\only<2->{$\{(y_i,\bold{x}_i)\}_{i=1,\ldots,n}$} :
+
+\[
+\hat{\theta}\visible<2->{(\bold{x})} =  \argmax_{\theta \in \Theta} \sum_{i=1}^n \visible<2->{w_i(\bold{x}) \cdot} \ell(\theta; y_i)
+\]
+
+\medskip
+
+\visible<3->{
+\textbf{Weights:}
+\begin{eqnarray*}
+w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.2cm]
+\visible<4->{
+w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.1cm]
+\visible<5->{
+w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
+\end{eqnarray*}
+}}}
+\end{frame}
+
+
+\subsection{Wind forecasting}
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting}
+
+\textbf{Goal:} Nowcasting (1--3 hours ahead) of wind direction at Innsbruck Airport.
+
+\bigskip
+\pause
+
+\textbf{Challenges:}
+\begin{itemize}
+  \item Circular response in $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$.
+  \item Possibly abrupt changes due to geographical position.
+  \item Numerical weather predictions less useful due to short lead time.
+\end{itemize}
+
+\bigskip
+\pause
+
+\textbf{Inputs:} Observation data only (41\,979 data points).
+\begin{itemize}
+  \item 4 stations at Innsbruck Airport, 6 nearby weather stations. 
+  \item Base variables: Wind direction, wind (gust) speed, temperature, (reduced) air pressure, relative humidity.
+  \item 260 covariates based on means/minima/maxima, temporal changes, spatial differences towards the airport.
+\end{itemize}
+
+\end{frame}
+
+%% SLIDE
+\begin{frame}
+\frametitle{Wind forecasting}
+
+\vspace*{-0.4cm}
+
+\setkeys{Gin}{width=0.75\linewidth}
+\only<1>{
+  \begin{center}
+  \includegraphics{_plot_circforest_stationmap_innsbruck.pdf}
+  \end{center}
+}
+\only<2>{
+  \begin{center}
+  \includegraphics{_plot_circforest_stationmap_innsbruck_box.pdf}
+  \end{center}
+}
+\only<3>{
+  \framesubtitle{~}
+  \vspace*{-0.55cm}
+  \begin{center}
+  \includegraphics{ibk_airport.png}
+  \end{center}
+}
+\only<4>{
+  \framesubtitle{Up-valley wind}
+  \vspace*{-0.55cm}
+  \begin{center}
+  \includegraphics{ibk_airport_east.png}
+  \end{center}
+}
+\only<5>{
+  \framesubtitle{Down-valley wind}
+  \vspace*{-0.55cm}
+  \begin{center}
+  \includegraphics{ibk_airport_west.png}
+  \end{center}
+}
+\only<6>{
+  \framesubtitle{Southerly wind}
+  \vspace*{-0.55cm}
+  \begin{center}
+  \includegraphics{ibk_airport_south.png}
+  \end{center}
+}
+
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting}
+
+\vspace{-0.7cm}
+
+\setkeys{Gin}{width=1\linewidth}
+\begin{center}
+\includegraphics{circtree_ibk.pdf}
+\end{center}
+
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting}
+
+\textbf{Benchmark:} Against other naive and circular models.
+\begin{itemize}
+\item Climatology: Without covariates.
+\item Persistency: Based on current wind direction.
+\item Circular GLM: Based on current wind speed and wind vectors $(u, v)$.
+\end{itemize}
+
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting}
+
+%\includegraphics{circforest_crpsraw_ibk_lag1.pdf}
+%\includegraphics{circforest_crpsraw_ibk_lag3.pdf}
+
+\textbf{Evaluation:} CRPS skill score for \only<1>{1}\only<2>{3}-hourly predictions (5-fold cross validation).
+\begin{center}
+\setkeys{Gin}{width=0.88\linewidth}
+\only<1>{\includegraphics{circforest_crpsskill_ibk_lag1.pdf}}%
+\only<2>{\includegraphics{circforest_crpsskill_ibk_lag3.pdf}}
+\end{center}
+
+\end{frame}
+
+
+\subsection{Software}
+%% SLIDE
+\begin{frame}
+\frametitle{Software}
+%\vspace{0.4cm}
+\textbf{Software:} \emph{circtree}
+available on R-Forge at\\
+
+\medskip
+
+\small{\url{https://R-Forge.R-project.org/projects/partykit/}}\\ 
+%and\\
+%\url{https://R-Forge.R-project.org/projects/uibk-rprog-2018/}}\\
+
+\bigskip
+\medskip
+
+\textbf{Main functions:}
+
+\medskip
+
+\begin{tabular}{ll}
+\code{circfit}    & Circular distributional fits (ML)\\
+& No covariates. \\
+\code{circtree}   & Circular distributional trees (\code{ctree}/\code{mob} + \code{circfit}).\\
+& Covariates as partitioning variables. \\
+\code{circforest} & Circular distributional forests (ensemble of \code{circtree}s).\\
+& Covariates as partitioning variables.
+\end{tabular}
+
+\bigskip
+\medskip
+
+\textbf{Correspondingly:} \code{disttree}, \code{distforest} for any \code{gamlss.family} or custom \code{family}.\\
+
+\end{frame}
+
+
+\subsection{References}
+%% SLIDE
+\begin{frame}
+\frametitle{References}
+
+\vspace{-0.2cm}
+\footnotesize
+
+Lang MN, Schlosser L, Hothorn T, Mayr GJ, Stauffer R, Zeileis A (2020).
+\dquote{Circular Regression Trees and Forests with an
+Application to Probabilistic Wind Direction Forecasting.}
+\emph{In preparation}.
+
+\medskip
+
+Schlosser L, Lang MN, Hothorn T, Mayr GJ, Stauffer R, Zeileis A (2019).
+\dquote{Distributional Trees for Circular Data.}
+\emph{Proceedings of the 34th International Workshop on Statistical Modelling}, 
+\textbf{1}, 226--231.
+\url{https://eeecon.uibk.ac.at/~zeileis/papers/Schlosser+Lang+Hothorn-2019.pdf}
+
+\medskip
+
+Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
+\dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
+\emph{The Annals of Applied Statistics}, \textbf{13}(3), 1564--1589.
+\doi{10.1214/19-AOAS1247}
+
+\bigskip
+
+Hothorn T, Hornik K, Zeileis A (2006).
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+ \emph{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
+
+\medskip
+ 
+Zeileis A, Hothorn T, Hornik K (2008).
+ \dquote{Model-Based Recursive Partitioning.}
+  \emph{Journal of Computational and Graphical Statistics},
+  \textbf{17}(2), 492--514.
+  \doi{10.1198/106186008X319331}
+
+\end{frame}
+
+\end{document}
