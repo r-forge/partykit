@@ -120,7 +120,7 @@ To evaluate the proposed circular regression trees and forests, a case study on
 probabilistic forecasting of wind direction for two airports in Austria is
 presented. In addition to the tree-based models, alternative common approaches
 are used as a benchmark in order to assess the predictive performances of the
-novel methodology of circular regression trees and forests.
+novel methodology of circular regression trees and forests. 
 }
 
 \Keywords{Distributional Trees; Random Forests; Circular Data; von Mises Distribution}
@@ -172,221 +172,124 @@ data requires the incorporation of its specific feature of periodicity, i.e.,
 in case of angular data the fact that values are restricted to an interval such
 as $[0,2\pi)$ with $0$ being equivalent to $2\pi$.
 
-Many approaches to model circular data assume that the circular
-variable of interest follows a circular distribution, in particular the von
-Mises distribution which is also known as the ``circular normal distribution''.
-%This is also the basis
-%which early regression models for circular data are built on as they regress
-%the parameter(s) of the von Mises distribution on covariates. 
-One of the first
-regression models with a circular response variable and linear covariates was
-presented by \cite{Gould:1969} where the circular mean, i.e., the location
-parameter of the von Mises distribution, is predicted by a linear combination of
-covariates. 
-\cite{Johnson+Wehrly:1978} refined this idea by
-plugging in a link function transforming the linear predictor to a 
-restricted interval of length $2\pi$. 
-%%%
-%%%In order to restrict the circular response to an interval of length $2\,pi\
-%%%\cite{Johnson+Wehrly:1978} refined this idea by linintroducing link functions transforming
-%%%the linear predictor to the restricted interval of length $2\pi$. 
-%\cite{Johnson+Wehrly:1978} took this idea one step further by
-%plugging in a link function such that the values of the linear predictor are
-%transformed to a restricted interval of length $2\pi$. 
-%This generalized linear
-%model (GLM)-type approach was further extended by \cite{Fisher+Lee:1992} and
-%subsequently by \cite{Fisher:1993} introducing another specific transformation
-%function which maps the values of the real line to the unit circle. 
-This generalized linear
-model (GLM)-type approach was further extended by \cite{Fisher+Lee:1992} and
-subsequently by \cite{Fisher:1993} introducing independent GLMs for either the 
-location or scale parameter with appropriate link functions while keeping the other 
-parameter constant. Additionally, they developed a combined heteroscedastic version 
-where the location and scale parameter are alternately reestimated conditional on 
-respective sets of covariates until convergence.
-%Moreover, the presented methodology does not only allow for the mean direction to be modeled 
-%depending on covariates while a constant estimate is obtained for the concentration parameter 
-%but also for the vice versa version. For each of these two approaches a separate model is introduced, 
-%however, they are also combined in a joint model (referred to as ``mixed model'').
-%%Moreover, the presented methodology allows for both distribution parameters, the mean
-%%direction and the concentration parameter of the von Mises distribution, to be
-%%modeled depending on covariates, not only separately but also in a
-%%combined model (also referred to ``mixed model''). 
-%In the employed iterative optimization algorithm the two sets of regression coefficients used
-%to model $\mu$ and $\sigma$ respectively are updated in alternation until convergence.
-%%To obtain proper initial values it is recommended to apply two separate models 
-%%where either one of the parameters is fixed while the other is predicted employing covariates 
-%%in a GLM-type model.
-%While the combined model but also the two separate models are built on well elaborated theory 
-While all of these models are built on well elaborated theory 
-the employed methodology has shown to be very challenging in its application, mainly due to the 
-complexity encountered in optimizing the corresponding log-likelihood function which is not globally concave. 
-Therefore, highly informative starting values are crucial for these circular GLMs to converge 
-\citep{Pewsey+Neuhaeuser+Ruxton:2013, Gill+Hangartner:2010}. 
-In order to avoid this strong dependence on appropriate initial values, \cite{Mulder+Klugkist:2017} 
-have presented a Bayesian alternative of a homoscedastic GLM for circular data.
-However, apart from potential difficulties in the optimization procedure of circular GLMs, 
-additive effects and their interpretation are often not intuitive for circular responses
-due to the highly non-linear link function and the not-straightforward representation of smooth 
-transitions on the unit circle. For example, the same rotation can be obtained in either 
-positive or negative direction on the circle leading to an ambiguous interpretation.
-
-%%%All listed methods and most of their further developments \citep[see, e.g.,][]{Jammalamadaka+Sengupta:2001} 
-%%%are built on additive regression models.
-%%%Generally these provide a powerful toolbox for modeling particularly smooth effects.
-%%%however, in the case of modeling circular data 
-%%%additive effects conditional on linear covariates are not intuitive
-%%%due to a possibly strongly non-linear rotation on the unit circle, whereby the same transformation
-%%%can be obtained in either positive or negative direction on the circle.
-%a possibly highly non-linear link function
-%can induce a more complex behavior of the modeled parameters as the location
-%parameter shifts closely towards the ``origin point'' $0$, also depending on the 
-%direction of the shift.
+Many approaches to model circular data assume that the circular variable of
+interest follows a circular distribution, in particular the von Mises
+distribution which is also known as the ``circular normal distribution''. One
+of the first regression models with a circular response variable and linear
+covariates was presented by \cite{Gould:1969} where the circular mean, i.e.,
+the location parameter of the von Mises distribution, is predicted by a linear
+combination of covariates. \cite{Johnson+Wehrly:1978} refined this idea by
+plugging in a link function transforming the linear predictor to a restricted
+interval of length $2\pi$. This generalized linear model (GLM)-type approach
+was further extended by \cite{Fisher+Lee:1992} and subsequently by
+\cite{Fisher:1993} introducing independent GLMs for either the location or
+scale parameter with appropriate link functions while keeping the other
+parameter constant. Additionally, they developed a combined heteroscedastic
+version where the location and scale parameter are alternately reestimated
+conditional on respective sets of covariates until convergence. While all of
+these models are built on well elaborated theory the employed methodology has
+shown to be very challenging in its application, mainly due to the complexity
+encountered in optimizing the corresponding log-likelihood function which is
+not globally concave. Therefore, highly informative starting values are
+crucial for these circular GLMs to converge
+\citep{Pewsey+Neuhaeuser+Ruxton:2013, Gill+Hangartner:2010}. In order to avoid
+this strong dependence on appropriate initial values,
+\cite{Mulder+Klugkist:2017} have presented a Bayesian alternative of a
+homoscedastic GLM for circular data. However, apart from potential
+difficulties in the optimization procedure of circular GLMs, additive effects
+and their interpretation are often not intuitive for circular responses due to
+the highly non-linear link function and the not-straightforward representation
+of smooth transitions on the unit circle. For example, the same rotation can be
+obtained in either positive or negative direction on the circle leading to an
+ambiguous interpretation.
 
 As a very intuitive and data-driven alternative, we propose a flexible
 tree-based regression approach for modeling circular data by applying the von
-Mises distribution within the methodology of distributional trees and
-forests \citep{Schlosser+Hothorn+Stauffer:2019}. 
-%In order to avoid these difficulties in regression modeling of circular data 
-%(and also the requirement of initial values) 
-%we propose an alternative and very flexible 
-%approach by applying the von Mises distribution within the methodology of distributional 
-%trees and distributional forests \citep{Schlosser+Hothorn+Stauffer:2019}. 
-The resulting circular regression trees and forests avoid the discussed difficulties 
-of circular GLMs by separating the data into more homogeneous subgroups and fitting a 
-simple intercept-only model for each resulting subset.
-Therefore, no covariates and, thus, no link functions must be employed in the estimation
-of the group-specific distribution parameters which also simplifies the optimization process.
-By incorporating the framework of distributional modeling, we allow for detecting 
-splits in all distribution parameters and provide a fully specified circular response distribution 
-for each terminal node offering a wide range of statistical inference.
-In addition, the employed tree structure allows to capture non-additive effects while forests 
-enable the modeling of smooth changes.
-Furthermore, covariates and their possible interactions do not need to be specified in advance as 
-they are selected automatically.
+Mises distribution within the methodology of distributional trees and forests
+\citep{Schlosser+Hothorn+Stauffer:2019}. The resulting circular regression
+trees and forests avoid the discussed difficulties of circular GLMs by
+separating the data into more homogeneous subgroups and fitting a simple
+intercept-only model for each resulting subset. Therefore, no covariates and,
+thus, no link functions must be employed in the estimation of the
+group-specific distribution parameters which also simplifies the optimization
+process. By incorporating the framework of distributional modeling, we allow
+for detecting splits in all distribution parameters and provide a fully
+specified circular response distribution for each terminal node offering a wide
+range of statistical inference. In addition, the employed tree structure
+allows to capture non-additive effects while forests enable the modeling of
+smooth changes. Furthermore, covariates and their possible interactions do not
+need to be specified in advance as they are selected automatically.
 
-%Moreover, non-additive effects are captured by the tree structure while forests allow for 
-%modeling smooth changes as well. Thus, a high level of flexibility is provided while a full 
-%distributional model is specified in each terminal node offering a wide range of inference. 
-
-%The resulting circular regression trees and forests do not require a pre-specified link function 
-%or any other model assumptions as covariates and their possible interactions are
-%selected automatically. 
-
-%Moreover, as covariates are employed for splitting only and not
-%considered for the parameter estimation within the resulting subgroups, their effects are easier to be interpreted for circular responses.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-This novel approach to circular regression trees and forests complements the literature 
-on tree-based circular modeling.
-%In particular, 
-\cite{Lund:2002} has already introduced the concept of circular regression trees where 
-binary splits are made based on an angular distance measure employed to evaluate node 
-homogeneity.
-While this approach does not only
-allow for linear, but also for circular covariates, the tree solely considers effects in the mean 
-direction for splitting, i.e., only the location parameter $\mu$ is regressed on covariates.
-Therefore, the introduced distributional approach to circular regression trees extends the concept
-of previous circular trees by considering splits in all distribution parameters and 
-providing a full probabilistic model. In addition, as a natural extension, ensembles or forests 
-of circular regression trees are presented in this study. 
-% that can improve forecasts by regularizing and stabilizing the model.
-
-%which is evaluated between 
-%the observed response values and the conditional mean direction of the circular response variable
-%and in that way serves as a measure of homogeneity within subgroups. 
-%%For a circular response $\theta$, covariate(s) $z$ and the conditional mean direction $\mu(z)$
-%%the employed circular distance is defined by $1-\cos(\theta - \mu(z)$.
-%%In each terminal node a predicted values is provided by the sample mean direction of the corresponding 
-%%subset of observations.
-%Furthermore, even though an estimate of dispersion in the form of total node heterogeneity is provided 
-%along with the predicted mean value in each terminal node
-%By incorporating the framework of distributional modeling, we extend the idea of circular trees allowing splits in all distribution parameters and providing a fully specified circular response distribution for each terminal node. 
-
-%Hence, the here proposed circular regression trees and forests can be seen as a further step in the development
-%of tree-based circular models by incorporating the framework of distributional modeling and in that way
-%considering splits in all distribution parameters and providing a fully specified distribution fitted 
-%in each terminal node.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%An alternative modeling approach that can deal with non-additive effects is
-%provided by tree-based methods. \cite{Lund:2002} introduced the concept of
-%circular regression trees which was further extended by
-%\cite{Larraondo+Inza+Lozano:2018}. Following this idea of employing tree-based
-%methods but also including the probabilistic concept of regressing distribution
-%parameters on covariates, we propose a very flexible approach by applying the
-%von Mises distribution within the methodology of distributional trees and
-%distributional forests \citep{Schlosser+Hothorn+Stauffer:2019} to circular
-%data. The resulting circular distributional trees and forests do not require
-%any model assumptions as covariates and their possible interactions are
-%selected automatically. Non-additive effects are captured by the tree structure
-%while circular forests allow for modeling smooth changes as well. Thus, a high
-%level of flexibility is provided while a full distributional model is specified
-%offering a wide range of inference.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+This novel approach to circular regression trees and forests complements the
+literature on tree-based circular modeling. \cite{Lund:2002} has already
+introduced the concept of circular regression trees where binary splits are
+made based on an angular distance measure employed to evaluate node
+homogeneity. While this approach does not only allow for linear, but also for
+circular covariates, the tree solely considers effects in the mean direction
+for splitting, i.e., only the location parameter $\mu$ is regressed on
+covariates. Therefore, the introduced distributional approach to circular
+regression trees extends the concept of previous circular trees by considering
+splits in all distribution parameters and providing a full probabilistic model.
+In addition, as a natural extension, ensembles or forests of circular
+regression trees are presented in this study. 
 
 \subsubsection*{Motivating example}
-To provide a first impression of the presented methodology a circular regression 
-tree is employed for probabilistic wind direction forecasting. Wind direction is a 
-classical circular quantity and accurate forecasts are of great importance for
-decision-making processes, e.g., in air traffic management as considered in this study.
-Figure~\ref{fig:tree_ibk} shows an estimated tree for 1-hourly forecasts at the
-airport of Innsbruck which lies at the bottom of a narrow valley within the European Alps.
-Topography channels the wind along the west-east valley axis or along a tributary
-valley intersecting from the south. Hence, pressure gradients to which valley
-wind regimes react are considered as covariates along with other meteorological
-measurements (lagged by one hour) and their derivatives, such as 
-wind direction and wind speed at the airport or spatial and temporal differences.
+To provide a first impression of the presented methodology a circular
+regression tree is employed for probabilistic wind direction forecasting. Wind
+direction is a classical circular quantity and accurate forecasts are of great
+importance for decision-making processes, e.g., in air traffic management as
+considered in this study. Figure~\ref{fig:tree_ibk} shows an estimated tree
+for 1-hourly forecasts at the airport of Innsbruck which lies at the bottom of
+a narrow valley within the European Alps. Topography channels the wind along
+the west-east valley axis or along a tributary valley intersecting from the
+south. Hence, pressure gradients to which valley wind regimes react are
+considered as covariates along with other meteorological measurements (lagged
+by one hour) and their derivatives, such as wind direction and wind speed at
+the airport or spatial and temporal differences.
 %%
-\begin{figure}[p!]
-  \centering
-  \includegraphics[width=0.9\textheight,,angle=90,origin=c]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
-  \caption{Fitted tree based on the von Mises distribution for 1-hourly wind
-  direction forecasts at the airport of Innsbruck. In each terminal node the
-  empirical histogram (gray) and fitted density (red line) are depicted along
-  with the estimated location parameter (red hand). The covariates selected for splitting
-  are wind direction (degree), wind speed ($\text{ms}^{-1}$), and pressure gradients
-  ($\text{dpressure; hPa}$) west, east and south of the airport, all lagged by
-  one hour.
-  Note that in the meteorological context wind direction is defined on the 
-  scale $[0,360]$ degree and increases clockwise from North ($0$ degree).
-}
-  \label{fig:tree_ibk} 
-\end{figure}
+\begin{figure}[p!] \centering
+\includegraphics[width=0.9\textheight,,angle=90,origin=c]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
+\caption{Fitted tree based on the von Mises distribution for 1-hourly wind
+direction forecasts at the airport of Innsbruck. In each terminal node the
+empirical histogram (gray) and fitted density (red line) are depicted along
+with the estimated location parameter (red hand). The covariates selected for
+splitting are wind direction (degree), wind speed ($\text{ms}^{-1}$), and
+pressure gradients ($\text{dpressure; hPa}$) west, east and south of the
+airport, all lagged by one hour. Note that in the meteorological context wind
+direction is defined on the scale $[0,360]$ degree and increases clockwise from
+North ($0$ degree). } \label{fig:tree_ibk} \end{figure}
 %%
 Together with the tree structure itself, Figure~\ref{fig:tree_ibk} depicts the
 empirical (gray) and fitted von Mises (red) distribution of wind direction in
 each terminal node. Based on the fitted location parameters $\hat \mu$, the
 subgroups can be distinguished into the following wind regimes: (1)~Up-valley
 winds blowing from the valley mouth towards the upper valley (from east to
-west, nodes~4 and 5); (2) Downslope winds blowing across the Alpine crest
-along the intersecting valley towards Innsbruck (from south-east to north-west,
+west, nodes~4 and 5); (2) Downslope winds blowing across the Alpine crest along
+the intersecting valley towards Innsbruck (from south-east to north-west,
 node~8); (3) Down-valley winds blowing in the direction of the valley mouth
 (from west to east, nodes 10, 12 and 13). Node~7 captures observations with
-rather low wind speeds that cannot be clearly distinguished into specific wind 
-regimes and are consequently associated with a very low estimated concentration 
-parameter~$\hat{\kappa}$, i.e., a high estimated variance. 
-In terms of covariates, the lagged wind direction (``persistence'') is mostly 
-responsible for distinguishing the broad range of wind regimes listed above while
-the pressure gradients and wind speed separate the data into subgroups with high 
-vs.\ low precision. 
-A more extensive case study of circular regression trees and forests
-applied to probabilistic forecasting of wind direction at the airports of
-Innsbruck and Vienna will be presented in this paper. Moreover, their
-performances are benchmarked to alternative commonly used approaches. 
+rather low wind speeds that cannot be clearly distinguished into specific wind
+regimes and are consequently associated with a very low estimated concentration
+parameter~$\hat{\kappa}$, i.e., a high estimated variance. In terms of
+covariates, the lagged wind direction (``persistence'') is mostly responsible
+for distinguishing the broad range of wind regimes listed above while the
+pressure gradients and wind speed separate the data into subgroups with high
+vs.\ low precision. A more extensive case study of circular regression trees
+and forests applied to probabilistic forecasting of wind direction at the
+airports of Innsbruck and Vienna will be presented in this paper. Moreover,
+their performances are benchmarked to alternative commonly used approaches. 
 
-The remainder of the paper is structured as follows: The theory on probabilistic
-circular modeling introducing the von Mises distribution, and circular regression
-models will be discussed in
-Section~\ref{sec:prob_circ}. The methodology of circular regression trees
-and forests and their features are introduced in Section~\ref{sec:tree_forest}.
-After the case study presented in \ref{sec:wind}, a comprehensive summary and
-conclusion is given in Section~\ref{sec:summary}.
+The remainder of the paper is structured as follows: The theory on
+probabilistic circular modeling introducing the von Mises distribution, and
+circular regression models will be discussed in Section~\ref{sec:prob_circ}.
+The methodology of circular regression trees and forests and their features are
+introduced in Section~\ref{sec:tree_forest}. After the case study presented in
+\ref{sec:wind}, a comprehensive summary and conclusion is given in
+Section~\ref{sec:summary}.
 
 % -------------------------------------------------------------------
 % Probabilistic circular modeling
 % -------------------------------------------------------------------
-%\newpage
 \section{Probabilistic circular modeling}
 \label{sec:prob_circ}
 Probabilistic modeling of circular data requires the selection of a proper
@@ -409,7 +312,8 @@ observation $y \in [0, 2\pi)$ is given by
 \end{equation}
 %%
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order
-$0$ (see, e.g., \citealt{Jammalamadaka+Sengupta:2001} and \citealt{Ley+Verdebout:2017} for a more detailed overview).
+$0$ (see, e.g., \citealt{Jammalamadaka+Sengupta:2001} and
+\citealt{Ley+Verdebout:2017} for a more detailed overview).
 
 The corresponding log-likelihood function is defined as
 %%
@@ -449,9 +353,8 @@ By means of the score function
 \end{equation}
 %%
 an indicator of deviation and in that way a measure of goodness of fit of the
-model can be obtained for each observation and fitted parameter.
-Moreover, the optimization problem in Equation~\ref{eq:optim} can also be
-defined by 
+model can be obtained for each observation and fitted parameter. Moreover, the
+optimization problem in Equation~\ref{eq:optim} can also be defined by 
 %%
 \begin{equation}
   \sum_{i = 1}^n s(\hat{\mu}, \hat{\kappa}, y_i) = 0.
@@ -487,73 +390,46 @@ data employing the von Mises distribution. While the left panel only serves as
 an illustration of the corresponding ``linear'' description restricted to an
 interval of length $2\pi$ but consequently not accounting for periodicity, the
 right panel displays an appropriate representation of a circular quantity on
-the unit circle. Looking at the empirical histogram along with 
-the fitted density (red line) and estimated
-location parameter (red hand) this example shows that reasonably well fitting
-probabilistic models can be established for circular data by specifying an
-appropriate distribution family such as the von Mises distribution and
-estimating its parameters via maximum likelihood. However, this procedure
-considers only the response variable. Including covariates can improve any
-model remarkably as they might provide valuable additional information.
-Therefore, (distributional) regression models are of high interest for all types
-of data, including circular data.
+the unit circle. Looking at the empirical histogram along with the fitted
+density (red line) and estimated location parameter (red hand) this example
+shows that reasonably well fitting probabilistic models can be established for
+circular data by specifying an appropriate distribution family such as the von
+Mises distribution and estimating its parameters via maximum likelihood.
+However, this procedure considers only the response variable. Including
+covariates can improve any model remarkably as they might provide valuable
+additional information.  Therefore, (distributional) regression models are of
+high interest for all types of data, including circular data.
 
-In most generalized linear or additive approaches to circular regression modeling 
-the location parameter $\mu$ is regressed on covariates $\mathbf{z}$ in the form of 
-%models employ linear combinations of the covariates to connect them to distribution 
-%parameters. By plugging in a link function $g$ 
+In most generalized linear or additive approaches to circular regression
+modeling the location parameter $\mu$ is regressed on covariates $\mathbf{z}$
+in the form of 
 \begin{equation}
 \mu = \mu_0 + g\left(\mathbf{\beta}^{\top} \mathbf{z}\right),
 \end{equation}
-with a circular intercept $\mu_0$ and a coefficient vector $\mathbf{\beta}$; whereby the 
-additive predictor is transformed to an interval of length $2\pi$  by a link function $g$. 
-As an appropriate link function typically $g(x) = 2 \cdot arctan(x)$ is employed, 
-as suggested by \citet{Fisher+Lee:1992}.
-While most of the proposed models estimate a constant concentration parameter, hence, assume
-homoscedasticity, \citet{Fisher+Lee:1992} also developed a heteroscedastic version by combining two  
-individual GLMs, each for one of the parameters $\mu$ and $\kappa$. 
-This provides a first approach to a fully probabilistic regression model for circular 
-data, however, the parameters are not regressed simultaneously on covariates as known from the 
-more general framework provided by generalized additive models for location, scale, and shape 
-\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}. 
-Nevertheless, all circular additive models incorporate the previously discussed difficulties induced by
-the characteristics of the log-likelihood function and the strongly non-linear link function.
-%For example, \cite{Johnson+Wehrly:1978} guarantee for the link function to return values
-%on an interval of length $2\pi$ by setting 
-%$g(x) = 2\pi \cdot F(x)$ 
-%for a cumulative distribution function $F$ while \cite{Fisher+Lee:1992} suggest to use
-%$g(x) = 2 \cdot arctan(|x|^{\lambda} \cdot sgn(x))$. 
-%Most of these approaches assume homogeneity, thus, the concentration parameter $\kappa$ is estimated 
-%as a constant. However, \cite{Fisher+Lee:1992} also present a model where $\kappa$ is regressed on 
-%covariates employing the exponential function as a link function while $\mu$ is assumed to be a 
-%constant value. Additionally to these two model variations where only one of the two distribution 
-%parameters depends on covariates a combination of them is introduced. In this joint model the 
-%two sets of regression coefficients employed to model $\mu$ or $\kappa$ respectively are reestimated 
-%in alternation within an iterative optimization algorithm. 
-%Hence, the presented theory provides a first approach to probabilistic regression modeling of circular 
-%data, even though, the parameters are not regressed simultaneously on covariates as for example in a 
-%more general case by generalized additive models for location, scale, and shape 
-%\citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}.
-%However, in practice the incorporated optimization procedure has shown to be very complex, already
-%for only one parameter being regressed on covariates and consequently even more so in the joint model.
-%This is primarily due to characteristics of the log-likelihood function of the employed von Mises 
-%distribution with the plugged-in link function. In particular, the function is not globally concave and
-%possibly very sharp local maxima can prevent the algorithm from converging towards the true parameters.
-%Furthermore, representing smooth effects on the unit circle and interpreting the corresponding coefficients
-%is not straightforward, mainly owing to possibly highly nonlinear link functions. In particular, changing 
-%covariates can induce rotations, however, potentially in both directions and in certain cases yielding a 
-%compression of the estimated density function.
-%\newline
-Referring to additive models in general, it has to be considered that a proper model specification 
-can be very challenging, particularly for a high number of covariates and no information on possible 
-interactions. Moreover, the additive structure might impose a smooth effect even if the true underlying 
-effect is an abrupt shift.
+with a circular intercept $\mu_0$ and a coefficient vector $\mathbf{\beta}$;
+whereby the additive predictor is transformed to an interval of length $2\pi$
+by a link function $g$. As an appropriate link function typically $g(x) = 2
+\cdot arctan(x)$ is employed, as suggested by \citet{Fisher+Lee:1992}. While
+most of the proposed models estimate a constant concentration parameter, hence,
+assume homoscedasticity, \citet{Fisher+Lee:1992} also developed a
+heteroscedastic version by combining two individual GLMs, each for one of the
+parameters $\mu$ and $\kappa$. This provides a first approach to a fully
+probabilistic regression model for circular data, however, the parameters are
+not regressed simultaneously on covariates as known from the more general
+framework provided by generalized additive models for location, scale, and
+shape \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}. Nevertheless, all circular
+additive models incorporate the previously discussed difficulties induced by
+the characteristics of the log-likelihood function and the strongly non-linear
+link function. Referring to additive models in general, it has to be
+considered that a proper model specification can be very challenging,
+particularly for a high number of covariates and no information on possible
+interactions. Moreover, the additive structure might impose a smooth effect
+even if the true underlying effect is an abrupt shift.
 
-An alternative to additive models, which can deal or even 
-avoid the mentioned difficulties in circular regression modeling are 
-tree-based models. For the particular case of circular data, the methodology 
-of circular regression trees and forests is presented in the following section.
-
+An alternative to additive models, which can deal or even avoid the mentioned
+difficulties in circular regression modeling are tree-based models. For the
+particular case of circular data, the methodology of circular regression trees
+and forests is presented in the following section.
 
 
 % -------------------------------------------------------------------
@@ -562,45 +438,13 @@ of circular regression trees and forests is presented in the following section.
 \section{Circular regression trees and forests}
 \label{sec:tree_forest}
 
-The main goal of employing tree-based models to circular data is to provide a flexible and 
-easy-to-apply modeling approach which accounts for a proper representation on the unit circle.
-Based on ideas of \citet{Lund:2002}, we introduce probabilistic circular regression trees and forests
-employing the von Mises distribution. The resulting tree-based models provide a very intuitive and data-driven 
-alternative to commonly used regression models for circular data.
-
-
-%A very flexible framework should allow for detecting a wide range of 
-%effects, from abrupt changes to smooth transitions, while for the latter difficulties related
-%to a circular representation should be avoided as well as any dependence on initial values.
-%\cite{Lund:2002} introduced the concept of circular regression trees where a circular response 
-%variable is regressed on linear as well as a circular covariate. For the crucial decision on how 
-%and where to split the data an angular distance measure is evaluated between the mean direction 
-%and each observation in a resulting subgroup in order to assess homogeneity within this subgroup. 
-%Hence, only the location parameter is considered for splitting such that effects in other parameters 
-%might be missed. Therefore, we introduce a distributional approach to circular regression trees 
-%where a fully specified distributional model is fitted in each node of the tree which enables the 
-%detecting of splits in all parameters. Moreover, not only predictions of the expected value but also 
-%corresponding confidence intervals, thresholds and quantiles can be obtained among many other information
-%quantities.
-%Additionally, possible difficulties induced by circular rotations are avoided as the distributional model
-%within each node is fitted without employing covariates.
-%A common way of including covariates is to regress the model parameters on
-%covariates. In the case of a probabilistic model for a circular response this
-%corresponds to expressing the location parameter $\mu$ and the concentration
-%parameter $\kappa$ of the von Mises distribution by means of the available
-%covariates, e.g., in the form of a linear combination, possibly with an
-%appropriate link function plugged in as in GLMs. This kind of approach is
-%presented for example in the mixed model of \cite{Fisher+Lee:1992} and
-%\cite{Fisher:1993}. Apart from the methodology developed specifically for
-%circular data more general approaches to regressing model parameters on
-%covariates are commonly used such as for example generalized additive models
-%for location, scale, and shape \citep[GAMLSS, ][]{Rigby+Stasinopoulos:2005}
-%where each distribution parameter is estimated by its own generalized additive
-%model (GAM). However, difficulties might arise in case of non-additive changes
-%and a proper model specification can be very challenging, particularly for a
-%high number of covariates and no information on possible interactions. As an
-%alternative regression approach which can deal with these problems, we
-%introduce a circular probabilistic tree-structured model in this section.
+The main goal of employing tree-based models to circular data is to provide a
+flexible and easy-to-apply modeling approach which accounts for a proper
+representation on the unit circle. Based on ideas of \citet{Lund:2002}, we
+introduce probabilistic circular regression trees and forests employing the von
+Mises distribution. The resulting tree-based models provide a very intuitive
+and data-driven alternative to commonly used regression models for circular
+data.
 
 \subsection{Circular regression trees}
 \label{sec:circtree}
@@ -624,21 +468,21 @@ In the applied tree-building algorithm, in each node the crucial decision on
 how and where to split the data is based on model scores which are obtained by
 evaluating the score function~$s$ for the individual observations and parameter
 estimates (Equation~\ref{eq:scores}). For the von Mises distribution with its
-two distribution parameters ($\mu$ and $\kappa$) and a data set of $n$ observations, 
-this yields an $n \times 2$ matrix that can be employed as a discrepancy measure, capturing
-how well each given observation conforms with the estimated location
-$\hat{\mu}$ and precision $\hat{\kappa}$, respectively. To capture dependence
-on covariates, the association between the model's scores and each available
-covariate is assessed using either a parameter instability test~(MOB) or a
-permutation test~(CTree). By doing so in each partitioning step, the covariate
-with the highest significant association (i.e., lowest significant $p$-value,
-if any) is selected for splitting the data. The corresponding split point is
-chosen either by optimizing the log-likelihood~(MOB) or a two-sample test
-statistic~(CTree) over all possible partitions. This procedure is repeated
-recursively until there are no significant parameter instabilities or until
-another stopping criterion is met (e.g., subgroup size or tree depth).
-A more detailed description of the applied tree-building algorithm
-can be found in Appendix~\ref{app:algorithm}.
+two distribution parameters ($\mu$ and $\kappa$) and a data set of $n$
+observations, this yields an $n \times 2$ matrix that can be employed as a
+discrepancy measure, capturing how well each given observation conforms with
+the estimated location $\hat{\mu}$ and precision $\hat{\kappa}$, respectively.
+To capture dependence on covariates, the association between the model's scores
+and each available covariate is assessed using either a parameter instability
+test~(MOB) or a permutation test~(CTree). By doing so in each partitioning
+step, the covariate with the highest significant association (i.e., lowest
+significant $p$-value, if any) is selected for splitting the data. The
+corresponding split point is chosen either by optimizing the
+log-likelihood~(MOB) or a two-sample test statistic~(CTree) over all possible
+partitions. This procedure is repeated recursively until there are no
+significant parameter instabilities or until another stopping criterion is met
+(e.g., subgroup size or tree depth). A more detailed description of the
+applied tree-building algorithm can be found in Appendix~\ref{app:algorithm}.
 
 Once a distributional tree model is fitted it can be employed to obtain
 probabilistic predictions for a possibly new set of observed covariates $\bm{z}
@@ -713,9 +557,9 @@ yielding its specific parameter estimates for the von Mises distribution
 Therefore, the resulting parameter estimates can smoothly adapt to the given
 covariates $\bm{z}$ whereas $w_i^{forest}(\bm{z}) = 1$ would correspond to the
 unweighted full-sample estimates and $w_i^{forest}(\bm{z}) \in \{0, 1\}$
-corresponds to the abrupt splits from a tree. Thus, circular regression
-forests can capture both smooth and abrupt changes, while covariates and
-possible interactions are selected automatically allowing for an easy-to-apply
+corresponds to the abrupt splits from a tree. Thus, circular regression forests
+can capture both smooth and abrupt changes, while covariates and possible
+interactions are selected automatically allowing for an easy-to-apply
 methodology with a full specification of the von Mises distribution.
 
 
@@ -724,50 +568,64 @@ methodology with a full specification of the von Mises distribution.
 % -------------------------------------------------------------------
 \section{Case study: Probabilistic wind direction forecasting}
 \label{sec:wind}
-As motivated in Section~\ref{sec:introduction},
-accurate forecasts of wind directions are of great importance for risk
-management in various fields such as agriculture, energy production or air
-safety control. For example, in order to direct airplanes to a safe landing,
-precise knowledge of wind direction for the next hour(s) at the respective
-airport is highly desirable and adequate prediction methods are required. In
-this section, a comprehensive case study on probabilistic wind direction
-forecasting is provided for two airports in Austria with fundamentally
-different site characteristics: Innsbruck with a rather unusual location for an
-airport, located at the bottom of a narrow Alpine valley, and Vienna located
-within flat terrain in the East of Austria. In addition to the newly introduced
-circular regression trees and forests, the case study employs various
-alternative approaches to forecast wind direction as benchmarks. The study is
-based on $1$\,h and $3$\,h forecasts employing lagged observations in the
-vicinity of the airports as possible predictor variables. 
+As motivated in Section~\ref{sec:introduction}, accurate forecasts of wind
+directions are of great importance for risk management in various fields such
+as agriculture, energy production or air safety control. For example, in order
+to direct airplanes to a safe landing, precise knowledge of wind direction for
+the next hour(s) at the respective airport is highly desirable and adequate
+prediction methods are required. In this section, a comprehensive case study on
+probabilistic wind direction forecasting is provided for two airports in
+Austria with fundamentally different site characteristics: Innsbruck with a
+rather unusual location for an airport, located at the bottom of a narrow
+Alpine valley, and Vienna located within flat terrain in the East of Austria.
+In addition to the newly introduced circular regression trees and forests, the
+case study employs various alternative approaches to forecast wind direction as
+benchmarks. The study is based on $1$\,h and $3$\,h forecasts employing lagged
+observations in the vicinity of the airports as possible predictor variables. 
 
 \subsection{Data}
+%%
+\begin{figure}[t]
+  \setkeys{Gin}{width=1.0\textwidth}
+  \centering
+  \includegraphics{_plot_circforest_stationmap_combined.pdf}
+  \caption{Overview of the study area for the airports Innsbruck and Vienna. 
+    For Innsbruck, $4$~stations at the airport and $6$~along the
+    intersecting valleys are used, whereas, for Vienna, $9$~stations at the airport
+    and $13$~within an area of approximately 30\,km$^2$ are used.
+    Elevation data are obtained from the TandDEM-X digital elevation model with a 
+    horizontal resolution of $90$~m \citep{Wessel:2018}.}
+  \label{fig:overview} 
+\end{figure}
+%%
 \label{sec:wind:data}
 The circular response variable considered in this case study is a $10$\,min
-mean of wind direction measurements at the airport for Innsbruck and Vienna on an
-hourly temporal resolution. As predictor variables, we use temporal information
-and $1$-hourly resolved $10$\,min mean observations of various meteorological quantities such as 
-wind direction, wind speed, temperature, air pressure and humidity, all lagged by
-one or three hours according to the respective forecasting step. The
-meteorological variables are measured either directly at the airports or within
-their vicinities. For Innsbruck, measurements at the airport and along the
-intersecting valleys are used, whereas, for Vienna, measurements at the airport
-and within an area of approximately 30\,km$^2$ are used. A topographical overview of
-the airports and their surrounding areas with the station sites employed in
-this study is provided in Figure~XXX. In addition, we use derived quantities
+mean of wind direction measurements at the airport for Innsbruck and Vienna on
+an hourly temporal resolution. As predictor variables, we use temporal
+information and $1$-hourly resolved $10$\,min mean observations of various
+meteorological quantities such as wind direction, wind speed, temperature, air
+pressure and humidity, all lagged by one or three hours according to the
+respective forecasting step. The meteorological variables are measured either
+directly at the airports or within their vicinities. For Innsbruck,
+measurements at the airport and along the intersecting valleys are used,
+whereas, for Vienna, measurements at the airport and within an area of
+approximately 30\,km$^2$ are used. A topographical overview of the airports and
+their surrounding areas with the station sites employed in this study is
+provided in Figure~\ref{fig:overview}. In addition, we use derived quantities
 such as 3-hourly means, minima and maxima, as well as 1-and 3-hourly temporal
 changes and spatial differences towards the airport of the respective
 quantities. An overview of the employed data sets can be found in
 Table~\ref{tab:data}. 
 
-The data used in this study consists of five subsequent years from January 2015 to
-December 2018. After first eliminating predictor variables with more than 5\%
-missing values and then time points with missing observations, the data set
-consists of 41\,979 time points and 260 covariates for Innsbruck, and of 38\,985
-times points and 494 covariates for Vienna, respectively.
+The data used in this study consists of five subsequent years from January 2015
+to December 2018. After first eliminating predictor variables with more than
+5\% missing values and then time points with missing observations, the data set
+consists of 41\,979 time points and 260 covariates for Innsbruck, and of
+38\,985 times points and 494 covariates for Vienna, respectively.
 
 %%
 \begin{table}[t!]
-  \caption[Table caption text]{Overview of the data sets employed in the case
+ \caption[Table caption text]{Overview of the data sets employed in the case
     study: For Innsbruck and Vienna, various meteorological variables and derived
     quantities of these are considered at the respective stations, located either
     directly at the airports or in their vicinities.}
@@ -830,20 +688,16 @@ circular regression tree and forest.
     variabilities or abrupt changes in the employed response variable wind
     direction.
     \newline
-    For simplicity, rather to fit one single climatological model, separate models are estimated 
-    rolling over all observation time points, 
-    using the same daytime of $31$~days centered around the day of interest over all available years in the training data.
-    %For simplicity, rather to fit one single climatological model, we perform the
-    %model fitting separately rolling over all time points. For each time point, the
-    %training data set consists of the same daytime as the time of interest within
-    %31~days centered around the same calender day over all years except the year of
-    %interest. 
-    To gain full probabilistic climatological forecasts, we employ the
-    steps described in Section~\ref{sec:prob_circ} and fit the distribution
-    parameters of the von Mises distribution via maximum likelihood estimation. The
-    construction of a climatological reference model was similarly pursued by
-    \citet{Vogel+Knippertz+Fink:2018} and is discussed in a comprehensive summary on
-    different time-adaptive training schemes in \citet{Lang+Lerch+Mayr:2019}.
+    For simplicity, rather to fit one single climatological model, separate
+    models are estimated rolling over all observation time points, using the same
+    daytime of $31$~days centered around the day of interest over all available
+    years in the training data.  To gain full probabilistic climatological
+    forecasts, we employ the steps described in Section~\ref{sec:prob_circ} and fit
+    the distribution parameters of the von Mises distribution via maximum
+    likelihood estimation. The construction of a climatological reference model was
+    similarly pursued by \citet{Vogel+Knippertz+Fink:2018} and is discussed in a
+    comprehensive summary on different time-adaptive training schemes in
+    \citet{Lang+Lerch+Mayr:2019}.
     %%
   \item \emph{Persistency model:}
     The persistence describes the previous value of a single weather quantity in a time
@@ -857,23 +711,22 @@ circular regression tree and forest.
     of the forecasting step whether the persistence can provide overall reliable
     information.
     \newline
-    To gain a full probabilistic persistency model, we proceed similarly as for the
-    climatological model by using maximum likelihood estimation and fitting the
+    To gain a full probabilistic persistency model, we proceed similarly as for
+    the climatological model by using maximum likelihood estimation and fitting the
     distribution parameters of the von Mises distribution conditional on lagged
-    response values according to the description in Section~\ref{sec:prob_circ}. 
-    We fit one model for every hour throughout 
-    the validation data set employing the
-    previous six lagged response values as training data. In order to allow for a
-    stronger influence of observations closer to the time of interest, exponential
-    smoothing is employed with a smoothing factor of $0.5$; accordingly, for every
-    prediction an equal influence rate of 50 percent is assigned both to the current 
-    observation and to the previous five observations together. Observations with longer 
-    time lags have exponential weights below $0.01$ and are therefore omitted from the
-    training data.
+    response values according to the description in Section~\ref{sec:prob_circ}.
+    We fit one model for every hour throughout the validation data set employing
+    the previous six lagged response values as training data. In order to allow for
+    a stronger influence of observations closer to the time of interest,
+    exponential smoothing is employed with a smoothing factor of $0.5$;
+    accordingly, for every prediction an equal influence rate of 50 percent is
+    assigned both to the current observation and to the previous five observations
+    together. Observations with longer time lags have exponential weights below
+    $0.01$ and are therefore omitted from the training data.
     %%
   \item \emph{Generalized linear model:}
-    Traditional approaches to forecast circular response variables are often based
-    on circular GLM-typed models \citep{Fisher:1993}. As discussed in
+    Traditional approaches to forecast circular response variables are often
+    based on circular GLM-typed models \citep{Fisher:1993}. As discussed in
     Section~\ref{sec:introduction}, circular regression models often experience the
     problem that the likelihood function can be strongly irregular which makes
     optimization rather difficult. Hence, they often do not converge if no
@@ -897,12 +750,13 @@ circular regression tree and forest.
     with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
     coefficients and $g$ the link function $g(x) = 2 \cdot \arctan(x)$. In
     addition, a constant concentration parameter $\kappa$ is fitted to the full
-    learning sample. To allow for seasonally varying error characteristics in both bias and slope
-    coefficients, and to allow for seasonal heteroscedasticity captured by the concentration
-    parameter, we use the same time-adaptive trainings approach as for the
-    climatological model; hence, separate models are estimated over all observation time points,
-    using the same daytime of $31$~days centered around the day of interest over
-    all available years in the training data \citep{Lang+Lerch+Mayr:2019}.
+    learning sample. To allow for seasonally varying error characteristics in both
+    bias and slope coefficients, and to allow for seasonal heteroscedasticity
+    captured by the concentration parameter, we use the same time-adaptive
+    trainings approach as for the climatological model; hence, separate models are
+    estimated over all observation time points, using the same daytime of $31$~days
+    centered around the day of interest over all available years in the training
+    data \citep{Lang+Lerch+Mayr:2019}.
     %%
   \item \emph{Circular regression tree:}
     For the circular regression tree introduced in Section~\ref{sec:circtree},
@@ -914,25 +768,26 @@ circular regression tree and forest.
     criterion (argument \code{minbucket}).
     %%
   \item \emph{Circular regression forest:} Following the description in
-    Section~\ref{sec:circforest}, the circular forest used in this study is constructed 
-    based on $100$~individual trees employing the R-package \pkg{circtree}. Each of these 
-    trees is again built by the CTree algorithm on a subsample containing a fraction of 
-    $30$~percent of the original learning data. As it can be expected that the lagged
-    response variable is one of the most informative predictor variables for wind
-    direction forecasting, all covariates are included for building each tree which
-    ensures that the lagged response variable is always considered for splitting.
-    This bagging approach can be applied in \pkg{circtree} by setting the argument
-    \code{mtry} to the total number of covariates. Since a high number of possible
-    split points leads to high computational costs, the covariates are binned in a
-    maximum of $50$ classes (argument \code{nmax = c("yx"\,=\,Inf, "z"\,=\,50)}).
-    Contrary to a single-tree model, forests usually consist of very large trees as
-    they are not prone to overfitting the data due to the stabilization obtained by
-    combining the individual trees. Therefore, we use the following control
-    arguments to build rather large trees: The minimal number of observations to
-    perform a split is set to 20 (argument \texttt{minsplit}), the minimal number
-    of observations in each terminal node is set to 7 (argument
-    \texttt{minbucket}), and the significance level for variable selection is kept
-    at its maximum value of $1$ (argument \texttt{alpha}).
+    Section~\ref{sec:circforest}, the circular forest used in this study is
+    constructed based on $100$~individual trees employing the R-package
+    \pkg{circtree}. Each of these trees is again built by the CTree algorithm on a
+    subsample containing a fraction of $30$~percent of the original learning data.
+    As it can be expected that the lagged response variable is one of the most
+    informative predictor variables for wind direction forecasting, all covariates
+    are included for building each tree which ensures that the lagged response
+    variable is always considered for splitting. This bagging approach can be
+    applied in \pkg{circtree} by setting the argument \code{mtry} to the total
+    number of covariates. Since a high number of possible split points leads to
+    high computational costs, the covariates are binned in a maximum of $50$
+    classes (argument \code{nmax = c("yx"\,=\,Inf, "z"\,=\,50)}). Contrary to a
+    single-tree model, forests usually consist of very large trees as they are not
+    prone to overfitting the data due to the stabilization obtained by combining
+    the individual trees. Therefore, we use the following control arguments to
+    build rather large trees: The minimal number of observations to perform a split
+    is set to 20 (argument \texttt{minsplit}), the minimal number of observations
+    in each terminal node is set to 7 (argument \texttt{minbucket}), and the
+    significance level for variable selection is kept at its maximum value of $1$
+    (argument \texttt{alpha}).
 \end{itemize}
 
 To compare the predictive performance of all proposed models, a circular
@@ -946,9 +801,9 @@ lower the CRPS value the better the predictive performance. Contrary to the
 linear version, the circular CRPS reduces not to the absolute error but to the
 angular distance when the forecast is deterministic.
 
-In addition to the raw CRPS, corresponding skill scores are computed to
-assess differences in the improvement of the various statistical models over
-the climatological model used as a reference:
+In addition to the raw CRPS, corresponding skill scores are computed to assess
+differences in the improvement of the various statistical models over the
+climatological model used as a reference:
 %%
 \begin{equation} 
   \text{CRPSS}_{\text{model}} = 1 -
@@ -957,14 +812,14 @@ the climatological model used as a reference:
 %%
 
 All scores presented in the next section are computed out-of-sample based on
-five years of data. For the persistency model only time points prior to
-the time of interest are used and the validation is performed rolling over all
+five years of data. For the persistency model only time points prior to the
+time of interest are used and the validation is performed rolling over all
 observations. For all other models a five-fold cross-validation is employed
 using up to four calendar years for model training and the remaining single
 calendar year for validation. Due to the large sample size of 24 hourly values
 per day over five years, some kind of temporal aggregation is needed to ensure
-a correct visual comparison of the individual methods. The analyses performed have
-shown that for the employed models the variability of the predictive
+a correct visual comparison of the individual methods. The analyses performed
+have shown that for the employed models the variability of the predictive
 performance over the five years is lower than over a single day or over a
 single year. Hence, CRPS and CRPS skill scores are aggregated over the
 respective five validation years which yields 24 hourly scores per month
@@ -978,16 +833,15 @@ forecasts are evaluated for two different lead times at two airports with
 different climatological site characteristics.
 Figure~\ref{fig:boxplot_crpsraw} shows the CRPS values of the employed models
 at forecast steps 1\,h and 3\,h for the airports Innsbruck (Panels~a,\,c) and
-Vienna (Panels~b,\,d). The scores are aggregated over the five validation years,
-yielding yearly mean values for every hour per calendar month, with a lower
-score indicating better performance. For both stations at both forecast steps,
-the circular forest overall provides the best predictive performance, followed
-by the circular regression tree and the persistency model; except for the $3$\,h~forecasts
-at Innsbruck where the persistency model is outperformed by all others. 
-In comparison to the circular regression tree and
-forest, for both stations and forecast steps, the climatological model and the
-linear model show clearly higher CRPS values and hence a lower predictive
-performance.
+Vienna (Panels~b,\,d). The scores are aggregated over the five validation
+years, yielding yearly mean values for every hour per calendar month, with a
+lower score indicating better performance. For both stations at both forecast
+steps, the circular forest overall provides the best predictive performance,
+followed by the circular regression tree and the persistency model; except for
+the $3$\,h~forecasts at Innsbruck where the persistency model is outperformed
+by all others. In comparison to the circular regression tree and forest, for
+both stations and forecast steps, the climatological model and the linear model
+show clearly higher CRPS values and hence a lower predictive performance.
 %%
 \begin{figure}[t]
   \centering
@@ -1012,35 +866,33 @@ limited number of possible wind directions exists, namely the three wind
 regimes discussed for Figure~\ref{fig:tree_ibk} in
 Section~\ref{sec:introduction}. Therefore, for Innsbruck the wind direction
 remains rather constant in one of these possible states, but once a change
-takes place it is mostly a major wind direction shift, 
-e.g., from up-valley to down-valley. Due to the few wind
-regimes the rather inflexible climatological and linear models score relatively
-well with similar CRPS values as the other models
-(Figure~\ref{fig:boxplot_crpsraw}\,a,\,c). In addition, at Innsbruck the
-potential high prediction errors in case of a change of the wind regime seem to 
-lead to a higher variation in the predictive performance for all models in comparison to
-Vienna; this variation is especially high for the persistency model due to its
-strong vulnerability to abrupt wind shifts. On the contrary, at Vienna the
-geographic surroundings do not constrain any wind direction which leads to
-smaller and less abrupt changes in the wind direction as well as less
+takes place it is mostly a major wind direction shift, e.g., from up-valley to
+down-valley. Due to the few wind regimes the rather inflexible climatological
+and linear models score relatively well with similar CRPS values as the other
+models (Figure~\ref{fig:boxplot_crpsraw}\,a,\,c). In addition, at Innsbruck the
+potential high prediction errors in case of a change of the wind regime seem to
+lead to a higher variation in the predictive performance for all models in
+comparison to Vienna; this variation is especially high for the persistency
+model due to its strong vulnerability to abrupt wind shifts. On the contrary,
+at Vienna the geographic surroundings do not constrain any wind direction which
+leads to smaller and less abrupt changes in the wind direction as well as less
 pronounced wind regimes. This seems to weaken the predictive performance of the
 climatological and linear models, and to reduce the performance variability for
 all models (Figure~\ref{fig:boxplot_crpsraw}\,b,\,d).
 
 The different forecast steps have apparently only a minor effect on the
 predictive performance of the climatological model and the linear model at both
-stations. As expected, for the persistency model, at both stations, higher scores
-for the $3$\,h forecast (Figure~\ref{fig:boxplot_crpsraw}\,c,\,d) reveal a
-lower performance for longer lead times; this is due to the lower 
-information content of minimum 3-hourly instead of 1-hourly lagged response 
-values employed as covariates in the persistency model. 
-The circular regression tree and forest seem to
-partially compensate for the lower skill of the lagged response values by other
-covariates, hence their predictive performance only slightly decreases for the
-longer lead time. This compensation is especially evident for Innsbruck, where
-the performance difference between the persistency model and the tree-based
-methods significantly increases from the 1-hourly to the 3-hourly forecast.
-
+stations. As expected, for the persistency model, at both stations, higher
+scores for the $3$\,h forecast (Figure~\ref{fig:boxplot_crpsraw}\,c,\,d) reveal
+a lower performance for longer lead times; this is due to the lower information
+content of minimum 3-hourly instead of 1-hourly lagged response values employed
+as covariates in the persistency model. The circular regression tree and
+forest seem to partially compensate for the lower skill of the lagged response
+values by other covariates, hence their predictive performance only slightly
+decreases for the longer lead time. This compensation is especially evident for
+Innsbruck, where the performance difference between the persistency model and
+the tree-based methods significantly increases from the 1-hourly to the
+3-hourly forecast.
 
 In addition to the raw CRPS (Figure~\ref{fig:boxplot_crpsraw}), CRPS skill
 scores with the climatological model as a reference are provided in
@@ -1053,9 +905,9 @@ improvement over the climatological model is lower for Innsbruck due to the low
 number of predominant wind regimes and hence a relatively good performance of
 the climatological model. Additionally, Figure~\ref{fig:boxplot_crpsskill}
 shows that while the persistency model's performance is lower than the
-reference (Panel~c) the tree-based models can compensate for the low skill of the 
-lagged response values employed as covariates and, hence, are still significantly 
-superior to the reference.
+reference (Panel~c) the tree-based models can compensate for the low skill of
+the lagged response values employed as covariates and, hence, are still
+significantly superior to the reference.
 
 %%
 \begin{figure}[t]
@@ -1074,51 +926,50 @@ superior to the reference.
 % -------------------------------------------------------------------
 \section{Summary and conclusion}
 \label{sec:summary}
-Extending the toolbox for modeling circular data, circular regression trees and forests 
-are established by coupling model-based recursive partitioning with the von Mises distribution. 
-By separating the data into more homogeneous subgroups, possible difficulties in circular regression
-are bypassed as covariates are solely considered for splitting and 
-group-specific models are fitted as intercept-only models.
-%distributional models are fitted as intercept-only models in each node. 
-In addition, by specifying the von Mises distribution for each node and
-allowing for splits in both distribution parameters $\mu$ and $\kappa$, 
-fully probabilistic forecasts are provided.
+Extending the toolbox for modeling circular data, circular regression trees and
+forests are established by coupling model-based recursive partitioning with the
+von Mises distribution. By separating the data into more homogeneous
+subgroups, possible difficulties in circular regression are bypassed as
+covariates are solely considered for splitting and group-specific models are
+fitted as intercept-only models. In addition, by specifying the von Mises
+distribution for each node and allowing for splits in both distribution
+parameters $\mu$ and $\kappa$, fully probabilistic forecasts are provided.
 
-The performance of the novel circular trees and forests are assessed in a real case study for shortterm
-probabilistic wind direction forecasting at two airports with different site characteristics.
-As benchline models, probabilistic climatology and persistency models, as well as a state-of-the-art
-circular GLM are evaluated based on proper scoring rules.
-In summary, the circular trees and forests have the highest predictive performance in this setting.
-For cases without changes in the wind regime, lagged response values provide already
-highly skillful estimates leading to a good performance of the persistency model as observed for shortterm wind direction forecasts in this study. While in these cases the trees and forests also benefit from the highly informative lagged response, they can compensate for a lower information of this covariate by incorporating other quantities and possible interactions of these, contrary to the persistency model (see Figure~\ref{fig:boxplot_crpsskill}).
-Hence, the tree-based models provide reliable forecasts in all tested meteorological settings.
-For operational use, a possible extension could be the incorporation of numerical weather predictions as (additional) covariates. While this probably only slightly improves the predictive skill for short leadtimes, it possibly extends the potential forecast range of the different methods. 
-Another possible improvement for obtaining more parsimonious circular trees is
-to consider splitting circular covariates into two circle segments by searching
-two split points simultaneously rather than sequentially at different depths.
-While this might slightly improve the predictive performance of circular trees,
-this should not affect the performance  of circular forests, as these
-consist of very large trees with many different splits.
+The performance of the novel circular trees and forests are assessed in a real
+case study for shortterm probabilistic wind direction forecasting at two
+airports with different site characteristics. As benchline models,
+probabilistic climatology and persistency models, as well as a state-of-the-art
+circular GLM are evaluated based on proper scoring rules. In summary, the
+circular trees and forests have the highest predictive performance in this
+setting. For cases without changes in the wind regime, lagged response values
+provide already highly skillful estimates leading to a good performance of the
+persistency model as observed for shortterm wind direction forecasts in this
+study. While in these cases the trees and forests also benefit from the highly
+informative lagged response, they can compensate for a lower information of
+this covariate by incorporating other quantities and possible interactions of
+these, contrary to the persistency model (see
+Figure~\ref{fig:boxplot_crpsskill}). Hence, the tree-based models provide
+reliable forecasts in all tested meteorological settings. For operational use,
+a possible extension could be the incorporation of numerical weather
+predictions as (additional) covariates. While this probably only slightly
+improves the predictive skill for short leadtimes, it possibly extends the
+potential forecast range of the different methods. Another possible
+improvement for obtaining more parsimonious circular trees is to consider
+splitting circular covariates into two circle segments by searching two split
+points simultaneously rather than sequentially at different depths. While this
+might slightly improve the predictive performance of circular trees, this
+should not affect the performance of circular forests, as these consist of
+very large trees with many different splits.
 
-To conclude, in general the tree structure can capture non-linear changes, shifts, and potential interactions in 
-covariates without prespecification of such effects. As supported by the presented case study,
-this can be particularly useful for modeling a highly fluctuating response, such as typically 
-observed for wind direction, or/and in case of a large number of possible covariates.
-Moreover, the case study shows that building ensembles of circular trees can even improve the forecasting performance, as the resulting circular forests allow for modeling smooth effects and stabelize the model.
+To conclude, in general the tree structure can capture non-linear changes,
+shifts, and potential interactions in covariates without prespecification of
+such effects. As supported by the presented case study, this can be
+particularly useful for modeling a highly fluctuating response, such as
+typically observed for wind direction, or/and in case of a large number of
+possible covariates. Moreover, the case study shows that building ensembles of
+circular trees can even improve the forecasting performance, as the resulting
+circular forests allow for modeling smooth effects and stabelize the model.
 
-
-
-%The comparison of the novel circular trees with simple climatological and persistency models, depicted
-%for probabilistic wind direction forecasts at two airports, shows that even in case of no obvious 
-%skillful covariates the trees have an high predictive performance. 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\begin{itemize}
-%  \item Add summary/conclusion of case study;
-%  \item Add summary/conclusion of circular regression trees and forests.
-%  \item Outlook on possible extensions (use of NWP data, circular splits, ...).
-%\end{itemize}
 
 \section*{Acknowledgments}
 This project was partially funded by the Austrian Research Promotion
