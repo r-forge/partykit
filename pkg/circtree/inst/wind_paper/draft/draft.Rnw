@@ -325,8 +325,7 @@ The corresponding log-likelihood function is defined as
 \end{equation}
 %%
 
-To fit a probabilistic model $\text{vM}(Y;
-\mu, \kappa)$ to a circular response variable $Y \in \mathcal{Y}$, the
+To fit a probabilistic model $\text{vM}(y; \mu, \kappa)$ to a circular response $y$, the
 distribution parameters $\mu$ and $\kappa$ are to be estimated.
 This can be done by
 maximizing the log-likelihood function $\ell(\mu, \kappa; y)$
@@ -410,7 +409,7 @@ in the form of
 \end{equation}
 with a circular intercept $\mu_0$ and a coefficient vector $\mathbf{\beta}$.  A
 link function $g$ transforms the additive predictor to an interval of length
-$2\pi$.  Typically $g(x) = 2\cdot arctan(x)$ is employed, as suggested by
+$2\pi$.  Typically $g(x) = 2\cdot \text{arctan}(x)$ is employed, as suggested by
 \citet{Fisher+Lee:1992}.  They also developed a heteroscedastic version by
 combining two individual GLMs, each for one of the parameters $\mu$ and
 $\kappa$. This provides a first approach to a fully probabilistic regression
@@ -524,7 +523,7 @@ local likelihood estimation of the distributional parameters
 \citep[Section~2.3. of][]{Schlosser+Hothorn+Stauffer:2019,
 Hothorn+Zeileis:2017}. More specifically, for each possibly new
 observation~$\bm{z}$ a set of averaged ``nearest neighbor'' weights
-$w_i^{forest}(\bm{z})$ is obtained that is based on the number of trees in
+$w_i^\text{forest}(\bm{z})$ is obtained that is based on the number of trees in
 which $\bm{z}$ is assigned to the same terminal node as each learning
 observation $y_i, i \in \{1,\ldots,n\}$. Hence, for a forest of $T$ trees, the
 weights are calculated via
@@ -544,13 +543,13 @@ yielding its specific parameter estimates for the von Mises distribution
 %%
 \begin{equation}
   (\hat{\mu},\hat{\kappa})(\bm{z}) = \operatorname{argmax}\displaylimits_{\mu,
-  \kappa} \sum_{i=1}^n w_i^{forest}(z) \cdot \ell(\mu, \kappa; y_i). 
+  \kappa} \sum_{i=1}^n w_i^\text{forest}(z) \cdot \ell(\mu, \kappa; y_i). 
 \end{equation}
 %%
 
 Therefore, the resulting parameter estimates can smoothly adapt to the given
-covariates $\bm{z}$ whereas $w_i^{forest}(\bm{z}) = 1$ would correspond to the
-unweighted full-sample estimates and $w_i^{forest}(\bm{z}) \in \{0, 1\}$
+covariates $\bm{z}$ whereas $w_i^\text{forest}(\bm{z}) = 1$ would correspond to the
+unweighted full-sample estimates and $w_i^\text{forest}(\bm{z}) \in \{0, 1\}$
 corresponds to the abrupt splits from a tree. Thus, circular regression forests
 can capture both smooth and abrupt changes, while covariates and possible
 interactions are selected automatically allowing for an easy-to-apply
@@ -736,7 +735,7 @@ circular regression tree and forest.
     \end{align}
     %%
     with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
-    coefficients and $g$ the link function $g(x) = 2 \cdot \arctan(x)$. In
+    coefficients and $g$ the link function $g(x) = 2 \cdot \text{arctan}(x)$. In
     addition, a constant concentration parameter $\kappa$ is fitted to the full
     learning sample. To allow for seasonally varying error characteristics in both
     bias and slope coefficients, and to allow for seasonal heteroscedasticity
@@ -996,55 +995,56 @@ presented in this case study.
 An alternative tree-building framework is provided by the MOB algorithm, which is based on 
 M-fluctuation tests \citep[see][for more details]{Zeileis+Hothorn+Hornik:2008}.
 
-\subsection*{CTree}
+%\subsection*{CTree}
 In the following, the testing and splitting strategy is described for the root node of the tree
 which contains the entire learning sample.
 %consisting of circular observations denoted by $\{y_i\}_{i = 1,\ldots,n}$, $n \in \mathbb{N}$. 
 For a complete tree model, the same procedure is applied iteratively to all resulting child nodes 
 with the corresponding subsamples.
 
-First, employing the von Mises distribution, a distributional model $\text{vM}(Y; \mu,\kappa)$ 
+First, employing the von Mises distribution, a distributional model $\text{vM}(y; \mu,\kappa)$ 
 is fitted to the learning sample of circular observations $\{y_i\}_{i = 1,\ldots,n}$ as explained 
 in Section~\ref{sec:prob_circ}.
 In a next step, a goodness-of-fit measurement %of $\text{vM}(Y; \mu,\kappa)$ 
 is obtained for each parameter and each observation by evaluating the score 
-function $s(\mu, \kappa, Y)$ at the estimated location and concentration 
+function $s(\mu, \kappa, y)$ at the estimated location and concentration 
 parameter $\hat{\mu}$ and $\hat{\kappa}$.
-To detect dependencies between the resulting score values
+To detect dependencies between the resulting scoring matrix
 \begin{equation}
-s(\hat{\mu}, \hat{\kappa}, y) = 
 \begin{pmatrix} 
-s(\hat{\mu}, \hat{\kappa}, y_1)_1 & s(\hat{\mu}, \hat{\kappa}, y_1)_2\\
+s(\hat{\mu}, \hat{\kappa}, y_1)_1 \quad, & s(\hat{\mu}, \hat{\kappa}, y_1)_2\\
 \vdots & \vdots\\
-s(\hat{\mu}, \hat{\kappa}, y_n)_1 & s(\hat{\mu}, \hat{\kappa}, y_n)_2
+s(\hat{\mu}, \hat{\kappa}, y_n)_1 \quad,& s(\hat{\mu}, \hat{\kappa}, y_n)_2
 \end{pmatrix}
 \end{equation}
-and each possible split variable $Z_l \in \{Z_1, \ldots, Z_m\}$ a permutation test is applied. 
-In particular, the hypotheses
-\begin{align}
-H_0^l:  s(\hat{\mu}, \hat{\kappa}, Y) \qquad \bot \qquad Z_l
-\end{align}
+and each possible split variable $z_l \in \{z_1, \ldots, z_m\}$ a permutation test is applied. 
+In particular, the null hypotheses
+of indipendence of each split variable and the scores
+%\begin{align}
+%H_0^l:  s(\hat{\mu}, \hat{\kappa}, Y) \qquad \bot \qquad Z_l
+%\end{align}
 is assessed by employing the multivariate linear statistic
 \begin{equation}
-T_l = vec\left(\sum_{i=1}^n v_l(Z_{li}) \cdot s(\hat{\mu}, \hat{\kappa}, Y_i)\right)
+t_l = vec\left(\sum_{i=1}^n v_l(z_{li}) \cdot s(\hat{\mu}, \hat{\kappa}, y_i)\right)
 \end{equation}
-with $s(\hat{\mu}, \hat{\kappa}, Y_i) \in \mathbb{R}^{1\times 2}$. 
-For a numeric split variable $Z_l$ the transformation function $v_l$
-is simply the identity function $v_l(Z_{li}) = Z_{li}$ such that $T_l \in \mathbb{R}^2$ 
+with $s(\hat{\mu}, \hat{\kappa}, y_i) \in \mathbb{R}^{1\times 2}$. 
+For a numeric split variable $z_l$ the transformation function $v_l$
+is simply the identity function $v_l(z_{li}) = z_{li}$ such that $t_l \in \mathbb{R}^2$ 
 as the ``vec'' operator converts the matrix of dimension $1 \times 2$ into a $2$ column vector.
-If $Z_l$ is a categorical variable with $H$ categories then 
-$v_l(Z_{li}) = (\I(Z_{li} = 1), \ldots, \I(Z_{li} = H))$, hence, $v_l$ returns a unit vector
-of dimension $H$ where the entry $1$ indicates the category of $Z_{li}$. 
-In this case the ``vec'' operator converts the $H \times 2$ matrix into a $H \cdot 2$ column vector 
-by column-wise combination such that $T_l \in \mathbb{R}^{H \cdot 2}$. 
-If there are any observations with missing values these are not included in the calculation of $T_l$.
+If $z_l$ is a categorical variable with $h$ categories then 
+$v_l(z_{li}) = (\I(z_{li} = 1), \ldots, \I(z_{li} = h))$, hence, $v_l$ returns a unit vector
+of dimension $h$ where the entry $1$ indicates the category of $z_{li}$. 
+In this case the ``vec'' operator converts the $h \times 2$ matrix into a $h \cdot 2$ column vector 
+by column-wise combination such that $t_l \in \mathbb{R}^{h \cdot 2}$. 
+If there are any observations with missing values these are not included in the calculation of $t_l$.
 
-To map the observed multivariate linear statistic $t_l$ onto the real line a univariate test statistic~$c$ is employed, for example in a quadratic form
+To map the %observed 
+multivariate linear statistic $t_l$ onto the real line a univariate test statistic~$c$ is employed, for example in a quadratic form
 \begin{equation}
 c_{\text{quad}}(t_l,\mu_l,\Sigma_l) = (t_l-\mu_l)\Sigma_l^+(t_l-\mu_l)^{\top}
 \end{equation}
-where $\mu_l$ and $\Sigma_l$ are the conditional expectation and the covariance of $T_l$,
-as derived by \cite{Strasser+Weber:1999} and used to standardize $t_l$, and $\Sigma_l^+$ 
+where $\mu_l$ and $\Sigma_l$ are the conditional expectation and the covariance of $t_l$,
+as derived by \cite{Strasser+Weber:1999} and used for standardization, and $\Sigma_l^+$ 
 is the Moore-Penrose inverse of $\Sigma_l$.
 As an alternative, also a maximum form ($c_{\text{max}}$) can be considered such that
 the maximum of the absolute values of the standardized linear statistic is returned.
@@ -1056,18 +1056,18 @@ normal with parameters $\mu_l$ and $\Sigma_l$ \citep{Strasser+Weber:1999}.
 With this knowledge at hand, the corresponding $p$-values can be calculated and used
 to select the best splitting variable. A small $p$-value corresponding to 
 $c(t_{l},\mu_{l},\Sigma_{l})$ indicates a strong discrepancy from the assumption of independence 
-between the scores and the split variable $Z_l$.
+between the scores and the split variable $z_l$.
 Therefore, if any of the Bonferroni-adjusted $p$-values is beneath the selected significance level,
-the partitioning variable $Z_{l^\ast}$ with the lowest $p$-value is selected as split variable, otherwise 
+the partitioning variable $z_{l^\ast}$ with the lowest $p$-value is selected as split variable, otherwise 
 no split is performed. This early stopping induced by the significance level is referred to as 
 ``pre-pruning'' which is often avoided for forest models by setting the significance level to $1$.
 
 To select the best split point within the already chosen split variable, again, a linear test statistic
-is employed. In particular, for a breakpoint $r$ of the variable $Z_{l^{\ast}}$ leading to two subgroups 
+is employed. In particular, for a breakpoint $r$ of the variable $z_{l^{\ast}}$ leading to two subgroups 
 $\mathcal{B}_{1r}$ and $\mathcal{B}_{2r}$ the discrepancy between score functions in the subgroups
 is measured by evaluating
 \begin{equation}
-T_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\hat{\mu}, \hat{\kappa}, Y_i)
+t_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\hat{\mu}, \hat{\kappa}, y_i)
 \end{equation}
 for $q \in \{1,2\}$.
 The breakpoint that leads to the highest discrepancy is then selected as split point as defined by
