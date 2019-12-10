@@ -726,12 +726,12 @@ circular regression tree and forest.
     \cite{Mulder+Klugkist:2017} the model uses a link function~$g$ to keep the
     response values within an interval of length $2\pi$. As the implementation
     cannot handle circular covariates, we use the components of the lagged
-    2-dimensional wind vector $\bm{vec} = (vec_1, vec_2)^{\top}$ and the lagged
+    2-dimensional wind vector~$(u, v)^{\top}$ and the lagged
     wind speed $spd$ as predictor variables. The model formula for the location
     parameter $\mu$ of the von Mises distribution can be written as:
     %%
     \begin{align}
-      \mu = \beta_0 + g(\beta_1 \cdot vec_{1} + \beta_2 \cdot vec_{2} + \beta_3 \cdot spd)
+      \mu = \beta_0 + g(\beta_1 \cdot u + \beta_2 \cdot v + \beta_3 \cdot spd)
     \end{align}
     %%
     with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
