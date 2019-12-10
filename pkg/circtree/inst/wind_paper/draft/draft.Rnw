@@ -740,7 +740,7 @@ circular regression tree and forest.
     learning sample. To allow for seasonally varying error characteristics in both
     bias and slope coefficients, and to allow for seasonal heteroscedasticity
     captured by the concentration parameter, we use the same time-adaptive
-    trainings approach as for the climatological model; hence, separate models are
+    training approach as for the climatological model; hence, separate models are
     estimated over all observation dates, using the same time of $31$~days
     centered around the day of interest over all available years in the training
     data \citep{Lang+Lerch+Mayr:2019}.
@@ -1019,7 +1019,7 @@ s(\hat{\mu}, \hat{\kappa}, y_n)_1 \quad,& s(\hat{\mu}, \hat{\kappa}, y_n)_2
 \end{equation}
 and each possible split variable $z_l \in \{z_1, \ldots, z_m\}$ a permutation test is applied. 
 In particular, the null hypotheses
-of indipendence of each split variable and the scores
+of independence of each split variable and the scores
 %\begin{align}
 %H_0^l:  s(\hat{\mu}, \hat{\kappa}, Y) \qquad \bot \qquad Z_l
 %\end{align}
