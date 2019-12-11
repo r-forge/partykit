@@ -41,6 +41,14 @@ Torsten~Hothorn, Georg~J.~Mayr, Reto Stauffer, Achim Zeileis}
 %\graphicspath{{plots/}}
 \newcommand{\argmax}{\operatorname{argmax}\displaylimits}
 
+\newcommand{\backupbegin}{
+   \newcounter{finalframe}
+   \setcounter{finalframe}{\value{framenumber}}
+}
+\newcommand{\backupend}{
+   \setcounter{framenumber}{\value{finalframe}}
+}
+
 %% colors
 \definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
 \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
@@ -725,35 +733,52 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 \begin{frame}[fragile]
 \frametitle{Motivation}
 
-\vspace*{-0.2cm}
+\only<1>{
 
-\textbf{Goal:} 
-\begin{itemize}
-  \item Regression trees and random forests for circular response variable.
-  \item Probabilistic/distributional modeling.
-\end{itemize} 
+  \vspace*{-0.2cm}
+  
+  \textbf{Goal:} 
+  \begin{itemize}
+    \item Regression trees and random forests for circular response variable.
+    \item Probabilistic/distributional modeling.
+  \end{itemize} 
+  
+  \medskip
+  
+  \textbf{Examples:} Circular data.
+  \begin{itemize}
+  \item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+  \item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$
+  \item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
+  %\item \ldots
+  \end{itemize}
+  
+  \medskip
+  
+  \textbf{Here:} Probabilistic forecasting of wind directions for the next hours 
+    at \\Innsbruck Airport, Austria \textcolor{gray}{\url{https://innsbruck-airport.panomax.com/}}. 
+  
+  \medskip
+  
+  \textbf{Prior knowledge:} Trees are natural idea for capturing abrupt 
+    changes \\due to geographical position. 
+}
 
-\medskip
-
-\textbf{Examples:} Circular data.
-\begin{itemize}
-\item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
-\item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$
-\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$
-%\item \ldots
-\end{itemize}
-
-\medskip
-
-\textbf{Here:} Probabilistic forecasting of wind directions for the next hours 
-  at \\Innsbruck Airport, Austria. 
-
-\medskip
-
-\textbf{Prior knowledge:} Trees are natural idea for capturing abrupt 
-  changes \\due to geographical position. 
+%\only<2>{
+%
+%  \vspace*{-0.2cm}
+%
+%  \begin{center}
+%  \includegraphics[width = 0.8\textwidth]{airport-innsbruck_airport-innsbruck_2019-01-12_11-20-00_left.jpg}
+%  \end{center}
+%  
+%  \begin{center}
+%  \includegraphics[width = 0.8\textwidth]{airport-innsbruck_airport-innsbruck_2019-01-12_11-20-00_right.jpg}
+%  \end{center}
+%}
 
 \end{frame}
+
 
 
 %% SLIDE
@@ -875,17 +900,192 @@ is met, yielding $B$ subgroups $\mathcal{B}_b$ with $b = 1, \dots, B$.
 
 \medskip
 
-\visible<3->{
+\visible<3-9>{
 \textbf{Weights:}
+\minipage{0.6\textwidth}
+\vspace{-0.3cm}
 \begin{eqnarray*}
 w^{\text{base}}_i(\bold{x})   & = & 1 \\[0.2cm]
-\visible<4->{
+\visible<6->{
 w^{\text{tree}}_i(\bold{x})   & = & \sum_{b=1}^B I((\bold{x}_i \in \mathcal{B}_b) \land (\bold{x} \in \mathcal{B}_b)) \\[0.1cm]
-\visible<5->{
-w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))
+\visible<9->{
+w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \frac{I((\bold{x}_i \in \mathcal{B}^t_b) \land (\bold{x} \in \mathcal{B}^t_b))}{|\mathcal{B}^t_b|}
 \end{eqnarray*}
-}}}
+}}
+\endminipage
+\minipage{0.4\textwidth}
+\vspace{1em}
+\visible<4-9>{
+\resizebox{1.1\textwidth}{!}{
+\begin{tikzpicture}
+  \draw (11.1,5) node{\phantom{.}};
+  \draw (18.5,9) node{\phantom{.}};
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (12, 9) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (11.5, 8) {\only<5-9>{$\bold{x}_i, \bold{x}$}};
+  \draw[-, line width=1pt] (n0) -- (n1);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (12.5, 8) {};
+  \draw[-, line width=1pt] (n0) -- (n2);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (12, 7) {};
+  \draw[-, line width=1pt] (n2) -- (n3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (13, 7) {};
+  \draw[-, line width=1pt] (n2) -- (n4);
+
+  \visible<7->{
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_0) at (12+3.25, 9) {};
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_1) at (11.5+3.25, 8) {};
+  \draw[-, line width=1pt] (n1_0) -- (n1_1);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_2) at (12.5+3.25, 8) {\only<8-9>{$\bold{x}_i, \bold{x}$}};
+  \draw[-, line width=1pt] (n1_0) -- (n1_2);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_3) at (11+3.25, 7) {};
+  \draw[-, line width=1pt] (n1_1) -- (n1_3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_4) at (12+3.25, 7) {};
+  \draw[-, line width=1pt] (n1_1) -- (n1_4);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_5) at (10.5+3.25, 6) {};
+  \draw[-, line width=1pt] (n1_3) -- (n1_5);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_6) at (11.5+3.25, 6) {};
+  \draw[-, line width=1pt] (n1_3) -- (n1_6);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_7) at (11+3.25, 5) {};
+  \draw[-, line width=1pt] (n1_6) -- (n1_7);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_8) at (12+3.25, 5) {};
+  \draw[-, line width=1pt] (n1_6) -- (n1_8);
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_0) at (12+6, 9) {};
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_1) at (11.5+6, 8) {};
+  \draw[-, line width=1pt] (n2_0) -- (n2_1);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_2) at (12.5+6, 8) {};
+  \draw[-, line width=1pt] (n2_0) -- (n2_2);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_3) at (11+6, 7) {\only<8-9>{$\bold{x}_i$}};
+  \draw[-, line width=1pt] (n2_1) -- (n2_3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_4) at (12+6, 7) {\only<8-9>{$\bold{x}_~$}};
+  \draw[-, line width=1pt] (n2_1) -- (n2_4);
+}
+\end{tikzpicture}
+}
+}
+
+\endminipage
+}
 \end{frame}
+
+
+%%%%%%%%
+%%
+%%\begin{frame}[fragile]{Stratified treatment effects}
+%%
+%%\begin{center}
+%%\resizebox{0.55\textwidth}{!}{
+%%\begin{tikzpicture}
+%%  \draw (11.1,5) node{\phantom{.}};
+%%  \draw (18.5,9) node{\phantom{.}};
+%%
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (12, 9) {};
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (11.5, 8) {\only<2->{$i, j$}};
+%%  \draw[-, line width=1pt] (n0) -- (n1);
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (12.5, 8) {};
+%%  \draw[-, line width=1pt] (n0) -- (n2);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (12, 7) {};
+%%  \draw[-, line width=1pt] (n2) -- (n3);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (13, 7) {};
+%%  \draw[-, line width=1pt] (n2) -- (n4);
+%%\end{tikzpicture}
+%%}
+%%\end{center}
+%%
+%%\bigskip
+%%\pause
+%%
+%%\textbf{Weights:} Only observations $j$ in the same subgroup as observation $i$
+%%enter the corresponding subgroup model.
+%%
+%%\bigskip
+%%\pause
+%%
+%%<<sgmodel2, eval=FALSE>>=
+%%sgmodel_1 <- model(response ~ treatment, data,
+%%  weights = as.numeric(subgroup == 1))
+%%@
+%%
+%%\end{frame}
+%%
+%%\begin{frame}[fragile]{Personalized treatment effects}
+%%
+%%\begin{center}
+%%\resizebox{0.55\textwidth}{!}{
+%%\begin{tikzpicture}
+%%  \draw (11.1,5) node{\phantom{.}};
+%%  \draw (18.5,9) node{\phantom{.}};
+%%
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (12, 9) {};
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (11.5, 8) {$i, j$};
+%%  \draw[-, line width=1pt] (n0) -- (n1);
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (12.5, 8) {};
+%%  \draw[-, line width=1pt] (n0) -- (n2);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (12, 7) {};
+%%  \draw[-, line width=1pt] (n2) -- (n3);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (13, 7) {};
+%%  \draw[-, line width=1pt] (n2) -- (n4);
+%%
+%%\only<2->{
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_0) at (12+3.5, 9) {};
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_1) at (11.5+3.5, 8) {};
+%%  \draw[-, line width=1pt] (n1_0) -- (n1_1);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_2) at (12.5+3.5, 8) {\only<4->{$i, j$}};
+%%  \draw[-, line width=1pt] (n1_0) -- (n1_2);
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_3) at (11+3.5, 7) {};
+%%  \draw[-, line width=1pt] (n1_1) -- (n1_3);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_4) at (12+3.5, 7) {};
+%%  \draw[-, line width=1pt] (n1_1) -- (n1_4);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_5) at (10.5+3.5, 6) {};
+%%  \draw[-, line width=1pt] (n1_3) -- (n1_5);
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_6) at (11.5+3.5, 6) {};
+%%  \draw[-, line width=1pt] (n1_3) -- (n1_6);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_7) at (11+3.5, 5) {};
+%%  \draw[-, line width=1pt] (n1_6) -- (n1_7);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_8) at (12+3.5, 5) {};
+%%  \draw[-, line width=1pt] (n1_6) -- (n1_8);
+%%
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_0) at (12+6, 9) {};
+%%  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_1) at (11.5+6, 8) {};
+%%  \draw[-, line width=1pt] (n2_0) -- (n2_1);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_2) at (12.5+6, 8) {};
+%%  \draw[-, line width=1pt] (n2_0) -- (n2_2);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_3) at (11+6, 7) {\only<4->{$j$}};
+%%  \draw[-, line width=1pt] (n2_1) -- (n2_3);
+%%  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_4) at (12+6, 7) {\only<4->{$i$}};
+%%  \draw[-, line width=1pt] (n2_1) -- (n2_4);
+%%}
+%%\end{tikzpicture}
+%%}
+%%\end{center}
+%%
+%%\only<2->{
+%%\textbf{Weights:} Obtain a finer measure of similarity between
+%%all observations $j$ and observation $i$ via a forest/ensemble of trees.
+%%}
+%%
+%%\bigskip
+%%
+%%\only<3>{
+%%\textbf{Randomization:}
+%%\begin{itemize}
+%%  \item Subsample of the training data (per tree).
+%%  \item Subsample of covariates (per node).
+%%\end{itemize}
+%%}
+%%
+%%\only<4>{
+%%\textbf{Aggregate:} The weight of observation $j$ for modeling the treatment effect
+%%for observation $i$ is the sum (or mean) of assignments to the same node
+%%$\Rightarrow w_{ij} = 2$ (or equivalently $2/3$).
+%%}
+%%
+%%\end{frame}
+%%
+%%
+%%
+%%%%%%%%%
 
 
 \subsection{Wind forecasting}
@@ -1095,4 +1295,52 @@ Zeileis A, Hothorn T, Hornik K (2008).
 
 \end{frame}
 
+\subsection{Appendix}
+\backupbegin
+
+%% SLIDE
+\begin{frame}
+~~~
+\end{frame}
+
+%% SLIDE
+\begin{frame}
+\frametitle{Wind forecasting: Vienna airport}
+
+\vspace*{-0.4cm}
+
+\setkeys{Gin}{width=0.75\linewidth}
+\begin{center}
+\includegraphics{_plot_circforest_stationmap_wien.pdf}
+\end{center}
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting: Vienna airport}
+
+\vspace{-0.7cm}
+
+\setkeys{Gin}{width=1\linewidth}
+\begin{center}
+\includegraphics{circtree_vie3h.pdf}
+\end{center}
+
+\end{frame}
+
+
+%% SLIDE
+\begin{frame}[fragile]
+\frametitle{Wind forecasting: Vienna airport}
+
+\textbf{Evaluation:} CRPS skill score for \only<1>{1}\only<2>{3}-hourly predictions (5-fold cross validation).
+\begin{center}
+\setkeys{Gin}{width=0.88\linewidth}
+\only<1>{\includegraphics{circforest_crpsskill_vie_lag1.pdf}}%
+\only<2>{\includegraphics{circforest_crpsskill_vie_lag3.pdf}}
+\end{center}
+
+\end{frame}
+\backupend
 \end{document}
