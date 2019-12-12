@@ -756,7 +756,7 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
   \medskip
   
   \textbf{Here:} Probabilistic forecasting of wind directions for the next hours 
-    at \\Innsbruck Airport, Austria \textcolor{gray}{\url{https://innsbruck-airport.panomax.com/}}. 
+    at \\Innsbruck Airport, Austria.% \textcolor{gray}{\url{https://innsbruck-airport.panomax.com/}}. 
   
   \medskip
   
@@ -958,7 +958,7 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \f
   \draw[-, line width=1pt] (n2_0) -- (n2_2);
   \node[rectangle, fill=HighlightOrange!70, align=center] (n2_3) at (11+6, 7) {\only<8-9>{$\bold{x}_i$}};
   \draw[-, line width=1pt] (n2_1) -- (n2_3);
-  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_4) at (12+6, 7) {\only<8-9>{$\bold{x}_~$}};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_4) at (12+6, 7) {\only<8-9>{$\bold{x}_{~}$}};
   \draw[-, line width=1pt] (n2_1) -- (n2_4);
 }
 \end{tikzpicture}
@@ -1188,7 +1188,7 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \f
 \begin{itemize}
 \item Climatology: Without covariates.
 \item Persistency: Based on current wind direction.
-\item Circular GLM: Based on current wind speed and wind vectors $(u, v)$.
+\item Circular GLM: Based on current wind speed and wind vector $(u, v)$.
 \end{itemize}
 
 \end{frame}
