@@ -827,46 +827,48 @@ $\hat{\theta} = \argmax_{\theta \in \Theta} \sum_{i=1}^n \ell(\theta; y_i)$
 \end{minipage}
 \begin{minipage}{0.23\textwidth}
 %\vspace{-0.1cm}
-\begin{tikzpicture}
-\visible<2-3>{
-\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
+\resizebox{0.9\textwidth}{!}{
+  \begin{tikzpicture}
+    \visible<2-3>{
+    \node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$Y$};
+    }
+    \visible<4>{
+    \node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\text{vM}(Y;\hat{\theta}$)};
+    }
+    \visible<5->{
+    \node[inner sep=0pt] (density1) at (0.8, 1.7)
+    {\includegraphics[width=0.6\textwidth]{density_root.pdf}};
+    }
+    \visible<6-8>{
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {?};
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {?};
+    \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1);
+    \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2);
+    }
+    \visible<9-10>{
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$Y_2$};
+    \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+    \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
+    }
+    \visible<11>{
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n1) at (0, 0) {$\text{vM}(Y_1;\hat{\theta_1}$)};
+    \node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 20pt] (n2) at (1.7, 0) {$\text{vM}(Y_2;\hat{\theta_2}$)};
+    }
+    \visible<11->{
+    \draw[-, gray, line width=0.5pt] (0.7, 1.1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
+    \draw[-, gray, line width=0.5pt] (1.0, 1.1) -- (n2) node [midway, right] {\scriptsize $X > p$};
+    }
+    \visible<12->{
+    \node[inner sep=0pt] (density2) at (-0.1,-0.3)
+    {\includegraphics[width=0.5\textwidth]{density_left.pdf}};
+    }
+    \visible<12->{
+    \node[inner sep=0pt] (density3) at (1.7,-0.3)
+    {\includegraphics[width=0.5\textwidth]{density_right.pdf}};
+    }
+  \end{tikzpicture}
 }
-\visible<4>{
-\node[ellipse, fill=HighlightBlue!70, align=center, scale = 0.7, minimum width=60pt, minimum height = 30pt] (n0) at (0.8, 1.7) {$\text{vM}(Y;\hat{\theta}$)};
-}
-\visible<5->{
-\node[inner sep=0pt] (density1) at (0.8, 1.7)
-{\includegraphics[width=0.6\textwidth]{density_root.pdf}};
-}
-\visible<6-8>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {?};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {?};
-\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1);
-\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2);
-}
-\visible<9-10>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$Y_1$};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$Y_2$};
-\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
-\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2) node [midway, right] {\scriptsize $X > p$};
-}
-\visible<11>{
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n1) at (0, 0) {$\text{vM}(Y_1;\hat{\theta_1}$)};
-\node[rectangle, fill=HighlightOrange!70, align=center, scale = 0.7, minimum width=50pt, minimum height = 20pt] (n2) at (1.6, 0) {$\text{vM}(Y_2;\hat{\theta_2}$)};
-}
-\visible<11->{
-\draw[-, gray, line width=0.5pt] (0.7, 1) -- (n1) node [midway, left] {\scriptsize $X \leq p$};
-\draw[-, gray, line width=0.5pt] (0.9, 1) -- (n2) node [midway, right] {\scriptsize $X > p$};
-}
-\visible<12->{
-\node[inner sep=0pt] (density2) at (-0.1,-0.1)
-{\includegraphics[width=0.5\textwidth]{density_left.pdf}};
-}
-\visible<12->{
-\node[inner sep=0pt] (density3) at (1.7,-0.1)
-{\includegraphics[width=0.5\textwidth]{density_right.pdf}};
-}
-\end{tikzpicture}
 \end{minipage}
 \vspace{0.1cm}
 %\begin{adjustwidth}{-0.0em}{-1em}
@@ -1125,11 +1127,13 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \f
 
 \setkeys{Gin}{width=0.75\linewidth}
 \only<1>{
+  \vspace*{0.2cm}
   \begin{center}
   \includegraphics{_plot_circforest_stationmap_innsbruck.pdf}
   \end{center}
 }
 \only<2>{
+  \vspace*{0.2cm}
   \begin{center}
   \includegraphics{_plot_circforest_stationmap_innsbruck_box.pdf}
   \end{center}
@@ -1188,7 +1192,7 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \f
 \begin{itemize}
 \item Climatology: Without covariates.
 \item Persistency: Based on current wind direction.
-\item Circular GLM: Based on current wind speed and wind vector $(u, v)$.
+\item Circular GLM: Based on current wind speed and wind vector $(u, v)^{\top}$.
 \end{itemize}
 
 \end{frame}
@@ -1244,7 +1248,7 @@ available on R-Forge at\\
 \bigskip
 \medskip
 
-\textbf{Correspondingly:} \code{disttree}, \code{distforest} for any \code{gamlss.family} or custom \code{family}.\\
+\textbf{Correspondingly:} \emph{disttree} for any \code{gamlss.family} or custom \code{family}.\\
 
 \end{frame}
 
@@ -1307,7 +1311,7 @@ Zeileis A, Hothorn T, Hornik K (2008).
 \begin{frame}
 \frametitle{Wind forecasting: Vienna airport}
 
-\vspace*{-0.4cm}
+\vspace*{-0.2cm}
 
 \setkeys{Gin}{width=0.75\linewidth}
 \begin{center}
