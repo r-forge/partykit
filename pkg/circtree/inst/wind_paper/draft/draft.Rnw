@@ -749,13 +749,13 @@ circular regression tree and forest.
     For the circular regression tree introduced in Section~\ref{sec:circtree},
     all covariates provided in the learning data can be considered due to an
     intrinsic automatic variable selection performed in the tree estimation. The
-    tree is built with the newly developed R-package \pkg{circtree} employing the
+    tree is built with the newly developed \textsf{R} package \pkg{circtree} employing the
     CTree algorithm \citep{Hothorn+Hornik+Zeileis:2006} using a minimal number of
     2000 observations in each terminal node (argument \code{minbucket}).
     %%
   \item \emph{Circular regression forest:} Following the description in
     Section~\ref{sec:circforest}, the circular forest used in this study is
-    constructed based on $100$~individual trees employing the R-package
+    constructed based on $100$~individual trees employing the \textsf{R} package
     \pkg{circtree}. Each of these trees is again built by the CTree algorithm on a
     subsample containing $30$~percent of the original learning data.  All
     covariates are included for building each tree which ensures that the lagged
@@ -963,8 +963,8 @@ Schlosser received a PhD scholarship granted from the University of Innsbruck.
 
 \section*{Computational details}
 The corresponding implementation of the proposed methodology for circular
-trees and forests is provided in the \textsf{R}
-package \textbf{circtree} (version~\Sexpr{packageVersion("circtree")}).
+trees and forests is provided in the \textsf{R} package \textbf{circtree} 
+(version~\Sexpr{packageVersion("circtree")}).
 % The proposed circular tree and forest models are implemented in the \textsf{R}
 % package \textbf{circtree} (version~\Sexpr{packageVersion("circtree")}). 
 The package is based on the \textbf{disttree} package
