@@ -552,7 +552,7 @@ specified beforehand.
 \label{sec:wind}
 As motivated in Section~\ref{sec:introduction}, accurate forecasts of wind
 directions are of great importance for risk management in various fields such
-as agriculture, energy production or aviation. For example, in order to direct
+as agriculture, energy production, or aviation. For example, in order to direct
 airplanes to a safe landing, precise knowledge of wind direction for the next
 hour(s) at the respective airport is highly desirable and adequate prediction
 methods are required. This section exemplifies the use of circular regression
@@ -580,27 +580,26 @@ vicinity of the airports as possible predictor variables.
 \label{sec:wind:data}
 The circular response variable considered in this case study is a $10$\,min-average
 of wind direction measurements at Innsbruck Airport (INN) and Vienna International Airport (VIE) on
-an hourly temporal resolution. As predictor variables, we use temporal
-information and $1$-hourly resolved $10$\,min mean observations of various
-meteorological quantities such as wind direction, wind speed, temperature, air
+an hourly temporal resolution. Temporal information and $1$-hourly resolved $10$\,min mean observations of various
+meteorological quantities are used as predictor variables, including wind direction, wind speed, temperature, air
 pressure and humidity, all lagged by one or three hours according to the
 respective forecasting step. The meteorological variables are measured either
 directly at the airports or within their vicinities. For Innsbruck,
 measurements at the airport and along the intersecting valleys are used,
 whereas, for Vienna, measurements at the airport and within its vicinity of
-approximately 30\,km are used. A topographical overview of the airports and
-their surrounding areas with the station sites employed in this study is
-provided in Figure~\ref{fig:overview}. In addition, we use derived quantities
+approximately 30\,km are used. Figure~\ref{fig:overview} provides a topographical
+overview of the airports and their surrounding areas with the station sites employed
+in this study. In addition, we use derived quantities
 such as 3-hourly means, minima and maxima, as well as 1-and 3-hourly temporal
 changes and spatial differences towards the airport of the respective
 quantities. An overview of the employed data sets can be found in
 Table~\ref{tab:data}. 
 
-The data used in this study consists of five subsequent years from January 2015
+The data used in this study consists of four subsequent years from January 2015
 to December 2018. After first eliminating predictor variables with more than
-5\% missing values and then points with missing observations, the data set
-consists of 41\,979 dates and 260 covariates for Innsbruck, and of
-38\,985 dates and 494 covariates for Vienna, respectively.
+5\% missing values and then time points with any missing observations, the data set
+consists of 41\,979 time points and 260 covariates for Innsbruck, and of
+38\,985 time points and 494 covariates for Vienna, respectively.
 
 %%
 \begin{table}[t!]
@@ -646,47 +645,31 @@ investigate whether they can be applied as a reasonable alternative to already
 existing approaches, three additional statistical models are employed in this
 study for probabilistic forecasting of wind directions. Two of them are based
 on existing approaches used in the meteorological field, while the third is a
-state-of-the-art GLM to forecast circular response variables. The next
-paragraphs introduce the reference methods and provide the corresponding model
-specifications used in this study for all considered models including the
-circular regression tree and forest. 
+state-of-the-art GLM-type model to forecast circular response variables.
 
 \begin{itemize}
   \item \emph{Climatological model:} 
     Accurate knowledge of weather quantities' climatologies can be important for a
-    wide range of applications and climatologies are often also used as a baseline for the
-    validation of newly developed forecasting systems
-    \citep{Simon+Umlauf+Zeileis:2017, Stauffer+Mayr+Messner:2017}. Usually, the performance of
-    climatological models strongly depends on the temporal dependency of the
-    quantity itself, either on a daily or yearly basis. Wind direction at a single
-    location is often quite unstable and only shows a daily cycle or an annual seasonality
-    in case of predominant local wind systems like the ones at Innsbruck introduced
-    in the analysis of Figure~\ref{fig:tree_ibk}. Hence, the climatological model
-    in this study provides a very simple implementation of a baseline model, which
-    might experience serious performance losses in case of random temporal
-    variabilities or abrupt changes in the employed response variable wind
-    direction.
+    wide range of applications. While forecasts based on climatologies, by
+    construction, do not adapt to the current weather situation they are still a
+    useful baseline for the validation of newly developed forecasting systems
+    \citep{Simon+Umlauf+Zeileis:2017, Stauffer+Mayr+Messner:2017}. 
     \newline
-    Instead of simply fitting a climatological model over all dates, separate
-    models are estimated rolling over all observation dates, using the same time of
-    $31$~days centered around the day of interest over all available years in the
-    training data.  To gain full probabilistic climatological forecasts, we employ
-    the steps described in Section~\ref{sec:prob_circ} and fit the distribution
-    parameters of the von Mises distribution via maximum likelihood estimation.
-    This approach follows \citet{Vogel+Knippertz+Fink:2018} and is discussed in a
-    comprehensive summary on different time-adaptive training schemes in
+    Specifically, the climatology employed in the following uses all observations
+    at the same time (to adapt to daily cycles) in a window of $31$~days centered
+    around the day of interest (to adapt to seasonal cycles)
+    in all available years in the sample. Based on these observations a probabilistic
+    model is obtained by maximum likelihood estimation as described in
+    Section~\ref{sec:prob_circ}. This approach follows \citet{Vogel+Knippertz+Fink:2018}
+    and is discussed in a comprehensive summary on different time-adaptive training schemes in
     \citet{Lang+Lerch+Mayr:2019}.
     %%
   \item \emph{Persistency model:}
     The persistence describes the previous value of a single weather quantity
-    in a time series. Hence, it is another objective measure in the verification of
-    weather forecasts and also often applied as a reference model
-    \citep{noaasnationalweatherservice:2019}. For short forecast steps under stable
-    atmospheric conditions, persistence can be a very good estimate, but as soon as
-    the regime changes during the forecast period, forecasts based on persistence
-    may also fail remarkably. Therefore, whether the persistence can provide
-    overall reliable information, heavily depends on the variability of the
-    variable of interest and the length of the forecasting step.
+    in a time series. Like the climatology it is a very basic prediction model that
+    is often applied as a baseline reference in weather forecasts
+    \citep{noaasnationalweatherservice:2019}. Especially in nowcasting tasks with very short
+    forecasting steps, the persistence can provide very good estimates.
     \newline
     To gain a full probabilistic persistency model, we proceed similarly as for
     the climatological model by using maximum likelihood estimation and fitting the
@@ -752,7 +735,7 @@ circular regression tree and forest.
     be applied in \pkg{circtree} by setting the argument \code{mtry} to the total
     number of covariates. Since a high number of possible split points leads to
     high computational costs, the covariates are binned in a maximum of $50$
-    classes (argument \code{nmax = c("yx"\,=\,Inf, "z"\,=\,50)}). Contrary to a
+    classes (argument \code{nmax = c(yx = Inf, z = 50)}). Contrary to a
     single-tree model, forests usually consist of very large trees as they are not
     prone to overfitting the data due to the stabilization obtained by combining
     the individual trees. Therefore, we use the following control arguments to
@@ -805,7 +788,7 @@ forecasting. To ensure a comprehensive comparison of the models, wind direction
 forecasts are evaluated for two different lead times at two airports with
 different climatological site characteristics.
 Figure~\ref{fig:boxplot_crpsraw} shows the CRPS values of the employed models
-at forecast steps 1\,h and 3\,h for the airports Innsbruck (Panels~a,\,c) and
+at forecast steps 1\,h and 3\,h for Innsbruck (Panels~a,\,c) and
 Vienna (Panels~b,\,d). The scores are aggregated over the five validation
 years, yielding yearly mean values for every hour per calendar month, with a
 lower score indicating better performance. The circular forest overall provides
@@ -822,7 +805,7 @@ clearly higher CRPS values and hence a lower predictive performance.
   \includegraphics{_plot_circforest_validation_crpsraw_agg_comparison_with_lowff_v14b.pdf}
   \caption{CRPS skill scores of wind direction forecasts based on the full
     predictive von~Mises distribution for $+1$\,h and $+3$\,h forecasts at the
-    airports Innsbruck and Vienna. Each box-and-whisker contains $24$~hourly scores
+    Innsbruck Airport and Vienna International Airport. Each box-and-whisker contains $24$~hourly scores
     for each of the $12$~months averaged over the $5$~validation years which
     yields a total of $288$~yearly mean values. The scores are shown for the
     climatological, persistency and the linear model as well as for the circular
@@ -904,7 +887,7 @@ forests are established by coupling model-based recursive partitioning with the
 von Mises distribution. By separating the data into more homogeneous
 subgroups, possible difficulties in circular regression are bypassed as
 covariates are solely considered for splitting and group-specific models are
-fitted as intercept-only models. In addition, by specifying the von Mises
+fitted without further covariates. In addition, by specifying the von Mises
 distribution for each node and allowing for splits in both distribution
 parameters $\mu$ and $\kappa$, fully probabilistic forecasts are provided.
 
@@ -912,7 +895,7 @@ The performance of the novel circular trees and forests is assessed in a
 case study for shortterm probabilistic wind direction forecasting at two
 airports with different site characteristics. As benchline models,
 probabilistic climatology and persistency models, as well as a state-of-the-art
-circular GLM are evaluated based on proper scoring rules. In summary, the
+circular GLM-type model are evaluated based on proper scoring rules. In summary, the
 circular trees and forests have the highest predictive performance in this
 setting. For cases without changes in the wind regime, lagged response values
 provide already highly skillful estimates leading to a good performance of the
