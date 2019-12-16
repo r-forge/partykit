@@ -101,7 +101,7 @@ the methodology for distributional modeling and probabilistic forecasting of cir
 response variables is rather limited. Most of the existing methods are built on the framework of
 generalized linear and additive models, which are often challenging to optimize
 and to interpret. Therefore, we suggest circular regression trees and random forests
-as an inuitive alternative approach that is relatively easy to fit. Building on
+as an intuitive alternative approach that is relatively easy to fit. Building on
 previous ideas for trees modeling circular means, we suggest a distributional
 approach for both trees and forests yielding probabilistic forecasts based on the
 von Mises distribution. The resulting tree-based models simplify
@@ -122,19 +122,29 @@ a benchmark.
 \Keywords{circular data, regression trees, random forests, distributional regression, von Mises distribution}
 
 \Address{
-  Moritz N. Lang, Lisa Schlosser, Reto Stauffer, Achim Zeileis \\
+  Moritz N. Lang, Lisa Schlosser, Achim Zeileis \\
   Universit\"at Innsbruck \\
   Department of Statistics \\
   Faculty of Economics and Statistics \\
   Universit\"atsstr.~15 \\
   6020 Innsbruck, Austria \\
-  E-mail: \email{Moritz.Lang@uibk.ac.at}, \email{Lisa.Schlosser@uibk.ac.at},\\
-  \email{Reto.Stauffer@uibk.ac.at},\email{Achim.Zeileis@R-project.org} \\
+  E-mail: \email{Moritz.Lang@uibk.ac.at}, \\
+  \phantom{E-mail: }\email{Lisa.Schlosser@uibk.ac.at},\\
+  \phantom{E-mail: }\email{Achim.Zeileis@R-project.org} \\
   URL: \url{https://www.uibk.ac.at/statistics/personal/moritz-lang/},\\
   \phantom{URL: }\url{https://www.uibk.ac.at/statistics/personal/schlosser-lisa/},\\
-  \phantom{URL: }\url{https://retostauffer.org/},\\
   \phantom{URL: }\url{https://eeecon.uibk.ac.at/~zeileis/}\\
 
+  Reto Stauffer \\
+  Universit\"at Innsbruck \\
+  Digital Science Center and \\ 
+  Department of Statistics \\
+  Faculty of Economics and Statistics \\
+  Universit\"atsstr.~15 \\
+  6020 Innsbruck, Austria \\
+  E-mail: \email{Reto.Stauffer@uibk.ac.at} \\
+  URL: \url{https://retostauffer.org/}\\
+  
   Georg~J.~Mayr\\
   Universit\"at Innsbruck \\
   Department of Atmospheric and Cryospheric Science \\
@@ -210,7 +220,7 @@ Mises distribution within the methodology of distributional trees and forests
 trees and forests avoid the discussed difficulties of circular GLMs by
 using the available covariates for partitioning the
 data into sufficiently homogeneous subgroups so that a simple von Mises distribution
-without further covariates can be fitted to the circular response in each subgroup.
+without further covariates can be fitted to the circular response in each of these subgroups.
 This obviates the need for a link function or for iterating between models for the
 separate distribution parameters. By leveraging the distributional modeling approach, the
 trees can automatically detect and capture differences in both
@@ -224,11 +234,11 @@ recursive partitioning algorithm.
 
 This novel approach to circular regression trees and forests complements the
 literature on tree-based circular modeling. \cite{Lund:2002} already
-introduced a circular regression tree algorithms where binary splits are
+introduced a circular regression tree algorithm where binary splits are
 made based on an angular distance measure capturing node
 homogeneity. However, this only models changes in the conditional mean
 but not the conditional variance or full probabilistic distribution.
-In contrast, here we introduce a distributional tree approach that considers
+In contrast, we introduce a distributional tree approach that considers
 splits in all distribution parameters and yields a full probabilistic predictive model.
 In addition, as a natural extension, ensembles or forests of circular
 regression trees are presented in this study, showing that these can further
@@ -241,7 +251,7 @@ improve predictive power.
 direction forecasts at the airport of Innsbruck. In each terminal node the
 empirical histogram (gray) and fitted density (red line) are depicted along
 with the estimated location parameter (red hand). The covariates selected for
-splitting are wind direction (degree), wind speed ($\text{ms}^{-1}$), and
+splitting are wind direction (meteorological degree), wind speed ($\text{ms}^{-1}$), and
 pressure gradients ($\text{dpressure; hPa}$) west, east and south of the
 airport, all lagged by one hour. Note that in the meteorological context wind
 direction is defined on the scale $[0,360]$ degree and increases clockwise from
@@ -261,7 +271,7 @@ the west-east valley axis or along a tributary valley intersecting from the
 south. Hence, pressure gradients to which valley wind regimes react are
 considered as covariates along with other meteorological measurements (lagged
 by one hour) and their derivatives, such as wind direction and wind speed at
-the airport as well as spatial and temporal differences.
+the airport itself as well as spatial and temporal differences.
 
 Figure~\ref{fig:tree_ibk} illustrates the resulting tree along with
 the empirical (gray) and fitted von Mises (red) wind direction distribution
@@ -559,7 +569,7 @@ methods are required. This section exemplifies the use of circular regression
 trees and forests with wind direction forecasts for two Austrian airports --
 one in flat terrain, the other one in mountainous terrain. The results are
 benchmarked against alternative probabilistic forecasting methods. The study
-is based on $1$\,h and $3$\,h forecasts employing lagged observations in the
+is based on $+1$\,h and $+3$\,h forecasts employing lagged observations in the
 vicinity of the airports as possible predictor variables. 
 
 \subsection{Data}
@@ -595,7 +605,7 @@ changes and spatial differences towards the airport of the respective
 quantities. An overview of the employed data sets can be found in
 Table~\ref{tab:data}. 
 
-The data used in this study consists of four subsequent years from January 2015
+The data used in this study consists of five subsequent years from January 2014
 to December 2018. After first eliminating predictor variables with more than
 5\% missing values and then time points with any missing observations, the data set
 consists of 41\,979 time points and 260 covariates for Innsbruck, and of
@@ -623,15 +633,15 @@ consists of 41\,979 time points and 260 covariates for Innsbruck, and of
                                     & 1-hourly and 3-hourly temporal changes, \\
                                     & spatial differences towards the airport\\
       \noalign{\vskip 1mm}                              
-      Weather stations (Innsbruck): & 4 stations at the airport, \\
+      Weather stations (Innsbruck): & 4 stations at the airport, as well as\\
                                     & Igls, Kematen, Kufstein, Landeck, Patscherkofel, \\
-                                    & Steinach\\
+                                    & and Steinach\\
       \noalign{\vskip 1mm}
-      Weather stations (Vienna):    & 9 stations at the airport, \\
+      Weather stations (Vienna):    & 9 stations at the airport, as well as\\
                                     & Arsenal, Donaufeld, Exelberg, G\"anserndorf, \\
                                     & Gro{\ss}-Enzersdorf, Gumpoldskirchen, Hohe Warte,\\
                                     & Innere Stadt, Jubil\"aumswarte, Mariabrunn, \\
-                                    & Seibersdorf, Unterlaa, Wolkersdorf\\
+                                    & Seibersdorf, Unterlaa, and Wolkersdorf\\
       \hline
     \end{tabular}
   \end{center}
@@ -695,7 +705,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     as a reference, we use the Bayesian implementation of
     \cite{Mulder+Klugkist:2017} which depends less on initial values due to an MCMC
     sampling algorithm using weakly informative priors.  \newline Following
-    \cite{Mulder+Klugkist:2017} the model uses a link function~$g$ to keep the
+    \cite{Mulder+Klugkist:2017} the model uses a link function~$g(\cdot)$ to keep the
     response values within an interval of length $2\pi$. As the implementation
     cannot handle circular covariates, we use the components of the lagged
     2-dimensional wind vector~$(u, v)^{\top}$ and the lagged
@@ -788,7 +798,7 @@ forecasting. To ensure a comprehensive comparison of the models, wind direction
 forecasts are evaluated for two different lead times at two airports with
 different climatological site characteristics.
 Figure~\ref{fig:boxplot_crpsraw} shows the CRPS values of the employed models
-at forecast steps 1\,h and 3\,h for Innsbruck (Panels~a,\,c) and
+at forecast steps $+1$\,h and $+3$\,h for Innsbruck (Panels~a,\,c) and
 Vienna (Panels~b,\,d). The scores are aggregated over the five validation
 years, yielding yearly mean values for every hour per calendar month, with a
 lower score indicating better performance. The circular forest overall provides
@@ -830,11 +840,10 @@ potential high prediction errors in case of a change of the wind regime seem to
 lead to a higher variation in the predictive performance for all models in
 comparison to Vienna; this variation is especially high for the persistency
 model due to its strong vulnerability to abrupt wind shifts. On the contrary,
-at Vienna the geographic surroundings do not constrain any wind direction which
-leads to smaller and less abrupt changes in the wind direction as well as less
-pronounced wind regimes. This seems to weaken the predictive performance of the
-climatological and linear models, and to reduce the performance variability for
-all models (Figure~\ref{fig:boxplot_crpsraw}\,b,\,d).
+at Vienna smaller and less abrupt changes in the wind direction as well as less pronounced 
+wind regimes are observed due to the less mountainous surrounding. This seems to 
+weaken the predictive performance of the climatological and linear models, and to 
+reduce the performance variability for all models (Figure~\ref{fig:boxplot_crpsraw}\,b,\,d).
 
 The different forecast steps have apparently only a minor effect on the
 predictive performance of the climatological model and the linear model at both
@@ -893,7 +902,7 @@ parameters $\mu$ and $\kappa$, fully probabilistic forecasts are provided.
 
 The performance of the novel circular trees and forests is assessed in a 
 case study for shortterm probabilistic wind direction forecasting at two
-airports with different site characteristics. As benchline models,
+airports with different site characteristics. As benchmark models,
 probabilistic climatology and persistency models, as well as a state-of-the-art
 circular GLM-type model are evaluated based on proper scoring rules. In summary, the
 circular trees and forests have the highest predictive performance in this
@@ -1002,11 +1011,11 @@ t_l = vec\left(\sum_{i=1}^n v_l(z_{li}) \cdot s(\hat{\mu}, \hat{\kappa}, y_i)\ri
 with $s(\hat{\mu}, \hat{\kappa}, y_i) \in \mathbb{R}^{1\times 2}$. 
 For a numeric split variable $z_l$ the transformation function $v_l$
 is simply the identity function $v_l(z_{li}) = z_{li}$ such that $t_l \in \mathbb{R}^2$ 
-as the ``vec'' operator converts the matrix of dimension $1 \times 2$ into a $2$ column vector.
+as the ``$vec$'' operator converts the matrix of dimension $1 \times 2$ into a $2$ column vector.
 If $z_l$ is a categorical variable with $h$ categories then 
 $v_l(z_{li}) = (\I(z_{li} = 1), \ldots, \I(z_{li} = h))$, hence, $v_l$ returns a unit vector
 of dimension $h$ where the entry $1$ indicates the category of $z_{li}$. 
-In this case the ``vec'' operator converts the $h \times 2$ matrix into a $h \cdot 2$ column vector 
+In this case the ``$vec$'' operator converts the $h \times 2$ matrix into a $h \cdot 2$ column vector 
 by column-wise combination such that $t_l \in \mathbb{R}^{h \cdot 2}$. 
 If there are any observations with missing values these are not included in the calculation of $t_l$.
 
