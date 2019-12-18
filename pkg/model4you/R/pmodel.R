@@ -27,7 +27,7 @@ pmodel <- function(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coe
                    return_attr = c("modelcall", "data", "similarity")) {
   
   ## compute similarity weights
-  if(is.matrix(x)) {
+  if(is(x, "matrix")) {
     if(is.null(model)) stop("When x is a matrix, model must not be NULL. Please enter a model object.")
     pweights <- x
   } else {
