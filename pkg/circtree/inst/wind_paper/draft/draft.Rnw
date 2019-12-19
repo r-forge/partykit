@@ -238,8 +238,8 @@ introduced a circular regression tree algorithm where binary splits are
 made based on an angular distance measure capturing node
 homogeneity. However, this only models changes in the conditional mean
 but not the conditional variance or full probabilistic distribution 
-%% FIXME: first attempt to include reference Gneiting+Balabdaoui+Raftery:2007
-which would allow for also considering uncertainty in forecasts \citep{Gneiting+Balabdaoui+Raftery:2007}.
+%% FIXME: first attempt to include reference Gneiting+Balabdaoui+Raftery:2007/ changed to Gneiting:2008
+which would allow for also considering uncertainty in forecasts \citep{Gneiting:2008}.
 %%
 In contrast, we introduce a distributional tree approach that considers
 splits in all distribution parameters and yields a full probabilistic predictive model.
@@ -924,11 +924,22 @@ improves the predictive skill for short leadtimes, it possibly extends the
 potential forecast range of the different methods. 
 %% FIXME: first draft to include reference on wind speed (Thorarinsdottir+Gneiting:2010)
 For the specific case of wind direction forecasting it has to be considered
-that this quantity is highly related to wind speed. For example, low wind speeds
-usually leads to a higher fluctuation in wind direction. One way how to account for
-this influence is by modeling both quantities in a bivariate model. %% FIXME: add reference?
-Alternatively, the approaches of \cite{Thorarinsdottir+Gneiting:2010} could be 
-incorporated in circular regression trees and forests.
+that this quantity is highly related to wind speed. For example, low wind
+speeds usually lead to a high fluctuation in wind direction. Hence, to account
+for both quantities simultaneously, distributional tree-based models could be
+built for wind vectors employing the bivariate normal distribution as performed
+for additive regression models by \citet{Lang+Mayr+Stauffer:2019}.
+Alternatively, also accounting for wind speed and direction but extending the
+presented methodology, circular trees and forests could be combined with
+distributional models for wind speed employing, e.g., the truncated normal
+distribution \citep{Thorarinsdottir+Gneiting:2010}. This could be pursued
+either in a two-step approach with two independent tree-based distributional
+models or in a more sophisticated approach employing a mixture response
+distribution.
+%One way how to account for
+%this influence is by modeling both quantities in a bivariate model. %% FIXME: add reference?
+%Alternatively, the approaches of \cite{Thorarinsdottir+Gneiting:2010} could be 
+%incorporated in circular regression trees and forests.
 %%
 Another possible
 improvement for obtaining more parsimonious circular trees is to consider
