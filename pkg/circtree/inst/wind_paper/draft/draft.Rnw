@@ -238,9 +238,7 @@ introduced a circular regression tree algorithm where binary splits are
 made based on an angular distance measure capturing node
 homogeneity. However, this only models changes in the conditional mean
 but not the conditional variance or full probabilistic distribution 
-%% FIXME: first attempt to include reference Gneiting+Balabdaoui+Raftery:2007/ changed to Gneiting:2008
 which would allow for also considering uncertainty in forecasts \citep{Gneiting:2008}.
-%%
 In contrast, we introduce a distributional tree approach that considers
 splits in all distribution parameters and yields a full probabilistic predictive model.
 In addition, as a natural extension, ensembles or forests of circular
@@ -328,7 +326,7 @@ distribution for an observation $y \in [0, 2\pi)$ is given by
 \end{equation}
 %%
 where $I_0(\kappa)$ is the modified Bessel function of the first kind and order
-$0$ (see, e.g., \citealt{Jammalamadaka+Sengupta:2001}, \citealt{Mardia+Zemroch:1975b}, or
+$0$ (see, e.g., \citealt{Mardia+Zemroch:1975b}, \citealt{Jammalamadaka+Sengupta:2001}, or
 \citealt{Ley+Verdebout:2017} for a more detailed overview).
 
 \begin{figure}[t]
@@ -739,7 +737,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     2000 observations in each terminal node (argument \code{minbucket}).
     %%
   \item \emph{Circular regression forest:} Following the description in
-    Section~\ref{sec:circforest}, the circular forest used in this study is
+    Section~\ref{sec:circforest}, the circular regression forest used in this study is
     constructed based on $100$~individual trees employing the \textsf{R} package
     \pkg{circtree}. Each of these trees is again built by the CTree algorithm on a
     subsample containing $30$~percent of the original learning data.  All
@@ -804,7 +802,7 @@ Figure~\ref{fig:boxplot_crpsraw} shows the CRPS values of the employed models
 at forecast steps $+1$\,h and $+3$\,h for Innsbruck (Panels~a,\,c) and
 Vienna (Panels~b,\,d). The scores are aggregated over the five validation
 years, yielding yearly mean values for every hour per calendar month, with a
-lower score indicating better performance. The circular forest overall provides
+lower score indicating better performance. The circular regression forest overall provides
 the best predictive performance, followed by the circular regression tree and
 the persistency model for both stations at both forecast steps; except for the
 $3$\,h~forecasts at Innsbruck where the persistency model is outperformed by
@@ -866,7 +864,7 @@ In addition to the raw CRPS (Figure~\ref{fig:boxplot_crpsraw}), CRPS skill
 scores with the climatological model as a reference are provided in
 Figure~\ref{fig:boxplot_crpsskill}. Skill scores are in percent, where positive
 values indicate an improvement in the predictive performance over the
-reference. For all setups, the circular forest has the highest skill scores
+reference. For all setups, the circular regression forest has the highest skill scores
 with a mean performance gain of 13--25\% and 58--71\% for Innsbruck and Vienna,
 respectively. As discussed for Figure~\ref{fig:boxplot_crpsraw}, this
 improvement over the climatological model is lower for Innsbruck due to the low
@@ -903,12 +901,12 @@ fitted without further covariates. In addition, by specifying the von Mises
 distribution for each node and allowing for splits in both distribution
 parameters $\mu$ and $\kappa$, fully probabilistic forecasts are provided.
 
-The performance of the novel circular trees and forests is assessed in a 
-case study for shortterm probabilistic wind direction forecasting at two
-airports with different site characteristics. As benchmark models,
-probabilistic climatology and persistency models, as well as a state-of-the-art
-circular GLM-type model are evaluated based on proper scoring rules. In summary, the
-circular trees and forests have the highest predictive performance in this
+The performance of the novel circular regression trees and forests is assessed in a case
+study for shortterm probabilistic wind direction forecasting at two airports
+with different site characteristics. As benchmark models, probabilistic
+climatology and persistency models, as well as a state-of-the-art circular
+GLM-type model are evaluated based on proper scoring rules. In summary, the
+circular regression trees and forests have the highest predictive performance in this
 setting. For cases without changes in the wind regime, lagged response values
 provide already highly skillful estimates leading to a good performance of the
 persistency model as observed for shortterm wind direction forecasts in this
@@ -921,33 +919,24 @@ reliable forecasts in all tested meteorological settings. For operational use,
 a possible extension could be the incorporation of numerical weather
 predictions as (additional) covariates. While this probably only slightly
 improves the predictive skill for short leadtimes, it possibly extends the
-potential forecast range of the different methods. 
-%% FIXME: first draft to include reference on wind speed (Thorarinsdottir+Gneiting:2010)
-For the specific case of wind direction forecasting, it has to be considered
-that this quantity is highly related to wind speed. For example, low wind
-speeds usually lead to a high fluctuation in wind direction. Hence, to account
-for both quantities simultaneously, distributional tree-based models could be
-built for wind vectors employing the bivariate normal distribution as performed
-for additive regression models by \citet{Lang+Mayr+Stauffer:2019}.
-Alternatively, also accounting for wind speed and direction but extending the
-presented methodology, circular trees and forests could be combined with
-distributional models for wind speed employing the truncated normal
-distribution \citep{Thorarinsdottir+Gneiting:2010}. This could be pursued
-either in a two-step approach with two independent tree-based distributional
-models or in a more sophisticated approach employing a mixture response
-distribution.
-%One way how to account for
-%this influence is by modeling both quantities in a bivariate model. %% FIXME: add reference?
-%Alternatively, the approaches of \cite{Thorarinsdottir+Gneiting:2010} could be 
-%incorporated in circular regression trees and forests.
-%%
-Another possible
-improvement for obtaining more parsimonious circular trees is to consider
-splitting circular covariates into two circle segments by searching two split
-points simultaneously rather than sequentially at different depths. While this
-might slightly improve the predictive performance of circular trees, this
-should not affect the performance of circular forests, as these consist of
-very large trees with many different splits.
+potential forecast range of the different methods. For the specific task of
+wind forecasting not only the wind direction, but also the wind speed and
+especially their combination is of high interest. To account for both
+quantities simultaneously, distributional tree-based models could be built for
+wind vectors employing the bivariate normal distribution as performed by
+\citet{Lang+Mayr+Stauffer:2019} in an additive regression framework.
+Alternatively, circular regression trees could be combined with distributional models for
+wind speed employing the truncated normal distribution
+\citep{Thorarinsdottir+Gneiting:2010}. This could be pursued either in a
+two-step approach with two independent distributional models or in a more
+sophisticated way employing a mixed response distribution in the presented
+tree-building algorithm. Another possible improvement for obtaining more
+parsimonious circular regression trees is to consider splitting circular covariates into
+two circle segments by searching two split points simultaneously rather than
+sequentially at different depths. While this might slightly improve the
+predictive performance of circular regression trees, this should not affect the
+performance of the forests, as they consist of very large trees with many
+different splits.
 
 
 To conclude, in general the tree structure can capture nonlinear changes,
@@ -956,8 +945,8 @@ such effects. As supported by the presented case study, this can be
 particularly useful for modeling a highly fluctuating response, such as
 typically observed for wind direction, or/and in case of a large number of
 possible covariates. Moreover, the case study shows that building ensembles of
-circular trees can even improve the forecasting performance, as the resulting
-circular forests allow for modeling smooth effects and stabelize the model.
+circular regression trees can even improve the forecasting performance, as the resulting
+forests allow for modeling smooth effects and stabelize the model.
 
 
 \section*{Acknowledgments}
@@ -968,9 +957,9 @@ Schlosser received a PhD scholarship granted from the University of Innsbruck.
 
 \section*{Computational details}
 The corresponding implementation of the proposed methodology for circular
-trees and forests is provided in the \textsf{R} package \textbf{circtree} 
+regression trees and forests is provided in the \textsf{R} package \textbf{circtree} 
 (version~\Sexpr{packageVersion("circtree")}).
-% The proposed circular tree and forest models are implemented in the \textsf{R}
+% The proposed circular regression tree and forest models are implemented in the \textsf{R}
 % package \textbf{circtree} (version~\Sexpr{packageVersion("circtree")}). 
 The package is based on the \textbf{disttree} package
 (version~\Sexpr{packageVersion("disttree")}) which applies the main tree
