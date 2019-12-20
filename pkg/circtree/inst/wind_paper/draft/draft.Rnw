@@ -178,7 +178,7 @@ e.g., hourly crime rate in socio-economics, animal movement direction or
 gene-structure in biology, and wind direction as one of the most important
 weather variables in meteorology. Fitting a statistical model to this type of
 data requires the incorporation of its specific feature of periodicity. For
-example, angular data are restricted to an interval such as $[0,2\pi)$ with $0$
+example, angular data are restricted to an interval such as~$[0,2\pi)$ with~$0$
 being equivalent~to~$2\pi$.
 
 \subsection[Circular regression: Conditional mean vs. distributional models]{Circular regression: Conditional mean vs.\ distributional models}
@@ -190,7 +190,7 @@ of the first regression models with a circular response variable and linear
 covariates was presented by \cite{Gould:1969} where the circular mean is
 predicted by a linear combination of covariates. \cite{Johnson+Wehrly:1978}
 refined this idea by plugging in a link function transforming the linear
-predictor to a restricted interval of length $2\pi$. This generalized linear
+predictor to a restricted interval of length~$2\pi$. This generalized linear
 model (GLM) type approach was further extended by \cite{Fisher+Lee:1992} and
 subsequently by \cite{Fisher:1993} introducing independent GLMs for either the
 location or scale parameter with appropriate link functions while keeping the
@@ -254,7 +254,7 @@ depicted along with the estimated location parameter (red hand). The covariates
 selected for splitting are wind direction (meteorological degree), wind speed
 ($\text{ms}^{-1}$), and pressure gradients ($\text{dpressure; hPa}$) west, east
 and south of the airport, all lagged by one hour. Note that in the
-meteorological context wind direction is defined on the scale $[0,360]$ degree
+meteorological context wind direction is defined on the scale $[0,360]$~degree
 and increases clockwise from North ($0$ degree).}
 \end{figure}
 
@@ -274,8 +274,8 @@ and their derivatives, such as wind direction and wind speed at the airport
 itself as well as spatial and temporal differences.
 
 Figure~\ref{fig:tree_ibk} illustrates the resulting tree along with the
-empirical (gray) and fitted von~Mises (red) wind direction distribution in each
-terminal node. Based on the fitted location parameters $\hat \mu$, the
+empirical (gray) and fitted von~Mises~(red) wind direction distribution in each
+terminal node. Based on the fitted location parameters~$\hat \mu$, the
 subgroups can be distinguished into the following wind regimes: (1)~Up-valley
 winds blowing from the valley mouth towards the upper valley (from east to
 west, nodes~4 and 5); (2)~Downslope winds blowing across the Alpine crest along
@@ -392,7 +392,7 @@ Equation~\ref{eq:optim} can alternatively be specified as
   \sum_{i = 1}^n s(\hat{\mu}, \hat{\kappa}, y_i) = 0.
 \end{equation}
 %%
-Figure~\ref{fig:densities} depicts von~Mises model for circular data in $[0, 2
+Figure~\ref{fig:densities} depicts a von~Mises model for circular data in $[0, 2
 \pi)$ fitted by maximum likelihood, either using a linearized (left) or
 circular (right) scale. In both cases, the empirical histogram (gray bars) is
 shown along with the fitted density (red line) and estimated location parameter
@@ -402,14 +402,14 @@ interest in a regression setup for forecasting.
 
 In most generalized linear model (GLM) or generalized additive model (GAM)
 approaches to circular regression the location parameter $\mu$ depends on
-covariates $\mathbf{z}$ through a link function $g(\cdot)$, circular intercept
+covariates $\mathbf{z}$ through a link function~$g(\cdot)$, circular intercept
 $\mu_0$ and coefficient vector $\mathbf{\beta}$: \begin{equation} \mu = \mu_0 +
 g\left(\mathbf{\beta}^{\top} \mathbf{z}\right). \end{equation} The link
 function transforms the additive predictor to an interval of length $2\pi$.
 Typically $g(x) = 2\cdot \text{arctan}(x)$ is employed, as suggested by
 \citet{Fisher+Lee:1992}. They also developed a heteroscedastic version by
-combining two individual GLMs, each for one of the parameters $\mu$ and
-$\kappa$. This provides a first approach to a fully probabilistic regression
+combining two individual GLMs, each for one of the parameters~$\mu$ and~$\kappa$. 
+This provides a first approach to a fully probabilistic regression
 model for circular data, albeit the parameters are not regressed simultaneously
 on covariates as in the more general framework provided by generalized additive
 models for location, scale, and shape \citep[GAMLSS,
@@ -479,7 +479,7 @@ probabilistic predictions for a possibly new set of observed covariates $\bm{z}
 observation to a terminal node where the parameter pair $(\hat{\mu},
 \hat{\kappa})$ is estimated for the corresponding subset of learning
 observations. This can also be expressed by employing weights which indicate
-whether the $i$-th learning observation and the observation $\bm{z}$ belong to
+whether the $i$-th learning observation and the observation~$\bm{z}$ belong to
 the same terminal node: 
 %%
 \begin{equation}
@@ -578,7 +578,7 @@ vicinity of the airports as possible predictor variables.
   \setkeys{Gin}{width=1.0\textwidth}
   \centering
   \includegraphics{_plot_circforest_stationmap_combined.pdf}
-  \caption{Overview of the study area for Innsbruck Airports (left) and Vienna International Airport (right). 
+  \caption{Overview of the study area for Innsbruck Airport (left) and Vienna International Airport (right). 
     For Innsbruck, $4$~stations at the airport and $6$~stations along the
     intersecting valleys are used, whereas, for Vienna, $9$~stations at the airport
     and $13$~stations within the vicinity of approximately 30\,km are used.
@@ -606,11 +606,11 @@ as well as 1-and 3-hourly temporal changes and spatial differences towards the
 airport of the respective quantities. An overview of the employed data sets can
 be found in Table~\ref{tab:data}. 
 
-The data used in this study consists of five subsequent years from January 2014
-to December 2018. After first eliminating predictor variables with more than
+The data used in this study consists of five subsequent years from January~2014
+to December~2018. After first eliminating predictor variables with more than
 5\% missing values and then time points with any missing observations, the data
-set consists of 41\,979 time points and 260 covariates for Innsbruck, and of
-38\,985 time points and 494 covariates for Vienna, respectively.
+set consists of 41\,979~time points and $260$~covariates for Innsbruck, and of
+38\,985~time points and $494$~covariates for Vienna, respectively.
 
 %%
 \begin{table}[t!]
@@ -718,7 +718,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     \end{align}
     %%
     with $\beta_0$ being a circular intercept, $\beta_\bullet$ the regression
-    coefficients and $g$ the link function $g(x) = 2 \cdot \text{arctan}(x)$. In
+    coefficients and the link function $g(x) = 2 \cdot \text{arctan}(x)$. In
     addition, a constant concentration parameter $\kappa$ is fitted to the full
     learning sample. To allow for seasonally varying error characteristics in both
     bias and slope coefficients, and to allow for seasonal heteroscedasticity
@@ -969,7 +969,7 @@ based on the \textbf{disttree} package
 (version~\Sexpr{packageVersion("disttree")}) which applies the main tree
 building functions from the \textbf{partykit} package
 (version~\Sexpr{packageVersion("partykit")}). All three packages are available
-on \textsf{R}-Forge at \url{https://R-Forge.R-project.org/projects/partykit/}.
+on \textsf{R}-Forge at {\url{https://R-Forge.R-project.org/projects/partykit/}}.
 
 For the circular GLM considered as reference model the corresponding
 implementation is provided in the \textsf{R} package \textbf{circglmbayes} by
@@ -1004,7 +1004,7 @@ observations $\{y_i\}_{i = 1,\ldots,n}$ as explained in
 Section~\ref{sec:prob_circ}. In a next step, a goodness-of-fit measurement is
 obtained for each parameter and each observation by evaluating the score
 function $s(\mu, \kappa, y)$ at the estimated location and concentration
-parameter $\hat{\mu}$ and $\hat{\kappa}$. To detect dependencies between the
+parameter~$\hat{\mu}$ and $\hat{\kappa}$. To detect dependencies between the
 resulting scoring matrix
 \begin{equation}
 \begin{pmatrix} 
@@ -1027,7 +1027,7 @@ the ``$vec$'' operator converts the matrix of dimension $1 \times 2$ into a $2$
 column vector. If $z_l$ is a categorical variable with $h$ categories then
 $v_l(z_{li}) = (\I(z_{li} = 1), \ldots, \I(z_{li} = h))$, hence, $v_l$ returns
 a unit vector of dimension $h$ where the entry $1$ indicates the category of
-$z_{li}$. In this case the ``$vec$'' operator converts the $h \times 2$ matrix
+$z_{li}$. In this case the ``$vec$'' operator converts the $h \times 2$~matrix
 into a $h \cdot 2$ column vector by column-wise combination such that $t_l \in
 \mathbb{R}^{h \cdot 2}$. If there are any observations with missing values
 these are not included in the calculation of $t_l$.
