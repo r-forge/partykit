@@ -923,7 +923,7 @@ predictions as (additional) covariates. While this probably only slightly
 improves the predictive skill for short leadtimes, it possibly extends the
 potential forecast range of the different methods. 
 %% FIXME: first draft to include reference on wind speed (Thorarinsdottir+Gneiting:2010)
-For the specific case of wind direction forecasting it has to be considered
+For the specific case of wind direction forecasting, it has to be considered
 that this quantity is highly related to wind speed. For example, low wind
 speeds usually lead to a high fluctuation in wind direction. Hence, to account
 for both quantities simultaneously, distributional tree-based models could be
@@ -931,7 +931,7 @@ built for wind vectors employing the bivariate normal distribution as performed
 for additive regression models by \citet{Lang+Mayr+Stauffer:2019}.
 Alternatively, also accounting for wind speed and direction but extending the
 presented methodology, circular trees and forests could be combined with
-distributional models for wind speed employing, e.g., the truncated normal
+distributional models for wind speed employing the truncated normal
 distribution \citep{Thorarinsdottir+Gneiting:2010}. This could be pursued
 either in a two-step approach with two independent tree-based distributional
 models or in a more sophisticated approach employing a mixture response
