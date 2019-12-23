@@ -952,7 +952,7 @@ particularly useful for modeling a highly fluctuating response, such as
 typically observed for wind direction, or/and in case of a large number of
 possible covariates. Moreover, the case study shows that building ensembles of
 circular regression trees can even improve the forecasting performance, as the
-resulting forests allow for modeling smooth effects and stabelize the model.
+resulting forests allow for modeling smooth effects and stabilize the model.
 
 
 \section*{Acknowledgments}
