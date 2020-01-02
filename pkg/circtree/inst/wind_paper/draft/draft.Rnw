@@ -153,7 +153,7 @@ benchmark.
   Innrain~52f \\
   6020 Innsbruck, Austria \\
   E-mail: \email{Georg.Mayr@uibk.ac.at} \\
-  URL: \url{http://acinn.uibk.ac.at/persons/georg_mayr}\\
+  URL: \url{https://www.uibk.ac.at/acinn/people/georg-mayr}\\
   
   Torsten Hothorn\\
   Universit\"at Z\"urich \\
