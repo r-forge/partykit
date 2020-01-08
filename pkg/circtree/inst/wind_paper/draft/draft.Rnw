@@ -96,28 +96,6 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 \Plainauthor{Lang, Schlosser, Hothorn, Mayr, Stauffer, Zeileis}
 
 \Abstract{
-%While circular data occur in a wide range of scientific fields, the methodology
-%for distributional modeling and probabilistic forecasting of circular response
-%variables is rather limited. Most of the existing methods are built on the
-%framework of generalized linear and additive models, which are often
-%challenging to optimize and to interpret. Therefore, we suggest circular
-%regression trees and random forests as an intuitive alternative approach that
-%is relatively easy to fit. Building on previous ideas for trees modeling
-%circular means, we suggest a distributional approach for both trees and forests
-%yielding probabilistic forecasts based on the von~Mises distribution. The
-%resulting tree-based models simplify the estimation process by using the
-%available covariates for partitioning the data into sufficiently homogeneous
-%subgroups so that a simple von~Mises distribution without further covariates
-%can be fitted to the circular response in each subgroup. These circular
-%regression trees are straightforward to interpret, can capture nonlinear
-%effects and interactions, and automatically select the relevant covariates that
-%are associated with either location and/or scale changes in the von~Mises
-%distribution. Combining an ensemble of circular regression trees to a circular
-%regression forest yields a local adaptive likelihood estimator for the
-%von~Mises distribution that can regularize and smooth the covariate effects.
-%The new methods are evaluated in a case study on probabilistic wind direction
-%forecasting at two Austrian airports, considering other common approaches as a
-%benchmark.
 While circular data occur in a wide range of scientific fields, the methodology
 for distributional modeling and probabilistic forecasting of circular response
 variables is rather limited. Most of the existing methods are built on the
