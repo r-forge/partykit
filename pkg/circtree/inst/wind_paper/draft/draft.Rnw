@@ -117,7 +117,7 @@ probabilistic wind direction forecasting at two Austrian airports, considering
 other common approaches as a benchmark.
 }
 
-\Keywords{circular data, regression trees, random forests, distributional regression, von~Mises distribution}
+\Keywords{circular data, regression trees, random forests, distributional regression, von~Mises distribution, probabilistic forecasting}
 
 \Address{
   Moritz N. Lang, Lisa Schlosser, Achim Zeileis \\
@@ -177,6 +177,8 @@ weather variables in meteorology. Fitting a statistical model to this type of
 data requires the incorporation of its specific feature of periodicity. For
 example, angular data are restricted to an interval such as~$[0,2\pi)$ with~$0$
 being equivalent~to~$2\pi$.
+
+\newpage
 
 \subsection[Circular regression: Conditional mean vs. distributional models]{Circular regression: Conditional mean vs.\ distributional models}
 
@@ -316,7 +318,7 @@ and hence easier to use is provided by the von~Mises distribution
 ``the circular normal distribution'' and is a common choice for probabilistic
 modeling of circular data. Based on a location parameter $\mu \in [0, 2\pi)$
 and a concentration parameter $\kappa > 0$ the density of the von~Mises
-distribution for an observation $y \in [0, 2\pi)$ is given by
+distribution for an observation~\mbox{$y \in [0, 2\pi)$} is given by
 %%
 \begin{equation}
   f_\mathrm{vM}(y; \mu, \kappa) = \frac{1}{2 \pi I_0(\kappa)}~e^{ \kappa \cos(y - \mu)},\label{schlosser:equ_vm}
@@ -355,8 +357,8 @@ The corresponding log-likelihood function is defined as
 \end{equation}
 %%
 To fit a probabilistic model $\text{vM}(y; \mu, \kappa)$ to a circular response
-$y$, the distribution parameters $\mu$ and $\kappa$ need to be estimated. This
-can be done by maximizing the log-likelihood function $\ell(\mu, \kappa; y)$
+$y$, the distribution parameters~$\mu$ and~$\kappa$ need to be estimated. This
+can be done by maximizing the log-likelihood function~$\ell(\mu, \kappa; y)$
 %%
 \begin{equation}\label{eq:optim}
   (\hat{\mu},\hat{\kappa}) = \argmax_{\mu,\kappa} \sum_{i=1}^n \ell(\mu, \kappa; y_i) 
@@ -521,7 +523,7 @@ Hothorn+Zeileis:2017}. More specifically, for each (possibly new)
 observation~$\bm{z}$ a set of averaged ``nearest neighbor'' weights
 $w_i^\text{forest}(\bm{z})$ is obtained that is based on the number of trees in
 which $\bm{z}$ is assigned to the same terminal node as each learning
-observation $y_i, i \in \{1,\ldots,n\}$. Hence, for a forest of $T$ trees, the
+observation~\mbox{$y_i, i \in \{1,\ldots,n\}$}. Hence, for a forest of $T$ trees, the
 weights are calculated via
 %%
 \begin{equation}
@@ -545,7 +547,7 @@ yielding its specific parameter estimates for the von~Mises distribution
 
 Therefore, the resulting parameter estimates can smoothly adapt to the given
 covariates $\bm{z}$ whereas $w_i(\bm{z}) = 1$ would correspond to the
-unweighted full-sample estimates and $w_i(\bm{z}) \in \{0, 1\}$ corresponds to
+unweighted full-sample estimates and \mbox{$w_i(\bm{z}) \in \{0, 1\}$} corresponds to
 the subgroup selection from a tree. Thus, circular regression forests can
 capture both smooth and abrupt changes, while covariates and possible
 interactions are selected automatically and do not explicitly need to be
@@ -1010,7 +1012,7 @@ s(\hat{\mu}, \hat{\kappa}, y_1)_1 \quad, & s(\hat{\mu}, \hat{\kappa}, y_1)_2\\
 s(\hat{\mu}, \hat{\kappa}, y_n)_1 \quad,& s(\hat{\mu}, \hat{\kappa}, y_n)_2
 \end{pmatrix}
 \end{equation}
-and each possible split variable $z_l \in \{z_1, \ldots, z_m\}$ a permutation
+and each possible split variable~\mbox{$z_l \in \{z_1, \ldots, z_m\}$} a permutation
 test is applied. In particular, the null hypotheses of independence of each
 split variable and the scores is assessed by employing the multivariate linear
 statistic
