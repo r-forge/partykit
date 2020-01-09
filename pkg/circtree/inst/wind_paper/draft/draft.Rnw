@@ -1,4 +1,4 @@
-\documentclass[nojss]{jss}
+\documentclass[nojss,shortnames]{jss}
 
 %% packages
 \usepackage{amstext,amsfonts,amsmath,bm,thumbpdf,lmodern,hyperref}
@@ -241,6 +241,8 @@ full probabilistic predictive model. In addition, as a natural extension,
 ensembles or forests of circular regression trees are presented in this study,
 showing that these can further improve predictive power.
 
+\subsection{Motivating example}
+
 \begin{figure}[p!]
 \centering
 \includegraphics[width=0.9\textheight,,angle=90,origin=c]{_plot_circforest_finalexampletree_ibk_lag1_v14.pdf}
@@ -254,8 +256,6 @@ and south of the airport, all lagged by one hour. Note that in the
 meteorological context wind direction is defined on the scale $[0,360]$~degree
 and increases clockwise from North ($0$ degree).}
 \end{figure}
-
-\subsection{Motivating example}
 
 To provide a first impression of the presented methodology, a circular
 regression tree is employed for probabilistic wind direction forecasting. Wind
