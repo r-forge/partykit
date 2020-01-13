@@ -178,9 +178,9 @@ stationeval <- function(station) {
   
   # fit distributional forest
   fit_time["distforest",] <- system.time(df <- distforest(df.formula, 
-                                                          data = learndata, type.tree = "ctree", 
+                                                          data = learndata, family = dist_list_cens_normal, 
                                                           ntree = 100, mtry = 27,
-                                                          control = disttree_control(family = dist_list_cens_normal, 
+                                                          control = disttree_control(type.tree = "ctree", 
                                                                                      teststat = "quad", testtype = "Univ", intersplit = TRUE,
                                                                                      mincriterion = 0, minsplit = 50,
                                                                                      minbucket = 20)))
