@@ -152,18 +152,19 @@ evalmodels <- function(station, train, test,
   # distributional tree
   dt_time <- system.time(dt <- disttree::disttree(dt.formula, 
                                                   data = learndata, family = family, 
-                                                  censtype = "left", censpoint = 0, type.tree = "ctree", 
-                                                  control = partykit::ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                                                    mincriterion = tree_mincrit, minsplit = tree_minsplit,
-                                                                                    minbucket = tree_minbucket)))
+                                                  control = disttree::disttree_control(type.tree = "ctree",
+                                                                                       teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                                                       mincriterion = tree_mincrit, minsplit = tree_minsplit,
+                                                                                       minbucket = tree_minbucket)))
   
   # distributional forest
   df_time <- system.time(df <- disttree::distforest(df.formula, 
-                                                    data = learndata, family = family, type.tree = "ctree", 
-                                                    ntree = ntree, censtype = "left", censpoint = 0, #fitted.OOB = FALSE,
-                                                    control = partykit::ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                                                      mincriterion = forest_mincrit, minsplit = forest_minsplit,
-                                                                                      minbucket = forest_minbucket), mtry = forest_mtry))
+                                                    data = learndata, family = family,  
+                                                    ntree = ntree, #fitted.OOB = FALSE,
+                                                    control = disttree::disttree_control(type.tree = "ctree",
+                                                                                         teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                                                         mincriterion = forest_mincrit, minsplit = forest_minsplit,
+                                                                                         minbucket = forest_minbucket), mtry = forest_mtry))
   
   
   # prespecified gamlss
