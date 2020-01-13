@@ -3,14 +3,27 @@
 #######################################################
 
 ## Replication material for: 
-## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
-## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
-## URL: http://arxiv.org/abs/1804.02921
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2019)
+## by Lisa Schlosser, Torsten Hothorn, Reto Stauffer, and Achim Zeileis
+## published in The Annals of Applied Statistics, 13(3), 1564-1589. 
+## doi:10.1214/19-AOAS1247 
+
+## Note: The exact results as presented were obtained by employing the following package versions:
+## disttree (version 0.1-0) based on the partykit package (version 1.2-3) and
+## RainTyrol (version 0.1-0)
+
+## Version requirements:
+## disttree (>= 0.2-0) requires RainTyrol (>= 0.2-0) and vice versa.
+## disttree (< 0.2-0) requires RainTyrol (< 0.2-0) and vice versa.
 
 ## This demo includes the cross-validation on one station (Axams) 
 ## and the application on all 95 observation stations.
 ## Further results for the station Axams can be obtained using demo
 ## demo("RainAxams", package = "disttree")
+## Full replication of Supplement A (Different Response Distributions) can be obtained with
+## demo("RainDistributions", package = "disttree")
+## Full replication of Supplement B (Stationwise Evaluation) can be obtained with
+## demo("RainStationwise", package = "disttree")
 
 ## Computation time: approximately 16 hours (on our machines, using 15 kernels) 
 

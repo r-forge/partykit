@@ -3,9 +3,18 @@
 #######################################################
 
 ## Replication material for Supplement B (Stationwise Evaluation) of the paper 
-## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
-## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
-## URL: http://arxiv.org/abs/1804.02921
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2019)
+## by Lisa Schlosser, Torsten Hothorn, Reto Stauffer, and Achim Zeileis
+## published in The Annals of Applied Statistics, 13(3), 1564-1589. 
+## doi:10.1214/19-AOAS1247 
+
+## Note: The exact results as presented were obtained by employing the following package versions:
+## disttree (version 0.1-0) based on the partykit package (version 1.2-3) and
+## RainTyrol (version 0.1-0)
+
+## Version requirements:
+## disttree (>= 0.2-0) requires RainTyrol (>= 0.2-0) and vice versa.
+## disttree (< 0.2-0) requires RainTyrol (< 0.2-0) and vice versa.
 
 ## This demo includes the application on 15 selected observation stations
 ## Full replication for station Axams can be obtained with
@@ -162,18 +171,19 @@ stationeval <- function(station) {
   # fit distributional tree
   fit_time["disttree",] <- system.time(dt <- disttree(dt.formula, 
                                                       data = learndata, family = dist_list_cens_normal, 
-                                                      censtype = "left", censpoint = 0, type.tree = "ctree", 
-                                                      control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                      control = disttree_control(type.tree = "ctree",
+                                                                              teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
                                                                               mincriterion = 0.95, minsplit = 50,
                                                                               minbucket = 20)))
   
   # fit distributional forest
   fit_time["distforest",] <- system.time(df <- distforest(df.formula, 
-                                                          data = learndata, family = dist_list_cens_normal, type.tree = "ctree", 
-                                                          ntree = 100, censtype = "left", censpoint = 0, mtry = 27,
-                                                          control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                                                  mincriterion = 0, minsplit = 50,
-                                                                                  minbucket = 20)))
+                                                          data = learndata, type.tree = "ctree", 
+                                                          ntree = 100, mtry = 27,
+                                                          control = disttree_control(family = dist_list_cens_normal, 
+                                                                                     teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                                                     mincriterion = 0, minsplit = 50,
+                                                                                     minbucket = 20)))
   
   # fit prespecified GAMLSS (covariates selected based on meteorological expert knowledge)
   g_learndata <- learndata

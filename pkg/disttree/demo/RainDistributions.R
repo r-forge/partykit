@@ -3,9 +3,18 @@
 #######################################################
 
 ## Replication material for Supplement A (Different Response Distributions) of the paper 
-## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
-## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
-## URL: http://arxiv.org/abs/1804.02921
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2019)
+## by Lisa Schlosser, Torsten Hothorn, Reto Stauffer, and Achim Zeileis
+## published in The Annals of Applied Statistics, 13(3), 1564-1589. 
+## doi:10.1214/19-AOAS1247 
+
+## Note: The exact results as presented were obtained by employing the following package versions:
+## disttree (version 0.1-0) based on the partykit package (version 1.2-3) and
+## RainTyrol (version 0.1-0)
+
+## Version requirements:
+## disttree (>= 0.2-0) requires RainTyrol (>= 0.2-0) and vice versa.
+## disttree (< 0.2-0) requires RainTyrol (< 0.2-0) and vice versa.
 
 ## This demo includes the application on selected stations employing different distributions
 ## (models learned on 24 years and evaluated on 4 years)
@@ -16,10 +25,7 @@
 ## Full replication of Supplement B (Stationwise Evaluation) can be obtained with
 ## demo("RainStationwise", package = "disttree")
 
-
-
-## Computation time: approximately 22 hours  
-# (on our machines, using 15 kernels)
+## Computation time: approximately 22 hours (on our machines, using 15 kernels)
 
 
 library("disttree")
@@ -273,23 +279,23 @@ stationeval <- function(station, method, distribution)
       dt <- disttree(dt.formula, 
                      data = learndata, 
                      family = if(distribution == "gaussian") dist_list_cens_normal else dist_list_cens_log, 
-                     censtype = "left", censpoint = 0, type.tree = "ctree", 
-                     control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                             mincriterion = 0.95, minsplit = 50,
-                                             minbucket = 20))
+                     control = disttree_control(type.tree = "ctree",
+                                                teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                mincriterion = 0.95, minsplit = 50,
+                                                minbucket = 20))
       predpar <- predict(dt, newdata = testdata, type = "parameter")
-
+      
     }
     
     if(method == "distforest"){
       df <- distforest(df.formula, 
                        data = learndata, 
                        family = if(distribution == "gaussian") dist_list_cens_normal else dist_list_cens_log, 
-                       type.tree = "ctree", 
-                       ntree = 100, censtype = "left", censpoint = 0, mtry = 27,
-                       control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                               mincriterion = 0, minsplit = 50,
-                                               minbucket = 20))
+                       ntree = 100, mtry = 27,
+                       control = disttree_control(type.tree = "ctree", 
+                                                  teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                  mincriterion = 0, minsplit = 50,
+                                                  minbucket = 20))
       predpar <- predict(df, newdata = testdata, type = "parameter")
     }
     
@@ -369,19 +375,19 @@ stationeval <- function(station, method, distribution)
       dt_bin <- disttree(dt.formula_bin, 
                          data = learndata,
                          family = dist_binomial, 
-                         type.tree = "ctree", 
-                         control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                 mincriterion = 0.95, minsplit = 50,
-                                                 minbucket = 20))
+                         control = disttree_control(type.tree = "ctree", 
+                                                    teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                    mincriterion = 0.95, minsplit = 50,
+                                                    minbucket = 20))
       
       # fit a tree on the positive observations only (with truncated normal distribution)
       dt_tr <- disttree(dt.formula, 
                         data = learndata_pos,
                         family = dist_list_trunc_normal, 
-                        type.tree = "ctree", 
-                        control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                                mincriterion = 0.95, minsplit = 50,
-                                                minbucket = 20))
+                        control = disttree_control(type.tree = "ctree", 
+                                                   teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                   mincriterion = 0.95, minsplit = 50,
+                                                   minbucket = 20))
       
       predpar <- predict(dt_tr, newdata = testdata, type = "parameter")
       predpar$nu <- predict(dt_bin, newdata = testdata, type = "parameter")$mu
@@ -392,21 +398,23 @@ stationeval <- function(station, method, distribution)
       # first a binomial tree to decide whether there is any precipitation at all
       df_bin <- distforest(df.formula_bin, 
                            data = learndata, 
-                           family = dist_binomial, type.tree = "ctree", 
+                           family = dist_binomial, 
                            ntree = 100, mtry = 27,
-                           control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                   mincriterion = 0, minsplit = 50,
-                                                   minbucket = 20))
+                           control = disttree_control(type.tree = "ctree", 
+                                                      teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                      mincriterion = 0, minsplit = 50,
+                                                      minbucket = 20))
       
       
       # fit a forest on the positive observations only (with truncated normal distribution)
       df_tr <- distforest(df.formula, 
                           data = learndata_pos, 
-                          family = dist_list_trunc_normal, type.tree = "ctree", 
+                          family = dist_list_trunc_normal,
                           ntree = 100, mtry = 27,
-                          control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                                  mincriterion = 0, minsplit = 50,
-                                                  minbucket = 20))
+                          control = disttree_control(type.tree = "ctree", 
+                                                     teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                     mincriterion = 0, minsplit = 50,
+                                                     minbucket = 20))
       
       predpar <- predict(df_tr, newdata = testdata, type = "parameter")
       predpar$nu <- predict(df_bin, newdata = testdata, type = "parameter")$mu
@@ -1090,21 +1098,19 @@ for(station in stationlist){
   dt_bin <- disttree(dt.formula_bin, 
                      data = learndata,
                      family = dist_binomial, 
-                     #censtype = "left", censpoint = 0, 
-                     type.tree = "ctree", 
-                     control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                             mincriterion = 0.95, minsplit = 50,
-                                             minbucket = 20))
+                     control = disttree_control(type.tree = "ctree", 
+                                                teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                                mincriterion = 0.95, minsplit = 50,
+                                                minbucket = 20))
   
   # fit a tree on the positive observations only (with truncated normal distribution)
   dt_tr <- disttree(dt.formula, 
                     data = learndata_pos,
                     family = dist_list_trunc_normal, 
-                    #censtype = "left", censpoint = 0, 
-                    type.tree = "ctree", 
-                    control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                            mincriterion = 0.95, minsplit = 50,
-                                            minbucket = 20))
+                    control = disttree_control(type.tree = "ctree", 
+                                               teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                               mincriterion = 0.95, minsplit = 50,
+                                               minbucket = 20))
   
   
   ## fit a hurdle tree using a 3-parametric truncated normal distribution with additional
@@ -1112,45 +1118,43 @@ for(station in stationlist){
   dt_h <- disttree(dt.formula, 
                    data = learndata,
                    family = dist_list_hurdle_normal, 
-                   #censtype = "left", censpoint = 0, 
-                   type.tree = "ctree", 
-                   control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                           mincriterion = 0.95, minsplit = 50,
-                                           minbucket = 20))
+                   control = disttree_control(type.tree = "ctree", 
+                                              teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                              mincriterion = 0.95, minsplit = 50,
+                                              minbucket = 20))
   
   
   ## fit distributional forest
   # first a binomial tree to decide whether there is any precipitation at all
   df_bin <- distforest(df.formula_bin, 
                        data = learndata, 
-                       family = dist_binomial, type.tree = "ctree", 
-                       # censtype = "left", censpoint = 0,
+                       family = dist_binomial, 
                        ntree = 100, mtry = 27,
-                       control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                               mincriterion = 0, minsplit = 50,
-                                               minbucket = 20))
+                       control = disttree_control(type.tree = "ctree", 
+                                                  teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                  mincriterion = 0, minsplit = 50,
+                                                  minbucket = 20))
   
   
   # fit a forest on the positive observations only (with truncated normal distribution)
   df_tr <- distforest(df.formula, 
                       data = learndata_pos, 
-                      family = dist_list_trunc_normal, type.tree = "ctree", 
-                      # censtype = "left", censpoint = 0,
+                      family = dist_list_trunc_normal, 
                       ntree = 100, mtry = 27,
-                      control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                              mincriterion = 0, minsplit = 50,
-                                              minbucket = 20))
+                      control = disttree_control(type.tree = "ctree", 
+                                                 teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                 mincriterion = 0, minsplit = 50,
+                                                 minbucket = 20))
   
   ## fit a hurdle forest using a 3-parametric truncated normal distribution with additional
   # third parameter nu modelling robs>0
   df_h <- distforest(df.formula, 
                      data = learndata, 
-                     family = dist_list_hurdle_normal, type.tree = "ctree", 
-                     # censtype = "left", censpoint = 0,
+                     family = dist_list_hurdle_normal, 
                      ntree = 100, mtry = 27,
-                     control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                             mincriterion = 0, minsplit = 50,
-                                             minbucket = 20))
+                     control = disttree_control(type.tree = "ctree", teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                                mincriterion = 0, minsplit = 50,
+                                                minbucket = 20))
   
   
   #####

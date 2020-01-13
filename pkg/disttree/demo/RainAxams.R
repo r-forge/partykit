@@ -3,14 +3,27 @@
 #######################################################
 
 ## Replication material for: 
-## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2018)
-## by Lisa Schlosser and Torsten Hothorn and Reto Stauffer and Achim Zeileis
-## URL: http://arxiv.org/abs/1804.02921
+## Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain (2019)
+## by Lisa Schlosser, Torsten Hothorn, Reto Stauffer, and Achim Zeileis
+## published in The Annals of Applied Statistics, 13(3), 1564-1589. 
+## doi:10.1214/19-AOAS1247 
+
+## Note: The exact results as presented were obtained by employing the following package versions:
+## disttree (version 0.1-0) based on the partykit package (version 1.2-3) and
+## RainTyrol (version 0.1-0)
+
+## Version requirements:
+## disttree (>= 0.2-0) requires RainTyrol (>= 0.2-0) and vice versa.
+## disttree (< 0.2-0) requires RainTyrol (< 0.2-0) and vice versa.
 
 ## This demo includes the application on one station (Axams) 
 ## (models learned on 24 years and evaluated on 4 years)
-## Full replication of all other results can be obtained with
+## Full replication of all other results presented in the paper can be obtained with
 ## demo("RainTyrol", package = "disttree")
+## Full replication of Supplement A (Different Response Distributions) can be obtained with
+## demo("RainDistributions", package = "disttree")
+## Full replication of Supplement B (Stationwise Evaluation) can be obtained with
+## demo("RainStationwise", package = "disttree")
 
 ## Computation time: approximately 18 minutes (on our machines, using 1 kernel)
 
@@ -144,10 +157,10 @@ set.seed(7)
 # fit distributional tree
 dt <- disttree(dt.formula, 
                data = learndata, family = dist_list_cens_normal, 
-               censtype = "left", censpoint = 0, type.tree = "ctree", 
-               control = ctree_control(teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
-                                       mincriterion = 0.95, minsplit = 50,
-                                       minbucket = 20))
+               control = disttree_control(type.tree = "ctree", 
+                                          teststat = "quad", testtype = "Bonferroni", intersplit = TRUE,
+                                          mincriterion = 0.95, minsplit = 50,
+                                          minbucket = 20))
 
 # visualization
 plot(dt)
@@ -158,11 +171,12 @@ coef(dt)
 
 # fit distributional forest
 df <- distforest(df.formula, 
-                 data = learndata, family = dist_list_cens_normal, type.tree = "ctree", 
-                 ntree = 100, censtype = "left", censpoint = 0, mtry = 27,
-                 control = ctree_control(teststat = "quad", testtype = "Univ", intersplit = TRUE,
-                                         mincriterion = 0, minsplit = 50,
-                                         minbucket = 20))
+                 data = learndata, family = dist_list_cens_normal,  
+                 ntree = 100, mtry = 27,
+                 control = disttree_control(type.tree = "ctree",
+                                            teststat = "quad", testtype = "Univ", intersplit = TRUE,
+                                            mincriterion = 0, minsplit = 50,
+                                            minbucket = 20))
 
 
 #####
@@ -222,6 +236,9 @@ y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
 y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
 dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
 
+# switch x-axis back to untransformed scale
+x <- x^(1.6)
+
 # point mass (slightly shifted)
 pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
 pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
@@ -245,14 +262,14 @@ lh4 <- crch::dcnorm(0.01, mean = df_mu[4], sd = df_sigma[4], left = 0)
 par(mar = c(3.8, 4, 2.3, 1.5))
 plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
      main = paste0("July ", pday), ylab = "Density", 
-     xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
+     xlab = expression(Total~precipitation~"["~mm~"/"~"24h"~"]"),
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
      xlim = c(-1.5,8))
 
 lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
 lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
 lines(x = x, y = y4, type = "l", col = pal[4], lwd = 1.3)
-legend("topright", c("Predicted distribution", "Point mass at censoring point", "Observation"),
+legend("topright", c("Predicted distribution", "Predicted point mass at 0", "Observation"),
        bty = "n", col = "black", lty = c(1, NA, NA), pch = c(NA, 19, 4), cex = 0.8, lwd = 1.3)
 
 # plot point mass
@@ -268,10 +285,10 @@ points(x = pm4[1], y = pm4[2], col = pal[4], pch = 19)
 
 
 # plot observations
-points(x = obs1[1], y = obs1[2], col = pal[1], pch = 4)
-points(x = obs2[1], y = obs2[2], col = pal[3], pch = 4)
-points(x = obs3[1], y = obs3[2], col = pal[2], pch = 4)
-points(x = obs4[1], y = obs4[2], col = pal[4], pch = 4)
+points(x = obs1[1], y = obs1[2], col = pal[1], pch = 4, cex = 1.4)
+points(x = obs2[1], y = obs2[2], col = pal[3], pch = 4, cex = 1.4)
+points(x = obs3[1], y = obs3[2], col = pal[2], pch = 4, cex = 1.4)
+points(x = obs4[1], y = obs4[2], col = pal[4], pch = 4, cex = 1.4)
 
 lines(x = c(obs1[1], obs1[1]), y = c(obs1[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 lines(x = c(obs2[1], obs2[1]), y = c(obs2[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
@@ -279,10 +296,10 @@ lines(x = c(obs3[1], obs3[1]), y = c(obs3[2], 0), col = "darkgray", type = "l", 
 lines(x = c(obs4[1], obs4[1]), y = c(obs4[2], 0), col = "darkgray", type = "l", lty = 2, lwd = 1.3)
 
 # add labels
-text(x = -0.8, y = lh1, labels = "2009", col = pal[1], cex = 0.8)
-text(x = -0.8, y = lh2, labels = "2010", col = pal[3], cex = 0.8)
-text(x = -0.8, y = lh3, labels = "2011", col = pal[2], cex = 0.8)
-text(x = -0.8, y = lh4, labels = "2012", col = pal[4], cex = 0.8)
+text(x = -1.7, y = lh1, labels = "2009", col = pal[1], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh2, labels = "2010", col = pal[3], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh3, labels = "2011", col = pal[2], cex = 0.8)     # -0.8
+text(x = -1.7, y = lh4, labels = "2012", col = pal[4], cex = 0.8)     # -0.8
 
 
 
