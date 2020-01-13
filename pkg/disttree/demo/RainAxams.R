@@ -234,22 +234,23 @@ y1 <- crch::dcnorm(x, mean = df_mu[1], sd = df_sigma[1], left = 0)
 y2 <- crch::dcnorm(x, mean = df_mu[2], sd = df_sigma[2], left = 0)
 y3 <- crch::dcnorm(x, mean = df_mu[3], sd = df_sigma[3], left = 0)
 y4 <- crch::dcnorm(x, mean = df_mu[4], sd = df_sigma[4], left = 0)
-dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, "3" = {dayending <- "rd"})
+dayending <- if(pday > 3) "th" else switch(pday, "1" = {dayending <- "st"}, "2" = {dayending <- "nd"}, 
+                                           "3" = {dayending <- "rd"})
 
 # switch x-axis back to untransformed scale
 x <- x^(1.6)
 
 # point mass (slightly shifted)
-pm1 <- c(0.05, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))
-pm2 <- c(0.01, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))
-pm3 <- c(-0.03, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))
-pm4 <- c(-0.07, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))
+pm1 <- c(0.15, crch::dcnorm(-1, mean = df_mu[1], sd = df_sigma[1], left = 0))     #  0.05
+pm2 <- c(0.05, crch::dcnorm(-1, mean = df_mu[2], sd = df_sigma[2], left = 0))     #  0.01
+pm3 <- c(-0.05, crch::dcnorm(-1, mean = df_mu[3], sd = df_sigma[3], left = 0))    # -0.03
+pm4 <- c(-0.15, crch::dcnorm(-1, mean = df_mu[4], sd = df_sigma[4], left = 0))    # -0.07
 
 # observations
-obs1 <- c(testdata[pdays,"robs"][1], crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
-obs2 <- c(testdata[pdays,"robs"][2], crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
-obs3 <- c(testdata[pdays,"robs"][3], crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
-obs4 <- c(testdata[pdays,"robs"][4], crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
+obs1 <- c(testdata[pdays,"robs"][1]^(1.6), crch::dcnorm(testdata[pdays,"robs"][1], mean = df_mu[1], sd = df_sigma[1], left = 0))
+obs2 <- c(testdata[pdays,"robs"][2]^(1.6), crch::dcnorm(testdata[pdays,"robs"][2], mean = df_mu[2], sd = df_sigma[2], left = 0))
+obs3 <- c(testdata[pdays,"robs"][3]^(1.6), crch::dcnorm(testdata[pdays,"robs"][3], mean = df_mu[3], sd = df_sigma[3], left = 0))
+obs4 <- c(testdata[pdays,"robs"][4]^(1.6), crch::dcnorm(testdata[pdays,"robs"][4], mean = df_mu[4], sd = df_sigma[4], left = 0))
 
 # legendheight
 lh1 <- crch::dcnorm(0.01, mean = df_mu[1], sd = df_sigma[1], left = 0)
@@ -263,8 +264,9 @@ par(mar = c(3.8, 4, 2.3, 1.5))
 plot(x = x, y = y1, type = "l", col = pal[1], lwd = 1.3, 
      main = paste0("July ", pday), ylab = "Density", 
      xlab = expression(Total~precipitation~"["~mm~"/"~"24h"~"]"),
+     # xlab = expression(Total~precipitation~"["~mm^(1/1.6)~"/"~"24h"~"]"),
      ylim = c(0,max(y1, y2, y3, y4, pm1, pm2, pm3, pm4) + 0.01),
-     xlim = c(-1.5,8))
+     xlim = c(-2,28))     #  xlim = c(-1.5,8))
 
 lines(x = x, y = y2, type = "l", col = pal[3], lwd = 1.3)
 lines(x = x, y = y3, type = "l", col = pal[2], lwd = 1.3)
