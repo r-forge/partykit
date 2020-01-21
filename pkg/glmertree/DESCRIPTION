@@ -1,7 +1,7 @@
 Package: glmertree
 Title: Generalized Linear Mixed Model Trees
-Date: 2019-04-15
-Version: 0.2-0
+Date: 2020-01-21
+Version: 0.2-1
 Authors@R: c(person(given = "Marjolein", family = "Fokkema", 
     role = c("aut", "cre"), email = "M.Fokkema@fsw.leidenuniv.nl"), 
   person(given = "Achim", family = "Zeileis", role = "aut", 
@@ -15,4 +15,4 @@ Imports: graphics, stats, utils, Formula
 Suggests: vcd, lattice
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

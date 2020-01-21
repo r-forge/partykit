@@ -9,9 +9,12 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ## remember call
   cl <- match.call()
   
-  ## check if data is complet, print warning if not: 
+  ## check if data is complete, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
     warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+    data_has_missings <- TRUE
+  } else {
+    data_has_missings <- FALSE
   }
   
   ## process offset:
@@ -58,6 +61,13 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
+  }
+  
+  ## process data
+  if (data_has_missings) {
+    old_N <- nrow(data)
+    data <- data[complete.cases(data[ , all.vars(ff)]), ]
+    warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
   }
   
   ## initialization
