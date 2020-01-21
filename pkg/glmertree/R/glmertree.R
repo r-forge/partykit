@@ -203,6 +203,9 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   ## check if data is complet, print warning if not: 
   if (nrow(data) != sum(stats::complete.cases(data))) {
     warning("data contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+    data_has_missings <- TRUE
+    } else {
+      data_has_missings <- FALSE
   }
   
   ## process offset:
@@ -249,6 +252,13 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
                   lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
   } else {
     rf <- formula(ff, lhs = 1L, rhs = 2L)
+  }
+  
+  ## process data
+  if (data_has_missings) {
+    old_N <- nrow(data)
+    data <- data[complete.cases(data[ , all.vars(ff)]), ]
+    warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
   }
   
   ## initialization
@@ -488,14 +498,10 @@ get_merMod_SEs <- function(object, which = "tree", global_intercept = TRUE) {
 }
 
 
-plot.glmertree <- plot.lmertree <- function(x, which = "all", # c("tree", "ranef", "tree.coef", "global.coef", "all") 
-                                              ask = TRUE,
-                                              type = "extended", 
-                                              observed = TRUE, 
-                                              fitted = "combined", 
-                                              tp_args = list(), 
-                                              drop_terminal = TRUE, 
-                                              terminal_panel = NULL, ...) {
+plot.glmertree <- plot.lmertree <- function(
+  x, which = "all", # c("tree", "ranef", "tree.coef", "global.coef", "all") 
+  ask = TRUE, type = "extended", observed = TRUE, fitted = "combined", 
+  tp_args = list(), drop_terminal = TRUE, terminal_panel = NULL, ...) {
   
   merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
   ff <- Formula::as.Formula(x$formula)

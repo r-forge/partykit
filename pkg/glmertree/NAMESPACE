@@ -5,7 +5,7 @@ import("grid")
 
 importFrom("utils", "globalVariables", "installed.packages")
 importFrom("graphics", "plot")
-importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula")
+importFrom("stats", "coef", "logLik", "model.frame", "predict", "terms", "update", "residuals", "as.formula", "complete.cases")
 importFrom("grDevices", "devAskNewPage")
 importFrom("graphics", "boxplot", "hist")
 

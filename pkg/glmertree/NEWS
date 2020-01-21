@@ -1,3 +1,10 @@
+Changes in Version 0.2-1
+
+  o Bug fix for missing data: Listwise deletion over all predictors and
+    response variables is now applied. Otherwise, global and local parts
+    of (g)lmertree model could be estimated based on a different sample
+    size.
+
 
 Changes in Version 0.2-0
 
