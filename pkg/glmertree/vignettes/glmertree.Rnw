@@ -84,7 +84,7 @@ For both main functions, the \code{formula} argument specifies the model formula
 %
 
 
-\section{Fitting a mixed-model tree with constant fits in terminal nodes}
+\section{Fitting a mixed-model tree with constant fits}
 \label{sec:regression_trees}
 
 For this example, we will make use of the artificially generated \code{MHserviceDemo} dataset, containing data on $N = \Sexpr{nrow(MHserviceDemo)}$ young people receiving treatment at one of \Sexpr{length(unique(MHserviceDemo$cluster_id))} mental-health service providers. The response variable is (\code{outcome}), a continuous variable representing treatment outcome, as measured by a mental-health difficulties score at follow-up, corrected for the baseline assessment, with higher values reflecting poorer treatment outcome. Potential predictor variables are demographic variables and case characteristics: two continuous (\code{age} and \code{impact}) and four binary covariates (\code{gender}, \code{emotional}, \code{autism} and \code{conduct}). The cluster indicator (\code{cluster\_id}) is an indicator for the mental-health service provider. The data can be loaded as follows:
