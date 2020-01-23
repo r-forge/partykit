@@ -1,3 +1,7 @@
+# partykit 1.2-6
+
+* Fix warning in predict.cforest
+
 # partykit 1.2-5
 
 ### Bugfixes
