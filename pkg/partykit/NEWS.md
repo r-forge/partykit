@@ -1,6 +1,7 @@
 # partykit 1.2-6
 
 * Fix warning in predict.cforest
+* Don't rely on suggested packages in man and tests
 
 # partykit 1.2-5
 
