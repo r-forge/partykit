@@ -1501,7 +1501,13 @@ Consequently, if only the slope $\beta_1$ but not the intercept $\beta_0$ change
 is of type $(0, \delta)^\top$ and thus orthogonal to the mean regressor. Due to this residual-based
 tests as in GUIDE break down and do not have power to detect this. Note that this situation does not
 have to be rare in practice: Especially for binary regressor variables (e.g., as in treatment-subgroup
-investigations) it can easily occur \citep[see Figure~2 in][for an illustration]{Loh+He+Man:2015}.
+interactions, see \citealp{Doove+Dusseldorp+VanDeun:2014}) it can easily occur \citep[see Figure~2 in][for an illustration]{Loh+He+Man:2015}.
+%% FIXME: add reference to Seibold+Hothorn+Zeileis:2019
+Testing strategies being capable of detecting all kinds of changes including those orthogonal to the 
+mean are also employed in an extension of (generalised) linear model trees introduced by 
+\cite{Seibold+Hothorn+Zeileis:2019}
+which allows for selected model parameters to be kept fixed at a globally estimated value while only 
+changes in the remaining parameters are considered for splitting.
 
 Also in more general models, residual-based and score-based procedures are expected to perform
 equally well if all model parameters are highly correlated. But if parameters do change orthogonally
