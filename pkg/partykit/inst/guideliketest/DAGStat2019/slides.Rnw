@@ -33,63 +33,29 @@ library("partykit")
 library("Formula")
 library("parallel")
 library("lattice")
+library("latticeExtra")
 library("scales")
 library("colorspace")
-#source("../guidelike.R")
-source("../tests_guideprune.R")
-#source("../ccprune.R")
+#source("../simulation/guidelike.R")
+source("../simulation/tests_guideprune.R")
+#source("../simulation/ccprune.R")
 
-load("../draft/stump.rda")
-sim_stump <- simres$res
-rm(simres)
-
-load("../draft/tree.rda")
-sim_tree <- simres$res
-rm(simres)
-
-load("../draft/pruning.rda")
-pr <- simres$res
-## extract data for xyplot comparing ARI and ARI_p
-pr <- pr[,c(1,2,7,8,9,12,15)]
-## extended data set with postpruning results being represented as separated tests
-prex <- pr[,c(1,2,3,4,6)]
-prex <- rbind(prex,prex)
-
-prex$test <- factor(prex$test,
-                    levels = c("ctree","mfluc",
-                               "guide_sum_12", "guide_sum_1_cor",
-                               "ctree_p","mfluc_p",
-                               "guide_sum_12_p", "guide_sum_1_cor_p"),
-                    labels = c("CTree","MOB",
-                               "GUIDE_scores", "GUIDE",
-                               "CTree_p","MOB_p",
-                               "GUIDE_scores_p", "GUIDE_p"))
-
-for(i in c((length(pr$test)+1) : (2*length(pr$test)))){
-  if(prex$test[i] == "CTree") prex$test[i] <- "CTree_p"
-  if(prex$test[i] == "MOB") prex$test[i] <- "MOB_p"
-  if(prex$test[i] == "GUIDE_scores") prex$test[i] <- "GUIDE_scores_p"
-  if(prex$test[i] == "GUIDE") prex$test[i] <- "GUIDE_p"
-}
-
-prex$nrsubgr[(length(pr$nrsubgr)+1) : (2*length(pr$nrsubgr))] <- pr$nrsubgr_p
-prex$ari[(length(pr$ari)+1) : (2*length(pr$ari))] <- pr$ari_p
-
-load("../draft/3way_xi00_delta03.rda")
-load("../draft/3way_xi08_delta1.rda")
-d00$xi <- 0
-d08$xi <- 0.8
-d3way <- rbind(d00, d08)
-d3way$xi <- factor(d3way$xi, levels = c(0,0.8), labels = c(0,0.8))
+load("../simulation/results/sim_stump.rda")
+load("../simulation/results/sim_tree.rda")
+load("../simulation/results/sim_3way.rda")
 
 
 ## HCL palette
-pal_dgp_light <- qualitative_hcl(3, "Set 2")
+pal <- qualitative_hcl(5, "Dark 3")
+names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE+scores", "CTree+max")
+
+## HCL palette for illustrations of data generating process
+pal_dgp_light <- qualitative_hcl(3, "Dark 3", c1 = 50, l1 = 75)
 pal_dgp <- qualitative_hcl(3, "Dark 3")
 
-## HCL palette (light)
-pal_results <- qualitative_hcl(4, "Dark 3")
-                
+## HCL palette for tree panels
+paltrees <- rgb(c(0.9, 1), c(0.9, 1), c(0.9, 1))
+
 
 #produce plots
 set.seed(7)
@@ -443,8 +409,8 @@ delta <- 1
 beta0 <- 0
 beta1 <- 1
 
-d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
-               vary_beta = "beta0", beta1 = beta1, delta = delta, xi = xi, sigma = sigma)
+d <- dgp_stump(nobs = nobs, changetype= "abrupt",
+               variation = "beta0", beta1 = beta1, delta = delta, xi = xi, sigma = sigma)
 
 sp_xi1 <- partysplit(3L, breaks = 0)
 
@@ -458,8 +424,6 @@ pn <- partynode(1L, split = sp_xi1,
                                          expression(beta[1] ==~" "~1~" or "~-delta)))))
 
 p <- party(pn, d)
-
-paltrees <- rgb(c(1, 0.9, 1), c(1, 0.9, 1), c(1, 0.9, 1))
 
 ep <- function (obj, digits = 3, abbreviate = FALSE, justmin = Inf, 
                 just = c("alternate", "increasing", "decreasing", "equal"), 
@@ -574,6 +538,7 @@ tp <- function (obj, digits = 3, abbreviate = FALSE,
 }
 
 class(tp) <- "grapcon_generator"
+
 @
 
 \vspace{-0.2cm}
@@ -585,7 +550,7 @@ class(tp) <- "grapcon_generator"
 #par(mar=c(3,3,0,0), oma = c(3,3,0,0))
 plot(p, 
      tp_args = list(FUN = identity, width = 15), 
-     ip_args = list(fill = paltrees[c(2, 3)]),
+     ip_args = list(fill = paltrees[c(1, 2)]),
      drop_terminal = TRUE, tnex = 1, edge_panel = ep, terminal_panel = tp)
 @
 \endminipage
@@ -610,8 +575,8 @@ mtext(expression(beta[1]== 1), side = 4, col = pal_dgp[1], las = 1, line = 0.5, 
 
 \minipage{0.36\textwidth}
 <<dgp_stump3, fig=TRUE, echo=FALSE, width=4, height=3>>=
-d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
-               vary_beta = "beta1", beta0 = beta0, delta = delta, xi = xi, sigma = sigma)
+d <- dgp_stump(nobs = nobs, changetype= "abrupt",
+               variation = "beta1", beta0 = beta0, delta = delta, xi = xi, sigma = sigma)
 
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "", xlab = "", main = expression("varying"~beta[1]),
@@ -630,8 +595,8 @@ mtext(expression(beta[1]==+delta), side = 4, col = pal_dgp[1], las = 1, line = 0
 \endminipage
 \minipage{0.36\textwidth}
 <<dgp_stump4, fig=TRUE, echo=FALSE, width=4, height=3>>=
-d <- dgp_stump(nobs = nobs, binary_beta = TRUE, binary_regressor = FALSE, only_intercept = FALSE,
-               vary_beta = "all", delta = delta, xi = xi, sigma = sigma)
+d <- dgp_stump(nobs = nobs, changetype= "abrupt", 
+               variation = "all", delta = delta, xi = xi, sigma = sigma)
 par(mar = c(4,4,2,4))
 plot(x = d$x[d$z1<=xi], y = d$y[d$z1<=xi], ylim = c(-5,5), ylab = "", xlab = "",
      main = expression("varying"~beta[0]~"and"~beta[1]),
@@ -666,69 +631,112 @@ subdata$test <- factor(subdata$test,
                        levels = c("ctree","mfluc",
                                   "guide_sum_12", "guide_sum_1_cor"),
                        labels = c("CTree","MOB",
-                                  "GUIDE_scores", "GUIDE"))
+                                  "GUIDE+scores", "GUIDE"))
 
 subdataxi <- subset(subdata, xi %in% c(0,0.8))
 
-par.settings <- list(superpose.symbol = list(col = pal_results, 
-                                             fill = pal_results), 
-                     superpose.line = list(col = pal_results))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
-library("latticeExtra")
-useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test, 
+useOuterStrips(xyplot(prop_Tsplit ~ delta | variation + xi, groups = ~ test, 
                       data = subdataxi, 
-                      subset = binary_beta == TRUE & binary_regressor == FALSE & 
-                        only_intercept == FALSE,# & xi == 0, 
+                      subset = changetype == "abrupt", 
                       type = "l", lty = c(1,1,1,1),
+                      lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
                       key =  list(text = list(levels(subdataxi$test)),
                                   lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                               col = pal_results, lwd = 1)),
+                                               col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
                       xlab = expression(delta),
-                      ylab = expression("Proportion of selecting"~Z[1]),
+                      ylab = expression("Selection probability of"~Z[1]),
                       par.settings = par.settings),
                
-               strip =strip.custom(factor.levels = c(expression("vary"~beta[0]~"and"~beta[1]), 
-                                                     expression("vary"~beta[0]), 
-                                                     expression("vary"~beta[1])),
+               strip =strip.custom(factor.levels = c(expression("varying"~beta[0]~"and"~beta[1]), 
+                                                     expression("varying"~beta[0]), 
+                                                     expression("varying"~beta[1])),
                                    bg = "gray90"),
-               strip.left=strip.custom(factor.levels = c(expression(xi == 0),                                                              expression(xi == 0.8)),
+               strip.left=strip.custom(factor.levels = c(expression(xi == 0~" (50%)"),                                                              expression(xi == 0.8~" (90%)" )),
                                        bg = "gray90"))
 
 
 @
 \end{figure}
-
 \end{frame}
 
 
-%\begin{frame}%[fragile]
-%\frametitle{Simulation 1: Full factorial analysis (vary both)}
+\begin{frame}%[fragile]
+\frametitle{Simulation 1: Continuously changing parameters}
 
-%\begin{figure}%[t]
-%\setkeys{Gin}{width=0.8\linewidth}
-%<<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
-%xyplot(pval_z1 ~ cat | xi, 
-%       groups = interaction(bin, res_scores), 
-%       data = d3way, 
-%       ylim = c(0,0.5),
-%       type = c("a"), 
-%       col = c("red", "blue", "red", "blue"),
-%       lty = c(1,1,2,2),
-%       xlab = "Categorization",
-%       ylab = expression(p~"-value of"~Z[1]),
-%       #index.cond = list(c(1,2,3,4)),
-%       strip = strip.custom(factor.levels = c(expression(xi==0~"and"~delta==0.3), 
-%                                              expression(xi==0.8~"and"~delta==1))),
-%       key = list(text = list(levels(interaction(d3way$bin, d3way$res_scores))),
-%                  lines = list(lty = c(1,1,2,2), 
-%                               type = "l",
-%                               col = c("red", "blue", "red", "blue"))))
-%@
-%\end{figure}
-%\end{frame}
+\begin{figure}%[t]
+\setkeys{Gin}{width=0.8\linewidth}
+<<contbeta, fig=TRUE, echo=FALSE, height=4, width=8>>=
+subdata <- subset(sim_stump, test %in% c("ctree", "ctree_max","mfluc","guide_sum_12","guide_sum_1_cor"))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree", "ctree_max","mfluc","guide_sum_12","guide_sum_1_cor"),
+                       labels = c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE"))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")], 
+                                             fill = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")]))
+
+xyplot(prop_Tsplit ~ delta | variation, groups = ~ test, 
+       data = subdata, 
+       subset = changetype == "continuous", 
+       scales=list(x=list(at=seq(1,11,2))),
+       type = "l", 
+       layout= c(3,1),
+       lwd = 2,
+       key =  list(text = list(levels(subdata$test)),
+                   lines = list(lty = c(1,1,1,1,1), 
+                                type = "l", 
+                                col = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")], 
+                                lwd = 2)), 
+       xlab = expression(delta),
+       ylab = expression("Selection probability of"~Z[1]),
+       index.cond = list(c(2,3,1)),
+       strip = strip.custom(factor.levels = c(expression("varying"~beta[0]~" and "~beta[1]),
+                                              expression("varying"~beta[0]), 
+                                              expression("varying"~beta[1])),
+                            bg = "gray90"),
+       par.settings = par.settings)
+@
+\end{figure}
+\end{frame}
+
+
+
+\begin{frame}%[fragile]
+\frametitle{Simulation 1: Full factorial analysis of building blocks}
+
+\begin{figure}%[t]
+\setkeys{Gin}{width=0.8\linewidth}
+<<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
+xyplot(pval_z1 ~ cat | xi, 
+       groups = interaction(bin, res_scores), 
+       data = sim_3way, 
+       ylim = c(0,0.5),
+       type = c("a"), 
+       col = c(pal[1], pal[3], pal[1], pal[3]),
+       lty = c(1,1,2,2),
+       lwd = 2,
+       layout = c(2,1),
+       scales = list(alternating=FALSE),
+       xlab = "Categorization",
+       ylab = expression("p-value of"~Z[1]),
+       strip = strip.custom(factor.levels = c(expression(xi==0~"(50%)"~" and"~delta==0.3), 
+                                              expression(xi==0.8~"(90%)"~" and"~delta==1)),
+                            bg = "gray90"),
+       key = list(text = list(c("Goodness of fit:", "  residuals", "  scores", "Dichotomization:", "  yes", "  no")),
+                  columns = 2,
+                  lines = list(lty = c(0,1,2,0,1,1), 
+                               type = "l", lwd = 2,
+                               col = c("black","black","black","black", pal[1], pal[3]))))
+
+@
+\end{figure}
+\end{frame}
 
 
 
@@ -736,11 +744,10 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | vary_beta + xi, groups = ~ test,
 \frametitle{Simulation 2: True tree structure}
 
 <<true_tree_dgp, eval = TRUE, echo=FALSE, results=hide>>=
-
 # d <- dgp_tree(nobs = 250)
 set.seed(7)
-d <- dgp_tree(nobs = 250, xi = 0, binary_regressor = FALSE, vary_beta = "all", 
-              binary_beta = TRUE, nrsplitvar = 2, sigma = 0.5)
+d <- dgp_tree(nobs = 250, xi = 0, variation = "all", 
+              changetype= "abrupt", sigma = 0.5)
 
 sp_xi2 <- partysplit(4L, breaks = 0)
 sp_xi1 <- partysplit(3L, breaks = 0)
@@ -805,7 +812,6 @@ mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0
 \endminipage
 \end{center}
 \end{figure}
-
 \end{frame}
 
 
@@ -815,37 +821,29 @@ mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0
 \begin{figure}%[t]
 \setkeys{Gin}{width=0.8\linewidth}
 <<tree_ari, fig=TRUE, echo=FALSE, height=4, width=8>>=
-subdata <- subset(sim_tree, test %in% c("ctree","mfluc",
-                                        "guide_sum_12", "guide_sum_1_cor"))
-#subdata <- subset(subdata, xi %in% c(0,0.5,0.8))
-subdata$test <- factor(subdata$test, 
-                       levels = c("ctree", "mfluc",
-                                  "guide_sum_12", "guide_sum_1_cor"),
-                       labels = c("CTree","MOB",
-                                  "GUIDE_scores", "GUIDE"))
-
-par.settings <- list(superpose.symbol = list(col = pal_results, 
-                                             fill = pal_results), 
-                     superpose.line = list(col = pal_results))
-
-
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 xyplot(ari ~ delta | xi, groups = ~ test, 
-       data = subdata, 
-       type = "l",
-       lty = c(1,1,1,1),
-       key =  list(text = list(levels(subdata$test)),
+       data = sim_tree[sim_tree$pruning == "pre",], 
+       type = "l", lty = c(1,1,1,1),
+       lwd = 2,
+       key =  list(text = list(levels(sim_tree$test)[1:4]),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal_results, lwd = 1)),
+                                col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        scales=list(x=list(at=seq(1,11,2))),
        xlab = expression(delta),
        ylab = "Adjusted Rand Index",
+       #index.cond = list(c(2,3,1),c(2,1)),
+       par.settings = par.settings,
        strip = strip.custom(factor.levels = c(expression(xi==0), 
                                               expression(xi==0.2), 
                                               expression(xi==0.5), 
                                               expression(xi==0.8)),
-                            bg = "gray90"),
-       par.settings = par.settings)
+                            bg = "gray90"))
+       
+
 
 @
 
@@ -858,18 +856,25 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 \begin{figure}%[t]
 \setkeys{Gin}{width=0.8\linewidth}
 <<prune_ari, fig=TRUE, echo=FALSE, height=4, width=8>>=
-par.settings <- list(superpose.symbol = list(col = pal_results, 
-                                             fill = pal_results), 
-                     superpose.line = list(col = pal_results))
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], 
+                                             fill = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")]))
 
-#prex <- subset(prex, xi %in% c(0,0.5,0.8))
+# add new variable that combines test and pruning strategy
+sim_tree$test_pruning <- paste(sim_tree$test, sim_tree$pruning, sep="_")
+sim_tree$test_pruning <- factor(sim_tree$test_pruning,
+                                levels = c("CTree_pre", "MOB_pre", "GUIDE+scores_pre", "GUIDE_pre",
+                                           "CTree_post", "MOB_post", "GUIDE+scores_post", "GUIDE_post"),
+                                labels = c("CTree_pre", "MOB_pre", "GUIDE+scores_pre", "GUIDE_pre",
+                                           "CTree_post", "MOB_post", "GUIDE+scores_post", "GUIDE_post"))
 
-xyplot(ari ~ delta | xi, groups = ~ test, 
-       data = prex, 
+xyplot(ari ~ delta | xi, groups = ~ test_pruning, 
+       data = sim_tree, 
        type = "l", lty = c(1,1,1,1,2,2,2,2),
-       key =  list(text = list(levels(prex$test)[1:4]),
+       lwd = 2,
+       key =  list(text = list(levels(sim_tree$test)[1:4]),
                    lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
-                                col = pal_results, lwd = 1)),
+                                col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
        layout= c(4,1),
        scales=list(x=list(at=seq(1,11,2))),
        xlab = expression(delta),
@@ -883,7 +888,6 @@ xyplot(ari ~ delta | xi, groups = ~ test,
 )
 @
 \end{figure}
-
 \end{frame}
 
 
