@@ -35,8 +35,9 @@ and the reimplementation of GUIDE also allowing for modifications.
 The file ccprune.R contains the reimplementation of cost-complexity pruning.
 
 For the partykit package a development version (1.2-4.2) which is based on version 1.2-4 is applied. 
-Contrary to version 1.2.4 (as currently available on CRAN) this development version provides M-fluctuation-tests. 
-Therefore, the applied development version is provided in the folder 'simulation' named partykit_1.2-4.2.tar.gz.
+Contrary to version 1.2-4 (as currently available on CRAN) this development version provides M-fluctuation tests. 
+Therefore, the applied development version 1.2-4.2 is provided in the folder 'simulation'.
+(For vignettes please see partykit package version 1.2-4. or https://cran.r-project.org/web/packages/partykit/index.html)
 
 Computation time for full reproduction of results (on our machines, using 3 kernels): 296 hours and 20 min consisting of
 approximately 21 h for the "stump" scenario 
