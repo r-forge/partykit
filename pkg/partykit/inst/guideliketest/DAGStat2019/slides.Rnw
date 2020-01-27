@@ -1,5 +1,5 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
-\usetheme[license, url]{uibk}
+\usetheme[url,license]{uibk}
 
 \title{The Power of Unbiased Recursive Partitioning:\\
 A Unifying View of CTree, MOB, and GUIDE}
@@ -645,8 +645,8 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | variation + xi, groups = ~ test,
                       type = "l", lty = c(1,1,1,1),
                       lwd = 2,
                       scales=list(x=list(at=seq(1,11,2))),
-                      key =  list(text = list(levels(subdataxi$test)),
-                                  lines = list(lty = c(1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                      key =  list(text = list(c(levels(subdataxi$test)," ")),
+                                  lines = list(lty = c(1,1,1,1,0), type = "l", pch = 1, cex = 0.8,
                                                col = pal[c("CTree", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
                       layout= c(3,2),
                       index.cond = list(c(2,3,1),c(2,1)),
@@ -665,6 +665,52 @@ useOuterStrips(xyplot(prop_Tsplit ~ delta | variation + xi, groups = ~ test,
 @
 \end{figure}
 \end{frame}
+
+
+\begin{frame}%[fragile]
+\frametitle{Simulation 1: Maximum vs.\ linear selection}
+
+\begin{figure}
+\setkeys{Gin}{width=0.8\linewidth}
+<<scores_stump_max, fig=TRUE, echo=FALSE, height=5, width=8>>=
+subdata <- subset(sim_stump, test %in% c("ctree","ctree_max","mfluc","guide_sum_12","guide_sum_1_cor"))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree", "ctree_max","mfluc","guide_sum_12","guide_sum_1_cor"),
+                       labels = c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE"))
+
+subdataxi <- subset(subdata, xi %in% c(0,0.8))
+
+par.settings <- list(superpose.symbol = list(col = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")], 
+                                             fill = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")]), 
+                     superpose.line = list(col = pal[c("CTree","CTree+max","MOB","GUIDE+scores","GUIDE")]))
+
+useOuterStrips(xyplot(prop_Tsplit ~ delta | variation + xi, groups = ~ test, 
+                      data = subdataxi, 
+                      subset = changetype == "abrupt", 
+                      type = "l", lty = c(1,1,1,1,1),
+                      lwd = 2,
+                      scales=list(x=list(at=seq(1,11,2))),
+                      key =  list(text = list(levels(subdataxi$test)),
+                                  lines = list(lty = c(1,1,1,1,1), type = "l", pch = 1, cex = 0.8,
+                                               col = pal[c("CTree", "CTree+max", "MOB", "GUIDE+scores", "GUIDE")], lwd = 2)),
+                      layout= c(3,2),
+                      index.cond = list(c(2,3,1),c(2,1)),
+                      xlab = expression(delta),
+                      ylab = expression("Selection probability of"~Z[1]),
+                      par.settings = par.settings),
+               
+               strip =strip.custom(factor.levels = c(expression("varying"~beta[0]~"and"~beta[1]), 
+                                                     expression("varying"~beta[0]), 
+                                                     expression("varying"~beta[1])),
+                                   bg = "gray90"),
+               strip.left=strip.custom(factor.levels = c(expression(xi == 0~" (50%)"),                                                              expression(xi == 0.8~" (90%)" )),
+                                       bg = "gray90"))
+
+
+@
+\end{figure}
+\end{frame}
+
 
 
 \begin{frame}%[fragile]
