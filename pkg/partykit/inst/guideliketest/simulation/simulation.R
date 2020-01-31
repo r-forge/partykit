@@ -41,7 +41,7 @@ sim_stump <- simwrapper(scenario = "stump",
 
 sim_stump <- sim_stump$res
 
-save(sim_stump, file = "sim_stump.rda")
+save(sim_stump, file = "results/sim_stump.rda")
 
 
 ### "stump" scenario, full factorial analysis as discussed in Section 5.2.
@@ -101,7 +101,7 @@ sim_3way2$xi <- 0.8
 sim_3way <- rbind(sim_3way1, sim_3way2)
 sim_3way$xi <- factor(sim_3way$xi, levels = c(0,0.8), labels = c(0,0.8))
 
-save(sim_3way, file = "sim_3way.rda")
+save(sim_3way, file = "results/sim_3way.rda")
 
 
 ### "tree" scenario as discussed in Section 5.3.
@@ -136,4 +136,4 @@ sim_tree_ex$pruning <- c(rep("pre", NROW(sim_tree)), rep("post", NROW(sim_tree))
 sim_tree <- sim_tree_ex
 rm(sim_tree_ex)
 
-save(sim_tree, file = "sim_tree.rda")
+save(sim_tree, file = "results/sim_tree.rda")
