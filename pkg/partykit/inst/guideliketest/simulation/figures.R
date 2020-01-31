@@ -19,15 +19,15 @@ names(pal) <- c("CTree", "MOB", "GUIDE", "GUIDE+scores", "CTree+max")
 # (computation time for full replication of simulation results by simulation.R: 
 # approximately 296 hours, on our machines, using 3 kernels)
 
-if(file.exists("sim_stump.rda") & file.exists("sim_3way.rda") & file.exists("sim_tree.rda")){
-  load("sim_stump.rda")
-  load("sim_3way.rda")
-  load("sim_tree.rda")
+if(file.exists("results/sim_stump.rda") & file.exists("results/sim_3way.rda") & file.exists("results/sim_tree.rda")){
+  load("results/sim_stump.rda")
+  load("results/sim_3way.rda")
+  load("results/sim_tree.rda")
 } else {
   source("simulation.R")
-  save(sim_stump, file = "sim_stump.rda")
-  save(sim_3way, file = "sim_3way.rda")
-  save(sim_tree, file = "sim_tree.rda")
+  save(sim_stump, file = "results/sim_stump.rda")
+  save(sim_3way, file = "results/sim_3way.rda")
+  save(sim_tree, file = "results/sim_tree.rda")
 }
 
 
