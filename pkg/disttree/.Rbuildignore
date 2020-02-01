@@ -9,3 +9,5 @@ inst/
 demo/demo_data_prep.R
 demo/timeAxams.R
 TODO
+Makefile
+_coverage.rds
