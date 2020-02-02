@@ -72,13 +72,13 @@ disttree <- function(formula,
   # (LS) check whether d$yx really contains only the response (and no covariates)
   if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # NOTE: (ML) can this happen after formula creation?
   
-  if(NCOL(d$yx[[1]]) > 1) stop("response variable has to be univariate") # TODO: (ML) adapt for multidimensional responses
+  if(NCOL(d$yx[[1]]) > 1) warning("multivariate response variable might not be properly supported") # TODO: (ML) adapt for multidimensional responses
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
   
   ## Set up wrapper function for distfit
   ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
-    ys <- d$yx[[1]][subset]  # necessary to get response data into the function
+    ys <- as.matrix(d$yx[[1]])[subset, ]  # necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     
     model <- disttree::distfit(ys, family = family, weights = subweights, start = info$coefficients, start.eta = NULL,
