@@ -14,7 +14,8 @@ importFrom("sandwich",
 )
 importFrom("utils", 
   "data", 
-  "getAnywhere"
+  "getAnywhere",
+  "combn"
 )
 importFrom("survival",
   "Surv",
