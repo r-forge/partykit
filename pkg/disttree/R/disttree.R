@@ -519,8 +519,10 @@ logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
       par <- coef_tn[i,]
       eta <-  as.numeric(linkfun(par))
       # response variable and weights of the observations that end up in this terminal node
-      nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
-      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      #nobs_tn <- newdata[pred.node == id_tn[i], paste(object$info$formula[[2]])]
+      nobs_tn <- newdata[pred.node == id_tn[i], names(newdata) %in% all.vars(object$info$formula[[2]])]  # FIXME: (ML) Check if correct.
+      #weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, length(nobs_tn))
+      weights_tn <- if(!is.null(weights)) weights[pred.node == id_tn[i]] else rep.int(1, NROW(nobs_tn))   # FIXME: (ML) Check if correct.
       if(length(nobs_tn) > 0L) ll <- ll + ddist(nobs_tn, eta = eta,  log=TRUE, sum = TRUE, weights = weights_tn)
     }
   }
