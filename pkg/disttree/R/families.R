@@ -2270,7 +2270,7 @@ dist_mvnorn <- function(k) {
     } else {
         tmp <- backsolve(dec, y, transpose = TRUE)
         loglik <- - (.5 * k * log(2*pi) + sum(log(par[1L:k + k])) +
-                  sum(log(diag(dec)))) - .5 * tmp^2
+                  sum(log(diag(dec)))) - .5 * colSums(tmp^2)  # FIXME: Is 'colSums' here correct? need to aggregate somehow to get dimensions right.
     }
 
     if(sum == TRUE){
