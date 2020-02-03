@@ -472,7 +472,6 @@ get_expectedvalue <- function(object, par) {
     return(expv)
   }
 
-  
   # integrate over function f = x * density function with estimated parameters plugged in (already in the object for class 'distfit')
   if(inherits(object, "distfit")) {
     f <- function(x) {

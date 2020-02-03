@@ -13,7 +13,7 @@ dist_gaussian <- function() {
     # par <- c(eta[1], exp(eta[2]))
     # val <- dnorm(y, mean = par[1], sd = par[2], log = log)
     
-    if(sum) {
+    if(sum) {  ## FIXME: (ML) sum makes no sense if log == FALSE
       if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
       val <- sum(weights * val, na.rm = TRUE)
     }
@@ -2215,144 +2215,6 @@ dist_mvnorn <- function(k) {
   names_rho <- combn(seq_len(k), 2, function(x) paste0("rho", x[1], x[2]))
   k_rho <- k * (k-1) / 2    ## number of rho parameters
 
-  ## Density function 
-  ## Copied from R-package networktree (mvnfit)
-  ## TODO: (ML) Check if problematic that ddist is calculated w/o eta or par
-  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {  
-    
-    eta <- NULL
-
-    ### parameters
-    y <- as.matrix(y)
-    n <- nrow(y)
-    k <- ncol(y)
-    ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
-
-    ### check if correlation matrix is identified
-    if(n <= k * (k - 1) / 2) {
-        stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
-    }
-
-    ### MLE mu
-    coef   <- colMeans(y)
-    pnames <- paste0("mu_", ynam)
-
-    ### MLE cov
-    Sig <- cov(y) * (n - 1)/n
-    coef <- c(coef, sqrt(diag(Sig)))
-    pnames <- c(pnames, paste0("sigma_", ynam))
-
-    ## MLE rho
-    Om <- cov2cor(Sig)
-    coef <- c(coef, Om[lower.tri(Om)])
-    pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
-                                  "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
-    names(coef) <- pnames
-
-    ### compute loglik
-    y <- (t(y) - coef[1L:k]) / coef[1L:k + k]           # scale y
-    dec <- tryCatch(chol(Om), error = function(e) e)
-    if(inherits(dec, "error")) {
-        loglik <- Inf
-    }
-    else {
-        tmp <- backsolve(dec, y, transpose = TRUE)
-        loglik <- -n * (.5 * k * log(2*pi) + sum(log(coef[1L:k + k])) +
-                  sum(log(diag(dec)))) - .5 * sum(tmp^2)
-    }
-    rval <- ifelse(log, loglik, exp(loglik))
-    return(rval)
-  }
-  
-  ## Score function
-  ## Copied from R-package networktree (mvnfit)
-  ## TODO: (ML) Check if problematic that sdist is calculated w/o eta or par
-  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
-
-    eta <- NULL
-
-    ### parameters
-    y <- as.matrix(y)
-    n <- nrow(y)
-    k <- ncol(y)
-    ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
-
-    ### check if correlation matrix is identified
-    if(n <= k*(k-1)/2) {
-      stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
-    }
-
-    ### MLE mu
-    coef   <- colMeans(y)
-    pnames <- paste0("mu_", ynam)
-
-    ### MLE cov
-    Sig <- cov(y) * (n - 1)/n
-    coef <- c(coef, sqrt(diag(Sig)))
-    pnames <- c(pnames, paste0("sigma_", ynam))
-
-    ## MLE rho
-    Om <- cov2cor(Sig)
-    coef <- c(coef, Om[lower.tri(Om)])
-    pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
-                                  "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
-    names(coef) <- pnames
-
-    ### compute loglik
-    y <- (t(y) - coef[1L:k]) / coef[1L:k + k]           # scale y
-    dec <- tryCatch(chol(Om), error = function(e) e)
-    if(inherits(dec, "error")) {
-      loglik <- Inf
-    }
-    else {
-      tmp <- backsolve(dec, y, transpose = TRUE)
-      loglik <- -n * (.5 * k * log(2*pi) + sum(log(coef[1L:k + k])) +
-                sum(log(diag(dec)))) - .5 * sum(tmp^2)
-    }
-
-    ### estfun
-    ef <- NULL
-    if(!inherits(dec, "error")) {
-      ### invert Sigma
-      InvOm <- chol2inv(dec)
-
-      ### expand to length of y
-      sigma_y <- rep.int(coef[1L:k + k], rep.int(n, k))
-
-      ### re-transpose y
-      y <- t(y)
-      yy <- t(backsolve(dec, tmp))     ## eq. y %*% InvOm
-
-      ### scores mu
-      ef <- yy/sigma_y
-
-      ### scores sigma
-      ef <- cbind(ef, (y * yy - 1)/sigma_y)
-
-      ### scores rho
-      ef <- cbind(ef, combn(k, 2,
-             function(x) (yy[,x[1]] * yy[,x[2]] - InvOm[x[2],x[1]])/2))
-
-      colnames(ef) <- names(coef)
-    } else {
-      stop("Score function could not be calculated")  # FIXME: (ML) Check what to do..
-  
-    }
-  
-    return(ef)
-  }
-  
-  
-  #hdist <- function(y, eta, weights = NULL) { # FIXME: (ML) missing...
-  
-  ## additional functions pdist, qdist, rdist on link scale  # FIXME: (ML) All missing
-  #pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = exp(eta[2]), 
-  #                                                                  lower.tail = lower.tail, log.p = log.p)
-  #qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = exp(eta[2]), 
-  #                                                                  lower.tail = lower.tail, log.p = log.p)
-  #rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = exp(eta[2]))
-
-  
   ## Set up link functions
   link <- c(
     rep("identity", k),
@@ -2379,6 +2241,149 @@ dist_mvnorn <- function(k) {
     names(par) <- c(names_mu, names_sigma, names_rho)
     return(par)
   }
+
+  ## Density function 
+  ## Copied from R-package networktree (mvnfit)
+  ddist <-  function(y, eta, log = TRUE, weights = NULL, sum = FALSE) {  
+
+    if(!log && sum) warning("To build sum makes no sense if 'log == FALSE'.")
+    
+    par <- linkinv(eta) 
+
+    ### parameters
+    y <- as.matrix(y)
+    n <- nrow(y)
+    k <- ncol(y)
+    ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
+
+    ## Set up correlation matrix 
+    tmp_rho <- par[grep("rho", names(par))]
+    Om <- matrix(1, ncol = k, nrow = k)
+    Om[upper.tri(Om)] <- tmp_rho
+    Om[lower.tri(Om)] <- tmp_rho
+
+    ### compute loglik
+    y <- (t(y) - par[1L:k]) / par[1L:k + k]           # scale y
+    dec <- tryCatch(chol(Om), error = function(e) e)
+    if(inherits(dec, "error")) {
+        loglik <- Inf
+    } else {
+        tmp <- backsolve(dec, y, transpose = TRUE)
+        loglik <- - (.5 * k * log(2*pi) + sum(log(par[1L:k + k])) +
+                  sum(log(diag(dec)))) - .5 * tmp^2
+    }
+
+    if(sum == TRUE){
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, n)
+      loglik <- sum(weights * loglik, na.rm = TRUE)
+    }
+
+    if(log == FALSE){
+      rval <- exp(loglik)
+    } else {
+      rval <- loglik
+    }
+
+    return(rval)
+  }
+  
+  ## Score function
+  ## Copied from R-package networktree (mvnfit)
+  ## TODO: (ML) Check if problematic that sdist is calculated w/o eta or par
+  sdist <- function(y, eta, weights = NULL, sum = FALSE) {   
+
+    par <- linkinv(eta) 
+
+    ### parameters
+    y <- as.matrix(y)
+    n <- nrow(y)
+    k <- ncol(y)
+    ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
+
+    #### check if correlation matrix is identified
+    #if(n <= k*(k-1)/2) {
+    #  stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
+    #}
+
+    #### MLE mu
+    #coef   <- colMeans(y)
+    #pnames <- paste0("mu_", ynam)
+
+    #### MLE cov
+    #Sig <- cov(y) * (n - 1)/n
+    #coef <- c(coef, sqrt(diag(Sig)))
+    #pnames <- c(pnames, paste0("sigma_", ynam))
+
+    ### MLE rho
+    #Om <- cov2cor(Sig)
+    #coef <- c(coef, Om[lower.tri(Om)])
+    #pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
+    #                              "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
+    #names(coef) <- pnames
+
+    ## Set up correlation matrix 
+    tmp_rho <- par[grep("rho", names(par))]
+    Om <- matrix(1, ncol = k, nrow = k)
+    Om[upper.tri(Om)] <- tmp_rho
+    Om[lower.tri(Om)] <- tmp_rho
+
+    ## Scale y and Cholesky decomposition of correlation matrix
+    y <- (t(y) - par[1L:k]) / par[1L:k + k]
+    dec <- tryCatch(chol(Om), error = function(e) e)
+
+    ### estfun
+    score <- NULL
+    if(!inherits(dec, "error")) {
+      ### invert Sigma
+      InvOm <- chol2inv(dec)
+
+      ### expand to length of y
+      sigma_y <- rep.int(par[1L:k + k], rep.int(n, k))
+
+      ## Part of loglik
+      tmp <- backsolve(dec, y, transpose = TRUE)
+
+      ### re-transpose y
+      y <- t(y)
+      yy <- t(backsolve(dec, tmp))     ## eq. y %*% InvOm
+
+      ### scores mu
+      score <- yy / sigma_y
+
+      ### scores sigma
+      score <- cbind(score, (y * yy - 1)/sigma_y)
+
+      ### scores rho
+      score <- cbind(score, combn(k, 2,
+             function(x) (yy[,x[1]] * yy[,x[2]] - InvOm[x[2],x[1]])/2))
+
+      colnames(score) <- names(par)
+    } else {
+      stop("Score function could not be calculated")  # FIXME: (ML) Check what to do..
+  
+    }
+
+    if(sum) {
+      if(is.null(weights) || (length(weights)==0L)) weights <- rep.int(1, length(y))
+      # if score == Inf replace score with 1.7e308 because Inf*0 would lead to NaN -> gradient is NaN
+      score[score==Inf] = 1.7e308 # FIXME: (ML) Correct that.
+      score <- colSums(weights * score, na.rm = TRUE)
+    }
+  
+    return(score)
+  }
+  
+  
+  #hdist <- function(y, eta, weights = NULL) { # FIXME: (ML) missing...
+  
+  ## additional functions pdist, qdist, rdist on link scale  # FIXME: (ML) All missing
+  #pdist <- function(q, eta, lower.tail = TRUE, log.p = FALSE) pnorm(q, mean = eta[1], sd = exp(eta[2]), 
+  #                                                                  lower.tail = lower.tail, log.p = log.p)
+  #qdist <- function(p, eta, lower.tail = TRUE, log.p = FALSE) qnorm(p, mean = eta[1], sd = exp(eta[2]), 
+  #                                                                  lower.tail = lower.tail, log.p = log.p)
+  #rdist <- function(n, eta) rnorm(n, mean = eta[1], sd = exp(eta[2]))
+
+  
   
 
   ## Start Fun (MLE)
@@ -2396,20 +2401,40 @@ dist_mvnorn <- function(k) {
     }
 
     ### MLE mu
-    coef   <- colMeans(y)
-    pnames <- paste0("mu_", ynam)
+    if(is.null(weights) || (length(weights)==0L)) {
+      coef   <- colMeans(y)
+      pnames <- paste0("mu_", ynam)
 
-    ### MLE cov
-    Sig <- cov(y) * (n - 1)/n
-    coef <- c(coef, sqrt(diag(Sig)))
-    pnames <- c(pnames, paste0("sigma_", ynam))
+      ### MLE cov
+      Sig <- cov(y) * (n - 1)/n
+      coef <- c(coef, sqrt(diag(Sig)))
+      pnames <- c(pnames, paste0("sigma_", ynam))
 
-    ## MLE rho
-    Om <- cov2cor(Sig)
-    coef <- c(coef, Om[lower.tri(Om)])
-    pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
-                                  "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
-    names(coef) <- pnames
+      ## MLE rho
+      Om <- cov2cor(Sig)
+      coef <- c(coef, Om[lower.tri(Om)])
+      pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
+                                    "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
+      names(coef) <- pnames
+    } else {
+
+      ### MLE mu
+      coef   <- apply(y, 2, weighted.mean, w = weights)
+      pnames <- paste0("mu_", ynam)
+
+      ### MLE cov
+      ##return(as.numeric(stats::cov.wt(cbind(x), weights, method = method)$cov))
+      Sig <- stats::cov.wt(y, wt = weights)$cov * (n - 1) / sum(weights)  # FIXME: (ML) n or sum(weights) ??!
+      coef <- c(coef, sqrt(diag(Sig)))
+      pnames <- c(pnames, paste0("sigma_", ynam))
+
+      ## MLE rho
+      Om <- cov2cor(Sig)
+      coef <- c(coef, Om[lower.tri(Om)])
+      pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
+                                    "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
+      names(coef) <- pnames
+    }
 
     starteta <- linkfun(coef)
 
@@ -2418,26 +2443,26 @@ dist_mvnorn <- function(k) {
   
   mle <- TRUE
   
-  dist_list_gaussian <- list(family.name = "Mulitvariate Normal Distribution",
-                             ddist = ddist, 
-                             sdist = sdist, 
-                             #hdist = hdist,
-                             #pdist = pdist,
-                             #qdist = qdist,
-                             #rdist = rdist,
-                             link = link, 
-                             linkfun = linkfun, 
-                             linkinv = linkinv, 
-                             linkinvdr = linkinvdr,
-                             startfun = startfun,
-                             mle = mle,
-                             gamlssobj = FALSE,
-                             censored = FALSE
+  dist_list_mvn <- list(family.name = "Mulitvariate Normal Distribution",
+                          ddist = ddist, 
+                          sdist = sdist, 
+                          #hdist = hdist,
+                          #pdist = pdist,
+                          #qdist = qdist,
+                          #rdist = rdist,
+                          link = link, 
+                          linkfun = linkfun, 
+                          linkinv = linkinv, 
+                          linkinvdr = linkinvdr,
+                          startfun = startfun,
+                          mle = mle,
+                          gamlssobj = FALSE,
+                          censored = FALSE
   )
   
   # Return family object
-  class(dist_list_gaussian) <- "disttree.family"
-  return(dist_list_gaussian)
+  class(dist_list_mvn) <- "disttree.family"
+  return(dist_list_mvn)
 }
 
 
