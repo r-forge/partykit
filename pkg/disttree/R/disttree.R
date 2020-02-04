@@ -78,7 +78,7 @@ disttree <- function(formula,
   ## Set up wrapper function for distfit
   ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
-    ys <- as.matrix(d$yx[[1]])[subset, ]  # necessary to get response data into the function
+    ys <- as.matrix(d$yx[[1]])[subset, ]  #TODO: (ML) adapted for multivariate reponse, check if correct!# necessary to get response data into the function
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
     
     model <- disttree::distfit(ys, family = family, weights = subweights, start = info$coefficients, start.eta = NULL,
