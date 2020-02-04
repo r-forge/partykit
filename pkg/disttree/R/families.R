@@ -2251,7 +2251,9 @@ dist_mvnorn <- function(k) {
     par <- linkinv(eta) 
 
     ### parameters
-    y <- as.matrix(y)
+    #y <- as.matrix(y)
+    y <- matrix(as.matrix(y), ncol = length(names_mu), dimnames = list(NULL, names(y))) ## FIXME: (ML) Check if correct, otherwise problem if single observation
+
     n <- nrow(y)
     k <- ncol(y)
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
@@ -2295,7 +2297,9 @@ dist_mvnorn <- function(k) {
     par <- linkinv(eta) 
 
     ### parameters
-    y <- as.matrix(y)
+    #y <- as.matrix(y)
+    y <- matrix(as.matrix(y), ncol = length(names_mu), dimnames = list(NULL, names(y))) ## FIXME: (ML) Check if correct, otherwise problem if single observation
+
     n <- nrow(y)
     k <- ncol(y)
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
@@ -2390,7 +2394,9 @@ dist_mvnorn <- function(k) {
   startfun <- function(y, weights = NULL){
 
     ### parameters
-    y <- as.matrix(y)
+    #y <- as.matrix(y)
+    y <- matrix(as.matrix(y), ncol = length(names_mu), dimnames = list(NULL, names(y))) ## FIXME: (ML) Check if correct, otherwise problem if single observation
+
     n <- nrow(y)
     k <- ncol(y)
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)

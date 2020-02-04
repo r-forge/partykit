@@ -329,7 +329,8 @@ logLik.distforest <- function(object, newdata = NULL, weights = NULL, ...){
   if(is.null(weights)) weights <- rep.int(1, NROW(responses))
   
   ## FIXME: check format returned by linkfun / linkinv (in case of multidimensional data)
-  ll <- sapply(1:NROW(responses),  function(i) object$info$family$ddist(responses[i], 
+
+  ll <- sapply(1:NROW(responses),  function(i) object$info$family$ddist(as.matrix(responses)[i, ], ## FIXME: (ML) adapted for multivariate response, check if correct
            eta = as.numeric(object$info$family$linkfun(pred.par[i,])),
            log = TRUE, weights = weights[i]))
   ll <- sum(ll, na.rm = TRUE)
