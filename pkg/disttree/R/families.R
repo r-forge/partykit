@@ -2261,7 +2261,8 @@ dist_mvnorn <- function(k) {
     ## Set up correlation matrix 
     tmp_rho <- par[grep("rho", names(par))]
     Om <- matrix(1, ncol = k, nrow = k)
-    Om[upper.tri(Om)] <- tmp_rho
+    Om[lower.tri(Om)] <- tmp_rho
+    Om <- t(Om)
     Om[lower.tri(Om)] <- tmp_rho
 
     ### compute loglik
@@ -2304,6 +2305,7 @@ dist_mvnorn <- function(k) {
     k <- ncol(y)
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
 
+    ######################################################################################
     #### check if correlation matrix is identified
     #if(n <= k*(k-1)/2) {
     #  stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
@@ -2319,16 +2321,18 @@ dist_mvnorn <- function(k) {
     #pnames <- c(pnames, paste0("sigma_", ynam))
 
     ### MLE rho
-    #Om <- cov2cor(Sig)
-    #coef <- c(coef, Om[lower.tri(Om)])
-    #pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 2L]],
-    #                              "_", ynam[which(lower.tri(Om), arr.ind = TRUE)[, 1L]]))
+    #Om.old <- cov2cor(Sig)
+    #coef <- c(coef, Om.old[lower.tri(Om.old)])
+    #pnames <- c(pnames, paste0("rho_", ynam[which(lower.tri(Om.old), arr.ind = TRUE)[, 2L]],
+    #                              "_", ynam[which(lower.tri(Om.old), arr.ind = TRUE)[, 1L]]))
     #names(coef) <- pnames
+    ######################################################################################
 
     ## Set up correlation matrix 
     tmp_rho <- par[grep("rho", names(par))]
     Om <- matrix(1, ncol = k, nrow = k)
-    Om[upper.tri(Om)] <- tmp_rho
+    Om[lower.tri(Om)] <- tmp_rho
+    Om <- t(Om)
     Om[lower.tri(Om)] <- tmp_rho
 
     ## Scale y and Cholesky decomposition of correlation matrix
@@ -2364,7 +2368,7 @@ dist_mvnorn <- function(k) {
       colnames(score) <- names(par)
     } else {
       stop("Score function could not be calculated")  # FIXME: (ML) Check what to do..
-  
+
     }
 
     if(sum) {
