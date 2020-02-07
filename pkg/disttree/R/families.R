@@ -2305,18 +2305,19 @@ dist_mvnorn <- function(k) {
     k <- ncol(y)
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
 
-    ######################################################################################
-    #### check if correlation matrix is identified
-    #if(n <= k*(k-1)/2) {
-    #  stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
-    #}
+    ### check if correlation matrix is identified
+    if(n <= 2*k + k*(k-1)/2) {
+      stop("mvnfit: n < 2*k + k*(k-1)/2, correlation matrix is not identified.")
+    }
 
+    #######################################################################################
+    #y.b <- y
     #### MLE mu
-    #coef   <- colMeans(y)
+    #coef   <- colMeans(y.b)
     #pnames <- paste0("mu_", ynam)
 
     #### MLE cov
-    #Sig <- cov(y) * (n - 1)/n
+    #Sig <- cov(y.b) * (n - 1)/n
     #coef <- c(coef, sqrt(diag(Sig)))
     #pnames <- c(pnames, paste0("sigma_", ynam))
 
@@ -2406,8 +2407,8 @@ dist_mvnorn <- function(k) {
     ynam <- if(is.null(colnames(y))) 1L:k else colnames(y)
 
     ### check if correlation matrix is identified
-    if(n <= k*(k-1)/2) {
-        stop("mvnfit: n < k*(k-1)/2, correlation matrix is not identified.")
+    if(n <= 2*k + k*(k-1)/2) {
+      stop("mvnfit: n < 2*k + k*(k-1)/2, correlation matrix is not identified.")
     }
 
     ### MLE mu
