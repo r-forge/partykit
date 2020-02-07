@@ -2434,8 +2434,7 @@ dist_mvnorn <- function(k) {
       pnames <- paste0("mu_", ynam)
 
       ### MLE cov
-      ##return(as.numeric(stats::cov.wt(cbind(x), weights, method = method)$cov))
-      Sig <- stats::cov.wt(y, wt = weights)$cov * (n - 1) / sum(weights)  # FIXME: (ML) n or sum(weights) ??!
+      Sig <- stats::cov.wt(y, wt = weights, method = "ML")$cov #FIXME: cov.wt could be used for mu,sigma,cor
       coef <- c(coef, sqrt(diag(Sig)))
       pnames <- c(pnames, paste0("sigma_", ynam))
 
