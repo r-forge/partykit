@@ -246,7 +246,7 @@ predict.distforest <- function(object, newdata = NULL,
         fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    w <- partykit:::.rfweights(fdata, fnewdata, rw, scale)
+    w <- partykit:::.rfweights(fdata, fnewdata, rw, scale) #FIXME: fdata and fnewdata equal ?! why?
 
 #    for (b in 1:length(forest)) {
 #        ids <- nodeids(forest[[b]], terminal = TRUE)
