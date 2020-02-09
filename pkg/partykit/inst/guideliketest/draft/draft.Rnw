@@ -435,15 +435,17 @@ applied test statistic can be found in Appendix~\ref{app:teststat_guide}.
 \subsection{Selecting a split point}
 \fixme{``Why is the choice of the split point not part of this paper?''}
 
-\hlc{GUIDE and MOB, which are both model-based approaches, employ the model estimated 
-in the considered node for an exhaustive search of the best split point over all possible 
-split points in the already selected split variable.
-CTree has not been developed specifically for model-based partitioning, hence, a 
-different approach to selecting a split point is suggested in the original paper. 
-However, as an adaption of CTree employing models for the split variable selection 
-is considered in this study, it is also combined with the same exhaustive search 
-strategy as GUIDE and MOB.}
-%\newpage
+\hlc{Once a split variable has been selected, the selection of the corresponding
+split point is less controversial. The most natural strategy is to use an exhaustive
+search over all possible split points and then select the one that optimizes the
+objective function (or loss function). In fact, this is the strategy adopted by both
+model-based approaches, GUIDE and MOB. Only CTree uses a slightly different approach,
+based on maximizing a two-sample test statistic, because the algorithm as originally
+proposed did not employ an explicit objective function. However, it can be shown
+that in some settings the two approaches coincide} \citep{Zeileis+Hothorn:2013}
+\hlc{while the differ somewhat more generally. As we focus on model-based partitioning
+here we employ the exhaustive model-based search for split point selection in
+all three algorithms considered.}
 
 \subsection{Pruning}
 \label{sec:pruning}
@@ -564,9 +566,9 @@ using conditional vs.\ unconditional approximations of the null distributions. H
 has relatively little influence compared to the other building blocks considered in detail here.
 Moreover, both similarities and relative differences between these approaches have been previously
 discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
-\hlc{Therefore, in this study the focus is put on the selected building blocks as they are assumed 
-(and have shown) to have the highest influence on the difference in performance between the testing 
-strategies.}
+\hlc{Therefore, this aspect is not considered again here but focus is given to the building
+blocks selected above.}
+
 
 \begin{table}[t!]
 \centering
@@ -1181,13 +1183,12 @@ Figure~\ref{fig:scores_stump} \hlc{also shows that for $\delta = 0$, i.e., no di
 in the parameters and consequently a random split variable selection, the probability of 
 selecting $Z_1$ as split variable is (close to)~$0$ (with the employed Bonferroni-adjustment of 
 $p$-values keeping this value particularly low).
-Even though it has to be noted that the number of replications in this simulation study is of
-course limited, the results for this setting indicate that all testing strategies conform well with 
-the predefined level of significance $\alpha = 0.05$ as the probability of splitting in any 
-of the available covariates is between 4 and 5~percent for $\delta = 0$ 
-(the exact values can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror})
-\hlc{with the tests for structural changes being slightly more conservative} 
-\citep[see, e.g.,][for more details on this typical behaviour]{Hothorn+Zeileis:2008, Zeileis+Hothorn:2013, Hansen:1997}.
+Even with the limited number of replications in this simulation study the empirical size
+of all testing strategies (i.e., for $\delta = 0$) is between 4 and 5~percent and thus
+conforms well with the nominal significance level of $\alpha = 0.05$. The exact values
+can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror})
+\hlc{which also shows that the asymptotic structural change tests are slightly more conservative}
+\citep[confirming previous results in][]{Hothorn+Zeileis:2008, Zeileis+Hothorn:2013}.
 
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
