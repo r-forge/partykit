@@ -193,16 +193,20 @@ points in all possible split variables. However, it has been shown that this is 
 computationally expensive but also biased towards split variables with many possible split
 points \citep{Doyle:1973, Kim+Loh:2001}. 
 Therefore, selecting a split variable in a first step and then searching for the 
-best split point only within this variable in a separated second step is a more 
-promising strategy as applied for example by the algorithms QUEST \citep{Loh+Shih:1997},
+best split point only within this variable in a separate second step is a more 
+promising strategy. \hlc{The most popular algorithms adopting such an unbiased recursive
+partitioning strategy are} QUEST \citep{Loh+Shih:1997},
 %% CHAID \citep{Kass:1980},
 GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zeileis:2006} 
-and MOB \citep{Zeileis+Hothorn+Hornik:2008}.
-For the first step of selecting a split variable they all share the same basic concept of 
-choosing the covariate which shows the highest association to the response variable 
-based on $p$-values provided by a statistical test. While QUEST
+and MOB \citep{Zeileis+Hothorn+Hornik:2008}. \hlc{QUEST and CTree have been suggested as
+nonparametric decision trees initially and have acquired more than 1,300 and 2,400 citations
+on Google Scholar, respectively. GUIDE and MOB have been designed for general model-based
+trees and have both received more than 400 citations.
+All of these share the same basic concept of selecting that covariate for splitting which shows the
+highest association to the response variable as captured by the $p$-value in the corresponding
+statistical test.} While QUEST
 %%, CHAID,
-and GUIDE employ 
+and its successor GUIDE employ 
 statistical significance tests for contingency tables, CTree applies permutation tests in 
 a conditional inference framework and MOB uses fluctuation tests based on central limit theorems
 for the parameter estimators. 
@@ -211,14 +215,11 @@ All these approaches have been shown to work well for various situations, howeve
 
 \fixme{``Why CTree, GUIDE, and MOB?''}
 
-\hlc{Therefore, in this paper the focus will be put on that first step of tree algorithms,
+Therefore, in this paper the focus will be put on that first step of tree algorithms,
 i.e., the task of selecting the best split variable in a given (sub)sample. 
-For this purpose, three leading unbiased recursive partitioning algorithms are considered, 
-namely GUIDE~(Google Scholar: 484), CTree~(2444) and MOB~(421). Moreover, through this 
-selection the approach of QUEST (1306) is included as well due to GUIDE having been introduced 
-as a descendant/extension of QUEST (and others). %\citep{} User Manual for GUIDE ver. 31.0.
-In particular, GUIDE, CTree, and MOB are compared by investigating the building blocks of 
-their testing strategies in which they differ:}
+In particular, the approach from the GUIDE algorithm \hlc{(which essentially encompasses QUEST)}
+is compared to the one of the CTree and MOB algorithms by investigating the building blocks of 
+their testing strategies in which they differ:
 (1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
 (2)~Dichotomization of these residuals or scores.
 (3)~Categorization of possible split variables.
