@@ -4,7 +4,7 @@
 \usepackage{amstext,amsfonts,amsmath,amssymb,bm,thumbpdf,lmodern,hyperref,dsfont}
 \usepackage[all]{hypcap}
 \usepackage{enumitem}
-\usepackage{color,soul}
+\usepackage{color,xcolor,soul}
 
 %% need no \usepackage{Sweave} 
 \SweaveOpts{engine = R, concordance = FALSE, eps = FALSE, keep.source = TRUE, eval = TRUE}
@@ -61,6 +61,7 @@
 
 \definecolor{changes}{rgb}{1,1,0.7}
 \newcommand{\hlc}[1]{{\sethlcolor{changes}\hl{#1}}}
+
 
 <<preliminaries, echo=FALSE, results=hide>>=
 # setwd("~/svn/partykit/pkg/partykit/inst/guideliketest/draft/")
@@ -208,10 +209,16 @@ for the parameter estimators.
 All these approaches have been shown to work well for various situations, however, the relative
 (dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
-Therefore, in this paper the focus will be put on that first step of tree algorithms,
-i.e., the task of selecting the best split variable in a given (sub)sample. In particular, the approach of the 
-GUIDE algorithm is compared to the one of the CTree algorithm and the MOB algorithm
-by investigating the building blocks of their testing strategies in which they differ:
+\fixme{``Why CTree, GUIDE, and MOB?''}
+
+\hlc{Therefore, in this paper the focus will be put on that first step of tree algorithms,
+i.e., the task of selecting the best split variable in a given (sub)sample. 
+For this purpose, three leading unbiased recursive partitioning algorithms are considered, 
+namely GUIDE~(Google Scholar: 484), CTree~(2444) and MOB~(421). Moreover, through this 
+selection the approach of QUEST (1306) is included as well due to GUIDE having been introduced 
+as a descendant/extension of QUEST (and others). %\citep{} User Manual for GUIDE ver. 31.0.
+In particular, GUIDE, CTree, and MOB are compared by investigating the building blocks of 
+their testing strategies in which they differ:}
 (1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
 (2)~Dichotomization of these residuals or scores.
 (3)~Categorization of possible split variables.
@@ -423,7 +430,20 @@ Note that the split point in numeric variables $Z$ is searched over all possible
 not just the four bins that were constructed for the $\chi^2$~test. More details on the
 applied test statistic can be found in Appendix~\ref{app:teststat_guide}.
 
+
+\subsection{Selecting a split point}
+\fixme{``Why is the choice of the split point not part of this paper?''}
+
+\hlc{GUIDE and MOB, which are both model-based approaches, employ the model estimated 
+in the considered node for an exhaustive search of the best split point over all possible 
+split points in the already selected split variable.
+CTree has not been developed specifically for model-based partitioning, hence, a 
+different approach to selecting a split point is suggested in the original paper. 
+However, as an adaption of CTree employing models for the split variable selection 
+is considered in this study, it is also combined with the same exhaustive search 
+strategy as GUIDE and MOB.}
 %\newpage
+
 \subsection{Pruning}
 \label{sec:pruning}
 
@@ -439,34 +459,34 @@ tree and then prune those splits in the tree that did not increase predictive pe
 cross-validation. This is also know as \emph{post-pruning} (after growing the initial tree) and
 more specifically cost-complexity pruning.
 
-In the unbiased recursive partitioning literature this post-pruning approach is also used frequently
-\citep[e.g., in][]{Loh+Vanichsetakul:1988,Loh+Shih:1997,Kim+Loh:2001,Loh:2002} and the $p$-values
-from the association tests are only employed for selecting the split variable on a unified scale.
+In the unbiased recursive partitioning literature this post-pruning approach is also used 
+frequently \citep[e.g., in][]{Loh+Vanichsetakul:1988,Loh+Shih:1997,Kim+Loh:2001,Loh:2002} 
+and the $p$-values from the association tests are only employed for selecting the split 
+variable on a unified scale.
 However, \cite{Hothorn+Hornik+Zeileis:2006} proposed to also use these $p$-values for a 
-so-called \emph{pre-pruning} strategy which stops growing the tree as soon as no significant association
-can be found in a given subgroup. This approach is the default in CTree and also in
+so-called \emph{pre-pruning} strategy which stops growing the tree as soon as no significant
+association can be found in a given subgroup. This approach is the default in CTree and also in
 MOB. However, \cite{Zeileis+Hothorn+Hornik:2008} also pointed out that a natural strategy for
-post-pruning in model-based partitioning is to use information criteria such as AIC (Akaike information
-criterion) or BIC (Bayes information criterion), following the ideas of \cite{Su+Wang+Fan:2004}.
+post-pruning in model-based partitioning is to use information criteria such as AIC (Akaike 
+information criterion) or BIC (Bayes information criterion), following the ideas of \cite{Su+Wang+Fan:2004}.
 
 Clearly, for inference-based pre-pruning it is crucial that the association tests employed for
-split selection work well as statistical significance test, i.e., conform with their nominal size
-and have high power. In contrast, when using post-pruning (either based on cross-validation or
-information criteria) it might not be as crucial that the significance test works well and has
-high power.
+split selection work well as statistical significance test, i.e., conform with their nominal
+size and have high power. In contrast, when using post-pruning (either based on 
+cross-validation or information criteria) it might not be as crucial that the significance 
+test works well and has high power.
 
 Due to these considerations we first evaluate the significance tests underlying CTree, MOB,
-and GUIDE by themselves, i.e., without growing an actual tree in combination with a pruning strategy.
-Subsequently we combine the tests with a cost-complexity post-pruning approach in order to assess
-whether shortcomings of the tests are mitigated by pruning.
+and GUIDE by themselves, i.e., without growing an actual tree in combination with a pruning 
+strategy. Subsequently we combine the tests with a cost-complexity post-pruning approach in 
+order to assess whether shortcomings of the tests are mitigated by pruning.
 
 
 \section{Unifying framework}\label{sec:unify}
 
 Each of the algorithms CTree, GUIDE, and MOB can be characterized by its combination
-of the type of model fits, tests, and pruning strategy employed to
-grow the tree. Table~\ref{tab:combinations} provides an overview of the default
-combinations.
+of the type of model fits, tests, and pruning strategy employed to grow the tree. 
+Table~\ref{tab:combinations} provides an overview of the default combinations.
 However, as discussed above, subsequent publications have emphasized that all three
 algorithms can be combined with different model fitting approaches and to some degree
 different pruning strategies have been explored as well. Thus, the class of tests
@@ -536,11 +556,16 @@ in the GUIDE approach, a one-way ANOVA can be used for assessing the association
 (without dichotomization) with the categorized split variable. Or alternatively, a multivariate
 one-way ANOVA can be used for the non-dichotomized scores as opposed to the residuals etc.
 
+\fixme{``Do the building blocks cover all possible options?''}
+
 Note that there are further differences in the testing strategies between the three algorithms, e.g.,
 using conditional vs.\ unconditional approximations of the null distributions. However, this difference
 has relatively little influence compared to the other building blocks considered in detail here.
 Moreover, both similarities and relative differences between these approaches have been previously
 discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
+\hlc{Therefore, in this study the focus is put on the selected building blocks as they are assumed 
+(and have shown) to have the highest influence on the difference in performance between the testing 
+strategies.}
 
 \begin{table}[t!]
 \centering
@@ -1059,14 +1084,8 @@ performance of the tests affects growing the trees overall. This is
 evaluated using the adjusted Rand index for trees grown by pre-pruning and 
 cost-complexity post-pruning (Section~\ref{sec:tree}).
 
-% To illustrate the effects of the building blocks in the unifying framework presented in 
-% Section~\ref{sec:unify} different combinations of them are investigated for the first
-% simulation scenario (stump) in Sections~\ref{sec:scores} and~\ref{sec:3way}. 
-% Then the testing strategies are evaluated on the more
-% complex tree structure of the second scenario in Section~\ref{sec:tree}. 
-% The corresponding results are shown in the following plots.
 
-\newpage
+%\newpage
 \subsection[``Stump'' scenario: Residuals vs. full model scores]{``Stump'' scenario: Residuals vs.\ full model scores}
 \label{sec:scores}
 
@@ -1153,7 +1172,21 @@ It is easily possible, though, to substantially mitigate this problem by using s
 (sensitive to changes in all parameters) rather than residuals only (sensitive to changes
 in the conditional mean). The remaining difference between MOB/CTree and GUIDE+scores
 is due to dichotomizing the scores at zero and due to categorizing the split variables
-which are investigated in more detail in the following section.
+which are investigated in more detail in the next section.
+
+\fixme{Type I error}
+
+Figure~\ref{fig:scores_stump} \hlc{also shows that for $\delta = 0$, i.e., no difference
+in the parameters and consequently a random split variable selection, the probability of 
+selecting $Z_1$ as split variable is (close to)~$0$ (with the employed Bonferroni-adjustment of 
+$p$-values keeping this value particularly low).
+Even though it has to be noted that the number of replications in this simulation study is of
+course limited, the results for this setting indicate that all testing strategies conform well with 
+the predefined level of significance $\alpha = 0.05$ as the probability of splitting in any 
+of the available covariates is between 4 and 5~percent for $\delta = 0$ 
+(the exact values can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror})
+\hlc{with the tests for structural changes being slightly more conservative} 
+\citep[see, e.g.,][for more details on this typical behaviour]{Hothorn+Zeileis:2008, Zeileis+Hothorn:2013, Hansen:1997}.
 
 
 \subsection{``Stump'' scenario: Full factorial analysis of building blocks}\label{sec:3way}
@@ -1502,7 +1535,6 @@ is of type $(0, \delta)^\top$ and thus orthogonal to the mean regressor. Due to 
 tests as in GUIDE break down and do not have power to detect this. Note that this situation does not
 have to be rare in practice: Especially for binary regressor variables (e.g., as in treatment-subgroup
 interactions, see \citealp{Doove+Dusseldorp+VanDeun:2014}) it can easily occur \citep[see Figure~2 in][for an illustration]{Loh+He+Man:2015}.
-%% FIXME: add reference to Seibold+Hothorn+Zeileis:2019
 Testing strategies being capable of detecting all kinds of changes including those orthogonal to the 
 mean are also employed in an extension of (generalised) linear model trees introduced by 
 \cite{Seibold+Hothorn+Zeileis:2019}
@@ -1541,6 +1573,7 @@ built using the basic framework of \code{ctree} and \code{mob}.
 \section*{Acknowledgments}
 Torsten Hothorn received funding from the Swiss National Science
 Foundation, grant number 200021\_184603.
+Lisa Schlosser received a PhD scholarship granted from the University of Innsbruck.
 
 
 \bibliography{ref.bib}
@@ -1640,13 +1673,6 @@ For the evaluation of all 12 possible combinations of the presented building blo
 the original testing strategies CTree, MOB, and GUIDE have been applied together
 with modified versions of them. The employed versions and the corresponding combination
 of building blocks are listed in Table~\ref{tab:combinations_appendix}.
-%Each suffix indicates a change of the original form of the considered testing strategy.
-%In particular, it relates to the transformations of the data before applying a statistical
-%test as represented by the different building blocks. In that way,
-%``+res'' refers to using only residuals (instead of all model scores),
-%``+scores'' to using all model scores (instead of only residuals),
-%``+cat'' to applying a categorization of split variables,
-%``+bin'' to applying a dichotomization of scores/residuals.
 
 \begin{table}[p!]
 \centering
@@ -1744,7 +1770,6 @@ but not necessarily smaller than the significance level, is illustrated.
 
 \section{Continuous ``stump'' scenario}
 \label{app:contbeta}
-
 
 \begin{figure}[t!]
 \setkeys{Gin}{width=\linewidth}
@@ -1978,6 +2003,57 @@ and 0.8 from left to right corresponding to the 50\%, 60\%, 75\%, and 90\% quant
 \end{figure}
 
 \clearpage
+
+\section{Type I error}
+\label{app:typeIerror}
+<<typeIerror, echo=FALSE, results=hide>>=
+# Table: Type I error
+subdata <- subset(sim_stump, test %in% c("ctree","mfluc",
+                                         "guide_sum_12", "guide_sum_1_cor"))
+subdata$test <- factor(subdata$test, 
+                       levels = c("ctree","mfluc",
+                                  "guide_sum_12", "guide_sum_1_cor"),
+                       labels = c("CTree","MOB",
+                                  "GUIDE+scores", "GUIDE"))
+
+sd <- subset(subdata, changetype == "abrupt" & delta == 0 & xi %in% c("0","0.8"))
+sd$xi <- factor(sd$xi)
+# sd[, c("test","xi", "variation", "prop_split")]
+
+xtbl <- xtabs(prop_split ~ (xi + test) + variation, data = sd)
+
+# sd$prop_split[sd$test == "CTree" & sd$variation == "all" & sd$xi == "0"]
+@
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ l l c c c }
+\hline\noalign{\smallskip} 
+Split point  & Strategy     & Varying $\beta_0$  & Varying $\beta_1$ & Varying $\beta_0$ and $\beta_1$ \\ 
+\noalign{\smallskip}\hline\noalign{\smallskip} 
+$\xi = 0$   & CTree         &  0.05 & 0.05 & 0.05 \\ 
+($50$\%)    & MOB           &  0.04 & 0.04 & 0.04 \\
+            & GUIDE+scores  &  0.05 & 0.05 & 0.05 \\
+            & GUIDE         &  0.04 & 0.04 & 0.04 \\
+\noalign{\smallskip}\hline\noalign{\smallskip} 
+$\xi = 0.8$ & CTree         &  0.05 & 0.05 & 0.05 \\
+($90$\%)    & MOB           &  0.04 & 0.04 & 0.04 \\
+            & GUIDE+scores  &  0.05 & 0.05 & 0.05 \\
+            & GUIDE         &  0.04 & 0.04 & 0.04 \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\caption{Probability of splitting in any of the available split variables,
+i.e., probability of any of the available split variables showing a $p$-value
+below the predefined level of significance $\alpha = 0.05$. 
+The testing strategies CTree, MOB, GUIDE, and GUIDE+scores are considered in 
+the ``stump'' scenario. Probabilities are estimated for effect size $\delta = 0$ 
+(i.e., no difference in the parameters) with 100 replications of 250 observations.
+The true split point $\xi$ in $Z_1$ is either the median~$0$~(top row) or the 90\%~quantile~$0.8$~(bottom row)
+for either varying intercept~$\beta_0$, varying slope~$\beta_1$, or both coefficients varying.
+\label{tab:typeIerror}}
+\end{table}
+
+
 
 \end{appendix}
 
