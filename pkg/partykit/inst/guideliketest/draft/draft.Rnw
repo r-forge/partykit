@@ -443,7 +443,7 @@ model-based approaches, GUIDE and MOB. Only CTree uses a slightly different appr
 based on maximizing a two-sample test statistic, because the algorithm as originally
 proposed did not employ an explicit objective function. However, it can be shown
 that in some settings the two approaches coincide} \citep{Zeileis+Hothorn:2013}
-\hlc{while the differ somewhat more generally. As we focus on model-based partitioning
+\hlc{while they differ somewhat more generally. As we focus on model-based partitioning
 here we employ the exhaustive model-based search for split point selection in
 all three algorithms considered.}
 
@@ -1186,7 +1186,7 @@ $p$-values keeping this value particularly low).
 Even with the limited number of replications in this simulation study the empirical size
 of all testing strategies (i.e., for $\delta = 0$) is between 4 and 5~percent and thus
 conforms well with the nominal significance level of $\alpha = 0.05$. The exact values
-can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror})
+can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror}
 \hlc{which also shows that the asymptotic structural change tests are slightly more conservative}
 \citep[confirming previous results in][]{Hothorn+Zeileis:2008, Zeileis+Hothorn:2013}.
 
