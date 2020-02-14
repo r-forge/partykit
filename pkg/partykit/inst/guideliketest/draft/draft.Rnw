@@ -1554,10 +1554,11 @@ linear model, e.g., in \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002}, a
 \section*{Computational details}
 \label{sec:comp}
 The applied implementation is based on the \proglang{R} package \pkg{partykit}
-(version~\Sexpr{packageVersion("partykit")}) which is available 
-on \proglang{R}-Forge at \url{https://R-Forge.R-project.org/projects/partykit/}.
-The code to reproduce the simulation study is available in the supplement for this 
-paper on arXiv.org E-Print Archive (\url{https://arxiv.org/}).
+%(version~\Sexpr{packageVersion("partykit")}) 
+(version~1.2.4) 
+which is available on \proglang{R}-Forge at 
+\url{https://R-Forge.R-project.org/projects/partykit/}.
+The code to reproduce the simulation study is available at \url{https://eeecon.uibk.ac.at/~zeileis/news/power_partitioning/}.
 
 The functions \code{ctree} and \code{mob} provide an implementation of the
 two tree algorithms in their original form. For their adapted versions additional
