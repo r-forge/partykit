@@ -174,7 +174,7 @@ URL: \url{http://user.math.uzh.ch/hothorn/}\\
 
 \begin{document}
 
-\vspace*{0.4cm}
+%\vspace*{0.4cm}
 
 \section{Introduction}\label{sec:introduction}
 In many situations fitting one global model to a given data set can be very challenging, 
@@ -194,17 +194,17 @@ computationally expensive but also biased towards split variables with many poss
 points \citep{Doyle:1973, Kim+Loh:2001}. 
 Therefore, selecting a split variable in a first step and then searching for the 
 best split point only within this variable in a separate second step is a more 
-promising strategy. \hlc{The most popular algorithms adopting such an unbiased recursive
-partitioning strategy are} QUEST \citep{Loh+Shih:1997},
+promising strategy. The most popular algorithms adopting such an unbiased recursive
+partitioning strategy are QUEST \citep{Loh+Shih:1997},
 %% CHAID \citep{Kass:1980},
-GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zeileis:2006} 
-and MOB \citep{Zeileis+Hothorn+Hornik:2008}. \hlc{QUEST and CTree have been suggested as
-nonparametric decision trees initially and have acquired more than 1,300 and 2,400 citations
+GUIDE \citep{Loh:2002}, CTree \citep{Hothorn+Hornik+Zeileis:2006}, 
+and MOB \citep{Zeileis+Hothorn+Hornik:2008}. QUEST and CTree have been suggested as
+nonparametric decision trees initially and have acquired more than 1,300 and 2,400~citations
 on Google Scholar, respectively. GUIDE and MOB have been designed for general model-based
 trees and have both received more than 400 citations.
 All of these share the same basic concept of selecting that covariate for splitting which shows the
 highest association to the response variable as captured by the $p$-value in the corresponding
-statistical test.} While QUEST
+statistical test. While QUEST
 %%, CHAID,
 and its successor GUIDE employ 
 statistical significance tests for contingency tables, CTree applies permutation tests in 
@@ -213,11 +213,11 @@ for the parameter estimators.
 All these approaches have been shown to work well for various situations, however, the relative
 (dis)advantages of the testing strategies have not yet been investigated and compared in detail.
 
-\fixme{``Why CTree, GUIDE, and MOB?''}
-
+%\fixme{``Why CTree, GUIDE, and MOB?''}
+%
 Therefore, in this paper the focus will be put on that first step of tree algorithms,
 i.e., the task of selecting the best split variable in a given (sub)sample. 
-In particular, the approach from the GUIDE algorithm \hlc{(which essentially encompasses QUEST)}
+In particular, the approach from the GUIDE algorithm (which essentially encompasses QUEST)
 is compared to the one of the CTree and MOB algorithms by investigating the building blocks of 
 their testing strategies in which they differ:
 (1)~Variation of the goodness-of-fit measure for the response: using residuals or full model scores.
@@ -241,10 +241,8 @@ Also regarding the effects of categorizing possible split variables and the sele
 of a pruning strategy clear recommendations can be given based on the presented results.
 
 The remainder of this manuscript is structured as follows:
-Section~\ref{sec:urp} reviews unbiased tree models, starting with the general algorithmic idea
-(Section~\ref{sec:generic_alg}) followed by the specific algorithms CTree (Section~\ref{sec:ctree}), 
-MOB (\ref{sec:mob}), and GUIDE (\ref{sec:guide}), before possible pruning strategies 
-(\ref{sec:pruning}) are discussed.
+Section~\ref{sec:urp} reviews unbiased tree models, starting with the general algorithmic idea~(Section~\ref{sec:generic_alg}) followed by the specific algorithms CTree~(Section~\ref{sec:ctree}), 
+MOB~(\ref{sec:mob}), and GUIDE~(\ref{sec:guide}), before possible pruning strategies~(\ref{sec:pruning}) are discussed.
 In Section~\ref{sec:unify} the unifying framework for testing strategies in unbiased model-based
 recursive partitioning algorithms is presented.
 The setting for the simulation study is introduced in Section~\ref{sec:simulation}
@@ -346,8 +344,8 @@ The estimate of the model parameters $\hat{\beta}$ is obtained by optimizing
 the sum of the objective function $\ell$, aggregated over all observations.
 This framework includes many different M-type estimators as special cases, including maximum 
 likelihood and ordinary least squares estimation. For a $K$-dimensional parameter
-$\beta$ the score function evaluated for the $i$-th observation $s(y_i, x_i, \beta)$
-is also a $K$-dimensional vector, i.e., the gradient contribution of the $i$-th observation.
+$\beta$ the score function evaluated for the $i$-th~observation~$s(y_i, x_i, \beta)$
+is also a $K$-dimensional vector, i.e., the gradient contribution of the $i$-th~observation.
 Thus, the $N \times K$-matrix consisting of these scores or gradient contributions for all 
 $i = 1, \dots, N$ observations is a natural candidate for the observation-wise goodness-of-fit
 measure as described in the previous Section~\ref{sec:generic_alg}.
@@ -367,9 +365,8 @@ the real line either by taking the absolute maximum or using a quadratic form --
 being computed from the analogous transformation of the normal distribution
 \citep[see][for a hands-on introduction and Appendix~\ref{app:teststat_ctree} for more details on the linear test statistic]{Hothorn+Hornik+VanDeWiel:2006}.
 
-If both variables $Y$ and $Z$ are numeric the default independence test corresponds to a Pearson 
-correlation test. For one numeric and one categorical variable essentially a one-way ANOVA
-(analysis of variance) is employed while for two categorical variables a $\chi^2$~test is performed.
+If both variables $Y$ and $Z$ are numeric the default independence test corresponds to a \mbox{Pearson} correlation test. For one numeric and one categorical variable essentially a one-way 
+ANOVA~(analysis of variance) is employed while for two categorical variables a $\chi^2$~test is performed.
 Thus, in the general CTree framework many types of tests can be specified by selecting suitable
 transformations $g$ and $h$. While originally
 conceived for nonparametric models, it is easy to adapt CTree to model-based testing and 
@@ -384,8 +381,7 @@ designed for a model-based goodness-of-fit measure in order to embed parametric 
 into a regression tree framework. Thus, MOB is based on an objective/loss function $\ell$
 and corresponding score function $s$. The original paper considered generalized linear models
 (GLMs) and survival regression models but subsequently various other models have been applied as well,
-including beta regression \citep{Gruen+Kosmidis+Zeileis:2012}, psychometric item response theory
-models \citep{Strobl+Kopf+Zeileis:2015}, or mixed effects models \citep{Fokkema+Smits+Zeileis:2018}.
+including beta regression \citep{Gruen+Kosmidis+Zeileis:2012}, psychometric item response theory models~\citep{Strobl+Kopf+Zeileis:2015}, or mixed effects models \citep{Fokkema+Smits+Zeileis:2018}.
 But just like CTree can be applied to parametric models, MOB conversely also encompasses
 simple regression and classification trees, e.g., by choosing an intercept-only model.
 
@@ -420,7 +416,7 @@ quantile regression models \citep{Chaudhuri+Loh:2002},
 and proportional hazards modeling via Poisson regression \citep{Loh+He+Man:2015}, among others.
 
 To construct a statistical test two additional transformations are carried out:
-(1)~The residuals $r(Y,X,\hat{\beta})$ are dichotomized at zero, yielding an indicator for positive vs.\ negative residuals.
+(1)~The residuals~$r(Y,X,\hat{\beta})$ are dichotomized at zero, yielding an indicator for positive vs.\ negative residuals.
 (2)~Each possible split variable $Z$ is categorized, i.e., unless $Z$ is already categorical
 it is split at its quartiles into four bins.
 Subsequently, a $\chi^2$~test of independence is performed for the dichotomized residuals and
@@ -433,19 +429,19 @@ applied test statistic can be found in Appendix~\ref{app:teststat_guide}.
 
 
 \subsection{Selecting a split point}
-\fixme{``Why is the choice of the split point not part of this paper?''}
+%\fixme{``Why is the choice of the split point not part of this paper?''}
 
-\hlc{Once a split variable has been selected, the selection of the corresponding
+Once a split variable has been selected, the selection of the corresponding
 split point is less controversial. The most natural strategy is to use an exhaustive
 search over all possible split points and then select the one that optimizes the
 objective function (or loss function). In fact, this is the strategy adopted by both
 model-based approaches, GUIDE and MOB. Only CTree uses a slightly different approach,
 based on maximizing a two-sample test statistic, because the algorithm as originally
 proposed did not employ an explicit objective function. However, it can be shown
-that in some settings the two approaches coincide} \citep{Zeileis+Hothorn:2013}
-\hlc{while they differ somewhat more generally. As we focus on model-based partitioning
+that in some settings the two approaches coincide \citep{Zeileis+Hothorn:2013}
+while they differ somewhat more generally. As we focus on model-based partitioning
 here we employ the exhaustive model-based search for split point selection in
-all three algorithms considered.}
+all three algorithms considered.
 
 \subsection{Pruning}
 \label{sec:pruning}
@@ -559,15 +555,15 @@ in the GUIDE approach, a one-way ANOVA can be used for assessing the association
 (without dichotomization) with the categorized split variable. Or alternatively, a multivariate
 one-way ANOVA can be used for the non-dichotomized scores as opposed to the residuals etc.
 
-\fixme{``Do the building blocks cover all possible options?''}
-
+%\fixme{``Do the building blocks cover all possible options?''}
+%
 Note that there are further differences in the testing strategies between the three algorithms, e.g.,
 using conditional vs.\ unconditional approximations of the null distributions. However, this difference
 has relatively little influence compared to the other building blocks considered in detail here.
 Moreover, both similarities and relative differences between these approaches have been previously
 discussed, e.g., in \cite{Hothorn+Zeileis:2008} and \cite{Zeileis+Hothorn:2013}.
-\hlc{Therefore, this aspect is not considered again here but focus is given to the building
-blocks selected above.}
+Therefore, this aspect is not considered again here but focus is given to the building
+blocks selected above.
 
 
 \begin{table}[t!]
@@ -704,7 +700,7 @@ linearly on the regressor variable $X$.
 % variable (taking values between $-1$ and $1$).
 Moreover, the intercept $\beta_0$ and/or the slope parameter $\beta_1$
 can depend on the true split variable $Z_1$. More specifically, three different variations
-are considered for the coefficients $\beta_0$ and $\beta_1$:
+are considered for the coefficients $\beta_0$ and $\beta_1$ (see Figure~\ref{fig:dgp_stump} for an illustration):
 %
 \begin{enumerate}
 \item The intercept $\beta_0$ varies depending on $Z_1$ while $\beta_1$ is fixed (at $1$).
@@ -713,8 +709,8 @@ are considered for the coefficients $\beta_0$ and $\beta_1$:
 \item Both coefficients $\beta_0$ and $\beta_1$ vary depending on $Z_1$.
 \end{enumerate}
 %
-See Figure~\ref{fig:dgp_stump} for an illustration. More precisely, the coefficient that
-changes~($\beta_{k-1}$ with $k=1,2=K$) switches between two values at the split point $\xi$:
+More precisely, the coefficient that
+changes~($\beta_{k-1}$~with $k=1,2=K$) switches between two values at the split point $\xi$:
 %
 \begin{align*}
 \beta_{k-1}(Z_1) = \begin{cases}
@@ -723,7 +719,7 @@ changes~($\beta_{k-1}$ with $k=1,2=K$) switches between two values at the split 
 \end{cases}
 \end{align*}
 In that way, the type of variation is the same for $\beta_0$ and $\beta_1$, however, in 
-opposite directions.
+opposite directions. 
 
 <<dgp, echo=FALSE>>=
 set.seed(7)
@@ -934,7 +930,7 @@ mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0
 \endminipage
 \caption{\label{fig:dgp_stump}{Top left panel: True stump structure applied in the data generating process for the ``stump'' scenario with the true model parameters $\beta_0$
 and $\beta_1$, either varying or being fixed at $0$ or $1$ respectively.
-Top right and bottom panels: Bivariate plot of the response $Y$ on regressor $X$ 
+Top right and bottom panels: Bivariate plot of the response~$Y$ on regressor~$X$ 
 with effect size $\delta = 1$ and for three variations: 
 varying $\beta_0$ and fixed $\beta_1$ (top right),
 fixed $\beta_0$ and varying $\beta_1$ (bottom left),
@@ -1009,7 +1005,7 @@ mtext(expression(beta[1]==-delta), side = 4, col = pal_dgp[2], las = 1, line = 0
 \caption{\label{fig:dgp_tree}Left panel: True tree structure
 applied in the data generating process for the ``tree'' scenario 
 with the true model parameters $\beta_0$ and $\beta_1$ for each terminal panel.
-Right panel: Bivariate plot of the response $Y$ on regressor $X$ 
+Right panel:~Bivariate plot of the response $Y$ on regressor~$X$ 
 with effect size $\delta = 1$.}
 \end{center}
 \end{figure}
@@ -1046,17 +1042,17 @@ the ``tree'' scenario. In particular, the parameters depend on the split variabl
 \subsection{Evaluation}
 \label{sec:evaluation}
 The testing strategies are evaluated over a stepwise increasing effect size $\delta$, 
-on 100 replications per step each consisting of 250 observations. 
+on 100~replications per step each consisting of 250 observations. 
 To compare the performance of the evaluated testing strategies for each step 
 in the ``stump'' scenario the following criteria are considered:
 the $p$-values pertaining only to the true split variable $Z_1$;
-and the proportion of replications for which the $p$-value of $Z_1$
+and the proportion of replications~for which the $p$-value of $Z_1$
 is the lowest and significant at 5\% level (i.e., where $Z_1$ would be
 selected for splitting in a pre-pruning approach), denoted by the 
 ``selection probability''. In that way, the power of the
 considered statistical tests can be compared as they are all applied
 as significance tests answering two questions at once:
-(1)~Should a split be performed at all? 
+(1)~Should a split be performed~at~all? 
 (2)~If so, in which variable?
 For the first question the $p$-values regarding all available split variables are compared 
 to a predefined level of significance $\alpha = 0.05$. Only if the smallest $p$-value is smaller
@@ -1151,7 +1147,7 @@ testing strategies CTree, MOB, GUIDE, and GUIDE+scores in the ``stump''
 scenario. Probabilities are estimated over increasing effect size $\delta$
 with 100 replications of 250 observations per step. The true split point
 in $Z_1$ is either the median 0 (top) or the 90\% quantile 0.8 (bottom)
-for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
+for either varying intercept~$\beta_0$ (left), varying slope~$\beta_1$
 (middle), or both coefficients varying (right).}
 \end{figure}
 
@@ -1177,17 +1173,17 @@ in the conditional mean). The remaining difference between MOB/CTree and GUIDE+s
 is due to dichotomizing the scores at zero and due to categorizing the split variables
 which are investigated in more detail in the next section.
 
-\fixme{Type I error}
-
-Figure~\ref{fig:scores_stump} \hlc{also shows that for $\delta = 0$, i.e., no difference
+%\fixme{Type I error}
+%
+Figure~\ref{fig:scores_stump} also shows that for $\delta = 0$, i.e., no difference
 in the parameters and consequently a random split variable selection, the probability of 
 selecting $Z_1$ as split variable is (close to)~$0$ (with the employed Bonferroni-adjustment of 
 $p$-values keeping this value particularly low).
-Even with the limited number of replications in this simulation study the empirical size
-of all testing strategies (i.e., for $\delta = 0$) is between 4 and 5~percent and thus
-conforms well with the nominal significance level of $\alpha = 0.05$. The exact values
-can be found in} Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror}
-\hlc{which also shows that the asymptotic structural change tests are slightly more conservative}
+Even with the limited number of replications in this simulation study the empirical~size~of 
+all testing strategies (i.e., for $\delta = 0$) is between 4 and 5~percent and thus
+conforms well~with~the nominal significance level of $\alpha = 0.05$. The exact values
+can be found in Table~\ref{tab:typeIerror} in Appendix~\ref{app:typeIerror}
+which also shows that the asymptotic structural change tests are slightly more conservative
 \citep[confirming previous results in][]{Hothorn+Zeileis:2008, Zeileis+Hothorn:2013}.
 
 
@@ -1377,7 +1373,7 @@ strategy such as cost-complexity pruning \citep{Breiman+Friedman+Stone:1984}. In
 variables have the lowest $p$-value among all potential split variables -- but it is irrelevant whether
 this is significant or not. To investigate to which extent this is actually true we evaluate the
 different tree algorithms in the more complex ``tree'' scenario (see Figure~\ref{fig:dgp_tree}):
-once with significance-based pre-pruning and once with cost-complexity post-pruning.
+once with significance-based pre-pruning and once \mbox{with cost-complexity post-pruning.}
 
 Recall that the true split structure is composed of splits in two different variables, both at
 the same split point $\xi$. First, the split in $Z_2$ changes the slope from $+\delta$ to
@@ -1482,7 +1478,7 @@ flavors are indeed mitigated. Thus, by first growing a large tree without stoppi
 non-significance and then pruning back based on predictive performance instead substantially
 improves the fit of the two GUIDE flavors. However, using the residuals only in GUIDE still
 performs clearly worse compared to the GUIDE+scores. The latter is essentially on par with
-CTree and MOB when the true split matches one of the categorization bins (i.e., $\xi = 0$
+CTree~and~MOB when the true split matches one of the categorization bins (i.e., $\xi = 0$
 and $\xi = 0.5$, respectively) while CTree/MOB still perform somewhat better in the other
 cases ($\xi = 0.2$ and $\xi = 0.8$).
 
@@ -1554,7 +1550,7 @@ e.g., in \cite{Hothorn+Zeileis:2017} and \cite{Schlosser+Hothorn+Stauffer:2019}.
 be of interest to investigate a score-based version of the extended GUIDE algorithms beyond the
 linear model, e.g., in \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002}, and \citealp{Loh+He+Man:2015}.
 
-
+\newpage
 \section*{Computational details}
 \label{sec:comp}
 The applied implementation is based on the \proglang{R} package \pkg{partykit}
@@ -1577,6 +1573,8 @@ Torsten Hothorn received funding from the Swiss National Science
 Foundation, grant number 200021\_184603.
 Lisa Schlosser received a PhD scholarship granted from the University of Innsbruck.
 
+\section*{Competing interests statement}
+The authors declare that they have no competing interests.
 
 \bibliography{ref.bib}
 
@@ -1637,7 +1635,7 @@ $$
 W_j(t) = \hat{V}^{-1/2} N^{-1/2} \sum_{i=1}^{\lfloor Nt \rfloor} s_{\pi(Z_{ji})} \qquad (0 \leq t \leq 1)
 $$
 with the model scores $s_i = s(Y_i, X_i, \hat{\beta})$ being sorted by the possible split variable $Z_j$ by including the ordering permutation $\pi(Z_{ji})$. 
-To scale this partial sum process an estimate $\hat{V}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
+To scale this partial sum process an estimate~$\hat{V}$ of the covariance matrix $\text{cov}(s(Y,X,\hat{\beta}))$ is included.
 Following \cite{Zeileis+Hornik:2007} $W_j(t)$ converges to a Brownian bridge $W^0$ under the null
 hypothesis of parameter stability. To obtain a test statistic a scalar functional $\lambda(\cdot)$ capturing the fluctuation in the empirical process can be applied and the corresponding asymptotic distribution of $\lambda(W_j(t))$ can be obtained by employing the same functional to the limit process, i.e., $\lambda(W^0)$. 
 
@@ -1751,7 +1749,7 @@ hence, where $Z_1$ is selected without any significance level in the ``stump'' s
 The testing strategies CTree, MOB, GUIDE, and GUIDE+scores are evaluated 
 over increasing effect size $\delta$ with 100 replications of 250 observations per step. 
 The true split point in $Z_1$ is either the median 0 (top) or the 90\% quantile 0.8 (bottom)
-for either varying intercept $\beta_0$ (left), varying slope $\beta_1$
+for either varying intercept~$\beta_0$ (left), varying slope~$\beta_1$
 (middle), or both coefficients varying (right).}
 \end{figure}
 
