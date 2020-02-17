@@ -66,10 +66,14 @@ coeffun <- function(model) {
 }
 coefs_wb <- pmodel(x = frst_wb, newdata = tsimdata_s,
                    fun = coeffun)
+## IGNORE_RDIFF_BEGIN
 summary(coefs_wb)
+## IGNORE_RDIFF_END 
 
 
 ## Variable importance
 set.seed(123)
 (vi_lm <- varimp(frst_lm))
+## IGNORE_RDIFF_BEGIN
 (vi_wb <- varimp(frst_wb))
+## IGNORE_RDIFF_END 

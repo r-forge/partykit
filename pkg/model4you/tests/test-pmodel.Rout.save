@@ -1,5 +1,5 @@
 
-R version 3.6.1 (2019-07-05) -- "Action of the Toes"
+R version 3.6.2 (2019-12-12) -- "Dark and Stormy Night"
 Copyright (C) 2019 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
@@ -20,7 +20,6 @@ Loading required package: partykit
 Loading required package: grid
 Loading required package: libcoin
 Loading required package: mvtnorm
-Loading required package: rpart
 > library("mvtnorm")
 > library("survival")
 > set.seed(123)
@@ -97,6 +96,7 @@ No data given. I'm using data set simdata_s from the current environment parent.
 + }
 > coefs_wb <- pmodel(x = frst_wb, newdata = tsimdata_s,
 +                    fun = coeffun)
+> ## IGNORE_RDIFF_BEGIN
 > summary(coefs_wb)
   (Intercept)          aA               scale          median_s0    
  Min.   :1.873   Min.   :-0.36744   Min.   :0.1086   Min.   :5.798  
@@ -112,6 +112,7 @@ No data given. I'm using data set simdata_s from the current environment parent.
  Mean   :7.606   Mean   : 0.8467  
  3rd Qu.:8.519   3rd Qu.: 1.6195  
  Max.   :9.331   Max.   : 2.5813  
+> ## IGNORE_RDIFF_END 
 > 
 > 
 > ## Variable importance
@@ -119,10 +120,12 @@ No data given. I'm using data set simdata_s from the current environment parent.
 > (vi_lm <- varimp(frst_lm))
         z1         z2         z3         z4         z5 
 479.272990  56.304019   1.554203  44.625821  35.586728 
+> ## IGNORE_RDIFF_BEGIN
 > (vi_wb <- varimp(frst_wb))
        z1        z2        z3        z4        z5 
 153.05987  28.35612  36.75283  23.65575  34.97163 
+> ## IGNORE_RDIFF_END 
 > 
 > proc.time()
    user  system elapsed 
- 13.112   0.085  13.187 
+ 17.469   0.138  17.606 
