@@ -6,6 +6,9 @@ import("partykit")
 importFrom("grDevices", "gray")
 importFrom("sandwich", "estfun")
 importFrom("sandwich", "bread")
+importFrom("grid", "drawDetails")
+importFrom("grid", "preDrawDetails")
+importFrom("grid", "postDrawDetails")
 
 ## Export functions
 export("circmax")
