@@ -71,16 +71,16 @@ plot(ct.rad, tp_args = list(response_range = c(0, 24)))
 ## example on response range (0, 360):
 sdat.deg <- circtree_simulate(response_range = c(0, 360))
 ct.deg <- circtree(y ~ x1 + x2, data = sdat.deg)
-plot(ct.deg, tp_args = list(type = "parameter"))
-plot(ct.deg, tp_args = list(type = "response"))
-plot(ct.deg, tp_args = list(plot_type = "geographics"))
+plot(ct.deg, tp_args = list(response_range = FALSE))
+plot(ct.deg, tp_args = list(response_range = TRUE))
+plot(ct.deg, tp_args = list(template = "geographics"))
 
 ## example on response range (0, 24):
 sdat.hour <- circtree_simulate(response_range = c(0, 24))
 ct.hour <- circtree(y ~ x1 + x2, data = sdat.hour, response_range = c(0, 24))
-plot(ct.hour, tp_args = list(type = "parameter"))
-plot(ct.hour, tp_args = list(type = "response", plot_type = "time"))
-plot(ct.hour, tp_args = list(type = "response", plot_type = "time", 
+plot(ct.hour, tp_args = list(response_range = FALSE))
+plot(ct.hour, tp_args = list(template = "clock24"))
+plot(ct.hour, tp_args = list(template = "clock24", 
   circlab = c("no", "mo", "mi", "ev")))
 }
 

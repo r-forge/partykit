@@ -204,7 +204,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
       mainlab <- mainlab(nid, node$info$object$ny, coefs[1], coefs[2], response_range)
     }
     ##grid::grid.text(mainlab, y = grid::unit(0.9, "npc"), gp = gpar(cex = 0.8))
-    g <- resizingTextGrob(mainlab, y = grid::unit(0.8, "npc"), gp = gpar(cex = 1.2))
+    g <- resizingTextGrob(mainlab, y = grid::unit(0.8, "npc"), gp = grid::gpar(cex = 1.2))
     grid::grid.draw(g)
 
     ## plot rectangle and actual graphic, optional x and ylab 
@@ -237,7 +237,7 @@ drawDetails.resizingTextGrob <- function(x, recording=TRUE) {
 }
 
 preDrawDetails.resizingTextGrob <- function(x) {
-  h <- grid::convertHeight(unit(1, "snpc"), "mm", valueOnly=TRUE)
+  h <- grid::convertHeight(grid::unit(1, "snpc"), "mm", valueOnly=TRUE)
   fs <- scales::rescale(h, to=c(18, 9), from=c(120, 20))
   grid::pushViewport(grid::viewport(gp = grid::gpar(fontsize = fs)))
 }

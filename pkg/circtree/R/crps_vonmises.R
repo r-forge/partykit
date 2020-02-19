@@ -6,7 +6,7 @@
 # - PURPOSE: Circular CRPS (von Mises) based on numeric integration using
 #            the charististic equation
 # -------------------------------------------------------------------
-# - L@ST MODIFIED: 2019-10-15 on thinkmoritz
+# - L@ST MODIFIED: 2020-02-19 on thinkmoritz
 # -------------------------------------------------------------------
 
 ##YEAR: 2017
@@ -109,8 +109,8 @@ crps_vonmises_sample <- function(y, mu, kappa, sum = FALSE, na.rm = FALSE, n = 1
       dat[i, "y"] <- dat[i, "y"] %% (2 * pi)
       dat[i, "mu"] <- dat[i, "mu"] %% (2 * pi)
 
-      crps <- mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), dat[i, "y"])) -
-        0.5 * mean(angle_dist(rvm(n, dat[i, "mu"], dat[i, "kappa"]), rvm(n, dat[i, "mu"], dat[i, "kappa"])))
+      crps <- mean(angle_dist(CircStats::rvm(n, dat[i, "mu"], dat[i, "kappa"]), dat[i, "y"])) -
+        0.5 * mean(angle_dist(CircStats::rvm(n, dat[i, "mu"], dat[i, "kappa"]), CircStats::rvm(n, dat[i, "mu"], dat[i, "kappa"])))
       return(crps)
     }
   })
