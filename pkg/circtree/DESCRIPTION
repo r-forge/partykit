@@ -8,5 +8,5 @@ Description: Infrastructure for fitting distributional trees and forests based o
 Depends: R (>= 3.4.0), partykit (>= 1.2-5), disttree (>= 0.2-0)
 License: GPL-2 | GPL-3
 Imports: stats, circular, Formula, movMF, gridGraphics, grDevices, sandwich, Bessel
-Suggests: bamlss, testthat, latex2exp, methods, colorspace 
+Suggests: bamlss, testthat, latex2exp, methods, colorspace, scoringRules, scales, CircStats
 RoxygenNote: 6.1.1
