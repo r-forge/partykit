@@ -1,5 +1,5 @@
 
-useDynLib(partykit, .registration = TRUE)
+useDynLib(partykitx, .registration = TRUE)
 
 import("stats")
 import("graphics")
