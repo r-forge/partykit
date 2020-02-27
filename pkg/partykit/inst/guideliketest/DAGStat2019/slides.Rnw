@@ -6,8 +6,8 @@ A Unifying View of CTree, MOB, and GUIDE}
 \author{Lisa Schlosser, Torsten Hothorn, Achim Zeileis}
 \setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
 %\renewcommand{\mysize}{\fontsize{7.7pt}{9pt}\selectfont}
-\URL{http://www.partykit.org/} 
-\headerimage{3}
+\URL{http://www.partykit.org/partykit} 
+\headerimage{4}
 
 
 \setbeamertemplate{caption}{\insertcaption} 
@@ -22,6 +22,7 @@ A Unifying View of CTree, MOB, and GUIDE}
 %% colors
 \definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
 \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+\definecolor{dred}{RGB}{119,16,26}
 
  
 \SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
@@ -99,7 +100,9 @@ dev.off()
 
 \begin{document}
 
-\section{Unbiased Recursive Partitioning}
+\section{The Power of Unbiased Recursive Partitioning}
+
+\subsection{Motivation}
 
 \begin{frame}%[fragile]
 \frametitle{Motivation}
@@ -136,9 +139,42 @@ dev.off()
 \end{tikzpicture}
 \end{frame}
 
+\subsection{Unbiased recursive partitioning}
 
-\begin{frame}%[fragile]
-\frametitle{Unbiased Recursive Partitioning}
+\begin{frame}
+\frametitle{Unbiased recursive partitioning}
+
+\textbf{GUIDE:} Loh (2002, \emph{Statistica Sinica}).
+\begin{itemize}
+  \item First \emph{unbiased} algorithm for recursive partitioning of linear models.
+  \item Separation of split variable and split point selection.
+  \item Based on $\chi^2$ tests.
+\end{itemize}
+
+\medskip
+
+\textbf{CTree:} Hothorn, Hornik, Zeileis (2006, \emph{JCGS}).
+\begin{itemize}
+  \item Proposed as unbiased recursive partitioning for nonparametric modeling.
+  \item Based on conditional inference (or permutation tests).
+  \item Can be model-based via model scores as the response transformation.
+\end{itemize}
+
+\medskip
+
+\textbf{MOB:} Zeileis, Hothorn, Hornik (2008, \emph{JCGS}).
+\begin{itemize}
+  \item Model-based recursive partitioning using M-estimation (ML, OLS, CRPS, \dots).
+  \item Based on parameter instability tests.
+  \item Adapted to various psychometric models: Rasch, PCM, Bradley-Terry, MPT, SEM, networks, \dots.
+\end{itemize}
+
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Unbiased recursive partitioning}
 {\bf Basic tree algorithm:}
 \medskip
 \begin{enumerate}
@@ -158,7 +194,7 @@ and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}
 
 
 \begin{frame}%[fragile]
-\frametitle{Split Variable Selection}
+\frametitle{Split variable selection}
 
 {\bf General testing strategy:}
 \begin{enumerate}
@@ -182,7 +218,7 @@ and each possible split variable~$Z_j$ and select the split~variable~$Z_{j^\ast}
 
 
 \begin{frame}%[fragile]
-\frametitle{Discrepancy Measures}
+\frametitle{Discrepancy measures}
 
 \textbf{Example:} Simple linear regression $\mathcal{M}(Y,X;\beta_0, \beta_1)$,
 fitted via ordinary least squares~(OLS).
@@ -196,6 +232,7 @@ r(Y,X,\hat{\beta_0},\hat{\beta_1}) = Y - \hat{\beta_0} - \hat{\beta_1} \cdot X &
 \end{flalign*}
 
 \bigskip
+\pause
 
 {\bf Model scores:} Based on log-likelihood or residual sum of squares.
 \begin{flalign*}
@@ -206,17 +243,20 @@ s(Y, X, \hat{\beta_0}, \hat{\beta_1}) =
 &&
 \end{flalign*}
 
-\visible<2>{
+\pause
+
 \vspace{-0.3cm}
-$$\hspace{-0.3cm}{\color{red}\Downarrow} \hspace{3.4cm} {\color{red}\Downarrow} $$
+$$\hspace{-0.3cm}{\color{dred}\Downarrow} \hspace{3.4cm} {\color{dred}\Downarrow} $$
 $$
-{\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{red} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1}) \cdot X}
+{\color{dred} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1})}  \hspace{0.7cm} {\color{dred} -2 \cdot r(Y, X, \hat{\beta_0},\hat{\beta_1}) \cdot X}
 $$
-}
+
 \end{frame}
 
+\subsection{A unifying view}
+
 \begin{frame}
-\frametitle{A Unifying View}
+\frametitle{A unifying view}
 
 \textbf{Algorithms:} CTree, MOB, GUIDE are all `flavors' of the general framework.
 
@@ -247,7 +287,7 @@ GUIDE & Residuals    & \checkmark    & \checkmark      & Sum of squares\\
 \end{frame}
 
 \begin{frame}%[fragile]
-\frametitle{General Framework}
+\frametitle{General framework}
 
 {\bf{Building blocks:}}
 
@@ -357,7 +397,7 @@ $$
 
 \begin{itemize}
 \item \emph{Pre-pruning:}
-Internal stopping criterion based on Bonferroni-corrected $p$-values of the applied tests. Stop splitting when there is no significant association. 
+Internal stopping criterion based on Bonferroni-corrected $p$-values of the underlying tests. Stop splitting when there is no significant association. 
 \item \emph{Post-pruning:}
 First grow a very large tree and afterwards prune splits that do not improve the model fit, 
 either via cross-validation (e.g.,~cost-complexity pruning as in CART) or 
@@ -365,6 +405,8 @@ based on information criteria (e.g.,~AIC or BIC).
 \end{itemize}
 \end{frame}
 
+
+\subsection{Simulation}
 
 \begin{frame}%[fragile]
 \frametitle{Simulation}
@@ -753,36 +795,36 @@ xyplot(prop_Tsplit ~ delta | variation, groups = ~ test,
 
 
 
-\begin{frame}%[fragile]
-\frametitle{Simulation 1: Full factorial analysis of building blocks}
-
-\begin{figure}%[t]
-\setkeys{Gin}{width=0.8\linewidth}
-<<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
-xyplot(pval_z1 ~ cat | xi, 
-       groups = interaction(bin, res_scores), 
-       data = sim_3way, 
-       ylim = c(0,0.5),
-       type = c("a"), 
-       col = c(pal[1], pal[3], pal[1], pal[3]),
-       lty = c(1,1,2,2),
-       lwd = 2,
-       layout = c(2,1),
-       scales = list(alternating=FALSE),
-       xlab = "Categorization",
-       ylab = expression("p-value of"~Z[1]),
-       strip = strip.custom(factor.levels = c(expression(xi==0~"(50%)"~" and"~delta==0.3), 
-                                              expression(xi==0.8~"(90%)"~" and"~delta==1)),
-                            bg = "gray90"),
-       key = list(text = list(c("Goodness of fit:", "  residuals", "  scores", "Dichotomization:", "  yes", "  no")),
-                  columns = 2,
-                  lines = list(lty = c(0,1,2,0,1,1), 
-                               type = "l", lwd = 2,
-                               col = c("black","black","black","black", pal[1], pal[3]))))
-
-@
-\end{figure}
-\end{frame}
+%% \begin{frame}%[fragile]
+%% \frametitle{Simulation 1: Full factorial analysis of building blocks}
+%% 
+%% \begin{figure}%[t]
+%% \setkeys{Gin}{width=0.8\linewidth}
+%% <<3way, fig=TRUE, echo=FALSE, height=4, width=8>>=
+%% xyplot(pval_z1 ~ cat | xi, 
+%%        groups = interaction(bin, res_scores), 
+%%        data = sim_3way, 
+%%        ylim = c(0,0.5),
+%%        type = c("a"), 
+%%        col = c(pal[1], pal[3], pal[1], pal[3]),
+%%        lty = c(1,1,2,2),
+%%        lwd = 2,
+%%        layout = c(2,1),
+%%        scales = list(alternating=FALSE),
+%%        xlab = "Categorization",
+%%        ylab = expression("p-value of"~Z[1]),
+%%        strip = strip.custom(factor.levels = c(expression(xi==0~"(50%)"~" and"~delta==0.3), 
+%%                                               expression(xi==0.8~"(90%)"~" and"~delta==1)),
+%%                             bg = "gray90"),
+%%        key = list(text = list(c("Goodness of fit:", "  residuals", "  scores", "Dichotomization:", "  yes", "  no")),
+%%                   columns = 2,
+%%                   lines = list(lty = c(0,1,2,0,1,1), 
+%%                                type = "l", lwd = 2,
+%%                                col = c("black","black","black","black", pal[1], pal[3]))))
+%% 
+%% @
+%% \end{figure}
+%% \end{frame}
 
 
 
@@ -937,6 +979,8 @@ xyplot(ari ~ delta | xi, groups = ~ test_pruning,
 \end{frame}
 
 
+\subsection{Recommendations}
+
 \begin{frame}%[fragile]
 \frametitle{Recommendations}
 
@@ -947,31 +991,27 @@ xyplot(ari ~ delta | xi, groups = ~ test_pruning,
 \item Full model scores better than residuals only.
 \item Original values of scores/residuals better than binarized values.
 \item Categorization is simpler, but less powerful in margins.
-\item If the significance test performs well pre-pruning works well,\\
-otherwise post-pruning might be needed.
-%\item Including full model scores is advantageous over using only residuals.
-%\item Binarizing scores/residuals does not improve the performance.
-%\item Categorizing split variables can simplify calculations, however,
-%effects might be missed unless a binning point is close to the true split point.
-%\item If the applied test performs well as significance test pre-pruning
-%is preferable, otherwise post-pruning.
+\item Maximally-selected statistics (as in MOB) more powerful for abrupt shifts.
+\item Linear statistics (default in CTree) more powerful for linear changes.
+\item If the significance tests perform well pre-pruning works well,\\
+      otherwise post-pruning might be needed.
 \end{itemize}
 \end{frame}
 
 
-\begin{frame}
-\frametitle{Software}
-
-\textbf{Package:} Available on CRAN at
-
-\url{https://CRAN.R-project.org/package=partykit}\\
-
-\bigskip
-
-\textbf{Replication code:} Available on R-Forge at
-
-\url{https://R-Forge.R-project.org/projects/partykit/}\\
-
+%% \begin{frame}
+%% \frametitle{Software}
+%% 
+%% \textbf{Package:} Available on CRAN at
+%% 
+%% \url{https://CRAN.R-project.org/package=partykit}\\
+%% 
+%% \bigskip
+%% 
+%% \textbf{Replication code:} Available on R-Forge at
+%% 
+%% \url{https://R-Forge.R-project.org/projects/partykit/}\\
+%% 
 %\bigskip
 
 %\textbf{Applied functions:}
@@ -982,9 +1022,7 @@ otherwise post-pruning might be needed.
 %\item Adaptions of both of them
 %\item Reimplementation of GUIDE
 %\end{itemize}
-\end{frame}
-
-
+%% \end{frame}
 
 
 
@@ -997,44 +1035,31 @@ otherwise post-pruning might be needed.
 
 \footnotesize
 Schlosser L, Hothorn T, Zeileis A (2019).
- \dquote{The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE.}
- \emph{Working paper in preparation}.
-  
-\medskip
+  \dquote{The Power of Unbiased Recursive Partitioning: A Unifying View of CTree, MOB, and GUIDE.}
+  arXiv:1906.10179, \emph{arXiv.org E-Print Archive}.
+  \url{https://arxiv.org/abs/1906.10179}.
 
-Breiman L, Friedman J H, Olshen R A, Stone C J (1984).
- \textit{Classification and Regression Trees.}
- Wadsworth,
- California.
+\bigskip
+\bigskip
+
+Loh W-Y (2002).
+  \dquote{Regression Trees with Unbiased Variable Selection and Interaction Detection.}
+  \textit{Statistica Sinica},
+  \textbf{12}(2), 361--386.
+  \url{http://www.jstor.org/stable/24306967}
 
 \medskip
 
 Hothorn T, Hornik K, Zeileis A (2006).
- \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
- \textit{Journal of Computational and Graphical Statistics},
- \textbf{15}(3), 651--674.
- \doi{10.1198/106186006X133933}
+  \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+  \textit{Journal of Computational and Graphical Statistics},
+  \textbf{15}(3), 651--674.
+  \doi{10.1198/106186006X133933}
  
 \medskip
 
-Hothorn T, Zeileis A (2015).
- \dquote{\textbf{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
- \textit{Journal of Machine Learning Research},
- \textbf{16}, 3905--3909.
- \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
-
-\medskip
-
-Loh W-Y (2002).
- \dquote{Regression Trees with Unbiased Variable Selection and Interaction Detection.}
- \textit{Statistica Sinica},
- \textbf{12}(2), 361--386.
- \url{http://www.jstor.org/stable/24306967}
-
-\medskip
-
 Zeileis A, Hothorn T, Hornik K (2008).
- \dquote{Model-Based Recursive Partitioning.}
+  \dquote{Model-Based Recursive Partitioning.}
   \textit{Journal of Computational and Graphical Statistics},
   \textbf{17}(2), 492--514.
   \doi{10.1198/106186008X319331}
