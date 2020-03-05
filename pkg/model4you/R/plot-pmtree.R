@@ -60,7 +60,8 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 
   ## check if model has on factor covariate
   if(!one_factor(mod))
-    stop("Model needs to be with a single factor covariate. Please check!")
+    stop("Plotting currently only works for models with a single factor covariate. 
+        We recommend using partykit or ggparty plotting functionalities!")
 
   ## get formula and data
   modcall <- getCall(mod)
@@ -155,7 +156,8 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 
   ## check if model has on factor covariate
   if(!one_factor(mod))
-    stop("Model needs to be with a single factor covariate. Please check!")
+      stop("Plotting currently only works for models with a single factor covariate. 
+        We recommend using partykit or ggparty plotting functionalities!")
 
   ## get formula and data
   modcall <- getCall(mod)
@@ -233,7 +235,8 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
 
   ## check if model has on factor covariate
   if(!one_factor(mod))
-    stop("Model needs to be with a single factor covariate. Please check!")
+    stop("Plotting currently only works for models with a single factor covariate. 
+        We recommend using partykit or ggparty plotting functionalities!")
 
   ## get formula and data
   modcall <- getCall(mod)
@@ -296,7 +299,8 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
 
   ## check if model has on factor covariate
   if(!one_factor(mod))
-    stop("Model needs to be with a single factor covariate. Please check!")
+      stop("Plotting currently only works for models with a single factor covariate. 
+        We recommend using partykit or ggparty plotting functionalities!")
 
   ## get formula and data
   modcall <- getCall(mod)
