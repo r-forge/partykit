@@ -128,7 +128,7 @@ one_factor <- function(object) {
 .prepare_args <- function(model, data, zformula, control, ...) {
 
   if(!one_factor(model))
-    stop("Model needs to be with a single factor covariate. Please check!")
+    warning("Models with anything but single factor covariates are in beta. Please check if this is what you want!")
 
   if (is.null(modcall <- getCall(model)))
     stop("Need a model with call component, see getCall")
