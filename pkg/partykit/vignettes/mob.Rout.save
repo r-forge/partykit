@@ -117,7 +117,6 @@ p.value   4.434e-04   0.9845  0.9226   0.870 0.7033  0.02647 8.099e-06
 x(Intercept)     xglucose 
     -5.35008      0.03787 
 
-## IGNORE_RDIFF_BEGIN
 > summary(pid_tree, node = 1)
 
 Call:
@@ -142,7 +141,7 @@ AIC: 812.7
 
 Number of Fisher Scoring iterations: 4
 
-## IGNORE_RDIFF_END
+
 > exp(coef(pid_tree)[, 2])
     2     4     5 
 1.060 1.048 1.024 
@@ -698,4 +697,4 @@ $`7`
  *** Run successfully completed ***
 > proc.time()
    user  system elapsed 
- 11.464   0.136  11.598 
+  10.95    0.18   11.13 
