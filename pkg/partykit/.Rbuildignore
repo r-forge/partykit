@@ -21,6 +21,7 @@ NEWS.md
 _pkgdown.yml
 index.Rmd
 vignettes/glmtree-titanic.Rmd
+vignettes/mob.Rout.save
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^.*R2.*$
