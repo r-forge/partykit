@@ -7,6 +7,6 @@ Authors@R: c(person(given = "Moritz N.", family = "Lang", role = c("aut", "cre")
 Description: Infrastructure for fitting distributional trees and forests based on maximum-likelihood estimation of parameters for a circular response, as well as regression methods for a circular response based on maximum-likelihood estimation are provided. For both approaches the von Mises distribution is employed as circular response distribution.
 Depends: R (>= 3.4.0), partykit (>= 1.2-5), disttree (>= 0.2-0)
 License: GPL-2 | GPL-3
-Imports: stats, circular, Formula, movMF, gridGraphics, grDevices, sandwich, Bessel, scales 
-Suggests: bamlss, testthat, latex2exp, methods, colorspace, scoringRules, CircStats
+Imports: stats, circular, Formula, movMF, gridGraphics, grDevices, sandwich, scales, latex2exp
+Suggests: testthat, methods
 RoxygenNote: 6.1.1
