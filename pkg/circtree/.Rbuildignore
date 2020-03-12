@@ -5,3 +5,4 @@ vignettes/circtree.tex
 inst/wind_paper/
 TODO
 R/crps_vonmises.R
+man/crps_vonmises.R
