@@ -4,3 +4,4 @@ vignettes/circtree_backup.pdf
 vignettes/circtree.tex
 inst/wind_paper/
 TODO
+R/crps_vonmises.R
