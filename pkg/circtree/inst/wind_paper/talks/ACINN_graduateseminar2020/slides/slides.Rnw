@@ -107,9 +107,9 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 
 \textbf{Examples:} Circular data.
 \begin{itemize}
-\item Hourly crime data: $[0\text{h}, 24\text{h})$ with $0\text{h} = 24\text{h}$.
-\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$.
-\item Wind directions: $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$.
+\item Hourly crime data: $[0\text{h}, 24\text{h})$.
+\item Directional behavior of animals: $[0^{\circ}, 360^{\circ})$.
+\item Wind directions: $[0^{\circ}, 360^{\circ})$.
 \end{itemize}
 
 \end{frame}
@@ -877,16 +877,76 @@ where $I_0(\kappa)$ is the modified Bessel function of the first kind and order 
 %% SLIDE
 \begin{frame}
 \frametitle{Learning circular trees and forests}
-      \begin{minipage}{0.7\textwidth}
+      \begin{minipage}{1\textwidth}
       {\bf Forest:} 
       \begin{enumerate}
       \item Learn an ensemble of $T$ trees:\\
        Each tree is built on a bootstrap or subsample of the data, with
       random input variable sampling.
-      \item<2-> Combine / average over estimated $T$ trees:\\
+      \item<2-> Aggregate / average over estimated $T$ trees:\\
       To stabilize and regularize the model.
+      %\item<3-> Only observations $\bold{x}_i$ in the same subgroup as a 
+      %(new) observation $\bold{x}$ enter the parameter estimation.
+      \item<2-> Weighted parameter estimation:\\The weight of observation $i$ for the parameter 
+        estimatation for a 
+        (new) observation $j$ is the mean of assignments to the same node.
       \end{enumerate}
       \end{minipage}
+\begin{center}
+\minipage{0.38\textwidth}
+\vspace{0.5em}
+\resizebox{0.94\textwidth}{!}{
+\begin{tikzpicture}
+  \visible<3->{
+  \draw (11.1,5) node{\phantom{.}};
+  \draw (18.5,9) node{\phantom{.}};
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (12, 9) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (11.5, 8) {\only<4->{$i, j$}};
+  \draw[-, line width=1pt] (n0) -- (n1);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (12.5, 8) {};
+  \draw[-, line width=1pt] (n0) -- (n2);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (12, 7) {};
+  \draw[-, line width=1pt] (n2) -- (n3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (13, 7) {};
+  \draw[-, line width=1pt] (n2) -- (n4);
+  }
+
+  \visible<5->{
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_0) at (12+3.25, 9) {};
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_1) at (11.5+3.25, 8) {};
+  \draw[-, line width=1pt] (n1_0) -- (n1_1);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_2) at (12.5+3.25, 8) {\only<6->{$i, j$}};
+  \draw[-, line width=1pt] (n1_0) -- (n1_2);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_3) at (11+3.25, 7) {};
+  \draw[-, line width=1pt] (n1_1) -- (n1_3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_4) at (12+3.25, 7) {};
+  \draw[-, line width=1pt] (n1_1) -- (n1_4);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_5) at (10.5+3.25, 6) {};
+  \draw[-, line width=1pt] (n1_3) -- (n1_5);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n1_6) at (11.5+3.25, 6) {};
+  \draw[-, line width=1pt] (n1_3) -- (n1_6);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_7) at (11+3.25, 5) {};
+  \draw[-, line width=1pt] (n1_6) -- (n1_7);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1_8) at (12+3.25, 5) {};
+  \draw[-, line width=1pt] (n1_6) -- (n1_8);
+
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_0) at (12+6, 9) {};
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2_1) at (11.5+6, 8) {};
+  \draw[-, line width=1pt] (n2_0) -- (n2_1);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_2) at (12.5+6, 8) {};
+  \draw[-, line width=1pt] (n2_0) -- (n2_2);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_3) at (11+6, 7) {\only<6->{$i\vphantom{j}$}};
+  \draw[-, line width=1pt] (n2_1) -- (n2_3);
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n2_4) at (12+6, 7) {\only<6->{$j$}};
+  \draw[-, line width=1pt] (n2_1) -- (n2_4);
+  }
+\end{tikzpicture}
+}
+\endminipage
+\end{center}
+
       
 \end{frame}
 
