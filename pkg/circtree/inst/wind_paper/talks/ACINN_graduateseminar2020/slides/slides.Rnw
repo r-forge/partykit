@@ -95,8 +95,6 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 \begin{frame}[fragile]
 \frametitle{Motivation}
 
-\pause
-
 \textbf{Goal:} 
 \begin{itemize}
   \item Statistical modeling of circular response variables.
