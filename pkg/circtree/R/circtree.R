@@ -36,7 +36,7 @@ circtree <- function(formula,
   response.name <- as.character(formula[[2]])
 
   ## Transform data to parameter range (-pi, pi)
-  data[, response.name] <- angle_trans(data[, response.name], 
+  data[, response.name] <- angle_trans(data[[response.name]], ## TODO: (ML) Modified to work with tibble
                                        start = response_range[1], 
                                        end = response_range[2])
   cl2$data <- data
