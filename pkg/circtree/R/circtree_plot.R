@@ -46,6 +46,7 @@ plot_circular <- function(X, coefs = NULL, stack = 10, cex = NULL, label = TRUE,
     if(is.null(cex)) cex <- 0.6
   }
 
+  ##zero <- ifelse(rotation == "counter", 1, -1) * zero
   X <- (ifelse(rotation == "counter", 1, -1) * (X - zero)) %% (2 * pi)
   coefs[1] <- (ifelse(rotation == "counter", 1, -1) * (coefs[1] - zero)) %% (2 * pi)
 
@@ -211,7 +212,7 @@ node_circular <- function(obj, which = NULL, id = TRUE, pop = TRUE,
     grid::seekViewport("plot")
 
     grid::grid.rect(gp = grid::gpar(fill = "transparent", col = 1), width = grid::unit(0.9, "npc"))
-    suppressWarnings(gridGraphics::grid.echo(function() plot_circular(y, coefs, template = template, zero = zero, response_range = response_range, ...), newpage = FALSE)) 
+    suppressWarnings(gridGraphics::grid.echo(function() plot_circular(y, coefs, template = template, zero = zero, rotation = rotation, response_range = response_range, ...), newpage = FALSE)) 
     #FIXME: (ML) gives warning due to the expression for labels in text(), which is used for labelling
 
     if(ylab != "") grid::grid.text(ylab, y = grid::unit(0.5, "npc"), x = grid::unit(-2.5, "lines"), rot = 90)
