@@ -1,0 +1,245 @@
+\documentclass[english, noconfig]{uibklttr}
+
+\newcommand{\section}[1]{{\Large{\textbf{#1}}}}
+\newcommand{\subsection}[1]{{\large \textbf{#1}}}
+\newcommand{\subsubsection}[1]{{\large \textbf{#1}}}
+\newcommand{\tightlist}[0]{}
+
+% Some colors
+\definecolor{myblue}{rgb}{0.2,0.2,0.9}
+\definecolor{mygray}{rgb}{0.7,0.7,0.7}
+
+\makeatletter
+\newenvironment{thebibliography}[1]
+     {\list{\@biblabel{\@arabic\c@enumiv}}%
+           {\settowidth\labelwidth{\@biblabel{#1}}%
+            \leftmargin\labelwidth
+            \advance\leftmargin\labelsep
+            \usecounter{enumiv}%
+            \let\p@enumiv\@empty
+            \renewcommand\theenumiv{\@arabic\c@enumiv}}%
+      \sloppy
+      \clubpenalty4000
+      \@clubpenalty \clubpenalty
+      \widowpenalty4000%
+      \sfcode`\.\@m}
+     {\def\@noitemerr
+       {\@latex@warning{Empty `thebibliography' environment}}%
+      \endlist}
+\newcommand\newblock{\hskip .11em\@plus.33em\@minus.07em}
+\makeatother
+\usepackage{natbib}
+
+%\usepackage{subcaption}
+%\captionsetup{font={bf,small},skip=0.25\baselineskip}
+%\captionsetup[subfigure]{font={bf,small}, skip=1pt, singlelinecheck=false}
+
+\usepackage{amsmath}
+
+\usepackage{float} % For figure placements
+\usepackage{enumitem}
+\setitemize{itemsep=0em}
+\setlist{itemsep = 0em}
+
+\usepackage{parskip}
+\setlength{\parskip}{.4em}
+
+% fake-float with caption for figures
+\usepackage{caption}
+\usepackage{newfloat}
+\DeclareFloatingEnvironment[fileext=lot]{figure}
+\DeclareCaptionFont{myblue}{\color{myblue}}
+\captionsetup{labelfont={bf},textfont={it}}
+
+% short re
+\newcommand{\sre}[1]{
+    \begin{color}{uibkgraym}#1\end{color}%
+}
+% long re
+\newenvironment{re}{
+    \begin{color}{uibkgraym}
+        \itshape
+}{
+    \end{color}
+}
+\newcommand{\todo}[1]{
+    \begin{color}{red}\textbf{TODO:} #1\end{color}%
+}
+\newcommand{\note}[1]{
+    \begin{color}{orange}\textbf{Reto's comment:} #1\end{color}%
+}
+\newcommand{\see}[2]{Page \textbf{#1}, line \textbf{#2}.}
+\newcommand{\msee}[3]{Page \textbf{#1}, lines \textbf{#2--#3}.}
+\newcommand{\fig}[1]{\textit{now Fig~#1}}
+\newcommand{\nsec}[1]{\textit{now Sec~#1}}
+
+
+\begin{document}
+
+\setkomavar{subject}{Revision of `npg-2019-49'}
+\setkomavar{signature}{Moritz Lang\\Corresponding Author}
+
+\setkomavar{fromname}[Name]{Moritz Lang}
+\setkomavar{fromemail}{Moritz.Lang@uibk.ac.at}
+
+
+
+
+\setkomavar{fromaddress}{University of Innsbruck, Department of Statistics, Universit\"atsstrasse
+15, 6020 Innsbruck, Austria}
+
+%\begin{letter}[fromemail]{To Maxime Taillardat}
+%\opening{Dear Christopher Paciorek}
+%
+%We thank you, as well as both reviewers, for the detailed and fruitful feedback
+%regarding our manuscript ``\textbf{Bivariate Gaussian models for wind vectors in a
+%distributional regression framework}''.
+%
+%\vspace{5mm}
+%
+%We have carefully revised our manuscript according to your comments and
+%suggestions. The most substantial changes are the following:
+%
+%\begin{itemize}
+%\item
+%An additional comparison to the work of \citet{schuhen.etal:2012} and of
+%\citet{pinson:2012} has been included. Both comparisons nicely confirm our
+%previous results. To keep the manuscript as clear as possible, we describe the
+%comparisons in the appendix and provide short summaries of the main finding
+%in the discussion section.
+%
+%\item
+%The introduction of the logarithmic score has been
+%extended. We now explicitly derive the employed formulation of the logarithmic
+%score and provide additional references.
+%
+%\item
+%We have added more information on the estimation procedure and describe the key
+%steps involved in the model fitting. Please also remark that for consistency we
+%have changed `mean and variance` to `location and scale parameter` within the
+%abstract and the introductory part of the discussion.
+%\end{itemize}
+%
+%\vspace{5mm}
+%
+%On the following pages a point-to-point response to both reviewers and to the
+%editor will be given. The attached manuscript highlights the changes in the
+%text in blue color.
+%
+%\closing{Your sincerely,}
+%
+%\end{letter}
+%
+%\newpage
+
+\section{Editor: Prof. Peter Smith - Comments to the Author}
+
+\begin{itemize}
+
+\item Please can you rewrite the Summary to give the application more prominence.
+Currently, the last sentence reads to me like an afterthought. Furthermore, I
+would prefer you to use the term ‘application’ rather than ‘case study’
+throughout the paper, since in Applied Statistics papers the methodological
+developments should be motivated by the application.
+
+\item Page 2, line 46: ‘… structure can capture non-additive …’?
+
+\item Page 2, lines 54 and 55: ‘… mean, whereas modelling the conditional … distribution would also allow uncertainty in the forecast to be estimated.’?
+
+\item Page 6, line 16 and Equation (2.6): bold the vector $\beta$.
+
+\item Page 6, lines 29 and 30: ‘In general, for additive models a proper model …’?
+
+\item Equations (3.1) to (3.4) and elsewhere: I find the use of multiple letters for a single superscript or subscript awkward and prefer to keep lower case letters for indices, so please consider replacing them, for example, T for tree and F for forest. Also for Equation (4.2), how about using parentheses rather than subscripts?
+
+\item Equation (3.4): bold vector $z$.
+
+\item Page 9, line 39: delete ‘respectively’.
+
+\item Page 15, line 23: replace ‘leveraged’ with ‘used’?
+
+\end{itemize}
+
+\newpage
+
+\section{Associate Editor - Comments to the Author}
+
+Both referees agree this is a good paper, and have only a few suggestions for
+changes, so I recommend minor revisions to address these.
+
+I have two short suggestions in addition to this:
+
+\begin{itemize}
+\item Can you comment on the typical computational requirements of the various
+methods used in your application, in terms of hardware required and length of
+computing time.
+
+\item Is it possible to include a link to computer code to reproduce your
+analysis? This is not essential for publication but would be helpful for
+readers who wish to perform similar analyses. The R package you have provided
+for your method is very helpful in this regard.  
+\end{itemize}
+
+\newpage
+
+\section{Referee: 1 - Comments to the Author}
+
+I found Circular Regression Trees and Forests to be a very nicely written
+paper, with a meaningful contribution to the literature on regression models
+for a circular response variable. 
+
+I have very few suggestions to the authors; but here are two:
+
+\begin{itemize}
+\item On page 2, what is the reference for the phrase "Additionally, they
+developed a combined ... version ...".
+
+\item On page 11, regarding "As the implementation cannot handle circular
+covariates ...": It could handle circular covariates in a fashion similar to
+Lund (1999), using a rotational or reflective relationship, or modeling the
+association with a trigonometric polynomial. Adding this to their comparison
+model, or at least mentioning the possibility of doing so, would be more
+appropriate than stating that circular covariates cannot be accommodated.
+\end{itemize}
+
+\vspace{0.5cm}
+References
+
+Lund UJ (1999). ``Least Circular Distance Regression for Directional Data.''
+\emph{Journal of Applied Statistics}, \textbf{26}\,(6), 723--733.
+doi:10.1080/02664769922160.
+
+\newpage
+
+\section{Referee: 2 - Comments to the Author}
+
+This is a well-written paper on using circular regression trees for analyzing a
+specific type of circular data. The probabilistic approach is well-founded. The
+experiments on wind direction data are well organized and the results are
+thoroughly analyzed.
+
+\begin{itemize}
+\item The authors could address model order determination problem using the
+Bayes Information Criterion (Schwartz, 1978, Annals of Statistics).  
+
+\item I would like to point out related works on circular regression models for
+shape representation (Kashyap and Chellappa) and circular random forests for
+vehicle direction estimation (Hara and Chellappa) given below. I feel there is
+some overlap between this paper and the work of Hara and Chellappa on using
+circular statistics for vehicle orientation estimation. The authors may include
+some comparisons with Hara, Chellappa work.
+\end{itemize}
+
+\vspace{0.5cm}
+References
+
+Hara K, Chellappa R (2017). ``Growing Regression Tree Forests by
+Classification for Continuous Object Pose Estimation.'' \emph{International
+Journal of Computer Vision}, \textbf{122}\,(2), 292--312.
+doi:10.1007/s11263-016-0942-1.
+
+Kashyap R, Chellappa R (1981). ``Stochastic Models for Closed Boundary
+Analysis: Representation and Reconstruction.'' \emph{IEEE Transactions on
+Information Theory}, \textbf{27}\,(5), 627--637. doi:10.1109/TIT.1981.1056390.
+
+\end{document}
