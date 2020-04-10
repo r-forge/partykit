@@ -9,5 +9,13 @@ paper:
 	pdflatex draft_jrssc.tex
 	make clean
 
+rebuttal: 
+	pdflatex rebuttal.tex
+	#bibtex rebuttal
+	#pdflatex rebuttal.tex
+	pdflatex rebuttal.tex
+	make clean
+
+
 clean:
-	rm *.out *.aux *.blg *.bbl *.log *.tpt 
+	rm -f *.out *.aux *.blg *.bbl *.log *.tpt 
