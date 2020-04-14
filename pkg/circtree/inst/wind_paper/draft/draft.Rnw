@@ -96,26 +96,47 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 \Plainauthor{Lang, Schlosser, Hothorn, Mayr, Stauffer, Zeileis}
 
 \Abstract{
-While circular data occur in a wide range of scientific fields, the methodology
+%SUBMITTED VERSION:
+%While circular data occur in a wide range of scientific fields, the methodology
+%for distributional modeling and probabilistic forecasting of circular response
+%variables is rather limited. Most of the existing methods are built on the
+%framework of generalized linear and additive models, which are often
+%challenging to optimize and interpret. Therefore, building on previous ideas
+%for trees modeling circular means, we suggest a distributional approach for
+%regression trees and random forests yielding probabilistic forecasts based on
+%the von~Mises distribution. The resulting tree-based models simplify the
+%estimation process by using the available covariates for partitioning the data
+%into sufficiently homogeneous subgroups so that a simple von~Mises distribution
+%without further covariates can be fitted to the circular response in each
+%subgroup. These circular regression trees are straightforward to interpret, can
+%capture nonlinear effects and interactions, and automatically select the
+%relevant covariates that are associated with either location and/or scale
+%changes in the von~Mises distribution. Combining an ensemble of circular
+%regression trees to a circular regression forest can regularize and smooth the
+%covariate effects. The new methods are evaluated in a case study on
+%probabilistic wind direction forecasting at two Austrian airports, considering
+%other common approaches as a benchmark.
+%
+%NEW VERSION:
+Circular data occur in a wide range of scientific fields, but the methodology
 for distributional modeling and probabilistic forecasting of circular response
-variables is rather limited. Most of the existing methods are built on the
-framework of generalized linear and additive models, which are often
-challenging to optimize and interpret. Therefore, building on previous ideas
-for trees modeling circular means, we suggest a distributional approach for
-regression trees and random forests yielding probabilistic forecasts based on
-the von~Mises distribution. The resulting tree-based models simplify the
-estimation process by using the available covariates for partitioning the data
-into sufficiently homogeneous subgroups so that a simple von~Mises distribution
-without further covariates can be fitted to the circular response in each
-subgroup. These circular regression trees are straightforward to interpret, can
-capture nonlinear effects and interactions, and automatically select the
-relevant covariates that are associated with either location and/or scale
-changes in the von~Mises distribution. Combining an ensemble of circular
-regression trees to a circular regression forest can regularize and smooth the
-covariate effects. The new methods are evaluated in a case study on
-probabilistic wind direction forecasting at two Austrian airports, considering
-other common approaches as a benchmark.
-}
+variables is rather limited. While most of the existing methods are built on
+the framework of generalized linear and additive models, which are often
+challenging to optimize and interpret, we propose a distributional approach for
+regression trees yielding probabilistic forecasts based on the von~Mises
+distribution. The resulting tree-based models use the available covariates only
+for partitioning the data into sufficiently homogeneous subgroups, allowing for
+a simple circular distributional fit in each subgroup. These circular
+regression trees are straightforward to interpret, can capture nonlinear
+effects and interactions, and automatically select the relevant covariates that
+are associated with changes in any distribution parameter. Ensembles or
+forests of such circular trees can further improve the forecasts by
+regularizing and stabilizing the model. The newly developed methodology is
+illustrated in an application on short-term probabilistic wind direction
+forecasting for Innsbruck and Vienna Airport in order to direct airplanes to a
+safe landing. The predictive skill of the novel approaches is benchmarked with
+an additive regression model plus a persistency and a climatology model,
+employing the circular continuous ranked probability score.}
 
 \Keywords{circular data, regression trees, random forests, distributional regression, von~Mises distribution, probabilistic forecasting}
 
@@ -243,16 +264,16 @@ be estimated \citep{Gneiting:2008}.
 %probabilistic distribution which would allow for also considering uncertainty
 %in forecasts \citep{Gneiting:2008}. 
 In the field of image based object direction estimation,
-\citet{Hara+Chellappa:2017} presented a distribution-based tree
-building algorithm by applying $k$-means clustering to the target space where
+\citet{Hara+Chellappa:2017} presented a distribution-based tree-building 
+algorithm by applying $k$-means clustering to the target space where
 the number of clusters $k$ is adaptively determined by the Bayes
 information criterion employing the von~Mises distribution. Despite their
 distribution-based splitting approach to circular response variables, they
 solely predict the mode of the distribution, thus, providing no full
 probabilistic forecasts. Combining these previous ideas for circular trees with the
 concept of distributional modeling, we introduce a fully distributional tree
-approach that considers both splits in all distribution parameters and yields a
-full probabilistic predictive model, as proposed by \citet{Gneiting:2008}. In
+approach that not only considers splits in all distribution parameters, but also yields a
+full probabilistic predictive model as proposed by \citet{Gneiting:2008}. In
 addition, as a natural extension, ensembles or forests of circular regression
 trees are presented in this study, showing that these can further improve
 predictive power.
@@ -304,7 +325,7 @@ pressure gradients and wind speed separate the data into subgroups with high
 vs.\ low precision. A more comprehensive application of circular regression
 trees and forests on probabilistic wind direction forecasting is presented in
 Section~\ref{sec:wind} for Innsbruck Airport and Vienna International Airport,
-together with a comparison with commonly-used alternative approaches.
+together with a comparison to commonly-used alternative approaches.
 
 The remainder of the paper is structured as follows: The theory on
 probabilistic circular modeling introducing the von~Mises distribution, and
@@ -584,7 +605,7 @@ hour(s) at the respective airport is highly desirable and adequate prediction
 methods are required. This section exemplifies the use of circular regression
 trees and forests with wind direction forecasts for two Austrian airports --
 one in flat terrain, the other one in mountainous terrain. The results are
-benchmarked against alternative probabilistic forecasting methods. The study is
+benchmarked against alternative probabilistic forecasting methods. The application is
 based on $+1$\,h and $+3$\,h forecasts employing lagged observations in the
 vicinity of the airports as possible predictor variables. 
 
@@ -616,13 +637,13 @@ their vicinities. For Innsbruck, measurements at the airport and along the
 intersecting valleys are used, whereas, for Vienna, measurements at the airport
 and within its vicinity of approximately 30\,km are used.
 Figure~\ref{fig:overview} provides a topographical overview of the airports and
-their surrounding areas with the station sites employed in this study. In
+their surrounding areas with the station sites employed in the application. In
 addition, we use derived quantities such as 3-hourly means, minima and maxima,
 as well as 1-and 3-hourly temporal changes and spatial differences towards the
 airport of the respective quantities. An overview of the employed data sets can
 be found in Table~\ref{tab:data}. 
 
-The data used in this study consists of five subsequent years from January~2014
+The data used in the application consists of five subsequent years from January~2014
 to December~2018. After first eliminating predictor variables with more than
 5\% missing values and then time points with any missing observations, the data
 set consists of 41\,979~time points and $260$~covariates for Innsbruck, and of
@@ -670,8 +691,8 @@ set consists of 41\,979~time points and $260$~covariates for Innsbruck, and of
 \label{sec:wind:models}
 For a fair evaluation of circular regression trees and forests, and to
 investigate whether they can be applied as a reasonable alternative to already
-existing approaches, three additional statistical models are employed in this
-study for probabilistic forecasting of wind directions. Two of them are based
+existing approaches, three additional statistical models are employed in the
+application on probabilistic wind direction forecasting. Two of them are based
 on existing approaches used in the meteorological field, while the third is a
 state-of-the-art GLM-type model to forecast circular response variables.
 
@@ -931,7 +952,7 @@ summary, the circular regression trees and forests have the highest predictive
 performance in this setting. For cases without changes in the wind regime,
 lagged response values provide already highly skillful estimates leading to a
 good performance of the persistency model as observed for shortterm wind
-direction forecasts in this study. While in these cases the trees and forests
+direction forecasts in the application. While in these cases the trees and forests
 also benefit from the highly informative lagged response, they can compensate
 for a lower information of this covariate by incorporating other quantities and
 possible interactions of these, contrary to the persistency model (see
@@ -986,8 +1007,8 @@ The corresponding implementation of the proposed methodology for circular
 regression trees and forests is provided in the \textsf{R} package
 \textbf{circtree} (version~\Sexpr{packageVersion("circtree")}). The package is
 based on the \textbf{disttree} package
-(version~\Sexpr{packageVersion("disttree")}) which applies the main tree
-building functions from the \textbf{partykit} package
+(version~\Sexpr{packageVersion("disttree")}) which applies the main tree-building 
+functions from the \textbf{partykit} package
 (version~\Sexpr{packageVersion("partykit")}). All three packages are available
 on \textsf{R}-Forge at {\url{https://R-Forge.R-project.org/projects/partykit/}}.
 
@@ -1009,7 +1030,7 @@ concentration parameter.
 This section provides a more detailed overview on the permutation-test-based
 CTree algorithm \citep{Hothorn+Hornik+Zeileis:2006}, specifically for circular
 data as applied for building circular regression trees and forests presented in
-this application. An alternative tree-building framework is provided by the MOB
+this study. An alternative tree-building framework is provided by the MOB
 algorithm, which is based on M-fluctuation tests \citep[see][for more
 details]{Zeileis+Hothorn+Hornik:2008}.
 
