@@ -76,7 +76,7 @@
 
 \begin{document}
 
-\setkomavar{subject}{Revision of `npg-2019-49'}
+\setkomavar{subject}{Revision of `JRSS-SC-Jan-20-0007'}
 \setkomavar{signature}{Moritz Lang\\Corresponding Author}
 
 \setkomavar{fromname}[Name]{Moritz Lang}
@@ -88,119 +88,205 @@
 \setkomavar{fromaddress}{University of Innsbruck, Department of Statistics, Universit\"atsstrasse
 15, 6020 Innsbruck, Austria}
 
-%\begin{letter}[fromemail]{To Maxime Taillardat}
-%\opening{Dear Christopher Paciorek}
-%
-%We thank you, as well as both reviewers, for the detailed and fruitful feedback
-%regarding our manuscript ``\textbf{Bivariate Gaussian models for wind vectors in a
-%distributional regression framework}''.
-%
-%\vspace{5mm}
-%
-%We have carefully revised our manuscript according to your comments and
-%suggestions. The most substantial changes are the following:
-%
-%\begin{itemize}
-%\item
-%An additional comparison to the work of \citet{schuhen.etal:2012} and of
-%\citet{pinson:2012} has been included. Both comparisons nicely confirm our
-%previous results. To keep the manuscript as clear as possible, we describe the
-%comparisons in the appendix and provide short summaries of the main finding
-%in the discussion section.
-%
-%\item
-%The introduction of the logarithmic score has been
-%extended. We now explicitly derive the employed formulation of the logarithmic
-%score and provide additional references.
-%
-%\item
-%We have added more information on the estimation procedure and describe the key
-%steps involved in the model fitting. Please also remark that for consistency we
-%have changed `mean and variance` to `location and scale parameter` within the
-%abstract and the introductory part of the discussion.
-%\end{itemize}
-%
-%\vspace{5mm}
-%
-%On the following pages a point-to-point response to both reviewers and to the
-%editor will be given. The attached manuscript highlights the changes in the
-%text in blue color.
-%
-%\closing{Your sincerely,}
-%
-%\end{letter}
-%
-%\newpage
+\begin{letter}[fromemail]{To Prof. Peter Smith}
+\opening{Dear Prof. Peter Smith}
+
+We thank you, as well as the associate editor and both reviewers, for the
+positive and constructive feedback regarding our manuscript ``\textbf{Circular
+Regression Trees and Forests with an Application to Probabilistic Wind
+Direction Forecasting}''.
+
+\vspace{5mm}
+
+We have carefully revised our manuscript according to given comments.
+The most substantial changes in the manuscript are the following:
+
+\begin{itemize}
+\item We have fully revised the abstract in order to put a larger
+focus on the application. In addition, we now use the term `application' 
+instead of `case study' throughout the manuscript and have also renamed Sect.~4.
+ 
+\item In the section computational details, we have additionally listed the needed
+computing time of the different methods on a standard desktop computer. 
+
+\item We now discuss the work of Hara and Chellappa~(2017) and compare their distribution-based 
+tree-building approach to our implementation of circular distributional trees within Sect.~1.1.
+
+\item For the employed GLM implemented by Mulder and Klugkist~(2017), we now
+explicitly state that the accommodation of circular covariates would be possible
+but require an additional manual adjustment, e.g., an approximation by a finite
+Fourier expansion (cf., Lund 1999).
+
+\end{itemize}
+
+\vspace{5mm}
+
+On the following pages a point-to-point response to all comments will be given.
+The attached manuscript highlights the changes in the text in blue color.
+
+\closing{Your sincerely,}
+
+\end{letter}
+
+\newpage
 
 \section{Editor: Prof. Peter Smith - Comments to the Author}
 
-\begin{itemize}
-
-\item Please can you rewrite the Summary to give the application more prominence.
+\begin{re}
+Please can you rewrite the Summary to give the application more prominence.
 Currently, the last sentence reads to me like an afterthought. Furthermore, I
-would prefer you to use the term ‘application’ rather than ‘case study’
+would prefer you to use the term `application' rather than `case study'
 throughout the paper, since in Applied Statistics papers the methodological
 developments should be motivated by the application.
+\end{re}
 
-\item Page 2, line 46: ‘… structure can capture non-additive …’?
+\vspace{-1em}
+First of all we want to thank you for your valuable input. 
 
-\item Page 2, lines 54 and 55: ‘… mean, whereas modelling the conditional … distribution would also allow uncertainty in the forecast to be estimated.’?
+We agree with your comment and have rewritten the abstract to put a larger
+focus on the application. Throughout the manuscript we now use the term
+`application' instead of `case study' and have also renamed Sect.~4
+accordingly. \todo{Lisa: Revise abstract}
 
-\item Page 6, line 16 and Equation (2.6): bold the vector $\beta$.
+\vspace{0.5em}
+\begin{re}
+Page 2, line 46: `… structure can capture non-additive …'?
+\end{re}
 
-\item Page 6, lines 29 and 30: ‘In general, for additive models a proper model …’?
+Thank you, we have rephrased the sentence according to your suggestion.
 
-\item Equations (3.1) to (3.4) and elsewhere: I find the use of multiple letters for a single superscript or subscript awkward and prefer to keep lower case letters for indices, so please consider replacing them, for example, T for tree and F for forest. Also for Equation (4.2), how about using parentheses rather than subscripts?
+\vspace{0.5em}
+\begin{re}
+Page 2, lines 54 and 55: `… mean, whereas modelling the conditional …
+distribution would also allow uncertainty in the forecast to be estimated.'?
+\end{re}
 
-\item Equation (3.4): bold vector $z$.
+We have rephrased the sentence accordingly.
 
-\item Page 9, line 39: delete ‘respectively’.
+\vspace{0.5em}
+\begin{re}
+Page 6, line 16 and Equation (2.6): bold the vector $\beta$.
+\end{re}
 
-\item Page 15, line 23: replace ‘leveraged’ with ‘used’?
+Thank you for pointing that out, we have corrected that accordingly.
 
-\end{itemize}
+\vspace{0.5em}
+\begin{re}
+Page 6, lines 29 and 30: `In general, for additive models a proper model …'?
+\end{re}
+
+We have rephrased the sentence according to your suggestion.
+
+\vspace{0.5em}
+\begin{re}
+Equations (3.1) to (3.4) and elsewhere: I find the use of multiple letters for a single superscript or subscript awkward and prefer to keep lower case letters for indices, so please consider replacing them, for example, T for tree and F for forest. Also for Equation (4.2), how about using parentheses rather than subscripts?
+\end{re}
+
+We have followed your suggestions and now use only single letters for super-
+and subscripts in the main body of the manuscript. In the appendix, we keep the
+notation as it is in order to be consistent with the reference Hothorn~\emph{et al.}~2006.
+
+\vspace{0.5em}
+\begin{re}
+Equation (3.4): bold vector $z$.
+\end{re}
+
+Thank you for pointing that out.
+
+\vspace{0.5em}
+\begin{re}
+Page 9, line 39: delete `respectively'.
+\end{re}
+
+We have corrected the sentence accordingly.
+
+\vspace{0.5em}
+\begin{re}
+Page 15, line 23: replace `leveraged' with `used'?
+\end{re}
+
+We have rephrased the sentence accordingly.
+
+\vspace{0.5cm}
+References
+
+Hothorn T, Hornik K, Zeileis A (2006). ``Unbiased Recursive Partitioning: A Conditional
+Inference Framework.'' \emph{Journal of Computational and Graphical Statistics}, \textbf{15}\,(3), 651--674.
+doi:10.1198/106186006x133933.
 
 \newpage
 
 \section{Associate Editor - Comments to the Author}
 
+\begin{re}
 Both referees agree this is a good paper, and have only a few suggestions for
-changes, so I recommend minor revisions to address these.
+changes, so I recommend minor revisions to address these. I have two short suggestions in addition to this:
 
-I have two short suggestions in addition to this:
-
-\begin{itemize}
-\item Can you comment on the typical computational requirements of the various
+Can you comment on the typical computational requirements of the various
 methods used in your application, in terms of hardware required and length of
 computing time.
+\end{re}
 
-\item Is it possible to include a link to computer code to reproduce your
+First of all we want to thank you for your valuable input. 
+
+We agree with your comment that additional information on the calculation
+requirements is valuable additional information for the user.  We have
+therefore listed the needed computing time of the different methods on a
+standard desktop computer within the section computational details.
+\todo{Moritz: Run models}
+
+\vspace{0.5em}
+\begin{re}
+Is it possible to include a link to computer code to reproduce your
 analysis? This is not essential for publication but would be helpful for
 readers who wish to perform similar analyses. The R package you have provided
 for your method is very helpful in this regard.  
-\end{itemize}
+\end{re}
+
+As we have used data from the Austrian air navigation service provider, which
+we are not entitled to distribute, we are unfortunately not able to provide
+self-contained computer code in order to reproduce our application. However, as you have already
+pointed out the implementation of circular regression trees and forests is
+provided in a freely available R-package with some minimal examples.
+Independent of this publication, we are planning to provide an online
+platform for the whole `partykit' project in the future.
 
 \newpage
 
 \section{Referee: 1 - Comments to the Author}
 
+\begin{re}
 I found Circular Regression Trees and Forests to be a very nicely written
 paper, with a meaningful contribution to the literature on regression models
 for a circular response variable. 
+\end{re}
 
+\begin{re}
 I have very few suggestions to the authors; but here are two:
 
-\begin{itemize}
-\item On page 2, what is the reference for the phrase "Additionally, they
+On page 2, what is the reference for the phrase "Additionally, they
 developed a combined ... version ...".
+\end{re}
 
-\item On page 11, regarding "As the implementation cannot handle circular
+First of all we want to thank you for your review and your valuable input. 
+
+Thanks for pointing out that the citation here is not clearly assigned. We have therefore
+listed the references below the statement again.
+
+\vspace{0.5em}
+\begin{re}
+On page 11, regarding "As the implementation cannot handle circular
 covariates ...": It could handle circular covariates in a fashion similar to
 Lund (1999), using a rotational or reflective relationship, or modeling the
 association with a trigonometric polynomial. Adding this to their comparison
 model, or at least mentioning the possibility of doing so, would be more
 appropriate than stating that circular covariates cannot be accommodated.
-\end{itemize}
+\end{re}
+
+A very good remark. We have adapted the statement accordingly and now
+explicitly state that the accommodation of circular covariates would be
+possible but require an additional manual adjustment, e.g., an approximation by
+a finite Fourier expansion.
 
 \vspace{0.5cm}
 References
@@ -213,22 +299,49 @@ doi:10.1080/02664769922160.
 
 \section{Referee: 2 - Comments to the Author}
 
+\begin{re}
 This is a well-written paper on using circular regression trees for analyzing a
 specific type of circular data. The probabilistic approach is well-founded. The
 experiments on wind direction data are well organized and the results are
 thoroughly analyzed.
+\end{re}
 
-\begin{itemize}
-\item The authors could address model order determination problem using the
+\begin{re}
+The authors could address model order determination problem using the
 Bayes Information Criterion (Schwartz, 1978, Annals of Statistics).  
+\end{re}
 
-\item I would like to point out related works on circular regression models for
+First of all we want to thank you for your review and your valuable input. 
+
+Regarding your suggestion, when building
+a circular distributional tree, the package \textbf{circtree} uses per default
+\emph{p}-values from association tests both for selecting the split variable
+and for a so-called pre-pruning strategy which stops growing the tree as soon as
+no significant associations can be found in a given subgroup. This is the
+default in both used unbiased recursive partitioning algorithms CTree
+and MOB. For the latter, as discussed by Zeileis~\emph{et al.}~(2008), an
+alternative, already implemented strategy  is to
+use information criteria such as AIC (Akaike information criterion) or BIC
+(Bayes information criterion) for post-pruning (after growing the initial tree). 
+As we use neither MOB no post-pruning in the
+presented application, we refrain from discussing this aspect any further in
+the manuscript. However, we want to refer to the submitted manuscript by
+Schlosser~\emph{et al.}~2019 which focuses on the advantages of different
+unbiased recursive partitioning algorithm for tree building as suggested in the literature.
+
+\vspace{0.5em}
+\begin{re}
+I would like to point out related works on circular regression models for
 shape representation (Kashyap and Chellappa) and circular random forests for
 vehicle direction estimation (Hara and Chellappa) given below. I feel there is
 some overlap between this paper and the work of Hara and Chellappa on using
 circular statistics for vehicle orientation estimation. The authors may include
 some comparisons with Hara, Chellappa work.
-\end{itemize}
+\end{re}
+
+Thank you very much for the very interesting and to us unfortunately so far unknown references.
+We now review the work of Hara and Chellappa~(2017) and briefly compare their approach
+to our implementation of circular distributional trees in Sect.~1.1.
 
 \vspace{0.5cm}
 References
@@ -241,5 +354,13 @@ doi:10.1007/s11263-016-0942-1.
 Kashyap R, Chellappa R (1981). ``Stochastic Models for Closed Boundary
 Analysis: Representation and Reconstruction.'' \emph{IEEE Transactions on
 Information Theory}, \textbf{27}\,(5), 627--637. doi:10.1109/TIT.1981.1056390.
+
+Schlosser L, Hothorn T, Zeileis A (2019). ``The Power of Unbiased Recursive
+Partitioning: A Unifying View of CTree, MOB, and GUIDE.'' arXiv:1906.10179,
+arXiv.org E-Print Archive.
+
+Zeileis A, Hothorn T, Hornik K (2008). ``Model-Based Recursive Partitioning.''
+\emph{Journal of Computational and Graphical Statistics}, \textbf{17}\,(2),
+492--514. doi:10.1198/106186008x319331.
 
 \end{document}
