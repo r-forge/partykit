@@ -102,19 +102,19 @@ We have carefully revised our manuscript according to given comments.
 The most substantial changes in the manuscript are the following:
 
 \begin{itemize}
-\item We have fully revised the abstract in order to put a larger
+\item We have fully revised the `Abstract' in order to put a larger
 focus on the application. In addition, we now use the term `application' 
 instead of `case study' throughout the manuscript and have also renamed Sect.~4.
  
-\item In the section computational details, we have additionally listed the needed
+\item In the section `Computational details', we have additionally listed the needed
 computing time of the different methods on a standard desktop computer. 
 
 \item We now discuss the work of Hara and Chellappa~(2017) and compare their distribution-based 
 tree-building approach to our implementation of circular distributional trees within Sect.~1.1.
 
-\item For the employed GLM implemented by Mulder and Klugkist~(2017), we now
+\item Regarding the employed GLM implemented by Mulder and Klugkist~(2017), we now
 explicitly state that the accommodation of circular covariates would be possible
-but require an additional manual adjustment, e.g., an approximation by a finite
+but would require an additional manual adjustment, e.g., an approximation by a finite
 Fourier expansion (cf., Lund 1999).
 
 \end{itemize}
@@ -122,9 +122,10 @@ Fourier expansion (cf., Lund 1999).
 \vspace{5mm}
 
 On the following pages a point-to-point response to all comments will be given.
-The attached manuscript highlights the changes in the text in blue color.
+The attached manuscript highlights the changes in the main body in blue color,
+the `Abstract' is fully revised but displayed in black color.
 
-\closing{Your sincerely,}
+\closing{Yours sincerely,}
 
 \end{letter}
 
@@ -143,10 +144,10 @@ developments should be motivated by the application.
 \vspace{-1em}
 First of all we want to thank you for your valuable input. 
 
-We agree with your comment and have rewritten the abstract to put a larger
+We agree with your comment and have rewritten the `Abstract' to put a larger
 focus on the application. Throughout the manuscript we now use the term
 `application' instead of `case study' and have also renamed Sect.~4
-accordingly. \todo{Lisa: Revise abstract}
+accordingly.
 
 \vspace{0.5em}
 \begin{re}
@@ -191,7 +192,7 @@ notation as it is in order to be consistent with the reference Hothorn~\emph{et 
 Equation (3.4): bold vector $z$.
 \end{re}
 
-Thank you for pointing that out.
+Thank you for pointing that out, the font style has been adapted.
 
 \vspace{0.5em}
 \begin{re}
@@ -227,13 +228,12 @@ methods used in your application, in terms of hardware required and length of
 computing time.
 \end{re}
 
-First of all we want to thank you for your valuable input. 
+We first want to thank you for the positive feedback and your valuable input. 
 
 We agree with your comment that additional information on the calculation
-requirements is valuable additional information for the user.  We have
-therefore listed the needed computing time of the different methods on a
-standard desktop computer within the section computational details.
-\todo{Moritz: Run models}
+requirements is valuable for the user. We have therefore listed the needed
+computing time of the different methods on a standard desktop computer within
+the section 'Computational details'.  \todo{Moritz: Run models}
 
 \vspace{0.5em}
 \begin{re}
@@ -248,7 +248,7 @@ we are not entitled to distribute, we are unfortunately not able to provide
 self-contained computer code in order to reproduce our application. However, as you have already
 pointed out the implementation of circular regression trees and forests is
 provided in a freely available R-package with some minimal examples.
-Independent of this publication, we are planning to provide an online
+Independent of this publication, we are planning to provide an updated online
 platform for the whole `partykit' project in the future.
 
 \newpage
@@ -268,7 +268,7 @@ On page 2, what is the reference for the phrase "Additionally, they
 developed a combined ... version ...".
 \end{re}
 
-First of all we want to thank you for your review and your valuable input. 
+First of all we want to thank you for your positive and constructive feedback.
 
 Thanks for pointing out that the citation here is not clearly assigned. We have therefore
 listed the references below the statement again.
@@ -285,7 +285,7 @@ appropriate than stating that circular covariates cannot be accommodated.
 
 A very good remark. We have adapted the statement accordingly and now
 explicitly state that the accommodation of circular covariates would be
-possible but require an additional manual adjustment, e.g., an approximation by
+possible but would require an additional manual adjustment, e.g., an approximation by
 a finite Fourier expansion.
 
 \vspace{0.5cm}
@@ -311,23 +311,22 @@ The authors could address model order determination problem using the
 Bayes Information Criterion (Schwartz, 1978, Annals of Statistics).  
 \end{re}
 
-First of all we want to thank you for your review and your valuable input. 
+First of all we want to thank you for your positive feedback and valuable input. 
 
-Regarding your suggestion, when building
-a circular distributional tree, the package \textbf{circtree} uses per default
-\emph{p}-values from association tests both for selecting the split variable
-and for a so-called pre-pruning strategy which stops growing the tree as soon as
-no significant associations can be found in a given subgroup. This is the
-default in both used unbiased recursive partitioning algorithms CTree
-and MOB. For the latter, as discussed by Zeileis~\emph{et al.}~(2008), an
-alternative, already implemented strategy  is to
-use information criteria such as AIC (Akaike information criterion) or BIC
-(Bayes information criterion) for post-pruning (after growing the initial tree). 
-As we use neither MOB no post-pruning in the
-presented application, we refrain from discussing this aspect any further in
-the manuscript. However, we want to refer to the submitted manuscript by
-Schlosser~\emph{et al.}~2019 which focuses on the advantages of different
-unbiased recursive partitioning algorithm for tree building as suggested in the literature.
+Regarding your suggestion, when building a circular distributional tree, the
+package \textbf{circtree} uses per default \emph{p}-values from association
+tests both for selecting the split variable and for a so-called pre-pruning
+strategy which stops growing the tree as soon as no significant associations
+can be found in a given subgroup. This is the default in both available
+unbiased recursive partitioning algorithms CTree and MOB. For the latter, as
+discussed by Zeileis~\emph{et al.}~(2008), an alternative, already implemented
+strategy  is to use information criteria such as AIC (Akaike information
+criterion) or BIC (Bayes information criterion) for post-pruning (after growing
+the initial tree).  As we use neither MOB nor post-pruning in the presented
+application, we refrain from discussing this aspect any further in the
+manuscript. However, we want to refer to the submitted manuscript by
+Schlosser~\emph{et al.}~2019 which investigates the performance of different 
+testing and pruning strategies employed in unbiased recursive partitioning algorithms.
 
 \vspace{0.5em}
 \begin{re}
