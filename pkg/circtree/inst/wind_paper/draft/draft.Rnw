@@ -1012,12 +1012,34 @@ functions from the \textbf{partykit} package
 (version~\Sexpr{packageVersion("partykit")}). All three packages are available
 on \textsf{R}-Forge at {\url{https://R-Forge.R-project.org/projects/partykit/}}.
 
-For the circular GLM considered as reference model the corresponding
+For the circular generalized linear model considered as reference model the corresponding
 implementation is provided in the \textsf{R} package \textbf{circglmbayes} by
 \cite{Mulder+Klugkist:2017}. In particular the function \code{circGLM} is
 applied to estimates the intercept and regression coefficient along with the
 concentration parameter.
 
+The computation time on a standard computer is in the order of 10\,milliseconds
+for the circular fit (used for the persistency and the climatological model),
+seconds for the estimation of the linear model and the circular tree, and from
+a few minutes to an hour for the estimation of the circular forest; the latter
+strongly depends on the number of covariates employed and, hence, varies
+between Innsbruck and Vienna Airport. However, for a single station and
+forecast step, the persistency and linear models must be re-estimated for each
+time of interest, and independent climatological models have to be fitted for
+all times of interest within a single calendar year, whereas for all times of interest only one 
+circular tree and circular forest model is required. 
+
+%The computation time on a standard computer is in the order of 10\,milliseconds
+%for the circular fit (used for the persistency and the climatological model),
+%seconds for the estimation of the linear model and the circular tree, and from
+%a few minutes to an hour for the estimation of the circular forest; the latter
+%strongly depends on the number of covariates employed and, hence, varies
+%between Innsbruck and Vienna Airport. However, the persistency and linear
+%models must be re-estimated for each time point in the validation data set, and
+%independent climatological models have to be estimated for all the time points
+%within one calendar year which exist in the validation period, whereas only one
+%model is needed for the circular tree and the circular forest valid for all
+%times points in the validation data set. 
 
 %\newpage
 \bibliography{ref.bib}
