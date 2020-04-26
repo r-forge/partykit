@@ -11,6 +11,7 @@
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
+\usepackage{Sweave}
 \usepackage{changepage}
 \usepackage{amsmath,tikz}
 \usepackage{calc}
@@ -313,6 +314,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \section{Distributional Trees and Forests}
 

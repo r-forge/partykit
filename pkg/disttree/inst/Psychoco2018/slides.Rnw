@@ -1079,14 +1079,14 @@ w^{\text{forest}}_i(\bold{x}) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} I(
 set.seed(723)
 fun <- function(x){cbind(10*exp(-((4*x[,1]-2)^4)), 0.5 + 2*abs(x[,1]))}
 learndata <- dgp(300, family = dist_list_normal, round.sp = 4, fun = fun)
-control <-  ctree_control(teststat = "quad", testtype = "Bonferroni", mincriterion = 0.7, minbucket = 20L)
-dt <- disttree(y~x1, data=learndata, family=dist_list_normal, type.tree = "ctree", control = control)
+control <-  disttree_control(type.tree = "ctree", teststat = "quad", testtype = "Bonferroni", mincriterion = 0.7, minbucket = 20L)
+dt <- disttree(y~x1, data=learndata, family=dist_list_normal, control = control)
 
 if(file.exists("sim_forest.rda")){
   load("sim_forest.rda")
 } else {
-  control <-  ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L)
-  df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, type.tree = "ctree", control = control)
+  control <-  disttree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L,type.tree = "ctree")
+  df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, control = control)
   df$info <- df$fitted <- df$weights <- df$nodes <- df$data <- df$terms <- df$loglik <- df$trafo <- NULL
   save(df, file = "sim_forest.rda")
 }
@@ -1390,6 +1390,8 @@ plot_ll(simlist)
 
 \begin{frame}
 \frametitle{Transformation models}
+
+\textbf{Alternative:} When no obvious classic distribution assumption is available.
 
 \textbf{Advantages:}
 \begin{itemize}

@@ -361,7 +361,7 @@ Y = daily precipitation sums\\
 
 \vspace{-3.5cm}
 \visible<6->{
-\textbf{Application/Motivation:}
+\textbf{Application / Motivation:}
 \begin{itemize}
 \item Prediction.
 \item Capturing dependencies and interactions.
@@ -1641,9 +1641,8 @@ $$(\text{precipitation})^\frac{1}{1.6} \sim \textit{c}\mathcal{N}(\mu,\sigma^2) 
 \begin{itemize}
 \item \textbf{Y:} Observation data (National Hydrographical Service):\\
 \begin{itemize}
-\item 95 observation stations in Tyrol, Austria.\\
-\item Daily 24h precipitation sums (July, 1985--2012).
-%\item Daily 24h precipitation sums from July over 28 years (1985--2012).
+\item Daily 24h precipitation sums (July, 1985--2012).\\
+\item 95 observation stations in Tyrol, Austria.
 \end{itemize}
 \vspace{0.1cm}
 \item \textbf{X:} NWP model output (Global Ensemble Forecast System):\\
