@@ -12,6 +12,7 @@ https://partykit.org}
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
+\usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 \graphicspath{{plots/}}
@@ -315,6 +316,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 
 
 \begin{document}
+\SweaveOpts{concordance=TRUE}
 
 \section{Distributional Trees and Forests}
 
@@ -324,7 +326,7 @@ plot1 <- function(learndata, dt=NULL, df=NULL, g=NULL, all.par = FALSE, df.par =
 \frametitle{Motivation}
 \vspace{-0.41cm}
 \begin{figure}[!htb]
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 <<motivation_GLM, echo=FALSE, results=hide>>=
 nobs <- 200
@@ -345,7 +347,7 @@ lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 \end{center}
 \endminipage
 \visible<3->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 <<motivation_GAM, echo=FALSE, results=hide>>=
 ## GAM
@@ -366,7 +368,7 @@ lines(x = x, y = ytrue, col = pal["forest"], lwd = 7, main = "")
 \end{center}
 \endminipage
 \visible<4->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 <<motivation_GAMLSS, echo=FALSE, results=hide>>=
 ## GAMLSS
@@ -438,7 +440,7 @@ $\ldots$}
 \frametitle{Motivation}
 \vspace{-0.2cm}
 \begin{figure}[!htb]
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 <<motivation_regtree, echo=FALSE, results=hide>>=
 ## Reg. Tree
@@ -463,7 +465,7 @@ lines(x = x, y = ytree, col = pal["forest"], lwd=7)
 
 \endminipage
 \visible<2->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
  \begin{center}
 <<motivation_randforest, echo=FALSE, results=hide>>=
 ## Random Forest
@@ -482,17 +484,17 @@ lines(x = x, y = yforest, col = pal["forest"], lwd=7, main = "")
 
 \endminipage
 \visible<3->{{\LARGE$\rightarrow$}}
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
   \visible<3->{
   \begin{center}
   \begin{tikzpicture}
-  \draw[line width=0.2mm, black] (0,0) rectangle (2.6,2.24);
-  \node[rectangle, align=center] (sq) at (1.3, 1.12) {\Huge{?}};
+  \draw[line width=0.2mm, black] (0,0) rectangle (2.44,2.12);
+  \node[rectangle, align=center] (sq) at (1.22, 1.06) {\Huge{?}};
   \end{tikzpicture}
   \end{center}}
 \endminipage
 
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 \vspace{0.0cm}
 \visible<1->{
@@ -517,7 +519,7 @@ Regression tree\\
 \end{center}
 \endminipage
 \hspace{0.65cm}
-\minipage{0.29\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 \vspace{0.0cm}
 \visible<2->{
@@ -564,7 +566,7 @@ $\ldots$}
 \end{center}
 \endminipage
 \hspace{0.65cm}
-\minipage{0.28\textwidth}
+\minipage{0.285\textwidth}
 \begin{center}
 \vspace{0.68cm}
 \visible<3->{
@@ -1488,8 +1490,8 @@ text(x = -0.8, y = lh4, labels = "2012", col = "purple", cex = 0.8)      # -1.7
 \item Compare to commonly used heteroscedastic censored Gaussian models:
 \end{itemize}
 %\begin{itemize}
-%\item Prespecified GAM: variable selection based on meteorological expert knowledge.
-%\item Boosted GAM: automatic variable selection.
+%\item Prespecified GAMLSS: variable selection based on meteorological expert knowledge.
+%\item Boosted GAMLSS: automatic variable selection.
 %\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 %\end{itemize}
 \vspace{0.1cm}
@@ -1505,11 +1507,11 @@ Model & Type & Variable Selection \\
                                & partitioning &           \\ 
 \hline
 \vspace{-0.15cm}
-\textbf{Prespecified GAM} & spline  & based on expert \\
+\textbf{Prespecified GAMLSS} & spline  & based on expert \\
                           & in each & knowledge      \\
 \hline
 \vspace{-0.15cm}
-\textbf{Boosted GAM} & spline  & automatic  \\
+\textbf{Boosted GAMLSS} & spline  & automatic  \\
                      & in each &            \\
 \hline
 \vspace{-0.15cm}
@@ -1618,8 +1620,8 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 \item Compare to commonly used heteroscedastic censored Gaussian models. %:\\
 \end{itemize}
 %\begin{itemize}
-%\item Prespecified GAM: variable selection based on meteorological expert knowledge.
-%\item Boosted GAM: automatic variable selection.
+%\item Prespecified GAMLSS: variable selection based on meteorological expert knowledge.
+%\item Boosted GAMLSS: automatic variable selection.
 %\item Ensemble Model Output Statistics (EMOS): linear predictors using only total precipitation predictions as covariates.
 %\end{itemize}
 
@@ -1636,11 +1638,11 @@ abline(h = 0, col = pal["EMOS"], lwd = 2)
 %                & partitioning &           \\ 
 %\hline
 %\vspace{-0.15cm}
-%\textbf{prespecified GAM} & spline  & based on expert \\
+%\textbf{Prespecified GAMLSS} & spline  & based on expert \\
 %                          & in each & knowledge      \\
 %\hline
 %\vspace{-0.15cm}
-%\textbf{boosted GAM} & spline  & automatic  \\
+%\textbf{Boosted GAMLSS} & spline  & automatic  \\
 %                     & in each &            \\
 %\hline
 %\vspace{-0.15cm}
