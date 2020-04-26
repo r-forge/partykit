@@ -395,7 +395,7 @@ LM, GLM\\
 \vspace{1.5cm}}
 \end{center}
 \endminipage
-\hspace{1.1cm}
+\hspace{1.cm}
 \minipage{0.25\textwidth}
 \begin{center}
 \visible<3->{
@@ -407,7 +407,7 @@ $\ldots$\\
 \vspace{1cm}}
 \end{center}
 \endminipage
-\hspace{1.1cm}
+\hspace{1.cm}
 \minipage{0.25\textwidth}
 \begin{center}
 \visible<4->{
@@ -1081,12 +1081,14 @@ fun <- function(x){cbind(10*exp(-((4*x[,1]-2)^4)), 0.5 + 2*abs(x[,1]))}
 learndata <- dgp(300, family = dist_list_normal, round.sp = 4, fun = fun)
 control <-  disttree_control(type.tree = "ctree", teststat = "quad", testtype = "Bonferroni", mincriterion = 0.7, minbucket = 20L)
 dt <- disttree(y~x1, data=learndata, family=dist_list_normal, control = control)
+dt$fitted.par <- predict(dt, type = "parameter")
 
 if(file.exists("sim_forest.rda")){
   load("sim_forest.rda")
 } else {
   control <-  disttree_control(teststat = "quad", testtype = "Univ", mincriterion = 0, minbucket = 7L,type.tree = "ctree")
   df <- distforest(y~x1, data=learndata, family=dist_list_normal, ntree = 500L, control = control)
+  df$fitted.par <- predict(df, type = "parameter")
   df$info <- df$fitted <- df$weights <- df$nodes <- df$data <- df$terms <- df$loglik <- df$trafo <- NULL
   save(df, file = "sim_forest.rda")
 }

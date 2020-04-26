@@ -12,7 +12,7 @@ https://partykit.org}
 
 \setbeamertemplate{caption}{\insertcaption} 
 %% includes a replacement for \usepackage{Sweave}
-\usepackage{Sweave}
+% \usepackage{Sweave}
 \usepackage{amsmath,tikz}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap}
 \graphicspath{{plots/}}
@@ -1357,26 +1357,27 @@ data("RainAxams")
       msl_diff
     
     
-  }
+}
 
 
-  # learning data: 24 years (1985 - 2008, both inlcuded)
-  # testing data: 4 successive years (2009, 2010, 2011, 2012)
-  learndata <- RainAxams[RainAxams$year < 2009,]
-  testdata <- RainAxams[RainAxams$year %in% c(2009, 2010, 2011, 2012),]
-  
-  
-                        
+# learning data: 24 years (1985 - 2008, both inlcuded)
+# testing data: 4 successive years (2009, 2010, 2011, 2012)
+learndata <- RainAxams[RainAxams$year < 2009,]
+testdata <- RainAxams[RainAxams$year %in% c(2009, 2010, 2011, 2012),]
+
+
+
 ##############################################################
 # fitting the models
 set.seed(7)
 
 df <- distforest(df.formula, data = learndata, family = dist_list_cens_normal, 
-                 type.tree = "ctree", ntree = 100, censtype = "left", censpoint = 0,
-                 control = ctree_control(teststat = "quad", testtype = "Univ",
-                                         intersplit = TRUE,
-                                         mincriterion = 0, minsplit = 50,
-                                         minbucket = 20), mtry = 27)
+                 ntree = 100, censtype = "left", censpoint = 0,
+                 control = disttree_control(type.tree = "ctree",
+                                            teststat = "quad", testtype = "Univ",
+                                            intersplit = TRUE,
+                                            mincriterion = 0, minsplit = 50,
+                                            minbucket = 20), mtry = 27)
 
 
 

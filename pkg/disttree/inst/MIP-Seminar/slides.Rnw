@@ -1596,10 +1596,11 @@ set.seed(7)
 
 df <- distforest(df.formula, data = learndata, family = dist_list_cens_normal, 
                  type.tree = "ctree", ntree = 100, censtype = "left", censpoint = 0,
-                 control = ctree_control(teststat = "quad", testtype = "Univ",
-                                         intersplit = TRUE,
-                                         mincriterion = 0, minsplit = 50,
-                                         minbucket = 20), mtry = 27)
+                 control = disttree_control(type.tree = "ctree", 
+                                            teststat = "quad", testtype = "Univ",
+                                            intersplit = TRUE,
+                                            mincriterion = 0, minsplit = 50,
+                                            minbucket = 20), mtry = 27)
 
 
 
