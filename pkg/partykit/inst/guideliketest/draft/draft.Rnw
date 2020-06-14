@@ -215,7 +215,9 @@ All these approaches have been shown to work well for various situations, howeve
 
 %\fixme{``Why CTree, GUIDE, and MOB?''}
 %
-Therefore, in this paper the focus will be put on that first step of tree algorithms,
+\fixme{Focus on testing strategies} 
+
+Therefore, \hlc{instead of comparing the complete algorithms,} in this paper the focus will be put on that first step of tree algorithms,
 i.e., the task of selecting the best split variable in a given (sub)sample. 
 In particular, the approach from the GUIDE algorithm (which essentially encompasses QUEST)
 is compared to the one of the CTree and MOB algorithms by investigating the building blocks of 
@@ -233,6 +235,10 @@ vary the building blocks and assess the power of the resulting inference procedu
 it is investigated whether the performance of the inference impacts the performance of the
 trees differently under pre- vs.\ post-pruning.
 
+%% FIXME
+\fixme{Provided theory, finite samples}
+
+\hlc{As the underlying theory of the different testing strategies and the resulting properties and skills but also limitations are already discussed in previous literature} \citep[see, e.g.,][]{Ploberger+Kraemer:1992, Hothorn+Hornik+Zeileis:2006, Zeileis+Hothorn+Hornik:2008, Loh:2002}, \hlc{the presented simulation study aims at investigating the corresponding consequences in finite samples.}
 In many of the considered scenarios the choice of goodness-of-fit measure heavily influences
 the performance of testing strategies. In particular, using model scores leads to
 overall clearly better results than employing residuals only. Moreover, the original
@@ -1083,6 +1089,10 @@ performance of the tests affects growing the trees overall. This is
 evaluated using the adjusted Rand index for trees grown by pre-pruning and 
 cost-complexity post-pruning (Section~\ref{sec:tree}).
 
+\fixme{again, focus on testing strategies}
+
+\hlc{For both scenarios the employed testing framework and the considered evaluations allow for a direct comparison of the testing strategies only opposed to the complete tree algorithms.}
+
 
 %\newpage
 \subsection[``Stump'' scenario: Residuals vs. full model scores]{``Stump'' scenario: Residuals vs.\ full model scores}
@@ -1549,6 +1559,14 @@ been exploited in several tree-based approaches previously published in the lite
 e.g., in \cite{Hothorn+Zeileis:2017} and \cite{Schlosser+Hothorn+Stauffer:2019}. Similarly, it would
 be of interest to investigate a score-based version of the extended GUIDE algorithms beyond the
 linear model, e.g., in \citealp{Loh+Zheng:2013}, \citealp{Chaudhuri+Loh:2002}, and \citealp{Loh+He+Man:2015}.
+
+\fixme{Outlook: non-tree structure}
+
+\hlc{To exploit the flexibility of tree models future investigations could also include situations where the underlying data generating process does not follow a (clear) tree structure. In this case, assessing the effects of different building blocks in the testing strategies should in general show similar results, however, they might vary depending on how well the true functional relationships can be approximated by a tree structure.}
+
+\fixme{Reference on Fu and Simonoff (2015)}
+
+As \cite{Fu+Simonoff:2015} \hlc{show, unbiased recursive partitioning algorithms can have a bias on their own. In particular, given that there are two possible split variables showing the same significant association to the (transformed) response the algorithms tend to select the one providing less possible split points. Therefore, this could be an additional specific setting in which the power of testing strategies and their building blocks could be compared.}
 
 \newpage
 \section*{Computational details}
