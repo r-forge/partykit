@@ -1,0 +1,639 @@
+\documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
+\usetheme[nototalframenumber,url,license]{uibk}
+
+\title{Random Forests}
+\author{Achim Zeileis, Lisa Schlosser}
+\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
+%\URL{http://www.partykit.org/partykit/}
+\renewcommand{\headerimage}[1]{%
+   \IfStrEqCase{#1}{%
+      {1}{%
+         \gdef\myheaderimageid{#1}%
+         \gdef\myheaderimageposition{nw}%
+         \gdef\myheaderimage{forest.jpg}%
+      }}[%
+         \gdef\myheaderimageid{1}%
+         \gdef\myheaderimageposition{nw}%
+         \gdef\myheaderimage{forest.jpg}%
+      ]%
+}
+\headerimage{1}
+
+\usepackage[utf8]{inputenc}
+
+\setbeamertemplate{caption}{\insertcaption} 
+%% includes a replacement for \usepackage{Sweave}
+%\usepackage{Sweave}
+\usepackage{changepage}
+\usepackage{amsmath,tikz}
+\usepackage{calc}
+\usepackage{graphicx}
+\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
+\usepackage{xcolor}
+%\usepackage[cal=boondoxo]{mathalfa}
+%\graphicspath{{plots/}}
+\newcommand{\argmin}{\operatorname{argmin}\displaylimits}
+
+%% colors
+\definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
+\definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
+\definecolor{forestred}{RGB}{206,73,81}
+\definecolor{treegreen}{RGB}{0,143,0}
+\definecolor{lightblue}{RGB}{34,151,230}
+\definecolor{lightorange}{RGB}{255,165,0}
+
+\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+<<preliminaries, echo=FALSE, results=hide>>=
+options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
+
+set.seed(7)
+
+invisible(.Call(grDevices:::C_palette, grDevices::hcl(
+  h = c(0,   5, 125, 245, 195, 315,  65,   0),
+  c = c(0, 100,  90,  85,  63, 105,  90,   0),
+  l = c(0,  55,  75,  60,  82,  48,  80,  65)
+)))
+
+library("disttree")
+library("Formula")
+library("latex2exp")
+library("lattice")
+library("MASS")
+library(colorspace)
+
+## HCL palette
+pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
+names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+
+pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
+names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
+
+transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
+
+lightblue <- "#2297E6"
+lightorange <- "#FFA500"
+@
+
+
+
+<<motivation_tree, echo=FALSE, results=hide>>=
+## Reg. Tree
+set.seed(7)
+nobs <- 200
+kappa <- 12
+x <- c(1:nobs)/nobs
+ytrue <- numeric(length = length(x))
+for(i in 1:(nobs)) ytrue[i] <- if(x[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x[i]-0.2)-1)))
+y <- ytrue + rnorm(nobs,0,0.3)
+# more points for precise illustration of true function
+x100 <- c(1:(100*nobs))/(100*nobs)
+ytrue <- ytree <- ytree2 <- ytree3 <- ytree4 <- yforest <- numeric(length = length(x100))
+for(i in 1:(nobs*100)) ytrue[i] <- if(x100[i]<1/3) 0.5 else 1+(1-plogis(kappa*(2*(x100[i]-0.2)-1)))
+for(i in 1:(nobs*100)) ytree[i] <- if(x100[i]<1/3) 0.5 else {if(x100[i]<2/3) 2 else 1}
+for(i in 1:(nobs*100)) ytree2[i] <- if(x100[i]<0.31) 0.47 else {if(x100[i]<0.69) 1.9 else 1.1}
+for(i in 1:(nobs*100)) ytree3[i] <- if(x100[i]<0.34) 0.52 else {if(x100[i]<0.54) 2.2 else {if(x100[i]<0.74) 1.74 else 0.9}}
+for(i in 1:(nobs*100)) ytree4[i] <- if(x100[i]<0.32) 0.51 else {if(x100[i]<0.63) 1.8 else 1.15}
+for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.34) 1.5 else {if(x100[i]<=0.54) 2 else {if(x100[i]<=0.63) 1.9 else {if(x100[i]<=0.69) 1.6 else {if(x100[i]<=0.74) 1.3 else 1}}}}}
+@
+
+
+\begin{document}
+
+\section{Forests models}
+
+\subsection{Motivation: Forest models}
+\begin{frame}[fragile]
+\frametitle{Motivation: Forest models}
+
+{\bf Idea:} \\
+\begin{itemize}
+\item Combination of an ensemble of trees. 
+\item Each tree can capture non-linear and non-additive effects and select covariates and possible interactions automatically.
+\item Combining trees to a forest model allows for an approximation of smooth effects.
+\item A forest can regularize and stabilize the model.
+\end{itemize}
+
+%\bigskip
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Motivation: Forest models}
+
+\vspace{0.2cm}
+
+\begin{minipage}{0.4\textwidth}
+\only<1>{\textbf{Tree model:\\}}\only<2-8>{\textbf{Subsampling:\\}}\only<9->{\textbf{Forest model:\\}}
+\vspace{-0.4cm}
+%\vspace{-0.8cm}
+\begin{center}
+\only<1>{
+%\vspace{0.2cm}
+\resizebox{0.63\textwidth}{!}{
+\begin{tikzpicture}
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n0) at (2, 3) {};
+  \node[] (n00) at (1, 1.5) {};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n1) at (0, 0) {$\hat{Y}_1$};
+  \draw[-] (n0) -- (n00) node [midway, left] {\small $X \leq p_1$};
+  \draw[-] (n0) -- (n1);
+  \node[ellipse, fill=HighlightBlue!70, align=center] (n2) at (3, 1.5) {};
+  \draw[-] (n0) -- (n2) node [midway, right] {\small $X > p_1$};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n3) at (2, 0) {$\hat{Y}_2$};
+  \draw[-] (n2) -- (n3) node [midway, left] {\small $X \leq p_2$};
+  \node[rectangle, fill=HighlightOrange!70, align=center] (n4) at (4, 0) {$\hat{Y}_3$};
+  \draw[-] (n2) -- (n4) node [midway, right] {\small $X > p_2$};
+\end{tikzpicture}}
+
+\vspace{0.475cm}
+
+}
+\only<2->{
+%\vspace{0.2cm}
+\resizebox{0.6\textwidth}{!}{
+\begin{tikzpicture}
+%\draw[ellipse, draw=black, align=center, scale = 0.7, minimum width=170pt, minimum height = 35pt] (set) at (1, 3) {};
+\draw[gray,rounded corners=10pt] (-1.05,4.35) -- (4.05,4.35) -- (4.05,2.7) -- (-2.05,2.7) -- (-2.05,4.35) -- (0.05,4.35);
+%\draw[gray] (1,3.5) ellipse (3 and 0.8);
+%\visible<4>{
+\begin{scope}
+\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\clip (1,3.5) ellipse (3 and 0.8);
+\pgfmathsetseed{7}
+\foreach \p in {1,...,200} {\fill[gray] (1+3*rand,3.5+0.8*rand) circle (0.04);}
+\end{scope}
+%}
+%%% color points
+%\visible<5-6>{
+%\begin{scope}
+%\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\pgfmathsetseed{7}
+%\foreach \p in {1,...,100} {\fill[treegreen] (1+3*rand,3.5+0.8*rand) circle (0.07);}
+%\end{scope}
+%}
+\visible<3->{
+\node[ellipse, draw=treegreen, align=center, minimum width=80pt, minimum height = 40pt, line width = 3pt] (subset1) at (0.1, 3.5) {};
+}
+%\visible<7-8>{
+%\begin{scope}
+%\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\pgfmathsetseed{7}
+%\foreach \p in {1,...,49} {\fill[gray] (1+3*rand,3.5+0.8*rand) circle (0.04);}
+%\foreach \p in {50,...,150} {\fill[lightblue] (1+3*rand,3.5+0.8*rand) circle (0.07);}
+%\end{scope}
+%}
+\visible<5->{
+\node[ellipse, draw = lightblue, align=center, minimum width=100pt, minimum height = 30pt, line width = 3pt] (subset2) at (1.2, 3.6) {};
+}
+%\visible<9-10>{
+%\begin{scope}
+%\clip (-1,4.3) -- (4,4.3) -- (4,2.7) -- (-2,2.7) -- (-2,4.3) -- (0,4.3);
+%\pgfmathsetseed{7}
+%\foreach \p in {1,...,99} {\fill[gray] (1+3*rand,3.5+0.8*rand) circle (0.04);}
+%\foreach \p in {100,...,200} {\fill[lightorange] (1+3*rand,3.5+0.8*rand) circle (0.07);}
+%\end{scope}
+%}
+\visible<7->{
+\node[ellipse, draw = lightorange, align=center, minimum width=120pt, minimum height = 25pt, line width = 3pt] (subset3) at (1.6, 3.3) {};
+}
+\visible<4->{
+\node[ellipse, fill=treegreen, align=center] (n00) at (-1, 2) {};
+\node[ellipse, fill=treegreen, align=center] (n01) at (-1.25, 1.25) {};
+\draw[-, line width=1pt] (n00) -- (n01);
+\node[rectangle, fill=treegreen, align=center] (n02) at (-1.5, 0.5) {};
+\draw[-, line width=1pt] (n01) -- (n02);
+\node[rectangle, fill=treegreen, align=center] (n03) at (-1, 0.5) {};
+\draw[-, line width=1pt] (n01) -- (n03);
+\node[rectangle, fill=treegreen, align=center] (n04) at (-0.5, 0.5) {};
+\draw[-, line width=1pt] (n00) -- (n04);
+}
+\visible<6->{
+\node[ellipse, fill=lightblue, align=center] (n10) at (1, 2) {};
+\node[ellipse, fill=lightblue, align=center] (n11) at (0.5, 1.25) {};
+\draw[-, line width=1pt] (n10) -- (n11);
+\node[rectangle, fill=lightblue, align=center] (n12) at (0.25, 0.5) {};
+\draw[-, line width=1pt] (n11) -- (n12);
+\node[rectangle, fill=lightblue, align=center] (n13) at (0.75, 0.5) {};
+\draw[-, line width=1pt] (n11) -- (n13);
+\node[ellipse, fill=lightblue, align=center] (n14) at (1.5, 1.25) {};
+\draw[-, line width=1pt] (n10) -- (n14);
+\node[rectangle, fill=lightblue, align=center] (n15) at (1.75, 0.5) {};
+\draw[-, line width=1pt] (n14) -- (n15);
+\node[rectangle, fill=lightblue, align=center] (n16) at (1.25, 0.5) {};
+\draw[-, line width=1pt] (n14) -- (n16);
+}
+\visible<8->{
+\node[ellipse, fill=lightorange, align=center] (n20) at (3, 2) {};
+\node[rectangle, fill=lightorange, align=center] (n21) at (2.5, 0.5) {};
+\draw[-, line width=1pt] (n20) -- (n21);
+\node[ellipse, fill=lightorange, align=center] (n22) at (3.25, 1.25) {};
+\draw[-, line width=1pt] (n20) -- (n22);
+\node[rectangle, fill=lightorange, align=center] (n23) at (3, 0.5) {};
+\draw[-, line width=1pt] (n22) -- (n23);
+\node[rectangle, fill=lightorange, align=center] (n24) at (3.5, 0.5) {};
+\draw[-, line width=1pt] (n22) -- (n24);
+}
+\visible<10->{
+\node[ellipse, draw = black, align=center, minimum width=15pt, minimum height = 15pt, line width = 2pt] (B1) at (-1.5, 0.5) {};
+\node[ellipse, align=center, line width = 3pt, text=treegreen] (Y1) at (-1.5, -0.5) {\LARGE $\hat{y}_1$};
+}
+\visible<11->{
+\node[ellipse, draw = black, align=center, minimum width=15pt, minimum height = 15pt, line width = 2pt] (B2) at (1.25, 0.5) {};
+\node[ellipse, align=center, line width = 3pt, text=lightblue] (Y2) at (1.25, -0.5) {\LARGE $\hat{y}_2$};
+}
+\visible<12->{
+\node[ellipse, draw = black, align=center, minimum width=15pt, minimum height = 15pt, line width = 2pt] (B2) at (3.5, 0.5) {};
+\node[ellipse, align=center, line width = 3pt, text=lightorange] (Y3) at (3.5, -0.5) {\LARGE $\hat{y}_3$};(3.5, 0.5)
+}
+\end{tikzpicture}
+}
+}
+\end{center}
+\end{minipage}
+\hspace{0.7cm}
+\begin{minipage}{0.36\textwidth}
+%\begin{center}
+%\vspace{0.1cm}
+\only<1-2>{
+%\vspace{0.01cm}
+<<plot_motivation_tree, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,0))
+#par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+#lines(x = x, y = ytrue, col = "gray", lwd=5, main = "")
+lines(x = x100, y = ytree, col = pal["forest"], lwd=7)
+mtext(text = "X", side = 1, cex = 2.5, line = 2)  
+mtext(text = "Y", side = 2, cex = 2.5, line = 1)  
+@
+}
+\only<3>{
+%\vspace{0.01cm}
+%\hspace{-0.1cm}
+<<plot_motivation_randforest_data, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,0))
+#par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+mtext(text = "X", side = 1, cex = 2.5, line = 2)  
+mtext(text = "Y", side = 2, cex = 2.5, line = 1)  
+@
+}
+\only<4-5>{
+%\vspace{0.01cm}
+%\hspace{-0.1cm}
+<<plot_motivation_randforest1, fig=TRUE, echo=FALSE, width=7>>=
+<<plot_motivation_randforest_data>>
+lines(x = x100, y = ytree2, col = pal["tree"], lwd=7)
+@
+}
+\only<6-7>{
+%\vspace{0.01cm}
+%\hspace{-0.1cm}
+<<plot_motivation_randforest2, fig=TRUE, echo=FALSE, width=7>>=
+<<plot_motivation_randforest1>>
+lines(x = x100, y = ytree3, col = lightblue, lwd=7)
+@
+}
+\only<8>{
+%\vspace{0.01cm}
+%\hspace{-0.1cm}
+<<plot_motivation_randforest3, fig=TRUE, echo=FALSE, width=7>>=
+<<plot_motivation_randforest2>>
+lines(x = x100, y = ytree4, col = lightorange, lwd=7)
+@
+}
+\only<9-12>{
+<<plot_motivation_randforest_x, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,0))
+#par(mar=c(3,3,2,5.5))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x100, y = ytree2, col = pal["tree"], lwd=7)
+lines(x = x100, y = ytree3, col = lightblue, lwd=7)
+lines(x = x100, y = ytree4, col = lightorange, lwd=7)
+lines(x = c(0.6,0.6), y = c(-1, 1.8), type = "l", lty = 2, lwd = 4)
+mtext(text = "Y", side = 2, cex = 2.5, line = 1)  
+mtext(text = "x", side = 1, cex = 4, line = 2, at=0.6)  
+@
+}
+\only<13->{
+<<plot_motivation_randforest4, fig=TRUE, echo=FALSE, width=7>>=
+par(mar=c(3,3,2,0))
+plot(x = x, y = y, xaxt="n", yaxt="n", ann=FALSE, col = "slategray", pch = 19)
+box(lwd=5)
+lines(x = x100, y = yforest, col = pal["forest"], lwd=7)
+lines(x = c(0.6,0.6), y = c(-1, 1.8), type = "l", lty = 2, lwd = 4)
+mtext(text = "x", side = 1, cex = 4, line = 2, at=0.6)  
+mtext(text = "Y", side = 2, cex = 2.5, line = 1)  
+@
+}
+\end{minipage}
+
+\vspace{0.5cm}
+
+\only<13->{
+$\hat{y}= \frac{1}{3} (\hat{y}_1 + \hat{y}_2 + \hat{y}_3)$
+}
+
+\vspace{0.3cm}
+
+\visible<13->{
+for $\hat{y}_t$ being the average response value in the corresponding segment $\mathcal{B}^t_x$ of the $t$-th tree for learning data $\{y_i\}_{i=1,\ldots,n}$:
+
+\vspace{0.3cm}
+
+$\hat{y}_t= \frac{1}{|\mathcal{B}^t_x|} \sum_{i: y_i \in \mathcal{B}^t_x} y_i$
+\visible<14->{
+$\ =\ \sum_{i=1}^n \frac{I(x_i \in \mathcal{B}^t_x)}{|\mathcal{B}^t_x|} \cdot y_i$
+}
+\visible<15->{
+$\ =\ \sum_{i=1}^n w_i(x) \cdot y_i$
+}
+}
+\end{frame}
+
+
+\subsection{Aggregation of trees}
+
+\begin{frame}
+\frametitle{Aggregation of trees}
+{\bf Strategy:} Combine trees to a forest model by employing tree-based weights.
+
+The predicted response $\hat{y}$ or, more generally, the predicted model parameter (vector) $\hat{\theta}$ is the argument of the parameter space $\Theta$ that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{y_i\}_{i=1,\ldots,n}$:
+
+\vspace{-0.2cm}
+
+\[
+\hat{\theta}(x) =  \argmin_{\theta \in \Theta} \sum_{i=1}^n w_i(x) \cdot f(\theta; y_i)
+\]
+
+\medskip
+
+\only<2-4>{
+
+\vspace{0.13cm}
+
+\textbf{Weights:}
+
+\vspace{-1.14cm}
+
+\begin{eqnarray*}
+w^{\text{base}}_i(x)   & = & 1 \\[0.2cm]
+\visible<3-4>{
+w^{\text{tree}}_i(x)   & = & \sum_{b=1}^B I((x_i \in \mathcal{B}_b) \land (x \in \mathcal{B}_b)) \\[0.1cm]
+\visible<4>{
+w^{\text{forest}}_i(x) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \frac{I((x_i \in \mathcal{B}^t_b) \land (x \in \mathcal{B}^t_b))}{\left|\mathcal{B}^t_b\right|}
+\end{eqnarray*}
+}}}
+
+\only<5->{
+%\vspace{-3cm}
+{\bf Note:} This general notation holds for classic random forests averaging over mean values of tree nodes by setting $f(\theta, y_i) = (\theta - y_i)^2$\\
+but also allows for combining quantiles (quantile regression forests) or full distributions as in distributional forests with
+$f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
+}
+
+\end{frame}
+
+
+\subsection{Subsampling}
+
+\begin{frame}
+\frametitle{Subsampling}
+{\bf Idea:} Build each tree on a different subset of the full data set.
+
+\medskip
+
+{\bf Types of subsampling:}
+\begin{itemize}
+\item Subsets (recommended size: 63.2\% of the full data set)
+\item Bootstrapping (resampling with replacement)
+\end{itemize}
+
+\bigskip
+
+{\bf Random input variable sampling:} In order to reduce the correlation among trees only a subset of possible split variables is provided for each split (recommended size: $\sqrt{\text{\#Var}}$).
+
+\bigskip
+
+{\bf Note:} Each tree is built as large as possible which can lead to overfitting for the single tree. However, this is compensated by aggregating the trees to a forest model.
+
+\end{frame}
+
+
+
+\subsection{Software}
+
+\begin{frame}[fragile]
+\frametitle{R software for forest models}
+
+{\bf randomForest:}
+\begin{itemize}
+  \item R package for classic random forests.
+  \item Based on implementations of CART.
+\end{itemize}
+
+\medskip
+
+<<call_randomForest, eval=FALSE, echo=TRUE>>=
+randomForest(formula, data=NULL, ..., subset, na.action=na.fail)
+randomForest(x, y=NULL,  ...)
+@
+
+\medskip
+
+Optional control arguments:
+\begin{itemize}
+\item \code{ntree}: nr. of trees, 
+\item \code{mtry}: nr. of randomly sampled split variable candidates, 
+\item \code{replace}: type of subsetting, 
+\item \code{sampsize}: size of drawn subsamples, 
+\item \code{nodesize}: minimum size of terminal nodes, 
+\item \code{maxnodes}: maximum number of terminal nodes, 
+\item \ldots 
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{R software for forest models}
+
+{\bf partykit:}
+\begin{itemize}
+  \item R package offering a toolkit for unbiased recursive partitioning. 
+  \item Provides the forest-building function \fct{cforest}, based on conditional inference trees.
+\end{itemize}
+
+\medskip
+
+<<call_cforest, eval = FALSE>>=
+cforest(formula, data, subset, ...)
+@
+
+\medskip
+
+\only<1>{
+Optional forest-specific control arguments:
+\begin{itemize}
+\item \code{ytrafo}: transformation function applied to the response,
+\item \code{ntree}: nr. of trees, 
+\item \code{mtry}: nr. of randomly sampled split variable candidates, 
+\item \code{perturb}: type and size of subsetting, 
+\item \ldots 
+\end{itemize}
+\vspace{0.9cm}
+}
+\only<2>{
+Optional tree-specific arguments handed over via \fct{ctree\_control}:
+\begin{itemize}
+\item \code{minsplit}: minimum nr. of observations to perform a split, 
+\item \code{minbucket}: minimum nr. of observations in a node after splitting, 
+\item \code{maxdepth}: maximum depth of the tree, 
+\item \code{alpha}: significance level for split variable selection,
+\item \ldots 
+\end{itemize}
+\vspace{0.9cm}
+}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{R software for forest models}
+
+{\bf Predictions:} For a (possibly new) set of observations the method \fct{predict} can be employed to obtain the corresponding predicted values of the response variable.
+
+\bigskip
+
+<<call_predict, eval=FALSE, echo=TRUE>>=
+predict(object, newdata, type = "response", ...)
+@
+
+\end{frame}
+
+
+\begin{frame}
+\frametitle{R software for forest models}
+
+\textbf{Further R packages:}
+%
+\begin{itemize}
+  \item ranger (classic random forests),
+  \item grf (generalized random forests),
+  \item disttree (distributional forests, based on partykit),
+  \item \ldots
+\end{itemize}
+
+\end{frame}
+
+
+
+\subsection{Variable importance}
+
+\begin{frame}
+\frametitle{Variable importance}
+{\bf Idea:} Asses the influence of a covariate by evaluating the change in performance of the model (mean decrease in accuracy) after dropping or permutating the selected covariate. 
+
+\bigskip
+
+Depending on the fitted model the corresponding objective function can be employed as \emph{risk function} to measure accuracy by calculating importance scores (e.g., log-likelihood, nr. of misclassifications, \ldots).
+
+\bigskip
+
+{\bf Implementations:}
+\begin{itemize}
+\item \fct{importance} in the R package randomForest.
+\item \fct{importance.ranger} in the R package ranger.
+\item \fct{varimp} in the R package partykit.
+\end{itemize}
+
+\end{frame}
+
+
+
+\subsection{References}
+
+\begin{frame}
+\frametitle{References}
+
+\vspace{-0.2cm}
+
+\scriptsize
+
+Breiman L (2001).
+  \dquote{Random {Forests}.}
+  \emph{Machine Learning}, 
+  \textbf{45}(1), 5--32.
+  \doi{10.1023/A:1010933404324}
+
+\medskip
+  
+Breiman L, Cutler A (2004).
+ \dquote{Random Forests.},
+ \url{https://www.stat.berkeley.edu/~breiman/RandomForests}
+ (Accessed: 2018-02-22)
+ 
+\medskip
+
+%Hothorn T, Zeileis A (2017).
+%  \dquote{Transformation Forests.}
+%  \emph{arXiv 1701.02110}, arXiv.org E-Print Archive.
+%  \url{http://arxiv.org/abs/1701.02110}
+%  
+%\smallskip
+  
+Hothorn T, Hornik K, Zeileis A (2006).
+ \dquote{Unbiased Recursive Partitioning: A Conditional Inference Framework.}
+ \emph{Journal of Computational and Graphical Statistics},
+ \textbf{15}(3), 651--674.
+ \doi{10.1198/106186006X133933}
+ 
+\medskip
+
+Hothorn T, Zeileis A (2015).
+ \dquote{{partykit}: A Modular Toolkit for Recursive Partytioning in \textsf{R}.}
+ \emph{Journal of Machine Learning Research},
+ \textbf{16}, 3905--3909.
+ \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
+  
+\medskip  
+
+Liaw A, Wiener M (2002).
+ \dquote{Classification and Regression by randomForest.}
+ \emph{R News},
+ \textbf{2}(3), 18--22.
+ \url{https://CRAN.R-project.org/doc/Rnews/}
+
+\medskip
+
+% Zeileis A, Hothorn T, Hornik K (2008).
+%  \dquote{Model-Based Recursive Partitioning.}
+%   \emph{Journal of Computational and Graphical Statistics},
+%   \textbf{17}(2), 492--514.
+%   \doi{10.1198/106186008X319331}
+% 
+% \medskip
+
+Athey S, Tibshirani J, Wager S (2019). 
+ \dquote{Generalized Random Forests.} 
+ \emph{Annals of Statistics}, \textbf{47}{2}, 1148--1178.
+ \doi{10.1214/18-AOS1709"}
+
+\medskip
+
+Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
+\dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
+\emph{The Annals of Applied Statistics}, \textbf{13}(3), 1564--1589.
+\doi{10.1214/19-AOAS1247}
+
+\medskip
+
+Wright M N, Ziegler A (2017).
+\dquote{{ranger}: A Fast Implementation of Random Forests for High
+Dimensional Data in {C++} and {R}.}
+\emph{Journal of Statistical Software}, \textbf{77}{1}, 1--17.
+\doi{10.18637/jss.v077.i01}
+
+\end{frame}
+
+\end{document}
