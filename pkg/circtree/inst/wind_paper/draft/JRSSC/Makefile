@@ -18,6 +18,20 @@ rebuttal_combined:
 	pdftk rebuttal.pdf tmp.pdf cat output rebuttal_combined.pdf && \
 	rm tmp.pdf
 
+rebuttal_combined_step1: 
+	make rebuttal && \
+	cd .. && \
+	make diff_step1 && \
+	cd JRSSC/
+
+rebuttal_combined_step2: 
+	cd .. && \
+	make diff_step2 && \
+	cp -avi diff_paper_submitted_2020_01_09.pdf JRSSC/tmp.pdf && \
+	cd JRSSC/ && \
+	pdftk rebuttal.pdf tmp.pdf cat output rebuttal_combined.pdf && \
+	rm tmp.pdf
+
 paper: 
 	pdflatex draft_jrssc.tex
 	bibtex draft_jrssc.aux

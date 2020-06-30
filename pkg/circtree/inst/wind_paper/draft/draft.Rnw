@@ -118,13 +118,13 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 %other common approaches as a benchmark.
 %
 %NEW VERSION:
-Circular data occur in a wide range of scientific fields, but the methodology
+Circular data occur in a wide range of scientific fields, however the methodology
 for distributional modeling and probabilistic forecasting of circular response
-variables is rather limited. While most of the existing methods are built on
+variables is rather limited. While most of the existing methods are built within
 the framework of generalized linear and additive models, which are often
 challenging to optimize and interpret, we propose a distributional approach for
 regression trees yielding probabilistic forecasts based on the von~Mises
-distribution. The resulting tree-based models use the available covariates only
+distribution. The resulting tree-based models use the available covariates 
 for partitioning the data into sufficiently homogeneous subgroups, allowing for
 a simple circular distributional fit in each subgroup. These circular
 regression trees are straightforward to interpret, can capture nonlinear
@@ -133,9 +133,9 @@ are associated with changes in any distribution parameter. Ensembles or
 forests of such circular trees can further improve the forecasts by
 regularizing and stabilizing the model. The newly developed methodology is
 illustrated in an application on short-term probabilistic wind direction
-forecasting for Innsbruck and Vienna Airport in order to direct airplanes to a
+forecasting for Innsbruck and Vienna Airport required to direct airplanes to a
 safe landing. The predictive skill of the novel approaches is benchmarked with
-an additive regression model plus a persistency and a climatology model,
+an additive regression model plus a persistency and a climatological model,
 employing the circular continuous ranked probability score.}
 
 \Keywords{circular data, regression trees, random forests, distributional regression, von~Mises distribution, probabilistic forecasting}
@@ -211,7 +211,7 @@ covariates was presented by \cite{Gould:1969} where the circular mean is
 predicted by a linear combination of covariates. \cite{Johnson+Wehrly:1978}
 refined this idea by plugging in a link function transforming the linear
 predictor to a restricted interval of length~$2\pi$. This generalized linear
-model (GLM) type approach was further extended by \cite{Fisher+Lee:1992} and
+model~(GLM) type approach was further extended by \cite{Fisher+Lee:1992} and
 subsequently by \cite{Fisher:1993} introducing independent GLMs for either the
 location or scale parameter with appropriate link functions while keeping the
 other parameter constant. Additionally, they developed a combined
@@ -253,30 +253,25 @@ specified in advance as they are selected automatically in the recursive
 partitioning algorithm.
 
 This novel approach to circular regression trees and forests complements the
-literature on tree-based circular modeling. \cite{Lund:2002} already introduced a
-circular regression tree algorithm where binary splits are made based on an
+literature on tree-based circular modeling. \cite{Lund:2002} already introduced
+a circular regression tree algorithm where binary splits are made based on an
 angular distance measure capturing node homogeneity. However, this only models
 changes in the conditional mean, whereas modeling the conditional variance or
 full probabilistic distribution would also allow uncertainty in the forecast to
-be estimated \citep{Gneiting:2008}. 
-%However, this only models
-%changes in the conditional mean but not the conditional variance or full
-%probabilistic distribution which would allow for also considering uncertainty
-%in forecasts \citep{Gneiting:2008}. 
-In the field of image based object direction estimation,
-\citet{Hara+Chellappa:2017} presented a distribution-based tree-building 
-algorithm by applying $k$-means clustering to the target space where
-the number of clusters $k$ is adaptively determined by the Bayes
-information criterion employing the von~Mises distribution. Despite their
-distribution-based splitting approach to circular response variables, they
-solely predict the mode of the distribution, thus, providing no full
-probabilistic forecasts. Combining these previous ideas for circular trees with the
-concept of distributional modeling, we introduce a fully distributional tree
-approach that not only considers splits in all distribution parameters, but also yields a
-full probabilistic predictive model as proposed by \citet{Gneiting:2008}. In
-addition, as a natural extension, ensembles or forests of circular regression
-trees are presented in this study, showing that these can further improve
-predictive power.
+be estimated \citep{Gneiting:2008}.  In the field of image based object
+direction estimation, \citet{Hara+Chellappa:2017} presented a
+distribution-based tree-building algorithm by applying $k$-means clustering to
+the target space where the number of clusters $k$ is adaptively determined by
+the Bayes information criterion employing the von~Mises distribution. Despite
+their distribution-based splitting approach to circular response variables,
+they solely predict the mode of the distribution, thus, providing no full
+probabilistic forecasts. Combining these previous ideas for circular trees with
+the concept of distributional modeling, we introduce a fully distributional
+tree approach that not only considers splits in all distribution parameters,
+but also yields a full probabilistic predictive model as proposed by
+\citet{Gneiting:2008}. In addition, as a natural extension, ensembles or
+forests of circular regression trees are presented in this study, showing that
+these can further improve predictive power.
 
 \subsection{Motivating example}
 
@@ -433,7 +428,7 @@ shown along with the fitted density (red line) and estimated location parameter
 response variable but no covariate. Of course, including covariates is of
 interest in a regression setup for forecasting.
 
-In most generalized linear model (GLM) or generalized additive model (GAM)
+In most generalized linear model~(GLM) or generalized additive model~(GAM)
 approaches to circular regression the location parameter $\mu$ depends on
 covariates $\mathbf{z}$ through a link function~$g(\cdot)$, circular intercept
 $\mu_0$ and coefficient vector $\boldsymbol{\beta}$: 
@@ -748,7 +743,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     response values within an interval of length $2\pi$. Since in the
     implementation of \cite{Mulder+Klugkist:2017} the accommodation of circular covariates would require
     an additional manual adjustment, such as an approximation by a finite Fourier expansion
-    (cf., \citealt{Lund:1999}), we use only the linear components of the lagged
+    (cf., \citealt{Lund:1999}), we only use the linear components of the lagged
     2-dimensional wind vector~$(u, v)^{\top}$ and the lagged wind speed $spd$ as
     predictor variables. Thus, the model formula for the location
     parameter $\mu$ of the von~Mises distribution can be written as:
@@ -798,7 +793,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
 \end{itemize}
 
 To compare the predictive performance of all proposed models, a circular
-analogue of the continuous ranked probability score (CRPS) as introduced by
+analogue of the continuous ranked probability score~(CRPS) as introduced by
 \cite{Grimit+Gneiting+Berrocal:2006} is computed. Just as the linear version of
 the CRPS \citep[for more details see][]{Hersbach:2000} it is a proper scoring
 rule \citep{Gneiting+Raftery:2007} and measures the difference between an
@@ -923,7 +918,7 @@ significantly superior to the reference.
   \setkeys{Gin}{width=1.0\textwidth}
   \includegraphics{_plot_circforest_validation_crpsskill_agg_comparison_with_lowff_v14b.pdf}
   \caption{As Figure~\ref{fig:boxplot_crpsraw}, but showing CRPS skill scores
-    with the climatology model as reference. Skill scores are in percent; positive
+    with the climatological model as reference. Skill scores are in percent; positive
     values indicate improvements over the reference.} 
   \label{fig:boxplot_crpsskill} 
 \end{figure}
@@ -987,7 +982,7 @@ different splits.
 
 To conclude, in general the tree structure can capture nonlinear changes,
 shifts, and potential interactions in covariates without prespecification of
-such effects. As supported by the application on probabilistic wind direction
+such effects. As supported by the presented application on probabilistic wind direction
 forecasting, this can be particularly useful for modeling a highly fluctuating
 response, such as typically observed for wind direction, or/and in case of a
 large number of possible covariates. Moreover, the application shows that
@@ -1021,27 +1016,14 @@ concentration parameter.
 The computation time on a standard computer is in the order of 10\,milliseconds
 for the circular fit (used for the persistency and the climatological model),
 seconds for the estimation of the linear model and the circular tree, and from
-a few minutes to an hour for the estimation of the circular forest; the latter
+a few minutes up to an hour for the estimation of the circular forest; the latter
 strongly depends on the number of covariates employed and, hence, varies
-between Innsbruck and Vienna Airport. However, for a single station and
+between the two locations included in the application. However, for a single station and
 forecast step, the persistency and linear models must be re-estimated for each
 time of interest, and independent climatological models have to be fitted for
-all times of interest within a single calendar year, whereas for all times of interest only one 
-circular tree and circular forest model is required. 
+all times of interest within a single calendar year, whereas for all times of interest only a single 
+circular tree and a single circular forest model is required. 
 
-%The computation time on a standard computer is in the order of 10\,milliseconds
-%for the circular fit (used for the persistency and the climatological model),
-%seconds for the estimation of the linear model and the circular tree, and from
-%a few minutes to an hour for the estimation of the circular forest; the latter
-%strongly depends on the number of covariates employed and, hence, varies
-%between Innsbruck and Vienna Airport. However, the persistency and linear
-%models must be re-estimated for each time point in the validation data set, and
-%independent climatological models have to be estimated for all the time points
-%within one calendar year which exist in the validation period, whereas only one
-%model is needed for the circular tree and the circular forest valid for all
-%times points in the validation data set. 
-
-%\newpage
 \bibliography{ref.bib}
 
 \newpage
