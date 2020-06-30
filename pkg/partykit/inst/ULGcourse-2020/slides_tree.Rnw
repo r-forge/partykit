@@ -46,7 +46,8 @@ library("coin")
 set.seed(7)
 @
 
-<<Titanic-data>>=
+<<data>>=
+data("CPS1985", package = "AER")
 data("Titanic", package = "datasets")
 ttnc <- as.data.frame(Titanic)
 ttnc <- ttnc[rep(1:nrow(ttnc), ttnc$Freq), 1:4]
@@ -102,9 +103,8 @@ names(ttnc)[2] <- "Gender"
 \begin{center}
 \setkeys{Gin}{width=0.9\textwidth}
 <<ctree_Titanic, echo=FALSE, fig=TRUE, width=11>>=
-ct <- ctree(Survived ~ Gender + Age + Class, data = ttnc,
-            control = ctree_control(alpha = 0.01))
-plot(ct)
+ct_ttnc <- ctree(Survived ~ Gender + Age + Class, data = ttnc, alpha = 0.01)
+plot(ct_ttnc)
 @
 \end{center}
 \end{frame}
@@ -139,9 +139,8 @@ No & Name &	Levels\\
 \begin{center}
 \setkeys{Gin}{width=0.99\textwidth}
 <<ctree_Wages1985, echo=FALSE, fig=TRUE, width=13>>=
-data("CPS1985", package = "AER")
-plot(ctree(log(wage)~education+experience+age+ethnicity+gender+union,data=CPS1985,
-           control = ctree_control(alpha = 0.01)))
+ct_cps <- ctree(log(wage) ~ education + experience + age + ethnicity + gender + union, data = CPS1985, alpha = 0.01)
+plot(ct_cps)
 @
 \end{center}
 \end{frame}
@@ -154,8 +153,8 @@ plot(ctree(log(wage)~education+experience+age+ethnicity+gender+union,data=CPS198
 \begin{center}
 \setkeys{Gin}{width=0.9\textwidth}
 <<lmtree_Wages1985, echo=FALSE, fig=TRUE, width=11>>=
-data("CPS1985", package = "AER")
-plot(lmtree(log(wage) ~ education | experience + age + ethnicity + gender + union, data = CPS1985))
+mob_cps <- lmtree(log(wage) ~ education | experience + age + ethnicity + gender + union, data = CPS1985)
+plot(mob_cps)
 @
 \end{center}
 \end{frame}
@@ -314,30 +313,29 @@ Minimal number of observations per node, tree depth, minimal $p$-value, \ldots
 \frametitle{Split variable selection}
 {\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Gender
 
-\vspace{0.5cm}
-
-\begin{minipage}{0.5\linewidth}
-\vspace{-2.2cm}
-<<echo=TRUE, results=verbatim>>=
-table(ttnc$Survived, ttnc$Gender)
-@
-\end{minipage}
-\begin{minipage}{0.45\linewidth}
-<<echo=TRUE, eval=FALSE>>=
-plot(Survived~Gender, data = ttnc)
+\begin{minipage}[t]{0.43\linewidth}
+<<survival-gender, echo=TRUE, eval=FALSE>>=
+plot(Survived ~ Gender, data = ttnc)
 @
 \vspace{-0.7cm}
-%\setkeys{Gin}{width=0.5\linewidth}
-<<echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
-plot(Survived~Gender, data = ttnc)
+<<survival-gender-plot, echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
+<<survival-gender>>
+@
+\end{minipage}
+\hfill
+\pause
+\begin{minipage}[t]{0.5\linewidth}
+<<echo=TRUE, results=verbatim>>=
+xtabs(~ Survived + Gender, data = ttnc)
 @
 \end{minipage}
 
 \pause
 
 <<echo=TRUE, results=verbatim>>=
-chisq.test(ttnc$Survived, ttnc$Gender)
+chisq.test(xtabs(~ Survived + Gender, data = ttnc))
 @
+
 \end{frame}
 
 
@@ -346,30 +344,27 @@ chisq.test(ttnc$Survived, ttnc$Gender)
 \frametitle{Split variable selection}
 {\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Age
 
-\vspace{0.5cm}
-
-\begin{minipage}{0.5\linewidth}
-\vspace{-2.2cm}
-<<echo=TRUE, results=verbatim>>=
-table(ttnc$Survived, ttnc$Age)
-@
-\end{minipage}
-\begin{minipage}{0.45\linewidth}
-<<echo=TRUE, eval=FALSE>>=
-plot(Survived~Age, data = ttnc)
+\begin{minipage}[t]{0.43\linewidth}
+<<survival-age, echo=TRUE, eval=FALSE>>=
+plot(Survived ~ Age, data = ttnc)
 @
 \vspace{-0.7cm}
-%\setkeys{Gin}{width=0.5\linewidth}
-<<echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
-plot(Survived~Age, data = ttnc)
+<<survival-age-plot, echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
+<<survival-age>>
+@
+\end{minipage}
+\hfill
+\pause
+\begin{minipage}[t]{0.5\linewidth}
+<<echo=TRUE, results=verbatim>>=
+xtabs(~ Survived + Age, data = ttnc)
 @
 \end{minipage}
 
-\pause
-
 <<echo=TRUE, results=verbatim>>=
-chisq.test(ttnc$Survived, ttnc$Age)
+chisq.test(xtabs(~ Survived + Age, data = ttnc))
 @
+
 \end{frame}
 
 
@@ -377,30 +372,27 @@ chisq.test(ttnc$Survived, ttnc$Age)
 \frametitle{Split variable selection}
 {\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Class
 
-\vspace{0.5cm}
-
-\begin{minipage}{0.5\linewidth}
-\vspace{-2.2cm}
-<<echo=TRUE, results=verbatim>>=
-table(ttnc$Survived, ttnc$Class)
-@
-\end{minipage}
-\begin{minipage}{0.45\linewidth}
-<<echo=TRUE, eval=FALSE>>=
-plot(Survived~Class, data = ttnc)
+\begin{minipage}[t]{0.43\linewidth}
+<<survival-class, echo=TRUE, eval=FALSE>>=
+plot(Survived ~ Class, data = ttnc)
 @
 \vspace{-0.7cm}
-%\setkeys{Gin}{width=0.5\linewidth}
-<<echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
-plot(Survived~Class, data = ttnc)
+<<survival-class-plot, echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
+<<survival-class>>
+@
+\end{minipage}
+\hfill
+\pause
+\begin{minipage}[t]{0.5\linewidth}
+<<echo=TRUE, results=verbatim>>=
+xtabs(~ Survived + Class, data = ttnc)
 @
 \end{minipage}
 
-\pause
-
 <<echo=TRUE, results=verbatim>>=
-chisq.test(ttnc$Survived, ttnc$Class)
+chisq.test(xtabs(~ Survived + Class, data = ttnc))
 @
+
 \end{frame}
 
 
@@ -411,13 +403,13 @@ chisq.test(ttnc$Survived, ttnc$Class)
 % Based on independence tests, e.g., $\chi^2$-test for categorical variables.
 % \vspace{0.4cm}
 % <<echo=TRUE, results=verbatim>>=
-% chisq_test(Survived~Gender, data = ttnc)
+% chisq_test(Survived ~ Gender, data = ttnc)
 % @
 % 
 % \vspace{0.2cm}
 % 
 % <<echo=TRUE, results=verbatim>>=
-% chisq_test(Survived~Age, data = ttnc)
+% chisq_test(Survived ~ Age, data = ttnc)
 % @
 % 
 % \vspace{0.7cm}
@@ -462,34 +454,29 @@ Evaluating associations on the unified $p$-value scale allows for an unbiased co
 \frametitle{Split variable selection}
 {\bf Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ education
 
-\vspace{-0.7cm}
-
-\begin{minipage}{0.4\linewidth}
-<<echo=TRUE, results=verbatim>>=
-cor(log(CPS1985$wage), 
-    CPS1985$education)
+\begin{minipage}[t]{0.39\linewidth}
+<<logwage-education, echo=TRUE, eval=FALSE>>=
+plot(log(wage) ~ education,
+  data = CPS1985)
 @
-<<echo=TRUE, eval=FALSE>>=
-plot(log(wage)~education, 
-     data = CPS1985)
+\vspace{-0.7cm}
+\setkeys{Gin}{width=\textwidth}
+<<logwage-education-plot, echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
+<<logwage-education>>
 @
 \end{minipage}
 \hfill
-\begin{minipage}{0.5\linewidth}
-%\vspace{-0.2cm}
-%\setkeys{Gin}{width=0.5\linewidth}
-<<echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
-plot(log(wage)~education, data = CPS1985)
-@
-\end{minipage}
-
 \pause
-
-\vspace{-0.7cm}
-
-<<echo=TRUE, results=verbatim>>=
-cor.test(log(CPS1985$wage), CPS1985$education)
+\begin{minipage}[t]{0.59\linewidth}
+<<echo=TRUE, eval=FALSE>>=
+cor.test(~ log(wage) + education, data = CPS1985)
 @
+<<echo=FALSE, results=verbatim>>=
+out <- capture.output(cor.test(~ log(wage) + education, data = CPS1985))
+out <- gsub("alternative hypothesis: ", "alternative hypothesis:\n", out, fixed = TRUE)
+writeLines(out)
+@
+\end{minipage}
 
 \end{frame}
 
@@ -498,38 +485,30 @@ cor.test(log(CPS1985$wage), CPS1985$education)
 \frametitle{Split variable selection}
 {\bf Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ gender
 
-\vspace{0.2cm}
-
-<<echo=TRUE, results=verbatim>>=
-tapply(log(CPS1985$wage), CPS1985$gender, summary)
+\begin{minipage}[t]{0.39\linewidth}
+<<logwage-gender, echo=TRUE, eval=FALSE>>=
+plot(log(wage) ~ gender,
+  data = CPS1985)
 @
-\begin{minipage}{0.37\linewidth}
-\vspace{-2cm}
-<<echo=TRUE, eval=FALSE>>=
-boxplot(log(wage)~gender, 
-        data = CPS1985)
+\vspace{-0.7cm}
+\setkeys{Gin}{width=\textwidth}
+<<logwage-gender-plot, echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
+<<logwage-gender>>
 @
 \end{minipage}
 \hfill
-\begin{minipage}{0.55\linewidth}
-\vspace{-0.7cm}
-%\setkeys{Gin}{width=0.4\linewidth}
-<<echo=FALSE, fig=TRUE, width=4.5, height=3.4>>=
-boxplot(log(wage)~gender, data = CPS1985)
+\pause
+\begin{minipage}[t]{0.59\linewidth}
+<<echo=TRUE, eval=FALSE>>=
+t.test(log(wage) ~ gender, data = CPS1985)
+@
+<<echo=FALSE, results=verbatim>>=
+out <- capture.output(t.test(log(wage) ~ gender, data = CPS1985))
+out <- gsub("alternative hypothesis: ", "alternative hypothesis:\n", out, fixed = TRUE)
+writeLines(out)
 @
 \end{minipage}
-\end{frame}
 
-
-\begin{frame}[fragile]
-\frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ gender
-
-\vspace{0.2cm}
-
-<<echo=TRUE, results=verbatim>>=
-oneway.test(log(wage)~gender, data = CPS1985, var.equal = TRUE)
-@
 \end{frame}
 
 
@@ -578,72 +557,64 @@ pruning}
 
 
 <<split_point_search>>=
-
-evalsplit <- function(sp, type = c("rmse","teststatistic")){
-  
-  if(type == "rmse"){
-    d1 <- CPS1985[CPS1985$education <= sp,]
-    d2 <- CPS1985[CPS1985$education > sp,]
-  
-    y1 <- mean(log(d1$wage))
-    y2 <- mean(log(d2$wage))
-    
-    rmse1 <- sum(sqrt((log(d1$wage) - y1)^2))
-    rmse2 <- sum(sqrt((log(d2$wage) - y2)^2))
-    
-    rmse <- rmse1 + rmse2
-    
-    return(rmse)
-  }
-  
-  if(type == "teststatistic"){
-    
-    itest <- independence_test(log(wage) ~ factor(education <= sp), data = CPS1985) 
-    pval <- as.numeric(pvalue(itest))
-    teststatistic <- statistic(itest)
-    return(list(pval = pval,
-                teststatistic = teststatistic))
-  }
+evalsplit <- function(sp) {
+  m <- lm(log(wage) ~ factor(education <= sp), data = CPS1985)
+  s <- independence_test(log(wage) ~ factor(education <= sp), data = CPS1985, teststat = "quadratic") 
+  c(
+    rss = deviance(m),
+    loglik = logLik(m),
+    logpval = pchisq(statistic(s), df = 1, log = TRUE, lower.tail = FALSE),
+    teststatistic = statistic(s)
+  )
 }  
-
-evalpoints <- sort(unique(CPS1985$education))
-evalpoints <- evalpoints[-length(evalpoints)]
-plotpoints_rmse <- numeric(length = length(evalpoints))
-for(j in 1: length(plotpoints_rmse))
-  plotpoints_rmse[j] <- evalsplit(evalpoints[j], type = "rmse")
-
-plotpoints_statistic <- plotpoints_pval <- numeric(length = length(evalpoints))
-for(k in 1: length(plotpoints_statistic)){
-  test <- evalsplit(evalpoints[k], type = "teststatistic")
-  plotpoints_statistic[k] <- test$teststatistic
-  plotpoints_pval[k] <- test$pval
-}
-
+sp <- head(sort(unique(CPS1985$education)), -1)
+eval <- sapply(sp, evalsplit)
 @
 
 
 \begin{frame}[fragile]
 \frametitle{Split point selection}
 
-%\setkeys{Gin}{width=0.8\textwidth}
-\begin{minipage}{0.49\linewidth}
-<<plot_split_point_search_rmse, fig=TRUE, width = 4.5, height = 4>>=
-plot(x = evalpoints, y = plotpoints_rmse, type = 'o',
-     xlab = "education", ylab = "RMSE")
+<<plot_split_point_search1, fig=TRUE, width = 7.5, height = 5>>=
+par(mar = c(5, 3, 1, 3))
+plot(sp, eval["loglik",], type = "n", xlab = "education", ylab = "", axes = FALSE)
+abline(v = 13, lty = 2, lwd = 1.5)
+lines(sp, eval["loglik", ], type = "o", col = 2, lwd = 1.5)
+axis(2, col.ticks = 2, col.axis = 2)
+par(new = TRUE)
+plot(sp, eval["teststatistic",], type = "o",
+  col = 4, lwd = 1.5,
+  xlab = "", ylab = "", axes = FALSE)
+axis(4, col.ticks = 4, col.axis = 4)
+axis(1)
+axis(1, at = 13)
+box()
+legend("topleft", c("Log-likelihood", "Test statistic"), col = c(2, 4), lwd = 1.5, pch = 1, bty = "n")
 @
-\end{minipage}
-\hfill
-\begin{minipage}{0.49\linewidth}
-<<plot_split_point_search_statistic, fig=TRUE, width = 4.5, height = 4>>=
-plot(x = evalpoints, y = plotpoints_statistic, type = 'o',
-     xlab = "education", ylab = "Two-sample test statistic")
 
-# plot(x = evalpoints, y = plotpoints_pval, type = 'o',
-#      xlab = "education", ylab = "twosample-teststatistic",
-#      ylim = c(0,0.1))
+\end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{Split point selection}
+
+<<plot_split_point_search2, fig=TRUE, width = 7.5, height = 5>>=
+par(mar = c(5, 3, 1, 3))
+plot(sp, eval["rss",], type = "n", xlab = "education", ylab = "", axes = FALSE)
+abline(v = 13, lty = 2, lwd = 1.5)
+lines(sp, eval["rss", ], type = "o", col = 2, lwd = 1.5)
+axis(2, col.ticks = 2, col.axis = 2)
+par(new = TRUE)
+plot(sp, eval["logpval",], type = "o",
+  col = 4, lwd = 1.5,
+  xlab = "", ylab = "", axes = FALSE)
+axis(4, col.ticks = 4, col.axis = 4)
+axis(1)
+axis(1, at = 13)
+box()
+legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4), lwd = 1.5, pch = 1, bty = "n")
 @
-\end{minipage}
+
 \end{frame}
 
 \begin{frame}[fragile]
