@@ -707,7 +707,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     model is obtained by maximum likelihood estimation as described in
     Section~\ref{sec:prob_circ}. This approach follows \citet{Vogel+Knippertz+Fink:2018}
     and is discussed in a comprehensive summary on different time-adaptive training schemes in
-    \citet{Lang+Lerch+Mayr:2019}.
+    \citet{Lang+Lerch+Mayr:2020}.
     %%
   \item \emph{Persistency model:}
     The persistence describes the previous value of a single weather quantity
@@ -763,7 +763,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     training approach as for the climatological model; hence, separate models are
     estimated over all observation dates, using the same time of $31$~days
     centered around the day of interest over all available years in the training
-    data \citep{Lang+Lerch+Mayr:2019}.
+    data \citep{Lang+Lerch+Mayr:2020}.
     %%
   \item \emph{Circular regression tree:}
     For the circular regression tree introduced in Section~\ref{sec:circtree},
