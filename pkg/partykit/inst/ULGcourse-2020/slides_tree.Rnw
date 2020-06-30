@@ -68,30 +68,31 @@ names(ttnc)[2] <- "Gender"
 
 \smallskip
 
-{\bf Idea:} \\
-\smallskip
-\quad Separate data into smaller and more homogeneous subgroups \\
-\quad based on information provided by covariates.
-%in order to obtain better fitting \\
-%\quad models in the resulting subsets.
-
-\bigskip
-
-\bigskip
-
-{\bf Formally:} \\
-\smallskip
-\quad Modeling of a dependent variable $Y$ by ``learning'' a recursive partition \\
-\quad w.r.t explanatory variables $X_1$, \dots, $X_m$.
-
-\bigskip
-
-\bigskip
-
-{\bf Key features:} \\
+\textbf{Idea:} ``Divide and conquer.''
 \begin{itemize}
-\item Predictive power in nonlinear regression relationships.
-\item Interpretability (enhanced by visualization), i.e., no ``black box'' methods.
+  \item \emph{Goal:} Split the data into small(er) and (rather) homogenous subgroups.
+  \item \emph{Inputs:} Explanatory variables (or covariates/regressors) used for splitting.
+  \item \emph{Output:} Prediction for dependent (or target) variable(s).
+\end{itemize}
+
+\bigskip
+\pause
+
+\textbf{Formally:}
+\begin{itemize}
+  \item Dependent variable $Y$ (possibly multivariate).
+  \item Based on explanatory variables $X_1, \dots, X_m$.
+  \item ``Learn'' subgroups of data by combining splits in $X_1, \dots, X_m$.
+  \item Predict $Y$ with (simple) model in the subgroups, often simply the mean.
+\end{itemize}
+  
+\bigskip
+\pause
+
+\textbf{Key features:}
+\begin{itemize}
+  \item Predictive power in nonlinear regression relationships.
+  \item Interpretability (enhanced by tree visualization), i.e., no ``black box''.
 \end{itemize}
 
 \end{frame}
@@ -99,7 +100,9 @@ names(ttnc)[2] <- "Gender"
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-{\small Titanic:  \quad $Survived \; \sim  \; Gender + Age + Class$}
+
+\textbf{Example:} Survival (yes/no) on the Titanic. Women and children first?
+
 \begin{center}
 \setkeys{Gin}{width=0.9\textwidth}
 <<ctree_Titanic, echo=FALSE, fig=TRUE, width=11>>=
@@ -107,35 +110,42 @@ ct_ttnc <- ctree(Survived ~ Gender + Age + Class, data = ttnc, alpha = 0.01)
 plot(ct_ttnc)
 @
 \end{center}
+
 \end{frame}
 
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-{\bf Data:}
-The Titanic data set provides information on the survival of 2201~passengers on the Titanic with the additional variables Class, Sex and Age.
+
+\textbf{Model formula:} \code{Survived ~ Gender + Age + Class}.
 
 \bigskip
 
-The variables and their levels are as follows:
+\textbf{Data:} Information on the survival of 2201~passengers on board the
+ill-fated maiden voyage of the RMS~Titanic in 1912. A data frame containing
+\Sexpr{nrow(ttnc)} observations on \Sexpr{ncol(ttnc)} variables.
 
 \bigskip
 
-\begin{tabular}{l l l}
+\begin{tabular}{ll}
 \hline 
-No & Name &	Levels\\
+Variable        & Description\\
 \hline 
-1 &	Class &	1st, 2nd, 3rd, Crew\\
-2 &	Sex &	Male, Female\\
-3 &	Age &	Child, Adult\\
-4 &	Survived &	No, Yes \\
+\code{Class}    & Factor: 1st, 2nd, 3rd, or Crew.\\
+\code{Gender}   & Factor: Male, Female.\\
+\code{Age}      & Factor: Child, Adult.\\
+\code{Survived} & Factor: No, Yes.\\
 \hline 
 \end{tabular}
 
 \end{frame}
+
+
 \begin{frame}[fragile]
 \frametitle{Motivation}
-{\small Wages:  \quad $log(wage) \; \sim  \; education + experience + age + ethnicity + gender + union$}
+
+\textbf{Example:} Determinants of wages and returns to education.
+
 \begin{center}
 \setkeys{Gin}{width=0.99\textwidth}
 <<ctree_Wages1985, echo=FALSE, fig=TRUE, width=13>>=
@@ -143,13 +153,44 @@ ct_cps <- ctree(log(wage) ~ education + experience + age + ethnicity + gender + 
 plot(ct_cps)
 @
 \end{center}
-\end{frame}
 
+\end{frame}
 
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
-{\small Wages:  \quad $log(wage) \; \sim  \; education \ | \ experience + age + ethnicity + gender + union$}
+
+\textbf{Model formula:} \code{log(wage) ~ education + experience + age + ethnicity + gender + union}.
+
+\bigskip
+
+\textbf{Data:} Random sample from the May 1985 US Current Population Survey.
+A data frame containing \Sexpr{nrow(CPS1985)} observations on \Sexpr{ncol(CPS1985)} variables.
+
+\bigskip
+
+\begin{tabular}{ll}
+\hline 
+Variable & Description\\
+\hline 
+\code{wage}       & Wage (in US dollars per hour). \\
+\code{education}  & Education (in years).  \\
+\code{experience} & Potential work experience (in years, \code{age - education - 6}). \\
+\code{age}        & Age (in years). \\
+\code{ethnicity}  & Factor: Caucasian, Hispanic, Other. \\
+\code{gender}     & Factor: Male, Female. \\
+\code{union}      & Factor. Does the individual work on a union job? \\
+\hline 
+\end{tabular}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Motivation}
+
+\textbf{Alternatively:} Linear regression tree.
+
 \begin{center}
 \setkeys{Gin}{width=0.9\textwidth}
 <<lmtree_Wages1985, echo=FALSE, fig=TRUE, width=11>>=
@@ -157,24 +198,53 @@ mob_cps <- lmtree(log(wage) ~ education | experience + age + ethnicity + gender 
 plot(mob_cps)
 @
 \end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Motivation}
+
+\textbf{Model formula:} \code{log(wage) ~ education | experience + age + ethnicity + gender + union}.
+
+\bigskip
+
+\textbf{Model fit:}
+\begin{itemize}
+  \item Not just a group-specific mean.
+  \item But group-specific intercept and slope (i.e., returns to education).
+\end{itemize}
+
 \end{frame}
 
 
 \begin{frame}[fragile]
 \frametitle{Motivation}
 
-Wind direction forecasting\\
-at Innsbruck airport
+\textbf{Example:} Nowcasting (1--3 hours ahead) of wind direction at Innsbruck Airport.
 
-\vspace{-1.4cm}
-
-\setkeys{Gin}{width=0.95\linewidth}
+\setkeys{Gin}{width=0.87\linewidth}
 \begin{center}
 \includegraphics{circtree_ibk.pdf}
 \end{center}
 
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{Motivation}
+
+\textbf{Data:} 41,979 data points for various weather observations.
+\begin{itemize}
+  \item Dependent variable: Wind direction 1--3 hours ahead.
+  \item Explanatory variables: Current weather observations including
+    wind direction, wind speed, temperature, (reduced) air pressure, relative humidity.
+  \item Circular response in $[0^{\circ}, 360^{\circ})$ with $0^{\circ} = 360^{\circ}$.
+\end{itemize}
+
+\bigskip
+
+\textbf{Model fit:} Circular distribution (von Mises), fitted by maximum likelihood.
+
+\end{frame}
 
 
 % \begin{frame}[fragile]
@@ -209,15 +279,15 @@ at Innsbruck airport
 \begin{frame}[fragile]
 \frametitle{Motivation}
 
-{\bf Homogeneity:} Partitioning the data into subgroups aims at allowing for a better model fit in each resulting subset.
+\textbf{Homogeneity:} Partitioning the data into subgroups aims at allowing for a better model fit in each resulting subset.
 
 \bigskip
 
-{\bf Model:} The model fitted to a response $Y$ in each subgroup optimizes an objective function, i.e., it can be a simple constant fit (e.g. average value or proportion, minimizing deviations) but also a more complex model (possibly including additional regressors, and, e.g., minimizing the residual sum of squares or the negative log-likelihood).
+\textbf{Model:} The model fitted to a response $Y$ in each subgroup optimizes an objective function, i.e., it can be a simple constant fit (e.g. average value or proportion, minimizing deviations) but also a more complex model (possibly including additional regressors, and, e.g., minimizing the residual sum of squares or the negative log-likelihood).
 
 \bigskip
 
-{\bf Trade-off:} Complexity in the tree structure vs.\ complexity in the fitted models.\\
+\textbf{Trade-off:} Complexity in the tree structure vs.\ complexity in the fitted models.\\
 Simple models in the nodes (such as constant fits) often lead to large trees while more complex models can compensate a higher variation within the nodes allowing for less complex trees.
 
 % \begin{itemize}
@@ -230,7 +300,7 @@ Simple models in the nodes (such as constant fits) often lead to large trees whi
 % 
 % \bigskip
 % 
-% {\bf Examples of discrepancy measures:} 
+% \textbf{Examples of discrepancy measures:} 
 % \begin{itemize}
 % \item For regression tree (numeric response): Deviations from an average value, residual sum of squares.
 % \item For classification tree (categorical response): Number of misclassifications.
@@ -243,7 +313,7 @@ Simple models in the nodes (such as constant fits) often lead to large trees whi
 \begin{frame}[fragile]
 \frametitle{Tree algorithm}
 
-{\bf Base algorithm:}
+\textbf{Base algorithm:}
 \begin{enumerate}
 \item Fit a model to the response $Y$.
 \item Assess association of $Y$ (or a corresponding transformation / goodness-of-fit measure) and each possible split variable $X_j$.
@@ -258,7 +328,7 @@ Simple models in the nodes (such as constant fits) often lead to large trees whi
 \begin{frame}[fragile]
 \frametitle{Tree algorithm: Building blocks}
 
-{\bf Examples of possible transformations of the response $Y$:} 
+\textbf{Examples of possible transformations of the response $Y$:} 
 \begin{itemize}
 \item Numeric response: 
 \begin{itemize}
@@ -274,17 +344,17 @@ Simple models in the nodes (such as constant fits) often lead to large trees whi
 
 \medskip 
 
-{\bf Possible association tests:} 
+\textbf{Possible association tests:} 
 $\chi^2$-test, Pearson correlation test, two-sample t-test, ANOVA, signed-rank tests, rank-sum tests, \ldots (depending on the scale and type of variables)
 
 \medskip
 
-{\bf Split point selection:}
+\textbf{Split point selection:}
 Exhaustive search over all possible split points or two-sample test statistics.
 
 \medskip
 
-{\bf Stopping criteria:}
+\textbf{Stopping criteria:}
 Minimal number of observations per node, tree depth, minimal $p$-value, \ldots 
 
 \end{frame}
@@ -295,7 +365,7 @@ Minimal number of observations per node, tree depth, minimal $p$-value, \ldots
 \frametitle{Tree algorithm}
 \vspace{0.2cm}
 
-{\bf How and where to split?}
+\textbf{How and where to split?}
 
 \vspace{0.4cm}
 
@@ -311,7 +381,7 @@ Minimal number of observations per node, tree depth, minimal $p$-value, \ldots
 \subsection{Split variable selection}
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Gender
+\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Gender
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-gender, echo=TRUE, eval=FALSE>>=
@@ -342,7 +412,7 @@ chisq.test(xtabs(~ Survived + Gender, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Age
+\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Age
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-age, echo=TRUE, eval=FALSE>>=
@@ -370,7 +440,7 @@ chisq.test(xtabs(~ Survived + Age, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Titanic): \ Survived $\sim$ Class
+\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Class
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-class, echo=TRUE, eval=FALSE>>=
@@ -399,7 +469,7 @@ chisq.test(xtabs(~ Survived + Class, data = ttnc))
 % 
 % \begin{frame}[fragile]
 % \frametitle{Split variable selection} 
-% {\bf Compare pairwise associations} (Titanic): 
+% \textbf{Compare pairwise associations} (Titanic): 
 % Based on independence tests, e.g., $\chi^2$-test for categorical variables.
 % \vspace{0.4cm}
 % <<echo=TRUE, results=verbatim>>=
@@ -436,23 +506,23 @@ chisq.test(xtabs(~ Survived + Class, data = ttnc))
 
 %\vspace{0.2cm}
 
-{\bf Idea:}
+\textbf{Idea:}
 Employ statistical tests for the split variable selection.\\
 Evaluating associations on the unified $p$-value scale allows for an unbiased comparison of possible split variables on different scales and of different types.
 
 \bigskip
 
-{\bf Unbiased recursive partitioning:} Separation of split variable selection (based on $p$-values) and split point selection (only within the already chosen split variable).
+\textbf{Unbiased recursive partitioning:} Separation of split variable selection (based on $p$-values) and split point selection (only within the already chosen split variable).
 
 \bigskip
 
-{\bf Alternative:} Directly compare all available split points in all possible split variables. In order to allow for an unbiased selection within this strategy, it has to be accounted for differences such as a varying number of available split points, different scales or variable types by correcting the measurement considered for comparison accordingly. However, this has often not been included in classic tree algorithms.
+\textbf{Alternative:} Directly compare all available split points in all possible split variables. In order to allow for an unbiased selection within this strategy, it has to be accounted for differences such as a varying number of available split points, different scales or variable types by correcting the measurement considered for comparison accordingly. However, this has often not been included in classic tree algorithms.
 \end{frame}
 
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ education
+\textbf{Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ education
 
 \begin{minipage}[t]{0.39\linewidth}
 <<logwage-education, echo=TRUE, eval=FALSE>>=
@@ -483,7 +553,7 @@ writeLines(out)
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\bf Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ gender
+\textbf{Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ gender
 
 \begin{minipage}[t]{0.39\linewidth}
 <<logwage-gender, echo=TRUE, eval=FALSE>>=
@@ -529,7 +599,7 @@ writeLines(out)
 % \frametitle{Tree algorithm}
 % \vspace{0.2cm}
 % 
-% {\bf How and where to split?}
+% \textbf{How and where to split?}
 % 
 % \vspace{0.4cm}
 % 
@@ -548,11 +618,11 @@ pruning}
 
 \begin{frame}[fragile]
 \frametitle{Split point selection}
-{\bf Exhaustive search:} For each possible split point evaluate a defined objective function in the resulting subgroups and select the split point that minimizes the objective function, i.e., leads to the highest improvement of the model fit.
+\textbf{Exhaustive search:} For each possible split point evaluate a defined objective function in the resulting subgroups and select the split point that minimizes the objective function, i.e., leads to the highest improvement of the model fit.
 
 \vspace{0.4cm}
 
-{\bf Alternative:} Two-sample test statistics evaluating the discrepancy between resulting subgroups. 
+\textbf{Alternative:} Two-sample test statistics evaluating the discrepancy between resulting subgroups. 
 \end{frame}
 
 
@@ -632,15 +702,15 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 \begin{frame}[fragile]
 \frametitle{Pruning}
 
-{\bf Goal:} Avoid overfitting.
+\textbf{Goal:} Avoid overfitting.
 
 \medskip
 
-{\bf Pre-pruning:} Internal stopping criterium. Stop splitting when there is no significant association to any of the possible split variable.
+\textbf{Pre-pruning:} Internal stopping criterium. Stop splitting when there is no significant association to any of the possible split variable.
 
 \medskip
 
-{\bf Post-pruning:} Grow large tree and prune splits that do not improve the model fit (e.g., via cross-validation or information criteria).
+\textbf{Post-pruning:} Grow large tree and prune splits that do not improve the model fit (e.g., via cross-validation or information criteria).
 
 \end{frame}
 
@@ -648,7 +718,7 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 \begin{frame}[fragile]
 \frametitle{Pruning}
 
-{\bf Pre-pruning:}
+\textbf{Pre-pruning:}
 \begin{itemize}
 \item[+] Does not require additional calculations as only already provided information from statistical test is used.
 \item[+] Computationally less expensive as trees are prevented from getting too large.
@@ -657,7 +727,7 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 
 \vspace{0.4cm}
 
-{\bf Post-pruning:}
+\textbf{Post-pruning:}
 \begin{itemize}
 \item[+] Stable method to avoid overfitting, regardless of the power of the employed statistical test.
 \item[+] Can employ information criteria such as AIC or BIC for model-based partitioning. 
@@ -686,7 +756,7 @@ originally proposed for nonparametric modeling but also allowing for a model bas
 
 \bigskip
 
-{\bf Note:} The CTree algorithm has been employed for all previous tree illustrations.
+\textbf{Note:} The CTree algorithm has been employed for all previous tree illustrations.
 
 \end{frame}
 
@@ -738,7 +808,7 @@ plot(ct)
 \begin{frame}[fragile]
 \frametitle{CTree}
 
-{\bf Predictions:} For a (possibly new) set of observations the method \fct{predict} can be employed to obtain the corresponding predicted values of the response variable. 
+\textbf{Predictions:} For a (possibly new) set of observations the method \fct{predict} can be employed to obtain the corresponding predicted values of the response variable. 
 
 <<ctree_predict, echo=TRUE, eval=TRUE, results=verbatim>>=
 nd <- data.frame(Class = "2nd", Gender = c("Female", "Male"), Age = "Child")
@@ -852,7 +922,7 @@ as.party(rp)
 \begin{frame}[fragile]
 \frametitle{rpart}
 
-{\bf Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
+\textbf{Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
 
 %\medskip
 
@@ -872,7 +942,7 @@ plot(as.party(rp_pruned))
 \begin{frame}[fragile]
 \frametitle{rpart}
 
-{\bf Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
+\textbf{Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
 
 %\medskip
 
@@ -892,7 +962,7 @@ plot(as.party(rp_pruned))
 \begin{frame}[fragile]
 \frametitle{rpart}
 
-{\bf Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
+\textbf{Post-pruning:} Cost-complexity pruning of an rpart-object with complexity parameter \texttt{cp}.
 
 %\medskip
 
@@ -929,7 +999,7 @@ plot(as.party(rp_pruned))
 % \begin{frame}
 % \frametitle{R software for tree models}
 % 
-% {\bf rpart:} 
+% \textbf{rpart:} 
 % \begin{itemize}
 % \item R package for Recursive PARTitioning.
 % \item Implementation based on ideas of CART (Classification And Regression Trees).
@@ -939,7 +1009,7 @@ plot(as.party(rp_pruned))
 % 
 % \vspace{0.4cm}
 % 
-% {\bf partykit:} 
+% \textbf{partykit:} 
 % \begin{itemize} 
 % \item R package offering a toolkit for unbiased recursive partitioning. 
 % \item Implementations of the tree algorithms CTree (Conditional Inference Trees) and MOB (Model-based Recursive Partitioning).
@@ -1009,7 +1079,7 @@ plot(glmt)
 \begin{frame}
 \frametitle{R software for tree models}
 
-{\bf Further R packages based on partykit:}
+\textbf{Further R packages based on partykit:}
 \begin{itemize}
   \item evtree (evolutionary trees),
   \item model4you (personalised trees),
@@ -1023,7 +1093,7 @@ plot(glmt)
 \begin{frame}
 \frametitle{R software for tree models}
 
-{\bf Further R packages:}
+\textbf{Further R packages:}
 \begin{itemize}
   \item mvpart (multivariate CART),
   \item RWeka (J4.8, M5', LMT),
