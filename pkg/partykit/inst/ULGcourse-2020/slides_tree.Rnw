@@ -1,11 +1,11 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
-\usetheme[nototalframenumber,url,license]{uibk}
+\usetheme[nototalframenumber,license]{uibk}
 
-\title{Tree models}
+\title{Classification and Regression Trees and Beyond}
 \subtitle{Supervised Learning: Algorithmic Modeling}
-\author{Achim Zeileis, Lisa Schlosser}
-\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
-%\URL{http://www.partykit.org/partykit/}
+\author{Lisa Schlosser, Achim Zeileis}
+
+%% forest header image
 \renewcommand{\headerimage}[1]{%
    \IfStrEqCase{#1}{%
       {1}{%
@@ -20,110 +20,44 @@
 }
 \headerimage{1}
 
+%% custom subsection slides
+\setbeamercolor*{subsectionfade}{use={normal text},parent={normal text},fg=structure.fg!30!normal text.bg}
+\AtBeginSubsection[]{%
+  \begin{frame}[c]
+    \begin{center}
+      \usebeamercolor[fg]{subsectionfade}
+      \Large \insertsection \\[2ex]
+      \usebeamercolor[fg]{structure}
+      \huge\bfseries\insertsubsection
+    \end{center}
+  \end{frame}
+}
 
-%\graphicspath{{Figures/}}
-\usepackage[utf8]{inputenc}
-
-\setbeamertemplate{caption}{\insertcaption} 
-%% includes a replacement for \usepackage{Sweave}
-% \usepackage{Sweave}
-\usepackage{changepage}
-\usepackage{amsmath,tikz}
-\usepackage{calc}
-\usepackage{graphicx}
-\usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
-\usepackage{color}
-\usepackage{xcolor}
-\usepackage{fancyvrb}
-%\usepackage[cal=boondoxo]{mathalfa}
-%\graphicspath{{plots/}}
-\newcommand{\argmax}{\operatorname{argmax}\displaylimits}
-
-\setbeamertemplate{subsection page}
-{\begin{center}
-\vspace{2cm}
-% {\Large \insertsection\par}
-% \vspace{0.5cm}
-Section~\thesubsection\par
-\vspace{0.5cm}
-{\LARGE \insertsubsection\par}
-\end{center}}
-\AtBeginSubsection{\frame{\subsectionpage}}
-
-%% colors
-% \definecolor{HighlightOrange}{rgb}{0.9490196,0.5725490,0.0000000}
-% \definecolor{HighlightBlue}{rgb}{0.4784314,0.7490196,0.9803922}
-% \definecolor{forestred}{RGB}{206,73,81}
-% \definecolor{treegreen}{RGB}{0,143,0}
-% \definecolor{lightblue}{RGB}{34,151,230}
-% \definecolor{lightorange}{RGB}{255,165,0}
-
-%\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
+%% for \usepackage{Sweave}
 \SweaveOpts{engine=R, eps=FALSE, echo=FALSE, results=hide, keep.source=TRUE}
 
 <<preliminaries, echo=FALSE, results=hide>>=
 options(prompt = "R> ", continue = "+  ", useFancyQuotes = FALSE, width = 70)
 
-set.seed(7)
-
-invisible(.Call(grDevices:::C_palette, grDevices::hcl(
-  h = c(0,   5, 125, 245, 195, 315,  65,   0),
-  c = c(0, 100,  90,  85,  63, 105,  90,   0),
-  l = c(0,  55,  75,  60,  82,  48,  80,  65)
-)))
-
-# setwd("~/Documents/ULG/slides_tree/")
-library("disttree")
-library("Formula")
-library("latex2exp")
-library("AER")
-#library("gamlss")
-#library("lattice")
-#library("crch")
-#library("RainTyrol")
-#library("parallel")
 library("rpart")
-#library("gamlss.cens")
-#gen.cens(NO, type = "left")
-#library("ggplot2")
-#theme_set(theme_bw(base_size = 18))
-library("MASS")
-#library("Ecdat")
-#library("wooldridge")
 library("partykit")
-#library("RWeka")
-#library("evtree")
 library("coin")
 
-
-## HCL palette
-# pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
-# names(pal) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-# 
-# pallight <- hcl(c(10, 128, 260, 290, 70), 100, 50, alpha = 0.25)
-# names(pallight) <- c("forest", "tree", "gamlss", "gamboostLSS", "EMOS")
-# 
-# transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
+set.seed(7)
 @
 
-
-
-<<data>>=
+<<Titanic-data>>=
 data("Titanic", package = "datasets")
 ttnc <- as.data.frame(Titanic)
 ttnc <- ttnc[rep(1:nrow(ttnc), ttnc$Freq), 1:4]
 names(ttnc)[2] <- "Gender"
-# ttnc <- transform(ttnc, Treatment = factor(Gender == "Female" | Age == "Child", 
-#                                            levels = c(FALSE, TRUE),
-#                                            labels = c("Male&Adult", "Female|Child")))
-##   labels = c("Normal\n(Male&Adult)", "Preferential\n(Female|Child)")
 @
 
 
 
 \begin{document}
 
-\section{Tree models}
+\section{Classification and regression trees and beyond}
 
 \subsection{Motivation}
 %\subsectionpage
@@ -205,7 +139,7 @@ No & Name &	Levels\\
 \begin{center}
 \setkeys{Gin}{width=0.99\textwidth}
 <<ctree_Wages1985, echo=FALSE, fig=TRUE, width=13>>=
-data("CPS1985")
+data("CPS1985", package = "AER")
 plot(ctree(log(wage)~education+experience+age+ethnicity+gender+union,data=CPS1985,
            control = ctree_control(alpha = 0.01)))
 @
@@ -220,8 +154,8 @@ plot(ctree(log(wage)~education+experience+age+ethnicity+gender+union,data=CPS198
 \begin{center}
 \setkeys{Gin}{width=0.9\textwidth}
 <<lmtree_Wages1985, echo=FALSE, fig=TRUE, width=11>>=
-data("CPS1985")
-plot(lmtree(log(wage)~education|experience+age+ethnicity+gender+union,data=CPS1985))
+data("CPS1985", package = "AER")
+plot(lmtree(log(wage) ~ education | experience + age + ethnicity + gender + union, data = CPS1985))
 @
 \end{center}
 \end{frame}
@@ -250,7 +184,7 @@ at Innsbruck airport
 % \begin{center}
 % \setkeys{Gin}{width=0.99\textwidth}
 % <<ctree_Wages1988, echo=FALSE, fig=TRUE, width=13>>=
-% data("CPS1988")
+% data("CPS1988", package = "AER")
 % ## ctree
 % plot(ctree(log(wage)~education+experience+ethnicity+region+parttime,data=CPS1988,
 %            control = ctree_control(alpha = 0.01, minsplit = 7000)))
