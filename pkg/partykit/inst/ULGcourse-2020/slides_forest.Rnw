@@ -67,12 +67,14 @@ invisible(.Call(grDevices:::C_palette, grDevices::hcl(
   l = c(0,  55,  75,  60,  82,  48,  80,  65)
 )))
 
-library("disttree")
+library("partykit")
 library("Formula")
 library("latex2exp")
 library("lattice")
 library("MASS")
-library(colorspace)
+library("colorspace")
+
+
 
 ## HCL palette
 pal <- hcl(c(10, 128, 260, 290, 50), 100, 50)
@@ -86,6 +88,8 @@ transpgray <- rgb(0.190,0.190,0.190, alpha = 0.2)
 lightblue <- "#2297E6"
 lightorange <- "#FFA500"
 @
+
+
 
 
 
@@ -120,7 +124,7 @@ for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.
 
 {\bf Idea:} \\
 \begin{itemize}
-\item Combination of an ensemble of trees. 
+\item Combine an ensemble of trees. 
 \item Each tree can capture non-linear and non-additive effects and select covariates and possible interactions automatically.
 \item Combining trees to a forest model allows for an approximation of smooth effects.
 \item A forest can regularize and stabilize the model.
@@ -369,21 +373,43 @@ $\ =\ \sum_{i=1}^n w_i(x) \cdot y_i$
 
 \subsection{Aggregation of trees\\
 \&\\
-supsampling}
+random sampling}
+
+\begin{frame}
+\frametitle{Aggregation of trees}
+{\bf Simple tree model:} Obtain predictions for the response $y$ by averaging over observations in the same terminal node $\mathcal{B}_x$: 
+$$
+\hat{y}= \frac{1}{|\mathcal{B}_x|} \sum_{i: y_i \in \mathcal{B}_x} y_i
+\visible<2->{
+\ =\ \sum_{i=1}^n w_i(x) \cdot y_i$$
+}
+
+{\bf Model-based tree:} Obtain predictions for model parameter(s) $\theta$ by optimizing an objective function $f$ for all observations in the same terminal node $\mathcal{B}_x$:
+$$
+\hat{\theta}= \argmin_{\theta} \sum_{i: y_i \in \mathcal{B}_x} f(\theta; y_i)
+\visible<2->{
+\ =\ \argmin_{\theta} \sum_{i=1}^n w_i(x) \cdot f(\theta; y_i)$$
+}
+
+{\bf Note:} The model-based approach allows for fitting complex models but also includes the specific case of averaging over all observations which corresponds to minimizing the residual sum of squares $\sum (Y - \hat{Y})^2$.
+
+
+\end{frame}
+
+
 
 \begin{frame}
 \frametitle{Aggregation of trees}
 {\bf Strategy:} Combine trees to a forest model by employing tree-based weights.
 
-The predicted response $\hat{y}$ 
-%or, more generally, the predicted model parameter (vector) $\hat{\theta}$ 
-is the argument %of the parameter space $\Theta$ 
+The predicted model parameter (vector) $\hat{\theta}$ 
+is the argument of the parameter space $\Theta$ 
 that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{y_i\}_{i=1,\ldots,n}$:
 
 \vspace{-0.2cm}
 
 \[
-\hat{y}(x) =  \argmin_{y} \sum_{i=1}^n w_i(x) \cdot f(y; y_i)
+\hat{\theta}(x) =  \argmin_{\theta} \sum_{i=1}^n w_i(x) \cdot f(\theta; y_i)
 \]
 
 \medskip
@@ -405,43 +431,230 @@ w^{\text{forest}}_i(x) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \frac{I((
 \end{eqnarray*}
 }}}
 
-\only<5->{
-%\vspace{-3cm}
-{\bf Note:} In model-based trees and forests a prediction is made not only for the response but for a model parameter (vector) $\theta$. 
-This more general approach holds for classic random forests averaging over mean values of tree nodes by setting $f(\theta, y_i) = (\theta - y_i)^2$\\
-but also allows for combining quantiles (quantile regression forests) or full distributions as in distributional forests with
-$f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
-}
 
 \end{frame}
 
 
 
 \begin{frame}
-\frametitle{Subsampling}
+\frametitle{Random sampling}
 {\bf Idea:} Build each tree on a different subset of the full data set.
 
 \medskip
 
-{\bf Types of subsampling:}
+{\bf Sampling observations:}
 \begin{itemize}
-\item Subsets (recommended size: 63.2\% of the full data set)
-\item Bootstrapping (resampling with replacement)
+\item Bootstrapping: resampling with replacement, usually ``n out of n''.
+\item Subsampling: draw a subset without replacement (typically of the size of 63.2\% of the full data set, but can be a smaller fraction for large data sets).
 \end{itemize}
 
 \bigskip
 
-{\bf Random input variable sampling:} In order to reduce the correlation among trees only a subset of possible split variables is provided for each split (recommended size: $\sqrt{\text{\#Var}}$).
+{\bf Sampling covariates:}\\
+\smallskip
+In order to reduce the correlation among trees random input variable sampling is employed, i.e., for each split only a subset of covariates is selected randomly and provided as possible split variables (typical sampling size: $\sqrt{\text{\#Var}}$).
+\end{frame}
+
+\begin{frame}
+\frametitle{Hyperparameter selection}
+
+Apart from the size and type of sampling two further control parameters have to be set for a forest model: 
+\begin{itemize}
+\item {\bf Number of trees:} A high number of trees allows for a more stable model and for a better approximation of smooth effects, however, at the cost of higher computational effort.
+\item {\bf Size of the trees:} The size of each single tree can be controlled by setting stopping criteria such as a minimal number of observations in a node, maximum tree depth or a significance level if a statistical test is employed in the tree algorithm. However, in a forest model each tree is usually built as large as possible which can lead to overfitting for a single tree, but this is compensated by aggregating the trees to a forest model.
+\end{itemize}
+\end{frame}
+
+<<data_wages, eval=TRUE, echo=FALSE, results=hide>>=
+data("CPS1985", package = "AER")
+@
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+
+\textbf{Data:} Random sample from the May 1985 US Current Population Survey.
+A data frame containing \Sexpr{nrow(CPS1985)} observations on \Sexpr{ncol(CPS1985)} variables.
 
 \bigskip
 
-{\bf Note:} Each tree is built as large as possible which can lead to overfitting for the single tree. However, this is compensated by aggregating the trees to a forest model.
+\begin{tabular}{ll}
+\hline 
+Variable & Description\\
+\hline 
+\code{wage}       & Wage (in US dollars per hour). \\
+\code{education}  & Education (in years).  \\
+\code{experience} & Potential work experience (in years, \code{age - education - 6}). \\
+\code{age}        & Age (in years). \\
+\code{ethnicity}  & Factor: Caucasian, Hispanic, Other. \\
+\code{gender}     & Factor: Male, Female. \\
+\code{union}      & Factor. Does the individual work on a union job? \\
+\hline 
+\end{tabular}
+
+\bigskip
+
+\textbf{Model formula:} \code{log(wage) ~ education + experience + age + ethnicity + gender + union}.
 
 \end{frame}
 
 
 
-\subsection{Software}
+<<example_wages, eval=TRUE, echo=FALSE, results=hide>>=
+set.seed(4)
+f <- log(wage) ~ education + experience + age + ethnicity + gender + union
+ct_cps <- ctree(f, data = CPS1985, alpha = 0.01)
+cf <- cforest(f, data = CPS1985, ntree = 5) #, control =ctree_control(maxdepth = 5))
+vimp <- varimp(cf , risk = "loglik")
+@
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+Single tree model:
+\setkeys{Gin}{width=0.99\textwidth}
+<<example_wages_ctree, eval=TRUE, echo=FALSE, fig=TRUE, width=13>>=
+plot(ct_cps)
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+Forest model - tree I:
+\setkeys{Gin}{width=0.99\textwidth}
+<<example_wages_cforest1, eval=TRUE, echo=FALSE, fig=TRUE, width=13>>=
+#par(mfrow=c(2,2))
+plot(party(cf[[1]][[1]], data = CPS1985), drop_terminal = TRUE)
+@
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+Forest model - tree II:
+\setkeys{Gin}{width=0.99\textwidth}
+<<example_wages_cforest2, eval=TRUE, echo=FALSE, fig=TRUE, width=13>>=
+#par(mfrow=c(2,2))
+plot(party(cf[[1]][[2]], data = CPS1985), drop_terminal = TRUE)
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+Forest model - tree III:
+\setkeys{Gin}{width=0.99\textwidth}
+<<example_wages_cforest3, eval=TRUE, echo=FALSE, fig=TRUE, width=13>>=
+#par(mfrow=c(2,2))
+plot(party(cf[[1]][[3]], data = CPS1985), drop_terminal = TRUE)
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+Forest model - tree IV:
+\setkeys{Gin}{width=0.99\textwidth}
+<<example_wages_cforest4, eval=TRUE, echo=FALSE, fig=TRUE, width=13>>=
+#par(mfrow=c(2,2))
+plot(party(cf[[1]][[4]], data = CPS1985), drop_terminal = TRUE)
+@
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Example: wages}
+\vspace{-0.5cm}
+\setkeys{Gin}{width=0.94\textwidth}
+<<example_wages_forest_prediction, eval=TRUE, echo=FALSE, fig=TRUE, width = 10>>=
+nd <- data.frame(education = 13.02, #c(2:18),
+                 experience = 17.82,
+                 age = c((18:64)/1), #36.83,
+                 ethnicity = "cauc",
+                 region = "other",
+                 gender = "male",
+                 occupation = "worker",
+                 sector = "other",
+                 union = "no",
+                 married = "yes")
+
+{
+  par(mfrow = c(2,2))
+  set.seed(74)
+  cf <- cforest(f, data = CPS1985, ntree = 2)
+  predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
+  colnames(predwage) <- c("age", "predicted log(wage)")
+  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
+       ylab = "predicted log(wage)", xlab = "age", main = "2 trees")
+  
+  cf <- cforest(f, data = CPS1985, ntree = 4)
+  predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
+  colnames(predwage) <- c("age", "predicted log(wage)")
+  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
+       ylab = "predicted log(wage)", xlab = "age", main = "4 trees")
+  
+  cf <- cforest(f, data = CPS1985, ntree = 20)
+  predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
+  colnames(predwage) <- c("age", "predicted log(wage)")
+  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
+       ylab = "predicted log(wage)", xlab = "age", main = "20 trees")
+  
+  cf <- cforest(f, data = CPS1985, ntree = 200)
+  predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
+  colnames(predwage) <- c("age", "predicted log(wage)")
+  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
+       ylab = "predicted log(wage)", xlab = "age", main = "200 trees")
+}
+@
+\end{frame}
+
+
+\begin{frame}
+\frametitle{Variable importance}
+{\bf Idea:} Asses the influence of a covariate by evaluating the change in performance of the model (mean decrease in accuracy) after dropping or permutating the selected covariate. 
+
+\bigskip
+
+
+%\bigskip
+
+% {\bf Implementations:}
+% \begin{itemize}
+% \item \fct{importance} in the R package randomForest.
+% \item \fct{importance.ranger} in the R package ranger.
+% \item \fct{varimp} in the R package partykit.
+% \end{itemize}
+
+% \only<2->{
+% \setkeys{Gin}{width=0.5\textwidth}
+% <<example_wages_vimp, eval=TRUE, echo=FALSE, fig=TRUE, width=6, height=3>>=
+% par(mar = c(4,5.5,0,2))
+% barplot(sort(vimp, decreasing = FALSE),
+%         horiz = TRUE, las = 1, axes = FALSE,
+%         xlab = "Variable importance: mean decrease in log-likelihood")
+% axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
+% @
+
+Depending on the fitted model the corresponding objective function can be employed as \emph{risk function} to measure accuracy by calculating importance scores (e.g., log-likelihood, nr. of misclassifications, \ldots).
+%}
+\end{frame}
+
+
+
+\begin{frame}
+\frametitle{Example: wages}
+Evaluation of variable importance in the fitted forest model:
+
+\bigskip
+
+\setkeys{Gin}{width=0.57\textwidth}
+<<example_wages_vimp, eval=TRUE, echo=FALSE, fig=TRUE, width=6, height=3>>=
+par(mar = c(4,5.4,1,2))
+barplot(sort(vimp, decreasing = FALSE),
+        horiz = TRUE, las = 1, axes = FALSE,
+        xlab = "Variable importance: mean decrease in log-likelihood")
+axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
+@
+\end{frame}
+
+\subsection{Implementations}
 
 \begin{frame}[fragile]
 \frametitle{R software for forest models}
@@ -484,10 +697,11 @@ $f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
 \end{itemize}
 
 <<call_ranger, eval=FALSE, echo=TRUE>>=
-ranger(formula, data)
+rf <- ranger(log(wage) ~ education + experience + age + ethnicity + gender + union,
+             data = CPS1985)
 @
 
- Optional control arguments:
+Optional control arguments:
 \begin{itemize}
 \item \code{num.trees}: number of trees, 
 \item \code{mtry}: number of randomly sampled split variable candidates, 
@@ -512,7 +726,8 @@ ranger(formula, data)
 \medskip
 
 <<call_cforest, eval = FALSE>>=
-cforest(formula, data, subset, ...)
+cf <- cforest(log(wage) ~ education + experience + age + ethnicity + gender + union,
+              data = CPS1985)
 @
 
 \medskip
@@ -548,8 +763,16 @@ Optional tree-specific arguments handed over via \fct{ctree\_control}:
 
 \bigskip
 
-<<call_predict, eval=FALSE, echo=TRUE>>=
-predict(object, newdata, type = "response", ...)
+For a ranger object:
+<<call_predict_rf, eval=FALSE, echo=TRUE>>=
+predict(rf, data = testdata)
+@
+
+\bigskip
+
+For a cforest object:
+<<call_predict_cf, eval=FALSE, echo=TRUE>>=
+predict(cf, newdata = testdata)
 @
 
 \end{frame}
@@ -570,30 +793,7 @@ predict(object, newdata, type = "response", ...)
 
 
 
-\subsection{Variable importance}
-
-\begin{frame}
-\frametitle{Variable importance}
-{\bf Idea:} Asses the influence of a covariate by evaluating the change in performance of the model (mean decrease in accuracy) after dropping or permutating the selected covariate. 
-
-\bigskip
-
-Depending on the fitted model the corresponding objective function can be employed as \emph{risk function} to measure accuracy by calculating importance scores (e.g., log-likelihood, nr. of misclassifications, \ldots).
-
-\bigskip
-
-{\bf Implementations:}
-\begin{itemize}
-\item \fct{importance} in the R package randomForest.
-\item \fct{importance.ranger} in the R package ranger.
-\item \fct{varimp} in the R package partykit.
-\end{itemize}
-
-\end{frame}
-
-
-
-%\subsection{References}
+\subsection{References}
 
 \begin{frame}
 \frametitle{References}
