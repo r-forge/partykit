@@ -1364,6 +1364,13 @@ Breiman L, Friedman JH, Olshen RA, Stone CJ (1984).
 
 \medskip
 
+Therneau T, Atkinson B (1997). 
+  \dquote{An Introduction to Recursive Partitioning Using the {rpart} Routine.}
+  Technical Report~61, Section of Biostatistics, Mayo Clinic, Rochester.
+  \url{http://www.mayo.edu/hsr/techrpt/61.pdf}
+
+\medskip
+
 % Breiman L (2001).
 %   \dquote{Random {Forests}.}
 %   \emph{Machine Learning}, 
@@ -1394,12 +1401,6 @@ Hothorn T, Zeileis A (2015).
  \textbf{16}, 3905--3909.
  \url{http://www.jmlr.org/papers/v16/hothorn15a.html}
  
-\medskip
-
-Therneau T, Atkinson B (2019). 
-  \dquote{{rpart}: Recursive Partitioning and Regression Trees.}
-  \url{https://CRAN.R-project.org/package=rpart}
-
 % medskip
 %  
 % Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
