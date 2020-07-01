@@ -1,10 +1,11 @@
 \documentclass[11pt,t,usepdftitle=false,aspectratio=169]{beamer}
-\usetheme[nototalframenumber,url,license]{uibk}
+\usetheme[nototalframenumber,license]{uibk}
 
 \title{Random Forests}
-\author{Achim Zeileis, Lisa Schlosser}
-\setbeamerfont{url}{size*={11.5pt}{13pt},series=\mdseries}
-%\URL{http://www.partykit.org/partykit/}
+\subtitle{Supervised Learning: Algorithmic Modeling}
+\author{Lisa Schlosser, Achim Zeileis}
+
+%% forest header image
 \renewcommand{\headerimage}[1]{%
    \IfStrEqCase{#1}{%
       {1}{%
@@ -19,6 +20,19 @@
 }
 \headerimage{1}
 
+%% custom subsection slides
+\setbeamercolor*{subsectionfade}{use={normal text},parent={normal text},fg=structure.fg!30!normal text.bg}
+\AtBeginSubsection[]{%
+  \begin{frame}[c]
+    \begin{center}
+      \usebeamercolor[fg]{subsectionfade}
+      \Large \insertsection \\[2ex]
+      \usebeamercolor[fg]{structure}
+      \huge\bfseries\insertsubsection
+    \end{center}
+  \end{frame}
+}
+
 \usepackage[utf8]{inputenc}
 
 \setbeamertemplate{caption}{\insertcaption} 
@@ -30,8 +44,6 @@
 \usepackage{graphicx}
 \usetikzlibrary{positioning,shapes,arrows,decorations.pathreplacing,calc,automata,mindmap,trees,tikzmark,decorations.pathreplacing}
 \usepackage{xcolor}
-%\usepackage[cal=boondoxo]{mathalfa}
-%\graphicspath{{plots/}}
 \newcommand{\argmin}{\operatorname{argmin}\displaylimits}
 
 %% colors
@@ -41,6 +53,7 @@
 \definecolor{treegreen}{RGB}{0,143,0}
 \definecolor{lightblue}{RGB}{34,151,230}
 \definecolor{lightorange}{RGB}{255,165,0}
+
 
 \SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
 <<preliminaries, echo=FALSE, results=hide>>=
@@ -99,11 +112,11 @@ for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.
 
 \begin{document}
 
-\section{Forests models}
+\section{Random forests}
 
-\subsection{Motivation: Forest models}
+\subsection{Motivation}
 \begin{frame}[fragile]
-\frametitle{Motivation: Forest models}
+\frametitle{Motivation}
 
 {\bf Idea:} \\
 \begin{itemize}
@@ -119,7 +132,7 @@ for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.
 
 
 \begin{frame}
-\frametitle{Motivation: Forest models}
+\frametitle{Motivation}
 
 \vspace{0.2cm}
 
@@ -354,18 +367,23 @@ $\ =\ \sum_{i=1}^n w_i(x) \cdot y_i$
 \end{frame}
 
 
-\subsection{Aggregation of trees}
+\subsection{Aggregation of trees\\
+\&\\
+supsampling}
 
 \begin{frame}
 \frametitle{Aggregation of trees}
 {\bf Strategy:} Combine trees to a forest model by employing tree-based weights.
 
-The predicted response $\hat{y}$ or, more generally, the predicted model parameter (vector) $\hat{\theta}$ is the argument of the parameter space $\Theta$ that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{y_i\}_{i=1,\ldots,n}$:
+The predicted response $\hat{y}$ 
+%or, more generally, the predicted model parameter (vector) $\hat{\theta}$ 
+is the argument %of the parameter space $\Theta$ 
+that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{y_i\}_{i=1,\ldots,n}$:
 
 \vspace{-0.2cm}
 
 \[
-\hat{\theta}(x) =  \argmin_{\theta \in \Theta} \sum_{i=1}^n w_i(x) \cdot f(\theta; y_i)
+\hat{y}(x) =  \argmin_{y} \sum_{i=1}^n w_i(x) \cdot f(y; y_i)
 \]
 
 \medskip
@@ -389,7 +407,8 @@ w^{\text{forest}}_i(x) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \frac{I((
 
 \only<5->{
 %\vspace{-3cm}
-{\bf Note:} This general notation holds for classic random forests averaging over mean values of tree nodes by setting $f(\theta, y_i) = (\theta - y_i)^2$\\
+{\bf Note:} In model-based trees and forests a prediction is made not only for the response but for a model parameter (vector) $\theta$. 
+This more general approach holds for classic random forests averaging over mean values of tree nodes by setting $f(\theta, y_i) = (\theta - y_i)^2$\\
 but also allows for combining quantiles (quantile regression forests) or full distributions as in distributional forests with
 $f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
 }
@@ -397,7 +416,6 @@ $f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
 \end{frame}
 
 
-\subsection{Subsampling}
 
 \begin{frame}
 \frametitle{Subsampling}
@@ -434,28 +452,53 @@ $f(\theta, y_i) = log(likelihood(\theta, y_i))$.\\
   \item Based on implementations of CART.
 \end{itemize}
 
-\medskip
-
-<<call_randomForest, eval=FALSE, echo=TRUE>>=
-randomForest(formula, data=NULL, ..., subset, na.action=na.fail)
-randomForest(x, y=NULL,  ...)
-@
-
-\medskip
-
-Optional control arguments:
-\begin{itemize}
-\item \code{ntree}: nr. of trees, 
-\item \code{mtry}: nr. of randomly sampled split variable candidates, 
-\item \code{replace}: type of subsetting, 
-\item \code{sampsize}: size of drawn subsamples, 
-\item \code{nodesize}: minimum size of terminal nodes, 
-\item \code{maxnodes}: maximum number of terminal nodes, 
-\item \ldots 
-\end{itemize}
+% \medskip
+% 
+% <<call_randomForest, eval=FALSE, echo=TRUE>>=
+% randomForest(formula, data=NULL, ..., subset, na.action=na.fail)
+% randomForest(x, y=NULL,  ...)
+% @
+% 
+% \medskip
+% 
+% Optional control arguments:
+% \begin{itemize}
+% \item \code{ntree}: nr. of trees, 
+% \item \code{mtry}: nr. of randomly sampled split variable candidates, 
+% \item \code{replace}: type of subsetting, 
+% \item \code{sampsize}: size of drawn subsamples, 
+% \item \code{nodesize}: minimum size of terminal nodes, 
+% \item \code{maxnodes}: maximum number of terminal nodes, 
+% \item \ldots 
+% \end{itemize}
 
 \end{frame}
 
+\begin{frame}[fragile]
+\frametitle{R software for forest models}
+
+{\bf ranger}:
+\begin{itemize}
+\item RANdom  forest  GEneRator.
+\item R package providing a faster implementation of classic random forests.
+\end{itemize}
+
+<<call_ranger, eval=FALSE, echo=TRUE>>=
+ranger(formula, data)
+@
+
+ Optional control arguments:
+\begin{itemize}
+\item \code{num.trees}: number of trees, 
+\item \code{mtry}: number of randomly sampled split variable candidates, 
+\item \code{replace}: sample with replacement, 
+\item \code{sample.fraction}: fraction of observations to sample, 
+\item \code{min.node.size}: minimal size of terminal nodes, 
+\item \code{max.depth}: maximal tree depth, 
+\item \code{splitrule}: splitting rule, 
+\item \ldots 
+\end{itemize}
+\end{frame}
 
 \begin{frame}[fragile]
 \frametitle{R software for forest models}
@@ -518,7 +561,6 @@ predict(object, newdata, type = "response", ...)
 \textbf{Further R packages:}
 %
 \begin{itemize}
-  \item ranger (classic random forests),
   \item grf (generalized random forests),
   \item disttree (distributional forests, based on partykit),
   \item \ldots
@@ -551,7 +593,7 @@ Depending on the fitted model the corresponding objective function can be employ
 
 
 
-\subsection{References}
+%\subsection{References}
 
 \begin{frame}
 \frametitle{References}
