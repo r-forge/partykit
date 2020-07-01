@@ -279,33 +279,31 @@ plot(mob_cps)
 \begin{frame}[fragile]
 \frametitle{Motivation}
 
-\textbf{Homogeneity:} Partitioning the data into subgroups aims at allowing for a better model fit in each resulting subset.
+\textbf{Original idea:} Trees are purely algorithmic models without assumptions.
+\begin{itemize}
+  \item Data-driven ``learning'' of homogenous subgroups.
+  \item Simple constant fit in each group, e.g., an average or proportion.
+\end{itemize}
 
 \bigskip
+\pause
 
-\textbf{Model:} The model fitted to a response $Y$ in each subgroup optimizes an objective function, i.e., it can be a simple constant fit (e.g. average value or proportion, minimizing deviations) but also a more complex model (possibly including additional regressors, and, e.g., minimizing the residual sum of squares or the negative log-likelihood).
+\textbf{Subsequently:} Trees are well-suited for combination with classical models.
+\begin{itemize}
+  \item Group-wise models, e.g., fitted by least squares or maximum likelihood.
+  \item Model-based learning accounts for model differences across subgroups.
+\end{itemize}
 
 \bigskip
+\pause
 
-\textbf{Trade-off:} Complexity in the tree structure vs.\ complexity in the fitted models.\\
-Simple models in the nodes (such as constant fits) often lead to large trees while more complex models can compensate a higher variation within the nodes allowing for less complex trees.
+\textbf{Trade-off:} 
+\begin{itemize}
+  \item Assume simple model and learn larger tree \emph{vs.}
+  \item More complex model and potentially smaller tree.
+\end{itemize}
 
-% \begin{itemize}
-% \item Choose an indicator or a measure of homogeneity within subgroups.
-% %% FIXME: discrepancy measure, loss function
-% \item Find the split which optimizes this measure in the resulting subgroups.
-% \end{itemize}
-% 
-% \bigskip
-% 
-% \bigskip
-% 
-% \textbf{Examples of discrepancy measures:} 
-% \begin{itemize}
-% \item For regression tree (numeric response): Deviations from an average value, residual sum of squares.
-% \item For classification tree (categorical response): Number of misclassifications.
-% \end{itemize}
- \end{frame}
+\end{frame}
  
 
 \subsection{Tree algorithm}
@@ -316,72 +314,155 @@ Simple models in the nodes (such as constant fits) often lead to large trees whi
 \textbf{Base algorithm:}
 \begin{enumerate}
 \item Fit a model to the response $Y$.
-\item Assess association of $Y$ (or a corresponding transformation / goodness-of-fit measure) and each possible split variable $X_j$.
-\item Split sample along the $X_{j^{\ast}}$ with strongest association: Choose breakpoint with highest improvement of the model fit.
+\item Assess association of $Y$ (or a corresponding transformation/goodness-of-fit measure) and each possible split variable $X_j$.
+\item Split sample along the $X_{j^{\ast}}$ with strongest association: Choose split point with highest improvement of the model fit.
 \item Repeat steps 1--3 recursively in the subsamples until some stopping criterion is met.
-\item Optionally: Reduce the size of the tree through post-pruning, i.e., by cutting off branches that do not improve the performance significantly.
+\item \emph{Optionally:} Reduce size of the tree by pruning branches of splits that do not improve the model fit sufficiently.
 \end{enumerate}
 
 \end{frame}
-
-
-\begin{frame}[fragile]
-\frametitle{Tree algorithm: Building blocks}
-
-\textbf{Examples of possible transformations of the response $Y$:} 
-\begin{itemize}
-\item Numeric response: 
-\begin{itemize}
-\item Ranks of $Y$.
-\item (Absolute) deviations $Y - \bar Y$.
-\item Residual sum of squares $\sum (Y - \hat{Y})^2$.
-\end{itemize}
-\item Categorical response: 
-\begin{itemize}
-\item Number of misclassifications (Gini impurity).
-\end{itemize}
-\end{itemize}
-
-\medskip 
-
-\textbf{Possible association tests:} 
-$\chi^2$-test, Pearson correlation test, two-sample t-test, ANOVA, signed-rank tests, rank-sum tests, \ldots (depending on the scale and type of variables)
-
-\medskip
-
-\textbf{Split point selection:}
-Exhaustive search over all possible split points or two-sample test statistics.
-
-\medskip
-
-\textbf{Stopping criteria:}
-Minimal number of observations per node, tree depth, minimal $p$-value, \ldots 
-
-\end{frame}
-
-
 
 \begin{frame}[fragile]
 \frametitle{Tree algorithm}
-\vspace{0.2cm}
 
-\textbf{How and where to split?}
+\textbf{Specific algorithms:} Many (albeit not all) can be derived from the base algorithm
+by combining suitable building blocks.
 
-\vspace{0.4cm}
+\bigskip
+\pause
 
-\begin{enumerate}
-\item Selection of the best split variable.
-\vspace{0.2cm}
-% \item \textcolor{gray}{Selection of the corresponding best split point.}
-\item Selection of the corresponding best split point.
-\end{enumerate}
+\textbf{Models for $Y$:} Simple constant fits vs.\ more complex statistical models.
+
+\bigskip
+\pause
+
+\textbf{Goodness of fit:} Suitable measure depends on type of response variable(s) $Y$
+and the corresponding model.
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Tree algorithm}
+
+\textbf{Goodness of fit:}
+\begin{itemize}
+  \item Numeric response: 
+  \begin{itemize}
+    \item $Y$ or ranks of $Y$.
+    \item (Absolute) deviations $Y - \bar Y$.
+    \item Residual sum of squares $\sum (Y - \hat{Y})^2$.
+  \end{itemize}
+  \pause
+  \item Categorical response: 
+  \begin{itemize}
+    \item Dummy variables for categories.
+    \item Number of misclassifications.
+    \item Gini impurity.
+  \end{itemize}
+  \pause
+  \item Survival response:
+  \begin{itemize}
+    \item Log-rank scores.
+  \end{itemize}
+  \pause
+  \item Parametric model:
+  \begin{itemize}
+    \item Residuals.
+    \item Model scores (gradient contributions).
+  \end{itemize}
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Tree algorithm}
+
+\textbf{Split variable selection:} Optimize some criterion over all $X_j$ ($j = 1, \dots, m$).
+\begin{itemize}
+  \item Objective function (residual sum of squares, log-likelihood, misclassification rate, impurity, \dots).
+  \item Test statistic or corresponding $p$-value.
+\end{itemize}
+
+\bigskip
+\pause
+
+\textbf{Split point selection:} Optimize some criterion over all (binary) splits in $X_{j*}$.
+\begin{itemize}
+  \item Objective function.
+  \item Two-sample test statistic or corresponding $p$-value.
+\end{itemize}
+
+\bigskip
+\pause
+
+\textbf{Stopping criteria:}
+\begin{itemize}
+  \item Constraints: Number of observations per node, tree depth, \dots
+  \item Lack of improvement: Significance, information criteria, \dots
+\end{itemize}
+
 \end{frame}
 
 
 \subsection{Split variable selection}
+
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Gender
+
+\textbf{Idea:}
+\begin{itemize}
+  \item Select variable $X_j$ ($j = 1, \dots, m$) most associated with heterogeneity in $Y$.
+  \item Heterogeneity captured by goodness-of-fit measure.
+  \item \emph{Often:} Maximum association over all possible binary splits.
+  \item \emph{Alternatively:} Overall association.
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Split variable selection}
+
+\textbf{Potential bias:} Variables with many potential splits may yield greater
+association ``by chance'', e.g., continuous $X_j$ or categorical with many levels.
+
+\bigskip
+\pause
+
+\textbf{Unbiased recursive partitioning:} Accounts for potential random variation by
+employing $p$-values from appropriate statistical tests.
+
+\bigskip
+\pause
+
+\textbf{Possible tests:} Depend on scales of $Y$, $X_j$, and the adopted model.
+\begin{itemize}
+  \item $\chi^2$ test, Pearson correlation test, two-sample t-test, ANOVA.
+  \item Maximally-selected two-sample tests.
+  \item Parameter instability tests.
+  \item \dots
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Split variable selection}
+
+\textbf{Examples:}
+\begin{itemize}
+  \item Titanic survival and wage determinants data.
+  \item Selection of first split variable in root node.
+  \item Employ classical statistical tests.
+  \item Does not exactly match a particular tree algorithm but similar to CTree.
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Split variable selection}
+\textbf{Assess pairwise associations:} \code{Survived ~ Gender} (Titanic).
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-gender, echo=TRUE, eval=FALSE>>=
@@ -412,7 +493,7 @@ chisq.test(xtabs(~ Survived + Gender, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Age
+\textbf{Assess pairwise associations:} \code{Survived ~ Age} (Titanic).
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-age, echo=TRUE, eval=FALSE>>=
@@ -440,7 +521,7 @@ chisq.test(xtabs(~ Survived + Age, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-\textbf{Assess pairwise associations} (Titanic): \ Survived $\sim$ Class
+\textbf{Assess pairwise associations:} \code{Survived ~ Class} (Titanic).
 
 \begin{minipage}[t]{0.43\linewidth}
 <<survival-class, echo=TRUE, eval=FALSE>>=
@@ -491,9 +572,9 @@ chisq.test(xtabs(~ Survived + Class, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\small Titanic:  \quad $Survived \; \sim  \; Gender + Age + Class$}
+
 \begin{center}
-\setkeys{Gin}{width=0.9\textwidth}
+\setkeys{Gin}{width=0.95\textwidth}
 <<echo=FALSE, fig=TRUE, width=11>>=
 <<ctree_Titanic>>
 @
@@ -503,26 +584,7 @@ chisq.test(xtabs(~ Survived + Class, data = ttnc))
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-
-%\vspace{0.2cm}
-
-\textbf{Idea:}
-Employ statistical tests for the split variable selection.\\
-Evaluating associations on the unified $p$-value scale allows for an unbiased comparison of possible split variables on different scales and of different types.
-
-\bigskip
-
-\textbf{Unbiased recursive partitioning:} Separation of split variable selection (based on $p$-values) and split point selection (only within the already chosen split variable).
-
-\bigskip
-
-\textbf{Alternative:} Directly compare all available split points in all possible split variables. In order to allow for an unbiased selection within this strategy, it has to be accounted for differences such as a varying number of available split points, different scales or variable types by correcting the measurement considered for comparison accordingly. However, this has often not been included in classic tree algorithms.
-\end{frame}
-
-
-\begin{frame}[fragile]
-\frametitle{Split variable selection}
-\textbf{Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ education
+\textbf{Assess pairwise associations:} \code{log(wage) ~ education} (Wages).
 
 \begin{minipage}[t]{0.39\linewidth}
 <<logwage-education, echo=TRUE, eval=FALSE>>=
@@ -553,7 +615,7 @@ writeLines(out)
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-\textbf{Assess pairwise associations} (Wages, CPS1985): \ log(wage) $\sim$ gender
+\textbf{Assess pairwise associations:} \code{log(wage) ~ gender} (Wages).
 
 \begin{minipage}[t]{0.39\linewidth}
 <<logwage-gender, echo=TRUE, eval=FALSE>>=
@@ -584,45 +646,55 @@ writeLines(out)
 
 \begin{frame}[fragile]
 \frametitle{Split variable selection}
-{\small Wages:  \quad $log(wage) \; \sim  \; education + experience + age + ethnicity + gender + union$}
+
 \begin{center}
 \setkeys{Gin}{width=0.99\textwidth}
 <<echo=FALSE, fig=TRUE, width=13>>=
 <<ctree_Wages1985>> 
 @
 \end{center}
+
 \end{frame}
 
 
-
-% \begin{frame}[fragile]
-% \frametitle{Tree algorithm}
-% \vspace{0.2cm}
-% 
-% \textbf{How and where to split?}
-% 
-% \vspace{0.4cm}
-% 
-% \begin{enumerate}
-% %\item \textcolor{gray}{Selection of the best split variable.} \checkmark
-% \item Selection of the best split variable.
-% \vspace{0.2cm}
-% \item Selection of the corresponding best split point.
-% \end{enumerate}
-% \end{frame}
-
-
-\subsection{Split point selection\\ 
-\&\\ 
-pruning}
+\subsection{Split point selection \& pruning}
 
 \begin{frame}[fragile]
 \frametitle{Split point selection}
-\textbf{Exhaustive search:} For each possible split point evaluate a defined objective function in the resulting subgroups and select the split point that minimizes the objective function, i.e., leads to the highest improvement of the model fit.
 
-\vspace{0.4cm}
+\textbf{Idea:}
+\begin{itemize}
+  \item Split $Y$ into most homogenous subgroups with respect to selected $X_{j*}$.
+  \item Homogeneity captured by goodness-of-fit measure.
+  \item \emph{Often:} Consider only binary splits.
+  \item Trivial for binary $X_{j*}$.
+  \item Otherwise typically exhaustive search over all binary splits.
+  \item Possibly already done in split variable selection.
+\end{itemize}
 
-\textbf{Alternative:} Two-sample test statistics evaluating the discrepancy between resulting subgroups. 
+\bigskip
+\pause
+
+\textbf{Goodness-of-fit measure:} Depends on scale of $Y$ and the adopted model.
+\begin{itemize}
+  \item Objective function (residual sum of squares, log-likelihood, misclassification rate, impurity, \dots).
+  \item Two-sample test statistic or corresponding $p$-value.
+\end{itemize}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Split point selection}
+
+\textbf{Example:}
+\begin{itemize}
+  \item Wage determinants data.
+  \item Selection of best split point in education in root node.
+  \item Residual sum of squares vs.\ normal log-likelihood.
+  \item Two-sample ANOVA-type $\chi^2$ test and corresponding $p$-value.
+\end{itemize}
+
 \end{frame}
 
 
@@ -689,13 +761,14 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 
 \begin{frame}[fragile]
 \frametitle{Split point selection}
-{\small Wages:  \quad $log(wage) \; \sim  \; education + experience + age + ethnicity + gender + union$}
+
 \begin{center}
 \setkeys{Gin}{width=0.99\textwidth}
 <<echo=FALSE, fig=TRUE, width=13>>=
 <<ctree_Wages1985>> 
 @
 \end{center}
+
 \end{frame}
 
 
@@ -706,7 +779,7 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 
 \medskip
 
-\textbf{Pre-pruning:} Internal stopping criterium. Stop splitting when there is no significant association to any of the possible split variable.
+\textbf{Pre-pruning:} Internal stopping criterium. Stop splitting when there is no significant association to any of the possible split variables $X_j$.
 
 \medskip
 
@@ -737,9 +810,7 @@ legend("bottomleft", c("Residual sum of squares", "Log-p-value"), col = c(2, 4),
 \end{frame}
 
 
-\subsection{Algorithms \\
-\& \\
-implementations}
+\subsection{Algorithms \& implementations}
 
 \begin{frame}
 \frametitle{CTree}
