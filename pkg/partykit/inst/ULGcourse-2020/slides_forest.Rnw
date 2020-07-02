@@ -581,26 +581,26 @@ nd <- data.frame(education = 13.02, #c(2:18),
   cf <- cforest(f, data = CPS1985, ntree = 2)
   predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
   colnames(predwage) <- c("age", "predicted log(wage)")
-  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
-       ylab = "predicted log(wage)", xlab = "age", main = "2 trees")
+  plot(x = predwage[,"age"], y = exp(predwage[,"predicted log(wage)"]), type = 'l',
+       ylab = "predicted wage", xlab = "age", main = "Forest with 2 trees")
   
   cf <- cforest(f, data = CPS1985, ntree = 4)
   predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
   colnames(predwage) <- c("age", "predicted log(wage)")
-  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
-       ylab = "predicted log(wage)", xlab = "age", main = "4 trees")
+  plot(x = predwage[,"age"], y = exp(predwage[,"predicted log(wage)"]), type = 'l',
+       ylab = "predicted wage", xlab = "age", main = "Forest with 4 trees")
   
   cf <- cforest(f, data = CPS1985, ntree = 20)
   predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
   colnames(predwage) <- c("age", "predicted log(wage)")
-  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
-       ylab = "predicted log(wage)", xlab = "age", main = "20 trees")
+  plot(x = predwage[,"age"], y = exp(predwage[,"predicted log(wage)"]), type = 'l',
+       ylab = "predicted wage", xlab = "age", main = "Forest with 20 trees")
   
   cf <- cforest(f, data = CPS1985, ntree = 200)
   predwage <- cbind(c((18:64)/1), predict(cf, newdata = nd))
   colnames(predwage) <- c("age", "predicted log(wage)")
-  plot(x = predwage[,"age"], y = predwage[,"predicted log(wage)"], type = 'l',
-       ylab = "predicted log(wage)", xlab = "age", main = "200 trees")
+  plot(x = predwage[,"age"], y = exp(predwage[,"predicted log(wage)"]), type = 'l',
+       ylab = "predicted wage", xlab = "age", main = "Forest with 200 trees")
 }
 @
 \end{frame}
@@ -608,7 +608,11 @@ nd <- data.frame(education = 13.02, #c(2:18),
 
 \begin{frame}
 \frametitle{Variable importance}
-{\bf Idea:} Asses the influence of a covariate on the model by evaluating the change in performance of the model (mean decrease in accuracy) after permutating the selected covariate. 
+{\bf Problem:} In a single tree model the effect of each covariate can easily be investigated based on a simple illustration of the tree structure. However, in a forest model this would require to investigate each tree on its own including its specific setting (induced by random sampling).
+
+\bigskip
+
+{\bf Idea:} Asses the influence of a covariate on the forest model by evaluating the change in performance of the model (mean decrease in accuracy) after permutating the selected covariate. 
 
 \bigskip
 
