@@ -608,7 +608,7 @@ nd <- data.frame(education = 13.02, #c(2:18),
 
 \begin{frame}
 \frametitle{Variable importance}
-{\bf Idea:} Asses the influence of a covariate by evaluating the change in performance of the model (mean decrease in accuracy) after dropping or permutating the selected covariate. 
+{\bf Idea:} Asses the influence of a covariate on the model by evaluating the change in performance of the model (mean decrease in accuracy) after permutating the selected covariate. 
 
 \bigskip
 
@@ -632,7 +632,7 @@ nd <- data.frame(education = 13.02, #c(2:18),
 % axis(1, at = seq(0,1,0.02), las = 1, mgp=c(0,1,0))
 % @
 
-Depending on the fitted model the corresponding objective function can be employed as \emph{risk function} to measure accuracy by calculating importance scores (e.g., log-likelihood, nr. of misclassifications, \ldots).
+Depending on the fitted model the corresponding objective function can be employed as \emph{risk function} to measure accuracy by calculating importance scores (e.g., log-likelihood, number of misclassifications, \ldots).
 %}
 \end{frame}
 
@@ -742,7 +742,10 @@ newdata <- data.frame(education = 13, experience = 17,
                       union = "no", married = "yes")
 pred_rf <- predict(rf, data = newdata)
 pred_rf$predictions     
-exp(pred_rf$predictions)     
+exp(pred_rf$predictions) 
+rf <- ranger(log(wage) ~ education + experience + age + ethnicity + gender + union,
+             data = CPS1985, importance = "impurity")
+importance(rf)
 @
 
 \end{frame}
@@ -778,18 +781,45 @@ Optional tree-specific arguments handed over via \fct{ctree\_control}:
 \item \code{alpha}: significance level for split variable selection,
 \item \ldots 
 \end{itemize}
-%\vspace{0.9cm}
 }
-
 % \only<3>{
+% 
 % <<call_cforest_control, eval = FALSE, echo=TRUE>>=
 % cf <- cforest(log(wage) ~ education + experience + age + ethnicity + gender + union,
-%              data = CPS1985, control = ctree_control(minsplit = 20))
+%             data = CPS1985, control = ctree_control(minsplit = 20))
 % @
 % }
 
 \end{frame}
 
+
+\begin{frame}[fragile]
+\frametitle{R software for forest models}
+
+{\bf partykit:}
+
+<<call_cforest, eval = FALSE, echo=TRUE>>=
+library("partykit")
+cf <- cforest(log(wage) ~ education + experience + age + ethnicity + gender + union,
+              data = CPS1985)
+@
+
+
+Optional tree-specific arguments handed over via \fct{ctree\_control}:
+\begin{itemize}
+\item \code{minsplit}: minimum number of observations to perform a split, 
+\item \code{minbucket}: minimum number of observations in a node after splitting, 
+\item \code{maxdepth}: maximum depth of the tree, 
+\item \code{alpha}: significance level for split variable selection,
+\item \ldots 
+\end{itemize}
+
+<<call_cforest_control, eval = FALSE, echo=TRUE>>=
+cf <- cforest(log(wage) ~ education + experience + age + ethnicity + gender + union,
+            data = CPS1985, control = ctree_control(minsplit = 20))
+@
+
+\end{frame}
 \begin{frame}[fragile]
 \frametitle{R software for forest models}
 
@@ -804,6 +834,7 @@ newdata <- data.frame(education = 13, experience = 17,
 pred_cf <- predict(cf, newdata = newdata)
 pred_cf
 exp(pred_cf)
+varimp(cf)
 @
 
 \end{frame}
@@ -880,6 +911,14 @@ Liaw A, Wiener M (2002).
 
 \medskip
 
+Wright M N, Ziegler A (2017).
+\dquote{{ranger}: A Fast Implementation of Random Forests for High
+Dimensional Data in {C++} and {R}.}
+\emph{Journal of Statistical Software}, \textbf{77}{1}, 1--17.
+\doi{10.18637/jss.v077.i01}
+
+\medskip
+
 % Zeileis A, Hothorn T, Hornik K (2008).
 %  \dquote{Model-Based Recursive Partitioning.}
 %   \emph{Journal of Computational and Graphical Statistics},
@@ -899,14 +938,6 @@ Schlosser L, Hothorn T, Stauffer R, Zeileis A (2019).
 \dquote{Distributional Regression Forests for Probabilistic Precipitation Forecasting in Complex Terrain.}
 \emph{The Annals of Applied Statistics}, \textbf{13}(3), 1564--1589.
 \doi{10.1214/19-AOAS1247}
-
-\medskip
-
-Wright M N, Ziegler A (2017).
-\dquote{{ranger}: A Fast Implementation of Random Forests for High
-Dimensional Data in {C++} and {R}.}
-\emph{Journal of Statistical Software}, \textbf{77}{1}, 1--17.
-\doi{10.18637/jss.v077.i01}
 
 \end{frame}
 
