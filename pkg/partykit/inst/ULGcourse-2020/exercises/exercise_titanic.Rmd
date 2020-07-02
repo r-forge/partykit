@@ -96,3 +96,17 @@ plot(ctrain)
 predtest <- predict(ctrain, newdata = test)
 caret::confusionMatrix(test$survived, predtest)
 ```
+
+```{r, include = FALSE}
+set.seed(4)
+library("ranger")
+rf <- ranger(formula, data = na.omit(train), num.trees = 20)
+rf$confusion.matrix
+rf <- ranger(formula, data = na.omit(train), num.trees = 500)
+rf$confusion.matrix
+
+cf <- cforest(formula, data = na.omit(train), ntree = 20)
+
+pred_cf <- predict(cf, newdata = test)
+pred_rf <- predict(rf, newdata = test)
+```
