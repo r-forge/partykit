@@ -356,7 +356,7 @@ $\hat{y}= \frac{1}{3} (\hat{y}_1 + \hat{y}_2 + \hat{y}_3)$
 \vspace{0.3cm}
 
 \visible<13->{
-for $\hat{y}_t$ being the average response value in the corresponding segment $\mathcal{B}^t_x$ of the $t$-th tree for learning data $\{y_i\}_{i=1,\ldots,n}$:
+for $\hat{y}_t$ being the average response value in the segment $\mathcal{B}^t_x$ which the observed covariate $x$ is assigned to in the $t$-th tree with learning data $\{(y_i,x_i)\}_{i=1,\ldots,n}$:
 
 \vspace{0.3cm}
 
@@ -377,21 +377,21 @@ random sampling}
 
 \begin{frame}
 \frametitle{Aggregation of trees}
-{\bf Simple tree model:} Obtain predictions for the response $y$ by averaging over observations in the same terminal node $\mathcal{B}_x$: 
+{\bf Simple tree model:} Obtain the predicted response $\hat{y}$ for an observed covariate~$x$ by averaging over observations in the same terminal node $\mathcal{B}_x$: 
 $$
 \hat{y}= \frac{1}{|\mathcal{B}_x|} \sum_{i: y_i \in \mathcal{B}_x} y_i
 \visible<2->{
 \ =\ \sum_{i=1}^n w_i(x) \cdot y_i$$
 }
 
-{\bf Model-based tree:} Obtain predictions for model parameter(s) $\theta$ by optimizing an objective function $f$ for all observations in the same terminal node $\mathcal{B}_x$:
+{\bf Model-based tree:} Obtain the predicted model parameter(s) $\hat{\theta}$ for an observed covariate~$x$ by optimizing an objective function $f$ for all observations in the same terminal node $\mathcal{B}_x$:
 $$
 \hat{\theta}= \argmin_{\theta} \sum_{i: y_i \in \mathcal{B}_x} f(\theta; y_i)
 \visible<2->{
 \ =\ \argmin_{\theta} \sum_{i=1}^n w_i(x) \cdot f(\theta; y_i)$$
 }
 
-{\bf Note:} The model-based approach allows for fitting complex models but also includes the specific case of averaging over all observations which corresponds to minimizing the residual sum of squares $\sum (Y - \hat{Y})^2$.
+{\bf Note:} The model-based approach allows for fitting complex models but also includes the specific case of averaging over all observations which corresponds to minimizing the residual sum of squares $\sum (y_i - \theta)^2$.
 
 
 \end{frame}
@@ -404,7 +404,7 @@ $$
 
 The predicted model parameter (vector) $\hat{\theta}$ 
 is the argument of the parameter space $\Theta$ 
-that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{y_i\}_{i=1,\ldots,n}$:
+that minimizes the weighted sum of the objective function $f$ evaluated for learning data $\{(y_i,x_i)\}_{i=1,\ldots,n}$:
 
 \vspace{-0.2cm}
 
