@@ -34,6 +34,15 @@
 }
 
 %% for \usepackage{Sweave}
+
+<<eval=TRUE, echo=FALSE, results=hide>>=
+transparent_png <- function(name, width, height, ...) {
+  grDevices::png(filename = paste(name, "png", sep = "."),
+    width = width, height = height, res = 100, units = "in", type = "quartz", bg = "transparent")
+}
+@
+
+
 \SweaveOpts{engine=R, eps=FALSE, echo=FALSE, results=hide, keep.source=TRUE}
 
 <<preliminaries, echo=FALSE, results=hide>>=
