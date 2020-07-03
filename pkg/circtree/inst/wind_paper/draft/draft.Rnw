@@ -1015,17 +1015,17 @@ implementation is provided in the \textsf{R} package \textbf{circglmbayes} by
 applied to estimates the intercept and regression coefficient along with the
 concentration parameter.
 
-The computation time on a standard computer is in the order of 10\,milliseconds
-for the circular fit (used for the persistency and the climatological model),
+The computation time on a standard computer is in the order of milliseconds for
+the circular fit (used for the persistency and the climatological model),
 seconds for the estimation of the linear model and the circular tree, and from
 a few minutes up to an hour for the estimation of the circular forest; the
 latter strongly depends on the number of covariates employed and, hence, varies
 between the two locations included in the application. However, for a single
-station and forecast step, the persistency and linear models must be
-re-estimated for each time of interest, and independent climatological models
-have to be fitted for all times of interest within a single calendar year,
-whereas for all times of interest only a single circular tree and a single
-circular forest model is required. 
+station and forecast step, the persistency model must be re-estimated for each
+time of interest, independent climatological and linear models have to be
+fitted for all times of interest within a single calendar year, whereas for all
+times of interest only a single circular tree and a single circular forest
+model is required. 
 
 \bibliography{ref.bib}
 
