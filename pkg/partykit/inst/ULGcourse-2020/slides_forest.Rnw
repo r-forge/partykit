@@ -134,7 +134,7 @@ for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.
 {\bf Idea:} \\
 \begin{itemize}
 \item Combine an ensemble of trees. 
-\item Each tree can capture non-linear and non-additive effects and select covariates and possible interactions automatically.
+\item A single tree can capture non-linear and non-additive effects and select covariates and possible interactions automatically.
 \item Combining trees to a forest model allows for an approximation of smooth effects.
 \item A forest can regularize and stabilize the model.
 \end{itemize}
@@ -369,7 +369,7 @@ for $\hat{y}_t$ being the average response value in the segment $\mathcal{B}^t_x
 
 \vspace{0.3cm}
 
-$\hat{y}_t= \frac{1}{|\mathcal{B}^t_x|} \sum_{i: y_i \in \mathcal{B}^t_x} y_i$
+$\hat{y}_t= \frac{1}{|\mathcal{B}^t_x|} \sum_{i: x_i \in \mathcal{B}^t_x} y_i$
 \visible<15->{
 $\ =\ \sum_{i=1}^n \frac{I(x_i \in \mathcal{B}^t_x)}{|\mathcal{B}^t_x|} \cdot y_i$
 }
@@ -386,9 +386,9 @@ random sampling}
 
 \begin{frame}
 \frametitle{Aggregation of trees}
-{\bf Simple tree model:} Obtain the predicted response $\hat{y}$ for an observed covariate~$x$ by averaging over observations in the same terminal node $\mathcal{B}_x$: 
+{\bf Simple tree model:} Obtain the predicted response $\hat{y}$ for an observed covariate~$x$ by averaging over observations in the terminal node~$\mathcal{B}_x$: 
 $$
-\hat{y}= \frac{1}{|\mathcal{B}_x|} \sum_{i: y_i \in \mathcal{B}_x} y_i
+\hat{y}= \frac{1}{|\mathcal{B}_x|} \sum_{i: x_i \in \mathcal{B}_x} y_i
 \visible<2->{
 \ =\ \sum_{i=1}^n w_i(x) \cdot y_i$$
 }
@@ -397,9 +397,9 @@ $$\ =\ \argmin_{\mu} \sum_{i=1}^n w_i(x) \cdot (y_i - \mu)^2$$
 }
 
 \visible<4->{
-{\bf Model-based tree:} Obtain the predicted model parameter(s) $\hat{\theta}$ for an observed covariate~$x$ by optimizing a loss function for all observations in the same terminal node $\mathcal{B}_x$:
+{\bf Model-based tree:} Obtain the predicted model parameter(s) $\hat{\theta}$ for an observed covariate~$x$ by optimizing a loss function for all observations in the terminal node~$\mathcal{B}_x$:
 $$
-\hat{\theta}= \argmin_{\theta} \sum_{i: y_i \in \mathcal{B}_x} loss(\theta; y_i)
+\hat{\theta}= \argmin_{\theta} \sum_{i: x_i \in \mathcal{B}_x} loss(\theta; y_i)
 \ =\ \argmin_{\theta} \sum_{i=1}^n w_i(x) \cdot loss(\theta; y_i)$$
 }
 
@@ -412,10 +412,10 @@ $$
 
 \begin{frame}
 \frametitle{Aggregation of trees}
-{\bf Strategy:} Combine trees to a forest model by employing tree-based weights.
+{\bf Strategy:} Combine T trees to a forest model by employing tree-based weights.
 
 The predicted model parameter (vector) $\hat{\theta}$ 
-is the argument of the parameter space $\Theta$ 
+is the argument %of the parameter space $\Theta$ 
 that minimizes the weighted sum of a loss function evaluated for learning data $\{(y_i,x_i)\}_{i=1,\ldots,n}$:
 
 \vspace{-0.2cm}
@@ -437,9 +437,9 @@ that minimizes the weighted sum of a loss function evaluated for learning data $
 \begin{eqnarray*}
 w^{\text{base}}_i(x)   & = & 1 \\[0.2cm]
 \visible<3-4>{
-w^{\text{tree}}_i(x)   & = & \sum_{b=1}^B I((x_i \in \mathcal{B}_b) \land (x \in \mathcal{B}_b)) \\[0.1cm]
+w^{\text{tree}}_i(x)   & = & \frac{I(x_i \in \mathcal{B}_x)}{\left|\mathcal{B}_x\right|}  \\[0.1cm]
 \visible<4>{
-w^{\text{forest}}_i(x) & = & \frac{1}{T} \sum_{t=1}^T \sum_{b=1}^{B^t} \frac{I((x_i \in \mathcal{B}^t_b) \land (x \in \mathcal{B}^t_b))}{\left|\mathcal{B}^t_b\right|}
+w^{\text{forest}}_i(x) & = & \frac{1}{T} \sum_{t=1}^T \frac{I(x_i \in \mathcal{B}^t_x)}{\left|\mathcal{B}^t_x\right|}
 \end{eqnarray*}
 }}}
 
