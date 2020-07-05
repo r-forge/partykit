@@ -110,8 +110,8 @@ the manuscript and have also renamed Sect.~4 accordingly.
 \item In the section `Computational details', we have added information about the
 order of magnitude of the computing time for the different methods on a standard desktop computer. 
 
-\item We now discuss the work of Hara and Chellappa~(2017) and their distribution-based 
-tree algorithm in relation to our circular distributional trees within Sect.~1.1.
+\item We now discuss the work of Hara and Chellappa~(2017) in relation to our
+circular distributional trees within Sect.~1.1.
 
 \item Regarding the employed GLM implemented by Mulder and Klugkist~(2017), we now
 explicitly state that the accommodation of circular covariates would be possible
@@ -217,7 +217,7 @@ doi:10.1198/106186006x133933.
 
 \newpage
 
-\section{Associate Editor - Comments to the Author}
+\section{Associate Editor -- Comments to the Author}
 
 \begin{re}
 Both referees agree this is a good paper, and have only a few suggestions for
@@ -253,7 +253,7 @@ platform for the whole `partykit' project in the near future.
 
 \newpage
 
-\section{Referee: 1 - Comments to the Author}
+\section{Referee 1 -- Comments to the Author}
 
 \begin{re}
 I found Circular Regression Trees and Forests to be a very nicely written
@@ -297,7 +297,7 @@ doi:10.1080/02664769922160.
 
 \newpage
 
-\section{Referee: 2 - Comments to the Author}
+\section{Referee 2 -- Comments to the Author}
 
 \begin{re}
 This is a well-written paper on using circular regression trees for analyzing a
@@ -338,9 +338,13 @@ circular statistics for vehicle orientation estimation. The authors may include
 some comparisons with Hara, Chellappa work.
 \end{re}
 
-Thank you very much for the very interesting and to us unfortunately so far unknown references.
-We now review the work of Hara and Chellappa~(2017) and briefly compare their approach
-to our implementation of circular distributional trees in Sect.~1.1.
+Thank you very much for pointing out these interesting references that, unfortunately,
+we were not aware of before. We now briefly discuss the work of Hara and Chellappa~(2017),
+comparing their approach to ours in Sect.~1.1. The main difference is that their
+algorithm aims at conditional mean estimation for circular data and only adopts
+distributional aspects for determining the number of splits. Specifically, the
+variances are restricted to be shared across splits whereas in our proposal they
+are full model parameters estimated and tested along with the means.
 
 \vspace{0.5cm}
 References

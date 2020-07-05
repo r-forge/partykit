@@ -280,20 +280,23 @@ a circular regression tree algorithm where binary splits are made based on an
 angular distance measure capturing node homogeneity. However, this only models
 changes in the conditional mean, whereas modeling the conditional variance or
 full probabilistic distribution would also allow uncertainty in the forecast to
-be estimated \citep{Gneiting:2008}.  In the field of image based object
-direction estimation, \citet{Hara+Chellappa:2017} presented a
-distribution-based tree-building algorithm by applying $k$-means clustering to
-the target space where the number of clusters $k$ is adaptively determined by
-the Bayes information criterion employing the von~Mises distribution. Despite
-their distribution-based splitting approach to circular response variables,
-they solely predict the mode of the distribution, thus, providing no full
-probabilistic forecasts. Combining these previous ideas for circular trees with
-the concept of distributional modeling, we introduce a fully distributional
-tree approach that not only considers splits in all distribution parameters,
-but also yields a full probabilistic predictive model as proposed by
-\citet{Gneiting:2008}. In addition, as a natural extension, ensembles or
-forests of circular regression trees are presented in this study, showing that
-these can further improve predictive power.
+be estimated \citep{Gneiting:2008}.  Moreover, \citet{Hara+Chellappa:2017}
+introduced both regression trees and random forests for image-based object
+direction estimation. These extend classical conditional-mean regression trees
+\citep{Breiman+Friedman+Stone:1984} and corresponding random forests
+\citep{Breiman:2001} to conditional mean models for cicular data. But rather
+than considering only binary splits, they employed $k$-means clustering
+to determine multi-way splits with the number $k$ adaptivaly determined
+based on the Bayes information criterion with either a Gaussian or von~Mises
+kernel. While a distributional aspect is considered in this step of the
+algorithm, variances are always restricted to be shared across splits and, more
+importantly, no probabilistic forecasts are obtained. Therefore, our proposed
+circular regression trees and random forests take these ideas a step further:
+A fully distributional approach is adopted for all aspects of the algorithms
+from selection of the split variables, selection of the split points, and
+ensemble aggregation of the predictions across trees in a forest. Therefore,
+this yields a full probabilistic predictive model as proposed by
+\citet{Gneiting:2008}.
 
 \subsection{Motivating example}
 
