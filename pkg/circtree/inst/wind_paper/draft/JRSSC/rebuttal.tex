@@ -313,20 +313,20 @@ Bayes Information Criterion (Schwartz, 1978, Annals of Statistics).
 
 First of all we want to thank you for your positive feedback and valuable input. 
 
-Regarding your suggestion, when building a circular distributional tree, the
-package \textbf{circtree} uses per default \emph{p}-values from association
-tests both for selecting the split variable and for a so-called pre-pruning
-strategy which stops growing the tree as soon as no significant associations
-can be found in a given subgroup. This is the default in both available
-unbiased recursive partitioning algorithms CTree and MOB. For the latter, as
-discussed by Zeileis~\emph{et al.}~(2008), an alternative, already implemented
-strategy  is to use information criteria such as AIC (Akaike information
-criterion) or BIC (Bayes information criterion) for post-pruning (after growing
-the initial tree).  As we use neither MOB nor post-pruning in the presented
-application, we refrain from discussing this aspect any further in the
-manuscript. However, we want to refer to the submitted manuscript by
-Schlosser~\emph{et al.}~2019 which investigates the performance of different 
-testing and pruning strategies employed in unbiased recursive partitioning algorithms.
+A very good remark, indeed split variable selection based on BIC creates an
+alternative possible tree-building strategy. Per default when building a
+circular distributional tree, the package \textbf{circtree} uses
+\emph{p}-values from association tests both for selecting the split variable
+and for a so-called pre-pruning strategy which stops growing the tree as soon
+as no significant associations can be found in a given subgroup. However, as
+discussed by Zeileis~\emph{et al.}~(2008), an alternative strategy is to use
+information criteria such as AIC (Akaike information criterion) or BIC (Bayes
+information criterion) for cost-complexity post-pruning, where a large tree is
+first built and then pruned back. We now discuss this aspect in the Appendix~A
+of the manuscript and also refer to the submitted manuscript by
+Schlosser~\emph{et al.}~2019 which investigates the performance of different
+testing and pruning strategies employed in unbiased recursive partitioning
+algorithms.
 
 \vspace{0.5em}
 \begin{re}
