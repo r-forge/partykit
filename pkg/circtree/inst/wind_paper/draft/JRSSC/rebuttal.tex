@@ -313,20 +313,20 @@ Bayes Information Criterion (Schwartz, 1978, Annals of Statistics).
 
 First of all we want to thank you for your positive feedback and valuable input. 
 
-A very good remark, indeed split variable selection based on BIC creates an
-alternative possible tree-building strategy. Per default when building a
-circular distributional tree, the package \textbf{circtree} uses
-\emph{p}-values from association tests both for selecting the split variable
-and for a so-called pre-pruning strategy which stops growing the tree as soon
-as no significant associations can be found in a given subgroup. However, as
-discussed in Zeileis~\emph{et al.}~(2008), an alternative strategy is to use
-information criteria such as AIC (Akaike information criterion) or BIC (Bayes
-information criterion) for cost-complexity post-pruning, where a large tree is
-first built and then pruned back. We now discuss post-pruning in the Appendix~A
-of the manuscript and also refer to the submitted manuscript by
-Schlosser~\emph{et al.}~2019, which investigates the performance of different
-testing and pruning strategies employed in unbiased recursive partitioning
-algorithms.
+Indeed, information criteria like AIC or BIC are natural candidates for
+determining the model order in distributional models, i.e., the number of splits
+in distributional trees. While they could be used instead of the $p$-values in
+the ``internal stopping'' or ``pre-pruning'', they are typically considered
+for ``post-pruning'' after initially growing a large tree (e.g., in
+Su~\emph{et al.}~2004 or Zeileis~\emph{et al.}~2008). This is now discussed
+in Appendix~A along with the other details of the tree algorithm employed.
+There we also refer to the recent work of Schlosser~\emph{et al.}~2019
+which empirically investigates the performance of different pre- and post-pruning
+strategies in unbiased recursive partitioning. This work finds that post-pruning
+only improves the performance of the unbiased trees considered when the
+underlying tests do not work well, e.g., when the power of the tests is low
+or the sample size extremely large.
+
 
 \vspace{0.5em}
 \begin{re}

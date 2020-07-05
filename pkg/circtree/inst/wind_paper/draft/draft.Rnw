@@ -1136,17 +1136,6 @@ otherwise no split is performed. This early stopping induced by the
 significance level is referred to as ``pre-pruning'' which is often avoided for
 forest models by setting the significance level to $1$.
 
-An alternative split variable selection strategy is provided by cost-complexity
-``post-pruning'', where a large tree is first built and then pruned back based
-on the predictive performance \citep{Breiman+Friedman+Stone:1984}. As discussed
-in \citet{Zeileis+Hothorn+Hornik:2008}, for model-based partitioning by
-employing information criteria such as AIC~(Akaike information criterion) or
-BIC~(Bayes information criterion) this strategy can be built on the same
-underlying loss function as pre-pruning. However,
-\citet{Schlosser+Hothorn+Zeileis:2019} show that post-pruning in an unbiased
-tree algorithm is usually only superior to pre-pruning when the underlying
-significance tests have low power, for example, due to a large data set.
-
 To select the best split point within the already chosen split variable, again,
 a linear test statistic is employed. In particular, for a breakpoint $r$ of the
 variable $z_{l^{\ast}}$ leading to two subgroups $\mathcal{B}_{1r}$ and
@@ -1162,10 +1151,22 @@ r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Si
 \end{equation}
 
 Subsequently, the same testing and splitting procedure is repeated in each of
-the resulting subgroups until some stopping criterion is reached. Next to the
-already mentioned significance-level-based stopping criterion, i.e., a minimal
-$p$-value for the statistical tests, also a maximal tree depth or a minimal
-number of observations in a node can be employed as stopping criteria.
+the resulting subgroups until some stopping criterion is reached. Complementing
+the pre-pruning mentioned above, based on the significance level of the
+statistical tests, further criteria such as maximal tree depth or a minimal
+number of observations in a node can be employed.
+
+In addition to, or as an alternative to, pre-pruning, classical post-pruning
+can also be applied where a large tree is grown first and then pruned back based
+on the predictive performance \citep{Breiman+Friedman+Stone:1984}. As pointed out
+by \citet{Zeileis+Hothorn+Hornik:2008}, information criteria such as AIC~(Akaike
+information criterion) or BIC~(Bayes information criterion) are natural candidates
+for this when partitioning maximum likelihood models. However,
+\citet{Schlosser+Hothorn+Zeileis:2019} show empirically that post-pruning only improves
+upon pre-pruning in an unbiased tree algorithm when the underlying significance
+tests do not work well, e.g., when they have low power or when the number of observations
+is extremely large.
+
 
 %This permutation-test-based tree algorithm is presented in 
 %\cite{Hothorn+Hornik+Zeileis:2006} as the CTree algorithm. 
