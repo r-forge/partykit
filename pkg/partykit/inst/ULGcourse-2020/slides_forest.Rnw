@@ -150,7 +150,7 @@ for(i in 1:(nobs*100)) yforest[i] <- if(x100[i]<=0.33) 0.52 else {if(x100[i]<=0.
 \vspace{0.2cm}
 
 \begin{minipage}{0.4\textwidth}
-\only<1>{\textbf{Tree model:\\}}\only<2-8>{\textbf{Subsampling:\\}}\only<9->{\textbf{Forest model:\\}}
+\only<1>{\textbf{Tree model:\\}}\only<2-12>{\textbf{Subsampling:\\}}\only<13->{\textbf{Forest model:\\}}
 \vspace{-0.4cm}
 %\vspace{-0.8cm}
 \begin{center}
