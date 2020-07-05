@@ -117,26 +117,48 @@ applyfun <- function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = pma
 %probabilistic wind direction forecasting at two Austrian airports, considering
 %other common approaches as a benchmark.
 %
-%NEW VERSION:
-Circular data occur in a wide range of scientific fields, however the
-methodology for distributional modeling and probabilistic forecasting of
-circular response variables is rather limited. While most of the existing
-methods are built within the framework of generalized linear and additive
-models, which are often challenging to optimize and interpret, we propose a
-distributional approach for regression trees yielding probabilistic forecasts
-based on the von~Mises distribution. The resulting tree-based models use the
-available covariates for partitioning the data into sufficiently homogeneous
-subgroups, allowing for a simple circular distributional fit in each subgroup.
-These circular regression trees are straightforward to interpret, can capture
-nonlinear effects and interactions, and automatically select the relevant
-covariates that are associated with changes in any distribution parameter.
-Ensembles or forests of such circular trees can further improve the forecasts
-by regularizing and stabilizing the model. The newly developed methodology is
-illustrated in an application on short-term probabilistic wind direction
-forecasting for Innsbruck and Vienna Airport required to direct airplanes to a
-safe landing. The predictive skill of the novel approaches is benchmarked with
-an additive regression model plus a persistency and a climatological model,
-employing the circular continuous ranked probability score.}
+%NEW LISA AND MORITZ VERSION
+%Circular data occur in a wide range of scientific fields, however the
+%methodology for distributional modeling and probabilistic forecasting of
+%circular response variables is rather limited. While most of the existing
+%methods are built within the framework of generalized linear and additive
+%models, which are often challenging to optimize and interpret, we propose a
+%distributional approach for regression trees yielding probabilistic forecasts
+%based on the von~Mises distribution. The resulting tree-based models use the
+%available covariates for partitioning the data into sufficiently homogeneous
+%subgroups, allowing for a simple circular distributional fit in each subgroup.
+%These circular regression trees are straightforward to interpret, can capture
+%nonlinear effects and interactions, and automatically select the relevant
+%covariates that are associated with changes in any distribution parameter.
+%Ensembles or forests of such circular trees can further improve the forecasts
+%by regularizing and stabilizing the model. The newly developed methodology is
+%illustrated in an application on short-term probabilistic wind direction
+%forecasting for Innsbruck and Vienna Airport required to direct airplanes to a
+%safe landing. The predictive skill of the novel approaches is benchmarked with
+%an additive regression model plus a persistency and a climatological model,
+%employing the circular continuous ranked probability score.
+While circular data occur in a wide range of scientific fields, the methodology 
+for distributional modeling and probabilistic forecasting of circular response
+variables is rather limited. Most of the existing methods are built on the
+framework of generalized linear and additive models, which are often challenging
+to optimize and interpret. Specifically, capturing abrupt changes or
+interactions is not straightforward but often relevant, e.g., for modeling wind
+directions subject to different wind regimes. Additionally, automatic covariate
+selection is desirable when many predictor variables are available, as often the
+case in weather forecasting.
+ 
+To address these challenges we suggest a general distributional approach using
+regression trees and random forests to obtain probabilistic forecasts for
+circular responses. Using trees simplifies model estimation as
+covariates are used only for partitioning the data and subsequently just a
+simple von~Mises distribution is fitted in the resulting subgroups.
+Circular regression trees are straightforward to interpret, can capture
+nonlinear effects and interactions, and automatically select covariates
+affecting location and/or scale in the von~Mises distribution. Circular random
+forests regularize and smooth the effects from an ensemble of trees.
+
+The new methods are applied to probabilistic wind direction forecasting at two
+Austrian airports, considering other common approaches as a benchmark.}
 
 \Keywords{circular data, regression trees, random forests, distributional regression, von~Mises distribution, probabilistic forecasting}
 
