@@ -284,9 +284,9 @@ be estimated \citep{Gneiting:2008}.  Moreover, \citet{Hara+Chellappa:2017}
 introduced both regression trees and random forests for image-based object
 direction estimation. These extend classical conditional-mean regression trees
 \citep{Breiman+Friedman+Stone:1984} and corresponding random forests
-\citep{Breiman:2001} to conditional mean models for cicular data. But rather
+\citep{Breiman:2001} to conditional mean models for circular data. But rather
 than considering only binary splits, they employed $k$-means clustering
-to determine multi-way splits with the number $k$ adaptivaly determined
+to determine multi-way splits with the number $k$ adaptively determined
 based on the Bayes information criterion with either a Gaussian or von~Mises
 kernel. While a distributional aspect is considered in this step of the
 algorithm, variances are always restricted to be shared across splits and, more
@@ -294,9 +294,8 @@ importantly, no probabilistic forecasts are obtained. Therefore, our proposed
 circular regression trees and random forests take these ideas a step further:
 A fully distributional approach is adopted for all aspects of the algorithms
 from selection of the split variables, selection of the split points, and
-ensemble aggregation of the predictions across trees in a forest. Therefore,
-this yields a full probabilistic predictive model as proposed by
-\citet{Gneiting:2008}.
+ensemble aggregation of the predictions across trees in a forest. This provides
+a full probabilistic predictive model, as proposed by \citet{Gneiting:2008}.
 
 \subsection{Motivating example}
 
