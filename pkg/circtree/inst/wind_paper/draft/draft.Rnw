@@ -1150,10 +1150,7 @@ r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Si
 \end{equation}
 
 Subsequently, the same testing and splitting procedure is repeated in each of
-the resulting subgroups until some stopping criterion is reached. Complementing
-the pre-pruning based on the significance level of the
-statistical tests, as mentioned above, further criteria such as maximal tree depth or a minimal
-number of observations in a node can be employed.
+the resulting subgroups until some stopping criterion is reached. Complementing the pre-pruning based on the significance level of the statistical tests, as described above, further criteria such as maximal tree depth or a minimal number of observations in a node can be employed.
 
 In addition to, or as an alternative to, pre-pruning, classical post-pruning
 can also be applied where a large tree is grown first and then pruned back based
