@@ -1051,8 +1051,8 @@ fitted for all times of interest within a single calendar year, whereas for all
 times of interest only a single circular tree and a single circular forest
 model is required. In general with respect to other applications, the computation
 time for the estimation of circular regression trees and forests can be reduced by
-various implemented settings, such as, e.g., the use of additional CPU cores or
-binning of the input data (c.f.  Section~\ref{sec:wind:models}).
+various implemented settings, such as, e.g., parallel estimation on multiple
+CPU cores or binning of the input data (c.f.  Section~\ref{sec:wind:models}).
 
 
 \bibliography{ref.bib}
@@ -1151,8 +1151,8 @@ r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Si
 
 Subsequently, the same testing and splitting procedure is repeated in each of
 the resulting subgroups until some stopping criterion is reached. Complementing
-the pre-pruning mentioned above, based on the significance level of the
-statistical tests, further criteria such as maximal tree depth or a minimal
+the pre-pruning based on the significance level of the
+statistical tests, as mentioned above, further criteria such as maximal tree depth or a minimal
 number of observations in a node can be employed.
 
 In addition to, or as an alternative to, pre-pruning, classical post-pruning
