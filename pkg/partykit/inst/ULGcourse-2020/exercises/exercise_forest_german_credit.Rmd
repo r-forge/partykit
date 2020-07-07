@@ -14,7 +14,8 @@ head(data)
 
 
 
-In this exercise we will use the 'South German Credit' data set. It contains a classification of the credit risk of 1000 individuals into 'good' and 'bad' together with 20 additional attributes.
+In this exercise we will use the 'South German Credit' data set. It contains a classification
+of the credit risk of 1000 individuals into 'good' and 'bad' together with 20 additional attributes.
 
 Simply download the file `r xfun::embed_file(file, text = "german.rds")` by clicking or
 download it from the corresponding homepage
@@ -50,43 +51,38 @@ contains the following information:
 # The Tasks
 
 We would like to find out how the credit risk of a person depends on the provided additional attributes of the person and the considered credit itself.
-By employing a tree model we are looking for a separation into homogeneous subgroups based on the additional information.
+Therefore, our response in this case is the binary variable `credit_risk`, as covariates we have 20 additional variables (17 categorical, 3 numeric).
 
-Our response in this case is the binary variable `credit_risk`, as covariates we have 20 additional variables (17 categorical, 3 numeric).
-
-Apply the CTree algorithm to build the tree models described in the following steps:
+Apply the forest-building function `cforest` to build a forest model as described in the following points:
 
 * Load the data set `"german.rds"`.
-* Build a tree using pre-pruning with a significance level of 0.04, with a maximum depth of 4 levels and the segment size of terminal nodes not being smaller than 15.
-* Evaluate the performance on the learning data by calculating the corresponding confusion matrix. How large is the misclassification rate?
-* Predict the credit risk of a new client who doesn't have a checking account, has never taken a credit before, is a 35-year-old married male who is a skilled employee working in a business in his home town for already 5 years now, and who plans to take one credit of 4000 DM for repairs in his own house where he moved in 2 years ago. The credit duration is 24 months, the installment rate is 30 %. There is no information provided on his savings and no registered telephone number on the client's name. There are no other installment plans or other debtors and there is no other person depending financially on the client.
-Does it have an impact on the prediction if the duration is reduced to only 12 months?
-* Separate the data set into a learning set (2/3 of the full data) and a testing set (1/3 of the full data). Build a tree on the learning data set and predict the credit risk on the testing data set. Evaluate the performance based on the number of misclassifications. How do parameters such as a minimal segment size or the significance level applied for pre-pruning influence the performance?
+* Build a forest model with 50 trees.
+* Predict the credit risk of a new client who doesn't have a checking account, has never taken a credit before, is a 40-year-old married male who is a skilled employee working in a business in his home town for already 6 years now, and who plans to take one credit of 5000 DM for repairs in his own house where he moved in 3 years ago. The credit duration is one year, the installment rate is 15 %. There is no information provided on his savings and no registered telephone number on the client's name. There are no other installment plans or other debtors and there is no other person depending financially on the client.
+Does it have an impact on the prediction if he plans to spend the money on furniture?
+* Which covariates have the highest influence on the model?
+* Separate the data set into a learning set (2/3 of the full data) and a testing set (1/3 of the full data). Build a forest on the learning data set and predict the credit risk on the testing data set. Assess the performance by evaluating the number of misclassifications on the testing data. How do parameters such as the number of trees influence the performance?
+* Apply the function `ranger` to build a forest model using the same parameters and compare it to the cforest model, e.g., based on predictions, the number of misclassifications on the testing data or variable importance.
 
 ```{r, include = FALSE}
 # data <- readRDS("data/german.rds")
-formula <- credit_risk ~  status + duration + credit_history + purpose  + amount + savings + employment_duration + installment_rate + personal_status_sex + other_debtors + present_residence + property + age + other_installment_plans + housing + number_credits + job + people_liable + telephone + foreign_worker
+f <- credit_risk ~  status + duration + credit_history + purpose  + amount + savings + employment_duration + installment_rate + personal_status_sex + other_debtors + present_residence + property + age + other_installment_plans + housing + number_credits + job + people_liable + telephone + foreign_worker
 
 library("partykit")
-ct <- ctree(formula, data = data)
-ct <- ctree(formula, data = data, control = ctree_control(alpha = 0.04, minbucket = 15, maxdepth = 4))
-
-library("caret")
-caret::confusionMatrix(data$credit_risk, predict(ct, newdata = data))
+cf <- cforest(formula = f, data = data, ntree = 50)
 
 newclient <- data.frame(status = "no checking account",
-                        duration = 24,
+                        duration = 12,
                         credit_history = "no credits taken/all credits paid back duly",
                         purpose = "repairs",
-                        amount = 4000,
+                        amount = 5000,
                         savings = "unknown/no savings account",
                         employment_duration = "4 <= ... < 7 yrs",
-                        installment_rate =  "25 <= ... < 35",
+                        installment_rate =  "< 20",
                         personal_status_sex = "male : married/widowed",
                         other_debtors = "none",
                         present_residence = "1 <= ... < 4 yrs",
                         property = "real estate",
-                        age = 35,
+                        age = 40,
                         other_installment_plans = "none",
                         housing = "own",
                         number_credits = "1",
@@ -95,31 +91,41 @@ newclient <- data.frame(status = "no checking account",
                         telephone = "no",
                         foreign_worker = "no"
                         )
-predict(ct, newdata = newclient)
 
 newclient2 <- newclient
-newclient2$duration <- 12
-predict(ct, newdata = newclient2)
+newclient2$purpose <- "furniture/equipment"
+
+predict(cf, newdata = newclient)
+predict(cf, newdata = newclient2)
+
 ```
 
-```{r, include = FALSE, echo = FALSE, out.width = "100%", fig.width = 10, fig.height = 5}
-plot(ct)
-```
 ```{r, include = FALSE}
 set.seed(4)
 trainid <- sample(1:NROW(data), size = 667, replace = FALSE)
 train <- data[trainid,]
 test <- data[-trainid,]
 
-ctrain <- ctree(formula, data = train)
-predtest <- predict(ctrain, newdata = test)
+```
 
+```{r, include = FALSE}
+library("ranger")
 library("caret")
-caret::confusionMatrix(test$credit_risk, predtest)
 
+rf <- ranger(formula = f, data = train, num.trees = 50)
+rf$confusion.matrix
+rf <- ranger(formula = f, data = train, num.trees = 500)
+rf$confusion.matrix
 
-ctrain <- ctree(formula, data = train, control = ctree_control(alpha = 0.01))
-plot(ctrain)
-predtest <- predict(ctrain, newdata = test)
-caret::confusionMatrix(test$credit_risk, predtest)
+rf <- ranger(formula = f, data = train, num.trees = 50)
+
+pred_cf <- predict(cf, newdata = test)
+confusionMatrix(pred_cf, test$credit_risk)
+
+pred_rf <- predict(rf, data = test)$prediction
+confusionMatrix(pred_rf, test$credit_risk)
+
+varimp(cf)
+rf <- ranger(f, data = train, num.trees = 50, importance = "impurity")
+importance(rf)
 ```
