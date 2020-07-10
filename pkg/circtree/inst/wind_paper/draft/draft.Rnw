@@ -146,7 +146,7 @@ interactions is not straightforward but often relevant, e.g., for modeling wind
 directions subject to different wind regimes. Additionally, automatic covariate
 selection is desirable when many predictor variables are available, as often the
 case in weather forecasting.
- 
+% 
 To address these challenges we suggest a general distributional approach using
 regression trees and random forests to obtain probabilistic forecasts for
 circular responses. Using trees simplifies model estimation as
@@ -156,7 +156,7 @@ Circular regression trees are straightforward to interpret, can capture
 nonlinear effects and interactions, and automatically select covariates
 affecting location and/or scale in the von~Mises distribution. Circular random
 forests regularize and smooth the effects from an ensemble of trees.
-
+%
 The new methods are applied to probabilistic wind direction forecasting at two
 Austrian airports, considering other common approaches as a benchmark.}
 
@@ -628,6 +628,7 @@ benchmarked against alternative probabilistic forecasting methods. The applicati
 based on $+1$\,h and $+3$\,h forecasts employing lagged observations in the
 vicinity of the airports as possible predictor variables. 
 
+\newpage
 \subsection{Data}
 %%
 \begin{figure}[t]
@@ -950,6 +951,7 @@ significantly superior to the reference.
 \end{figure}
 %%
 
+\newpage
 % -------------------------------------------------------------------
 % Summary
 % -------------------------------------------------------------------
