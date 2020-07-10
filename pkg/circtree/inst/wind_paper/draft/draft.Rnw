@@ -511,7 +511,7 @@ data can be accomplished with the unbiased recursive partitioning algorithms
 MOB \citep{Zeileis+Hothorn+Hornik:2008} or CTree
 \citep{Hothorn+Hornik+Zeileis:2006}. For this purpose, model scores are
 obtained by evaluating the score function~$s(\cdot)$ for each individual
-observation at the parameter estimates (Equation~(\ref{eq:scores})). For the
+observation at the parameter estimates (Equation~\ref{eq:scores}). For the
 von~Mises distribution with its two distribution parameters ($\mu$ and
 $\kappa$) and a data set of $n$ observations, this yields an $n \times 2$
 matrix that can be employed as a discrepancy measure, capturing how well each
@@ -765,7 +765,7 @@ state-of-the-art GLM-type model to forecast circular response variables.
     \cite{Mulder+Klugkist:2017} which depends less on initial values due to an MCMC
     sampling algorithm using weakly informative priors. \newline Following
     \cite{Fisher+Lee:1992} the model uses a link function~$g(\cdot)$ to keep the
-    response values within an interval of length $2\pi$. Since in the
+    response values within an interval of length $2\pi$. Because in the
     implementation of \cite{Mulder+Klugkist:2017} the accommodation of circular
     covariates would require an additional manual adjustment, such as an
     approximation by a finite Fourier expansion (cf., \citealt{Lund:1999}), we only
@@ -1146,7 +1146,7 @@ t_{l^{\ast}}^{qr} = \sum_{i \in \mathcal{B}_{qr}} s(\hat{\mu}, \hat{\kappa}, y_i
 for $q \in \{1,2\}$. The breakpoint that leads to the highest discrepancy is
 then selected as split point as defined by
 \begin{equation}
-r^{\ast} = \argmin_{r} (\min_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Sigma_{l^{\ast}}^{qr})).
+r^{\ast} = \argmax_{r} (\max_{q=1,2}(c(t_{l^{\ast}}^{qr},\mu_{l^{\ast}}^{qr},\Sigma_{l^{\ast}}^{qr}))).
 \end{equation}
 
 Subsequently, the same testing and splitting procedure is repeated in each of
