@@ -73,7 +73,7 @@
 ### regarding the selected p-value and split variable
 .which.max <- function(x) {
     x[!is.finite(x)] <- -Inf
-    which(order(x) == length(x))
+    order(x)[length(x)]
 }
 
 
