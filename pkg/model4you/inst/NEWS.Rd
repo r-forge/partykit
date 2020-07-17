@@ -2,6 +2,16 @@
 
 \title{NEWS file for the \pkg{model4you} package}
 
+\section{Changes in Version 0.9-6}{
+  \itemize{
+    \item update score calculation in coxph() models:\\
+    old: as.matrix(cbind(residuals(mod, "martingale"), estfun(mod)))
+    new: cbind(mod$residuals, mod$residuals * model.matrix(mod))
+  }
+}
+
+
+
 \section{Changes in Version 0.9-5}{
   \itemize{
     \item avoid using class()==, instead use is(), especially for matrix
