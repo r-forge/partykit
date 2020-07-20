@@ -164,7 +164,8 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
 
   ## control parameters (used repeatedly)
   minsize <- control$minsize
-  if(!is.null(minsize) && !is.integer(minsize)) minsize <- as.integer(minsize)
+  if(!is.null(minsize) && !is.integer(minsize)) 
+      minsize <- as.integer(floor(minsize))
   verbose <- control$verbose
   rnam <- c("estfun", "object")
   terminal <- lapply(rnam, function(x) x %in% control$terminal)
