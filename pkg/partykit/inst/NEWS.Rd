@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-10 (2020-07-20)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{Deal with non-integer \code{minsize} in \code{mob}.}
+  }
+}
+}
+
 \section{Changes in Version 1.2-9 (2020-07-08)}{
   \subsection{Bugfixes}{
   \itemize{
@@ -9,6 +17,8 @@
   }
 }
 }
+
+
 
 \section{Changes in Version 1.2-8 (2020-06-09)}{
   \subsection{Bugfixes}{
