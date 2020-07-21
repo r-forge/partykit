@@ -182,15 +182,16 @@
     proci <- process[oi, , drop = FALSE]
     proci <- apply(proci, 2L, cumsum)
     tt0 <- if(ctrl$caseweights && any(weights != 1L)) cumsum(weights[oi]) else 1:n
-    stat <- if(from < to) {
+    from_to <- tt0 >= from & tt0 <= to
+    stat <- if(length(from_to) > 0L) {
       xx <- rowSums(proci^2)
-      xx <- xx[tt0 >= from & tt0 <= to]
-      tt <- tt0[tt0 >= from & tt0 <= to]/nobs
+      xx <- xx[from_to]
+      tt <- tt0[from_to]/nobs
       max(xx/(tt * (1 - tt)))	  
     } else {
       0
     }
-    pval <- if(from < to) logp.supLM(stat, k, lambda) else NA
+    pval <- if(length(from_to) > 0L) logp.supLM(stat, k, lambda) else NA
   }
   
   ## return version of pvalue that .extree_node deals with
