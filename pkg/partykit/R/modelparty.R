@@ -353,7 +353,7 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
         proci <- apply(proci, 2L, cumsum)
 	tt0 <- if(control$caseweights && any(weights != 1L)) cumsum(weights[oi]) else 1:n
 	from_to <- tt0 >= from & tt0 <= to
-        stat[i] <- if(length(from_to) > 0L) {
+        stat[i] <- if(sum(from_to) > 0L) {
 	  xx <- rowSums(proci^2)
 	  xx <- xx[from_to]
 	  tt <- tt0[from_to]/nobs
@@ -361,7 +361,7 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
 	} else {
 	  0
 	}
-        pval[i] <- if(length(from_to) > 0L) logp.supLM(stat[i], k, lambda) else NA
+        pval[i] <- if(sum(from_to) > 0L) logp.supLM(stat[i], k, lambda) else NA
       }
     }
 
