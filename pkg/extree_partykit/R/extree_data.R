@@ -280,7 +280,7 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 }    
 
 ### <FIXME> document how to extract slots fast </FIXME>
-"[[.extree_data" <- extree_variable <- function(x, i, 
+extree_variable <- function(x, i, 
     type = c("original", "index", "scores", "missings")) {
     type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
     switch(type, 
