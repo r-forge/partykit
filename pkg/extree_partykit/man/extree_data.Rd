@@ -75,7 +75,7 @@ this function.
   model.frame(ed, yxonly = TRUE)
 
   ### binned Petal.Width
-  ed[[4, type = "index"]]
+  extree_variable(ed, 4, type = "index")
 
   ### response
   ed$yx$y
