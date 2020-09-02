@@ -280,7 +280,6 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 }    
 
 ### <FIXME> document how to extract slots fast </FIXME>
-### <FIXME> (HS) replace [[]] with function extree_variable</FIXME>
 "[[.extree_data" <- extree_variable <- function(x, i, 
     type = c("original", "index", "scores", "missings")) {
     type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
@@ -312,4 +311,13 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
             x$missings[[i]]
         }
     )
+}
+
+
+### <FIXME> (HS) delete if possible </FIXME>
+"[[.extree_data" <- function(x, i, 
+    type = c("original", "index", "scores", "missings")) { 
+    
+    warning("[[.extree_data is deprecated. Please use extree_variable().")
+    extree_variable(x = x, i = i, type = type)
 }
