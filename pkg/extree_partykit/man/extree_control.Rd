@@ -66,26 +66,31 @@ extree_control(
                    assigned (following the node distribution). If \code{TRUE},
                    they go with the majority.}
   \item{caseweights}{ a logical interpreting \code{weights} as case weights.}
-  \item{applyfun}{an optional \code{\link[base]{lapply}}-style function with arguments
+  \item{applyfun}{ an optional \code{\link[base]{lapply}}-style function with arguments
                   \code{function(X, FUN, \dots)}. It is used for computing the variable selection criterion.
                   The default is to use the basic \code{lapply}
                   function unless the \code{cores} argument is specified (see below).}
-  \item{cores}{numeric. If set to an integer the \code{applyfun} is set to
+  \item{cores}{ numeric. If set to an integer the \code{applyfun} is set to
                \code{\link[parallel]{mclapply}} with the desired number of \code{cores}.}
-  \item{saveinfo}{logical. Store information about variable selection
+  \item{saveinfo}{ logical. Store information about variable selection
                   procedure in \code{info} slot of each \code{partynode}.}
-  \item{update}{logical. If \code{TRUE}, the data transformation is updated
+  \item{update}{ logical. If \code{TRUE}, the data transformation is updated
                 in every node.}
-  \item{bonferroni}{}
-  \item{selectfun}{}
-  \item{splitfun}{}
-  \item{svselectfun}{}
-  \item{svsplitfun}{}
+  \item{bonferroni}{ logical. Should \code{p} values be Bonferroni corrected?}
+  \item{selectfun}{ a function or list of functions with arguments \code{model}, \code{trafo}, \code{data}, \code{subset}, \code{weights}, \code{j}, \code{split_only}, \code{control}. Each list element must have a unique name according to the variable type (?).}
+  \item{splitfun}{ a function or list of functions with arguments \code{model}, \code{trafo}, \code{data}, \code{subset}, \code{weights}, \code{whichvar}, \code{ctrl}. Each list element must have a unique name according to the variable type (?).}
+  \item{svselectfun}{an optional function or list of functions for selecting surrogate variables.}
+  \item{svsplitfun}{an optional function or list of functions for selecting surrogate splits.}
 }
 \details{
-	TBD
+	The arguments \code{splitfun} determines how to selected a splitting variable for a node.
+	It returns a list of p-values and test statistics per variable. 
+  The variables are sorted by the p-value or test statistic (according to \code{criterion}) and their sorted       indices are the input for the \code{selectfun} in form of the argument \code{whichvar}. 
+
+  For details on the other arguments, see \code{\link{ctree_control}}. 
+  For an example, see \code{\link{extree}}.
 }
 \value{
-  A list.
+  A list. 
 }
 \keyword{misc}

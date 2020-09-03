@@ -20,7 +20,7 @@ extree_variable(x, i, type = c("original", "index", "scores", "missings"))
   \code{"original"} returns the original data;
   \code{"index"} returns the \code{\link[inum]{inum}} object; 
   \code{"scores"} returns the named list of numeric scores (see argument \code{scores} in \code{\link{extree_data}}); 
-  \code{"missings"} returns the info on which entries of \code{i} are missing; 
+  \code{"missings"} returns the info on which entries of \code{i} are missing. 
 }
 }
 \details{
@@ -28,5 +28,21 @@ extree_variable(x, i, type = c("original", "index", "scores", "missings"))
 }
 \value{
 The selected information.
+}
+\examples{
+
+data("iris")
+ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, data = iris, yx = "matrix")
+
+### response
+extree_variable(ed, i = 1)
+extree_variable(ed, i = "yx")
+extree_variable(ed, i = "yx", type = "missings")
+
+### covariates
+extree_variable(ed, i = 4)
+extree_variable(ed, i = 5, type = "index")
+extree_variable(ed, i = 5)[1:10]
+extree_variable(ed, i = c(2, 4)) 
 }
 \keyword{tree}
