@@ -189,7 +189,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     if (!is.null(scores))
         ret$scores[names(scores)] <- scores
     
-    if (length(nmax) == 1) nmax <- c("yx" = nmax, "z" = nmax)
+    if (length(nmax) == 1L) nmax <- c("yx" = nmax, "z" = nmax)
     ### <FIXME> make meanlevels an argument and make sure intersplit is TRUE </FIXME>
     ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
         nmax = nmax["z"], meanlevels = FALSE)
