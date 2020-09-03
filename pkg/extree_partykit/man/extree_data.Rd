@@ -54,12 +54,20 @@ part. Use \code{Inf} to switch-off binning.
 }
 }
 \details{
-This internal functionality will be the basis of implementations of other
-tree algorithms in future versions. Currently, only \code{ctree} relies on
-this function.
+  This internal functionality will be the basis of implementations of other
+  tree algorithms in future versions. Currently, only \code{ctree} relies on
+  this function.
+  
+  We use the following notation:
+  \itemize{
+      \item \code{y}: response variable(s)
+      \item \code{x}: model covariate(s) (e.g. in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
+      \item \code{z}: split variable(s)
+  }
 }
 \value{An object of class \code{extree_data}. %TODO add mor info here
 }
+\seealso{\code{\link{extree_variable}}}
 \examples{
 
   data("iris")

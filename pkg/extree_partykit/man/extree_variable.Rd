@@ -14,7 +14,7 @@ extree_variable(x, i, type = c("original", "index", "scores", "missings"))
 \arguments{
   \item{x}{an object of class \code{\link{extree_data}}.
 }
-\item{i}{extree data slot index. Can be a numeric vector or \code{"xy"}.
+\item{i}{extree data slot index. Can be a numeric vector or \code{"xy"} (see also \code{\link{extree_data}}).
 }
   \item{type}{type of variable version to return. 
   \code{"original"} returns the original data;
@@ -27,22 +27,71 @@ extree_variable(x, i, type = c("original", "index", "scores", "missings"))
 
 }
 \value{
-The selected information.
+The selected information. See argument \code{type}.
 }
+\seealso{\code{\link{extree_data}}}
 \examples{
 
-data("iris")
-ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, data = iris, yx = "matrix")
+  data("iris")
 
-### response
-extree_variable(ed, i = 1)
-extree_variable(ed, i = "yx")
-extree_variable(ed, i = "yx", type = "missings")
+  ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
+                    data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
 
-### covariates
-extree_variable(ed, i = 4)
-extree_variable(ed, i = 5, type = "index")
-extree_variable(ed, i = 5)[1:10]
-extree_variable(ed, i = c(2, 4)) 
+
+  ### binned Petal.Width
+  extree_variable(ed, 4, type = "index")
+  
+  ## y and x variables
+  head(extree_variable(ed, i = "yx"))
+  extree_variable(ed, i = "yx", type = "missings")
+  
+  ### response
+  extree_variable(ed, i = 1)
+  
+  ### split variables
+  extree_variable(ed, i = 4)
+  extree_variable(ed, i = 5, type = "index")
+  extree_variable(ed, i = 5)[1:10]
+  extree_variable(ed, i = c(2, 4))
+
+  
+  
+  
+  
+  data("HuntingSpiders", package = "partykit")
+
+  ed_hs <- extree_data(arct.lute + pard.lugu + zora.spin + pard.nigr + 
+      pard.pull + aulo.albi + troc.terr + alop.cune + pard.mont + alop.acce + 
+      alop.fabr + arct.peri ~ herbs + reft + moss + sand + twigs + water,
+      data = HuntingSpiders, yx = "matrix", nmax = c(yx = Inf, z = Inf))
+  
+  ### the model.frame
+  mf <- model.frame(ed)
+  all.equal(mf, HuntingSpiders[, names(mf)])
+  
+  ## Original variable
+  extree_variable(ed_hs, 1, type = "original")
+  HuntingSpiders$arct.lute
+  
+  ## outcome variables
+  head(extree_variable(ed_hs, i = "yx"))
+  
+  ## Index 
+  # nmax = c(yx = Inf, z = Inf) and thus NULL
+  # 1 = arct.lute
+  extree_variable(ed_hs, 1, type = "index")
+  
+  # for z index is created even if nmax = c(yx = Inf, z = Inf)
+  # 13 = herbs
+  extree_variable(ed_hs, 13, type = "index")
+  
+  ## what do scores do?
+  extree_variable(ed_hs, 1, type = "scores")
+  extree_variable(ed_hs, 13, type = "scores")
+  extree_variable(ed_hs, 14, type = "scores")
+  
+  ## No missings
+  extree_variable(ed_hs, 1, type = "missings")
 }
+
 \keyword{tree}
