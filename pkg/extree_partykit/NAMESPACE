@@ -11,9 +11,6 @@ import("mvtnorm")
 importFrom("survival",
   "survfit"
 )
-importFrom("rpart",
-  "prune"
-)
 importFrom("grDevices",
   "gray.colors"
 )
@@ -210,13 +207,13 @@ S3method("weights", "modelparty")
 S3method("predict", "modelparty")
 S3method("print", "modelparty")
 S3method("plot", "modelparty")
-S3method("prune", "modelparty")
+S3method(rpart::prune, "modelparty")
 
 ## methods for class lmtree
 S3method("plot", "lmtree")
 S3method("predict", "lmtree")
 S3method("print", "lmtree")
-S3method("prune", "lmtree")
+S3method(rpart::prune, "lmtree")
 
 ## methods for class glmtree
 S3method("plot", "glmtree")
@@ -237,8 +234,5 @@ S3method("as.simpleparty", "XMLNode")
 S3method("as.party", "rpart")
 
 ## conditional registration of strucchange methods
-if(getRversion() >= "3.6.0") {
-  S3method(strucchange::sctest, "constparty")
-  S3method(strucchange::sctest, "modelparty")
-}
-
+S3method(strucchange::sctest, "constparty")
+S3method(strucchange::sctest, "modelparty")
