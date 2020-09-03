@@ -85,13 +85,24 @@ The selected information. See argument \code{type}.
   # 13 = herbs
   extree_variable(ed_hs, 13, type = "index")
   
-  ## what do scores do?
-  extree_variable(ed_hs, 1, type = "scores")
-  extree_variable(ed_hs, 13, type = "scores")
-  extree_variable(ed_hs, 14, type = "scores")
-  
   ## No missings
   extree_variable(ed_hs, 1, type = "missings")
+  
+  
+  
+  if (require("TH.data") && require("survival")) {
+    library("survival")
+    data("GBSG2", package = "TH.data")
+    
+    ed_bc <- extree_data(Surv(time, cens) ~ tgrade, data = GBSG2)
+    
+    ## Survival outcome
+    extree_variable(ed_bc, i = "yx")
+    
+    ## Ordered variable tgrade (tumor grade)
+    extree_variable(ed_bc, i = 2)
+    extree_variable(ed_bc, i = 2, type = "scores")
+  } 
 }
 
 \keyword{tree}

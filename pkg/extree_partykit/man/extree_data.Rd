@@ -64,12 +64,36 @@ part. Use \code{Inf} to switch-off binning.
       \item \code{x}: model covariate(s) (e.g. in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
       \item \code{z}: split variable(s)
   }
+  
 }
 \value{An object of class \code{extree_data}. %TODO add mor info here
 }
 \seealso{\code{\link{extree_variable}}}
 \examples{
 
+  
+  if(require("mlbench")) {
+    
+    ## Pima Indians diabetes data
+    data("PimaIndiansDiabetes", package = "mlbench")
+    
+    # with formula
+    ed1 <- extree_data(diabetes ~ glucose |  mass + pedigree + age,
+        data = PimaIndiansDiabetes)
+    
+    # without formula (useful for big data sets)
+    data_list <- list(
+      y = c("diabetes"),
+      x = c("glucose"),
+      z = c("mass", "pedigree", "age")
+    )
+    ed2 <- extree_data(formula = data_list, data = PimaIndiansDiabetes)
+    
+    str(ed1, 2)
+    str(ed2, 2)
+  }
+
+  
   data("iris")
 
   ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
@@ -90,6 +114,9 @@ part. Use \code{Inf} to switch-off binning.
 
   ### model matrix 
   ed$yx$x
+  
+  
+  
 
 }
 \keyword{tree}
