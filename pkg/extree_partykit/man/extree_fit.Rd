@@ -30,7 +30,7 @@ extree_fit(data, trafo, converged, selectfun = ctrl$selectfun, splitfun = ctrl$s
   \item{svsplitfun}{an optional function for selecting surrogate splits.
 }
   \item{partyvars}{a numeric vector assigning a weight to each partitioning
-variable (\code{z} in \code{\link{extree_data}}.
+variable (\code{z} in \code{\link{extree_data}}).
 }
   \item{subset}{a sorted integer vector describing a subset.
 }

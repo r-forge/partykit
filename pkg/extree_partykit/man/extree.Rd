@@ -45,10 +45,96 @@ the model converged?).
 
 \code{selectfun} defines how to select the split variable.
 \code{splitfun} defines how to select the split point. 
-Details in \code{\link{extree_control}}
+Details in \code{\link{extree_control}}.
 }
 \value{Currently: A list of \code{nodes} (an object of class \code{partynode})
 	and \code{trafo} (the encapsulated transformation function).
 	This will likely change soon.
 }
+\examples{
+
+data(airquality, package = "datasets")
+airq <- subset(airquality, !is.na(Ozone))
+airq_dat <- extree_data(Ozone ~ Wind + Temp,
+                        data = airq, yx = "matrix")
+
+### Set up trafo function to preprocess data for variable and split point selection 
+trafo_identity <- function(subset, data, weights = NULL, info = NULL, 
+                           estfun = TRUE, object = TRUE) {
+  
+  ### Extract response and "subset"
+  y <- extree_variable(data, i = 1, type = "original")  
+  y[-subset] <- NA  
+  
+  ### Return list
+  rval <- list(
+    estfun = if (estfun) y else NULL,
+    unweighted = TRUE,  
+    converged = TRUE 
+  )
+  return(rval)
+}
+
+### Set up function to guide variable selection 
+### Returns a list with values of test statistics and p-values 
+var_select_guide <- function(model, trafo, data, subset, weights, j,
+                                    split_only = FALSE, control) {
+
+  estfun <- model$estfun[subset]
+
+  ### categorize estfun if not already a factor
+  if(is.factor(estfun)) est_cat <- estfun else {
+    breaks <- unique(quantile(estfun, c(0, 0.25, 0.5, 0.75, 1)))
+    if(length(breaks) < 5) breaks <- c(min(estfun), mean(estfun), max(estfun))
+    est_cat <- cut(estfun, breaks = breaks,
+                   include.lowest = TRUE, right = TRUE)
+  }
+
+  ### get possible split variable
+  sv_cat <- extree_variable(data, i = j, type = "index")[subset]
+
+  ### independence test
+  test <- chisq.test(x = est_cat, y = sv_cat)
+  res <- list(statistic = test$statistic, p.value = test$p.value)
+
+  return(res)
+}
+
+
+### Set up split selection
+### As a split point the median is used of the split variable
+split_select_median_numeric <- function(model, trafo, data, subset, weights, 
+                                        whichvar, ctrl) {
+  
+  if (length(whichvar) == 0) return(NULL)
+  
+  ### split FIRST variable at median 
+  j <- whichvar[1]
+  x <- extree_variable(data, i = j, type = "original")[subset]
+  ret <- partysplit(as.integer(j), breaks = median(x))
+  
+  return(ret)
+}
+
+### Set extree control 
+ctrl1 <- extree_control(criterion = "p.value", # split variable selection criterion 
+                        logmincriterion = log(1 - 0.05),
+                        update = TRUE,
+                        selectfun = var_select_guide,
+                        splitfun = split_select_median_numeric,
+                        svselectfun = NULL, 
+                        svsplitfun = NULL,
+                        minsplit = 50)
+
+
+### Call extree 
+tr1 <- extree(data = airq_dat, trafo = trafo_identity, 
+              control = c(ctrl1, restart = TRUE))
+print(tr1$nodes)
+ptr1 <- party(tr1$nodes, data = airq_dat$data)
+print(ptr1)
+plot(ptr1)
+}
 \keyword{tree}
+
+
