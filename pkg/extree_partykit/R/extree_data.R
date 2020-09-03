@@ -297,7 +297,8 @@ extree_variable <- function(x, i,
             return(x$zindex[[i]])
         },
         "scores" = {
-            f <- x[[i]]
+            # f <- x[[i]]
+            f <- extree_variable(x, i, type = "original")
             if (is.ordered(f)) {
                 sc <- x$scores[[i]]
                 if (is.null(sc)) sc <- 1:nlevels(f)
