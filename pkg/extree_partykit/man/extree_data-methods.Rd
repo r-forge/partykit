@@ -29,12 +29,13 @@
 \details{
 
   \code{str} compactly shows the internal structure of the object and 
-  \code{print} calls \code{str}.
+  \code{print} returns dimension of the \code{data.frame} and the names of the variables.
   
   \code{dimnames} gets the \code{dimnames} of \code{x$data} and \code{dim} gets 
   the \code{dim} of \code{x$data}.
 
 }
+\seealso{\code{\link{extree_data}}, \code{\link{extree_variable}}}
 \examples{
 
     ## airquality data
@@ -44,7 +45,7 @@
         
     ## use methods
     print(my_data)
-    str(my_data)
+    str(my_data, 2)
     dim(my_data)
     dimnames(my_data)
     
