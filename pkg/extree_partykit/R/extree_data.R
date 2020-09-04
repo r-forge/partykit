@@ -23,7 +23,9 @@ print.extree_data <- function(x, ...) {
     ## paste first 5 variables
     pastevars <- function(vars){
         
-        if(length(vars) > 5) {
+        lengthvars <- ifelse(is.logical(vars), sum(vars), length(vars))
+        
+        if(lengthvars > 5) {
             return(paste0(paste(names(x$data)[vars][1:5], collapse = ", "), ", ..."))
         } else {
             return(paste(names(x$data)[vars], collapse = ", "))

@@ -134,6 +134,14 @@ tr1 <- extree(data = airq_dat, trafo = trafo_identity,
 tr1
 
 
+## Same tree, different extree_data creating (no formula)
+dl <- list(y = "Ozone", z = c("Wind", "Temp"))
+airq_dat2 <- extree_data(dl,
+    data = airq, yx = "matrix")
+tr12 <- extree(data = airq_dat2, trafo = trafo_identity, 
+              control = c(ctrl1, restart = TRUE))
+tr12
+
 # -------------------------------------------------------------------
 # EXAMPLE 2: Use trafo_identity() and guide_test() for categorial response
 # -------------------------------------------------------------------
