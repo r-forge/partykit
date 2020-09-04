@@ -18,7 +18,23 @@ str.extree_data <- function(object, max.level = 1, give.attr = FALSE, ...) {
 
 ## print method
 print.extree_data <- function(x, ...) {
-    str(x, ...)
+    cat("'extree_data' with data of dimension", paste(dim(x$data), collapse = "x"), "\n\n")
+    
+    ## paste first 5 variables
+    pastevars <- function(vars){
+        
+        if(length(vars) > 5) {
+            return(paste0(paste(names(x$data)[vars][1:5], collapse = ", "), ", ..."))
+        } else {
+            return(paste(names(x$data)[vars], collapse = ", "))
+        } 
+    }
+        
+    cat("Variables: \n")
+    cat("y:", pastevars(x$variables$y), "\n")
+    if(length(x$variables$x) > 0) 
+        cat("x:", pastevars(x$variables$x), "\n")
+    cat("z:", pastevars(x$variables$z == 1), "\n")
 }
 
 
@@ -283,13 +299,20 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 extree_variable <- function(x, i, 
     type = c("original", "index", "scores", "missings")) {
     type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
+    
+    ## Check
+    if(length(i) > 1 & is.character(i)) 
+        stop("i cannot be a character vector.")
+    if(length(i) > 1 & type != "original") 
+        stop("For length(i) > 1 only type = 'original' is currently implemented.")
+    
     switch(type, 
         "original" = {
-            if (i == "yx") return(model.frame(x, yxonly = TRUE))
+            if (length(i) == 1 && i == "yx") return(model.frame(x, yxonly = TRUE))
             mf <- model.frame(x)
             ### [[.data.frame needs lots of memory
             class(mf) <- "list"
-            return(mf[[i]])
+            if(length(i) == 1) return(mf[[i]]) else return(mf[i])
         },
         "index" = {
             if (i == "yx" || i %in% c(x$variables$y, x$variables$x))

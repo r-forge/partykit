@@ -73,8 +73,11 @@ The selected information. See argument \code{type}.
   extree_variable(ed_hs, 1, type = "original")
   HuntingSpiders$arct.lute
   
-  ## outcome variables
+  # outcome variables
   head(extree_variable(ed_hs, i = "yx"))
+  
+  # Several variables
+  extree_variable(ed_hs, 10:15)
   
   ## Index 
   # nmax = c(yx = Inf, z = Inf) and thus NULL
