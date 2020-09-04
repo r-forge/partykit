@@ -17,7 +17,8 @@ str.extree_data <- function(object, max.level = 1, give.attr = FALSE, ...) {
 
 
 ## print method
-print.extree_data <- function(x, ...) {
+print.extree_data <- function(x, ...) { 
+    # FIXME (HS) add argument maxvars to let user choose the number of printed vars
     cat("'extree_data' with data of dimension", paste(dim(x$data), collapse = "x"), "\n\n")
     
     ## paste first 5 variables
@@ -33,12 +34,13 @@ print.extree_data <- function(x, ...) {
     }
         
     cat("Variables: \n")
-    cat("y:", pastevars(x$variables$y), "\n")
+    cat(length(x$variables$y), "response variable(s) y:", pastevars(x$variables$y), "\n")
     if(length(x$variables$x) > 0) 
-        cat("x:", pastevars(x$variables$x), "\n")
-    cat("z:", pastevars(x$variables$z == 1), "\n")
+        cat(length(x$variables$x), "model variable(s) x:", pastevars(x$variables$x), "\n")
+    cat(sum(x$variables$z), "split variable(s) z:", pastevars(x$variables$z == 1), "\n")
 }
 
+## FIXME (HS) summary method: how many variables of which type, which binning, scores?
 
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
@@ -223,6 +225,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         yxmf <- mf
     }
     
+    ## FIXME: (HS) lapply(names(ret$data), function(name) { if(name %in% unlist(vars)) which(is.na(ret$data[[name]])) else integer() })
     ret$missings <- lapply(ret$data, function(x) which(is.na(x)))
     ret$yxmissings <- sort(unique(do.call("c", ret$missings[yxvars])))
     
@@ -316,7 +319,7 @@ extree_variable <- function(x, i,
             class(mf) <- "list"
             if(length(i) == 1) return(mf[[i]]) else return(mf[i])
         },
-        "index" = {
+        "index" = { ## FIXME: allow numeric vector here (return as list)
             if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
                 return(x$yxindex) ### may be NULL
             return(x$zindex[[i]])
