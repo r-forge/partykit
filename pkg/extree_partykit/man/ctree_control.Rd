@@ -7,19 +7,38 @@
 
 }
 \usage{
-ctree_control(teststat = c("quadratic", "maximum"),
+ctree_control(
+    teststat = c("quadratic", "maximum"),
     splitstat = c("quadratic", "maximum"),
     splittest = FALSE,
     testtype = c("Bonferroni", "MonteCarlo", "Univariate", "Teststatistic"),
     pargs = GenzBretz(),
-    nmax = c(yx = Inf, z = Inf), alpha = 0.05, mincriterion = 1 - alpha,
-    logmincriterion = log(mincriterion), minsplit = 20L, minbucket = 7L,
-    minprob = 0.01, stump = FALSE, lookahead = FALSE, MIA = FALSE, nresample = 9999L,
-    tol = sqrt(.Machine$double.eps),maxsurrogate = 0L, numsurrogate = FALSE,
-    mtry = Inf, maxdepth = Inf,
-    multiway = FALSE, splittry = 2L, intersplit = FALSE, majority = FALSE,
-    caseweights = TRUE, applyfun = NULL, cores = NULL, saveinfo = TRUE,
-    update = NULL, splitflavour = c("ctree", "exhaustive"))
+    nmax = c(yx = Inf, z = Inf), 
+    alpha = 0.05, 
+    mincriterion = 1 - alpha,
+    logmincriterion = log(mincriterion), 
+    minsplit = 20L, 
+    minbucket = 7L,
+    minprob = 0.01, 
+    stump = FALSE, 
+    lookahead = FALSE, 
+    MIA = FALSE, 
+    nresample = 9999L,
+    tol = sqrt(.Machine$double.eps), 
+    maxsurrogate = 0L, 
+    numsurrogate = FALSE,
+    mtry = Inf, 
+    maxdepth = Inf,
+    multiway = FALSE, 
+    splittry = 2L, 
+    intersplit = FALSE, 
+    majority = FALSE,
+    caseweights = TRUE, 
+    applyfun = NULL, 
+    cores = NULL, 
+    saveinfo = TRUE,
+    update = NULL, 
+    splitflavour = c("ctree", "exhaustive"))
 }
 \arguments{
   \item{teststat}{ a character specifying the type of the test statistic

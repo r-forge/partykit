@@ -39,13 +39,13 @@ variable (\code{z} in \code{\link{extree_data}}).
   \item{ctrl}{control arguments.
 }
   \item{doFit}{a logical indicating if the tree shall be grown (\code{TRUE})
-or not \code{FALSE}.
+or not (\code{FALSE}).
 }
 }
 \details{
 This internal functionality will be the basis of implementations of other
 tree algorithms in future versions. Currently, only \code{ctree} relies on
-this function.
+this function. See \code{\link{extree}} and \code{\link{extree_control}} for further details.
 }
 \value{An object of class \code{partynode}.}
 \keyword{tree}
