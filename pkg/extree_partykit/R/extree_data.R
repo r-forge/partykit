@@ -306,10 +306,8 @@ extree_variable <- function(x, i,
     type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
     
     ## Check
-    if(length(i) > 1 & is.character(i)) 
-        stop("i cannot be a character vector.")
-    if(length(i) > 1 & type != "original") 
-        stop("For length(i) > 1 only type = 'original' is currently implemented.")
+    if(length(i) > 1 & type == "scores") 
+        stop("For length(i) > 1 type = 'scores' is currently not implemented.")
     
     switch(type, 
         "original" = {
@@ -317,12 +315,13 @@ extree_variable <- function(x, i,
             mf <- model.frame(x)
             ### [[.data.frame needs lots of memory
             class(mf) <- "list"
-            if(length(i) == 1) return(mf[[i]]) else return(mf[i])
+            if (length(i) == 1) return(mf[[i]]) else return(mf[i])
         },
-        "index" = { ## FIXME: allow numeric vector here (return as list)
-            if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
+        "index" = {
+            if (i == "yx" || (length(i) == 1 & i %in% c(x$variables$y, x$variables$x)))
+            # if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
                 return(x$yxindex) ### may be NULL
-            return(x$zindex[[i]])
+            if (length(i) == 1) return(x$zindex[[i]]) else return(x$zindex[i])
         },
         "scores" = {
             # f <- x[[i]]
