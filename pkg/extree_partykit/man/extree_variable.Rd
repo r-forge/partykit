@@ -14,7 +14,7 @@ extree_variable(x, i, type = c("original", "index", "scores", "missings"))
 \arguments{
   \item{x}{an object of class \code{\link{extree_data}}.
 }
-\item{i}{extree data slot index. Can be a numeric vector or \code{"xy"} (see also \code{\link{extree_data}}).
+\item{i}{extree data slot index. Can be a numeric vector, a character vector of variable names or \code{"xy"} (see also \code{\link{extree_data}}).
 }
   \item{type}{type of variable version to return. 
   \code{"original"} returns the original data;
@@ -33,29 +33,33 @@ The selected information. See argument \code{type}.
 \examples{
 
   data("iris")
-
   ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
-                    data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
-
+      data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
 
   ### binned Petal.Width
   extree_variable(ed, 4, type = "index")
-  
+
   ## y and x variables
   head(extree_variable(ed, i = "yx"))
   extree_variable(ed, i = "yx", type = "missings")
-  
+
   ### response
   extree_variable(ed, i = 1)
-  
+  extree_variable(ed, i = "Species")
+
   ### split variables
   extree_variable(ed, i = 4)
+  extree_variable(ed, i = "Petal.Width")
   extree_variable(ed, i = 5, type = "index")
   extree_variable(ed, i = 5)[1:10]
-  extree_variable(ed, i = c(2, 4))
 
-  
-  
+  ### several variables at once
+  ## type = "original"
+  extree_variable(ed, i = c(2, 4))
+  extree_variable(ed, i = c("Sepal.Width", "Petal.Width"))
+  ## type = "index" (only for binned variables, otherwise NULL)
+  extree_variable(ed, i = c(2, 4), type = "index")
+  extree_variable(ed, i = c("Sepal.Width", "Petal.Width"), type = "index")
   
   
   data("HuntingSpiders", package = "partykit")
