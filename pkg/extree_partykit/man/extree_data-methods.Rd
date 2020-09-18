@@ -23,7 +23,7 @@
   \item{max.level}{maximal level of nesting which is applied for displaying 
     nested structures, e.g., a list containing sub lists. Default NA: Display 
     all nesting levels.}
-  \item{give.attr}{logical; if TRUE (default), show attributes as sub structures.}
+  \item{give.attr}{logical; if TRUE, show attributes as sub structures. Defaults to FALSE.}
   \item{\dots}{ additional arguments passed to \code{\link{str}}.}
 }
 \details{
