@@ -89,8 +89,15 @@ part. Use \code{Inf} to switch-off binning.
     )
     ed2 <- extree_data(formula = data_list, data = PimaIndiansDiabetes)
     
-    str(ed1, 2)
-    str(ed2, 2)
+    ## ed1 and ed2 differ, because they are created in different ways.
+    ## They still result in the same tree.
+    str(ed1$data, 2)
+    str(ed2$data, 2)
+    
+    dim(ed1$data)
+    dim(ed2$data)
+    
+    all.equal(ed1, ed2)
   }
 
   
