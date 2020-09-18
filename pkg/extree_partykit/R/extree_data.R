@@ -225,8 +225,13 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         yxmf <- mf
     }
     
-    ## FIXME: (HS) lapply(names(ret$data), function(name) { if(name %in% unlist(vars)) which(is.na(ret$data[[name]])) else integer() })
-    ret$missings <- lapply(ret$data, function(x) which(is.na(x)))
+    ## Get missings (only for relevant variables: yxvars and vars$z)
+    get_miss <- function(i) {
+        if (i %in% yxvars || vars$z[i] == 1)
+            which(is.na(ret$data[, i])) else NA
+    }
+    ret$missings <- lapply(seq_len(ncol(ret$data)), get_miss)
+    names(ret$missings) <- names(ret$data)
     ret$yxmissings <- sort(unique(do.call("c", ret$missings[yxvars])))
     
     ## FIXME: separate object with options for: discretization, condensation, some NA handling

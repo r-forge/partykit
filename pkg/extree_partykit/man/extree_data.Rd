@@ -123,7 +123,31 @@ part. Use \code{Inf} to switch-off binning.
   ed$yx$x
   
   
-  
+  # Working with missings 
+  ## generate example data
+  set.seed(2020)
+  n <- 15
+  X <- rnorm(n = n)
+  Z <- rnorm(n = n)
+  Y <- rnorm(n = n, mean = x + I(z > 0))
+  Zmiss <- Z
+  Zmiss[3:5] <- NA
+  O <- sample(1:2, size = n, replace = TRUE)
+  Omiss <- O
+  Omiss[1:2] <- NA
+  dat <- data.frame(Y, X, Z, Zmiss, O, Omiss)
+    
+  exd <- extree_data(formula = list(y = c("Y"), x = c("X"), z = c("Zmiss"), 
+      offset = c("Omiss")), data = dat)
+    
+  ## show all missings that are relevant (not computed for unused variables)
+  exd$missings
+    
+  ## missings in variable Zmiss
+  extree_variable(x = exd, i = "Zmiss", type = "missings")
+    
+  ## missings in yx (this includes the offset, of course)
+  extree_variable(x = exd, i = "yx", type = "missings")
 
 }
 \keyword{tree}
