@@ -45,7 +45,8 @@ or not (\code{FALSE}).
 \details{
 This internal functionality will be the basis of implementations of other
 tree algorithms in future versions. Currently, only \code{ctree} relies on
-this function. See \code{\link{extree}} and \code{\link{extree_control}} for further details.
+this function. 
 }
 \value{An object of class \code{partynode}.}
+\seealso{\code{\link{extree}} and \code{\link{extree_control}}.}
 \keyword{tree}

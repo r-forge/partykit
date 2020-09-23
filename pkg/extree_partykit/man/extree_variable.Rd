@@ -70,7 +70,7 @@ The selected information. See argument \code{type}.
       data = HuntingSpiders, yx = "matrix", nmax = c(yx = Inf, z = Inf))
   
   ### the model.frame
-  mf <- model.frame(ed)
+  mf <- model.frame(ed_hs)
   all.equal(mf, HuntingSpiders[, names(mf)])
   
   ## Original variable

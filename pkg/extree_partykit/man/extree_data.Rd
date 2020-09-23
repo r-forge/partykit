@@ -65,6 +65,7 @@ part. Use \code{Inf} to switch-off binning.
       \item \code{z}: split variable(s)
   }
   
+  A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
 \value{An object of class \code{extree_data}. %TODO add mor info here
 }
