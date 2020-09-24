@@ -162,10 +162,10 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar, cont
 var_select_loop <- function(model, trafo, data, subset, weights, whichvar, 
     control, var_select) {
 
-    ## set up return list + criteria matrix
-    ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
-    rownames(ret$criteria) <- c("statistic", "p.value")
-    colnames(ret$criteria) <- names(model.frame(data))
+    ## set up return list + criterion matrix
+    ret <- list(criterion = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+    rownames(ret$criterion) <- c("statistic", "p.value")
+    colnames(ret$criterion) <- names(model.frame(data))
     if (length(whichvar) == 0) return(ret)
 
     ## loop over all relevant variables and use var_select function supplied
@@ -175,8 +175,8 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
             data = data, subset = subset, weights = weights, j = j, 
             control = control)
         
-        ret$criteria["statistic",j] <- tst$statistic
-        ret$criteria["p.value",j] <- tst$p.value
+        ret$criterion["statistic",j] <- tst$statistic
+        ret$criterion["p.value",j] <- tst$p.value
     }
     ret
 }
@@ -212,9 +212,9 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 
 ## Select function old
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
-    ret <- list(criteria = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
-    rownames(ret$criteria) <- c("statistic", "p.value")
-    colnames(ret$criteria) <- names(model.frame(data))
+    ret <- list(criterion = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+    rownames(ret$criterion) <- c("statistic", "p.value")
+    colnames(ret$criterion) <- names(model.frame(data))
     if (length(whichvar) == 0) return(ret)
     ### <FIXME> allow joint MC in the absense of missings; fix seeds
     ### write ctree_test / ... with whichvar and loop over variables there
@@ -223,8 +223,8 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
         tst <- FUN(model = model, trafo = trafo, data = data, 
                    subset = subset, weights = weights, j = j, 
                    SPLITONLY = FALSE, ctrl = ctrl)
-        ret$criteria["statistic",j] <- tst$statistic
-        ret$criteria["p.value",j] <- tst$p.value
+        ret$criterion["statistic",j] <- tst$statistic
+        ret$criterion["p.value",j] <- tst$p.value
     }
     ret
 }
@@ -298,185 +298,218 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
                                 ### for identifying obs for this node
     ctrl, 			### extree_control()
     info = NULL,
-    cenv = NULL			### environment for depth and maxid
+    extree_env = NULL           ### environment for depth and maxid
 ) {
+  ## initialize tracker: is this a terminal node?
+  terminal <- FALSE
 
-    ### depth keeps track of the depth of the tree
-    ### which has to be < than maxdepth
-    ### maxit is the largest id in the left subtree
-    if (is.null(cenv)) {
-        cenv <- new.env()
-        assign("depth", 0L, envir = cenv)
+  ## is there any info to be preserved?
+
+  ## depth keeps track of the depth of the tree: has to be < than maxdepth
+  ## maxit is the largest id in the left subtree
+  if (is.null(extree_env)) {
+    extree_env <- new.env()
+    assign("depth", 0L, envir = extree_env)
+  }
+  depth <- get("depth", envir = extree_env)
+  assign("maxid", id, envir = extree_env)
+  if (depth >= ctrl$maxdepth) terminal <- TRUE
+  ## FIXME: previously the code stopped here with:
+  ##   return(partynode(as.integer(id)))
+  ## However, we should collect "info" if desired!
+  ## Analogously for all subsequent checks for "terminal".
+
+  ## check for stumps
+  if (!terminal && id > 1L && ctrl$stump) terminal <- TRUE
+
+  ## sw is basically the number of observations
+  ## which has to be > minsplit in order to consider
+  ## the node for splitting
+  ## FIXME: currently computed even if we know terminal=TRUE already
+  sw <- if (length(weights) > 0L) {
+    if (ctrl$caseweights) sum(weights[subset]) else sum(weights[subset] > 0L)
+  } else {
+    length(subset)
+  }
+  if (!terminal && sw < ctrl$minsplit) terminal <- TRUE
+
+  ## FIXME: split variable selection structure should be set up
+  ## with NAs if terminal=TRUE but "criterion" selected for "info"
+  svars <- which(partyvars > 0)
+  if (ctrl$mtry < Inf) {
+    mtry <- min(length(svars), ctrl$mtry)
+    svars <- .resample(svars, mtry, prob = partyvars[svars])
+  } 
+
+  ## FIXME: include a condition like
+  ##  if(!terminal || "trafo" %in% ctrl$save)
+  thismodel <- trafo(subset = subset, weights = weights, info = info,
+    estfun = TRUE, object = TRUE)
+  if (is.null(thismodel)) terminal <- TRUE
+
+  ## update sample size constraints on possible splits
+  ## need to do this here because selectfun might consider splits
+  mb <- ctrl$minbucket
+  mp <- ctrl$minprob
+  swp <- ceiling(sw * mp)
+  if (mb < swp) mb <- as.integer(swp)
+  thisctrl <- ctrl
+  thisctrl$minbucket <- mb
+
+  ## split variable selection:
+  ## - either already returns a finished "partysplit" object
+  ## - or "criterion" matrix (typically statistics & p-value) for all variables
+  ## FIXME: need to get "empty" criterion matrix with all NAs
+  varsel <- selectfun(model = thismodel, trafo = trafo, data = data,
+    subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
+
+  if (terminal || inherits(varsel, "partysplit")) {
+    thissplit <- if(terminal) NULL else varsel
+    info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))] ## FIXME: needs updating
+    info$nobs <- sw
+    if (!ctrl$saveinfo) info <- NULL
+  } else {
+    ## criterion matrix and some sanity checking
+    p <- varsel$criterion
+    if(!is.matrix(p) || NCOL(p) != length(svars)) {
+      stop("variable selection function does not provide a valid criterion matrix")
     }
-    depth <- get("depth", envir = cenv)
-    assign("maxid", id, envir = cenv)
-    if (depth >= ctrl$maxdepth)
-        return(partynode(as.integer(id)))
 
-    ### check for stumps
-    if (id > 1L && ctrl$stump) 
-        return(partynode(as.integer(id)))
+    ## adjust p-values (for non-NA p-values), if any
+    if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(p["p.value", ])
+    if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(p["log.p.value", ], log = TRUE)
 
-    ### sw is basically the number of observations
-    ### which has to be > minsplit in order to consider
-    ### the node for splitting
-    if (length(weights) > 0L) {
-        if (ctrl$caseweights) {
-            sw <- sum(weights[subset]) 
-        } else {
-            sw <- sum(weights[subset] > 0L)
-        }
+    ## determine criterion
+    criterion <- ctrl$criterion
+    critvalue <- ctrl$critvalue
+    ## use log p-values if available (and p-values wanted)
+    if(criterion == "p.value" && "log.p.value" %in% rownames(p)) {
+      criterion <- "log.p.value"
+      critvalue <- log(critvalue)
+    }
+    ## minimize p-values? (or maximize other criterion)
+    minp <- criterion %in% c("p.value", "log.p.value")
+    ## extract criterion values
+    crit <- p[criterion, , drop = TRUE]
+
+    ## no admissible splits in any variable, e.g., all
+    ## split variables constant
+    if (all(is.na(crit))) terminal <- TRUE
+
+    ## placeholder for missing criterion values
+    crit[is.na(crit)] <- if(minp) Inf else -Inf
+
+    ### optimal criterion, trying to break ties if any
+    critopt <- if(minp) min(crit, na.rm = TRUE) else max(crit, na.rm = TRUE)
+    ties <- which(abs(crit - critopt) < sqrt(.Machine$double.xmin))
+    if(length(ties) > 1L) {
+      if(minp && any(c("statistic", "log.statistic") %in% rownames(p))) {
+        stat <- if("log.statistic" %in% rownames(p)) {
+	  p["log.statistic", ties, drop = TRUE]
+	} else {
+	  p["statistic", ties, drop = TRUE]
+	}
+	## subtract small value from (log-)p-value based on rank of (log-)statistic
+        crit[ties] <- crit[ties] - rank(stat)/length(ties) * 1e-8      
+      } else {
+        ## FIXME: Can we do anything here? Always choose the first? Randomize?
+      }
+    }
+
+    ### switch from log(1 - pval) to pval for info slots
+    ### switch from log(statistic) to statistic
+    ### criterion stays on log scale to replicate variable selection
+    p <- rbind(p, criterion = crit)
+    p["statistic",] <- exp(p["statistic",])
+    p["p.value",] <- -expm1(p["p.value",])
+    pmin <- p["p.value", which.max(crit)]
+    names(pmin) <- colnames(model.frame(data))[which.max(crit)]
+
+    ### report on tests actually performed only
+    p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
+         drop = FALSE]
+    info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
+                varsel[!(names(varsel) %in% c("criterion", "converged"))],
+                thismodel[!(names(thismodel) %in% c("estfun"))])
+    info$nobs <- sw
+    if (!ctrl$saveinfo) info <- NULL
+
+    ### nothing "significant"
+    if (all(crit <= ctrl$logmincriterion))
+      return(partynode(as.integer(id), info = info))
+
+    ### at most ctrl$splittry variables with meaningful criterion
+    st <- pmin(sum(is.finite(crit)), ctrl$splittry)
+    jsel <- rev(order(crit))[1:st]
+    jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
+    if (!is.null(varsel$splits)) {
+      ### selectfun may return of a list of partysplit objects; use these for
+      ### splitting; selectfun is responsible for making sure lookahead is implemented
+      thissplit <- varsel$splits[[jsel[1]]]
     } else {
-        sw <- length(subset)
+      ### try to find an admissible split in data[, jsel]
+      thissplit <- splitfun(model = thismodel, trafo = trafo, data = data, subset = subset, 
+                  weights = weights, whichvar = jsel, ctrl = thisctrl)
     }
-    if (sw < ctrl$minsplit) 
-        return(partynode(as.integer(id)))
+  }
 
-    svars <- which(partyvars > 0)
-    if (ctrl$mtry < Inf) {
-        mtry <- min(sum(partyvars > 0), ctrl$mtry)
-        svars <- .resample(svars, mtry, prob = partyvars[partyvars > 0])
-    } 
+  ### failed split search:
+  if (is.null(thissplit))
+    return(partynode(as.integer(id), info = info))
 
-    thismodel <- trafo(subset = subset, weights = weights, info = info, 
-                       estfun = TRUE, object = TRUE)
-    if (is.null(thismodel))
-        return(partynode(as.integer(id)))
+  ### successful split search: set-up node
+  ret <- partynode(as.integer(id))
+  ret$split <- thissplit
+  ret$info <- info
 
-    ### update sample size constraints on possible splits
-    ### need to do this here because selectfun might consider splits
-    mb <- ctrl$minbucket
-    mp <- ctrl$minprob
-    swp <- ceiling(sw * mp)
-    if (mb < swp) mb <- as.integer(swp)
-    thisctrl <- ctrl
-    thisctrl$minbucket <- mb
+  ### determine observations for splitting (only non-missings)
+  snotNA <- subset[!subset %in% data[[varid_split(thissplit), type = "missings"]]]
+  if (length(snotNA) == 0)
+    return(partynode(as.integer(id), info = info))
+  ### and split observations
+  kidids <- kidids_node(ret, model.frame(data), obs = snotNA)
 
-    ### compute test statistics and p-values
-    ### for _unbiased_ variable selection
-    sf <- selectfun(model = thismodel, trafo = trafo, data = data, subset = subset, weights = weights, 
-                    whichvar = svars, ctrl = thisctrl)
+  ### compute probability of going left / right
+  prob <- tabulate(kidids) / length(kidids) 
+  # names(dimnames(prob)) <- NULL
+  if (ctrl$majority)  ### go with majority
+    prob <- as.double((1L:length(prob)) %in% which.max(prob))
+  if (is.null(ret$split$prob))
+    ret$split$prob <- prob
 
-    if (inherits(sf, "partysplit")) {
-        thissplit <- sf
-        info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))]
-        info$nobs <- sw
-        if (!ctrl$saveinfo) info <- NULL
-    } else {
-        ### make sure to correct for _non-constant_ variables only
-        sf$criteria["p.value",] <- ctrl$padjust(sf$criteria["p.value",])
-	    
-        ### selectfun might return other things later to be used for info
-        p <- sf$criteria
+  ### compute surrogate splits
+  if (ctrl$maxsurrogate > 0L) {
+    pv <- partyvars
+    pv[varid_split(thissplit)] <- 0
+    pv <- which(pv > 0)
+    if (ctrl$numsurrogate)
+      pv <- pv[sapply(model.frame(data)[, pv], function(x) is.numeric(x) || is.ordered(x))]
+    ret$surrogates <- .extree_surrogates(kidids, data = data, 
+      weights = weights, subset = snotNA, 
+      whichvar = pv,
+      selectfun = svselectfun, splitfun = svsplitfun, ctrl = ctrl)
+  }
+  kidids <- kidids_node(ret, model.frame(data), obs = subset)
 
-        crit <- p[ctrl$criterion,,drop = TRUE]
-        if (all(is.na(crit))) 
-            return(partynode(as.integer(id)))
+  ### proceed recursively
+  kids <- vector(mode = "list", length = max(kidids)) 
+  nextid <- id + 1L
+  for (k in 1L:max(kidids)) {
+    nextsubset <- subset[kidids == k]
+    assign("depth", depth + 1L, envir = extree_env)
+    kids[[k]] <- .extree_node(id = nextid, data = data, 
+      trafo = trafo,
+      selectfun = selectfun, splitfun = splitfun,
+      svselectfun = svselectfun, svsplitfun = svsplitfun, 
+      partyvars = partyvars, 
+      weights = weights, subset = nextsubset, 
+      ctrl = ctrl, info = nodeinfo, extree_env = extree_env)
+    ### was: nextid <- max(nodeids(kids[[k]])) + 1L
+    nextid <- get("maxid", envir = extree_env) + 1L
+  }
+  ret$kids <- kids
 
-        crit[is.na(crit)] <- -Inf
-        ### crit is maximised, but there might be ties
-        ties <- which(abs(crit - max(crit, na.rm = TRUE)) < sqrt(.Machine$double.xmin))
-        if (length(ties) > 1) {
-            ### add a small value (< 1/1000) to crit derived from rank of 
-            ### teststat
-            crit[ties] <- crit[ties] + 
-                rank(p["statistic", ties]) / (sum(ties) * 1000)
-        }
-
-        ### switch from log(1 - pval) to pval for info slots
-        ### switch from log(statistic) to statistic
-        ### criterion stays on log scale to replicate variable selection
-        p <- rbind(p, criterion = crit)
-        p["statistic",] <- exp(p["statistic",])
-        p["p.value",] <- -expm1(p["p.value",])
-        pmin <- p["p.value", which.max(crit)]
-        names(pmin) <- colnames(model.frame(data))[which.max(crit)]
-
-        ### report on tests actually performed only
-        p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
-               drop = FALSE]
-        info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
-                              sf[!(names(sf) %in% c("criteria", "converged"))],
-                              thismodel[!(names(thismodel) %in% c("estfun"))])
-        info$nobs <- sw
-        if (!ctrl$saveinfo) info <- NULL
-
-        ### nothing "significant"
-        if (all(crit <= ctrl$logmincriterion))
-            return(partynode(as.integer(id), info = info))
-
-        ### at most ctrl$splittry variables with meaningful criterion
-        st <- pmin(sum(is.finite(crit)), ctrl$splittry)
-        jsel <- rev(order(crit))[1:st]
-        jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
-        if (!is.null(sf$splits)) {
-            ### selectfun may return of a list of partysplit objects; use these for
-            ### splitting; selectfun is responsible for making sure lookahead is implemented
-            thissplit <- sf$splits[[jsel[1]]]
-        } else {
-            ### try to find an admissible split in data[, jsel]
-            thissplit <- splitfun(model = thismodel, trafo = trafo, data = data, subset = subset, 
-                                  weights = weights, whichvar = jsel, ctrl = thisctrl)
-        }
-    }
-
-    ### failed split search:
-    if (is.null(thissplit))
-        return(partynode(as.integer(id), info = info))
-
-    ### successful split search: set-up node
-    ret <- partynode(as.integer(id))
-    ret$split <- thissplit
-    ret$info <- info
-
-    ### determine observations for splitting (only non-missings)
-    snotNA <- subset[!subset %in% data[[varid_split(thissplit), type = "missings"]]]
-    if (length(snotNA) == 0)
-        return(partynode(as.integer(id), info = info))
-    ### and split observations
-    kidids <- kidids_node(ret, model.frame(data), obs = snotNA)
-
-    ### compute probability of going left / right
-    prob <- tabulate(kidids) / length(kidids) 
-    # names(dimnames(prob)) <- NULL
-    if (ctrl$majority)  ### go with majority
-        prob <- as.double((1L:length(prob)) %in% which.max(prob))
-    if (is.null(ret$split$prob))
-        ret$split$prob <- prob
-
-    ### compute surrogate splits
-    if (ctrl$maxsurrogate > 0L) {
-        pv <- partyvars
-        pv[varid_split(thissplit)] <- 0
-        pv <- which(pv > 0)
-        if (ctrl$numsurrogate)
-            pv <- pv[sapply(model.frame(data)[, pv], function(x) is.numeric(x) || is.ordered(x))]
-        ret$surrogates <- .extree_surrogates(kidids, data = data, 
-            weights = weights, subset = snotNA, 
-            whichvar = pv,
-            selectfun = svselectfun, splitfun = svsplitfun, ctrl = ctrl)
-    }
-    kidids <- kidids_node(ret, model.frame(data), obs = subset)
-
-    ### proceed recursively
-    kids <- vector(mode = "list", length = max(kidids)) 
-    nextid <- id + 1L
-    for (k in 1L:max(kidids)) {
-        nextsubset <- subset[kidids == k]
-        assign("depth", depth + 1L, envir = cenv)
-        kids[[k]] <- .extree_node(id = nextid, data = data, 
-            trafo = trafo,
-            selectfun = selectfun, splitfun = splitfun,
-            svselectfun = svselectfun, svsplitfun = svsplitfun, 
-            partyvars = partyvars, 
-            weights = weights, subset = nextsubset, 
-            ctrl = ctrl, info = nodeinfo, cenv = cenv)
-        ### was: nextid <- max(nodeids(kids[[k]])) + 1L
-        nextid <- get("maxid", envir = cenv) + 1L
-    }
-    ret$kids <- kids
-
-    return(ret)
+  return(ret)
 }
 
 ### unbiased recursive partitioning: surrogate splits
@@ -500,9 +533,9 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = ms)
     dm[cbind(subset, split)] <- 1
     thismodel <- list(estfun = dm)
-    sf <- selectfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
+    varsel <- selectfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
                     weights = weights, whichvar = whichvar, ctrl = ctrl)
-    p <- sf$criteria
+    p <- varsel$criterion
     ### partykit always used p-values, so expect some differences
     crit <- p[ctrl$criterion,,drop = TRUE]
     ### crit is maximised, but there might be ties
@@ -670,7 +703,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
 extree_control <- function(
   ## unbiased inference-based variable selection  
   criterion = "p.value",
-  logmincriterion, ## FIXME: rename and add default
+  critvalue = 0.05,
   padjust = TRUE,
 
   ## technical
@@ -762,7 +795,7 @@ extree_control <- function(
 
   list(
     criterion = criterion,
-    logmincriterion = logmincriterion,
+    critvalue = critvalue,
     padjust = padjust,
     
     applyfun = applyfun,
