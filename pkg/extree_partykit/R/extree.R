@@ -21,7 +21,7 @@ extree <- function(data,
     
     ## set up trafo
     update <- function(subset, weights, control, doFit = TRUE) {
-        partykit::extree_fit(data = data, trafo = mytrafo, converged = converged,
+        extree_fit(data = data, trafo = mytrafo, converged = converged,
             partyvars = data$variables$z, subset = subset,
             weights = weights, ctrl = control, doFit = doFit)  
     }
@@ -363,10 +363,9 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
         info$nobs <- sw
         if (!ctrl$saveinfo) info <- NULL
     } else {
-        if (ctrl$bonferroni) 
-            ### make sure to correct for _non-constant_ variables only
-            sf$criteria["p.value",] <- sf$criteria["p.value",] * 
-                                       sum(!is.na(sf$criteria["p.value",]))
+        ### make sure to correct for _non-constant_ variables only
+        sf$criteria["p.value",] <- ctrl$padjust(sf$criteria["p.value",])
+	    
         ### selectfun might return other things later to be used for info
         p <- sf$criteria
 
@@ -668,85 +667,117 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
 
 
 ### control arguments needed in this file
-extree_control <- function
-(
-    criterion, ## FIXME: add default
-    logmincriterion, ## FIXME: add default
-    minsplit = 20L,
-    minbucket = 7L, 
-    minprob = 0.01, 
-    nmax = Inf,
-    stump = FALSE,
-    lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
-    maxsurrogate = 0L, 
-    numsurrogate = FALSE,
-    mtry = Inf,
-    maxdepth = Inf, 
-    multiway = FALSE, 
-    splittry = 2L,
-    majority = FALSE, 
-    caseweights = TRUE, 
-    applyfun = NULL, 
-    cores = NULL,
-    saveinfo = TRUE,
-    bonferroni = FALSE,
-    update = NULL,
-    selectfun, ## FIXME: add default (ctree?)
-    splitfun, ## FIXME: add default
-    svselectfun, ## FIXME: add default
-    svsplitfun ## FIXME: add default
+extree_control <- function(
+  ## unbiased inference-based variable selection  
+  criterion = "p.value",
+  logmincriterion, ## FIXME: rename and add default
+  padjust = TRUE,
+
+  ## technical
+  applyfun = NULL, 
+  cores = NULL,
+
+  minsplit = 20L,
+  minbucket = 7L, 
+  minprob = 0.01, 
+  nmax = Inf,
+  stump = FALSE,
+  lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
+  maxsurrogate = 0L, 
+  numsurrogate = FALSE,
+  mtry = Inf,
+  maxdepth = Inf, 
+  multiway = FALSE, 
+  splittry = 2L,
+  majority = FALSE, 
+  caseweights = TRUE, 
+  saveinfo = TRUE,
+  update = NULL,
+  
+  selectfun, ## FIXME: add default (ctree?)
+  splitfun, ## FIXME: add default
+  svselectfun, ## FIXME: add default
+  svsplitfun, ## FIXME: add default
+
+  ## legacy
+  bonferroni = FALSE
 ) {
 
-    ## apply infrastructure for determining split points
-    if (is.null(applyfun)) {
-        applyfun <- if(is.null(cores)) {
-            lapply
-        } else {
-            function(X, FUN, ...)
-                parallel::mclapply(X, FUN, ..., mc.cores = cores)
-        }
-    }
+  ## p-value adjustment
+  if(is.logical(padjust)) {
+    padjust <- if(padjust) "sidak" else "none"
+  }
+  if(is.character(padjust)) {
+    padjust <- switch(tolower(padjust),
+      "bonferroni" = p_adjust_bonferroni,
+      "sidak" = p_adjust_sidak,
+      "none" = function(p, ...) p,
+      stop(paste("unknown padjust method:", padjust))
+    )
+  }
+  if(!is.function(padjust)) stop("padjust must be a logical, character, or function")
 
-    ### well, it is implemented but not correctly so
-    if (multiway & maxsurrogate > 0L)
-        stop("surrogate splits currently not implemented for multiway splits")
-    
-    ## var_select preprocessing
-    if(is.list(selectfun) || is.character(selectfun) || "j" %in% names(formals(selectfun))) {
-        
-        var_sel <- .preprocess_select(selectfun, select_type = "var")
-        
-        selectfun <- function(model, trafo, data, subset, weights,
-            whichvar, ctrl) {
-            var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl,
-                var_select = var_sel)
-        }
+  ## optionally employ parallel computing facilities
+  if(is.null(applyfun)) {
+    if(is.null(cores)) cores <- 1L
+    applyfun <- if(cores == 1L) {
+      lapply
+    } else if(.Platform$OS.type == "windows") {
+      cl <- parallel::makeCluster(cores) 
+      on.exit(parallel::stopCluster(cl))
+      function(X, FUN, ...) parallel::parLapply(cl, X, FUN, ...)
+    } else {
+      function(X, FUN, ...) parallel::mclapply(X, FUN, ..., mc.cores = cores)    
     }
-    
-    ## split_select preprocessing
-    if(is.list(splitfun) || is.character(splitfun) || "j" %in% names(formals(splitfun))) {
-        
-        split_sel <- .preprocess_select(splitfun, select_type = "split")
-        
-        splitfun <- function(model, trafo, data, subset, weights,
-            whichvar, ctrl) {
-            split_select_loop(model = model, trafo = trafo, data = data,
-                subset = subset, weights = weights, whichvar = whichvar,
-                control = ctrl, split_select = split_sel)
-        }
-    }
+  }
 
-    list(criterion = criterion, logmincriterion = logmincriterion,
-         minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, nmax = nmax,
-         lookahead = lookahead, mtry = mtry,
-         maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-         maxsurrogate = maxsurrogate, 
-         numsurrogate = numsurrogate, majority = majority,
-         caseweights = caseweights, applyfun = applyfun,
-         saveinfo = saveinfo, bonferroni = bonferroni, update = update,
-         selectfun = selectfun, splitfun = splitfun, svselectfun =
-         svselectfun, svsplitfun = svsplitfun)
+  ### well, it is implemented but not correctly so (FIXME)
+  if (multiway & maxsurrogate > 0L)
+      stop("surrogate splits currently not implemented for multiway splits")
+  
+  ## var_select preprocessing
+  if(is.list(selectfun) || is.character(selectfun) || "j" %in% names(formals(selectfun))) {
+      
+      var_sel <- .preprocess_select(selectfun, select_type = "var")
+      
+      selectfun <- function(model, trafo, data, subset, weights,
+  	  whichvar, ctrl) {
+  	  var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl,
+  	      var_select = var_sel)
+      }
+  }
+  
+  ## split_select preprocessing
+  if(is.list(splitfun) || is.character(splitfun) || "j" %in% names(formals(splitfun))) {
+      
+      split_sel <- .preprocess_select(splitfun, select_type = "split")
+      
+      splitfun <- function(model, trafo, data, subset, weights,
+  	  whichvar, ctrl) {
+  	  split_select_loop(model = model, trafo = trafo, data = data,
+  	      subset = subset, weights = weights, whichvar = whichvar,
+  	      control = ctrl, split_select = split_sel)
+      }
+  }
+
+  list(
+    criterion = criterion,
+    logmincriterion = logmincriterion,
+    padjust = padjust,
+    
+    applyfun = applyfun,
+    
+       minsplit = minsplit, minbucket = minbucket, 
+       minprob = minprob, stump = stump, nmax = nmax,
+       lookahead = lookahead, mtry = mtry,
+       maxdepth = maxdepth, multiway = multiway, splittry = splittry,
+       maxsurrogate = maxsurrogate, 
+       numsurrogate = numsurrogate, majority = majority,
+       caseweights = caseweights, 
+       saveinfo = saveinfo, update = update,
+       selectfun = selectfun, splitfun = splitfun, svselectfun =
+       svselectfun, svsplitfun = svsplitfun
+  )
 }
 
 
@@ -867,3 +898,4 @@ extree_control <- function
         ret <- ret[!(ret %in% data$yxmissings)]
     ret
 }
+
