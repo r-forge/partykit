@@ -394,54 +394,73 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 
     ## no admissible splits in any variable, e.g., all
     ## split variables constant
-    if (all(is.na(crit))) terminal <- TRUE
+    if (all(is.na(crit)) || (minp && all(crit >= critvalue)) || (!minp && all(crit <= critvalue))) {
+      terminal <- TRUE
+    }
 
     ## placeholder for missing criterion values
     crit[is.na(crit)] <- if(minp) Inf else -Inf
 
-    ### optimal criterion, trying to break ties if any
-    critopt <- if(minp) min(crit, na.rm = TRUE) else max(crit, na.rm = TRUE)
-    ties <- which(abs(crit - critopt) < sqrt(.Machine$double.xmin))
-    if(length(ties) > 1L) {
-      if(minp && any(c("statistic", "log.statistic") %in% rownames(p))) {
-        stat <- if("log.statistic" %in% rownames(p)) {
-	  p["log.statistic", ties, drop = TRUE]
-	} else {
-	  p["statistic", ties, drop = TRUE]
-	}
-	## subtract small value from (log-)p-value based on rank of (log-)statistic
-        crit[ties] <- crit[ties] - rank(stat)/length(ties) * 1e-8      
-      } else {
-        ## FIXME: Can we do anything here? Always choose the first? Randomize?
+    if(!terminal) {
+      ## optimal criterion, trying to break ties if any
+      critopt <- if(minp) min(crit, na.rm = TRUE) else max(crit, na.rm = TRUE)
+      ties <- which(abs(crit - critopt) < sqrt(.Machine$double.xmin))
+      if(length(ties) > 1L) {
+        ## break ties in p-values (if this is the "criterion") by using statistics (if available)
+        if(minp && any(c("statistic", "log.statistic") %in% rownames(p))) {
+          stat <- if("log.statistic" %in% rownames(p)) {
+	    p["log.statistic", ties, drop = TRUE]
+          } else {
+	    p["statistic", ties, drop = TRUE]
+          }
+          ## subtract small value from (log-)p-value based on rank of (log-)statistic
+          crit[ties] <- crit[ties] - rank(stat)/length(ties) * 1e-8      
+        } else {
+          ## FIXME: Can we do anything here? Always choose the first? Randomize?
+        }
       }
+
+      ## store up to "splittry" best variables
+      jsel <- order(crit, decreasing = !minp)
+      splittry <- pmin(sum(is.finite(crit)), ctrl$splittry)
+      jsel <- jsel[1L:splittry]      
+      jsel <- if(minp) jsel[crit[jsel] < critvalue] else jsel[crit[jsel] > critvalue]
+    } else {
+      jsel <- integer()
     }
 
-    ### switch from log(1 - pval) to pval for info slots
-    ### switch from log(statistic) to statistic
-    ### criterion stays on log scale to replicate variable selection
-    p <- rbind(p, criterion = crit)
-    p["statistic",] <- exp(p["statistic",])
-    p["p.value",] <- -expm1(p["p.value",])
-    pmin <- p["p.value", which.max(crit)]
-    names(pmin) <- colnames(model.frame(data))[which.max(crit)]
+    if(!terminal) { ## FIXME: if(!terminal || "criterion" %in% save)
+      ## always include the criterion used as "criterion"
+      p <- rbind(p, criterion = crit)
+
+      ## switch to "statistic" and "p.value" omitting logs
+      if(("log.statistic" %in% rownames(p)) && !("statistic" %in% rownames(p))) {
+        p <- rbind(p, statistic = exp(p["statistic", ]))
+      }
+      if(("log.p.value" %in% rownames(p)) && !("p.value" %in% rownames(p))) {
+        p <- rbind(p, p.value = exp(p["log.p.value", ]))
+      }
+      p <- p[-which(rownames(p) %in% c("log.statistic", "log.p.value")), , drop = FALSE]
+
+      ## store optimal p-value (FIXME: Always p-value - or optimal criterion?)
+      jopt <- if(minp) which.min(crit) else which.max(crit)
+      if("p.value" %in% rownames(p)) {
+	popt <- p["p.value", jopt]
+      } else {
+        popt <- NA_real_
+      }
+      names(popt) <- colnames(p)[jopt]
+    }
 
     ### report on tests actually performed only
     p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
          drop = FALSE]
-    info <- nodeinfo <- c(list(criterion = p, p.value = pmin), 
+    info <- nodeinfo <- c(list(criterion = p, p.value = popt), 
                 varsel[!(names(varsel) %in% c("criterion", "converged"))],
                 thismodel[!(names(thismodel) %in% c("estfun"))])
     info$nobs <- sw
     if (!ctrl$saveinfo) info <- NULL
 
-    ### nothing "significant"
-    if (all(crit <= ctrl$logmincriterion))
-      return(partynode(as.integer(id), info = info))
-
-    ### at most ctrl$splittry variables with meaningful criterion
-    st <- pmin(sum(is.finite(crit)), ctrl$splittry)
-    jsel <- rev(order(crit))[1:st]
-    jsel <- jsel[crit[jsel] > ctrl$logmincriterion]
     if (!is.null(varsel$splits)) {
       ### selectfun may return of a list of partysplit objects; use these for
       ### splitting; selectfun is responsible for making sure lookahead is implemented
