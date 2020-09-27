@@ -452,10 +452,11 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
       names(popt) <- colnames(p)[jopt]
     }
 
-    ### report on tests actually performed only
-    p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
-         drop = FALSE]
-    info <- nodeinfo <- c(list(criterion = p, p.value = popt), 
+    ## FIXME: Would we want this? I guess it's clearer/easier to keep these in.
+    ## ## report on tests actually performed only
+    ## p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
+    ##      drop = FALSE]
+    info <- nodeinfo <- c(list(criterion = p, p.value = popt),  ## FIXME: update according to "save"
                 varsel[!(names(varsel) %in% c("criterion", "converged"))],
                 thismodel[!(names(thismodel) %in% c("estfun"))])
     info$nobs <- sw
@@ -464,7 +465,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     if (!is.null(varsel$splits)) {
       ### selectfun may return of a list of partysplit objects; use these for
       ### splitting; selectfun is responsible for making sure lookahead is implemented
-      thissplit <- varsel$splits[[jsel[1]]]
+      thissplit <- varsel$splits[[jsel[1L]]]
     } else {
       ### try to find an admissible split in data[, jsel]
       thissplit <- splitfun(model = thismodel, trafo = trafo, data = data, subset = subset, 
