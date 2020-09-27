@@ -248,10 +248,13 @@ mob_partynode <- function(Y, X, Z, weights = NULL, offset = NULL, cluster = NULL
       "info" = bread,
       "sandwich" = bread %*% meat %*% bread
     ))
-    process <- t(J12 %*% t(process))  
+    process <- t(J12 %*% t(process)) ## NOTE: loses column names
 
     ## select parameters to test
-    if(!is.null(control$parm)) process <- process[, control$parm, drop = FALSE]
+    if(!is.null(control$parm)) {
+      if(is.character(control$parm)) colnames(process) <- colnames(estfun)
+      process <- process[, control$parm, drop = FALSE]
+    }
     k <- NCOL(process)
 
     ## get critical values for supLM statistic
