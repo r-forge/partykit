@@ -2,23 +2,22 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-10 (2020-07-20)}{
+\section{Changes in Version 1.2-10 (2020-09-28)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{Deal with non-integer \code{minsize} in \code{mob}.}
+    \item{Handle NAs in \code{.get_psplits}.}
   }
 }
 }
 
-\section{Changes in Version 1.2-9 (2020-07-08)}{
+\section{Changes in Version 1.2-9 (2020-07-10)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{Fix an issue with printing of tied p-values.}
   }
 }
 }
-
-
 
 \section{Changes in Version 1.2-8 (2020-06-09)}{
   \subsection{Bugfixes}{
