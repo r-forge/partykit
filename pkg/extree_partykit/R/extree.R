@@ -39,7 +39,7 @@ extree <- function(data,
     
     
     ## find matching objects and set up list
-    ## FIXME: better solution than via search()?
+    ## FIXME: (Z) better solution than via search()?
     snam <- sprintf(paste0("^", select_type, "_select_%s"), strategy)
     onam <- unlist(lapply(search(), objects))
     onam <- unique(onam[grep(snam, onam)])
@@ -201,7 +201,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
             conv <- sapply(unique(na.omit(sp)), function(i)
                 isTRUE(trafo(subset[sp == i & !is.na(sp)], weights = weights)$converged))
             if (!all(conv)) ret <- NULL
-            ## FIXME: allow option to keep estfun and move on --> update = FALSE
+            ## FIXME: (Z) allow option to keep estfun and move on --> update = FALSE
         }
         
         ## stop if a split was found, otherwise continue with next possible var
@@ -313,8 +313,11 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   }
   depth <- get("depth", envir = extree_env)
   assign("maxid", id, envir = extree_env)
+
+  ## FIXME: (Z) initialize extree_env$criterion with NULL
+
   if (depth >= ctrl$maxdepth) terminal <- TRUE
-  ## FIXME: previously the code stopped here with:
+  ## FIXME: (Z) previously the code stopped here with:
   ##   return(partynode(as.integer(id)))
   ## However, we should collect "info" if desired!
   ## Analogously for all subsequent checks for "terminal".
@@ -325,7 +328,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   ## sw is basically the number of observations
   ## which has to be > minsplit in order to consider
   ## the node for splitting
-  ## FIXME: currently computed even if we know terminal=TRUE already
+  ## FIXME: (Z) currently computed even if we know terminal=TRUE already
   sw <- if (length(weights) > 0L) {
     if (ctrl$caseweights) sum(weights[subset]) else sum(weights[subset] > 0L)
   } else {
@@ -333,7 +336,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   }
   if (!terminal && sw < ctrl$minsplit) terminal <- TRUE
 
-  ## FIXME: split variable selection structure should be set up
+  ## FIXME: (Z) split variable selection structure should be set up
   ## with NAs if terminal=TRUE but "criterion" selected for "info"
   svars <- which(partyvars > 0)
   if (ctrl$mtry < Inf) {
@@ -341,11 +344,13 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     svars <- .resample(svars, mtry, prob = partyvars[svars])
   } 
 
-  ## FIXME: include a condition like
+  ## FIXME: (Z) include a condition like
   ##  if(!terminal || "trafo" %in% ctrl$save)
   thismodel <- trafo(subset = subset, weights = weights, info = info,
     estfun = TRUE, object = TRUE)
   if (is.null(thismodel)) terminal <- TRUE
+
+  ## FIXME: (Z) canonicalize saveinfo to list(inner, terminal) with character vectors
 
   ## update sample size constraints on possible splits
   ## need to do this here because selectfun might consider splits
@@ -355,17 +360,20 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   if (mb < swp) mb <- as.integer(swp)
   thisctrl <- ctrl
   thisctrl$minbucket <- mb
+  ## FIXME: (Z) add canonicalized saveinfo argument
 
   ## split variable selection:
   ## - either already returns a finished "partysplit" object
   ## - or "criterion" matrix (typically statistics & p-value) for all variables
-  ## FIXME: need to get "empty" criterion matrix with all NAs
+  ## FIXME: (Z) need to get "empty" criterion matrix with all NAs
+  ## -> store in extree_env after computing varsel for the first time in the root node
+  ## except when root node is already terminal
   varsel <- selectfun(model = thismodel, trafo = trafo, data = data,
     subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
 
   if (terminal || inherits(varsel, "partysplit")) {
     thissplit <- if(terminal) NULL else varsel
-    info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))] ## FIXME: needs updating
+    info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))] ## FIXME: (Z) needs updating
     info$nobs <- sw
     if (!ctrl$saveinfo) info <- NULL
   } else {
@@ -416,7 +424,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
           ## subtract small value from (log-)p-value based on rank of (log-)statistic
           crit[ties] <- crit[ties] - rank(stat)/length(ties) * 1e-8      
         } else {
-          ## FIXME: Can we do anything here? Always choose the first? Randomize?
+          ## FIXME: (Z) Can we do anything here? Always choose the first? Randomize?
         }
       }
 
@@ -429,7 +437,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
       jsel <- integer()
     }
 
-    if(!terminal) { ## FIXME: if(!terminal || "criterion" %in% save)
+    if(!terminal) { ## FIXME: (Z) if(!terminal || "criterion" %in% save)
       ## always include the criterion used as "criterion"
       p <- rbind(p, criterion = crit)
 
@@ -442,7 +450,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
       }
       p <- p[-which(rownames(p) %in% c("log.statistic", "log.p.value")), , drop = FALSE]
 
-      ## store optimal p-value (FIXME: Always p-value - or optimal criterion?)
+      ## store optimal p-value (FIXME: (Z) Always p-value - or optimal criterion?)
       jopt <- if(minp) which.min(crit) else which.max(crit)
       if("p.value" %in% rownames(p)) {
 	popt <- p["p.value", jopt]
@@ -452,11 +460,11 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
       names(popt) <- colnames(p)[jopt]
     }
 
-    ## FIXME: Would we want this? I guess it's clearer/easier to keep these in.
+    ## FIXME: (Z) Would we want this? I guess it's clearer/easier to keep these in.
     ## ## report on tests actually performed only
     ## p <- p[,!is.na(p["statistic",]) & is.finite(p["statistic",]),
     ##      drop = FALSE]
-    info <- nodeinfo <- c(list(criterion = p, p.value = popt),  ## FIXME: update according to "save"
+    info <- nodeinfo <- c(list(criterion = p, p.value = popt),  ## FIXME: (Z) update according to "save"
                 varsel[!(names(varsel) %in% c("criterion", "converged"))],
                 thismodel[!(names(thismodel) %in% c("estfun"))])
     info$nobs <- sw
@@ -523,7 +531,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
       svselectfun = svselectfun, svsplitfun = svsplitfun, 
       partyvars = partyvars, 
       weights = weights, subset = nextsubset, 
-      ctrl = ctrl, info = nodeinfo, extree_env = extree_env)
+      ctrl = ctrl, info = nodeinfo, extree_env = extree_env) ## FIXME: (Z) update saveinfo in ctrl
     ### was: nextid <- max(nodeids(kids[[k]])) + 1L
     nextid <- get("maxid", envir = extree_env) + 1L
   }
@@ -747,10 +755,10 @@ extree_control <- function(
   saveinfo = TRUE,
   update = NULL,
   
-  selectfun, ## FIXME: add default (ctree?)
-  splitfun, ## FIXME: add default
-  svselectfun, ## FIXME: add default
-  svsplitfun, ## FIXME: add default
+  selectfun, ## FIXME: (Z) add default (ctree?)
+  splitfun, ## FIXME: (Z) add default
+  svselectfun, ## FIXME: (Z) add default
+  svsplitfun, ## FIXME: (Z) add default
 
   ## legacy
   bonferroni = FALSE
