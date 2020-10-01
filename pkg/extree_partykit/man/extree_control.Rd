@@ -65,7 +65,7 @@ extree_control(
                    daughter node because of missing information are randomly
                    assigned (following the node distribution). If \code{TRUE},
                    they go with the majority.}
-  \item{caseweights}{ a logical interpreting \code{weights} as case weights.}
+  \item{caseweights}{ a logical interpreting \code{weights} as case/frequency weights. See \code{\link{extree_data}} for details.} 
   \item{applyfun}{ an optional \code{\link[base]{lapply}}-style function with arguments
                   \code{function(X, FUN, \dots)}. It is used for computing the variable selection criterion.
                   The default is to use the basic \code{lapply}

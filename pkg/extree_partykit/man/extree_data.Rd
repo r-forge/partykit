@@ -28,7 +28,7 @@ extree_data(formula, data, subset, na.action = na.pass, weights, offset,
   \item{na.action}{a function which indicates what should happen when the
 data contain missing values.
 }
-  \item{weights}{an optional vector of weights.
+  \item{weights}{an optional vector of weights. These can either be precision weights, case/frequency weights or sampling weights. Details are given below. 
 }
   \item{offset}{an optional offset vector.
 }
@@ -64,6 +64,14 @@ part. Use \code{Inf} to switch-off binning.
       \item \code{x}: model covariate(s) (e.g. in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
       \item \code{z}: split variable(s)
   }
+  
+  % TODO: please check the following notes on weights. 
+  In statistics, three main types of \code{weights} exist: precision weights, frequency/case weights and sampling weights. 
+  Precision weights describe the precisions of observations. 
+  A weight of 5 means that a value is an average of 5 replicate observations. 
+  Second, frequency/case weights describe absolute frequencies where a weight of 5 means that 5 identical observations (same covariate patterns) exist in a dataset. 
+  Third, sampling weights describe how a sample can be scaled up to a population where a weight of 5 means that an observations is sampled with a probability of 1/5. 
+  For details we refer to \href{https://notstatschat.rbind.io/2020/08/04/weights-in-statistics/}{this blog post}. 
   
   A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
