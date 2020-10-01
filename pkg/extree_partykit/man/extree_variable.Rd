@@ -71,6 +71,8 @@ The selected information. See argument \code{type}.
   
   ### the model.frame
   mf <- model.frame(ed_hs)
+  ## mf differs from HuntingSpiders because of its additional attributes 
+  ## derived from its formula, although the data.frames are the same
   all.equal(mf, HuntingSpiders[, names(mf)])
   
   ## Original variable
