@@ -66,7 +66,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         
         ## y and z (and optionally x) need to be in formula
         if(!all(c("y", "z") %in% fonam)) stop("'formula' needs to specify at least a response 'y' and partitioning variables 'z'")
-        if(!("x" %in% fonam)) formula$x <- NULL
+        if(!("x" %in% fonam)) formula$x <- NULL ## FIXME: (SD) Nothing happens here, can this be deleted?
         
         ## furthermore weights/offset/cluster/strata may be in formula or call
         vars <- formula[vanam]
@@ -238,19 +238,19 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     ## below is just "proof-of-concept" implementation using plain model.matrix() which could
     ## be included as one option...
     if (yx == "matrix") {
-        
         ## fake formula/terms if necessary
         formula <- Formula::as.Formula(sprintf("%s ~ %s | %s",
             paste(vanam[vars$y], collapse = " + "),
             if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
             paste(vanam[vars$z > 0], collapse = " + ")
         ))
+        ## FIXME: (SD) do we need info on all, y, z somewhere else? 
         mt <- list(
-            "all" = terms(formula),
-            "y"   = terms(formula, data = data, rhs = 0L),
-            "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
-            "yx"  = terms(formula, data = data, rhs = 1L),
-            "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L)
+            # "all" = terms(formula),
+            # "y"   = terms(formula, data = data, rhs = 0L),
+            # "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
+            "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L),
+            "yx"  = terms(formula, data = data, rhs = 1L)
         )
         ymult <- length(vars$y) > 1L
         npart <- 2L
@@ -260,6 +260,17 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         } else if (ytype == "data.frame") {
             yx <- list("y" = yxmf[vanam[vars$y]])
         } else { ### ytype = "matrix"
+          ## FIXME: (SD) model.part not practical for high-dim data  
+          ## Possible solution (SD): 
+              # Ytmp <-  as.matrix(yxmf[vanam[vars$y]])
+              # # Replace NA by rowise 0 if necessary
+              # if (length(ret$yxmissings) == 0) {
+              #   Ymat <- Ytmp
+              # }
+              # else {
+              #   Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
+              #   Ymat[-ret$yxmissings,] <- Ytmp[-ret$yxmissings,]
+              # }
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
             if (length(ret$yxmissings) == 0) {
@@ -278,6 +289,8 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
                 Xmat <- Xtmp
             } else {
                 Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
+                ## FIXME: (SD) Error if no missings in x, but in y! 
+                ## Either do not replace NAs by 0 or do it with is.NA() - not ret$xymissing! 
                 Xmat[-ret$yxmissings,] <- Xtmp
             }
             yx[[ni]] <- Xmat
