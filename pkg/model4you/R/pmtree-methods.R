@@ -47,7 +47,8 @@ predict.pmtree <- function(object, newdata = NULL, type = "node",
     prfun <- function(nd, type = "pass") {
       # model
       mod <- update(object$info$model, 
-                    subset = (trdatnodes == nd))
+                    subset = (trdatnodes == nd),
+                    data = object$data)
       
       if(type == "coef") {
         data.frame(t(coef(mod)), 
