@@ -2,11 +2,12 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-10 (2020-09-28)}{
+\section{Changes in Version 1.2-10 (2020-10-12)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{Deal with non-integer \code{minsize} in \code{mob}.}
     \item{Handle NAs in \code{.get_psplits}.}
+    \item{Fix URLs.}
   }
 }
 }
@@ -238,7 +239,7 @@
   \itemize{
     \item{The \pkg{partykit} package has now been published in
       \emph{Journal of Machine Learning Research}, 16, 3905-3909.
-      \url{http://jmlr.org/papers/v16/hothorn15a.html}}
+      \url{https://jmlr.org/papers/v16/hothorn15a.html}}
     \item{Added support for setting background in panel functions.}
     \item{The \code{as.list()} method for \code{partynode} objects
       erroneously created an object \code{thisnode} in the calling
