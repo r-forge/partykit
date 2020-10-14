@@ -5,14 +5,22 @@
 \alias{gettree.pmforest}
 \title{Compute model-based forest from model.}
 \usage{
-pmforest(model, data = NULL, zformula = ~., ntree = 500L,
-  perturb = list(replace = FALSE, fraction = 0.632), mtry = NULL,
-  applyfun = NULL, cores = NULL, control = ctree_control(teststat =
-  "quad", testtype = "Univ", mincriterion = 0, saveinfo = FALSE, lookahead
-  = TRUE, ...), trace = FALSE, ...)
+pmforest(
+  model,
+  data = NULL,
+  zformula = ~.,
+  ntree = 500L,
+  perturb = list(replace = FALSE, fraction = 0.632),
+  mtry = NULL,
+  applyfun = NULL,
+  cores = NULL,
+  control = ctree_control(teststat = "quad", testtype = "Univ", mincriterion = 0,
+    saveinfo = FALSE, lookahead = TRUE, ...),
+  trace = FALSE,
+  ...
+)
 
-\method{gettree}{pmforest}(object, tree = 1L, saveinfo = TRUE,
-  coeffun = coef, ...)
+\method{gettree}{pmforest}(object, tree = 1L, saveinfo = TRUE, coeffun = coef, ...)
 }
 \arguments{
 \item{model}{a model object. The model can be a parametric model with a single binary covariate.}
@@ -123,7 +131,7 @@ if(require("mvtnorm") & require("survival")) {
     dp_lm <- cbind(coefs_lm, tsimdata)
     ggplot(tsimdata) +
       stat_function(fun = function(z1) 0.2 + beta * cos(z1), 
-                    aes(color = "true treatment\\neffect")) +
+                    aes(color = "true treatment\neffect")) +
       geom_point(data = dp_lm, 
                  aes(y = aA, x = z1, color = "estimates lm"), 
                  alpha = 0.5)  +

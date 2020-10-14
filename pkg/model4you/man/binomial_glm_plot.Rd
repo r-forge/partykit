@@ -5,8 +5,13 @@
 \title{Plot for a given logistic regression model (glm with binomial family)
 with one binary covariate.}
 \usage{
-binomial_glm_plot(mod, data = NULL, plot_data = FALSE,
-  theme = theme_classic(), ...)
+binomial_glm_plot(
+  mod,
+  data = NULL,
+  plot_data = FALSE,
+  theme = theme_classic(),
+  ...
+)
 }
 \arguments{
 \item{mod}{A model of class glm with binomial family.}

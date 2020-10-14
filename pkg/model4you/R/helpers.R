@@ -58,7 +58,7 @@
     ## add estfun if wanted
     if(estfun) {
       if(is(mod, "coxph")) {
-          ef <- cbind(mod$residuals, mod$residuals * model.matrix(mod))
+          ef <- cbind(mod$residuals, mod$residuals * stats::model.matrix(mod))
         # old: ef <- as.matrix(cbind(residuals(mod, "martingale"), ef))
       } else {
           ef <- estfun(mod)

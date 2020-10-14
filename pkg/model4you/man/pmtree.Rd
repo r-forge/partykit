@@ -4,8 +4,14 @@
 \alias{pmtree}
 \title{Compute model-based tree from model.}
 \usage{
-pmtree(model, data = NULL, zformula = ~., control = ctree_control(),
-  coeffun = coef, ...)
+pmtree(
+  model,
+  data = NULL,
+  zformula = ~.,
+  control = ctree_control(),
+  coeffun = coef,
+  ...
+)
 }
 \arguments{
 \item{model}{a model object. The model can be a parametric model with a binary covariate.}

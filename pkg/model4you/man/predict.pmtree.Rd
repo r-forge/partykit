@@ -4,8 +4,14 @@
 \alias{predict.pmtree}
 \title{pmtree predictions}
 \usage{
-\method{predict}{pmtree}(object, newdata = NULL, type = "node",
-  predict_args = list(), perm = NULL, ...)
+\method{predict}{pmtree}(
+  object,
+  newdata = NULL,
+  type = "node",
+  predict_args = list(),
+  perm = NULL,
+  ...
+)
 }
 \arguments{
 \item{object}{pmtree object.}
