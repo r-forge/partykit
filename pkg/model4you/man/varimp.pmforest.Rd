@@ -4,9 +4,15 @@
 \alias{varimp.pmforest}
 \title{Variable Importance for pmforest}
 \usage{
-\method{varimp}{pmforest}(object, nperm = 1L, OOB = TRUE,
+\method{varimp}{pmforest}(
+  object,
+  nperm = 1L,
+  OOB = TRUE,
   risk = function(x, ...) -objfun(x, sum = TRUE, ...),
-  conditional = FALSE, threshold = 0.2, ...)
+  conditional = FALSE,
+  threshold = 0.2,
+  ...
+)
 }
 \arguments{
 \item{object}{DESCRIPTION.}

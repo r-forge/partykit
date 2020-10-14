@@ -5,8 +5,7 @@
 \title{Survival plot for a given survreg model
 with one binary covariate.}
 \usage{
-survreg_plot(mod, data = NULL, theme = theme_classic(),
-  yrange = NULL)
+survreg_plot(mod, data = NULL, theme = theme_classic(), yrange = NULL)
 }
 \arguments{
 \item{mod}{A model of class survreg.}

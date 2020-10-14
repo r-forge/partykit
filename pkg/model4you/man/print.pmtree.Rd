@@ -7,8 +7,14 @@
 \alias{coef.pmtree}
 \title{Methods for pmtree}
 \usage{
-\method{print}{pmtree}(x, node = NULL, FUN = NULL,
-  digits = getOption("digits") - 4L, footer = TRUE, ...)
+\method{print}{pmtree}(
+  x,
+  node = NULL,
+  FUN = NULL,
+  digits = getOption("digits") - 4L,
+  footer = TRUE,
+  ...
+)
 
 \method{summary}{pmtree}(object, node = NULL, ...)
 

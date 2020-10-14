@@ -4,8 +4,14 @@
 \alias{pmodel}
 \title{Personalised model}
 \usage{
-pmodel(x = NULL, model = NULL, newdata = NULL, OOB = TRUE,
-  fun = coef, return_attr = c("modelcall", "data", "similarity"))
+pmodel(
+  x = NULL,
+  model = NULL,
+  newdata = NULL,
+  OOB = TRUE,
+  fun = coef,
+  return_attr = c("modelcall", "data", "similarity")
+)
 }
 \arguments{
 \item{x}{cforest object or matrix of weights.}
@@ -94,7 +100,7 @@ if(require("mvtnorm") & require("survival")) {
     dp_lm <- cbind(coefs_lm, tsimdata)
     ggplot(tsimdata) +
       stat_function(fun = function(z1) 0.2 + beta * cos(z1), 
-                    aes(color = "true treatment\\neffect")) +
+                    aes(color = "true treatment\neffect")) +
       geom_point(data = dp_lm, 
                  aes(y = aA, x = z1, color = "estimates lm"), 
                  alpha = 0.5)  +

@@ -5,8 +5,13 @@
 \title{Density plot for a given lm model
 with one binary covariate.}
 \usage{
-lm_plot(mod, data = NULL, densest = FALSE, theme = theme_classic(),
-  yrange = NULL)
+lm_plot(
+  mod,
+  data = NULL,
+  densest = FALSE,
+  theme = theme_classic(),
+  yrange = NULL
+)
 }
 \arguments{
 \item{mod}{A model of class lm.}

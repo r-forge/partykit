@@ -13,8 +13,7 @@ objfun(x, ...)
 
 \method{objfun}{lm}(x, newdata = NULL, weights = NULL, ...)
 
-\method{objfun}{glm}(x, newdata = NULL, weights = NULL, log = TRUE,
-  ...)
+\method{objfun}{glm}(x, newdata = NULL, weights = NULL, log = TRUE, ...)
 }
 \arguments{
 \item{x}{model object.}

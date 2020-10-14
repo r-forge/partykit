@@ -147,7 +147,7 @@ varimp(tr_math_d, risk = of)
 ### check different formulas
 set.seed(1212)
 n <- 90
-d1 <- d2 <- d3 <- data.frame(y = abs(rnorm(n) + 5), x = 1:n - 10,
+d1 <- d2 <- d3 <- data.frame(y = abs(rnorm(n) + 5), x = rep(1:(n/15), each = 15), #1:n - 10,
   trt = rep(1:3, each = n/3), z1 = rnorm(n))
 d2$trt <- factor(d2$trt)
 d3$trt <- ordered(d3$trt)
@@ -163,13 +163,15 @@ f <- list(
   y ~ factor(trt),
   y ~ factor(trt) + offset(x),
   y ~ factor(x > as.numeric(trt)),
-  y ~ interaction(x, trt),
+  # y ~ interaction(x, trt),
   y ~ 0 + trt
 )
 
 try_pmtree <- function(bmod, data) {
-  # try(pmtree(bmod, data = data))
-  "pmtree" %in% class(try(pmtree(bmod, data = data), silent = TRUE))
+  "pmtree" %in% class(tryCatch(pmtree(bmod, data = data), 
+                               error = function(e) e, 
+                               warning = function(w) w))
+  # "pmtree" %in% class(try(pmtree(bmod, data = data), silent = TRUE))
 }
 
 run_lm <- function(formula, data, ...) {
@@ -185,8 +187,8 @@ run_coxph <- function(formula, data, ...) {
 }
 
 ## expected results
-ok1 <- list(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE)
-ok2 <- list(FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE, TRUE, TRUE, TRUE, TRUE)
+ok1 <- list(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE)
+ok2 <- list(FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE, TRUE, TRUE, TRUE)
 ok3 <- ok2
 
 

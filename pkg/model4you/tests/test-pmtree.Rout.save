@@ -1,6 +1,6 @@
 
-R version 3.6.1 (2019-07-05) -- "Action of the Toes"
-Copyright (C) 2019 The R Foundation for Statistical Computing
+R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
+Copyright (C) 2020 The R Foundation for Statistical Computing
 Platform: x86_64-pc-linux-gnu (64-bit)
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
@@ -444,7 +444,7 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 > ### check different formulas
 > set.seed(1212)
 > n <- 90
-> d1 <- d2 <- d3 <- data.frame(y = abs(rnorm(n) + 5), x = 1:n - 10,
+> d1 <- d2 <- d3 <- data.frame(y = abs(rnorm(n) + 5), x = rep(1:(n/15), each = 15), #1:n - 10,
 +   trt = rep(1:3, each = n/3), z1 = rnorm(n))
 > d2$trt <- factor(d2$trt)
 > d3$trt <- ordered(d3$trt)
@@ -460,13 +460,15 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 +   y ~ factor(trt),
 +   y ~ factor(trt) + offset(x),
 +   y ~ factor(x > as.numeric(trt)),
-+   y ~ interaction(x, trt),
++   # y ~ interaction(x, trt),
 +   y ~ 0 + trt
 + )
 > 
 > try_pmtree <- function(bmod, data) {
-+   # try(pmtree(bmod, data = data))
-+   "pmtree" %in% class(try(pmtree(bmod, data = data), silent = TRUE))
++   "pmtree" %in% class(tryCatch(pmtree(bmod, data = data), 
++                                error = function(e) e, 
++                                warning = function(w) w))
++   # "pmtree" %in% class(try(pmtree(bmod, data = data), silent = TRUE))
 + }
 > 
 > run_lm <- function(formula, data, ...) {
@@ -482,8 +484,8 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 + }
 > 
 > ## expected results
-> ok1 <- list(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, TRUE, FALSE)
-> ok2 <- list(FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE, TRUE, TRUE, TRUE, TRUE)
+> ok1 <- list(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, TRUE, FALSE)
+> ok2 <- list(FALSE, FALSE, TRUE,  FALSE, TRUE,  FALSE, TRUE,  TRUE, TRUE, TRUE, TRUE)
 > ok3 <- ok2
 > 
 > 
@@ -505,25 +507,17 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 > d1$y <- d2$y <- d3$y <- Surv(d1$y + 0.5)
 > 
 > survreg1 <- lapply(f, run_survreg, data = d1, model = FALSE)
-Warning messages:
-1: In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
-  Ran out of iterations and did not converge
-2: In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
+Warning message:
+In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
   Ran out of iterations and did not converge
 > identical(lapply(survreg1, try_pmtree, data = d1), ok1)
 [1] TRUE
 > 
 > survreg2 <- lapply(f, run_survreg, data = d2, model = FALSE)
-Warning message:
-In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
-  Ran out of iterations and did not converge
 > identical(lapply(survreg2, try_pmtree, data = d2), ok2)
 [1] TRUE
 > 
 > survreg3 <- lapply(f, run_survreg, data = d3, model = FALSE)
-Warning message:
-In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
-  Ran out of iterations and did not converge
 > identical(lapply(survreg3, try_pmtree, data = d3), ok3)
 [1] TRUE
 > 
@@ -531,77 +525,19 @@ In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
 > 
 > ## checks with coxph
 > coxph1 <- lapply(f, run_coxph, data = d1, model = FALSE)
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-4: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-5: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > identical(lapply(coxph1, try_pmtree, data = d1), ok1)
 [1] TRUE
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > 
 > coxph2 <- lapply(f, run_coxph, data = d2, model = FALSE)
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-4: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-5: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > identical(lapply(coxph2, try_pmtree, data = d2), ok2)
 [1] TRUE
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-4: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > 
 > coxph3 <- lapply(f, run_coxph, data = d3, model = FALSE)
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-4: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-5: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > identical(lapply(coxph3, try_pmtree, data = d3), ok3)
 [1] TRUE
-Warning messages:
-1: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-2: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-3: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  Ran out of iterations and did not converge
-4: In fitter(X, Y, istrat, offset, init, control, weights = weights,  :
-  one or more coefficients may be infinite
 > 
 > 
 > 
 > proc.time()
    user  system elapsed 
-  9.493   0.094   9.577 
+  6.993   0.113   7.101 
