@@ -32,7 +32,7 @@ The selected information. See argument \code{type}.
 \seealso{\code{\link{extree_data}}}
 \examples{
 
-  data("iris")
+  data("iris", package = "datasets")
   ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
       data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
 
