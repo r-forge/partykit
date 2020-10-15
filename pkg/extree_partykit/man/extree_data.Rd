@@ -40,6 +40,7 @@ depends on the specific tree algorithm.
 }
   \item{scores}{an optional named list of numeric scores to be assigned to
 ordered factors in the \code{z} part of the formula.
+% FIXME: improve naming, e.g. ordinalscores?
 }
   \item{yx}{a character indicating if design matrices shall be computed. 
 }
@@ -48,7 +49,7 @@ stored.
 }
   \item{nmax}{a numeric vector of length two with the maximal number of
 bins in the response and \code{x}-part (first element) and the \code{z}
-part. Use \code{Inf} to switch-off binning.
+part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
 }
   \item{\dots}{additional arguments.
 }
@@ -60,9 +61,9 @@ part. Use \code{Inf} to switch-off binning.
   
   We use the following notation:
   \itemize{
-      \item \code{y}: response variable(s)
-      \item \code{x}: model covariate(s) (e.g. in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
-      \item \code{z}: split variable(s)
+      \item \code{y}: response variable(s) (also known as dependent or target variable)
+      \item \code{x}: model covariate(s) (e.g. regressor variable in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
+      \item \code{z}: split variable(s) (also known as partitioning variable)
   }
   
   % TODO: please check the following notes on weights. 
@@ -75,9 +76,9 @@ part. Use \code{Inf} to switch-off binning.
   
   A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
-\value{An object of class \code{extree_data}. %TODO add mor info here
+\value{An object of class \code{extree_data}. %TODO add more info here
 }
-\seealso{\code{\link{extree_variable}}}
+\seealso{\code{\link{extree_variable}}, \code{\link[inum]{inum}}}
 \examples{
 
   
@@ -110,7 +111,7 @@ part. Use \code{Inf} to switch-off binning.
   }
 
   
-  data("iris")
+  data("iris", package = "datasets")
 
   ed <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
                     data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
