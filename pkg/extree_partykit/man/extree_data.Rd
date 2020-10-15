@@ -64,6 +64,7 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
       \item \code{y}: response variable(s) (also known as dependent or target variable)
       \item \code{x}: model covariate(s) (e.g. regressor variable in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
       \item \code{z}: split variable(s) (also known as partitioning variable)
+      \item \code{yx}: model part, including offset, weights, etc.
   }
   
   % TODO: please check the following notes on weights. 
@@ -76,7 +77,21 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   
   A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
-\value{An object of class \code{extree_data}. %TODO add more info here
+\value{An object of class \code{extree_data} containing (some of) the following elements:
+ \item{data}{ The data (usually as \code{\link[base]{data.frame}}). }
+ \item{variables}{ Information on indexes of variables \code{y} and \code{x}, 
+   index vector of \code{z} variables, indexes of \code{weights}, 
+   \code{offset}, \code{cluster}, \code{strata}.}
+ \item{terms}{ A list of terms objects for \code{all} terms, \code{y},  
+  \code{z}, \code{yx}, and \code{x}. 
+  Only available if \code{formula} argument is set to a \code{\link[stats]{formula}},
+  not a list.}
+ \item{scores}{ Numeric scores to be assigned to ordered factors in the 
+  \code{z} part of the formula. }
+ \item{zindex}{ Object of class \code{\link[inum]{inum}}. }
+ \item{missings}{ Missing observations (row indexes) in each variable used. }
+ \item{yxmissings}{ Missing observations (row indexes) in the model part, including offset. }
+ \item{yx}{ A list of model matrices (only if \code{yx = "matrix"}). }
 }
 \seealso{\code{\link{extree_variable}}, \code{\link[inum]{inum}}}
 \examples{
@@ -139,7 +154,7 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   n <- 15
   X <- rnorm(n = n)
   Z <- rnorm(n = n)
-  Y <- rnorm(n = n, mean = x + I(z > 0))
+  Y <- rnorm(n = n, mean = X + I(Z > 0))
   Zmiss <- Z
   Zmiss[3:5] <- NA
   O <- sample(1:2, size = n, replace = TRUE)
