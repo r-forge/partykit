@@ -36,8 +36,9 @@ split_select1 <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
 
 ## run tree
 tr1 <- extree(data = my_data, trafo = trafo1, 
-    control = c(extree_control(criterion = "statistic",
-        logmincriterion = log(1 - 0.04),
+    control = c(extree_control(
+        criterion = "statistic",
+        critvalue = -65000,
         update = TRUE,
         selectfun = partykit:::.objfun_select(),
         splitfun = split_select1,
@@ -95,7 +96,6 @@ var_select2_call <- function(model, trafo, data, subset, weights, whichvar, ctrl
 ## run tree
 tr2 <- extree(data = d, trafo = trafo2, 
     control = c(extree_control(criterion = "p.value",
-        logmincriterion = log(1 - 0.05),
         update = TRUE,
         selectfun = var_select2_call,
         splitfun = split_select1,

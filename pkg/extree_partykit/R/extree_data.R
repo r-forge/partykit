@@ -42,6 +42,8 @@ print.extree_data <- function(x, ...) {
 
 ## FIXME (HS) summary method: how many variables of which type, which binning, scores?
 
+
+
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
     strata, scores = NULL, yx = c("none", "matrix"), ytype = c("vector", "data.frame", "matrix"), 
@@ -173,6 +175,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     vars$z <- vars$z[vanam]
     if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
     vars$z <- as.numeric(vars$z)
+    attr(vars$z, "variable_names") <- vanam[vars$z == 1]
     ## all others to integer
     for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
         if(!is.null(vars[[v]])) {
@@ -184,6 +187,9 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
             }
         }
         vars[[v]] <- unique(as.integer(vars[[v]]))
+        
+        ## add info on variable names
+        if(length(vars[[v]]) != 0) attr(vars[[v]], "variable_names") <- vanam[vars[[v]]]
     }
     if(is.null(vars$y)) stop("at least one 'y' variable must be specified")
     
@@ -196,8 +202,14 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     
     ret <- list(
         data = if(noformula) data else mf,
+        model.frame = if(noformula) FALSE else TRUE,
         variables = vars,
-        terms = mt
+        terms = mt,
+        scores = NULL,
+        zindex = NULL,
+        missings = NULL,
+        yxmissings = NULL,
+        yx = NULL
     )
     
     mf <- ret$data
