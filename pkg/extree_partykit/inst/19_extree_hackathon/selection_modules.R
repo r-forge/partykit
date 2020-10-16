@@ -60,10 +60,10 @@ var_select_cat <- function(estfun, data, subset, j){
 
 # unifying function for variable selection using var_select_cat or var_select_num
 var_select <- function(estfun, data, subset, j){
-  if(class(data[[j]]) == "factor"){
+  if(class(extree_variable(data, j)) == "factor"){
     res <- var_select_cat(estfun = estfun, data = data, subset = subset, j = j)
   }
-  if(class(data[[j]]) == "numeric"){
+  if(class(extree_variable(data, j)) == "numeric"){
     res <- var_select_num(estfun = estfun, data = data, subset = subset, j = j)
   }
   return(res)
@@ -126,7 +126,7 @@ if(FALSE){
   }
 
   
-  library("partykit")
+  library("partykitx")
   
   d <-  extree_data(Species ~ .,
                     data = iris, yx = "matrix")
