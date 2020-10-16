@@ -33,6 +33,127 @@ extree <- function(data,
     
 }
 
+extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun, 
+                       splitfun = ctrl$splitfun, svselectfun = ctrl$svselectfun, 
+                       svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, ctrl, doFit = TRUE) {
+  ret <- list()
+  
+  ### <FIXME> use data$vars$z as default for partyvars </FIXME>
+  ### <FIXME> try to avoid doFit </FIXME>
+  
+  nf <- names(formals(trafo))
+  if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
+    mytrafo <- trafo
+  } else {
+    stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
+    stopifnot(!is.null(yx <- data$yx))
+    mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
+      iy <- data[["yx", type = "index"]]
+      if (is.null(iy)) {
+        NAyx <- data[["yx", type = "missing"]]
+        y <- yx$y
+        x <- yx$x
+        offset <- attr(yx$x, "offset")
+        ### <FIXME> other ways of handling NAs necessary? </FIXME>
+        subset <- subset[!(subset %in% NAyx)]
+        if (NCOL(y) > 1) {
+          y <- y[subset,,drop = FALSE]
+        } else {
+          y <- y[subset]
+        }
+        if (!is.null(x)) {
+          ax <- attributes(x)
+          ax$dim <- NULL
+          ax$dimnames <- NULL
+          x <- x[subset,,drop = FALSE]
+          for (a in names(ax)) attr(x, a) <- ax[[a]] ### terms, formula, ... for predict
+        }
+        w <- weights[subset]
+        offset <- offset[subset]
+        cluster <- data[["(cluster)"]][subset]
+        if (all(c("estfun", "object") %in% nf)) { 
+          m <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
+                     cluster = cluster, estfun = estfun, object = object, ...)
+        } else {
+          obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
+                       cluster = cluster, ...)
+          m <- list(coefficients = coef(obj),
+                    objfun = -as.numeric(logLik(obj)),
+                    estfun = NULL, object = NULL)
+          if (estfun) m$estfun <- sandwich::estfun(obj)
+          if (object) m$object <- obj
+        }
+        if (!is.null(ef <- m$estfun)) {
+          ### ctree expects unweighted scores
+          if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
+            m$estfun <- m$estfun / w
+          Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
+          Y[subset,] <- m$estfun
+          m$estfun <- Y
+        }
+      } else {
+        w <- libcoin::ctabs(ix = iy, subset = subset, weights = weights)[-1]
+        offset <- attr(yx$x, "offset")
+        cluster <- model.frame(data, yxonly = TRUE)[["(cluster)"]]
+        if (all(c("estfun", "object") %in% nf)) { 
+          m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
+                     cluster = cluster,
+                     estfun = estfun, object = object, ...)
+        } else {
+          obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
+                       cluster = cluster, ...)
+          m <- list(coefficients = coef(obj),
+                    objfun = -as.numeric(logLik(obj)),
+                    estfun = NULL, object = NULL)
+          if (estfun) m$estfun <- sandwich::estfun(obj)
+          if (object) m$object <- obj
+          if (!is.null(obj$unweighted)) 
+            m$unweighted <- obj$unweighted
+          m$converged <- obj$converged ### may or may not exist
+        }
+        ### <FIXME> unweight scores in ctree or weight scores in
+        ### mfluc (means: for each variable again) </FIXME>
+        ### ctree expects unweighted scores
+        if (!is.null(m$estfun))  {
+          if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
+            m$estfun <- m$estfun / w
+        }
+        if (!is.null(ef <- m$estfun))
+          m$estfun <- rbind(0, ef)
+      }
+      return(m)
+    }
+  }
+  
+  if (!ctrl$update) {
+    rootestfun <- mytrafo(subset = subset, weights = weights)
+    updatetrafo <- function(subset, weights, info, ...)
+      return(rootestfun)
+  } else {
+    updatetrafo <- function(subset, weights, info, ...) {
+      ret <- mytrafo(subset = subset, weights = weights, info = info, ...)
+      if (is.null(ret$converged)) ret$converged <- TRUE
+      conv <- TRUE
+      if (is.function(converged)) conv <- converged(subset, weights)
+      ret$converged <- ret$converged && conv
+      if (!ret$converged) return(NULL)
+      ret
+    }
+  }
+  
+  nm <- c("model", "trafo", "data", "subset", "weights", "whichvar", "ctrl")
+  stopifnot(all(nm == names(formals(selectfun))))
+  stopifnot(all(nm == names(formals(splitfun))))
+  stopifnot(all(nm == names(formals(svselectfun))))
+  stopifnot(all(nm == names(formals(svsplitfun))))
+  
+  if (!doFit) return(mytrafo)
+  
+  list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
+                            splitfun = splitfun, svselectfun = svselectfun, svsplitfun = svsplitfun, 
+                            partyvars = partyvars, weights = weights, subset = subset, ctrl = ctrl),
+       trafo = mytrafo)
+}
 
 
 
@@ -293,130 +414,6 @@ extree <- function(data,
   ret$kids <- kids
 
   return(ret)
-}
-
-
-
-extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun, 
-                       splitfun = ctrl$splitfun, svselectfun = ctrl$svselectfun, 
-                       svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, ctrl, doFit = TRUE) {
-    ret <- list()
-
-    ### <FIXME> use data$vars$z as default for partyvars </FIXME>
-    ### <FIXME> try to avoid doFit </FIXME>
-
-    nf <- names(formals(trafo))
-    if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
-        mytrafo <- trafo
-    } else {
-        stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
-        stopifnot(!is.null(yx <- data$yx))
-        mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
-            iy <- data[["yx", type = "index"]]
-            if (is.null(iy)) {
-                NAyx <- data[["yx", type = "missing"]]
-                y <- yx$y
-                x <- yx$x
-                offset <- attr(yx$x, "offset")
-                ### <FIXME> other ways of handling NAs necessary? </FIXME>
-                subset <- subset[!(subset %in% NAyx)]
-                if (NCOL(y) > 1) {
-                    y <- y[subset,,drop = FALSE]
-                } else {
-                    y <- y[subset]
-                }
-                if (!is.null(x)) {
-                    ax <- attributes(x)
-                    ax$dim <- NULL
-                    ax$dimnames <- NULL
-                    x <- x[subset,,drop = FALSE]
-                    for (a in names(ax)) attr(x, a) <- ax[[a]] ### terms, formula, ... for predict
-                }
-                w <- weights[subset]
-                offset <- offset[subset]
-                cluster <- data[["(cluster)"]][subset]
-                if (all(c("estfun", "object") %in% nf)) { 
-                    m <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
-                               cluster = cluster, estfun = estfun, object = object, ...)
-                } else {
-                    obj <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
-                                 cluster = cluster, ...)
-                    m <- list(coefficients = coef(obj),
-                              objfun = -as.numeric(logLik(obj)),
-                              estfun = NULL, object = NULL)
-                    if (estfun) m$estfun <- sandwich::estfun(obj)
-                    if (object) m$object <- obj
-                }
-                if (!is.null(ef <- m$estfun)) {
-                    ### ctree expects unweighted scores
-                    if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
-                        m$estfun <- m$estfun / w
-                    Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
-                    Y[subset,] <- m$estfun
-                    m$estfun <- Y
-                }
-            } else {
-                w <- libcoin::ctabs(ix = iy, subset = subset, weights = weights)[-1]
-                offset <- attr(yx$x, "offset")
-                cluster <- model.frame(data, yxonly = TRUE)[["(cluster)"]]
-                if (all(c("estfun", "object") %in% nf)) { 
-                    m <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
-                               cluster = cluster,
-                               estfun = estfun, object = object, ...)
-                } else {
-                    obj <- trafo(y = yx$y, x = yx$x, offset = offset, weights = w, start = info$coef, 
-                                 cluster = cluster, ...)
-                    m <- list(coefficients = coef(obj),
-                              objfun = -as.numeric(logLik(obj)),
-                              estfun = NULL, object = NULL)
-                    if (estfun) m$estfun <- sandwich::estfun(obj)
-                    if (object) m$object <- obj
-                    if (!is.null(obj$unweighted)) 
-                        m$unweighted <- obj$unweighted
-                    m$converged <- obj$converged ### may or may not exist
-                }
-                ### <FIXME> unweight scores in ctree or weight scores in
-                ### mfluc (means: for each variable again) </FIXME>
-                ### ctree expects unweighted scores
-                if (!is.null(m$estfun))  {
-                    if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
-                        m$estfun <- m$estfun / w
-                }
-                if (!is.null(ef <- m$estfun))
-                    m$estfun <- rbind(0, ef)
-            }
-            return(m)
-        }
-    }
-                 
-    if (!ctrl$update) {
-        rootestfun <- mytrafo(subset = subset, weights = weights)
-        updatetrafo <- function(subset, weights, info, ...)
-            return(rootestfun)
-    } else {
-        updatetrafo <- function(subset, weights, info, ...) {
-            ret <- mytrafo(subset = subset, weights = weights, info = info, ...)
-            if (is.null(ret$converged)) ret$converged <- TRUE
-            conv <- TRUE
-            if (is.function(converged)) conv <- converged(subset, weights)
-            ret$converged <- ret$converged && conv
-            if (!ret$converged) return(NULL)
-            ret
-        }
-    }
-
-    nm <- c("model", "trafo", "data", "subset", "weights", "whichvar", "ctrl")
-    stopifnot(all(nm == names(formals(selectfun))))
-    stopifnot(all(nm == names(formals(splitfun))))
-    stopifnot(all(nm == names(formals(svselectfun))))
-    stopifnot(all(nm == names(formals(svsplitfun))))
-
-    if (!doFit) return(mytrafo)
-
-    list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
-                              splitfun = splitfun, svselectfun = svselectfun, svsplitfun = svsplitfun, 
-                              partyvars = partyvars, weights = weights, subset = subset, ctrl = ctrl),
-         trafo = mytrafo)
 }
 
 
