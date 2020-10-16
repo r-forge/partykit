@@ -62,9 +62,9 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   We use the following notation:
   \itemize{
       \item \code{y}: response variable(s) (also known as dependent or target variable)
-      \item \code{x}: model covariate(s) (e.g. regressor variable in \code{\link{mob}}, \code{\link{glmtree}}, etc.)
+      \item \code{x}: model covariate(s) (e.g. regressor variable in \code{\link{mob}}, \code{\link{glmtree}}, etc., if any)
       \item \code{z}: split variable(s) (also known as partitioning variable)
-      \item \code{yx}: model part, including offset, weights, etc.
+      \item \code{yx}: the combined model part of y and x (if any), including offset, weights, etc.
   }
   
   % TODO: please check the following notes on weights. 
@@ -81,7 +81,8 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
  \item{data}{ The data (usually as \code{\link[base]{data.frame}}). }
  \item{variables}{ Information on indexes of variables \code{y} and \code{x}, 
    index vector of \code{z} variables, indexes of \code{weights}, 
-   \code{offset}, \code{cluster}, \code{strata}.}
+   \code{offset}, \code{cluster}, \code{strata}. Each non-empty entry has an 
+   attribute \code{variable_names}.}
  \item{terms}{ A list of terms objects for \code{all} terms, \code{y},  
   \code{z}, \code{yx}, and \code{x}. 
   Only available if \code{formula} argument is set to a \code{\link[stats]{formula}},
