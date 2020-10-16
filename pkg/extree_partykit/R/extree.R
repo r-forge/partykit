@@ -48,9 +48,9 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
     stopifnot(!is.null(yx <- data$yx))
     mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
-      iy <- data[["yx", type = "index"]]
+      iy <- extree_variable(data, i = "yx", type = "index")
       if (is.null(iy)) {
-        NAyx <- data[["yx", type = "missing"]]
+        NAyx <- extree_variable(data, i ="yx", type = "missings")
         y <- yx$y
         x <- yx$x
         offset <- attr(yx$x, "offset")
@@ -367,7 +367,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
   ret$info <- info
 
   ### determine observations for splitting (only non-missings)
-  snotNA <- subset[!subset %in% data[[varid_split(thissplit), type = "missings"]]]
+  snotNA <- subset[!subset %in% extree_variable(data, i = varid_split(thissplit), type = "missings")]
   if (length(snotNA) == 0)
     return(partynode(as.integer(id), info = info))
   ### and split observations

@@ -1,4 +1,4 @@
-library("partykit")
+library("partykitx")
 
 ### --- Example 1 --- ###
 ### - airquality with only numeric variables
@@ -40,9 +40,9 @@ tr1 <- extree(data = my_data, trafo = trafo1,
         criterion = "statistic",
         critvalue = -65000,
         update = TRUE,
-        selectfun = partykit:::.objfun_select(),
+        selectfun = partykitx:::.objfun_select(),
         splitfun = split_select1,
-        svselectfun = partykit:::.objfun_select(),
+        svselectfun = partykitx:::.objfun_select(),
         svsplitfun = split_select1),
         restart = TRUE))
 
@@ -101,7 +101,7 @@ tr2 <- extree(data = d, trafo = trafo2,
         splitfun = split_select1,
         svselectfun = var_select2_call,
         svsplitfun = split_select1,
-        minsplit = 70),
+        minsplit = 90),
         restart = TRUE))
 
 tr2

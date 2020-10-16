@@ -127,20 +127,21 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
                             control, var_select) {
   
   ## set up return list + criterion matrix
-  ret <- list(criterion = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+  znams <- attr(data$variables$z, "variable_names")
+  ret <- list(criterion = matrix(NA, nrow = 2L, ncol = length(znams)))
   rownames(ret$criterion) <- c("statistic", "p.value")
-  colnames(ret$criterion) <- names(model.frame(data))
+  colnames(ret$criterion) <- znams
   if (length(whichvar) == 0) return(ret)
   
   ## loop over all relevant variables and use var_select function supplied
-  for (j in whichvar) {
+  for (i in seq_along(whichvar)) {
     
     tst <- selector(select = var_select, model = model, trafo = trafo, 
-                    data = data, subset = subset, weights = weights, j = j, 
+                    data = data, subset = subset, weights = weights, j = whichvar[i], 
                     control = control)
     
-    ret$criterion["statistic",j] <- tst$statistic
-    ret$criterion["p.value",j] <- tst$p.value
+    ret$criterion["statistic", i] <- tst$statistic
+    ret$criterion["p.value", i] <- tst$p.value
   }
   ret
 }
@@ -176,19 +177,20 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 
 ## Select function old
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
-  ret <- list(criterion = matrix(NA, nrow = 2L, ncol = ncol(model.frame(data))))
+  znams <- attr(data$variables$z, "variable_names")
+  ret <- list(criterion = matrix(NA, nrow = 2L, ncol = length(znams)))
   rownames(ret$criterion) <- c("statistic", "p.value")
-  colnames(ret$criterion) <- names(model.frame(data))
+  colnames(ret$criterion) <- znams
   if (length(whichvar) == 0) return(ret)
   ### <FIXME> allow joint MC in the absense of missings; fix seeds
   ### write ctree_test / ... with whichvar and loop over variables there
   ### </FIXME>
-  for (j in whichvar) {
+  for (i in seq_along(whichvar)) {
     tst <- FUN(model = model, trafo = trafo, data = data, 
-               subset = subset, weights = weights, j = j, 
+               subset = subset, weights = weights, j = whichvar[i], 
                SPLITONLY = FALSE, ctrl = ctrl)
-    ret$criterion["statistic",j] <- tst$statistic
-    ret$criterion["p.value",j] <- tst$p.value
+    ret$criterion["statistic", i] <- tst$statistic
+    ret$criterion["p.value", i] <- tst$p.value
   }
   ret
 }
@@ -248,14 +250,14 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 .objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
   
-  x <- data[[j]]
-  NAs <- data[[j, type = "missing"]]
+  x <- extree_variable(data, i = j)
+  NAs <- extree_variable(data, i= j, type = "missing")
   if (all(subset %in% NAs)) { 
     if (SPLITONLY) return(NULL)
     return(list(statistic = NA, p.value = NA))
   }
   
-  ix <- data[[j, type = "index"]]
+  ix <- extree_variable(data, i = j, type = "index")
   ux <- attr(ix, "levels")
   ixtab <- libcoin::ctabs(ix = ix, weights = weights, subset = subset)[-1]
   ORDERED <- is.ordered(x) || is.numeric(x)
