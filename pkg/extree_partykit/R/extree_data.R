@@ -244,10 +244,10 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
             if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
             paste(vanam[vars$z > 0], collapse = " + ")
         ))
-        ## FIXME: (SD) do we need info on all, y, z somewhere else? 
+        ## SD: "all", "z" are commented out for now
         mt <- list(
             # "all" = terms(formula),
-            # "y"   = terms(formula, data = data, rhs = 0L),
+            "y"   = terms(formula, data = data, rhs = 0L),
             # "z"   = terms(formula, data = data, lhs = 0L, rhs = 2L),
             "x"   = terms(formula, data = data, lhs = 0L, rhs = 1L),
             "yx"  = terms(formula, data = data, rhs = 1L)
