@@ -66,7 +66,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         
         ## y and z (and optionally x) need to be in formula
         if(!all(c("y", "z") %in% fonam)) stop("'formula' needs to specify at least a response 'y' and partitioning variables 'z'")
-        if(!("x" %in% fonam)) formula$x <- NULL ## FIXME: (SD) Nothing happens here, can this be deleted?
+        if(!("x" %in% fonam)) formula$x <- NULL 
         
         ## furthermore weights/offset/cluster/strata may be in formula or call
         vars <- formula[vanam]
@@ -244,7 +244,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
             if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
             paste(vanam[vars$z > 0], collapse = " + ")
         ))
-        ## SD: "all", "z" are commented out for now
+        ## SD: "all", "z" are commented out for now since they are not used afterwards
         mt <- list(
             # "all" = terms(formula),
             "y"   = terms(formula, data = data, rhs = 0L),
@@ -261,21 +261,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
             yx <- list("y" = yxmf[vanam[vars$y]])
         } else { ### ytype = "matrix"
           ## FIXME: (SD) model.part not practical for high-dim data  
-          ## Possible solution (SD): 
-              # Ytmp <-  as.matrix(yxmf[vanam[vars$y]])
-              # # Replace NA by rowise 0 if necessary
-              # if (length(ret$yxmissings) == 0) {
-              #   Ymat <- Ytmp
-              # }
-              # else {
-              #   Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
-              #   Ymat[-ret$yxmissings,] <- Ytmp[-ret$yxmissings,]
-              # }
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
             if (length(ret$yxmissings) == 0) {
                 Ymat <- Ytmp
             } else {
+              ### FIXME: (SD) why are NAs set to 0? why whole line set to 0 in case of multiple outcomes?
                 Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
                 Ymat[-ret$yxmissings,] <- Ytmp
             }
@@ -284,16 +275,17 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         for(i in (1L:npart)[-npart]) {
             ni <- paste("x", if(i == 1L) "" else i, sep = "")
             ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
-            Xtmp <- model.matrix(ti, yxmf)
-            if (length(ret$yxmissings) == 0) {
-                Xmat <- Xtmp
-            } else {
-                Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
-                ## FIXME: (SD) Error if no missings in x, but in y! 
-                ## Either do not replace NAs by 0 or do it with is.NA() - not ret$xymissing! 
-                Xmat[-ret$yxmissings,] <- Xtmp
-            }
-            yx[[ni]] <- Xmat
+            yx[[ni]] <- model.matrix(ti, yxmf)
+            ## FIXME: (SD)  if model.matrix not right dim consider code below. 
+            # if (length(ret$yxmissings) == 0) {
+            #     Xmat <- Xtmp
+            # } else {
+            #     Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
+            #     ## FIXME: (SD) Error if no missings in x, but in y! 
+            #     ## Either do not replace NAs by 0 or do it with is.NA() - not ret$xymissing! 
+            #     Xmat[-ret$yxmissings,] <- Xtmp
+            # }
+            # yx[[ni]] <- Xmat
             if(ncol(yx[[ni]]) < 1L) {
                 yx[[ni]] <- NULL
             } else {

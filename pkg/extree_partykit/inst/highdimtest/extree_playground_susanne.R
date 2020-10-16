@@ -217,6 +217,7 @@ dl2 <- list(y = c("Ozone", "Ozone2"), x = "Day",
 airq_dat2 <- extree_data(dl2, data = datahd, yx = yx,
   nmax = c(yx = bins, z = bins), ytype = "matrix") 
 
+
 # Improvement? 
 # user  system elapsed 
 # 22.128   0.006  22.138 
