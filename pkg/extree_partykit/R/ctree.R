@@ -4,6 +4,9 @@
         args <- list(...)
         ctrl[names(args)] <- args
         .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+        ## FIXME: (HS) move to using new var selector
+        # var_select_loop(model, trafo, data, subset, weights, whichvar, 
+        #                 control = ctrl, var_select = .ctree_test)
     }
 
 .ctree_split <- function(...)
@@ -11,6 +14,9 @@
         args <- list(...)
         ctrl[names(args)] <- args
         .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+        ## FIXME: (HS) move to using new split selector
+        # split_select_loop(model, trafo, data, subset, weights, whichvar, 
+        #                   control = ctrl, split_select = .ctree_test)
     }
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
@@ -25,7 +31,7 @@
                               subset = subset, weights = weights,
                               SPLITONLY = SPLITONLY, ctrl = ctrl))
     }
-
+    
     stopifnot(NROW(Y) == length(ix))
 
     NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
@@ -54,7 +60,7 @@
 
 .ctree_test_1d <- function(data, j, Y, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- data[[j]]
+    x <- extree_variable(data, j)
     MIA <- FALSE
     if (ctrl$MIA) {
         NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
@@ -65,7 +71,7 @@
     if (is.factor(x) || is.ordered(x))
         X <- data$zindex[[j]] ### data[[j, type = "index"]]
 
-    scores <- data[[j, type = "scores"]]
+    scores <- extree_variable(data, j, type = "scores")
     ORDERED <- is.ordered(x) || is.numeric(x)
 
     ux <- Xleft <- Xright <- NULL
@@ -96,7 +102,7 @@
         }
         MIA <- FALSE
     }
-    cluster <- data[["(cluster)"]]
+    cluster <- extree_variable(data, "(cluster)")
 
     .ctree_test_internal(x = x, X = X, ix = NULL, Xleft = Xleft, Xright = Xright,
                          ixleft = NULL, ixright = NULL, ux = ux, scores = scores,
@@ -108,7 +114,7 @@
 
 .ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
 
-    x <- data[[j]]
+    x <- extree_variable(data, j)
     ix <- data$zindex[[j]] ### data[[j, type = "index"]]
     ux <- attr(ix, "levels")
 
@@ -119,7 +125,7 @@
     if (is.factor(x) || is.ordered(x))
         X <- integer(0)
 
-    scores <- data[[j, type = "scores"]]
+    scores <- extree_variable(data, j, type = "scores")
     ORDERED <- is.ordered(x) || is.numeric(x)
 
     if (ctrl$splittest || SPLITONLY) {
@@ -141,7 +147,7 @@
         if (is.numeric(x))
             X <- matrix(c(0, as.double(attr(ix, "levels"))), ncol = 1)
     }
-    cluster <- data[["(cluster)"]]
+    cluster <- extree_variable(data, "(cluster)")
 
     .ctree_test_internal(x = x, X = X, ix = ix, Xleft = Xleft, Xright = Xright,
                          ixleft = ixleft, ixright = ixright, ux = ux, scores = scores,
@@ -331,7 +337,7 @@ ctree_control <- function
     nmax = c("yx" = Inf, "z" = Inf),
     alpha = 0.05,
     mincriterion = 1 - alpha,
-    logmincriterion = log(mincriterion),
+    logmincriterion = log(mincriterion), ## FIXME: (HS) Is currently unused
     minsplit = 20L,
     minbucket = 7L,
     minprob = 0.01,
@@ -380,7 +386,8 @@ ctree_control <- function
 
     c(extree_control(criterion = ifelse("Teststatistic" %in% testtype,
                                       "statistic", "p.value"),
-                     logmincriterion = logmincriterion, minsplit = minsplit,
+                     # logmincriterion = logmincriterion, ## FIXME: (HS) I uncommented as it currently leads to error
+                     minsplit = minsplit,
                      minbucket = minbucket, minprob = minprob,
                      nmax = nmax, stump = stump, lookahead = lookahead,
                      mtry = mtry, maxdepth = maxdepth, multiway = multiway,
@@ -415,7 +422,7 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
     }
     mf$nmax <- control$nmax
     ## evaluate model.frame
-    mf[[1L]] <- quote(partykit::extree_data)
+    mf[[1L]] <- quote(partykitx::extree_data) ## FIXME: (HS) change to partykit once we rename again
 
     d <- eval(mf, parent.frame())
     subset <- .start_subset(d)
@@ -439,12 +446,12 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
         mfyx[["(weights)"]] <- mfyx[["(offset)"]] <- NULL
         yvars <- names(mfyx)
         for (yvar in yvars) {
-            sc <- d[[yvar, "scores"]]
+            sc <- extree_variable(d, yvar, "scores")
             if (!is.null(sc))
                 attr(mfyx[[yvar]], "scores") <- sc
         }
         Y <- .y2infl(mfyx, response = d$variables$y, ytrafo = ytrafo)
-        if (!is.null(iy <- d[["yx", type = "index"]])) {
+        if (!is.null(iy <- extree_variable(d, "yx", type = "index"))) {
             Y <- rbind(0, Y)
         }
         ytrafo <- function(subset, weights, info, estfun, object, ...)
