@@ -77,22 +77,21 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   
   A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
-\value{An object of class \code{extree_data} containing (some of) the following elements:
+\value{An object of class \code{extree_data} containing the following elements:
  \item{data}{ The data (usually as \code{\link[base]{data.frame}}). }
  \item{variables}{ Information on indexes of variables \code{y} and \code{x}, 
    index vector of \code{z} variables, indexes of \code{weights}, 
-   \code{offset}, \code{cluster}, \code{strata}. Each non-empty entry has an 
+   \code{offset}, \code{cluster}, \code{strata}. Each non-empty entrys have an 
    attribute \code{variable_names}.}
  \item{terms}{ A list of terms objects for \code{all} terms, \code{y},  
-  \code{z}, \code{yx}, and \code{x}. 
-  Only available if \code{formula} argument is set to a \code{\link[stats]{formula}},
-  not a list.}
+  \code{z}, \code{yx}, and \code{x}, if \code{formula} argument is set to a \code{\link[stats]{formula}}.
+  Otherwise (if \code{formula} is a list) \code{NULL}. }
  \item{scores}{ Numeric scores to be assigned to ordered factors in the 
   \code{z} part of the formula. }
  \item{zindex}{ Object of class \code{\link[inum]{inum}}. }
  \item{missings}{ Missing observations (row indexes) in each variable used. }
  \item{yxmissings}{ Missing observations (row indexes) in the model part, including offset. }
- \item{yx}{ A list of model matrices (only if \code{yx = "matrix"}). }
+ \item{yx}{ A list of model matrices. Only if \code{yx = "matrix"}, otherwise \code{NULL}¸. }
 }
 \seealso{\code{\link{extree_variable}}, \code{\link[inum]{inum}}}
 \examples{
