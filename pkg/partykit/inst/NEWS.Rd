@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-11 (2020-10-23)}{
+  \subsection{New Features}{
+  \itemize{
+    \item{Add an experimental implementation of honesty.}
+  }
+}
+}
+
 \section{Changes in Version 1.2-10 (2020-10-12)}{
   \subsection{Bugfixes}{
   \itemize{
@@ -11,6 +19,7 @@
   }
 }
 }
+
 
 \section{Changes in Version 1.2-9 (2020-07-10)}{
   \subsection{Bugfixes}{
