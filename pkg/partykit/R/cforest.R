@@ -140,7 +140,7 @@ cforest <- function
             if (!perturb$replace) size <- floor(size * perturb$fraction)
             rw <- replicate(ntree, 
                             sample(idx, size = size, 
-                                   replace = perturb$replace, prob = probw),
+                                   replace = perturb$replace, prob = probw[idx]),
                             simplify = FALSE)
         } else {
             frac <- if (!perturb$replace) perturb$fraction else 1
