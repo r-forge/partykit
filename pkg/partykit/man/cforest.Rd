@@ -118,7 +118,8 @@ cforest(formula, data, weights, subset, offset, cluster, strata,
           For \code{type = "where"}, a list of terminal node ids for each of the
           trees in the forest ist returned.}
   \item{OOB}{
-    a logical defining out-of-bag predictions (only if \code{newdata = NULL}).}
+    a logical defining out-of-bag predictions (only if \code{newdata = NULL}).
+    If the forest was fitted with honesty, this option is ignored.}
   \item{FUN}{
     a function to compute summary statistics. Predictions for each node have to be
     computed based on arguments \code{(y, w)} where \code{y} is the response and
