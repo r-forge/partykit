@@ -207,8 +207,9 @@ cforest <- function
         ret <- updatefun(sort(rw[[b]]), integer(0), control)
         ### honesty: prune-off empty nodes
         if (!is.null(hn)) {
+            nid <- nodeids(ret$nodes, terminal = TRUE)
             nd <- unique(fitted_node(ret$nodes, data = d$data, obs = hn[[b]]))
-            prn <- nodeids(ret$nodes)[nodeids(ret$nodes) %in% nd]
+            prn <- nid[!nid %in% nd]
             if (length(prn) > 0)
                 ret <- list(nodes = nodeprune(ret$nodes, ids = prn), trafo = ret$trafo)
         }
