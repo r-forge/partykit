@@ -38,7 +38,11 @@ pmodel <- function(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coe
   ## personalised model or model coefficients
   get_pmod <- function(w) {
     
-    if(sum(w) == 0) stop("The weights for one observation are all 0. A solution may be increasing ntree.")
+    if (sum(w) == 0) {
+        warning("The weights for one observation are all 0, return base coefficients. 
+                 A solution may be increasing ntree.")
+        return(coef(model))
+    }
     dat <- x$data
     dat$w <- w
     
