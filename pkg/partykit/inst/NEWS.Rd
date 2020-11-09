@@ -8,6 +8,12 @@
     \item{Add an experimental implementation of honesty.}
   }
 }
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{Non-standard variable names are now handled correctly within \code{extree_data}, prompted by
+          \url{https://stackoverflow.com/questions/64660889/ctree-ignores-variables-with-non-syntactic-names}.}
+  }
+}
 }
 
 \section{Changes in Version 1.2-10 (2020-10-12)}{
