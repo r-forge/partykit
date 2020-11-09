@@ -166,7 +166,7 @@ extree_fit(data = airq_dat, trafo = trafo_identity, ctrl = ctrl1, weights = NULL
 #   1: In formals(fun) : argument is not a function
 # 2: In formals(fun) : argument is not a function
 
-# Bugs extree_data: 
+# Bugs extree_data: ## FIXME: Z checks this...
 dim <- 100
 yx <- "matrix"
 bins <- Inf
