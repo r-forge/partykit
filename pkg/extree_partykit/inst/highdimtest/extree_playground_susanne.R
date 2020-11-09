@@ -12,6 +12,9 @@
 library(devtools)
 devtools::load_all()
 # library(partykit)
+library(ggplot2)
+library(data.table) 
+library(tictoc)
 
 #--------------------------------------------------------------------
 # Data 
@@ -124,77 +127,6 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL,
 # Try out high-dim datasets
 #-----------------------------------------------------------------------------
 
-fit_tree_airquality <- function(dim, bins = Inf, yx = "None") {
-  
-  datahd <- add_noise_var(airquality, dim) 
-  dl <- list(y = "Ozone", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
-  
-  ctrl1 <- extree_control(criterion = "p.value",
-                          critvalue = 0.05,
-                          update = TRUE,
-                          selectfun = list(
-                            numeric = var_select_guide_numeric,
-                            default = var_select_guide_factor
-                          ),
-                          svselectfun = NULL, 
-                          svsplitfun = NULL,
-                          splitfun = split_select_median_numeric,
-                          minsplit = 50)
-  
-  tic()
-  airq_dat <- extree_data(dl, data = datahd, yx = yx,
-                          nmax = c(yx = bins, z = bins))
-  
-  a <- toc()
-  time_data <- as.numeric(a$toc - a$tic)
-  tic()
-  xtr <- extree(data = airq_dat, trafo = trafo_identity, 
-                control = c(ctrl1, restart = TRUE))
-  b <- toc()
-  list(time_data = time_data, time_extree = as.numeric(b$toc - b$tic))
-}
-
-# Study: 
-
-dim <- c(1000, 5000, 10000)
-bins <- c(10, 100, Inf)
-yx <- c("none", "matrix")
-grid <- expand.grid(dim, bins, yx)
-grid.time <- as.data.table(grid)
-names(grid.time) = c("dims", "bins", "yx")
-grid.time[,  c("time_data", "time_extree") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
-  setup <- grid.time[row, ]
-  xtree <- fit_tree_airquality(dim = setup$dims, bins = setup$bins, yx = as.character(setup$yx))  
-  xtree$time_data
-  list(
-    time_data = xtree$time_data, 
-    time_extree = xtree$time_extree
-  )
-}))
-]
-
-grid.time$bins = as.factor(grid.time$bins)
-
-a <- ggplot(grid.time, aes(x = dims, y = time_data, color = yx)) + 
-  geom_point(aes(shape = bins)) +
-  ylab("extree_data time elapsed (sec)")
-
-b <- ggplot(grid.time, aes(x = dims, y = time_extree, color = yx)) +
-  geom_point(aes(shape = bins)) +
-  ylab("extree time elapsed (sec)")
-
-ggsave(filename = "extree_data_time.pdf", plot = a, height = 3.5, width = 4)
-ggsave(filename = "extree_time.pdf", plot = b, height = 3.5, width = 4)
-
-
-# Profiling: 
-dim <- 100
-yx <- "matrix"
-bins <- Inf
-datahd <- add_noise_var(airquality, dim) 
-datahd$Ozone2 <- sample(datahd$Ozone)
-dl <- list(y = c("Ozone", "Ozone2"), z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
-
 ctrl1 <- extree_control(criterion = "p.value",
   critvalue = 0.05,
   update = TRUE,
@@ -207,26 +139,145 @@ ctrl1 <- extree_control(criterion = "p.value",
   splitfun = split_select_median_numeric,
   minsplit = 50)
 
-system.time(airq_dat <- extree_data(dl, data = datahd, yx = yx,
-  nmax = c(yx = bins, z = bins), ytype = "matrix"))
-
-# ERROR occurs: 
-dl2 <- list(y = c("Ozone", "Ozone2"), x = "Day", 
-  z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
-
-airq_dat2 <- extree_data(dl2, data = datahd, yx = yx,
-  nmax = c(yx = bins, z = bins), ytype = "matrix") 
 
 
-# Improvement? 
-# user  system elapsed 
-# 22.128   0.006  22.138 
 
-# user  system elapsed 
-# 1.586   0.000   1.586 
+# Busg extree: 
+dl <- list(y = "Ozone", z = c("Wind", "Temp"))
+airq_dat <- extree_data(dl, data = airquality) # does not work
+
+xtr <- extree(data = airq_dat, trafo = trafo_identity, 
+  control = ctrl1)
+# Error in .extree_node(id = nextid, data = data, trafo = trafo, selectfun = selectfun,  : 
+#     object 'popt' not found
+# In addition: Warning messages:
+#   1: In formals(fun) : argument is not a function
+# 2: In formals(fun) : argument is not a function
+# 3: In chisq.test(x = est_cat, y = sv_cat) :
+#   Chi-squared approximation may be incorrect
+# 4: In chisq.test(x = est_cat, y = sv_cat) :
+#   Chi-squared approximation may be incorrect
+
+extree_fit(data = airq_dat, trafo = trafo_identity, ctrl = ctrl1, weights = NULL, 
+  subset = NULL, partyvars = NULL)
+# Error in extree_variable(data, i = 1, type = "original") : 
+#   argument "data" is missing, with no default
+# In addition: Warning messages:
+#   1: In formals(fun) : argument is not a function
+# 2: In formals(fun) : argument is not a function
+
+# Bugs extree_data: 
+dim <- 100
+yx <- "matrix"
+bins <- Inf
+datahd <- add_noise_var(airquality, dim) 
+
+## One integer target: 
+# Binning results in errors & wrong bins in case of integer outcomes
+dl <- list(y = "Ozone", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
+extree_data(dl, data = datahd, yx = "matrix", 
+  nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") # does not work due to binning
+# Weird error: 
+# Error in Ymat[-ret$yxmissings, ] <- Ytmp : 
+#   number of items to replace is not a multiple of replacement length
+airq_dat2 <- extree_data(dl, data = datahd, yx = "none", # no error but also no binning
+  nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") 
+airq_dat3 <- extree_data(dl, data = datahd, yx = "matrix", # no error but wrong output
+  nmax = c("yx" = 10, "z" = Inf), ytype = "vector") 
+airq_dat4 <- extree_data(dl, data = datahd, yx = "matrix", # works because no binning
+  ytype = "matrix") 
+
+# One numeric target: 
+datahd$Ozonen = as.numeric(datahd$Ozone)
+dln <- list(y = "Ozonen", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
+extree_data(dln, data = datahd, yx = "matrix", #numeric outcome 
+  nmax = c("yx" = 10), ytype = "matrix") # does not work due to binning
+# Error in Ymat[-ret$yxmissings, ] <- Ytmp : 
+#   number of items to replace is not a multiple of replacement length
+extree_data(dln, data = datahd, yx = "matrix", #numeric outcome 
+  nmax = c("yx" = 10), ytype = "vector") # error due to binning
+# Error in if (length(ux) > nmax) ux <- unique(quantile(x, prob = 1:(nmax -  : 
+#     missing value where TRUE/FALSE needed
+
+
+## Multiple targets: 
+datahd$Ozone2 <- sample(datahd$Ozone)
+dlmulti <- list(y = c("Ozonen", "Ozone2"), z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
+airq_dat <- extree_data(dlmulti, data = datahd, yx = "matrix",
+  nmax = c("yx" = c(10, 10, 20), "z" = Inf), ytype = "matrix") # works although yx wrong dimensions, works as if yx = Inf! 
+
+############################################################################
+
 
 
 # Test: 
 head(datahd$Ozone)
 head(datahd$Ozone2)
 head(airq_dat$yx$y)
+
+
+#--- Runtime Study ---- 
+
+fit_tree_airquality <- function(dim, bins = Inf, yx = "none") {
+  datahd <- add_noise_var(airquality, dim) 
+  dl <- list(y = "Ozone", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
+  
+  
+  tic()
+  airq_dat <- extree_data(dl, data = datahd, yx = yx,
+    nmax = c(yx = bins, z = bins))
+  
+  a <- toc()
+  time_data <- as.numeric(a$toc - a$tic)
+  # tic()
+  # xtr <- extree(data = airq_dat, trafo = trafo_identity, 
+  #   control = ctrl1)
+  # b <- toc()
+  # list(time_data = time_data, time_extree = as.numeric(b$toc - b$tic))
+}
+
+dim <- c(1000, 5000, 10000)
+# bins <- c(10, 100, Inf)
+yx <- c("matrix", "none")
+
+# grid <- expand.grid(dim, bins, yx)
+# grid.time <- as.data.table(grid)
+# names(grid.time) = c("dims", "bins", "yx")
+
+grid <- expand.grid(dim, yx)
+grid.time <- as.data.table(grid)
+names(grid.time) = c("dims", "yx")
+grid.time[,  c("time_data") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
+  setup <- grid.time[row, ]
+  xtree <- fit_tree_airquality(dim = setup$dims, yx = as.character(setup$yx)) #, bins = setup$bins
+  list(time_data = xtree)
+}))
+]
+
+grid.time[,  c("time_data", "time_extree") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
+  setup <- grid.time[row, ]
+  xtree <- fit_tree_airquality(dim = setup$dims, yx = as.character(setup$yx)) #, bins = setup$bins
+  xtree$time_data
+  list(
+    time_data = xtree$time_data,
+    time_extree = xtree$time_extree
+  )
+}))
+]
+
+# Error in .extree_node(id = nextid, data = data, trafo = trafo, selectfun = selectfun,  : 
+#     object 'popt' not found
+
+grid.time$bins = as.factor(grid.time$bins)
+
+a <- ggplot(grid.time, aes(x = dims, y = time_data, color = yx)) + 
+  # geom_point(aes(shape = bins)) +
+  geom_point() + 
+  ylab("extree_data time elapsed (sec)")
+
+b <- ggplot(grid.time, aes(x = dims, y = time_extree, color = yx)) +
+  geom_point(aes(shape = bins)) +
+  ylab("extree time elapsed (sec)")
+
+ggsave(filename = "extree_data_time.pdf", plot = a, height = 3.5, width = 4)
+ggsave(filename = "extree_time.pdf", plot = b, height = 3.5, width = 4)
