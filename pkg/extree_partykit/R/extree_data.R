@@ -142,9 +142,9 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         
         ## extract variable lists
         vars <- list(
-            y = attr(mt$y, "term.labels"),
-            x = unique(unlist(lapply(grep("^x", names(mt)), function(i) attr(mt[[i]], "term.labels")))),
-            z = attr(mt$z, "term.labels"),
+            y = .get_term_labels(mt$y),
+            x = unique(unlist(lapply(grep("^x", names(mt)), function(i) .get_term_labels(mt[[i]])))),
+            z = .get_term_labels(mt$z),
             weights = if("(weights)" %in% names(mf)) "(weights)" else NULL,
             offset  = if("(offset)"  %in% names(mf)) "(offset)"  else NULL,
             cluster = if("(cluster)" %in% names(mf)) "(cluster)" else NULL,
@@ -363,6 +363,19 @@ extree_variable <- function(x, i,
     )
 }
 
+.deparse_variables <- function(x) paste(deparse(x, width.cutoff = 500L,
+  backtick = !is.symbol(x) && is.language(x)), collapse = " ")
+
+.get_term_labels <- function(terms, delete_response = FALSE) {
+  ## ## with just standard variable names one could use:
+  ## attr(terms, "term.labels")
+
+  ## delete response from terms (if needed)
+  if(delete_response) terms <- delete.response(terms)
+
+  ## with non-standard variable names -> deparse to handle `...` correctly
+  vapply(attr(terms, "variables"), .deparse_variables, " ")[-1L]
+}
 
 ### <FIXME> (HS) delete if possible </FIXME>
 "[[.extree_data" <- function(x, i, 
