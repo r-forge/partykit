@@ -68,12 +68,11 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   }
   
   % TODO: please check the following notes on weights. 
-  In statistics, three main types of \code{weights} exist: precision weights, frequency/case weights and sampling weights. 
+ According to Thomas Lumley (2020) three main types of \code{weights} exist: precision weights, frequency/case weights and sampling weights. 
   Precision weights describe the precisions of observations. 
   A weight of 5 means that a value is an average of 5 replicate observations. 
   Second, frequency/case weights describe absolute frequencies where a weight of 5 means that 5 identical observations (same covariate patterns) exist in a dataset. 
-  Third, sampling weights describe how a sample can be scaled up to a population where a weight of 5 means that an observations is sampled with a probability of 1/5. 
-  For details we refer to \href{https://notstatschat.rbind.io/2020/08/04/weights-in-statistics/}{this blog post}. 
+  Third, sampling weights describe how a sample can be scaled up to a population where a weight of 5 means that an observations is sampled with a probability of 1/5.  
   
   A convience function for accessing the information of the returned object of \code{extree_data} is \code{\link{extree_variable}}.
 }
@@ -94,6 +93,12 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
  \item{yx}{ A list of model matrices. Only if \code{yx = "matrix"}, otherwise \code{NULL}¸. }
 }
 \seealso{\code{\link{extree_variable}}, \code{\link[inum]{inum}}}
+
+\references{ 
+Lumley T (2020).
+  Weights in statistics. \url{https://notstatschat.rbind.io/2020/08/04/weights-in-statistics/}
+}
+
 \examples{
 
   
