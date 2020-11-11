@@ -214,7 +214,9 @@
     }
 
     ### check if either X or Y were unique
-    if (all(lev$Variance < ctrl$tol)) {
+    vr <- lev$Variance
+    vr[is.na(vr)] <- 0
+    if (all(vr < ctrl$tol)) {
         if (SPLITONLY) return(NULL)
         return(list(statistic = NA, p.value = NA))
     }
