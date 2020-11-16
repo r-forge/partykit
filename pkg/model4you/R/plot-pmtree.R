@@ -324,7 +324,7 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
         probability = s_raw$surv[ , i],
         row.names = NULL)))
   pr <- rbind(pr,
-    data.frame(xdat, pr = c(0, 0), probability = c(1, 1)))
+    data.frame(xdat, pr = rep(0, NROW(xdat)), probability = rep(1, NROW(xdat))))
   pr[[1]] <- as.factor(pr[[1]])
 
   ## plot
