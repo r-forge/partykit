@@ -4,6 +4,7 @@
 # - DATE:   2020-09-23
 # -------------------------------------------------------------------
 # - PURPOSE: Some examples illustrating high-dimension performance
+# - BASIS: ../19_extree_hackathon/extree_examples_2019_11_08.R
 # -------------------------------------------------------------------
 
 # -------------------------------------------------------------------
@@ -142,7 +143,7 @@ ctrl1 <- extree_control(criterion = "p.value",
 
 
 
-# Busg extree: 
+# Bugs extree/extree_fit: 
 dl <- list(y = "Ozone", z = c("Wind", "Temp"))
 airq_dat <- extree_data(dl, data = airquality) # does not work
 
