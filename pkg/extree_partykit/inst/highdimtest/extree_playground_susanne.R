@@ -145,7 +145,7 @@ ctrl1 <- extree_control(criterion = "p.value",
 
 # Bugs extree/extree_fit: 
 dl <- list(y = "Ozone", z = c("Wind", "Temp"))
-airq_dat <- extree_data(dl, data = airquality) # does not work
+airq_dat <- extree_data(Ozone ~ Wind + Temp, data = airquality) # does not work
 
 xtr <- extree(data = airq_dat, trafo = trafo_identity, 
   control = ctrl1)

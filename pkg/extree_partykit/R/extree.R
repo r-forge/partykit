@@ -280,6 +280,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     ## split variables constant
     if (all(is.na(crit)) || (minp && all(crit >= critvalue)) || (!minp && all(crit <= critvalue))) {
       terminal <- TRUE
+      popt <- NA_real_
     }
 
     ## placeholder for missing criterion values
@@ -324,12 +325,14 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
       if(("log.p.value" %in% rownames(p)) && !("p.value" %in% rownames(p))) {
         p <- rbind(p, p.value = exp(p["log.p.value", ]))
       }
-      p <- p[-which(rownames(p) %in% c("log.statistic", "log.p.value")), , drop = FALSE]
-
+      if (any(rownames(p) %in% c("log.statistic", "log.p.value"))) {
+        p <- p[-which(rownames(p) %in% c("log.statistic", "log.p.value")), , drop = FALSE]  
+      }
+    
       ## store optimal p-value (FIXME: (Z) Always p-value - or optimal criterion?)
       jopt <- if(minp) which.min(crit) else which.max(crit)
       if("p.value" %in% rownames(p)) {
-	popt <- p["p.value", jopt]
+	      popt <- p["p.value", jopt]
       } else {
         popt <- NA_real_
       }
