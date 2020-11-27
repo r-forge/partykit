@@ -3,7 +3,7 @@
 vdisttree:=$(shell cat DESCRIPTION | egrep Version | sed 's/Version://g')
 
 
-.PHONY: codecov check build
+.PHONY: codecov check install
 
 codecov: SHELL:=/bin/bash
 codecov: 
@@ -22,8 +22,8 @@ check:
 	-rmdir ../tmp_disttree_inst
 
 
-build: SHELL:=/bin/bash
-build:
+install: SHELL:=/bin/bash
+install:
 	-mkdir ../tmp_disttree_inst/ 
 	-find ./inst/ -maxdepth 1 -mindepth 1 -not -name tinytest \
     -exec mv '{}' ../tmp_disttree_inst/ \; 
