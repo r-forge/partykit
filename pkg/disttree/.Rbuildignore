@@ -5,7 +5,7 @@ R/test_distributions.R
 R/try_guide.R
 R/examples.R
 man/.Rhistory
-inst/
+inst/[^(tinytest)$]
 demo/demo_data_prep.R
 demo/timeAxams.R
 TODO

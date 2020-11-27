@@ -11,4 +11,4 @@ Imports: graphics, stats, utils, Formula, sandwich, survival
 Suggests: crch, gamlss.cens, lmtest, mvtnorm, countreg, testthat, tinytest
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.0
