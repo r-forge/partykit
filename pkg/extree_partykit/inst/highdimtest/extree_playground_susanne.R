@@ -13,9 +13,6 @@
 library(devtools)
 devtools::load_all()
 # library(partykit)
-library(ggplot2)
-library(data.table) 
-library(tictoc)
 
 #--------------------------------------------------------------------
 # Data 
@@ -140,33 +137,6 @@ ctrl1 <- extree_control(criterion = "p.value",
   splitfun = split_select_median_numeric,
   minsplit = 50)
 
-
-
-
-# Bugs extree/extree_fit: 
-dl <- list(y = "Ozone", z = c("Wind", "Temp"))
-airq_dat <- extree_data(Ozone ~ Wind + Temp, data = airquality) # does not work
-
-xtr <- extree(data = airq_dat, trafo = trafo_identity, 
-  control = ctrl1)
-# Error in .extree_node(id = nextid, data = data, trafo = trafo, selectfun = selectfun,  : 
-#     object 'popt' not found
-# In addition: Warning messages:
-#   1: In formals(fun) : argument is not a function
-# 2: In formals(fun) : argument is not a function
-# 3: In chisq.test(x = est_cat, y = sv_cat) :
-#   Chi-squared approximation may be incorrect
-# 4: In chisq.test(x = est_cat, y = sv_cat) :
-#   Chi-squared approximation may be incorrect
-
-extree_fit(data = airq_dat, trafo = trafo_identity, ctrl = ctrl1, weights = NULL, 
-  subset = NULL, partyvars = NULL)
-# Error in extree_variable(data, i = 1, type = "original") : 
-#   argument "data" is missing, with no default
-# In addition: Warning messages:
-#   1: In formals(fun) : argument is not a function
-# 2: In formals(fun) : argument is not a function
-
 # Bugs extree_data: ## FIXME: Z checks this...
 dim <- 100
 yx <- "matrix"
@@ -209,15 +179,24 @@ airq_dat <- extree_data(dlmulti, data = datahd, yx = "matrix",
 
 ############################################################################
 
+# Test predict: 
+dl <- list(y = "Ozone", z = c("Wind", "Temp"))
+airq_dat <- extree_data(Ozone ~ Wind + Temp, data = airquality) # does not work
 
+xtr <- extree(data = airq_dat, trafo = trafo_identity, 
+  control = ctrl1) # Bug solved
+ptr <- constparty(xtr$nodes, data = airq_dat$data)
+# same output 
+predict(ptr, type = "response")
+predict(ptr, type = "node")
 
-# Test: 
-head(datahd$Ozone)
-head(datahd$Ozone2)
-head(airq_dat$yx$y)
-
+############################################################################
 
 #--- Runtime Study ---- 
+library(ggplot2)
+library(data.table) 
+library(tictoc)
+library(gridExtra)
 
 fit_tree_airquality <- function(dim, bins = Inf, yx = "none") {
   datahd <- add_noise_var(airquality, dim) 
@@ -229,15 +208,21 @@ fit_tree_airquality <- function(dim, bins = Inf, yx = "none") {
     nmax = c(yx = bins, z = bins))
   
   a <- toc()
-  time_data <- as.numeric(a$toc - a$tic)
-  # tic()
-  # xtr <- extree(data = airq_dat, trafo = trafo_identity, 
-  #   control = ctrl1)
-  # b <- toc()
-  # list(time_data = time_data, time_extree = as.numeric(b$toc - b$tic))
+  tic()
+  xtr <- extree(data = airq_dat, trafo = trafo_identity,
+    control = ctrl1)
+  b <- toc()
+  ptr <- party(xtr$nodes, data = airq_dat$data)
+  tic()
+  pred <- predict(ptr)
+  c <- toc()
+  list(
+    time_data = as.numeric(a$toc - a$tic), 
+    time_extree = as.numeric(b$toc - b$tic), 
+    time_pred = as.numeric(c$toc - c$tic))
 }
 
-dim <- c(1000, 5000, 10000)
+dim <- c(1000, 5000, 10000, 20000)
 # bins <- c(10, 100, Inf)
 yx <- c("matrix", "none")
 
@@ -248,28 +233,17 @@ yx <- c("matrix", "none")
 grid <- expand.grid(dim, yx)
 grid.time <- as.data.table(grid)
 names(grid.time) = c("dims", "yx")
-grid.time[,  c("time_data") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
+grid.time[,  c("time_data", "time_extree", "time_predict") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
   setup <- grid.time[row, ]
   xtree <- fit_tree_airquality(dim = setup$dims, yx = as.character(setup$yx)) #, bins = setup$bins
-  list(time_data = xtree)
+  list(time_data = xtree$time_data,
+    time_extree = xtree$time_extree, 
+    time_predict = xtree$time_pred)
 }))
 ]
 
-grid.time[,  c("time_data", "time_extree") := data.table::rbindlist(lapply(seq_len(nrow(grid.time)), function(row) {
-  setup <- grid.time[row, ]
-  xtree <- fit_tree_airquality(dim = setup$dims, yx = as.character(setup$yx)) #, bins = setup$bins
-  xtree$time_data
-  list(
-    time_data = xtree$time_data,
-    time_extree = xtree$time_extree
-  )
-}))
-]
 
-# Error in .extree_node(id = nextid, data = data, trafo = trafo, selectfun = selectfun,  : 
-#     object 'popt' not found
-
-grid.time$bins = as.factor(grid.time$bins)
+# grid.time$bins = as.factor(grid.time$bins)
 
 a <- ggplot(grid.time, aes(x = dims, y = time_data, color = yx)) + 
   # geom_point(aes(shape = bins)) +
@@ -277,8 +251,17 @@ a <- ggplot(grid.time, aes(x = dims, y = time_data, color = yx)) +
   ylab("extree_data time elapsed (sec)")
 
 b <- ggplot(grid.time, aes(x = dims, y = time_extree, color = yx)) +
-  geom_point(aes(shape = bins)) +
+  # geom_point(aes(shape = bins)) +
+  geom_point() + 
   ylab("extree time elapsed (sec)")
 
-ggsave(filename = "extree_data_time.pdf", plot = a, height = 3.5, width = 4)
-ggsave(filename = "extree_time.pdf", plot = b, height = 3.5, width = 4)
+c <- ggplot(grid.time, aes(x = dims, y = time_predict, color = yx)) +
+  geom_point() + 
+  ylab("predict time elapsed (sec)")
+
+d <- grid.arrange(a, b, c, ncol = 3)
+
+# ggsave(filename = "extree_data_time.pdf", plot = a, height = 3.5, width = 4)
+# ggsave(filename = "extree_time.pdf", plot = b, height = 3.5, width = 4)
+# ggsave(filename = "extree_pedict_time.pdf", plot = c, height = 3.5, width = 4)
+ggsave(filename = "time.pdf", plot = d, height = 3.5, width = 12)
