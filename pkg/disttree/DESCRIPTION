@@ -6,7 +6,7 @@ Authors@R: c(person(given = "Moritz N.", family = "Lang", role = "aut", email = 
              person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at", comment = c(ORCID = "0000-0003-0314-6075")),
              person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org", comment = c(ORCID = "0000-0003-0918-3766")))
 Description: Infrastructure for fitting distributional regression trees and forests based on maximum-likelihood estimation of parameters for specified distribution families, for example from the GAMLSS family.
-Depends: R (>= 3.1.0), partykit (>= 1.2-5), gamlss.dist
+Depends: R (>= 3.1.0), partykit (>= 1.2-11), gamlss.dist
 Imports: graphics, stats, utils, Formula, sandwich, survival
 Suggests: crch, gamlss.cens, lmtest, mvtnorm, countreg, tinytest
 LazyData: yes
