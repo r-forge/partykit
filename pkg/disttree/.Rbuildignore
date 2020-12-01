@@ -1,3 +1,15 @@
+inst/circforest
+inst/CMStatistics2017
+inst/CMStatistics2019
+inst/draft
+inst/eeecon_workshop
+inst/IWSM2019
+inst/JSM2018
+inst/MIP-Seminar
+inst/PhD_thesis_defense
+inst/Psychoco2018
+inst/replication
+inst/useR2017
 R/distforest_mob.R
 R/disttree_urp.R
 R/ytrafo_score.R
@@ -5,7 +17,6 @@ R/test_distributions.R
 R/try_guide.R
 R/examples.R
 man/.Rhistory
-inst/[^(tinytest)$]
 demo/demo_data_prep.R
 demo/timeAxams.R
 TODO
