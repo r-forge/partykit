@@ -10,6 +10,15 @@
 # -------------------------------------------------------------------
 library("crch")
 library("gamlss.cens")
+library("RainTyrol")
+
+  data("RainTyrol")
+
+  station <- "Axams"
+  
+  ## Get observations and covariates for selected station
+  RainData <- RainTyrol[RainTyrol$station == as.character(station), ]
+  rownames(RainData) <- c(1:NROW(RainData))
 
 if(at_home()){
   # -------------------------------------------------------------------
