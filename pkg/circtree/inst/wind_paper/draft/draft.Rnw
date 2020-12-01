@@ -342,7 +342,7 @@ covariates, the lagged wind direction (``persistence'') is mostly responsible
 for distinguishing the broad range of wind regimes listed above while the
 pressure gradients and wind speed separate the data into subgroups with high
 vs.\ low precision. A more comprehensive application of circular regression
-trees and forests on probabilistic wind direction forecasting is presented in
+trees and forests to probabilistic wind direction forecasting is presented in
 Section~\ref{sec:wind} for Innsbruck Airport and Vienna International Airport,
 together with a comparison to commonly-used alternative approaches.
 
@@ -673,7 +673,7 @@ set consists of 41\,979~time points and $260$~covariates for Innsbruck, and of
 %%
 \begin{table}[t!]
  \caption[Table caption text]{Overview of the data sets employed in the
-    application on probabilistic wind direction forecasting: For Innsbruck and
+    application to probabilistic wind direction forecasting: For Innsbruck and
     Vienna, various meteorological variables and derived quantities of these are
     considered at the respective stations, located either directly at the airports
     or in their vicinities.}
@@ -713,7 +713,7 @@ set consists of 41\,979~time points and $260$~covariates for Innsbruck, and of
 For a fair evaluation of circular regression trees and forests, and to
 investigate whether they can be applied as a reasonable alternative to already
 existing approaches, three additional statistical models are employed in the
-application on probabilistic wind direction forecasting. Two of them are based
+application to probabilistic wind direction forecasting. Two of them are based
 on existing approaches used in the meteorological field, while the third is a
 state-of-the-art GLM-type model to forecast circular response variables.
 
@@ -967,7 +967,7 @@ each node and allowing for splits in both distribution parameters $\mu$ and
 $\kappa$, fully probabilistic forecasts are provided.
 
 The performance of the novel circular regression trees and forests is assessed
-in an application on short-term probabilistic wind direction forecasting at two
+in an application to short-term probabilistic wind direction forecasting at two
 airports with different site characteristics. As benchmark models,
 probabilistic climatology and persistency models, as well as a state-of-the-art
 circular GLM-type model are evaluated based on proper scoring rules. In
@@ -1010,7 +1010,7 @@ different splits.
 
 To conclude, in general the tree structure can capture nonlinear changes,
 shifts, and potential interactions in covariates without prespecification of
-such effects. As supported by the presented application on probabilistic wind direction
+such effects. As supported by the presented application to probabilistic wind direction
 forecasting, this can be particularly useful for modeling a highly fluctuating
 response, such as typically observed for wind direction, or/and in case of a
 large number of possible covariates. Moreover, the application shows that
