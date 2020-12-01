@@ -6,7 +6,8 @@
 # - PURPOSE: Test non-standard variable names employing ctree() and mob().
 # -------------------------------------------------------------------
 # - REMARK: - Actually written for `partykit', needs to be adapted or moved.
-#           - Tests are only run at home, where environmentent variable TT_AT_HOME=TRUE.
+#           - Tests are only run at home, where env variable TT_AT_HOME=TRUE.
+#           - Perform comparison based on nodeapply(), tree$node, or print statement?
 # -------------------------------------------------------------------
 
 if(at_home()){
@@ -14,7 +15,21 @@ if(at_home()){
   # -------------------------------------------------------------------
   # PRELIMINARIES
   # -------------------------------------------------------------------
+  ## Check if partykit is installed
   if(!require("partykit")) stop("Please install the package 'partykit' ...")
+
+  ## Helper function to produce print statement
+  get_print_statement <- function(print_statement){
+    sink(tmp_file <- tempfile())
+    on.exit(sink())
+    invisible(force(print(print_statement)))
+
+    con <- file(tmp_file, "r", encoding = "Latin1")
+    output <- readLines(con); close(con)
+
+    return(output)
+  }
+
   
   # -------------------------------------------------------------------
   # RUN TEST FOR SPLIT VARIABLE NAMES WITH BACKTICKS
@@ -66,45 +81,40 @@ if(at_home()){
   # -------------------------------------------------------------------
   # Check lmtree single space with cars dataset  
   # -------------------------------------------------------------------
-  ##FIXME: (ML) Not running
-  if(FALSE){ 
-    lmt_cars1 <- lmtree(dist ~ speed, data = cars) 
-    
-    mycars <- cars
-    names(mycars)[1] <- "my speed"
-    lmt_cars2 <- lmtree(dist ~ `my speed`, data = mycars) 
-    
-    expect_equivalent(nodeapply(lmt_cars1), nodeapply(lmt_cars2))
-  }
+  lmt_cars1 <- lmtree(dist ~ speed, data = cars) 
+  
+  mycars <- cars
+  names(mycars)[1] <- "my speed"
+  lmt_cars2 <- lmtree(dist ~ `my speed`, data = mycars) 
+  
+  expect_equivalent(nodeapply(lmt_cars1), nodeapply(lmt_cars2))
   
   
   # -------------------------------------------------------------------
   # Check mob for several spaces with Pima Indians diabetes data (official example)
   # -------------------------------------------------------------------
-  ##FIXME: (ML) Not running
-  if(FALSE){
-    if(require("mlbench")) {
+  if(require("mlbench")) {
+  
+    data("PimaIndiansDiabetes", package = "mlbench")
     
-      data("PimaIndiansDiabetes", package = "mlbench")
-      
-      logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
-        glm(y ~ 0 + x, family = binomial, start = start, ...)
-      }
-      
-      mob_pid1 <- mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
-        mass + pedigree + age, data = PimaIndiansDiabetes, fit = logit)
-    
-      PimaIndiansDiabetes2 <- PimaIndiansDiabetes
-      names(PimaIndiansDiabetes2)[2] <- "glu co se"
-      names(PimaIndiansDiabetes2)[1] <- "pre gnant"
-      names(PimaIndiansDiabetes2)[7] <- "pedi gree"
-      names(PimaIndiansDiabetes2)[6] <- "m a s s"
-    
-      mob_pid2 <- mob(diabetes ~ `glu co se` | `pre gnant` + pressure + triceps + insulin +
-        `m a s s` + `pedi gree` + age, data = PimaIndiansDiabetes2, fit = logit)
-    
-      expect_equivalent(nodeapply(mob_pid1), nodeapply(mob_pid2))
+    logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+      glm(y ~ 0 + x, family = binomial, start = start, ...)
     }
+    
+    mob_pid1 <- mob(diabetes ~ glucose | pregnant + pressure + triceps + insulin +
+      mass + pedigree + age, data = PimaIndiansDiabetes, fit = logit)
+  
+    PimaIndiansDiabetes2 <- PimaIndiansDiabetes
+    names(PimaIndiansDiabetes2)[2] <- "glu co se"
+    names(PimaIndiansDiabetes2)[1] <- "pre gnant"
+    names(PimaIndiansDiabetes2)[7] <- "pedi gree"
+    names(PimaIndiansDiabetes2)[6] <- "m a s s"
+  
+    mob_pid2 <- mob(diabetes ~ `glu co se` | `pre gnant` + pressure + triceps + 
+      insulin + `m a s s` + `pedi gree` + age, data = PimaIndiansDiabetes2, 
+      fit = logit)
+  
+    expect_equivalent(nodeapply(mob_pid1), nodeapply(mob_pid2))
   }
   
   # -------------------------------------------------------------------
@@ -126,11 +136,10 @@ if(at_home()){
   # -------------------------------------------------------------------
   # Check lmtree for several spaces with cars dataset
   # -------------------------------------------------------------------
-  ##FIXME: (ML) Not running
-  if(FALSE){
-    lmt_cars1 <- lmtree(dist ~ speed, data = cars) 
-    lmt_cars3 <- lmtree(`d i s t` ~ speed, data = my_cars2) 
+  lmt_cars1 <- lmtree(dist ~ speed, data = cars) 
+  lmt_cars3 <- lmtree(`d i s t` ~ speed, data = my_cars2) 
   
-    expect_equivalent(nodeapply(lmt_cars1), nodeapply(lmt_cars3))
-  }
+  #TODO: (ML) Compare nodeapply(), tree$node, or print statement?
+  expect_identical(get_print_statement(lmt_cars1$node), 
+                   get_print_statement(lmt_cars3$node))
 } 
