@@ -338,6 +338,7 @@ ctree_control <- function
     minbucket = 7L,
     minprob = 0.01,
     stump = FALSE,
+    maxvar = Inf,
     lookahead = FALSE,	### try trafo() for daugther nodes before implementing the split
     MIA = FALSE,	### DOI: 10.1016/j.patrec.2008.01.010
     nresample = 9999L,
@@ -384,7 +385,7 @@ ctree_control <- function
                                       "statistic", "p.value"),
                      logmincriterion = logmincriterion, minsplit = minsplit,
                      minbucket = minbucket, minprob = minprob,
-                     nmax = nmax, stump = stump, lookahead = lookahead,
+                     nmax = nmax, maxvar = maxvar, stump = stump, lookahead = lookahead,
                      mtry = mtry, maxdepth = maxdepth, multiway = multiway,
                      splittry = splittry, maxsurrogate = maxsurrogate,
                      numsurrogate = numsurrogate,
