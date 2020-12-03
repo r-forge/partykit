@@ -2,10 +2,12 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-11 (2020-10-23)}{
+\section{Changes in Version 1.2-11 (2020-12-03)}{
   \subsection{New Features}{
   \itemize{
     \item{Add an experimental implementation of honesty.}
+    \item{Add \code{maxvar} argument to \code{ctree_control} for restricting
+          the number of split variables to be used in a tree.}
   }
 }
   \subsection{Bugfixes}{

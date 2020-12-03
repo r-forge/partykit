@@ -103,14 +103,16 @@
     if (is.null(cenv)) {
         cenv <- new.env()
         assign("depth", 0L, envir = cenv)
+        assign("splitvars", rep(0L, length(partyvars)), envir = cenv)
     }
     depth <- get("depth", envir = cenv)
     assign("maxid", id, envir = cenv)
     if (depth >= ctrl$maxdepth)
         return(partynode(as.integer(id)))
 
+
     ### check for stumps
-    if (id > 1L && ctrl$stump) 
+    if (id > 1L && ctrl$stump)
         return(partynode(as.integer(id)))
 
     ### sw is basically the number of observations
@@ -128,10 +130,19 @@
     if (sw < ctrl$minsplit) 
         return(partynode(as.integer(id)))
 
-    svars <- which(partyvars > 0)
+    ### split variables used so far
+    splitvars <- get("splitvars", envir = cenv)
+    if (sum(splitvars) < ctrl$maxvar) {
+        ### all variables subject to splitting
+        svars <- which(partyvars > 0)
+    } else {
+        ### only those already used for splitting in other nodes are
+        ### eligible
+        svars <- which(partyvars > 0 & splitvars > 0)
+    }
     if (ctrl$mtry < Inf) {
-        mtry <- min(sum(partyvars > 0), ctrl$mtry)
-        svars <- .resample(svars, mtry, prob = partyvars[partyvars > 0])
+        mtry <- min(length(svars), ctrl$mtry)
+        svars <- .resample(svars, mtry, prob = partyvars[svars])
     } 
 
     thismodel <- trafo(subset = subset, weights = weights, info = info, 
@@ -225,6 +236,8 @@
     ret <- partynode(as.integer(id))
     ret$split <- thissplit
     ret$info <- info
+    splitvars[thissplit$varid] <- 1L
+    assign("splitvars", splitvars, cenv)
 
     ### determine observations for splitting (only non-missings)
     snotNA <- subset[!subset %in% data[[varid_split(thissplit), type = "missings"]]]
@@ -779,6 +792,7 @@ extree_control <- function
     minbucket = 7L, 
     minprob = 0.01, 
     nmax = Inf,
+    maxvar = Inf,
     stump = FALSE,
     lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
     maxsurrogate = 0L, 
@@ -816,7 +830,7 @@ extree_control <- function
 
     list(criterion = criterion, logmincriterion = logmincriterion,
          minsplit = minsplit, minbucket = minbucket, 
-         minprob = minprob, stump = stump, nmax = nmax,
+         minprob = minprob, maxvar = max(c(1, maxvar)), stump = stump, nmax = nmax,
          lookahead = lookahead, mtry = mtry,
          maxdepth = maxdepth, multiway = multiway, splittry = splittry,
          maxsurrogate = maxsurrogate, 
