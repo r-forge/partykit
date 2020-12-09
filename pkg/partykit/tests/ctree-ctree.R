@@ -85,7 +85,9 @@ fun <- function(args) {
     list(error = err, time = c(ot, nt))
 }
 
-ret <- lapply(1:nrow(gr), function(i) { print(i); fun(gr[i, ,drop = FALSE]); })
+fun(gr[95,])
+
+# ret <- lapply(1:nrow(gr), function(i) { print(i); fun(gr[i, ,drop = FALSE]); })
 
 tm <- t(sapply(ret, function(x) x$time))
 err <- sapply(ret, function(x) x$error)
