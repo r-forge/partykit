@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-11 (2020-12-03)}{
+\section{Changes in Version 1.2-11 (2020-12-09)}{
   \subsection{New Features}{
   \itemize{
     \item{Add an experimental implementation of honesty.}
@@ -12,6 +12,7 @@
 }
   \subsection{Bugfixes}{
   \itemize{
+    \item{\code{all.equal} must not check environments.}
     \item{Non-standard variable names are now handled correctly within \code{extree_data}, prompted by
           \url{https://stackoverflow.com/questions/64660889/ctree-ignores-variables-with-non-syntactic-names}.}
   }
