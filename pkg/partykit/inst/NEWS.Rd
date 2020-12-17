@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-12 (2020-12-17)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{Better checks for response classes, fixing a bug reported by John Ogawa.}
+  }
+}
+}
+
 \section{Changes in Version 1.2-11 (2020-12-09)}{
   \subsection{New Features}{
   \itemize{
@@ -18,6 +26,7 @@
   }
 }
 }
+
 
 \section{Changes in Version 1.2-10 (2020-10-12)}{
   \subsection{Bugfixes}{
