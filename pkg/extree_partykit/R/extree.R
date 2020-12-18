@@ -10,8 +10,6 @@ extree <- function(data,
     weights <- model.weights(model.frame(data))
     
     
-    
-    
     ## trafo preprocessing
     mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
         trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
@@ -428,34 +426,40 @@ extree_control <- function(
   critvalue = 0.05,
   padjust = TRUE,
 
-  ## technical
-  applyfun = NULL, 
-  cores = NULL,
-
+  ## tree construction
   minsplit = 20L,
   minbucket = 7L, 
   minprob = 0.01, 
-  nmax = Inf,
   stump = FALSE,
-  lookahead = FALSE, ### try trafo() for daugther nodes before implementing the split
   maxsurrogate = 0L, 
   numsurrogate = FALSE,
   mtry = Inf,
   maxdepth = Inf, 
-  multiway = FALSE, 
   splittry = 2L,
   majority = FALSE, 
   caseweights = TRUE, 
-  saveinfo = TRUE,
   update = NULL,
-  
-  selectfun, ## FIXME: (Z) add default (ctree?)
-  splitfun, ## FIXME: (Z) add default
-  svselectfun, ## FIXME: (Z) add default
-  svsplitfun, ## FIXME: (Z) add default
+
+  ## currently not used/implemented
+  nmax = Inf,        ## better name/settings?
+  lookahead = FALSE, ## try trafo() for daugther nodes before implementing the split
+  multiway = FALSE,  ## passed to split_select?
+
+  ## TODO
+  save = NULL, ## FIXME: (Z) -> save instead of saveinfo
+  selectfun, ## FIXME: (Z) var_select / add default (ctree?)
+  splitfun, ## FIXME: (Z) split_select / add default
+  svselectfun, ## FIXME: (Z) sv_var_select / add default
+  svsplitfun, ## FIXME: (Z) sv_split_select / add default
+
+  ## technical (FIXME: (Z) not yet used, pass to select functions?)
+  applyfun = NULL, 
+  cores = NULL,
 
   ## legacy
-  bonferroni = FALSE
+  bonferroni = FALSE,
+  saveinfo = TRUE,
+  testflavour = "ctree" ## FIXME: (Z) get rid of this option? needed for: m$estfun <- m$estfun / w
 ) {
 
   ## p-value adjustment
