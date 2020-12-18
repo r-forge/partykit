@@ -137,7 +137,7 @@ ctrl1 <- extree_control(criterion = "p.value",
   splitfun = split_select_median_numeric,
   minsplit = 50)
 
-# Bugs extree_data: ## FIXME: Z checks this...
+# Bugs extree_data
 dim <- 100
 yx <- "matrix"
 bins <- Inf
@@ -151,6 +151,11 @@ extree_data(dl, data = datahd, yx = "matrix",
 # Weird error: 
 # Error in Ymat[-ret$yxmissings, ] <- Ytmp : 
 #   number of items to replace is not a multiple of replacement length
+#
+# Reason: Ymat is after binning, ret$yxmissings is before binning
+# - Ymat dimension corresponds to yxmf after binning, here 67 rows
+# - ret$yxmissings corresponds to ret$data before binning, here 153 rows
+
 airq_dat2 <- extree_data(dl, data = datahd, yx = "none", # no error but also no binning
   nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") 
 airq_dat3 <- extree_data(dl, data = datahd, yx = "matrix", # no error but wrong output
