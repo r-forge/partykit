@@ -363,6 +363,10 @@ extree_variable <- function(x, i,
     )
 }
 
+## for handling of non-standard variable names within extree_data() by mimicking 
+## handling of such variables in model.frame() etc. in "stats" prompted by
+## https://stackoverflow.com/questions/64660889/ctree-ignores-variables-with-non-syntactic-names
+
 .deparse_variables <- function(x) paste(deparse(x, width.cutoff = 500L,
   backtick = !is.symbol(x) && is.language(x)), collapse = " ")
 
