@@ -11,7 +11,7 @@
 # -------------------------------------------------------------------
 # Prelimanaries
 # -------------------------------------------------------------------
-library("partykit")
+library("partykitx")
 source("selection_modules.R")
 source("trafo_functions.R")
 
@@ -128,8 +128,7 @@ trafo_identity <- function(subset, data, weights = NULL, info = NULL,
 }
 
 
-tr1 <- extree(data = airq_dat, trafo = trafo_identity, 
-    control = c(ctrl1, restart = TRUE))
+tr1 <- extree(data = airq_dat, trafo = trafo_identity, control = c(ctrl1, restart = TRUE))
 
 tr1
 
@@ -250,8 +249,8 @@ tr5_ctree <- ctree(Ozone ~ Wind + Temp, data = airq)
 ctrl <- extree_control(criterion = "p.value",
   logmincriterion = log(1 - 0.05),
   update = TRUE,
-  selectfun = partykit:::.ctree_select(),
-  splitfun = partykit:::.ctree_split(),
+  selectfun = partykitx:::.ctree_select(),
+  splitfun = partykitx:::.ctree_split(),
   svselectfun = NULL,
   svsplitfun = NULL,
   minsplit = 2)
