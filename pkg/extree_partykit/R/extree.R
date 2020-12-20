@@ -1,9 +1,4 @@
-extree <- function(data, 
-    trafo,
-    control = extree_control(#TODO: rename selectfun -> var_select, splitfun -> split_select, 
-        ...), 
-    converged = NULL,
-    ...) {
+extree <- function(data, trafo, control = extree_control(...),  converged = NULL, ...) {
     
     ## check / preprocess extree data
     subset <- .start_subset(data = data)
@@ -31,9 +26,9 @@ extree <- function(data,
     
 }
 
-extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun, 
-                       splitfun = ctrl$splitfun, svselectfun = ctrl$svselectfun, 
-                       svsplitfun = ctrl$svsplitfun, partyvars, subset, weights, ctrl, doFit = TRUE) {
+extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect, 
+                       splitselect = ctrl$splitselect, svarselect = ctrl$svarselect, 
+                       ssplitselect = ctrl$ssplitselect, partyvars, subset, weights, ctrl, doFit = TRUE) {
   ret <- list()
   
   ### <FIXME> use data$vars$z as default for partyvars </FIXME>
@@ -83,7 +78,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
         }
         if (!is.null(ef <- m$estfun)) {
           ### ctree expects unweighted scores
-          if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
+          if (!isTRUE(m$unweighted) && is.null(varselect) && ctrl$unweighted) 
             m$estfun <- m$estfun / w
           Y <- matrix(0, nrow = nrow(model.frame(data)), ncol = ncol(ef))
           Y[subset,] <- m$estfun
@@ -113,7 +108,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
         ### mfluc (means: for each variable again) </FIXME>
         ### ctree expects unweighted scores
         if (!is.null(m$estfun))  {
-          if (!isTRUE(m$unweighted) && is.null(selectfun) && ctrl$testflavour == "ctree") 
+          if (!isTRUE(m$unweighted) && is.null(varselect) && ctrl$unweighted) 
             m$estfun <- m$estfun / w
         }
         if (!is.null(ef <- m$estfun))
@@ -140,15 +135,15 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
   }
   
   nm <- c("model", "trafo", "data", "subset", "weights", "whichvar", "ctrl")
-  stopifnot(all(nm == names(formals(selectfun))))
-  stopifnot(all(nm == names(formals(splitfun))))
-  stopifnot(all(nm == names(formals(svselectfun))))
-  stopifnot(all(nm == names(formals(svsplitfun))))
+  stopifnot(all(nm == names(formals(varselect))))
+  stopifnot(all(nm == names(formals(splitselect))))
+  stopifnot(all(nm == names(formals(svarselect))))
+  stopifnot(all(nm == names(formals(ssplitselect))))
   
   if (!doFit) return(mytrafo)
   
-  list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, selectfun = selectfun, 
-                            splitfun = splitfun, svselectfun = svselectfun, svsplitfun = svsplitfun, 
+  list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, varselect = varselect, 
+                            splitselect = splitselect, svarselect = svarselect, ssplitselect = ssplitselect, 
                             partyvars = partyvars, weights = weights, subset = subset, ctrl = ctrl),
        trafo = mytrafo)
 }
@@ -161,10 +156,10 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     id = 1L, 			### id of this node
     data, 			### full data, readonly
     trafo,
-    selectfun, 			### variable selection
-    splitfun,                   ### split selection
-    svselectfun,                ### same for surrogate splits
-    svsplitfun,                 ### same for surrogate splits
+    varselect, 			### variable selection
+    splitselect,                ### split selection
+    svarselect,                 ### same for surrogate splits
+    ssplitselect,               ### same for surrogate splits
     partyvars, 			### partytioning variables
                                 ### a subset of 1:ncol(model.frame(data))
     weights = integer(0L),	### optional case weights
@@ -227,7 +222,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
   ## FIXME: (Z) canonicalize saveinfo to list(inner, terminal) with character vectors
 
   ## update sample size constraints on possible splits
-  ## need to do this here because selectfun might consider splits
+  ## need to do this here because varselect might consider splits
   mb <- ctrl$minbucket
   mp <- ctrl$minprob
   swp <- ceiling(sw * mp)
@@ -242,7 +237,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
   ## FIXME: (Z) need to get "empty" criterion matrix with all NAs
   ## -> store in extree_env after computing varsel for the first time in the root node
   ## except when root node is already terminal
-  varsel <- selectfun(model = thismodel, trafo = trafo, data = data,
+  varsel <- varselect(model = thismodel, trafo = trafo, data = data,
     subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
 
   if (terminal || inherits(varsel, "partysplit")) {
@@ -348,12 +343,12 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     if (!ctrl$saveinfo) info <- NULL
 
     if (!is.null(varsel$splits)) {
-      ### selectfun may return of a list of partysplit objects; use these for
-      ### splitting; selectfun is responsible for making sure lookahead is implemented
+      ### varselect may return of a list of partysplit objects; use these for
+      ### splitting; varselect is responsible for making sure lookahead is implemented
       thissplit <- varsel$splits[[jsel[1L]]]
     } else {
       ### try to find an admissible split in data[, jsel]
-      thissplit <- splitfun(model = thismodel, trafo = trafo, data = data, subset = subset, 
+      thissplit <- splitselect(model = thismodel, trafo = trafo, data = data, subset = subset, 
                   weights = weights, whichvar = jsel, ctrl = thisctrl)
     }
   }
@@ -392,7 +387,7 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     ret$surrogates <- .extree_surrogates(kidids, data = data, 
       weights = weights, subset = snotNA, 
       whichvar = pv,
-      selectfun = svselectfun, splitfun = svsplitfun, ctrl = ctrl)
+      varselect = svarselect, splitselect = ssplitselect, ctrl = ctrl)
   }
   kidids <- kidids_node(ret, model.frame(data), obs = subset)
 
@@ -404,8 +399,8 @@ extree_fit <- function(data, trafo, converged, selectfun = ctrl$selectfun,
     assign("depth", depth + 1L, envir = extree_env)
     kids[[k]] <- .extree_node(id = nextid, data = data, 
       trafo = trafo,
-      selectfun = selectfun, splitfun = splitfun,
-      svselectfun = svselectfun, svsplitfun = svsplitfun, 
+      varselect = varselect, splitselect = splitselect,
+      svarselect = svarselect, ssplitselect = ssplitselect, 
       partyvars = partyvars, 
       weights = weights, subset = nextsubset, 
       ctrl = ctrl, info = nodeinfo, extree_env = extree_env) ## FIXME: (Z) update saveinfo in ctrl
@@ -446,23 +441,31 @@ extree_control <- function(
   multiway = FALSE,  ## passed to split_select?
 
   ## TODO
-  save = NULL, ## FIXME: (Z) -> save instead of saveinfo
-  selectfun, ## FIXME: (Z) var_select / add default (ctree?)
-  splitfun, ## FIXME: (Z) split_select / add default
-  svselectfun, ## FIXME: (Z) sv_var_select / add default
-  svsplitfun, ## FIXME: (Z) sv_split_select / add default
+  save = NULL,         ## FIXME: (Z) -> save instead of saveinfo
+  varselect = NULL,    ## FIXME: (Z) add default (ctree?)
+  splitselect = NULL,  ## FIXME: (Z) add default
+  svarselect = NULL,   ## FIXME: (Z) add default
+  ssplitselect = NULL, ## FIXME: (Z) add default
 
   ## technical (FIXME: (Z) not yet used, pass to select functions?)
   applyfun = NULL, 
   cores = NULL,
 
+  ## allow extensions
+  ...,
+
   ## legacy
-  bonferroni = FALSE,
+  bonferroni = NULL,
   saveinfo = TRUE,
-  testflavour = "ctree" ## FIXME: (Z) get rid of this option? needed for: m$estfun <- m$estfun / w
+  selectfun = NULL,
+  splitfun = NULL,
+  svselectfun = NULL,
+  svsplitfun = NULL,
+  unweighted = TRUE ## FIXME: (Z) get rid of this option? needed for: m$estfun <- m$estfun / w
 ) {
 
-  ## p-value adjustment
+  ## p-value adjustment (legacy option: bonferroni)
+  if(!is.null(bonferroni)) padjust <- bonferroni
   if(is.logical(padjust)) {
     padjust <- if(padjust) "sidak" else "none"
   }
@@ -491,32 +494,25 @@ extree_control <- function(
   }
 
   ### well, it is implemented but not correctly so (FIXME)
-  if (multiway & maxsurrogate > 0L)
-      stop("surrogate splits currently not implemented for multiway splits")
+  if (multiway & maxsurrogate > 0L) stop("surrogate splits currently not implemented for multiway splits")
   
-  ## var_select preprocessing
-  if(is.list(selectfun) || is.character(selectfun) || "j" %in% names(formals(selectfun))) {
-      
-      var_sel <- .preprocess_select(selectfun, select_type = "var")
-      
-      selectfun <- function(model, trafo, data, subset, weights,
-  	  whichvar, ctrl) {
-  	  var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl,
-  	      var_select = var_sel)
-      }
+  ## variable selection preprocessing
+  if(!is.null(selectfun)) varselect <- selectfun
+  if(is.list(varselect) || is.character(varselect) || "j" %in% names(formals(varselect))) {
+    var_sel <- .preprocess_select(varselect, select_type = "var")
+    varselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+      var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, var_select = var_sel)
+    }
   }
   
-  ## split_select preprocessing
-  if(is.list(splitfun) || is.character(splitfun) || "j" %in% names(formals(splitfun))) {
-      
-      split_sel <- .preprocess_select(splitfun, select_type = "split")
-      
-      splitfun <- function(model, trafo, data, subset, weights,
-  	  whichvar, ctrl) {
-  	  split_select_loop(model = model, trafo = trafo, data = data,
-  	      subset = subset, weights = weights, whichvar = whichvar,
-  	      control = ctrl, split_select = split_sel)
-      }
+  ## split selection preprocessing
+  if(!is.null(splitfun)) splitselect <- splitfun
+  if(is.list(splitselect) || is.character(splitselect) || "j" %in% names(formals(splitselect))) {
+    split_sel <- .preprocess_select(splitselect, select_type = "split")
+    splitselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+      split_select_loop(model = model, trafo = trafo, data = data, subset = subset,
+        weights = weights, whichvar = whichvar, control = ctrl, split_select = split_sel)
+    }
   }
 
   list(
@@ -524,21 +520,35 @@ extree_control <- function(
     critvalue = critvalue,
     padjust = padjust,
     
+    minsplit = minsplit,
+    minbucket = minbucket, 
+    minprob = minprob,
+    stump = stump,
+    maxsurrogate = maxsurrogate, 
+    numsurrogate = numsurrogate,
+    mtry = mtry,
+    maxdepth = maxdepth,
+    splittry = splittry,
+    majority = majority,
+    caseweights = caseweights, 
+    update = update,
+
+    varselect = varselect,
+    splitselect = splitselect,
+    svarselect = svarselect,
+    ssplitselect = ssplitselect,
+
     applyfun = applyfun,
-    
-       minsplit = minsplit, minbucket = minbucket, 
-       minprob = minprob, stump = stump, nmax = nmax,
-       lookahead = lookahead, mtry = mtry,
-       maxdepth = maxdepth, multiway = multiway, splittry = splittry,
-       maxsurrogate = maxsurrogate, 
-       numsurrogate = numsurrogate, majority = majority,
-       caseweights = caseweights, 
-       saveinfo = saveinfo, update = update,
-       selectfun = selectfun, splitfun = splitfun, svselectfun =
-       svselectfun, svsplitfun = svsplitfun
+    save = save,
+
+    nmax = nmax,
+    lookahead = lookahead,
+    multiway = multiway,
+    saveinfo = saveinfo,
+    unweighted = unweighted,
+    ...
   )
 }
-
 
 
 ### data preprocessing -> initial subset
@@ -560,9 +570,9 @@ extree_control <- function(
   subset, 			### subset of 1:nrow(data) with
   ### non-missings in primary split
   whichvar, 			### partytioning variables
-  selectfun, 			### variable selection and split
+  varselect, 			### variable selection and split
   ### function
-  splitfun,
+  splitselect,
   ctrl			### ctree_control()
 ) {
   
@@ -572,7 +582,7 @@ extree_control <- function(
   dm <- matrix(0, nrow = nrow(model.frame(data)), ncol = ms)
   dm[cbind(subset, split)] <- 1
   thismodel <- list(estfun = dm)
-  varsel <- selectfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
+  varsel <- varselect(model = thismodel, trafo = NULL, data = data, subset = subset, 
                       weights = weights, whichvar = whichvar, ctrl = ctrl)
   p <- varsel$criterion
   ### partykit always used p-values, so expect some differences
@@ -593,8 +603,8 @@ extree_control <- function(
     jsel <- which.max(crit)
     thisctrl <- ctrl
     thisctrl$minbucket <- 0L
-    sp <- splitfun(model = thismodel, trafo = NULL, data = data, subset = subset, 
-                   weights = weights, whichvar = jsel, ctrl = ctrl)
+    sp <- splitselect(model = thismodel, trafo = NULL, data = data, subset = subset, 
+                      weights = weights, whichvar = jsel, ctrl = ctrl)
     if (is.null(sp)) next
     ret[[i]] <- sp
     tmp <- kidids_split(ret[[i]], model.frame(data), obs = subset)
