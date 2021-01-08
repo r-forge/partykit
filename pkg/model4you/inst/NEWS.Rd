@@ -2,8 +2,17 @@
 
 \title{NEWS file for the \pkg{model4you} package}
 
+
 \section{Changes in Version 0.9-6}{
   \itemize{
+    \item set all.equal(...) to all.equal(..., check.environment = FALSE) as needed for R version, see https://stat.ethz.ch/pipermail/r-devel/2020-December/080172.html
+  }
+}
+
+\section{Changes in Version 0.9-6}{
+  \itemize{
+    \item Fix issues with multi-core computing.
+    \item allow plotting of more than two treatment groups for cox model
     \item update score calculation in coxph() models:\\
     old: as.matrix(cbind(residuals(mod, "martingale"), estfun(mod)))
     new: cbind(mod$residuals, mod$residuals * model.matrix(mod))
