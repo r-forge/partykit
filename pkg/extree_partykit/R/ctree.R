@@ -3,23 +3,23 @@
     function(model, trafo, data, subset, weights, whichvar, ctrl) {
         args <- list(...)
         ctrl[names(args)] <- args
-        .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
-        ## FIXME: (HS) move to using new var selector
-        # var_select_loop(model, trafo, data, subset, weights, whichvar, 
-        #                 control = ctrl, var_select = .ctree_test)
+        # .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+        ## new var selector
+        var_select_loop(model, trafo, data, subset, weights, whichvar,
+                        control = ctrl, var_select = .ctree_test)
     }
 
 .ctree_split <- function(...)
     function(model, trafo, data, subset, weights, whichvar, ctrl) {
         args <- list(...)
         ctrl[names(args)] <- args
-        .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
-        ## FIXME: (HS) move to using new split selector
-        # split_select_loop(model, trafo, data, subset, weights, whichvar, 
-        #                   control = ctrl, split_select = .ctree_test)
+        # .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
+        ##  new split selector
+        split_select_loop(model, trafo, data, subset, weights, whichvar,
+                          control = ctrl, split_select = .ctree_test)
     }
 
-.ctree_test <- function(model, trafo, data, subset, weights, j, SPLITONLY = FALSE, ctrl) {
+.ctree_test <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
 
     ix <- data$zindex[[j]] ### data[[j, type = "index"]]
     iy <- data$yxindex ### data[["yx", type = "index"]]
@@ -29,14 +29,15 @@
         stopifnot(NROW(levels(iy)) == (NROW(Y) - 1))
         return(.ctree_test_2d(data = data, j = j, Y = Y, iy = iy,
                               subset = subset, weights = weights,
-                              SPLITONLY = SPLITONLY, ctrl = ctrl))
+                              SPLITONLY = split_only, ctrl = control))
     }
     
+    if(NROW(Y) != length(ix)) browser()
     stopifnot(NROW(Y) == length(ix))
 
     NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
     NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
-    if (ctrl$MIA && (ctrl$splittest || SPLITONLY)) {
+    if (control$MIA && (control$splittest || split_only)) {
         subsetNArm <- subset[!(subset %in% NAyx)]
     } else {
         subsetNArm <- subset[!(subset %in% c(NAyx, NAz))]
@@ -47,7 +48,7 @@
         return(list(statistic = NA, p.value = NA))
 
     return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm,
-                          weights = weights, SPLITONLY = SPLITONLY, ctrl = ctrl))
+                          weights = weights, SPLITONLY = split_only, ctrl = control))
 }
 
 .partysplit <- function(varid, breaks = NULL, index = NULL, right = TRUE,

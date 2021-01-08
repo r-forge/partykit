@@ -90,7 +90,8 @@
 }
 
 # <FIXME> (HS) Better name for function
-selector <- function(select, model, trafo, data, subset, weights, whichvar, control, j) {
+selector <- function(select, model, trafo, data, subset, weights, whichvar, 
+  control, j, split_only = FALSE) {
   
   
   # <FIXME> (HS) add check if function(s) return what we want
@@ -99,7 +100,7 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar, cont
     ## if var_select is function, apply function
     ret <- select(model = model, trafo = trafo, data = data, 
                   subset = subset, weights = weights, j = j, 
-                  split_only = FALSE, control = control)
+                  split_only = split_only, control = control)
     
   } else if (is.list(select) && all(sapply(select, is.function))) {
     
@@ -110,7 +111,7 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar, cont
     ### Run appropriate var_select function
     ret <- select[[varclass]](model = model, trafo = trafo, data = data, 
                               subset = subset, weights = weights, j = j, 
-                              split_only = FALSE, control = control)
+                              split_only = split_only, control = control)
     
   } else {
     ## a future option would be a character which hints to functions 
@@ -157,7 +158,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     
     ret <- selector(select = split_select, model = model, trafo = trafo, 
                     data = data, subset = subset, weights = weights, j = j, 
-                    control = control)
+                    control = control, split_only = TRUE)
     
     ### check if trafo can be successfully applied to all daugther nodes 
     ### (converged = TRUE)
