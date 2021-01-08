@@ -157,9 +157,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         ## idea: check (x and) z vs. deparse(cl$weights), deparse(cl$offset), deparse(cl$cluster)
         
         ## check wether offset was inside the formula
-        if(!is.null(off <- attr(mt$x, "offset"))) {
+        ## FIXME: (SD) i in mf[[i]] is wrongly specified in if statement --> y, 
+        ## maybe off <- attr(mt$all, "offset") fixes things
+        ## FIXME: (SD) offset appears two times in mf (`offset(..)` & `(offset)`) 
+        if(!is.null(off <- attr(mt$x, "offset"))) { 
             if(is.null(vars$offset)) mf[["(offset)"]] <- rep.int(0, nrow(mf))
-            for(i in off) mf[["(offset)"]] <- mf[["(offset)"]] + mf[[i]]
+            for(i in off) mf[["(offset)"]] <- mf[["(offset)"]] + mf[[i]] 
             vars$offset <- "(offset)"
         }
     }
@@ -177,6 +180,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     vars$z <- as.numeric(vars$z)
     attr(vars$z, "variable_names") <- vanam[vars$z == 1]
     ## all others to integer
+    ## <FIXME: (SD) proper handling of numeric offset necessary
     for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
         if(!is.null(vars[[v]])) {
             if(is.character(vars[[v]])) vars[[v]] <- match(vars[[v]], vanam)
