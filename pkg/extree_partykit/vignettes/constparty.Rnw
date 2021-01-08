@@ -66,7 +66,7 @@ classes, (b)~parsing of XML descriptions of trees learned in other software syst
   Universit\"atsstr.~15 \\
   6020 Innsbruck, Austria \\
   E-mail: \email{Achim.Zeileis@R-project.org}\\
-  URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+  URL: \url{https://www.zeileis.org/}
 }
 
 
