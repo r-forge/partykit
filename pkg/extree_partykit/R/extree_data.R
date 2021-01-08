@@ -275,29 +275,34 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
           ## FIXME: (SD) model.part not practical for high-dim data  
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
-            if (length(ret$yxmissings) == 0) {
-                Ymat <- Ytmp
+            if (is.finite(nmax["yx"])) {
+              Ymat <- Ytmp
             } else {
-              ### FIXME: (SD) why are NAs set to 0? why whole line set to 0 in case of multiple outcomes?
-                Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
-                Ymat[-ret$yxmissings,] <- Ytmp
+                if (length(ret$yxmissings) == 0) {
+                    Ymat <- Ytmp
+                } else {
+                  ### FIXME: (SD) why are NAs set to 0? why whole line set to 0 in case of multiple outcomes?
+                    Ymat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Ytmp))
+                    Ymat[-ret$yxmissings,] <- Ytmp
+                }
             }
             yx <- list("y" = Ymat)
         }
         for(i in (1L:npart)[-npart]) {
             ni <- paste("x", if(i == 1L) "" else i, sep = "")
             ti <- if(!ymult & npart == 2L) mt$yx else mt[[ni]]
-            yx[[ni]] <- model.matrix(ti, yxmf)
-            ## FIXME: (SD)  if model.matrix not right dim consider code below. 
-            # if (length(ret$yxmissings) == 0) {
-            #     Xmat <- Xtmp
-            # } else {
-            #     Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
-            #     ## FIXME: (SD) Error if no missings in x, but in y! 
-            #     ## Either do not replace NAs by 0 or do it with is.NA() - not ret$xymissing! 
-            #     Xmat[-ret$yxmissings,] <- Xtmp
-            # }
-            # yx[[ni]] <- Xmat
+            Xtmp <- model.matrix(ti, yxmf)
+            if (is.finite(nmax["yx"])) {
+                Xmat <- Xtmp
+            } else {
+                if (length(ret$yxmissings) == 0) {
+                    Xmat <- Xtmp
+                } else {
+                    Xmat <- matrix(0, nrow = NROW(yxmf), ncol = NCOL(Xtmp))
+                    Xmat[-ret$yxmissings,] <- Xtmp
+                }
+            }
+            yx[[ni]] <- Xmat
             if(ncol(yx[[ni]]) < 1L) {
                 yx[[ni]] <- NULL
             } else {
