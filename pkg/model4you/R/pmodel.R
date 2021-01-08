@@ -55,7 +55,7 @@ pmodel <- function(x = NULL, model = NULL, newdata = NULL, OOB = TRUE, fun = coe
   ret <- apply(pweights, 2, get_pmod)
 
   if(is(ret, "matrix")) ret <- t(ret)
-  if(all.equal(fun, identity) == TRUE) class(ret) <- c("pmodel_identity", class(ret))
+  if(all.equal(fun, identity, check.environment = FALSE) == TRUE) class(ret) <- c("pmodel_identity", class(ret))
   class(ret) <- c("pmodel", class(ret))
   
   if("modelcall" %in% return_attr) attr(ret, "modelcall") <- getCall(model)
