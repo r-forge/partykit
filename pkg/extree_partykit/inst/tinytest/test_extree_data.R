@@ -102,33 +102,34 @@ exd$missings$Zmiss
 # -------------------------------------------------------------------
 # Tests for standard and rare inputs 
 # -------------------------------------------------------------------
+d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
+d$y[c(1, 10)] <- NA
+
 # formula
-ex0 <- extree_data(y ~ z, data = d)
-ex1 <- extree_data(list(y = "y", z = "z"), data = d)
-expect_equivalent(ex0$data, ex1$data)
+exf1 <- extree_data(y ~ z, data = d)
+exf2 <- extree_data(list(y = "y", z = "z"), data = d)
+expect_equivalent(exf1$data, exf2$data)
 
 ## Subset
 sub1 <- c(2, 7)
-ex1 <- extree_data(y ~ z, data = d, subset = sub1)
-expect_equivalent(ex1$data, d[sub1,])
+exs1 <- extree_data(y ~ z, data = d, subset = sub1)
+expect_equivalent(exs1$data, d[sub1,])
 # double entries allowed
 sub2 <- c(0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
-ex2 <- extree_data(y ~ z, data = d, subset = sub2)
-expect_equivalent(ex2$data, d[sub2,])
+exs2 <- extree_data(y ~ z, data = d, subset = sub2)
+expect_equivalent(exs2$data, d[sub2,])
 
 ## na.action
-ex3 <- extree_data(y ~ z, data = d, na.action = na.exclude)
-expect_false(any(is.na(ex3)))
-
-ex4 <- extree_data(y ~ z, data = d, na.action = na.pass)
-expect_equivalent(ex4$data, d)
-
+exna1 <- extree_data(y ~ z, data = d, na.action = na.exclude)
+expect_false(any(is.na(exna1)))
+exna2 <- extree_data(y ~ z, data = d, na.action = na.pass)
+expect_equivalent(exna2$data, d)
 expect_error(extree_data(y ~ z, data = d, na.action = na.fail))
 
 ## weights 
 w <- seq(0, 1, length.out = 10)
-ex5 <- extree_data(y ~ z, data = d, weights = w)
-expect_equal(ex5$data$`(weights)`, w)
+exw1 <- extree_data(y ~ z, data = d, weights = w)
+expect_equal(exw1$data$`(weights)`, w)
 
 expect_error(extree_data(y ~ z, data = d, weights = w[-1]), 
     pattern = "variable lengths differ")
@@ -137,67 +138,85 @@ expect_silent(extree_data(y ~ z, data = d, weights = sub2))
 
 ## offset
 # Formula
-ex6 <- extree_data(y ~ z, data = d, offset = w)
-expect_equal(ex6$data$`(offset)`, w)
+# w part of d
+exof1 <- extree_data(y ~ z, data = d, offset = w)
+expect_equal(exof1$data$`(offset)`, w)
+expect_equal(exof1$data[,exof1$variables$offset], w) 
 d$w <- w
-ex7 <- extree_data(y ~ offset(w) | z, data = d)
+exof2 <- extree_data(y ~ offset(w) | z, data = d)
+# w not part of d
 d$w <- NULL
-ex8 <- extree_data(y ~ offset(w) | z, data = d)
-ex9 <- extree_data(y ~ z, offset = w, data = d)
-# FIXME: (SD) following currently failes due to wrongly specified off <- attr(mt$x, "offset")
-# expect_equal(ex7$data$`(offset)`, w, ex7$data$`(offset)`) 
-# expect_equal(ex7$data[,ex7$variables$offset], w) 
-# expect_equal(ex8$data[,ex8$variables$offset], w)
-expect_equal(ex9$data[,ex9$variables$offset], w) 
-expect_equivalent(ex7, ex8)
+exof3 <- extree_data(y ~ offset(w) | z, data = d)
+# FIXME: (SD) following currently fails due to wrongly specified off <- attr(mt$x, "offset")
+# expect_equal(exof2$data$`(offset)`, w, exof2$data$`(offset)`) 
+# expect_equal(exof2$data[,exof2$variables$offset], w) 
+# expect_equal(exof3$data[,exof3$variables$offset], w)
+expect_equivalent(exof2, exof3)
 # List instead of formula
 d$w <- w
-ex8 <- extree_data(list(y = "y", z = "z", offset = "w"), data = d)
-expect_equal(ex8$data$w, w) ## FIXME: (SD) should data differ to data above?
-expect_equal( ex8$data[, ex8$variables$offset], w)
-ex9 <- extree_data(list(y = "y", z = "z"), offset = "w", data = d)
+exol1 <- extree_data(list(y = "y", z = "z", offset = "w"), data = d)
+expect_equal(exol1$data$w, w) ## FIXME: (SD) should data differ to data above?
+expect_equal( exol1$data[, exol1$variables$offset], w)
+exol2 <- extree_data(list(y = "y", z = "z"), offset = "w", data = d)
 d$w <- NULL
-w1 <- w
-ex10 <- extree_data(list(y = "y", z = "z"), offset = w1, data = d)
-ex11 <- extree_data(list(y = "y", z = "z", offset = w1), data = d)
+exol3 <- extree_data(list(y = "y", z = "z"), offset = w, data = d)
+exol4 <- extree_data(list(y = "y", z = "z", offset = w), data = d)
 ## FIXME: (SD) variables$offset gives wrong index due to vars[[v]] <- unique(as.integer(vars[[v]])) & 
-## proper handling of numerics as offset --> add w1 to data & use correct index! 
-# expect_equal(ex10$data[, ex10$variables$offset], w1) 
-# expect_equal(ex11$data[, ex11$variables$offset], w1) 
-expect_equal(ex10, ex11)
+## proper handling of numerics as offset --> add w to data & use correct index! 
+# expect_equal(exol3$data[, exol3$variables$offset], w) 
+# expect_equal(exol4$data[, exol4$variables$offset], w) 
+expect_equal(exol3, exol4)
 
 ## cluster
 cl <- factor(sample(c(1, 2, 3), size = nrow(d), replace = TRUE))
 clc <- sample(c(1, 2, 3), size = nrow(d), replace = TRUE)
-expect_silent(extree_data(y ~ z, data = d, cluster = cl))
-ex7 <- extree_data(y ~ z, data = d, cluster = clc)
+expect_silent(ex6 <- extree_data(y ~ z, data = d, cluster = cl))
+expect_equal(ex6$data$`(cluster)`, cl)
+exc1 <- extree_data(y ~ z, data = d, cluster = clc)
 expect_warning(extree_data(list(y = "y", z = "z", cluster = cl), data = d), 
-    pattern = "'cluster', must be character") #FIXME: (SD) Do we want this? 
-ex8 <- extree_data(list(y = "y", z = "z", cluster = clc), data = d)
-# expect_equal(ex7$data, ex8$data) #FIXME: (SD) Currently fails, ex8: cluster not in data + wrong index in variables
-
+    pattern = "'cluster', must be character") #(SD) Do we want that factors are not allowed for cluster in formula?
+exc2 <- extree_data(list(y = "y", z = "z", cluster = clc), data = d)
+# expect_equal(exc1$data, exc2$data) #FIXME: (SD) Currently fails, exc2: cluster not in data + wrong index in variables
 
 ## scores
+# TODO: named list of numeric scores to be assigned to ordered factors in z part! 
+sc <-  seq(0.1, 1, length.out = 10)
 d$zf <- ordered(d$z)
-ex8 <- extree_data(y ~ zf, data = d)
-ex9 <- extree_data(y ~ zf, data = d, scores = seq(0.1, 1, length.out = 10)) 
-expect_equal(ex8, ex9) #SD: Do we want this? 
-ex10 <- extree_data(y ~ zf, data = d, scores = seq(1, 10, length.out = 8))
-expect_equal(ex10, ex9)
+exsc1 <- extree_data(y ~ zf, data = d)
+# FIXME (SD): No check if score is list! Expect errors for the following
+exsc2 <- extree_data(y ~ zf, data = d, scores = sc)
+expect_equal(exsc1, exsc2)
+exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
+expect_equal(exsc3$scores$zf, sc)
+# FIXME (SD): Expect error if nr of scores != nr of levels
+exsc4 <- extree_data(y ~ zf, data = d, scores = list(zf = sc[c(1:8)]))
 
 ## yx 
-ex11 <- extree_data(y ~ z, data = d, yx = "matrix")
-expect_equal(ex11$data$y, ex11$yx$y)
-expect_inherits(ex11$yx$y, "integer")
+exyx1 <- extree_data(y ~ z, data = d, yx = "matrix")
+expect_equal(exyx1$data$y, exyx1$yx$y)
+expect_inherits(exyx1$yx$y, "integer")
 
 ## ytype 
-ex12 <- extree_data(y ~ z, data = d, yx = "matrix", ytype = "data.frame")
-expect_inherits(ex12$yx$y, "data.frame")
-ex13 <- extree_data(y ~ z, data = d, yx = "matrix", ytype = "matrix")
-expect_inherits(ex13$yx$y, "matrix")
-ex14 <- extree_data(y ~ z, data = d, yx = "none", ytype = "data.frame")
-expect_equal(ex14, ex0) # ytype is ignored if yx = "none" 
+exyt1 <- extree_data(y ~ z, data = d, yx = "matrix", ytype = "data.frame")
+expect_inherits(exyt1$yx$y, "data.frame")
+exyt2 <- extree_data(y ~ z, data = d, yx = "matrix", ytype = "matrix")
+expect_inherits(exyt2$yx$y, "matrix")
+exyt3 <- extree_data(y ~ z, data = d, yx = "none", ytype = "data.frame")
+expect_equal(exyt3, exf1) # ytype is ignored if yx = "none" 
 
-## nmax 
-# ex <- extree_data(y ~ z, data = d, yx = "matrix", ytype = "matrix",
-#     nmax = c("yx" = 3, "z" = 3))
+## nmax
+# # convert to numeric since no binning for integer vars
+dn <- data.frame(apply(d, MARGIN = 2, as.numeric))
+exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
+  nmax = c("yx" = 3, "z" = 3))
+# FIXME: (SD) Wrong output? Don't we actually want...? 
+# expect_equal(exn1$yx, inum::inum(dn[, "y", drop = FALSE], total = TRUE, nmax = 3, as.interval = "y"))
+# FIXME: (SD) Bug in inum 
+# sepallen <- iris[, "Sepal.Length", drop = FALSE]
+# a <- inum(sepallen, nmax = 5, as.interval = "Sepal.Length")
+# cbind(sepallen, a)
+# b <- inum(sepallen, nmax = 5, total = TRUE)
+# # cbind(sepallen, a, b) # repeats attribute levels??
+# cbind(sepallen, a, as.numeric(b))
+# c <- inum(sepallen, nmax = 5, total = TRUE, complete.cases.only = TRUE)
+# cbind(sepallen, a, as.numeric(c)) # Bug --> suddenly many 0s 
