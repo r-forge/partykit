@@ -3,6 +3,14 @@
 \title{NEWS file for the \pkg{partykit} package}
 
 \section{Changes in Version 1.2-12 (2020-12-17)}{
+  \subsection{New Features}{
+  \itemize{
+    \item{Add \code{method} argument to \code{glmtree}. The default is to use
+          \code{"glm.fit"} (as was hard-coded previously) but this can also be
+	  changed, e.g., to \code{"brglmFit"} from \pkg{brglm2} for bias-reduced
+	  estimation of generalized linear models.}
+  }
+}
   \subsection{Bugfixes}{
   \itemize{
     \item{Better checks for response classes, fixing a bug reported by John Ogawa.}
