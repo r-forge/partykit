@@ -345,11 +345,11 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     if (!is.null(varsel$splits)) {
       ### varselect may return of a list of partysplit objects; use these for
       ### splitting; varselect is responsible for making sure lookahead is implemented
-      thissplit <- varsel$splits[[jsel[1L]]]
+      thissplit <- varsel$splits[[jsel[1L] + 1L]] ## FIXME: jsel + 1L must be removed as soon as possible
     } else {
       ### try to find an admissible split in data[, jsel]
       thissplit <- splitselect(model = thismodel, trafo = trafo, data = data, subset = subset, 
-                  weights = weights, whichvar = jsel, ctrl = thisctrl)
+                  weights = weights, whichvar = jsel + 1L, ctrl = thisctrl) ## FIXME: jsel + 1L must be removed as soon as possible
     }
   }
 
