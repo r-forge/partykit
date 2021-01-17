@@ -45,7 +45,7 @@
     ### report by Kevin Ummel: _all_ obs being missing lead to
     ### subset being ignored completely
     if (length(subsetNArm) == 0) 
-        return(list(statistic = NA, p.value = NA))
+        return(list(log.statistic = NA, log.p.value = NA))
 
     return(.ctree_test_1d(data = data, j = j, Y = Y, subset = subsetNArm,
                           weights = weights, SPLITONLY = split_only, ctrl = control))
@@ -208,7 +208,7 @@
         cc <- complete.cases(Ytmp)
         if (!all(cc)) { ### only NAs left
             if (SPLITONLY) return(NULL)
-            return(list(statistic = NA, p.value = NA))
+            return(list(log.statistic = NA, log.p.value = NA))
         }
         lev <- LinStatExpCov(X = X, Y = Y, ix = ix, iy = iy, subset = subset,
                              weights = weights, block = cluster,
@@ -223,12 +223,12 @@
     ### check if either X or Y were unique
     if (all(lev$Variance < ctrl$tol)) {
         if (SPLITONLY) return(NULL)
-        return(list(statistic = NA, p.value = NA))
+        return(list(log.statistic = NA, log.p.value = NA))
     }
 
     ### compute test statistic and log(1 - p-value)
     tst <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                  lower = TRUE, log = TRUE, ordered = ORDERED,
+                  lower = FALSE, log = TRUE, ordered = ORDERED,
                   maxselect = MAXSELECT,
                   minbucket = ctrl$minbucket, pargs = ctrl$pargs)
 
@@ -239,7 +239,7 @@
                              nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstleft <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                          lower = TRUE, log = TRUE, ordered = ORDERED,
+                          lower = FALSE, log = TRUE, ordered = ORDERED,
                           minbucket = ctrl$minbucket, pargs = ctrl$pargs)
         ### compute linear statistic + expecation and covariance
         lev <- LinStatExpCov(X = Xright, Y = Y, ix = ixright, iy = iy, subset = subset,
@@ -247,7 +247,7 @@
                              nresample = nresample, varonly = varonly, checkNAs = FALSE)
         ### compute test statistic and log(1 - p-value)
         tstright <- doTest(lev, teststat = teststat, pvalue = pvalue,
-                           lower = TRUE, log = TRUE, ordered = ORDERED,
+                           lower = FALSE, log = TRUE, ordered = ORDERED,
                            minbucket = ctrl$minbucket, pargs = ctrl$pargs)
     }
 
@@ -257,8 +257,8 @@
             if (tst$TestStatistic < tstright$TestStatistic)
                 tst <- tstright
         }
-        return(list(statistic = log(pmax(tst$TestStatistic, .Machine$double.eps)),
-                    p.value = tst$p.value))
+        return(list(log.statistic = log(pmax(tst$TestStatistic, .Machine$double.eps)),
+                    log.p.value = tst$p.value))
     }
 
     ret <- NULL
