@@ -129,10 +129,11 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   
   ## set up return list + criterion matrix
   znams <- attr(data$variables$z, "variable_names")
-  ret <- list(criterion = matrix(NA, nrow = 2L, ncol = length(znams)))
+  ret <- list(criterion = matrix(NA_real_, nrow = 2L, ncol = length(znams)))
+  ## FIXME: it is not ideal to use these names first and fix them later
   rownames(ret$criterion) <- c("statistic", "p.value")
   colnames(ret$criterion) <- znams
-  if (length(whichvar) == 0) return(ret)
+  if (length(whichvar) == 0L) return(ret)
   
   ## loop over all relevant variables and use var_select function supplied
   for (i in seq_along(whichvar)) {
@@ -140,10 +141,15 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     tst <- selector(select = var_select, model = model, trafo = trafo, 
                     data = data, subset = subset, weights = weights, j = whichvar[i], 
                     control = control)
+
+    logs <- "log.statistic" %in% names(tst)
+    logp <- "log.p.value" %in% names(tst)
     
-    ret$criterion["statistic", i] <- tst$statistic
-    ret$criterion["p.value", i] <- tst$p.value
+    ret$criterion["statistic", i] <- if(logs) tst$log.statistic else tst$statistic
+    ret$criterion["p.value", i] <- if(logp) tst$log.p.value else tst$p.value
   }
+  if(logs) rownames(ret$criterion)[1L] <- "log.statistic"
+  if(logp) rownames(ret$criterion)[2L] <- "log.p.value"
   ret
 }
 
