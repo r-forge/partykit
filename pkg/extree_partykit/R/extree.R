@@ -313,7 +313,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
 
       ## switch to "statistic" and "p.value" omitting logs
       if(("log.statistic" %in% rownames(p)) && !("statistic" %in% rownames(p))) {
-        p <- rbind(p, statistic = exp(p["statistic", ]))
+        p <- rbind(p, statistic = exp(p["log.statistic", ]))
       }
       if(("log.p.value" %in% rownames(p)) && !("p.value" %in% rownames(p))) {
         p <- rbind(p, p.value = exp(p["log.p.value", ]))
