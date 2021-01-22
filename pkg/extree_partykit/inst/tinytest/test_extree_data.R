@@ -148,10 +148,22 @@ exof2 <- extree_data(y ~ offset(w) | z, data = d)
 d$w <- NULL
 exof3 <- extree_data(y ~ offset(w) | z, data = d)
 # FIXME: (SD) following currently fails due to wrongly specified off <- attr(mt$x, "offset")
-# expect_equal(exof2$data$`(offset)`, w, exof3$data$`(offset)`) 
-# expect_equal(exof2$data[,exof2$variables$offset], w) 
-# expect_equal(exof3$data[,exof3$variables$offset], w)
-expect_equivalent(exof2, exof3)
+expect_equal(exof2$data$`(offset)`, w, exof3$data$`(offset)`) 
+expect_equal(exof2$data[,exof2$variables$offset], w, exof3$data[,exof3$variables$offset])
+# Multiple offsets 
+exof4 <- extree_data(y ~ offset(w) + offset(log(w))| z, data = d)
+exof5 <- extree_data(y ~ offset(log(w))| z, offset = w, data = d)
+expect_equal(exof4$data[, exof4$variables$offset], exof5$data[, exof5$variables$offset],  w + log(w))
+expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "unsuported specification of 'offset'")
+# expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "number of offsets is 20, should equal 10")
+exof6 <- extree_data(y ~ offset(log(w)) + offset(-w)| z, offset = w, data = d)
+expect_equal(exof6$data[, exof6$variables$offset],  log(w))
+# FIXME: (SD) should matrix of offsets work as well for multiple y's? 
+# d$w <- NULL
+# w2 <- log(w)
+# exof7 <- extree_data(cbind(y, log(y)) ~ z, offset = as.matrix(cbind(w, w2)), data = d)
+# exof8 <- extree_data(y + log(y) ~ z, offset = as.matrix(cbind(w, w2)), data = d)
+
 # List instead of formula
 d$w <- w
 exol1 <- extree_data(list(y = "y", z = "z", offset = "w"), data = d)
@@ -212,10 +224,10 @@ exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
 # FIXME: (SD) Wrong output? Don't we actually want...? 
 # expect_equal(exn1$yx, inum::inum(dn[, "y", drop = FALSE], total = TRUE, nmax = 3, as.interval = "y"))
 # FIXME: (SD) Bug in inum 
-# sepallen <- iris[, "Sepal.Length", drop = FALSE]
-# sepallen$Sepal.Length[c(1, 10)] <- NA
-# a <- inum(sepallen, nmax = 5, as.interval = "Sepal.Length")
-# b <- inum(sepallen, nmax = 5, total = TRUE)
-# c <- inum(sepallen, nmax = 5, total = TRUE, complete.cases.only = TRUE)
-# cbind(sepallen, a, as.numeric(b), as.numeric(c)) # Bug --> suddenly many 0s 
-# # cbind(sepallen, a, b) # repeats attribute levels??
+sepallen <- iris[, "Sepal.Length", drop = FALSE]
+sepallen$Sepal.Length[c(1, 10)] <- NA
+a <- inum(sepallen, nmax = 5, as.interval = "Sepal.Length")
+b <- inum(sepallen, nmax = 5, total = TRUE)
+c <- inum(sepallen, nmax = 5, total = TRUE, complete.cases.only = TRUE)
+cbind(sepallen, a, as.numeric(b), as.numeric(c)) # Bug --> suddenly many 0s
+# cbind(sepallen, a, b) # repeats attribute levels??
