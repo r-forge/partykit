@@ -276,7 +276,8 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         } else if (ytype == "data.frame") {
             yx <- list("y" = yxmf[vanam[vars$y]])
         } else { ### ytype = "matrix"
-          ## FIXME: (SD) model.part not practical for high-dim data  
+          ## FIXME: (SD) yxmf only gives levels of binned y not observations
+          ## as.numeric(ret$yxindex) instead of yxmf? 
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
             if (is.finite(nmax["yx"])) {
