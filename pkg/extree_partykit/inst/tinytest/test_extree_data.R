@@ -148,7 +148,7 @@ exof2 <- extree_data(y ~ offset(w) | z, data = d)
 d$w <- NULL
 exof3 <- extree_data(y ~ offset(w) | z, data = d)
 # FIXME: (SD) following currently fails due to wrongly specified off <- attr(mt$x, "offset")
-# expect_equal(exof2$data$`(offset)`, w, exof2$data$`(offset)`) 
+# expect_equal(exof2$data$`(offset)`, w, exof3$data$`(offset)`) 
 # expect_equal(exof2$data[,exof2$variables$offset], w) 
 # expect_equal(exof3$data[,exof3$variables$offset], w)
 expect_equivalent(exof2, exof3)
@@ -183,8 +183,8 @@ exc2 <- extree_data(list(y = "y", z = "z", cluster = clc), data = d)
 sc <-  seq(0.1, 1, length.out = 10)
 d$zf <- ordered(d$z)
 exsc1 <- extree_data(y ~ zf, data = d)
-# FIXME (SD): No check if score is list! Expect errors for the following
-exsc2 <- extree_data(y ~ zf, data = d, scores = sc)
+# FIXME (SD): No check if score is list! Expect errors for the following, exsc2$scores is just empty
+exsc2 <- extree_data(y ~ zf, data = d, scores = sc) 
 expect_equal(exsc1, exsc2)
 exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
 expect_equal(exsc3$scores$zf, sc)
@@ -213,10 +213,9 @@ exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
 # expect_equal(exn1$yx, inum::inum(dn[, "y", drop = FALSE], total = TRUE, nmax = 3, as.interval = "y"))
 # FIXME: (SD) Bug in inum 
 # sepallen <- iris[, "Sepal.Length", drop = FALSE]
+# sepallen$Sepal.Length[c(1, 10)] <- NA
 # a <- inum(sepallen, nmax = 5, as.interval = "Sepal.Length")
-# cbind(sepallen, a)
 # b <- inum(sepallen, nmax = 5, total = TRUE)
-# # cbind(sepallen, a, b) # repeats attribute levels??
-# cbind(sepallen, a, as.numeric(b))
 # c <- inum(sepallen, nmax = 5, total = TRUE, complete.cases.only = TRUE)
-# cbind(sepallen, a, as.numeric(c)) # Bug --> suddenly many 0s 
+# cbind(sepallen, a, as.numeric(b), as.numeric(c)) # Bug --> suddenly many 0s 
+# # cbind(sepallen, a, b) # repeats attribute levels??
