@@ -54,6 +54,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     yx <- match.arg(yx, choices = c("none", "matrix"))
     ytype <- match.arg(ytype, choices = c("vector", "data.frame", "matrix"))
     
+    ## FIXME: (SD) Currently only NULL, numeric vector but not a matrix is 
+    ## allowed as offset.
+    if (!missing(offset) && !is.vector(offset)) {
+      stop("unsuported specification of 'offset', should be a numeric vector")
+    }
+    
     ## 'formula' may either be a (multi-part) formula or a list
     noformula <- !inherits(formula, "formula")
     if(noformula) {
@@ -125,6 +131,21 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         ## evaluate model.frame
         mf[[1L]] <- quote(stats::model.frame)
         mf <- eval(mf, parent.frame())
+        offset <- model.offset(mf)
+        
+        ## FIXME: (SD) lm() code for offset for multiple targets --> currently fails if y = cbind(y1, y2)
+        # y <- model.part(formula, data = mf, lhs = 1)
+        # ymult <- ncol(y) >= 2
+        # ny <- nrow(y)
+        # if (!is.null(offset)) {
+        #   if (!ymult) 
+        #     offset <- as.vector(offset)
+        #   if (NROW(offset) != ny) 
+        #     stop(gettextf("number of offsets is %d, should equal %d (number of observations)", 
+        #       NROW(offset), ny), domain = NA)
+        # }
+        
+        mf$"(offset)" <- offset
         
         ## extract terms in various combinations
         mt <- list(
@@ -152,19 +173,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         )
         ymult <- length(vars$y) >= 1L
         if(!ymult) vars$y <- names(mf)[1L]
-        ## FIXME: store information which variable(s) went into (weights), (offset), (cluster)
-        ## (strata)
-        ## idea: check (x and) z vs. deparse(cl$weights), deparse(cl$offset), deparse(cl$cluster)
-        
-        ## check wether offset was inside the formula
-        ## FIXME: (SD) i in mf[[i]] is wrongly specified in if statement --> y, 
-        ## maybe off <- attr(mt$all, "offset") fixes things
-        ## FIXME: (SD) offset appears two times in mf (`offset(..)` & `(offset)`) 
-        if(!is.null(off <- attr(mt$x, "offset"))) { 
-            if(is.null(vars$offset)) mf[["(offset)"]] <- rep.int(0, nrow(mf))
-            for(i in off) mf[["(offset)"]] <- mf[["(offset)"]] + mf[[i]] 
-            vars$offset <- "(offset)"
-        }
     }
     
     ## canonicalize y/x/z term labels
