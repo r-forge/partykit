@@ -14,6 +14,10 @@
   \subsection{Bugfixes}{
   \itemize{
     \item{Better checks for response classes, fixing a bug reported by John Ogawa.}
+    \item{In \code{lmtree} and \code{glmtree} the \code{"xlevels"} attribute for the
+      regressors is preserved in the models fitted within the trees. Thus, predicting
+      for data whose \code{"xlevels"} do not match, an error is generated now
+      (as opposed to warning and partially incorrect predictions).}
   }
 }
 }
