@@ -29,19 +29,19 @@ disttree <- function(formula,
   control$lower <- control$upper <- NULL
   if(control$saveinfo == FALSE){
     control$saveinfo <- TRUE
-    warning("'control$saveinfo' set to TRUE, needed for distributional tree.")
+    warning("'control$saveinfo' set to TRUE, needed for a distributional tree.")
   }
 
   ## Keep call
   cl <- match.call(expand.dots = TRUE)
   if(missing(data)) data <- environment(formula)
   
-  # Check formula
+  ## Check formula
   formula <- Formula::as.Formula(formula)
   if(length(formula)[2L] > 1L) {
     formula <- Formula::Formula(formula(formula, rhs = 2L))  
-    # NOTE: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot
-    warning("formula must not have more than one RHS parts (only partitioning variables allowed)")
+    # NOTE: (LS) if rhs has more than 1 element it is here assumed that partitioning variables are handed over on 2nd slot.
+    warning("Formula must not have more than one RHS part (only partitioning variables allowed).")
   }
   
   ## Set up model.frame() call
@@ -50,7 +50,7 @@ disttree <- function(formula,
                "offset", "cluster", "scores"), names(mf), 0L)
 
   mf <- mf[c(1L, m)]
-  mf$yx <- "matrix"          
+  mf$yx <- "matrix"  # NOTE: (ML) does it need to be a matrix rather than a model.frame? 
   mf$nmax <- control$nmax
   mf$ytype <- control$ytype
   
@@ -58,8 +58,8 @@ disttree <- function(formula,
   mf[[1L]] <- quote(partykit::extree_data)
   
   d <- eval(mf, parent.frame())
-
   subset <- partykit:::.start_subset(d)
+
   weights <- model.weights(model.frame(d))
 
   if (is.null(control$update)) control$update <- TRUE
@@ -68,26 +68,32 @@ disttree <- function(formula,
   if(!inherits(family, "disttree.family")) 
     family <- distfamily(family)
   
-  #Y <- d$yx[[1]]
-  # (LS) check whether d$yx really contains only the response (and no covariates)
-  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  # NOTE: (ML) can this happen after formula creation?
+  #Y <- d$yx[[1]]  # NOTE: (ML) can be deleted?
+  if(length(d$yx) > 1) stop("covariates can only be used as split variables")  
+    # NOTE: (LS) check whether d$yx really contains only the response (and no covariates).
+    # NOTE: (ML) can this happen after formula creation?
   
-  if(NCOL(d$yx[[1]]) > 1) warning("multivariate response variable might not be properly supported") # TODO: (ML) adapt for multidimensional responses
+  if(NCOL(d$yx[[1]]) > 1) warning("multivariate response variable might not be properly supported") 
+    # TODO: (ML) adapt for multidimensional responses.
   if(inherits(d$yx[[1]], "interval")) stop("can not deal with binned intervals yet") 
+    # TODO: (ML) adapt for binned intervals.
   
   ## Set up wrapper function for distfit
   ytrafo <- function(subset, weights, estfun = FALSE, object = FALSE, info = NULL) {
     
-    ys <- as.matrix(d$yx[[1]])[subset, ]  #TODO: (ML) adapted for multivariate reponse, check if correct!# necessary to get response data into the function
+    ys <- as.matrix(d$yx[[1]])[subset, ]  # necessary to get response data into the function
+      # TODO: (ML) adapted for multivariate reponse, check if correct!
     subweights <- if(is.null(weights) || (length(weights)==0L)) weights else weights[subset]
+      # TODO: (ML) check again subweights.
     
-    model <- disttree::distfit(ys, family = family, weights = subweights, start = info$coefficients, start.eta = NULL,
+    model <- disttree::distfit(ys, family = family, weights = subweights, 
+                                 start = info$coefficients, start.eta = NULL,
                                  vcov = (decorrelate == "vcov"), type.hessian = type.hessian, 
                                  method = method, estfun = estfun, optim.control = optim.control,
                                  lower = lower, upper = upper)
     
     if(estfun) {
-      ef <- as.matrix(model$estfun) # distfit returns weighted scores!
+      ef <- as.matrix(model$estfun)  # distfit returns weighted scores!
       
       if(decorrelate != "none") {
         n <- NROW(ef)
@@ -113,26 +119,29 @@ disttree <- function(formula,
       
       estfun <- matrix(0, ncol = ncol(ef), nrow = nrow(d$data)) 
       estfun[subset,] <- ef
-      ### now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
+      # now automatically if(!(is.null(weights) || (length(weights)==0L))) estfun <- estfun / weights 
+      # TODO: (ML) not needed anymore, as distfit returns weighted scores?
     } else {
       estfun <- NULL
     }
+
     rval <- list(estfun = estfun,
-                unweighted = FALSE, # (LS) unweighted = TRUE would prevent estfun / w in extree_fit
+                unweighted = FALSE,  # (LS) unweighted = TRUE would prevent estfun / w in extree_fit.
                 coefficients = coef(model, type = "parameter"),
-                objfun = -logLik(model),  # (LS) optional function to be minimized 
+                objfun = -logLik(model),  # (LS) optional function to be minimized.
                 object = if(object) model else NULL,
-                nobs = nobs(model), # TODO: (ML) check if ok, added to get nobs right
-                converged = model$converged  # TODO: (LS) warnings if distfit does not converge
+                nobs = nobs(model),  # TODO: (ML) check if ok, added to get nobs right.
+                converged = model$converged  # TODO: (LS) warnings if distfit does not converge.
     )
     
     return(rval)
   }
 
   ## Set up default 'converged' function
-  # checking whether all response values are equal in one node, if so return FALSE
+  ### Checking whether all response values are equal in one node, if so return FALSE
   converged_default <- function(data, weights, control){
-    #if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
+    # if(is.null(weights)) weights <- rep.int(1, NROW(data$yx[[1]]))
+    # TODO: (ML) delete?
     convfun <- function(subset, weights){
       ys <- data$yx[[1]][subset]
       ws <- if(is.null(weights) || (length(weights)==0L)) rep.int(1, NROW(ys)) else weights[subset]
@@ -142,6 +151,7 @@ disttree <- function(formula,
     return(convfun)
   }
 
+  ## Check if 'converged' is a function, otherwise use default
   if (is.function(converged)) {
     stopifnot(all(c("data", "weights", "control") %in% names(formals(converged))))
     converged <- converged(d, weights, control = control) & 
@@ -156,9 +166,11 @@ disttree <- function(formula,
                          subset = subset, weights = weights, ctrl = control, doFit = doFit)
   }
 
+  ## Return if no doFit == FALSE
   if (!doFit) return(list(d = d, update = update))
 
-  ## Set minsize to 10 * number of parameters, if NULL ## TODO: (ML) n_coef could be get from family?!
+  ## Set minsize to 10 * number of parameters, if NULL 
+  ## TODO: (ML) n_coef could be get from family?!
   if (is.null(control$minbucket) | is.null(control$minsplit)) {
       ctrl <- control
       N <- sum(complete.cases(model.frame(d, yxonly = TRUE)))
@@ -216,7 +228,8 @@ disttree <- function(formula,
   )
 
   class(rval) <- c("modelparty", class(rval))  # FIXME: either model or constparty object!
-  # TODO: (AZ) check if this can be done prettier
+
+  ## TODO: (AZ) check if this can be done prettier
   which_terminals <- nodeids(rval, terminal = TRUE)
   which_all <- nodeids(rval)
 
@@ -266,50 +279,58 @@ disttree <- function(formula,
 
 
 disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"), 
-                               type.hessian = c("checklist", "analytic", "numeric"),
-                               decorrelate = c("none", "opg", "vcov"),
-                               method = "L-BFGS-B",
-                               optim.control = list(),
-                               lower = -Inf,
-                               upper = Inf,
-                               minsplit = NULL,     # NOTE: (ML) currently use mob default
-                               minbucket = NULL,    # NOTE: (ML) currently use mob default
-                               splittry = 1L,       # NOTE: (ML) currently use mob default
-                               
-                               ## Arguments need for disttree
-                               splitflavour = c("ctree", "exhaustive"),  
-                               testflavour = c("ctree", "mfluc", "guide"),
-                               terminal = "object",
-                               model = TRUE,
-                               inner = "object",
+                             type.hessian = c("checklist", "analytic", "numeric"),
+                             decorrelate = c("none", "opg", "vcov"),
+                             method = "L-BFGS-B",
+                             optim.control = list(),
+                             lower = -Inf,
+                             upper = Inf,
+                             minsplit = NULL,     # NOTE: (ML) currently use mob default
+                             minbucket = NULL,    # NOTE: (ML) currently use mob default
+                             splittry = 1L,       # NOTE: (ML) currently use mob default
+                             
+                             ## Arguments need for disttree
+                             splitflavour = c("ctree", "exhaustive"),  
+                             testflavour = c("ctree", "mfluc", "guide"),
+                             terminal = "object",
+                             model = TRUE,
+                             inner = "object",
 
-                               ## Additional arguments for exhaustive/mobster
-                               restart = TRUE,
-                               breakties = FALSE,
-                               parm = NULL,
-                               dfsplit = TRUE,
-                               vcov = c("opg", "info", "sandwich"),
-                               ordinal = c("chisq", "max", "L2"),
-                               ytype = c("vector", "data.frame", "matrix"),
-                               trim = 0.1,
-                               #nrep = 10000L,       #FIXME: (ML) Is in mob included, needed for dt?
-                               #catsplit = "binary", #FIXME: (ML) Is in mob included, needed for dt?
-                               #numsplit = "left",   #FIXME: (ML) Is in mob included, needed for dt?
-                               #minsize = NULL,      #FIXME: (ML) Is in mob included, needed for dt?
-                               #minprob = 0.01,      #FIXME: (ML) Is in mob included, needed for dt?
-                               #nmax = Inf,          #FIXME: (ML) Is in mob included, needed for dt?
+                             ## Additional arguments for exhaustive/mobster
+                             restart = TRUE,
+                             breakties = FALSE,
+                             parm = NULL,
+                             dfsplit = TRUE,
+                             vcov = c("opg", "info", "sandwich"),
+                             ordinal = c("chisq", "max", "L2"),
+                             ytype = c("vector", "data.frame", "matrix"),
+                             trim = 0.1,
+                             #nrep = 10000L,       #FIXME: (ML) Is in mob included, needed for dt?
+                             #catsplit = "binary", #FIXME: (ML) Is in mob included, needed for dt?
+                             #numsplit = "left",   #FIXME: (ML) Is in mob included, needed for dt?
+                             #minsize = NULL,      #FIXME: (ML) Is in mob included, needed for dt?
+                             #minprob = 0.01,      #FIXME: (ML) Is in mob included, needed for dt?
+                             #nmax = Inf,          #FIXME: (ML) Is in mob included, needed for dt?
  
-                               ## Additonal arguments for GUIDE
-                               guide_interaction = FALSE,
-                               interaction = FALSE,
-                               #guide_unweighted = FALSE,
-                               guide_parm = NULL,  # a vector of indices of the parameters (incl. intercept) for which estfun should be considered
-                               guide_testtype = c("max", "sum", "coin"),
-                               guide_decorrelate = "vcov",   # needs to be set to other than "none" for testtype max and sum 
-                               xgroups = NULL,  # number of categories for split variables (optionally breaks can be handed over)
-                               ygroups = NULL,  # number of categories for scores (optionally breaks can be handed over)
-                               weighted.scores = FALSE,   # logical, should scores be weighted in GUIDE 
-                               ...) {
+                             ## Additonal arguments for GUIDE
+                             ## TODO: (ML) Do we really want include GUIDE in disttree?!
+                             guide_interaction = FALSE,
+                             interaction = FALSE,
+                             #guide_unweighted = FALSE,
+                             guide_parm = NULL,           # TODO: (LS) a vector of indices of 
+                                                          # the parameters (incl. intercept) for 
+                                                          # which estfun should be considered
+                             guide_testtype = c("max", "sum", "coin"),
+                             guide_decorrelate = "vcov",  # TODO: (LS) needs to be set to other than 
+                                                          # "none" for testtype max and sum 
+                             xgroups = NULL,              # TODO: (LS)number of categories for 
+                                                          # split variables (optionally breaks can be 
+                                                          # handed over)
+                             ygroups = NULL,              # TODO: (LS)number of categories for scores 
+                                                          # (optionally breaks can be handed over)
+                             weighted.scores = FALSE,     # TODO: (LS)logical, should scores be 
+                                                          # weighted in GUIDE 
+                             ...) {
 
   mc <- match.call(expand.dots = FALSE)
 
@@ -368,15 +389,19 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
     if(!(ctrl$criterion == "p.value") && guide_interaction){
       stop("For testflavour GUIDE with interaction tests only 'p.value' can be selected as criterion")
     }
-    ctrl <- c(ctrl, list(guide_parm = guide_parm,    # LS: a vector of indices of parameters for which estfun should be considered
+    ctrl <- c(ctrl, list(guide_parm = guide_parm,    # TODO: (LS) a vector of indices of parameters 
+                                                     # for which estfun should be considered.
               guide_testtype = guide_testtype,
               interaction = interaction,
-              guide_decorrelate = guide_decorrelate, # (LS) needs to be set to other than "none" for testtype max and sum 
-                                                     # (LS) unless ytrafo returns decorrelated scores
+              guide_decorrelate = guide_decorrelate, # TODO: (LS) needs to be set to other than "none" 
+                                                     # for testtype max and sum unless ytrafo returns 
+                                                     # decorrelated scores.
                                                      # FIXME: (LS) c("none","vcov","opg")
-              xgroups = xgroups,                     # (LS) number of categories for split variables (optionally breaks can be handed over)
-              ygroups = ygroups,                     # (LS) number of categories for scores (optionally breaks can be handed over)
-              weighted.scores = weighted.scores))    # (LS) logical, should scores be weighted
+              xgroups = xgroups,                     # TODO: (LS) number of categories for split 
+                                                     # variables (optionally breaks can be handed over).
+              ygroups = ygroups,                     # TODO: (LS) number of categories for scores 
+                                                     # (optionally breaks can be handed over).
+              weighted.scores = weighted.scores))    # TODO: (LS) logical, should scores be weighted.
   }
 
   ## Overwrite the split- and selectfun according to the split- and testflavour 
@@ -395,7 +420,7 @@ disttree_control <- function(type.tree = NULL, #c("mob", "ctree", "guide"),
 
 
 
-## FIXME: adapt methods (class disttree?)
+## FIXME: (ML) adapt methods (class disttree?)
 print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", ...)
 {
   familyname <- if(inherits(x$info$family, "gamlss.family")) {
@@ -410,12 +435,12 @@ print.disttree <- function(x, title = NULL, objfun = "negative log-likelihood", 
 predict.disttree <- function (object, newdata = NULL, type = c("parameter", "response", "node"), OOB = FALSE, ...) 
 {
   
-  # per default 'type' is set to 'parameter'
+  ## Per default 'type' is set to 'parameter'
   type <- match.arg(type)
   
   ## get nodes
-  ## if ctree was applied   # FIXME: currently class constparty can not be obtained from disttree
-  #if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
+  # if ctree was applied   # FIXME: (LS) currently class constparty can not be obtained from disttree
+  # if(inherits(object, "constparty")) pred.nodes <- partykit::predict.party(object, newdata =  newdata, 
   #                                                                         type = "node", OOB = OOB, ...)
   # if mob was applied
   if(inherits(object, "modelparty")) pred.nodes <- partykit::predict.modelparty(object, newdata =  newdata, 
@@ -474,7 +499,7 @@ fitted.disttree <- function(object, ...){
   
 }
 
-## FIXME: Should we allow for newdata in logLik ?
+## FIXME: (LS) Should we allow for newdata in logLik ?
 logLik.disttree <- function(object, newdata = NULL, weights = NULL, ...) {
   if(is.null(newdata)) {
     if(!is.null(weights)) stop("for weighted loglikelihood hand over data as newdata")

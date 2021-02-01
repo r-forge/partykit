@@ -7,11 +7,11 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
                       method = "L-BFGS-B", estfun = TRUE, optim.control = list(), ...)
 {
   
-  ## FIX ME: error if parameters/eta are handed over in vector/matrix (only first values are chosen)
+  ## FIXME: (LS) error if parameters/eta are handed over in vector/matrix (only first values are chosen)
   ## start on par scale
   ## start.eta on link scale
 
-  ## FIX ME: what to do if weights consists of zeros only
+  ## FIXME: (LS) what to do if weights consists of zeros only
   
   type.hessian <- match.arg(type.hessian)
   
@@ -29,7 +29,7 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
   if(is.null(weights) || (length(weights)==0L)) weights <- as.vector(rep.int(1, ny))
   if(length(weights) != ny) stop("number of observations and length of weights are not equal")
   if(is.table(weights)) weights <- as.vector(weights)
-  # check if all weights are 0 (happens for low number of trees, FIX ME: how to deal with this?)
+  # check if all weights are 0 (happens for low number of trees, FIXME: (LS) how to deal with this?)
   wzero <- all(weights == 0)
   if(wzero) {
     warning("all weights are 0")
@@ -91,7 +91,7 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
       if(!survival::is.Surv(y)){
         if(family$censtype == "left") y <- survival::Surv(y, y > family$censpoint, type = "left")
         if(family$censtype == "right") y <- survival::Surv(y, y < family$censpoint, type = "right")
-        ## FIX ME: interval censored
+        ## FIXME: (LS) interval censored
         #if(family$censtype == "interval") y <- survival::Surv(y, ((y > family$censpoint[1]) * (y < family$censpoint[2])), type = "interval")
       }
     } else {
@@ -114,11 +114,11 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
   
   
   ## store y and select observations with weight > 0 
-  #FIXME# y.store <- y          
-  #FIXME# y <- y[weights > 0]
+  #FIXME: (LS) y.store <- y          
+  #FIXME: (LS) y <- y[weights > 0]
   
   ## number of observations = sum of weights (i.e., case weights)
-  ## FIXME ## also need proportionality weights, i.e., weights = sum(weights > 0) ?
+  ## FIXME: (LS) also need proportionality weights, i.e., weights = sum(weights > 0) ?
   # nobs <- sum(weights)
   
   ## notation:
@@ -184,11 +184,11 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
     if(NROW(y)>1 & !allequ) {
       starteta <- family$startfun(y, weights = weights)
     } else {
-      ## FIX ME: replacements of starting values apart from location
+      ## FIXME: (LS) replacements of starting values apart from location
       if(NROW(y)==1 | allequ){ 
         starteta <- try(family$startfun(y, weights = weights))
         if(inherits(starteta, "try-error") | any(is.na(starteta))){
-          starteta <- family$linkfun(c(unique(y), rep.int(1e-10, length(family$link)-1)))  ## FIX ME: set all other parameters to 1e-10?
+          starteta <- family$linkfun(c(unique(y), rep.int(1e-10, length(family$link)-1)))  ## FIXME: (LS) set all other parameters to 1e-10?
         }
         warning("only one observation or only equal observations in distfit")
       } else warning("no observation in distfit")
@@ -234,8 +234,8 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
       if(inherits(opt, "try-error")) {
         warning("Error in 'optim()' for method 'L-BFGS-B',
                 optimization restarted with 'BFGS' and additional arguments ignored")
-        ## FIX ME: first keep additional arguments, only if this fails as well change method
-        ## FIX ME: order of steps?
+        ## FIXME: (LS) first keep additional arguments, only if this fails as well change method
+        ## FIXME: (LS) order of steps?
         method <- "BFGS"
         opt <- try(optim(par = starteta, fn = nll, gr = grad, method = method,
                          hessian = (type.hessian == "numeric"), control = optim.control), silent = TRUE)
@@ -330,7 +330,7 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
       matrix(0, ncol = length(eta), nrow = ny) 
     } else { 
     # estfun for link coefficients eta
-    weights * family$sdist(y, eta, sum = FALSE)   ## FIX ME: cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
+    weights * family$sdist(y, eta, sum = FALSE)   ## FIXME: (LS) cut out rows with weight = 0? -> No! index is of importance for independence tests (relation to covariates)
     }
   } else {
     ef <- NULL                    
@@ -345,7 +345,7 @@ distfit <- function(y, family = NO(), weights = NULL, start = NULL, start.eta = 
       if(!survival::is.Surv(x)){
         if(family$censtype == "left") eval <- family$ddist(survival::Surv(x, x > family$censpoint, type = "left"), eta = eta, log = log)
         if(family$censtype == "right") eval <- family$ddist(survival::Surv(x, x < family$censpoint, type = "right"), eta = eta, log = log)
-        ## FIX ME: interval censored
+        ## FIXME: (LS) interval censored
       } else eval <- family$ddist(x, eta = eta,  log=log)
       return(eval)
     }
@@ -445,7 +445,7 @@ get_expectedvalue <- function(object, par) {
         scale <- par[,2]
         expv <- (1 - (1 / (1 + exp(location/scale)))) * scale * (1 + exp(-location/scale)) * log(1 + exp(location/scale))
     } else {
-      ## FIX ME: expected value for other censored distributions:
+      ## FIXME: (LS) expected value for other censored distributions:
       warning("For censored distributions other than the censored normal and censored logistic distribution
               the location parameter is returned as response/expected value.")
       expv <- par[,1]
@@ -459,7 +459,7 @@ get_expectedvalue <- function(object, par) {
       sigma <- par[,2]
       expv <- (mu + sigma * (dnorm(mu/sigma) / pnorm(mu/sigma)))
     } else {
-      ## FIX ME: expected value for other truncated distributions:
+      ## FIXME: (LS) expected value for other truncated distributions:
       warning("For truncated distributions other than the truncated normal distribution
                 the location parameter is returned as response/expected value.")
       expv <- par[,1]
@@ -567,7 +567,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = c("parameter", "l
   if(type == "link"){ 
     coef <- object$eta
     vcov <- object$vcov
-    # FIX ME: vcov on link scale: values around zero might be negative => error using sqrt
+    # FIXME: (LS) vcov on link scale: values around zero might be negative => error using sqrt
   }
   if(type == "parameter"){ 
     coef <- object$par
@@ -748,7 +748,7 @@ plot.distfit <- function(x,
                          fill = "lightgray", col = "darkred", lwd = 1.5,
                          ...)
 {
-  ## FIX ME: barplot instead of hist for discrete distributions
+  ## FIXME: (LS) barplot instead of hist for discrete distributions
   if(isTRUE(all.equal(x$y, round(x$y)))) {
     
     ## barplot instead of hist:
