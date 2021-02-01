@@ -2,5 +2,10 @@
 * Write new family function
 * Write new control function
 * Enhance automatic tests
-* Clean code, remove fixmes and commented lines
+* Clean code, remove fixmes and commented lines:
+  * distfit.R     -> quite independent of partykit.
+  * distfamily.R  -> quite independent of partykit. 
+  * families.R    -> quite independent of partykit.
+  * disttree.R    -> depends heavily on partykit. 
+  * distforest.R  -> depends heavily on partykit.
 
