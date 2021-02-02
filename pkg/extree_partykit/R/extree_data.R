@@ -65,7 +65,13 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     if(noformula) {
         
         ## formula needs to be a 'list' (if it is not a 'formula')
-        if(!inherits(formula, "list")) stop("unsupported specification of 'formula'")    
+        if(!inherits(formula, "list")) stop("unsupported specification of 'formula'")   
+        
+        ## elements of formula needs to be variable names of data 
+        ischar <- sapply(formula, is.character)
+        indata <- sapply(formula, function(nam) {all(nam %in% names(data))})
+        if (!all(ischar)) stop("elements in 'formula' need to be of type character")
+        if (!all(indata)) stop(sprintf("variable '%s' not found in 'data'", names(indata[!indata])))
         
         ## specified formula elements and overall call elements
         fonam <- names(formula)
@@ -85,7 +91,16 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         }
         if("offset" %in% clnam) {
             clvar <- try(offset, silent = TRUE)
-            vars[["offset"]] <- c(vars[["offset"]], if(!inherits(clvar, "try-error")) clvar else deparse(cl$offset))
+            if(!inherits(clvar, "try-error")) {
+            ## Added this to handle numeric offsets properly 
+              if (is.numeric(offset)) {
+                data[,"(offset)"] <- offset
+                clvar <- "(offset)"
+              } 
+            } else {
+              clvar <- deparse(cl$offset)
+            }
+            vars[["offset"]] <- c(vars[["offset"]], clvar)
         }
         if("cluster" %in% clnam) {
             clvar <- try(cluster, silent = TRUE)

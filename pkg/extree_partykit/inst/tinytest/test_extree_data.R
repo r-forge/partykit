@@ -127,7 +127,7 @@ expect_equivalent(exna2$data, d)
 expect_error(extree_data(y ~ z, data = d, na.action = na.fail))
 
 ## weights 
-w <- seq(0, 1, length.out = 10)
+w <- seq(0, 1, length.out = nrow(d))
 exw1 <- extree_data(y ~ z, data = d, weights = w)
 expect_equal(exw1$data$`(weights)`, w)
 
@@ -147,7 +147,6 @@ exof2 <- extree_data(y ~ offset(w) | z, data = d)
 # w not part of d
 d$w <- NULL
 exof3 <- extree_data(y ~ offset(w) | z, data = d)
-# FIXME: (SD) following currently fails due to wrongly specified off <- attr(mt$x, "offset")
 expect_equal(exof2$data$`(offset)`, w, exof3$data$`(offset)`) 
 expect_equal(exof2$data[,exof2$variables$offset], w, exof3$data[,exof3$variables$offset])
 # Multiple offsets 
@@ -158,7 +157,7 @@ expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "unsuporte
 # expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "number of offsets is 20, should equal 10")
 exof6 <- extree_data(y ~ offset(log(w)) + offset(-w)| z, offset = w, data = d)
 expect_equal(exof6$data[, exof6$variables$offset],  log(w))
-# FIXME: (SD) should matrix of offsets work as well for multiple y's? 
+# FIXME: (SD) should matrix of offsets work as well for multiple y's? --> lm()
 # d$w <- NULL
 # w2 <- log(w)
 # exof7 <- extree_data(cbind(y, log(y)) ~ z, offset = as.matrix(cbind(w, w2)), data = d)
@@ -166,29 +165,33 @@ expect_equal(exof6$data[, exof6$variables$offset],  log(w))
 
 # List instead of formula
 d$w <- w
-exol1 <- extree_data(list(y = "y", z = "z", offset = "w"), data = d)
+d$logw <- log(w)
+expect_error(extree_data(list(y = "y", z = "z", offset = w), data = d))
+exol1 <- extree_data(list(y = "y", z = "z"), offset = "w", data = d)
 expect_equal(exol1$data$w, w) ## FIXME: (SD) should data differ to data above?
 expect_equal( exol1$data[, exol1$variables$offset], w)
-exol2 <- extree_data(list(y = "y", z = "z"), offset = "w", data = d)
 d$w <- NULL
-exol3 <- extree_data(list(y = "y", z = "z"), offset = w, data = d)
-exol4 <- extree_data(list(y = "y", z = "z", offset = w), data = d)
-## FIXME: (SD) variables$offset gives wrong index due to vars[[v]] <- unique(as.integer(vars[[v]])) & 
-## proper handling of numerics as offset --> add w to data & use correct index! 
-# expect_equal(exol3$data[, exol3$variables$offset], w) 
-# expect_equal(exol4$data[, exol4$variables$offset], w) 
-expect_equal(exol3, exol4)
+exol2 <- extree_data(list(y = "y", z = "z"), offset = w, data = d)
+expect_equal(exol2$data[, exol2$variables$offset], w)
+# multiple offsets: 
+d$w <- w
+exol3 <- extree_data(list(y = "y", z = "z", offset = c("w", "logw")), data = d)
+expect_equal(exol3$data[, exol3$variables$offset], data.frame(cbind(w, logw = log(w))))
 
 ## cluster
-cl <- factor(sample(c(1, 2, 3), size = nrow(d), replace = TRUE))
 clc <- sample(c(1, 2, 3), size = nrow(d), replace = TRUE)
-expect_silent(ex6 <- extree_data(y ~ z, data = d, cluster = cl))
-expect_equal(ex6$data$`(cluster)`, cl)
-exc1 <- extree_data(y ~ z, data = d, cluster = clc)
-expect_warning(extree_data(list(y = "y", z = "z", cluster = cl), data = d), 
-    pattern = "'cluster', must be character") #(SD) Do we want that factors are not allowed for cluster in formula?
-exc2 <- extree_data(list(y = "y", z = "z", cluster = clc), data = d)
-# expect_equal(exc1$data, exc2$data) #FIXME: (SD) Currently fails, exc2: cluster not in data + wrong index in variables
+cl <- as.factor(clc)
+exc1 <- extree_data(y ~ z, data = d, cluster = cl)
+expect_equivalent(exc1$data[,exc1$variables$cluster], cl)
+exc2 <- extree_data(y ~ z, data = d, cluster = clc)
+exc3 <- extree_data(list(y = "y", z = "z"), cluster = clc, data = d)
+expect_error(extree_data(list(y = "y", z = "z", cluster = cl), data = d), "need to be of type character") #(SD) Do we want that factors are not allowed for cluster in formula?
+expect_error(extree_data(list(y = "y", z = "z", cluster = "cl"), data = d), "not found in 'data'")
+d$clc <- clc
+d$cl <- cl
+exc2 <- extree_data(list(y = "y", z = "z", cluster = "clc"), data = d)
+exc3 <- extree_data(list(y = "y", z = "z", cluster = "cl"), data = d)
+expect_equal(exc2$data, exc3$data) 
 
 ## scores
 # TODO: named list of numeric scores to be assigned to ordered factors in z part! 
@@ -223,11 +226,3 @@ exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
   nmax = c("yx" = 3, "z" = 3))
 # FIXME: (SD) Wrong output? Don't we actually want...? 
 # expect_equal(exn1$yx, inum::inum(dn[, "y", drop = FALSE], total = TRUE, nmax = 3, as.interval = "y"))
-# FIXME: (SD) Bug in inum 
-sepallen <- iris[, "Sepal.Length", drop = FALSE]
-sepallen$Sepal.Length[c(1, 10)] <- NA
-a <- inum(sepallen, nmax = 5, as.interval = "Sepal.Length")
-b <- inum(sepallen, nmax = 5, total = TRUE)
-c <- inum(sepallen, nmax = 5, total = TRUE, complete.cases.only = TRUE)
-cbind(sepallen, a, as.numeric(b), as.numeric(c)) # Bug --> suddenly many 0s
-# cbind(sepallen, a, b) # repeats attribute levels??
