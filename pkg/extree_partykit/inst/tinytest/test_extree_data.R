@@ -104,6 +104,7 @@ exd$missings$Zmiss
 # -------------------------------------------------------------------
 d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
 d$y[c(1, 10)] <- NA
+w <- seq(0, 1, length.out = nrow(d))
 
 # formula
 exf1 <- extree_data(y ~ z, data = d)
@@ -127,7 +128,6 @@ expect_equivalent(exna2$data, d)
 expect_error(extree_data(y ~ z, data = d, na.action = na.fail))
 
 ## weights 
-w <- seq(0, 1, length.out = nrow(d))
 exw1 <- extree_data(y ~ z, data = d, weights = w)
 expect_equal(exw1$data$`(weights)`, w)
 
@@ -162,8 +162,7 @@ expect_equal(exof6$data[, exof6$variables$offset],  log(w))
 # w2 <- log(w)
 # exof7 <- extree_data(cbind(y, log(y)) ~ z, offset = as.matrix(cbind(w, w2)), data = d)
 # exof8 <- extree_data(y + log(y) ~ z, offset = as.matrix(cbind(w, w2)), data = d)
-
-# List instead of formula
+## List instead of formula
 d$w <- w
 d$logw <- log(w)
 expect_error(extree_data(list(y = "y", z = "z", offset = w), data = d))
@@ -194,17 +193,15 @@ exc3 <- extree_data(list(y = "y", z = "z", cluster = "cl"), data = d)
 expect_equal(exc2$data, exc3$data) 
 
 ## scores
-# TODO: named list of numeric scores to be assigned to ordered factors in z part! 
 sc <-  seq(0.1, 1, length.out = 10)
 d$zf <- ordered(d$z)
 exsc1 <- extree_data(y ~ zf, data = d)
-# FIXME (SD): No check if score is list! Expect errors for the following, exsc2$scores is just empty
-exsc2 <- extree_data(y ~ zf, data = d, scores = sc) 
-expect_equal(exsc1, exsc2)
+expect_error(extree_data(y ~ zf, data = d, scores = sc), "unsupported specification") 
 exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
 expect_equal(exsc3$scores$zf, sc)
-# FIXME (SD): Expect error if nr of scores != nr of levels
-exsc4 <- extree_data(y ~ zf, data = d, scores = list(zf = sc[c(1:8)]))
+# FIXME (SD): Expect error if nr of scores != nr of levels? 
+expect_error(extree_data(y ~ zf, data = d, scores = list(zm = sc[c(1:8)])), 
+  "names of 'scores' must match names of split variables 'z'")
 
 ## yx 
 exyx1 <- extree_data(y ~ z, data = d, yx = "matrix")
@@ -222,7 +219,12 @@ expect_equal(exyt3, exf1) # ytype is ignored if yx = "none"
 ## nmax
 # # convert to numeric since no binning for integer vars
 dn <- data.frame(apply(d, MARGIN = 2, as.numeric))
+dn$x <- as.numeric(sample(1:20, size = 10))
 exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
   nmax = c("yx" = 3, "z" = 3))
-# FIXME: (SD) Wrong output? Don't we actually want...? 
-# expect_equal(exn1$yx, inum::inum(dn[, "y", drop = FALSE], total = TRUE, nmax = 3, as.interval = "y"))
+expect_equivalent(exn1$yxindex, inum::inum(dn[, "y", drop = FALSE], total = TRUE, complete.cases.only = TRUE, nmax = 3, as.interval = "y"))
+exn1$zindex #FIXME: (SD) why is there an element y?  
+exn2 <- extree_data(y + x ~ z, data = dn, yx = "matrix", ytype = "matrix",
+  nmax = c("yx" = 3, "z" = 3))
+exn3 <- extree_data(y + x ~ z, data = dn, yx = "matrix", ytype = "vector", 
+  nmax = c("yx" = 3, "z" = 3))

@@ -245,8 +245,11 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     
     ret$scores <- vector(mode = "list", length = length(ret$variables$z))
     names(ret$scores) <- names(mf)
-    if (!is.null(scores))
+    if (!is.null(scores)) {
+      if(!inherits(scores, "list")) stop("unsupported specification of 'scores', should be a list")  
+      if(!(names(scores) %in% names(mf))) stop("names of 'scores' must match names of split variables 'z'") 
         ret$scores[names(scores)] <- scores
+    }
     
     if (length(nmax) == 1L) nmax <- c("yx" = nmax, "z" = nmax)
     ### <FIXME> make meanlevels an argument and make sure intersplit is TRUE </FIXME>
@@ -301,6 +304,8 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         } else { ### ytype = "matrix"
           ## FIXME: (SD) yxmf only gives levels of binned y not observations
           ## as.numeric(ret$yxindex) instead of yxmf? 
+            # yxdf <- data.frame(unclass(exn1$yxindex))
+            # names(yxdf) <- names(yxmf)
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
             if (is.finite(nmax["yx"])) {
