@@ -306,6 +306,10 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     } else {
       jsel <- integer()
     }
+    
+    ## map jsel from criterion to data
+    jsel <- match(colnames(varsel$criterion)[jsel], names(data$data))
+    if(anyNA(jsel)) stop("some of the variables in the 'criterion' are not available in the 'data'")
 
     if(!terminal) { ## FIXME: (Z) if(!terminal || "criterion" %in% save)
       ## always include the criterion used as "criterion"
@@ -345,11 +349,11 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     if (!is.null(varsel$splits)) {
       ### varselect may return of a list of partysplit objects; use these for
       ### splitting; varselect is responsible for making sure lookahead is implemented
-      thissplit <- varsel$splits[[jsel[1L] + 1L]] ## FIXME: jsel + 1L must be removed as soon as possible
+      thissplit <- varsel$splits[jsel[1L]]
     } else {
       ### try to find an admissible split in data[, jsel]
       thissplit <- splitselect(model = thismodel, trafo = trafo, data = data, subset = subset, 
-                  weights = weights, whichvar = jsel + 1L, ctrl = thisctrl) ## FIXME: jsel + 1L must be removed as soon as possible
+                  weights = weights, whichvar = jsel, ctrl = thisctrl)
     }
   }
 
