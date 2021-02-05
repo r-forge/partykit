@@ -38,8 +38,7 @@ depends on the specific tree algorithm.
   \item{strata}{an optional factor describing strata. The interpretation
 depends on the specific tree algorithm.
 }
-  \item{scores}{an optional named list of numeric scores to be assigned to
-ordered factors in the \code{z} part of the formula.
+  \item{scores}{an optional named list of scores to be attached to ordered factors.
 % FIXME: improve naming, e.g. ordinalscores?
 }
   \item{yx}{a character indicating if design matrices shall be computed. 
@@ -66,6 +65,10 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
       \item \code{z}: split variable(s) (also known as partitioning variable)
       \item \code{yx}: the combined model part of y and x (if any), including offset, weights, etc.
   }
+  
+  Offsets can be specified by \code{offset} terms in \code{formula} or by the \code{offset} argument. 
+  If \code{formula} is a list, the former is preferable to the latter.
+  All offsets are sumed and stored in the column \code{"(offset)"} in \code{data}.
   
   % TODO: please check the following notes on weights. 
  According to Thomas Lumley (2020) three main types of \code{weights} exist: precision weights, frequency/case weights and sampling weights. 

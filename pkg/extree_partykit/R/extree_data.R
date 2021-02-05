@@ -111,6 +111,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
             vars[["strata"]] <- c(vars[["strata"]], if(!inherits(clvar, "try-error")) clvar else deparse(cl$strata))
         }
         
+        if ("offset" %in% c(fonam, clnam)) {
+          ## sum offset 
+          data[, "(offset)"] <- rowSums(data[vars[["offset"]]])
+          vars[["offset"]] <- "(offset)" 
+        }
+        
         ## sanity checking
         for(v in vanam) {
             if(!is.null(vars[[v]]) && !(is.numeric(vars[[v]]) | is.character(vars[[v]]) | is.logical(vars[[v]]))) {
@@ -243,12 +249,16 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     yxvars <- c(vars$y, vars$x, vars$offset, vars$cluster)
     zerozvars <- which(vars$z == 0)
     
+    # In future, allow vector of scores in case of a *single* ordered factor
     ret$scores <- vector(mode = "list", length = length(ret$variables$z))
     names(ret$scores) <- names(mf)
     if (!is.null(scores)) {
       if(!inherits(scores, "list")) stop("unsupported specification of 'scores', should be a list")  
-      if(!(names(scores) %in% names(mf))) stop("names of 'scores' must match names of split variables 'z'") 
-        ret$scores[names(scores)] <- scores
+      if(!(names(scores) %in% names(mf))) stop("names of 'scores' must match names of variables") 
+      levs <- sapply(mf, nlevels)
+      len <- sapply(scores, length)
+      if(!all(levs[names(scores)] == len[names(scores)])) stop("number of scores in 'scores' must match number of levels of ordered factors")
+      ret$scores[names(scores)] <- scores
     }
     
     if (length(nmax) == 1L) nmax <- c("yx" = nmax, "z" = nmax)
