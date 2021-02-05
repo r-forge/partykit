@@ -89,7 +89,7 @@ expect_equal(exd$missings$Zmiss, c(3, 4, 5))
 expect_equal(extree_variable(x = exd, i = "yx", type = "missings"), c(1, 2)) # missings in offset Omiss
 expect_equal(exd$missings$Y, integer())
 expect_equal(exd$missings$X, integer())
-expect_equal(exd$missings$Omiss, c(1, 2))
+expect_equal(exd$missings$`(offset)`, c(1, 2))
 
 ## missings should not be computed in unused variables
 expect_equal(extree_variable(x = exd, i = "Z", type = "missings"), NA)
@@ -174,8 +174,8 @@ exol2 <- extree_data(list(y = "y", z = "z"), offset = w, data = d)
 expect_equal(exol2$data[, exol2$variables$offset], w)
 # multiple offsets: 
 d$w <- w
-exol3 <- extree_data(list(y = "y", z = "z", offset = c("w", "logw")), data = d)
-expect_equal(exol3$data[, exol3$variables$offset], data.frame(cbind(w, logw = log(w))))
+exol3 <- extree_data(list(y = "y", z = "z", offset = c("w", "logw")), offset = w, data = d)
+expect_equal(exol3$data[, exol3$variables$offset], 2*w+log(w))
 
 ## cluster
 clc <- sample(c(1, 2, 3), size = nrow(d), replace = TRUE)
@@ -199,9 +199,12 @@ exsc1 <- extree_data(y ~ zf, data = d)
 expect_error(extree_data(y ~ zf, data = d, scores = sc), "unsupported specification") 
 exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
 expect_equal(exsc3$scores$zf, sc)
+exsc4 <- extree_data(zf ~ y, data = d, scores = list(zf = sc))
 # FIXME (SD): Expect error if nr of scores != nr of levels? 
-expect_error(extree_data(y ~ zf, data = d, scores = list(zm = sc[c(1:8)])), 
-  "names of 'scores' must match names of split variables 'z'")
+expect_error(extree_data(y ~ zf, data = d, scores = list(zm = sc)), 
+  "names of 'scores' must match names")
+expect_error(extree_data(y ~ zf, data = d, scores = list(zf = sc[c(1:8)])), 
+  "number of scores in 'scores' must match number of levels of ordered factors")
 
 ## yx 
 exyx1 <- extree_data(y ~ z, data = d, yx = "matrix")
@@ -222,7 +225,8 @@ dn <- data.frame(apply(d, MARGIN = 2, as.numeric))
 dn$x <- as.numeric(sample(1:20, size = 10))
 exn1 <- extree_data(y ~ z, data = dn, yx = "matrix", ytype = "matrix",
   nmax = c("yx" = 3, "z" = 3))
-expect_equivalent(exn1$yxindex, inum::inum(dn[, "y", drop = FALSE], total = TRUE, complete.cases.only = TRUE, nmax = 3, as.interval = "y"))
+expect_equivalent(exn1$yxindex, inum::inum(dn[, "y", drop = FALSE], total = TRUE, 
+  complete.cases.only = TRUE, nmax = 3, as.interval = "y"))
 exn1$zindex #FIXME: (SD) why is there an element y?  
 exn2 <- extree_data(y + x ~ z, data = dn, yx = "matrix", ytype = "matrix",
   nmax = c("yx" = 3, "z" = 3))
