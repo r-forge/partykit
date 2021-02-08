@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-12 (2020-12-17)}{
+\section{Changes in Version 1.2-12 (2021-02-08)}{
   \subsection{New Features}{
   \itemize{
     \item{Add \code{method} argument to \code{glmtree}. The default is to use
@@ -13,6 +13,7 @@
 }
   \subsection{Bugfixes}{
   \itemize{
+    \item{Fix LaTeX problem.}
     \item{Better checks for response classes, fixing a bug reported by John Ogawa.}
     \item{In \code{lmtree} and \code{glmtree} the \code{"xlevels"} attribute for the
       regressors is preserved in the models fitted within the trees. Thus, predicting
