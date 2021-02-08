@@ -1125,7 +1125,7 @@ Levels: Never < Within a Year < Over a Year
 > stopifnot(names(nodeInfo$p.value) == "d")
 > stopifnot(split_node(tNodes)$varid == 3)
 > 
-> ### spotted by John Ogawa, 2020-12-11
+> ### reported by John Ogawa, 2020-12-11
 > class(dfb$a) <- c("Hansi", "factor")
 > tr2 <- ctree(a ~ ., data = dfb, control = ctree_control(minsplit = 10,minbucket = 5,
 +                                                        maxsurrogate = 2, alpha = 0.05))
@@ -1133,4 +1133,4 @@ Levels: Never < Within a Year < Over a Year
 > 
 > proc.time()
    user  system elapsed 
-  4.373   0.078   4.465 
+  2.901   0.102   3.000 
