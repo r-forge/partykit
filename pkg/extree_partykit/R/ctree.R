@@ -21,8 +21,8 @@
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
 
-    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
-    iy <- data$yxindex ### data[["yx", type = "index"]]
+    ix <- extree_variable(data, i = j, type = "index") ### data[[j, type = "index"]]
+    iy <- extree_variable(data, i = "yx", type = "index") ### data[["yx", type = "index"]]
     Y <- model$estfun
 
     if (!is.null(iy)) {
@@ -32,8 +32,9 @@
                               SPLITONLY = split_only, ctrl = control))
     }
     
-    if(NROW(Y) != length(ix)) browser()
-    stopifnot(NROW(Y) == length(ix))
+    if (NROW(Y) != length(ix)) {
+        if (split_only) return(NULL) else return(list(statistic = NA, p.value = NA))
+    }
 
     NAyx <- data$yxmissings ### data[["yx", type = "missings"]]
     NAz <- data$missings[[j]] ### data[[j, type = "missings"]]
