@@ -128,7 +128,7 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
                             control, var_select) {
   
   ## set up return list + criterion matrix
-  znams <- attr(data$variables$z, "variable_names")
+  znams <- names(data$data)[data$variables$z > 0] #attr(data$variables$z, "variable_names")
   ret <- list(criterion = matrix(NA_real_, nrow = 2L, ncol = length(znams)))
   ## FIXME: it is not ideal to use these names first and fix them later
   rownames(ret$criterion) <- c("statistic", "p.value")
@@ -184,7 +184,7 @@ split_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 
 ## Select function old
 .select <- function(model, trafo, data, subset, weights, whichvar, ctrl, FUN) {
-  znams <- attr(data$variables$z, "variable_names")
+  znams <- names(data$data)[data$variables$z > 0] 
   ret <- list(criterion = matrix(NA, nrow = 2L, ncol = length(znams)))
   rownames(ret$criterion) <- c("statistic", "p.value")
   colnames(ret$criterion) <- znams

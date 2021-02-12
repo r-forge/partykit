@@ -207,7 +207,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     vars$z <- vars$z[vanam]
     if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
     vars$z <- as.numeric(vars$z)
-    attr(vars$z, "variable_names") <- vanam[vars$z == 1]
     ## all others to integer
     ## <FIXME: (SD) proper handling of numeric offset necessary
     for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
@@ -221,8 +220,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         }
         vars[[v]] <- unique(as.integer(vars[[v]]))
         
-        ## add info on variable names
-        if(length(vars[[v]]) != 0) attr(vars[[v]], "variable_names") <- vanam[vars[[v]]]
     }
     if(is.null(vars$y)) stop("at least one 'y' variable must be specified")
     
@@ -262,9 +259,12 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     }
     
     if (length(nmax) == 1L) nmax <- c("yx" = nmax, "z" = nmax)
+    
+    # create zindex 
     ### <FIXME> make meanlevels an argument and make sure intersplit is TRUE </FIXME>
     ret$zindex <- inum::inum(mf, ignore = names(mf)[zerozvars], total = FALSE, 
         nmax = nmax["z"], meanlevels = FALSE)
+    
     if (is.finite(nmax["yx"])) {
         ret$yxindex <- inum::inum(mf[, yxvars, drop = FALSE], total = TRUE, 
             as.interval = names(mf)[vars$y], complete.cases.only = TRUE, 
