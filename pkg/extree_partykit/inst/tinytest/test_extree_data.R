@@ -36,6 +36,9 @@ expect_equal(aq1$terms, aq3$terms)
 expect_null(aq2$terms)
 expect_null(aq4$terms)
 
+## Check zindex
+expect_equal(aq1$zindex, aq2$zindex)
+
 
 # -------------------------------------------------------------------
 # Pima Indians diabetes EXAMPLE
