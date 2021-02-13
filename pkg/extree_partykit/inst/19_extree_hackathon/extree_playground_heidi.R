@@ -75,7 +75,6 @@ source("selection_modules.R")
 
 var_select2 <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
     res <- var_select(estfun = model$estfun, data = data, subset = subset, j = j)
-    
     return(as.list(res))
 }
 
