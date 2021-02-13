@@ -141,12 +141,17 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
     tst <- selector(select = var_select, model = model, trafo = trafo, 
                     data = data, subset = subset, weights = weights, j = whichvar[i], 
                     control = control)
-
+    
     logs <- "log.statistic" %in% names(tst)
     logp <- "log.p.value" %in% names(tst)
     
-    ret$criterion["statistic", i] <- if(logs) tst$log.statistic else tst$statistic
-    ret$criterion["p.value", i] <- if(logp) tst$log.p.value else tst$p.value
+    if (is.null(tst)) {
+      ret$criterion["statistic", i] <- NA
+      ret$criterion["p.value", i] <- NA
+    } else {
+      ret$criterion["statistic", i] <- if(logs) tst$log.statistic else tst$statistic
+      ret$criterion["p.value", i] <- if(logp) tst$log.p.value else tst$p.value
+    }
   }
   if(logs) rownames(ret$criterion)[1L] <- "log.statistic"
   if(logp) rownames(ret$criterion)[2L] <- "log.p.value"

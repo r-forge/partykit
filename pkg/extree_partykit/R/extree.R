@@ -240,6 +240,8 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   varsel <- varselect(model = thismodel, trafo = trafo, data = data,
     subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
 
+  if(all(is.na(varsel$criterion))) terminal <- TRUE
+  
   if (terminal || inherits(varsel, "partysplit")) {
     thissplit <- if(terminal) NULL else varsel
     info <- nodeinfo <- thismodel[!(names(thismodel) %in% c("estfun"))] ## FIXME: (Z) needs updating
@@ -350,13 +352,13 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
       ### varselect may return of a list of partysplit objects; use these for
       ### splitting; varselect is responsible for making sure lookahead is implemented
       thissplit <- varsel$splits[jsel[1L]]
-    } else {
+    } else { 
       ### try to find an admissible split in data[, jsel]
       thissplit <- splitselect(model = thismodel, trafo = trafo, data = data, subset = subset, 
                   weights = weights, whichvar = jsel, ctrl = thisctrl)
     }
   }
-
+  
   ### failed split search:
   if (is.null(thissplit))
     return(partynode(as.integer(id), info = info))
@@ -367,6 +369,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   ret$info <- info
 
   ### determine observations for splitting (only non-missings)
+  #if(class(thissplit) != "partysplit") browser()
   snotNA <- subset[!subset %in% extree_variable(data, i = varid_split(thissplit), type = "missings")]
   if (length(snotNA) == 0)
     return(partynode(as.integer(id), info = info))
@@ -509,6 +512,15 @@ extree_control <- function(
     }
   }
   
+  ## surrogate variable selection preprocessing
+  if(!is.null(svselectfun)) svarselect <- svselectfun
+  if(is.list(svarselect) || is.character(svarselect) || "j" %in% names(formals(svarselect))) {
+    svar_sel <- .preprocess_select(svarselect, select_type = "var")
+    svarselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+      var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, var_select = svar_sel)
+    }
+  }
+  
   ## split selection preprocessing
   if(!is.null(splitfun)) splitselect <- splitfun
   if(is.list(splitselect) || is.character(splitselect) || "j" %in% names(formals(splitselect))) {
@@ -516,6 +528,16 @@ extree_control <- function(
     splitselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
       split_select_loop(model = model, trafo = trafo, data = data, subset = subset,
         weights = weights, whichvar = whichvar, control = ctrl, split_select = split_sel)
+    }
+  }
+  
+  ## surrogate split selection preprocessing
+  if(!is.null(svsplitfun)) ssplitselect <- svsplitfun
+  if(is.list(ssplitselect) || is.character(ssplitselect) || "j" %in% names(formals(ssplitselect))) {
+    ssplit_sel <- .preprocess_select(ssplitselect, select_type = "split")
+    ssplitselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+      split_select_loop(model = model, trafo = trafo, data = data, subset = subset,
+        weights = weights, whichvar = whichvar, control = ctrl, split_select = ssplit_sel)
     }
   }
 
