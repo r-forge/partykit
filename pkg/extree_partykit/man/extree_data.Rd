@@ -68,7 +68,7 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
   
   Offsets can be specified by \code{offset} terms in \code{formula} or by the \code{offset} argument. 
   If \code{formula} is a list, the former is preferable to the latter.
-  All offsets are sumed and stored in the column \code{"(offset)"} in \code{data}.
+  All offsets are summed and stored in the column \code{"(offset)"} in the returned \code{data} object.
   
   % TODO: please check the following notes on weights. 
  According to Thomas Lumley (2020) three main types of \code{weights} exist: precision weights, frequency/case weights and sampling weights. 
