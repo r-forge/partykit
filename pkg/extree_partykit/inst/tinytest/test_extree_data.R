@@ -156,7 +156,7 @@ expect_equal(exof2$data[,exof2$variables$offset], w, exof3$data[,exof3$variables
 exof4 <- extree_data(y ~ offset(w) + offset(log(w))| z, data = d)
 exof5 <- extree_data(y ~ offset(log(w))| z, offset = w, data = d)
 expect_equal(exof4$data[, exof4$variables$offset], exof5$data[, exof5$variables$offset],  w + log(w))
-expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "unsuported specification of 'offset'")
+expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "unsupported specification of 'offset'")
 # expect_error(extree_data(y ~ z, offset = cbind(w, log(w)), data = d), "number of offsets is 20, should equal 10")
 exof6 <- extree_data(y ~ offset(log(w)) + offset(-w)| z, offset = w, data = d)
 expect_equal(exof6$data[, exof6$variables$offset],  log(w))
@@ -235,3 +235,9 @@ exn2 <- extree_data(y + x ~ z, data = dn, yx = "matrix", ytype = "matrix",
   nmax = c("yx" = 3, "z" = 3))
 exn3 <- extree_data(y + x ~ z, data = dn, yx = "matrix", ytype = "vector", 
   nmax = c("yx" = 3, "z" = 3))
+exn4 <- extree_data(y + x ~ z, data = dn, nmax = c("yx" = 3))
+expect_true(length(levels(exn4$zindex$z)) != 3)
+expect_error(extree_data(y ~ z, data = dn, nmax = c("heo" = 20)), "names of 'nmax'")
+exn5 <- extree_data(y + x ~ z, data = dn, nmax = c("z" = 3))
+expect_true(is.null(exn5$yxindex))
+expect_true(length(levels(exn5$zindex$z))== 3)

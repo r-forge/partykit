@@ -137,7 +137,6 @@ ctrl1 <- extree_control(criterion = "p.value",
   splitfun = split_select_median_numeric,
   minsplit = 50)
 
-# Bugs extree_data
 dim <- 100
 yx <- "matrix"
 bins <- Inf
@@ -147,14 +146,7 @@ datahd <- add_noise_var(airquality, dim)
 # Binning results in errors & wrong bins in case of integer outcomes
 dl <- list(y = "Ozone", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
 extree_data(dl, data = datahd, yx = "matrix", 
-  nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") # does not work due to binning
-# Weird error: 
-# Error in Ymat[-ret$yxmissings, ] <- Ytmp : 
-#   number of items to replace is not a multiple of replacement length
-#
-# Reason: Ymat is after binning, ret$yxmissings is before binning
-# - Ymat dimension corresponds to yxmf after binning, here 67 rows
-# - ret$yxmissings corresponds to ret$data before binning, here 153 rows
+  nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") 
 
 airq_dat2 <- extree_data(dl, data = datahd, yx = "none", # no error but also no binning
   nmax = c("yx" = 10, "z" = Inf), ytype = "matrix") 
@@ -165,33 +157,35 @@ airq_dat4 <- extree_data(dl, data = datahd, yx = "matrix", # works because no bi
 
 # One numeric target: 
 datahd$Ozonen = as.numeric(datahd$Ozone)
-dln <- list(y = "Ozonen", z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
-extree_data(dln, data = datahd, yx = "matrix", #numeric outcome 
-  nmax = c("yx" = 10), ytype = "matrix") # does not work due to binning
-# Error in Ymat[-ret$yxmissings, ] <- Ytmp : 
-#   number of items to replace is not a multiple of replacement length
+dln <- list(y = "Ozonen", z = c("Wind", "Temp"))
+extree_data(dln, data = datahd, yx = "matrix", 
+  nmax = c("yx" = 10), ytype = "matrix") 
+# Error in if (length(ux) > nmax) ux <- unique(quantile(x, prob = 1:(nmax -  : 
+#     missing value where TRUE/FALSE needed
 extree_data(dln, data = datahd, yx = "matrix", #numeric outcome 
   nmax = c("yx" = 10), ytype = "vector") # error due to binning
 # Error in if (length(ux) > nmax) ux <- unique(quantile(x, prob = 1:(nmax -  : 
 #     missing value where TRUE/FALSE needed
 
-
 ## Multiple targets: 
 datahd$Ozone2 <- sample(datahd$Ozone)
 dlmulti <- list(y = c("Ozonen", "Ozone2"), z = c("Wind", "Temp", paste("X", 1:dim, sep = "")))
 airq_dat <- extree_data(dlmulti, data = datahd, yx = "matrix",
-  nmax = c("yx" = c(10, 10, 20), "z" = Inf), ytype = "matrix") # works although yx wrong dimensions, works as if yx = Inf! 
+  nmax = c("yx" = c(10, 10, 20), "z" = Inf), ytype = "matrix")
 
 ############################################################################
 
 # Test predict: 
 dl <- list(y = "Ozone", z = c("Wind", "Temp"))
-airq_dat <- extree_data(Ozone ~ Wind + Temp, data = airquality) # does not work
+airq_dat <- extree_data(Ozone ~ Wind + Temp, data = airquality)
 
 xtr <- extree(data = airq_dat, trafo = trafo_identity, 
-  control = ctrl1) # Bug solved
-ptr <- constparty(xtr$nodes, data = airq_dat$data)
-# same output 
+  control = ctrl1)
+# class list 
+
+ptr <- party(xtr$nodes, data = airq_dat$data)
+
+pred <- predict(ptr)
 predict(ptr, type = "response")
 predict(ptr, type = "node")
 

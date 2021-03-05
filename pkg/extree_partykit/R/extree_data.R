@@ -54,10 +54,14 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     yx <- match.arg(yx, choices = c("none", "matrix"))
     ytype <- match.arg(ytype, choices = c("vector", "data.frame", "matrix"))
     
+    if (!all(names(nmax) %in% c("yx", "z"))) {
+      stop("names of 'nmax' should be equal to 'yx' and 'z'")
+    }
+    
     ## FIXME: (SD) Currently only NULL, numeric vector but not a matrix is 
     ## allowed as offset.
     if (!missing(offset) && !is.vector(offset)) {
-      stop("unsuported specification of 'offset', should be a numeric vector")
+      stop("unsupported specification of 'offset', should be a numeric vector")
     }
     
     ## 'formula' may either be a (multi-part) formula or a list
@@ -258,7 +262,15 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
       ret$scores[names(scores)] <- scores
     }
     
-    if (length(nmax) == 1L) nmax <- c("yx" = nmax, "z" = nmax)
+    if (length(nmax) == 1L) {
+      if(is.null(names(nmax))) {
+        nmax <- c("yx" = nmax, "z" = nmax)
+      } else {
+        temp <- c("yx" = Inf, "z" = Inf)
+        temp[names(nmax)] <- nmax
+        nmax <- temp
+      }
+    }
     
     # create zindex 
     ### <FIXME> make meanlevels an argument and make sure intersplit is TRUE </FIXME>
