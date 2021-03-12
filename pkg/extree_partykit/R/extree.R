@@ -7,7 +7,7 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     
     ## trafo preprocessing
     mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
-        trafo(subset, data = data, weights, info = NULL, estfun = TRUE, object = TRUE)
+        trafo(subset, data = data, weights, info = info, estfun = estfun, object = object)
     }
     
     ## TODO: converged preprocessing (if needed)
