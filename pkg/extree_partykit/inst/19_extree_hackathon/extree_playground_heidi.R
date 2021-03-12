@@ -10,8 +10,13 @@ library("partykitx")
 airq <- subset(airquality, !is.na(Ozone))
 my_data <- extree_data(Ozone ~ Wind + Temp, 
     data = airq, yx = "matrix")
+## README <Z> to get the numeric vector d$yx$y we need to indicate yx = "matrix"?
 
 ## Trafo with estfun = y, objfun = -MSE
+## README <Z>
+## - +MSE ?
+## - also include coefficients = mean(data$yx$y[subset]) ?
+## - always rely on yx being available?
 trafo1 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
     estfun <- matrix(0, ncol = NCOL(data$yx$y), nrow = nrow(data$data))
     estfun[subset,] <- as.matrix(data$yx$y)[subset, ]
@@ -47,7 +52,8 @@ tr1 <- extree(data = my_data, trafo = trafo1,
         restart = TRUE))
 
 tr1
-# plot(tr1)
+## README <Z> $trafo does not seem to pass on arguments, deliberately?
+## plot(tr1)
 
 
 ### --- Example 2 --- ###
@@ -61,8 +67,10 @@ tr1
 ## Iris data
 d <-  extree_data(Species ~ Petal.Width + Petal.Length,
     data = iris, yx = "matrix")
+## README <Z> to get the factor d$yx$y we need to indicate yx = "matrix"?
 
 ## Trafo with estfun = y
+## README <Z> nevertheless include coefficients and/or objfun?
 trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
     estfun <- data$yx$y  ## data[[1, "original"]]
     estfun[-subset] <- NA
