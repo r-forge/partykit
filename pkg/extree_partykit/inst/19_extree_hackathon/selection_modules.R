@@ -7,13 +7,19 @@ var_select_num <- function(estfun, data, subset, j){
   if(is.factor(estfun)) {
     est_cat <- estfun 
   } else {
-    breaks <- unique(quantile(estfun, c(0, 0.5, 1)))
+    breaks <- unique(quantile(estfun, c(0, 0.5, 1))) ## README <Z> median (here) vs. mean (next line)?
     if(length(breaks) < 3) breaks <- c(min(estfun), mean(estfun), max(estfun))
     est_cat <- cut(estfun, breaks = breaks, 
                    include.lowest = TRUE, right = TRUE)
   }
   
   # get possible split variable
+  ## README <Z>
+  ## - note that this is an enum object (inheriting from integer)
+  ## - there are no methods for mean(), median(), quantile(), or cut()!
+  ## - thus all computations below operate on the ranks rather than the original observations
+  ## - quantile() plus cut() should not be critical, though, as they are invariant under monotonic transformations
+  ## - but mean() is certainly different
   sv <- data$zindex[[j]][subset]
   
   # categorize possible split variable
@@ -23,9 +29,9 @@ var_select_num <- function(estfun, data, subset, j){
                 include.lowest = TRUE, right = TRUE)
   
   # independence test 
-  test <- chisq.test(x = est_cat, y = sv_cat)
+  test <- chisq.test(x = est_cat, y = sv_cat) ## FIXME <Z> ideally avoid chisq.test and obtain log.statistic and log.p.value
   res <- c(test$p.value, test$statistic)
-  names(res) <- c("p.value", "statistic")  ## FIXME: (ML, LS) return log(p-value) instead?
+  names(res) <- c("p.value", "statistic")  ## FIXME: (ML, LS) return log(p-value) instead? REAMDE <Z> yes
 
   return(res)
 }
@@ -89,6 +95,7 @@ var_select_all <- function(estfun, data, subset){
   is.splitvar <- !sapply(data$zindex, FUN = is.null)
   
   # store p-value and test statistic in matrix 'res'
+  ## README <Z> should this be transposed?
   res <- matrix(nrow = sum(is.splitvar), ncol = 2)
   colnames(res) <- c("p.value", "statistic")         ## FIXME: (ML, LS) return log(p-value) instead?
   rownames(res) <- names(is.splitvar[is.splitvar])
