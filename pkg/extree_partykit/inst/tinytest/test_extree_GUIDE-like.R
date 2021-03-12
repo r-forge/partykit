@@ -3,16 +3,21 @@ library("partykitx")
 
 ### ---- GUIDE variable selection (adapted version of selection_modules.R) ------ ##
 
+## TODO: (HS) support weights, also ask Lisa if we need to implement
+## any other functionality.
+
 # variable selection for numeric splitvariable with index j
 var_select_guide_numeric <- function(model, trafo, data, subset, weights, j, 
   split_only = FALSE, control) {
   
+  ## TODO: (HS) allow matrix estfun
   estfun <- model$estfun[subset]
   
   # categorize estfun if not already a factor
   if(is.factor(estfun)) {
     est_cat <- estfun 
   } else {
+    ## TODO (HS): GUIDE uses mean, maybe we should use that in general? -> ask Lisa
     breaks <- unique(quantile(estfun, c(0, 0.5, 1)))
     if(length(breaks) < 3) breaks <- c(min(estfun), mean(estfun), max(estfun))
     est_cat <- cut(estfun, breaks = breaks, 
@@ -21,6 +26,7 @@ var_select_guide_numeric <- function(model, trafo, data, subset, weights, j,
   
   # get possible split variable
   sv <- data$zindex[[j]][subset]
+  ## TODO: (HS) use sv <- extree_variable(data, i = j, type = "original")
   
   # categorize possible split variable
   breaks <- unique(quantile(sv, c(0,0.25, 0.5, 0.75,1)))
@@ -29,17 +35,24 @@ var_select_guide_numeric <- function(model, trafo, data, subset, weights, j,
     include.lowest = TRUE, right = TRUE)
   
   # independence test 
+  ## TODO: (HS) for internal implementation use coin testing instead
+  ## of chisq.test
   if(length(unique(est_cat)) < 2) return(NULL)
   test <- chisq.test(x = est_cat, y = sv_cat)
   res <- c(test$p.value, test$statistic)
-  names(res) <- c("p.value", "statistic")  ## FIXME: (ML, LS) return log(p-value) instead?
+  names(res) <- c("p.value", "statistic")  
+  ## TODO: (ML, LS) return log(p-value) and log-statistic instead
+  ## -> c("log.p.value", "log.statistic")
   
+  ## TODO: (HS) return matrix
   return(as.list(res))
 }
 
 
 # variable selection for categorical splitvariable with index j
 var_select_guide_factor <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+  
+  ## TODO: (HS) same TODOs as above
   
   estfun <- model$estfun[subset]
   # categorize estfun if not already a factor
@@ -59,11 +72,14 @@ var_select_guide_factor <- function(model, trafo, data, subset, weights, j, spli
   if(length(unique(est_cat)) < 2) return(NULL)
   test <- chisq.test(x = est_cat, y = sv_cat)
   res <- c(test$p.value, test$statistic)
-  names(res) <- c("p.value", "statistic")   ## FIXME: (ML, LS) return log(p-value) instead?
+  names(res) <- c("p.value", "statistic") 
   
   return(as.list(res))
 }
 
+
+## TODO: (HS) implement a split_select_objfun, based on 
+## trafo(...)$objfun on subsets for all possible splits (like MOB or GUIDE)
 
 ## split_select with median
 split_select_median <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
@@ -74,8 +90,9 @@ split_select_median <- function(model, trafo, data, subset, weights, whichvar, c
   if (length(whichvar) == 0) return(NULL)
   
   ## split FIRST variable at median
+  ## TODO: (HS) consider what to do if first does not work (use control info)
   j <- whichvar[1]
-  x <- model.frame(data)[[j]][subset]
+  x <- model.frame(data)[[j]][subset] ## TODO: (HS) use extree_variable here
   ret <- partysplit(as.integer(j), breaks = median(x))
   
   return(ret)
@@ -89,12 +106,11 @@ split_select_median <- function(model, trafo, data, subset, weights, whichvar, c
 
 ## Iris data
 d <-  extree_data(Species ~ Petal.Width + Petal.Length,
-  data = iris, yx = "matrix")
-
+  data = iris, yx = "matrix") ## TODO: (HS) we shouldn't need "matrix" here
 
 ## Trafo with estfun = y
 trafo_y <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
-  estfun <- data$yx$y  ## data[[1, "original"]]
+  estfun <- data$yx$y  ## use extree_variable here
   estfun[-subset] <- NA
   
   list(estfun = estfun, converged = TRUE)
@@ -107,7 +123,7 @@ trafo_y <- function(subset, data, weights, info = NULL, estfun = TRUE, object = 
 ### (1) separate functions for different types of data with argument j
 tr1 <- extree(data = d, trafo = trafo_y, 
   control = c(extree_control(criterion = "p.value",
-    logmincriterion = log(1 - 0.05),
+    critvalue = 0.05,
     update = TRUE,
     varselect = list(
       numeric = var_select_guide_numeric,
@@ -124,6 +140,7 @@ tr1 <- extree(data = d, trafo = trafo_y,
     restart = TRUE))
 
 # Warnings due to too small tables for chisquare test
+## TODO: (HS) implement without warnings
 tr1
 
 ### (2) one function
