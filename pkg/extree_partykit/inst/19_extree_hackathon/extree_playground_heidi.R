@@ -3,7 +3,7 @@ library("partykitx")
 ### --- Example 1 --- ###
 ### - airquality with only numeric variables
 ### - Trafo with estfun = y, objfun = -MSE
-### - var_select with exhaustive search
+### - varselect with exhaustive search
 ### - split_select with median
 
 ## airquality data
@@ -60,7 +60,7 @@ tr1
 ### Based on selection_modules.R from Lisa
 ### - iris data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test
+### - varselect with GUIDE test
 ### - split_select with median
 
 
@@ -78,21 +78,21 @@ trafo2 <- function(subset, data, weights, info = NULL, estfun = TRUE, object = T
     list(estfun = estfun, converged = TRUE)
 }
 
-## var_select via GUIDE
+## varselect via GUIDE
 source("selection_modules.R")
 
-var_select2 <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    res <- var_select(estfun = model$estfun, data = data, subset = subset, j = j)
+varselect2 <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+    res <- varselect(estfun = model$estfun, data = data, subset = subset, j = j)
     return(as.list(res))
 }
 
-var_select2_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+varselect2_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
     # args <- list(...)
     # ctrl[names(args)] <- args
     # partykit:::.select(model, trafo, data, subset, weights, whichvar, ctrl, 
-    #     FUN = var_select2)
-    var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
-        var_select = var_select2)
+    #     FUN = varselect2)
+    varselect_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+        varselect = varselect2)
 }
 
 
@@ -104,9 +104,9 @@ var_select2_call <- function(model, trafo, data, subset, weights, whichvar, ctrl
 tr2 <- extree(data = d, trafo = trafo2, 
     control = c(extree_control(criterion = "p.value",
         update = TRUE,
-        selectfun = var_select2_call,
+        selectfun = varselect2_call,
         splitfun = split_select1,
-        svselectfun = var_select2_call,
+        svselectfun = varselect2_call,
         svsplitfun = split_select1,
         minsplit = 90),
         restart = TRUE))
@@ -119,43 +119,43 @@ tr2
 ### Based on selection_modules.R from Lisa
 ### - iris data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test, but separate functions
+### - varselect with GUIDE test, but separate functions
 ### - split_select with median
 
 ### how could we allow the following?
 ## FUN = list(numeric = ..., factor = ..., ordered = ..., default = ...)
 
-var_select3_num <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    res <- var_select_num(estfun = model$estfun, data = data, subset = subset, j = j)
+varselect3_num <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+    res <- varselect_num(estfun = model$estfun, data = data, subset = subset, j = j)
     return(as.list(res))
 }
 
-var_select3_cat <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
-    res <- var_select_cat(estfun = model$estfun, data = data, subset = subset, j = j)
+varselect3_cat <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
+    res <- varselect_cat(estfun = model$estfun, data = data, subset = subset, j = j)
     return(as.list(res))
 }
 
-var_select3 <- list(
-    numeric = var_select3_num,
-    default = var_select3_cat
+varselect3 <- list(
+    numeric = varselect3_num,
+    default = varselect3_cat
 )
 
 ## allow that I can give list directly to selectfun
 ## or even just selectfun = "guide" and the functions need to be called
-## var_select_guide_factor, var_select_guide_numeric
+## varselect_guide_factor, varselect_guide_numeric
 
-var_select3_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-    var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
-        var_select = var_select3)
+varselect3_call <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+    varselect_loop(model, trafo, data, subset, weights, whichvar, ctrl, 
+        varselect = varselect3)
 }
 
 tr3 <- extree(data = d, trafo = trafo2, 
     control = c(extree_control(criterion = "p.value",
         logmincriterion = log(1 - 0.05),
         update = TRUE,
-        selectfun = var_select3_call,
+        selectfun = varselect3_call,
         splitfun = split_select1,
-        svselectfun = var_select3_call,
+        svselectfun = varselect3_call,
         svsplitfun = split_select1,
         minsplit = 70),
         restart = TRUE))
@@ -169,7 +169,7 @@ all.equal(tr2, tr3)
 ### Based on selection_modules.R from Lisa
 ### - anorexia data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test, but separate functions
+### - varselect with GUIDE test, but separate functions
 ### - split_select with median
 
 ## data
@@ -227,9 +227,9 @@ tr4 <- extree(data = d4, trafo = trafo2,
     control = c(extree_control(criterion = "p.value",
         logmincriterion = log(1 - 0.05),
         update = TRUE,
-        selectfun = var_select3_call,
+        selectfun = varselect3_call,
         splitfun = split_select4,
-        svselectfun = var_select3_call,
+        svselectfun = varselect3_call,
         svsplitfun = split_select4,
         minsplit = 70),
         restart = TRUE))
@@ -241,21 +241,21 @@ tr4
 ### Based on selection_modules.R from Lisa
 ### - anorexia data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test, but separate functions
+### - varselect with GUIDE test, but separate functions
 ### - split_select with median
 
 ctrl5 <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
     selectfun = list(
-        numeric = var_select3_num,
-        default = var_select3_cat
+        numeric = varselect3_num,
+        default = varselect3_cat
     ),
     splitfun = list(
         numeric = split_select4_num,
         factor = split_select4_cat
     ),
-    svselectfun = var_select3_call,
+    svselectfun = varselect3_call,
     svsplitfun = split_select4,
     minsplit = 70)
 
@@ -270,11 +270,11 @@ all.equal(tr4, tr5)
 ### Based on selection_modules.R from Lisa
 ### - anorexia data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test, but separate functions
+### - varselect with GUIDE test, but separate functions
 ### - split_select with median
 
-var_select_awesome_numeric <- var_select3_num
-var_select_awesome_default <- var_select3_cat
+varselect_awesome_numeric <- varselect3_num
+varselect_awesome_default <- varselect3_cat
 
 split_select_awesome_numeric <- split_select4_num
 split_select_awesome_default <- split_select4_cat
@@ -283,14 +283,14 @@ ctrl6 <- extree_control(criterion = "p.value",
     logmincriterion = log(1 - 0.05),
     update = TRUE,
     selectfun = list(
-        numeric = var_select_awesome_numeric, 
+        numeric = varselect_awesome_numeric, 
         default = "awesome_default"
     ),
     splitfun = list(
         numeric = "awesome_numeric",
         default = "awesome_default"
     ),
-    svselectfun = var_select3_call,
+    svselectfun = varselect3_call,
     svsplitfun = split_select4,
     minsplit = 70)
 
@@ -304,7 +304,7 @@ all.equal(tr6, tr4)
 ### Based on selection_modules.R from Lisa
 ### - anorexia data
 ### - Trafo with estfun = y
-### - var_select with GUIDE test, but separate functions
+### - varselect with GUIDE test, but separate functions
 ### - split_select with median
 
 ctrl7 <- extree_control(criterion = "p.value",
@@ -312,7 +312,7 @@ ctrl7 <- extree_control(criterion = "p.value",
     update = TRUE,
     selectfun = "awesome",
     splitfun = "awesome",
-    svselectfun = var_select3_call,
+    svselectfun = varselect3_call,
     svsplitfun = split_select4,
     minsplit = 70)
 

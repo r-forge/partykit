@@ -445,7 +445,7 @@ extree_control <- function(
   ## currently not used/implemented
   nmax = Inf,        ## better name/settings?
   lookahead = FALSE, ## try trafo() for daugther nodes before implementing the split
-  multiway = FALSE,  ## passed to split_select?
+  multiway = FALSE,  ## passed to splitselect?
 
   ## TODO
   save = NULL,         ## FIXME: (Z) -> save instead of saveinfo
@@ -508,7 +508,7 @@ extree_control <- function(
   if(is.list(varselect) || is.character(varselect) || "j" %in% names(formals(varselect))) {
     var_sel <- .preprocess_select(varselect, select_type = "var")
     varselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-      var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, var_select = var_sel)
+      varselect_loop(model, trafo, data, subset, weights, whichvar, ctrl, varselect = var_sel)
     }
   }
   
@@ -517,7 +517,7 @@ extree_control <- function(
   if(is.list(svarselect) || is.character(svarselect) || "j" %in% names(formals(svarselect))) {
     svar_sel <- .preprocess_select(svarselect, select_type = "var")
     svarselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-      var_select_loop(model, trafo, data, subset, weights, whichvar, ctrl, var_select = svar_sel)
+      varselect_loop(model, trafo, data, subset, weights, whichvar, ctrl, varselect = svar_sel)
     }
   }
   
@@ -526,8 +526,8 @@ extree_control <- function(
   if(is.list(splitselect) || is.character(splitselect) || "j" %in% names(formals(splitselect))) {
     split_sel <- .preprocess_select(splitselect, select_type = "split")
     splitselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-      split_select_loop(model = model, trafo = trafo, data = data, subset = subset,
-        weights = weights, whichvar = whichvar, control = ctrl, split_select = split_sel)
+      splitselect_loop(model = model, trafo = trafo, data = data, subset = subset,
+        weights = weights, whichvar = whichvar, control = ctrl, splitselect = split_sel)
     }
   }
   
@@ -536,8 +536,8 @@ extree_control <- function(
   if(is.list(ssplitselect) || is.character(ssplitselect) || "j" %in% names(formals(ssplitselect))) {
     ssplit_sel <- .preprocess_select(ssplitselect, select_type = "split")
     ssplitselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
-      split_select_loop(model = model, trafo = trafo, data = data, subset = subset,
-        weights = weights, whichvar = whichvar, control = ctrl, split_select = ssplit_sel)
+      splitselect_loop(model = model, trafo = trafo, data = data, subset = subset,
+        weights = weights, whichvar = whichvar, control = ctrl, splitselect = ssplit_sel)
     }
   }
 

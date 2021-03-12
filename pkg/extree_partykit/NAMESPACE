@@ -34,8 +34,8 @@ export(
   "extree_control",
   "extree_data",
   "extree_fit",
-  "var_select_loop",
-  "split_select_loop",
+  "varselect_loop",
+  "splitselect_loop",
   "extree_variable", ## ! copy of "[[.extree_data"
 
   ## new ctree implementation

@@ -1,10 +1,10 @@
-## helper function for .preprocess_var_select
+## helper function for .preprocess_varselect
 .get_strategy_function <- function(strategy, select_type = "var") {
   
   
   ## find matching objects and set up list
   ## FIXME: (Z) better solution than via search()?
-  snam <- sprintf(paste0("^", select_type, "_select_%s"), strategy)
+  snam <- sprintf(paste0("^", select_type, "select_%s"), strategy)
   onam <- unlist(lapply(search(), objects))
   onam <- unique(onam[grep(snam, onam)])
   strategy <- lapply(onam, get)
@@ -75,7 +75,7 @@
   varclass_orig <- class(extree_variable(x = data, i = j))
   
   ### Use most appropriate class (1st), if more than one is available
-  ### Remove varclass if no var_select function is available
+  ### Remove varclass if no varselect function is available
   varclass <- varclass_orig[varclass_orig %in% names(select_list)][1]
   
   ### if no function for this class is provided use default function
@@ -97,18 +97,18 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar,
   # <FIXME> (HS) add check if function(s) return what we want
   
   if(is.function(select)) {
-    ## if var_select is function, apply function
+    ## if varselect is function, apply function
     ret <- select(model = model, trafo = trafo, data = data, 
                   subset = subset, weights = weights, j = j, 
                   split_only = split_only, control = control)
     
   } else if (is.list(select) && all(sapply(select, is.function))) {
     
-    ## if var_select is list of functions, apply appropriate function
+    ## if varselect is list of functions, apply appropriate function
     varclass <- .get_varclass(select_list = select, data = data, 
                               j = j)
     
-    ### Run appropriate var_select function
+    ### Run appropriate varselect function
     ret <- select[[varclass]](model = model, trafo = trafo, data = data, 
                               subset = subset, weights = weights, j = j, 
                               split_only = split_only, control = control)
@@ -124,8 +124,8 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar,
 
 
 ## new selectfunction
-var_select_loop <- function(model, trafo, data, subset, weights, whichvar, 
-                            control, var_select) {
+varselect_loop <- function(model, trafo, data, subset, weights, whichvar, 
+                            control, varselect) {
   
   ## set up return list + criterion matrix
   znams <- names(data$data)[data$variables$z > 0] #attr(data$variables$z, "variable_names")
@@ -135,10 +135,10 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
   colnames(ret$criterion) <- znams
   if (length(whichvar) == 0L) return(ret)
   
-  ## loop over all relevant variables and use var_select function supplied
+  ## loop over all relevant variables and use varselect function supplied
   for (i in seq_along(whichvar)) {
     
-    tst <- selector(select = var_select, model = model, trafo = trafo, 
+    tst <- selector(select = varselect, model = model, trafo = trafo, 
                     data = data, subset = subset, weights = weights, j = whichvar[i], 
                     control = control)
     
@@ -159,15 +159,15 @@ var_select_loop <- function(model, trafo, data, subset, weights, whichvar,
 }
 
 ## Split function new
-split_select_loop <- function(model, trafo, data, subset, weights, whichvar, 
-                              control, split_select) {
+splitselect_loop <- function(model, trafo, data, subset, weights, whichvar, 
+                              control, splitselect) {
   
   if (length(whichvar) == 0) return(NULL)
   
   ## loop over all vars in whichvar (stop if split is found)
   for (j in whichvar) {
     
-    ret <- selector(select = split_select, model = model, trafo = trafo, 
+    ret <- selector(select = splitselect, model = model, trafo = trafo, 
                     data = data, subset = subset, weights = weights, j = j, 
                     control = control, split_only = TRUE)
     
