@@ -5,8 +5,8 @@
         ctrl[names(args)] <- args
         # .select(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
         ## new var selector
-        var_select_loop(model, trafo, data, subset, weights, whichvar,
-                        control = ctrl, var_select = .ctree_test)
+        varselect_loop(model, trafo, data, subset, weights, whichvar,
+                        control = ctrl, varselect = .ctree_test)
     }
 
 .ctree_split <- function(...)
@@ -15,8 +15,8 @@
         ctrl[names(args)] <- args
         # .split(model, trafo, data, subset, weights, whichvar, ctrl, FUN = .ctree_test)
         ##  new split selector
-        split_select_loop(model, trafo, data, subset, weights, whichvar,
-                          control = ctrl, split_select = .ctree_test)
+        splitselect_loop(model, trafo, data, subset, weights, whichvar,
+                          control = ctrl, splitselect = .ctree_test)
     }
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
