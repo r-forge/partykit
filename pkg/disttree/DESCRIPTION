@@ -1,14 +1,21 @@
 Package: disttree
 Title: Trees and Forests for Distributional Regression
-Date: 2019-08-13
+Date: 2021-03-12
 Version: 0.2-0
-Authors@R: c(person(given = "Moritz N.", family = "Lang", role = "aut", email = "moritz.n.lang@gmail.com", comment = c(ORCID = "0000-0002-2533-9903")),
-             person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at", comment = c(ORCID = "0000-0003-0314-6075")),
-             person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org", comment = c(ORCID = "0000-0003-0918-3766")))
-Description: Infrastructure for fitting distributional regression trees and forests based on maximum-likelihood estimation of parameters for specified distribution families, for example from the GAMLSS family.
+Authors@R: c(person(given = "Torsten", family = "Hothorn", role = "ctb", email = "Torsten.Hothorn@R-project.org", 
+                    comment = c(ORCID = "0000-0001-8301-0471")),
+             person(given = "Moritz N.", family = "Lang", role = "aut", email = "moritz.n.lang@gmail.com", 
+                    comment = c(ORCID = "0000-0002-2533-9903")),
+             person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at", 
+                    comment = c(ORCID = "0000-0003-0314-6075")),
+             person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org", 
+                    comment = c(ORCID = "0000-0003-0918-3766")))
+Description: Infrastructure for fitting distributional regression trees and
+             forests based on maximum-likelihood estimation of parameters for specified
+             distribution families, for example from the GAMLSS family.
 Depends: R (>= 3.1.0), partykit (>= 1.2-5), gamlss.dist
 Imports: graphics, stats, utils, Formula, sandwich, survival
 Suggests: crch, gamlss.cens, lmtest, mvtnorm, countreg, tinytest, RainTyrol
 LazyData: yes
 License: GPL-2 | GPL-3
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
