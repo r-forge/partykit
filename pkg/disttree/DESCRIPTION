@@ -2,12 +2,12 @@ Package: disttree
 Title: Trees and Forests for Distributional Regression
 Date: 2021-03-12
 Version: 0.2-0
-Authors@R: c(person(given = "Torsten", family = "Hothorn", role = "ctb", email = "Torsten.Hothorn@R-project.org", 
-                    comment = c(ORCID = "0000-0001-8301-0471")),
+Authors@R: c(person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at", 
+                    comment = c(ORCID = "0000-0003-0314-6075")),
              person(given = "Moritz N.", family = "Lang", role = "aut", email = "moritz.n.lang@gmail.com", 
                     comment = c(ORCID = "0000-0002-2533-9903")),
-             person(given = "Lisa", family = "Schlosser", role = c("aut", "cre"), email = "Lisa.Schlosser@uibk.ac.at", 
-                    comment = c(ORCID = "0000-0003-0314-6075")),
+             person(given = "Torsten", family = "Hothorn", role = "aut", email = "Torsten.Hothorn@R-project.org", 
+                    comment = c(ORCID = "0000-0001-8301-0471")),
              person(given = "Achim", family = "Zeileis", role = "aut", email = "Achim.Zeileis@R-project.org", 
                     comment = c(ORCID = "0000-0003-0918-3766")))
 Description: Infrastructure for fitting distributional regression trees and
