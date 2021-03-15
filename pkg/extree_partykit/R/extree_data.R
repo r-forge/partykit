@@ -383,44 +383,73 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 }    
 
 ### <FIXME> document how to extract slots fast </FIXME>
-extree_variable <- function(x, i, 
-    type = c("original", "index", "scores", "missings")) {
-    type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
-    
-    ## Check
-    if(length(i) > 1 & type == "scores") 
-        stop("For length(i) > 1 type = 'scores' is currently not implemented.")
-    
-    switch(type, 
-        "original" = {
-            if (length(i) == 1 && i == "yx") return(model.frame(x, yxonly = TRUE))
+extree_variable <- function(x, index = NULL, variable = NULL,  
+  type = c("original", "index", "scores", "missings")) {
+  type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
+  
+  if (!is.null(variable)) {
+    if (variable == "y" & (!type %in% c("original", "missings"))) { # FIXME: (SD) what happends if !is.null(x$yxindex) for type = "original"
+      stop("variable = 'y' only possible for type = 'original' and type = 'missings'")
+    }
+    match.arg(variable, c("yx", "y")) # FIXME: (SD) Allow x and z? 
+    if (!is.null(index)) stop("Specify either 'index' or 'variable' - not both")
+  }
+  
+  ## Check
+  if(length(index) > 1 & type == "scores") 
+    stop("For length(index) > 1 type = 'scores' is currently not implemented.")
+  
+  switch(type, 
+    "original" = {
+      if (!is.null(variable)) {
+        switch(variable, 
+          # model.frame(x$terms[[variable]], model.frame(x)) # Shortcut for original data not binned one
+          "yx" = {
+            return(model.frame(x, yxonly = TRUE)) # FIXME: SD is attr(formula$yxindex, "levels") in model.frame really what we want?
+          }, 
+          "y" = {
+            # FIXME: (SD) binning: return yx? 
+            # or returned binned y: mf <- model.frame(x$terms$y, attr(x$yxindex, "levels"))
+            # or return original? (currently, see also above)
             mf <- model.frame(x)
-            ### [[.data.frame needs lots of memory
-            class(mf) <- "list"
-            if (length(i) == 1) return(mf[[i]]) else return(mf[i])
-        },
-        "index" = {
-            if (i == "yx" || (length(i) == 1 & i %in% c(x$variables$y, x$variables$x)))
-            # if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
-                return(x$yxindex) ### may be NULL
-            if (length(i) == 1) return(x$zindex[[i]]) else return(x$zindex[i])
-        },
-        "scores" = {
-            # f <- x[[i]]
-            f <- extree_variable(x, i, type = "original")
-            if (is.ordered(f)) {
-                sc <- x$scores[[i]]
-                if (is.null(sc)) sc <- 1:nlevels(f)
-                return(sc)
-            }
-            return(NULL)
-        },
-        "missings" = {
-            if (i == "yx" || i %in% c(x$variables$y, x$variables$x))
-                return(x$yxmissings)
-            x$missings[[i]]
-        }
-    )
+            yid <- x$variables$y
+            if (length(yid) == 1) return(mf[[yid]]) else return(mf[yid])
+          })
+      }
+      mf <- model.frame(x)
+      ### [[.data.frame needs lots of memory
+      class(mf) <- "list"
+      if (length(index) == 1) return(mf[[index]]) else return(mf[index])
+    },
+    "index" = {
+      if (!is.null(variable) || (length(index) == 1 & index %in% c(x$variables$y, x$variables$x)))
+        return(x$yxindex) ### may be NULL
+      if (length(index) == 1) return(x$zindex[[index]]) else return(x$zindex[index])
+    },
+    "scores" = {
+      # f <- x[[index]]
+      f <- extree_variable(x, index, variable, type = "original")
+      if (is.ordered(f)) {
+        sc <- x$scores[[index]]
+        if (is.null(sc)) sc <- 1:nlevels(f)
+        return(sc)
+      }
+      return(NULL)
+    },
+    "missings" = {
+      if (!is.null(variable)) {
+        switch(variable, 
+          "yx" = {
+            return(x$yxmissings)
+          }, 
+          "y" = {
+            yid <- x$variables$y
+            if (length(yid) == 1) return(x$missings[[yid]]) else return(x$missings[yid])
+          })
+      } 
+      if (length(index) == 1) return(x$missings[[index]]) else return(x$missings[index])
+    }
+  )
 }
 
 ## for handling of non-standard variable names within extree_data() by mimicking 
