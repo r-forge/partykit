@@ -240,6 +240,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   varsel <- varselect(model = thismodel, trafo = trafo, data = data,
     subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
 
+  ## Stop if NULL or all values NA
   if(all(is.na(varsel$criterion))) terminal <- TRUE
   
   if (terminal || inherits(varsel, "partysplit")) {

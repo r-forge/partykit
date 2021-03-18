@@ -127,13 +127,20 @@ selector <- function(select, model, trafo, data, subset, weights, whichvar,
 varselect_loop <- function(model, trafo, data, subset, weights, whichvar, 
                             control, varselect) {
   
+  ## if whichvar is empty return NULL
+  if (length(whichvar) == 0L) return(NULL)
+  
   ## set up return list + criterion matrix
-  znams <- names(data$data)[data$variables$z > 0] #attr(data$variables$z, "variable_names")
-  ret <- list(criterion = matrix(NA_real_, nrow = 2L, ncol = length(znams)))
-  ## FIXME: it is not ideal to use these names first and fix them later
-  rownames(ret$criterion) <- c("statistic", "p.value")
-  colnames(ret$criterion) <- znams
-  if (length(whichvar) == 0L) return(ret)
+  svarnams <- names(data$data)[whichvar]
+  ret <- list(criterion = matrix(NA_real_, nrow = 2L, ncol = length(whichvar), 
+    dimnames = list(c("statistic", "p.value"), svarnams)))
+  ## TODO: (HS) it should be possible to have other things than statistic and p.value
+  
+  # znams <- names(data$data)[data$variables$z > 0] #attr(data$variables$z, "variable_names")
+  # ret <- list(criterion = matrix(NA_real_, nrow = 2L, ncol = length(znams)))
+  # ## FIXME: it is not ideal to use these names first and fix them later
+  # rownames(ret$criterion) <- c("statistic", "p.value")
+  # colnames(ret$criterion) <- znams
   
   ## loop over all relevant variables and use varselect function supplied
   for (i in seq_along(whichvar)) {
