@@ -384,13 +384,10 @@ model.frame.extree_data <- function(formula, yxonly = FALSE, ...) {
 
 ### <FIXME> document how to extract slots fast </FIXME>
 extree_variable <- function(x, index = NULL, variable = NULL,  
-  type = c("original", "index", "scores", "missings")) {
-  type <- match.arg(type, choices = c("original", "index", "scores", "missings"))
+  type = c("original", "inum", "scores", "missings")) {
+  type <- match.arg(type, choices = c("original", "inum", "scores", "missings"))
   
   if (!is.null(variable)) {
-    if (variable == "y" & (!type %in% c("original", "missings"))) { # FIXME: (SD) what happends if !is.null(x$yxindex) for type = "original"
-      stop("variable = 'y' only possible for type = 'original' and type = 'missings'")
-    }
     match.arg(variable, c("yx", "y")) # FIXME: (SD) Allow x and z? 
     if (!is.null(index)) stop("Specify either 'index' or 'variable' - not both")
   }
@@ -421,9 +418,21 @@ extree_variable <- function(x, index = NULL, variable = NULL,
       class(mf) <- "list"
       if (length(index) == 1) return(mf[[index]]) else return(mf[index])
     },
-    "index" = {
-      if (!is.null(variable) || (length(index) == 1 & index %in% c(x$variables$y, x$variables$x)))
-        return(x$yxindex) ### may be NULL
+    "inum" = {
+      if (!is.null(variable)) {
+        var <- x$yxindex
+        switch(variable, 
+          "yx" = {
+            return(var)
+          }, 
+          "y" = {
+            mf <- model.frame(x)
+            varnam <- names(mf)[x$variables$y]
+            attr(var, "levels") <- attr(var, "levels")[, varnam, drop = FALSE]
+            return(var)
+          }
+        )
+      }
       if (length(index) == 1) return(x$zindex[[index]]) else return(x$zindex[index])
     },
     "scores" = {
@@ -472,7 +481,7 @@ extree_variable <- function(x, index = NULL, variable = NULL,
 
 ### <FIXME> (HS) delete if possible </FIXME>
 "[[.extree_data" <- function(x, i, 
-    type = c("original", "index", "scores", "missings")) { 
+    type = c("original", "inum", "scores", "missings")) { 
     
     warning("[[.extree_data is deprecated. Please use extree_variable().")
     extree_variable(x = x, i = i, type = type)
