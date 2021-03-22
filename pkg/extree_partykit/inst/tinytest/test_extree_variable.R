@@ -28,7 +28,7 @@ expect_equal(ev1, ed$data$Petal.Width)
 ev2 <- extree_variable(ed, c(2, 4), type = "original") # FIXME: (SD) how to handle this if binning? --> returns unbinned vars currently
 expect_equal(ev2, as.list(ed$data[, c("Sepal.Width", "Petal.Width")])) 
 
-ev3 <- extree_variable(ed, index = 2, type = "original") # FIXME: (SD) returns levels of bins --> is this what we want? 
+ev3 <- extree_variable(ed, index = 1, type = "original") # FIXME: (SD) returns original --> should it return bins? 
 
 ## character index
 expect_null(extree_variable(ed, index = "y", type = "original")) # Question: (SD) expect error instead of NULL? 
@@ -50,11 +50,14 @@ expect_equal(names(extree_variable(edm, variable = c("yx"))), c("Species", "Sepa
 expect_equal(extree_variable(ed, variable = "y"), extree_variable(ed, i = 1)) # Question: (SD) Should this be equal? 
 
 # index
-expect_error(extree_variable(ed, variable = "y", type = "index"), "variable = 'y' only possible for type = 'original'") # Question: (SD) is that fine? 
-expect_equal(extree_variable(ed, variable = "yx", type = "index"), ed$yxindex)
-extree_variable(ed, index = c(3, 4), type = "index") # FIXME: (SD) how to handle this if binning? 
-extree_variable(edb, index = c(3, 4), type = "index") 
-expect_equivalent(class(extree_variable(edb, index = 5, type = "index")), c("enum", "integer"))
+expect_equal(attr(extree_variable(ed, variable = "y", type = "inum"), "levels"), 
+  attr(ed$yxindex, "levels")[, 1, drop = FALSE])
+expect_equal(as.numeric(extree_variable(ed, variable = "y", type = "inum")), 
+as.numeric(ed$yxindex))
+expect_equal(extree_variable(ed, variable = "yx", type = "inum"), ed$yxindex)
+extree_variable(ed, index = c(3, 4), type = "inum") # FIXME: (SD) how to handle this if binning? --> currently only z variables
+extree_variable(edb, index = c(3, 4), type = "inum") 
+expect_equivalent(class(extree_variable(edb, index = 5, type = "inum")), c("enum", "integer"))
 
 # scores
 d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
