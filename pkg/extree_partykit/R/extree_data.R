@@ -158,18 +158,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         mf <- eval(mf, parent.frame())
         offset <- model.offset(mf)
         
-        ## FIXME: (SD) lm() code for offset for multiple targets --> currently fails if y = cbind(y1, y2)
-        # y <- model.part(formula, data = mf, lhs = 1)
-        # ymult <- ncol(y) >= 2
-        # ny <- nrow(y)
-        # if (!is.null(offset)) {
-        #   if (!ymult) 
-        #     offset <- as.vector(offset)
-        #   if (NROW(offset) != ny) 
-        #     stop(gettextf("number of offsets is %d, should equal %d (number of observations)", 
-        #       NROW(offset), ny), domain = NA)
-        # }
-        
         mf$"(offset)" <- offset
         
         ## extract terms in various combinations
@@ -212,7 +200,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
     vars$z <- as.numeric(vars$z)
     ## all others to integer
-    ## <FIXME: (SD) proper handling of numeric offset necessary
     for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
         if(!is.null(vars[[v]])) {
             if(is.character(vars[[v]])) vars[[v]] <- match(vars[[v]], vanam)
@@ -324,10 +311,6 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         } else if (ytype == "data.frame") {
             yx <- list("y" = yxmf[vanam[vars$y]])
         } else { ### ytype = "matrix"
-          ## FIXME: (SD) yxmf only gives levels of binned y not observations
-          ## as.numeric(ret$yxindex) instead of yxmf? 
-            # yxdf <- data.frame(unclass(exn1$yxindex))
-            # names(yxdf) <- names(yxmf)
             Ytmp <- model.matrix(~ 0 + ., Formula::model.part(formula, yxmf, lhs = TRUE))
             ### <FIXME> are there cases where Ytmp already has missings? </FIXME>
             if (is.finite(nmax["yx"])) {
