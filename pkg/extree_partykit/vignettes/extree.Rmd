@@ -1,0 +1,101 @@
+---
+title: "Extensible trees with extree"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: flatly
+vignette: >
+  %\VignetteIndexEntry{Extensible trees with extree}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteDepends{partykit}
+  %\VignetteKeywords{extree}
+  %\VignettePackage{partykit}
+---
+
+```{r preliminaries, echo = FALSE, message = FALSE}
+library("partykit")
+knitr::opts_chunk$set(message = FALSE, warning = FALSE,
+  dev = "png", dpi = 100, out.width = "100%",
+  fig.height = 6, fig.width = 6, fig.align = "center", fig.show = "hold")
+```
+
+
+## A minimal extree example
+
+```{r}
+library("partykitx")
+```
+
+
+For this simple example, we would not need any trafo function as we select splits solely based
+on the split variable values, but we need to define one (as in any real application you'd need 
+it and the package requires you to specify one). So here we use the identity-trafo, i.e. we 
+return all values of the outcome variable of the given node (all not in the node are set to `NA`).
+```{r}
+## Trafo with estfun = y
+trafo_identity <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
+  
+  y <- extree_variable(data, variable = "y")
+  y[-subset] <- NA
+  
+  list(estfun = y, converged = TRUE)
+}
+```
+
+
+We use a meaningless variable selection function which just randomly selects a
+variable.
+```{r}
+varselect_random <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+  
+  # Get names of split variables
+  znams <- names(data$data)[data$variables$z > 0]
+  
+  # Build return matrix
+  ret <- matrix(0, nrow = 1, ncol = length(znams), dimnames = list("mycriterion", znams))
+  
+  # Select random variable for splitting
+  zselect <- sample(znams, size = 1)
+  ret["mycriterion", zselect] <- 1
+  
+  return(ret)
+}
+```
+
+Our split selection function splits at the median of a given variable.
+```{r}
+splitselect_median <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+  
+  ## split first selected variable at median
+  j <- whichvar[1]
+  x <- extree_variable(data, index = j)[subset]
+  ret <- partysplit(as.integer(j), breaks = median(x))
+  
+  return(ret)
+}
+```
+
+We use the iris data set.
+```{r}
+d <-  extree_data(Species ~ Petal.Width + Petal.Length, data = iris) 
+```
+
+And this is the tree we can compute.
+```{r}
+mytree_iris <- extree(data = d, trafo = trafo_identity,
+  control = c(extree_control(criterion = "mycriterion",
+    logmincriterion = log(-1),
+    update = TRUE,
+    varselect = varselect_random,
+    splitselect = split_select_median,
+    svarselect = varselect_random,
+    ssplitselect = split_select_median,
+    minbucket = 70,
+    lookahead = TRUE),
+    restart = TRUE))
+mytree_iris
+
+```
+
+Have fun adapting this simple example to more advanced solutions!
