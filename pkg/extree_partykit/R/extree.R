@@ -1,18 +1,30 @@
 extree <- function(data, trafo, control = extree_control(...),  converged = NULL, ...) {
-    
+
+    ## FIXME: (Z) The function extree() started by copying relevant parts from the
+    ## ctree() function in the current release. The goal is to have a common workhorse
+    ## function for new tree-fitting functions.
+
     ## check / preprocess extree data
-    subset <- .start_subset(data = data)
     weights <- model.weights(model.frame(data))
-    
+    subset <- .start_subset(data = data)
+    ## FIXME: (Z) Computes index from 1:n, then omits indexes associated with NAs
+    ## -> Should this be handled more generally? Optionally allowing to pass on data with NAs?
     
     ## trafo preprocessing
+    ## FIXME: (Z) Why is a separate mytrafo() needed, can't we just pass on the user-specified trafo?
+    ## This would simplify debugging substantially?
+    ## But maybe this is somehow related to avoiding data copying?
     mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
         trafo(subset, data = data, weights, info = info, estfun = estfun, object = object)
     }
     
-    ## TODO: converged preprocessing (if needed)
+    ## FIXME: (HS) converged preprocessing (if needed)
     
     ## set up trafo
+    ## FIXME: (Z) Similar to above, why is yet another local wrapper needed?
+    ## Can we avoid calling extree_fit() for the side-effect of pre-processing and returning
+    ## the trafo argument (argument: doFit)? Idea: Separate extree_trafo() function
+    ## and then the current extree() function can probably be integrated into extree_fit().
     update <- function(subset, weights, control, doFit = TRUE) {
         extree_fit(data = data, trafo = mytrafo, converged = converged,
             partyvars = data$variables$z, subset = subset,
@@ -22,7 +34,7 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     ## fit
     tree <- update(subset = subset, weights = weights, control = control)
     
-    ## TODO: prepare extree object
+    ## FIXME: (HS) Prepare extree object.
     
 }
 
