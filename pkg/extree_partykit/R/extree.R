@@ -252,8 +252,17 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   varsel <- varselect(model = thismodel, trafo = trafo, data = data,
     subset = subset, weights = weights, whichvar = svars, ctrl = thisctrl)
 
-  ## Stop if NULL or all values NA
-  if(all(is.na(varsel$criterion))) terminal <- TRUE
+  ## criterion matrix
+  if(is.matrix(varsel)) {
+    p <- varsel 
+    varsel <- list(criterion = varsel)
+  } else {
+    p <- varsel$criterion
+  }
+  
+  
+  ## Stop growing if NULL or all values NA
+  if(all(is.na(p))) terminal <- TRUE
   
   if (terminal || inherits(varsel, "partysplit")) {
     thissplit <- if(terminal) NULL else varsel
@@ -261,12 +270,11 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     info$nobs <- sw
     if (!ctrl$saveinfo) info <- NULL
   } else {
-    ## criterion matrix and some sanity checking
-    p <- varsel$criterion
-    if(!is.matrix(p) || NCOL(p) != length(svars)) {
-      stop("variable selection function does not provide a valid criterion matrix")
-    }
-
+    
+    ## Stop if matrix has wrong structure 
+    if(!(ctrl$criterion %in% rownames(p))) 
+      stop(paste("varselect function has to return matrix where one rowname is", ctrl$criterion))
+    
     ## adjust p-values (for non-NA p-values), if any
     if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(p["p.value", ])
     if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(p["log.p.value", ], log = TRUE)
@@ -286,7 +294,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
 
     ## no admissible splits in any variable, e.g., all
     ## split variables constant
-    if (all(is.na(crit)) || (minp && all(crit >= critvalue)) || (!minp && all(crit <= critvalue))) {
+    if (all(is.na(crit)) || (minp && all(crit >= critvalue, na.rm = TRUE)) || (!minp && all(crit <= critvalue, na.rm = TRUE))) {
       terminal <- TRUE
       popt <- NA_real_
     }
@@ -323,7 +331,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     }
     
     ## map jsel from criterion to data
-    jsel <- match(colnames(varsel$criterion)[jsel], names(data$data))
+    jsel <- match(colnames(p)[jsel], names(data$data))
     if(anyNA(jsel)) stop("some of the variables in the 'criterion' are not available in the 'data'")
 
     if(!terminal) { ## FIXME: (Z) if(!terminal || "criterion" %in% save)

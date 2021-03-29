@@ -147,6 +147,7 @@ splitselect_loop <- function(model, trafo, data, subset, weights, whichvar,
   if (length(whichvar) == 0) return(NULL)
   
   ## loop over all vars in whichvar (stop if split is found)
+  ## TODO: (HS) can this be replaced with lapply?
   for (j in whichvar) {
     
     ret <- selector(select = splitselect, model = model, trafo = trafo, 

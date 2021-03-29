@@ -45,7 +45,7 @@ varselect_guide_numeric <- function(model, trafo, data, subset, weights, j,
   ## -> c("log.p.value", "log.statistic")
   
   ## TODO: (HS) return matrix
-  return(as.list(res))
+  return(res)
 }
 
 
@@ -74,7 +74,7 @@ varselect_guide_factor <- function(model, trafo, data, subset, weights, j, split
   res <- c(test$p.value, test$statistic)
   names(res) <- c("p.value", "statistic") 
   
-  return(as.list(res))
+  return(res)
 }
 
 
@@ -110,7 +110,7 @@ d <-  extree_data(Species ~ Petal.Width + Petal.Length,
 
 ## Trafo with estfun = y
 trafo_y <- function(subset, data, weights, info = NULL, estfun = TRUE, object = TRUE) {
-  estfun <- data$yx$y  ## use extree_variable here
+  estfun <- extree_variable(data, variable = "y")
   estfun[-subset] <- NA
   
   list(estfun = estfun, converged = TRUE)
