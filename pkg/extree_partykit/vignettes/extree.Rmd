@@ -12,19 +12,19 @@ vignette: >
   %\VignetteKeywords{extree}
   %\VignettePackage{partykit}
 ---
-
+  
 ```{r preliminaries, echo = FALSE, message = FALSE}
-library("partykit")
-knitr::opts_chunk$set(message = FALSE, warning = FALSE,
+  library("partykit")
+  knitr::opts_chunk$set(message = FALSE, warning = FALSE,
   dev = "png", dpi = 100, out.width = "100%",
   fig.height = 6, fig.width = 6, fig.align = "center", fig.show = "hold")
 ```
-
-
+  
+  
 ## A minimal extree example
-
+  
 ```{r}
-library("partykitx")
+  library("partykitx")
 ```
 
 
@@ -84,18 +84,126 @@ d <-  extree_data(Species ~ Petal.Width + Petal.Length, data = iris)
 And this is the tree we can compute.
 ```{r}
 mytree_iris <- extree(data = d, trafo = trafo_identity,
-  control = c(extree_control(criterion = "mycriterion",
-    logmincriterion = log(-1),
-    update = TRUE,
+  control = extree_control(criterion = "mycriterion",
+    critvalue = 0.5,
+    update = TRUE, # would be nice not having to set this
     varselect = varselect_random,
-    splitselect = split_select_median,
-    svarselect = varselect_random,
-    ssplitselect = split_select_median,
-    minbucket = 70,
-    lookahead = TRUE),
-    restart = TRUE))
+    splitselect = splitselect_median,
+    svarselect = varselect_random, # would be nice not having to set this
+    ssplitselect = splitselect_median, # would be nice not having to set this
+    minsplit = 20))
 mytree_iris
 
 ```
 
 Have fun adapting this simple example to more advanced solutions!
+
+
+## A less minimal example: exhaustive search
+
+Let's say we want to implement an exhaustive search strategy which goes through
+all possible splits of all variables and chooses the one corresponding to the
+lowest loss.
+
+- What is the variable selection procedure? There is basically none. We keep all split variables.
+- What is the split selection procedure? We go through all split points in all variables and select the one corresponding to the lowest loss.
+
+Let's do that now.
+
+For the variable selection function we just build a matrix of `1` entries.
+```{r}
+varselect_cart <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+  
+  # Get names of split variables
+  znams <- names(data$data)[data$variables$z > 0]
+  
+  # Build return matrix
+  ret <- matrix(1, nrow = 1, ncol = length(znams), dimnames = list("cart_criterion", znams))
+  
+  return(ret)
+}
+```
+
+The split selection function goes through all possible split points in all 
+split variables and selects the one which has the lowest loss. In this case
+we will use the MSE.
+```{r}
+splitselect_mse <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+  
+  lowest <- list(mse = Inf)
+    
+  ## go through all split variable
+  for(i in whichvar) {
+    
+    # variable
+    z <- extree_variable(data, index = i)[subset]
+    # y <- extree_variable(data, variable = "y")[subset]
+    y <- model$estfun[subset]
+    
+    # sorted unique split points
+    points <- sort(unique(z))
+    
+    
+    ## go through all possible split points
+    for(k in points) {
+      left <- z <= k
+      right <- z > k
+      
+      n_left <- sum(left)
+      n_right <- sum(right)
+      
+      ## check if enough observations in each subgroup
+      if(!( n_left < ctrl$minsplit || n_right < ctrl$minsplit )) {
+        
+        yhat_left <- mean(y[left])
+        yhat_right <- mean(y[right])
+        
+        ## compute mse
+        mse <- mean((yhat_left - y[left])^2) + mean((yhat_right - y[right])^2)
+
+        ## check if mse is lower than previously lowest mse. If so, replace.
+        if(mse < lowest$mse) {
+          lowest <- list(z = i, split = k, mse = mse)
+          cat(paste("left MSE:",  round(mean((yhat_left - y[left])^2), 2), 
+            "n:", sum(left),
+            "right MSE:", round(mean((yhat_right - y[right])^2), 2),
+            "n:", sum(right), "\n"))
+        }
+      }
+    }
+    
+  }
+  
+  if(is.infinite(lowest$mse)) {
+    ret <- NULL
+  } else {
+    ret <- partysplit(as.integer(lowest$z), breaks = lowest$split)
+  }
+  
+  return(ret)
+}
+
+
+```
+
+```{r}
+rset.seed(123)
+cars1 <- cars
+cars1$random <- sample(1:10, size = nrow(cars1), replace = TRUE)
+carsd <- extree_data(dist ~ speed + random, data = cars1) 
+
+
+mytree_cars <- extree(data = carsd, trafo = trafo_identity,
+  control = extree_control(
+    criterion = "cart_criterion",
+    critvalue = 0.5, 
+    update = TRUE,
+    varselect = varselect_cart,
+    splitselect = splitselect_mse,
+    svarselect = varselect_cart,
+    ssplitselect = splitselect_mse,
+    minsplit = 8))
+mytree_cars
+
+```
+
