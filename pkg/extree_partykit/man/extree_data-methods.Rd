@@ -13,7 +13,7 @@
 }
 \usage{
 \method{str}{extree_data}(object, max.level = 1, give.attr = FALSE, ...)
-\method{print}{extree_data}(x, ...)
+\method{print}{extree_data}(x, maxvars = 5, ...)
 \method{dimnames}{extree_data}(x)
 \method{dim}{extree_data}(x)
 }
@@ -24,6 +24,7 @@
     nested structures, e.g., a list containing sub lists. Default NA: Display 
     all nesting levels.}
   \item{give.attr}{logical; if TRUE, show attributes as sub structures. Defaults to FALSE.}
+  \item{maxvars}{maximum number of variables printed.}
   \item{\dots}{ additional arguments passed to \code{\link{str}}.}
 }
 \details{
