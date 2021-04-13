@@ -21,8 +21,8 @@
 
 .ctree_test <- function(model, trafo, data, subset, weights, j, split_only = FALSE, control) {
 
-    ix <- extree_variable(data, i = j, type = "index") ### data[[j, type = "index"]]
-    iy <- extree_variable(data, i = "yx", type = "index") ### data[["yx", type = "index"]]
+    ix <- extree_variable(data, index = j, type = "inum") ### data[[j, type = "inum"]]
+    iy <- extree_variable(data, variable = "yx", type = "inum") ### data[["yx", type = "inum"]]
     Y <- model$estfun
 
     if (!is.null(iy)) {
@@ -71,7 +71,7 @@
 
     ### X for (ordered) factors is always dummy matrix
     if (is.factor(x) || is.ordered(x))
-        X <- data$zindex[[j]] ### data[[j, type = "index"]]
+        X <- data$zindex[[j]] ### data[[j, type = "inum"]]
 
     scores <- extree_variable(data, j, type = "scores")
     ORDERED <- is.ordered(x) || is.numeric(x)
@@ -81,7 +81,7 @@
     if (ctrl$splittest || SPLITONLY) {
         MAXSELECT <- TRUE
         if (is.numeric(x)) {
-            X <- data$zindex[[j]] ###data[[j, type = "index"]]
+            X <- data$zindex[[j]] ###data[[j, type = "inum"]]
             ux <- levels(X)
         }
         if (MIA) {
@@ -117,7 +117,7 @@
 .ctree_test_2d <- function(data, Y, iy, j, subset, weights, SPLITONLY = FALSE, ctrl) {
 
     x <- extree_variable(data, j)
-    ix <- data$zindex[[j]] ### data[[j, type = "index"]]
+    ix <- data$zindex[[j]] ### data[[j, type = "inum"]]
     ux <- attr(ix, "levels")
 
     MIA <- FALSE
@@ -448,12 +448,12 @@ ctree <- function(formula, data, subset, weights, na.action = na.pass, offset, c
         mfyx[["(weights)"]] <- mfyx[["(offset)"]] <- NULL
         yvars <- names(mfyx)
         for (yvar in yvars) {
-            sc <- extree_variable(d, yvar, "scores")
+            sc <- extree_variable(d, yvar, type = "scores")
             if (!is.null(sc))
                 attr(mfyx[[yvar]], "scores") <- sc
         }
         Y <- .y2infl(mfyx, response = d$variables$y, ytrafo = ytrafo)
-        if (!is.null(iy <- extree_variable(d, "yx", type = "index"))) {
+        if (!is.null(iy <- extree_variable(d, "yx", type = "inum"))) {
             Y <- rbind(0, Y)
         }
         ytrafo <- function(subset, weights, info, estfun, object, ...)
