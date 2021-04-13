@@ -11,10 +11,10 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     ## -> Should this be handled more generally? Optionally allowing to pass on data with NAs?
     
     ## trafo preprocessing
-    ## FIXME: (Z) Why is a separate mytrafo() needed, can't we just pass on the user-specified trafo?
+    ## FIXME: (Z) Why is a separate extree_trafo() needed, can't we just pass on the user-specified trafo?
     ## This would simplify debugging substantially?
     ## But maybe this is somehow related to avoiding data copying?
-    mytrafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
+    extree_trafo <- function(subset, weights, info = NULL, estfun = TRUE, object = TRUE) {
         trafo(subset, data = data, weights, info = info, estfun = estfun, object = object)
     }
     
@@ -26,7 +26,7 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     ## the trafo argument (argument: doFit)? Idea: Separate extree_trafo() function
     ## and then the current extree() function can probably be integrated into extree_fit().
     update <- function(subset, weights, control, doFit = TRUE) {
-        extree_fit(data = data, trafo = mytrafo, converged = converged,
+        extree_fit(data = data, trafo = extree_trafo, converged = converged,
             partyvars = data$variables$z, subset = subset,
             weights = weights, ctrl = control, doFit = doFit)  
     }
@@ -48,11 +48,11 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   
   nf <- names(formals(trafo))
   if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
-    mytrafo <- trafo
+    extree_trafo <- trafo
   } else {
     stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
     stopifnot(!is.null(yx <- data$yx))
-    mytrafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
+    extree_trafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
       iy <- extree_variable(data, i = "yx", type = "index")
       if (is.null(iy)) {
         NAyx <- extree_variable(data, i ="yx", type = "missings")
@@ -131,12 +131,12 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   }
   
   if (!ctrl$update) {
-    rootestfun <- mytrafo(subset = subset, weights = weights)
+    rootestfun <- extree_trafo(subset = subset, weights = weights)
     updatetrafo <- function(subset, weights, info, ...)
       return(rootestfun)
   } else {
     updatetrafo <- function(subset, weights, info, ...) {
-      ret <- mytrafo(subset = subset, weights = weights, info = info, ...)
+      ret <- extree_trafo(subset = subset, weights = weights, info = info, ...)
       if (is.null(ret$converged)) ret$converged <- TRUE
       conv <- TRUE
       if (is.function(converged)) conv <- converged(subset, weights)
@@ -152,12 +152,12 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   stopifnot(all(nm == names(formals(svarselect))))
   stopifnot(all(nm == names(formals(ssplitselect))))
   
-  if (!doFit) return(mytrafo)
+  if (!doFit) return(extree_trafo)
   
   list(nodes = .extree_node(id = 1, data = data, trafo = updatetrafo, varselect = varselect, 
                             splitselect = splitselect, svarselect = svarselect, ssplitselect = ssplitselect, 
                             partyvars = partyvars, weights = weights, subset = subset, ctrl = ctrl),
-       trafo = mytrafo)
+       trafo = extree_trafo)
 }
 
 
