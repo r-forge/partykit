@@ -387,14 +387,10 @@ extree_variable <- function(x, index = NULL, variable = NULL,
     "original" = {
       if (!is.null(variable)) {
         switch(variable, 
-          # model.frame(x$terms[[variable]], model.frame(x)) # Shortcut for original data not binned one
           "yx" = {
-            return(model.frame(x, yxonly = TRUE)) # FIXME: SD is attr(formula$yxindex, "levels") in model.frame really what we want?
+            return(model.frame(x$terms[[variable]], model.frame(x)))
           }, 
           "y" = {
-            # FIXME: (SD) binning: return yx? 
-            # or returned binned y: mf <- model.frame(x$terms$y, attr(x$yxindex, "levels"))
-            # or return original? (currently, see also above)
             mf <- model.frame(x)
             yid <- x$variables$y
             if (length(yid) == 1) return(mf[[yid]]) else return(mf[yid])
@@ -423,7 +419,6 @@ extree_variable <- function(x, index = NULL, variable = NULL,
       if (length(index) == 1) return(x$zindex[[index]]) else return(x$zindex[index])
     },
     "scores" = {
-      # f <- x[[index]]
       f <- extree_variable(x, index, variable, type = "original")
       if (is.ordered(f)) {
         sc <- x$scores[[index]]

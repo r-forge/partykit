@@ -25,13 +25,13 @@ edb <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Le
 ev1 <- extree_variable(ed, 4, type = "original")
 expect_equal(ev1, ed$data$Petal.Width)
 
-ev2 <- extree_variable(ed, c(2, 4), type = "original") # FIXME: (SD) how to handle this if binning? --> returns unbinned vars currently
+ev2 <- extree_variable(ed, c(2, 4), type = "original")
 expect_equal(ev2, as.list(ed$data[, c("Sepal.Width", "Petal.Width")])) 
 
-ev3 <- extree_variable(ed, index = 1, type = "original") # FIXME: (SD) returns original --> should it return bins? 
+ev3 <- extree_variable(ed, index = 1, type = "original") 
 
 ## character index
-expect_null(extree_variable(ed, index = "y", type = "original")) # Question: (SD) expect error instead of NULL? 
+expect_null(extree_variable(ed, index = "y", type = "original")) # returns NULL because no variable named "y"
 ec1 <- extree_variable(ed, index = "Sepal.Length", type = "original")
 expect_equal(ec1, ed$data$Sepal.Length)
 ec2 <- extree_variable(ed, index = c("Sepal.Length", "Sepal.Width"), type = "original")
@@ -40,24 +40,24 @@ expect_equal(ec2, as.list(ed$data[, c("Sepal.Length", "Sepal.Width")]))
 ## y and x variables
 ey1 <- extree_variable(edb, variable = "y", type = "original")
 expect_equal(ey1, iris$Species)
-expect_equal(extree_variable(ed, variable = "y", type = "original"), ed$data$Species) # FIXME: (SD) currently does not return binned y 
-# --> if yx = "matrix" we can use x$yx$y for binned outcome otherwise not!! 
-# should it be equal to binned outcome?  --> attr(ed$yxindex, "levels")$Species
+expect_equal(extree_variable(ed, variable = "y", type = "original"), ed$data$Species) 
 exy <- extree_variable(ed, variable = "yx", type = "original")
-expect_equal(exy, attr(ed$yxindex, "levels")) # Question: (SD) Why not "original"
+expect_equal(data.frame(exy), ed$data[, c("Species", "Sepal.Width", "Sepal.Length")]) 
 expect_error(extree_variable(ed, variable = "x"), "'arg' should be one of")
 expect_equal(names(extree_variable(edm, variable = c("yx"))), c("Species", "Sepal.Length", "Sepal.Width"))
-expect_equal(extree_variable(ed, variable = "y"), extree_variable(ed, i = 1)) # Question: (SD) Should this be equal? 
+expect_equal(extree_variable(ed, variable = "y"), extree_variable(ed, i = 1)) 
 
-# index
+# inum
 expect_equal(attr(extree_variable(ed, variable = "y", type = "inum"), "levels"), 
   attr(ed$yxindex, "levels")[, 1, drop = FALSE])
-expect_equal(as.numeric(extree_variable(ed, variable = "y", type = "inum")), 
-as.numeric(ed$yxindex))
+ediy <- extree_variable(ed, variable = "y", type = "inum")
+expect_equal(as.numeric(ediy), as.numeric(ed$yxindex))
+expect_inherits(ediy, "inumtotal")
 expect_equal(extree_variable(ed, variable = "yx", type = "inum"), ed$yxindex)
 extree_variable(ed, index = c(3, 4), type = "inum") # FIXME: (SD) how to handle this if binning? --> currently only z variables
 extree_variable(edb, index = c(3, 4), type = "inum") 
-expect_equivalent(class(extree_variable(edb, index = 5, type = "inum")), c("enum", "integer"))
+expect_equivalent(class(extree_variable(edb, index = 5, type = "inum")), c("enum", "integer")) # FIXME: (SD) is this fine? 
+expect_null(extree_variable(edb, variable = "yx", type = "inum"))
 
 # scores
 d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
