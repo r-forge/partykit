@@ -17,17 +17,21 @@ str.extree_data <- function(object, max.level = 1, give.attr = FALSE, ...) {
 
 
 ## print method
-print.extree_data <- function(x, ...) { 
-    # FIXME (HS) add argument maxvars to let user choose the number of printed vars
-    cat("'extree_data' with data of dimension", paste(dim(x$data), collapse = "x"), "\n\n")
+print.extree_data <- function(x, maxvars = 5, ...) { 
+  
+    cat("'extree_data' with data of dimension", paste(dim(x$data), collapse = "x"), "\n")
+    yx_inum <- extree_variable(x, variable = "yx", type = "inum")
+    if(class(yx_inum) == "inumtotal") 
+      cat("  dimension of yx reduced to", paste(dim(attr(yx_inum, "levels")), collapse = "x"), "\n")
+    cat("\n")
     
     ## paste first 5 variables
     pastevars <- function(vars){
         
         lengthvars <- ifelse(is.logical(vars), sum(vars), length(vars))
         
-        if(lengthvars > 5) {
-            return(paste0(paste(names(x$data)[vars][1:5], collapse = ", "), ", ..."))
+        if(lengthvars > maxvars) {
+            return(paste0(paste(names(x$data)[vars][1:maxvars], collapse = ", "), ", ..."))
         } else {
             return(paste(names(x$data)[vars], collapse = ", "))
         } 
