@@ -1,4 +1,4 @@
-extree <- function(data, trafo, control = extree_control(...),  converged = NULL, ...) {
+extree <- function(data, trafo, control = extree_control(...),  converged = NULL, doFit = TRUE, ...) {
 
     ## FIXME: (Z) The function extree() started by copying relevant parts from the
     ## ctree() function in the current release. The goal is to have a common workhorse
@@ -20,19 +20,21 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     
     ## FIXME: (HS) converged preprocessing (if needed)
     
-    ## set up trafo
-    ## FIXME: (Z) Similar to above, why is yet another local wrapper needed?
-    ## Can we avoid calling extree_fit() for the side-effect of pre-processing and returning
-    ## the trafo argument (argument: doFit)? Idea: Separate extree_trafo() function
-    ## and then the current extree() function can probably be integrated into extree_fit().
-    update <- function(subset, weights, control, doFit = TRUE) {
-        extree_fit(data = data, trafo = extree_trafo, converged = converged,
-            partyvars = data$variables$z, subset = subset,
-            weights = weights, ctrl = control, doFit = doFit)  
-    }
+    # ## set up trafo
+    # ## FIXME: (Z) Similar to above, why is yet another local wrapper needed?
+    # ## Can we avoid calling extree_fit() for the side-effect of pre-processing and returning
+    # ## the trafo argument (argument: doFit)? Idea: Separate extree_trafo() function
+    # ## and then the current extree() function can probably be integrated into extree_fit().
+    # update <- function(subset, weights, control, doFit = TRUE) {
+    #     extree_fit(data = data, trafo = extree_trafo, converged = converged,
+    #         partyvars = data$variables$z, subset = subset,
+    #         weights = weights, ctrl = control, doFit = TRUE)  
+    # }
     
     ## fit
-    tree <- update(subset = subset, weights = weights, control = control)
+    tree <- extree_fit(data = data, trafo = extree_trafo, converged = converged,
+      partyvars = data$variables$z, subset = subset,
+      weights = weights, ctrl = control, doFit = doFit, ...)
     
     ## FIXME: (HS) Prepare extree object.
     

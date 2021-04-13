@@ -11,7 +11,7 @@
 }
 \usage{
 extree(data, trafo, control = extree_control(...), 
-    converged = NULL, ...)
+    converged = NULL, doFit = TRUE, ...)
 }
 \arguments{
   \item{data}{an object of class \code{\link{extree_data}}, see
