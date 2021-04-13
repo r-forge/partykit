@@ -65,7 +65,7 @@ varselect_random <- function(model, trafo, data, subset, weights, whichvar, ctrl
 
 Our split selection function splits at the median of a given variable.
 ```{r}
-splitselect_median <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
+split_select_median <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
   
   ## split first selected variable at median
   j <- whichvar[1]

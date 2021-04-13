@@ -9,16 +9,18 @@
   function helps accessing them.
 }
 \usage{
-extree_variable(x, i, type = c("original", "index", "scores", "missings"))
+extree_variable(x, index, variable, type = c("original", "inum", "scores", "missings"))
 }
 \arguments{
   \item{x}{an object of class \code{\link{extree_data}}.
 }
-\item{i}{extree data slot index. Can be a numeric vector, a character vector of variable names or \code{"xy"} (see also \code{\link{extree_data}}).
+  \item{index}{extree data slot index. Can be a numeric vector or a character vector of variable names.
+}
+  \item{variable}{extree data slot name. Can be \code{"yx"} or \code{"x"} (see also \code{\link{extree_data}}).
 }
   \item{type}{type of variable version to return. 
   \code{"original"} returns the original data;
-  \code{"index"} returns the \code{\link[inum]{inum}} object; 
+  \code{"inum"} returns the \code{\link[inum]{inum}} object; 
   \code{"scores"} returns the named list of numeric scores (see argument \code{scores} in \code{\link{extree_data}}); 
   \code{"missings"} returns the info on which entries of \code{i} are missing. 
 }
@@ -37,11 +39,11 @@ The selected information. See argument \code{type}.
       data = iris, nmax = c("yx" = 25, "z" = 10), yx = "matrix")
 
   ### binned Petal.Width
-  extree_variable(ed, 4, type = "index")
+  extree_variable(ed, i = 4, type = "inum")
 
   ## y and x variables
-  head(extree_variable(ed, i = "yx"))
-  extree_variable(ed, i = "yx", type = "missings")
+  head(extree_variable(ed, variable = "yx"))
+  extree_variable(ed, variable = "yx", type = "missings")
 
   ### response
   extree_variable(ed, i = 1)
@@ -50,16 +52,16 @@ The selected information. See argument \code{type}.
   ### split variables
   extree_variable(ed, i = 4)
   extree_variable(ed, i = "Petal.Width")
-  extree_variable(ed, i = 5, type = "index")
+  extree_variable(ed, i = 5, type = "inum")
   extree_variable(ed, i = 5)[1:10]
 
   ### several variables at once
   ## type = "original"
   extree_variable(ed, i = c(2, 4))
   extree_variable(ed, i = c("Sepal.Width", "Petal.Width"))
-  ## type = "index" (only for binned variables, otherwise NULL)
-  extree_variable(ed, i = c(2, 4), type = "index")
-  extree_variable(ed, i = c("Sepal.Width", "Petal.Width"), type = "index")
+  ## type = "inum" (only for binned variables, otherwise NULL)
+  extree_variable(ed, i = c(2, 4), type = "inum")
+  extree_variable(ed, i = c("Sepal.Width", "Petal.Width"), type = "inum")
   
   
   data("HuntingSpiders", package = "partykit")
@@ -80,7 +82,7 @@ The selected information. See argument \code{type}.
   HuntingSpiders$arct.lute
   
   # outcome variables
-  head(extree_variable(ed_hs, i = "yx"))
+  head(extree_variable(ed_hs, variable = "yx"))
   
   # Several variables
   extree_variable(ed_hs, 10:15)
@@ -88,11 +90,11 @@ The selected information. See argument \code{type}.
   ## Index 
   # nmax = c(yx = Inf, z = Inf) and thus NULL
   # 1 = arct.lute
-  extree_variable(ed_hs, 1, type = "index")
+  extree_variable(ed_hs, 1, type = "inum")
   
   # for z index is created even if nmax = c(yx = Inf, z = Inf)
   # 13 = herbs
-  extree_variable(ed_hs, 13, type = "index")
+  extree_variable(ed_hs, 13, type = "inum")
   
   ## No missings
   extree_variable(ed_hs, 1, type = "missings")
