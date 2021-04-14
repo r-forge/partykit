@@ -61,7 +61,7 @@ airq_dat <- extree_data(Ozone ~ Wind + Temp,
 trafo_identity <- function(subset, data, weights = NULL, info = NULL, 
   estfun = TRUE, object = TRUE) {
   ### Extract response and "subset"
-  y <- extree_variable(data, i = 1, type = "original")  
+  y <- extree_variable(data, index = 1, type = "original")  
   y[-subset] <- NA  
   
   ### Return list
@@ -90,7 +90,7 @@ var_select_guide <- function(model, trafo, data, subset, weights, j,
   }
   
   ### get possible split variable
-  sv_cat <- extree_variable(data, i = j, type = "index")[subset]
+  sv_cat <- extree_variable(data, index = j, type = "inum")[subset]
   
   ### independence test
   test <- chisq.test(x = est_cat, y = sv_cat)
@@ -109,7 +109,7 @@ split_select_median_numeric <- function(model, trafo, data, subset, weights,
   
   ### define split point as median of variable with lowest p-value 
   j <- whichvar[1] # select variable with lowest p-value
-  x <- extree_variable(data, i = j, type = "original")[subset]
+  x <- extree_variable(data, index = j, type = "original")[subset]
   ret <- partysplit(as.integer(j), breaks = median(x))
   
   return(ret)
