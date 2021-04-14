@@ -273,13 +273,13 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     if (!ctrl$saveinfo) info <- NULL
   } else {
     
+    ## adjust p-values (for non-NA p-values), if any
+    if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(unlist(p["p.value", ]))
+    if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(unlist(p["log.p.value", ]), log = TRUE)
+    
     ## Stop if matrix has wrong structure 
     if(!(ctrl$criterion %in% rownames(p))) 
       stop(paste("varselect function has to return matrix where one rowname is", ctrl$criterion))
-    
-    ## adjust p-values (for non-NA p-values), if any
-    if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(p["p.value", ])
-    if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(p["log.p.value", ], log = TRUE)
 
     ## determine criterion
     criterion <- ctrl$criterion
