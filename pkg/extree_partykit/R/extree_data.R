@@ -24,6 +24,7 @@ print.extree_data <- function(x, maxvars = 5, ...) {
     if(class(yx_inum) == "inumtotal") 
       cat("  dimension of yx reduced to", paste(dim(attr(yx_inum, "levels")), collapse = "x"), "\n")
     cat("\n")
+    ## FIXME: (HS) print also max dim of z (nmax)
     
     ## paste first 5 variables
     pastevars <- function(vars){
