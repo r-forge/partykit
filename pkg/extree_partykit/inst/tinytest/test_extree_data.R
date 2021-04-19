@@ -85,18 +85,18 @@ exd <- extree_data(formula = list(y = c("Y"), x = c("X"), z = c("Zmiss"),
 
 
 ## check missings in variable Zmiss
-expect_equal(extree_variable(x = exd, i = "Zmiss", type = "missings"), c(3, 4, 5))
+expect_equal(extree_variable(x = exd, index = "Zmiss", type = "missings"), c(3, 4, 5))
 expect_equal(exd$missings$Zmiss, c(3, 4, 5))
 
 ## check missings in yx (this includes the offset, of course)
-expect_equal(extree_variable(x = exd, i = "yx", type = "missings"), c(1, 2)) # missings in offset Omiss
+expect_equal(extree_variable(x = exd, variable = "yx", type = "missings"), c(1, 2)) # missings in offset Omiss
 expect_equal(exd$missings$Y, integer())
 expect_equal(exd$missings$X, integer())
 expect_equal(exd$missings$`(offset)`, c(1, 2))
 
 ## missings should not be computed in unused variables
-expect_equal(extree_variable(x = exd, i = "Z", type = "missings"), NA)
-expect_equal(extree_variable(x = exd, i = "O", type = "missings"), NA)
+expect_equal(extree_variable(x = exd, index = "Z", type = "missings"), NA)
+expect_equal(extree_variable(x = exd, index = "O", type = "missings"), NA)
 
 ## check that extree
 exd$missings$Zmiss
@@ -241,3 +241,4 @@ expect_error(extree_data(y ~ z, data = dn, nmax = c("heo" = 20)), "names of 'nma
 exn5 <- extree_data(y + x ~ z, data = dn, nmax = c("z" = 3))
 expect_true(is.null(exn5$yxindex))
 expect_true(length(levels(exn5$zindex$z))== 3)
+

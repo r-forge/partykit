@@ -61,9 +61,9 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     stopifnot(all(c("y", "x", "offset", "weights", "start") %in% nf))
     stopifnot(!is.null(yx <- data$yx))
     extree_trafo <- function(subset, weights, info, estfun = FALSE, object = FALSE, ...) {
-      iy <- extree_variable(data, i = "yx", type = "index")
+      iy <- extree_variable(data, variable = "yx", type = "inum")
       if (is.null(iy)) {
-        NAyx <- extree_variable(data, i ="yx", type = "missings")
+        NAyx <- extree_variable(data, variable ="yx", type = "missings")
         y <- yx$y
         x <- yx$x
         offset <- attr(yx$x, "offset")
@@ -83,7 +83,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
         }
         w <- weights[subset]
         offset <- offset[subset]
-        cluster <- data[["(cluster)"]][subset]
+        cluster <- extree_variable(data, index = "(cluster)")[subset] ## data[["(cluster)"]][subset]
         if (all(c("estfun", "object") %in% nf)) { 
           m <- trafo(y = y, x = x, offset = offset, weights = w, start = info$coef, 
                      cluster = cluster, estfun = estfun, object = object, ...)
@@ -262,6 +262,17 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
 
   ## criterion matrix
   if(is.matrix(varsel)) {
+    
+    ## if varsel is matrix of lists, simplify 
+    if(any(apply(varsel, 1, is.list))) {
+      nams <- colnames(varsel)
+      varsel <- apply(varsel, 1, function(x) ifelse(is.list(x), return(unlist(x)), return(x)))
+      if(is.matrix(varsel)) varsel <- t(varsel) else {
+        varsel <- t(t(varsel)) 
+        colnames(varsel) <- nams
+      }
+    }
+    
     p <- varsel 
     varsel <- list(criterion = varsel)
   } else {
@@ -280,8 +291,8 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
   } else {
     
     ## adjust p-values (for non-NA p-values), if any
-    if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(unlist(p["p.value", ]))
-    if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(unlist(p["log.p.value", ]), log = TRUE)
+    if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(p["p.value", ])
+    if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(p["log.p.value", ], log = TRUE)
     
   
     ## determine criterion
@@ -404,7 +415,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
 
   ### determine observations for splitting (only non-missings)
   #if(class(thissplit) != "partysplit") browser()
-  snotNA <- subset[!subset %in% extree_variable(data, i = varid_split(thissplit), type = "missings")]
+  snotNA <- subset[!subset %in% extree_variable(data, index = varid_split(thissplit), type = "missings")]
   if (length(snotNA) == 0)
     return(partynode(as.integer(id), info = info))
   ### and split observations

@@ -72,7 +72,7 @@
 # <FIXME> (HS) better name of function
 .get_varclass <- function(select_list, data, j) {
   ### which class is variable?
-  varclass_orig <- class(extree_variable(x = data, i = j))
+  varclass_orig <- class(extree_variable(x = data, index = j))
   
   ### Use most appropriate class (1st), if more than one is available
   ### Remove varclass if no varselect function is available
@@ -245,14 +245,14 @@ splitselect_loop <- function(model, trafo, data, subset, weights, whichvar,
 .objfun_test <- function(model, trafo, data, subset, weights, j, SPLITONLY, ctrl)
 {
   
-  x <- extree_variable(data, i = j)
-  NAs <- extree_variable(data, i= j, type = "missing")
+  x <- extree_variable(data, index = j)
+  NAs <- extree_variable(data, index = j, type = "missing")
   if (all(subset %in% NAs)) { 
     if (SPLITONLY) return(NULL)
     return(list(statistic = NA, p.value = NA))
   }
   
-  ix <- extree_variable(data, i = j, type = "index")
+  ix <- extree_variable(data, index = j, type = "index")
   ux <- attr(ix, "levels")
   ixtab <- libcoin::ctabs(ix = ix, weights = weights, subset = subset)[-1]
   ORDERED <- is.ordered(x) || is.numeric(x)

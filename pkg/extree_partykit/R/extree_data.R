@@ -468,5 +468,5 @@ extree_variable <- function(x, index = NULL, variable = NULL,
     type = c("original", "inum", "scores", "missings")) { 
     
     warning("[[.extree_data is deprecated. Please use extree_variable().")
-    extree_variable(x = x, i = i, type = type)
+    extree_variable(x = x, index = i, type = type)
 }
