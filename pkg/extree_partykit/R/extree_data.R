@@ -375,8 +375,10 @@ extree_variable <- function(x, index = NULL, variable = NULL,
   type = c("original", "inum", "scores", "missings")) {
   type <- match.arg(type, choices = c("original", "inum", "scores", "missings"))
   
+  if (is.null(index) & is.null(variable)) stop("Specify either 'index' or 'variable'")
+  
   if (!is.null(variable)) {
-    match.arg(variable, c("yx", "y")) # FIXME: (SD) Allow x and z? 
+    match.arg(variable, c("yx", "y")) 
     if (!is.null(index)) stop("Specify either 'index' or 'variable' - not both")
   }
   
@@ -389,12 +391,12 @@ extree_variable <- function(x, index = NULL, variable = NULL,
       if (!is.null(variable)) {
         switch(variable, 
           "yx" = {
-            return(model.frame(x$terms[[variable]], model.frame(x)))
+            if (!is.null(x$yxindex)) x$yxindex <- NULL
+            return(model.frame(x, yxonly = TRUE))
           }, 
           "y" = {
-            mf <- model.frame(x)
-            yid <- x$variables$y
-            if (length(yid) == 1) return(mf[[yid]]) else return(mf[yid])
+            vars <- x$variables
+            return(x$data[, vars$y])
           })
       }
       mf <- model.frame(x)
@@ -410,8 +412,7 @@ extree_variable <- function(x, index = NULL, variable = NULL,
             return(var)
           }, 
           "y" = {
-            mf <- model.frame(x)
-            varnam <- names(mf)[x$variables$y]
+            varnam <- names(x$data)[x$variables$y]
             attr(var, "levels") <- attr(var, "levels")[, varnam, drop = FALSE]
             return(var)
           }

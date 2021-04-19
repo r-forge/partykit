@@ -19,6 +19,9 @@ edm <- extree_data(Species + Sepal.Length ~ Sepal.Width | Petal.Width + Petal.Le
 # no binning
 edb <- extree_data(Species ~ Sepal.Width + Sepal.Length | Petal.Width + Petal.Length, 
   data = iris, yx = "matrix") # Question: (SD) why is edb$zindex$Petal.Width & Pegal.Length specified?  
+# only y - no x
+ednox <- extree_data(Species ~ Petal.Width + Petal.Length, data = iris, 
+  nmax = c("yx" = 25, "z" = 10))
 
 # Original 
 ## numeric index
@@ -46,6 +49,8 @@ expect_equal(data.frame(exy), ed$data[, c("Species", "Sepal.Width", "Sepal.Lengt
 expect_error(extree_variable(ed, variable = "x"), "'arg' should be one of")
 expect_equal(names(extree_variable(edm, variable = c("yx"))), c("Species", "Sepal.Length", "Sepal.Width"))
 expect_equal(extree_variable(ed, variable = "y"), extree_variable(ed, i = 1)) 
+# only y -  no x
+expect_equal(ey1, extree_variable(ednox, variable = "y"))
 
 # inum
 expect_equal(attr(extree_variable(ed, variable = "y", type = "inum"), "levels"), 
@@ -53,11 +58,13 @@ expect_equal(attr(extree_variable(ed, variable = "y", type = "inum"), "levels"),
 ediy <- extree_variable(ed, variable = "y", type = "inum")
 expect_equal(as.numeric(ediy), as.numeric(ed$yxindex))
 expect_inherits(ediy, "inumtotal")
-expect_equal(extree_variable(ed, variable = "yx", type = "inum"), ed$yxindex)
+expect_equal(dim(attr(ediy, "levels")), c(nrow(attr(ed$yxindex, "levels")), 1))
 extree_variable(ed, index = c(3, 4), type = "inum") # FIXME: (SD) how to handle this if binning? --> currently only z variables
 extree_variable(edb, index = c(3, 4), type = "inum") 
 expect_equivalent(class(extree_variable(edb, index = 5, type = "inum")), c("enum", "integer")) # FIXME: (SD) is this fine? 
 expect_null(extree_variable(edb, variable = "yx", type = "inum"))
+# only y no x
+expect_equal(unique(extree_variable(ednox, variable = "y", type = "inum")), c(1,2,3))
 
 # scores
 d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
@@ -87,3 +94,8 @@ expect_equal(em1$Sepal.Length, integer(0))
 ## multiple y 
 expect_equal(extree_variable(edm, variable = "y", type = "missings"), 
   list(Species = integer(0), Sepal.Length = integer(0)))
+
+# index and variable 
+expect_error(extree_variable(ed, index = 2, variable = "yx"), 
+  "Specify either 'index' or 'variable' - not both")
+expect_error(extree_variable(ed), "Specify either 'index' or 'variable'")
