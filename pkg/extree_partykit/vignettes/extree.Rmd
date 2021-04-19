@@ -187,7 +187,7 @@ splitselect_mse <- function(model, trafo, data, subset, weights, whichvar, ctrl)
 ```
 
 ```{r}
-rset.seed(123)
+set.seed(123)
 cars1 <- cars
 cars1$random <- sample(1:10, size = nrow(cars1), replace = TRUE)
 carsd <- extree_data(dist ~ speed + random, data = cars1) 
