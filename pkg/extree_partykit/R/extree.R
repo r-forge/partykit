@@ -40,14 +40,20 @@ extree <- function(data, trafo, control = extree_control(...),  converged = NULL
     
 }
 
+
+## TODO: (AZ) rename ctrl -> control, rename partyvars, move selectors to control only,
+## sort arguments such that they are compatible with extree() sorting
 extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect, 
                        splitselect = ctrl$splitselect, svarselect = ctrl$svarselect, 
                        ssplitselect = ctrl$ssplitselect, partyvars, subset, weights, ctrl, doFit = TRUE) {
   ret <- list()
   
-  ### <FIXME> use data$vars$z as default for partyvars </FIXME>
+  ### <FIXME> use data$vars$z as default for partyvars (similar for subset, weights) </FIXME>
   ### <FIXME> try to avoid doFit </FIXME>
   
+  
+  ## FIXME: (AZ) do preprocessing in the same way in extree and extree_fit,
+  ## maybe separate function
   nf <- names(formals(trafo))
   if (all(c("subset", "weights", "info", "estfun", "object") %in% nf)) {
     extree_trafo <- trafo
@@ -277,10 +283,7 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     if("p.value" %in% rownames(p)) p["p.value", ] <- ctrl$padjust(unlist(p["p.value", ]))
     if("log.p.value" %in% rownames(p)) p["log.p.value", ] <- ctrl$padjust(unlist(p["log.p.value", ]), log = TRUE)
     
-    ## Stop if matrix has wrong structure 
-    if(!(ctrl$criterion %in% rownames(p))) 
-      stop(paste("varselect function has to return matrix where one rowname is", ctrl$criterion))
-
+  
     ## determine criterion
     criterion <- ctrl$criterion
     critvalue <- ctrl$critvalue
@@ -289,11 +292,19 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
       criterion <- "log.p.value"
       critvalue <- log(critvalue)
     }
+    
+    ## Stop if matrix has wrong structure 
+    if(!(criterion %in% rownames(p))) 
+      stop(paste("varselect function has to return matrix where one rowname is", criterion))
+    
+    
     ## minimize p-values? (or maximize other criterion)
     minp <- criterion %in% c("p.value", "log.p.value")
     ## extract criterion values
     crit <- p[criterion, , drop = TRUE]
 
+    
+    
     ## no admissible splits in any variable, e.g., all
     ## split variables constant
     if (all(is.na(crit)) || (minp && all(crit >= critvalue, na.rm = TRUE)) || (!minp && all(crit <= critvalue, na.rm = TRUE))) {
