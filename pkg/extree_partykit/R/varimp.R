@@ -159,7 +159,11 @@ gettree.cforest <- function(object, tree = 1L, ...) {
         tmp <- ctree(as.formula(paste(x, "~", paste(xnames[xnames != x], collapse = "+"))),
                      data = d, control = ctree_control(teststat = "quad", testtype = "Univariate",
                                                        stump = TRUE))
-        pval <- info_node(node_party(tmp))$criterion["p.value",]
+        ## FIXME: (HS) is this the best way to get the p.value?
+        crit_matrix <- info_node(node_party(tmp))$criterion
+        if("p.value" %in% rownames(crit_matrix)) 
+            pval <- crit_matrix["p.value",] else 
+                pval <- exp(crit_matrix["log.p.value",])
         pval[is.na(pval)] <- 1
         ### make the meaning of threshold equal to partykit
         ret <- names(pval)[(1 - pval) > threshold] 

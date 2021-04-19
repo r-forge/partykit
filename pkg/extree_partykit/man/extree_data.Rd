@@ -93,7 +93,7 @@ part. Use \code{Inf} to switch-off binning. See also \code{\link[inum]{inum}}.
  \item{zindex}{ Object of class \code{\link[inum]{inum}}. }
  \item{missings}{ Missing observations (row indexes) in each variable used. }
  \item{yxmissings}{ Missing observations (row indexes) in the model part, including offset. }
- \item{yx}{ A list of model matrices. Only if \code{yx = "matrix"}, otherwise \code{NULL}¸. }
+ \item{yx}{ A list of model matrices. Only if \code{yx = "matrix"}, otherwise \code{NULL}. }
 }
 \seealso{\code{\link{extree_variable}}, \code{\link[inum]{inum}}}
 
@@ -147,7 +147,7 @@ Lumley T (2020).
   model.frame(ed, yxonly = TRUE)
 
   ### binned Petal.Width
-  extree_variable(ed, 4, type = "index")
+  extree_variable(ed, 4, type = "inum")
 
   ### response
   ed$yx$y
@@ -177,10 +177,10 @@ Lumley T (2020).
   exd$missings
     
   ## missings in variable Zmiss
-  extree_variable(x = exd, i = "Zmiss", type = "missings")
+  extree_variable(x = exd, index = "Zmiss", type = "missings")
     
   ## missings in yx (this includes the offset, of course)
-  extree_variable(x = exd, i = "yx", type = "missings")
+  extree_variable(x = exd, variable = "yx", type = "missings")
 
 }
 \keyword{tree}

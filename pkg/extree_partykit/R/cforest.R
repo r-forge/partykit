@@ -83,7 +83,7 @@ cforest <- function
     if (!is.null(oweights))
         ctreecall$weights <- 1:NROW(oweights)
     ctreecall$control <- control ### put ... into ctree_control()
-    ctreecall[[1L]] <- quote(partykit::ctree)
+    ctreecall[[1L]] <- quote(partykitx::ctree)
     tree <- eval(ctreecall, parent.frame())
 
     if (is.null(control$update))
@@ -96,7 +96,7 @@ cforest <- function
     control$mtry <- mtry
     control$applyfun <- lapply
  
-    strata <- d[["(strata)"]]
+    strata <- extree_variable(d, index = "(strata)") ## d[["(strata)"]]
     if (!is.null(strata)) {
         if (!is.factor(strata)) stop("strata is not a single factor")
     }
@@ -238,7 +238,7 @@ predict.cforest <- function(object, newdata = NULL, type = c("response", "prob",
         fnewdata <- lapply(forest, fitted_node, data = nd, vmatch = vmatch, ...)
     }
 
-    w <- .rfweights(fdata, fnewdata, rw, scale)
+    w <- partykitx:::.rfweights(fdata, fnewdata, rw, scale)
 
 #    for (b in 1:length(forest)) {
 #        ids <- nodeids(forest[[b]], terminal = TRUE)

@@ -113,4 +113,4 @@ get_paths <- function(obj, i) {
 }
 
 .rfweights <- function(fdata, fnewdata, rw, scale)
-    w <- .Call(R_rfweights, fdata, fnewdata, rw, scale)
+    w <- .Call(partykit:::R_rfweights, fdata, fnewdata, rw, scale)
