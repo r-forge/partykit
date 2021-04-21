@@ -45,13 +45,14 @@ print.extree_data <- function(x, maxvars = 5, ...) {
     cat(sum(x$variables$z), "split variable(s) z:", pastevars(x$variables$z == 1), "\n")
 }
 
-## FIXME (HS) summary method: how many variables of which type, which binning, scores?
+## FIXME (HS) summary method: how many variables of which type, which binning?
 
 
 
 ## extensible tree (model) function
 extree_data <- function(formula, data, subset, na.action = na.pass, weights, offset, cluster,
-    strata, scores = NULL, yx = c("none", "matrix"), ytype = c("vector", "data.frame", "matrix"), 
+    strata, # scores = NULL, 
+    yx = c("none", "matrix"), ytype = c("vector", "data.frame", "matrix"), 
     nmax = c("yx" = Inf, "z" = Inf), ...)
 {
     ## call
@@ -231,7 +232,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         model.frame = if(noformula) FALSE else TRUE,
         variables = vars,
         terms = mt,
-        scores = NULL,
+        # scores = NULL,
         zindex = NULL,
         missings = NULL,
         yxmissings = NULL,
@@ -242,17 +243,17 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     yxvars <- c(vars$y, vars$x, vars$offset, vars$cluster)
     zerozvars <- which(vars$z == 0)
     
-    # In future, allow vector of scores in case of a *single* ordered factor
-    ret$scores <- vector(mode = "list", length = length(ret$variables$z))
-    names(ret$scores) <- names(mf)
-    if (!is.null(scores)) {
-      if(!inherits(scores, "list")) stop("unsupported specification of 'scores', should be a list")  
-      if(!(names(scores) %in% names(mf))) stop("names of 'scores' must match names of variables") 
-      levs <- sapply(mf, nlevels)
-      len <- sapply(scores, length)
-      if(!all(levs[names(scores)] == len[names(scores)])) stop("number of scores in 'scores' must match number of levels of ordered factors")
-      ret$scores[names(scores)] <- scores
-    }
+    # # In future, allow vector of scores in case of a *single* ordered factor
+    # ret$scores <- vector(mode = "list", length = length(ret$variables$z))
+    # names(ret$scores) <- names(mf)
+    # if (!is.null(scores)) {
+    #   if(!inherits(scores, "list")) stop("unsupported specification of 'scores', should be a list")  
+    #   if(!(names(scores) %in% names(mf))) stop("names of 'scores' must match names of variables") 
+    #   levs <- sapply(mf, nlevels)
+    #   len <- sapply(scores, length)
+    #   if(!all(levs[names(scores)] == len[names(scores)])) stop("number of scores in 'scores' must match number of levels of ordered factors")
+    #   ret$scores[names(scores)] <- scores
+    # }
     
     if (length(nmax) == 1L) {
       if(is.null(names(nmax))) {
@@ -383,7 +384,7 @@ extree_variable <- function(x, index = NULL, variable = NULL,
   }
   
   ## Check
-  if(length(index) > 1 & type == "scores") 
+  if(length(index) > 1 & type == "scores")
     stop("For length(index) > 1 type = 'scores' is currently not implemented.")
   
   switch(type, 

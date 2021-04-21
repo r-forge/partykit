@@ -67,13 +67,13 @@ expect_null(extree_variable(edb, variable = "yx", type = "inum"))
 expect_equal(unique(extree_variable(ednox, variable = "y", type = "inum")), c(1,2,3))
 
 # scores
-d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
-d$y[c(1, 10)] <- NA
-sc <-  seq(0.1, 1, length.out = 10)
-d$zf <- ordered(d$z)
-exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
-expect_equal(extree_variable(exsc3, index = 2, type = "scores"), sc)
-expect_null(extree_variable(exsc3, index = 1, type = "scores"))
+# d <- data.frame(y = rep(1:5, each = 2), z = 1:10)
+# d$y[c(1, 10)] <- NA
+# sc <-  seq(0.1, 1, length.out = 10)
+# d$zf <- ordered(d$z)
+# exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
+# expect_equal(extree_variable(exsc3, index = 2, type = "scores"), sc)
+# expect_null(extree_variable(exsc3, index = 1, type = "scores"))
 
 # missing
 ## data 

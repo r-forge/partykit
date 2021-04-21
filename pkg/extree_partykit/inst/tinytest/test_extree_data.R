@@ -196,18 +196,18 @@ exc3 <- extree_data(list(y = "y", z = "z", cluster = "cl"), data = d)
 expect_equal(exc2$data, exc3$data) 
 
 ## scores
-sc <-  seq(0.1, 1, length.out = 10)
-d$zf <- ordered(d$z)
-exsc1 <- extree_data(y ~ zf, data = d)
-expect_error(extree_data(y ~ zf, data = d, scores = sc), "unsupported specification") 
-exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
-expect_equal(exsc3$scores$zf, sc)
-exsc4 <- extree_data(zf ~ y, data = d, scores = list(zf = sc))
-# FIXME (SD): Expect error if nr of scores != nr of levels? 
-expect_error(extree_data(y ~ zf, data = d, scores = list(zm = sc)), 
-  "names of 'scores' must match names")
-expect_error(extree_data(y ~ zf, data = d, scores = list(zf = sc[c(1:8)])), 
-  "number of scores in 'scores' must match number of levels of ordered factors")
+# sc <-  seq(0.1, 1, length.out = 10)
+# d$zf <- ordered(d$z)
+# exsc1 <- extree_data(y ~ zf, data = d)
+# expect_error(extree_data(y ~ zf, data = d, scores = sc), "unsupported specification") 
+# exsc3 <- extree_data(y ~ zf, data = d, scores = list(zf = sc))
+# expect_equal(exsc3$scores$zf, sc)
+# exsc4 <- extree_data(zf ~ y, data = d, scores = list(zf = sc))
+# # FIXME (SD): Expect error if nr of scores != nr of levels? 
+# expect_error(extree_data(y ~ zf, data = d, scores = list(zm = sc)), 
+#   "names of 'scores' must match names")
+# expect_error(extree_data(y ~ zf, data = d, scores = list(zf = sc[c(1:8)])), 
+#   "number of scores in 'scores' must match number of levels of ordered factors")
 
 ## yx 
 exyx1 <- extree_data(y ~ z, data = d, yx = "matrix")
