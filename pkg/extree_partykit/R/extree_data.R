@@ -196,17 +196,17 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     
     ## canonicalize y/x/z term labels
     vanam <- if(noformula) names(data) else names(mf)
-    ## z to numeric
-    if(is.null(vars$z)) stop("at least one 'z' variable must be specified")
-    if(is.integer(vars$z)) vars$z <- vanam[vars$z]
-    if(is.character(vars$z)) vars$z <- vanam %in% vars$z
-    if(is.logical(vars$z)) vars$z <- as.numeric(vars$z)
-    if(is.null(names(vars$z))) names(vars$z) <- vanam
-    vars$z <- vars$z[vanam]
-    if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
-    vars$z <- as.numeric(vars$z)
+    # ## z to numeric
+    # if(is.null(vars$z)) stop("at least one 'z' variable must be specified")
+    # if(is.integer(vars$z)) vars$z <- vanam[vars$z]
+    # if(is.character(vars$z)) vars$z <- vanam %in% vars$z
+    # if(is.logical(vars$z)) vars$z <- as.numeric(vars$z)
+    # if(is.null(names(vars$z))) names(vars$z) <- vanam
+    # vars$z <- vars$z[vanam]
+    # if(any(is.na(vars$z))) vars$z[is.na(vars$z)] <- 0
+    # vars$z <- as.numeric(vars$z)
     ## all others to integer
-    for(v in c("y", "x", "weights", "offset", "cluster", "strata")) {
+    for(v in c("y", "x", "z", "weights", "offset", "cluster", "strata")) {
         if(!is.null(vars[[v]])) {
             if(is.character(vars[[v]])) vars[[v]] <- match(vars[[v]], vanam)
             if(is.logical(vars[[v]])) vars[[v]] <- which(vars[[v]])
@@ -241,7 +241,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     
     mf <- ret$data
     yxvars <- c(vars$y, vars$x, vars$offset, vars$cluster)
-    zerozvars <- which(vars$z == 0)
+    zerozvars <- which(!vanam %in% vanam[vars$z]) # which(vars$z == 0)
     
     # # In future, allow vector of scores in case of a *single* ordered factor
     # ret$scores <- vector(mode = "list", length = length(ret$variables$z))
@@ -284,7 +284,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
     
     ## Get missings (only for relevant variables: yxvars and vars$z)
     get_miss <- function(i) {
-        if (i %in% yxvars || vars$z[i] == 1)
+        if (i %in% yxvars || i %in% vars$z)
             which(is.na(ret$data[, i])) else NA
     }
     ret$missings <- lapply(seq_len(ncol(ret$data)), get_miss)
@@ -299,7 +299,7 @@ extree_data <- function(formula, data, subset, na.action = na.pass, weights, off
         formula <- Formula::as.Formula(sprintf("%s ~ %s | %s",
             paste(vanam[vars$y], collapse = " + "),
             if(length(vars$x) > 0L) paste(vanam[vars$x], collapse = " + ") else "0",
-            paste(vanam[vars$z > 0], collapse = " + ")
+            paste(vanam[vars$z], collapse = " + ")
         ))
         ## SD: "all", "z" are commented out for now since they are not used afterwards
         mt <- list(

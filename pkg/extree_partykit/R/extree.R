@@ -227,10 +227,12 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
 
   ## FIXME: (Z) split variable selection structure should be set up
   ## with NAs if terminal=TRUE but "criterion" selected for "info"
-  svars <- which(partyvars > 0)
+  svars <- partyvars #which(partyvars > 0)
   if (ctrl$mtry < Inf) {
     mtry <- min(length(svars), ctrl$mtry)
-    svars <- .resample(svars, mtry, prob = partyvars[svars])
+    ## FIXME: (HS) we used to have the option to have prob = value between 0 and 1. 
+    ## Do we want that again?
+    svars <- .resample(svars, mtry) #prob = partyvars[svars])
   } 
 
   ## FIXME: (Z) include a condition like
