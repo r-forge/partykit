@@ -2,6 +2,15 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-14 (2021-04-22)}{
+  \subsection{Bugfixes}{
+  \itemize{
+    \item{\code{cforest} ignored \code{converged} argument.}
+}
+}
+}
+
+
 \section{Changes in Version 1.2-13 (2021-03-03)}{
   \subsection{Small Improvements}{
   \itemize{
@@ -11,6 +20,7 @@
   }
 }
 }
+
 
 \section{Changes in Version 1.2-12 (2021-02-08)}{
   \subsection{New Features}{
