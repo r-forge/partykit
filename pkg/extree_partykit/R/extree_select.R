@@ -253,7 +253,7 @@ splitselect_loop <- function(model, trafo, data, subset, weights, whichvar,
     return(list(statistic = NA, p.value = NA))
   }
   
-  ix <- extree_variable(data, index = j, type = "index")
+  ix <- extree_variable(data, index = j, type = "inum")
   ux <- attr(ix, "levels")
   ixtab <- libcoin::ctabs(ix = ix, weights = weights, subset = subset)[-1]
   ORDERED <- is.ordered(x) || is.numeric(x)
