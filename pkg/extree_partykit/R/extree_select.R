@@ -4,6 +4,7 @@
   
   ## find matching objects and set up list
   ## FIXME: (Z) better solution than via search()?
+  ## FIXME: (Z) Search first in package (maybe also in partner packages), then in .GlobalEnv
   snam <- sprintf(paste0("^", select_type, "select_%s"), strategy)
   onam <- unlist(lapply(search(), objects))
   onam <- unique(onam[grep(snam, onam)])
@@ -49,7 +50,7 @@
         return(sfun)
       } 
       
-      ## get appropriat function if character
+      ## get appropriate function if character
       if (is.character(select[[select_nam]])) {
         sfun <- .get_strategy_function(select[[select_nam]], 
                                        select_type = select_type)
