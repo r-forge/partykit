@@ -552,6 +552,8 @@ extree_control <- function(
   
   ## variable selection preprocessing
   if(!is.null(selectfun)) varselect <- selectfun
+  ## FIXME: (HS) First preprocess and then check if loop needed (j %in% names...)
+  ## to allow for character specification of functions that do the loop internally
   if(is.list(varselect) || is.character(varselect) || "j" %in% names(formals(varselect))) {
     var_sel <- .preprocess_select(varselect, select_type = "var")
     varselect <- function(model, trafo, data, subset, weights, whichvar, ctrl) {
