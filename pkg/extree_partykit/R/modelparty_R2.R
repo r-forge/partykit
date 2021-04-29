@@ -1,4 +1,3 @@
-
 .mfluc_select <- function(...)
     function(model, trafo, data, subset, weights, whichvar, ctrl) {
         args <- list(...)
@@ -12,8 +11,8 @@
 {
 
   stopifnot(!SPLITONLY)
-  stopifnot(is.null(data[["yx", type = "index"]]))
-  z <- data[[j]][subset]
+  stopifnot(is.null(extree_variable(data, variable = "yx", type = "inum"))) #data[["yx", type = "index"]]))
+  z <- extree_variable(data, index = j)[subset] #data[[j]][subset]
   estfun <- model$estfun[subset,,drop = FALSE]
   cluster <- data[["(cluster)"]][subset]
   if(length(weights) == 0) {
@@ -194,7 +193,7 @@
   }
   
   ## return version of pvalue that .extree_node deals with
-  rval <- list(statistic = log(stat), p.value = log1p(-exp(pval)))
+  rval <- list(statistic = log(stat), log1p(-exp(pval)))
   return(rval)
 }
 
