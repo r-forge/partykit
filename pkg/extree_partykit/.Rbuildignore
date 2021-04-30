@@ -23,4 +23,4 @@ index.Rmd
 vignettes/glmtree-titanic.Rmd
 ^.*\.Rproj$
 ^\.Rproj\.user$
-#^.*R2.*$
+

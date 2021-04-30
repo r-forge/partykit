@@ -193,7 +193,7 @@
   }
   
   ## return version of pvalue that .extree_node deals with
-  rval <- list(statistic = log(stat), log1p(-exp(pval)))
+  rval <- list(statistic = log(stat), p.value = -log1p(-exp(pval)))
   return(rval)
 }
 

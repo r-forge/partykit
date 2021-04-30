@@ -50,7 +50,7 @@ splitselect_objfun <- function(model, trafo, data, subset, weights, j,
 
 mobtr <- extree(data = bhdat, trafo = simple_lm_trafo, 
   control = extree_control(criterion = "p.value",
-    logmincriterion = log(1 - 0.05),
+    critvalue = 0.05,
     update = TRUE,
     varselect = varselect_mfluc,
     splitselect = splitselect_objfun,
@@ -63,7 +63,7 @@ mobtr <- extree(data = bhdat, trafo = simple_lm_trafo,
     restart = TRUE,
     intersplit = FALSE))
 
-lmtr <- partykit::lmtree(medv ~ lstat + rm | zn + indus + chas + nox + 
+lmtr <- partykit::glmtree(medv ~ lstat + rm | zn + indus + chas + nox +
     age + dis + rad + tax + crim + b + ptratio, data = BostonHousing)
 
 # We still have some issues with the p-values, but the ordering seems fine! :)
@@ -73,5 +73,8 @@ test1_mobtr <- nodeapply(mobtr$nodes, ids = 1, FUN = info_node)[[1]]$criterion
 test1_lmtr <- nodeapply(lmtr, ids = 1, FUN = info_node)[[1]]$test
 (sorted_pvalues_lmtr <- sort(test1_lmtr["p.value", ]))
 
-expect_equal(sorted_pvalues_mobtr, sorted_pvalues_lmtr)
+expect_equal(sorted_pvalues_mobtr, sorted_pvalues_lmtr, tolerance = 0.001)
 expect_equal(names(sorted_pvalues_mobtr), names(sorted_pvalues_lmtr))
+
+mobtr
+lmtr
