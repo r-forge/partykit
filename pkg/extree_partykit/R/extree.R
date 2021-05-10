@@ -269,10 +269,8 @@ extree_fit <- function(data, trafo, converged, varselect = ctrl$varselect,
     if(any(apply(varsel, 1, is.list))) {
       nams <- colnames(varsel)
       varsel <- apply(varsel, 1, function(x) ifelse(is.list(x), return(unlist(x)), return(x)))
-      if(is.matrix(varsel)) varsel <- t(varsel) else {
-        varsel <- t(t(varsel)) 
-        colnames(varsel) <- nams
-      }
+      varsel <- if(is.matrix(varsel)) t(varsel) else as.matrix(varsel)
+      colnames(varsel) <- nams
     }
     
     p <- varsel 
