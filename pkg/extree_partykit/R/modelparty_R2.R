@@ -14,7 +14,7 @@
   stopifnot(is.null(extree_variable(data, variable = "yx", type = "inum"))) #data[["yx", type = "index"]]))
   z <- extree_variable(data, index = j)[subset] #data[[j]][subset]
   estfun <- model$estfun[subset,,drop = FALSE]
-  cluster <- data[["(cluster)"]][subset]
+  cluster <- extree_variable(data, index = "(cluster)") # data[["(cluster)"]][subset]
   if(length(weights) == 0) {
       weights <- rep(1, NROW(estfun))
   } else {
@@ -22,11 +22,11 @@
   }
   obj <- model$obj
 
-  if(length(unique(z)) < 2L) return(list(statistic = NA, p.value = NA))
+  if(length(unique(z)) < 2L) return(list(log.statistic = NA, log.p.value = NA))
   
   ## set up return values
   m <- NCOL(z)
-  pval <- rep.int(NA_real_, m)
+  lpval <- rep.int(NA_real_, m)
   stat <- rep.int(0, m)
   ifac <- rep.int(FALSE, m)
   
@@ -44,7 +44,7 @@
   
   ## stop if all collumn values in process are the same
   if(all(apply(process, 2, function(x) length(unique(x))) == 1)) 
-    return(list(statistic = NA, p.value = NA))
+    return(list(log.statistic = NA, log.p.value = NA))
   
   ## scale process
   process <- process/sqrt(nobs)
@@ -147,14 +147,14 @@
     # compute statistic only if at least two levels are left
     if(length(segweights) < 2L) {
       stat <- 0
-      pval <- NA_real_
+      lpval <- NA_real_
     } else if(iord) {
       proci <- apply(proci, 2L, cumsum)
       tt0 <- head(cumsum(table(z)), -1L)
       tt <- head(cumsum(segweights), -1L)
       if(ctrl$ordinal == "max") {
         stat <- max(abs(proci[tt0, ] / sqrt(tt * (1-tt))))
-        pval <- log(as.numeric(1 - mvtnorm::pmvnorm(
+        lpval <- log(as.numeric(1 - mvtnorm::pmvnorm(
           lower = -stat, upper = stat,
           mean = rep(0, length(tt)),
           sigma = outer(tt, tt, function(x, y)
@@ -164,11 +164,11 @@
       } else {
         proci <- rowSums(proci^2)
         stat <- max(proci[tt0] / (tt * (1-tt)))
-        pval <- log(strucchange::ordL2BB(segweights, nproc = k, nrep = ctrl$nrep)$computePval(stat, nproc = k))
+        lpval <- log(strucchange::ordL2BB(segweights, nproc = k, nrep = ctrl$nrep)$computePval(stat, nproc = k))
       }
     } else {      
       stat <- sum(sapply(1L:k, function(j) (tapply(proci[,j], z, sum)^2)/segweights))
-      pval <- pchisq(stat, k*(length(levels(z))-1), log.p = TRUE, lower.tail = FALSE)
+      lpval <- pchisq(stat, k*(length(levels(z))-1), log.p = TRUE, lower.tail = FALSE)
     }
   } else {
     oi <- if(ctrl$breakties) {
@@ -189,11 +189,11 @@
     } else {
       0
     }
-    pval <- if(from < to) logp.supLM(stat, k, lambda) else NA
+    lpval <- if(from < to) logp.supLM(stat, k, lambda) else NA
   }
   
   ## return version of pvalue that .extree_node deals with
-  rval <- list(statistic = log(stat), p.value = -log1p(-exp(pval)))
+  rval <- list(log.statistic = log(stat), log.p.value = lpval)
   return(rval)
 }
 
