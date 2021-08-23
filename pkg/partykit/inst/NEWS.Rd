@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-15 (2021-08-23)}{
+  \subsection{Small Improvements}{
+  \itemize{
+    \item{Update reference output.}
+}
+}
+}
+
 \section{Changes in Version 1.2-14 (2021-04-22)}{
   \subsection{Bugfixes}{
   \itemize{
