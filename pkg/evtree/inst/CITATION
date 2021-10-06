@@ -10,12 +10,6 @@ citEntry(entry = "Article",
   volume       = "61",
   number       = "1",
   pages        = "1--29",
-  url          = "http://www.jstatsoft.org/v61/i01/",
-
-  textVersion  =
-  paste("Thomas Grubinger, Achim Zeileis, Karl-Peter Pfeiffer (2014).",
-        "evtree: Evolutionary Learning of Globally Optimal Classification and Regression Trees in R.",
-        "Journal of Statistical Software, 61(1), 1-29.",
-        "URL http://www.jstatsoft.org/v61/i01/.")
+  doi          = "10.18637/jss.v061.i01"
 )
 
