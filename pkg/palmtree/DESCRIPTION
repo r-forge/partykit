@@ -12,10 +12,9 @@ Description: This is an implementation of model-based trees with global model
   parameters (PALM trees). The PALM tree algorithm is an extension to the MOB
   algorithm (implemented in the 'partykit' package), where some parameters are
   fixed across all groups. Details about the method can be found in Seibold,
-  Hothorn, Zeileis (2016) <arXiv:1612.07498>. The package offers coef(),
+  Hothorn, Zeileis (2019) <doi:10.1007/s11634-018-0342-1>. The package offers coef(),
   logLik(), plot(), and predict() functions for PALM trees.
 Depends: R (>= 3.1.0), partykit
 Imports: Formula (>= 1.2-1)
 Suggests: mvtnorm, psychotools
 License: GPL-2 | GPL-3
-RoxygenNote: 6.0.1

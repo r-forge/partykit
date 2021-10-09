@@ -70,7 +70,7 @@ member, \code{palmtree()}.
 
 This vignette introduces when and how PALM trees can be used and how they can
 be computed in \proglang{R}. In terms of the methodology we focus on the
-essential and refer to \cite{Seibold+Hothorn+Zeileis:2016} for more details.
+essential and refer to \cite{Seibold+Hothorn+Zeileis:2019} for more details.
 Section~\ref{sec:palmtree} gives a short theoretical introduction followed by
 two illustrative applications with simple PALM trees.
 Section~\ref{sec:advanced_palmtree} shows the more detailed settings that can
@@ -275,7 +275,7 @@ dgp <- function() {
 }
 @
 The results of a simulation study using this data generating process and 
-variations thereof can be found in \cite{Seibold+Hothorn+Zeileis:2016}.
+variations thereof can be found in \cite{Seibold+Hothorn+Zeileis:2019}.
 
 
 In order to apply a PALM tree to a data set simulated from this data generating
@@ -346,7 +346,7 @@ MathExam <- MathExam14W[ , c("pcorrect", "group", "tests", "study",
                              "attempt", "semester", "gender")]
 @
 Due to the large number of students (\Sexpr{nrow(MathExam)}) the students were
-asked to select a group, where the first group worte the exam in the morning
+asked to select a group, where the first group wrote the exam in the morning
 and the second group right after the first group finished. The students in the
 two groups received slightly different tasks. The variable \code{group}
 contains the information on the selected group of each students. We are
@@ -385,8 +385,8 @@ high.
 To obtain coefficients from the PALM tree there are three different options
 <<>>=
 coef(palmtree_math)
-coef(palmtree_math$palm)
-coef(palmtree_math$tree)
+coef(palmtree_math, model = "palm")
+coef(palmtree_math, model = "tree")
 @
 where the first two are equivalent. They return coefficients of the model
 <<>>=
