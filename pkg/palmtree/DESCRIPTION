@@ -1,7 +1,7 @@
 Package: palmtree
 Title: Partially Additive (Generalized) Linear Model Trees
-Date: 2020-05-15
-Version: 0.9-1
+Date: 2021-10-09
+Version: 1.0-0
 Authors@R: c(person(given = "Heidi", family = "Seibold", role = c("aut", "cre"), email = "heidi@seibold.co",
                     comment = c(ORCID = "0000-0002-8960-9642")),
              person(given = "Torsten", family = "Hothorn", role = "aut", email = "Torsten.Hothorn@R-project.org",
