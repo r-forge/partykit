@@ -61,15 +61,14 @@ palmtree(formula, data, weights = NULL, family = NULL,
   while keeping the remaining regression coefficients constant throughout the tree.
   The estimation algorithm iterates between (1) estimation of the tree given
   an offset of the global effects, and (2) estimation of the global regression effects
-  given the tree structure.
+  given the tree structure. See Seibold, Hothorn, and Zeileis (2019, Advances in
+  Data Analysis and Classification) for further details.
   
   To specify all variables in the model a \code{formula} such as
   \code{y ~ x1 + x2 | x3 | z1 + z2 + z3} is used, where \code{y} is the
   response, \code{x1} and \code{x2} are the regressors in every node of the
   tree, \code{x3} has a global regression coefficients, and \code{z1} to \code{z3}
   are the partitioning variables considered for growing the tree.
-
-  The code is still under development and might change in future versions.
 }
 
 \value{
@@ -102,13 +101,19 @@ The function returns a list with the following objects:
   \code{\link[partykit]{lmtree}}, \code{\link[partykit]{glmtree}}}
 
 \references{ 
-Sies A, Van Mechelen I (2015).
-  Comparing Four Methods for Estimating Tree-Based Treatment Regimes.
-  \emph{Unpublished Manuscript}.
+  Seibold H, Hothorn T, Zeileis A (2019).
+    Generalised Linear Model Trees with Global Additive Effects.
+    \emph{Advances in Data Analysis and Classification}, \bold{13}(3), 703-725.
+    \doi{10.1007/s11634-018-0342-1}
+
+  Sies A, Van Mechelen I (2017).
+    Comparing Four Methods for Estimating Tree-Based Treatment Regimes.
+    \emph{The International Journal of Biostatistics}, \bold{13}(1), 20160068.
+    \doi{10.1515/ijb-2016-0068}
 }
 
 \examples{
-## one DGP from Sies and Van Mechelen (2015)
+## illustration: DGP (1) from Sies and Van Mechelen (2017)
 dgp <- function(nobs = 1000, nreg = 5, creg = 0.4, ptreat = 0.5, sd = 1,
   coef = c(1, 0.25, 0.25, 0, 0, -0.25), eff = 1)
 {
