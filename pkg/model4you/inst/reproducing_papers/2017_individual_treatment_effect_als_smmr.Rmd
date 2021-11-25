@@ -23,7 +23,7 @@ load("data/ALSsurvdata.rda")
 
 ## Base models
 ```{r}
-bm_alsfrs <- glm(ALSFRS.Start ~ Riluzole + offset(log(ALSFRS.halfYearAfter)), 
+bm_alsfrs <- glm(ALSFRS.halfYearAfter ~ Riluzole + offset(log(ALSFRS.Start)), 
                  data = ALSFRSdata, family = gaussian(link = "log"))
 summary(bm_alsfrs)
 
