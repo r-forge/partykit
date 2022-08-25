@@ -2,6 +2,14 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-17 (2022-08-25)}{
+  \subsection{Buxfixes}{
+  \itemize{
+    \item{Allow \code{NA} in responses when plotting. Reported by Tyson H. Holmes.}
+}
+}
+}
+
 \section{Changes in Version 1.2-16 (2022-06-20)}{
   \subsection{Buxfixes}{
   \itemize{
