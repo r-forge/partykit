@@ -10,7 +10,7 @@ Description: Recursive partitioning based on (generalized) linear mixed models
     (GLMMs) combining lmer()/glmer() from 'lme4' and lmtree()/glmtree() from 
     'partykit'. The fitting algorithm is described in more detail in Fokkema,
     Smits, Zeileis, Hothorn & Kelderman (2018; <DOI:10.3758/s13428-017-0971-x>).
-Depends: R (>= 3.1.0), lme4, partykit (>= 1.0-4)
+Depends: R (>= 4.0.0), lme4, partykit (>= 1.0-4)
 Imports: graphics, stats, utils, Formula
 Suggests: vcd, lattice
 LazyData: yes

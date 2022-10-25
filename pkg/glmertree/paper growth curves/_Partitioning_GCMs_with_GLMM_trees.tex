@@ -1,0 +1,789 @@
+\documentclass[doc,floatsintext,natbib]{apa7}
+%\usepackage[man,floatsintext]{apa6}
+%\usepackage[doc,floatsintext]{apa6}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{doi}
+\usepackage{booktabs}
+%\usepackage[dvipsnames]{xcolor}
+\usepackage{placeins}
+\usepackage{enumitem}
+\usepackage{xcolor}
+%\usepackage[colorinlistoftodos]{todonotes}
+%%\todo[inline, color=green!40]{This is an inline comment.}
+
+\linespread{1.3}
+
+
+\title{Recursive partitioning of linear growth curve models}
+\shorttitle{Partitioning linear trajectories with GLMM trees}
+\authorsnames{Marjolein Fokkema$^1$, Achim Zeileis$^2$}
+\authorsaffiliations{{$^1$Leiden University}, {$^2$University of Innbruck}}
+
+\abstract{Growth curve models are popular tools for studying development over time. Often, researchers have a specific interest in uncovering subgroups that show different patterns of growth over time. Recursive partitioning methods (RPMs) allow for detecting such subgroups. In this paper, we focus on the use of generalized linear mixed effects model trees (GLMM trees) for partitioning LGCMs. GLMM trees were originally proposed for subgroup detection in clustered cross-sectional data. Here, we introduce recent adaptations of the algorithm that that are of particular relevance for partitioning longitudinal models, and growth curve models in particulat. Using simulated and existing data, we compare the performance of GLMM trees and other methods for partitioning LGCMs: SEM trees, LongCART and longRPart. We find that GLMM trees provide similar accuracy compared to SEM trees, and better accuracy compared to LongCART and longRPart. In addition, GLMM trees allow for the analysis of trajectories with both discrete and continuous time, are less sensitive to (mis-)specification of the random-effects structure and require substantially lower computation times.}
+
+\usepackage{Sweave}
+\begin{document}
+\input{_Partitioning_GCMs_with_GLMM_trees-concordance}
+\maketitle
+
+
+\section{Introduction}
+\label{sec:Introduction}
+
+
+In longitudinal studies, (generalized) linear growth curve modeling is often used to model change over time, and inter individual differences in change. For example, researchers may want to model student's reading or math development in an educational study, or symptom reduction over the course of a clinical trail. Inter individual heterogeneity is likely in such studies, where (groups of) participants show higher or lower rates of growth over time. Through the use of mixed-effects or latent-variable models, such heterogeneity can be captured, and explained by covariates of a-priori known relevance \citep{NeisyMatt18}.
+
+Often, the covariates that predict or affect the trajectories may not be known a-priori, or researchers may have a specific interest in finding subgroups of participants with similar trajectories. Recursive partitioning methods (RPMs), also known as decision-tree methods, are particularly suited in such cases. Several existing RPMs allow for partitioning growth trajectories: For example, GUIDE \citep{Loh02}, longRPart \citep{AbdoyLeBl02}, GEE-based decision trees \citep{Lee05}, longitudinal interaction trees \cite[IT; ][]{SuyMene11}, Structural Equation Model (SEM) trees \citep{BranyOert13, ArnoyVoel21}, mixed-effects longitudinal trees \citep[MELT; ][]{EoyCho14} and LongCART \cite{KundyHare19} allow for partitioning linear growth curve models (LGCMs). Partitioning based on non-linear growth curve models can be performed with the longRPart2 \citep{StegyJaco18} and IT-LT \citep{WeiyLiu20} methods\footnote{Both IT methods specifically focus at detecting so-called \textit{treatment-subgroup interactions}: subgroups that respond more favorably to one treatment than another.}.
+
+In this paper, we focus on generalized linear mixed-effects model trees \citep[GLMM trees; ][]{FokkySmit18}, which allow for subgroup detection in a wide range of mixed-effects models. Although originally not specifically developed for partitioning LGCMs, application of GLMM trees for partitioning LGCMs is straightforward. We propose two adaptations to the algorithm, which we expect to be of particular relevance for partitioning LGCMs. 
+
+The main difference between GLMM trees and the aforementioned RPMs, is that the latter all fit the full parametric model in each of the nodes. In contrast, GLMM trees uses the observations in each node to estimate the fixed-effects parameters, while using all observations to estimate the random-effects parameters. This may not only reduce computation time; it also reduces the total number of parameters to be estimated, which may improve stability and reduce overfitting. This local/global estimation approach was originally proposed by \cite{HajjyBell11} and \cite{SelaySimo12} for trees with constant fits in the terminal nodes; \cite{FokkySmit18} generalized it to model-based trees.
+
+The longRPart, longRPart2, IT-LT and original SEM tree algorithms employ an exhaustive split detection procedure: For every possible cut point in the current node, the full parametric model is re-estimated in the two resulting nodes. To choose the optimal cutpoint, a likelihood ratio test is computed for every possible cut point. Drawbacks of this exhaustive search are a heavy computational burden, as well as a selection bias towards covariates with a larger number of possible cut points \citep{ShihyTsai04, Shih04}. 
+
+LongCART, MELT, GEE-based decision trees and score-based SEM trees fit full parametric models in each of the nodes as well, but do not refit models for cutpoint selection; they employ the predictions or residuals from the fitted model in the current node for selecting the best split. This reduces computational burden. Furthermore, these approaches allow for employing a two-step approach for split detection, which separates variable and cutpoint selection, thus preventing variable selection bias. The GLMM tree algorithm is more similar to the latter group of RPMs, in that it employs a two-step approach to split detection.
+
+The remainder of this paper is structured as follows: In the next section (Estimation) we explain how GLMM trees are estimated, and how estimation can be adjusted to (better) account for dependence structures encountered in LGCMs. Next, in Study I, we perform a simulation study to assess performance of GLMM trees and the proposed adaptations in partitioning LGCMs. In Study II, we use the same simulation design to compare the performance of GLMM trees with that of two other mixed-effects RPMs: SEM trees and LongCART.  In Study III, we compare the performance of GLMM trees and longRPart in partitioning children's trajectories of reading, math and science abilities. In the Discussion, we summarize our findings and discuss implications.
+
+% Compared to RPMs that employ likelihood-ratio tests as a splitting criterion \citep{AbdoyLeBl02, StegyJaco18, BranyOert13, WeiyLiu20}, GLMM trees require less computation, do not present with a variable selection bias, and do not require partitioning variables to be measured at the highest level.
+
+% Compared to GEE-based RPMs of \cite{Lee05, SuyMene11, CalhyLevi20}, GLMM trees also allow for a GEE-type approach to split selection, while explicitly modeling inter-individual variation through the estimation of random effects.
+
+% Compared to RPMs which compute splitting criteria based on only the sign of residuals \cite{ChauyLo95, Loh02, Lee05}, the score-based tests employed by GLMM trees allow for capturing both sign and magnitude of misfit.
+
+
+
+\section{Estimation of GLMM trees}
+
+In the GLMM tree model \citep{FokkySmit18}, expectation $\mu_i$ of outcome vector $y_i$ is modeled through a linear predictor and suitable link function:
+%
+\begin{eqnarray}
+\label{eq:expected_value}
+E[y_i | X_i] & = & \mu_i, \\
+\label{eq:GLMMtree}
+g(\mu_{i}) & = & X_{i} \beta_{j} + Z_{i} b_{i}
+\end{eqnarray}
+%
+In the current paper, $g$ is the identity function and we assume a continuous response with normally distributed errors. Further, $X_i$ is the $N_i \times (p+1)$ fixed-effects design matrix for subject $i$ ($i = {1, \dots, N}$). We assume time is the predictor variable of interest, thus $p=1$ and $X_i$ comprises a column of 1s for the intercept and a column for the observed timepoints of subject $i$. The set of observed timepoints may differ between subjects, and thus the number of rows of $X_i$ may differ between subjects. $\beta_j$ is a column vector of node-specific fixed-effects parameters, their values depending on terminal node $j$ of which observation $i$ is part. Subscript $j$ is what distinguishes the GLMM tree model from a traditional GLMM. As in a traditional GLMM, $Z_i$ is the random-effects design matrix for subject $i$ and contains (a subset of) the columns of $X_i$. Further, $b_i$ is a vector of random effects of subject $i$. We assume that $b$ follows a (possibly multivariate) normal distribution with mean zero and (co)variance $\Sigma_{b}$. We assume Gaussian errors, with constant variance across subjects. 
+
+The parameters of a traditional GLMM can be estimated by, for example, (restricted) maximum likelihood. The GLMM tree model in Eq. \ref{eq:GLMMtree} is estimated by alternating between estimating the partition (i.e., subgroups or terminal nodes $j$), and estimating the random- and fixed-effects parameters, as per the following algorithm: 
+
+\begin{enumerate}
+\setlength\itemsep{0em}
+	\setcounter{enumi}{-1}
+	\item Initialize by setting $r$ and all values $\hat{b}_{(r)}$ to 0.
+	\item Set $r = r+1$. Estimate the partition using $Z_{i} \hat{b_i}_{(r-1)}$ as an offset.
+	\item Fit the mixed-effects model $g(\mu_{i}) = X_{i} \beta_{j} + Z_{i} b_i$ with terminal node $j(r)$ from Step~1. Extract posterior predictions $\hat{b}_{(r)}$ from the estimated model.
+	\item Repeat Steps~1 and~2 until convergence.
+\end{enumerate}
+
+The algorithm initializes by setting $b$ to $0$, since the random effects are initially unknown. In every iteration, the partition is (re-)estimated using a GLM-based recursive partition in Step~1, while the fixed- and random-effects parameters are (re-)estimated in Step~2. Note that the random effects are not partitioned, but estimated \textit{globally}, using all observations in the dataset. The fixed effects are estimated \textit{locally}, using the observations in the current node. Convergence of the algorithm is monitored by computing the log-likelihood criterion of the mixed-effects model fitted in Step~3. Typically, this converges if the tree does not change from one iteration to the next. 
+
+
+\subsection{Initialization}
+
+Studies to date indicate that initializing estimation with zero random effects yields an accurate final model \citep{HajjyBell11, HajjyBell14, HajjyLaro17, SelaySimo12, FuySimo15, FokkySmit18}. \cite{SelaySimo12} assessed the impact of different initial values and found only minor impact on the final model, which became smaller with increasing sample size. In \cite{FokkySmit18}, we found initializing estimation of GLMM trees with zero random effects performed well in cross-sectional datasets. With longitudinal data (e.g., LGCMs), observations from the same unit tend to be more strongly correlated than in cross-sectional data; initialization with zero random effects may provide an unrealistic starting point which may be difficult to overcome in subsequent iterations. Initializing GLMM-tree estimation by estimating the random effects, assuming no grouping structure, may provide a better starting point. We thus hypothesize that for partitioning LGCMs, initializing GLMM-tree estimation with the random effects can improve subgroup recovery and predictive accuracy.
+
+
+\subsection{Partitioning}
+
+The partition (or tree) in Step~1 is estimated using model-based recursive partitioning \citep[MOB; ][]{ZeilyHoth08}. The MOB algorithm cycles iteratively through the following steps: 
+
+\begin{enumerate}
+\setlength\itemsep{0em}
+\renewcommand{\labelenumi}{\alph{enumi})}
+	\item Fit the parametric model to all observations in the dataset. 
+	\item Statistically test for parameter instability with respect to each of the partitioning variables.
+	\item If there is some overall parameter instability, split the dataset with respect to the partitioning variable associated with the highest instability.
+	\item Repeat Steps (a) through (c) in each of the resulting subgroups.
+\end{enumerate}
+
+Parameter stability is tested in Step~(b), using the the \textit{scores} (gradient contributions) from the model fitted in Step~(a). Under mild regularity conditions, the scores have an expected value of 0. The parameter stability tests evaluate whether the scores fluctuate randomly around their mean of 0, or if they exhibit systematic deviations when they are ordered by the values of one or more covariates. For continuous covariates (or ordered covariates with a large enough number of unique values), this involves computing the cumulative score process $W_k(t)$ with respect to each potential partitioning variable $U_k$ \citep{ZeilyHoth08}:
+
+\begin{eqnarray}
+\label{eq:efp}
+W_{k}(t) = \hat{J}^{-1/2} n^{-1/2} \sum^{[nt]}_{i=1}{\hat{\psi}}_{\sigma(U_{ik})}
+\end{eqnarray}
+
+where $\hat{J}$ is a suitable estimate of the covariance matrix of the parametric model fitted in the current node, and $n$ gives the number of observations in the current node. Further, $\hat{\psi}_{\sigma(U_{ik})}$ denotes estimated scores (denoted $\hat{\psi}$), with the subscript {$\sigma(U_{ik})$} denoting their ordering by the values of partitioning variable $U_k$. Note that $0 \leq t \leq 1$, thus $nt = 1$ for an observation with a unique minimum on the partitioning variable, and $nt = n$ for an observation with a unique maximum. 
+
+From the cumulative score process $W_k(t)$, a range of test statistics can be derived which capture non-random fluctuations. For numerical partitioning variables, a maximum Lagrange multiplier test statistic can be computed, which takes the maximum of the squared Euclidean norm of $W_k(t)$, weighted by it's variance \citep{ZeilyHorn07}. This statistic is referred to as the \textit{supLM} statistic, and is asymptotically equivalent to the maximum of likelihood-ratio statistics. Approximate asymptotic $p$-values for the \textit{supLM} statistic can be computed with the method of \cite{Hans97}. Categorical covariates do not provide an implicit ordering. Scores are therefore binned at each level of the covariate and a test statistic is computed that does not depend on the ordering of the levels \citep{MerkyFan14}. 
+
+When partitioning LGCMs, covariates will often not be measured at the lowest level, but at the subject level. The covariance matrix employed in Eq. \ref{eq:efp} can account for this clustering of observations within subjects \citep[e.g., ][]{ZeilyKoll20} by employing a clustered covariance matrix $\hat{J}$ in computation of the score process. \textcolor{orange}{@AZ: Thus, only computation of $\hat{J}$ is affected by cluster argument? Sscores are summed before computing $\hat{J}$, but computation of $\sum^{[nt]}_{i=1}{\hat{\psi}}_{\sigma(U_{ik}})$ is unaffected?} This resembles a GEE-type approach, where dependence between observations is accounted for in the variance structure. We thus hypothesize that for partitioning LGCMs, use of clustered covariances yields more accurate subgroup recovery and improves predictive accuracy.
+
+
+
+
+\section{Study I: Performance of LM(M) trees}
+
+To test whether initializing GLMM-tree estimation with the random effects and use of clustered covariances in computation of the parameter stability tests yields more accurate subgroup recovery when partitioning LGCMs, we performed a simulation study.
+
+\subsection{Method}
+
+\subsubsection{Data-generating design}
+
+
+
+\begin{figure}[!ht]
+\caption{Design of the subgroup-specific fixed effects in the simulation.}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-003}
+\label{fig:design_tree}
+\end{figure}
+
+We simulated datasets according to the subgroup structure depicted in Figure~\ref{fig:design_tree}. Specifically, four non-overlapping subgroups corresponding to the terminal nodes of the tree in Figure~\ref{fig:design_tree} were created. Observations in terminal nodes 3 and 4, and in terminal nodes 6 and 7 have the same fixed intercept ($\beta_{j0}$). To facilitate comparison with the SEM tree algorithm, the same timepoints were generated for all subjects (i.e., $t = 0, 1, 2, 3, 4$). The response was computed as:\\
+
+$$y_{i} =  X_{i} \beta_{j} + Z_{i} b_i + \epsilon_{i},$$
+
+\noindent where $\beta_j$ corresponds to the fixed effects in terminal node $j$ of which subject $i$ is part. The fixed- and random-effects design matrices $X_i$ and $Z_i$ are identical, each comprising two columns: a vector of 1s for the intercept, and a vector of timepoints. The value for $b_i$ was generated from a multivariate normal distribution with mean zero and a $2 \times 2$ diagonal covariance matrix $\Sigma$, the diagonal entries determined by the level of the data-generating design described next. Values in $\epsilon_{i}$ were independently generated from $N(\mu = 0, \sigma = \sqrt{5})$.   
+
+We varied the following data-generating characteristics:
+
+\begin{itemize}
+\setlength\itemsep{0em}
+\setlength{\itemindent}{0.2in}
+\item Number of subjects: small ($N = 100$) or large ($N = 250$).
+\item Variance of the random intercept: small ($\sigma_{b_0}^2 = 1$) or large ($\sigma_{b_0}^2 = 2$).
+\item Variance of the random slope: small ($\sigma_{b_1}^2 = .1$) or large ($\sigma_{b_1}^2 = .4$).
+\item Number of noise partitioning variables: small ($p = 5$) or large ($p = 25$).
+\item Intercorrelation between partitioning variables: absent ($\rho = 0$) or present ($\rho = .3$).
+\end{itemize}
+
+We employed a full factorial design, yielding $2^5 = 32$ cells.We performed 100 repetitions for each cell of the design. For generating and analysing data, we used R \citep[][version 4.1.2]{R22}. 
+
+
+
+\subsubsection{Partitioning methods}
+
+We fitted two different LM trees to each dataset: One employing default settings (i.e., parameter stability tests performed at level I) and one where the parameter stability tests employed clustered covariance matrices (i.e., parameter stability tests performed at level 2). To fit LM trees, we used package \textbf{partykit} \citep[version 1.2-15][]{HothyZeil15}.
+
+We fitted eight different LMM trees to each dataset: We estimated an LMM tree using default settings (i.e., parameter stability tests performed using observation-level covariances, estimation initialized with the tree structure); an LMM tree with parameter stability tests performed using cluster-level covariances; an LMM tree estimated by initializing estimation with the random effects; an LMM tree estimated by combining the latter two approaches. Each of the four approaches were applied with a specification comprising random intercepts only, as well as with a specification comprising both random intercepts and slopes, yielding eight different LMM trees. The different specifications allow for assessing the effect of mis-specification of the random-effects structure. To fit LMMs, we used package \textbf{lme4} \cite[version 1.1-29][]{BateyMach15} and to fit LMM trees we used package \textbf{glmertree} \citep[version 0.2-0][]{FokkySmit18}.
+
+
+
+\subsubsection{Evaluation of performance}
+
+We evaluated tree accuracy by counting the number of splits in each tree. Trees with $> 3$ splits are indicative of Type-I error, while trees with $> 3$ splits are indicative of Type-II errors (i.e., too low power for tests of the true partitioning variables). We also assessed which variable was selected for the first split in every tree. 
+
+
+\subsection{Results}
+
+
+
+
+
+
+
+
+
+\begin{figure}[!ht]
+\caption{Tree size distributions for LM(M) trees.}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-009}
+\end{subfigure}
+{\footnotesize \textit{Note.} The $y$-axis is on the log scale and represents tree size. Grey lines indicate true number of splits (3 nodes). cluster = cluster-level covariances employed in parameter stability tests; ranef init = estimation initialized with the random effects. Distances on $y$-axis are on the log scale.}
+\label{fig:LMM_sizes}
+\end{figure}
+
+Figure~\ref{fig:LMM_sizes} depicts the number of splits implemented by each partitioning approach. The default fitting approach overfits, and implemented $> 3$ splits in most datasets. This overfitting is successfully mitigated by the use of cluster-level covariances in the parameter stability tests (mean number of splits 2.87), which appears most effective for LMM trees (mean number of splits 3.02 for trees estimating only random intercepts; 2.96 for trees estimating random intercepts and slopes). 
+
+Initializing estimation with the random effects also effectively reduces tree size, but too strongly when random slopes are estimated (mean number of splits without random slopes 3.15; with random slopes 1.15). Heterogeneity related to partitioning variables measured at level 2 can either be captured and explained by the tree, or captured by the random effects. By initializing estimation with the random effects effects, this heterogeneity can no longer be captured by the tree; this likely worsens with more complex random-effects specification. Combining the use of random-effects initialization and cluster-level covariances does not appear beneficial, yielding a similar and too high number of splits, irrespective of the random-effects specification (mean number of splits 4.1).
+
+Distributions of the number of splits, separated according to the levels of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ are depicted in Figure~\ref{fig:LMM_sizes_interact} (Appendix~\ref{sec:AppendixA}). These plots show a pattern similar to Figure~\ref{fig:LMM_sizes}, with use of cluster-level covariances providing the most accurate split recovery. In addition, the plots show that increasing values of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ yield higher numbers of splits, while the effect of $\rho$ is very minor. \textcolor{orange}{I moved plots to Appendix because of their size and because they are not of main interest. Not sure if following results should be discussed here or in the Appendix:} The main deviation from this pattern of main effects is that increased variance of the random effects (increases $\sigma_{b_0}$ and/or $\sigma_{b_1}$) yields lower numbers of splits if random slopes are estimated and estimation is initialized with the random effects.
+
+Table~\ref{tab:first_splits} shows the variables selected for the first split. Only rarely is the wrong variable selected for the first split, and this occurs only with random-effects initialization and observation-level covariances in the parameter stability tests are employed. In the large majority of those cases, $U_2$ and $U_3$ were selected for the first split. 
+
+
+
+
+
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Wed Oct 26 00:12:30 2022
+\begin{table}[ht]
+\caption{Variables selected for the first split by each LM(M) tree approach.} 
+\label{tab:first_splits}
+\begin{tabular}{llrrrrr}
+  \hline
+Random effects & Fitting approach & $U_1$ & $U_2$ & $U_3$ & $U_4$ - $U_{25}$ & no split \\ 
+  \hline
+$\sigma_{b_0} = \sigma_{b_1} = 0$ &  & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  $\sigma_{b_0} = \sigma_{b_1} = 0$ & clustered cov. & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+   \hline
+$\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ &  & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & clustered cov. & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & ran.eff. init. & 0.996 & 0.002 & 0.002 & 0.001 & 0.000 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & both & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+   \hline
+$\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ &  & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & clustered cov. & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & ran.eff. init. & 0.499 & 0.007 & 0.006 & 0.003 & 0.485 \\ 
+  $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & both & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+   \hline \multicolumn{7}{l}{\footnotesize\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables are}\\  \multicolumn{7}{l}{\footnotesize continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). $\sigma_{b_0}$ and $\sigma_{b_1}$} are\\  \multicolumn{7}{l}{\footnotesize the standard deviations of the random intercept and slope, respectively.}\\ \end{tabular}
+\end{table}
+\FloatBarrier
+
+
+
+
+
+\section{Study II: Comparison of LM(M) trees with SEM trees and LongCART}
+
+In this second study, we compare performance of LM(M) trees with that of SEM trees and LongCART. This allows us to evaluate the possible (dis)advantages of global versus local estimation of random-effects parameters, as well as the performance of different splitting criteria. The same data-generating design as in Study I was employed. We compared performance of LM(M) trees employing clustered covariances only, which showed good performance in Study I.
+
+\subsection{Method}
+
+We fitted SEM trees using two different splitting criteria: First, we used the default "naive" splitting approach \citep{BranyOert13}, in which likelihood ratio tests (LRTs) are used as the splitting criterion. The likelihood of the SEM fitted to the observations in the current node is compared against the likelihood of a range of two-group SEMs, in which the two groups are defined by each possible candidate split. An LRT can thus be computed for each candidate split, which quantifies the improvement in fit that may be obtained by implementing the split. In each step, the candidate yielding the highest LRT is selected for splitting, and splitting is continued as long as a candidate split yields a $p$-value of the LRT above a pre-specified $\alpha$ level (0.05, by default). 
+
+Second, we fitted score-based SEM trees, as proposed by \cite{ArnoyVoel21}. This approach uses the MOB algorithm described in the Introduction, where the parametric model fitted in step (a) is a SEM. While for GLMM trees, parameter stability tests are computed for the fixed-effects parameters only, score-based SEM trees compute parameter stability tests based on both fixed- and random-effects parameters. 
+
+To specify the node-specific models for SEM trees, we employed an LGCM specification with the response at each timepoint regressed on a latent intercept and slope. Intercept loadings were fixed to 1; slope loadings were fixed to the value of $t$ at each timepoint. With both LRT- and score-based splitting criteria, we employed three different model specifications: a) variances of latent slope and intercept fixed to 0; b) variance of latent intercept freely estimated, variance of latent slope fixed to 0; c) variances of latent intercept and slope freely estimated. Errors were assumed uncorrelated between timepoints, error variances freely were estimated for each timepoint. To fit SEMs, we used package \textbf{lavaan} \citep[version 0.6-11][]{Ross12} and to fit SEM trees, we used package \textbf{semtree} \citep[version 0.9.17][]{BranyOert13}.    
+
+We fitted a LongCART tree to each dataset, employing default settings. The LongCART function estimates node-specific models comprising a random intercept term; this default cannot be overridden. A fixed-effects model was specified with the response regressed on time and a subject-specific random intercept. We used package \textbf{semtree} to fit SEM trees \citep[][version 0.9.17]{BranyOert13}. To fit LMMs, we used package \textbf{nlme} \citep[version 3.1-153][]{PinhyBate00} and to fit LongCART trees we used package \textbf{LongCART} \citep[version 3.1][]{Kund21}.    
+
+
+\subsection{Results}
+
+
+
+
+
+
+
+
+\begin{figure}[!ht]
+\caption{Tree size distributions for LM(M) trees with clustered covariances, SEM trees and LongCART.}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-014}
+%\includegraphics{tree_size_plot.png}
+\end{subfigure}
+{\footnotesize \textit{Note.} Values on $x$-axis indicate whether random intercepts and/or slopes were estimated: no = random intercepts and slopes fixed to 0; int. = variance of random intercept freely estimated, variance of random slope fixed to 0; int. + slope = variance of random intercept and slope (and correlation between the two) freely estimated. Distances on $y$-axis are on the log scale. Grey lines indicate true number of splits (3 splits).}
+\label{fig:tree_sizes}
+\end{figure}
+
+Figure~\ref{fig:tree_sizes} depicts tree size distributions for the different algorithms. LRT-based SEM trees appear somewhat overpowered with a mean number of splits of 3.61 ($SD = $1.71), while score-based SEM trees comprised the correct number of splits on average ($M = $3.09; $SD = $1.61). SEM trees appear more systematically affected by mis-specification of the random-effects structure than LMM trees and under-specification yields a higher number of splits. LongCART trees appear underpowered, with a mean number of splits of 2.01 ($SD = $1.45). This could be the result of under-specification of the random-effects structure: LongCART trees incorporate a random-intercept term only and this default cannot be overridden.
+
+
+%We performed pairwise t-tests to assess differences between the approaches in Figure~\ref{fig:tree_sizes}. Bonferroni-corrected $p$-values indicated significant differences in tree size between most methods (all $p < .001$), with some notable exceptions: The number of splits implemented by LMM trees with clustered covariances was indistinguishable from that of LRT-based SEM trees with freely estimated random intercepts and slopes, and from the score-based SEM trees with freely estimated random intercepts. 
+
+
+Figure~\ref{fig:tree_sizes_interact} (Appendix \ref{sec:AppendixA}) presents tree size distributions, separated according to the levels of the data-generating parameters. Strongest effects were observed for $N$, followed by $\sigma_{b_0}$, $p_{noise}$, $\rho$ and $\sigma_{b_1}$. \textcolor{orange}{I moved plots to Appendix because of their size and because they are not of main interest. Not sure if following results should even be discussed here or in the Appendix:} Results for $N$ were as expected for all methods: with increasing sample size, more splits are implemented. Both LRT- and score-based SEM trees seem only affected by levels of $\sigma_{b_0}$, $p_{noise}$ and $\rho$ under misspecification of the random effects. Especially when both random intercept and slope variances are fixed to 0, higher levels of $\sigma_{b_0}$ and $p_{noise}$ yield more splits with both SEM tree approached. LRT-based SEM trees seem unaffected by levels of $\rho$, while score-based SEM trees seemed to implement a larger number of splits with increasing values of $\rho$. This pattern seemed reversed for increased magnitude of $\sigma_{b_1}$, which yields a lower number of splits for both SEM tree approaches, but only when the random effects were correctly specified. LongCART implemented more splits with higher levels of $p_{noise}$ and $\rho$, but was unaffected by levels of $\sigma_{b_0}$ and $\sigma_{b_1}$.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Wed Oct 26 00:12:30 2022
+\begin{table}[!ht]
+\caption{Variable selected for the first split by each of the partitioning methods.} 
+\label{tab:first_splits2}
+\begin{tabular}{llrrrrr}
+  \hline
+Algorithm & Random effects & $U_1$ & $U_2$ & $U_3$ & $U_4$ - $U_{25}$ & no split \\ 
+  \hline
+LM(M) tree & $\sigma_{b_0} = \sigma_{b_1} = 0$ & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+    (clustered & $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+      covariances) & $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+   \hline
+SEM tree & $\sigma_{b_0} = \sigma_{b_1} = 0$ & 1.000 & 0.000 & 0.000 & 0.000 & 0.000 \\ 
+    (LRT-based) & $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & 0.998 & 0.000 & 0.002 & 0.000 & 0.000 \\ 
+    & $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & 0.992 & 0.001 & 0.001 & 0.002 & 0.004 \\ 
+   \hline
+SEM tree & $\sigma_{b_0} = \sigma_{b_1} = 0$ & 0.761 & 0.176 & 0.052 & 0.012 & 0.000 \\ 
+    (score-based) & $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ & 0.879 & 0.077 & 0.044 & 0.000 & 0.000 \\ 
+    & $\sigma_{b_0} > 0$, $\sigma_{b_1} > 0$ & 0.999 & 0.000 & 0.000 & 0.000 & 0.001 \\ 
+   \hline
+LongCART & $\sigma_{b_0} > 0$, $\sigma_{b_1} = 0$ &  & 0.419 & 0.297 & 0.092 & 0.192 \\ 
+   \hline \multicolumn{7}{l}{\footnotesize\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables}\\  \multicolumn{7}{l}{\footnotesize are continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). $\sigma_{b_0}$ and $\sigma_{b_1}$}\\  \multicolumn{7}{l}{\footnotesize are the standard deviations of the random intercept and slope, respectively.}\\ \end{tabular}
+\end{table}
+
+
+Table~\ref{tab:first_splits2} presents variable selection frequencies for the first split in the fitted trees. For SEM trees, the LRT criterion yields almost perfect accuracy for the first split. The score-based approach selected the wrong splitting variable for the first split in about 12\% of datasets, but only when the random-effects structure was mis-specified (i.e., $\sigma_{b_0}$ and/or $\sigma_{b_1}$ fixed to 0). When random effects were correctly specified, score-based SEM trees also provided perfect recovery of the first split. Closer inspection of parameter stability tests suggested that the tests are (much) more sensitive to instability in the fixed slope than in the fixed intercept.
+
+LongCART trees exhibit strikingly low accuracy for recovering the first split, selecting the wrong variable in all datase. LongCART showed a more dramatic tendency than score-based SEM trees to use $U_2$ and $U_3$ for implementing the first split. Of note, in the LongCART trees where no split was implemented (19\% of datasets), 99\% $U_1$ was the strongest splitting candidate, but the parameter stability test simply did not exceed the criterion of significance in those datasets. This suggests that either the parameter stability tests proposed by \cite{KundyHare19} are less sensitive to instabilities with respect to the fixed intercept, and/or with respect to categorical covariates. 
+
+
+
+
+\begin{figure}[!ht]
+\caption{Computation time distributions for the different partitioning methods.}
+\begin{subfigure}{.6\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-020}
+\end{subfigure}
+\label{fig:comp_times}
+\end{figure}
+
+
+Figure~\ref{fig:comp_times} presents computation time distributions for the partitioning algorithms. A clear computational advantage is observed for LM trees, with an average computation time of 0.141 seconds. Including random-effects estimation increased computation time: for LMM trees, average computation time was 0.65 seconds. LongCART and SEM trees yielded much longer computation times, with LongCART requiring 23.36 seconds, score-based SEM trees 4.4 seconds, and LRT-based SEM trees 2685.37 seconds computation time, on average. 
+
+
+\FloatBarrier
+
+
+\section{Study III: Application}
+
+\subsection{Method} 
+
+\subsubsection{Dataset}
+
+We analyzed longitudinal assessments of children's reading, math and science abilities from the Early Childhood Longitudinal Study-Kindergarten class of 1998-1999 \citep[ECLS-K; ][]{NCES10}. Data were collected from kindergarten 1998 through eighth grade 2007. In the current analyses, we focus on assessments during kindergarten, 1st, 3rd, 5th and 8th grade. In the ECLS-K study, data from 21,304 children from 1,018 schools across the USA were collected.  
+
+Response variables are reading, math and science ability. These were assessed using multi-item cognitive tests, from which latent ability estimates were computed with a mean of zero and variance of one. Reading and math abilities were assessed in all five rounds of data collection, while science knowledge was assessed in the 3rd, 5th and 8th grade only. We analyzed data from  children who completed all assessments ($N = 6,277$ for reading; $N = 6,512$ for math; $N = 6,625$ for science).
+
+Our analyses focus on predicting ability trajectories, based on baseline characteristics. Time was measured as the number of months since the baseline assessment. In order to obtain approximately linear trajectories, used $\sqrt{\mathrm{months}}$ as the timing metric for reading and math trajectories, and $\mathrm{months}^{\frac{2}{3}}$ for science trajectories.
+
+We used the following time-invariant covariates as potential partitioning variables:
+
+\begin{itemize}
+\setlength\itemsep{0em}
+\setlength{\itemindent}{0.2in}
+\item Gender (51.1\% male)
+\item Age in months at baseline (range 53 to 96; M = 6.14 years at baseline).
+\item Race (8 categories)
+\item First time in kindergarten (yes/no)
+\item Socio-economic status (range -5 to 3)
+\item Fine motor skills (e.g., drawing figures; range 0 to 9)
+\item Gross motor skills (e.g., ability to hop, skip and jump; range 0 to 8)
+\item Interpersonal skills (range 1 to 4)
+\item Self-control (range 1 to 4)
+\item Internalizing problem behavior (range 1 to 4)
+\item Externalizing problem behavior (range 1 to 4)
+\end{itemize}
+
+
+
+
+
+\subsubsection{Partitioning methods}
+
+
+We fitted four LM(M) trees, employing the same approaches applied in Studies I and II, except for the default approaches, and the random-effects initialization approach when both random intercepts and slopes were estimated; approaches which showed far from optimal performance in Study I. 
+
+For comparison, we fitted longRPart \citep{AbdoyLeBl02} trees. We opted for longRPart, because neither SEM tree, LongCART, longRPart or longRPart2 implementations provide functionality to obtain predictions for new observations. We wrote custom functionality to allow for prediction with longRPart trees, but could not produce this for the other methods. We expect, however, that performance of longRPart will be representative of the other methods, in the sense that all fit the full mixed-effects model locally. Furthermore, SEM tree could not be employed because assessments at each wave did not take place on identical timepoints, which is a requirement for SEM-based growth curve modeling.
+
+Using package \textbf{longRPart} \citep[version 1.0][]{StewyAbdo12}, we fitted two longRPart trees with different random effects specifications: One tree comprising a random intercept only, and one tree comprising both a random intercept and slope, with respect to student. In order to implement a split, longRPart uses a criterion based on the minimum decrease in deviance, which is set to 0.01, by default. This yielded a very large number of splits in the current analyses and poor predictive accuracy. We therefore restricted maximum tree depth to 5, yielding a maximum of $2^5$ = 32 terminal nodes, or 31 splits. Significance of the LRT, or a cross-validation approach to determine whether to implement a split or not may yield better results, but neither approach is implemented in longRPart (nor longRPart2). 
+
+
+
+\subsubsection{Evaluation of performance}
+
+The ECLS-K datasets have exceptionally large sample sizes, which may not be representative of real-world applications. We therefore employed random sampling to obtain training samples of $N=250$ and $N=1,000$ children, and evaluated predictive accuracy using the responses of children not included in the training sample. For each combination of response variable and sample size, we performed 100 repetitions. Because we used disjunct samples of children for training and testing, only the fixed-effects parts of each fitted model were used for prediction; random effects were fixed to 0. Accuracy was assessed by computing the test MSE, by taking the mean squared difference between predicted and observed ability estimates of test observations. We measured tree size by counting the number of splits in each tree, and measured computation time in seconds. 
+
+
+\subsection{Results}
+
+
+
+
+\begin{figure}[!ht]
+\caption{Mean squared errors for trees fitted to math (top), reading (middle) and science (bottom) ability trajectories.}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-021}
+\end{subfigure}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-022}
+\end{subfigure}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-023}
+\end{subfigure}
+{\footnotesize \textit{Note. }The $y$-axis on the right gives an estimate of the proportion of variance explained, computed as $1 - \frac{MSE}{var(y)}$. Distances on $y$-axis are on the log scale.}
+\label{fig:application_MSEs}
+\end{figure}
+
+
+
+
+
+
+\begin{table}
+
+\begin{threeparttable}
+\caption{\label{tab:application_MSEs}Cross-validated mean squared errors for each of the response variables.}
+\centering
+\fontsize{8}{10}\selectfont
+\begin{tabular}[t]{lcccccc}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{2}{c}{Math} & \multicolumn{2}{c}{Reading} & \multicolumn{2}{c}{Science} \\
+\cmidrule(l{3pt}r{3pt}){2-3} \cmidrule(l{3pt}r{3pt}){4-5} \cmidrule(l{3pt}r{3pt}){6-7}
+\multicolumn{1}{c}{ } & \multicolumn{1}{c}{N = 250} & \multicolumn{1}{c}{N = 1,000} & \multicolumn{1}{c}{N = 250} & \multicolumn{1}{c}{N = 1,000} & \multicolumn{1}{c}{N = 250} & \multicolumn{1}{c}{N = 1,000} \\
+\cmidrule(l{3pt}r{3pt}){2-2} \cmidrule(l{3pt}r{3pt}){3-3} \cmidrule(l{3pt}r{3pt}){4-4} \cmidrule(l{3pt}r{3pt}){5-5} \cmidrule(l{3pt}r{3pt}){6-6} \cmidrule(l{3pt}r{3pt}){7-7}
+LM tree (c) & 0.1407 (0.004) & 0.1290 (0.002) & 0.1262 (0.003) & 0.1191 (0.001) & 0.4178 (0.012) & 0.3787 (0.007)\\
+LMM tree (i,c) & 0.1398 (0.004) & 0.1283 (0.002) & 0.1261 (0.003) & 0.1191 (0.001) & 0.4151 (0.013) & 0.3777 (0.006)\\
+LMM tree (i,s,c) & 0.1403 (0.005) & 0.1287 (0.002) & 0.1264 (0.003) & 0.1192 (0.001) & 0.4143 (0.012) & 0.3777 (0.006)\\
+LMM tree (i,r) & 0.1441 (0.006) & 0.1285 (0.002) & 0.1302 (0.004) & 0.1202 (0.002) & 0.4124 (0.013) & 0.3762 (0.006)\\
+longRPart (i) & 0.1463 (0.006) & 0.1318 (0.003) & 0.1335 (0.006) & 0.1213 (0.003) & 0.4197 (0.015) & 0.4050 (0.011)\\
+longRPart (i,s) & 0.1430 (0.005) & 0.1306 (0.002) & 0.1291 (0.004) & 0.1199 (0.002) & 0.4289 (0.020) & 0.4296 (0.022)\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\small
+\item [] \footnotesize \textit{Note.} Values represent means over 100 repetitions, parenthesized values represent SDs and can be interpreted as standard errors. c = cluster-level covariances; r = estimation initialized with random effects; i =  random-intercept variance freely estimated; s = random-slope variance freely estimated.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+
+
+
+
+
+
+
+
+Figure~\ref{fig:application_MSEs} and Table~\ref{tab:application_MSEs} present MSE distributions for each of the partitioning approaches, separated by sample size\footnote{LongRPart trees comprising random intercepts and slopes ran into estimation errors in some datasets: In the Math ability data, 2 out of 200 datasets did not yield a tree. All tree estimations converged successfully in the Reading ability data. In the Science ability data, 40 out of 200 datasets did not yield a tree. Results are presented for iterations did yield a tree.}. Differences in performance between the partitioning approaches are of smaller magnitude than differences due to sample size. All methods show higher accuracy with larger sample sizes (with one exception: longRPart trees comprising random intercepts and slopes fitted on science ability data).
+
+LM(M) trees tend to show better predictive accuracy than longRPart trees. Pairwise $t$-tests indicated significantly better performance for each of the LM(M) tree approaches employing clustered covariances, compared to both longRPart approaches (Bonferroni corrected $p$-values all $< .01$). However, it should be noted that differences in performance are small; for example, the standard errors presented in Table~\ref{tab:application_MSEs} indicate differences $> 1$ \textit{SE} only for Reading with $N=250$, and Science (both $N=250$ and $N=1,000$)\footnote{The significance of pairwise $t$-tests may seem in contrast with the but small differences in terms of standard errors presented in Table~\ref{tab:application_MSEs}, but the standard errors in the pairwise $t$-tests are sensitive to the number of replications, while the standard errors in Table~\ref{tab:application_MSEs} are not, and thus provide a more useful measure of the strength of the effect.}. 
+
+Table~\ref{tab:application_MSEs} indicates that LMM trees comprising a random intercept term and employing cluster-level covariances ("LMM tree (i,c)") performed best for predicting Math and Reading abilities. For predicting science abilities, LMM trees initializing estimation with the random effects and estimating only a random intercept performed best, while this was the worst-performing approach for math and reading. For longRPart, a somewhat similar shift in performance occurs: While trees comprising both a random intercept and slope performed best for predicting Math and Reading, trees with a random intercept only performed best for predicting Science. This shift may be due to the lower number of Science ability assessments, compared to Math and Reading.
+
+Interestingly, the performance of LM(M) trees employing cluster-level covariances seems hardly affected by the specification of the random-effects: Figure~\ref{fig:application_MSEs} shows very similar performance for LM(M) trees with(out) random intercepts or slopes. Pairwise $t$-tests did not indicate significant differences between the three approaches for any of the response variables.
+
+
+
+\begin{figure}[!b]
+\caption{Tree sizes for trees fitted to math (top), reading (middle) and science (bottom) ability trajectories.}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-028}
+\end{subfigure}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-029}
+\end{subfigure}
+\begin{subfigure}{1.2\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-030}
+\end{subfigure}
+\label{fig:application_sizes}
+\end{figure}
+
+
+
+\begin{figure}[h]
+\caption{Computation times for partitioning math, reading and science ability trajectories.}
+\begin{subfigure}{.5\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-031}
+\end{subfigure}
+\label{fig:application_times}
+\end{figure}
+
+Figure~\ref{fig:application_sizes} present tree size distributions for each of the partitioning approaches. Interestingly, whereas LM(M) trees implement a larger number of splits with increasing sample size, this pattern appears reversed for longRPart trees. For math and reading, the best-performing LM(M) tree approach in terms of predictive accuracy yields a smaller number of splits than the best-performing longRPart approach when sample size is small ($N=250$). This pattern reverses with large sample size ($N=1,000$), then the best-performing LM(M) tree approach yields a larger number of splits than the best-performing longRPart approach. For the math data, the best-performing longRPart approach yields a smaller number of splits than the best-performing LM(M) tree approach. 
+
+Given the very minor differences in performance for LM(M) tree employing clustered covariances with different specifications of the random effects (Figure~\ref{fig:application_MSEs}), Figure~\ref{fig:application_sizes} suggests that LM trees with clustered covariances may provide very good complexity-accuracy trade-off.    
+
+Figure~\ref{fig:application_times} depicts the computation time distributions of the different partitioning algorithms. A clear computational advantage is observed for LM trees, with an average computation time of 0.47 seconds. Including estimation of random effects increases computation time, which was 5.62 seconds on average for LMM trees. LongRPart trees required longest computation times, with an average of 364.06 seconds. 
+
+
+
+
+\section{Discussion}
+
+In Study I, we found the default estimation approach for GLMM trees proposed in \cite{FokkySmit18} yields high Type-I error rates when partitioning LGCMs. As hypothesized, performing parameter-stability tests using clustered covariances strongly improved performance. Also as hypothesized, we found initializing estimation with the random effects to be beneficial, but only when the random-effects specification comprised a random intercept only. Combining cluster-level covariances and random-effects initialization was not beneficial. The performance of of LM(M) trees using clustered covariances appeared largely unaffected by (mis-)specification of the random effects.
+
+In Study II, we found good performance of SEM trees in partitioning LGCMs, but a stronger sensitivity to mis-specification of the random effects, where underspecification yielded higher Type-I errors. In accordance with results of \cite{ArnoyVoel21}, we found score-based SEM trees to have somewhat lower power than LRT-based SEM trees. LongCART tended to be underpowered, which could be due to the trees not incorporating random slopes, or the parameter stability test for categorical covariates proposed by \cite{KundyHare19} may be underpowered.  
+
+In Study III, we found higher predictive accuracy for LM(M) trees than for longRPart, but differences in performance were small. Similar to Studies I and II, we found LM(M) trees to be comparably insensitive to (mis-)specification of the random effects, which may provide an important practical advantage. 
+
+All three studies showed substantial computational advantage of GLM(M) trees. This is likely due to the estimation approach employed by GLMM trees, where fixed-effects parameters are estimated locally within a node while random-effects parameters are estimated globally, using all observations. In contrast, SEM trees, LongCART and longRPart fit the full mixed-effects model in each node, which may substantially increase computational burden. 
+
+
+\subsection{Possible points for further discussion}
+
+\begin{itemize}
+
+\item Lower performance of longRPart possibly due to lack of robust criterion for determining statistical significance of a split. Cross-validation procedures might mitigate this problem, but feasibility of such approaches currently impeded by lack of functionality for generating predictions and high computational burden.
+
+\item MELT \citep{EoyCho14} employs random-effects predictions as a partitioning criterion, which is effective, as our results on random-effects initialization illustrate that random effects can capture effects of substantive interest that we want to use for explanation.
+
+\item Future work:
+
+\begin{itemize}
+\item GLMM trees can be extended to allow for partitioning based on all mixed-effects model parameters simultaneously, by using the score-based tests for mixed-effects models proposed by \cite{WangyMerk18}.
+\item GLMM trees can be extended to allow for partitioning non-linear growth curve models / GAMs. 
+\item Performance of GLMM trees on non-gaussian responses (binomial or count responses) should be evaluated.
+\end{itemize}
+\end{itemize}
+
+
+\bibliography{bib}
+
+
+\appendix
+
+
+\section{Effects of data-generating parameters on tree size}
+\label{sec:AppendixA}
+
+For LM(M) trees (Figure~\ref{fig:LMM_sizes_interact}), use of cluster-level covariances provided the most robust improvement in split recovery. For the data-generating parameters, the effects on tree size were strongest for $\sigma_{b_0}$, followed by $N$, $p$, $\sigma_{b_1}$ and $\rho$. Increasing values of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ tend to yield higher numbers of splits, and the effect of $\rho$ is minimal. The main exception to these main effects is that increased values of $\sigma_{b_0}$ and $\sigma_{b_1}$ yield lower numbers of splits when random slopes are estimated, and estimation is initialized with the random effects. In these cases, most variance may be captured by the random effects already in the first iteration of the algorithm, and will no longer be picked up by splits in the tree. Also, increased values of $p$ and $\sigma_{b_1}$ yield a slightly lower number of splits when cluster-level covariances are employed. Cluster-level covariances appear to be beneficial in accurately recovering the true subgroups, but with higher $p$, the Bonferroni correction will further reduce power to detect. Increased variance of $\sigma_{b_1}$ may reduce the power to detect the second and third split in the tree, which are driven by subgroup differences in slopes.
+
+For SEM trees and LongCART (Figure~\ref{fig:tree_sizes_interact}), strongest effects were observed for $N$, followed by $\sigma_{b_0}$, $p_{noise}$, $\rho$ and $\sigma_{b_1}$. Results for $N$ were as expected for all methods: with increasing sample size, more splits are implemented. Both LRT- and score-based SEM trees seem only affected by levels of $\sigma_{b_0}$, $p_{noise}$ and $\rho$ under misspecification of the random effects. Especially when both random intercept and slope variances are fixed to 0, higher levels of $\sigma_{b_0}$ and $p_{noise}$ yield more splits with both SEM tree approached. LRT-based SEM trees seem unaffected by levels of $\rho$, while score-based SEM trees seemed to implement a larger number of splits with increasing values of $\rho$. This pattern seemed reversed for increased magnitude of $\sigma_{b_1}$, which yields a lower number of splits for both SEM tree approaches, but only when the random effects were correctly specified. LongCART implemented more splits with higher levels of $p_{noise}$ and $\rho$, but was unaffected by levels of $\sigma_{b_0}$ and $\sigma_{b_1}$.
+
+
+\begin{figure}[!ht]
+\caption{Effects of data-generating parameters on tree size for LM(M) trees.}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-032}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-033}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-034}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-035}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-036}
+\end{subfigure}
+{\footnotesize \textit{Note.} Grey lines indicate true number of splits; distances on $y$-axis are on log scale. $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $N$ = sample size at level 2; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+\label{fig:LMM_sizes_interact}
+\end{figure}
+
+
+
+
+
+\begin{figure}[!ht]
+\caption{Effect of data-generating parameters on tree size for LM(M), SEM and LongCART trees.}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-037}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-038}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-039}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-040}
+\end{subfigure}
+\begin{subfigure}{1.25\textwidth}
+\includegraphics{_Partitioning_GCMs_with_GLMM_trees-041}
+\end{subfigure}
+{\footnotesize \textit{Note.} Grey lines indicate true number of splits; distances on $y$-axis are on log scale. $N$ = sample size at level 2; $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+\label{fig:tree_sizes_interact}
+\end{figure}
+
+
+
+
+
+
+
+\FloatBarrier
+
+
+\end{document}
+
+
+
+
+
+
+\section{Notes}
+
+\subsection{Fully local mixed-effects RPMs}
+
+The LongCART, longRPart, longPart2, non-linear longitudinal IT and SEM trees methods estimate all model parameters (fixed and random) locally, that is, separately in every (terminal) node. SEM trees provide a possible exception, by allowing the user to restrict one or more parameters to be equal across nodes. Such local estimation of the full parametric model increases the total number of estimated parameters. On the one hand, this allows the node-specific models to flexibly accommodate the observed datapoints, which may be useful for example in case of heteroscedasticity, but at the same time may increase the likelihood of overfitting. 
+
+LongRPart, non-linear longitudinal IT and SEM trees all employ likelihood-ratio tests for split selection. That is, in the current node, a likelihood-ratio is computed for every possible splitting variable and value pair. This brings a heavy computational load, as computing the likelihood ratios requires fitting the full parametric model for each of the possible splits, in each of the two resulting daughter nodes. This may also introduce variable selection bias towards variables with a larger number of possible split points \citep{ShihyTsai04, Shih04}. SEM trees \cite{BranyOert13} however allow for mitigating this bias through a two-stage procedure similar to that of \cite{LohyShih97} and \cite{KimyLoh01}.
+
+MELT and LongCART also perform local estimation of all mixed-effects model parameters, but take a different approach to partitioning. MELT partitions the observations in the current node by fitting a basic and complex model: the basic model comprises an LMM with random intercepts and fixed slope of time (polynomial functions of time may also be included); the complex model additionally comprises random slope(s) of time. Node impurity is defined as the sum of the squared difference between the random slope from the complex model and the fixed slope from the basis model. The sign of the difference is used for splitting variable and value selection, following the approach of \cite{Loh09}. This likely reduces the computational burden compared to SEM trees, longRPart and IT, and also mitigates variable selection bias. Possible disadvantages are that MELT does not account for the precision of the random slope predictions, and does not allow for generating individual predictions, but only predicting the shape and magnitude of growth trajectories.   
+
+LongCART takes an approach related to that of \cite{ZeilyHoth08}. It fits the full mixed-effects model in the current node, and employs score-based parameter stability tests to assess the instability of the fixed-effects parameters of the mixed-effects model w.r.t. each of the partitioning variables \citep{KundyHare19}. They propose different parameter stability tests for continuous and categorical partitioning variables. The p-values of the parameter stability tests are used to determine whether splitting should be continued, and if so, which variable should be selected for splitting. In the next step, the cut-point for the variable is selected that will yield the largest decrease in AIC. This two-step approach aims to mitigate overfitting as well as a selection bias towards variables with a larger number of possible split points. In the simulation study of \cite{KundyHare19}, LongCART outperforms GLMM trees, MVRPART, and rpart- and ctree-based RE-EM Trees, in terms of predictive accuracy and tree size. \footnote{GLMM performs pretty badly, is outperformed by MVPART also. Probably, cluster argument was not employed for GLMM tree. Also, they did not evaluate variable selection bias. Also, LongCART package only supports continuous outcomes.}
+
+Finally, the GUIDE algorithm for piecewise linear models as proposed \cite{Loh02} can also be applied for fitting piecewise (i.e., local) linear mixed-effects models. The algorithm proposed by \cite{Loh02} takes the residuals from a linear regression model fitted in the current node. $\chi^2$ tests are used to quantify the assocation between the partitioning variables and the sign of the residuals (numerical partitioning variables are converted to categorical variables by cutting the variable into groups at the sample quartiles). The partitioning variable with the lowest p-value is selected for splitting. Although there is currently no evidence available on the performance of GUIDE for partitioning LGCMs, the GUIDE approach can be employed by simply taking the residuals from a linear mixed-effects regression model, instead of a linear regression model. 
+ 
+
+\subsection{GEE-based RPMs}
+
+Both longitudinal IT and GEE-based decision trees employ GEE instead of mixed-effects models. GEE-based decision trees \cite{Lee05} extend the generalized regression tree approach of \cite{ChauyLo95} to multivariate outcomes. A marginal GEE model is fitted in the current node and the average Pearson residual is computed for every level-2 unit. Units are grouped into two groups, one with non-negative and one with negative residuals, and two-sample t-test are performed to quantify differences between the two groups along each covariate axis. \footnote{The paper also mentions chi-square tests, but it is unclear if these are actually employed. They could be used for categorical covariates, but then p-values need to be used for selecting the splitting variable. \cite{ChauyLo95} transformed categorical covariates to ordered ones to allow for using t-tests.} The covariate selected to split the node is the one with the largest absolute t-statistic. The cut-point for the selected covariate is the weighted average of the two group means. Splitting is continued by repeating these steps in each of the resulting daughter nodes, until the p-value exceeds a pre-specified level.
+
+Longitudinal IT \cite{SuyMene11} employs Wald tests for split selection. It fits a GEE model in the current node, and quantifies the strength of potential treatment-subgroup interactions for every possible split through a Wald statistic, which employs a sandwich estimator for the covariance matrix of the parameter estimates. The split with the highest Wald statistic is selected for splitting. After fitting a large initial tree, pruning is performed through cross validation to select a minimum value for the Wald statistic (i.e., a node's contribution to the interaction complexity of the tree).
+
+Similar GEE approaches were developed for random forests. Both \cite{CalhyLevi20} and \cite{Mart15} found that the standard random-forest method favors splits based on covariates measured at level 2. \cite{CalhyLevi20} attribute this to the use of the Gini index, and successfully mitigate the bias by employing a robust Wald statistics for split selection instead.
+
+
+\subsection{Partly global mixed-effects RPMs}
+
+Several mixed-effects RPMs have been developed which take a partly global estimation approach \citep{HajjyBell11, HajjyLaro17, SelaySimo12, FuySimo15, SpeiyWolf18}. These methods estimate the random effects globally, using all observations, while estimating the fixed effects locally, i.e., separately in every subgroup. \cite{FokkySmit18} extended this approach to allow for GLMM-based recursive partitioning, which allows for estimating GLMs comprising one or more pre-specified predictor variables in the terminal nodes. This allows, for example, for partitioning LGCMs, while accounting for dependence of observations from the same subject through (global) estimation of random effects.
+
+To estimate the full model, the partly global methods iterate between I) estimating the subgroup structure (recursive partition), given the current estimates of the random effects; and II) estimating the global effects, given the current subgroup structure. This procedure may require several iterations, but generally the computational load remains relatively low, as split selection does not require fitting a full parametric model for every possible split point. Note however, that if the partitioning algorithm employed in step I) exhibits variable selection bias, the full model will also exhibit this bias. 
+
+
+\subsection{List of decision-tree methods for longitudinal data}
+
+\cite{HajjyBell11} proposed regression trees for clustered data.
+
+\cite{HajjyBell14} proposed mixed-effects random forests for clustered data.
+
+\cite{HajjyLaro17} proposed generalized regression trees for clustered data.
+
+\cite{EoyCho14} proposed tree-structured mixed-effects regression modeling for longitudinal data.
+
+\cite{Simo13} proposed goodness-of-fit tests for mixed-effects regression tree models that can be used to test for non-linearity of the fixed effects or heteroscedasticity of the errors. 
+
+\cite{SelaySimo12} proposed regression trees for clustered data.
+
+\cite{FuySimo15} proposed unbiased regression trees for longitudinal and clustered data.
+
+\cite{SpeiyWolf18} proposed a CART-based method for longitudinal and clustered data with binary outcomes. \cite{SpeiyWolf19} proposed random-forest method for longitudinal and clustered data with binary outcomes. The authors compared their tree and random forest methods also with GLMM trees, which were outperformed in the presence of strong random effects. However, this result may possibly be explained by the authors using the default settings of GLMM trees, where estimations is initialized by estimating the tree. Initializing estimation with the random effects may likely be beneficial in the presence of strong random effects.
+
+For longitudinal data observed at very many times, \cite{YuyLamb99} treated each response vector as a random function and reduced the dimensionality of the data by fitting each trajectory with a spline curve. Then they used the estimated coefficients of the basis functions as multivariate responses to fit a regression tree model.
+
+The method of \cite{StegyJaco18} allows for fitting non-linear mixed-effects models \cite{LindyBate90} in each of the tree nodes. The method of \cite{WeiyLiu20} allows for fitting splines \citep[i.e., natural cubic spline bases formed by B-splines, see][]{GyoryLasz06}.
+
+\cite{Lee05} proposed generalized multivariate decision trees by using GEE.
+
+From \cite{Loh14}: \cite{Sega92} first proposed a recursive partitioning method for longitudinal data by using as node impurity a function of the likelihood of an autoregressive or compound symmetry model. \cite{AbdoyLeBl02} used the same approach, but with a likelihood-ratio test statistic as impurity function. 
+
+\cite{Zhan98} extended \cite{Sega92} to multiple binary response variables, using as node impurity the log-likelihood of an exponential family distribution that depends only on the linear terms and the sum of second-order products of the responses. \cite{ZhanyYe08} applied the technique to ordinal responses. Their approach requires covariance matrices to be computed at every node. 
+
+\cite{WeiyLiu20} propose a tree-structured subgroup identification method IT-LT, that combines mixed-effects models with regression splines, in order to detect treatment subgroups with differential patterns of change over time. They find that in the absence of additive effects of partitioning variables, IT-LT and glmertree perform similarly. In the presence of additive effects, glmertree performs more poorly. 
+
+\cite{DeAt02} avoided the problem of covariance estimation by using as node impurity the total sum of squared deviations from the mean across the response variables. \cite{LarsySpec04} used the Mahalanobis distance, but estimated the covariance matrix from the whole data set. (And whereas \cite{DeAt02} does not refer to the work of \cite{Sega92}, \cite{LarsySpec04} do.)
+
+"Hsiao \& Shih (2007) showed that multivariate extensions of CART are biased toward selecting  variables  that  allow  more  splits.  They  proposed  using  chi-squared  tests  of  conditional independence (conditioning on the components of the response vector) of residual signs versus grouped X values to select the split variables. The method may lack power if the effects of the X variables are not in the same direction across all the Y variables. Lee (2005) applied the GUIDE approach to multiple responses with ordered X variables by  fitting  a  generalized  estimating  equation  model  to  the  data  in  each  node  and  taking  the average  of  the  Pearson  residuals  over  the  responses  variables,  for  each  observation.  The observations  are  classified  into  two  groups  according  to  the  signs  of  the  average  residuals, and  the X with  the  smallest p -value  from  two-sample t -tests  is  chosen  to  split  the  node. Although  unbiased,  the  method  is  not  sensitive  to  all  response  trajectory  shapes.  Loh  \& Zheng (2013) solved this problem by using the residual vector patterns, rather than their averages,  to  choose  the  split  variables.  The  solution  is  applicable  to  data  observed  at  random time points."
+
+Further, work of Ciampi needs to be mentioned?!
+
+\cite{DeAt02} extended CART to multivariate continuous outcomes. But this was actually already proposed by \cite{GillyShel74} "a new inductive statistical technique, MAID-M, performs predictive modeling for a multivariate criterion from a set of predictor variables. Based on additive multivariate measures of association, it identifies the smallest combination of predictor variables accounting for a maximal proportion of the variation space of a given set of criterion variables."
+  
+As noted by \cite{SelaySimo12}, the methods of \cite{DeAt02} and \cite{Sega92} have a substantial drawback for the analysis of longitudinal data, in that they require the same timepoints have been observed for every subject, and do not allow for extrapolation to future timepoints, i.e., prediction on timepoints not observed in the training data.
+
+
+\cite{BurgyRits15} propose tree-based varying coefficient regression. It builds on the MOB algorithm, in order to fit a varying coefficient model. This redesign involves two adjustments to MOB: 1) Inspired by the algorithms of Hajjem et al. (2011) and Sela and Simonoff (2012), our algorithm builds a closed model that consists of a tree-structured fixed-effects component and a global random effect component. By doing so, the observations of an individual are connected with the single set of corresponding random coefficients, regardless of in which nodes these observations fall, allowing for splits on time-varying covariates. 2) The coefficient constancy tests for the variable and tree size selection of MOB are adjusted, so that a separate partition is fitted for each fixed-effects coefficient.
+
+The algorithm does not include auto-correlated errors.
+
+\cite{BurgyRits15} distinguish between unconnected mixed effects tree methods (where separate mixed models are fitted in each node) and connected mixed-effects tree methods (where fixed effects are estimated locally and random effects globally). 
+
+\cite{BurgyRits17} do not have a mixed-effects part yet, only varying coefficients. The main difference with GLM trees is that for each coefficients of the GLM, a different model is fitted.
+
+\cite{ChauyLo95} propose generalized regression trees, which fit a low-order polynomial in each node using maximum likelihood, and split each nodeusing a criterion based on the sign of the residuals. In principle, this allows for modeling longitudinal data, but the examples in the manuscript do not have repeated measures within subjects. Does, there is no correlated data.
+
+\subsection{"Global" mixed-effects partitioning methods}
+
+\cite{StegyJaco18} recently proposed an extension to the \cite{AbdoyLeBl02} to nonlinear mixed-effects models. Their method allows for partitioning based on cluster-level variables only. The implementation does currently not allow for specifying a within-group correlation structure, but defaults to assuming no within-group correlations. 
+
+\cite{StegyJaco18} note that a limitation of \cite{AbdoyLeBl02}, SEM and glmertree do not allow for observation-level covariates. They also note that the  algorithms of \cite{HajjyBell11} and \cite{SelaySimo12} extend the work of \cite{AbdoyLeBl02} to simultaneously handle observation-level and cluster-level predictors. This is incorrect, as glmertree allows for partitioning on both individual and cluster-level variables. Furthermore, glmertree, \cite{HajjyBell11} and \cite{SelaySimo12} are different from the algorithms of \cite{AbdoyLeBl02} and \cite{StegyJaco18}, in that the latter two estimate the random effects locally, within every node, whereas the former three estimate the random effects globally. I believe this global estimation of random effects is what allows for splitting on observation- and cluster level covariates. If the whole model is re-estimated locally, I am not sure whether one could or should partition based on observation-level covariates. 
+
+One advantage of RE-EMtree is that it also employs the nlme package, like \cite{AbdoyLeBl02} and \cite{StegyJaco18}. It thereby allows for specifying an autocorrelation structure within the errors (i.e., allows the error covariance matrix to be nondiagonal). glmertree employs lme4, which does not allow for specifying the correlation structure. The current implementation of \cite{StegyJaco18} employs nlme, but does not allow for specifying the correlation structure.
+
+\cite{UsamyHaye17} performed a simulation study comparing the performance of LGCM-based SEM trees with LGCM mixtures, especially under model misspecification. They conclude that the Bonferroni method may outperform the 5-fold CV method for SEM trees, especially when the maximum number of possible partitions (subgroups?) and total sample size are small. Accurate recovery of the number of classes by SEM trees is strongly related to the agreement of the covariate with it true latent profile, and the influence of sample size is also notable (direction?). Agreement rates of .6 and .7 or up are needed for SEM trees to correctly detects classes, regardless of sample size. SEM trees might be very sensitive to model misspecification with respect to the template SEM. More separation between classes yields better class recovery for SEM trees. The impact of model misspecification on LGCMMs is smaller than that on SEM trees. This can be attributed to lower statistical power of oberved covariates in identifying classes with SEM trees.  
+
+\cite{UsamyJaco19} investigated the performance of LGC model-based SEM trees in simulated data. They assessed the performance of SEM trees to correctly identify classes using linear and quadratic LGCM. They conclude that: correct identification of the number of classes are most strongly related to the agreement rate of (observed) covariates with the true latent profile. If covariates are correlated .70 or stronger to the true latent profiles, in many cases SEM trees can uncover heterogeneity more precisely than LGCM mixtures. The larger the number of true classes, the lower the likelihood that the true number of classes is recovered by LGCM-based SEM trees. LGCM-based SEM trees were more robust against model misspecification than latent-change-score SEM trees.
+
+In this context, the finding of \cite{MartyOert15} may be of interest: Growth mixture models outperform simpler clustering algorithms when detecting longitudinal heterogeneity, even with small sample sizes. 
+
+
+
+
+ 
+\subsection{Latent class growth trees}
+
+\cite{BergySchm17} and \cite{BergyVerm18} used / proposed a method for latent class growth analysis to detect subpopulations that display different growth curves. The method recursively partitions observstions in a manner similar to divisive hierarchical clustering: classes are split until a certain criterion indicates that the fit can no longer be improved.
+
+
+\subsection{Findings on random forests for multilevel data}
+
+\cite{Mart15} proposed "an extension of the way in which variable importance measures are calculated for CART and random forests. In order to obtain more accurate estimates of variable importance, a simulated cross-validation sample for calculating variable importances is employed, rather than the out-of-bag sample. Simulation results \cite{Mart15} show that this indeed yields a more accurate ordering of variable importance than the traditional OOB approach." (from \cite{Finc15})
+
+\cite{Mart15} Simulation phase results: "Both CART and conditional inference methods showed decreased performance in predictive accuracy and the identification of relevant variables when the ICC was moderate to large and predictors were measured at both levels of the analysis. In particular, both methods had a biased preference for level-2 variables, despite these variables having no simulated relationship with the outcome. While this is to be expected with conditional inference methods that utilize a permutation test framework built on independence assumptions, this finding is  unexpected for CART methods. If all variables are measured at the first level of analysis, however, both CART and conditional inference methods perform as expected, regardless of ICC values."
+
+\cite{Mart15} Application phase results: "Results from three separate applications indicated  that forest methods did not massively outperform a main-effects only model in any application, but it did aid in the potential identification of small effects that deviated from linearity.
+
+In the first application, a very small interaction effect was discovered between the SES and student minority status variables, such that non-minority students appeared to benefit more from having high SES compared to minority students, who appeared to benefit less. 
+
+The second dataset had no evidence for anything more complex than a main effect, which is not surprising given the fact that the dataset was small ($N < 200$), making it more difficult to identify more complex model specifications that were likely to generalize to a future sample.  
+
+The  third  dataset  found  a  small  non-linearity in student prior achievement predicting future achievement.While the deviation from nonlinearity was small, it contributed to the forest models outperforming the main effects only model due to the fact that the impact of prior achievement on future achievement was large. However, because prior achievement explained so much variation in future achievement, it left very little systematic variation to be explained by other measures"
+
+\cite{KarpyHill09} "found that for multilevel data, the individual trees that make up the forest in RF are highly correlated with one another, and that this correlation increases concomitantly with increases in the ICC. In turn the inflated correlation among the trees results in an underestimate of the OOB error." (from \cite{Finc15})
+
+
+\subsection{Regression trees with time-dependent covariates}
+
+\cite{GaliyMont02} propose a CART-based approach to fitting regression trees (for continuous outcomes), where the split function (impurity measure) is adjusted so as to account for autocorrelation of the repeated observations on the same unit. The method allows for observations of the same unit to end up in different terminal nodes; the terminal nodes are piecewise-constant functions of (time-dependent) covariate.
+
+\cite{PillayCalo03} combined this approach with radial basis function (RBF) networks, in order to smoothen the predictive model. In this approach, the location parameters of the RBF network are determined by fitting regression tree. 
+
+\cite{GaliyPill07} proposed alternative split criteria, based on loss functions minimized by M-estimators \cite{Hube64}. These split criteria are more robust, by downweighing outliers when calculating the measure of within-node impurity. (But this is not really for repeated measures data.) 
+
+
+
+\cite{NeisyMatt98} describe the use of mixed-effects models and latent-curve models to explore growth over time, and show that "one framework is often more advantageous to adopt". In a table, they provide an overview of when to prefer one approach over another. They summarize: "the ME approach tends to be most useful for straightforward models (e.g., a simple growth trajectory with one outcome variable), with complex data structures such as smaller samples, time-unstructured data, or multiple levels of nesting requiring more flexibility. Conversely, the LC approach is best suited to complex models with straightforward data structures, such as growth models embedded in larger models, assessments of global model fit, unconstrained time-varying covariates, and complex variance functions."
+
+
+\subsection{Performance of traditional GEEs}
+
+\cite{HubbyAher10}: "The one caveat to an otherwise straightforward approach is that the number of neighborhoods has to be sufficiently large; the inference is asymptotically correct but not necessarily accurate in smaller samples."
+
+\cite{HubbyAher10} have pointed out that that mixed models involve unverifiable assumptions on the data-generating distribution, which lead to potentially misleading estimates and biased inference. They therefore favor a GEE-type approach, as it involves little assumptions, and just requires the number of level-2 observations to be sufficiently large for robust estimation of standard errors. They also point out the fact that GEE- or mixed-effects parameter estimates in the linear case are equivalent, but not in the binary case.
+
+\subsection{Alternative application datasets}
+
+\cite{Lee05} analyzed epileptic seizure data that is available in as the \verb|epil| dataset in package MASS. The data consist of the number of epileptic seizures in an eight-week baseline period before any treatment, and in each of four two-week treatment periods in which patients received either a placebo or the drug Progabide in addition to other therapy. 
+
+
+\cite{Lee05} analyzed RCT data to compare a test treatment and placebo for a respiratory disorder. Patients in each of two centers were randomly assigned to groups receiving the active treatment or a placebo. During treatment, respiratory status was determined at four visits. The data is available as the \verb|resp| dataset in package sanon.
+
+
+
+
+\cite{BurgyRits15} analyzed data derived from the British Household Panel Study, to show how the effect of unemployment on self-reported happiness varies across individual life circumstances. The data is included as supplementary material to their paper?
+
+\cite{FuySimo15} analyzed "the wages data, obtained from the UCLA Academic Technology Service website. It contains data on 888 individuals' hourly log wage (response variable) information and corresponding covariate values. It was previously studied by Singer and Willett (2003) and Eo and Cho (2014). The number of observations of each individual range from 1 to 13, so the data are highly unbalanced, with a total of 6402 observations. Eo and Cho (2014) were limited to time-invariant covariates in their applications of GUIDE and MELT to these data, using race (White, Black and Hispanic) and hgc (highest degree completed by each individual). The CART-based REEMtree is also given in Eo and Cho (2014), and it only splits once, on the hgc variable. Fig. 16 ... gives the unbiased REEM tree, which has a more complex structure, broadly similar to that of GUIDE (as presented in Eo and Cho, 2014)."
+
+
+
+\subsection{Auto correlation structures}
+
+
+https://bbolker.github.io/mixedmodels-misc/notes/corr\_braindump.html
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%Table~\ref{tab:ECLSK_accuracy} shows the cross-validated predictive accuracies for all RPMs. Prediction errors were largest for the science data, which also had the largest sample variance (...), while prediction errors were lowest for the reading data, which also had the smallest sample variance (...). The sample variance of the math score was ....
+
+%Several fitting attempts for longRPart trees resulted in estimation errors: For the trees with random intercepts estimated only, ... out of 30 tree-fitting attempts yielded an error, while for the trees with both random intercepts and slopes estimated, ... out of 30 tree-fitting attempts yielded an error. Results for longRPart are computed based on successfully fitted trees.
+
+%The MSEs differ significantly only between the LM(M) trees and longRPart trees. LM(M) trees provide somewhat lower prediction errors, but the tree sizes in Table~\ref{tab:ECLSK_complexity} indicate that this comes at the cost of larger tree size. 
+
+%On average, LMM trees were more accurate but also larger than longRPart trees. In terms of average predictive accuracy, the tree which estimates random intercepts and initialized estimation with the random effects performed best for the LMM trees. For the longRPart trees, the model with both random intercepts and slopes performed best. 
+
+%However, the settings that perform best for predicting reading and math scores, did not perform best for predicting science scores. Cluster sizes (i.e., number of observations per student) are lower for the science scores (3) than for the reading and math scores (5), which may partly explain the difference. For LM(M) trees, the trees which estimate both random intercepts and slopes while performing parameter stability tests on the cluster level, perform best in the reading and math data. However, for the science data, these settings perform among the worst, while highest accuracy was obtained by the LMM tree in which only a random intercept was estimated, and estimation was initialized with the random effects. Note that both these settings were found to perform best in the earlier simulation study. 
+
+%For longPart, highest predictive accuracy was also obtained with trees in which both random intercepts and slopes were estimated for the reading and math data. For the science data, trees in which only random intercepts were estimated provided highest predictive accuracy. In all three datasets, the random-effects specification that yielded the largest longRPart trees, also yielded the highest predictive accuracy.
+
+\begin{figure}
+\caption{Computation time distributions for the different partitioning methods.}
+\label{fig:comp_timeECLSK}
+\end{figure}
+
+
+
+%In terms of computation time, Figure~\ref{fig:comp_timeECLSK} indicates a clear computational advantage for LM(M) trees. The outlying, lower computation times for longRPart are due to estimation errors early in the fitting process, after which computations are halted completely.
