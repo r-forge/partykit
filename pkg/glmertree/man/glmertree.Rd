@@ -59,10 +59,10 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     in \code{data} or a vector of length \code{nrow(data)}. If 
     \code{cluster = NULL} (the default), observation-level covariances 
     are employed in the parameter stability tests. If 
-    partitioning variables are measured on the cluster level, this will
-    likely yield spurious splits, which can be mitigated by specification 
-    of the cluster argument, which results in cluster-level covariances
-    being employed in the parameter stability tests.}
+    partitioning variables are measured on the cluster level, this can
+    be accounted for by specifying the name of the cluster argument here, 
+    as a result cluster-level covariances will be employed in the parameter 
+    stability tests.}
   \item{ranefstart}{\code{NULL} (the default), \code{TRUE}, or a numeric 
     vector of length \code{nrow(data)}. Specifies the offset to be used in 
     estimation of the first tree. \code{NULL} by default, yielding a zero offset 

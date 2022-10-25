@@ -115,12 +115,23 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     if (iteration > 2L) data$.tree <- NULL
     
     ## fit tree
-    if (is.null(q_cluster)) {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     dfsplit = dfsplit, ...)
+    if (is.null(cl$vcov)) { ## Allow for use of ML estimation:
+      if (is.null(q_cluster)) {
+        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                       dfsplit = dfsplit, ...)
+      } else {
+        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                       cluster = .cluster, dfsplit = dfsplit, ...)
+      }
     } else {
-      tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                     cluster = .cluster, dfsplit = dfsplit, ...)
+      if (is.null(q_cluster)) {
+        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                        dfsplit = dfsplit, family = "gaussian", ...)
+      } else {
+        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                        cluster = .cluster, dfsplit = dfsplit, family = "gaussian", 
+                        ...)
+      }
     }
     
     if (plot) plot(tree, main = paste("Iteration", iteration))
@@ -157,8 +168,13 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                       REML = REML, offset = offset, control = lmer.control)          
         }
       }
-      b <- structure(lme@beta, .Names = names(fixef(lme)))
-      b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      if (length(tree) == 1L) { 
+        b <- structure(lme@beta, .Names = names(fixef(lme)))
+        b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
+      } else {
+        b <- structure(lme@beta, .Names = names(fixef(lme)))
+        b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
       data$.ranef <- suppressWarnings(suppressMessages(
         predict(lme, newdata = data, newparams = list(beta = b))))
     } else {
@@ -220,7 +236,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   cl <- match.call()
   
   ## check if data is complete
-  all_vars <- if (any(grepl(".", as.character(formula)), fixed = TRUE)) 
+  all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
     names(data) else all.vars(formula)
   if (nrow(data) != sum(stats::complete.cases(data[ , all_vars]))) {
     warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
@@ -352,9 +368,14 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
           glme <- glmer(rf, data = data, family = family, weights = .weights,
                         nAGQ = nAGQ, offset = offset, control = glmer.control)
         }
-      }       
-      b <- structure(glme@beta, .Names = names(fixef(glme)))
-      b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
+      if (length(tree) == 1L) { 
+        b <- structure(glme@beta, .Names = names(fixef(glme)))
+        b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
+      } else {
+        b <- structure(glme@beta, .Names = names(fixef(glme)))
+        b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+      }
       data$.ranef <- suppressWarnings(suppressMessages(
         predict(glme, newdata = data, type = "link", newparams = list(beta = b))))
     } else {
@@ -590,6 +611,9 @@ plot.glmertree <- plot.lmertree <- function(
         ## Add leading zeros to get better ordering in dotplot
         long_coefs$node <- paste(
           "node", gsub(" ", "0", sapply(long_coefs$node, function(x) substring(x, nchar(x)-2+1))))
+        ## dotplot orders factors from high to low, so adjust ordering
+        long_coefs$node <- ordered(long_coefs$node, 
+                                   levels = sort(unique(long_coefs$node), decreasing = TRUE))
         print(lattice::dotplot(node ~ values | ind, data = long_coefs,
                       lx = long_coefs$lower, ux = long_coefs$upper,
                       prepanel = prepanel, panel = panel, as.table = TRUE,
