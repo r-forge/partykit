@@ -12,6 +12,10 @@
 \usepackage{placeins}
 \usepackage{enumitem}
 \usepackage{xcolor}
+\usepackage{setspace}
+
+\renewcommand{\doitext}{} % prevents superfluous addition of "doi:" in references
+
 %\usepackage[colorinlistoftodos]{todonotes}
 %%\todo[inline, color=green!40]{This is an inline comment.}
 
@@ -23,7 +27,7 @@
 \authorsnames{Marjolein Fokkema$^1$, Achim Zeileis$^2$}
 \authorsaffiliations{{$^1$Leiden University}, {$^2$University of Innbruck}}
 
-\abstract{Growth curve models are popular tools for studying the development of a response variable within subjects over time. Between-subject heterogeneity is commonly encountered and often of specific research interest. We show how generalized linear mixed effects model (GLMM) trees can be used to identify heterogeneous subgroups in linear growth curve models. GLMM trees were originally proposed for clustered cross-sectional data; here we introduces extensions for longitudinal data. The resulting extended GLMM trees are directly applicable to growth curve models as an important special case. We evaluate the performance of GLMM trees in partitioning growth curve models on simulated datasets and existing datasets on children's development of reading, math and science abilities. We compare the performance of GLMM trees with the SEM trees, LongCART and longRPart methods. GLMM trees provide similar accuracy compared to SEM trees, and better accuracy compared to LongCART and longRPart. In addition, GLMM trees allow for analysing discrete as well as continuous time series, are less sensitive to (mis-)specification of the random-effects structure and require substantially lower computation times.}
+\abstract{Growth curve models are popular tools for studying the development of a response variable within subjects over time. Heterogeneity between subjects is likely encountered in such models and researchers are often interested in explaining or predicting this heterogeneity. We show how generalized linear mixed effects model (GLMM) trees can be used to identify heterogeneous subgroups in linear growth curve models. GLMM trees were originally proposed for clustered cross-sectional data; here we extend the method to allow for longitudinal data. The resulting extended GLMM trees are directly applicable to growth curve models as an important special case. We evaluate GLMM tree's performance in partitioning growth curve models through a simulation study and through application to children's development of scholastic abilities. We compare the performance of GLMM trees with three alternative methods: SEM trees, LongCART and longRPart. GLMM trees provide similar accuracy compared to SEM trees, and better accuracy compared to LongCART and longRPart. In addition, GLMM trees allow for modeling both discrete and continuous time series, are less sensitive to (mis-)specification of the random-effects structure and require substantially lower computation times.}
 
 \begin{document}
 \SweaveOpts{concordance=TRUE}
@@ -38,23 +42,21 @@
 tinytex::latexmk("Partitioning_GCMs_with_GLMM_trees.tex")
 @
 
-Modeling development over time is of prime interest in psychological research. For example, researchers may want to model student's reading or math development in an educational study, or symptom reduction over the course of a clinical trail. Inter-individual heterogeneity is likely encountered in such studies. For example, some (groups of) participants may show higher or lower rates of growth over time. Development over time is generally studied with mixed-effects or latent-variable models, which allow for capturing inter-individual heterogeneity and explaining this heterogeneity with covariates of a-priori known relevance \citep{NeisyMatt18}.
+Development over time is of prime interest in psychological researchers. For example, researchers may want to model and predict student's reading or math development in educational studies \citep{MorgyFark09}, or patient's symptom reduction over the course of clinical trails \citep{Fein09}. Mixed-effects or latent-variable models can be used to model development over time, and allow for explaining possible heterogeneity with covariates of a-priori known relevance \citep{NeisyMatt18}. However, the covariates that are predictive of development may often not be known in advance, and identifying them may be of prime interest. 
 
-However, the covariates that predict or affect developmental trajectories may not be known in advance and often researchers may have a specific interest in identifying these covariates. Recursive partitioning methods (RPMs) are exploratory methods that allow for identifying relevant predictors from a potentially (very) large number of covariates. At the same time, RPMs allow for direct identification of heterogeneous subgroups. Several existing RPMs allow for subgroup detection in growth-curve models: GUIDE \citep{Loh02}, longRPart \citep{AbdoyLeBl02}, GEE-based decision trees \citep{Lee05}, longitudinal interaction trees \cite[IT; ][]{SuyMene11}, structural equation model (SEM) trees \citep{BranyOert13, ArnoyVoel21}, mixed-effects longitudinal trees \citep[MELT; ][]{EoyCho14} and LongCART \cite{KundyHare19} allow for partitioning linear growth curve models (LGCMs). Further, longRPart2 \citep{StegyJaco18} and IT-LT \citep{WeiyLiu20} methods allow for subgroup detection in non-linear growth curve models \footnote{Both IT methods have a specific aim of detecting subgroups for which the time-by-treatment interaction differs, so are not general methods for partitioning growth curve models.}.
+Recursive partitioning methods (RPMs) allow for identifying relevant predictors from a potentially (very) large number of covariates. Several RPMs that allow for partitioning growth-curve models have been developed: GUIDE \citep{Loh02}, longRPart \citep{AbdoyLeBl02}, GEE-based decision trees \citep{Lee05}, longitudinal interaction trees \cite[IT; ][]{SuyMene11}, SEM trees \citep{BranyOert13}, mixed-effects longitudinal trees \citep[MELT; ][]{EoyCho14} and LongCART \cite{KundyHare19} allow for partitioning linear growth curve models (LGCMs). Further, the longRPart2 \citep{StegyJaco18} and IT-LT \citep{WeiyLiu20} methods allow for subgroup detection in non-linear growth curve models\footnote{Both IT methods have a specific aim of detecting subgroups for which the time-by-treatment interaction differs, so are not general methods for partitioning growth curve models.}.
 
-In this paper, we propose the use of generalized linear mixed-effects model trees \citep[GLMM trees; ][]{FokkySmit18} for subgroup detection in LGCMs. GLMM trees were originally proposed for subgroup detection in clustered cross-sectional studies, where subjects are for example nested in treatment centers, classrooms and/or geographical areas. Yet, GLMM trees provide a much more general method, allowing for subgroup detection in almost any type of mixed-effects model. Compared to clustered cross-sectional data, however, longitudinal data often come with two central characteristics that may require a different estimation approach: Higher random-effects variance (i.e., higher intra-class correlations) and predictors of interest measured at higher levels (e.g., time-constant covariates). In this paper, we introduce and test two recent extensions of GLMM trees that can account for these characteristics. We focus on the specific use case of partitioning LGCMs, but methods for dealing with stronger intra-class correlations and higher-level covariates of interest are obviously of relevance beyond the realm of LGCMs. 
+Here we propose the use of generalized linear mixed-effects model trees \citep[GLMM trees; ][]{FokkySmit18} for partitioning LGCMs. GLMM trees were originally proposed for subgroup detection in clustered cross-sectional studies, where subjects are for example nested in treatment centers, classrooms and/or geographical areas. Yet, GLMM trees provide a more general method 2for subgroup detection in almost any type of mixed-effects model. Compared to clustered cross-sectional data, however, longitudinal data may require a different estimation approach: The variance of random effects tends to be higher with longitudinal data, and predictors of interest tend to be measured at higher levels (e.g., time-invariant covariates). In this paper, we propose and test two recent extensions of GLMM trees that account for these characteristics. We focus on the specific use case of partitioning LGCMs, but the extensions are critical for a wide range of settings where covariates are measured at higher levels and/or random-effects variance is substantial.
 
+The main characteristic that sets GLMM trees apart from other methods for partitioning LGCMs is its local-global estimation approach: GLMM trees do not fit a full parametric model in each of the terminal nodes. Instead, the fixed-effects parameters are estimated \textit{locally}, using the observations within a terminal node, and the random-effects parameters are estimated \textit{globally}, using all observations. This local-global estimation approach was first proposed by \cite{HajjyBell11} and \cite{SelaySimo12} for trees with constant fits in the terminal nodes. With GLMM trees, the approach was generalized to allow for GLMs with any number of parameters in the terminal nodes, thus allowing for non-Gaussian responses and targeted detection of a wide range of possible interaction effects \cite{FokkySmit18}.
 
-\subsection{Recursive partitioning methods for longitudinal data}
+All other methods for partitioning LGCMs take a fully local estimation approach: Within every terminal node, a full parametric model is estimated based the observations in that node only. This fully local estimation approach brings higher computational load and increased model complexity. GLMM trees require estimation of a (much) lower number of random-effects parameters, which likely reduces overfitting and improves stability and generalizability of the fitted model. Furthermore, the fully local estimation approach requires possible partitioning variables to be measured at the highest level of the multilevel structure, while the local-global estimation approach allows for partitioning variables to be measured at any level.
 
-Compared to the aforementioned RPMs for partitioning LGCMs \citep{Loh02, AbdoyLeBl02, Lee05, SuyMene11, BranyOert13, ArnoyVoel21, EoyCho14, KundyHare19}, GLMM trees differ in that they do not fit a full parametric model in each of the terminal nodes. GLMM trees estimate the fixed-effects parameters locally, using only the observations within a terminal node, and estimate the random-effects parameters globally, using all observations. Not only does this reduce computation time, it also reduces model complexity, which in turn may reduce instability and overfitting. This local-global estimation approach was first proposed by \cite{HajjyBell11} and \cite{SelaySimo12} for trees with constant fits in the terminal nodes. In effect, the approach replaces the fixed-effects part of the mixed-effects model with a decision tree with constant fits in the terminal nodes, while the random effects are estimated as usual. \cite{FokkySmit18} generalized this approach to allow for GLMs with any number of parameters in the terminal nodes, thus allowing for non-Gaussian responses and targeted detection of interaction effects.
+The computational advantage of GLMM trees may be highest compared to longRPart, longRPart2, IT-LT and LRT-based SEM trees. These methods employ an exhaustive split detection procedure: For every possible split in the current node, the full parametric model is re-estimated in the two nodes that would result from the split. To choose the optimal split, a likelihood ratio test is computed for every possible cut point. Not only does this bring a heavy computational load, it also introduces a selection bias towards covariates with a larger number of possible cut points \citep{ShihyTsai04, Shih04}. LongCART, MELT, GEE-based decision trees and score-based SEM trees also fit full parametric models in each of the nodes, but do not refit models for cutpoint selection; they employ the predictions or residuals from the fitted model in the current node for selecting the best split. This not only reduces computational load, it also allows for separating variable and cutpoint selection, thus preventing selection bias. The GLMM tree algorithm also employs a two-step approach to split selection.
 
-The computational advantage of GLMM trees is highest compared to longRPart, longRPart2, IT-LT and LRT-based SEM trees. These latter methods employ an exhaustive split detection procedure: For every possible split in the current node, the full parametric model is re-estimated in the two nodes that would result from the split. To choose the optimal split, a likelihood ratio test is computed for every possible cut point. In addition to a heavy computational burden, this also introduces a selection bias towards covariates with a larger number of possible cut points \citep{ShihyTsai04, Shih04}. LongCART, MELT, GEE-based decision trees and score-based SEM trees also fit full parametric models in each of the nodes, but do not refit models for cutpoint selection; they employ the predictions or residuals from the fitted model in the current node for selecting the best split. This reduces the computational burden, and allows for separating variable and cutpoint selection, thus preventing variable selection bias. The GLMM tree algorithm is more similar to the latter group of RPMs, in that it employs a two-step approach to split detection.
+In summary, compared to other methods for partitioning LGCMs, GLMM trees may provide lower computational load, lower model complexity and instability, and unbiased variable selection.
 
-
-\subsubsection{Current paper}
-
-In what follows, the next section explains how GLMM trees are estimated, and how it can be adapted to better account for longitudinal data structures. In three empirical evaluations, we assess and compare performance of GLMM trees in partitioning LGCMs: In Simulation Study I, we assess performance of the proposed adaptations to GLMM trees. In Simulation Study II, we compare performance of GLMM trees with that of two other methods: SEM trees and LongCART. In the Application, we compare the performance of GLMM trees and longRPart in partitioning existing datasets on children's development of reading, math and science abilities. In the Discussion, we summarize our findings and their implications.
+In what follows, we first describe estimation of GLMM trees, and possible adjustments to better account for longitudinal data structures. Next, we assess and compare performance of GLMM trees for partitioning LGCMs: In Simulation~Study~I, we assess performance of the proposed adaptations to GLMM trees. In Simulation~Study~II, we compare performance of GLMM trees with that of two other methods: SEM trees and LongCART. In the Application, we compare the performance of GLMM trees and longRPart in existing datasets on children's development of reading, math and science abilities. In the Discussion, we summarize our findings and implications.
 
 % Compared to RPMs that employ likelihood-ratio tests as a splitting criterion \citep{AbdoyLeBl02, StegyJaco18, BranyOert13, WeiyLiu20}, GLMM trees require less computation, do not present with a variable selection bias, and do not require partitioning variables to be measured at the highest level.
 
@@ -76,7 +78,7 @@ E[y_i | X_i] & = & \mu_i, \\
 g(\mu_{i}) & = & X_{i} \beta_{j} + Z_{i} b_{i}
 \end{eqnarray}
 %
-In the current paper, $g$ is the identity function and we assume a continuous response with normally distributed errors and constant variance $\sigma_\epsilon$. In principle, generalizations to other distributions within the GLM. Further, $X_i$ is the $N_i \times (p+1)$ fixed-effects design matrix for subject $i$ ($i = {1, \dots, N}$). We furter assume time is the predictor variable of interest, thus $p=1$ and $X_i$ comprises two columns: a column of 1s for the intercept and a column of observed timepoints for subject $i$. The number ($N_i$) and values of observed timepoints may differ between subjects. While in a traditional GLMM, the fixed-effects parameters are assumed constant over all observations, but in the GLMM tree model, $\beta_j$ is a column vector of node-specific fixed-effects parameters, its value depending on terminal node $j$ of which observation $i$ is part. As in a traditional GLMM, $Z_i$ is the random-effects design matrix for subject $i$, comprising a subset of columns of $X_i$ and $b_i$ is a vector of random effects for subject $i$. Finally, we assume that $b$ follows a (possibly multivariate) normal distribution with mean zero and (co)variance $\Sigma_{b}$. 
+Thus, in the current paper, $g$ is the identity function and we assume a continuous response with normally distributed errors and constant variance $\sigma_\epsilon$. Generalizations to other response variable types within the GLM are straightforward. Further, $X_i$ is the $n_i \times (p+1)$ fixed-effects design matrix for subject $i$ ($i = {1, \dots, N}$). We furter assume time is the predictor variable of interest, thus $p=1$ and $X_i$ comprises a column of 1s for the intercept and a column of observed timepoints for subject $i$. Note that the number and spacing of observed timepoints may differ between subjects. $\beta_j$ is a column vector of node-specific fixed-effects parameters, its value depending on terminal node $j$ of which observation $i$ is part. As in a traditional GLMM, $Z_i$ is the random-effects design matrix for subject $i$, comprising a subset of columns of $X_i$, and $b_i$ is a vector of random effects for subject $i$. Finally, $b$ is assumed to follow a (possibly multivariate) normal distribution with mean zero and (co)variance $\Sigma_{b}$. 
 
 The parameters of a traditional GLMM can be estimated by, for example, (restricted) maximum likelihood. The GLMM tree model is estimated by alternating between estimating the partition (i.e., subgroups or terminal nodes $j$), and estimating the random- and fixed-effects parameters, as per the following algorithm: 
 
@@ -94,7 +96,7 @@ The algorithm initializes by assuming zero random effects. In every iteration, t
 
 \subsection{Initialization}
 
-Studies to date indicate that initializing estimation with zero random effects yields an accurate final model \citep{HajjyBell11, HajjyBell14, HajjyLaro17, SelaySimo12, FuySimo15, FokkySmit18}. \cite{SelaySimo12} assessed found only minor impact of different initialization values on the final model, which became smaller with increasing sample size. In \cite{FokkySmit18}, we found initializing estimation of GLMM trees with zero random effects performed well in cross-sectional clustered data. With longitudinal data, repeated measures on the same subjects tend to be correlated more strongly than observations nested withiin the same unit in cross-sectional data. If the random effects are in fact sizable, assuming them to be zero could provide an unrealistic starting point that is difficult to overcome in subsequent iterations. Our first hypothesis is that for partitioning LGCMs, initializing estimation with the random effects instead of the subgroup structure improves accuracy of GLMM trees.
+Studies to date indicate that initializing estimation with zero random effects yields accurate final models \citep{HajjyBell11, HajjyBell14, HajjyLaro17, SelaySimo12, FuySimo15, FokkySmit18}. \cite{SelaySimo12} assessed the impact of different initialization values and found minor impact that became smaller with increasing sample size. In \cite{FokkySmit18}, we found initializing estimation of GLMM trees with zero random effects performed well in cross-sectional clustered data. With longitudinal data, however, random effects tend to be stronger: Repeated measures on the same subjects tend to be correlated more strongly than observations nested within the same unit in cross-sectional data. If the random effects are sizable, the inital assumption of zero random effects could provide an unrealistic starting point that is difficult to overcome in subsequent iterations. Our expectation is that for partitioning LGCMs, initializing estimation with the random effects instead of the subgroup structure may improve subgroup recovery and predictive accuracy.
 
 
 \subsection{Partitioning}
@@ -114,16 +116,21 @@ Parameter stability in Step~(b) is tested using the the \textit{scores} (gradien
 
 \begin{eqnarray}
 \label{eq:efp}
-W_{k}(t) = \hat{J}^{-1/2} n^{-1/2} \sum^{[nt]}_{i=1}{\hat{\psi}}_{\sigma(U_{ik})}
+W_{k}(t) = \hat{J}^{-1/2} n_{j}^{-1/2} \sum^{[n_jt]}_{i=1}{\hat{\psi}}_{\sigma(U_{ik})}
 \end{eqnarray}
 
-where $\hat{J}$ is a suitable estimate of the covariance matrix of the parametric model fitted in Step~(a), and $n$ gives the number of observations in the current node. Further, $\hat{\psi}_{\sigma(U_{ik})}$ denotes estimated scores (denoted $\hat{\psi}$), with the subscript {$\sigma(U_{ik})$} denoting their ordering by the values of partitioning variable $U_k$. Note that $0 \leq t \leq 1$, thus $nt = 1$ for an observation with a unique minimum on the partitioning variable, and $nt = n$ for an observation with a unique maximum. 
-
-\textcolor{red}{Perhaps replace $n$ with $N_j$? This is more line with notation of GLMM tree model, but might be confusing with cov mat $J$?}
+where $\hat{J}$ is a suitable estimate of the covariance matrix of the parametric model fitted in Step~(a), and $n_j$ gives the number of observations in the current node. Further, $\hat{\psi}_{\sigma(U_{ik})}$ denotes the estimated scores, with subscript {$\sigma(U_{ik})$} denoting their ordering by the values of partitioning variable $U_k$. Note that $0 \leq t \leq 1$, thus $n_jt = 1$ for an observation with a unique minimum on the partitioning variable, and $n_jt = n_j$ for an observation with a unique maximum. 
 
 From the cumulative score process $W_k(t)$, a range of test statistics can be derived which capture non-random fluctuations. For numerical partitioning variables, a maximum Lagrange multiplier test statistic can be computed, which takes the maximum of the squared Euclidean norm of $W_k(t)$, weighted by it's variance \citep{ZeilyHorn07}. This statistic is referred to as the \textit{supLM} statistic, and is asymptotically equivalent to the maximum of likelihood-ratio statistics. Approximate asymptotic $p$-values for the \textit{supLM} statistic can be computed with the method of \cite{Hans97}. Categorical covariates do not provide an implicit ordering. Scores are therefore binned at each level of the covariate and a test statistic is computed that does not depend on the ordering of the levels \citep{MerkyFan14}. 
 
-When partitioning longitudinal data, covariates will often be measured at the subject level. This clustering of observations within subjects can be accounted for in computing a so-called \textit{clustered} covariance matrix $\hat{J}$ \citep[e.g., ][]{ZeilyKoll20}. This resembles a GEE-type approach with an independence correlation structure. Our second hypothesis is that for partitioning LGCMs, use of clustered covariances improves accuracy of GLMM trees.
+When partitioning longitudinal data, covariates will often be measured at the subject level, which should be accounted for in computing the estimated covariance matrix $\hat{J}$. In general, this computation makes use of the scores. By summing the scores within clusters prior to computation of the covariances, so-called \textit{clustered} covariances are obtained, which account for dependence between observations within the same cluster \citep{ZeilyKoll20}. This resembles a GEE-type approach with an independence correlation structure. Our expectation is that in partitioning LGCMs, use of clustered covariances in the parameter stability tests will improve accuracy of the tree.
+
+
+
+% $\textrm{Var} \hat{\beta}$ = (X^\top X)^{-1} X^\top \Omega X (X^\top X)^{-1}$
+
+% The $X^\top \Omega X$ is the meat, and the $(X^\top X)^{-1}$ is the bread. For computing robust standard errors, we compute a new kind of meat. $\Omega = \sigma^2 I_n$, a matrix with $\sigma^2$ on the diagonal and zeros elsewhere. $n$ can be the number of observations, or the number of clusters.
+
 
 
 
@@ -134,7 +141,7 @@ We performed a simulation study to compare the performance GLM(M) trees estimate
 
 \subsection{Method}
 
-\subsubsection{Data-generating design}
+\subsubsection{Data generation}
 
 <<echo=FALSE>>=
 library("partykit")
@@ -155,12 +162,10 @@ node6 <- as.numeric(U1 == 1 & U3 <= 0)
 ## right-most node: x1 == 1 & x3 > 0
 ## intercept = 1, slope = 1
 node7 <- as.numeric(U1 == 1 & U3 > 0)
-y <- (node3 * -1 - node3 * time) + (-node4) +
- (node6) + (node7 * 1 + node7 * time) 
+y <- -(node3 + node3*time) - node4 + node6 + (node7 + node7*time) 
 data <- data.frame(U1 = as.factor(U1), U2, U3, time, y)   
 tree <- lmtree(y ~ time | U1 + U2 + U3, data = data, maxdepth = 3)
-
-fig4 <- party(
+fig <- party(
   partynode(1L,
             split = partysplit(1L, breaks = 1),
             kids = list(
@@ -187,7 +192,6 @@ fig4 <- party(
                             expression(beta[j1] == '1.0'))))))),
   data.frame(data)
 )
-#plot(fig4, tp_args = list(FUN = identity, width = 9), tnex = 1.5)
 
 ## Panel-combining function:
 combine_panels <- function(panel1, panel2, party2 = NULL) {
@@ -209,17 +213,14 @@ combine_panels <- function(panel1, panel2, party2 = NULL) {
 @
 
 
-\begin{figure}[!t]
+\begin{figure}[bt]
 \caption{Design of the subgroup-specific fixed effects in the simulation.}
 <<fig=T, height=5, width=5, echo=F>>=
-#plot(tree, ip_args = list(pval = FALSE), gp = gpar(cex = .7),
-#     tp_args = list(pointcol = "white", xlab = "time",
-#                    mainlab = function(id, nobs) paste("node", id)))
 plot(tree, tnex = 3.5, terminal_panel = combine_panels(
     panel1 = node_bivplot(tree, xlab = "time", pointcol = "white",
                         mainlab = function(id, nobs) paste("node", id)),
-    panel2 = node_terminal(fig4, FUN = identity, height = 4, width = 12, id = FALSE),
-    party2 = fig4), 
+    panel2 = node_terminal(fig, FUN = identity, height = 4, width = 12, id = FALSE),
+    party2 = fig), 
   gp = gpar(cex = .7), ip_args = list(pval = FALSE))
 @
 \label{fig:design_tree}
@@ -229,7 +230,7 @@ We simulated data according to the subgroup structure depicted in Figure~\ref{fi
 
 $$y_{i} =  X_{i} \beta_{j} + Z_{i} b_i + \epsilon_{i},$$
 
-\noindent where $\beta_j$ corresponds to the fixed effects in terminal node $j$ of which subject $i$ is part. The bottom panels of Figure~\ref{fig:design_tree} present the subgroup-specific values of the fixed intercept and slope ($\beta_{j0}$ and $\beta_{j1}$, respectively). The fixed- and random-effects design matrices $X_i$ and $Z_i$ are identical, each comprising two columns: a vector of 1s for the intercept, and a vector of timepoints. The same set of timepoints was generated for all subjects: ${0, 1, 2, 3, 4}$ \footnote{Although GLMM trees do not require the same set of timepoints for each subject, this design allowed for comparison with SEM trees.}. Values of $b_i$ were generated from a multivariate normal distribution with mean zero and a $2 \times 2$ diagonal covariance matrix $\Sigma$, the diagonal entries determined by the level of the data-generating design described next. Values in $\epsilon_{i}$ were independently generated from $N(\mu = 0, \sigma = \sqrt{5})$.   
+\noindent where $\beta_j$ corresponds to the fixed effects in terminal node $j$ of which subject $i$ is part. The bottom panels of Figure~\ref{fig:design_tree} present the subgroup-specific values of the fixed intercept and slope ($\beta_{j0}$ and $\beta_{j1}$, respectively). The fixed- and random-effects design matrices $X_i$ and $Z_i$ are identical, each comprising two columns: a vector of 1s for the intercept, and a vector of timepoints. The same set of timepoints was generated for all subjects: ${0, 1, 2, 3, 4}$\footnote{Although GLMM trees do not require the same set of timepoints for each subject, this design allowed for comparison with SEM trees in the next section.}. Values of $b_i$ were generated from a multivariate normal distribution with mean zero and a $2 \times 2$ diagonal covariance matrix $\Sigma$, the diagonal entries determined by the level of the data-generating design described next. Values of $\epsilon_{i}$ were independently generated from a normal distribution with a mean of zero and a variance of 5.   
 
 We varied the following data-generating characteristics:
 
@@ -238,46 +239,55 @@ We varied the following data-generating characteristics:
 \setlength{\itemindent}{0.2in}
 \item Number of subjects: small ($N = 100$) or large ($N = 250$).
 \item Variance of the random intercept: small ($\sigma_{b_0}^2 = 1$) or large ($\sigma_{b_0}^2 = 2$).
-\item Variance of the random slope: small ($\sigma_{b_1}^2 = .1$) or large ($\sigma_{b_1}^2 = .4$).
+\item Variance of the random slope: small ($\sigma_{b_1}^2 = 0.1$) or large ($\sigma_{b_1}^2 = 0.4$).
 \item Number of noise partitioning variables: small ($p = 5$) or large ($p = 25$).
 \item Intercorrelation between partitioning variables: absent ($\rho = 0$) or present ($\rho = .3$).
 \end{itemize}
 
-We employed a full factorial design yielding $2^5 = 32$ cells and performed 100 repetitions per cell. We used R \citep[version 4.1.2; ][]{R22} to generate and analyze all data. 
+We employed a full factorial design yielding $2^5 = 32$ cells and performed 100 repetitions per cell. We performed all data generation and analysis in R \citep[version 4.1.2; ][]{R22}. 
 
 
 
-\subsubsection{Partitioning approaches}
+\subsubsection{Model fitting}
 
-We fitted ten trees to each dataset:
+We applied ten partitioning approaches to every generated dataset, each employing one of three different random-effects specifications: 
 
-\begin{itemize}
-  \item Two linear model (LM) trees: 
   \begin{itemize}
-    \item A tree employing default settings, where the parameter stability tests use observation-level covariances.
-    \item A tree where the parameter stability tests use clustered covariances. 
-  \end{itemize}
-  \item Eight linear mixed model (LMM) trees: 
-  \begin{itemize}
-    \item Two trees fitted using default settings, where parameter stability tests use observation-level covariances and estimation is initialized with the tree structure. 
-    \item Two trees where the parameter stability tests use cluster-level covariances.
-    \item Two trees where estimation is initialized with the random effects. 
-    \item Two trees where the parameter stability tests use cluster-level covariances and estimation is initialized with the random effects.
-  \end{itemize}
-\end{itemize}  
     
-Each of the two LMM trees were fitted with different specifications of the random effects: One of the LMM trees estimated random intercepts only, one of the LMM trees estimated both random intercepts and slopes. Because variances of random intercepts and slopes were $> 0$ in all cells of the design, the three different random-effects specifications (LM trees assume 0 random effects) allow for assessing the effect of mis-specifying the random effects. To fit LM trees, we used package \textbf{partykit} \citep[version 1.2-15; ][]{HothyZeil15}. To fit LMMs, we used package \textbf{lme4} \cite[version 1.1-29; ][]{BateyMach15}. To fit LMM trees we used package \textbf{glmertree} \citep[version 0.2-0; ][]{FokkySmit18}.
+    \item $\hat{\sigma}_{b_0} = \hat{\sigma}_{b_1} = 0$. That is, random effects and thus their variance were fixed to 0, and two fixed-effects linear model (LM) trees were fitted.
+    \begin{itemize}
+        \item The default observation-level covariances were used to compute the parameter stability tests.
+        \item Clustered covariances were used to compute the parameter stability tests. 
+    \end{itemize}
+    
+    \item $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} = 0$. That is, four linear mixed-effects model (LMM) tree were fitted in which the variance of the random intercept was freely estimated and the variance of the random slope was fixed to 0: 
+    \begin{itemize}
+      \item Default settings were used, in which parameter stability tests employed observation-level covariances and estimation is initialized with the tree structure. 
+    \item Instead, clustered covariances were used to compute the parameter stability tests.
+    \item Instead, estimation was initialized with the random effects. 
+    \item Instead, clustered covariances were used to compute the parameter stability tests and estimation was initialized with the random effects.
+  \end{itemize}
+    
+    \item $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} > 0$. That is, four LMM trees were fitted in which the variance of both the random intercept and slope were freely estimated. The same four approaches were applied (default, clustered covariances, random-effects initialization, clustered covariances and random-effects initialization) as with the previous LMM tree specification.
+  \end{itemize}
+
+To fit LM trees, we used package \textbf{partykit} \citep[version 1.2-15; ][]{HothyZeil15}. To fit LMMs, we used package \textbf{lme4} \cite[version 1.1-29; ][]{BateyMach15}. To fit LMM trees we used package \textbf{glmertree} \citep[version 0.2-0; ][]{FokkySmit18}. To compute clustered covariance, we used package \textbf{sandwich} \citep[version 3.0-1; ][]{ZeilyKoll20}. We employed outer product of gradients method to compute covariances, thus employing only the meat of the sandwich estimator to estimate the covariances.
 
 
 \subsubsection{Evaluation of performance}
 
-We evaluated tree accuracy by counting the number of splits in each tree. Trees with $> 3$ splits are indicative of Type-I error, while trees with $> 3$ splits are indicative of Type-II errors (i.e., too low power for tests of the true partitioning variables). We also assessed which variable was selected for the first split in every tree. 
+We evaluated tree accuracy by counting the number of splits in each tree. Trees with $> 3$ splits are indicative of Type-I error, while trees with $> 3$ splits are indicative of Type-II errors (i.e., too low power for tests of the true partitioning variables). We also assessed the variable selected for the first split in every tree. 
 
 
 \subsection{Results}
 
 
 <<echo=FALSE>>=
+###########################
+##
+## Load tree size data
+##
+
 load("tree_sizes.Rda")
 tree_size <- data.frame(sizes, true = 7)
 N <- c(100, 250)
@@ -357,6 +367,13 @@ M_default <- mean(tmp$tree_size[tmp$default_ids])
 M_cluster <- mean(tmp$tree_size[tmp$cluster_ids])
 M_ranefstart <- mean(tmp$tree_size[tmp$ranefstart_ids])
 M_both <- mean(tmp$tree_size[tmp$both_ids])
+
+means <- tapply(tmp$tree_size, tmp$method_id, mean)
+sds <- tapply(tmp$tree_size, tmp$method_id, sd)
+mads <- tapply(tmp$tree_size, tmp$method_id, function(x) mean(abs(x-3)))
+props_more_splits <- tapply(tmp$tree_size, tmp$method_id, function(x) mean(x > 3L))
+props_less_splits <- tapply(tmp$tree_size, tmp$method_id, function(x) mean(x < 3L))
+props_corr_splits <- tapply(tmp$tree_size, tmp$method_id, function(x) mean(x == 3L))
 @
 
 <<eval=FALSE, echo=FALSE>>=
@@ -379,52 +396,46 @@ pairwise.t.test(tmp$tree_size, tmp$method_id,
 @
 
 
-<<echo=FALSE>>=
-means <- tapply(tmp$tree_size, tmp$method_id, mean)
-@
 
 
 \begin{figure}[!ht]
-\caption{Tree size distributions for LM(M) trees.}
-\begin{subfigure}{1.2\textwidth}
-<<echo=FALSE, fig=TRUE, height=3.5>>=
+\caption{Tree size distributions for LM trees (left panel) and LMM trees (middle and right panel).}
+\begin{subfigure}{1.25\textwidth}
+<<echo=FALSE, fig=TRUE, height=4>>=
+library("dplyr")
+
 ## Prepare data
 tmp <-  tree_sizes_long
-tmp$tree_size <- (tmp$tree_size-1)/2
+tmp$tree_size <- (tmp$tree_size-1)/2 ## count splits instead of nodes
 tmp <- tmp[-which(tmp$method_id == "true") , ]
 tmp$method_id <- factor(tmp$method_id)
 
 ## Create indicator for algorithm and random effects specification
 tmp$ranef <- NA
-tmp$ranef[tmp$method_id %in% c("lm", "lm_c")] <- "LM tree \n(no random effects)"
-tmp$ranef[tmp$method_id %in% c("lmer", "lmer_c", "lmer_r", "lmer_cr")] <- "LMM tree \n(random intercept)"
-tmp$ranef[tmp$method_id %in% c("lmer_s", "lmer_s_c", "lmer_s_r", "lmer_s_cr")] <- "LMM tree \n(random intercept + slope)"
+tmp$ranef[tmp$method_id %in% c("lm", "lm_c")] <- "{hat(sigma)[b[0]] == hat(sigma)[b[1]]} == 0"
+tmp$ranef[tmp$method_id %in% c("lmer", "lmer_c", "lmer_r", "lmer_cr")] <- "list(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)"
+tmp$ranef[tmp$method_id %in% c("lmer_s", "lmer_s_c", "lmer_s_r", "lmer_s_cr")] <- "list(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)"
 tmp$ranef[tmp$method_id %in% c("LongCART")] <- "LongCART"
 tmp$ranef[tmp$method_id %in% c("s_sem", "f_sem")] <- "SEM trees \n(no random effects)"
 tmp$ranef[tmp$method_id %in% c("s_sem_i", "f_sem_i")] <- "SEM tree \n(random intercept)"
 tmp$ranef[tmp$method_id %in% c("s_sem_s", "f_sem_s")] <- "SEM tree \n(random intercept + slope)"
-tmp$ranef <- factor(tmp$ranef, 
-                    levels = c("LM tree \n(no random effects)", "LMM tree \n(random intercept)", 
-                               "LMM tree \n(random intercept + slope)", 
-                               "SEM tree \n(no random effects)", "SEM tree \n(random intercept)", 
-                               "SEM tree \n(random intercept + slope)"))           
 
 ## Create indicator for additional settings
 tmp$setting <- NA
 tmp$setting[tmp$method_id %in% c("lmer", "lmer_s", "lm")] <- "default"
-tmp$setting[tmp$method_id %in% c("lmer_c", "lmer_s_c", "lm_c")] <- "cluster"
-tmp$setting[tmp$method_id %in% c("lmer_r", "lmer_s_r")] <- "ranef\ninit"
-tmp$setting[tmp$method_id %in% c("lmer_cr", "lmer_s_cr")] <- "cluster +\nranef"
+tmp$setting[tmp$method_id %in% c("lmer_c", "lmer_s_c", "lm_c")] <- "cl.cov."
+tmp$setting[tmp$method_id %in% c("lmer_r", "lmer_s_r")] <- "ran.eff."
+tmp$setting[tmp$method_id %in% c("lmer_cr", "lmer_s_cr")] <- "cl.cov.+\nran.eff."
 tmp$setting[tmp$method_id %in% c("LongCART")] <- "default"
 tmp$setting[tmp$method_id %in% c("s_sem", "s_sem_i", "s_sem_s")] <- "score"
 tmp$setting[tmp$method_id %in% c("f_sem", "f_sem_i", "f_sem_s")] <- "fair"
-tmp$setting <- factor(tmp$setting, levels = c("cluster +\nranef", "cluster", 
+tmp$setting <- factor(tmp$setting, levels = c("cl.cov.+\nran.eff.", "cl.cov.", 
                                               "default", "fair",
-                                              "ranef\ninit", "score"))
+                                              "ran.eff.", "score"))
 levels(tmp$sigma_int) <- c("1", "4")
 levels(tmp$sigma_slope) <- c("0.1", "0.4")
-tmp$setting <- factor(tmp$setting, levels = c("default", "cluster",  "ranef\ninit", 
-                       "cluster +\nranef", "fair", "score"))
+tmp$setting <- factor(tmp$setting, levels = c("default", "cl.cov.",  "ran.eff.", 
+                       "cl.cov.+\nran.eff.", "fair", "score"))
 
 ## Create the plot
 library("ggplot2")
@@ -432,42 +443,74 @@ library("gridExtra")
 library("colorspace")
 library("scales")
 
+## Set up data.frame of summary stats
+summ_stats <- data.frame(M = round(means[c("lm", "lm_c", "lmer", "lmer_c", "lmer_cr", "lmer_r", 
+                   "lmer_s", "lmer_s_c", "lmer_s_cr", "lmer_s_r")], digits = 2), 
+                   SD = format(sds[c("lm", "lm_c", "lmer", "lmer_c", "lmer_cr", "lmer_r", 
+                   "lmer_s", "lmer_s_c", "lmer_s_cr", "lmer_s_r")], digits = 2),
+                   MAD = format(mads[c("lm", "lm_c", "lmer", "lmer_c", "lmer_cr", "lmer_r", 
+                   "lmer_s", "lmer_s_c", "lmer_s_cr", "lmer_s_r")], digits = 2))
+summ_stats$method <- rownames(summ_stats)
+summ_stats$y <- 50
+## Note!!! Labels of ran.eff. and cl.cov.+ran.eff. have been switched to have text labels
+## above the right boxplot / countplot. Setting it as a factor and releveling does not help. 
+summ_stats$setting <- c("default", "cl.cov.", 
+                        "default", "cl.cov.", "cl.cov.+\nran.eff.", "ran.eff.", 
+                        "default", "cl.cov.", "cl.cov.+\nran.eff.", "ran.eff.")
+
+summ_stats$ranef <- NA
+summ_stats$ranef[summ_stats$method %in% c("lm", "lm_c")] <- "{hat(sigma)[b[0]] == hat(sigma)[b[1]]} == 0"
+summ_stats$ranef[summ_stats$method %in% c("lmer", "lmer_c", "lmer_r", "lmer_cr")] <- "list(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)"
+summ_stats$ranef[summ_stats$method %in% c("lmer_s", "lmer_s_c", "lmer_s_r", "lmer_s_cr")] <- "list(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)"
+summ_stats$all <- with(summ_stats, paste(M, SD, MAD, sep = "\n"))
+
 ## LM(M)
 LMM_ids <- which(tmp$method_id %in% c("lm", "lm_c", "lmer", "lmer_c", "lmer_cr", 
                                       "lmer_r", "lmer_s", "lmer_s_c", 
                                       "lmer_s_cr", "lmer_s_r"))
 breaks <- c(0, 1, 3, 7, 20)
-lim <- c(0, 25)
+lim <- c(0, 60)
+
+## Plot
 plot0 <- ggplot(tmp[LMM_ids, ]) +
   geom_boxplot(aes(x=setting, y=tree_size), 
                position=position_dodge(1), show.legend = FALSE, 
-               alpha = 0.5, width = .6) + 
+               alpha = 0.5, width = .6, outlier.shape = NA, coef = NULL) + 
+  geom_count(aes(x=setting, y=tree_size), col = "grey", alpha = .75) +
   scale_y_continuous(trans = pseudo_log_trans(sigma = 1, base = exp(1)), 
                      breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits") + theme(legend.position = "none") +
-  geom_hline(yintercept=3, col = "darkgrey")
+  geom_text(data = summ_stats, aes(x=setting, y=y, label = all),
+            size = 3, col = "grey44") +
+  labs(x = "", y = "no. of splits") + theme(legend.position = "none") +
+  geom_hline(yintercept=3, col = "darkgrey") + 
+  facet_grid(~ranef, scales = "free", space = "free", 
+             labeller = label_parsed)  +
+  coord_cartesian(clip = 'off') +
+  labs(tag = "  M\n SD\nMAD") + theme(plot.tag.position = c(.04, .85),
+                                   plot.tag = element_text(size = 10))
 plot0
 @
-\end{subfigure}
-{\footnotesize \textit{Note.} The $y$-axis is on the log scale and represents tree size. Grey lines indicate true number of splits (3 nodes). cluster = cluster-level covariances employed in parameter stability tests; ranef init = estimation initialized with the random effects. Distances on $y$-axis are on the log scale.}
+\end{subfigure}%
+\vspace{-0.5cm}%
+
+{\textit{Note.} Grey circles represent counts, grey lines represent true number of splits. Panel labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. Distances on $y$-axis are on the log scale. cl.cov. = cluster-level covariances employed in parameter stability tests; ran.eff. = estimation initialized with the random effects. MAD = Mean absolute deviation from true tree size.}
 \label{fig:LMM_sizes}
 \end{figure}
 
-Figure~\ref{fig:LMM_sizes} depicts the number of splits implemented by each partitioning approach. Irrespective of the random-effect specification, the default fitting approaches overfit, implementing $> 3$ splits in a large majority of datasets. Irrespective of the random-effects specification, the overfitting is successfully mitigated by the use of cluster-level covariances in the parameter stability tests (mean number of splits \Sexpr{round(M_cluster, digits = 2)}), which appears most effective for LMM trees: the mean number of splits was \Sexpr{round(means["lmer_c"], digits = 2)} for LMM trees with random intercepts only and \Sexpr{round(means["lmer_s_c"], digits = 2)} for LMM trees estimating both random intercepts and slopes.
+Figure~\ref{fig:LMM_sizes} depicts the number of splits implemented by each partitioning approach. Irrespective of the random-effect specification, the default fitting approaches (left-most box in every panel) tended to overfit, implementing $> 3$ splits in \Sexpr{format(100*mean(c(props_more_splits["lm"], props_more_splits["lmer"], props_more_splits["lmer_s"])), digits = 2L)}\% datasets, on average. This overfitting was successfully mitigated through use of cluster-level covariances in the parameter stability tests, irrespective of the random-effects specification. The average number of splits of LMM trees employing clustered covariances were closest to the true number of splits. In terms of mean absolute deviation (MAD) from the true tree size, LM trees with clustered covariances performed best, closely followed by the LMM trees employing clustered covariances.
 
-Initializing estimation with the random effects was also effective in reducing tree size, bput the effect depended on the random-effects specification. When random slopes were estimated in addition to random intercepts, too few splits were implemented on average: the mean number of splits was \Sexpr{round(means["lmer_r"], digits = 2)} for LMM trees with random intercepts only, and \Sexpr{round(means["lmer_s_r"], digits = 2)}) for LMM trees estimating both random intercepts and slopes. Combined use of random-effects initialization and cluster-level covariances does not appear beneficial, yielding too many splits, irrespective of the random-effects specification (mean number of splits \Sexpr{round(M_both, digits = 2)}).
+In terms of MAD, however, the LMM tree estimating random intercepts only performed even slightly better than the latter two approaches.  Thus, initializing estimation with the random effects can successfully mitigate the overfitting observed for the default LMM trees, but the effect depens strongly on the random-effects specification. With estimation of both a random intercept and slope, random-effects initialization may lead to subgroup differences being captured by the random effects instead of the tree structure. Use of random-effects initialization and cluster-level covariances in tandem was less effective in reducing the number of splits than using either of the two approaches.
 
-Distributions of the number of splits, separated according to the levels of the data-generating design are depicted in Figure~\ref{fig:LMM_sizes_interact} (Appendix~\ref{sec:AppendixA}). The plots indicate little interaction between data-generating parameters and model-fitting approached. Figure~\ref{fig:LMM_sizes_interact} shows a pattern very similar to Figure~\ref{fig:LMM_sizes}, where the use of cluster-level covariances provides the most accurate split recovery. Main effects of the data-generating design were as expected: Increasing values of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ yield higher numbers of splits. The effect of $\rho$ was minor. The only evidence of an interaction between data-generating parameters and model-fitting approaches is that increased variance of the random effects (higher $\sigma_{b_0}$ and/or $\sigma_{b_1}$) yields lower numbers of splits if random slopes are estimated and estimation is initialized with the random effects. Thus, with stronger random effects and a more complex random-effects specification, differences in fixed effects (which should be captured by the tree) tend to be captured by the random effects when estimation is intialized with the random effects. 
+Distributions of the number of splits, separated according to the levels of the data-generating design are presented and discussed in  Figure~\ref{fig:LMM_sizes_interact} and Appendix~\ref{sec:AppendixA}, because they show a pattern very similar to Figure~\ref{fig:LMM_sizes}. Use of cluster-level covariances provides the most accurate split recovery. Of the data-generating parameters, $\sigma_{b_1}$ and $N$ showed the strongest effects, with higher values resulting in a higher number of splits. The number of noise variables and $\sigma^2_{b_1}$ had smaller effects, and were involved in minor interactions: With the default fitting approach, they had a positive effect on the number of implemented splits; with clustered covariance or random-effects initialization, they had a negative effect on the number of splits. The correlation between partitioning variables hardly affected the number of implemented splits.
 
-Table~\ref{tab:first_splits} shows the variables selected for the first split. Only rarely is the wrong variable selected for the first split, and this occurs only with random-effects initialization and observation-level covariances in the parameter stability tests are employed. In the large majority of those cases, $U_2$ and $U_3$ were selected for the first split. 
+Table~\ref{tab:first_splits} shows the variables selected for the first split, and indicates high accuracy for recovery of the first split: Only very rarely is $U_1$ not selected for the first split.
 
 
 
 
 
 <<echo=FALSE, results=tex, message=FALSE, warning=FALSE>>=
-library("xtable")
+library("kableExtra")
 load(file = "splitvars.Rda")
 splitvar <- apply(splits, 2, unlist)
 rownames(splitvar) <- NULL
@@ -493,6 +536,7 @@ probs <- sapply(probs, function(x) {
 ## Have column for u1, u2, u3, u4-up, no split
 splits <- matrix(sapply(probs, function(x) x["x1"]), ncol = 1,
                  dimnames = list(names(probs), "x1"))
+splits[is.na(splits)] <- 0
 for (u_set in list("x2","x3", paste0("x", 4:30), "no split")) {
   splits <- cbind(splits, sapply(probs, function(x) sum(x[names(x) %in% u_set])))
 }
@@ -501,42 +545,39 @@ rows <- cbind(c("LM tree", " ",
                 "LMM tree", " ", " ", " ", " ", " ", " ", " ", 
                 "SEM tree", " ", " ", " ", " ", " ", 
                 "LongCART"),
-                c("$\\sigma_{b_0} = \\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} = \\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} = \\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} = \\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} > 0$",
-                  "$\\sigma_{b_0} > 0$, $\\sigma_{b_1} = 0$"),
-             c("", "clustered cov.", "", "clustered cov.", 
-               "ran.eff. init.", "both", "", "clustered cov.", 
-               "ran.eff. init.", "both",
+                c("$\\hat{\\sigma}_{b_0} = \\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} = \\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} = \\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} = \\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} > 0$",
+                  "$\\hat{\\sigma}_{b_0} > 0$, $\\hat{\\sigma}_{b_1} = 0$"),
+             c("default", "cl.cov.", "default", "cl.cov.", 
+               "ran.eff.", "cl.cov. + ran.eff.", "default", "cl.cov.", 
+               "ran.eff.", "cl.cov. + ran.eff.",
                "LRT", "LRT", "LRT", "score-based", "score-based", "score-based", ""))
 splits <- cbind(rows, splits)
 colnames(splits) <- c("Algorithm", "Random effects", "Fitting approach", "$U_1$", 
                       "$U_2$", "$U_3$", "$U_4$ - $U_{25}$", "no split")
 
-print(xtable(splits[1:10, -1], digits = 3,
-             caption = "Variables selected for the first split by each LM(M) tree approach.", 
-             label = "tab:first_splits"), 
-      include.rownames=FALSE, hline.after = c(-1, 0, 2, 6), #table.placement = "tb",
-      add.to.row = list(pos = list(10, 10, 10, 10), command = c(
-        "\\hline",
-        "\\multicolumn{7}{l}{\\footnotesize\\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables are}\\\\ ", 
-        "\\multicolumn{7}{l}{\\footnotesize continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). $\\sigma_{b_0}$ and $\\sigma_{b_1}$} are\\\\ ",
-        "\\multicolumn{7}{l}{\\footnotesize the standard deviations of the random intercept and slope, respectively.}\\\\ ")),
-      latex.environment = "", caption.placement = "top",
-      sanitize.text.function=function(x){x})
+## Print the table
+kable_styling(add_footnote(kable(splits[1:10, -1], format = "latex", booktabs = TRUE, 
+                                 label = "first_splits", align = "llccccc", 
+        escape=FALSE, linesep = "", # linesep command suppressess addlinesep every 5 rows
+        caption = "Variables selected for the first split by each LM tree (top two rows) and LMM tree (bottom eight rows) estimation approach.", row.names = FALSE, digits = 3L),
+  "\\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables are continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). $\\hat{\\sigma}_{b_0}$ and $\\hat{\\sigma}_{b_1}$ are the estimated standard deviations of the random intercept and slope, respectively.", 
+  notation="none", threeparttable = TRUE, escape = FALSE),
+  font_size = 11, full_width=FALSE)
 @
 
 \FloatBarrier
@@ -545,23 +586,33 @@ print(xtable(splits[1:10, -1], digits = 3,
 
 
 
-\section{Study II: Comparison of LM(M) trees with SEM trees and LongCART}
 
-In this second study, we compare performance of LM(M) trees with that of SEM trees and LongCART. This allows us to evaluate the possible (dis)advantages of global versus local estimation of random-effects parameters, as well as the performance of different splitting criteria. The same data-generating design as in Study I was employed. We compared performance of LM(M) trees employing clustered covariances only, which showed good performance in Study I.
+
+\section{Simulation Study II}
+
+Next, we compared performance of LM(M) trees with that of SEM trees and LongCART. This allows us to evaluate the possible (dis)advantages of global versus local estimation of random-effects parameters, as well as the performance of the different splitting criteria employed by each method. The same data-generating design as in Simulation Study I was employed. To reduce the number of comparisons, we only include performance of LM(M) trees fitted using clustered covariances, because they showed good performance in Simulation Study I.
 
 \subsection{Method}
 
-We fitted SEM trees using two different splitting criteria: First, we used the default "naive" splitting approach \citep{BranyOert13}, in which likelihood ratio tests (LRTs) are used as the splitting criterion. The likelihood of the SEM fitted to the observations in the current node is compared against the likelihood of a range of two-group SEMs, in which the two groups are defined by each possible candidate split. An LRT can thus be computed for each candidate split, which quantifies the improvement in fit that may be obtained by implementing the split. In each step, the candidate yielding the highest LRT is selected for splitting, and splitting is continued as long as a candidate split yields a $p$-value of the LRT above a pre-specified $\alpha$ level (0.05, by default). 
+We fitted a total of six SEM trees to every dataset. We used two different splitting criteria: 
 
-Second, we fitted score-based SEM trees, as proposed by \cite{ArnoyVoel21}. This approach uses the MOB algorithm described in the Introduction, where the parametric model fitted in step (a) is a SEM. While for GLMM trees, parameter stability tests are computed for the fixed-effects parameters only, score-based SEM trees compute parameter stability tests based on both fixed- and random-effects parameters. 
+\begin{itemize} 
 
-To specify the node-specific models for SEM trees, we employed an LGCM specification with the response at each timepoint regressed on a latent intercept and slope. Intercept loadings were fixed to 1; slope loadings were fixed to the value of $t$ at each timepoint. With both LRT- and score-based splitting criteria, we employed three different model specifications: a) variances of latent slope and intercept fixed to 0; b) variance of latent intercept freely estimated, variance of latent slope fixed to 0; c) variances of latent intercept and slope freely estimated. Errors were assumed uncorrelated between timepoints, error variances freely were estimated for each timepoint. To fit SEMs, we used package \textbf{lavaan} \citep[version 0.6-11][]{Ross12} and to fit SEM trees, we used package \textbf{semtree} \citep[version 0.9.17][]{BranyOert13}.    
+\item We used the default "naive" splitting approach which employs likelihood ratio tests (LRTs) as the splitting criterion \citep{BranyOert13}. That is, the likelihood of the SEM fitted to the observations in the current node is compared against the likelihood of a range of two-group SEMs, in which the two groups are defined by each possible candidate split. An LRT can thus be computed for each candidate split, which quantifies the improvement in fit that may be obtained by implementing the split. In each step, the candidate yielding the highest LRT is selected for splitting, and splitting is continued as long as a candidate split yields a $p$-value of the LRT above a pre-specified $\alpha$ level (0.05, by default). 
 
-We fitted a LongCART tree to each dataset, employing default settings. The LongCART function estimates node-specific models comprising a random intercept term; this default cannot be overridden. A fixed-effects model was specified with the response regressed on time and a subject-specific random intercept. We used package \textbf{semtree} to fit SEM trees \citep[][version 0.9.17]{BranyOert13}. To fit LMMs, we used package \textbf{nlme} \citep[version 3.1-153][]{PinhyBate00} and to fit LongCART trees we used package \textbf{LongCART} \citep[version 3.1][]{Kund21}.    
+\item We used the score-based splitting approach of \cite{ArnoyVoel21}. This approach uses the MOB algorithm described in the Introduction, where the parametric model fitted in step (a) is a SEM. While for GLMM trees, parameter stability tests are computed for the fixed-effects parameters only, score-based SEM trees compute parameter stability tests based on both fixed- and random-effects parameters. 
+
+\end{itemize}
+
+For each splitting approach, three different random-effects specifications were employed: Variances of latent intercepts and slopes both fixed to 0; variance of the latent intercept freely estimated and variance of the latent slope fixed to 0; variances of latent intercepts and slopes both freely estimated. To specify the node-specific models for SEM trees, we employed an LGCM specification with the response at each timepoint regressed on a latent intercept and slope. Intercept loadings were fixed to 1; slope loadings were fixed to ${0, 1, 2, 3, 4}$, respectively. Errors were assumed uncorrelated between timepoints and an error variance was freely estimated for each timepoint. We used package \textbf{lavaan} \citep[version 0.6-11; ][]{Ross12} to fit the SEMs and we used package \textbf{semtree} \citep[version 0.9.17; ][]{BranyOert13} to fit the SEM trees.    
+
+We fitted a single LongCART tree to each dataset. The LongCART function estimates node-specific models comprising a random intercept term; this default cannot be overridden. A fixed-effects model was specified with the response regressed on time and a subject-specific random intercept. We used package \textbf{LongCART} \citep[version 3.1][]{Kund21} to fit LongCART trees.    
 
 
 \subsection{Results}
 
+
+\subsubsection{Tree size}
 
 <<echo=FALSE>>=
 tmp2 <- tmp
@@ -638,40 +689,85 @@ varco <- as.data.frame(VarCorr(mod_all))$vcov /
 varco
 @
 
-\begin{figure}[!ht]
+\begin{figure}[!b]
 \caption{Tree size distributions for LM(M) trees with clustered covariances, SEM trees and LongCART.}
-\begin{subfigure}{1.2\textwidth}
-<<echo=FALSE, fig=TRUE, height=3.5>>=
+\begin{subfigure}{1.25\textwidth}
+<<echo=FALSE, fig=TRUE, height=4>>=
+## Note!!! White spaces added to LM(M) and SEM tree, b/c with use of geom_text panels get ordered
+## alphabetically
 tmp2$method <- ifelse(
-  tmp2$method_id %in% c("lm_c", "lmer_c", "lmer_s_c"), "LM(M) tree", 
-      ifelse(tmp2$method_id %in% c("f_sem", "f_sem_i", "f_sem_s"), "SEM tree (LRT-based)", 
+  tmp2$method_id %in% c("lm_c", "lmer_c", "lmer_s_c"), " LM(M) tree ", 
+      ifelse(tmp2$method_id %in% c("f_sem", "f_sem_i", "f_sem_s"), " SEM tree (LRT-based) ", 
              ifelse(tmp2$method_id %in% c("s_sem", "s_sem_i", "s_sem_s"),
-                             "SEM tree (score-based)", "LongCART")))
-tmp2$random <- ifelse(tmp2$method_id %in% c("lm_c", "f_sem", "s_sem"), "no", 
+                             " SEM tree (score-based) ", "LongCART")))
+tmp2$method <- factor(tmp2$method, levels = c(" LM(M) tree ", " SEM tree (LRT-based) ", 
+                                              " SEM tree (score-based) ", "LongCART"))
+
+tmp2$random <- ifelse(tmp2$method_id %in% c("lm_c", "f_sem", "s_sem"), 
+                      "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
                       ifelse(tmp2$method_id %in% c("lmer_c", "f_sem_i", "s_sem_i", "Lcrt"),
-                             "int.", "int. + \nslope"))
-tmp2$random <- factor(tmp2$random, levels = c("no", "int.", "int. + \nslope"))
-tmp2$method <- factor(tmp2$method, levels = c("LM(M) tree", "SEM tree (LRT-based)", 
-                                              "SEM tree (score-based)", "LongCART"))
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                              "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)"))
+
+## Set up data.frame of summary stats
+means <- tapply(tmp2$tree_size, tmp2$method_id, mean)
+sds <- tapply(tmp2$tree_size, tmp2$method_id, sd)
+mads <- tapply(tmp2$tree_size, tmp2$method_id, function(x) mean(abs(x - 3)))
+summ_stats <- data.frame(M = round(means[c("lm_c", "lmer_c", "lmer_s_c", 
+                                            "f_sem", "f_sem_i", "f_sem_s",
+                                            "s_sem", "s_sem_i", "s_sem_s", "Lcrt")], digits = 2), 
+                   SD = round(sds[c("lm_c", "lmer_c", "lmer_s_c", 
+                                            "f_sem", "f_sem_i", "f_sem_s",
+                                            "s_sem", "s_sem_i", "s_sem_s", "Lcrt")], digits = 2),
+                   MAD = sprintf(mads[c("lm_c", "lmer_c", "lmer_s_c", 
+                                            "f_sem", "f_sem_i", "f_sem_s",
+                                            "s_sem", "s_sem_i", "s_sem_s", "Lcrt")],  fmt = '%#.2f'))
+summ_stats$method_id <- factor(rownames(summ_stats))
+
+summ_stats$method <- ifelse(
+  summ_stats$method_id %in% c("lm_c", "lmer_c", "lmer_s_c"), " LM(M) tree ", 
+      ifelse(summ_stats$method_id %in% c("f_sem", "f_sem_i", "f_sem_s"), " SEM tree (LRT-based) ", 
+             ifelse(summ_stats$method_id %in% c("s_sem", "s_sem_i", "s_sem_s"),
+                             " SEM tree (score-based) ", "LongCART")))
+tmp2$method <- factor(tmp2$method, levels = c(" LM(M) tree ", " SEM tree (LRT-based) ", 
+                                              " SEM tree (score-based) ", "LongCART"))
+summ_stats$y <- 25.5
+summ_stats$random <- ifelse(summ_stats$method_id %in% c("lm_c", "f_sem", "s_sem"), 
+                      "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(summ_stats$method_id %in% c("lmer_c", "f_sem_i", "s_sem_i", "Lcrt"),
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                              "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)"))
+summ_stats$all <- with(summ_stats, paste(M, SD, MAD, sep = "\n"))
+
 breaks <- c(0, 1, 3, 7, 15)
-lim <- c(0, 15)
+lim <- c(0, 30)
 plot1 <- ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size), alpha = .5, width = .6) + 
+  geom_boxplot(aes(x=random, y=tree_size), alpha = .5, width = .6, coef = NULL) +
+  geom_count(aes(x=random, y=tree_size), col = "grey", alpha = .75) +
   geom_hline(yintercept=3, col = "darkgrey") +
+  geom_text(data = summ_stats, aes(x=random, y=y, label = all),
+            size = 3, col = "grey44") +
   scale_y_continuous(trans = pseudo_log_trans(), 
                      breaks = breaks, lim = lim) +
   facet_grid(~ method, scales = "free", space = "free") +
-  labs(x = "", y = "Tree size")
+  labs(x = "", y = "no. of splits") + theme(legend.position = "none") +
+  scale_x_discrete(labels = scales::parse_format()) +
+  coord_cartesian(clip = 'off') +
+  labs(tag = "  M\n SD\nMAD") + theme(plot.tag.position = c(.03, .87),
+                                   plot.tag = element_text(size = 10))
 plot1
-##ggsave(file = "tree_size_plot.png", height = 9.5, width=19, units = "cm")
 @
-%\includegraphics{tree_size_plot.png}
-\end{subfigure}
-{\footnotesize \textit{Note.} Values on $x$-axis indicate whether random intercepts and/or slopes were estimated: no = random intercepts and slopes fixed to 0; int. = variance of random intercept freely estimated, variance of random slope fixed to 0; int. + slope = variance of random intercept and slope (and correlation between the two) freely estimated. Distances on $y$-axis are on the log scale. Grey lines indicate true number of splits (3 splits).}
+\end{subfigure}%
+\vspace{-0.5cm}%
+{
+\footnotesize \textit{Note.} Grey circles represent counts, grey lines indicate true number of splits. Distances on the $y$-axis are on the log scale. $x$-axis labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. MAD = Mean absolute deviation from true tree size.}
 \label{fig:tree_sizes}
 \end{figure}
 
-Figure~\ref{fig:tree_sizes} depicts tree size distributions for the different algorithms. LRT-based SEM trees appear somewhat overpowered with a mean number of splits of \Sexpr{round(tapply(tmp2$tree_size, tmp2$method, mean)["SEM tree (LRT-based)"], digits = 2)} ($SD = $\Sexpr{round(tapply(tmp2$tree_size, tmp2$method, sd)["SEM tree (LRT-based)"], digits = 2)}), while score-based SEM trees comprised the correct number of splits on average ($M = $\Sexpr{round(tapply(tmp2$tree_size, tmp2$method, mean)["SEM tree (score-based)"], digits = 2)}; $SD = $\Sexpr{round(tapply(tmp2$tree_size, tmp2$method, sd)["SEM tree (score-based)"], digits = 2)}). SEM trees appear more systematically affected by mis-specification of the random-effects structure than LMM trees and under-specification yields a higher number of splits. LongCART trees appear underpowered, with a mean number of splits of \Sexpr{round(tapply(tmp2$tree_size, tmp2$method, mean)["LongCART"], digits = 2)} ($SD = $\Sexpr{round(tapply(tmp2$tree_size, tmp2$method, sd)["LongCART"], digits = 2)}). This could be the result of under-specification of the random-effects structure: LongCART trees incorporate a random-intercept term only and this default cannot be overridden.
+Figure~\ref{fig:tree_sizes} depicts tree size distributions for the different algorithms. Comparing the performance of LM(M) trees (leftmost panel) with the performance of SEM trees (middle two panels) indicates that performance of SEM trees is more strongly and systematically affected by the complexity of the random-effects structure than LM(M) trees, with more complex structure yielding lower tree size. When random intercepts and slopes are fixed to zero, both LRT- and score based SEM trees tend to implement too many splits. With the correct random-effects specification (both random intercepts and slopes freely estimated), LRT-based SEM trees recover the correct tree size on average, but with higher variance than LMM trees. Score-based SEM trees perform best when only random intercepts are estimated, implementing too few splits when random slopes are estimated, too. LongCART trees appear underpowered, implementing two splits on average.
+
+On average, LMM trees estimating a random intercept and/or slope implement an average number of splits very close to the true number of splits; the same goes for LRT-based SEM trees estimating both random intercept and slope, and score-based SEM trees estimating a random intercept only. According to the mean absolute deviation from the true number of splits (MAD), however, LM trees perform best, closely followed by LMM trees estimating both random slope and intercept, LRT-based SEM trees estimating a random intercept only, LMM trees estimating only a random intercept and score-based SEM trees estimating only a random intercept.
+
 
 <<eval=FALSE, echo=FALSE>>=
 pairwise.t.test(tmp2$tree_size, tmp2$method_id, 
@@ -690,17 +786,13 @@ pairwise.t.test(tmp2$tree_size, tmp2$method_id,
 # s_sem_i  1.00000 1.00000  < 2e-16 < 2e-16 8.2e-09 1.00000 < 2e-16 -       -      
 # s_sem_s  < 2e-16 < 2e-16  < 2e-16 < 2e-16 < 2e-16 < 2e-16 < 2e-16 < 2e-16 -      
 # Lcrt     < 2e-16 < 2e-16  < 2e-16 < 2e-16 < 2e-16 < 2e-16 < 2e-16 < 2e-16 0.03511
+
+## t-tests for comparing no. of splits with true number of splits
+t_tests <- round(apply((sizes-1)/2, 2, function(x) t.test(x, mu = 3)$p.value), digits = 3)
+t_tests
 @
 
-%We performed pairwise t-tests to assess differences between the approaches in Figure~\ref{fig:tree_sizes}. Bonferroni-corrected $p$-values indicated significant differences in tree size between most methods (all $p < .001$), with some notable exceptions: The number of splits implemented by LMM trees with clustered covariances was indistinguishable from that of LRT-based SEM trees with freely estimated random intercepts and slopes, and from the score-based SEM trees with freely estimated random intercepts. 
-
-<<eval=FALSE, echo=FALSE>>=
-## t-tests for comparing no of splits with true number of splits
-round(apply((sizes-1)/2, 2, function(x) t.test(x, mu = 3)$p.value), digits = 3)
-@
-
-Figure~\ref{fig:tree_sizes_interact} (Appendix \ref{sec:AppendixA}) presents tree size distributions, separated according to the levels of the data-generating parameters. Strongest effects were observed for $N$, followed by $\sigma_{b_0}$, $p_{noise}$, $\rho$ and $\sigma_{b_1}$. \textcolor{orange}{I moved plots to Appendix because of their size and because they are not of main interest. Not sure if following results should even be discussed here or in the Appendix:} Results for $N$ were as expected for all methods: with increasing sample size, more splits are implemented. Both LRT- and score-based SEM trees seem only affected by levels of $\sigma_{b_0}$, $p_{noise}$ and $\rho$ under misspecification of the random effects. Especially when both random intercept and slope variances are fixed to 0, higher levels of $\sigma_{b_0}$ and $p_{noise}$ yield more splits with both SEM tree approached. LRT-based SEM trees seem unaffected by levels of $\rho$, while score-based SEM trees seemed to implement a larger number of splits with increasing values of $\rho$. This pattern seemed reversed for increased magnitude of $\sigma_{b_1}$, which yields a lower number of splits for both SEM tree approaches, but only when the random effects were correctly specified. LongCART implemented more splits with higher levels of $p_{noise}$ and $\rho$, but was unaffected by levels of $\sigma_{b_0}$ and $\sigma_{b_1}$.
-
+Distributions of the number of splits, separated according to the levels of the data-generating parameters are depicted and discussed in Appendix~\ref{sec:AppendixA} and Figure~\ref{fig:tree_sizes_interact}, because they show a pattern very similar to Figure~\ref{fig:tree_sizes}. Of the data-generating parameters, $N$ and $\sigma_{b_0}^2$ showed the strongest effects and in the expected direction with higher values resulting in a higher number of splits. The number of splits implemented by SEM trees was most strongly affected by the data-generating parameters when the random effects were misspecified (i.e., random intercepts and/or slope fixed to 0).
 
 
 
@@ -721,38 +813,33 @@ tapply(tmp2$tree_size, list(tmp2$method_id, tmp2$sigma_slope), mean)
 
 
 
+\subsubsection{Split selection}
 
 <<echo=FALSE, results=tex, message=FALSE, warning=FALSE>>=
+library("kableExtra")
 splits$Algorithm[2] <- "LM(M) tree"
-splits$Algorithm[4] <- "  (clustered"
-splits$Algorithm[8] <- "    covariances)"
+splits$Algorithm[4] <- "  (cl.cov.)"
+splits$Algorithm[8] <- " "
 splits$Algorithm[12] <- "  (LRT-based)"
 splits$Algorithm[14] <- "SEM tree"
 splits$Algorithm[15] <- "  (score-based)"
-print(xtable(splits[c(2, 4, 8, 11:17), -3], digits = 3,
-             caption = "Variable selected for the first split by each of the partitioning methods.", 
-             label = "tab:first_splits2"), include.rownames=FALSE, 
-      hline.after = c(-1, 0, 3, 6, 9), table.placement = "!ht",
-      add.to.row = list(pos = list(10, 10, 10, 10), command = c(
-        "\\hline",
-        "\\multicolumn{7}{l}{\\footnotesize\\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables}\\\\ ", 
-        "\\multicolumn{7}{l}{\\footnotesize are continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). $\\sigma_{b_0}$ and $\\sigma_{b_1}$}\\\\ ",
-        "\\multicolumn{7}{l}{\\footnotesize are the standard deviations of the random intercept and slope, respectively.}\\\\ ")),
-      latex.environment = "", caption.placement = "top",
-      sanitize.text.function=function(x){x})
 
-
-
-
-
-
+## Print table
+kable_styling(add_footnote(
+  kable(splits[c(2, 4, 8, 11:17), -3], format = "latex", booktabs = TRUE, 
+        label = "first_splits2", align = "llccccc", row.names = FALSE, digits = 3,
+        escape=FALSE, linesep = "", # linesep command suppressess addlinesep every 5 rows
+        caption = "Cross-validated mean squared errors for each of the response variables."),
+  "\\footnotesize \\textit{Note.} $U_1$ is the true first splitting variable and is binary; all other partitioning variables are continuous, with $U_2$ and $U_3$ being true splitting variables (nodes 2 and 3). The first column indicates wheter the random intercept and/or slope were estimated or not.", 
+  notation="none", threeparttable = TRUE, escape = FALSE),
+  font_size = 11, full_width=FALSE)
 @
 
 
 
-Table~\ref{tab:first_splits2} presents variable selection frequencies for the first split in the fitted trees. For SEM trees, the LRT criterion yields almost perfect accuracy for the first split. The score-based approach selected the wrong splitting variable for the first split in about \Sexpr{round(100*(1 - mean(splits$`$U_1$`[grep("s_sem", rownames(splits))])))}\% of datasets, but only when the random-effects structure was mis-specified (i.e., $\sigma_{b_0}$ and/or $\sigma_{b_1}$ fixed to 0). When random effects were correctly specified, score-based SEM trees also provided perfect recovery of the first split. Closer inspection of parameter stability tests suggested that the tests are (much) more sensitive to instability in the fixed slope than in the fixed intercept.
+Table~\ref{tab:first_splits2} presents variable selection frequencies for the first split in the fitted trees. For SEM trees, the LRT criterion yields almost perfect accuracy for the first split. The score-based approach selected the wrong variable for the first split in about \Sexpr{round(100*(1 - mean(splits$`$U_1$`[grep("s_sem", rownames(splits))])))}\% of datasets, but only when the random-effects structure was misspecified. When random effects were correctly specified, score-based SEM trees also provided perfect recovery of the first split. Closer inspection of stability tests seperately per model parameter suggested that the the score-based tests for SEMs are more sensitive to instability in the fixed slope than in the fixed intercept.
 
-LongCART trees exhibit strikingly low accuracy for recovering the first split, selecting the wrong variable in all datase. LongCART showed a more dramatic tendency than score-based SEM trees to use $U_2$ and $U_3$ for implementing the first split. Of note, in the LongCART trees where no split was implemented (\Sexpr{round(100*prop.table(table(tree_size$Lcrt))[1])}\% of datasets), \Sexpr{round(100*prop.table(table(Lcrt_splitvars[tree_size$Lcrt == 1L] == "x1"))["TRUE"])}\% $U_1$ was the strongest splitting candidate, but the parameter stability test simply did not exceed the criterion of significance in those datasets. This suggests that either the parameter stability tests proposed by \cite{KundyHare19} are less sensitive to instabilities with respect to the fixed intercept, and/or with respect to categorical covariates. 
+LongCART trees exhibit low accuracy for recovering the first split, selecting the wrong variable in all datasets where at least one split was implemented. LongCART showed an even stronger tendency than score-based SEM trees to select $U_2$ or $U_3$ for the first split. Of note, in the datasets where LongCART did not implement any splits, in \Sexpr{round(100*prop.table(table(Lcrt_splitvars[tree_size$Lcrt == 1L] == "x1"))["TRUE"])}\% percent of datasets $U_1$ was the strongest splitting candidate, but the parameter stability test simply did not reach the criterion for significance. This suggests the parameter stability tests proposed by \cite{KundyHare19} are less sensitive to instabilities with respect to the fixed intercept, or less sensitive to instability with respect to a categorical covariate. 
 
 
 <<echo=FALSE, eval=FALSE>>=
@@ -873,10 +960,13 @@ for (i in c("x2")){#}, "x2", "x3", "x4", "x5")) {
 @
 
 
+
+\subsubsection{Computation time}
+
 \begin{figure}[!ht]
 \caption{Computation time distributions for the different partitioning methods.}
-\begin{subfigure}{.6\textwidth}
-<<fig=TRUE, echo=FALSE, width=4, height=4>>=
+\begin{subfigure}{.8\textwidth}
+<<fig=TRUE, echo=FALSE, width=4, height=3.25>>=
 load("comp_times.Rda")
 colnames(times) <- c(rep("LMM tree", times = 8),
                      rep(" LM tree", times = 2), 
@@ -884,51 +974,46 @@ colnames(times) <- c(rep("LMM tree", times = 8),
                      rep("SEM tree\n(score)", times = 3),
                      "LongCART")
 times <- reshape2::melt(times)
-ggplot(times, aes(Var2, value)) + geom_boxplot(width=.5, alpha = .5) + 
-  labs(x = "", y = "Computation time (in seconds)") +
-  scale_y_continuous(trans = "log", breaks = c(.01, .1, 1, 10, 100, 1000, 10000))
 mean_times <- tapply(times$value, times$Var2, mean)
+summ_stats <- data.frame(M = sprintf(mean_times, fmt = '%#.2f'),
+                         Var2 = levels(times$Var2),
+                         y = 100000)
+ggplot(times, aes(Var2, value)) + 
+  geom_violin(, alpha = .5, fill = "grey", width=.5) +
+  labs(x = "", y = "Computation time (in seconds)") +
+  geom_text(data = summ_stats, aes(x=Var2, y=y, label = M),
+            size = 3, col = "black") +
+  scale_y_continuous(trans = "log", limits = c(0.01, 100000), 
+                     breaks = c(.01, .1, 1, 10, 100, 1000, 10000)) +
+  labs(tag = "M") + theme(plot.tag.position = c(.12, .96),
+                          plot.tag = element_text(size = 10)) + 
+  geom_text(data = summ_stats, aes(x=Var2, y=y, label = M),
+            size = 3, col = "darkgrey") 
 @
 \end{subfigure}
 \label{fig:comp_times}
 \end{figure}
 
 
-Figure~\ref{fig:comp_times} presents computation time distributions for the partitioning algorithms. A clear computational advantage is observed for LM trees, with an average computation time of \Sexpr{round(mean_times[" LM tree"], digits = 3)} seconds. Including random-effects estimation increased computation time: for LMM trees, average computation time was \Sexpr{round(mean_times["LMM tree"], digits = 2)} seconds. LongCART and SEM trees yielded much longer computation times, with LongCART requiring \Sexpr{round(mean_times["LongCART"], digits = 2)} seconds, score-based SEM trees \Sexpr{round(mean_times["SEM tree\n(score)"], digits = 2)} seconds, and LRT-based SEM trees \Sexpr{round(mean_times["SEM tree\n(LRT)"], digits = 2)} seconds computation time, on average. 
+Figure~\ref{fig:comp_times} presents computation time distributions for the partitioning algorithms. A clear computational advantage is observed for LM trees. LMM trees require longer computation times because of the estimation of random effects. Yet, this increase is minor compared to the computation times required by LongCART and SEM trees: LRT-based SEM trees required strikingly computation times, while score-based SEM trees were computationally more efficient, as expected. Computation times for LongCART were in between LRT- and score-based SEM trees. 
 
 
 \FloatBarrier
 
 
-\section{Study III: Application}
+\section{Application}
 
 \subsection{Method} 
 
 \subsubsection{Dataset}
 
-We analyzed longitudinal assessments of children's reading, math and science abilities from the Early Childhood Longitudinal Study-Kindergarten class of 1998-1999 \citep[ECLS-K; ][]{NCES10}. Data were collected from kindergarten 1998 through eighth grade 2007. In the current analyses, we focus on assessments during kindergarten, 1st, 3rd, 5th and 8th grade. In the ECLS-K study, data from 21,304 children from 1,018 schools across the USA were collected.  
+We analyzed longitudinal assessments of children's reading, math and science abilities from the Early Childhood Longitudinal Study-Kindergarten class of 1998-1999 \citep[ECLS-K; ][]{NCES10}. Data were collected from 21,304 children from 1,018 schools across the USA were collected. Assessments took place from kindergarten in 1998 through 8th grade in 2007. In the current analyses, we focus on the assessments from kindergarten, 1st, 3rd, 5th and 8th grade.
 
-Response variables are reading, math and science ability. These were assessed using multi-item cognitive tests, from which latent ability estimates were computed with a mean of zero and variance of one. Reading and math abilities were assessed in all five rounds of data collection, while science knowledge was assessed in the 3rd, 5th and 8th grade only. We analyzed data from  children who completed all assessments ($N = 6,277$ for reading; $N = 6,512$ for math; $N = 6,625$ for science).
+Response variables are reading, math and science abilities. These were assessed using multi-item cognitive tests, from which latent ability estimates were computed with a mean of zero and variance of one. Reading and math abilities were assessed in all five rounds of data collection, while science knowledge was assessed in the 3rd, 5th and 8th grade only. We analyzed data from children who completed all assessments yielding $N = 6,277$ for reading; $N = 6,512$ for math; $N = 6,625$ for science.
 
-Our analyses focus on predicting ability trajectories, based on baseline characteristics. Time was measured as the number of months since the baseline assessment. In order to obtain approximately linear trajectories, used $\sqrt{\mathrm{months}}$ as the timing metric for reading and math trajectories, and $\mathrm{months}^{\frac{2}{3}}$ for science trajectories.
+Our analyses focus on predicting trajectories of reading, math and science abilities, based on baseline characteristics. Time was measured as the number of months since the baseline assessment. In order to obtain approximately linear trajectories, $\mathrm{months}^{1/2}$ was used as the timing metric for reading and math trajectories, and $\mathrm{months}^{2/3}$ for science trajectories.
 
-We used the following time-invariant covariates as potential partitioning variables:
-
-\begin{itemize}
-\setlength\itemsep{0em}
-\setlength{\itemindent}{0.2in}
-\item Gender (51.1\% male)
-\item Age in months at baseline (range 53 to 96; M = 6.14 years at baseline).
-\item Race (8 categories)
-\item First time in kindergarten (yes/no)
-\item Socio-economic status (range -5 to 3)
-\item Fine motor skills (e.g., drawing figures; range 0 to 9)
-\item Gross motor skills (e.g., ability to hop, skip and jump; range 0 to 8)
-\item Interpersonal skills (range 1 to 4)
-\item Self-control (range 1 to 4)
-\item Internalizing problem behavior (range 1 to 4)
-\item Externalizing problem behavior (range 1 to 4)
-\end{itemize}
+We used eleven time-invariant covariates as potential partitioning variables: Gender (51.1\% male); Age in months at baseline (range 53 to 96; M = 6.14 years at baseline); Race (8 categories); First time in kindergarten (yes/no); Socio-economic status (range -5 to 3); Fine motor skills (e.g., drawing figures; range 0 to 9); Gross motor skills (e.g., ability to hop, skip and jump; range 0 to 8); Interpersonal skills (range 1 to 4); Self-control (range 1 to 4); Internalizing problem behavior (range 1 to 4); Externalizing problem behavior (range 1 to 4).
 
 
 
@@ -937,17 +1022,17 @@ We used the following time-invariant covariates as potential partitioning variab
 \subsubsection{Partitioning methods}
 
 
-We fitted four LM(M) trees, employing the same approaches applied in Studies I and II, except for the default approaches, and the random-effects initialization approach when both random intercepts and slopes were estimated; approaches which showed far from optimal performance in Study I. 
+We fitted four LM(M) trees using the approaches which showed most promise in the simulations: An LM tree ($\hat{\sigma}_{b_0} = \hat{\sigma}_{b_1} = 0$) using clustered covariances in the parameter-stability tests, two LMM trees using clustered covariances with different random-effects specifications ($\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} = 0$ and $\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} > 0$), and an LMM tree initializing estimation with the random effects and freely estimating a random intercept only ($\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} = 0$). 
 
-For comparison, we fitted longRPart \citep{AbdoyLeBl02} trees. We opted for longRPart, because neither SEM tree, LongCART, longRPart or longRPart2 implementations provide functionality to obtain predictions for new observations. We wrote custom functionality to allow for prediction with longRPart trees, but could not produce this for the other methods. We expect, however, that performance of longRPart will be representative of the other methods, in the sense that all fit the full mixed-effects model locally. Furthermore, SEM tree could not be employed because assessments at each wave did not take place on identical timepoints, which is a requirement for SEM-based growth curve modeling.
+To compare the performance of LM(M) trees on existing data, we could not employ SEM tree or LongCART, so we opted for longRPart \citep{AbdoyLeBl02}. Neither SEM trees, LongCART, longRPart or longRPart2 implementations provide functionality to obtain predictions for new observations. Writing custom functionality to allow for prediction was most straightforward for longRPart. Furthermore, performance of longRPart will be representative of the other methods, in the sense that all four methods fit full mixed-effects models locally. Like LongCART and longRPart2, longRPart fits a mixed-effects model in each of the terminal nodes. Like LRT-based SEM trees, longRPart uses an exhaustive LRT-based search in every node to find the optimal next split.
 
-Using package \textbf{longRPart} \citep[version 1.0][]{StewyAbdo12}, we fitted two longRPart trees with different random effects specifications: One tree comprising a random intercept only, and one tree comprising both a random intercept and slope, with respect to student. In order to implement a split, longRPart uses a criterion based on the minimum decrease in deviance, which is set to 0.01, by default. This yielded a very large number of splits in the current analyses and poor predictive accuracy. We therefore restricted maximum tree depth to 5, yielding a maximum of $2^5$ = \Sexpr{2^5} terminal nodes, or \Sexpr{(2^5)-1} splits. Significance of the LRT, or a cross-validation approach to determine whether to implement a split or not may yield better results, but neither approach is implemented in longRPart (nor longRPart2). 
+Using package \textbf{longRPart} \citep[version 1.0; ][]{StewyAbdo12}, we fitted two trees with different random effects specifications: A tree comprising a random intercept only, and a tree comprising both a random intercept and slope with respect to student. In order to implement a split, longRPart uses a criterion based on the minimum decrease in deviance, which is set to 0.01, by default. This yielded a very large number of splits in the current analyses and poor predictive accuracy. We therefore restricted maximum tree depth to 5, yielding a maximum of $2^5$ = \Sexpr{2^5} terminal nodes, or \Sexpr{(2^5)-1} splits. Significance of the LRT, or a cross-validation approach to determine whether to implement a split or not may yield better results, but this has not been implemented. 
 
 
 
 \subsubsection{Evaluation of performance}
 
-The ECLS-K datasets have exceptionally large sample sizes, which may not be representative of real-world applications. We therefore employed random sampling to obtain training samples of $N=250$ and $N=1,000$ children, and evaluated predictive accuracy using the responses of children not included in the training sample. For each combination of response variable and sample size, we performed 100 repetitions. Because we used disjunct samples of children for training and testing, only the fixed-effects parts of each fitted model were used for prediction; random effects were fixed to 0. Accuracy was assessed by computing the test MSE, by taking the mean squared difference between predicted and observed ability estimates of test observations. We measured tree size by counting the number of splits in each tree, and measured computation time in seconds. 
+The ECLS-K datasets have exceptionally large sample sizes. We therefore employed random sampling to obtain training samples of $N=250$ and $N=1,000$ children, likely more representative of real-world studies in psychology. For each combination of response variable (math, reading or science) and sample size, we performed 100 repetitions. We evaluated predictive accuracy by computing the mean squared difference between predicted and observed response variable values for all children not included in the training sample of the current repetition. Note that this measures the accuracy of the fixed-effects predictions only. Tree size was measured by the number of splits in each tree, and computation time was measured in seconds. 
 
 
 \subsection{Results}
@@ -955,7 +1040,7 @@ The ECLS-K datasets have exceptionally large sample sizes, which may not be repr
 
 
 
-\begin{figure}[!ht]
+\begin{figure}[!bt]
 \caption{Mean squared errors for trees fitted to math (top), reading (middle) and science (bottom) ability trajectories.}
 \begin{subfigure}{1.2\textwidth}
 <<echo=FALSE, fig=TRUE, height=2, width=8>>=
@@ -991,26 +1076,47 @@ scie_MSEs <- rbind(scie_MSEs, cbind(MSEs, N = 1000))
 #sapply(scie_MSEs, function(x) table(is.na(x)))$longRPart_s
 #sapply(scie_MSEs, function(x) tapply(x, scie_MSEs$N, mean))
 
+
+
+## Compute summary stats
+MSE_df <- data.frame(t(sapply(math_MSEs[ , -c(4,6,7,10)], 
+                              function(x) sprintf("%.4f", tapply(x, math_MSEs$N, mean, na.rm = TRUE)))))
+MSE_df <- cbind(MSE_df, t(sapply(math_MSEs[ , -c(4,6,7,10)], 
+                               function(x) sprintf("%.3f", tapply(x, math_MSEs$N, sd, na.rm = TRUE)))))
+MSE_df <- cbind(MSE_df, t(sapply(read_MSEs[ , -c(4,6,7,10)], 
+                               function(x) sprintf("%.4f", tapply(x, read_MSEs$N, mean, na.rm = TRUE)))))
+MSE_df <- cbind(MSE_df, t(sapply(read_MSEs[ , -c(4,6,7,10)], 
+                               function(x) sprintf("%.3f", tapply(x, read_MSEs$N, sd, na.rm = TRUE)))))
+MSE_df <- cbind(MSE_df, t(sapply(scie_MSEs[ , -c(4,6,7,10)], 
+                               function(x) sprintf("%.4f", tapply(x, scie_MSEs$N, mean, na.rm = TRUE)))))
+MSE_df <- cbind(MSE_df, t(sapply(scie_MSEs[ , -c(4,6,7,10)], 
+                               function(x) sprintf("%.3f", tapply(x, scie_MSEs$N, sd, na.rm = TRUE)))))
+summ_stats <- MSE_df[ , c(1:2,5:6,9:10)]
+names(summ_stats) <- c("math, N = 250", "math, N = 1,000", 
+                       "read, N = 250", "read, N = 250", 
+                       "scie, N = 250", "scie, N = 1,000")
+
 tmp3 <- data.frame(stack(math_MSEs[ , -c(4,6,7,10)]),
                     dataset_id = factor(rep(1:nrow(math_MSEs), times = 12)),
                    N = math_MSEs$N)
 names(tmp3)[1:2] <- c("MSE", "method") 
 tmp3$method2 <- as.character(tmp3$method)
-tmp3$method2[grepl("LMtree", tmp3$method2)] <- "LM tree\n\n(cluster)"
-tmp3$method2[tmp3$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cluster)"
-tmp3$method2[tmp3$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
-tmp3$method2[tmp3$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
+tmp3$method2[grepl("LMtree", tmp3$method2)] <- "LM tree\n\n(cl.cov.)"
+tmp3$method2[tmp3$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl.cov.)"
+tmp3$method2[tmp3$method2 == "LMMtree_r"] <- "LMM tree\n\n(ran.eff.)"
+tmp3$method2[tmp3$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cl.cov.+ran.eff.)"
 tmp3$method2[grepl("longR", tmp3$method2)] <- "longRPart"
-tmp3$random <- ifelse(tmp3$method == "LMtree_c", "no", ifelse(
-  tmp3$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp3$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp3$random <- ifelse(tmp3$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp3$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp3$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp3$N <- factor(tmp3$N)
 
 theme_set(theme_gray(base_size = 10))
 ggplot(tmp3) +
-  geom_boxplot(aes(x=random, y=MSE, fill = N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
+  geom_violin(aes(x=random, y=MSE, fill = N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
   scale_y_continuous(trans = log_trans(),
                      sec.axis = sec_axis(trans=~1-(./var_math))) +
   facet_grid(~method2, scales = "free", space = "free") +
@@ -1030,15 +1136,16 @@ tmp4$method2[tmp4$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl
 tmp4$method2[tmp4$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
 tmp4$method2[tmp4$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
 tmp4$method2[grepl("longR", tmp4$method2)] <- "longRPart"
-tmp4$random <- ifelse(tmp4$method == "LMtree_c", "no", ifelse(
-  tmp4$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp4$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp4$random <- ifelse(tmp4$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp4$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp4$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp4$N <- factor(tmp4$N)
 ggplot(tmp4) +
-  geom_boxplot(aes(x=random, y=MSE, fill=N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
-    scale_y_continuous(trans = log_trans(),
+  geom_violin(aes(x=random, y=MSE, fill=N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
+  scale_y_continuous(trans = log_trans(),
                        sec.axis = sec_axis(trans=~1-(./var_read))) +
   facet_grid(~method2, scales = "free", space = "free") +
   theme(strip.background = element_blank(), strip.text.x = element_blank(),
@@ -1058,22 +1165,27 @@ tmp5$method2[tmp5$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl
 tmp5$method2[tmp5$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
 tmp5$method2[tmp5$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
 tmp5$method2[grepl("longR", tmp5$method2)] <- "longRPart"
-tmp5$random <- ifelse(tmp5$method == "LMtree_c", "no", ifelse(
-  tmp5$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp5$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp5$random <- ifelse(tmp5$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp5$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp5$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp5$N <- factor(tmp5$N)
-ggplot(tmp5) +
-  geom_boxplot(aes(x=random, y=MSE, fill=N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
-    scale_y_continuous(trans = log_trans(),
+library("ggforce")
+ggplot(tmp5, aes(x=random, y=MSE)) +
+  geom_violin(aes(fill=N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
+  scale_y_continuous(trans = log_trans(),
                        sec.axis = sec_axis(trans=~1-(./var_scie))) +
   facet_grid(~method2, scales = "free", space = "free") +
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(x = "", y = "MSE")
+  labs(x = "", y = "MSE") +
+  scale_x_discrete(labels = scales::parse_format()) +
+  coord_cartesian(clip = 'off') 
 @
-\end{subfigure}
-{\footnotesize \textit{Note. }The $y$-axis on the right gives an estimate of the proportion of variance explained, computed as $1 - \frac{MSE}{var(y)}$. Distances on $y$-axis are on the log scale.}
+\end{subfigure}%
+\vspace{-0.5cm}%
+{\footnotesize \textit{Note. }The second $y$-axis (far right) gives an estimate of the proportion of variance explained, computed as $1 - \frac{MSE}{var(y)}$. Distances on $y$-axis are on the log scale.}
 \label{fig:application_MSEs}
 \end{figure}
 
@@ -1111,32 +1223,19 @@ pairwise.t.test(tmp5$MSE, tmp5$method, alternative = "two.sided",
 @
 
 
-
+\setlength{\tabcolsep}{3pt}
 
 <<application_MSE, echo=FALSE, results=tex>>=
 library("kableExtra")
-MSE_df <- data.frame(t(sapply(math_MSEs[ , -c(4,6,7,10)], 
-                              function(x) sprintf("%.4f", tapply(x, math_MSEs$N, mean, na.rm = TRUE)))))
-MSE_df <- cbind(MSE_df, t(sapply(math_MSEs[ , -c(4,6,7,10)], 
-                               function(x) sprintf("%.3f", tapply(x, math_MSEs$N, sd, na.rm = TRUE)))))
-MSE_df <- cbind(MSE_df, t(sapply(read_MSEs[ , -c(4,6,7,10)], 
-                               function(x) sprintf("%.4f", tapply(x, read_MSEs$N, mean, na.rm = TRUE)))))
-MSE_df <- cbind(MSE_df, t(sapply(read_MSEs[ , -c(4,6,7,10)], 
-                               function(x) sprintf("%.3f", tapply(x, read_MSEs$N, sd, na.rm = TRUE)))))
-MSE_df <- cbind(MSE_df, t(sapply(scie_MSEs[ , -c(4,6,7,10)], 
-                               function(x) sprintf("%.4f", tapply(x, scie_MSEs$N, mean, na.rm = TRUE)))))
-MSE_df <- cbind(MSE_df, t(sapply(scie_MSEs[ , -c(4,6,7,10)], 
-                               function(x) sprintf("%.3f", tapply(x, scie_MSEs$N, sd, na.rm = TRUE)))))
 MSE_df <- cbind(paste0(MSE_df[,1], " (", MSE_df[,3], ")"),
                 paste0(MSE_df[,2], " (", MSE_df[,4], ")"),
                 paste0(MSE_df[,5], " (", MSE_df[,7], ")"), 
                 paste0(MSE_df[,6], " (", MSE_df[,8], ")"), 
                 paste0(MSE_df[,9], " (", MSE_df[,11], ")"),
                 paste0(MSE_df[,10], " (", MSE_df[,12], ")"))
-rownames(MSE_df) <- c("LM tree (c)", "LMM tree (i,c)", "LMM tree (i,r)", "LMM tree (i,s,c)",  
-                      "longRPart (i)", "longRPart (i,s)")
+rownames(MSE_df) <- c("LM tree$^c$", "LMM tree$^{i,c}$", "LMM tree$^{i,r}$", "LMM tree$^{i,s,c}$",  
+                      "longRPart$^i$", "longRPart$^{i,s}$")
 MSE_df <- MSE_df[c(1,2,4,3,5,6), ]
-
 
 kable_styling(add_header_above(add_header_above(add_footnote(
   kable(MSE_df, format = "latex", booktabs = TRUE, label = "application_MSEs", align = "c", 
@@ -1147,7 +1246,7 @@ kable_styling(add_header_above(add_header_above(add_footnote(
   c(" ", "N = 250"=1, "N = 1,000"=1, "N = 250"=1, "N = 1,000"=1,
     "N = 250"=1, "N = 1,000"=1), align = "c"),
   c(" ", "Math" = 2, "Reading" = 2, "Science" = 2), align = "c"),
-  font_size = 8, full_width=FALSE)
+  font_size = 9, full_width=FALSE)
 @
 
 
@@ -1224,7 +1323,7 @@ math_MSEs[6,]
 ##   were used for those nodes, which is always the lme with random 
 ## intercepts only
 
-## Illustrate by refiting trees:
+## Illustrate by refitting trees:
 load("bag_ids, N = 250, Math.Rda")
 library("longRPart")
 
@@ -1338,19 +1437,24 @@ scie_affected / sum(scie_sizes$N)
 ## without random slopes. This might paint a slightly difference picture.
 ## However, I do not expect dramatic differences, given that results
 ## for longRPart and longRPart_s are quite similar, and seem to differ
-## most for Science, which was most strongly affected bu the mistake.
+## most for Science, which was most strongly affected by the mistake.
 
 @
 
 
+\subsubsection{Predictive accuracy}
 
-Figure~\ref{fig:application_MSEs} and Table~\ref{tab:application_MSEs} present MSE distributions for each of the partitioning approaches, separated by sample size\footnote{LongRPart trees comprising random intercepts and slopes ran into estimation errors in some datasets: In the Math ability data, \Sexpr{table(is.na(math_MSEs$longRPart_s))["TRUE"]} out of 200 datasets did not yield a tree. All tree estimations converged successfully in the Reading ability data. In the Science ability data, \Sexpr{table(is.na(scie_MSEs$longRPart_s))["TRUE"]} out of 200 datasets did not yield a tree. Results are presented for iterations did yield a tree.}. Differences in performance between the partitioning approaches are of smaller magnitude than differences due to sample size. All methods show higher accuracy with larger sample sizes (with one exception: longRPart trees comprising random intercepts and slopes fitted on science ability data).
+LongRPart trees comprising both random intercepts and slopes yielded estimation errors in \Sexpr{(table(is.na(math_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the Math data and in \Sexpr{(table(is.na(scie_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the Science data. All other model-fitting attempts converged successfully. Results are presented for successful model estimations.
 
-LM(M) trees tend to show better predictive accuracy than longRPart trees. Pairwise $t$-tests indicated significantly better performance for each of the LM(M) tree approaches employing clustered covariances, compared to both longRPart approaches (Bonferroni corrected $p$-values all $< .01$). However, it should be noted that differences in performance are small; for example, the standard errors presented in Table~\ref{tab:application_MSEs} indicate differences $> 1$ \textit{SE} only for Reading with $N=250$, and Science (both $N=250$ and $N=1,000$)\footnote{The significance of pairwise $t$-tests may seem in contrast with the but small differences in terms of standard errors presented in Table~\ref{tab:application_MSEs}, but the standard errors in the pairwise $t$-tests are sensitive to the number of replications, while the standard errors in Table~\ref{tab:application_MSEs} are not, and thus provide a more useful measure of the strength of the effect.}. 
+Figure~\ref{fig:application_MSEs} presents MSE distributions for each of the partitioning approaches, separated by sample size. As expected, all methods show higher accuracy with larger sample sizes. LM(M) trees tend to show better predictive accuracy than longRPart trees. Pairwise $t$-tests indicated significantly better performance for each of the LM(M) tree approaches employing clustered covariances, compared to both longRPart approaches (Bonferroni corrected $p$-values all $< .01$). However, these performance differences are small; the effects of sample size are much more obvious than the differences between methods in Figure~\ref{fig:application_MSEs}. 
 
-Table~\ref{tab:application_MSEs} indicates that LMM trees comprising a random intercept term and employing cluster-level covariances ("LMM tree (i,c)") performed best for predicting Math and Reading abilities. For predicting science abilities, LMM trees initializing estimation with the random effects and estimating only a random intercept performed best, while this was the worst-performing approach for math and reading. For longRPart, a somewhat similar shift in performance occurs: While trees comprising both a random intercept and slope performed best for predicting Math and Reading, trees with a random intercept only performed best for predicting Science. This shift may be due to the lower number of Science ability assessments, compared to Math and Reading.
+Table~\ref{tab:application_MSEs} presents means and standard deviations of the MSEs. Only few differences in performance between LM(M) and longRPart trees are larger $> 1$ standard error: For Reading with $N=250$ and for Science with both sample sizes. Note that the standard errors in the pairwise $t$-tests are get smaller with a larger number of replications, while the standard errors in Table~\ref{tab:application_MSEs} do not. The latter thus provide a more useful measure of effect size, while the former have higher power to detect differences between methods.
 
-Interestingly, the performance of LM(M) trees employing cluster-level covariances seems hardly affected by the specification of the random-effects: Figure~\ref{fig:application_MSEs} shows very similar performance for LM(M) trees with(out) random intercepts or slopes. Pairwise $t$-tests did not indicate significant differences between the three approaches for any of the response variables.
+Table~\ref{tab:application_MSEs} indicates that LMM trees estimating only a random intercept and employing cluster-level covariances performed best for predicting Math and Reading abilities. For predicting science abilities, LMM trees initializing estimation with the random effects and estimating only a random intercept performed best. Random-effects initialization was the worst-performing LMM tree approach for Math and Reading. 
+
+For longRPart, trees comprising both a random intercept and slope performed best for predicting Math and Reading, trees with a random intercept only performed best for predicting Science. The differences in performance between Math and Reading on the one hand and science can perhaps be explained by the lower number of repeated assessments of Science abilities.
+
+Again, the performance of LM(M) trees employing cluster-level covariances seems hardly affected by the specification of the random-effects: Figure~\ref{fig:application_MSEs} shows very similar performance for LM(M) trees with random intercepts, slopes or neither. Pairwise $t$-tests did not indicate significant differences between those three approaches for any of the response variables.
 
 <<eval=FALSE, echo=FALSE>>=
 math_LMM <- lmer(score ~ months + (1 + months|CHILDID), data = mathdata)
@@ -1367,8 +1471,8 @@ scie_LMM <- lmer(score ~ months + (1 + months|CHILDID), data = sciedata)
 @
 
 
-\begin{figure}[!b]
-\caption{Tree sizes for trees fitted to math (top), reading (middle) and science (bottom) ability trajectories.}
+\begin{figure}[!bt]
+\caption{Tree sizes for trees fitted to Math (top), Reading (middle) and Science (bottom) ability trajectories.}
 \begin{subfigure}{1.2\textwidth}
 <<echo=FALSE, fig=TRUE, height=2, width=8>>=
 ## Tree size
@@ -1414,17 +1518,18 @@ tmp6$method2[tmp6$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl
 tmp6$method2[tmp6$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
 tmp6$method2[tmp6$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
 tmp6$method2[grepl("longR", tmp6$method2)] <- "longRPart"
-tmp6$random <- ifelse(tmp6$method == "LMtree_c", "no", ifelse(
-  tmp6$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp6$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp6$random <- ifelse(tmp6$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp6$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp6$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp6$N <- factor(tmp6$N)
 ggplot(tmp6) +
-  geom_boxplot(aes(x=random, y=splits, fill = N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
+  geom_violin(aes(x=random, y=splits, fill = N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
   facet_grid(~method2, scales = "free", space = "free") +
   theme(axis.title.x=element_blank(), axis.text.x=element_blank()) +
-  labs(x = "", y = "# of splits")
+  labs(x = "", y = "no. of splits")
 @
 \end{subfigure}
 \begin{subfigure}{1.2\textwidth}
@@ -1439,16 +1544,17 @@ tmp7$method2[tmp7$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl
 tmp7$method2[tmp7$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
 tmp7$method2[tmp7$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
 tmp7$method2[grepl("longR", tmp7$method2)] <- "longRPart"
-tmp7$random <- ifelse(tmp7$method == "LMtree_c", "no", ifelse(
-  tmp7$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp7$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp7$random <- ifelse(tmp7$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp7$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp7$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp7$N <- factor(tmp7$N)
 ggplot(tmp7) +
-  geom_boxplot(aes(x=random, y=splits, fill=N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
+  geom_violin(aes(x=random, y=splits, fill=N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
   facet_grid(~method2, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits") +
+  labs(x = "", y = "no. of splits") +
   theme(strip.background = element_blank(), strip.text.x = element_blank(),
         axis.title.x=element_blank(), axis.text.x=element_blank())
 @
@@ -1465,17 +1571,20 @@ tmp8$method2[tmp8$method2 %in% c("LMMtree_c", "LMMtree_sc")] <- "LMM tree\n\n(cl
 tmp8$method2[tmp8$method2 == "LMMtree_r"] <- "LMM tree\n\n(ranef)"
 tmp8$method2[tmp8$method2 %in% c("LMMtree_cr", "LMMtree_scr")] <- "LMM tree\n\n(cluster + ranef)"
 tmp8$method2[grepl("longR", tmp8$method2)] <- "longRPart"
-tmp8$random <- ifelse(tmp8$method == "LMtree_c", "no", ifelse(
-  tmp8$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), "int.", 
-  ifelse(tmp8$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
-    "int. + \nslope", NA)))
+tmp8$random <- ifelse(tmp8$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, hat(sigma)[b[1]] == 0)", 
+                      ifelse(tmp8$method %in% c("LMMtree_c", "LMMtree_r", "LMMtree_cr", "longRPart"), 
+                             "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] == 0)", 
+                             ifelse(tmp8$method %in% c("LMMtree_sc", "LMMtree_scr", "longRPart_s"), 
+                                "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp8$N <- factor(tmp8$N)
 ggplot(tmp8) +
-  geom_boxplot(aes(x=random, y=splits, fill=N), 
-               position=position_dodge(1), alpha = .5, width = .6) +
+  geom_violin(aes(x=random, y=splits, fill=N), 
+               position=position_dodge(1), alpha = .5, width = .7) +
   facet_grid(~method2, scales = "free", space = "free") +
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(x = "", y = "# of splits")
+  labs(x = "", y = "no. of splits") +
+  scale_x_discrete(labels = scales::parse_format()) +
+  coord_cartesian(clip = 'off')
 @
 \end{subfigure}
 \label{fig:application_sizes}
@@ -1486,7 +1595,7 @@ ggplot(tmp8) +
 \begin{figure}[h]
 \caption{Computation times for partitioning math, reading and science ability trajectories.}
 \begin{subfigure}{.5\textwidth}
-<<echo=FALSE, fig=TRUE, height=3, width=3>>=
+<<echo=FALSE, fig=TRUE, height=3.25, width=3>>=
 load("times, N = 250, Reading.Rda")
 read_times <- cbind(times, N = 250)
 load("times, N = 1000, Reading.Rda")
@@ -1499,8 +1608,8 @@ math_times <- rbind(math_times, cbind(times, N = 1000))
 
 load("times, N = 250, Science.Rda")
 scie_times <- cbind(times, N = 250)
-#load("times, N = 1000, Science.Rda")
-#scie_times <- rbind(scie_times, cbind(times, N = 1000))
+load("times, N = 1000, Science.Rda")
+scie_times <- rbind(scie_times, cbind(times, N = 1000))
 
 
 ## Combine all LMM trees
@@ -1512,67 +1621,69 @@ ECLSK_times$ind[grepl("LMMtree", ECLSK_times$ind)]<- "LMM tree"
 ECLSK_times$ind[grepl("longRPart", ECLSK_times$ind)]<- "longRPart"
 ECLSK_times$ind[ECLSK_times$ind == "LMtree_c"] <- "LM tree"
 ECLSK_times$ind <- factor(ECLSK_times$ind)
-ggplot(ECLSK_times) +
-  geom_boxplot(aes(x=ind, y=values), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = "log", 
-                     breaks = c(.01, .1, 1, 10, 100, 1000, 10000)) +
-  labs(x = "", y = "Computation time (in seconds)")
+
+## Compute summary stats
 mean_times <- with(ECLSK_times, tapply(values, ind, mean, na.rm=TRUE))
+summ_stats <- data.frame(M = sprintf(mean_times, fmt = '%#.2f'),
+                         ind = names(mean_times),
+                         y = 11000)
+## Plot
+ggplot(ECLSK_times) +
+  geom_violin(aes(x=ind, y=values), alpha = .5, fill = "grey", width=.7) +
+  scale_y_continuous(trans = "log", limits = c(0.1, 12000),
+                     breaks = c(.01, .1, 1, 10, 100, 1000)) +
+  labs(x = "", y = "Computation time (in seconds)") +
+  geom_text(data = summ_stats, aes(x=ind, y=y, label = M),
+            size = 3, col = "grey44") +
+  labs(tag = "M") + theme(plot.tag.position = c(.12, .95),
+                          plot.tag = element_text(size = 10)) 
 @
 \end{subfigure}
 \label{fig:application_times}
 \end{figure}
 
-Figure~\ref{fig:application_sizes} present tree size distributions for each of the partitioning approaches. Interestingly, whereas LM(M) trees implement a larger number of splits with increasing sample size, this pattern appears reversed for longRPart trees. For math and reading, the best-performing LM(M) tree approach in terms of predictive accuracy yields a smaller number of splits than the best-performing longRPart approach when sample size is small ($N=250$). This pattern reverses with large sample size ($N=1,000$), then the best-performing LM(M) tree approach yields a larger number of splits than the best-performing longRPart approach. For the math data, the best-performing longRPart approach yields a smaller number of splits than the best-performing LM(M) tree approach. 
+Figure~\ref{fig:application_sizes} presents tree size distributions for each of the partitioning approaches. Interestingly, whereas LM(M) trees implement a larger number of splits with increasing sample size, this pattern is reversed for longRPart trees. For Math and Reading, the best-performing LM(M) tree approach in terms of predictive accuracy yields a smaller number of splits than the best-performing longRPart approach when sample size is small. This pattern reverses with large sample size, where the best-performing LM(M) tree approach yields a larger number of splits than the best-performing longRPart approach. For the Math data, the best-performing longRPart approach yields a smaller number of splits than the best-performing LM(M) tree approach.
 
-Given the very minor differences in performance for LM(M) tree employing clustered covariances with different specifications of the random effects (Figure~\ref{fig:application_MSEs}), Figure~\ref{fig:application_sizes} suggests that LM trees with clustered covariances may provide very good complexity-accuracy trade-off.    
 
-Figure~\ref{fig:application_times} depicts the computation time distributions of the different partitioning algorithms. A clear computational advantage is observed for LM trees, with an average computation time of \Sexpr{round(mean_times["LM tree"], digits = 2)} seconds. Including estimation of random effects increases computation time, which was \Sexpr{round(mean_times["LMM tree"], digits = 2)} seconds on average for LMM trees. LongRPart trees required longest computation times, with an average of \Sexpr{round(mean_times["longRPart"], digits = 2)} seconds. 
+\subsubsection{Computation time}
+
+Figure~\ref{fig:application_times} depicts computation time distributions of the different partitioning algorithms. A clear computational advantage is observed for LM trees ($M =$ \Sexpr{round(mean_times["LM tree"], digits = 2)} seconds). LMM trees require longer computation times ($M =$ \Sexpr{round(mean_times["LMM tree"], digits = 2)} seconds). This increase is minor compared to LongRPart trees, which required longest computation times ($M =$ \Sexpr{round(mean_times["longRPart"], digits = 2)} seconds). 
 
 
 
 
 \section{Discussion}
 
-In Study I, we found the default estimation approach for GLMM trees proposed in \cite{FokkySmit18} yields high Type-I error rates when partitioning LGCMs. As hypothesized, performing parameter-stability tests using clustered covariances strongly improved performance. Also as hypothesized, we found initializing estimation with the random effects to be beneficial, but only when the random-effects specification comprised a random intercept only. Combining cluster-level covariances and random-effects initialization was not beneficial. The performance of of LM(M) trees using clustered covariances appeared largely unaffected by (mis-)specification of the random effects.
+In line with expectations, the simulation study showed that the default estimation approach for GLMM trees yields too many splits when partitioning LGCMs. As hypothesized, performing parameter-stability tests using clustered covariances mitigated this overfitting. Also as expected, initializing estimation with the random effects mitigated overfitting, but too strongly when both random intercepts and slopes were estimated. The performance of of LM(M) trees using clustered covariances appeared largely unaffected by (mis-)specification of the random effects, and could therefore be the safest choice in practice. Combining cluster-level covariances and random-effects initialization worsened performance, os in practice users should use either one of the two approaches.
 
-In Study II, we found good performance of SEM trees in partitioning LGCMs, but a stronger sensitivity to mis-specification of the random effects, where underspecification yielded higher Type-I errors. In accordance with results of \cite{ArnoyVoel21}, we found score-based SEM trees to have somewhat lower power than LRT-based SEM trees. LongCART tended to be underpowered, which could be due to the trees not incorporating random slopes, or the parameter stability test for categorical covariates proposed by \cite{KundyHare19} may be underpowered.  
+The simulations showed comparable performance of LM(M) and SEM trees in partitioning LGCMs. SEM trees did however show stronger sensitivity to misspecification of the random effects, with underspecification yielding a higher number of splits. Furthermore, in line with results of \cite{ArnoyVoel21}, we found score-based SEM trees to have somewhat lower power than LRT-based SEM trees, but computationally much less burdensome. LongCART trees often selected the wrong partitioning variable for the first split, and were outperformed by LM(M) and SEM trees. The LongCART parameter stability tests \citep{KundyHare19} may be underpowered for detecting systematic instability of the fixed intercept, or for detecting instability with respect to categorical covariates.  
 
-In Study III, we found higher predictive accuracy for LM(M) trees than for longRPart, but differences in performance were small. Similar to Studies I and II, we found LM(M) trees to be comparably insensitive to (mis-)specification of the random effects, which may provide an important practical advantage. 
+In the application, we found higher predictive accuracy for LM(M) trees than for longRPart, but differences in performance were small. In line with the simulation studies, we found performance of LM(M) trees did not depend on (mis-)specification of the random effects, which may provide an important practical advantage. 
 
-All three studies showed substantial computational advantage of GLM(M) trees. This is likely due to the estimation approach employed by GLMM trees, where fixed-effects parameters are estimated locally within a node while random-effects parameters are estimated globally, using all observations. In contrast, SEM trees, LongCART and longRPart fit the full mixed-effects model in each node, which may substantially increase computational burden. 
+Both simulation and application studies indicated a substantial computational advantage of GLM(M) trees. This is likely due to the local-global estimation approach employed by GLMM trees, where fixed-effects parameters are estimated locally within a node and random-effects parameters are estimated globally, using all observations. In contrast, SEM trees, LongCART and longRPart fit the full mixed-effects model in each node, which may substantially increase computational burden. The local-global estimation approach also reduces model complexity and the good performance of GLMM trees in the current study suggests this may be beneficial for stability and generalizability.
+
+Yet, a possible downside of the local-global estimation approach is that it does not allow for recovering subgroups with differences in random-effects parameters. When there is a specific interest in partitioning the random effects, score-based SEM trees should be preferred. Alternatively, researchers may want to use the parameter stability tests for mixed-effects models developed by \cite{WangyMerk18} \citep[see also ][]{WangyMerk21,WangyGrav22}. This will be useful, for example, when the number and/or distances between timepoints differs between respondents and SEM-based growth curve models can thus not be applied \cite{NeisyMatt18}.
+
+The focus of the current study was limited to Gaussian responses and LGCMs. Future studies should assess performance of GLMM trees in partitioning longitudinal data with, for example, binomial or count responses. We expect that the good performance of clustered covariances in the parameter stability tests generalizes to other settings where covariates are measured at higher levels, either in longitudinal and/or otherwise nested data structures. Yet, whether our conclusions generalize to settings beyond LGCMs should be assessed in future studies. Finally, we used the outer-product-of-gradients (OPG) estimator for computing (clustered) covariances. Future studies could assess whether computation and use of the full sandwich estimator further improves performance of the parameter stability tests.
 
 
-\subsection{Possible points for further discussion}
+   
 
-\begin{itemize}
 
-\item Lower performance of longRPart possibly due to lack of robust criterion for determining statistical significance of a split. Cross-validation procedures might mitigate this problem, but feasibility of such approaches currently impeded by lack of functionality for generating predictions and high computational burden.
-
-\item MELT \citep{EoyCho14} employs random-effects predictions as a partitioning criterion, which is effective, as our results on random-effects initialization illustrate that random effects can capture effects of substantive interest that we want to use for explanation.
-
-\item Future work:
-
-\begin{itemize}
-\item GLMM trees can be extended to allow for partitioning based on all mixed-effects model parameters simultaneously, by using the score-based tests for mixed-effects models proposed by \cite{WangyMerk18}.
-\item GLMM trees can be extended to allow for partitioning non-linear growth curve models / GAMs. 
-\item Performance of GLMM trees on non-gaussian responses (binomial or count responses) should be evaluated.
-\end{itemize}
-\end{itemize}
 
 
 \bibliography{bib}
 
-
+\newpage
 \appendix
 
 
 \section{Effects of data-generating parameters on tree size}
 \label{sec:AppendixA}
 
-For LM(M) trees (Figure~\ref{fig:LMM_sizes_interact}), use of cluster-level covariances provided the most robust improvement in split recovery. For the data-generating parameters, the effects on tree size were strongest for $\sigma_{b_0}$, followed by $N$, $p$, $\sigma_{b_1}$ and $\rho$. Increasing values of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ tend to yield higher numbers of splits, and the effect of $\rho$ is minimal. The main exception to these main effects is that increased values of $\sigma_{b_0}$ and $\sigma_{b_1}$ yield lower numbers of splits when random slopes are estimated, and estimation is initialized with the random effects. In these cases, most variance may be captured by the random effects already in the first iteration of the algorithm, and will no longer be picked up by splits in the tree. Also, increased values of $p$ and $\sigma_{b_1}$ yield a slightly lower number of splits when cluster-level covariances are employed. Cluster-level covariances appear to be beneficial in accurately recovering the true subgroups, but with higher $p$, the Bonferroni correction will further reduce power to detect. Increased variance of $\sigma_{b_1}$ may reduce the power to detect the second and third split in the tree, which are driven by subgroup differences in slopes.
+For LM(M) trees (Figure~\ref{fig:LMM_sizes_interact}), use of cluster-level covariances provided the most robust improvement in split recovery. For the data-generating parameters, the effects on tree size were strongest for $\sigma_{b_0}$, followed by $N$, $p$, $\sigma_{b_1}$ and $\rho$. Higher values of $\sigma_{b_0}$, $N$, $p$ and $\sigma_{b_1}$ tend to yield higher numbers of splits, while the effect of $\rho$ is minimal. 
 
-For SEM trees and LongCART (Figure~\ref{fig:tree_sizes_interact}), strongest effects were observed for $N$, followed by $\sigma_{b_0}$, $p_{noise}$, $\rho$ and $\sigma_{b_1}$. Results for $N$ were as expected for all methods: with increasing sample size, more splits are implemented. Both LRT- and score-based SEM trees seem only affected by levels of $\sigma_{b_0}$, $p_{noise}$ and $\rho$ under misspecification of the random effects. Especially when both random intercept and slope variances are fixed to 0, higher levels of $\sigma_{b_0}$ and $p_{noise}$ yield more splits with both SEM tree approached. LRT-based SEM trees seem unaffected by levels of $\rho$, while score-based SEM trees seemed to implement a larger number of splits with increasing values of $\rho$. This pattern seemed reversed for increased magnitude of $\sigma_{b_1}$, which yields a lower number of splits for both SEM tree approaches, but only when the random effects were correctly specified. LongCART implemented more splits with higher levels of $p_{noise}$ and $\rho$, but was unaffected by levels of $\sigma_{b_0}$ and $\sigma_{b_1}$.
+For SEM trees and LongCART (Figure~\ref{fig:tree_sizes_interact}), strongest effects were observed for $N$, followed by $\sigma_{b_0}$, $p_{noise}$, $\rho$ and $\sigma_{b_1}$. Results for $N$ were as expected for all methods: More splits are implemented with higher sample size. Both LRT- and score-based SEM trees seem only affected by levels of $\sigma_{b_0}$, $p_{noise}$ and $\rho$ under misspecification of the random effects. Especially when both random intercept and slope variances are fixed to 0, higher levels of $\sigma_{b_0}$ and $p_{noise}$ yield more splits with both SEM tree approached. LRT-based SEM trees seem unaffected by levels of $\rho$, while score-based SEM trees seemed to implement a larger number of splits with increasing values of $\rho$. This pattern seemed reversed for increased magnitude of $\sigma_{b_1}$, which yields a lower number of splits for both SEM tree approaches, but only when the random effects were correctly specified. LongCART implemented more splits with higher levels of $\rho$,  $\sigma_{b_1}$, $N$, $p_{noise}$ and $\sigma_{b_0}$.
 
 
 \begin{figure}[!ht]
@@ -1581,78 +1692,97 @@ For SEM trees and LongCART (Figure~\ref{fig:tree_sizes_interact}), strongest eff
 <<echo=FALSE, fig=TRUE, height=1.7>>=
 theme_set(theme_gray(base_size = 8))
 cols <- rep(rainbow_hcl(10)[c(3,5)], times = 5)
-ggplot(tmp[LMM_ids, ]) +
-  geom_boxplot(aes(x=setting, y=tree_size, fill = sigma_int), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(sigma^2~(b[0]))) + 
+ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
+  geom_boxplot(aes(fill = sigma_int), 
+               position=position_dodge(1), alpha = .5, width = .6, 
+               outlier.shape = NA, coef = NULL) +
+  geom_count(aes(group=sigma_int), position=position_dodge(1), colour = "black", 
+             fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
+  labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[0]))) + 
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank()) +
-  labs(fill=expression(sigma[b[0]]^2))
+  labs(fill=expression(sigma[b[0]]^2)) +
+  stat_summary(aes(group=sigma_int), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp[LMM_ids, ]) +
-  geom_boxplot(aes(x=setting, y=tree_size, fill = N), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(),
-                     breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits") +
+ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
+  geom_boxplot(aes(fill = N), 
+               position=position_dodge(1), alpha = .5, width = .6, 
+               outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=N), 
+             position=position_dodge(1), colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
+  labs(x = "", y = "no. of splits") +
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank(),
-        strip.background = element_blank(), strip.text.x = element_blank())
+        strip.background = element_blank(), strip.text.x = element_blank()) +
+  stat_summary(aes(group=N), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp[LMM_ids, ]) +
-  geom_boxplot(aes(x=setting, y=tree_size, fill = p_noise), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(),
-                     breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col = expression(p[noise])) +
+ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
+  geom_boxplot(aes(fill = p_noise), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=p_noise), position=position_dodge(1), 
+             colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
+  labs(x = "", y = "no. of splits", col = expression(p[noise])) +
   geom_hline(yintercept=3, col = "darkgrey") +
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(p[noise]))
+  labs(fill=expression(p[noise])) +
+  stat_summary(aes(group=p_noise), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp[LMM_ids, ]) +
-  geom_boxplot(aes(x=setting, y=tree_size, fill = sigma_slope), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(),
-                     breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(sigma^2~(b[1]))) +
+ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
+  geom_boxplot(aes(fill = sigma_slope), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=sigma_slope), position=position_dodge(1), 
+             colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
+  labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[1]))) +
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(sigma[b[1]]^2))
+  labs(fill=expression(sigma[b[1]]^2)) +
+  stat_summary(aes(group=sigma_slope), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
+  
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.8>>=
-ggplot(tmp[LMM_ids, ]) +
-  geom_boxplot(aes(x=setting, y=tree_size, fill = rho), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
-  facet_grid(~ranef, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(sigma^2~(b[1]))) +
+ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
+  geom_boxplot(aes(fill = rho), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=rho), position=position_dodge(1), 
+             colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
+  labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[1]))) +
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(rho))
+  labs(fill=expression(rho)) +
+  stat_summary(aes(group=rho), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
 theme_set(theme_gray(base_size = 11))
 @
-\end{subfigure}
-{\footnotesize \textit{Note.} Grey lines indicate true number of splits; distances on $y$-axis are on log scale. $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $N$ = sample size at level 2; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+\end{subfigure}%
+\vspace{-.6cm}%
+{\singlespacing \small \textit{Note.} Black dots represent means, grey circles represent counts, grey lines represent true number of splits. Distances on $y$-axis are on log scale. $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $N$ = sample size at level 2; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
 \label{fig:LMM_sizes_interact}
 \end{figure}
 
@@ -1664,80 +1794,101 @@ theme_set(theme_gray(base_size = 11))
 \caption{Effect of data-generating parameters on tree size for LM(M), SEM and LongCART trees.}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.7>>=
+lim <- c(0, 18)
 theme_set(theme_gray(base_size = 8))
-ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size, fill = N), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
+ggplot(tmp2, aes(x=random, y=tree_size)) +
+  geom_boxplot(aes(fill = N), position=position_dodge(1), alpha = .5, width = .6,
+               outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=N), 
+             position=position_dodge(1), colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(N)) + 
+  labs(x = "", y = "no. of splits", col=expression(N)) + 
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank()) +
-  labs(fill=expression(N))
+  labs(fill=expression(N)) +
+  stat_summary(aes(group=N), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4) 
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size, fill = sigma_int), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
+ggplot(tmp2, aes(x=random, y=tree_size)) +
+  geom_boxplot(aes(fill = sigma_int), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=sigma_int), position=position_dodge(1), 
+             colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
   scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
+                     breaks = breaks, limits = lim) +
   facet_grid(~method, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(sigma^2~(b[0]))) +
+  labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[0]))) +
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(sigma[b[0]]^2))
+  labs(fill=expression(sigma[b[0]]^2)) +
+  stat_summary(aes(group=sigma_int), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4)
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size, fill = p_noise), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
+ggplot(tmp2, aes(x=random, y=tree_size)) +
+  geom_boxplot(aes(fill = p_noise), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=p_noise), position=position_dodge(1), 
+             colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
   facet_grid(~method, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col = expression(p[noise])) +
+  labs(x = "", y = "no. of splits", col = expression(p[noise])) +
   geom_hline(yintercept=3, col = "darkgrey") +
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(p[noise]))
+  labs(fill=expression(p[noise])) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
+  stat_summary(aes(group=p_noise), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4)
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.5>>=
-ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size, fill = rho), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
-  scale_y_continuous(trans = pseudo_log_trans(), 
-                     breaks = breaks, lim = lim) +
+ggplot(tmp2, aes(x=random, y=tree_size)) +
+  geom_boxplot(aes(fill = rho), position=position_dodge(1), 
+               alpha = .5, width = .6, outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=rho), position=position_dodge(1), colour = "black", 
+             fill=NA, show.legend = FALSE, alpha = .15) +
+  scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(rho)) +
+  labs(x = "", y = "no. of splits", col=expression(rho)) +
   geom_hline(yintercept=3, col = "darkgrey") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(rho))
+  labs(fill=expression(rho)) + 
+  stat_summary(aes(group=rho), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4)
 @
 \end{subfigure}
 \begin{subfigure}{1.25\textwidth}
-<<echo=FALSE, fig=TRUE, height=1.8>>=
-ggplot(tmp2) +
-  geom_boxplot(aes(x=random, y=tree_size, fill = sigma_slope), 
-               position=position_dodge(1), alpha = .5, width = .6) + 
+<<echo=FALSE, fig=TRUE, height=2.0>>=
+ggplot(tmp2, aes(x=random, y=tree_size)) +
+  geom_boxplot(aes(fill = sigma_slope), 
+               position=position_dodge(1), alpha = .5, width = .6,
+               outlier.shape = NA, coef=NULL) + 
+  geom_count(aes(group=sigma_slope), 
+             position=position_dodge(1), colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
   scale_y_continuous(trans = pseudo_log_trans(), 
                      breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
-  labs(x = "", y = "# of splits", col=expression(sigma[b[1]]^2)) +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  labs(x = "", y = "no. of splits", col=expression(sigma[b[1]]^2)) +
+  geom_hline(yintercept=3, col = "darkgrey") +
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
-  labs(fill=expression(sigma[b[1]]^2))
+  labs(fill=expression(sigma[b[1]]^2)) + 
+  scale_x_discrete(labels = scales::parse_format()) +
+  stat_summary(aes(group=sigma_slope), position=position_dodge(1), fun="mean", 
+               col = "black", shape=16, size = .4)
 theme_set(theme_gray(base_size = 11))
 @
-\end{subfigure}
-{\footnotesize \textit{Note.} Grey lines indicate true number of splits; distances on $y$-axis are on log scale. $N$ = sample size at level 2; $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+\end{subfigure}%
+\vspace{-.6cm}%
+{ \singlespacing \small \textit{Note.} Black dots represent means, grey circles represent counts, grey lines represent true number of splits. Distances on $y$-axis are on log scale. $N$ = sample size at level 2; $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
 \label{fig:tree_sizes_interact}
 \end{figure}
 
@@ -2028,276 +2179,3 @@ st7
 
 
 https://bbolker.github.io/mixedmodels-misc/notes/corr\_braindump.html
-
-
-
-
-
-
-
-
-<<eval=FALSE, echo=FALSE>>=
-## ECLSK are reading scores with minbucket = 500
-# load("predsECLSK")
-# load("tree_sizesECLSK")
-# MSEs <- sapply(preds, function(x) mean((x - preds$observed)^2, na.rm = TRUE))
-# ses <- sapply(preds, function(x) sd((x - preds$observed)^2, na.rm = TRUE) / 
-#          sqrt(sum(!is.na(x))))
-# Table <- data.frame(MSE = MSEs[-13], SE = ses[-13],
-#                     mean_tree_size = sapply(sizes, mean, na.rm = TRUE),
-#                     SD = sapply(sizes, sd, na.rm = TRUE))
-# names(Table) <- c("$MSE$", "$se_{MSE}$", "$M_{tree size}$", "$SD_{tree size}$")
-# rownames(Table) <- c("LMtree", "LMtree_c", "LMMtree", "LMMtree_c", "LMMtree_r",
-#                      "LMMtree_{cr}", "LMMtree_s", "LMMtree_{sc}", "LMMtree_{sr}",
-#                      "LMMtree_{scr}", "longRPart", "longRPart_s")
-# tmp_minbucket <- data.frame(ID = names(MSEs[-13]),
-#                             tree_size = colMeans(sizes, na.rm = TRUE),
-#                             MSE = MSEs[-13])
-@ 
-
-
-<<echo=FALSE>>=
-#' Print LaTeX tables with headings over two lines
-#' 
-#' @param .data A data frame with at least some of the column names having a \code{separator}.
-#' @param separator A regular expression that splits the top and bottom rows. If the separator is not found in the names of \code{.data}, the function returns an error (saying you should probably just use \code{print.xtable()})
-#' @param align Passed to \code{xtable}: Character vector of length equal to the number of columns of the resulting table, indicating the alignment of the corresponding columns.
-#' @param digits Passed to \code{xtable}
-#' @param label Passed to \code{xtable}
-#' @param caption Passed to \code{xtable}
-#' @param booktabs Should the tabular environment produced use booktabs? Set to TRUE for (my) convenience. This will cause an error if  \verb{\usepackage{booktabs}} has not been called in LaTeX.
-#' @param heading_command A (simple) LaTeX control sequence (properly escaped) to apply to each heading names.
-#' @param ... Arguments passed to \code{print.xtable}. You cannot pass \code{add.to.row}, \code{include.rownames}, or \code{include.colnames} as we make use of these options in this function.  
-#' @return Output intended for LaTeX. A table produced using xtable where groups of column names are put in the top row. 
-#' @author Hugh Parsonage
-#' @examples
-#' example_df <- 
-#' data.frame(yr = 2001:2005, 
-#'           Revenue__foo = 1:5, 
-#'           Revenue__bar = 11:15, 
-#'           Revenue__baz = 21:25, 
-#'           ordinary = 1:5,
-#'           Expense__foo = 1:5,
-#'           Expense__bar = 11:15, 
-#'           Expense__baz = 21:25, 
-#'           Last__foo = 1:5, 
-#'           Last__baz = 2:6,
-#'           last = 101:105)
-#' print_2heading_xtable(example_df, separator = "__")
-#' @export
-print_2heading_xtable <- function(.data, 
-                                  separator = "__", 
-                                  align = NULL, 
-                                  caption = NULL,
-                                  digits = NULL,
-                                  label = NULL,
-                                  booktabs = TRUE, 
-                                  heading_command = "\\textbf", ...){
-  orig_names <- names(.data)
-  if (!any(grepl(separator, orig_names))){
-    stop("No separator found in column names, so there is no point in using this function. Make sure you have specified the right separator; otherwise, just use print.xtable().")
-  }
-
-  if (any(c("add.to.row", "include.colnames", "include.rownames") %in% names(list(...)))){
-    stop("You should not pass add.to.row, include.colnames, or include.rownames to print.xtable() via this function.")
-  }
-  
-  split_names <-  grep(separator, orig_names, value = TRUE)
-  split_positions <- grep(separator, orig_names, value = FALSE)
-
-  # get the names before the separator
-  top_headers <- gsub(paste0("^(.*)", separator, ".*$"), "\\1", split_names)
-  # Where in the original table is there a new top header?
-
-  orig_names_no_suffix <- 
-    gsub(paste0("^(.*)", separator, ".*$"), paste0("\\1", separator), orig_names)
-
-  # For cmidrule{}
-  position_of_header_instance <- 
-    # Need to test first column
-    which(orig_names_no_suffix == dplyr::lead(orig_names_no_suffix) & 
-            (orig_names_no_suffix != dplyr::lag(orig_names_no_suffix) | is.na(dplyr::lag(orig_names_no_suffix))))
-
-  position_of_header_final <- 
-    # Need to test final column
-    which((orig_names_no_suffix != dplyr::lead(orig_names_no_suffix) | is.na(dplyr::lead(orig_names_no_suffix))) &
-            orig_names_no_suffix == dplyr::lag(orig_names_no_suffix))
-
-  if (length(position_of_header_instance) != length(position_of_header_final)){
-    stop("This is a bug. Sorry. Please provide your data frame to the grattan package maintainer.")
-  }
-
-  double_row_column_names <- 
-    rbind(gsub("^(.*)__(.*)$", "\\1", orig_names), gsub("^(.*)__(.*)$", "\\2", orig_names))
-
-  # factor etc in table to preserve order
-  top_headers_widths <- 
-    as.data.frame(table(factor(double_row_column_names[1,], levels = unique(double_row_column_names[1,]))))
-
-  first_row <- 
-    unique(double_row_column_names[1,])
-
-  first_row_formatted <- 
-    paste0(heading_command, "{", first_row, "}")
-
-  top_row <- character(length(first_row))
-
-  # Could do paste0() directly but decided that it would 
-  # avoid the point which is to add \multicolumn only to the rows that call for it.
-  for (ii in seq_along(first_row)){
-    if (first_row[ii] %in% top_headers){
-      top_row[ii] <- paste0("\\multicolumn{", top_headers_widths$Freq[ii], "}{c}{", first_row_formatted[ii], "}")
-    }
-  }
-  rm(ii)
-
-  for_latex_top_row <- 
-    paste0(paste0(top_row, collapse = " & "), "\\\\")
-
-  if (booktabs){
-    # (lr) to avoid cmidrule touching adjacent groups
-    between_row <- paste0("\\cmidrule(lr){",  position_of_header_instance, "-", position_of_header_final, "}")
-  } else {
-    between_row <- paste0("\\cline{",  position_of_header_instance, "-", position_of_header_final, "}")
-  }
-  for_latex_between_row <- 
-    paste0(paste0(between_row, collapse = ""))
-
-  for_latex_second_row <- 
-    paste0(heading_command, "{", double_row_column_names[2,], "}")
-
-  for_latex_second_row <- 
-    paste0(paste0(for_latex_second_row, collapse = " & "), "\\\\")
-
-  addtorow <- list()
-  addtorow$pos <- list(0, 0, 0)
-  addtorow$command <- 
-    paste0(paste0(c(for_latex_top_row, for_latex_between_row, for_latex_second_row)), "\n")
-
-  xtable::print.xtable(xtable::xtable(.data, align = align, digits = digits, 
-                                      label = label, caption = caption), 
-                       type = "latex",
-                       add.to.row = addtorow, 
-                       include.colnames = FALSE, 
-                       include.rownames = FALSE,
-                       booktabs = booktabs,
-                       ...)
-}
-@
-
-<<echo=FALSE, eval=FALSE, results=tex>>=
-## ECLSK2 are reading scores with maxdepth = 4
-load("predsECLSK2")
-var_reading <- round(var(preds$observed), digits = 3)
-MSEs_read <- sapply(preds, function(x) mean((x - preds$observed)^2, na.rm = TRUE))
-ses_read <- sapply(preds, function(x) sd((x - preds$observed)^2, na.rm = TRUE) / 
-         sqrt(sum(!is.na(x))))
-load("preds_math")
-var_math <- round(var(preds$observed), digits = 3)
-MSEs_math <- sapply(preds, function(x) mean((x - preds$observed)^2, na.rm = TRUE))
-ses_math <- sapply(preds, function(x) sd((x - preds$observed)^2, na.rm = TRUE) / 
-         sqrt(sum(!is.na(x))))
-load("preds_science")
-var_science <- round(var(preds$observed), digits = 3)
-MSEs_scie <- sapply(preds, function(x) mean((x - preds$observed)^2, na.rm = TRUE))
-ses_scie <- sapply(preds, function(x) sd((x - preds$observed)^2, na.rm = TRUE) / 
-         sqrt(sum(!is.na(x))))
-Table2 <- data.frame(MSEs_read[-13], ses_read[-13],
-                     MSEs_math[-13], ses_math[-13],
-                     MSEs_scie[-13], ses_scie[-13])
-Table2$mean_rank <- 1/3*(rank(Table2$MSEs_read..13.) + rank(Table2$MSEs_math..13.) + 
-  rank(Table2$MSEs_scie..13.))
-names(Table2) <- c("Reading MSE", "SE", "Math MSE", "SE", "Science MSE", "SE", 
-                   "mean rank")
-Names <- cbind(sapply(strsplit(rownames(Table2), "_"), function(x) x[1]),
-                sapply(strsplit(sapply(strsplit(rownames(Table2), "_"), 
-                                       function(x) x[2]), ""), 
-                       function(x) paste(x, collapse = ", ")))
-Names[,2][Names[,2] == "NA"] <- ""
-Names[3:12, 2] <- paste("i,", Names[3:12, 2])
-
-Table3 <- cbind(Algorithm = paste(Names[,1], Names[,2]),
-                Table2, stringsAsFactors = FALSE)
-
-names(Table3) <- c("Algorithm",  "Reading__MSE", "Reading__SE", "Math__MSE", "Math__SE", 
-                   "Science__MSE", "Science__SE", "  __mean\nrank")
-
-print_2heading_xtable(Table3, separator = "__", 
-                      digits = c(0, 0, 4, 3, 4, 3, 4, 3, 1), 
-                      align = c("r", "l", rep("c", times = 7)), 
-                      caption = "Predictive accuracy for the ECLSK data. c indicates that parameter stabiliy tests were performed at the cluster level; r indicates that estimation was initialized with the random effects; i indicates that random intercepts were estimated; s indicates that random slopes were estimated.",
-                      label = "tab:ECLSK_accuracy",
-                      hline.after = c(-1, 0, nrow(Table3)))
-@
-
-
-
-
-<<echo=FALSE, eval=FALSE, results=tex>>=
-load("tree_sizesECLSK2")
-failed_longRpart_count <- sum(is.na(sizes$longRPart))
-failed_longRpart_s_count <- sum(is.na(sizes$longRPart_s))
-tree_sizes <- data.frame(
-  tree_size = colMeans(sizes, na.rm = TRUE),
-  SD = sapply(sizes, sd, na.rm = TRUE))
-load("sizes_math")
-failed_longRpart_count <- sum(failed_longRpart_count, sum(is.na(sizes$longRPart)))
-failed_longRpart_s_count <- sum(failed_longRpart_s_count, sum(is.na(sizes$longRPart_s)))
-tree_sizes <- cbind(tree_sizes,
-                    tree_size = colMeans(sizes, na.rm=TRUE),
-                    SD = sapply(sizes, sd, na.rm=TRUE))
-load("sizes_science")
-failed_longRpart_count <- sum(failed_longRpart_count, sum(is.na(sizes$longRPart)))
-failed_longRpart_s_count <- sum(failed_longRpart_s_count, sum(is.na(sizes$longRPart_s)))
-tree_sizes <- cbind(tree_sizes,
-                    tree_size = colMeans(sizes, na.rm=TRUE),
-                    SD = sapply(sizes, sd, na.rm=TRUE))
-tree_sizes$mean_rank <- 1/3*(rank(tree_sizes[,1]) + rank(tree_sizes[,3]) + rank(tree_sizes[,5]))
-
-tree_sizes <- cbind(Algorithm = paste(Names[,1], Names[,2]), tree_sizes, 
-                    stringsAsFactors = FALSE)
-names(tree_sizes) <- c("Algorithm",  "Reading__M", "Reading__SD", "Math__M", "Math__SD", 
-                   "Science__M", "Science__SD", "  __mean\nrank")
-
-print_2heading_xtable(tree_sizes, separator = "__", 
-                      digits = c(0, 0, 1, 1, 1, 1, 1, 1, 1), 
-                      align = c("r", "l", rep("c", times = 7)), 
-                      caption = "Tree sizes for the ECLSK data. c indicates that parameter stabiliy tests were performed at the cluster level; r indicates that estimation was initialized with the random effects; i indicates that random intercepts were estimated; s indicates that random slopes were estimated.",
-                      label = "tab:ECLSK_complexity",
-                      hline.after = c(-1, 0, nrow(tree_sizes)))
-@
-
-%Table~\ref{tab:ECLSK_accuracy} shows the cross-validated predictive accuracies for all RPMs. Prediction errors were largest for the science data, which also had the largest sample variance (...), while prediction errors were lowest for the reading data, which also had the smallest sample variance (...). The sample variance of the math score was ....
-
-%Several fitting attempts for longRPart trees resulted in estimation errors: For the trees with random intercepts estimated only, ... out of 30 tree-fitting attempts yielded an error, while for the trees with both random intercepts and slopes estimated, ... out of 30 tree-fitting attempts yielded an error. Results for longRPart are computed based on successfully fitted trees.
-
-%The MSEs differ significantly only between the LM(M) trees and longRPart trees. LM(M) trees provide somewhat lower prediction errors, but the tree sizes in Table~\ref{tab:ECLSK_complexity} indicate that this comes at the cost of larger tree size. 
-
-%On average, LMM trees were more accurate but also larger than longRPart trees. In terms of average predictive accuracy, the tree which estimates random intercepts and initialized estimation with the random effects performed best for the LMM trees. For the longRPart trees, the model with both random intercepts and slopes performed best. 
-
-%However, the settings that perform best for predicting reading and math scores, did not perform best for predicting science scores. Cluster sizes (i.e., number of observations per student) are lower for the science scores (3) than for the reading and math scores (5), which may partly explain the difference. For LM(M) trees, the trees which estimate both random intercepts and slopes while performing parameter stability tests on the cluster level, perform best in the reading and math data. However, for the science data, these settings perform among the worst, while highest accuracy was obtained by the LMM tree in which only a random intercept was estimated, and estimation was initialized with the random effects. Note that both these settings were found to perform best in the earlier simulation study. 
-
-%For longPart, highest predictive accuracy was also obtained with trees in which both random intercepts and slopes were estimated for the reading and math data. For the science data, trees in which only random intercepts were estimated provided highest predictive accuracy. In all three datasets, the random-effects specification that yielded the largest longRPart trees, also yielded the highest predictive accuracy.
-
-\begin{figure}
-<<echo=FALSE, eval=FALSE, fig=TRUE>>=
-load("comp_timesECLSK2") ## Reading, maxdepth = 4
-times2 <- list(reading = times)
-load("times_math") 
-times2$math <- times
-load("times_science") 
-times2$science <- times
-times <- do.call(rbind, times2)
-comp_time <- reshape2::melt(times)
-p <- ggplot(comp_time, aes(variable, value))  
-p + geom_boxplot() + labs(x = "", y = "Computation time (in seconds)") +
-  scale_y_continuous(trans = "log", breaks = c(.1, 1, 10, 100, 1000, 10000)) +
-  theme(axis.text.x = element_text(angle = 90))
-@ 
-\caption{Computation time distributions for the different partitioning methods.}
-\label{fig:comp_timeECLSK}
-\end{figure}
-
-
-
-%In terms of computation time, Figure~\ref{fig:comp_timeECLSK} indicates a clear computational advantage for LM(M) trees. The outlying, lower computation times for longRPart are due to estimation errors early in the fitting process, after which computations are halted completely.
