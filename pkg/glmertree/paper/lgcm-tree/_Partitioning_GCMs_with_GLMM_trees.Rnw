@@ -95,35 +95,37 @@ The parameters of a traditional GLMM can be estimated, among other techniques, b
 
 Convergence of the algorithm is monitored through the log-likelihood of the mixed-effects model fitted in Step~3. Typically, this converges when the partition~$j(r)$ from the GLM tree is the same as $j(r-1)$ from the previous step.
 
+In the following two subsections provide some more details on alternative initialization strategies for Step~0 and details of the GLM tree algorithm from Step~1, respecitvely. Each subsection first reviews the well-established methods and the proceeds to discuss modifications that may improve the performance when partitioning LGCMs using longitudinal data.
+
 
 \subsection{Initialization}
 
-Studies to date indicate that initializing estimation with zero random effects yields accurate final models \citep{HajjyBell11, HajjyBell14, HajjyLaro17, SelaySimo12, FuySimo15, FokkySmit18}. \cite{SelaySimo12} assessed the impact of different initialization values and found minor impact that became smaller with increasing sample size. In \cite{FokkySmit18}, we found initializing estimation of GLMM trees with zero random effects performed well in cross-sectional clustered data. With longitudinal data, however, random effects tend to be stronger: Repeated measures on the same subjects tend to be correlated more strongly than observations nested within the same unit in cross-sectional data. If the random effects are sizable, the inital assumption of zero random effects could provide an unrealistic starting point that is difficult to overcome in subsequent iterations. Our expectation is that for partitioning LGCMs, initializing estimation with the random effects instead of the subgroup structure may improve subgroup recovery and predictive accuracy.
+Previous publications on recursive partitioning of models with mixed effects find that initializing the random-effect estimates with zero yields accurate estimates of the subgroup memberships and thus of the final models  \citep{HajjyBell11, HajjyBell14, HajjyLaro17, SelaySimo12, FuySimo15, FokkySmit18}. \cite{SelaySimo12} assessed the impact of different initialization values and found only minor differences that became decreased further with increasing sample size. In \cite{FokkySmit18}, we found initializing estimation of GLMM trees with zero random effects performed well in cross-sectional clustered data. With longitudinal data, however, random effects tend to be more pronounced: Repeated measures on the same subjects tend to be correlated more closely than observations nested within the same unit in cross-sectional data. If the random effects are sizable, the inital assumption of zero random effects could provide an unrealistic starting point that may be difficult to overcome in subsequent iterations. Our expectation is that for partitioning LGCMs, initializing estimation with the random effects instead of the subgroup structure may improve subgroup recovery and predictive accuracy. More specifically, that means the algorithm starts by estimating the classic version of the mixed-effects model from Equation~\ref{eq:GLMMtree} with just one set of fixed-effects coefficients $\beta$ and all subjects in a single group.
 
 
 \subsection{Partitioning}
 
-The subgroup structure in Step~1 is estimated using model-based recursive partitioning \citep[MOB; ][]{ZeilyHoth08}. The MOB algorithm cycles iteratively through the following steps: 
+The subgroup structure in Step~1 is estimated by a GLM tree using the general model-based recursive partitioning (MOB) algorithm by \cite{ZeilyHoth08}. Here, we give a short general overview and then comment on the aspects of the algorithm that may be particularly relevant for LGCMs. In the case of GLMs (with random effects held constant in an offset), the MOB algorithm cycles iteratively through the following steps: 
 
 \begin{enumerate}
 \setlength\itemsep{0em}
 \renewcommand{\labelenumi}{\alph{enumi})}
-	\item Fit the parametric model to all observations in the dataset. 
-	\item Test for parameter instability with respect to each of the partitioning variables.
-	\item If there is some overall parameter instability, split the dataset with respect to the partitioning variable associated with the highest instability.
+	\item Fit the GLM to all observations in the current subgroup. 
+	\item Test for instability of the GLM parameters with respect to each of the partitioning variables.
+	\item If there is some overall parameter instability, split the subgroup with respect to the partitioning variable associated with the highest instability.
 	\item Repeat Steps (a) through (c) in each of the resulting subgroups.
 \end{enumerate}
 
-Parameter stability in Step~(b) is tested using the the \textit{scores} (gradient contributions) from the model fitted in Step~(a). Under mild regularity conditions, the scores have an expected value of 0. The parameter stability tests evaluate whether the scores fluctuate randomly around their mean of 0, or exhibit systematic deviations when ordered by the values of a covariate. For continuous covariates (or ordered covariates with a large enough number of unique values), this involves computing the cumulative score process $W_k(t)$ with respect to each potential partitioning variable $U_k$ \citep{ZeilyHoth08}:
-
+Parameter stability in Step~(b) is tested using the the \textit{scores} (gradient contributions) from the GLM fitted in Step~(a). Under correct specification of the model and mild regularity conditions, the scores have an expected value of 0. The parameter stability tests evaluate whether the scores fluctuate randomly around their mean of 0, or exhibit systematic deviations when ordered by the values of a covariate available for partitioning. For continuous covariates $U_k$ (or ordered covariates with a large enough number of unique values), this involves computing the following cumulative score process $W_k(t)$ with respect to each potential partitioning variable \citep{ZeilyHoth08}:
+%
 \begin{eqnarray}
 \label{eq:efp}
 W_{k}(t) = \hat{J}^{-1/2} n_{j}^{-1/2} \sum^{[n_jt]}_{i=1}{\hat{\psi}}_{\sigma(U_{ik})}
 \end{eqnarray}
+%
+where $\hat{J}$ is a suitable estimate of the covariance matrix of the parameter estimates, and $n_j$ gives the number of observations in the current subgroup. Further, $\hat{\psi}_{\sigma(U_{ik})}$ denotes the scores evaluated at the parameter estimates, with subscript {$\sigma(U_{ik})$} denoting their ordering by the values of partitioning variable $U_k$. Note that $0 \leq t \leq 1$, thus $n_jt = 1$ for an observation associated with a unique minimum on the partitioning variable, and $n_jt = n_j$ for an observation with a unique maximum. 
 
-where $\hat{J}$ is a suitable estimate of the covariance matrix of the parametric model fitted in Step~(a), and $n_j$ gives the number of observations in the current node. Further, $\hat{\psi}_{\sigma(U_{ik})}$ denotes the estimated scores, with subscript {$\sigma(U_{ik})$} denoting their ordering by the values of partitioning variable $U_k$. Note that $0 \leq t \leq 1$, thus $n_jt = 1$ for an observation with a unique minimum on the partitioning variable, and $n_jt = n_j$ for an observation with a unique maximum. 
-
-From the cumulative score process $W_k(t)$, a range of test statistics can be derived which capture non-random fluctuations. For numerical partitioning variables, a maximum Lagrange multiplier test statistic can be computed, which takes the maximum of the squared Euclidean norm of $W_k(t)$, weighted by it's variance \citep{ZeilyHorn07}. This statistic is referred to as the \textit{supLM} statistic, and is asymptotically equivalent to the maximum of likelihood-ratio statistics. Approximate asymptotic $p$-values for the \textit{supLM} statistic can be computed with the method of \cite{Hans97}. Categorical covariates do not provide an implicit ordering. Scores are therefore binned at each level of the covariate and a test statistic is computed that does not depend on the ordering of the levels \citep{MerkyFan14}. 
+From the cumulative score process $W_k(t)$, a range of test statistics can be derived which capture increased fluctuations (beyond the random fluctuation under parameter stability). For numerical partitioning variables, a maximum Lagrange multiplier test statistic can be computed, which takes the maximum of the squared Euclidean norm of $W_k(t)$, weighted by its variance \citep{ZeilyHorn07}. This statistic is referred to as the \textit{supLM} statistic, and is asymptotically equivalent to the maximum of likelihood-ratio statistics. Approximate asymptotic $p$-values for the \textit{supLM} statistic can be computed with the method of \cite{Hans97}. Categorical covariates do not provide an implicit ordering. Scores are therefore binned at each level of the covariate and a test statistic is computed that does not depend on the ordering of the levels \citep{MerkyFan14}. 
 
 When partitioning longitudinal data, covariates will often be measured at the subject level, which should be accounted for in computing the estimated covariance matrix $\hat{J}$. In general, this computation makes use of the scores. By summing the scores within clusters prior to computation of the covariances, so-called \textit{clustered} covariances are obtained, which account for dependence between observations within the same cluster \citep{ZeilyKoll20}. This resembles a GEE-type approach with an independence correlation structure. Our expectation is that in partitioning LGCMs, use of clustered covariances in the parameter stability tests will improve accuracy of the tree.
 
@@ -132,7 +134,6 @@ When partitioning longitudinal data, covariates will often be measured at the su
 % $\textrm{Var} \hat{\beta}$ = (X^\top X)^{-1} X^\top \Omega X (X^\top X)^{-1}$
 
 % The $X^\top \Omega X$ is the meat, and the $(X^\top X)^{-1}$ is the bread. For computing robust standard errors, we compute a new kind of meat. $\Omega = \sigma^2 I_n$, a matrix with $\sigma^2$ on the diagonal and zeros elsewhere. $n$ can be the number of observations, or the number of clusters.
-
 
 
 
