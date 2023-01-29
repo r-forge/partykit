@@ -223,9 +223,9 @@ combine_panels <- function(panel1, panel2, party2 = NULL) {
 @
 
 
-\begin{figure}[bt]
+\begin{figure}[t!]
 \caption{Design of the subgroup-specific fixed effects in the simulation.}
-<<fig=T, height=5, width=5, echo=F>>=
+<<fig=TRUE, height=5.5, width=5.5, echo=FALSE>>=
 plot(tree, tnex = 3.5, terminal_panel = combine_panels(
     panel1 = node_bivplot(tree, xlab = "time", pointcol = "white",
                         mainlab = function(id, nobs) paste("node", id)),
@@ -236,14 +236,14 @@ plot(tree, tnex = 3.5, terminal_panel = combine_panels(
 \label{fig:design_tree}
 \end{figure}
 
-We simulated data according to the subgroup structure depicted in Figure~\ref{fig:design_tree}. Every dataset comprised four non-overlapping subgroups, corresponding to the terminal nodes of the tree in Figure~\ref{fig:design_tree}. The response was computed as:\\
-
+We simulated data according to the subgroup structure depicted in Figure~\ref{fig:design_tree}. Every dataset comprised four non-overlapping subgroups, corresponding to the terminal nodes of the tree in Figure~\ref{fig:design_tree}. The response was computed as:
+%
 $$y_{i} =  X_{i} \beta_{j} + Z_{i} b_i + \epsilon_{i},$$
-
-\noindent where $\beta_j$ corresponds to the fixed effects in terminal node $j$ of which subject $i$ is part. The bottom panels of Figure~\ref{fig:design_tree} present the subgroup-specific values of the fixed intercept and slope ($\beta_{j0}$ and $\beta_{j1}$, respectively). The fixed- and random-effects design matrices $X_i$ and $Z_i$ are identical, each comprising two columns: a vector of 1s for the intercept, and a vector of timepoints. The same set of timepoints was generated for all subjects: ${0, 1, 2, 3, 4}$\footnote{Although GLMM trees do not require the same set of timepoints for each subject, this design allowed for comparison with SEM trees in the next section.}. Values of $b_i$ were generated from a multivariate normal distribution with mean zero and a $2 \times 2$ diagonal covariance matrix $\Sigma$, the diagonal entries determined by the level of the data-generating design described next. Values of $\epsilon_{i}$ were independently generated from a normal distribution with a mean of zero and a variance of 5.   
+%
+where $\beta_j$ corresponds to the fixed effects in terminal node $j$ of which subject $i$ is part. The bottom panels of Figure~\ref{fig:design_tree} present the subgroup-specific values of the fixed intercept and slope ($\beta_{j0}$ and $\beta_{j1}$, respectively). The fixed- and random-effects design matrices $X_i$ and $Z_i$ are identical, each comprising two columns: a vector of 1s for the intercept, and a vector of timepoints. The same set of timepoints was generated for all subjects: ${0, 1, 2, 3, 4}$.\footnote{Although GLMM trees do not require the same set of timepoints for each subject, this design allowed for comparison with SEM trees in the next section.} Values of $b_i$ were generated from a multivariate normal distribution with mean zero and a $2 \times 2$ diagonal covariance matrix $\Sigma$, the diagonal entries determined by the level of the data-generating design described next. Values of $\epsilon_{i}$ were independently generated from a normal distribution with a mean of zero and a variance of 5.   
 
 We varied the following data-generating characteristics:
-
+%
 \begin{itemize}
 \setlength\itemsep{0em}
 \setlength{\itemindent}{0.2in}
@@ -251,42 +251,41 @@ We varied the following data-generating characteristics:
 \item Variance of the random intercept: small ($\sigma_{b_0}^2 = 1$) or large ($\sigma_{b_0}^2 = 2$).
 \item Variance of the random slope: small ($\sigma_{b_1}^2 = 0.1$) or large ($\sigma_{b_1}^2 = 0.4$).
 \item Number of noise partitioning variables: small ($p = 5$) or large ($p = 25$).
-\item Intercorrelation between partitioning variables: absent ($\rho = 0$) or present ($\rho = .3$).
+\item Intercorrelation between partitioning variables: absent ($\rho = 0$) or present ($\rho = 0.3$).
 \end{itemize}
-
+%
 We employed a full factorial design yielding $2^5 = 32$ cells and performed 100 repetitions per cell. We performed all data generation and analysis in R \citep[version 4.1.2; ][]{R22}. 
 
 
 
 \subsubsection{Model fitting}
 
-We applied ten partitioning approaches to every generated dataset, each employing one of three different random-effects specifications: 
-
+We applied ten variations LM(M) trees to every generated dataset, where each variation combines one of the following three \emph{random-effects specifications} (none/intercepts/intercepts+slopes) with the \emph{random-effect initializations} (if any; all zero vs.\ full sample estimates) and \emph{covariance specifications in the parameter instability tests} (classic vs.\ clustered), as discussed in the previous section.
+%
+\begin{itemize}
+  \item None: $\hat{\sigma}_{b_0} = \hat{\sigma}_{b_1} = 0$. Random effects and thus their variance were fixed to 0, yielding linear model (LM) trees with fixed effects only and the following variations of covariance specifications.
   \begin{itemize}
-    
-    \item $\hat{\sigma}_{b_0} = \hat{\sigma}_{b_1} = 0$. That is, random effects and thus their variance were fixed to 0, and two fixed-effects linear model (LM) trees were fitted.
-    \begin{itemize}
-        \item The default observation-level covariances were used to compute the parameter stability tests.
-        \item Clustered covariances were used to compute the parameter stability tests. 
-    \end{itemize}
-    
-    \item $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} = 0$. That is, four linear mixed-effects model (LMM) tree were fitted in which the variance of the random intercept was freely estimated and the variance of the random slope was fixed to 0: 
-    \begin{itemize}
-      \item Default settings were used, in which parameter stability tests employed observation-level covariances and estimation is initialized with the tree structure. 
-    \item Instead, clustered covariances were used to compute the parameter stability tests.
-    \item Instead, estimation was initialized with the random effects. 
-    \item Instead, clustered covariances were used to compute the parameter stability tests and estimation was initialized with the random effects.
+      \item Default: Classic observation-level covariances.
+      \item Alternative: Clustered covariances. 
   \end{itemize}
-    
-    \item $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} > 0$. That is, four LMM trees were fitted in which the variance of both the random intercept and slope were freely estimated. The same four approaches were applied (default, clustered covariances, random-effects initialization, clustered covariances and random-effects initialization) as with the previous LMM tree specification.
+  
+  \item Intercepts: $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} = 0$. This yields linear mixed-effects model (LMM) trees in which only the variance of the random intercept was freely estimated and the variance of the random slope was fixed to 0. The four variations considered are the following.
+  \begin{itemize}
+    \item Default: Classic observation-level covariances in the parameter stability tests and random-effect initialization with all zeros (0.). 
+    \item Alternative: Clustered covariances in the parameter stability tests.
+    \item Alternative: Random-effect initialization with the full-sample estimates (0$'$.). 
+    \item Alternative: Clustered covariances and random-effect initialization with the full-sample estimates.
   \end{itemize}
-
+  
+  \item Intercepts and slopes: $\hat{\sigma}_{b_0} > 0; \hat{\sigma}_{b_1} > 0$. This yields LMM trees in which the variance of both the random intercept and slope were freely estimated. The four variations considered are the same as for the intercept-only LMM trees.
+\end{itemize}
+%
 To fit LM trees, we used package \textbf{partykit} \citep[version 1.2-15; ][]{HothyZeil15}. To fit LMMs, we used package \textbf{lme4} \cite[version 1.1-29; ][]{BateyMach15}. To fit LMM trees we used package \textbf{glmertree} \citep[version 0.2-0; ][]{FokkySmit18}. To compute clustered covariance, we used package \textbf{sandwich} \citep[version 3.0-1; ][]{ZeilyKoll20}. We employed outer product of gradients method to compute covariances, thus employing only the meat of the sandwich estimator to estimate the covariances.
 
 
 \subsubsection{Evaluation of performance}
 
-We evaluated tree accuracy by counting the number of splits in each tree. Trees with $> 3$ splits are indicative of Type-I error, while trees with $> 3$ splits are indicative of Type-II errors (i.e., too low power for tests of the true partitioning variables). We also assessed the variable selected for the first split in every tree. 
+We evaluated tree accuracy by counting the number of splits in each tree. Trees with $> 3$ splits are indicative of Type-I error, while trees with $< 3$ splits are indicative of Type-II errors (i.e., too low power for tests of the true partitioning variables). We also assessed the variable selected for the first split in every tree. 
 
 
 \subsection{Results}
@@ -408,7 +407,7 @@ pairwise.t.test(tmp$tree_size, tmp$method_id,
 
 
 
-\begin{figure}[!ht]
+\begin{figure}[t!]
 \caption{Tree size distributions for LM trees (left panel) and LMM trees (middle and right panel).}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=4>>=
@@ -482,17 +481,18 @@ breaks <- c(0, 1, 3, 7, 20)
 lim <- c(0, 60)
 
 ## Plot
+theme_set(theme_bw())
 plot0 <- ggplot(tmp[LMM_ids, ]) +
   geom_boxplot(aes(x=setting, y=tree_size), 
                position=position_dodge(1), show.legend = FALSE, 
                alpha = 0.5, width = .6, outlier.shape = NA, coef = NULL) + 
-  geom_count(aes(x=setting, y=tree_size), col = "grey", alpha = .75) +
+  geom_count(aes(x=setting, y=tree_size), col = "gray", alpha = .75) +
   scale_y_continuous(trans = pseudo_log_trans(sigma = 1, base = exp(1)), 
                      breaks = breaks, lim = lim) +
   geom_text(data = summ_stats, aes(x=setting, y=y, label = all),
-            size = 3, col = "grey44") +
+            size = 3, col = "gray44") +
   labs(x = "", y = "no. of splits") + theme(legend.position = "none") +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   facet_grid(~ranef, scales = "free", space = "free", 
              labeller = label_parsed)  +
   coord_cartesian(clip = 'off') +
@@ -503,13 +503,15 @@ plot0
 \end{subfigure}%
 \vspace{-0.5cm}%
 
-{\textit{Note.} Grey circles represent counts, grey lines represent true number of splits. Panel labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. Distances on $y$-axis are on the log scale. cl.cov. = cluster-level covariances employed in parameter stability tests; ran.eff. = estimation initialized with the random effects. MAD = Mean absolute deviation from true tree size.}
+{\textit{Note.} Gray circles represent counts, dark gray horizontal lines represent true number of splits~3. Panel labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. Distances on $y$-axis are on the log scale. cl.cov.~= cluster-level covariances employed in parameter stability tests; ran.eff.~= estimation initialized with the random effects on the full sample. MAD = Mean absolute deviation from true tree size.}
 \label{fig:LMM_sizes}
 \end{figure}
 
+\emph{FIXME: Figure~2 and its caption are inconsistent because LM trees are not on the left but on the right. Also, the following paragraphs are inconsistent with respect to the discussion of MAD. The first occurrence of MAD is maybe M?}
+
 Figure~\ref{fig:LMM_sizes} depicts the number of splits implemented by each partitioning approach. Irrespective of the random-effect specification, the default fitting approaches (left-most box in every panel) tended to overfit, implementing $> 3$ splits in \Sexpr{format(100*mean(c(props_more_splits["lm"], props_more_splits["lmer"], props_more_splits["lmer_s"])), digits = 2L)}\% datasets, on average. This overfitting was successfully mitigated through use of cluster-level covariances in the parameter stability tests, irrespective of the random-effects specification. The average number of splits of LMM trees employing clustered covariances were closest to the true number of splits. In terms of mean absolute deviation (MAD) from the true tree size, LM trees with clustered covariances performed best, closely followed by the LMM trees employing clustered covariances.
 
-In terms of MAD, however, the LMM tree estimating random intercepts only performed even slightly better than the latter two approaches.  Thus, initializing estimation with the random effects can successfully mitigate the overfitting observed for the default LMM trees, but the effect depens strongly on the random-effects specification. With estimation of both a random intercept and slope, random-effects initialization may lead to subgroup differences being captured by the random effects instead of the tree structure. Use of random-effects initialization and cluster-level covariances in tandem was less effective in reducing the number of splits than using either of the two approaches.
+In terms of MAD, however, the LMM tree estimating random intercepts only performed even slightly better than the latter two approaches.  Thus, initializing estimation with the random effects can successfully mitigate the overfitting observed for the default LMM trees, but the effect depends strongly on the random-effects specification. With estimation of both a random intercept and slope, random-effects initialization may lead to subgroup differences being captured by the random effects instead of the tree structure. Use of random-effects initialization and cluster-level covariances in tandem was less effective in reducing the number of splits than using either of the two approaches.
 
 Distributions of the number of splits, separated according to the levels of the data-generating design are presented and discussed in  Figure~\ref{fig:LMM_sizes_interact} and Appendix~\ref{sec:AppendixA}, because they show a pattern very similar to Figure~\ref{fig:LMM_sizes}. Use of cluster-level covariances provides the most accurate split recovery. Of the data-generating parameters, $\sigma_{b_1}$ and $N$ showed the strongest effects, with higher values resulting in a higher number of splits. The number of noise variables and $\sigma^2_{b_1}$ had smaller effects, and were involved in minor interactions: With the default fitting approach, they had a positive effect on the number of implemented splits; with clustered covariance or random-effects initialization, they had a negative effect on the number of splits. The correlation between partitioning variables hardly affected the number of implemented splits.
 
@@ -753,10 +755,10 @@ breaks <- c(0, 1, 3, 7, 15)
 lim <- c(0, 30)
 plot1 <- ggplot(tmp2) +
   geom_boxplot(aes(x=random, y=tree_size), alpha = .5, width = .6, coef = NULL) +
-  geom_count(aes(x=random, y=tree_size), col = "grey", alpha = .75) +
-  geom_hline(yintercept=3, col = "darkgrey") +
+  geom_count(aes(x=random, y=tree_size), col = "gray", alpha = .75) +
+  geom_hline(yintercept=3, col = "darkgray") +
   geom_text(data = summ_stats, aes(x=random, y=y, label = all),
-            size = 3, col = "grey44") +
+            size = 3, col = "gray44") +
   scale_y_continuous(trans = pseudo_log_trans(), 
                      breaks = breaks, lim = lim) +
   facet_grid(~ method, scales = "free", space = "free") +
@@ -770,7 +772,7 @@ plot1
 \end{subfigure}%
 \vspace{-0.5cm}%
 {
-\footnotesize \textit{Note.} Grey circles represent counts, grey lines indicate true number of splits. Distances on the $y$-axis are on the log scale. $x$-axis labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. MAD = Mean absolute deviation from true tree size.}
+\footnotesize \textit{Note.} Gray circles represent counts, dark gray horizontal lines indicate true number of splits~3. Distances on the $y$-axis are on the log scale. $x$-axis labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated. MAD = Mean absolute deviation from true tree size.}
 \label{fig:tree_sizes}
 \end{figure}
 
@@ -989,7 +991,7 @@ summ_stats <- data.frame(M = sprintf(mean_times, fmt = '%#.2f'),
                          Var2 = levels(times$Var2),
                          y = 100000)
 ggplot(times, aes(Var2, value)) + 
-  geom_violin(, alpha = .5, fill = "grey", width=.5) +
+  geom_violin(, alpha = .5, fill = "gray", width=.5) +
   labs(x = "", y = "Computation time (in seconds)") +
   geom_text(data = summ_stats, aes(x=Var2, y=y, label = M),
             size = 3, col = "black") +
@@ -998,7 +1000,7 @@ ggplot(times, aes(Var2, value)) +
   labs(tag = "M") + theme(plot.tag.position = c(.12, .96),
                           plot.tag = element_text(size = 10)) + 
   geom_text(data = summ_stats, aes(x=Var2, y=y, label = M),
-            size = 3, col = "darkgrey") 
+            size = 3, col = "darkgray") 
 @
 \end{subfigure}
 \label{fig:comp_times}
@@ -1123,7 +1125,7 @@ tmp3$random <- ifelse(tmp3$method == "LMtree_c", "atop(hat(sigma)[b[0]] == 0, ha
                                 "atop(hat(sigma)[b[0]] > 0, hat(sigma)[b[1]] > 0)", NA)))
 tmp3$N <- factor(tmp3$N)
 
-theme_set(theme_gray(base_size = 10))
+theme_set(theme_bw(base_size = 10))
 ggplot(tmp3) +
   geom_violin(aes(x=random, y=MSE, fill = N), 
                position=position_dodge(1), alpha = .5, width = .7) +
@@ -1639,12 +1641,12 @@ summ_stats <- data.frame(M = sprintf(mean_times, fmt = '%#.2f'),
                          y = 11000)
 ## Plot
 ggplot(ECLSK_times) +
-  geom_violin(aes(x=ind, y=values), alpha = .5, fill = "grey", width=.7) +
+  geom_violin(aes(x=ind, y=values), alpha = .5, fill = "gray", width=.7) +
   scale_y_continuous(trans = "log", limits = c(0.1, 12000),
                      breaks = c(.01, .1, 1, 10, 100, 1000)) +
   labs(x = "", y = "Computation time (in seconds)") +
   geom_text(data = summ_stats, aes(x=ind, y=y, label = M),
-            size = 3, col = "grey44") +
+            size = 3, col = "gray44") +
   labs(tag = "M") + theme(plot.tag.position = c(.12, .95),
                           plot.tag = element_text(size = 10)) 
 @
@@ -1700,7 +1702,7 @@ For SEM trees and LongCART (Figure~\ref{fig:tree_sizes_interact}), strongest eff
 \caption{Effects of data-generating parameters on tree size for LM(M) trees.}
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.7>>=
-theme_set(theme_gray(base_size = 8))
+theme_set(theme_bw(base_size = 8))
 cols <- rep(rainbow_hcl(10)[c(3,5)], times = 5)
 ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   geom_boxplot(aes(fill = sigma_int), 
@@ -1711,7 +1713,7 @@ ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
   labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[0]))) + 
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank()) +
   labs(fill=expression(sigma[b[0]]^2)) +
   stat_summary(aes(group=sigma_int), position=position_dodge(1), fun="mean", 
@@ -1729,7 +1731,7 @@ ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
   labs(x = "", y = "no. of splits") +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   stat_summary(aes(group=N), position=position_dodge(1), fun="mean", 
@@ -1746,7 +1748,7 @@ ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
   labs(x = "", y = "no. of splits", col = expression(p[noise])) +
-  geom_hline(yintercept=3, col = "darkgrey") +
+  geom_hline(yintercept=3, col = "darkgray") +
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(p[noise])) +
@@ -1764,7 +1766,7 @@ ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
   labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[1]))) +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(sigma[b[1]]^2)) +
@@ -1783,16 +1785,16 @@ ggplot(tmp[LMM_ids, ], aes(x=setting, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~ranef, scales = "free", space = "free", labeller = label_parsed) +
   labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[1]))) +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(rho)) +
   stat_summary(aes(group=rho), position=position_dodge(1), fun="mean", 
                col = "black", shape=16, size = .4) 
-theme_set(theme_gray(base_size = 11))
+theme_set(theme_bw(base_size = 11))
 @
 \end{subfigure}%
 \vspace{-.6cm}%
-{\singlespacing \small \textit{Note.} Black dots represent means, grey circles represent counts, grey lines represent true number of splits. Distances on $y$-axis are on log scale. $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $N$ = sample size at level 2; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+{\singlespacing \small \textit{Note.} Black dots represent means, gray circles represent counts, dark gray horizontal lines represent true number of splits~3. Distances on $y$-axis are on log scale. $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $N$ = sample size at level 2; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
 \label{fig:LMM_sizes_interact}
 \end{figure}
 
@@ -1805,7 +1807,7 @@ theme_set(theme_gray(base_size = 11))
 \begin{subfigure}{1.25\textwidth}
 <<echo=FALSE, fig=TRUE, height=1.7>>=
 lim <- c(0, 18)
-theme_set(theme_gray(base_size = 8))
+theme_set(theme_bw(base_size = 8))
 ggplot(tmp2, aes(x=random, y=tree_size)) +
   geom_boxplot(aes(fill = N), position=position_dodge(1), alpha = .5, width = .6,
                outlier.shape = NA, coef=NULL) + 
@@ -1814,7 +1816,7 @@ ggplot(tmp2, aes(x=random, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
   labs(x = "", y = "no. of splits", col=expression(N)) + 
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(), axis.text.x=element_blank()) +
   labs(fill=expression(N)) +
   stat_summary(aes(group=N), position=position_dodge(1), fun="mean", 
@@ -1832,7 +1834,7 @@ ggplot(tmp2, aes(x=random, y=tree_size)) +
                      breaks = breaks, limits = lim) +
   facet_grid(~method, scales = "free", space = "free") +
   labs(x = "", y = "no. of splits", col=expression(sigma^2~(b[0]))) +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(sigma[b[0]]^2)) +
@@ -1849,7 +1851,7 @@ ggplot(tmp2, aes(x=random, y=tree_size)) +
              colour = "black", fill=NA, show.legend = FALSE, alpha = .15) +
   facet_grid(~method, scales = "free", space = "free") +
   labs(x = "", y = "no. of splits", col = expression(p[noise])) +
-  geom_hline(yintercept=3, col = "darkgrey") +
+  geom_hline(yintercept=3, col = "darkgray") +
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(p[noise])) +
@@ -1868,7 +1870,7 @@ ggplot(tmp2, aes(x=random, y=tree_size)) +
   scale_y_continuous(trans = pseudo_log_trans(), breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
   labs(x = "", y = "no. of splits", col=expression(rho)) +
-  geom_hline(yintercept=3, col = "darkgrey") + 
+  geom_hline(yintercept=3, col = "darkgray") + 
   theme(axis.title.x=element_blank(),axis.text.x=element_blank(),
         strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(rho)) + 
@@ -1888,17 +1890,17 @@ ggplot(tmp2, aes(x=random, y=tree_size)) +
                      breaks = breaks, lim = lim) +
   facet_grid(~method, scales = "free", space = "free") +
   labs(x = "", y = "no. of splits", col=expression(sigma[b[1]]^2)) +
-  geom_hline(yintercept=3, col = "darkgrey") +
+  geom_hline(yintercept=3, col = "darkgray") +
   theme(strip.background = element_blank(), strip.text.x = element_blank()) +
   labs(fill=expression(sigma[b[1]]^2)) + 
   scale_x_discrete(labels = scales::parse_format()) +
   stat_summary(aes(group=sigma_slope), position=position_dodge(1), fun="mean", 
                col = "black", shape=16, size = .4)
-theme_set(theme_gray(base_size = 11))
+theme_set(theme_bw(base_size = 11))
 @
 \end{subfigure}%
 \vspace{-.6cm}%
-{ \singlespacing \small \textit{Note.} Black dots represent means, grey circles represent counts, grey lines represent true number of splits. Distances on $y$-axis are on log scale. $N$ = sample size at level 2; $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
+{ \singlespacing \small \textit{Note.} Black dots represent means, gray circles represent counts, dark gray horizontal lines represent true number of splits~3. Distances on $y$-axis are on log scale. $N$ = sample size at level 2; $\sigma_{b_0}^2$ = variance of random intercept; $\sigma_{b_1}^2$ = variance of random slope; $p_{noise}$ = number of noise variables; $\rho$ = correlation between partitioning variables.}
 \label{fig:tree_sizes_interact}
 \end{figure}
 
