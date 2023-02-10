@@ -517,7 +517,8 @@ Distributions of the number of splits, separated according to the levels of the 
 
 Table~\ref{tab:first_splits} shows the variables selected for the first split, and indicates high accuracy for recovery of the first split: Only very rarely is $U_1$ not selected for the first split.
 
-
+\emph{FIXME: The `Note` below Table~1 (and~2) is too close to the lower horizontal rule, making it hard to read. The order of of the rows should match the order of the panels in
+Figure~2, possibly aided by horizontal rules (then each combination of sigmas only has to be spelled out once).}
 
 
 
@@ -541,7 +542,7 @@ splitvar[tree_size$Lcrt == 1, "Lcrt"] <- NA
 func <- function(x) table(x, useNA = "ifany") / sum(table(x, useNA = "ifany"))
 probs <- apply(splitvar, 2, func)
 probs <- sapply(probs, function(x) {
-  names(x)[is.na(names(x))] <- "no split"
+  names(x)[is.na(names(x))] <- "No split"
   return(x)
 })
 
@@ -549,7 +550,7 @@ probs <- sapply(probs, function(x) {
 splits <- matrix(sapply(probs, function(x) x["x1"]), ncol = 1,
                  dimnames = list(names(probs), "x1"))
 splits[is.na(splits)] <- 0
-for (u_set in list("x2","x3", paste0("x", 4:30), "no split")) {
+for (u_set in list("x2","x3", paste0("x", 4:30), "No split")) {
   splits <- cbind(splits, sapply(probs, function(x) sum(x[names(x) %in% u_set])))
 }
 splits <- data.frame(splits[c(9:10, 1:8, 11:17), ]) ## reorder rows so LM tree is 1st
@@ -580,7 +581,7 @@ rows <- cbind(c("LM tree", " ",
                "LRT", "LRT", "LRT", "score-based", "score-based", "score-based", ""))
 splits <- cbind(rows, splits)
 colnames(splits) <- c("Algorithm", "Random effects", "Fitting approach", "$U_1$", 
-                      "$U_2$", "$U_3$", "$U_4$ - $U_{25}$", "no split")
+                      "$U_2$", "$U_3$", "$U_4$--$U_{25}$", "No split")
 
 ## Print the table
 kable_styling(add_footnote(kable(splits[1:10, -1], format = "latex", booktabs = TRUE, 
@@ -602,7 +603,7 @@ kable_styling(add_footnote(kable(splits[1:10, -1], format = "latex", booktabs = 
 
 \section{Simulation Study II}
 
-Next, we compared performance of LM(M) trees with that of SEM trees and LongCART. This allows us to evaluate the possible (dis)advantages of global versus local estimation of random-effects parameters, as well as the performance of the different splitting criteria employed by each method. The same data-generating design as in Simulation Study I was employed. To reduce the number of comparisons, we only include performance of LM(M) trees fitted using clustered covariances, because they showed good performance in Simulation Study I.
+Next, we compared performance of LM(M) trees with that of SEM trees and LongCART. This allows us to evaluate the possible (dis)advantages of global versus local estimation of random-effects parameters, as well as the performance of the different splitting criteria employed by each method. The same data-generating design as in Simulation Study~I was employed. To reduce the number of comparisons, we only include performance of LM(M) trees fitted using clustered covariances, because they showed good performance in Simulation Study~I.
 
 \subsection{Method}
 
@@ -610,7 +611,7 @@ We fitted a total of six SEM trees to every dataset. We used two different split
 
 \begin{itemize} 
 
-\item We used the default "naive" splitting approach which employs likelihood ratio tests (LRTs) as the splitting criterion \citep{BranyOert13}. That is, the likelihood of the SEM fitted to the observations in the current node is compared against the likelihood of a range of two-group SEMs, in which the two groups are defined by each possible candidate split. An LRT can thus be computed for each candidate split, which quantifies the improvement in fit that may be obtained by implementing the split. In each step, the candidate yielding the highest LRT is selected for splitting, and splitting is continued as long as a candidate split yields a $p$-value of the LRT above a pre-specified $\alpha$ level (0.05, by default). 
+\item We used the default ``naive'' splitting approach which employs likelihood ratio tests (LRTs) as the splitting criterion \citep{BranyOert13}. That is, the likelihood of the SEM fitted to the observations in the current node is compared against the likelihood of a range of two-group SEMs, in which the two groups are defined by each possible candidate split. An LRT can thus be computed for each candidate split, which quantifies the improvement in fit that may be obtained by implementing the split. In each step, the candidate yielding the highest LRT is selected for splitting, and splitting is continued as long as a candidate split yields a $p$-value of the LRT above a pre-specified $\alpha$ level (0.05, by default). 
 
 \item We used the score-based splitting approach of \cite{ArnoyVoel21}. This approach uses the MOB algorithm described in the Introduction, where the parametric model fitted in step (a) is a SEM. While for GLMM trees, parameter stability tests are computed for the fixed-effects parameters only, score-based SEM trees compute parameter stability tests based on both fixed- and random-effects parameters. 
 
@@ -618,7 +619,7 @@ We fitted a total of six SEM trees to every dataset. We used two different split
 
 For each splitting approach, three different random-effects specifications were employed: Variances of latent intercepts and slopes both fixed to 0; variance of the latent intercept freely estimated and variance of the latent slope fixed to 0; variances of latent intercepts and slopes both freely estimated. To specify the node-specific models for SEM trees, we employed an LGCM specification with the response at each timepoint regressed on a latent intercept and slope. Intercept loadings were fixed to 1; slope loadings were fixed to ${0, 1, 2, 3, 4}$, respectively. Errors were assumed uncorrelated between timepoints and an error variance was freely estimated for each timepoint. We used package \textbf{lavaan} \citep[version 0.6-11; ][]{Ross12} to fit the SEMs and we used package \textbf{semtree} \citep[version 0.9.17; ][]{BranyOert13} to fit the SEM trees.    
 
-We fitted a single LongCART tree to each dataset. The LongCART function estimates node-specific models comprising a random intercept term; this default cannot be overridden. A fixed-effects model was specified with the response regressed on time and a subject-specific random intercept. We used package \textbf{LongCART} \citep[version 3.1][]{Kund21} to fit LongCART trees.    
+We fitted a single LongCART tree to each dataset. The LongCART function estimates node-specific models comprising a random intercept term; this default cannot be changed. A fixed-effects model was specified with the response regressed on time and a subject-specific random intercept. We used package \textbf{LongCART} \citep[version 3.1][]{Kund21} to fit LongCART trees.    
 
 
 \subsection{Results}
@@ -849,9 +850,9 @@ kable_styling(add_footnote(
 
 
 
-Table~\ref{tab:first_splits2} presents variable selection frequencies for the first split in the fitted trees. For SEM trees, the LRT criterion yields almost perfect accuracy for the first split. The score-based approach selected the wrong variable for the first split in about \Sexpr{round(100*(1 - mean(splits$`$U_1$`[grep("s_sem", rownames(splits))])))}\% of datasets, but only when the random-effects structure was misspecified. When random effects were correctly specified, score-based SEM trees also provided perfect recovery of the first split. Closer inspection of stability tests seperately per model parameter suggested that the the score-based tests for SEMs are more sensitive to instability in the fixed slope than in the fixed intercept.
+Table~\ref{tab:first_splits2} presents variable selection frequencies for the first split in the fitted trees. For SEM trees, the LRT criterion yields almost perfect accuracy for the first split as does the score-based criterion provided the random effects were correctly specified. Only in case of misspecification of the random-effects structure, the score-based SEM trees selected the wrong variable for the first split in about \Sexpr{round(100*(1 - mean(splits$`$U_1$`[grep("s_sem", rownames(splits))])))}\% of datasets. Closer inspection of stability tests seperately per model parameter suggested that the the score-based tests for SEMs are more sensitive to instability in the fixed slope than in the fixed intercept.
 
-LongCART trees exhibit low accuracy for recovering the first split, selecting the wrong variable in all datasets where at least one split was implemented. LongCART showed an even stronger tendency than score-based SEM trees to select $U_2$ or $U_3$ for the first split. Of note, in the datasets where LongCART did not implement any splits, in \Sexpr{round(100*prop.table(table(Lcrt_splitvars[tree_size$Lcrt == 1L] == "x1"))["TRUE"])}\% percent of datasets $U_1$ was the strongest splitting candidate, but the parameter stability test simply did not reach the criterion for significance. This suggests the parameter stability tests proposed by \cite{KundyHare19} are less sensitive to instabilities with respect to the fixed intercept, or less sensitive to instability with respect to a categorical covariate. 
+LongCART trees exhibit low accuracy for recovering the first split, selecting the wrong variable in all datasets where at least one split was implemented. LongCART showed a strong tendency to select $U_2$ or $U_3$ for the first split. It is noteworthy that in the datasets where LongCART did not implement any splits, in \Sexpr{round(100*prop.table(table(Lcrt_splitvars[tree_size$Lcrt == 1L] == "x1"))["TRUE"])}\% percent of datasets $U_1$ was the strongest splitting candidate, but the parameter stability test simply did not reach the criterion for significance. This suggests the parameter stability tests proposed by \cite{KundyHare19} are less sensitive to instabilities with respect to the fixed intercept, or less sensitive to instability with respect to a categorical covariate. 
 
 
 <<echo=FALSE, eval=FALSE>>=
@@ -1007,7 +1008,7 @@ ggplot(times, aes(Var2, value)) +
 \end{figure}
 
 
-Figure~\ref{fig:comp_times} presents computation time distributions for the partitioning algorithms. A clear computational advantage is observed for LM trees. LMM trees require longer computation times because of the estimation of random effects. Yet, this increase is minor compared to the computation times required by LongCART and SEM trees: LRT-based SEM trees required strikingly computation times, while score-based SEM trees were computationally more efficient, as expected. Computation times for LongCART were in between LRT- and score-based SEM trees. 
+Figure~\ref{fig:comp_times} presents computation time distributions for the partitioning algorithms. A clear computational advantage is observed for LM trees. LMM trees require longer computation times because of the estimation of random effects. Yet, this increase is minor compared to the computation times required by LongCART and SEM trees: LRT-based SEM trees required striking computation times, while score-based SEM trees were computationally more efficient, as expected.
 
 
 \FloatBarrier
