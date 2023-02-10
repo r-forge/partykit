@@ -1020,13 +1020,15 @@ Figure~\ref{fig:comp_times} presents computation time distributions for the part
 
 \subsubsection{Dataset}
 
-We analyzed longitudinal assessments of children's reading, math and science abilities from the Early Childhood Longitudinal Study-Kindergarten class of 1998-1999 \citep[ECLS-K; ][]{NCES10}. Data were collected from 21,304 children from 1,018 schools across the USA were collected. Assessments took place from kindergarten in 1998 through 8th grade in 2007. In the current analyses, we focus on the assessments from kindergarten, 1st, 3rd, 5th and 8th grade.
+We analyzed longitudinal assessments of children's reading, math and science abilities from the Early Childhood Longitudinal Study-Kindergarten class of 1998--1999 \citep[ECLS-K; ][]{NCES10}. Data were collected from 21,304 children from 1,018 schools across the USA. Assessments took place from kindergarten in 1998 through 8th grade in 2007. In the current analyses, we focus on the assessments from kindergarten, 1st, 3rd, 5th and 8th grade.
 
-Response variables are reading, math and science abilities. These were assessed using multi-item cognitive tests, from which latent ability estimates were computed with a mean of zero and variance of one. Reading and math abilities were assessed in all five rounds of data collection, while science knowledge was assessed in the 3rd, 5th and 8th grade only. We analyzed data from children who completed all assessments yielding $N = 6,277$ for reading; $N = 6,512$ for math; $N = 6,625$ for science.
+Response variables are reading, math, and science abilities. These were assessed using multi-item cognitive tests, from which latent ability estimates were computed with a mean of zero and variance of one. Reading and math abilities were assessed in all five rounds of data collection, while science knowledge was assessed in the 3rd, 5th and 8th grade only. We analyzed data from children who completed all assessments yielding $N = 6,277$ for reading; $N = 6,512$ for math; $N = 6,625$ for science.
 
 Our analyses focus on predicting trajectories of reading, math and science abilities, based on baseline characteristics. Time was measured as the number of months since the baseline assessment. In order to obtain approximately linear trajectories, $\mathrm{months}^{1/2}$ was used as the timing metric for reading and math trajectories, and $\mathrm{months}^{2/3}$ for science trajectories.
 
-We used eleven time-invariant covariates as potential partitioning variables: Gender (51.1\% male); Age in months at baseline (range 53 to 96; M = 6.14 years at baseline); Race (8 categories); First time in kindergarten (yes/no); Socio-economic status (range -5 to 3); Fine motor skills (e.g., drawing figures; range 0 to 9); Gross motor skills (e.g., ability to hop, skip and jump; range 0 to 8); Interpersonal skills (range 1 to 4); Self-control (range 1 to 4); Internalizing problem behavior (range 1 to 4); Externalizing problem behavior (range 1 to 4).
+\emph{README: Are these power transformations for months by 1/2 or 2/3 standard in the literature? Should this be cited in some way or is this uncontroversial?}
+
+We used eleven time-invariant covariates as potential partitioning variables: Gender (51.1\% male); Age in months at baseline (range 53 to 96; M = 6.14 years at baseline); Race (8 categories); First time in kindergarten (yes/no); Socio-economic status (range $-$5 to 3); Fine motor skills (e.g., drawing figures; range 0 to 9); Gross motor skills (e.g., ability to hop, skip and jump; range 0 to 8); Interpersonal skills (range 1 to 4); Self-control (range 1 to 4); Internalizing problem behavior (range 1 to 4); Externalizing problem behavior (range 1 to 4).
 
 
 
@@ -1037,7 +1039,11 @@ We used eleven time-invariant covariates as potential partitioning variables: Ge
 
 We fitted four LM(M) trees using the approaches which showed most promise in the simulations: An LM tree ($\hat{\sigma}_{b_0} = \hat{\sigma}_{b_1} = 0$) using clustered covariances in the parameter-stability tests, two LMM trees using clustered covariances with different random-effects specifications ($\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} = 0$ and $\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} > 0$), and an LMM tree initializing estimation with the random effects and freely estimating a random intercept only ($\hat{\sigma}_{b_0} > 0$, $\hat{\sigma}_{b_1} = 0$). 
 
+\emph{FIXME: Maybe better clarify what `existing data' in the next sentence means. I think you are referring to data where we have to evaluate out-of-sample rather than with the `true' effects in-sample, right?}
+
 To compare the performance of LM(M) trees on existing data, we could not employ SEM tree or LongCART, so we opted for longRPart \citep{AbdoyLeBl02}. Neither SEM trees, LongCART, longRPart or longRPart2 implementations provide functionality to obtain predictions for new observations. Writing custom functionality to allow for prediction was most straightforward for longRPart. Furthermore, performance of longRPart will be representative of the other methods, in the sense that all four methods fit full mixed-effects models locally. Like LongCART and longRPart2, longRPart fits a mixed-effects model in each of the terminal nodes. Like LRT-based SEM trees, longRPart uses an exhaustive LRT-based search in every node to find the optimal next split.
+
+\emph{README: The conclusion not to consider SEM trees which performed rather well in the simulation studies is a bit unsatisfying. Also, longRPart was not included in the simulation studies. Overall, the new insights gained compared to the simulation studies are not so huge. So maybe we should discuss again how to best present this?}
 
 Using package \textbf{longRPart} \citep[version 1.0; ][]{StewyAbdo12}, we fitted two trees with different random effects specifications: A tree comprising a random intercept only, and a tree comprising both a random intercept and slope with respect to student. In order to implement a split, longRPart uses a criterion based on the minimum decrease in deviance, which is set to 0.01, by default. This yielded a very large number of splits in the current analyses and poor predictive accuracy. We therefore restricted maximum tree depth to 5, yielding a maximum of $2^5$ = \Sexpr{2^5} terminal nodes, or \Sexpr{(2^5)-1} splits. Significance of the LRT, or a cross-validation approach to determine whether to implement a split or not may yield better results, but this has not been implemented. 
 
@@ -1045,7 +1051,7 @@ Using package \textbf{longRPart} \citep[version 1.0; ][]{StewyAbdo12}, we fitted
 
 \subsubsection{Evaluation of performance}
 
-The ECLS-K datasets have exceptionally large sample sizes. We therefore employed random sampling to obtain training samples of $N=250$ and $N=1,000$ children, likely more representative of real-world studies in psychology. For each combination of response variable (math, reading or science) and sample size, we performed 100 repetitions. We evaluated predictive accuracy by computing the mean squared difference between predicted and observed response variable values for all children not included in the training sample of the current repetition. Note that this measures the accuracy of the fixed-effects predictions only. Tree size was measured by the number of splits in each tree, and computation time was measured in seconds. 
+The ECLS-K datasets have exceptionally large sample sizes. We therefore employed random sampling to obtain training samples of $N=250$ and $N=1,000$ children, likely more representative of real-world studies in psychology. For each combination of response variable (math, reading, or science) and sample size, we performed 100 repetitions. We evaluated predictive accuracy by computing the mean squared difference between predicted and observed response variable values for all children not included in the training sample of the current repetition. Note that this measures the accuracy of the fixed-effects predictions only. Tree size was measured by the number of splits in each tree, and computation time was measured in seconds. 
 
 
 \subsection{Results}
@@ -1450,22 +1456,22 @@ scie_affected / sum(scie_sizes$N)
 ## without random slopes. This might paint a slightly difference picture.
 ## However, I do not expect dramatic differences, given that results
 ## for longRPart and longRPart_s are quite similar, and seem to differ
-## most for Science, which was most strongly affected by the mistake.
+## most for science, which was most strongly affected by the mistake.
 
 @
 
 
 \subsubsection{Predictive accuracy}
 
-LongRPart trees comprising both random intercepts and slopes yielded estimation errors in \Sexpr{(table(is.na(math_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the Math data and in \Sexpr{(table(is.na(scie_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the Science data. All other model-fitting attempts converged successfully. Results are presented for successful model estimations.
+LongRPart trees comprising both random intercepts and slopes yielded convergence errors in \Sexpr{(table(is.na(math_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the math data and in \Sexpr{(table(is.na(scie_MSEs$longRPart_s))["TRUE"]/200)*100}\% of samples from the science data. All other model-fitting attempts converged successfully. Results are presented for successful model estimations.
 
 Figure~\ref{fig:application_MSEs} presents MSE distributions for each of the partitioning approaches, separated by sample size. As expected, all methods show higher accuracy with larger sample sizes. LM(M) trees tend to show better predictive accuracy than longRPart trees. Pairwise $t$-tests indicated significantly better performance for each of the LM(M) tree approaches employing clustered covariances, compared to both longRPart approaches (Bonferroni corrected $p$-values all $< .01$). However, these performance differences are small; the effects of sample size are much more obvious than the differences between methods in Figure~\ref{fig:application_MSEs}. 
 
-Table~\ref{tab:application_MSEs} presents means and standard deviations of the MSEs. Only few differences in performance between LM(M) and longRPart trees are larger $> 1$ standard error: For Reading with $N=250$ and for Science with both sample sizes. Note that the standard errors in the pairwise $t$-tests are get smaller with a larger number of replications, while the standard errors in Table~\ref{tab:application_MSEs} do not. The latter thus provide a more useful measure of effect size, while the former have higher power to detect differences between methods.
+Table~\ref{tab:application_MSEs} presents means and standard deviations of the MSEs. Only few differences in performance between LM(M) and longRPart trees are larger $> 1$ standard error: For reading with $N=250$ and for science with both sample sizes. Note that the standard errors in the pairwise $t$-tests get smaller with a larger number of replications, while the standard errors in Table~\ref{tab:application_MSEs} do not. The latter thus provide a more useful measure of effect size, while the former have higher power to detect differences between methods.
 
-Table~\ref{tab:application_MSEs} indicates that LMM trees estimating only a random intercept and employing cluster-level covariances performed best for predicting Math and Reading abilities. For predicting science abilities, LMM trees initializing estimation with the random effects and estimating only a random intercept performed best. Random-effects initialization was the worst-performing LMM tree approach for Math and Reading. 
+Table~\ref{tab:application_MSEs} indicates that LMM trees estimating only a random intercept and employing cluster-level covariances performed best for predicting math and reading abilities. For predicting science abilities, LMM trees initializing estimation with the random effects and estimating only a random intercept performed best. Random-effects initialization was the worst-performing LMM tree approach for math and reading. 
 
-For longRPart, trees comprising both a random intercept and slope performed best for predicting Math and Reading, trees with a random intercept only performed best for predicting Science. The differences in performance between Math and Reading on the one hand and science can perhaps be explained by the lower number of repeated assessments of Science abilities.
+For longRPart, trees comprising both a random intercept and slope performed best for predicting math and reading, trees with a random intercept only performed best for predicting science. The differences in performance between math and reading on the one hand and science can perhaps be explained by the lower number of repeated assessments of science abilities.
 
 Again, the performance of LM(M) trees employing cluster-level covariances seems hardly affected by the specification of the random-effects: Figure~\ref{fig:application_MSEs} shows very similar performance for LM(M) trees with random intercepts, slopes or neither. Pairwise $t$-tests did not indicate significant differences between those three approaches for any of the response variables.
 
@@ -1485,7 +1491,7 @@ scie_LMM <- lmer(score ~ months + (1 + months|CHILDID), data = sciedata)
 
 
 \begin{figure}[!bt]
-\caption{Tree sizes for trees fitted to Math (top), Reading (middle) and Science (bottom) ability trajectories.}
+\caption{Tree sizes for trees fitted to math (top), reading (middle), and science (bottom) ability trajectories.}
 \begin{subfigure}{1.2\textwidth}
 <<echo=FALSE, fig=TRUE, height=2, width=8>>=
 ## Tree size
@@ -1655,7 +1661,7 @@ ggplot(ECLSK_times) +
 \label{fig:application_times}
 \end{figure}
 
-Figure~\ref{fig:application_sizes} presents tree size distributions for each of the partitioning approaches. Interestingly, whereas LM(M) trees implement a larger number of splits with increasing sample size, this pattern is reversed for longRPart trees. For Math and Reading, the best-performing LM(M) tree approach in terms of predictive accuracy yields a smaller number of splits than the best-performing longRPart approach when sample size is small. This pattern reverses with large sample size, where the best-performing LM(M) tree approach yields a larger number of splits than the best-performing longRPart approach. For the Math data, the best-performing longRPart approach yields a smaller number of splits than the best-performing LM(M) tree approach.
+Figure~\ref{fig:application_sizes} presents tree size distributions for each of the partitioning approaches. Interestingly, whereas LM(M) trees implement a larger number of splits with increasing sample size, this pattern is reversed for longRPart trees. For math and reading, the best-performing LM(M) tree approach in terms of predictive accuracy yields a smaller number of splits than the best-performing longRPart approach when sample size is small. This pattern reverses with large sample size, where the best-performing LM(M) tree approach yields a larger number of splits than the best-performing longRPart approach. For the math data, the best-performing longRPart approach yields a smaller number of splits than the best-performing LM(M) tree approach.
 
 
 \subsubsection{Computation time}
