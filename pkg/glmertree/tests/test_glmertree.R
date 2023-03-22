@@ -1,29 +1,27 @@
 library("glmertree")
-
-## load artificial example data
+options(width = 70, prompt = "R> ", continue = "+  ")
 data("DepressionDemo", package = "glmertree")
-
-## fit normal linear regression LMM tree for continuous outcome
-lt <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
-               data = DepressionDemo)
-#print(lt)
-#plot(lt, which = "all") # default behavior, may also be "tree" or "ranef" 
-coef(lt)
-#ranef(lt)
-#predict(lt, type = "response") # default behavior, may also be "node"
-predict(lt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
-#residuals(lt)
-VarCorr(lt) # see lme4::VarCorr
-
-
-## fit logistic regression GLMM tree for binary outcome
-gt <- glmertree(depression_bin ~ treatment | cluster | age + anxiety + duration,
-                data = DepressionDemo)
-#print(gt)
-#plot(gt, which = "all") # default behavior, may also be "tree" or "ranef" 
-coef(gt)
-#ranef(gt)
-#predict(gt, type = "response") # default behavior, may also be "node" or "link"
-predict(gt, re.form = NA) # excludes random effects, see ?lme4::predict.merMod
-#residuals(gt)
-VarCorr(gt) # see lme4::VarCorr
+summary(DepressionDemo)
+lmm_tree <- lmertree(depression ~ treatment | cluster | 
+                       age + duration + anxiety, data = DepressionDemo)
+plot(lmm_tree, which = "tree")
+plot(lmm_tree, which = "ranef")
+print(lmm_tree)
+coef(lmm_tree)
+ranef(lmm_tree)
+predict(lmm_tree, newdata = DepressionDemo[1:7, ])
+predict(lmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
+residuals(lmm_tree)[1:10]
+predict(lmm_tree)[1:10]
+glmm_tree <- glmertree(depression_bin ~ treatment | 
+                         cluster | age + duration + anxiety, data = DepressionDemo, 
+                       family = binomial)
+plot(glmm_tree, which = "tree")
+plot(glmm_tree, which = "ranef")
+print(glmm_tree)
+coef(glmm_tree)
+ranef(glmm_tree)
+predict(glmm_tree, newdata = DepressionDemo[1:7, ])
+predict(glmm_tree, newdata = DepressionDemo[1:7, -3], re.form = NA)
+residuals(glmm_tree)[1:10]
+predict(glmm_tree)[1:10]

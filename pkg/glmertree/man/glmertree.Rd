@@ -87,14 +87,14 @@ glmertree(formula, data, family = "binomial", weights = NULL,
     random-effects model be printed for every iteration of the estimation?} 
   \item{plot}{Should the tree be plotted at every iteration of the estimation?
     Note that selecting this option slows down execution of the function.}
-  \item{REML}{logical scalar. Should the fixef-effects estimates be chosen to 
+  \item{REML}{logical scalar. Should the fixed-effects estimates be chosen to 
     optimize the REML criterion (as opposed to the log-likelihood)? Will be 
     passed to funtion \code{lmer()}. See \code{\link[lme4]{lmer}} for details.} 
   \item{nAGQ}{integer scalar. Specifies the number of points per axis for evaluating 
     the adaptive Gauss-Hermite approximation to the log-likelihood, to be passed
     to function \code{glmer()}. See \code{\link[lme4]{glmer}} for details.} 
   \item{lmer.control, glmer.control}{list. An optional list with control
-    parameters to be passed to \code{lmer()} and \code{glmer()}, respectively.
+    parameters to be passed to \code{lmer()} or \code{glmer()}, respectively.
     See \code{\link[lme4]{lmerControl}} for details.} 
   \item{\dots}{Additional arguments to be passed to \code{lmtree()} or \code{glmtree()}.
     See \code{\link[partykit]{mob_control}} documentation for details.}

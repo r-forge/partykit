@@ -32,7 +32,7 @@
   \item{type}{character; \code{"extended"} (default) or \code{"simple"}.
       \code{"extended"} yields a plotted tree with observed data and/or
       fitted means plotted in the terminal nodes; \code{"simple"} yields a 
-      plottedtree with the value of fixed and/or random effects coefficients 
+      plotted tree with the value of fixed and/or random effects coefficients 
       reported in the terminal nodes.}
   \item{observed}{logical. Should observed datapoints be plotted in the tree?
       Defaults to \code{TRUE}, \code{FALSE} is only supported for objects of 

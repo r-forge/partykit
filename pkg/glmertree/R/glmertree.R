@@ -12,8 +12,8 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ## check if data is complete
   all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
     names(data) else all.vars(formula)
-  if (nrow(data) != sum(stats::complete.cases(data[ , all_vars]))) {
-    warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
+  if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
+    warning("some variables have missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
     data_has_missings <- TRUE
   } else {
     data_has_missings <- FALSE
@@ -83,6 +83,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     old_N <- nrow(data)
     data <- data[complete.cases(data[ , all_vars]), ]
     warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
+    
   }
   
   ## initialization
@@ -238,7 +239,7 @@ glmertree <- function(formula, data, family = "binomial", weights = NULL,
   ## check if data is complete
   all_vars <- if (any(grepl(".", as.character(formula), fixed = TRUE))) 
     names(data) else all.vars(formula)
-  if (nrow(data) != sum(stats::complete.cases(data[ , all_vars]))) {
+  if (nrow(data[ , all_vars]) != sum(stats::complete.cases(data[ , all_vars]))) {
     warning("'data' contains missing values, note that listwise deletion will be employed.", immediate. = TRUE) 
     data_has_missings <- TRUE
   } else {
@@ -460,12 +461,13 @@ fixef.lmertree <- coef.lmertree <-
 
 
 
-VarCorr.lmertree <- VarCorr.glmertree <- function(object, ...) {
-  merMod_type <- ifelse(inherits(object, "lmertree"), "lmer", "glmer")
-  VarCorr(object[[merMod_type]], ...)
+VarCorr.lmertree <- VarCorr.glmertree <- function(x, ...) {
+  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
+  VarCorr(x[[merMod_type]], ...)
 }
 
 
+# ## Old version of plot lmertree function
 # plot.lmertree <- plot.glmertree <- function(x, which = "all", ask = TRUE, 
 #                                             type = "extended", ...) {    
 # 
