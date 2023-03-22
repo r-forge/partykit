@@ -22,7 +22,7 @@
 \linespread{1.3}
 
 
-\title{Recursive partitioning of linear growth curve models}
+\title{Subgroup detection in linear growth curve models with GLMM trees}
 \shorttitle{Recursive partitioning of linear growth curve models}
 \authorsnames{Marjolein Fokkema$^1$, Achim Zeileis$^2$}
 \authorsaffiliations{{$^1$Leiden University}, {$^2$Universit\"at Innsbruck}}

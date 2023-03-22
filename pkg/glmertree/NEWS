@@ -1,4 +1,13 @@
 
+Changes in Version 0.2-2
+
+  o Minor bug fixes.
+
+  o Experimental function betamertree added, for partitioning 
+    mixed-effects beta regression trees.
+
+
+
 Changes in Version 0.2-1
 
   o Bug fix for missing data: Listwise deletion over all predictor,
