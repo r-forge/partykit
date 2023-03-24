@@ -96,7 +96,7 @@ betamertree <- function(formula, data, family = NULL, weights = NULL,
     
     ## fit tree
     #if (is.null(q_cluster)) {
-      tree <- betareg::betatree(tf, partition = pf, data = data,  
+      tree <- betatree_alt(tf, partition = pf, data = data,  
                        offset = .ranef, link = "logit", link.phi = "log",
                        weights = .weights, dfsplit = dfsplit, ...)
     #} else {
@@ -340,4 +340,107 @@ predict.betamertree <- function(object, newdata = NULL, type = "response",
     #  predict(object$tree, newdata = newdata, type = type)
     #}
   }
+}
+
+
+betatree_alt <- function (formula, partition, data, subset = NULL, na.action = na.omit, 
+                      weights, offset, cluster, link = "logit", link.phi = "log", 
+                      control = betareg::betareg.control(), ...) 
+{
+  control <- partykit::mob_control(...)
+  control$xtype <- control$ytype <- "data.frame"
+  cl <- match.call(expand.dots = TRUE)
+  f <- if (missing(partition)) 
+    Formula::Formula(formula)
+  else Formula::as.Formula(formula, partition)
+  if (length(f)[2L] == 1L) {
+    attr(f, "rhs") <- c(list(1), list(1), attr(f, "rhs"))
+    formula <- Formula::as.Formula(formula(f))
+  }
+  else if (length(f)[2L] == 2L) {
+    attr(f, "rhs") <- c(attr(f, "rhs")[[1L]], list(1), attr(f, 
+                                                            "rhs")[[2L]])
+    formula <- Formula::as.Formula(formula(f))
+  }
+  else {
+    formula <- f
+  }
+  mob_formula <- formula(Formula::as.Formula(
+    formula(formula, rhs = 1L:2L, collapse = TRUE), formula(formula, lhs = 0L, 
+                                                            rhs = 3L)))
+  
+  ## Temporary fix for when no regressors have been specified
+  if (sum(as.character(mob_formula[[3]][[2]]) == c("+", "1", "1")) == 3) {
+    mob_formula <- formula(Formula::as.Formula(
+      formula(formula, rhs = 1L, collapse = TRUE), formula(formula, lhs = 0L, 
+                                                           rhs = 3L)))
+  }
+  ## End of fix
+  
+  br_call <- match.call(expand.dots = FALSE)
+  br_call$partition <- br_call$cluster <- br_call$... <- NULL
+  br_call$formula <- formula(formula, lhs = 1L, rhs = 1L:2L) 
+  ft <- terms(formula, data = data, lhs = 1L, rhs = 1L:2L) ## full terms
+  xt <- terms(formula, data = data, lhs = 1L, rhs = 1L) ## z terms (should be ~1; specifies predictors for the variance)
+  zt <- terms(formula, data = data, lhs = 0L, rhs = 2L) ## x terms, specifies predictors for the mean
+  betafit <- function(y, x, start = NULL, weights = NULL, 
+                      offset = NULL, cluster = NULL, ..., estfun = FALSE, 
+                      object = FALSE) {
+    args <- list(...)
+    ctrl <- list(start = start)
+    anam <- names(args)
+    anam <- anam[!(anam %in% c("link", "link.phi", "type"))]
+    for (n in anam) {
+      ctrl[[n]] <- args[[n]]
+      args[[n]] <- NULL
+    }
+    args$control <- do.call("betareg.control", ctrl)
+    
+    
+    ## Temporary fix, not sure if needed
+    if (is.null(x)) x <- rep(1L, times = length(y))
+    ## end of fix
+      
+      
+    mf <- cbind(y, x)
+    attr(mf, "terms") <- ft
+    y <- y[[1L]]
+    xx <- model.matrix(xt, mf)
+    xz <- model.matrix(zt, mf)
+    args <- c(list(x = xx, y = y, z = xz, weights = weights, 
+                   offset = offset), args)
+    obj <- do.call("betareg.fit", args)
+    rval <- list(coefficients = betareg:::coef.betareg(obj), objfun = obj$loglik, 
+                 estfun = NULL, object = NULL)
+    if (estfun | object) {
+      class(obj) <- "betareg"
+      obj$contrasts <- attr(x, "contrasts")
+      obj$levels <- list(mu = attr(x, "xlevels"), phi = attr(x, 
+                                                             "xlevels"), full = attr(x, "xlevels"))
+      obj$call <- br_call
+      obj$terms <- list(mean = xt, precision = zt, full = ft)
+      obj$model <- mf
+      rval$object <- obj
+    }
+    if (estfun) {
+      obj$y <- y
+      obj$x <- list(mean = xx, precision = xz)
+      rval$estfun <- betareg:::estfun.betareg(obj)
+    }
+    return(rval)
+  }
+  m <- match.call(expand.dots = FALSE)
+  m$formula <- mob_formula
+  m$fit <- betafit
+  m$control <- control
+  m$link <- link
+  m$link.phi <- link.phi
+  m$partition <- NULL
+  if ("..." %in% names(m)) 
+    m[["..."]] <- NULL
+  m[[1L]] <- as.call(expression(partykit::mob))[[1L]]
+  rval <- eval(m, parent.frame())
+  rval$info$call <- cl
+  class(rval) <- c("betatree", class(rval))
+  return(rval)
 }
