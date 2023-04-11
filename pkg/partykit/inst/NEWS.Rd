@@ -2,6 +2,23 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-20 (2023-04-11)}{
+  \subsection{Buxfixes}{
+  \itemize{
+    \item{\code{density} now gives warnings when called with weights, avoid this.}
+    \item{Check for tied p-values fails on M1mac.}
+}
+}
+}
+
+\section{Changes in Version 1.2-19 (2023-03-19)}{
+  \subsection{Buxfixes}{
+  \itemize{
+    \item{Fix documentation bug.}
+}
+}
+}
+
 \section{Changes in Version 1.2-18 (2023-03-09)}{
   \subsection{Buxfixes}{
   \itemize{
@@ -9,6 +26,7 @@
 }
 }
 }
+
 
 \section{Changes in Version 1.2-17 (2023-02-28)}{
   \subsection{Misc}{
