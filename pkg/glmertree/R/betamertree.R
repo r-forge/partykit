@@ -369,6 +369,7 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
     formula(formula, rhs = 1L:2L, collapse = TRUE), formula(formula, lhs = 0L, 
                                                             rhs = 3L)))
   
+  
   ## Temporary fix for when no regressors have been specified
   if (sum(as.character(mob_formula[[3]][[2]]) == c("+", "1", "1")) == 3) {
     mob_formula <- formula(Formula::as.Formula(
@@ -376,6 +377,7 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
                                                            rhs = 3L)))
   }
   ## End of fix
+  
   
   br_call <- match.call(expand.dots = FALSE)
   br_call$partition <- br_call$cluster <- br_call$... <- NULL
