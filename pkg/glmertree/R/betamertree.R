@@ -370,7 +370,7 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
                                                             rhs = 3L)))
   
   
-  ## Temporary fix for when no regressors have been specified
+  ## Temporary fix for when no regressors have been specified (Needed up to Version: 3.1-4, Date: 2021-02-09, perhaps not after that)
   if (sum(as.character(mob_formula[[3]][[2]]) == c("+", "1", "1")) == 3) {
     mob_formula <- formula(Formula::as.Formula(
       formula(formula, rhs = 1L, collapse = TRUE), formula(formula, lhs = 0L, 
@@ -412,7 +412,7 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
     args <- c(list(x = xx, y = y, z = xz, weights = weights, 
                    offset = offset), args)
     obj <- do.call("betareg.fit", args)
-    rval <- list(coefficients = betareg:::coef.betareg(obj), objfun = obj$loglik, 
+    rval <- list(coefficients = coef(obj), objfun = obj$loglik, 
                  estfun = NULL, object = NULL)
     if (estfun | object) {
       class(obj) <- "betareg"
@@ -427,7 +427,7 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
     if (estfun) {
       obj$y <- y
       obj$x <- list(mean = xx, precision = xz)
-      rval$estfun <- betareg:::estfun.betareg(obj)
+      rval$estfun <- estfun.betareg(obj)
     }
     return(rval)
   }
@@ -444,5 +444,118 @@ betatree_alt <- function (formula, partition, data, subset = NULL, na.action = n
   rval <- eval(m, parent.frame())
   rval$info$call <- cl
   class(rval) <- c("betatree", class(rval))
+  return(rval)
+}
+
+
+
+#############################################################
+##
+## Function copied from function betareg:::estfun.betareg.
+## This code was written by Achim Zeileis.
+## Code copied from betareg version 3.1-4.
+## Code copied here to avoid use of :::
+##
+estfun.betareg <- function (x, phi = NULL, ...) {
+  
+  y <- if (is.null(x$y)) model.response(model.frame(x)) else x$y
+  xmat <- if (is.null(x$x)) model.matrix(x, model = "mean") else x$x$mean
+  zmat <- if (is.null(x$x)) model.matrix(x, model = "precision") else x$x$precision
+  offset <- x$offset
+  if (is.null(offset[[1L]])) offset[[1L]] <- rep.int(0, NROW(xmat))
+  if (is.null(offset[[2L]])) offset[[2L]] <- rep.int(0, NROW(zmat))
+  wts <- weights(x)
+  if (is.null(wts)) wts <- 1
+  phi_full <- if (is.null(phi)) x$phi else phi
+  beta <- x$coefficients$mean
+  gamma <- x$coefficients$precision
+  ystar <- qlogis(y)
+  eta <- as.vector(xmat %*% beta + offset[[1L]])
+  phi_eta <- as.vector(zmat %*% gamma + offset[[2L]])
+  mu <- x$link$mean$linkinv(eta)
+  phi <- x$link$precision$linkinv(phi_eta)
+  mustar <- digamma(mu * phi) - digamma((1 - mu) * phi)
+  rval <- phi * (ystar - mustar) * as.vector(x$link$mean$mu.eta(eta)) * wts * xmat
+  if (phi_full) {
+    rval <- cbind(rval, (mu * (ystar - mustar) + log(1 - y) - digamma((1 - mu) * phi) + digamma(phi)) * 
+                    as.vector(x$link$precision$mu.eta(phi_eta)) * wts * zmat)
+    colnames(rval) <- names(coef(x, phi = phi_full))
+  }
+  attr(rval, "assign") <- NULL
+  if (x$type == "BR") {
+    nobs <- nrow(xmat)
+    k <- ncol(xmat)
+    m <- ncol(zmat)
+    InfoInv <- x$vcov
+    D1 <- x$link$mean$mu.eta(eta)
+    D2 <- x$link$precision$mu.eta(phi_eta)
+    D1dash <- x$link$mean$dmu.deta(eta)
+    D2dash <- x$link$precision$dmu.deta(phi_eta)
+    Psi2 <- psigamma((1 - mu) * phi, 1)
+    dPsi1 <- psigamma(mu * phi, 2)
+    dPsi2 <- psigamma((1 - mu) * phi, 2)
+    kappa2 <- psigamma(mu * phi, 1) + Psi2
+    kappa3 <- dPsi1 - dPsi2
+    Psi3 <- psigamma(phi, 1)
+    dPsi3 <- psigamma(phi, 2)
+    PQ <- function(t) {
+      prodfun <- function(mat1, mat2) {
+        sapply(seq_len(nobs), function(i) tcrossprod(mat1[i, 
+        ], mat2[i, ]), simplify = FALSE)
+      }
+      if (t <= k) {
+        Xt <- xmat[, t]
+        bb <- if (k > 0L) {
+          bbComp <- wts * phi^2 * D1 * (phi * D1^2 * kappa3 + D1dash * kappa2) * Xt * xmat
+          prodfun(xmat, bbComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, k))
+        }
+        bg <- if ((k > 0L) & (m > 0L)) {
+          bgComp <- wts * phi * D1^2 * D2 * (mu * phi * kappa3 + phi * dPsi2 + kappa2) * Xt * zmat
+          prodfun(xmat, bgComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, m))
+        }
+        gg <- if (m > 0L) {
+          ggComp <- wts * phi * D1 * D2^2 * (mu^2 * kappa3 - dPsi2 + 2 * mu * dPsi2) * 
+            Xt * zmat + wts * phi * D1 * D2dash * (mu * kappa2 - Psi2) * Xt * zmat
+          prodfun(zmat, ggComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, m, m))
+        }
+      } else {
+        Zt <- zmat[, t - k]
+        bb <- if (k > 0L) {
+          bbComp <- wts * phi * D2 * 
+            (phi * D1^2 * mu * kappa3 + phi * D1^2 * dPsi2 + D1dash * mu * kappa2 - D1dash * Psi2) * Zt * xmat
+          prodfun(xmat, bbComp)
+        } else {
+          sapply(1:nobs, function(x) matrix(0, k, k))
+        }
+        bg <- if ((k > 0L) & (m > 0L)) {
+          bgComp <- wts * D1 * D2^2 * (phi * mu^2 * kappa3 + 
+                                         phi * (2 * mu - 1) * dPsi2 + mu * kappa2 - 
+                                         Psi2) * Zt * zmat
+          prodfun(xmat, bgComp)
+        }
+        else sapply(1:nobs, function(x) matrix(0, k, 
+                                               m))
+        gg <- if (m > 0L) {
+          ggComp <- wts * D2^3 * (mu^3 * kappa3 + (3 * mu^2 - 3 * mu + 1) * dPsi2 - dPsi3) * 
+            Zt * zmat + wts * D2dash * D2 * (mu^2 * kappa2 + (1 - 2 * mu) * Psi2 - Psi3) * Zt * zmat
+          prodfun(zmat, ggComp)
+        }
+        else sapply(1:nobs, function(x) matrix(0, m, m))
+      }
+      sapply(seq_len(nobs), function(i) {
+        sum(diag(InfoInv %*% rbind(cbind(bb[[i]], bg[[i]]), cbind(t(bg[[i]]), gg[[i]]))))/2}, simplify = TRUE)
+    }
+    if (inherits(InfoInv, "try-error")) {
+      adjustment <- rep.int(NA_real_, k + m)
+    }
+    else adjustment <- sapply(1:(k + m), PQ)
+    rval <- rval + adjustment
+  }
   return(rval)
 }
