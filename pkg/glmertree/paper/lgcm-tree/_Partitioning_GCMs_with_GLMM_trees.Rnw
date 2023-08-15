@@ -70,7 +70,7 @@ icc <- data.frame(VarCorr(LMM))
 
 Development over time is of prime interest in psychological research. For example, in educational studies researchers may want to model student's academic development over time; in clinical studies researchers may want to model patients' symptoms over time. Mixed-effects or latent-variable models can be used to model such trajectories and allow for explaining heterogeneity with covariates of a-priori known relevance \citep[e.g., ][]{NeisyMatt18}. However, when the covariates that can explain heterogeneity are not known in advance, methods for identifying them are needed. 
 
-For example, Figure~\ref{fig:global_trajectories} shows trajectories of science knowledge and skills from 250 children who were assessed at three timepoints throughout grades 3 through 8\footnote{Further details on the source of these data and scaling of the response variable are provided in Study~III.}. The grey lines depict individual trajectories, while the red line depicts the estimated average trajectory. Although the red line describes the average trajectory well, the grey lines indicate substantial intra-individual variability in average levels and growth over time. A common research aim might be to identify which covariates can explain or predict this heterogeneity. 
+For example, Figure~\ref{fig:global_trajectories} shows trajectories of science knowledge and skills from 250 children who were assessed at three timepoints throughout grades 3 through 8\footnote{Further details on the source of these data and scaling of the response variable are provided in Study~III.}. The gray lines depict individual trajectories, while the red line depicts the estimated average trajectory. Although the red line describes the average trajectory well, the gray lines indicate substantial intra-individual variability in average levels and growth over time. A common research aim might be to identify which covariates can explain or predict this heterogeneity. 
 
 
 \begin{figure}%
@@ -88,7 +88,7 @@ lines(x = c(min(data$months), max(data$months)),
      y = c(fixef(LMM)[1], fixef(LMM)[1] + max(data$months)*fixef(LMM)[2]),
      lwd = 3, col = 2)
 @
-\\\footnotesize{\textit{Note.} Grey lines depict observed individual trajectories. The red line depicts the average growth curve as estimated with a linear mixed-effect model, comprising a fixed effect of time and a random intercept with respect to individuals.}
+\\\footnotesize{\textit{Note.} Gray lines depict observed individual trajectories. The red line depicts the average growth curve as estimated with a linear mixed-effect model, comprising a fixed effect of time and a random intercept with respect to individuals.}
 \end{subfigure}%
 \label{fig:global_trajectories}
 \end{figure}%
@@ -121,7 +121,7 @@ icc_c <- as.data.frame(VarCorr(lmm_tree_c))
 lmm_c_preds <- predict(lmm_tree_c, newdata = testdat, re.form=NA)
 lmm_preds <- predict(LMM, newdata = testdat, re.form=NA)
 @
-\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, $y$-axes represent science ability. Grey lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model comprising node-specific fixed effects of time and a random intercepts with respect to individuals.}
+\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, $y$-axes represent science ability. Gray lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model comprising node-specific fixed effects of time and a random intercept with respect to individuals.}
 \end{subfigure}%
 \label{fig:LMM_tree_c}
 \end{figure}%
@@ -140,7 +140,7 @@ kable_styling(kable(coefs, format = "latex", booktabs = TRUE, label = "local_coe
 @
 
 
-Recursive partitioning methods (RPMs), also known as ``trees``, allow for identifying relevant predictors from a potentially (very) large number of covariates. Figure~\ref{fig:LMM_tree_c} shows an example tree, which identified socio-economic status (SES) and internalizing problems (INTERN) from a set of 11 socio-demographic and behavioral characteristics of these children, assessed at baseline. Four subgroups were identified, corresponding to the terminal nodes of the tree, each with a different estimate of the fixed intercept and slope (see Table~\ref{tab:local_coefs}). For children in the group with lower levels of SES, the intercept is also lowest, indicating lower science ability. For intermediate levels of SES (between -0.41 and 1.23), there is also an effect of internalizing problems, where children with higher internalizing problems have a lower intercept. Highest science ability intercepts are observed in the group with highest SES. It appears that nodes with higher intercepts also tend to have higher slopes, indicating that children with relatively higher ability also show larger ability gains over time.   
+Recursive partitioning methods (RPMs), also known as ``trees``, allow for identifying relevant predictors from a potentially (very) large number of covariates. Figure~\ref{fig:LMM_tree_c} shows an example tree, which identified socio-economic status (SES) and internalizing problems (INTERN) from a set of 11 socio-demographic and behavioral characteristics of these children, assessed at baseline. Four subgroups were identified, corresponding to the terminal nodes of the tree, each with a different estimate of the fixed intercept and slope (see Table~\ref{tab:local_coefs}). For children in the group with lower levels of SES, the intercept is also lowest, indicating lower science ability. For intermediate levels of SES (between $-0.41$ and $1.23$), there is also an effect of internalizing problems, where children with higher internalizing problems have a lower intercept. Highest science ability intercepts are observed in the group with highest SES. It appears that nodes with higher intercepts also tend to have higher slopes, indicating that children with relatively higher ability also show larger ability gains over time.   
 
 The tree in Figure~\ref{fig:LMM_tree_c} has been estimated with generalized linear mixed-effects model trees \citep[GLMM trees; ][]{FokkySmit18}. GLMM trees were originally proposed for subgroup detection in clustered cross-sectional studies, where subjects are for example nested in treatment centers, classrooms and/or geographical areas. In the current paper we aim to extend GLMM trees, so that they can be applied to partitioning LGCMs. The general idea of GLMM trees is appealing for subgroup detection in almost any type of mixed-effects model. Compared to clustered cross-sectional data, however, longitudinal data may require a different estimation approach: The variance of random effects tends to be higher with longitudinal data, and predictors of interest tend to be measured at higher levels (e.g., time-invariant covariates). In this paper, we propose and test two extensions of GLMM trees that account for these characteristics. We focus on the specific use case of partitioning LGCMs, but the extensions are critical for a wider range of settings where covariates are measured at higher levels and/or where the random effects have substantial variance.
 
@@ -217,7 +217,7 @@ plot(lmm_tree, which = "growth", ip_args = list(pval = FALSE),
 icc <- as.data.frame(VarCorr(lmm_tree))
 lmm_preds <- predict(lmm_tree, newdata = testdat, re.form=NA)
 @
-\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, the $y$-axes represent science ability. Grey lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model with a node-specific fixed effect of time and random intercepts estimated with respect to individuals.}
+\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, the $y$-axes represent science ability. Gray lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model with a node-specific fixed effect of time and random intercepts estimated with respect to individuals.}
 \label{fig:LMM_tree}
 \end{figure}%
 
@@ -233,7 +233,7 @@ plot(lmm_tree_r, which = "growth", ip_args = list(pval = FALSE),
 icc_r <- as.data.frame(VarCorr(lmm_tree_r))
 lmm_r_preds <- predict(lmm_tree_r, newdata = testdat, re.form=NA)
 @
-\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, $y$-axes represent science ability. Grey lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model with a node-specific fixed effect of time and random intercepts estimated with respect to individuals.}
+\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, $y$-axes represent science ability. Gray lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model with a node-specific fixed effect of time and random intercepts estimated with respect to individuals.}
 \label{fig:LMM_tree_r}
 \end{figure}%
 
@@ -911,7 +911,7 @@ plot1
 \end{subfigure}%
 \vspace{-0.5cm}%
 {
-\footnotesize \textit{Note.} M~= mean number of splits; SD~= standard deviation of the number of splits; MAD~= Mean absolute deviation from true tree size. Grey circles represent counts, dark gray horizontal lines indicate true number of splits~3. Distances on the $y$-axis are on the log scale; $x$-axis labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated.}
+\footnotesize \textit{Note.} M~= mean number of splits; SD~= standard deviation of the number of splits; MAD~= Mean absolute deviation from true tree size. Gray circles represent counts, dark gray horizontal lines indicate true number of splits~3. Distances on the $y$-axis are on the log scale; $x$-axis labels indicate whether variances of the random intercept and slope were fixed to 0 or freely estimated.}
 \label{fig:tree_sizes}
 \end{figure}
 
@@ -1396,17 +1396,17 @@ colnames(MSE_df) <- rep(c("M", "SD", "$R^2$"), times = 3)
 MSE_df <- MSE_df[c(1,2,4,3), ]
 
 ## Add benchmark LMMs
-load("LMM MSEs, N = 250, Math.RDa")
+load("LMM MSEs, N = 250, Math.Rda")
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 1] <- format(colMeans(MSEs), digits = 4)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 2] <- round(sapply(MSEs, sd), digits = 3)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 3] <- sprintf("%.3f", 1 - colMeans(MSEs)/var_math)
 
-load("LMM MSEs, N = 250, Reading.RDa")
+load("LMM MSEs, N = 250, Reading.Rda")
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 4] <- format(colMeans(MSEs), digits = 4)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 5] <- round(sapply(MSEs, sd), digits = 3)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 6] <- sprintf("%.3f", 1 - colMeans(MSEs)/var_read)
 
-load("LMM MSEs, N = 250, Science.RDa")
+load("LMM MSEs, N = 250, Science.Rda")
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 7] <- format(colMeans(MSEs), digits = 4)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 8] <- round(sapply(MSEs, sd), digits = 3)
 MSE_df[c("LMM$^i$", "LMM$^{i,s}$"), 9] <- sprintf("%.3f", 1 - colMeans(MSEs)/var_scie)
