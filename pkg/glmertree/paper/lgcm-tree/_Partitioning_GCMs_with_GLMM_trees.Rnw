@@ -91,7 +91,7 @@ lines(x = c(min(data$months), max(data$months)),
 \subsection{Recursive Partitioning Methods for Growth Curve Models}
 
 Recursive partitioning methods (RPMs), also known as ``trees``, allow for identifying relevant predictors from a potentially (very) large number of covariates. Figure~\ref{fig:LMM_tree_r} shows an example tree, which identified socio-economic status (SES), gross motor skills (GMOTOR) and internalizing problems (INTERN) from a set of 11 socio-demographic and behavioral characteristics of the children, assessed at baseline. Five subgroups were identified, corresponding to the terminal nodes of the tree, each with a different estimate of the fixed intercept and slope %(presented in Table~\ref{tab:local_coefs}). 
-Groups of children with lower (higher) SES also have a lower (higher) intercept, indicating lower (higher) average science ability. For children with lower SES (node~2), there is also an effect of gross motor skills: The group with lower motor skills has a lower intercept. For children with intermediate levels of SES (node~6), there is also an effect of internalizing problems: The group with lower internalizing problems has a higher intercept. Also, the two groups (or nodes) with higher intercepts have higher slopes, indicating that children with relatively higher ability may also show larger gains in ability over time.   
+Groups of children with lower (higher) SES also have a lower (higher) intercept, indicating lower (higher) average science ability. For children with lower SES (node~2), there is also an effect of gross motor skills: The group with lower motor skills has a lower intercept. For children with intermediate levels of SES (node~6), there is also an effect of internalizing problems: The group with lower internalizing problems has a higher intercept. The two groups (or nodes) with higher intercepts also have higher slopes, indicating that children with higher ability also gain more ability over time.   
 
 
 
@@ -129,7 +129,6 @@ plot(lmm_tree_r, which = "growth", ip_args = list(pval = FALSE),
             xaxis.labs = c(0, 12, 36, 60)), gp = gpar(cex = 1.5))
 @
 \label{subfig:tree}
-\\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, $y$-axes represent science ability. Gray lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model comprising node-specific fixed effects of time and a random intercept with respect to individuals.}
 \end{subfigure}%
 ~
 \begin{subfigure}{0.25\textwidth}%
@@ -236,7 +235,8 @@ The alternative initialization step is thus:
 
 \begin{figure}%
 \caption{GLMM tree estimated by initializing with zero random effects.}
-<<fig=TRUE, height=8, width=14, echo=FALSE>>=
+\begin{subfigure}{1.2\textwidth}
+<<fig=TRUE, height=9, width=16, echo=FALSE>>=
 lmm_tree <- lmertree(LMM_form, data = data, maxdepth = 6)
 plot(lmm_tree, which = "growth", ip_args = list(pval = FALSE), 
      nodesize_level = "CHILDID", tp_args = 
@@ -245,6 +245,7 @@ plot(lmm_tree, which = "growth", ip_args = list(pval = FALSE),
 icc <- as.data.frame(VarCorr(lmm_tree))
 lmm_preds <- predict(lmm_tree, newdata = testdat, re.form=NA)
 @
+\end{subfigure}
 \\\footnotesize{\textit{Note.} The $x$-axes represent the number of months after the baseline assessment, the $y$-axes represent science ability. Gray lines depict observed individual trajectories. Red lines depict the average growth curve within each terminal node, as estimated with a linear mixed-effect model with a node-specific fixed effect of time and random intercepts estimated with respect to individuals.}
 \label{fig:LMM_tree}
 \end{figure}%
@@ -296,7 +297,7 @@ When partitioning longitudinal data, covariates will often be measured at the su
 
 The tree in Figure~\ref{fig:LMM_tree_c} was estimated using cluster-level parameter stability tests. Application of GLMM trees with both cluster-level parameter stability tests and random-effects initialization yielded the exact same tree structure and parameter estimates. Compared to Figures~\ref{fig:LMM_tree_r} and \ref{fig:LMM_tree}, the cluster-level parameter stability tests provided the most parsimonious tree structure thus far. The estimated variances of the random intercept were \Sexpr{formatC(data.frame(VarCorr(lmm_tree_r$lmer))$vcov[1], digits = 2, format = "f")} (Figure~\ref{fig:LMM_tree_r}, \Sexpr{formatC(data.frame(VarCorr(lmm_tree$lmer))$vcov[1], digits = 2, format = "f")} (Figure~\ref{fig:LMM_tree}) and \Sexpr{formatC(data.frame(VarCorr(lmm_tree_c$lmer))$vcov[1], digits = 2, format = "f")} (Figure~\ref{fig:LMM_tree_c}, indicating that the more parsimonious the tree structure, the more variance will be captured by the random effects.
 
-In the next sections, we will assess performance of the original algorithm and proposed adaptations through more extensive empirical evaluations.
+In the next sections, we assess performance of the original algorithm and proposed adaptations through more extensive empirical evaluations.
 
 
 
