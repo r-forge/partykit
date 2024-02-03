@@ -465,9 +465,12 @@ fixef.lmertree <- coef.lmertree <-
 
 
 
-VarCorr.lmertree <- VarCorr.glmertree <- function(x, sigma = 1, ...) {
-  merMod_type <- ifelse(inherits(x, "lmertree"), "lmer", "glmer")
-  VarCorr(x[[merMod_type]], sigma = sigma, ...)
+VarCorr.lmertree <- function(x, ...) {
+  VarCorr(x[["lmer"]], ...)
+}
+
+VarCorr.glmertree <- function(x, sigma = 1, ...) {
+  VarCorr(x[["glmer"]], sigma = sigma, ...)
 }
 
 
