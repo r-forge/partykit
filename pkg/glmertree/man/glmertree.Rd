@@ -165,6 +165,14 @@ Fokkema M, Smits N, Zeileis A, Hothorn T, Kelderman H (2018).
   \dQuote{Detecting Treatment-Subgroup Interactions in Clustered Data
   with Generalized Linear Mixed-Effects Model Trees}. Behavior Research 
   Methods, 50(5), 2016-2034. \doi{10.3758/s13428-017-0971-x}
+  
+Fokkema M, Edbrooke-Childs J & Wolpert M (2021). \dQuote{Generalized linear mixed-model 
+  (GLMM) trees: A flexible decision-tree method for multilevel and longitudinal data.} 
+  Psychotherapy Research, 31(3), 329-341. \doi{10.1080/10503307.2020.1785037}
+  
+Fokkema M & Zeileis A (2024). Subgroup detection in linear growth curve models with 
+  generalized linear mixed model (GLMM) trees. Behavior Research Methods. 
+  \doi{10.3758/s13428-024-02389-1}
 }
 
 \seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
