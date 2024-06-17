@@ -436,7 +436,7 @@ fixef.lmertree <- coef.lmertree <-
   
   if (which == "tree") { 
     coefs <- coef(object$tree, drop = FALSE)
-    coefs <- coefs[levels(object$data$.tree), ]
+    coefs <- coefs[levels(object$data$.tree), , drop = FALSE]
     if (object$joint) { 
       ## overwrite tree coefs with fixed effects from (g)lmer
       lmer_fixef <- fixef(object[[merMod_type]])

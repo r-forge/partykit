@@ -26,7 +26,7 @@ cv.glmertree(tree, newdata, reference = NULL, omit.intercept = FALSE, \dots)
   \item{tree}{An object of class \code{lmertree} or \code{glmertree} that was fitted on 
   a set of training data.}
   \item{newdata}{A \code{data.frame} containing a new set of observations on the same
-  variables that were used to fit code{tree}.}
+  variables that were used to fit \code{tree}.}
   \item{reference}{Numeric or character scalar, indicating the number of the terminal node of 
 which the intercept should be taken as a reference for intercepts in all other nodes. 
 If \code{NULL}, the default of taking the first terminal node's intercept as the reference category
