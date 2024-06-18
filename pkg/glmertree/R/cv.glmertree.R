@@ -1,5 +1,4 @@
 ## CV function for GLMM trees
-
 cv.lmertree <- cv.glmertree <- function(tree, newdata, reference = NULL, 
                                         omit.intercept = FALSE, ...) {
   
@@ -28,7 +27,9 @@ cv.lmertree <- cv.glmertree <- function(tree, newdata, reference = NULL,
                           levels = levels(tree$data$.tree))
   
   ## Replace data
-  tree$tree$data <- newdata[names(tree$tree$data)[1:(ncol(tree$tree$data)-2)]] ## omits (weights) and (offset)
+  omit_col_ids <- which(names(tree$tree$data) %in% c("(weights)", "(offset)", "(cluster)"))
+  tree$tree$data <- newdata[names(tree$tree$data)[(1:ncol(tree$tree$data))[-omit_col_ids]]]
+  
   tree$data <- newdata
   
   ## Replace (g)lmer
