@@ -20,7 +20,7 @@ cv.lmertree <- cv.glmertree <- function(tree, newdata, reference = NULL,
   ## Extract formula
   ff <- if (merMod_type == "lmer") {
     attr(tree$lmer, "call")$formula } else { attr(tree$glmer, "call")$formula 
-    }
+  }
   
   ## Get node indicators for newdata
   newdata$.tree <- factor(predict(tree, newdata = newdata, type = "node"),

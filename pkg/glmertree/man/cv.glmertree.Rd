@@ -82,17 +82,17 @@ test <- sample(1:nrow(DepressionDemo), size = 200, replace = TRUE)
 tree1 <- lmertree(depression ~ treatment | cluster | age + anxiety + duration,
                  data = DepressionDemo[train, ])
                  
-## Obtain honest esimtates of parameters and standard errors using test data
+## Obtain honest estimates of parameters and standard errors using test data
 tree2 <- cv.lmertree(tree1, newdata = DepressionDemo[test, ])
 tree3 <- cv.lmertree(tree1, newdata = DepressionDemo[test, ], 
                      reference = 7, omit.intercept = TRUE)
 
+summary(tree2)
+summary(tree3)
+
 coef(tree1)
 coef(tree2)
 coef(tree3)
-
-summary(tree2)
-summary(tree3)
 
 plot(tree1, which = "tree")
 plot(tree2, which = "tree")

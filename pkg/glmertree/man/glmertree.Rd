@@ -175,9 +175,11 @@ Fokkema M & Zeileis A (2024). Subgroup detection in linear growth curve models w
   \doi{10.3758/s13428-024-02389-1}
 }
 
-\seealso{\code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
-  \code{\link[partykit]{lmtree}}, \code{\link[partykit]{glmtree}}, 
-  \code{\link{plot.lmertree}}, \code{\link{plot.glmertree}}}
+\seealso{\code{\link{plot.lmertree}}, \code{\link{plot.glmertree}},
+  \code{\link{cv.lmertree}}, \code{\link{cv.glmertree}},
+  \code{\link{GrowthCurveDemo}},
+  \code{\link[lme4]{lmer}}, \code{\link[lme4]{glmer}},
+  \code{\link[partykit]{lmtree}}, \code{\link[partykit]{glmtree}}}
 
 \examples{
 \donttest{
