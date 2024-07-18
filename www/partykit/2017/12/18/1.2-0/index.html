@@ -72,44 +72,52 @@ hljs.initHighlightingOnLoad();
   <h2>New Features</h2>
 <ul>
 <li> We welcome Heidi Seibold as co-author! </li>
-<li> Internal re-organisation for ctree by means of new extensible tree
- infrastructure (available in extree_data and extree_fit). Certain
- parts of the new infrastructure are still experimental. ctree is
- fully backward compatible. </li>
-<li> Use libcoin for computing linear test statistics and p-values for
- ctree. </li>
+<li> Internal re-organisation for ctree by means of new extensible
+tree infrastructure (available in extree_data and extree_fit).
+Certain parts of the new infrastructure are still experimental.
+ctree is fully backward compatible. </li>
+<li> Use libcoin for computing linear test statistics and p-values
+for ctree. </li>
 <li> Use inum for binning (the new nmax argument). </li>
-<li> Quadratic test statistics for splitpoint selection are now available
- for ctree via ctree_control(splitstat = "quadratic"). </li>
-<li> Maximally selected test statistics for variable selection are now
- available for ctree via ctree_control(splittest = TRUE). </li>
+<li> Quadratic test statistics for splitpoint selection are now
+available for ctree via ctree_control(splitstat = "quadratic"). </li>
+<li> Maximally selected test statistics for variable selection are
+now available for ctree via ctree_control(splittest = TRUE). </li>
 <li> Missing values can be treated as a separate category, also for
- splits in numeric variables in ctree via ctree_control(MIA = TRUE). </li>
+splits in numeric variables in ctree via ctree_control(MIA =
+TRUE). </li>
 <li> Permutation variable importance, including conditional variable
- importance, was added to partykit. </li>
+importance, was added to partykit. </li>
 <li> New offset argument in ctree. </li>
 <li> New get_paths for computing paths to nodes. </li>
-<li> node_barplot gained a text argument that can be used to draw text
- labels for the percentages displayed. </li>
+<li> node_barplot gained a text argument that can be used to draw
+text labels for the percentages displayed. </li>
 <li> The margins used in plot.party can now also be set by the user. </li>
 </ul>
 <h2>Bugfixes</h2>
 <ul>
-<li> Bug fix in codemob() if weights are used and caseweights = TRUE (the
- default).  The statistics for the parameter instability tests were
- computed incorrectly and consequently the selection of splitting
- variables and also the stopping criterion were affected/incorrect. </li>
+<li> Bug fix in mob() if weights are used and caseweights = TRUE
+(the default).  The statistics for the parameter instability
+tests were computed incorrectly and consequently the selection
+of splitting variables and also the stopping criterion were
+affected/incorrect. </li>
 <li> Avoid log(p) values of -Inf inside mob() by replacing weighted
- averaging with naive averaging in the response surface regression
- output in case the p values are below machine precision. </li>
+averaging with naive averaging in the response surface
+regression output in case the p values are below machine
+precision. </li>
 <li> The as.party method for rpart objects without any splits only
- returned a naked partynode rather than a full party. This has been
- corrected now. </li>
-<li> nodeapply did not produce the same results for permutations of ids.
- Spotted by Heidi Seibold. </li>
+returned a naked partynode rather than a full party. This has
+been corrected now. </li>
+<li> nodeapply did not produce the same results for permutations of
+ids.  Spotted by Heidi Seibold. </li>
 <li> Out-of-bag predictions in predict.cforest were incorrect. </li>
-<li> perm in predict was only considered when newdata was given. Spotted
- by Heidi Seibold. </li>
+<li> perm in predict was only considered when newdata was given.
+Spotted by Heidi Seibold. </li>
+<li> Don't try to search for binary splits in unordered factors with
+more than 31 levels. This potentially caused an integer overrun
+in previous versions.  party::ctree() uses an approximation for
+binary split searches in unordered factors; thus, using party
+might be an alternative. </li>
 </ul>
 
   </article>
@@ -131,7 +139,7 @@ hljs.initHighlightingOnLoad();
 
     <A class="page-link" HREF=http://CRAN.R-project.org/web/packages/partykit/partykit.pdf>Manual</A>
     
-    <A class="page-link" HREF=http://CRAN.R-project.org/src/contrib/partykit_1.2-0.tar.gz>Source</A>
+    <A class="page-link" HREF=http://CRAN.R-project.org/src/contrib/partykit_1.2-21.tar.gz>Source</A>
 
     <A class="page-link" HREF=https://r-forge.r-project.org/projects/partykit>Development</A>
 
