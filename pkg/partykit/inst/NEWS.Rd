@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-22 (2024-08-19)}{
+\section{Changes in Version 1.2-22 (2024-08-17)}{
   \subsection{Buxfixes}{
   \itemize{
     \item{Use \code{R\_Calloc}.}
