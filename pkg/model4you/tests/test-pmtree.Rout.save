@@ -1,7 +1,7 @@
 
-R version 4.0.3 (2020-10-10) -- "Bunny-Wunnies Freak Out"
-Copyright (C) 2020 The R Foundation for Statistical Computing
-Platform: x86_64-pc-linux-gnu (64-bit)
+R version 4.4.1 (2024-06-14) -- "Race for Your Life"
+Copyright (C) 2024 The R Foundation for Statistical Computing
+Platform: aarch64-apple-darwin23.4.0
 
 R is free software and comes with ABSOLUTELY NO WARRANTY.
 You are welcome to redistribute it under certain conditions.
@@ -368,24 +368,24 @@ In .prepare_args(model = model, data = data, zformula = zformula,  :
 > (tr_math_mz <- pmtree(bmod_math, control = ctree_control(maxdepth = 2), data = Math_mz))
 [1] root
 |   [2] tests <= 84.61538
-|   |   [3] tests <= 57.69231: n = 124
+|   |   [3] tests <= 57.69231: n = 122
 |   |       (Intercept)      group2 
-|   |         42.603550   -6.488818 
-|   |   [4] tests > 57.69231: n = 420
+|   |         41.514042   -5.399309 
+|   |   [4] tests > 57.69231: n = 422
 |   |       (Intercept)      group2 
-|   |         54.967949   -1.729082 
+|   |         55.273592   -2.034726 
 |   [5] tests > 84.61538
-|   |   [6] tests <= 92.30769: n = 97
+|   |   [6] tests <= 92.30769: n = 98
 |   |       (Intercept)      group2 
-|   |         66.730769   -3.033063 
-|   |   [7] tests > 92.30769: n = 88
+|   |         65.290807   -1.593101 
+|   |   [7] tests > 92.30769: n = 87
 |   |       (Intercept)      group2 
-|   |          87.73389   -10.65998 
+|   |          89.52991   -12.45601 
 
 Number of inner nodes:    3
 Number of terminal nodes: 4
 Number of parameters per node: 2
-Objective function: -282919.6
+Objective function: -279321
 > 
 > 
 > ## check logLik
@@ -425,8 +425,8 @@ Objective function (residual sum of squares): 315116.8
 +   - objfun(x, newdata = newdata, weights = weights, perm = perm, sum = TRUE, ...)
 + }
 > varimp(tr_math, nperm = 2, risk = of)
- tests 
-184270 
+   tests 
+170701.1 
 > 
 > # deeper tree
 > w <- rep(1, nrow(Math_mx))
@@ -437,8 +437,8 @@ Warning message:
 In .prepare_args(model = model, data = data, zformula = zformula,  :
   NAs in model variables (pcorrect, group). Omitting rows with NAs.
 > varimp(tr_math_d, risk = of)
-      tests     attempt      gender       study    semester 
-247262.1814  67543.0073  18595.5202   3297.5797    959.4839 
+     tests    attempt     gender      study   semester 
+234737.534  69050.999  11758.219   1055.642   2806.542 
 > 
 > 
 > ### check different formulas
@@ -540,4 +540,4 @@ In survreg.fit(X, Y, weights, offset, init = init, controlvals = control,  :
 > 
 > proc.time()
    user  system elapsed 
-  6.993   0.113   7.101 
+  3.566   0.213   4.007 
