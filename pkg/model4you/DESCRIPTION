@@ -1,7 +1,7 @@
 Package: model4you
 Title: Stratified and Personalised Models Based on Model-Based Trees and Forests
-Date: 2020-12-23
-Version: 0.9-7
+Date: 2024-11-06
+Version: 0.9-8
 Authors@R: c(person(given = "Heidi", family = "Seibold", 
                     role = c("aut", "cre"), email = "heidi@seibold.co"),
 	           person(given = "Achim", family = "Zeileis", 
