@@ -58,6 +58,7 @@
     MIA <- FALSE
     if (ctrl$MIA) {
         NAs <- data$missings[[j]] ### data[[j, type = "missings"]]
+        NAs <- NAs[NAs %in% subset]
         MIA <- (length(NAs) > 0)
     }
 
