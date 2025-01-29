@@ -2,6 +2,17 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
+\section{Changes in Version 1.2-24 (2025-01-29)}{
+  \subsection{Buxfixes}{
+  \itemize{
+    \item{Handle ordinal splitting variables like numeric in \code{.list.rules.party()}.}
+    \item{\code{MIA = TRUE} failed in rare cases because the principle
+          was applied to nodes w/o missing values in the split variable; spotted by
+          Ben Schneider.}
+}
+}
+}
+
 \section{Changes in Version 1.2-23 (2024-12-02)}{
   \subsection{Buxfixes}{
   \itemize{
@@ -9,6 +20,7 @@
 }
 }
 }
+
 
 \section{Changes in Version 1.2-22 (2024-08-17)}{
   \subsection{Buxfixes}{
