@@ -918,3 +918,16 @@ d <- d[rep.int(1:30, c(22, 9, 4, 15, 12, 2, 7, 6, 1, 4, 25, 6, 2, 7, 42, 16,
 3, 31, 1, 7, 3, 7, 1, 1, 3, 22, 3, 4, 18, 1)), ]
 
 ctree(y ~ x + z, data = d, alpha = 0.1, minbucket = 60, MIA = TRUE)
+
+### ctree failed for unordered factor responses with NAs
+### spotted by Jonathan Rinne
+library("partykit")
+d <- cars
+d$dist[1:10] <- NA
+d$speed[11:20] <- NA
+dim(d)
+ctree(dist ~ speed, data = d)
+ctree(dist ~ speed, data = d, subset = !is.na(d$dist))
+d$dist <- cut(d$dist, breaks = c(-Inf, 26, 36, 56, Inf), ordered_result = FALSE)
+ctree(dist ~ speed, data = d)
+ctree(dist ~ speed, data = d, subset = !is.na(d$dist))

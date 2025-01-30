@@ -9,6 +9,8 @@
     \item{\code{MIA = TRUE} failed in rare cases because the principle
           was applied to nodes w/o missing values in the split variable; spotted by
           Ben Schneider.}
+    \item{\code{ctree} failed when an unordered factor response contained
+          missing values; spotted by Jonathan Rinne.}
 }
 }
 }
