@@ -648,7 +648,7 @@ plot.glmertree <- plot.lmertree <- function(
         
       } else if (which == "growth") {
         if (is.null(tp_args$cluster)) cluster <- x$tree$fitted[["(cluster)"]]
-        if (is.null(tp_args$cluster)) cluster <- Formula::model.part(Formula::Formula(x$formula),
+        if (is.null(cluster)) cluster <- Formula::model.part(Formula::Formula(x$formula),
                                                             data = model.frame(x$lmer), lhs = 0, rhs = 2L)[[1L]]
         tp_args <- append(tp_args, list(cluster = cluster))
         plot(x$tree, terminal_panel = node_growthplot, tp_args = tp_args, ...)
