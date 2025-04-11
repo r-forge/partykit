@@ -1,3 +1,8 @@
+# glmertree 0.2-7
+
+* ...
+
+
 # glmertree 0.2-6
 
 * Paper on linear growth curve modeling with `lmertree()` published:

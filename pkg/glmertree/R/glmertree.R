@@ -1,5 +1,8 @@
 utils::globalVariables(c(".tree", ".ranef", ".weights", ".cluster"))
 
+## TODO: Adjust plot = TRUE in (g)lmertree, use as simple as possible plotting option (plotting observed 
+## datapoints can be time intensive) 
+
 lmertree <- function(formula, data, weights = NULL, cluster = NULL,
                      ranefstart = NULL, offset = NULL, joint = TRUE,
                      abstol = 0.001, maxit = 100L, dfsplit = TRUE, 
@@ -12,7 +15,7 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   ## check if data is complete
   all_vars <- if (any(all.vars(formula) %in% ".")) {
     names(data) 
-    warning("Use of the dot in the lmertree formula is not recommended, it may have unintended consequences.")
+    warning("Use of the dot in the lmertree formula is not recommended, it may have unintended consequences.See https://stackoverflow.com/a/56169599/8234333 for suggestions.")
   } else {
     all.vars(formula)
   }    
@@ -53,157 +56,203 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
   }
   
   ## formula processing (full, tree, random)
-  ff <- Formula::as.Formula(formula)
-  if (length(ff[[3L]][[2L]]) != 3L) 
-    warning("It looks like the specified formula is not a three-part lmertree formula. See package vignette('glmertree', 'glmertree'), or https://stats.stackexchange.com/a/623290/173546.", immediate. = TRUE)
-  tf <- formula(ff, lhs = 1L, rhs = c(1L, 3L))
-  if (length(attr(ff, "rhs")[[2L]]) == 1L) {
-    if (attr(ff, "rhs")[[2L]] == 1) {
-      no_rf <- TRUE # then global fixed intercept was requested
-    } else {
-      no_rf <- FALSE
-      rf <- (. ~ (1 | id))[[3L]]
-      rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
-      attr(ff, "rhs")[[2L]] <- rf
-    }
-  }
-  if (joint) {
-    rf <- formula(ff, lhs = 1L, rhs = 1L)
-    rf <- update(rf, . ~ .tree / .)
-    rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
-                  lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-    # ## If rf contains a one, estimate intercept globally
-    # ## TODO: Check what happens if a random formula containing 1 was specified
-    # if ("1" %in% as.character(attr(ff, "rhs")[[2L]])) {
-    #   no_rf <- TRUE
-    #   rf <- update(rf, . ~ . -.tree)
-    # } else {
-    #   no_rf <- FALSE
-    # }
-  } else {
-    rf <- formula(ff, lhs = 1L, rhs = 2L)
-  }
-  
+  ff <- suppressWarnings(Formula::as.Formula(formula))
+  tf <- suppressWarnings(formula(ff, lhs = 1L, rhs = c(1L, 3L)))
+  use_merDeriv <- suppressWarnings(ifelse(formula(ff, lhs = 0, rhs = 3) == formula("~ 0"), TRUE, FALSE))
+  if (use_merDeriv) warning("The model formula has a two-part right-had side, while lmertree requires a three-part right-hand side.")
+
   ## process data
   if (data_has_missings) {
     old_N <- nrow(data)
     data <- data[complete.cases(data[ , all_vars]), ]
     warning(paste0("New sample size is N = ", nrow(data), " (old sample size was N = ", old_N, ")."))
-    
   }
   
-  ## initialization
-  iteration <- 0L
-  data$.ranef <- if (is.null(ranefstart)) {
-    rep(0, times = dim(data)[1L])
-  } else if (ranefstart && length(ranefstart) == 1L) {
-    ## generate ranefstart from lme null model: 
-    predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
-                 data = data, weights = .weights, REML = REML,
-                 offset = offset, control = lmer.control),
-            newdata = data)
-  } else {
-    ranefstart  
-  }
-  continue <- TRUE
-  oldloglik <- c(-Inf, - Inf) # last element is the oldest
-  
-  ## iterate between lmer and lmtree estimation
-  while (continue) {
+  if (use_merDeriv) {
     
-    ## if offset was specified, add it to .ranef:
-    if (!is.null(offset)) {
-      data$.ranef <- data$.ranef + offset
-    }
-    
-    iteration <- iteration + 1L
-    
-    ## prevent .tree variable being selected as part var if dot was used formula
-    if (iteration > 2L) data$.tree <- NULL
-    
-    ## fit tree
-    if (is.null(cl$vcov)) { ## Allow for use of ML estimation:
-      if (is.null(q_cluster)) {
-        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                       dfsplit = dfsplit, ...)
-      } else {
-        tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                       cluster = .cluster, dfsplit = dfsplit, ...)
-      }
-    } else {
-      if (is.null(q_cluster)) {
-        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                        dfsplit = dfsplit, family = "gaussian", ...)
-      } else {
-        tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
-                        cluster = .cluster, dfsplit = dfsplit, family = "gaussian", 
-                        ...)
-      }
-    }
-    
-    if (plot) plot(tree, main = paste("Iteration", iteration))
-    
-    data$.tree <- if (joint) {
-      factor(predict(tree, newdata = data, type = "node"))
-    } else {
-      predict(tree, newdata = data, type = "response") 
-      ## note that these predictions already include offset
-    }
-    
-    ## fit lmer
-    if (joint) {
-      ## estimate full lmer model but force all coefficients from the
-      ## .tree (and the overall intercept) to zero for the prediction
-      if (length(tree) == 1L) {
-        ## If tree of depth 1 was grown, (g)lmer model should not include interactions:
-        rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
-        rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
-                          lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
-        if (is.null(offset)) {
-          lme <- lmer(rf.alt, data = data, weights = .weights, 
-                      REML = REML, control = lmer.control)          
-        } else {
-          lme <- lmer(rf.alt, data = data, weights = .weights, 
-                      REML = REML, offset = offset, control = lmer.control)
-        }
-      } else { # a tree was grown
-        if (is.null(offset)) {
-          lme <- lmer(rf, data = data, weights = .weights,
-                      REML = REML, control = lmer.control)
-        } else {
-          lme <- lmer(rf, data = data, weights = .weights, 
-                      REML = REML, offset = offset, control = lmer.control)          
-        }
-      }
-      if (length(tree) == 1L) { 
-        b <- structure(lme@beta, .Names = names(fixef(lme)))
-        b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
-      } else {
-        b <- structure(lme@beta, .Names = names(fixef(lme)))
-        b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
-      }
-      data$.ranef <- suppressWarnings(suppressMessages(
-        predict(lme, newdata = data, newparams = list(beta = b))))
-    } else {
-      ## estimate only a partial lmer model using the .tree fitted
-      ## values as an offset
-      lme <- lmer(rf, data = data, offset = .tree, weights = .weights, 
-                  REML = REML, control = lmer.control)
-      data$.ranef <- predict(lme, newdata = data)
-      ## note that because newdata is specified, predict.merMod will 
-      ## not include offset in predictions
-    }
-    
-    ## iteration information
-    newloglik <- logLik(lme)    
-    continue <- (abs(newloglik - oldloglik[1]) > abstol) & (iteration < maxit) 
-    if (continue & (abs(newloglik - oldloglik[2]) < abstol)) {
-      if (newloglik > oldloglik[1]) continue <- FALSE
-    }
-    oldloglik[2] <- oldloglik[1]
-    oldloglik[1] <- newloglik
-    if (verbose) print(newloglik)
+    if (!requireNamespace("merDeriv")) 
+      stop("Package merDeriv is needed to perform partitioning based on the full set of mixed-effects parameters. Install package merDeriv and run again.")
+    if (!is.null(q_weights)) 
+      warning("Specified weights will be ignored, because mixed-effects model derivatives can currently not be computed using weights.")
+    if (!is.null(cl$joint) || !is.null(cl$abstol) || !is.null(cl$maxit)) 
+      warning("Iterative estimation not used when partitioning is based on the full mixed-effects model. Argument(s) ",
+              ifelse(is.null(joint), "", "joint, "), ifelse(is.null(abstol), "", "abstol, "), 
+              ifelse(is.null(maxit), " ", "maxit "), "will be ignored.")
+    if (!is.null(ranefstart)) 
+      warning("Starting values for random effects are ignored when partitioning is based on the full mixed-effects model. An offset can be specified using the offset argument.")
 
+    tf <- suppressWarnings(Formula(formula(paste(
+      ## get response
+      paste(all.vars(formula(ff, lhs = NULL, rhs = 0)), "~"),
+      ## get predictors for node-specific model
+      paste(all.vars(formula(formula(ff, lhs = 0L, rhs = 1L))), collapse = "+"),
+      ## get partitioning variables
+      paste("|", paste(all.vars(formula(ff, lhs = 0L, rhs = 2L)), collapse = "+"))))))
+    lf <- suppressWarnings(formula(ff, lhs = NULL, rhs = 1L)) ## formula to feed local model predictors to mob()
+    
+    control <- mob_control(...)
+    control$verbose <- verbose
+    control$xtype <- control$ytype <- "data.frame" ## b/c (g)lmer wants a data.frame
+    tree <- if (is.null(q_cluster)) {
+      if (is.null(q_offset)) {
+        mob(formula = tf, data = data, lf = lf, fit = lmerfit, control = control, 
+            weights = NULL, REML = REML, lmer.control = lmer.control)
+      } else {
+        mob(formula = tf, data = data, lf = lf, fit = lmerfit, control = control, 
+            weights = NULL, REML = REML, lmer.control = lmer.control, offset = offset)
+      }
+    } else {
+      if (is.null(q_offset)) {
+        mob(formula = tf, data = data, lf = lf, fit = lmerfit, cluster = .cluster, 
+            control = control, weights = NULL, REML = REML, lmer.control = lmer.control)
+      } else {
+        mob(formula = tf, data = data, lf = lf, fit = lmerfit, cluster = .cluster, 
+            control = control, weights = NULL, REML = REML, lmer.control = lmer.control,
+            offset = offset)
+      }
+    }
+
+  } else { ## use iterative estimation
+    
+    if (length(attr(ff, "rhs")[[2L]]) == 1L) {
+      if (attr(ff, "rhs")[[2L]] == 1) {
+        no_rf <- TRUE # then global fixed intercept was requested
+      } else {
+        no_rf <- FALSE
+        rf <- (. ~ (1 | id))[[3L]]
+        rf[[2L]][[3L]] <- attr(ff, "rhs")[[2L]]
+        attr(ff, "rhs")[[2L]] <- rf
+      }
+    }
+    if (joint) {
+      rf <- formula(ff, lhs = 1L, rhs = 1L)
+      rf <- update(rf, . ~ .tree / .)
+      rf <- formula(Formula::as.Formula(rf, formula(ff, lhs = 0L, rhs = 2L)),
+                    lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+      # ## If rf contains a one, estimate intercept globally
+      # ## TODO: Check what happens if a random formula containing 1 was specified
+      # if ("1" %in% as.character(attr(ff, "rhs")[[2L]])) {
+      #   no_rf <- TRUE
+      #   rf <- update(rf, . ~ . -.tree)
+      # } else {
+      #   no_rf <- FALSE
+      # }
+    } else {
+      rf <- formula(ff, lhs = 1L, rhs = 2L)
+    }
+    ## initialization
+    iteration <- 0L
+    data$.ranef <- if (is.null(ranefstart)) {
+      rep(0, times = dim(data)[1L])
+    } else if (ranefstart && length(ranefstart) == 1L) {
+      ## generate ranefstart from lme null model: 
+      predict(lmer(formula(ff, lhs = 1L, rhs = 2L),
+                   data = data, weights = .weights, REML = REML,
+                   offset = offset, control = lmer.control),
+              newdata = data)
+    } else {
+      ranefstart  
+    }
+    continue <- TRUE
+    oldloglik <- c(-Inf, - Inf) # last element is the oldest
+    
+    ## iterate between lmer and lmtree estimation
+    while (continue) {
+      
+      ## if offset was specified, add it to .ranef:
+      if (!is.null(offset)) {
+        data$.ranef <- data$.ranef + offset
+      }
+      
+      iteration <- iteration + 1L
+      
+      ## prevent .tree variable being selected as part var if dot was used formula
+      if (iteration > 2L) data$.tree <- NULL
+      
+      ## fit tree
+      if (is.null(cl$vcov)) { ## Allow for use of ML estimation:
+        if (is.null(q_cluster)) {
+          tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                         dfsplit = dfsplit, ...)
+        } else {
+          tree <- lmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                         cluster = .cluster, dfsplit = dfsplit, ...)
+        }
+      } else {
+        if (is.null(q_cluster)) {
+          tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                          dfsplit = dfsplit, family = "gaussian", ...)
+        } else {
+          tree <- glmtree(tf, data = data, offset = .ranef, weights = .weights, 
+                          cluster = .cluster, dfsplit = dfsplit, family = "gaussian", 
+                          ...)
+        }
+      }
+      
+      if (plot) plot(tree, main = paste("Iteration", iteration))
+      
+      data$.tree <- if (joint) {
+        factor(predict(tree, newdata = data, type = "node"))
+      } else {
+        predict(tree, newdata = data, type = "response") 
+        ## note that these predictions already include offset
+      }
+      
+      ## fit lmer
+      if (joint) {
+        ## estimate full lmer model but force all coefficients from the
+        ## .tree (and the overall intercept) to zero for the prediction
+        if (length(tree) == 1L) {
+          ## If tree of depth 1 was grown, (g)lmer model should not include interactions:
+          rf.alt <- formula(ff, lhs = 1L, rhs = 1L)
+          rf.alt <- formula(Formula::as.Formula(rf.alt, formula(ff, lhs = 0L, rhs = 2L)),
+                            lhs = 1L, rhs = c(1L, 2L), collapse = TRUE)
+          if (is.null(offset)) {
+            lme <- lmer(rf.alt, data = data, weights = .weights, 
+                        REML = REML, control = lmer.control)          
+          } else {
+            lme <- lmer(rf.alt, data = data, weights = .weights, 
+                        REML = REML, offset = offset, control = lmer.control)
+          }
+        } else { # a tree was grown
+          if (is.null(offset)) {
+            lme <- lmer(rf, data = data, weights = .weights,
+                        REML = REML, control = lmer.control)
+          } else {
+            lme <- lmer(rf, data = data, weights = .weights, 
+                        REML = REML, offset = offset, control = lmer.control)          
+          }
+        }
+        if (length(tree) == 1L) { 
+          b <- structure(lme@beta, .Names = names(fixef(lme)))
+          b[names(b) %in% names(tree[[1]]$node$info$object$coefficients)] <- 0        
+        } else {
+          b <- structure(lme@beta, .Names = names(fixef(lme)))
+          b[substr(names(b), 1L, 5L) %in% c("(Inte", ".tree")] <- 0
+        }
+        data$.ranef <- suppressWarnings(suppressMessages(
+          predict(lme, newdata = data, newparams = list(beta = b))))
+      } else {
+        ## estimate only a partial lmer model using the .tree fitted
+        ## values as an offset
+        lme <- lmer(rf, data = data, offset = .tree, weights = .weights, 
+                    REML = REML, control = lmer.control)
+        data$.ranef <- predict(lme, newdata = data)
+        ## note that because newdata is specified, predict.merMod will 
+        ## not include offset in predictions
+      }
+      
+      ## iteration information
+      newloglik <- logLik(lme)    
+      continue <- (abs(newloglik - oldloglik[1]) > abstol) & (iteration < maxit) 
+      if (continue & (abs(newloglik - oldloglik[2]) < abstol)) {
+        if (newloglik > oldloglik[1]) continue <- FALSE
+      }
+      oldloglik[2] <- oldloglik[1]
+      oldloglik[1] <- newloglik
+      if (verbose) print(newloglik)
+      
+    }
   }
   
   ## collect results
@@ -211,25 +260,52 @@ lmertree <- function(formula, data, weights = NULL, cluster = NULL,
     formula = formula,
     call = cl,
     tree = tree,
-    lmer = lme,
-    ranef = ranef(lme), 
-    varcorr = VarCorr(lme),
-    variance = attr(VarCorr(lme),"sc")^2, 
+    lmer = if (use_merDeriv) NA else lme, ## TODO: return list if use_merDeriv
+    ranef = if (use_merDeriv) NA else ranef(lme),  ## TODO: return list if use_merDeriv
+    varcorr = if (use_merDeriv) NA else VarCorr(lme), ## TODO: return list if use_merDeriv
+    variance = if (use_merDeriv) NA else attr(VarCorr(lme),"sc")^2, ## TODO: return list or vector if use_merDeriv
     data = data,
     nobs = nrow(data),
-    loglik = as.numeric(newloglik),
-    df = attr(newloglik, "df"),
+    loglik = if (use_merDeriv) NA else as.numeric(newloglik), ## TODO: return vector if use_merDeriv
+    df = if (use_merDeriv) NA else attr(newloglik, "df"), ## TODO: return vector if use_merDeriv
     dfsplit = dfsplit,
-    iterations = iteration, 
-    maxit = maxit,
-    ranefstart = ranefstart, 
-    abstol = abstol,
+    iterations = if (use_merDeriv) NA else iteration, 
+    maxit = if (use_merDeriv) NA else maxit,
+    ranefstart = if (use_merDeriv) NA else ranefstart, 
+    abstol = if (use_merDeriv) NA else abstol,
     mob.control = list(...),
     lmer.control = lmer.control,
-    joint = joint
+    joint = if (use_merDeriv) NA else joint
   )
   class(result) <- "lmertree"
   return(result)
+}
+
+
+## Fitting function for fitting and extracting scores from merMod objects
+lmerfit <- function(y, x, start = NULL, weights = NULL, offset = NULL, 
+                    estfun = NULL, object = NULL, ..., lf, REML = TRUE, 
+                    lmer.control = lmerControl()) {
+  
+  args <- list(...)
+  if (is.null(x)) {
+    x <- matrix(1, nrow = NROW(y), ncol = 1L,
+                dimnames = list(NULL, "(Intercept)"))
+  }
+  args$formula <- lf
+  args$data <- cbind(x, y)
+  args$offset <- offset 
+  args$control <- lmer.control
+  args$REML <- REML
+  
+  object <- do.call("lmer", args)
+  object@call$weights <- NULL
+  list(
+    object = object, ## model object for which further methods could be available
+    coefficients = list(fixef = fixef(object), ranef = VarCorr(object)), ## allows readable print method
+    objfun = logLik(object), # lme4:::logLik.merMod(object), ## minimized objective function
+    estfun = merDeriv::estfun.lmerMod(object, level = 1L) ## empir. estimating functions / scores
+  )
 }
 
 
