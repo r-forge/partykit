@@ -154,7 +154,7 @@ ReadingSkills$x2 <- runif(nrow(ReadingSkills))
 ReadingSkills$x3 <- factor(rnorm(nrow(ReadingSkills)) > 0)
 ReadingSkills$gr <- factor(rep(letters[1:5], length.out = nrow(ReadingSkills))) 
 
-\donttest{
+\dontrun{
 ## Fit beta mixed-effects regression tree
 betamer_form <- accuracy ~ iq | gr | dyslexia + x1 + x2 + x3
 bmertree <- betamertree(betamer_form, data = ReadingSkills, minsize = 10)
