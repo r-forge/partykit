@@ -144,7 +144,6 @@ Grün B, Kosmidis I, Zeileis A (2012).
 \code{\link[betareg]{betatree}}}
 
 \examples{
-\donttest{
 if (require("betareg") && require("glmmTMB")) {
 ## load example data
 data("ReadingSkills", package = "betareg")
@@ -155,7 +154,8 @@ ReadingSkills$x2 <- runif(nrow(ReadingSkills))
 ReadingSkills$x3 <- factor(rnorm(nrow(ReadingSkills)) > 0)
 ReadingSkills$gr <- factor(rep(letters[1:5], length.out = nrow(ReadingSkills))) 
 
-## Fit beta mixed-effects regression tree 
+\donttest{
+## Fit beta mixed-effects regression tree
 betamer_form <- accuracy ~ iq | gr | dyslexia + x1 + x2 + x3
 bmertree <- betamertree(betamer_form, data = ReadingSkills, minsize = 10)
 VarCorr(bmertree)
