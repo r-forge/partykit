@@ -14,5 +14,6 @@ Depends: R (>= 4.0.0), lme4, partykit (>= 1.0-4)
 Imports: graphics, stats, utils, Formula
 Suggests: vcd, lattice, betareg, glmmTMB, lmerTest, merDeriv
 LazyData: yes
+URL: https://r-forge.r-project.org/projects/partykit
 License: GPL-2 | GPL-3
 Encoding: UTF-8
