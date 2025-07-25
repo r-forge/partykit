@@ -578,7 +578,7 @@ confint.distfit <- function(object, parm, level = 0.95, type = c("parameter", "l
   right <- 1-left
   
   if(missing(parm)){
-    use.parm <- rep(TRUE,length = np)
+    use.parm <- rep(TRUE, length.out = np)
   } else {
     use.parm <- logical(length = np)
     if(("mu" %in% parm) || (paste0(object$family$link[1],"(mu)") %in% parm) || 1 %in% parm) use.parm[1] <- TRUE
