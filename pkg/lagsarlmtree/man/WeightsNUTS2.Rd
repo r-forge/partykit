@@ -12,9 +12,10 @@ A list containing 40 listw weight matrices.
 }
 
 \source{
-Journal of Applied Econometrics Data Archive. 
-
-\url{http://qed.econ.queensu.ca/jae/2013-v28.4/cuaresma-feldkircher/}
+  Crespo Cuaresma J, Feldkircher M (2013).
+    Spatial Filtering, Model Uncertainty and the Speed of Income Convergence in Europe (Replication Data).
+    Version: 1. \emph{Journal of Applied Econometrics}. Dataset.
+    \doi{10.15456/jae.2022320.0732268890}
 }
 
 \references{
