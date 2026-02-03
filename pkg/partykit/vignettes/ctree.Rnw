@@ -979,8 +979,6 @@ observations. Because of the small sample size we allow for a split if at
 least $5$ observations are element of a node The prognostic factor \code{water}
 found by \cite{Death:2002} is confirmed by the model 
 shown in Figures~\ref{spider1} and~\ref{spider2} which additionally identifies \code{reft}.
-The data are available in package 
-\pkg{mvpart} \citep{mvpart}.
 
 <<spider-ctree, echo = TRUE>>=
 data("HuntingSpiders", package = "partykit")
@@ -1266,6 +1264,6 @@ covariates was removed from the user interface.
 detach(package:party)
 @
 
-\bibliography{party}
+\bibliography{party,packages}
 
 \end{document}

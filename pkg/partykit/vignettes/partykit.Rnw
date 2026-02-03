@@ -96,10 +96,11 @@ algorithm also provide accompanying software but many software systems,
 e.g., including \pkg{Weka} \citep{Witten+Frank:2005} or \proglang{R} \citep{R},
 also provide collections of various types of trees.
 Within \proglang{R} the list of prominent packages includes
-\pkg{rpart} \citep[implementing the CART algorithm]{rpart},
-\pkg{mvpart} \citep[for multivariate CART]{mvpart},
-\pkg{RWeka} \citep[containing interfaces to J4.8, M5', LMT from \pkg{Weka}]{RWeka}, and
-\pkg{party} \citep[implementing CTree and MOB]{party} among
+\pkg{rpart} \citep[implementing the CART algorithm]{pkg:rpart},
+%%% \pkg{mvpart} \citep[for multivariate CART]{mvpart},
+\pkg{RWeka} \citep[containing interfaces to J4.8, M5', LMT from
+\pkg{Weka}]{pkg:RWeka}, and
+\pkg{party} \citep[implementing CTree and MOB]{pkg:party} among
 many others. See the CRAN task view ``Machine Learning''
 \citep{ctv} for an overview.
 
@@ -803,6 +804,6 @@ and associated infrastructure are discussed: splits, nodes, and trees with funct
 for printing, plotting, and predicting. Further vignettes in the package
 discuss in more detail the tools built on top of it.
 
-\bibliography{party}
+\bibliography{party,packages}
 
 \end{document}
