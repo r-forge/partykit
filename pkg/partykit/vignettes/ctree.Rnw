@@ -94,7 +94,7 @@
   Hirschengraben 84\\
   CH-8001 Z\"urich, Switzerland \\
   E-mail: \email{Torsten.Hothorn@R-project.org}\\
-  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+  URL: \url{https://user.math.uzh.ch/hothorn/}\\
 
   Kurt Hornik \\
   Institute for Statistics and Mathematics\\
@@ -102,7 +102,7 @@
   Welthandelsplatz 1 \\
   1020 Wien, Austria\\
   E-mail: \email{Kurt.Hornik@R-project.org} \\
-  URL: \url{http://statmath.wu.ac.at/~hornik/}\\
+  URL: \url{https://statmath.wu.ac.at/~hornik/}\\
 
   Achim Zeileis \\
   Department of Statistics \\
@@ -111,7 +111,7 @@
   Universit\"atsstr.~15 \\
   6020 Innsbruck, Austria \\
   E-mail: \email{Achim.Zeileis@R-project.org} \\
-  URL: \url{http://eeecon.uibk.ac.at/~zeileis/}
+  URL: \url{https://www.zeileis.org/}
 }
 
 
@@ -769,8 +769,7 @@ visualization of the regression relationship is useful for comparing the
 structures inherent in the learning sample with subject matter knowledge. 
 For $98$ patients and $98$ controls, matched by age
 and gender, $62$ covariates describing the eye morphology are available. The
-data is part of the 
-\pkg{TH.data} package, \url{http://CRAN.R-project.org}).
+data is part of the \pkg{TH.data} package \citep{pkg:TH.data}.
 The first split in Figure~\ref{glaucoma} separates eyes with a volume 
 above reference less than
 $\Sexpr{sp} \text{ mm}^3$ in the inferior part of the

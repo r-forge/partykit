@@ -58,7 +58,7 @@
   Universit\"atsstr.~15 \\
   6020 Innsbruck, Austria \\
   E-mail: \email{Achim.Zeileis@R-project.org} \\
-  URL: \url{http://eeecon.uibk.ac.at/~zeileis/} \\
+  URL: \url{https://www.zeileis.org/} \\
 
   Torsten Hothorn\\
   Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
@@ -66,7 +66,7 @@
   Hirschengraben 84\\
   CH-8001 Z\"urich, Switzerland \\
   E-mail: \email{Torsten.Hothorn@R-project.org}\\
-  URL: \url{http://user.math.uzh.ch/hothorn/}
+  URL: \url{https://user.math.uzh.ch/hothorn/}
 }
 
 

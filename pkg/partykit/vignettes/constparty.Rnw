@@ -2,7 +2,7 @@
 
 %\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{Constant Partying: Growing and Handling Trees with Constant Fits}
-%\VignetteDepends{partykit, rpart, RWeka, pmml, datasets}
+%\VignetteDepends{partykit, rpart, RWeka, datasets}
 %\VignetteKeywords{recursive partitioning, regression trees, classification trees, decision trees}
 %\VignettePackage{partykit}
 

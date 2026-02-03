@@ -29,7 +29,7 @@ pkg <- function(pkg)
 
 
 pkgs <- c("mvtnorm", "partykit", "party", "psychotree", "C50", # "mvpart",
-"survival", "rpart", "modeltools", "mlbench", "pmml", "RWeka")
+          "survival", "rpart", "modeltools", "mlbench", "pmml", "RWeka", "TH.data")
 p <- sapply(pkgs, require, character.only = TRUE)
 if (!all(p))
     try(install.packages(pkgs[!p], repos = "https://CRAN.R-project.org"))

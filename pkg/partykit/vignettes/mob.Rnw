@@ -1,5 +1,7 @@
 \documentclass[nojss]{jss}
 \usepackage{amsmath,thumbpdf}
+\usepackage[utf8]{inputenc}
+
 
 \shortcites{mvtnorm}
 
@@ -37,7 +39,7 @@ pkgs <- sapply(pkgs, require, character.only = TRUE)
 
 \Abstract{  
   MOB is a generic algorithm for \underline{mo}del-\underline{b}ased recursive
-  partitioning \citep{Zeileis+Hothorn+Hornik:2008}. Rather than fitting one
+  partitioning (Zeileis, Hothorn and Hornik 2008). Rather than fitting one
   global model to a dataset, it estimates local models on subsets of data that
   are ``learned'' by recursively partitioning. It proceeds in the following way:
   (1)~fit a parametric model to a data set, (2)~test for parameter instability
@@ -63,7 +65,7 @@ pkgs <- sapply(pkgs, require, character.only = TRUE)
   Universit\"atsstr.~15 \\
   6020 Innsbruck, Austria \\
   E-mail: \email{Achim.Zeileis@R-project.org} \\
-  URL: \url{http://eeecon.uibk.ac.at/~zeileis/} \\
+  URL: \url{https://www.zeileis.org/} \\
 
   Torsten Hothorn\\
   Institut f\"ur Epidemiologie, Biostatistik und Pr\"avention \\
@@ -71,7 +73,7 @@ pkgs <- sapply(pkgs, require, character.only = TRUE)
   Hirschengraben 84\\
   CH-8001 Z\"urich, Switzerland \\
   E-mail: \email{Torsten.Hothorn@R-project.org}\\
-  URL: \url{http://user.math.uzh.ch/hothorn/}\\
+  URL: \url{https://user.math.uzh.ch/hothorn/}\\
 }
 
 \begin{document}
