@@ -182,4 +182,4 @@ $levels
 > 
 > proc.time()
    user  system elapsed 
-  0.504   0.043   0.542 
+  0.506   0.040   0.541 

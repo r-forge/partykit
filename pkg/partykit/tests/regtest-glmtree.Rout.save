@@ -506,19 +506,24 @@ NULL
 > unclass(m_df)$node$info$criterion
 NULL
 > 
-> 
-> ### example from mob vignette
-> data("PimaIndiansDiabetes", package = "mlbench")
-> 
-> logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
+> if (requireNamespace("mlbench")) {
++ 
++ ### example from mob vignette
++ data("PimaIndiansDiabetes", package = "mlbench")
++ 
++ logit <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
 +   glm(y ~ 0 + x, family = binomial, start = start, ...)
 + }
-> 
-> pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps +
++ 
++ pid_formula <- diabetes ~ glucose | pregnant + pressure + triceps +
 +   insulin + mass + pedigree + age
-> 
-> pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
-> pid_tree
++ 
++ pid_tree <- mob(pid_formula, data = PimaIndiansDiabetes, fit = logit)
++ print(pid_tree)
++ print(nodeapply(pid_tree, ids = nodeids(pid_tree), function(n) n$info$criterion))
++ 
++ }
+Loading required namespace: mlbench
 Model-based recursive partitioning (logit)
 
 Model formula:
@@ -542,7 +547,6 @@ Number of inner nodes:    2
 Number of terminal nodes: 3
 Number of parameters per node: 2
 Objective function: 355.4578
-> nodeapply(pid_tree, ids = nodeids(pid_tree), function(n) n$info$criterion)
 $`1`
 NULL
 
@@ -559,9 +563,6 @@ $`5`
 NULL
 
 > 
-> 
-> 
-> 
 > proc.time()
    user  system elapsed 
-  9.639   0.084   9.728 
+  9.704   0.055   9.769 

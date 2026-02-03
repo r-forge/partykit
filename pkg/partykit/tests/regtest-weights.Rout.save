@@ -124,4 +124,4 @@ Loading required package: mvtnorm
 > 
 > proc.time()
    user  system elapsed 
-  0.576   0.067   0.639 
+  0.581   0.063   0.639 
