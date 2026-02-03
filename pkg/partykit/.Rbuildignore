@@ -23,6 +23,7 @@ index.Rmd
 vignettes/glmtree-titanic.Rmd
 vignettes/mob.Rout.save
 vignettes/ctree.Rout.save
+vignettes/packages.R
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^.*R2.*$
