@@ -10,17 +10,18 @@
 \newcommand{\fixme}[1]{\emph{\marginpar{FIXME} (#1)}}
 \newcommand{\class}[1]{`\texttt{#1}'}
 
-%% neet no \usepackage{Sweave}
-\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE}
-
-<<setup, echo=FALSE, results=hide>>=
+<<setup, echo=FALSE, results='hide', message = FALSE, warnings = FALSE>>=
 suppressWarnings(RNGversion("3.5.2"))
 library("partykit")
 options(prompt = "R> ", continue = "+  ", digits = 4, useFancyQuotes = FALSE)
+pkgs <- c("AER", "Formula", "mlbench", "sandwich", "strucchange",
+          "survival", "TH.data", "vcd", "psychotools", "psychotree", "knitr")
+pkgs <- sapply(pkgs, require, character.only = TRUE)
 @
 
+%\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{Parties, Models, Mobsters: A New Implementation of Model-Based Recursive Partitioning in R}
-%\VignetteDepends{AER,Formula,mlbench,sandwich,strucchange,survival,TH.data,vcd,psychotools,psychotree}
+%\VignetteDepends{AER,Formula,mlbench,sandwich,strucchange,survival,TH.data,vcd,psychotools,psychotree,knitr}
 %\VignetteKeywords{parametric models, object-orientation, recursive partitioning}
 %\VignettePackage{partykit}
 
@@ -74,6 +75,18 @@ options(prompt = "R> ", continue = "+  ", digits = 4, useFancyQuotes = FALSE)
 }
 
 \begin{document}
+
+<<fail, results = "asis", echo = FALSE>>=
+if (any(!pkgs))
+{
+    cat(paste("Package(s)", paste(names(pkgs)[!pkgs], collapse = ", "), 
+        "not available, stop processing.",
+        "\\end{document}\n"))
+    knitr::knit_exit()
+}
+@
+
+
 \section{Overview}
 
 To implement the model-based recursive partitioning (MOB) algorithm of 
@@ -462,14 +475,14 @@ see Section~\ref{sec:interface} for further details.
 \begin{figure}[p!]
 \centering
 \setkeys{Gin}{width=0.8\textwidth}
-<<PimaIndiansDiabetes-plot, echo=FALSE, results=hide, fig=TRUE, height=5, width=7>>=
+<<PimaIndiansDiabetes-plot, echo=FALSE, results='hide', fig.height=5, fig.width=7>>=
 plot(pid_tree)
 @
 \caption{\label{fig:pid_tree} Logistic-regression-based tree for the Pima Indians diabetes
 data. The plots in the leaves report the estimated regression coefficients.}
 
 \setkeys{Gin}{width=\textwidth}
-<<PimaIndiansDiabetes-plot2,echo=FALSE,results=hide,fig=TRUE,height=6,width=10>>=
+<<PimaIndiansDiabetes-plot2,echo=FALSE,results='hide',fig.height=6,fig.width=10>>=
 plot(pid_tree2, tp_args = list(ylines = 1, margins = c(1.5, 1.5, 1.5, 2.5)))
 @
 \caption{\label{fig:pid_tree2} Logistic-regression-based tree for the Pima Indians
@@ -696,7 +709,7 @@ to \code{mob()} and \code{nreg} is the number of regressor variables.
 
 Furthermore, each \code{node} of the tree contains the following information:
 %
-<<PimaIndiansDiabetes-info>>=
+<<PimaIndiansDiabetes-info-tree>>=
 names(pid_tree$node$info)
 @
 %
@@ -947,7 +960,7 @@ j_tree <- lmtree(log(subs) ~ log(price/citations) | price + citations +
 \begin{figure}[t!]
 \centering
 \setkeys{Gin}{width=0.75\textwidth}
-<<Journals-plot, echo=FALSE, results=hide, fig=TRUE, height=5.5, width=7>>=
+<<Journals-plot, echo=FALSE, results='hide', fig.height=5.5, fig.width=7>>=
 plot(j_tree)
 @
 \caption{\label{fig:Journals} Linear-regression-based tree for the journals
@@ -969,7 +982,7 @@ Finally, various quantities of interest such as the coefficients, standard
 errors and test statistics, and the associated parameter instability tests
 could be extracted by the following code. The corresponding output is suppressed here.
 %
-<<Journals-methods, results=hide>>=
+<<Journals-methods, results='hide'>>=
 coef(j_tree, node = 1:3)
 summary(j_tree, node = 1:3)
 sctest(j_tree, node = 1:3)
@@ -1029,10 +1042,9 @@ of the fitted hyperplane.
 \setkeys{Gin}{width=\textwidth}
 \begin{figure}[p!]
 \centering
-<<BostonHousing-plot,echo=FALSE,results=hide,fig=TRUE,height=8,width=12,include=FALSE>>=
+<<BostonHousing-plot,echo=FALSE,fig.height=8,fig.width=12,out.extra='width=18cm,keepaspectratio,angle=90'>>=
 plot(bh_tree)
 @
-\includegraphics[width=18cm,keepaspectratio,angle=90]{mob-BostonHousing-plot}
 \caption{\label{fig:BostonHousing} Linear-regression-based tree for the Boston housing data.
 The plots in the leaves give partial scatter plots for \code{rm} (upper panel) and 
 \code{lstat} (lower panel).}
@@ -1114,7 +1126,7 @@ replicated observations \citep[see][for a discussion of the different types of w
 %
 \begin{figure}[t!]
 \setkeys{Gin}{width=\textwidth}
-<<TeachingRatings-plot,echo=FALSE,results=hide,fig=TRUE,height=8,width=12>>=
+<<TeachingRatings-plot,echo=FALSE,results='hide',fig.height=8,fig.width=12>>=
 plot(tr_tree)
 @
 \caption{\label{fig:tr_tree} WLS-based tree for the teaching ratings data.
@@ -1180,7 +1192,7 @@ ttnc_tree
 %
 \begin{figure}[t!]
 \setkeys{Gin}{width=\textwidth}
-<<Titanic-plot,echo=FALSE,results=hide,fig=TRUE,height=6,width=10>>=
+<<Titanic-plot,echo=FALSE,results='hide',fig.height=6,fig.width=10>>=
 plot(ttnc_tree, tp_args = list(ylines = 1, margins = c(1.5, 1.5, 1.5, 2.5)))
 @
 \caption{\label{fig:ttnc_tree} Logistic-regression-based tree for the 
@@ -1221,7 +1233,7 @@ For regression a parametric Weibull regression based on the \code{survreg()} fun
 from the \pkg{survival} package \citep{survival} is used. A fitting function for
 \code{mob()} can be easily set up:
 %
-<<wbreg, results=hide>>=
+<<wbreg, results='hide'>>=
 library("survival")
 wbreg <- function(y, x, start = NULL, weights = NULL, offset = NULL, ...) {
   survreg(y ~ 0 + x, weights = weights, dist = "weibull", ...)
@@ -1255,14 +1267,14 @@ gbsg2_tree <- mob(Surv(time, cens) ~ horTh + pnodes | age + tsize +
 \begin{figure}[p!]
 \centering
 \setkeys{Gin}{width=0.6\textwidth}
-<<GBSG2-plot, echo=FALSE, results=hide, fig=TRUE, height=4.5, width=5>>=
+<<GBSG2-plot, echo=FALSE, results='hide', fig.height=4.5, fig.width=5>>=
 plot(gbsg2_tree)
 @
 \caption{\label{fig:GBSG2} Censored Weibull-regression-based tree for the German
 breast cancer data. The plots in the leaves report the estimated regression coefficients.}
 
 \setkeys{Gin}{width=\textwidth}
-<<GBSG2-scatter, echo=FALSE, results=hide, fig=TRUE, height=6, width=9>>=
+<<GBSG2-scatter, echo=FALSE, results='hide', fig.height=6, fig.width=9>>=
 gbsg2node <- function(mobobj, 
   col = "black", linecol = "red", cex = 0.5, pch = NULL,
   jitter = FALSE, xscale = NULL, yscale = NULL, ylines = 1.5,
@@ -1433,7 +1445,6 @@ To fit the Bradley-Terry tree to the data, the available building blocks
 just have to be tied together. First, we set up the basic/simple model fitting
 interface described in Section~\ref{sec:fit}:
 %
-@
 <<btfit1>>=
 btfit1 <- function(y, x = NULL, start = NULL, weights = NULL,
   offset = NULL, ...) btmodel(y, ...)
@@ -1510,13 +1521,13 @@ plot(bt2, FUN = worthf)
 %
 \begin{figure}[p!]
 \centering
-<<bt2-plot, fig=TRUE, height=7.4, width=12, echo=FALSE>>=
+<<bt2-plot, fig.height=7.4, fig.width=12, echo=FALSE>>=
 plot(bt2)
 @
 
 \vspace*{0.5cm}
 
-<<bt2-plot2, fig=TRUE, height=7.4, width=12, echo=FALSE>>=
+<<bt2-plot2, fig.height=7.4, fig.width=12, echo=FALSE>>=
 <<bt2-worthf>>
 @
 \caption{\label{fig:topmodel-plot1} Bradley-Terry-based tree for the topmodel attractiveness
@@ -1538,7 +1549,7 @@ nodeapply(bt2, ids = c(3, 5, 6, 7), FUN = function(n)
 %
 \begin{figure}[t!]
 \centering
-<<bt2-nodeapply-plot, fig=TRUE, height=7, width=9, echo=FALSE, results=hide>>=
+<<bt2-nodeapply-plot, fig.height=7, fig.width=9, echo=FALSE, results='hide'>>=
 <<bt2-nodeapply>>
 @
 \caption{\label{fig:topmodel-plot2} Worth parameters in the terminal nodes
@@ -1558,7 +1569,7 @@ plot(bt2, drop = TRUE, tnex = 2,
 
 \begin{figure}[t!]
 \centering
-<<node_btplot, echo=FALSE, results=hide, fig=TRUE, height=6.2, width=10>>=
+<<node_btplot, echo=FALSE, results='hide', fig.height=6.2, fig.width=10>>=
 ## visualization function
 node_btplot <- function(mobobj, id = TRUE,
   worth = TRUE, names = TRUE, abbreviate = TRUE, index = TRUE, ref = TRUE,

@@ -1,5 +1,6 @@
 \documentclass[nojss]{jss}
 
+%\VignetteEngine{knitr::knitr}
 %\VignetteIndexEntry{Constant Partying: Growing and Handling Trees with Constant Fits}
 %\VignetteDepends{partykit, rpart, RWeka, pmml, datasets}
 %\VignetteKeywords{recursive partitioning, regression trees, classification trees, decision trees}
@@ -11,7 +12,6 @@
 \usepackage{amsmath}
 \usepackage{thumbpdf}
 \usepackage{rotating}
-%% need no \usepackage{Sweave}
 
 %% additional commands
 \newcommand{\squote}[1]{`{#1}'}
@@ -74,9 +74,7 @@ classes, (b)~parsing of XML descriptions of trees learned in other software syst
 
 \setkeys{Gin}{width=\textwidth}
 
-\SweaveOpts{engine=R, eps=FALSE, keep.source=TRUE, eval=TRUE}
-
-<<setup, echo = FALSE, results = hide>>=
+<<setup, echo = FALSE, results = "hide", message = FALSE, warning = FALSE>>=
 suppressWarnings(RNGversion("3.5.2"))
 options(width = 70)
 library("partykit")
@@ -185,12 +183,12 @@ produces a graphical representation of this tree, see Figure~\ref{party_plot}.
 
 \begin{figure}[p!]
 \centering
-<<rpart-plot-orig, fig = TRUE, width = 10, height = 6>>=
+<<rpart-plot-orig, fig.width = 10, fig.height = 6>>=
 plot(rp)
 text(rp)
 @
 
-<<rpart-plot, fig = TRUE, width = 10, height = 6>>=
+<<rpart-plot, fig.width = 10, fig.height = 6>>=
 plot(party_rp)
 @
 \caption{\class{rpart} tree of Titanic data plotted using \pkg{rpart} (top)
@@ -242,7 +240,7 @@ Figure~\ref{J48_plot}.
 
 \begin{sidewaysfigure}
 \centering
-<<J48-plot, fig = TRUE, width = 15, height = 9>>=
+<<J48-plot, fig.width = 15, fig.height = 9>>=
 plot(party_j48)
 @
 \caption{\class{J48} tree of Titanic data plotted using \pkg{partykit}
@@ -280,7 +278,7 @@ ttnc_pmml <- file.path(system.file("pmml", package = "partykit"),
 %
 \begin{figure}[t!]
 \centering
-<<PMML-Titanic-plot1, fig=TRUE, height=9, width=17>>=
+<<PMML-Titanic-plot1, fig.height = 9, fig.width = 17>>=
 plot(ttnc_quest)
 @
 \caption{QUEST tree for Titanic data, fitted using \proglang{SPSS} and exported
@@ -323,7 +321,7 @@ This object is plotted in Figure~\ref{PMML-Titanic-plot2}.
 
 \begin{figure}[t!]
 \centering
-<<PMML-Titanic-plot2, fig=TRUE, height=8.5, width=14>>=
+<<PMML-Titanic-plot2, fig.height = 8.5, fig.width = 14>>=
 plot(ttnc_quest2)
 @
 \caption{QUEST tree for Titanic data, fitted using \proglang{SPSS}, exported
@@ -335,18 +333,21 @@ Furthermore, we briefly point out that there is also the \proglang{R}
 package \pkg{pmml} \citep{pmml}, part of the \pkg{rattle} project
 \citep{rattle}, that allows to
 export PMML files for \pkg{rpart} trees from \proglang{R}. For example,
-for the \class{rpart} tree for the Titanic data:
-<<PMML-write>>=
-library("pmml")
-tfile <- tempfile()
-write(toString(pmml(rp)), file = tfile)
+with \pkg{pmml} available, for the \class{rpart} tree for the Titanic data:
+<<PMML-write, message = FALSE>>=
+if (pmmlOK <- require("pmml")) {
+    tfile <- tempfile()
+    write(toString(pmml(rp)), file = tfile)
+}
 @
 Then, we can simply read this file and inspect the resulting tree
 <<PMML-read>>=
-(party_pmml <- pmmlTreeModel(tfile))
-all.equal(predict(party_rp, newdata = ttnc, type = "prob"), 
-  predict(party_pmml, newdata = ttnc, type = "prob"),
-  check.attributes = FALSE)
+if (pmmlOK) {
+    (party_pmml <- pmmlTreeModel(tfile))
+    print(all.equal(predict(party_rp, newdata = ttnc, type = "prob"), 
+                    predict(party_pmml, newdata = ttnc, type = "prob"),
+                    check.attributes = FALSE))
+}
 @
 Further example PMML files created with \pkg{rattle} are the Data Mining
 Group web page, e.g.,
@@ -525,7 +526,7 @@ resulting model
 %
 \begin{figure}[t!]
 \centering
-<<mytree-5, echo = FALSE, fig = TRUE, height=8.5, width=14>>=
+<<mytree-5, echo = FALSE, fig.height=8.5, fig.width=14>>=
 plot(myttnc)
 @
 \caption{Classification tree fitted by the \fct{mytree} function to the
@@ -566,7 +567,7 @@ The corresponding visualization is shown in Figure~\ref{prunetree}.
 \setkeys{Gin}{width=0.85\textwidth}
 \begin{figure}[t!]
 \centering
-<<mytree-nodeprune-plot, echo = FALSE, fig = TRUE, height=6, width=10>>=
+<<mytree-nodeprune-plot, echo = FALSE, fig.height=6, fig.width=10>>=
 plot(myttnc2)
 @
 \caption{Pruned classification tree fitted by the \fct{mytree} function to the

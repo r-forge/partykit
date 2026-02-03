@@ -22,6 +22,7 @@ _pkgdown.yml
 index.Rmd
 vignettes/glmtree-titanic.Rmd
 vignettes/mob.Rout.save
+vignettes/ctree.Rout.save
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^.*R2.*$
