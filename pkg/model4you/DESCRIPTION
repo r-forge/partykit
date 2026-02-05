@@ -1,7 +1,7 @@
 Package: model4you
 Title: Stratified and Personalised Models Based on Model-Based Trees and Forests
-Date: 2024-11-06
-Version: 0.9-8
+Date: 2026-02-05
+Version: 0.9-9
 Authors@R: c(person(given = "Heidi", family = "Seibold", 
                     role = c("aut", "cre"), email = "heidi@seibold.co"),
 	           person(given = "Achim", family = "Zeileis", 
@@ -29,7 +29,8 @@ Imports:
     ggplot2,
     Formula,
     gridExtra,
-    survival
+    survival,
+    rlang
 Suggests:
     mvtnorm,
     TH.data,
@@ -41,4 +42,4 @@ Suggests:
     MASS
 License: GPL-2 | GPL-3
 Encoding: UTF-8
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2

@@ -50,7 +50,8 @@
 #'                                            confint = TRUE,
 #'                                            plot_data = TRUE))
 #'
-#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar theme_classic aes_string aes ylim ylab theme
+#' @importFrom ggplot2 ggplot geom_point geom_errorbar geom_bar theme_classic aes ylim ylab theme
+#' @importFrom rlang .data
 #' @export
 binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme_classic(), ...) {
 
@@ -86,10 +87,10 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
     uxdat)
 
   ## points plot info
-  pts <- geom_point(data = pdat, aes_string(x = colnames(xdat), y = "py"))
+  pts <- geom_point(data = pdat, aes(x = .data[[colnames(xdat)]], y = .data[["py"]]))
   ci <- geom_errorbar(data = pdat, width = 0.1,
-    aes_string(x = colnames(xdat),
-      ymin = "lwr", ymax = "upr"))
+    aes(x = .data[[colnames(xdat)]],
+      ymin = .data[["lwr"]], ymax = .data[["upr"]]))
 
   if(plot_data) {
     ## get mosaic plot data
@@ -102,8 +103,8 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 
     ## add mosaic plot info
     p <- ggplot() + geom_bar(data = plotData,
-      aes_string("x", "var2Height", fill = "x",
-        alpha = "y", width = "marginVar1"),
+      aes(.data[["x"]], .data[["var2Height"]], fill = .data[["x"]],
+        alpha = .data[["y"]], width = .data[["marginVar1"]]),
       stat = "identity") + pts + ci
   } else {
     p <- ggplot() + ci + pts
@@ -146,7 +147,8 @@ binomial_glm_plot <- function(mod, data = NULL, plot_data = FALSE, theme = theme
 #'                 family = gaussian, data = anorexia)
 #' lm_plot(anorex.1)
 #'
-#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string xlim xlab scale_linetype_discrete
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes xlim xlab scale_linetype_discrete
+#' @importFrom rlang .data
 #' @export
 lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
   yrange = NULL) {
@@ -193,15 +195,15 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
     des <- factor(c("model", "kernel"), levels = c("model", "kernel"))
     p <- ggplot() +
       geom_line(data = cbind(dens, estimate = des[1]),
-        aes_string(x = "ygrid", y = "density", color = trtnam, linetype = "estimate")) +
+        aes(x = .data[["ygrid"]], y = .data[["density"]], color = .data[[trtnam]], linetype = .data[["estimate"]])) +
       geom_line(data = cbind(data, estimate = des[2]),
-        aes_string(x = ynam, color = trtnam, linetype = "estimate"),
+        aes(x = .data[[ynam]], color = .data[[trtnam]], linetype = .data[["estimate"]]),
         stat = "density") +
       scale_linetype_discrete(drop = FALSE)
   } else {
     p <- ggplot() +
       geom_line(data = dens,
-        aes_string(x = "ygrid", y = "density", color = trtnam))
+        aes(x = .data[["ygrid"]], y = .data[["density"]], color = .data[[trtnam]]))
   }
   p + theme + xlim(yrange) + xlab(ynam)
 }
@@ -224,7 +226,8 @@ lm_plot <- function(mod, data = NULL, densest = FALSE, theme = theme_classic(),
 #'   survreg_plot(survreg(Surv(futime, fustat) ~ factor(rx), ovarian))
 #' }
 #'
-#' @importFrom ggplot2 ggplot geom_line theme_classic aes_string coord_cartesian
+#' @importFrom ggplot2 ggplot geom_line theme_classic aes coord_cartesian
+#' @importFrom rlang .data
 #' @importFrom stats model.frame predict formula terms get_all_vars
 #' @importFrom survival Surv survreg
 #' @importFrom Formula as.Formula
@@ -261,9 +264,9 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
         row.names = NULL)))
 
   ## plot
-  xnam <- attr(terms(xformula), "term.labels")
-  ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam,
-    color = xnam)) +
+  xnam <- names(xdat)
+  ggplot(data = pr, aes(x = .data[["pr"]], y = .data[["probability"]], group = .data[[xnam]],
+    color = .data[[xnam]])) +
     geom_line() + coord_cartesian(xlim = yrange) +
     xlab(as.character(yformula[[2]])[2]) +
     theme
@@ -287,7 +290,8 @@ survreg_plot <- function(mod, data = NULL, theme = theme_classic(),
 #'   coxph_plot(coxph(Surv(futime, fustat) ~ factor(rx), ovarian))
 #' }
 #'
-#' @importFrom ggplot2 ggplot geom_step theme_classic aes_string coord_cartesian
+#' @importFrom ggplot2 ggplot geom_step theme_classic aes coord_cartesian
+#' @importFrom rlang .data
 #' @importFrom stats model.frame predict formula terms get_all_vars
 #' @importFrom survival Surv survreg
 #' @importFrom Formula as.Formula
@@ -329,8 +333,8 @@ coxph_plot <- function(mod, data = NULL, theme = theme_classic(),
 
   ## plot
   xnam <- names(xdat)
-  ggplot(data = pr, aes_string(x = "pr", y = "probability", group = xnam,
-    color = xnam)) +
+  ggplot(data = pr, aes(x = .data[["pr"]], y = .data[["probability"]], group = .data[[xnam]],
+    color = .data[[xnam]])) +
     geom_step() + coord_cartesian(xlim = yrange, ylim = 0:1) +
     xlab(as.character(yformula[[2]])[2]) +
     theme

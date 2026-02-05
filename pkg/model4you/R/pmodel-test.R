@@ -101,7 +101,7 @@ pmtest <- function(forest, pmodels = NULL, data = NULL, B = 100) {
 #' @param x object of class heterogeneity_test.
 #' @param ... ignored.
 #'
-#' @importFrom ggplot2 geom_rug geom_vline scale_linetype element_blank labs aes_string
+#' @importFrom ggplot2 geom_rug geom_vline scale_linetype element_blank labs aes
 #' 
 #' @export
 plot.heterogeneity_test <- function(x, ...) {
@@ -110,7 +110,7 @@ plot.heterogeneity_test <- function(x, ...) {
   orig <- lls[!lls$sim, ]
   ggplot() + 
     geom_line(data = sim, aes(x = diff), stat = "density") +
-    geom_rug(data = lls, aes_string(x = "diff", linetype = "hypothesis")) +
+    geom_rug(data = lls, aes(x = .data[["diff"]], linetype = .data[["hypothesis"]])) +
     geom_vline(data = orig, aes(xintercept = diff),
                linetype = 2) +
     scale_linetype(labels = expression(H[0], data)) + 
