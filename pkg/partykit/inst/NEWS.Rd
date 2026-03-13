@@ -2,7 +2,7 @@
 \name{NEWS}
 \title{NEWS file for the \pkg{partykit} package}
 
-\section{Changes in Version 1.2-27 (2026-03-11)}{
+\section{Changes in Version 1.2-27 (2026-03-13)}{
   \subsection{Bugfixes}{
   \itemize{
     \item{More sensible test output.}
